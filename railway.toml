@@ -5,7 +5,9 @@
 builder = "DOCKERFILE"
 
 [deploy]
-startCommand = "npm run start:prod"
+# Start command is handled by Dockerfile CMD: "node dist/main.js"
+# No need to override - Dockerfile handles it correctly
+# startCommand = "node dist/main.js"
 healthcheckPath = "/api/health"
 healthcheckTimeout = 300
 restartPolicyType = "ON_FAILURE"
