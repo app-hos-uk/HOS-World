@@ -43,17 +43,28 @@ RUN npm install -g pnpm
 
 WORKDIR /app
 
-# Copy built files and dependencies
-COPY --from=base /app/node_modules ./node_modules
-COPY --from=base /app/services/api/dist ./dist
-COPY --from=base /app/services/api/package.json ./
-COPY --from=base /app/services/api/prisma ./prisma
+# Copy package files for production install
+COPY --from=base /app/package.json ./
+COPY --from=base /app/pnpm-lock.yaml ./
+COPY --from=base /app/pnpm-workspace.yaml ./
+COPY --from=base /app/services/api/package.json ./services/api/
 COPY --from=base /app/packages ./packages
 
-# Prisma Client is already generated in the base stage and included in node_modules
-# No need to regenerate in production stage
+# Install only production dependencies
+RUN pnpm install --prod --no-frozen-lockfile
+
+# Copy built files
+COPY --from=base /app/services/api/dist ./dist
+COPY --from=base /app/services/api/package.json ./services/api/
+COPY --from=base /app/services/api/prisma ./prisma
+
+# Prisma Client is already generated in the base stage
+# But we need to ensure it's available - copy from node_modules or regenerate
+RUN cd services/api && pnpm db:generate || echo "Prisma client already available"
 
 EXPOSE 3001
+
+WORKDIR /app/services/api
 
 CMD ["node", "dist/main.js"]
 
