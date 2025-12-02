@@ -31,8 +31,6 @@ RUN pnpm db:generate
 
 # Build
 WORKDIR /app/services/api
-# Generate Prisma client again to ensure it's available
-RUN pnpm db:generate
 # Build the application (will show type errors but attempt to compile)
 RUN pnpm build || echo "Build completed with some type errors - checking if dist exists..."
 # Verify dist directory was created
