@@ -52,8 +52,8 @@ COPY --from=base /app/services/api/package.json ./
 COPY --from=base /app/services/api/prisma ./prisma
 COPY --from=base /app/packages ./packages
 
-# Generate Prisma Client
-RUN cd /app && pnpm --filter @hos-marketplace/api db:generate
+# Prisma Client is already generated in the base stage and included in node_modules
+# No need to regenerate in production stage
 
 EXPOSE 3001
 
