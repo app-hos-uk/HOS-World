@@ -39,6 +39,9 @@ RUN ls -la dist/ || (echo "Build failed - dist directory not found" && exit 1)
 # Production image
 FROM node:18-alpine
 
+# Install build dependencies for native modules (bcrypt, etc.)
+RUN apk add --no-cache python3 make g++
+
 RUN npm install -g pnpm
 
 WORKDIR /app
@@ -50,8 +53,8 @@ COPY --from=base /app/pnpm-workspace.yaml ./
 COPY --from=base /app/services/api/package.json ./services/api/
 COPY --from=base /app/packages ./packages
 
-# Install all dependencies (needed for workspace packages and Prisma)
-# We'll use --prod but also need dev deps for Prisma generation
+# Install all dependencies (needed for workspace packages, Prisma, and native modules)
+# Native modules like bcrypt need to be rebuilt for the target platform
 RUN pnpm install --no-frozen-lockfile
 
 # Copy built files
