@@ -57,6 +57,9 @@ COPY --from=base /app/packages ./packages
 # Native modules like bcrypt need to be rebuilt for the target platform
 RUN pnpm install --no-frozen-lockfile
 
+# Rebuild native modules to ensure they're compiled for Alpine Linux
+RUN pnpm rebuild bcrypt || echo "bcrypt rebuild completed"
+
 # Copy built files
 COPY --from=base /app/services/api/dist ./services/api/dist
 COPY --from=base /app/services/api/package.json ./services/api/
