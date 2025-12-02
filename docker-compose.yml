@@ -1,0 +1,92 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-hos_user}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-hos_password}
+      POSTGRES_DB: ${POSTGRES_DB:-hos_marketplace}
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-hos_user}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  api:
+    build:
+      context: .
+      dockerfile: services/api/Dockerfile
+    ports:
+      - "3001:3001"
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER:-hos_user}:${POSTGRES_PASSWORD:-hos_password}@postgres:5432/${POSTGRES_DB:-hos_marketplace}
+      REDIS_URL: redis://redis:6379
+      PORT: 3001
+      NODE_ENV: development
+      FRONTEND_URL: http://localhost:3000
+      JWT_SECRET: ${JWT_SECRET:-dev-secret-change-in-production}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    volumes:
+      - ./services/api:/app/services/api
+      - ./packages:/app/packages
+
+  web:
+    build:
+      context: .
+      dockerfile: apps/web/Dockerfile
+    ports:
+      - "3000:3000"
+    environment:
+      NEXT_PUBLIC_API_URL: http://localhost:3001/api
+      NEXT_PUBLIC_CMS_URL: http://localhost:1337/api
+      NODE_ENV: development
+    depends_on:
+      - api
+
+  cms:
+    image: strapi/strapi:latest
+    ports:
+      - "1337:1337"
+    environment:
+      DATABASE_CLIENT: postgres
+      DATABASE_HOST: postgres
+      DATABASE_PORT: 5432
+      DATABASE_NAME: ${POSTGRES_DB:-hos_marketplace}
+      DATABASE_USERNAME: ${POSTGRES_USER:-hos_user}
+      DATABASE_PASSWORD: ${POSTGRES_PASSWORD:-hos_password}
+      DATABASE_SSL: false
+      JWT_SECRET: ${CMS_JWT_SECRET:-cms-secret-change-in-production}
+      ADMIN_JWT_SECRET: ${CMS_ADMIN_SECRET:-admin-secret-change-in-production}
+      APP_KEYS: ${CMS_APP_KEYS:-key1,key2,key3,key4}
+    depends_on:
+      postgres:
+        condition: service_healthy
+    volumes:
+      - cms_data:/srv/app
+
+volumes:
+  postgres_data:
+  redis_data:
+  cms_data:
+

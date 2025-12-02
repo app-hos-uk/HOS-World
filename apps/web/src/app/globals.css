@@ -1,0 +1,41 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --font-cinzel: 'Cinzel', serif;
+  --font-lora: 'Lora', serif;
+}
+
+* {
+  box-sizing: border-box;
+  padding: 0;
+  margin: 0;
+}
+
+html,
+body {
+  max-width: 100vw;
+  overflow-x: hidden;
+  background-color: var(--color-background);
+  color: var(--color-text-primary);
+  font-family: var(--font-family-primary);
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+body {
+  background: #ffffff; /* White background as per requirements */
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+}
+
+

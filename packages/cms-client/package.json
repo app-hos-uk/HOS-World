@@ -1,0 +1,20 @@
+{
+  "name": "@hos-marketplace/cms-client",
+  "version": "1.0.0",
+  "description": "CMS client for fetching content from Strapi",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch"
+  },
+  "keywords": ["cms", "strapi", "content"],
+  "author": "House of Spells",
+  "license": "UNLICENSED",
+  "dependencies": {},
+  "devDependencies": {
+    "typescript": "^5.3.3"
+  },
+  "peerDependencies": {}
+}
+

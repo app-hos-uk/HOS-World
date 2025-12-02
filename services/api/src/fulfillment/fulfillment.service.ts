@@ -1,0 +1,348 @@
+import {
+  Injectable,
+  NotFoundException,
+  BadRequestException,
+  ForbiddenException,
+} from '@nestjs/common';
+import { PrismaService } from '../database/prisma.service';
+import {
+  CreateFulfillmentCenterDto,
+  UpdateFulfillmentCenterDto,
+} from './dto/create-fulfillment-center.dto';
+import { VerifyShipmentDto, CreateShipmentDto } from './dto/verify-shipment.dto';
+import { ShipmentStatus, ProductSubmissionStatus } from '@prisma/client';
+
+@Injectable()
+export class FulfillmentService {
+  constructor(private prisma: PrismaService) {}
+
+  // Fulfillment Center Management
+  async createFulfillmentCenter(createDto: CreateFulfillmentCenterDto) {
+    return this.prisma.fulfillmentCenter.create({
+      data: createDto,
+    });
+  }
+
+  async findAllFulfillmentCenters(activeOnly: boolean = false) {
+    const where: any = {};
+    if (activeOnly) {
+      where.isActive = true;
+    }
+
+    return this.prisma.fulfillmentCenter.findMany({
+      where,
+      orderBy: { name: 'asc' },
+      include: {
+        shipments: {
+          take: 5,
+          orderBy: { createdAt: 'desc' },
+        },
+      },
+    });
+  }
+
+  async findOneFulfillmentCenter(id: string) {
+    const center = await this.prisma.fulfillmentCenter.findUnique({
+      where: { id },
+      include: {
+        shipments: {
+          orderBy: { createdAt: 'desc' },
+        },
+      },
+    });
+
+    if (!center) {
+      throw new NotFoundException('Fulfillment center not found');
+    }
+
+    return center;
+  }
+
+  async updateFulfillmentCenter(id: string, updateDto: UpdateFulfillmentCenterDto) {
+    const center = await this.prisma.fulfillmentCenter.findUnique({
+      where: { id },
+    });
+
+    if (!center) {
+      throw new NotFoundException('Fulfillment center not found');
+    }
+
+    return this.prisma.fulfillmentCenter.update({
+      where: { id },
+      data: updateDto,
+    });
+  }
+
+  async deleteFulfillmentCenter(id: string) {
+    const center = await this.prisma.fulfillmentCenter.findUnique({
+      where: { id },
+      include: {
+        shipments: true,
+      },
+    });
+
+    if (!center) {
+      throw new NotFoundException('Fulfillment center not found');
+    }
+
+    if (center.shipments.length > 0) {
+      throw new BadRequestException(
+        'Cannot delete fulfillment center with existing shipments',
+      );
+    }
+
+    await this.prisma.fulfillmentCenter.delete({
+      where: { id },
+    });
+
+    return { message: 'Fulfillment center deleted successfully' };
+  }
+
+  // Shipment Management
+  async createShipment(createDto: CreateShipmentDto) {
+    // Verify submission exists and is approved
+    const submission = await this.prisma.productSubmission.findUnique({
+      where: { id: createDto.submissionId },
+    });
+
+    if (!submission) {
+      throw new NotFoundException('Submission not found');
+    }
+
+    if (submission.status !== 'PROCUREMENT_APPROVED') {
+      throw new BadRequestException(
+        'Shipment can only be created for procurement-approved submissions',
+      );
+    }
+
+    // Check if shipment already exists
+    const existingShipment = await this.prisma.shipment.findUnique({
+      where: { submissionId: createDto.submissionId },
+    });
+
+    if (existingShipment) {
+      throw new BadRequestException('Shipment already exists for this submission');
+    }
+
+    // Verify fulfillment center exists
+    const fulfillmentCenter = await this.prisma.fulfillmentCenter.findUnique({
+      where: { id: createDto.fulfillmentCenterId },
+    });
+
+    if (!fulfillmentCenter) {
+      throw new NotFoundException('Fulfillment center not found');
+    }
+
+    // Create shipment
+    const shipment = await this.prisma.shipment.create({
+      data: {
+        submissionId: createDto.submissionId,
+        fulfillmentCenterId: createDto.fulfillmentCenterId,
+        trackingNumber: createDto.trackingNumber,
+        status: 'PENDING',
+      },
+      include: {
+        submission: {
+          include: {
+            seller: {
+              select: {
+                id: true,
+                storeName: true,
+                slug: true,
+              },
+            },
+          },
+        },
+        fulfillmentCenter: true,
+      },
+    });
+
+    // Update submission status
+    await this.prisma.productSubmission.update({
+      where: { id: createDto.submissionId },
+      data: {
+        status: 'SHIPPED_TO_FC',
+      },
+    });
+
+    // TODO: Send notification to fulfillment center
+
+    return shipment;
+  }
+
+  async findAllShipments(status?: ShipmentStatus, fulfillmentCenterId?: string) {
+    const where: any = {};
+
+    if (status) {
+      where.status = status;
+    }
+
+    if (fulfillmentCenterId) {
+      where.fulfillmentCenterId = fulfillmentCenterId;
+    }
+
+    const shipments = await this.prisma.shipment.findMany({
+      where,
+      orderBy: { createdAt: 'desc' },
+      include: {
+        submission: {
+          include: {
+            seller: {
+              select: {
+                id: true,
+                storeName: true,
+                slug: true,
+              },
+            },
+          },
+        },
+        fulfillmentCenter: true,
+      },
+    });
+
+    return shipments;
+  }
+
+  async findOneShipment(id: string) {
+    const shipment = await this.prisma.shipment.findUnique({
+      where: { id },
+      include: {
+        submission: {
+          include: {
+            seller: {
+              select: {
+                id: true,
+                storeName: true,
+                slug: true,
+                sellerType: true,
+              },
+            },
+            productData: true,
+          },
+        },
+        fulfillmentCenter: true,
+      },
+    });
+
+    if (!shipment) {
+      throw new NotFoundException('Shipment not found');
+    }
+
+    return shipment;
+  }
+
+  async verifyShipment(id: string, userId: string, verifyDto: VerifyShipmentDto) {
+    const shipment = await this.prisma.shipment.findUnique({
+      where: { id },
+      include: {
+        submission: true,
+      },
+    });
+
+    if (!shipment) {
+      throw new NotFoundException('Shipment not found');
+    }
+
+    if (shipment.status === 'VERIFIED' || shipment.status === 'REJECTED') {
+      throw new BadRequestException(
+        `Shipment cannot be verified in status: ${shipment.status}`,
+      );
+    }
+
+    const updateData: any = {
+      status: verifyDto.status,
+      verifiedBy: userId,
+    };
+
+    if (verifyDto.verificationNotes) {
+      updateData.verificationNotes = verifyDto.verificationNotes;
+    }
+
+    if (verifyDto.trackingNumber) {
+      updateData.trackingNumber = verifyDto.trackingNumber;
+    }
+
+    if (verifyDto.status === 'VERIFIED') {
+      updateData.receivedAt = new Date();
+    }
+
+    const updated = await this.prisma.shipment.update({
+      where: { id },
+      data: updateData,
+      include: {
+        submission: {
+          include: {
+            seller: {
+              select: {
+                id: true,
+                storeName: true,
+                slug: true,
+              },
+            },
+          },
+        },
+        fulfillmentCenter: true,
+      },
+    });
+
+    // If verified, update submission status and notify teams
+    if (verifyDto.status === 'VERIFIED') {
+      await this.prisma.productSubmission.update({
+        where: { id: shipment.submissionId },
+        data: {
+          status: 'FC_ACCEPTED',
+          fcAcceptedAt: new Date(),
+        },
+      });
+
+      // TODO: Send notifications to:
+      // - Procurement team
+      // - Catalog team
+      // - HOS operations
+    } else if (verifyDto.status === 'REJECTED') {
+      await this.prisma.productSubmission.update({
+        where: { id: shipment.submissionId },
+        data: {
+          status: 'FC_REJECTED',
+        },
+      });
+
+      // TODO: Send notification to seller and procurement
+    }
+
+    return updated;
+  }
+
+  async getDashboardStats(fulfillmentCenterId?: string) {
+    const where: any = {};
+    if (fulfillmentCenterId) {
+      where.fulfillmentCenterId = fulfillmentCenterId;
+    }
+
+    const [
+      totalShipments,
+      pending,
+      inTransit,
+      received,
+      verified,
+      rejected,
+    ] = await Promise.all([
+      this.prisma.shipment.count({ where }),
+      this.prisma.shipment.count({ where: { ...where, status: 'PENDING' } }),
+      this.prisma.shipment.count({ where: { ...where, status: 'IN_TRANSIT' } }),
+      this.prisma.shipment.count({ where: { ...where, status: 'RECEIVED' } }),
+      this.prisma.shipment.count({ where: { ...where, status: 'VERIFIED' } }),
+      this.prisma.shipment.count({ where: { ...where, status: 'REJECTED' } }),
+    ]);
+
+    return {
+      totalShipments,
+      pending,
+      inTransit,
+      received,
+      verified,
+      rejected,
+    };
+  }
+}
+

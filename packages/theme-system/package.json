@@ -1,0 +1,25 @@
+{
+  "name": "@hos-marketplace/theme-system",
+  "version": "1.0.0",
+  "description": "Theme management system for House of Spells Marketplace",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "clean": "rm -rf dist",
+    "type-check": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@hos-marketplace/shared-types": "workspace:*",
+    "react": "^18.2.0"
+  },
+  "devDependencies": {
+    "typescript": "^5.3.3"
+  },
+  "files": [
+    "dist"
+  ]
+}
+
+
