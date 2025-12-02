@@ -50,8 +50,9 @@ COPY --from=base /app/pnpm-workspace.yaml ./
 COPY --from=base /app/services/api/package.json ./services/api/
 COPY --from=base /app/packages ./packages
 
-# Install only production dependencies (including workspace dependencies)
-RUN pnpm install --prod --no-frozen-lockfile
+# Install all dependencies (needed for workspace packages and Prisma)
+# We'll use --prod but also need dev deps for Prisma generation
+RUN pnpm install --no-frozen-lockfile
 
 # Copy built files
 COPY --from=base /app/services/api/dist ./services/api/dist
