@@ -1,0 +1,64 @@
+# ============================================
+# Railway Environment Variables
+# Copy these to Railway Dashboard
+# ============================================
+
+# Backend API Service (@hos-marketplace/api)
+# ============================================
+
+# Database (Get from PostgreSQL service → Variables tab)
+DATABASE_URL=[COPY FROM POSTGRESQL SERVICE]
+
+# Redis (Get from Redis service → Variables tab)
+REDIS_URL=[COPY FROM REDIS SERVICE]
+
+# Server Configuration
+PORT=3001
+NODE_ENV=production
+FRONTEND_URL=https://placeholder.railway.app
+
+# JWT Authentication
+JWT_SECRET=Kp7wamA5lpeHBuNEpHkRd4q7mPXJA2xT43DN2tvB8FA=
+JWT_EXPIRES_IN=7d
+JWT_REFRESH_SECRET=/vUoK9uS315lu/v2nfAN0CAbTUVACQJBDBXcTm3uvi4=
+JWT_REFRESH_EXPIRES_IN=30d
+
+# Rate Limiting
+RATE_LIMIT_TTL=60000
+RATE_LIMIT_MAX=100
+
+# File Upload
+UPLOAD_MAX_SIZE=10485760
+UPLOAD_ALLOWED_TYPES=image/jpeg,image/png,image/gif,image/webp
+
+# Email (Gmail - Optional, add later)
+SMTP_HOST=smtp.gmail.com
+SMTP_PORT=587
+SMTP_USER=your-email@gmail.com
+SMTP_PASS=[Gmail App Password]
+SMTP_FROM=noreply@hos-marketplace.com
+
+# ============================================
+# Frontend Web Service (@hos-marketplace/web)
+# ============================================
+
+NEXT_PUBLIC_API_URL=https://your-backend-url.railway.app/api
+NODE_ENV=production
+PORT=3000
+
+# ============================================
+# Optional Services (Add Later)
+# ============================================
+
+# Stripe (Add after Stripe setup)
+# STRIPE_SECRET_KEY=sk_test_...
+# STRIPE_PUBLISHABLE_KEY=pk_test_...
+# STRIPE_WEBHOOK_SECRET=whsec_...
+
+# Cloudinary (Add after Cloudinary setup)
+# CLOUDINARY_CLOUD_NAME=...
+# CLOUDINARY_API_KEY=...
+# CLOUDINARY_API_SECRET=...
+
+# Gemini AI (Add after Google AI setup)
+# GEMINI_API_KEY=...
