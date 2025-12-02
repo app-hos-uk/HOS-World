@@ -81,6 +81,10 @@ RUN pnpm db:generate
 
 EXPOSE 3001
 
+# Set working directory for CMD
+WORKDIR /app/services/api
+
 # Run from the API directory
+# Use 0.0.0.0 to listen on all interfaces (required for Railway)
 CMD ["node", "dist/main.js"]
 
