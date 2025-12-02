@@ -1,5 +1,6 @@
 # API Service Dockerfile
-FROM node:18-alpine AS base
+# Use Debian-based image for better native module (bcrypt) compatibility
+FROM node:18-slim AS base
 
 # Install pnpm
 RUN npm install -g pnpm
@@ -36,11 +37,15 @@ RUN pnpm build || echo "Build completed with some type errors - checking if dist
 # Verify dist directory was created
 RUN ls -la dist/ || (echo "Build failed - dist directory not found" && exit 1)
 
-# Production image
-FROM node:18-alpine
+# Production image - Use Debian-based image for better native module compatibility
+FROM node:18-slim
 
 # Install build dependencies for native modules (bcrypt, etc.)
-RUN apk add --no-cache python3 make g++
+RUN apt-get update && apt-get install -y \
+    python3 \
+    make \
+    g++ \
+    && rm -rf /var/lib/apt/lists/*
 
 RUN npm install -g pnpm
 
