@@ -50,21 +50,20 @@ COPY --from=base /app/pnpm-workspace.yaml ./
 COPY --from=base /app/services/api/package.json ./services/api/
 COPY --from=base /app/packages ./packages
 
-# Install only production dependencies
+# Install only production dependencies (including workspace dependencies)
 RUN pnpm install --prod --no-frozen-lockfile
 
 # Copy built files
-COPY --from=base /app/services/api/dist ./dist
+COPY --from=base /app/services/api/dist ./services/api/dist
 COPY --from=base /app/services/api/package.json ./services/api/
-COPY --from=base /app/services/api/prisma ./prisma
+COPY --from=base /app/services/api/prisma ./services/api/prisma
 
-# Prisma Client is already generated in the base stage
-# But we need to ensure it's available - copy from node_modules or regenerate
-RUN cd services/api && pnpm db:generate || echo "Prisma client already available"
+# Generate Prisma Client in production (needed for runtime)
+WORKDIR /app/services/api
+RUN pnpm db:generate
 
 EXPOSE 3001
 
-WORKDIR /app/services/api
-
+# Run from the API directory
 CMD ["node", "dist/main.js"]
 
