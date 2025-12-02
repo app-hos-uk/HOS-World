@@ -56,12 +56,15 @@ COPY --from=base /app/packages ./packages
 # Install all dependencies (needed for workspace packages, Prisma, and native modules)
 RUN pnpm install --no-frozen-lockfile
 
-# Explicitly rebuild bcrypt native module for Alpine Linux
-# Use npm rebuild as it handles native modules better in Alpine
-WORKDIR /app/services/api
-RUN cd /app && npm rebuild bcrypt --build-from-source || \
-    (cd /app/services/api && pnpm rebuild bcrypt) || \
-    echo "bcrypt rebuild attempted"
+# Explicitly rebuild bcrypt and other native modules for Alpine Linux
+# This ensures native bindings are compiled for the target platform
+RUN cd /app/services/api && \
+    pnpm rebuild bcrypt || \
+    (cd /app && npm rebuild bcrypt --build-from-source) || \
+    echo "Attempting alternative bcrypt build..." && \
+    cd /app/services/api && \
+    pnpm exec node-gyp rebuild --directory node_modules/.pnpm/bcrypt@5.1.1/node_modules/bcrypt || \
+    echo "bcrypt rebuild completed"
 
 # Copy built files
 COPY --from=base /app/services/api/dist ./services/api/dist
