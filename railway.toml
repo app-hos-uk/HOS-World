@@ -5,10 +5,10 @@
 builder = "DOCKERFILE"
 
 [deploy]
-# Explicitly set start command to use production build (not npm start which runs nest start)
-# Railway was using npm start which runs nest start (dev mode) instead of the Dockerfile CMD
-# Use sh -c to execute shell commands (cd is a shell builtin, not an executable)
-startCommand = "sh -c 'cd /app/services/api && node dist/main.js'"
+# Use Dockerfile CMD instead of overriding with startCommand
+# Dockerfile already sets WORKDIR /app/services/api and CMD ["node", "dist/main.js"]
+# Removing startCommand to let Dockerfile handle it
+# startCommand = "node dist/main.js"
 # Temporarily disabled healthcheck to allow deployment to complete
 # Re-enable after confirming service starts successfully
 # healthcheckPath = "/api/health"
