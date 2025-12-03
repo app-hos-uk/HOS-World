@@ -33,11 +33,20 @@ async function bootstrap() {
 
     const port = process.env.PORT || 3001;
     console.log(`📡 Listening on port: ${port}`);
+    console.log(`⏳ Calling app.listen(${port})...`);
     
-    await app.listen(port);
-
+    const server = await app.listen(port);
+    
+    console.log(`✅ Server object received:`, !!server);
     console.log(`✅ API server is running on: http://0.0.0.0:${port}/api`);
     console.log(`✅ Health check available at: http://0.0.0.0:${port}/api/health`);
+    
+    // Verify server is actually listening
+    if (server && server.listening) {
+      console.log(`✅ Server confirmed listening on port ${port}`);
+    } else {
+      console.warn(`⚠️ Server object exists but listening status unclear`);
+    }
   } catch (error) {
     console.error('❌ Failed to start API server:', error);
     console.error('Error stack:', error.stack);
