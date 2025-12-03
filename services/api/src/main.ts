@@ -32,21 +32,23 @@ async function bootstrap() {
     );
 
     const port = process.env.PORT || 3001;
-    console.log(`📡 Listening on port: ${port}`);
-    console.log(`⏳ Calling app.listen(${port})...`);
+    console.log(`📡 About to listen on port: ${port}`);
     
-    const server = await app.listen(port);
-    
-    console.log(`✅ Server object received:`, !!server);
-    console.log(`✅ API server is running on: http://0.0.0.0:${port}/api`);
-    console.log(`✅ Health check available at: http://0.0.0.0:${port}/api/health`);
-    
-    // Verify server is actually listening
-    if (server && server.listening) {
-      console.log(`✅ Server confirmed listening on port ${port}`);
-    } else {
-      console.warn(`⚠️ Server object exists but listening status unclear`);
-    }
+    // Use callback-based listen to ensure we get confirmation
+    await new Promise<void>((resolve, reject) => {
+      const server = app.getHttpServer();
+      server.listen(port, '0.0.0.0', () => {
+        console.log(`✅ Server is listening on port ${port}`);
+        console.log(`✅ API server is running on: http://0.0.0.0:${port}/api`);
+        console.log(`✅ Health check available at: http://0.0.0.0:${port}/api/health`);
+        resolve();
+      });
+      
+      server.on('error', (error: any) => {
+        console.error('❌ Server error:', error);
+        reject(error);
+      });
+    });
   } catch (error) {
     console.error('❌ Failed to start API server:', error);
     console.error('Error stack:', error.stack);
