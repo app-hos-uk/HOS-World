@@ -85,22 +85,15 @@ EXPOSE 3001
 WORKDIR /app/services/api
 
 # Create startup script that runs migrations then starts the app
+# Use db push as primary method since we don't have migration files yet
 RUN cat > /app/services/api/start.sh << 'EOF'
 #!/bin/sh
-set -e
-echo "🔄 Checking database connection..."
+echo "🔄 Starting database setup..."
 cd /app/services/api
-echo "🔄 Running database migrations..."
-if pnpm prisma migrate deploy 2>&1; then
-  echo "✅ Migrations applied successfully"
-else
-  echo "⚠️ Migration deploy failed. Attempting db push as fallback..."
-  if pnpm prisma db push --accept-data-loss --skip-generate 2>&1; then
-    echo "✅ Database schema synced successfully"
-  else
-    echo "⚠️ Database setup failed - app will start but may have errors"
-  fi
-fi
+echo "🔄 Syncing database schema..."
+pnpm prisma db push --accept-data-loss --skip-generate 2>&1 || {
+  echo "⚠️ Database schema sync failed - continuing anyway"
+}
 echo "✅ Starting application..."
 exec node dist/main.js
 EOF
