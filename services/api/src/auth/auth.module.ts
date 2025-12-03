@@ -40,54 +40,57 @@ export class AuthModule implements OnModuleInit {
   ) {}
 
   async onModuleInit() {
-    // Conditionally register OAuth strategies only if configured
+    // Don't block startup - register OAuth strategies in background
     // Using dynamic imports to avoid class evaluation when not needed
-    
-    // Google Strategy
-    const googleClientID = this.configService.get<string>('GOOGLE_CLIENT_ID');
-    const googleClientSecret = this.configService.get<string>('GOOGLE_CLIENT_SECRET');
-    if (googleClientID && googleClientSecret) {
-      try {
-        const { GoogleStrategy } = await import('./strategies/google.strategy');
-        new GoogleStrategy(this.configService, this.authService);
-        logger.log('Google OAuth strategy registered');
-      } catch (error) {
-        logger.warn('Failed to register Google OAuth strategy:', error.message);
+    Promise.resolve().then(async () => {
+      // Google Strategy
+      const googleClientID = this.configService.get<string>('GOOGLE_CLIENT_ID');
+      const googleClientSecret = this.configService.get<string>('GOOGLE_CLIENT_SECRET');
+      if (googleClientID && googleClientSecret) {
+        try {
+          const { GoogleStrategy } = await import('./strategies/google.strategy');
+          new GoogleStrategy(this.configService, this.authService);
+          logger.log('Google OAuth strategy registered');
+        } catch (error) {
+          logger.warn('Failed to register Google OAuth strategy:', error.message);
+        }
+      } else {
+        logger.debug('Google OAuth not configured - skipping strategy');
       }
-    } else {
-      logger.debug('Google OAuth not configured - skipping strategy');
-    }
 
-    // Facebook Strategy
-    const facebookAppId = this.configService.get<string>('FACEBOOK_APP_ID');
-    const facebookAppSecret = this.configService.get<string>('FACEBOOK_APP_SECRET');
-    if (facebookAppId && facebookAppSecret) {
-      try {
-        const { FacebookStrategy } = await import('./strategies/facebook.strategy');
-        new FacebookStrategy(this.configService, this.authService);
-        logger.log('Facebook OAuth strategy registered');
-      } catch (error) {
-        logger.warn('Failed to register Facebook OAuth strategy:', error.message);
+      // Facebook Strategy
+      const facebookAppId = this.configService.get<string>('FACEBOOK_APP_ID');
+      const facebookAppSecret = this.configService.get<string>('FACEBOOK_APP_SECRET');
+      if (facebookAppId && facebookAppSecret) {
+        try {
+          const { FacebookStrategy } = await import('./strategies/facebook.strategy');
+          new FacebookStrategy(this.configService, this.authService);
+          logger.log('Facebook OAuth strategy registered');
+        } catch (error) {
+          logger.warn('Failed to register Facebook OAuth strategy:', error.message);
+        }
+      } else {
+        logger.debug('Facebook OAuth not configured - skipping strategy');
       }
-    } else {
-      logger.debug('Facebook OAuth not configured - skipping strategy');
-    }
 
-    // Apple Strategy
-    const appleClientID = this.configService.get<string>('APPLE_CLIENT_ID');
-    const appleTeamID = this.configService.get<string>('APPLE_TEAM_ID');
-    const appleKeyID = this.configService.get<string>('APPLE_KEY_ID');
-    const applePrivateKeyPath = this.configService.get<string>('APPLE_PRIVATE_KEY_PATH');
-    if (appleClientID && appleTeamID && appleKeyID && applePrivateKeyPath) {
-      try {
-        const { AppleStrategy } = await import('./strategies/apple.strategy');
-        new AppleStrategy(this.configService, this.authService);
-        logger.log('Apple OAuth strategy registered');
-      } catch (error) {
-        logger.warn('Failed to register Apple OAuth strategy:', error.message);
+      // Apple Strategy
+      const appleClientID = this.configService.get<string>('APPLE_CLIENT_ID');
+      const appleTeamID = this.configService.get<string>('APPLE_TEAM_ID');
+      const appleKeyID = this.configService.get<string>('APPLE_KEY_ID');
+      const applePrivateKeyPath = this.configService.get<string>('APPLE_PRIVATE_KEY_PATH');
+      if (appleClientID && appleTeamID && appleKeyID && applePrivateKeyPath) {
+        try {
+          const { AppleStrategy } = await import('./strategies/apple.strategy');
+          new AppleStrategy(this.configService, this.authService);
+          logger.log('Apple OAuth strategy registered');
+        } catch (error) {
+          logger.warn('Failed to register Apple OAuth strategy:', error.message);
+        }
+      } else {
+        logger.debug('Apple OAuth not configured - skipping strategy');
       }
-    } else {
-      logger.debug('Apple OAuth not configured - skipping strategy');
-    }
+    }).catch(() => {
+      // Ignore errors - don't block startup
+    });
   }
 }

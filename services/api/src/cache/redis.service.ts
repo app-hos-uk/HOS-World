@@ -13,39 +13,47 @@ export class RedisService implements OnModuleInit, OnModuleDestroy {
   async onModuleInit() {
     const redisUrl = this.configService.get('REDIS_URL') || 'redis://localhost:6379';
     
-    try {
-      this.client = createClient({
-        url: redisUrl,
-        socket: {
-          reconnectStrategy: (retries) => {
-            if (retries > 10) {
-              this.logger.error('Redis connection failed after 10 retries');
-              return new Error('Redis connection failed');
-            }
-            return Math.min(retries * 100, 3000);
-          },
-        },
-      });
+    // Don't block startup - connect in background with timeout
+    Promise.race([
+      (async () => {
+        try {
+          this.client = createClient({
+            url: redisUrl,
+            socket: {
+              reconnectStrategy: (retries) => {
+                if (retries > 10) {
+                  this.logger.error('Redis connection failed after 10 retries');
+                  return new Error('Redis connection failed');
+                }
+                return Math.min(retries * 100, 3000);
+              },
+            },
+          });
 
-      this.client.on('error', (err) => {
-        this.logger.error('Redis client error:', err);
-        this.isConnected = false;
-      });
+          this.client.on('error', (err) => {
+            this.logger.error('Redis client error:', err);
+            this.isConnected = false;
+          });
 
-      this.client.on('connect', () => {
-        this.logger.log('Redis client connecting...');
-      });
+          this.client.on('connect', () => {
+            this.logger.log('Redis client connecting...');
+          });
 
-      this.client.on('ready', () => {
-        this.logger.log('Redis client ready');
-        this.isConnected = true;
-      });
+          this.client.on('ready', () => {
+            this.logger.log('Redis client ready');
+            this.isConnected = true;
+          });
 
-      await this.client.connect();
-    } catch (error) {
-      this.logger.warn('Redis connection failed, using fallback:', error.message);
-      this.isConnected = false;
-    }
+          await this.client.connect();
+        } catch (error) {
+          this.logger.warn('Redis connection failed, using fallback:', error.message);
+          this.isConnected = false;
+        }
+      })(),
+      new Promise((resolve) => setTimeout(resolve, 5000)), // 5 second timeout
+    ]).then(() => {
+      this.logger.debug('Redis connection attempt completed (may still be connecting)');
+    });
   }
 
   async onModuleDestroy() {
