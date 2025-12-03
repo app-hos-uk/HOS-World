@@ -6,19 +6,21 @@ RUN npm install -g pnpm
 
 WORKDIR /app
 
-# Copy package files
+# Copy package files (order matters for Docker layer caching)
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
-COPY apps/web/package.json ./apps/web/
 
-# Copy all package.json files from packages
+# Copy all package.json files from packages (must be before install)
 COPY packages/shared-types/package.json ./packages/shared-types/
 COPY packages/api-client/package.json ./packages/api-client/
 COPY packages/theme-system/package.json ./packages/theme-system/
 COPY packages/ui-components/package.json ./packages/ui-components/
 COPY packages/utils/package.json ./packages/utils/
 COPY packages/cms-client/package.json ./packages/cms-client/
+COPY apps/web/package.json ./apps/web/
 
-# Install dependencies (using --no-frozen-lockfile for CI/CD compatibility)
+# Install ALL dependencies including dev dependencies (needed for building packages)
+# Using --no-frozen-lockfile for CI/CD compatibility
+# This installs @types/react and other dev dependencies needed for TypeScript builds
 RUN pnpm install --no-frozen-lockfile
 
 # Copy source code
