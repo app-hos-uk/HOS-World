@@ -21,7 +21,12 @@ COPY apps/web/package.json ./apps/web/
 # Install ALL dependencies including dev dependencies (needed for building packages)
 # Using --no-frozen-lockfile for CI/CD compatibility
 # This installs @types/react and other dev dependencies needed for TypeScript builds
-RUN pnpm install --no-frozen-lockfile
+# Force install to ensure dev dependencies are included
+RUN pnpm install --no-frozen-lockfile --include-workspace-root
+
+# Verify @types/react is installed (for debugging)
+RUN ls -la /app/node_modules/.pnpm | grep "@types+react" || echo "Checking for @types/react..."
+RUN pnpm list @types/react --depth=0 || echo "@types/react check..."
 
 # Copy source code
 COPY apps/web ./apps/web
