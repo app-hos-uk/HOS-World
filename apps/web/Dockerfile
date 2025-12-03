@@ -24,10 +24,11 @@ COPY apps/web/package.json ./apps/web/
 RUN pnpm install --no-frozen-lockfile
 
 # Copy source code
-# Copy packages first (including tsconfig.json files)
-COPY packages ./packages
+# Copy packages first (including tsconfig.json files and source files)
+# Use --chown to ensure proper permissions and avoid cache issues
+COPY --chown=node:node packages ./packages
 # Copy web app
-COPY apps/web ./apps/web
+COPY --chown=node:node apps/web ./apps/web
 
 # Build packages first (in dependency order)
 # This ensures workspace packages are available for the web app build
@@ -53,6 +54,8 @@ RUN cat tsconfig.json | grep -q '"DOM"' || (echo "ERROR: DOM lib missing from ap
 # Verify put/delete methods exist in client.ts
 RUN grep -q "async put" src/client.ts || (echo "ERROR: put method missing from ApiClient" && exit 1)
 RUN grep -q "async delete" src/client.ts || (echo "ERROR: delete method missing from ApiClient" && exit 1)
+# Verify headers type fix is present (should use Record, not HeadersInit for assignment)
+RUN grep -q "Record<string, string>" src/client.ts || (echo "ERROR: headers type fix missing - should use Record<string, string>" && grep -A 2 "const headers" src/client.ts && exit 1)
 RUN pnpm build
 
 # 5. ui-components (depends on shared-types and theme-system)
