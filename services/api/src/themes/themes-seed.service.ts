@@ -6,24 +6,23 @@ export class ThemesSeedService implements OnModuleInit {
   constructor(private prisma: PrismaService) {}
 
   async onModuleInit() {
-    // Don't block startup - seed in background with timeout
-    Promise.race([
-      (async () => {
-        try {
-          // Only seed if no themes exist
-          const themeCount = await this.prisma.theme.count();
-          if (themeCount === 0) {
-            await this.seedDefaultThemes();
-          }
-        } catch (error) {
-          // Don't throw - allow app to start even if seeding fails
-          console.warn('Theme seeding failed:', error.message);
+    // Don't block startup - seed in background
+    // Return immediately so NestJS doesn't wait
+    (async () => {
+      try {
+        // Only seed if no themes exist
+        const themeCount = await this.prisma.theme.count();
+        if (themeCount === 0) {
+          await this.seedDefaultThemes();
         }
-      })(),
-      new Promise((resolve) => setTimeout(resolve, 10000)), // 10 second timeout
-    ]).catch(() => {
+      } catch (error) {
+        // Don't throw - allow app to start even if seeding fails
+        console.warn('Theme seeding failed:', error.message);
+      }
+    })().catch(() => {
       // Ignore errors
     });
+    // Return immediately - don't wait for seeding
   }
 
   async seedDefaultThemes(): Promise<void> {
