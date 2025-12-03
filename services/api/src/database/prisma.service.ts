@@ -9,8 +9,25 @@ export class PrismaService extends PrismaClient implements OnModuleInit, OnModul
     // Don't block startup - connect in background
     // Return immediately so NestJS doesn't wait
     this.$connect()
-      .then(() => {
+      .then(async () => {
         this.logger.log('Database connected successfully');
+        
+        // Sync database schema if needed (for production deployments)
+        if (process.env.NODE_ENV === 'production' && process.env.SYNC_DB_SCHEMA !== 'false') {
+          try {
+            this.logger.log('🔄 Syncing database schema...');
+            const { execSync } = require('child_process');
+            execSync('pnpm prisma db push --accept-data-loss --skip-generate', {
+              cwd: process.cwd(),
+              stdio: 'inherit',
+              env: process.env,
+            });
+            this.logger.log('✅ Database schema synced successfully');
+          } catch (error) {
+            this.logger.warn('⚠️ Database schema sync failed:', error.message);
+            // Continue anyway - app can still run
+          }
+        }
       })
       .catch((error) => {
         this.logger.error('Failed to connect to database:', error.message);

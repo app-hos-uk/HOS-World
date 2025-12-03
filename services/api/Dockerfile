@@ -84,21 +84,8 @@ EXPOSE 3001
 # Set working directory for CMD
 WORKDIR /app/services/api
 
-# Create startup script that runs migrations then starts the app
-# Use db push as primary method since we don't have migration files yet
-RUN cat > /app/services/api/start.sh << 'EOF'
-#!/bin/sh
-echo "🔄 Starting database setup..."
-cd /app/services/api
-echo "🔄 Syncing database schema..."
-pnpm prisma db push --accept-data-loss --skip-generate 2>&1 || {
-  echo "⚠️ Database schema sync failed - continuing anyway"
-}
-echo "✅ Starting application..."
-exec node dist/main.js
-EOF
-RUN chmod +x /app/services/api/start.sh
-
-# Run migrations on startup, then start the app
-CMD ["/app/services/api/start.sh"]
+# Run from the API directory
+# Use 0.0.0.0 to listen on all interfaces (required for Railway)
+# Database schema will be synced automatically in PrismaService.onModuleInit()
+CMD ["node", "dist/main.js"]
 
