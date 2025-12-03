@@ -24,8 +24,10 @@ COPY apps/web/package.json ./apps/web/
 RUN pnpm install --no-frozen-lockfile
 
 # Copy source code
-COPY apps/web ./apps/web
+# Copy packages first (including tsconfig.json files)
 COPY packages ./packages
+# Copy web app
+COPY apps/web ./apps/web
 
 # Build packages first (in dependency order)
 # This ensures workspace packages are available for the web app build
