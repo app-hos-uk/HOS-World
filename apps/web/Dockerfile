@@ -41,7 +41,9 @@ WORKDIR /app/packages/theme-system
 RUN pnpm build
 
 # 3. utils (depends on shared-types)
+# Verify tsconfig.json has DOM lib before building
 WORKDIR /app/packages/utils
+RUN cat tsconfig.json | grep -q '"DOM"' || (echo "ERROR: DOM lib missing from tsconfig.json" && cat tsconfig.json && exit 1)
 RUN pnpm build
 
 # 4. api-client (depends on shared-types)
