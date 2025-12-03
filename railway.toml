@@ -3,7 +3,8 @@
 
 [build]
 builder = "DOCKERFILE"
-dockerfile = "services/api/Dockerfile"
+context = "services/api"
+dockerfile = "Dockerfile"
 
 [deploy]
 # Use Dockerfile CMD instead of overriding with startCommand
