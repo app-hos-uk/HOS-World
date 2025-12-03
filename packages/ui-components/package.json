@@ -15,7 +15,9 @@
     "@hos-marketplace/theme-system": "workspace:*"
   },
   "devDependencies": {
-    "typescript": "^5.3.3"
+    "typescript": "^5.3.3",
+    "@types/react": "^18.2.0",
+    "@types/react-dom": "^18.2.0"
   },
   "files": [
     "dist"
