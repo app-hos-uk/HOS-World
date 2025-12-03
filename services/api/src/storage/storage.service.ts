@@ -1,6 +1,7 @@
-import { Injectable, BadRequestException } from '@nestjs/common';
+import { Injectable, BadRequestException, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import * as fs from 'fs/promises';
+import { v2 as cloudinary } from 'cloudinary';
 
 export enum StorageProvider {
   LOCAL = 'local',
@@ -19,9 +20,28 @@ export interface UploadResult {
 @Injectable()
 export class StorageService {
   private provider: StorageProvider;
+  private readonly logger = new Logger(StorageService.name);
 
   constructor(private configService: ConfigService) {
     this.provider = (this.configService.get('STORAGE_PROVIDER') || 'local') as StorageProvider;
+    
+    // Initialize Cloudinary if configured
+    if (this.provider === StorageProvider.CLOUDINARY) {
+      const cloudName = this.configService.get<string>('CLOUDINARY_CLOUD_NAME');
+      const apiKey = this.configService.get<string>('CLOUDINARY_API_KEY');
+      const apiSecret = this.configService.get<string>('CLOUDINARY_API_SECRET');
+      
+      if (cloudName && apiKey && apiSecret) {
+        cloudinary.config({
+          cloud_name: cloudName,
+          api_key: apiKey,
+          api_secret: apiSecret,
+        });
+        this.logger.log('Cloudinary initialized successfully');
+      } else {
+        this.logger.warn('Cloudinary credentials missing - using placeholder');
+      }
+    }
   }
 
   async uploadFile(
@@ -105,19 +125,56 @@ export class StorageService {
   private async uploadToCloudinary(
     file: Express.Multer.File,
     folder: string,
-    options?: any,
+    options?: { optimize?: boolean; resize?: { width?: number; height?: number } },
   ): Promise<UploadResult> {
-    // TODO: Implement Cloudinary upload
-    // const cloudinary = require('cloudinary').v2;
-    // const result = await cloudinary.uploader.upload(file.buffer, { folder, ...options });
-    // return { url: result.secure_url, publicId: result.public_id, provider: StorageProvider.CLOUDINARY };
+    try {
+      const cloudName = this.configService.get<string>('CLOUDINARY_CLOUD_NAME');
+      const apiKey = this.configService.get<string>('CLOUDINARY_API_KEY');
+      const apiSecret = this.configService.get<string>('CLOUDINARY_API_SECRET');
 
-    // Placeholder
-    return {
-      url: `https://res.cloudinary.com/${this.configService.get('CLOUDINARY_CLOUD_NAME')}/image/upload/${folder}/${Date.now()}-${file.originalname}`,
-      publicId: `${folder}/${Date.now()}-${file.originalname}`,
-      provider: StorageProvider.CLOUDINARY,
-    };
+      if (!cloudName || !apiKey || !apiSecret) {
+        throw new BadRequestException('Cloudinary credentials not configured');
+      }
+
+      // Convert buffer to base64 data URI for Cloudinary
+      const base64Data = file.buffer.toString('base64');
+      const dataUri = `data:${file.mimetype};base64,${base64Data}`;
+
+      // Build upload options
+      const uploadOptions: any = {
+        folder: folder,
+        resource_type: 'auto', // Auto-detect image, video, raw
+        use_filename: true,
+        unique_filename: true,
+      };
+
+      // Add optimization if requested
+      if (options?.optimize) {
+        uploadOptions.quality = 'auto';
+        uploadOptions.fetch_format = 'auto';
+      }
+
+      // Add resize if requested
+      if (options?.resize) {
+        uploadOptions.width = options.resize.width;
+        uploadOptions.height = options.resize.height;
+        uploadOptions.crop = 'limit'; // Maintain aspect ratio
+      }
+
+      // Upload to Cloudinary
+      const result = await cloudinary.uploader.upload(dataUri, uploadOptions);
+
+      this.logger.log(`File uploaded to Cloudinary: ${result.public_id}`);
+
+      return {
+        url: result.secure_url,
+        publicId: result.public_id,
+        provider: StorageProvider.CLOUDINARY,
+      };
+    } catch (error) {
+      this.logger.error('Cloudinary upload failed:', error);
+      throw new BadRequestException(`Failed to upload file to Cloudinary: ${error.message}`);
+    }
   }
 
   private async uploadLocal(file: Express.Multer.File, folder: string): Promise<UploadResult> {
@@ -138,7 +195,36 @@ export class StorageService {
   }
 
   private async deleteFromCloudinary(url: string): Promise<void> {
-    // TODO: Implement Cloudinary deletion
+    try {
+      // Extract public_id from Cloudinary URL
+      // URL format: https://res.cloudinary.com/{cloud_name}/{resource_type}/upload/{public_id}.{format}
+      const urlParts = url.split('/upload/');
+      if (urlParts.length < 2) {
+        this.logger.warn(`Invalid Cloudinary URL format: ${url}`);
+        return;
+      }
+
+      // Get public_id (remove file extension)
+      let publicId = urlParts[1];
+      // Remove query parameters if any
+      publicId = publicId.split('?')[0];
+      // Remove file extension
+      publicId = publicId.replace(/\.[^/.]+$/, '');
+
+      // Delete from Cloudinary
+      const result = await cloudinary.uploader.destroy(publicId, {
+        resource_type: 'auto', // Auto-detect resource type
+      });
+
+      if (result.result === 'ok') {
+        this.logger.log(`File deleted from Cloudinary: ${publicId}`);
+      } else {
+        this.logger.warn(`Cloudinary deletion result: ${result.result} for ${publicId}`);
+      }
+    } catch (error) {
+      this.logger.error('Cloudinary deletion failed:', error);
+      // Don't throw - allow deletion to fail silently in some cases
+    }
   }
 
   private async deleteLocal(url: string): Promise<void> {
