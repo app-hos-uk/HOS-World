@@ -51,7 +51,7 @@ const defaultSlides: HeroSlide[] = [
     title: 'Welcome to the Magical World',
     subtitle: 'House of Spells',
     description: 'Discover authentic wands, collectibles, and magical items from your favorite fandoms',
-    image: '/hero/harry-potter-banner.jpg', // 1920x1080px, max 500KB
+    image: '/hero/harry-potter-banner.svg', // Placeholder - replace with JPG (1920x1080px, max 500KB)
     link: '/fandoms/harry-potter',
     buttonText: 'Explore Harry Potter',
     fandom: 'Harry Potter',
@@ -61,7 +61,7 @@ const defaultSlides: HeroSlide[] = [
     title: 'Journey to Middle-earth',
     subtitle: 'Lord of the Rings',
     description: 'Authentic replicas and collectibles from the epic fantasy world',
-    image: '/hero/lotr-banner.jpg', // 1920x1080px, max 500KB
+    image: '/hero/lotr-banner.svg', // Placeholder - replace with JPG (1920x1080px, max 500KB)
     link: '/fandoms/lord-of-the-rings',
     buttonText: 'Discover Middle-earth',
     fandom: 'Lord of the Rings',
@@ -71,7 +71,7 @@ const defaultSlides: HeroSlide[] = [
     title: 'Enter the Game of Thrones',
     subtitle: 'Westeros Collection',
     description: 'Premium collectibles and merchandise from the Seven Kingdoms',
-    image: '/hero/got-banner.jpg', // 1920x1080px, max 500KB
+    image: '/hero/got-banner.svg', // Placeholder - replace with JPG (1920x1080px, max 500KB)
     link: '/fandoms/game-of-thrones',
     buttonText: 'Enter Westeros',
     fandom: 'Game of Thrones',

@@ -22,28 +22,28 @@ const featuredBanners = [
   {
     id: 1,
     title: 'New Arrivals',
-    image: '/banners/new-arrivals.jpg', // 800x600px, max 200KB
+    image: '/banners/new-arrivals.svg', // Placeholder - replace with JPG (800x600px, max 200KB)
     link: '/products?filter=new',
     badge: 'New',
   },
   {
     id: 2,
     title: 'Best Sellers',
-    image: '/banners/best-sellers.jpg', // 800x600px, max 200KB
+    image: '/banners/best-sellers.svg', // Placeholder - replace with JPG (800x600px, max 200KB)
     link: '/products?filter=bestsellers',
     badge: 'Hot',
   },
   {
     id: 3,
     title: 'Limited Edition',
-    image: '/banners/limited-edition.jpg', // 800x600px, max 200KB
+    image: '/banners/limited-edition.svg', // Placeholder - replace with JPG (800x600px, max 200KB)
     link: '/products?filter=limited',
     badge: 'Limited',
   },
   {
     id: 4,
     title: 'Sale Items',
-    image: '/banners/sale.jpg', // 800x600px, max 200KB
+    image: '/banners/sale.svg', // Placeholder - replace with JPG (800x600px, max 200KB)
     link: '/products?filter=sale',
     badge: 'Sale',
   },
@@ -83,7 +83,7 @@ export default function HomePage() {
             <FeatureBanner
               title="Exclusive Collectibles"
               description="Rare and authentic items from your favorite fandoms"
-              image="/featured/collectibles.jpg" // 1920x1080px, max 400KB
+              image="/featured/collectibles.svg" // Placeholder - replace with JPG (1920x1080px, max 400KB)
               link="/products?category=collectibles"
               buttonText="Shop Collectibles"
               position="left"
@@ -92,7 +92,7 @@ export default function HomePage() {
             <FeatureBanner
               title="Magical Apparel"
               description="Wear your fandom with pride - official merchandise"
-              image="/featured/apparel.jpg" // 1920x1080px, max 400KB
+              image="/featured/apparel.svg" // Placeholder - replace with JPG (1920x1080px, max 400KB)
               link="/products?category=apparel"
               buttonText="Shop Apparel"
               position="right"
