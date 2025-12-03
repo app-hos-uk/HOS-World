@@ -260,4 +260,19 @@ export class ApiClient {
   async get<T>(endpoint: string): Promise<T> {
     return this.request<T>(endpoint);
   }
+
+  // Generic PUT method for custom endpoints
+  async put<T>(endpoint: string, data: any): Promise<T> {
+    return this.request<T>(endpoint, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    });
+  }
+
+  // Generic DELETE method for custom endpoints
+  async delete<T>(endpoint: string): Promise<T> {
+    return this.request<T>(endpoint, {
+      method: 'DELETE',
+    });
+  }
 }

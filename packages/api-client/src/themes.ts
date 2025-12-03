@@ -1,49 +1,8 @@
 import { ApiClient } from './client';
+import type { Theme } from '@hos-marketplace/shared-types';
 
-export interface Theme {
-  id: string;
-  name: string;
-  type: 'hos' | 'seller' | 'customer';
-  sellerId?: string;
-  config: {
-    colors: {
-      primary: string;
-      secondary: string;
-      background: string;
-      surface: string;
-      text: {
-        primary: string;
-        secondary: string;
-      };
-      accent: string;
-      error: string;
-      success: string;
-      warning: string;
-    };
-    typography: {
-      fontFamily: {
-        primary: string;
-        secondary: string;
-      };
-      fontSize: {
-        xs: string;
-        sm: string;
-        base: string;
-        lg: string;
-        xl: string;
-        '2xl'?: string;
-        '3xl'?: string;
-      };
-    };
-    spacing?: Record<string, string>;
-    borderRadius?: Record<string, string>;
-    shadows?: Record<string, string>;
-  };
-  isActive: boolean;
-  version: number;
-  createdAt: string;
-  updatedAt: string;
-}
+// Re-export Theme from shared-types (don't define a duplicate)
+export type { Theme } from '@hos-marketplace/shared-types';
 
 export interface SellerTheme {
   theme: Theme | null;
