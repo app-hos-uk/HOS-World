@@ -23,11 +23,14 @@ COPY apps/web/package.json ./apps/web/
 # This installs @types/react and other dev dependencies needed for TypeScript builds
 # Add cache-busting ARG to force fresh install when code changes
 ARG CACHE_BUST=1
+ARG BUILD_DATE=unknown
 RUN pnpm install --no-frozen-lockfile
 
 # Copy source code
 # Copy packages first (including tsconfig.json files and source files)
 # Use --chown to ensure proper permissions and avoid cache issues
+# Add BUILD_DATE to cache-bust the COPY layer
+RUN echo "Build date: ${BUILD_DATE}"
 COPY --chown=node:node packages ./packages
 # Copy web app
 COPY --chown=node:node apps/web ./apps/web
