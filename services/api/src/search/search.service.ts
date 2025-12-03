@@ -21,30 +21,37 @@ export class SearchService implements OnModuleInit {
   ) {}
 
   async onModuleInit() {
-    // Only initialize Elasticsearch if configured
-    const elasticsearchNode = this.configService.get<string>('ELASTICSEARCH_NODE');
-    if (!elasticsearchNode) {
-      this.logger.warn('ELASTICSEARCH_NODE not configured - search features will be disabled');
-      return;
-    }
-
-    try {
-      // Set a timeout for Elasticsearch connection
-      await Promise.race([
-        this.createIndex(),
-        new Promise((_, reject) => 
-          setTimeout(() => reject(new Error('Elasticsearch connection timeout')), 5000)
-        ),
-      ]);
-      
-      // Optionally sync existing products on startup
-      if (this.configService.get('SYNC_PRODUCTS_ON_STARTUP') === 'true') {
-        await this.syncAllProducts();
+    // Don't block startup - initialize Elasticsearch in background
+    // Return immediately so NestJS doesn't wait
+    Promise.resolve().then(async () => {
+      // Only initialize Elasticsearch if configured
+      const elasticsearchNode = this.configService.get<string>('ELASTICSEARCH_NODE');
+      if (!elasticsearchNode) {
+        this.logger.warn('ELASTICSEARCH_NODE not configured - search features will be disabled');
+        return;
       }
-    } catch (error) {
-      this.logger.warn('Elasticsearch initialization failed, search features will be disabled:', error.message);
-      // Don't throw - allow app to start without Elasticsearch
-    }
+
+      try {
+        // Set a timeout for Elasticsearch connection
+        await Promise.race([
+          this.createIndex(),
+          new Promise((_, reject) => 
+            setTimeout(() => reject(new Error('Elasticsearch connection timeout')), 5000)
+          ),
+        ]);
+        
+        // Optionally sync existing products on startup
+        if (this.configService.get('SYNC_PRODUCTS_ON_STARTUP') === 'true') {
+          await this.syncAllProducts();
+        }
+      } catch (error) {
+        this.logger.warn('Elasticsearch initialization failed, search features will be disabled:', error.message);
+        // Don't throw - allow app to start without Elasticsearch
+      }
+    }).catch(() => {
+      // Ignore errors
+    });
+    // Return immediately - don't wait for Elasticsearch
   }
 
   /**
