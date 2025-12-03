@@ -32,10 +32,7 @@ RUN pnpm install --no-frozen-lockfile
 # Use --chown to ensure proper permissions and avoid cache issues
 # Force cache invalidation by copying in a specific order
 RUN echo "Build date: ${BUILD_DATE}" && echo "Forcing fresh package copy..."
-# Copy package.json files first to ensure dependencies are correct
-COPY --chown=node:node packages/*/package.json ./packages/*/
-COPY --chown=node:node packages/*/tsconfig.json ./packages/*/ 2>/dev/null || true
-# Now copy all package source files
+# Copy all package files (package.json, tsconfig.json, and source)
 COPY --chown=node:node packages ./packages
 # Copy web app
 COPY --chown=node:node apps/web ./apps/web
@@ -107,7 +104,8 @@ COPY --from=base /app/apps/web/.next ./apps/web/.next
 COPY --from=base /app/apps/web/public ./apps/web/public
 COPY --from=base /app/apps/web/package.json ./apps/web/
 COPY --from=base /app/apps/web/next.config.js ./apps/web/next.config.js
-COPY --from=base /app/apps/web/next.config.ts ./apps/web/next.config.ts 2>/dev/null || true
+# Copy next.config.ts if it exists (optional file)
+COPY --from=base /app/apps/web/next.config.ts* ./apps/web/ 2>/dev/null || true
 COPY --from=base /app/packages ./packages
 
 # Set working directory to web app
