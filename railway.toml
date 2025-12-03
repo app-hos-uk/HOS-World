@@ -3,6 +3,7 @@
 
 [build]
 builder = "DOCKERFILE"
+dockerfilePath = "services/api/Dockerfile"
 
 [deploy]
 # Use Dockerfile CMD instead of overriding with startCommand
