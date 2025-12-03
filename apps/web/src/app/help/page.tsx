@@ -20,7 +20,7 @@ export default function HelpPage() {
               <div>
                 <h3 className="text-xl font-medium mb-2">How can I track my order?</h3>
                 <p className="text-gray-600">
-                  Once your order ships, you'll receive a tracking number via email.
+                  Once your order ships, you&apos;ll receive a tracking number via email.
                 </p>
               </div>
               <div>

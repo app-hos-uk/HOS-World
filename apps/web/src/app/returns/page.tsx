@@ -24,11 +24,11 @@ export default function ReturnsPage() {
           <section>
             <h2 className="text-2xl font-semibold mb-4">How to Return</h2>
             <ol className="list-decimal list-inside space-y-2 text-gray-600">
-              <li>Log into your account and go to "My Orders"</li>
+              <li>Log into your account and go to &quot;My Orders&quot;</li>
               <li>Select the item you want to return</li>
-              <li>Click "Request Return" and follow the instructions</li>
+              <li>Click &quot;Request Return&quot; and follow the instructions</li>
               <li>Print the return label and ship the item back</li>
-              <li>Once we receive your return, we'll process your refund</li>
+              <li>Once we receive your return, we&apos;ll process your refund</li>
             </ol>
           </section>
           <section>
