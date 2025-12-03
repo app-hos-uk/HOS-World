@@ -104,8 +104,7 @@ COPY --from=base /app/apps/web/.next ./apps/web/.next
 COPY --from=base /app/apps/web/public ./apps/web/public
 COPY --from=base /app/apps/web/package.json ./apps/web/
 COPY --from=base /app/apps/web/next.config.js ./apps/web/next.config.js
-# Copy next.config.ts if it exists (optional file)
-COPY --from=base /app/apps/web/next.config.ts* ./apps/web/ 2>/dev/null || true
+# Note: next.config.ts is optional - Next.js will use next.config.js if .ts doesn't exist
 COPY --from=base /app/packages ./packages
 
 # Set working directory to web app
