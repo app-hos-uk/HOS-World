@@ -60,6 +60,20 @@ async function bootstrap() {
         console.log(`✅ Server is listening on port ${port}`);
         console.log(`✅ API server is running on: http://0.0.0.0:${port}/api`);
         console.log(`✅ Health check available at: http://0.0.0.0:${port}/api/health`);
+        console.log(`✅ Root endpoint available at: http://0.0.0.0:${port}/`);
+        
+        // Log all registered routes for debugging
+        const router = app.getHttpAdapter().getInstance();
+        if (router && router._router) {
+          console.log('📋 Registered routes:');
+          router._router.stack.forEach((middleware: any) => {
+            if (middleware.route) {
+              const methods = Object.keys(middleware.route.methods).join(', ').toUpperCase();
+              console.log(`  ${methods} ${middleware.route.path}`);
+            }
+          });
+        }
+        
         resolve();
       });
       
