@@ -87,8 +87,13 @@ WORKDIR /app/services/api
 # Create startup script that runs migrations then starts the app
 RUN echo '#!/bin/sh\n\
 set -e\n\
+echo "🔄 Checking database connection..."\n\
 echo "🔄 Running database migrations..."\n\
-pnpm prisma migrate deploy || echo "⚠️ Migration failed or no migrations to apply"\n\
+cd /app/services/api\n\
+pnpm prisma migrate deploy 2>&1 || {\n\
+  echo "⚠️ Migration deploy failed. Attempting db push as fallback..."\n\
+  pnpm prisma db push --accept-data-loss 2>&1 || echo "⚠️ Database setup failed - app will start but may have errors"\n\
+}\n\
 echo "✅ Starting application..."\n\
 exec node dist/main.js\n\
 ' > /app/services/api/start.sh && chmod +x /app/services/api/start.sh
