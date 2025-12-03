@@ -20,7 +20,9 @@ async function bootstrap() {
     });
 
     // Global prefix for all routes
-    app.setGlobalPrefix('api');
+    app.setGlobalPrefix('api', {
+      exclude: ['/'], // Exclude root path from prefix
+    });
 
     // Global validation pipe
     app.useGlobalPipes(

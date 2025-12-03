@@ -1,4 +1,4 @@
-import { Controller, Get } from '@nestjs/common';
+import { Controller, Get, Redirect } from '@nestjs/common';
 import { AppService } from './app.service';
 import { Public } from './common/decorators/public.decorator';
 
@@ -8,12 +8,26 @@ export class AppController {
 
   @Public()
   @Get()
+  getRoot() {
+    return {
+      message: 'House of Spells Marketplace API',
+      version: '1.0.0',
+      endpoints: {
+        health: '/api/health',
+        api: '/api',
+        docs: 'Coming soon',
+      },
+    };
+  }
+
+  @Public()
+  @Get('api')
   getHello(): string {
     return this.appService.getHello();
   }
 
   @Public()
-  @Get('health')
+  @Get('api/health')
   healthCheck() {
     return {
       status: 'ok',
