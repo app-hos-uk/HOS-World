@@ -1,9 +1,15 @@
 import { PrismaClient, UserRole } from '@prisma/client';
-import * as dotenv from 'dotenv';
-import * as path from 'path';
 
-// Load environment variables
-dotenv.config({ path: path.join(__dirname, '../../../.env') });
+// Try to load .env file if dotenv is available (optional)
+try {
+  // eslint-disable-next-line @typescript-eslint/no-var-requires
+  const dotenv = require('dotenv');
+  const path = require('path');
+  dotenv.config({ path: path.join(__dirname, '../../../.env') });
+} catch {
+  // dotenv not available, use environment variables directly
+  // DATABASE_URL should be set in environment
+}
 
 const prisma = new PrismaClient();
 
