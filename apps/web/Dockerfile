@@ -48,6 +48,11 @@ RUN pnpm build
 
 # 4. api-client (depends on shared-types)
 WORKDIR /app/packages/api-client
+# Verify tsconfig.json has DOM lib before building
+RUN cat tsconfig.json | grep -q '"DOM"' || (echo "ERROR: DOM lib missing from api-client tsconfig.json" && cat tsconfig.json && exit 1)
+# Verify put/delete methods exist in client.ts
+RUN grep -q "async put" src/client.ts || (echo "ERROR: put method missing from ApiClient" && exit 1)
+RUN grep -q "async delete" src/client.ts || (echo "ERROR: delete method missing from ApiClient" && exit 1)
 RUN pnpm build
 
 # 5. ui-components (depends on shared-types and theme-system)
