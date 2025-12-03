@@ -85,18 +85,26 @@ EXPOSE 3001
 WORKDIR /app/services/api
 
 # Create startup script that runs migrations then starts the app
-RUN echo '#!/bin/sh' > /app/services/api/start.sh && \
-    echo 'set -e' >> /app/services/api/start.sh && \
-    echo 'echo "🔄 Checking database connection..."' >> /app/services/api/start.sh && \
-    echo 'cd /app/services/api' >> /app/services/api/start.sh && \
-    echo 'echo "🔄 Running database migrations..."' >> /app/services/api/start.sh && \
-    echo 'pnpm prisma migrate deploy 2>&1 || {' >> /app/services/api/start.sh && \
-    echo '  echo "⚠️ Migration deploy failed. Attempting db push as fallback..."' >> /app/services/api/start.sh && \
-    echo '  pnpm prisma db push --accept-data-loss --skip-generate 2>&1 || echo "⚠️ Database setup failed - app will start but may have errors"' >> /app/services/api/start.sh && \
-    echo '}' >> /app/services/api/start.sh && \
-    echo 'echo "✅ Starting application..."' >> /app/services/api/start.sh && \
-    echo 'exec node dist/main.js' >> /app/services/api/start.sh && \
-    chmod +x /app/services/api/start.sh
+RUN cat > /app/services/api/start.sh << 'EOF'
+#!/bin/sh
+set -e
+echo "🔄 Checking database connection..."
+cd /app/services/api
+echo "🔄 Running database migrations..."
+if pnpm prisma migrate deploy 2>&1; then
+  echo "✅ Migrations applied successfully"
+else
+  echo "⚠️ Migration deploy failed. Attempting db push as fallback..."
+  if pnpm prisma db push --accept-data-loss --skip-generate 2>&1; then
+    echo "✅ Database schema synced successfully"
+  else
+    echo "⚠️ Database setup failed - app will start but may have errors"
+  fi
+fi
+echo "✅ Starting application..."
+exec node dist/main.js
+EOF
+RUN chmod +x /app/services/api/start.sh
 
 # Run migrations on startup, then start the app
 CMD ["/app/services/api/start.sh"]
