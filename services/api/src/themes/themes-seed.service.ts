@@ -10,6 +10,12 @@ export class ThemesSeedService implements OnModuleInit {
     // Return immediately so NestJS doesn't wait
     (async () => {
       try {
+        // Check if themes table exists by attempting a simple query
+        // If table doesn't exist, Prisma will throw an error
+        await this.prisma.$queryRaw`SELECT 1 FROM themes LIMIT 1`.catch(() => {
+          throw new Error('Themes table does not exist. Please run database migrations first.');
+        });
+        
         // Only seed if no themes exist
         const themeCount = await this.prisma.theme.count();
         if (themeCount === 0) {
@@ -17,7 +23,12 @@ export class ThemesSeedService implements OnModuleInit {
         }
       } catch (error) {
         // Don't throw - allow app to start even if seeding fails
-        console.warn('Theme seeding failed:', error.message);
+        // This is expected if migrations haven't been run yet
+        if (error.message?.includes('does not exist') || error.message?.includes('table')) {
+          console.warn('⚠️ Themes table not found. Skipping theme seeding. Please run database migrations.');
+        } else {
+          console.warn('⚠️ Theme seeding failed:', error.message);
+        }
       }
     })().catch(() => {
       // Ignore errors

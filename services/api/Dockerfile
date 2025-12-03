@@ -84,7 +84,15 @@ EXPOSE 3001
 # Set working directory for CMD
 WORKDIR /app/services/api
 
-# Run from the API directory
-# Use 0.0.0.0 to listen on all interfaces (required for Railway)
-CMD ["node", "dist/main.js"]
+# Create startup script that runs migrations then starts the app
+RUN echo '#!/bin/sh\n\
+set -e\n\
+echo "🔄 Running database migrations..."\n\
+pnpm prisma migrate deploy || echo "⚠️ Migration failed or no migrations to apply"\n\
+echo "✅ Starting application..."\n\
+exec node dist/main.js\n\
+' > /app/services/api/start.sh && chmod +x /app/services/api/start.sh
+
+# Run migrations on startup, then start the app
+CMD ["/app/services/api/start.sh"]
 
