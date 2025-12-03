@@ -19,9 +19,9 @@ async function bootstrap() {
       credentials: true,
     });
 
-    // Global prefix for all routes
+    // Global prefix for all routes (except root)
     app.setGlobalPrefix('api', {
-      exclude: ['/'], // Exclude root path from prefix
+      exclude: ['/'],
     });
 
     // Global validation pipe

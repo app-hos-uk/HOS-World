@@ -3,6 +3,7 @@ import { ConfigModule } from '@nestjs/config';
 import { APP_GUARD } from '@nestjs/core';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
+import { RootController } from './root.controller';
 import { AuthModule } from './auth/auth.module';
 import { ProductsModule } from './products/products.module';
 import { OrdersModule } from './orders/orders.module';
@@ -92,7 +93,7 @@ import { JwtAuthGuard } from './common/guards/jwt-auth.guard';
     StorageModule,
     QueueModule,
   ],
-  controllers: [AppController],
+  controllers: [RootController, AppController],
   providers: [
     AppService,
     {
