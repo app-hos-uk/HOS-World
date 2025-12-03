@@ -19,10 +19,7 @@ async function bootstrap() {
       credentials: true,
     });
 
-    // Global prefix for all routes
-    app.setGlobalPrefix('api');
-    
-    // Add root route handler via middleware
+    // Add root route handler via middleware BEFORE setting global prefix
     app.use('/', (req: any, res: any, next: any) => {
       if (req.path === '/' && req.method === 'GET') {
         return res.json({
@@ -40,6 +37,9 @@ async function bootstrap() {
       }
       next();
     });
+
+    // Global prefix for all routes
+    app.setGlobalPrefix('api');
 
     // Global validation pipe
     app.useGlobalPipes(
@@ -63,15 +63,29 @@ async function bootstrap() {
         console.log(`✅ Root endpoint available at: http://0.0.0.0:${port}/`);
         
         // Log all registered routes for debugging
-        const router = app.getHttpAdapter().getInstance();
-        if (router && router._router) {
-          console.log('📋 Registered routes:');
-          router._router.stack.forEach((middleware: any) => {
-            if (middleware.route) {
-              const methods = Object.keys(middleware.route.methods).join(', ').toUpperCase();
-              console.log(`  ${methods} ${middleware.route.path}`);
+        try {
+          const router = app.getHttpAdapter().getInstance();
+          if (router && router._router && router._router.stack) {
+            console.log('📋 Registered routes:');
+            let routeCount = 0;
+            router._router.stack.forEach((middleware: any) => {
+              if (middleware.route) {
+                const methods = Object.keys(middleware.route.methods).join(', ').toUpperCase();
+                console.log(`  ${methods} ${middleware.route.path}`);
+                routeCount++;
+              } else if (middleware.name === 'router' && middleware.regexp) {
+                // Handle nested routers
+                console.log(`  Router: ${middleware.regexp.source}`);
+              }
+            });
+            if (routeCount === 0) {
+              console.log('  ⚠️ No routes found in router stack');
             }
-          });
+          } else {
+            console.log('⚠️ Could not access router instance for route logging');
+          }
+        } catch (error) {
+          console.log('⚠️ Error logging routes:', error.message);
         }
         
         resolve();
