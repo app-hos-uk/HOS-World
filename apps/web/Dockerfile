@@ -21,6 +21,8 @@ COPY apps/web/package.json ./apps/web/
 # Install ALL dependencies including dev dependencies (needed for building packages)
 # Using --no-frozen-lockfile for CI/CD compatibility
 # This installs @types/react and other dev dependencies needed for TypeScript builds
+# Add cache-busting ARG to force fresh install when code changes
+ARG CACHE_BUST=1
 RUN pnpm install --no-frozen-lockfile
 
 # Copy source code
