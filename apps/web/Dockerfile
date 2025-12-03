@@ -1,4 +1,5 @@
 # Web Service Dockerfile
+# Cache-bust: 2025-12-03-15:30
 FROM node:18-slim AS base
 
 # Install pnpm
@@ -29,8 +30,12 @@ RUN pnpm install --no-frozen-lockfile
 # Copy source code
 # Copy packages first (including tsconfig.json files and source files)
 # Use --chown to ensure proper permissions and avoid cache issues
-# Add BUILD_DATE to cache-bust the COPY layer
-RUN echo "Build date: ${BUILD_DATE}"
+# Force cache invalidation by copying in a specific order
+RUN echo "Build date: ${BUILD_DATE}" && echo "Forcing fresh package copy..."
+# Copy package.json files first to ensure dependencies are correct
+COPY --chown=node:node packages/*/package.json ./packages/*/
+COPY --chown=node:node packages/*/tsconfig.json ./packages/*/ 2>/dev/null || true
+# Now copy all package source files
 COPY --chown=node:node packages ./packages
 # Copy web app
 COPY --chown=node:node apps/web ./apps/web
