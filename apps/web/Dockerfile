@@ -25,7 +25,34 @@ RUN pnpm install --no-frozen-lockfile
 COPY apps/web ./apps/web
 COPY packages ./packages
 
-# Build
+# Build packages first (in dependency order)
+# This ensures workspace packages are available for the web app build
+
+# 1. shared-types (no dependencies - must be built first)
+WORKDIR /app/packages/shared-types
+RUN pnpm build
+
+# 2. theme-system (depends on shared-types)
+WORKDIR /app/packages/theme-system
+RUN pnpm build
+
+# 3. utils (depends on shared-types)
+WORKDIR /app/packages/utils
+RUN pnpm build
+
+# 4. api-client (depends on shared-types)
+WORKDIR /app/packages/api-client
+RUN pnpm build
+
+# 5. ui-components (depends on shared-types and theme-system)
+WORKDIR /app/packages/ui-components
+RUN pnpm build || echo "ui-components build skipped if no build script"
+
+# 6. cms-client (if exists)
+WORKDIR /app/packages/cms-client
+RUN pnpm build || echo "cms-client build skipped if no build script"
+
+# Build web app
 WORKDIR /app/apps/web
 RUN pnpm build
 
