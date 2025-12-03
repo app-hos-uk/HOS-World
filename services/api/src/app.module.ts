@@ -93,7 +93,7 @@ import { JwtAuthGuard } from './common/guards/jwt-auth.guard';
     StorageModule,
     QueueModule,
   ],
-  controllers: [RootController, AppController],
+  controllers: [AppController],
   providers: [
     AppService,
     {

@@ -19,9 +19,26 @@ async function bootstrap() {
       credentials: true,
     });
 
-    // Global prefix for all routes (except root)
-    app.setGlobalPrefix('api', {
-      exclude: ['/'],
+    // Global prefix for all routes
+    app.setGlobalPrefix('api');
+    
+    // Add root route handler via middleware
+    app.use('/', (req: any, res: any, next: any) => {
+      if (req.path === '/' && req.method === 'GET') {
+        return res.json({
+          message: 'House of Spells Marketplace API',
+          version: '1.0.0',
+          status: 'running',
+          endpoints: {
+            api: '/api',
+            health: '/api/health',
+            products: '/api/products',
+            auth: '/api/auth',
+          },
+          documentation: 'API documentation coming soon',
+        });
+      }
+      next();
     });
 
     // Global validation pipe
