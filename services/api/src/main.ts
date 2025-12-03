@@ -53,49 +53,13 @@ async function bootstrap() {
     const port = process.env.PORT || 3001;
     console.log(`📡 About to listen on port: ${port}`);
     
-    // Use callback-based listen to ensure we get confirmation
-    await new Promise<void>((resolve, reject) => {
-      const server = app.getHttpServer();
-      server.listen(port, '0.0.0.0', () => {
-        console.log(`✅ Server is listening on port ${port}`);
-        console.log(`✅ API server is running on: http://0.0.0.0:${port}/api`);
-        console.log(`✅ Health check available at: http://0.0.0.0:${port}/api/health`);
-        console.log(`✅ Root endpoint available at: http://0.0.0.0:${port}/`);
-        
-        // Log all registered routes for debugging
-        try {
-          const router = app.getHttpAdapter().getInstance();
-          if (router && router._router && router._router.stack) {
-            console.log('📋 Registered routes:');
-            let routeCount = 0;
-            router._router.stack.forEach((middleware: any) => {
-              if (middleware.route) {
-                const methods = Object.keys(middleware.route.methods).join(', ').toUpperCase();
-                console.log(`  ${methods} ${middleware.route.path}`);
-                routeCount++;
-              } else if (middleware.name === 'router' && middleware.regexp) {
-                // Handle nested routers
-                console.log(`  Router: ${middleware.regexp.source}`);
-              }
-            });
-            if (routeCount === 0) {
-              console.log('  ⚠️ No routes found in router stack');
-            }
-          } else {
-            console.log('⚠️ Could not access router instance for route logging');
-          }
-        } catch (error) {
-          console.log('⚠️ Error logging routes:', error.message);
-        }
-        
-        resolve();
-      });
-      
-      server.on('error', (error: any) => {
-        console.error('❌ Server error:', error);
-        reject(error);
-      });
-    });
+    // Use app.listen() to ensure all routes are properly registered
+    await app.listen(port, '0.0.0.0');
+    
+    console.log(`✅ Server is listening on port ${port}`);
+    console.log(`✅ API server is running on: http://0.0.0.0:${port}/api`);
+    console.log(`✅ Health check available at: http://0.0.0.0:${port}/api/health`);
+    console.log(`✅ Root endpoint available at: http://0.0.0.0:${port}/`);
   } catch (error) {
     console.error('❌ Failed to start API server:', error);
     console.error('Error stack:', error.stack);
