@@ -14,9 +14,29 @@ async function bootstrap() {
     const app = await NestFactory.create(AppModule);
 
     // Enable CORS
+    // Support multiple origins for flexibility
+    const allowedOrigins = [
+      process.env.FRONTEND_URL,
+      'https://hos-marketplaceweb-production.up.railway.app',
+      'http://localhost:3000',
+    ].filter(Boolean); // Remove undefined values
+
     app.enableCors({
-      origin: process.env.FRONTEND_URL || 'http://localhost:3000',
+      origin: (origin, callback) => {
+        // Allow requests with no origin (like mobile apps or curl requests)
+        if (!origin) return callback(null, true);
+        
+        // Check if origin is in allowed list
+        if (allowedOrigins.some(allowed => origin === allowed)) {
+          callback(null, true);
+        } else {
+          console.warn(`⚠️  CORS blocked origin: ${origin}`);
+          callback(new Error('Not allowed by CORS'));
+        }
+      },
       credentials: true,
+      methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+      allowedHeaders: ['Content-Type', 'Authorization'],
     });
 
     // Add root route handler via middleware BEFORE setting global prefix
