@@ -34,9 +34,8 @@ export function CharacterSelector({ onSelect, onSkip }: CharacterSelectorProps) 
 
   const loadCharacters = async () => {
     try {
-      const response = await fetch('/api/characters');
-      const data = await response.json();
-      setCharacters(data.data || []);
+      const response = await apiClient.getCharacters();
+      setCharacters(response.data || []);
     } catch (error) {
       console.error('Error loading characters:', error);
     } finally {
@@ -46,9 +45,8 @@ export function CharacterSelector({ onSelect, onSkip }: CharacterSelectorProps) 
 
   const loadFandoms = async () => {
     try {
-      const response = await fetch('/api/fandoms');
-      const data = await response.json();
-      setFandoms(data.data || []);
+      const response = await apiClient.getFandoms();
+      setFandoms(response.data || []);
     } catch (error) {
       console.error('Error loading fandoms:', error);
     }
