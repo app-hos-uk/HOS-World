@@ -32,16 +32,13 @@ export default function LoginPage() {
       const response = await apiClient.getCurrentUser();
       const user = response.data;
       
-      if (!user.characterAvatar) {
-        // Show character selector if no character selected
-        setShowCharacterSelector(true);
-        setStep('character');
-        setToken(authToken);
-      } else {
-        router.push('/');
-      }
+      // Character selection is optional - go directly to home page
+      // Users can select a character later from their profile if they want
+      router.push('/');
     } catch (error) {
       console.error('Error checking character:', error);
+      // Even if there's an error, proceed to home page
+      router.push('/');
     }
   };
 
@@ -57,12 +54,8 @@ export default function LoginPage() {
       localStorage.setItem('auth_token', authToken);
       setToken(authToken);
 
-      // Check if character is selected
-      await checkCharacterSelection(authToken);
-
-      if (!showCharacterSelector) {
-        router.push('/');
-      }
+      // Character selection is optional - go directly to home page
+      router.push('/');
     } catch (err: any) {
       setError(err.message || 'Login failed. Please check your credentials.');
     } finally {
@@ -86,9 +79,9 @@ export default function LoginPage() {
       localStorage.setItem('auth_token', authToken);
       setToken(authToken);
 
-      // Show character selector for new users
-      setStep('character');
-      setShowCharacterSelector(true);
+      // Character selection is optional - go directly to home page
+      // New users can select a character later from their profile
+      router.push('/');
     } catch (err: any) {
       setError(err.message || 'Registration failed. Please try again.');
     } finally {
