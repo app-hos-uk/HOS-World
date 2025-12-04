@@ -17,6 +17,14 @@ module.exports = {
     '^@/(.*)$': '<rootDir>/$1',
   },
   setupFilesAfterEnv: ['<rootDir>/../test/setup.ts'],
+  transformIgnorePatterns: [
+    'node_modules/(?!(@nestjs|@elastic|bcrypt))',
+  ],
+  transform: {
+    '^.+\\.(t|j)s$': ['ts-jest', {
+      isolatedModules: true,
+    }],
+  },
 };
 
 

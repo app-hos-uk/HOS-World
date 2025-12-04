@@ -18,7 +18,6 @@
     "forceConsistentCasingInFileNames": false,
     "noFallthroughCasesInSwitch": false,
     "noEmitOnError": false,
-    "suppressImplicitAnyIndexErrors": true,
     "paths": {
       "@/*": ["src/*"]
     }

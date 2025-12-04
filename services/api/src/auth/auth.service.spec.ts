@@ -1,12 +1,18 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { JwtService } from '@nestjs/jwt';
-import { BadRequestException, UnauthorizedException } from '@nestjs/common';
-import * as bcrypt from 'bcrypt';
+import { ConfigService } from '@nestjs/config';
+import { ConflictException, UnauthorizedException } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { PrismaService } from '../database/prisma.service';
 import { CreateUserDto, LoginDto } from './dto/register.dto';
 
-jest.mock('bcrypt');
+// Mock bcrypt before importing it
+jest.mock('bcrypt', () => ({
+  hash: jest.fn(),
+  compare: jest.fn(),
+}));
+
+import * as bcrypt from 'bcrypt';
 
 describe('AuthService - Phase 1 Tests', () => {
   let service: AuthService;
@@ -32,6 +38,16 @@ describe('AuthService - Phase 1 Tests', () => {
     sign: jest.fn(),
   };
 
+  const mockConfigService = {
+    get: jest.fn((key: string) => {
+      const config: Record<string, any> = {
+        JWT_SECRET: 'test-secret-key',
+        JWT_EXPIRES_IN: '1h',
+      };
+      return config[key];
+    }),
+  };
+
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
@@ -43,6 +59,10 @@ describe('AuthService - Phase 1 Tests', () => {
         {
           provide: JwtService,
           useValue: mockJwtService,
+        },
+        {
+          provide: ConfigService,
+          useValue: mockConfigService,
         },
       ],
     }).compile();
@@ -78,7 +98,10 @@ describe('AuthService - Phase 1 Tests', () => {
 
       (bcrypt.hash as jest.Mock).mockResolvedValue(hashedPassword);
       mockPrismaService.user.findUnique.mockResolvedValue(null);
-      mockPrismaService.user.create.mockResolvedValue(mockUser);
+      mockPrismaService.user.create.mockResolvedValue({
+        ...mockUser,
+        avatar: null,
+      });
       mockPrismaService.customer.create.mockResolvedValue({
         id: 'customer-id',
         userId: mockUser.id,
@@ -92,18 +115,19 @@ describe('AuthService - Phase 1 Tests', () => {
         where: { email: createUserDto.email },
       });
       expect(mockPrismaService.user.create).toHaveBeenCalled();
-      expect(result).toHaveProperty('access_token');
+      expect(result).toHaveProperty('token');
+      expect(result).toHaveProperty('refreshToken');
       expect(result.user.email).toBe(createUserDto.email);
     });
 
-    it('should throw BadRequestException if email already exists', async () => {
+    it('should throw ConflictException if email already exists', async () => {
       mockPrismaService.user.findUnique.mockResolvedValue({
         id: 'existing-user-id',
         email: createUserDto.email,
       });
 
       await expect(service.register(createUserDto)).rejects.toThrow(
-        BadRequestException,
+        ConflictException,
       );
       expect(mockPrismaService.user.create).not.toHaveBeenCalled();
     });
@@ -142,15 +166,14 @@ describe('AuthService - Phase 1 Tests', () => {
       });
     });
 
-    it('should throw UnauthorizedException if user not found', async () => {
+    it('should return null if user not found', async () => {
       mockPrismaService.user.findUnique.mockResolvedValue(null);
 
-      await expect(
-        service.validateUser(loginDto.email, loginDto.password),
-      ).rejects.toThrow(UnauthorizedException);
+      const result = await service.validateUser(loginDto.email, loginDto.password);
+      expect(result).toBeNull();
     });
 
-    it('should throw UnauthorizedException if password is incorrect', async () => {
+    it('should return null if password is incorrect', async () => {
       const mockUser = {
         id: 'user-id',
         email: loginDto.email,
@@ -161,33 +184,58 @@ describe('AuthService - Phase 1 Tests', () => {
       mockPrismaService.user.findUnique.mockResolvedValue(mockUser);
       (bcrypt.compare as jest.Mock).mockResolvedValue(false);
 
-      await expect(
-        service.validateUser(loginDto.email, loginDto.password),
-      ).rejects.toThrow(UnauthorizedException);
+      const result = await service.validateUser(loginDto.email, loginDto.password);
+      expect(result).toBeNull();
     });
   });
 
   describe('login', () => {
-    it('should login user and return access token', async () => {
-      const mockUser = {
-        id: 'user-id',
+    it('should login user and return tokens', async () => {
+      const loginDto: LoginDto = {
         email: 'test@example.com',
-        role: 'CUSTOMER',
+        password: 'password123',
       };
 
+      const mockUser = {
+        id: 'user-id',
+        email: loginDto.email,
+        password: 'hashedPassword123',
+        firstName: 'Test',
+        lastName: 'User',
+        role: 'CUSTOMER',
+        avatar: null,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      };
+
+      mockPrismaService.user.findUnique.mockResolvedValue(mockUser);
+      (bcrypt.compare as jest.Mock).mockResolvedValue(true);
       mockJwtService.sign.mockReturnValue('jwt-token');
 
-      const result = await service.login(mockUser);
+      const result = await service.login(loginDto);
 
-      expect(mockJwtService.sign).toHaveBeenCalledWith({
-        sub: mockUser.id,
-        email: mockUser.email,
-        role: mockUser.role,
+      expect(mockPrismaService.user.findUnique).toHaveBeenCalledWith({
+        where: { email: loginDto.email },
+        select: {
+          id: true,
+          email: true,
+          password: true,
+          firstName: true,
+          lastName: true,
+          role: true,
+          avatar: true,
+          createdAt: true,
+          updatedAt: true,
+        },
       });
-      expect(result).toEqual({
-        access_token: 'jwt-token',
-        user: mockUser,
-      });
+      expect(bcrypt.compare).toHaveBeenCalledWith(
+        loginDto.password,
+        mockUser.password,
+      );
+      expect(result).toHaveProperty('token');
+      expect(result).toHaveProperty('refreshToken');
+      expect(result.user.email).toBe(loginDto.email);
+      expect(result.user.password).toBeUndefined();
     });
   });
 });

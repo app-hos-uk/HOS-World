@@ -49,7 +49,8 @@ import { JwtAuthGuard } from './common/guards/jwt-auth.guard';
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
-      envFilePath: '.env',
+      envFilePath: process.env.NODE_ENV === 'test' ? undefined : '.env',
+      ignoreEnvFile: process.env.NODE_ENV === 'test',
     }),
     DatabaseModule,
     CacheModule,
