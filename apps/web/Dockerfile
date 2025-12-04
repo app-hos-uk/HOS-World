@@ -75,7 +75,21 @@ WORKDIR /app/packages/cms-client
 RUN pnpm build || echo "cms-client build skipped if no build script"
 
 # Build web app
+# Accept build-time environment variables for Next.js
+ARG NEXT_PUBLIC_API_URL
+ARG NEXT_PUBLIC_CMS_URL
+ARG NEXT_PUBLIC_FRONTEND_URL
+
+# Set as ENV so Next.js can access them during build
+ENV NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL
+ENV NEXT_PUBLIC_CMS_URL=$NEXT_PUBLIC_CMS_URL
+ENV NEXT_PUBLIC_FRONTEND_URL=$NEXT_PUBLIC_FRONTEND_URL
+
 WORKDIR /app/apps/web
+
+# Debug: Print env vars to verify they're set (will be visible in build logs)
+RUN echo "Building with NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL"
+
 RUN pnpm build
 
 # Production image
