@@ -36,6 +36,19 @@ model User {
   returnRequests  ReturnRequest[]
   cartId          String?
 
+  // Phase 6: Fandom Experience Relations
+  characterAvatarId  String?
+  characterAvatar    Character?   @relation("CharacterAvatar", fields: [characterAvatarId], references: [id])
+  favoriteFandoms    String[]     @default([])
+  gamificationPoints Int          @default(0)
+  level              Int          @default(1)
+  aiPreferences      Json?
+  aiChats            AIChat[]
+  userBadges         UserBadge[]
+  userQuests         UserQuest[]
+  collections        Collection[]
+  sharedItems        SharedItem[]
+
   @@map("users")
 }
 
@@ -282,31 +295,31 @@ model Address {
 
 // Order model
 model Order {
-  id                String          @id @default(uuid())
+  id                String            @id @default(uuid())
   userId            String
-  user              User            @relation(fields: [userId], references: [id])
+  user              User              @relation(fields: [userId], references: [id])
   sellerId          String
-  seller            Seller          @relation(fields: [sellerId], references: [id])
-  orderNumber       String          @unique
+  seller            Seller            @relation(fields: [sellerId], references: [id])
+  orderNumber       String            @unique
   items             OrderItem[]
-  subtotal          Decimal         @db.Decimal(10, 2)
-  tax               Decimal         @db.Decimal(10, 2)
-  total             Decimal         @db.Decimal(10, 2)
-  currency          String          @default("USD")
-  status            OrderStatus     @default(PENDING)
+  subtotal          Decimal           @db.Decimal(10, 2)
+  tax               Decimal           @db.Decimal(10, 2)
+  total             Decimal           @db.Decimal(10, 2)
+  currency          String            @default("USD")
+  status            OrderStatus       @default(PENDING)
   shippingAddressId String
-  shippingAddress   Address         @relation("ShippingAddress", fields: [shippingAddressId], references: [id])
+  shippingAddress   Address           @relation("ShippingAddress", fields: [shippingAddressId], references: [id])
   billingAddressId  String
-  billingAddress    Address         @relation("BillingAddress", fields: [billingAddressId], references: [id])
+  billingAddress    Address           @relation("BillingAddress", fields: [billingAddressId], references: [id])
   paymentMethod     String?
-  paymentStatus     PaymentStatus   @default(PENDING)
+  paymentStatus     PaymentStatus     @default(PENDING)
   trackingCode      String?
   notes             OrderNote[]
   payments          Payment[]
   returnRequests    ReturnRequest[]
   orderSettlements  OrderSettlement[]
-  createdAt         DateTime        @default(now())
-  updatedAt         DateTime        @updatedAt
+  createdAt         DateTime          @default(now())
+  updatedAt         DateTime          @updatedAt
 
   @@map("orders")
 }
@@ -665,42 +678,42 @@ model DuplicateProduct {
 
 // Logistics Partner model
 model LogisticsPartner {
-  id            String   @id @default(uuid())
-  name          String
-  description   String?  @db.Text
-  website       String?
-  country       String?
-  isActive      Boolean  @default(true)
-  contactInfo   Json?    // Contact information
+  id             String   @id @default(uuid())
+  name           String
+  description    String?  @db.Text
+  website        String?
+  country        String?
+  isActive       Boolean  @default(true)
+  contactInfo    Json? // Contact information
   trackingApiUrl String?
-  apiKey        String?  // Encrypted API key
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+  apiKey         String? // Encrypted API key
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
 
   // Relations
-  shipments     Shipment[]
+  shipments Shipment[]
 
   @@map("logistics_partners")
 }
 
 // Settlement model
 model Settlement {
-  id              String        @id @default(uuid())
-  sellerId        String
-  seller          Seller        @relation(fields: [sellerId], references: [id], onDelete: Cascade)
-  periodStart     DateTime
-  periodEnd       DateTime
-  totalSales      Decimal       @db.Decimal(10, 2)
-  totalOrders     Int
-  platformFee     Decimal       @db.Decimal(10, 2)
-  netAmount       Decimal       @db.Decimal(10, 2)
-  currency        String        @default("USD")
-  status          SettlementStatus @default(PENDING)
-  paymentMethod   String?
-  paidAt          DateTime?
-  notes           String?       @db.Text
-  createdAt       DateTime      @default(now())
-  updatedAt       DateTime      @updatedAt
+  id            String           @id @default(uuid())
+  sellerId      String
+  seller        Seller           @relation(fields: [sellerId], references: [id], onDelete: Cascade)
+  periodStart   DateTime
+  periodEnd     DateTime
+  totalSales    Decimal          @db.Decimal(10, 2)
+  totalOrders   Int
+  platformFee   Decimal          @db.Decimal(10, 2)
+  netAmount     Decimal          @db.Decimal(10, 2)
+  currency      String           @default("USD")
+  status        SettlementStatus @default(PENDING)
+  paymentMethod String?
+  paidAt        DateTime?
+  notes         String?          @db.Text
+  createdAt     DateTime         @default(now())
+  updatedAt     DateTime         @updatedAt
 
   // Relations
   orderSettlements OrderSettlement[]
@@ -718,15 +731,165 @@ enum SettlementStatus {
 
 // Order Settlement (many-to-many relationship between orders and settlements)
 model OrderSettlement {
-  id          String     @id @default(uuid())
+  id           String     @id @default(uuid())
   settlementId String
-  settlement  Settlement @relation(fields: [settlementId], references: [id], onDelete: Cascade)
-  orderId     String
-  order       Order      @relation(fields: [orderId], references: [id], onDelete: Cascade)
-  amount      Decimal    @db.Decimal(10, 2)
-  platformFee Decimal    @db.Decimal(10, 2)
-  createdAt   DateTime   @default(now())
+  settlement   Settlement @relation(fields: [settlementId], references: [id], onDelete: Cascade)
+  orderId      String
+  order        Order      @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  amount       Decimal    @db.Decimal(10, 2)
+  platformFee  Decimal    @db.Decimal(10, 2)
+  createdAt    DateTime   @default(now())
 
   @@unique([settlementId, orderId])
   @@map("order_settlements")
+}
+
+// Fandom model (Phase 6)
+model Fandom {
+  id          String   @id @default(uuid())
+  name        String   @unique
+  slug        String   @unique
+  description String?  @db.Text
+  image       String?
+  banner      String?
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+
+  // Relations
+  characters Character[]
+  quests     Quest[]
+
+  @@map("fandoms")
+}
+
+// Character model (Phase 6)
+model Character {
+  id           String   @id @default(uuid())
+  fandomId     String
+  fandom       Fandom   @relation(fields: [fandomId], references: [id], onDelete: Cascade)
+  name         String
+  description  String?  @db.Text
+  personality  String?  @db.Text // JSON personality traits
+  systemPrompt String?  @db.Text // AI system prompt
+  avatar       String?
+  isActive     Boolean  @default(true)
+  createdAt    DateTime @default(now())
+
+  // Relations
+  aiChats AIChat[]
+  users   User[]   @relation("CharacterAvatar")
+
+  @@map("characters")
+}
+
+// AI Chat model (Phase 6)
+model AIChat {
+  id          String    @id @default(uuid())
+  userId      String
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  characterId String
+  character   Character @relation(fields: [characterId], references: [id], onDelete: Cascade)
+  messages    Json      @default("[]")
+  context     Json?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@map("ai_chats")
+}
+
+// Badge model (Phase 6)
+model Badge {
+  id          String  @id @default(uuid())
+  name        String  @unique
+  description String? @db.Text
+  icon        String?
+  category    String
+  rarity      String  @default("COMMON")
+  points      Int     @default(0)
+  isActive    Boolean @default(true)
+
+  // Relations
+  userBadges UserBadge[]
+  quests     Quest[]
+
+  @@map("badges")
+}
+
+// User Badge model (Phase 6)
+model UserBadge {
+  id       String   @id @default(uuid())
+  userId   String
+  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  badgeId  String
+  badge    Badge    @relation(fields: [badgeId], references: [id], onDelete: Cascade)
+  earnedAt DateTime @default(now())
+
+  @@unique([userId, badgeId])
+  @@map("user_badges")
+}
+
+// Quest model (Phase 6)
+model Quest {
+  id           String    @id @default(uuid())
+  name         String
+  description  String?   @db.Text
+  type         String
+  fandomId     String?
+  fandom       Fandom?   @relation(fields: [fandomId], references: [id])
+  points       Int       @default(0)
+  badgeId      String?
+  badge        Badge?    @relation(fields: [badgeId], references: [id])
+  requirements Json?
+  isActive     Boolean   @default(true)
+  startsAt     DateTime?
+  endsAt       DateTime?
+
+  // Relations
+  userQuests UserQuest[]
+
+  @@map("quests")
+}
+
+// User Quest model (Phase 6)
+model UserQuest {
+  id          String    @id @default(uuid())
+  userId      String
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  questId     String
+  quest       Quest     @relation(fields: [questId], references: [id], onDelete: Cascade)
+  progress    Json?
+  status      String    @default("IN_PROGRESS")
+  completedAt DateTime?
+
+  @@unique([userId, questId])
+  @@map("user_quests")
+}
+
+// Collection model (Phase 6)
+model Collection {
+  id          String   @id @default(uuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name        String
+  description String?  @db.Text
+  items       Json     @default("[]")
+  isPublic    Boolean  @default(false)
+  createdAt   DateTime @default(now())
+
+  @@map("collections")
+}
+
+// Shared Item model (Phase 6)
+model SharedItem {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type      String
+  itemId    String
+  content   Json
+  platform  String?
+  views     Int      @default(0)
+  createdAt DateTime @default(now())
+
+  @@map("shared_items")
 }
