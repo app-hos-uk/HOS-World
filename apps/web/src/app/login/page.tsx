@@ -70,7 +70,7 @@ export default function LoginPage() {
 
     try {
       const response = await apiClient.register({
-        email,
+        email: email.trim(),
         password,
         role: 'customer',
       });
@@ -83,7 +83,10 @@ export default function LoginPage() {
       // New users can select a character later from their profile
       router.push('/');
     } catch (err: any) {
-      setError(err.message || 'Registration failed. Please try again.');
+      // Better error handling
+      const errorMessage = err.message || err.response?.data?.message || 'Registration failed. Please try again.';
+      setError(errorMessage);
+      console.error('Registration error:', err);
     } finally {
       setLoading(false);
     }
@@ -162,8 +165,9 @@ export default function LoginPage() {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   required
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-gray-900 bg-white"
                   placeholder="your.email@example.com"
+                  style={{ color: '#111827' }}
                 />
               </div>
 
@@ -178,8 +182,9 @@ export default function LoginPage() {
                   onChange={(e) => setPassword(e.target.value)}
                   required
                   minLength={8}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-gray-900 bg-white"
                   placeholder="••••••••"
+                  style={{ color: '#111827' }}
                 />
               </div>
 
