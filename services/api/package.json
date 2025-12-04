@@ -26,6 +26,9 @@
     "db:generate": "prisma generate",
     "db:studio": "prisma studio",
     "db:seed-admin": "ts-node src/database/create-admin.ts",
+    "db:verify-admin": "ts-node src/database/verify-admin.ts",
+    "db:fix-admin": "ts-node src/database/fix-admin-now.ts",
+    "db:migrate-phase6": "ts-node src/database/run-phase6-migration.ts",
     "clean": "rm -rf dist"
   },
   "dependencies": {
@@ -88,22 +91,5 @@
     "ts-node": "^10.9.2",
     "tsconfig-paths": "^4.2.0",
     "typescript": "^5.3.3"
-  },
-  "jest": {
-    "moduleFileExtensions": [
-      "js",
-      "json",
-      "ts"
-    ],
-    "rootDir": "src",
-    "testRegex": ".*\\.spec\\.ts$",
-    "transform": {
-      "^.+\\.(t|j)s$": "ts-jest"
-    },
-    "collectCoverageFrom": [
-      "**/*.(t|j)s"
-    ],
-    "coverageDirectory": "../coverage",
-    "testEnvironment": "node"
   }
 }
