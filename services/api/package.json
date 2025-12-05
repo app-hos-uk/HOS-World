@@ -26,6 +26,8 @@
     "db:generate": "prisma generate",
     "db:studio": "prisma studio",
     "db:seed-admin": "ts-node src/database/create-admin.ts",
+    "db:seed-all-roles": "ts-node src/database/seed-all-roles.ts",
+    "db:create-team-users": "ts-node src/database/create-team-users.ts",
     "db:verify-admin": "ts-node src/database/verify-admin.ts",
     "db:fix-admin": "ts-node src/database/fix-admin-now.ts",
     "db:migrate-phase6": "ts-node src/database/run-phase6-migration.ts",

@@ -43,6 +43,7 @@ import { LogisticsModule } from './logistics/logistics.module';
 import { SettlementsModule } from './settlements/settlements.module';
 import { StorageModule } from './storage/storage.module';
 import { QueueModule } from './queue/queue.module';
+import { AdminModule } from './admin/admin.module';
 import { JwtAuthGuard } from './common/guards/jwt-auth.guard';
 
 @Module({
@@ -92,6 +93,7 @@ import { JwtAuthGuard } from './common/guards/jwt-auth.guard';
     SettlementsModule,
     StorageModule,
     QueueModule,
+    AdminModule,
   ],
   controllers: [AppController],
   providers: [
