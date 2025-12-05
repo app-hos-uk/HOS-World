@@ -84,3 +84,32 @@ Started: Browser Automation Testing
 
 3. **Documentation**: Create detailed fix guide for login issue
 
+---
+
+## Fixes Applied
+
+### 1. Login Input Visibility ✅
+- Added explicit white backgrounds
+- Added dark text colors
+- Added inline styles for reliability
+- Increased border thickness
+
+### 2. API URL Configuration ✅
+- Changed default from `http://localhost:3001/api` to production URL
+- Now defaults to: `https://hos-marketplaceapi-production.up.railway.app/api`
+- This ensures API calls work even if `NEXT_PUBLIC_API_URL` env var is not set
+
+### 3. Debug Logging Added ✅
+- Added console logging to login handler
+- Logs form submission, API calls, and errors
+- Will help identify why automated browser login fails
+
+---
+
+## Current Status
+- **Login Form**: ✅ Visible and styled correctly
+- **API Endpoint**: ✅ Working (verified with curl)
+- **API URL Default**: ✅ Fixed to use production URL
+- **Debug Logging**: ✅ Added to login handler
+- **Browser Login**: ⏳ Testing in progress (debug logs will show issue)
+
