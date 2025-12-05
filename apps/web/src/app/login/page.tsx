@@ -110,6 +110,33 @@ export default function LoginPage() {
       // Mark login success to prevent onUnauthorized redirects
       markLoginSuccess();
 
+      // Fetch user data to get role for redirect
+      let redirectPath = '/';
+      try {
+        const userResponse = await apiClient.get('/auth/me');
+        if (userResponse?.data) {
+          const user = userResponse.data;
+          // Map role to dashboard path
+          const roleDashboardMap: Record<string, string> = {
+            CUSTOMER: '/',
+            WHOLESALER: '/wholesaler/dashboard',
+            B2C_SELLER: '/seller/dashboard',
+            SELLER: '/seller/dashboard',
+            ADMIN: '/admin/dashboard',
+            PROCUREMENT: '/procurement/dashboard',
+            FULFILLMENT: '/fulfillment/dashboard',
+            CATALOG: '/catalog/dashboard',
+            MARKETING: '/marketing/dashboard',
+            FINANCE: '/finance/dashboard',
+            CMS_EDITOR: '/',
+          };
+          redirectPath = roleDashboardMap[user.role] || '/';
+        }
+      } catch (err) {
+        // If we can't get user info, default to home
+        console.error('Failed to fetch user info:', err);
+      }
+
       // Set redirect flag and stop auth check BEFORE redirect
       isRedirecting.current = true;
       setIsCheckingAuth(false);
@@ -122,11 +149,11 @@ export default function LoginPage() {
         authRequestController.current = null;
       }
 
-      // Redirect to home
+      // Redirect to role-specific dashboard or home
       if (typeof window !== 'undefined') {
-        window.location.replace('/');
+        window.location.replace(redirectPath);
       } else {
-        router.replace('/');
+        router.replace(redirectPath);
       }
     } catch (err: any) {
       console.error('Login error:', err);
