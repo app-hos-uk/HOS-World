@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
-import { apiClient } from '@/lib/api';
+import { apiClient, markLoginSuccess } from '@/lib/api';
 import { CharacterSelector } from '@/components/CharacterSelector';
 import { FandomQuiz } from '@/components/FandomQuiz';
 
@@ -33,121 +33,116 @@ export default function LoginPage() {
     setIsMounted(true);
   }, []);
 
+  // CRITICAL: Cancel any auth checks immediately when user starts logging in
   useEffect(() => {
-    // CRITICAL: Only run auth check after component is mounted (client-side only)
-    // This prevents hydration mismatches between server and client
+    if (loading) {
+      // User is actively logging in - cancel any pending auth checks
+      if (authRequestController.current) {
+        authRequestController.current.abort();
+        authRequestController.current = null;
+      }
+      // Prevent auth check from running during login
+      isRedirecting.current = false;
+      hasCheckedAuth.current = false;
+      authCheckInProgress.current = false;
+      setIsCheckingAuth(false);
+    }
+  }, [loading]);
+
+  // Auth check effect - runs only once after mount
+  useEffect(() => {
+    // Only run after component is mounted (client-side only)
     if (!isMounted) {
       return;
     }
     
-    // CRITICAL: If we're already redirecting, don't check auth again
-    // This prevents redirect loops and page instability
+    // CRITICAL: Don't run auth check if user is actively logging in
+    // This prevents interference with the login process
+    if (loading) {
+      setIsCheckingAuth(false);
+      return;
+    }
+    
+    // CRITICAL: If already redirecting, don't check auth again
     if (isRedirecting.current) {
       setIsCheckingAuth(false);
       return;
     }
     
-    // Prevent multiple effect runs
-    // This can happen in React Strict Mode or with browser extensions
+    // Prevent multiple effect runs - only check once
     if (hasCheckedAuth.current || authCheckInProgress.current) {
       return;
     }
+    
+    // Mark as checked and in progress
     hasCheckedAuth.current = true;
     authCheckInProgress.current = true;
     
-    // CRITICAL: Check sessionStorage to see if we're already redirecting
-    // This persists across component re-mounts and prevents redirect loops
-    // BUT: Only skip if we're not in the middle of a login/register attempt
-    // (The login/register handlers will clear this flag when user actively logs in)
+    // Clear any stale sessionStorage flags on mount
     try {
-      const isRedirectingInSession = sessionStorage.getItem('login_redirecting');
-      if (isRedirectingInSession === 'true') {
-        // Check if user is actively trying to log in (form is being submitted)
-        // If loading is true, user is logging in, so don't skip auth check
-        // Instead, clear the flag and allow login to proceed
-        if (loading) {
-          // User is actively logging in, clear the flag
-          sessionStorage.removeItem('login_redirecting');
-          isRedirecting.current = false;
-        } else {
-          // Not actively logging in, skip auth check to prevent redirect loop
-          // Don't log message - this is expected behavior to prevent loops
-          // The flag will be cleared when user actively logs in
-          isRedirecting.current = true;
-          setIsCheckingAuth(false);
-          authCheckInProgress.current = false;
-          return;
-        }
-      }
+      sessionStorage.removeItem('login_redirecting');
     } catch (e) {
-      // sessionStorage might not be available
-    }
-    
-    // Only reset redirect flag if we're not already redirecting
-    // This prevents clearing the flag during an active redirect
-    if (!isRedirecting.current) {
-      isRedirecting.current = false;
+      // Ignore sessionStorage errors
     }
 
-    // Add small delay to ensure DOM is ready
-    // This helps with React hydration timing issues
     const checkAuth = async () => {
       try {
-        // Small delay to stabilize
-        await new Promise(resolve => setTimeout(resolve, 50));
+        // Small delay to ensure DOM is ready and stabilize
+        await new Promise(resolve => setTimeout(resolve, 100));
         
-        // CRITICAL: Check if we're still on login page before proceeding
-        // If user navigated away, don't check auth
-        if (typeof window !== 'undefined' && window.location.pathname !== '/login') {
-          console.log('Not on login page, skipping auth check');
+        // CRITICAL: Check if we're still on login page
+        if (typeof window === 'undefined' || window.location.pathname !== '/login') {
           setIsCheckingAuth(false);
           authCheckInProgress.current = false;
           return;
         }
 
-        // Chrome-specific: Use try-catch for localStorage access
-        // Chrome extensions can sometimes interfere with localStorage
+        // CRITICAL: Don't check if user started logging in during the delay
+        if (loading || isRedirecting.current) {
+          setIsCheckingAuth(false);
+          authCheckInProgress.current = false;
+          return;
+        }
+
+        // Get token from localStorage
         let storedToken: string | null = null;
         try {
           storedToken = localStorage.getItem('auth_token');
         } catch (e) {
-          // Chrome extension or privacy mode might block localStorage
           console.warn('localStorage access blocked:', e);
           setIsCheckingAuth(false);
           authCheckInProgress.current = false;
           return;
         }
         
+        // No token means user needs to login
         if (!storedToken) {
-          // No token, stay on login page
           setIsCheckingAuth(false);
           authCheckInProgress.current = false;
           return;
         }
 
         // Validate token by checking current user
-        // Use fetch directly to avoid triggering onUnauthorized redirect
         const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api';
         
-        // CRITICAL: Cancel any existing auth request to prevent duplicates
+        // Cancel any existing auth request
         if (authRequestController.current) {
-          console.log('Cancelling previous auth request to prevent duplicates');
           authRequestController.current.abort();
         }
         
-        // Create new abort controller for this request
+        // Create new abort controller
         const controller = new AbortController();
         authRequestController.current = controller;
+        
         const timeoutId = setTimeout(() => {
           if (authRequestController.current === controller) {
             controller.abort();
           }
-        }, 5000); // 5 second timeout
+        }, 5000);
 
         try {
-          // CRITICAL: Double-check we're still on login page before making request
-          if (typeof window !== 'undefined' && window.location.pathname !== '/login') {
-            console.log('Navigated away from login, cancelling auth check');
+          // Final check before making request
+          if (typeof window === 'undefined' || window.location.pathname !== '/login' || loading || isRedirecting.current) {
             controller.abort();
             setIsCheckingAuth(false);
             authCheckInProgress.current = false;
@@ -166,192 +161,124 @@ export default function LoginPage() {
 
           clearTimeout(timeoutId);
           
-          // CRITICAL: Clear the controller reference if this is still the active request
           if (authRequestController.current === controller) {
             authRequestController.current = null;
           }
 
-          // CRITICAL: Double-check we're still on login page before processing response
-          if (typeof window !== 'undefined' && window.location.pathname !== '/login') {
-            console.log('Not on login page anymore, ignoring auth response');
+          // Final check before processing response
+          if (typeof window === 'undefined' || window.location.pathname !== '/login' || loading || isRedirecting.current) {
             setIsCheckingAuth(false);
             authCheckInProgress.current = false;
             return;
           }
 
-          // CRITICAL: Only redirect if response is 200 OK AND we have valid user data
+          // If response is OK, user is authenticated - redirect to home
           if (response.ok && response.status === 200) {
             try {
               const data = await response.json();
               
-              // Validate response structure
               if (!data || !data.data) {
                 console.warn('Invalid API response structure:', data);
-                throw new Error('Invalid response structure');
+                setIsCheckingAuth(false);
+                authCheckInProgress.current = false;
+                return;
               }
               
               const user = data.data;
               
-              // CRITICAL: Only redirect if we have a valid user with an ID
-              // AND we're still on the login page
-              // AND we haven't already set the redirect flag
-              // AND component is fully mounted (hydration complete)
-              if (
-                isMounted &&
-                user && 
-                user.id && 
-                typeof user.id === 'string' &&
-                user.id.length > 0 &&
-                !isRedirecting.current && 
-                typeof window !== 'undefined' &&
-                window.location.pathname === '/login'
-              ) {
-                console.log('Valid user found, redirecting to home:', user.email);
-                
-                // Set flags immediately to prevent any re-checks
+              // Validate user data
+              if (user && user.id && typeof user.id === 'string' && user.id.length > 0) {
+                // Set redirect flag immediately
                 isRedirecting.current = true;
                 setIsCheckingAuth(false);
                 authCheckInProgress.current = false;
-                hasCheckedAuth.current = true; // Prevent any future checks
                 
-                // CRITICAL: Set sessionStorage flag to persist across re-renders/re-mounts
-                // This prevents the component from checking auth again if it re-mounts
-                try {
-                  sessionStorage.setItem('login_redirecting', 'true');
-                  // Clear the flag after 5 seconds as a safety measure
-                  setTimeout(() => {
-                    try {
-                      sessionStorage.removeItem('login_redirecting');
-                    } catch (e) {
-                      // Ignore errors
-                    }
-                  }, 5000);
-                } catch (e) {
-                  // sessionStorage might not be available, continue anyway
-                }
-                
-                // Use immediate redirect with window.location for reliability
-                // This ensures the redirect happens immediately and prevents any loops
+                // Immediate redirect - no delays, no sessionStorage flags
                 if (typeof window !== 'undefined' && window.location.pathname === '/login') {
-                  // Clear any pending timeouts/animations
+                  // Cancel any pending requests
                   if (authRequestController.current) {
                     authRequestController.current.abort();
                     authRequestController.current = null;
                   }
                   
-                  // Immediate redirect using window.location for maximum reliability
-                  // This bypasses React Router and ensures the redirect completes
-                  // Use replace to prevent back button issues
+                  // Immediate redirect
                   window.location.replace('/');
                   return;
                 }
-                
-                // Fallback to router.replace if window.location fails
-                router.replace('/');
-                return;
-              } else {
-                console.warn('User validation failed:', {
-                  hasUser: !!user,
-                  hasId: !!(user && user.id),
-                  idType: user?.id ? typeof user.id : 'none',
-                  idLength: user?.id ? user.id.length : 0,
-                  isRedirecting: isRedirecting.current,
-                  pathname: window.location.pathname,
-                });
               }
             } catch (parseError) {
               console.error('Failed to parse auth response:', parseError);
-              // Don't redirect on parse errors
             }
           } else {
-            // Response not OK - token is invalid
-            console.log('Auth check failed - invalid token:', response.status, response.statusText);
+            // Token is invalid - clear it
+            try {
+              localStorage.removeItem('auth_token');
+            } catch (e) {
+              // Ignore
+            }
           }
         } catch (fetchError: any) {
           clearTimeout(timeoutId);
           
-          // Clear controller reference
           if (authRequestController.current === controller) {
             authRequestController.current = null;
           }
           
-          // Handle abort errors gracefully (user navigated away or timeout)
+          // Only handle abort errors silently
           if (fetchError.name === 'AbortError') {
-            // Check if we're still on login page
-            if (typeof window !== 'undefined' && window.location.pathname === '/login') {
-              console.warn('Auth check aborted - staying on login page');
-            } else {
-              console.log('Auth check aborted - user navigated away');
-            }
             setIsCheckingAuth(false);
             authCheckInProgress.current = false;
-            // Don't redirect on abort
             return;
-          } else {
-            console.error('Auth check error:', fetchError);
-            // Don't redirect on errors
-            throw fetchError;
           }
+          
+          console.error('Auth check error:', fetchError);
         }
         
-        // If we get here, token is invalid (401, 403, or other error)
-        // Clear invalid token and stay on login page
-        try {
-          localStorage.removeItem('auth_token');
-        } catch (e) {
-          console.warn('Failed to clear localStorage:', e);
-        }
         setIsCheckingAuth(false);
         authCheckInProgress.current = false;
       } catch (error) {
-        // Network error or other issue
         console.error('Auth check failed:', error);
-        // Clear token on error to be safe
-        try {
-          localStorage.removeItem('auth_token');
-        } catch (e) {
-          console.warn('Failed to clear localStorage:', e);
-        }
-        // Stay on login page - don't redirect
         setIsCheckingAuth(false);
-        authCheckInProgress.current = false;
-      } finally {
-        // Always reset the in-progress flag
         authCheckInProgress.current = false;
       }
     };
 
     checkAuth();
     
-    // Cleanup function to reset flags and cancel requests if component unmounts
+    // Cleanup function
     return () => {
-      // CRITICAL: Don't reset flags if we're redirecting
-      // This prevents the component from re-checking auth after redirect starts
       if (!isRedirecting.current) {
         authCheckInProgress.current = false;
       }
       if (authRequestController.current) {
-        console.log('Component unmounting, cancelling auth request');
         authRequestController.current.abort();
         authRequestController.current = null;
       }
     };
-  }, [router, isMounted]); // Add isMounted to dependencies
+  }, [isMounted]); // Only depend on isMounted - loading is checked inside, not a trigger
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
     setLoading(true);
 
-    // CRITICAL: Clear sessionStorage flag at the START of login attempt
-    // This prevents "Redirect already in progress" message when user is actively logging in
+    // CRITICAL: Cancel any pending auth checks immediately
+    if (authRequestController.current) {
+      authRequestController.current.abort();
+      authRequestController.current = null;
+    }
+    
+    // Set flags to prevent auth check from running during login
+    isRedirecting.current = false;
+    hasCheckedAuth.current = false;
+    authCheckInProgress.current = false;
+    setIsCheckingAuth(false);
+    
+    // Clear any sessionStorage flags
     try {
       sessionStorage.removeItem('login_redirecting');
-      // Also reset the redirect flag to allow fresh login
-      isRedirecting.current = false;
-      hasCheckedAuth.current = false;
     } catch (e) {
-      // Ignore sessionStorage errors
+      // Ignore
     }
 
     // Validate inputs
@@ -362,30 +289,20 @@ export default function LoginPage() {
     }
 
     try {
-      console.log('Attempting login with email:', email);
       const response = await apiClient.login({ email, password });
-      console.log('Login response received:', response);
-      console.log('Response structure:', {
-        hasData: !!response.data,
-        dataKeys: response.data ? Object.keys(response.data) : [],
-        hasToken: !!(response.data?.token),
-        hasUser: !!(response.data?.user),
-      });
       
       // Check response structure
       if (!response || !response.data) {
-        console.error('Invalid response structure:', response);
         throw new Error('Invalid response from server');
       }
 
       const { token: authToken } = response.data;
 
       if (!authToken) {
-        console.error('No token in response:', response);
         throw new Error('No token received from server');
       }
 
-      // Chrome-specific: Ensure localStorage write completes
+      // Save token to localStorage
       try {
         localStorage.setItem('auth_token', authToken);
         setToken(authToken);
@@ -394,32 +311,34 @@ export default function LoginPage() {
         throw new Error('Failed to save authentication token');
       }
 
-      // CRITICAL: Clear any existing sessionStorage redirect flags
-      // This prevents the auth check from interfering with the login redirect
-      try {
-        sessionStorage.removeItem('login_redirecting');
-      } catch (e) {
-        // Ignore sessionStorage errors
-      }
+      // CRITICAL: Mark login success to prevent onUnauthorized redirects
+      markLoginSuccess();
 
-      // Set redirect flag to prevent any auth re-checks
+      // CRITICAL: Set redirect flag and stop auth check BEFORE redirect
       isRedirecting.current = true;
       setIsCheckingAuth(false);
       setLoading(false);
+      
+      // Cancel any auth requests
+      if (authRequestController.current) {
+        authRequestController.current.abort();
+        authRequestController.current = null;
+      }
 
-      // Character selection is optional - go directly to home page
-      // Use window.location.replace() for immediate, reliable redirect
-      // This matches the auth check redirect behavior
+      // Immediate redirect - no delays, no sessionStorage flags
       if (typeof window !== 'undefined') {
         window.location.replace('/');
       } else {
-        // Fallback to router if window is not available
         router.replace('/');
       }
     } catch (err: any) {
       console.error('Login error:', err);
       setError(err.message || 'Login failed. Please check your credentials.');
       setLoading(false);
+      // Reset flags on error so user can try again
+      isRedirecting.current = false;
+      hasCheckedAuth.current = false;
+      authCheckInProgress.current = false;
     }
   };
 
@@ -428,15 +347,23 @@ export default function LoginPage() {
     setError('');
     setLoading(true);
 
-    // CRITICAL: Clear sessionStorage flag at the START of registration attempt
-    // This prevents "Redirect already in progress" message when user is actively registering
+    // CRITICAL: Cancel any pending auth checks immediately
+    if (authRequestController.current) {
+      authRequestController.current.abort();
+      authRequestController.current = null;
+    }
+    
+    // Set flags to prevent auth check from running during registration
+    isRedirecting.current = false;
+    hasCheckedAuth.current = false;
+    authCheckInProgress.current = false;
+    setIsCheckingAuth(false);
+    
+    // Clear any sessionStorage flags
     try {
       sessionStorage.removeItem('login_redirecting');
-      // Also reset the redirect flag to allow fresh registration
-      isRedirecting.current = false;
-      hasCheckedAuth.current = false;
     } catch (e) {
-      // Ignore sessionStorage errors
+      // Ignore
     }
 
     try {
@@ -447,7 +374,7 @@ export default function LoginPage() {
       });
       const { token: authToken } = response.data;
 
-      // Chrome-specific: Ensure localStorage write completes
+      // Save token to localStorage
       try {
         localStorage.setItem('auth_token', authToken);
         setToken(authToken);
@@ -456,31 +383,33 @@ export default function LoginPage() {
         throw new Error('Failed to save authentication token');
       }
 
-      // CRITICAL: Clear any existing sessionStorage redirect flags
-      // This prevents the auth check from interfering with the registration redirect
-      try {
-        sessionStorage.removeItem('login_redirecting');
-      } catch (e) {
-        // Ignore sessionStorage errors
-      }
+      // CRITICAL: Mark login success to prevent onUnauthorized redirects
+      markLoginSuccess();
 
-      // Set redirect flag to prevent any auth re-checks
+      // CRITICAL: Set redirect flag and stop auth check BEFORE redirect
       isRedirecting.current = true;
       setIsCheckingAuth(false);
       setLoading(false);
+      
+      // Cancel any auth requests
+      if (authRequestController.current) {
+        authRequestController.current.abort();
+        authRequestController.current = null;
+      }
 
-      // Character selection is optional - go directly to home page
-      // Use window.location.replace() for immediate, reliable redirect
+      // Immediate redirect - no delays
       if (typeof window !== 'undefined') {
         window.location.replace('/');
       } else {
-        // Fallback to router if window is not available
         router.replace('/');
       }
     } catch (err: any) {
       setError(err.message || 'Registration failed. Please try again.');
-    } finally {
       setLoading(false);
+      // Reset flags on error so user can try again
+      isRedirecting.current = false;
+      hasCheckedAuth.current = false;
+      authCheckInProgress.current = false;
     }
   };
 
@@ -531,10 +460,23 @@ export default function LoginPage() {
     }
   };
 
-  // Show loading state while checking authentication
-  // Only show if we're actually checking, not redirecting, and component is mounted
-  // This prevents hydration mismatch by not showing different content on server vs client
-  if (!isMounted || (isCheckingAuth && !isRedirecting.current)) {
+  // Show loading state only briefly while checking authentication on first mount
+  // Don't show if user is actively logging in or redirecting
+  if (!isMounted) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-purple-50 to-blue-50 flex items-center justify-center p-4 sm:p-6 lg:p-8">
+        <div className="max-w-md w-full text-center">
+          <div className="animate-spin rounded-full h-8 w-8 sm:h-12 sm:w-12 border-b-2 border-purple-600 mx-auto"></div>
+          <p className="mt-4 text-sm sm:text-base text-gray-600">Loading...</p>
+        </div>
+      </div>
+    );
+  }
+  
+  // Don't show loading if user is actively logging in or redirecting
+  // Show login form immediately for better UX
+  if (isCheckingAuth && !loading && !isRedirecting.current) {
+    // Show loading only for a brief moment during auth check
     return (
       <div className="min-h-screen bg-gradient-to-br from-purple-50 to-blue-50 flex items-center justify-center p-4 sm:p-6 lg:p-8">
         <div className="max-w-md w-full text-center">
