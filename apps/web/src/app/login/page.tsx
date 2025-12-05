@@ -1,14 +1,13 @@
 'use client';
 
-import { useState, useEffect, useRef, useMemo } from 'react';
-import { useRouter, usePathname } from 'next/navigation';
+import { useState, useEffect, useRef } from 'react';
+import { useRouter } from 'next/navigation';
 import { apiClient, markLoginSuccess } from '@/lib/api';
 import { CharacterSelector } from '@/components/CharacterSelector';
 import { FandomQuiz } from '@/components/FandomQuiz';
 
 export default function LoginPage() {
   const router = useRouter();
-  const pathname = usePathname();
   const [step, setStep] = useState<'login' | 'character' | 'quiz' | 'forgot-password'>('login');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
