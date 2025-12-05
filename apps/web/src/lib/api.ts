@@ -62,6 +62,12 @@ export const apiClient = ApiClient.create({
   onUnauthorized: () => {
     if (typeof window !== 'undefined') {
       const currentPath = window.location.pathname;
+      const unauthId = `unauth_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+      const stackTrace = new Error().stack || '';
+      
+      // #region agent log
+      fetch('http://127.0.0.1:7242/ingest/315c2d74-b9bb-430e-9c51-123c9436e40e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'api.ts:66',message:'onUnauthorized triggered',data:{unauthId,currentPath,isInCooldown:isInLoginCooldown(),lastLoginTime,stackTrace:stackTrace.split('\n').slice(0,8).join('\n')},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'D'})}).catch(()=>{});
+      // #endregion
       
       console.log('[LOGIN FIX] onUnauthorized called', {
         currentPath,
@@ -72,6 +78,9 @@ export const apiClient = ApiClient.create({
       
       // CRITICAL: Don't redirect if we're already on login page
       if (currentPath === '/login' || currentPath.includes('/login')) {
+        // #region agent log
+        fetch('http://127.0.0.1:7242/ingest/315c2d74-b9bb-430e-9c51-123c9436e40e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'api.ts:78',message:'onUnauthorized skipped - already on login',data:{unauthId,currentPath},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'D'})}).catch(()=>{});
+        // #endregion
         console.log('[LOGIN FIX] Already on login page, skipping redirect');
         // Just clear the token, don't redirect
         try {

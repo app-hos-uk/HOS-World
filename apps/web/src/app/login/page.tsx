@@ -7,10 +7,22 @@ import { CharacterSelector } from '@/components/CharacterSelector';
 import { FandomQuiz } from '@/components/FandomQuiz';
 
 export default function LoginPage() {
+  // #region agent log
+  const mountId = `mount_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+  const stackTrace = new Error().stack || '';
+  fetch('http://127.0.0.1:7242/ingest/315c2d74-b9bb-430e-9c51-123c9436e40e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'login/page.tsx:10',message:'Component render started',data:{mountId,pathname:typeof window!=='undefined'?window.location.pathname:'SSR',stackTrace:stackTrace.split('\n').slice(0,5).join('\n')},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A,B,C'})}).catch(()=>{});
+  // #endregion
+  
   // VERSION MARKER: Login Fix v2.0 - Simplified stable version
   console.log('[LOGIN FIX v2.0] Login page component mounted');
   
   const router = useRouter();
+  const mountCountRef = useRef(0);
+  mountCountRef.current += 1;
+  
+  // #region agent log
+  fetch('http://127.0.0.1:7242/ingest/315c2d74-b9bb-430e-9c51-123c9436e40e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'login/page.tsx:18',message:'Component render count',data:{mountId,mountCount:mountCountRef.current,pathname:typeof window!=='undefined'?window.location.pathname:'SSR'},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A,C'})}).catch(()=>{});
+  // #endregion
   const [step, setStep] = useState<'login' | 'character' | 'quiz' | 'forgot-password'>('login');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -33,6 +45,9 @@ export default function LoginPage() {
 
   // Set mounted state after hydration to prevent server/client mismatch
   useEffect(() => {
+    // #region agent log
+    fetch('http://127.0.0.1:7242/ingest/315c2d74-b9bb-430e-9c51-123c9436e40e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'login/page.tsx:37',message:'useEffect setIsMounted executed',data:{mountId,pathname:typeof window!=='undefined'?window.location.pathname:'SSR'},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'E'})}).catch(()=>{});
+    // #endregion
     setIsMounted(true);
   }, []);
 
@@ -55,22 +70,49 @@ export default function LoginPage() {
 
   // DEBUG: Track component mounts and unmounts
   useEffect(() => {
-    console.log('[LOGIN FIX v2.0] Component mounted, pathname:', typeof window !== 'undefined' ? window.location.pathname : 'SSR');
+    const currentPath = typeof window !== 'undefined' ? window.location.pathname : 'SSR';
+    const unmountStack = new Error().stack || '';
+    // #region agent log
+    fetch('http://127.0.0.1:7242/ingest/315c2d74-b9bb-430e-9c51-123c9436e40e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'login/page.tsx:57',message:'Component mounted effect',data:{mountId,pathname:currentPath,stackTrace:unmountStack.split('\n').slice(0,5).join('\n')},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A,B,C'})}).catch(()=>{});
+    // #endregion
+    console.log('[LOGIN FIX v2.0] Component mounted, pathname:', currentPath);
     
     return () => {
-      console.log('[LOGIN FIX v2.0] Component unmounting, pathname:', typeof window !== 'undefined' ? window.location.pathname : 'SSR');
+      const unmountPath = typeof window !== 'undefined' ? window.location.pathname : 'SSR';
+      // #region agent log
+      fetch('http://127.0.0.1:7242/ingest/315c2d74-b9bb-430e-9c51-123c9436e40e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'login/page.tsx:65',message:'Component unmounting',data:{mountId,pathname:unmountPath},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'B'})}).catch(()=>{});
+      // #endregion
+      console.log('[LOGIN FIX v2.0] Component unmounting, pathname:', unmountPath);
     };
   }, []);
 
-  // DEBUG: Track pathname changes
+  // DEBUG: Track pathname changes and router events
   useEffect(() => {
     if (typeof window !== 'undefined') {
       const currentPath = window.location.pathname;
+      const prevPath = sessionStorage.getItem('prev_pathname') || 'none';
+      // #region agent log
+      fetch('http://127.0.0.1:7242/ingest/315c2d74-b9bb-430e-9c51-123c9436e40e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'login/page.tsx:71',message:'Pathname change detected',data:{mountId,currentPath,prevPath,hash:window.location.hash,search:window.location.search},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'B'})}).catch(()=>{});
+      // #endregion
+      sessionStorage.setItem('prev_pathname', currentPath);
       console.log('[LOGIN FIX v2.0] Pathname changed to:', currentPath);
       
       if (currentPath !== '/login' && currentPath !== '/') {
         console.warn('[LOGIN FIX v2.0] Unexpected pathname:', currentPath);
       }
+    }
+    
+    // Track router events
+    const handleRouteChange = () => {
+      const path = typeof window !== 'undefined' ? window.location.pathname : 'SSR';
+      // #region agent log
+      fetch('http://127.0.0.1:7242/ingest/315c2d74-b9bb-430e-9c51-123c9436e40e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'login/page.tsx:84',message:'Router navigation event',data:{mountId,pathname:path},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'B'})}).catch(()=>{});
+      // #endregion
+    };
+    
+    if (typeof window !== 'undefined') {
+      window.addEventListener('popstate', handleRouteChange);
+      return () => window.removeEventListener('popstate', handleRouteChange);
     }
   }, []);
 
