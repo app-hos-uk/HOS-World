@@ -2,64 +2,42 @@
 
 import Link from 'next/link';
 import { useTheme } from '@hos-marketplace/theme-system';
-import { useState, useEffect } from 'react';
-import { apiClient } from '@/lib/api';
-import { useRouter } from 'next/navigation';
+import { useState } from 'react';
+import { useAuth } from '@/contexts/AuthContext';
+import type { UserRole } from '@hos-marketplace/shared-types';
 
 export function Header() {
   const theme = useTheme();
-  const router = useRouter();
+  const { user, isAuthenticated, logout, hasRole } = useAuth();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [userEmail, setUserEmail] = useState<string | null>(null);
 
   const toggleMobileMenu = () => {
     setIsMobileMenuOpen(!isMobileMenuOpen);
   };
 
-  // Check if user is logged in
-  useEffect(() => {
-    const checkAuth = async () => {
-      const token = typeof window !== 'undefined' ? localStorage.getItem('auth_token') : null;
-      if (token) {
-        setIsLoggedIn(true);
-        // Try to get user info
-        try {
-          const response = await apiClient.getCurrentUser();
-          if (response?.data?.email) {
-            setUserEmail(response.data.email);
-          }
-        } catch (error) {
-          // If token is invalid, clear it
-          localStorage.removeItem('auth_token');
-          setIsLoggedIn(false);
-        }
-      } else {
-        setIsLoggedIn(false);
-      }
+  // Get dashboard link based on user role
+  const getDashboardLink = (): string => {
+    if (!user) return '/';
+    
+    const roleDashboardMap: Record<UserRole, string> = {
+      CUSTOMER: '/',
+      WHOLESALER: '/wholesaler/dashboard',
+      B2C_SELLER: '/seller/dashboard',
+      SELLER: '/seller/dashboard',
+      ADMIN: '/admin/dashboard',
+      PROCUREMENT: '/procurement/dashboard',
+      FULFILLMENT: '/fulfillment/dashboard',
+      CATALOG: '/catalog/dashboard',
+      MARKETING: '/marketing/dashboard',
+      FINANCE: '/finance/dashboard',
+      CMS_EDITOR: '/',
     };
-    
-    checkAuth();
-    
-    // Listen for storage changes (when login happens in another tab/window)
-    const handleStorageChange = () => {
-      checkAuth();
-    };
-    
-    window.addEventListener('storage', handleStorageChange);
-    return () => window.removeEventListener('storage', handleStorageChange);
-  }, []);
+
+    return roleDashboardMap[user.role] || '/';
+  };
 
   const handleLogout = async () => {
-    try {
-      await apiClient.logout();
-    } catch (error) {
-      // Ignore logout errors
-    }
-    localStorage.removeItem('auth_token');
-    setIsLoggedIn(false);
-    setUserEmail(null);
-    router.push('/');
+    await logout();
   };
 
   return (
@@ -97,10 +75,17 @@ export function Header() {
             >
               Cart
             </Link>
-            {isLoggedIn ? (
+            {isAuthenticated && user ? (
               <>
+                {/* Dashboard link for authenticated users */}
+                <Link
+                  href={getDashboardLink()}
+                  className="text-sm lg:text-base text-purple-700 hover:text-amber-600 font-medium font-secondary transition-colors duration-300"
+                >
+                  Dashboard
+                </Link>
                 <span className="text-sm lg:text-base text-purple-700 font-medium">
-                  {userEmail || 'User'}
+                  {user.email}
                 </span>
                 <button
                   onClick={handleLogout}
@@ -163,10 +148,17 @@ export function Header() {
               >
                 Cart
               </Link>
-              {isLoggedIn ? (
+              {isAuthenticated && user ? (
                 <>
+                  <Link
+                    href={getDashboardLink()}
+                    onClick={() => setIsMobileMenuOpen(false)}
+                    className="text-base text-purple-700 hover:text-amber-600 font-medium font-secondary transition-colors duration-300 py-2 px-2 rounded-lg hover:bg-purple-50"
+                  >
+                    Dashboard
+                  </Link>
                   <div className="px-4 py-2 text-base text-purple-700 font-medium">
-                    {userEmail || 'User'}
+                    {user.email}
                   </div>
                   <button
                     onClick={() => {

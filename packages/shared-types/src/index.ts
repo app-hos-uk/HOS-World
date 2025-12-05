@@ -68,6 +68,20 @@ export interface Theme {
   };
 }
 
+// User Roles - matches backend schema
+export type UserRole = 
+  | 'CUSTOMER'
+  | 'WHOLESALER'
+  | 'B2C_SELLER'
+  | 'SELLER' // Legacy - will be deprecated
+  | 'ADMIN'
+  | 'PROCUREMENT'
+  | 'FULFILLMENT'
+  | 'CATALOG'
+  | 'MARKETING'
+  | 'FINANCE'
+  | 'CMS_EDITOR';
+
 // User Types
 export interface User {
   id: string;
@@ -75,7 +89,7 @@ export interface User {
   firstName?: string;
   lastName?: string;
   phone?: string;
-  role: 'customer' | 'seller' | 'admin';
+  role: UserRole;
   avatar?: string;
   characterAvatar?: string; // Selected character ID for fandom experience
   createdAt: Date;
@@ -83,7 +97,7 @@ export interface User {
 }
 
 export interface Customer extends User {
-  role: 'customer';
+  role: 'CUSTOMER';
   addresses?: Address[];
   loyaltyPoints?: number;
   themePreference?: 'light' | 'dark' | 'accessibility';
@@ -91,7 +105,7 @@ export interface Customer extends User {
 
 // Seller Types
 export interface Seller extends User {
-  role: 'seller';
+  role: 'SELLER' | 'WHOLESALER' | 'B2C_SELLER';
   storeName: string;
   slug: string;
   description?: string;
@@ -289,8 +303,8 @@ export interface RegisterData {
   password: string;
   firstName?: string;
   lastName?: string;
-  role: 'customer' | 'seller';
-  storeName?: string; // Required if role is 'seller'
+  role: 'CUSTOMER' | 'WHOLESALER' | 'B2C_SELLER';
+  storeName?: string; // Required if role is seller type
 }
 
 export interface AuthResponse {

@@ -358,4 +358,43 @@ export class ApiClient {
   async getFinanceDashboardData(): Promise<ApiResponse<any>> {
     return this.request<ApiResponse<any>>('/dashboard/finance');
   }
+
+  // Submissions
+  async createSubmission(data: {
+    name: string;
+    description: string;
+    sku?: string;
+    barcode?: string;
+    ean?: string;
+    price: number;
+    tradePrice?: number;
+    rrp?: number;
+    currency?: string;
+    taxRate?: number;
+    stock: number;
+    quantity?: number;
+    fandom?: string;
+    category?: string;
+    tags?: string[];
+    images: Array<{ url: string; alt?: string; order?: number }>;
+    variations?: Array<{ name: string; options: any[] }>;
+  }): Promise<ApiResponse<any>> {
+    return this.request<ApiResponse<any>>('/submissions', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async getSubmissions(status?: string): Promise<ApiResponse<any[]>> {
+    const url = status ? `/submissions?status=${status}` : '/submissions';
+    return this.request<ApiResponse<any[]>>(url, {
+      method: 'GET',
+    });
+  }
+
+  async getFandoms(): Promise<ApiResponse<any[]>> {
+    return this.request<ApiResponse<any[]>>('/fandoms', {
+      method: 'GET',
+    });
+  }
 }

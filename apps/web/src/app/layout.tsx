@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import { Cinzel, Lora } from 'next/font/google';
 import { ThemeProviderWrapper } from '@/components/ThemeProviderWrapper';
+import { AuthProviderWrapper } from '@/components/AuthProviderWrapper';
 import './globals.css';
 
 // Cinzel for headings, brand, and magical feel
@@ -37,9 +38,11 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={`${cinzel.variable} ${lora.variable}`}>
-        <ThemeProviderWrapper>
-          {children}
-        </ThemeProviderWrapper>
+        <AuthProviderWrapper>
+          <ThemeProviderWrapper>
+            {children}
+          </ThemeProviderWrapper>
+        </AuthProviderWrapper>
       </body>
     </html>
   );
