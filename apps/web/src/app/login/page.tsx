@@ -71,7 +71,8 @@ export default function LoginPage() {
           isRedirecting.current = false;
         } else {
           // Not actively logging in, skip auth check to prevent redirect loop
-          console.log('Redirect already in progress (from sessionStorage), skipping auth check');
+          // Don't log message - this is expected behavior to prevent loops
+          // The flag will be cleared when user actively logs in
           isRedirecting.current = true;
           setIsCheckingAuth(false);
           authCheckInProgress.current = false;
