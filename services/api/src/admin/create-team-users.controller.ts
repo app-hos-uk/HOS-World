@@ -152,7 +152,7 @@ export class CreateTeamUsersController {
       try {
         const existingUser = await this.prisma.user.findUnique({
           where: { email: userData.email },
-          include: { seller: true },
+          include: { sellerProfile: true },
         });
 
         if (existingUser) {
@@ -169,7 +169,7 @@ export class CreateTeamUsersController {
 
           // Create or update seller profile if needed
           if (userData.role === UserRole.SELLER || userData.role === UserRole.B2C_SELLER || userData.role === UserRole.WHOLESALER) {
-            if (existingUser.seller) {
+            if (existingUser.sellerProfile) {
               await this.prisma.seller.update({
                 where: { userId: existingUser.id },
                 data: {
