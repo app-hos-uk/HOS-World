@@ -58,7 +58,7 @@ export function BannerCarousel({
             className="flex-shrink-0 group relative overflow-hidden rounded-lg border-2 border-purple-700/50 hover:border-amber-400/50 transition-all duration-300"
             prefetch={false}
           >
-            <div className="relative w-64 h-32 md:w-80 md:h-40">
+            <div className="relative w-48 h-24 sm:w-64 sm:h-32 md:w-80 md:h-40">
               <img
                 src={banner.image}
                 alt={banner.title}
@@ -71,8 +71,8 @@ export function BannerCarousel({
                   {banner.badge}
                 </span>
               )}
-              <div className="absolute bottom-0 left-0 right-0 p-4">
-                <h3 className="text-white font-semibold text-sm md:text-base font-primary group-hover:text-amber-300 transition-colors drop-shadow-lg">
+              <div className="absolute bottom-0 left-0 right-0 p-2 sm:p-3 md:p-4">
+                <h3 className="text-white font-semibold text-xs sm:text-sm md:text-base font-primary group-hover:text-amber-300 transition-colors drop-shadow-lg">
                   {banner.title}
                 </h3>
               </div>

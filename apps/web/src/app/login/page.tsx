@@ -160,17 +160,31 @@ export default function LoginPage() {
       return;
     }
 
+    // #region agent log
+    fetch('http://127.0.0.1:7242/ingest/315c2d74-b9bb-430e-9c51-123c9436e40e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'login/page.tsx:163',message:'Login API call starting',data:{mountId,email,hasPassword:!!password,apiUrl:process.env.NEXT_PUBLIC_API_URL||'not-set'},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'I'})}).catch(()=>{});
+    // #endregion
+
     try {
       const response = await apiClient.login({ email, password });
       
+      // #region agent log
+      fetch('http://127.0.0.1:7242/ingest/315c2d74-b9bb-430e-9c51-123c9436e40e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'login/page.tsx:168',message:'Login API call succeeded',data:{mountId,hasResponse:!!response,hasData:!!response?.data,hasToken:!!response?.data?.token},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'I'})}).catch(()=>{});
+      // #endregion
+      
       // Check response structure
       if (!response || !response.data) {
+        // #region agent log
+        fetch('http://127.0.0.1:7242/ingest/315c2d74-b9bb-430e-9c51-123c9436e40e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'login/page.tsx:173',message:'Login failed - invalid response',data:{mountId,hasResponse:!!response,hasData:!!response?.data},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'I'})}).catch(()=>{});
+        // #endregion
         throw new Error('Invalid response from server');
       }
 
       const { token: authToken } = response.data;
 
       if (!authToken) {
+        // #region agent log
+        fetch('http://127.0.0.1:7242/ingest/315c2d74-b9bb-430e-9c51-123c9436e40e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'login/page.tsx:180',message:'Login failed - no token',data:{mountId,hasData:!!response.data},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'I'})}).catch(()=>{});
+        // #endregion
         throw new Error('No token received from server');
       }
 
@@ -178,7 +192,13 @@ export default function LoginPage() {
       try {
         localStorage.setItem('auth_token', authToken);
         setToken(authToken);
+        // #region agent log
+        fetch('http://127.0.0.1:7242/ingest/315c2d74-b9bb-430e-9c51-123c9436e40e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'login/page.tsx:187',message:'Token saved to localStorage',data:{mountId,hasToken:!!authToken,tokenLength:authToken?.length},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'I'})}).catch(()=>{});
+        // #endregion
       } catch (e) {
+        // #region agent log
+        fetch('http://127.0.0.1:7242/ingest/315c2d74-b9bb-430e-9c51-123c9436e40e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'login/page.tsx:191',message:'Failed to save token',data:{mountId,error:e instanceof Error?e.message:'unknown'},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'I'})}).catch(()=>{});
+        // #endregion
         console.error('Failed to save token:', e);
         throw new Error('Failed to save authentication token');
       }
@@ -200,7 +220,7 @@ export default function LoginPage() {
 
       // Immediate redirect - no delays, no sessionStorage flags
       // #region agent log
-      fetch('http://127.0.0.1:7242/ingest/315c2d74-b9bb-430e-9c51-123c9436e40e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'login/page.tsx:227',message:'Redirecting to home after login',data:{mountId,hasToken:!!authToken,pathname:typeof window!=='undefined'?window.location.pathname:'SSR'},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'G'})}).catch(()=>{});
+      fetch('http://127.0.0.1:7242/ingest/315c2d74-b9bb-430e-9c51-123c9436e40e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'login/page.tsx:227',message:'Redirecting to home after successful login',data:{mountId,hasToken:!!authToken,pathname:typeof window!=='undefined'?window.location.pathname:'SSR'},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'G'})}).catch(()=>{});
       // #endregion
       if (typeof window !== 'undefined') {
         window.location.replace('/');
@@ -208,6 +228,9 @@ export default function LoginPage() {
         router.replace('/');
       }
     } catch (err: any) {
+      // #region agent log
+      fetch('http://127.0.0.1:7242/ingest/315c2d74-b9bb-430e-9c51-123c9436e40e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'login/page.tsx:235',message:'Login API call failed',data:{mountId,error:err?.message||'unknown',errorType:err?.constructor?.name,stackTrace:err?.stack?.split('\n').slice(0,5).join('\n')},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'I'})}).catch(()=>{});
+      // #endregion
       console.error('Login error:', err);
       setError(err.message || 'Login failed. Please check your credentials.');
       setLoading(false);
@@ -215,6 +238,7 @@ export default function LoginPage() {
       isRedirecting.current = false;
       hasCheckedAuth.current = false;
       authCheckInProgress.current = false;
+      // CRITICAL: DO NOT redirect on error - stay on login page
     }
   };
 

@@ -24,7 +24,7 @@ export function SearchBar() {
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           placeholder="Search products, fandoms, sellers..."
-          className="w-full px-4 py-3 pl-10 pr-4 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-accent"
+          className="w-full px-3 sm:px-4 py-2 sm:py-3 pl-8 sm:pl-10 pr-20 sm:pr-24 text-sm sm:text-base rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-accent"
           style={{
             backgroundColor: theme.colors.surface,
             color: theme.colors.text.primary,
@@ -33,7 +33,7 @@ export function SearchBar() {
         />
         <button
           type="submit"
-          className="absolute right-2 top-1/2 transform -translate-y-1/2 px-4 py-2 rounded-md"
+          className="absolute right-1 sm:right-2 top-1/2 transform -translate-y-1/2 px-3 sm:px-4 py-1.5 sm:py-2 text-xs sm:text-sm rounded-md font-medium transition-colors"
           style={{
             backgroundColor: theme.colors.accent,
             color: '#ffffff',

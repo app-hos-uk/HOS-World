@@ -17,20 +17,20 @@ export function FandomCollection() {
 
   return (
     <section>
-      <div className="flex items-center justify-between mb-6">
-        <h2 className="text-3xl font-bold" style={{ color: theme.colors.text.primary }}>
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-4 sm:mb-6 gap-3 sm:gap-0">
+        <h2 className="text-2xl sm:text-3xl font-bold" style={{ color: theme.colors.text.primary }}>
           Fandom Collection
         </h2>
         <Link
           href="/fandoms"
-          className="text-accent hover:underline font-medium"
+          className="text-sm sm:text-base text-accent hover:underline font-medium"
           style={{ color: theme.colors.accent }}
         >
           See more
         </Link>
       </div>
 
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3 sm:gap-4">
         {fandoms.map((fandom) => (
           <Link
             key={fandom.id}
@@ -40,8 +40,8 @@ export function FandomCollection() {
             prefetch={true}
           >
             <div className="aspect-square bg-gray-200"></div>
-            <div className="p-3">
-              <h3 className="font-semibold text-center" style={{ color: theme.colors.text.primary }}>
+            <div className="p-2 sm:p-3">
+              <h3 className="font-semibold text-center text-xs sm:text-sm" style={{ color: theme.colors.text.primary }}>
                 {fandom.name}
               </h3>
             </div>

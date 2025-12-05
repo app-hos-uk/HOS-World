@@ -34,8 +34,8 @@ function PaymentContent() {
     return (
       <div className="min-h-screen bg-white">
         <Header />
-        <main className="container mx-auto px-4 py-12">
-          <p>Loading order details...</p>
+        <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 lg:py-12">
+          <p className="text-sm sm:text-base">Loading order details...</p>
         </main>
         <Footer />
       </div>
@@ -46,8 +46,8 @@ function PaymentContent() {
     return (
       <div className="min-h-screen bg-white">
         <Header />
-        <main className="container mx-auto px-4 py-12">
-          <h1 className="text-4xl font-bold mb-8">Order Not Found</h1>
+        <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 lg:py-12">
+          <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold mb-6 sm:mb-8">Order Not Found</h1>
         </main>
         <Footer />
       </div>
@@ -57,14 +57,14 @@ function PaymentContent() {
   return (
     <div className="min-h-screen bg-white">
       <Header />
-      <main className="container mx-auto px-4 py-12 max-w-4xl">
-        <h1 className="text-4xl font-bold mb-8">Complete Payment</h1>
+      <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 lg:py-12 max-w-4xl">
+        <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold mb-6 sm:mb-8">Complete Payment</h1>
         
         {/* Seller Information - Revealed at Payment Page */}
         {order.seller && (
-          <div className="bg-gray-50 border rounded-lg p-6 mb-6">
-            <h2 className="text-xl font-semibold mb-4">Seller Information</h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="bg-gray-50 border rounded-lg p-4 sm:p-6 mb-4 sm:mb-6">
+            <h2 className="text-lg sm:text-xl font-semibold mb-3 sm:mb-4">Seller Information</h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4">
               <div>
                 <p className="text-sm text-gray-600">Store Name</p>
                 <p className="font-medium">{order.seller.storeName}</p>
@@ -82,8 +82,8 @@ function PaymentContent() {
         )}
 
         {/* Order Summary */}
-        <div className="bg-white border rounded-lg p-6 mb-6">
-          <h2 className="text-xl font-semibold mb-4">Order Summary</h2>
+        <div className="bg-white border rounded-lg p-4 sm:p-6 mb-4 sm:mb-6">
+          <h2 className="text-lg sm:text-xl font-semibold mb-3 sm:mb-4">Order Summary</h2>
           <div className="space-y-2">
             {order.items?.map((item: any, index: number) => (
               <div key={index} className="flex justify-between">
@@ -109,10 +109,10 @@ function PaymentContent() {
         </div>
 
         {/* Payment Form */}
-        <div className="bg-white border rounded-lg p-6">
-          <h2 className="text-xl font-semibold mb-4">Payment Details</h2>
-          <p className="text-gray-600 mb-6">Payment integration coming soon...</p>
-          <button className="w-full bg-purple-600 text-white py-3 rounded-lg font-medium hover:bg-purple-700 transition-colors">
+        <div className="bg-white border rounded-lg p-4 sm:p-6">
+          <h2 className="text-lg sm:text-xl font-semibold mb-3 sm:mb-4">Payment Details</h2>
+          <p className="text-sm sm:text-base text-gray-600 mb-4 sm:mb-6">Payment integration coming soon...</p>
+          <button className="w-full bg-purple-600 text-white py-2.5 sm:py-3 text-sm sm:text-base rounded-lg font-medium hover:bg-purple-700 transition-colors">
             Complete Payment
           </button>
         </div>
@@ -127,8 +127,8 @@ export default function PaymentPage() {
     <Suspense fallback={
       <div className="min-h-screen bg-white">
         <Header />
-        <main className="container mx-auto px-4 py-12">
-          <p>Loading...</p>
+        <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 lg:py-12">
+          <p className="text-sm sm:text-base">Loading...</p>
         </main>
         <Footer />
       </div>

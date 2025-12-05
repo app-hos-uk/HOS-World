@@ -146,7 +146,7 @@ export function HeroBanner({
   const currentSlideData = slides[currentSlide];
 
   return (
-    <div className="relative w-full h-[600px] md:h-[700px] overflow-hidden">
+    <div className="relative w-full h-[400px] sm:h-[500px] md:h-[600px] lg:h-[700px] overflow-hidden">
       {/* Background Image with Parallax Effect */}
       <div
         className={`absolute inset-0 bg-cover bg-center transition-all duration-1000 ease-in-out ${getAnimationClass()}`}
@@ -164,30 +164,30 @@ export function HeroBanner({
 
       {/* Content */}
       <div className="relative z-10 h-full flex items-center">
-        <div className="container mx-auto px-4 md:px-8">
+        <div className="container mx-auto px-4 sm:px-6 md:px-8">
           <div className="max-w-2xl">
             {/* Fandom Badge - Purple with gold accent */}
             {currentSlideData.fandom && (
-              <div className="mb-4 inline-block">
-                <span className="px-4 py-2 bg-gradient-to-r from-purple-700 to-indigo-700 text-white text-sm font-semibold rounded-full font-primary shadow-lg border border-amber-400/30">
+              <div className="mb-3 sm:mb-4 inline-block">
+                <span className="px-3 sm:px-4 py-1.5 sm:py-2 bg-gradient-to-r from-purple-700 to-indigo-700 text-white text-xs sm:text-sm font-semibold rounded-full font-primary shadow-lg border border-amber-400/30">
                   {currentSlideData.fandom}
                 </span>
               </div>
             )}
 
             {/* Subtitle - Gold/Amber */}
-            <p className="text-amber-400 text-lg md:text-xl mb-2 font-primary font-medium tracking-wide drop-shadow-lg">
+            <p className="text-amber-400 text-sm sm:text-base md:text-lg lg:text-xl mb-2 font-primary font-medium tracking-wide drop-shadow-lg">
               {currentSlideData.subtitle}
             </p>
 
             {/* Title - White with purple shadow */}
-            <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold text-white mb-4 font-primary leading-tight drop-shadow-2xl" style={{ textShadow: '2px 2px 8px rgba(124, 58, 237, 0.5)' }}>
+            <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-6xl xl:text-7xl font-bold text-white mb-3 sm:mb-4 font-primary leading-tight drop-shadow-2xl" style={{ textShadow: '2px 2px 8px rgba(124, 58, 237, 0.5)' }}>
               {currentSlideData.title}
             </h1>
 
             {/* Description */}
             {currentSlideData.description && (
-              <p className="text-purple-100 text-lg md:text-xl mb-8 font-secondary leading-relaxed max-w-xl drop-shadow-md">
+              <p className="text-purple-100 text-sm sm:text-base md:text-lg lg:text-xl mb-6 sm:mb-8 font-secondary leading-relaxed max-w-xl drop-shadow-md">
                 {currentSlideData.description}
               </p>
             )}
@@ -195,7 +195,7 @@ export function HeroBanner({
             {/* CTA Button - Purple to Indigo gradient with gold hover */}
             <Link
               href={currentSlideData.link}
-              className="inline-block px-8 py-4 bg-gradient-to-r from-purple-700 via-indigo-700 to-purple-700 hover:from-purple-600 hover:via-indigo-600 hover:to-purple-600 text-white font-semibold rounded-lg transition-all duration-300 transform hover:scale-105 shadow-xl hover:shadow-2xl font-primary text-lg border border-amber-400/30 hover:border-amber-400/50"
+              className="inline-block px-5 sm:px-6 md:px-8 py-2.5 sm:py-3 md:py-4 bg-gradient-to-r from-purple-700 via-indigo-700 to-purple-700 hover:from-purple-600 hover:via-indigo-600 hover:to-purple-600 text-white font-semibold rounded-lg transition-all duration-300 transform hover:scale-105 shadow-xl hover:shadow-2xl font-primary text-sm sm:text-base md:text-lg border border-amber-400/30 hover:border-amber-400/50"
               prefetch={true}
             >
               {currentSlideData.buttonText} →
@@ -209,24 +209,24 @@ export function HeroBanner({
         <>
           <button
             onClick={prevSlide}
-            className="absolute left-4 top-1/2 -translate-y-1/2 z-20 p-3 bg-purple-800/80 hover:bg-purple-700/90 backdrop-blur-sm rounded-full text-white transition-all duration-300 hover:scale-110 border border-amber-400/30 shadow-lg"
+            className="absolute left-2 sm:left-4 top-1/2 -translate-y-1/2 z-20 p-2 sm:p-3 bg-purple-800/80 hover:bg-purple-700/90 backdrop-blur-sm rounded-full text-white transition-all duration-300 hover:scale-110 border border-amber-400/30 shadow-lg"
             aria-label="Previous slide"
           >
-            <ChevronLeftIcon className="w-6 h-6" />
+            <ChevronLeftIcon className="w-4 h-4 sm:w-6 sm:h-6" />
           </button>
           <button
             onClick={nextSlide}
-            className="absolute right-4 top-1/2 -translate-y-1/2 z-20 p-3 bg-purple-800/80 hover:bg-purple-700/90 backdrop-blur-sm rounded-full text-white transition-all duration-300 hover:scale-110 border border-amber-400/30 shadow-lg"
+            className="absolute right-2 sm:right-4 top-1/2 -translate-y-1/2 z-20 p-2 sm:p-3 bg-purple-800/80 hover:bg-purple-700/90 backdrop-blur-sm rounded-full text-white transition-all duration-300 hover:scale-110 border border-amber-400/30 shadow-lg"
             aria-label="Next slide"
           >
-            <ChevronRightIcon className="w-6 h-6" />
+            <ChevronRightIcon className="w-4 h-4 sm:w-6 sm:h-6" />
           </button>
         </>
       )}
 
       {/* Indicators - Purple with gold active */}
       {showIndicators && (
-        <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-20 flex space-x-2">
+        <div className="absolute bottom-4 sm:bottom-6 left-1/2 -translate-x-1/2 z-20 flex space-x-2">
           {slides.map((_, index) => (
             <button
               key={index}

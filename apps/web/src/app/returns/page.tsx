@@ -5,16 +5,16 @@ export default function ReturnsPage() {
   return (
     <div className="min-h-screen bg-white">
       <Header />
-      <main className="container mx-auto px-4 py-12">
-        <h1 className="text-4xl font-bold mb-8">Returns & Refunds</h1>
-        <div className="max-w-3xl mx-auto space-y-8">
+      <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 lg:py-12">
+        <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold mb-6 sm:mb-8">Returns & Refunds</h1>
+        <div className="max-w-3xl mx-auto space-y-6 sm:space-y-8">
           <section>
-            <h2 className="text-2xl font-semibold mb-4">Return Policy</h2>
-            <p className="text-gray-600 mb-4">
+            <h2 className="text-xl sm:text-2xl font-semibold mb-3 sm:mb-4">Return Policy</h2>
+            <p className="text-sm sm:text-base text-gray-600 mb-3 sm:mb-4">
               We want you to be completely satisfied with your purchase. You can return most items
               within 30 days of delivery for a full refund.
             </p>
-            <ul className="list-disc list-inside space-y-2 text-gray-600">
+            <ul className="list-disc list-inside space-y-1.5 sm:space-y-2 text-sm sm:text-base text-gray-600">
               <li>Items must be in original condition with tags attached</li>
               <li>Returns must be initiated within 30 days of delivery</li>
               <li>Original shipping costs are non-refundable</li>
@@ -22,8 +22,8 @@ export default function ReturnsPage() {
             </ul>
           </section>
           <section>
-            <h2 className="text-2xl font-semibold mb-4">How to Return</h2>
-            <ol className="list-decimal list-inside space-y-2 text-gray-600">
+            <h2 className="text-xl sm:text-2xl font-semibold mb-3 sm:mb-4">How to Return</h2>
+            <ol className="list-decimal list-inside space-y-1.5 sm:space-y-2 text-sm sm:text-base text-gray-600">
               <li>Log into your account and go to &quot;My Orders&quot;</li>
               <li>Select the item you want to return</li>
               <li>Click &quot;Request Return&quot; and follow the instructions</li>
@@ -32,8 +32,8 @@ export default function ReturnsPage() {
             </ol>
           </section>
           <section>
-            <h2 className="text-2xl font-semibold mb-4">Refund Processing</h2>
-            <p className="text-gray-600">
+            <h2 className="text-xl sm:text-2xl font-semibold mb-3 sm:mb-4">Refund Processing</h2>
+            <p className="text-sm sm:text-base text-gray-600">
               Refunds will be processed to your original payment method within 5-10 business days
               after we receive your return.
             </p>
