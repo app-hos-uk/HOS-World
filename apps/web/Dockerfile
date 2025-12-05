@@ -1,5 +1,5 @@
 # Web Service Dockerfile
-# Cache-bust: 2025-12-03-15:30
+# Cache-bust: 2025-12-05-20:15 - Force fresh build to deploy latest login fixes
 FROM node:18-slim AS base
 
 # Install pnpm
