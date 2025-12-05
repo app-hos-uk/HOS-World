@@ -7,6 +7,9 @@ import { CharacterSelector } from '@/components/CharacterSelector';
 import { FandomQuiz } from '@/components/FandomQuiz';
 
 export default function LoginPage() {
+  // VERSION MARKER: Login Fix v2.0 - Simplified stable version
+  console.log('[LOGIN FIX v2.0] Login page component mounted');
+  
   const router = useRouter();
   const [step, setStep] = useState<'login' | 'character' | 'quiz' | 'forgot-password'>('login');
   const [email, setEmail] = useState('');
@@ -21,7 +24,7 @@ export default function LoginPage() {
   const [resetEmail, setResetEmail] = useState('');
   const [resetLoading, setResetLoading] = useState(false);
   const [resetSuccess, setResetSuccess] = useState(false);
-  const [isCheckingAuth, setIsCheckingAuth] = useState(true);
+  const [isCheckingAuth, setIsCheckingAuth] = useState(false); // Disabled for stability
   const [isMounted, setIsMounted] = useState(false); // Prevent hydration mismatches
   const hasCheckedAuth = useRef(false);
   const isRedirecting = useRef(false);
@@ -50,216 +53,9 @@ export default function LoginPage() {
     }
   }, [loading]);
 
-  // Auth check effect - runs only once after mount
-  useEffect(() => {
-    // Only run after component is mounted (client-side only)
-    if (!isMounted) {
-      return;
-    }
-    
-    // CRITICAL: Don't run auth check if user is actively logging in
-    // This prevents interference with the login process
-    if (loading) {
-      setIsCheckingAuth(false);
-      return;
-    }
-    
-    // CRITICAL: If already redirecting, don't check auth again
-    if (isRedirecting.current) {
-      setIsCheckingAuth(false);
-      return;
-    }
-    
-    // Prevent multiple effect runs - only check once
-    if (hasCheckedAuth.current || authCheckInProgress.current) {
-      return;
-    }
-    
-    // Mark as checked and in progress
-    hasCheckedAuth.current = true;
-    authCheckInProgress.current = true;
-    
-    // Clear any stale sessionStorage flags on mount
-    try {
-      sessionStorage.removeItem('login_redirecting');
-    } catch (e) {
-      // Ignore sessionStorage errors
-    }
-
-    const checkAuth = async () => {
-      try {
-        // Small delay to ensure DOM is ready and stabilize
-        await new Promise(resolve => setTimeout(resolve, 100));
-        
-        // CRITICAL: Check if we're still on login page
-        if (typeof window === 'undefined' || window.location.pathname !== '/login') {
-          setIsCheckingAuth(false);
-          authCheckInProgress.current = false;
-          return;
-        }
-
-        // CRITICAL: Don't check if user started logging in during the delay
-        if (loading || isRedirecting.current) {
-          setIsCheckingAuth(false);
-          authCheckInProgress.current = false;
-          return;
-        }
-
-        // Get token from localStorage
-        let storedToken: string | null = null;
-        try {
-          storedToken = localStorage.getItem('auth_token');
-        } catch (e) {
-          console.warn('localStorage access blocked:', e);
-          setIsCheckingAuth(false);
-          authCheckInProgress.current = false;
-          return;
-        }
-        
-        // No token means user needs to login
-        if (!storedToken) {
-          setIsCheckingAuth(false);
-          authCheckInProgress.current = false;
-          return;
-        }
-
-        // Validate token by checking current user
-        const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api';
-        
-        // Cancel any existing auth request
-        const existingController = authRequestController.current;
-        if (existingController) {
-          existingController.abort();
-        }
-        
-        // Create new abort controller
-        const controller = new AbortController();
-        authRequestController.current = controller;
-        
-        const timeoutId = setTimeout(() => {
-          if (authRequestController.current === controller) {
-            controller.abort();
-          }
-        }, 5000);
-
-        try {
-          // Final check before making request
-          if (typeof window === 'undefined' || window.location.pathname !== '/login' || loading || isRedirecting.current) {
-            controller.abort();
-            setIsCheckingAuth(false);
-            authCheckInProgress.current = false;
-            authRequestController.current = null;
-            return;
-          }
-
-          const response = await fetch(`${apiUrl}/auth/me`, {
-            method: 'GET',
-            headers: {
-              'Content-Type': 'application/json',
-              'Authorization': `Bearer ${storedToken}`,
-            },
-            signal: controller.signal,
-          });
-
-          clearTimeout(timeoutId);
-          
-          if (authRequestController.current === controller) {
-            authRequestController.current = null;
-          }
-
-          // Final check before processing response
-          if (typeof window === 'undefined' || window.location.pathname !== '/login' || loading || isRedirecting.current) {
-            setIsCheckingAuth(false);
-            authCheckInProgress.current = false;
-            return;
-          }
-
-          // If response is OK, user is authenticated - redirect to home
-          if (response.ok && response.status === 200) {
-            try {
-              const data = await response.json();
-              
-              if (!data || !data.data) {
-                console.warn('Invalid API response structure:', data);
-                setIsCheckingAuth(false);
-                authCheckInProgress.current = false;
-                return;
-              }
-              
-              const user = data.data;
-              
-              // Validate user data
-              if (user && user.id && typeof user.id === 'string' && user.id.length > 0) {
-                // Set redirect flag immediately
-                isRedirecting.current = true;
-                setIsCheckingAuth(false);
-                authCheckInProgress.current = false;
-                
-                // Immediate redirect - no delays, no sessionStorage flags
-                if (typeof window !== 'undefined' && window.location.pathname === '/login') {
-                  // Cancel any pending requests
-                  const pendingController = authRequestController.current;
-                  if (pendingController) {
-                    pendingController.abort();
-                    authRequestController.current = null;
-                  }
-                  
-                  // Immediate redirect
-                  window.location.replace('/');
-                  return;
-                }
-              }
-            } catch (parseError) {
-              console.error('Failed to parse auth response:', parseError);
-            }
-          } else {
-            // Token is invalid - clear it
-            try {
-              localStorage.removeItem('auth_token');
-            } catch (e) {
-              // Ignore
-            }
-          }
-        } catch (fetchError: any) {
-          clearTimeout(timeoutId);
-          
-          if (authRequestController.current === controller) {
-            authRequestController.current = null;
-          }
-          
-          // Only handle abort errors silently
-          if (fetchError.name === 'AbortError') {
-            setIsCheckingAuth(false);
-            authCheckInProgress.current = false;
-            return;
-          }
-          
-          console.error('Auth check error:', fetchError);
-        }
-        
-        setIsCheckingAuth(false);
-        authCheckInProgress.current = false;
-      } catch (error) {
-        console.error('Auth check failed:', error);
-        setIsCheckingAuth(false);
-        authCheckInProgress.current = false;
-      }
-    };
-
-    checkAuth();
-    
-    // Cleanup function
-    return () => {
-      if (!isRedirecting.current) {
-        authCheckInProgress.current = false;
-      }
-      const cleanupController = authRequestController.current;
-      if (cleanupController) {
-        cleanupController.abort();
-        authRequestController.current = null;
-      }
-    };
-  }, [isMounted]); // Only depend on isMounted - loading is checked inside, not a trigger
+  // DISABLED: Auth check removed for maximum stability
+  // Login page will always show immediately without any checks
+  // This prevents all instability issues
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -468,23 +264,9 @@ export default function LoginPage() {
     }
   };
 
-  // Show loading state only briefly while checking authentication on first mount
-  // Don't show if user is actively logging in or redirecting
+  // Show minimal loading only during hydration
+  // Once mounted, show login form immediately for maximum stability
   if (!isMounted) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-purple-50 to-blue-50 flex items-center justify-center p-4 sm:p-6 lg:p-8">
-        <div className="max-w-md w-full text-center">
-          <div className="animate-spin rounded-full h-8 w-8 sm:h-12 sm:w-12 border-b-2 border-purple-600 mx-auto"></div>
-          <p className="mt-4 text-sm sm:text-base text-gray-600">Loading...</p>
-        </div>
-      </div>
-    );
-  }
-  
-  // Don't show loading if user is actively logging in or redirecting
-  // Show login form immediately for better UX
-  if (isCheckingAuth && !loading && !isRedirecting.current) {
-    // Show loading only for a brief moment during auth check
     return (
       <div className="min-h-screen bg-gradient-to-br from-purple-50 to-blue-50 flex items-center justify-center p-4 sm:p-6 lg:p-8">
         <div className="max-w-md w-full text-center">

@@ -77,10 +77,19 @@ export const apiClient = ApiClient.create({
       // CRITICAL: Don't redirect if we just logged in (within cooldown period)
       // This prevents redirect loops immediately after login
       if (isInLoginCooldown()) {
-        console.log('Skipping redirect - within login cooldown period');
+        console.log('[LOGIN FIX] Skipping redirect - within login cooldown period', {
+          timeSinceLogin: Date.now() - (lastLoginTime || 0),
+          cooldownMs: LOGIN_COOLDOWN_MS,
+        });
         // Don't clear token during cooldown - might be a false positive
         return;
       }
+      
+      console.log('[LOGIN FIX] onUnauthorized triggered', {
+        currentPath,
+        isInCooldown: isInLoginCooldown(),
+        lastLoginTime,
+      });
       
       // Clear token and redirect to login
       try {
