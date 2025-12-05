@@ -48,9 +48,11 @@ export class ApiClient {
 
     const url = `${this.baseUrl}${endpoint}`;
     
-    // Log request in development (only in browser, skip in build)
-    if (typeof window !== 'undefined' && typeof process !== 'undefined' && (process as any).env?.NODE_ENV === 'development') {
-      console.log('API Request:', { method: options.method || 'GET', url, headers });
+    // Log request in development (only in browser)
+    // Note: process.env check removed to avoid TypeScript errors in browser package
+    if (typeof window !== 'undefined') {
+      // Development logging can be enabled via browser console if needed
+      // console.log('API Request:', { method: options.method || 'GET', url, headers });
     }
 
     try {
@@ -98,9 +100,11 @@ export class ApiClient {
 
       const data = await response.json();
       
-      // Log response in development for debugging (only in browser, skip in build)
-      if (typeof window !== 'undefined' && typeof process !== 'undefined' && (process as any).env?.NODE_ENV === 'development') {
-        console.log('API Response:', { url, status: response.status, data });
+      // Log response in development for debugging (only in browser)
+      // Note: process.env check removed to avoid TypeScript errors in browser package
+      if (typeof window !== 'undefined') {
+        // Development logging can be enabled via browser console if needed
+        // console.log('API Response:', { url, status: response.status, data });
       }
       
       return data;
