@@ -22,12 +22,23 @@ export default function LoginPage() {
   const [resetLoading, setResetLoading] = useState(false);
   const [resetSuccess, setResetSuccess] = useState(false);
   const [isCheckingAuth, setIsCheckingAuth] = useState(true);
+  const [isMounted, setIsMounted] = useState(false); // Prevent hydration mismatches
   const hasCheckedAuth = useRef(false);
   const isRedirecting = useRef(false);
   const authCheckInProgress = useRef(false); // Prevent concurrent auth checks
   const authRequestController = useRef<AbortController | null>(null); // Track active request
 
+  // Set mounted state after hydration to prevent server/client mismatch
   useEffect(() => {
+    setIsMounted(true);
+  }, []);
+
+  useEffect(() => {
+    // CRITICAL: Only run auth check after component is mounted (client-side only)
+    // This prevents hydration mismatches between server and client
+    if (!isMounted) {
+      return;
+    }
     // Prevent multiple effect runs
     // This can happen in React Strict Mode or with browser extensions
     if (hasCheckedAuth.current || authCheckInProgress.current) {
@@ -145,29 +156,37 @@ export default function LoginPage() {
               // CRITICAL: Only redirect if we have a valid user with an ID
               // AND we're still on the login page
               // AND we haven't already set the redirect flag
+              // AND component is fully mounted (hydration complete)
               if (
+                isMounted &&
                 user && 
                 user.id && 
                 typeof user.id === 'string' &&
                 user.id.length > 0 &&
                 !isRedirecting.current && 
+                typeof window !== 'undefined' &&
                 window.location.pathname === '/login'
               ) {
                 console.log('Valid user found, redirecting to home:', user.email);
                 isRedirecting.current = true;
                 setIsCheckingAuth(false);
                 
-                // Use setTimeout to ensure state updates complete
-                setTimeout(() => {
-                  // Double-check we're still on login page before redirecting
-                  // Don't check isRedirecting here since we just set it
-                  if (window.location.pathname === '/login') {
+                // Use requestAnimationFrame to ensure DOM is ready and hydration is complete
+                // This prevents hydration errors by ensuring redirect happens after React hydration
+                requestAnimationFrame(() => {
+                  // Double-check we're still on login page and mounted before redirecting
+                  if (
+                    isMounted &&
+                    typeof window !== 'undefined' &&
+                    window.location.pathname === '/login' &&
+                    isRedirecting.current // Ensure flag is still set
+                  ) {
                     router.replace('/');
                   } else {
-                    // If we're not on login page anymore, reset the flag
+                    // If conditions changed, reset the flag
                     isRedirecting.current = false;
                   }
-                }, 0);
+                });
                 return;
               } else {
                 console.warn('User validation failed:', {
@@ -252,7 +271,7 @@ export default function LoginPage() {
         authRequestController.current = null;
       }
     };
-  }, [router]);
+  }, [router, isMounted]); // Add isMounted to dependencies
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -394,8 +413,9 @@ export default function LoginPage() {
   };
 
   // Show loading state while checking authentication
-  // Only show if we're actually checking and not redirecting
-  if (isCheckingAuth && !isRedirecting.current) {
+  // Only show if we're actually checking, not redirecting, and component is mounted
+  // This prevents hydration mismatch by not showing different content on server vs client
+  if (!isMounted || (isCheckingAuth && !isRedirecting.current)) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-purple-50 to-blue-50 flex items-center justify-center p-4 sm:p-6 lg:p-8">
         <div className="max-w-md w-full text-center">
