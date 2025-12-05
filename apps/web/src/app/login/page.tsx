@@ -11,19 +11,31 @@ export default function LoginPage() {
   const pathname = usePathname();
   
   // #region agent log
-  const mountId = `mount_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-  const stackTrace = new Error().stack || '';
-  fetch('http://127.0.0.1:7242/ingest/315c2d74-b9bb-430e-9c51-123c9436e40e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'login/page.tsx:11',message:'Component render started',data:{mountId,pathname:pathname||(typeof window!=='undefined'?window.location.pathname:'SSR'),stackTrace:stackTrace.split('\n').slice(0,5).join('\n')},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A,B,C'})}).catch(()=>{});
+  // Move mountId generation to useEffect to avoid creating new ID on every render
+  const mountIdRef = useRef<string | null>(null);
+  if (!mountIdRef.current) {
+    mountIdRef.current = `mount_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+  }
+  const mountId = mountIdRef.current;
+  
+  // Log render start only on mount, not every render
+  useEffect(() => {
+    const stackTrace = new Error().stack || '';
+    fetch('http://127.0.0.1:7242/ingest/315c2d74-b9bb-430e-9c51-123c9436e40e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'login/page.tsx:13',message:'Component render started',data:{mountId,pathname:pathname||(typeof window!=='undefined'?window.location.pathname:'SSR'),stackTrace:stackTrace.split('\n').slice(0,5).join('\n')},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A,B,C'})}).catch(()=>{});
+  }, []);
   // #endregion
   
-  // VERSION MARKER: Login Fix v5.0 - Disabled Strict Mode, Memoized ThemeProviderWrapper
-  console.log('[LOGIN FIX v5.0] Login page component mounted');
+  // VERSION MARKER: Login Fix v6.0 - Removed pathname tracking and optimized debug logs
+  console.log('[LOGIN FIX v6.0] Login page component mounted');
   
   const mountCountRef = useRef(0);
   mountCountRef.current += 1;
   
   // #region agent log
-  fetch('http://127.0.0.1:7242/ingest/315c2d74-b9bb-430e-9c51-123c9436e40e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'login/page.tsx:20',message:'Component render count',data:{mountId,mountCount:mountCountRef.current,pathname:pathname||(typeof window!=='undefined'?window.location.pathname:'SSR')},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A,C'})}).catch(()=>{});
+  // Log render count only on mount, not every render - moved to useEffect
+  useEffect(() => {
+    fetch('http://127.0.0.1:7242/ingest/315c2d74-b9bb-430e-9c51-123c9436e40e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'login/page.tsx:31',message:'Component render count',data:{mountId,mountCount:mountCountRef.current,pathname:pathname||(typeof window!=='undefined'?window.location.pathname:'SSR')},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A,C'})}).catch(()=>{});
+  }, []);
   // #endregion
   const [step, setStep] = useState<'login' | 'character' | 'quiz' | 'forgot-password'>('login');
   const [email, setEmail] = useState('');
@@ -88,35 +100,8 @@ export default function LoginPage() {
     };
   }, []);
 
-  // DEBUG: Track pathname changes and router events
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      const currentPath = window.location.pathname;
-      const prevPath = sessionStorage.getItem('prev_pathname') || 'none';
-      // #region agent log
-      fetch('http://127.0.0.1:7242/ingest/315c2d74-b9bb-430e-9c51-123c9436e40e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'login/page.tsx:71',message:'Pathname change detected',data:{mountId,currentPath,prevPath,hash:window.location.hash,search:window.location.search},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'B'})}).catch(()=>{});
-      // #endregion
-      sessionStorage.setItem('prev_pathname', currentPath);
-      console.log('[LOGIN FIX v2.0] Pathname changed to:', currentPath);
-      
-      if (currentPath !== '/login' && currentPath !== '/') {
-        console.warn('[LOGIN FIX v2.0] Unexpected pathname:', currentPath);
-      }
-    }
-    
-    // Track router events
-    const handleRouteChange = () => {
-      const path = typeof window !== 'undefined' ? window.location.pathname : 'SSR';
-      // #region agent log
-      fetch('http://127.0.0.1:7242/ingest/315c2d74-b9bb-430e-9c51-123c9436e40e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'login/page.tsx:84',message:'Router navigation event',data:{mountId,pathname:path},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'B'})}).catch(()=>{});
-      // #endregion
-    };
-    
-    if (typeof window !== 'undefined') {
-      window.addEventListener('popstate', handleRouteChange);
-      return () => window.removeEventListener('popstate', handleRouteChange);
-    }
-  }, []);
+  // REMOVED: Pathname tracking useEffect - was causing excessive re-renders
+  // Next.js router handles navigation internally, manual tracking unnecessary
 
   // DISABLED: Auth check removed for maximum stability
   // Login page will always show immediately without any checks
