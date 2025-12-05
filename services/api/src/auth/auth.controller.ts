@@ -35,10 +35,9 @@ export class AuthController {
   }
 
   @Public()
-  @UseGuards(LocalAuthGuard)
   @Post('login')
   @HttpCode(HttpStatus.OK)
-  async login(@Body() loginDto: LoginDto, @Request() req: any): Promise<ApiResponse<AuthResponse>> {
+  async login(@Body() loginDto: LoginDto): Promise<ApiResponse<AuthResponse>> {
     const result = await this.authService.login(loginDto);
     return {
       data: result,
