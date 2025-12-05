@@ -57,15 +57,26 @@ export default function LoginPage() {
     
     // CRITICAL: Check sessionStorage to see if we're already redirecting
     // This persists across component re-mounts and prevents redirect loops
+    // BUT: Only skip if we're not in the middle of a login/register attempt
+    // (The login/register handlers will clear this flag when user actively logs in)
     try {
       const isRedirectingInSession = sessionStorage.getItem('login_redirecting');
       if (isRedirectingInSession === 'true') {
-        console.log('Redirect already in progress (from sessionStorage), skipping auth check');
-        isRedirecting.current = true;
-        setIsCheckingAuth(false);
-        authCheckInProgress.current = false;
-        // Don't reset the flag - let the redirect complete
-        return;
+        // Check if user is actively trying to log in (form is being submitted)
+        // If loading is true, user is logging in, so don't skip auth check
+        // Instead, clear the flag and allow login to proceed
+        if (loading) {
+          // User is actively logging in, clear the flag
+          sessionStorage.removeItem('login_redirecting');
+          isRedirecting.current = false;
+        } else {
+          // Not actively logging in, skip auth check to prevent redirect loop
+          console.log('Redirect already in progress (from sessionStorage), skipping auth check');
+          isRedirecting.current = true;
+          setIsCheckingAuth(false);
+          authCheckInProgress.current = false;
+          return;
+        }
       }
     } catch (e) {
       // sessionStorage might not be available
@@ -331,6 +342,17 @@ export default function LoginPage() {
     setError('');
     setLoading(true);
 
+    // CRITICAL: Clear sessionStorage flag at the START of login attempt
+    // This prevents "Redirect already in progress" message when user is actively logging in
+    try {
+      sessionStorage.removeItem('login_redirecting');
+      // Also reset the redirect flag to allow fresh login
+      isRedirecting.current = false;
+      hasCheckedAuth.current = false;
+    } catch (e) {
+      // Ignore sessionStorage errors
+    }
+
     // Validate inputs
     if (!email || !password) {
       setError('Please fill in all fields');
@@ -404,6 +426,17 @@ export default function LoginPage() {
     e.preventDefault();
     setError('');
     setLoading(true);
+
+    // CRITICAL: Clear sessionStorage flag at the START of registration attempt
+    // This prevents "Redirect already in progress" message when user is actively registering
+    try {
+      sessionStorage.removeItem('login_redirecting');
+      // Also reset the redirect flag to allow fresh registration
+      isRedirecting.current = false;
+      hasCheckedAuth.current = false;
+    } catch (e) {
+      // Ignore sessionStorage errors
+    }
 
     try {
       const response = await apiClient.register({
