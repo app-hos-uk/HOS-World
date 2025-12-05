@@ -63,8 +63,16 @@ export const apiClient = ApiClient.create({
     if (typeof window !== 'undefined') {
       const currentPath = window.location.pathname;
       
+      console.log('[LOGIN FIX] onUnauthorized called', {
+        currentPath,
+        isInCooldown: isInLoginCooldown(),
+        lastLoginTime,
+        timestamp: Date.now(),
+      });
+      
       // CRITICAL: Don't redirect if we're already on login page
       if (currentPath === '/login' || currentPath.includes('/login')) {
+        console.log('[LOGIN FIX] Already on login page, skipping redirect');
         // Just clear the token, don't redirect
         try {
           localStorage.removeItem('auth_token');
@@ -80,16 +88,11 @@ export const apiClient = ApiClient.create({
         console.log('[LOGIN FIX] Skipping redirect - within login cooldown period', {
           timeSinceLogin: Date.now() - (lastLoginTime || 0),
           cooldownMs: LOGIN_COOLDOWN_MS,
+          currentPath,
         });
         // Don't clear token during cooldown - might be a false positive
         return;
       }
-      
-      console.log('[LOGIN FIX] onUnauthorized triggered', {
-        currentPath,
-        isInCooldown: isInLoginCooldown(),
-        lastLoginTime,
-      });
       
       // Clear token and redirect to login
       try {
@@ -97,16 +100,18 @@ export const apiClient = ApiClient.create({
         // Clear login time on unauthorized
         lastLoginTime = null;
         sessionStorage.removeItem('last_login_time');
+        console.log('[LOGIN FIX] Token cleared, redirecting to /login');
       } catch (e) {
-        console.warn('Failed to clear localStorage:', e);
+        console.warn('[LOGIN FIX] Failed to clear localStorage:', e);
       }
       
       // Only redirect if we're not on login page and not in cooldown
       if (currentPath !== '/login' && !currentPath.includes('/login')) {
         try {
+          console.log('[LOGIN FIX] Redirecting to /login from:', currentPath);
           window.location.href = '/login';
         } catch (e) {
-          // Fallback - ignore errors
+          console.error('[LOGIN FIX] Failed to redirect:', e);
         }
       }
     }

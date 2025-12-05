@@ -53,6 +53,27 @@ export default function LoginPage() {
     }
   }, [loading]);
 
+  // DEBUG: Track component mounts and unmounts
+  useEffect(() => {
+    console.log('[LOGIN FIX v2.0] Component mounted, pathname:', typeof window !== 'undefined' ? window.location.pathname : 'SSR');
+    
+    return () => {
+      console.log('[LOGIN FIX v2.0] Component unmounting, pathname:', typeof window !== 'undefined' ? window.location.pathname : 'SSR');
+    };
+  }, []);
+
+  // DEBUG: Track pathname changes
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const currentPath = window.location.pathname;
+      console.log('[LOGIN FIX v2.0] Pathname changed to:', currentPath);
+      
+      if (currentPath !== '/login' && currentPath !== '/') {
+        console.warn('[LOGIN FIX v2.0] Unexpected pathname:', currentPath);
+      }
+    }
+  }, []);
+
   // DISABLED: Auth check removed for maximum stability
   // Login page will always show immediately without any checks
   // This prevents all instability issues
