@@ -1,6 +1,5 @@
 'use client';
 
-import { useEffect } from 'react';
 import { Header } from '@/components/Header';
 import { SearchBar } from '@/components/SearchBar';
 import { HeroBanner } from '@/components/HeroBanner';
@@ -54,31 +53,6 @@ const featuredBanners = [
 
 
 export default function HomePage() {
-  // #region agent log
-  useEffect(() => {
-    const homeMountId = `home_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-    const homeStack = new Error().stack || '';
-    fetch('http://127.0.0.1:7242/ingest/315c2d74-b9bb-430e-9c51-123c9436e40e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'page.tsx:54',message:'Home page mounted',data:{mountId:homeMountId,pathname:window.location.pathname,hasToken:!!localStorage.getItem('auth_token'),stackTrace:homeStack.split('\n').slice(0,5).join('\n')},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'H'})}).catch(()=>{});
-    
-    // Track errors
-    const errorHandler = (event: ErrorEvent) => {
-      fetch('http://127.0.0.1:7242/ingest/315c2d74-b9bb-430e-9c51-123c9436e40e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'page.tsx:58',message:'Home page error',data:{mountId:homeMountId,error:event.message,filename:event.filename,lineno:event.lineno,pathname:window.location.pathname},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'K'})}).catch(()=>{});
-    };
-    
-    // Track unhandled promise rejections
-    const rejectionHandler = (event: PromiseRejectionEvent) => {
-      fetch('http://127.0.0.1:7242/ingest/315c2d74-b9bb-430e-9c51-123c9436e40e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'page.tsx:64',message:'Home page unhandled rejection',data:{mountId:homeMountId,reason:event.reason?.toString(),pathname:window.location.pathname},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'K'})}).catch(()=>{});
-    };
-    
-    window.addEventListener('error', errorHandler);
-    window.addEventListener('unhandledrejection', rejectionHandler);
-    
-    return () => {
-      window.removeEventListener('error', errorHandler);
-      window.removeEventListener('unhandledrejection', rejectionHandler);
-    };
-  }, []);
-  // #endregion
   
   return (
     <div className="min-h-screen bg-white">
