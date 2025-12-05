@@ -1,11 +1,12 @@
 import { ApiClient } from '@hos-marketplace/api-client';
 
 // Create API client instance
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api';
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'https://hos-marketplaceapi-production.up.railway.app/api';
 
-// Log API URL in development to help debug
-if (typeof window !== 'undefined' && process.env.NODE_ENV === 'development') {
-  console.log('API Base URL:', API_BASE_URL);
+// Log API URL to help debug (always log in production too for troubleshooting)
+if (typeof window !== 'undefined') {
+  console.log('[API] API Base URL:', API_BASE_URL);
+  console.log('[API] NEXT_PUBLIC_API_URL env var:', process.env.NEXT_PUBLIC_API_URL || 'NOT SET');
 }
 
 // Track login state to prevent redirect loops
