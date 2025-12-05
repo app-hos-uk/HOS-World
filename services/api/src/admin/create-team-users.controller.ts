@@ -1,7 +1,5 @@
-import { Controller, Post, UseGuards } from '@nestjs/common';
-import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
-import { RolesGuard } from '../common/guards/roles.guard';
-import { Roles } from '../common/decorators/roles.decorator';
+import { Controller, Post } from '@nestjs/common';
+import { Public } from '../common/decorators/public.decorator';
 import { PrismaService } from '../database/prisma.service';
 import { UserRole } from '@prisma/client';
 import type { ApiResponse } from '@hos-marketplace/shared-types';
@@ -65,10 +63,8 @@ const teamUsers = [
 export class CreateTeamUsersController {
   constructor(private prisma: PrismaService) {}
 
+  @Public()
   @Post('create-team-users')
-  // Temporarily allow without auth for setup - remove guards for initial setup
-  // @UseGuards(JwtAuthGuard, RolesGuard)
-  // @Roles('ADMIN')
   async createTeamUsers(): Promise<ApiResponse<any>> {
     const results = [];
 
