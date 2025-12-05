@@ -1,6 +1,6 @@
 'use client';
 
-import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import React, { createContext, useContext, useState, useEffect, useMemo, useCallback, ReactNode } from 'react';
 import type { Theme } from '@hos-marketplace/shared-types';
 import { hosTheme, defaultThemes } from './theme';
 
@@ -123,12 +123,14 @@ export function ThemeProvider({
     }
   }, [theme, isLoading]);
 
-  const value: ThemeContextValue = {
+  // Keep context value simple - only recreate when theme changes
+  // Functions are stable and don't need memoization
+  const value: ThemeContextValue = useMemo(() => ({
     theme,
     setTheme,
     setThemeById,
     loadTheme,
-  };
+  }), [theme]); // Only recreate when theme changes
 
   return <ThemeContext.Provider value={value}>{children}</ThemeContext.Provider>;
 }

@@ -1,27 +1,52 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
-import { useRouter } from 'next/navigation';
+import { useState, useEffect, useRef, useMemo } from 'react';
+import { useRouter, usePathname } from 'next/navigation';
 import { apiClient, markLoginSuccess } from '@/lib/api';
 import { CharacterSelector } from '@/components/CharacterSelector';
 import { FandomQuiz } from '@/components/FandomQuiz';
 
 export default function LoginPage() {
+  const router = useRouter();
+  const pathname = usePathname();
+  
   // #region agent log
   const mountId = `mount_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
   const stackTrace = new Error().stack || '';
-  fetch('http://127.0.0.1:7242/ingest/315c2d74-b9bb-430e-9c51-123c9436e40e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'login/page.tsx:10',message:'Component render started',data:{mountId,pathname:typeof window!=='undefined'?window.location.pathname:'SSR',stackTrace:stackTrace.split('\n').slice(0,5).join('\n')},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A,B,C'})}).catch(()=>{});
+  fetch('http://127.0.0.1:7242/ingest/315c2d74-b9bb-430e-9c51-123c9436e40e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'login/page.tsx:11',message:'Component render started',data:{mountId,pathname:pathname||(typeof window!=='undefined'?window.location.pathname:'SSR'),stackTrace:stackTrace.split('\n').slice(0,5).join('\n')},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A,B,C'})}).catch(()=>{});
   // #endregion
   
-  // VERSION MARKER: Login Fix v2.0 - Simplified stable version
-  console.log('[LOGIN FIX v2.0] Login page component mounted');
+  // CRITICAL: Prevent rendering if not on login route
+  // This prevents mounting on wrong route during SSR/hydration
+  const isOnLoginRoute = useMemo(() => {
+    if (typeof window === 'undefined') {
+      // SSR - assume we're on login route (this is the login page component)
+      return true;
+    }
+    const currentPath = window.location.pathname || pathname;
+    const isLogin = currentPath === '/login';
+    // #region agent log
+    fetch('http://127.0.0.1:7242/ingest/315c2d74-b9bb-430e-9c51-123c9436e40e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'login/page.tsx:22',message:'Route check',data:{mountId,currentPath,pathname,isLogin},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'B'})}).catch(()=>{});
+    // #endregion
+    return isLogin;
+  }, [pathname]);
   
-  const router = useRouter();
+  // Early return if not on login route - prevents mounting on wrong route
+  if (!isOnLoginRoute) {
+    // #region agent log
+    fetch('http://127.0.0.1:7242/ingest/315c2d74-b9bb-430e-9c51-123c9436e40e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'login/page.tsx:31',message:'Early return - not on login route',data:{mountId,pathname:pathname||(typeof window!=='undefined'?window.location.pathname:'SSR')},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'B'})}).catch(()=>{});
+    // #endregion
+    return null;
+  }
+  
+  // VERSION MARKER: Login Fix v3.0 - Route-aware stable version
+  console.log('[LOGIN FIX v3.0] Login page component mounted on correct route');
+  
   const mountCountRef = useRef(0);
   mountCountRef.current += 1;
   
   // #region agent log
-  fetch('http://127.0.0.1:7242/ingest/315c2d74-b9bb-430e-9c51-123c9436e40e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'login/page.tsx:18',message:'Component render count',data:{mountId,mountCount:mountCountRef.current,pathname:typeof window!=='undefined'?window.location.pathname:'SSR'},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A,C'})}).catch(()=>{});
+  fetch('http://127.0.0.1:7242/ingest/315c2d74-b9bb-430e-9c51-123c9436e40e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'login/page.tsx:40',message:'Component render count',data:{mountId,mountCount:mountCountRef.current,pathname:pathname||(typeof window!=='undefined'?window.location.pathname:'SSR')},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A,C'})}).catch(()=>{});
   // #endregion
   const [step, setStep] = useState<'login' | 'character' | 'quiz' | 'forgot-password'>('login');
   const [email, setEmail] = useState('');
