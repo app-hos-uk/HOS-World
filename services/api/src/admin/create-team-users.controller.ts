@@ -107,5 +107,146 @@ export class CreateTeamUsersController {
       message: 'Team users creation completed',
     };
   }
+
+  @Public()
+  @Post('create-business-users')
+  async createBusinessUsers(): Promise<ApiResponse<any>> {
+    // Generate password hash for "Test123!"
+    const password = 'Test123!';
+    const saltRounds = 10;
+    const passwordHash = await bcrypt.hash(password, saltRounds);
+    
+    const businessUsers = [
+      {
+        email: 'seller@hos.test',
+        firstName: 'Seller',
+        lastName: 'User',
+        role: UserRole.SELLER,
+        storeName: 'Test Seller Store',
+      },
+      {
+        email: 'b2c-seller@hos.test',
+        firstName: 'B2C',
+        lastName: 'Seller',
+        role: UserRole.B2C_SELLER,
+        storeName: 'B2C Seller Store',
+      },
+      {
+        email: 'wholesaler@hos.test',
+        firstName: 'Wholesaler',
+        lastName: 'User',
+        role: UserRole.WHOLESALER,
+        storeName: 'Wholesaler Store',
+      },
+      {
+        email: 'customer@hos.test',
+        firstName: 'Customer',
+        lastName: 'User',
+        role: UserRole.CUSTOMER,
+      },
+    ];
+
+    const results = [];
+
+    for (const userData of businessUsers) {
+      try {
+        const existingUser = await this.prisma.user.findUnique({
+          where: { email: userData.email },
+          include: { seller: true },
+        });
+
+        if (existingUser) {
+          // Update existing user
+          await this.prisma.user.update({
+            where: { id: existingUser.id },
+            data: {
+              password: passwordHash,
+              role: userData.role,
+              firstName: userData.firstName,
+              lastName: userData.lastName,
+            },
+          });
+
+          // Create or update seller profile if needed
+          if (userData.role === UserRole.SELLER || userData.role === UserRole.B2C_SELLER || userData.role === UserRole.WHOLESALER) {
+            if (existingUser.seller) {
+              await this.prisma.seller.update({
+                where: { userId: existingUser.id },
+                data: {
+                  storeName: userData.storeName,
+                  sellerType: userData.role === UserRole.WHOLESALER ? 'WHOLESALER' : userData.role === UserRole.B2C_SELLER ? 'B2C_SELLER' : 'B2C_SELLER',
+                },
+              });
+            } else {
+              // Create seller profile
+              const slug = userData.storeName!.toLowerCase().replace(/\s+/g, '-');
+              await this.prisma.seller.create({
+                data: {
+                  userId: existingUser.id,
+                  storeName: userData.storeName!,
+                  slug,
+                  country: 'US',
+                  timezone: 'UTC',
+                  sellerType: userData.role === UserRole.WHOLESALER ? 'WHOLESALER' : userData.role === UserRole.B2C_SELLER ? 'B2C_SELLER' : 'B2C_SELLER',
+                  logisticsOption: 'HOS_LOGISTICS',
+                },
+              });
+            }
+          }
+
+          results.push({ email: userData.email, status: 'updated', role: userData.role });
+        } else {
+          // Create new user
+          const newUser = await this.prisma.user.create({
+            data: {
+              email: userData.email,
+              password: passwordHash,
+              firstName: userData.firstName,
+              lastName: userData.lastName,
+              role: userData.role,
+            },
+          });
+
+          // Create seller profile if needed
+          if (userData.role === UserRole.SELLER || userData.role === UserRole.B2C_SELLER || userData.role === UserRole.WHOLESALER) {
+            const slug = userData.storeName!.toLowerCase().replace(/\s+/g, '-');
+            await this.prisma.seller.create({
+              data: {
+                userId: newUser.id,
+                storeName: userData.storeName!,
+                slug,
+                country: 'US',
+                timezone: 'UTC',
+                sellerType: userData.role === UserRole.WHOLESALER ? 'WHOLESALER' : userData.role === UserRole.B2C_SELLER ? 'B2C_SELLER' : 'B2C_SELLER',
+                logisticsOption: 'HOS_LOGISTICS',
+              },
+            });
+          }
+
+          // Create customer profile if needed
+          if (userData.role === UserRole.CUSTOMER) {
+            await this.prisma.customer.create({
+              data: {
+                userId: newUser.id,
+              },
+            });
+          }
+
+          results.push({ email: userData.email, status: 'created', role: userData.role });
+        }
+      } catch (error: any) {
+        results.push({ email: userData.email, status: 'error', error: error.message });
+      }
+    }
+
+    return {
+      data: {
+        users: results,
+        totalCreated: results.filter((r) => r.status === 'created').length,
+        totalUpdated: results.filter((r) => r.status === 'updated').length,
+      },
+      message: 'Business users creation completed',
+    };
+  }
 }
 
