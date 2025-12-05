@@ -16,37 +16,14 @@ export default function LoginPage() {
   fetch('http://127.0.0.1:7242/ingest/315c2d74-b9bb-430e-9c51-123c9436e40e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'login/page.tsx:11',message:'Component render started',data:{mountId,pathname:pathname||(typeof window!=='undefined'?window.location.pathname:'SSR'),stackTrace:stackTrace.split('\n').slice(0,5).join('\n')},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A,B,C'})}).catch(()=>{});
   // #endregion
   
-  // CRITICAL: Prevent rendering if not on login route
-  // This prevents mounting on wrong route during SSR/hydration
-  const isOnLoginRoute = useMemo(() => {
-    if (typeof window === 'undefined') {
-      // SSR - assume we're on login route (this is the login page component)
-      return true;
-    }
-    const currentPath = window.location.pathname || pathname;
-    const isLogin = currentPath === '/login';
-    // #region agent log
-    fetch('http://127.0.0.1:7242/ingest/315c2d74-b9bb-430e-9c51-123c9436e40e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'login/page.tsx:22',message:'Route check',data:{mountId,currentPath,pathname,isLogin},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'B'})}).catch(()=>{});
-    // #endregion
-    return isLogin;
-  }, [pathname]);
-  
-  // Early return if not on login route - prevents mounting on wrong route
-  if (!isOnLoginRoute) {
-    // #region agent log
-    fetch('http://127.0.0.1:7242/ingest/315c2d74-b9bb-430e-9c51-123c9436e40e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'login/page.tsx:31',message:'Early return - not on login route',data:{mountId,pathname:pathname||(typeof window!=='undefined'?window.location.pathname:'SSR')},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'B'})}).catch(()=>{});
-    // #endregion
-    return null;
-  }
-  
-  // VERSION MARKER: Login Fix v3.0 - Route-aware stable version
-  console.log('[LOGIN FIX v3.0] Login page component mounted on correct route');
+  // VERSION MARKER: Login Fix v4.0 - Removed blocking route check
+  console.log('[LOGIN FIX v4.0] Login page component mounted');
   
   const mountCountRef = useRef(0);
   mountCountRef.current += 1;
   
   // #region agent log
-  fetch('http://127.0.0.1:7242/ingest/315c2d74-b9bb-430e-9c51-123c9436e40e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'login/page.tsx:40',message:'Component render count',data:{mountId,mountCount:mountCountRef.current,pathname:pathname||(typeof window!=='undefined'?window.location.pathname:'SSR')},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A,C'})}).catch(()=>{});
+  fetch('http://127.0.0.1:7242/ingest/315c2d74-b9bb-430e-9c51-123c9436e40e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'login/page.tsx:20',message:'Component render count',data:{mountId,mountCount:mountCountRef.current,pathname:pathname||(typeof window!=='undefined'?window.location.pathname:'SSR')},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A,C'})}).catch(()=>{});
   // #endregion
   const [step, setStep] = useState<'login' | 'character' | 'quiz' | 'forgot-password'>('login');
   const [email, setEmail] = useState('');
@@ -216,6 +193,9 @@ export default function LoginPage() {
       }
 
       // Immediate redirect - no delays, no sessionStorage flags
+      // #region agent log
+      fetch('http://127.0.0.1:7242/ingest/315c2d74-b9bb-430e-9c51-123c9436e40e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'login/page.tsx:227',message:'Redirecting to home after login',data:{mountId,hasToken:!!authToken,pathname:typeof window!=='undefined'?window.location.pathname:'SSR'},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'G'})}).catch(()=>{});
+      // #endregion
       if (typeof window !== 'undefined') {
         window.location.replace('/');
       } else {
@@ -290,6 +270,9 @@ export default function LoginPage() {
       }
 
       // Immediate redirect - no delays
+      // #region agent log
+      fetch('http://127.0.0.1:7242/ingest/315c2d74-b9bb-430e-9c51-123c9436e40e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'login/page.tsx:301',message:'Redirecting to home after register',data:{mountId,hasToken:!!authToken,pathname:typeof window!=='undefined'?window.location.pathname:'SSR'},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'G'})}).catch(()=>{});
+      // #endregion
       if (typeof window !== 'undefined') {
         window.location.replace('/');
       } else {

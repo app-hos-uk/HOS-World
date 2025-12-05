@@ -1,3 +1,6 @@
+'use client';
+
+import { useEffect } from 'react';
 import { Header } from '@/components/Header';
 import { SearchBar } from '@/components/SearchBar';
 import { HeroBanner } from '@/components/HeroBanner';
@@ -49,14 +52,41 @@ const featuredBanners = [
   },
 ];
 
+
 export default function HomePage() {
+  // #region agent log
+  useEffect(() => {
+    const homeMountId = `home_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    const homeStack = new Error().stack || '';
+    fetch('http://127.0.0.1:7242/ingest/315c2d74-b9bb-430e-9c51-123c9436e40e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'page.tsx:54',message:'Home page mounted',data:{mountId:homeMountId,pathname:window.location.pathname,hasToken:!!localStorage.getItem('auth_token'),stackTrace:homeStack.split('\n').slice(0,5).join('\n')},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'H'})}).catch(()=>{});
+    
+    // Track errors
+    const errorHandler = (event: ErrorEvent) => {
+      fetch('http://127.0.0.1:7242/ingest/315c2d74-b9bb-430e-9c51-123c9436e40e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'page.tsx:58',message:'Home page error',data:{mountId:homeMountId,error:event.message,filename:event.filename,lineno:event.lineno,pathname:window.location.pathname},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'K'})}).catch(()=>{});
+    };
+    
+    // Track unhandled promise rejections
+    const rejectionHandler = (event: PromiseRejectionEvent) => {
+      fetch('http://127.0.0.1:7242/ingest/315c2d74-b9bb-430e-9c51-123c9436e40e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'page.tsx:64',message:'Home page unhandled rejection',data:{mountId:homeMountId,reason:event.reason?.toString(),pathname:window.location.pathname},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'K'})}).catch(()=>{});
+    };
+    
+    window.addEventListener('error', errorHandler);
+    window.addEventListener('unhandledrejection', rejectionHandler);
+    
+    return () => {
+      window.removeEventListener('error', errorHandler);
+      window.removeEventListener('unhandledrejection', rejectionHandler);
+    };
+  }, []);
+  // #endregion
+  
   return (
     <div className="min-h-screen bg-white">
       <Header />
       <main>
         {/* Search bar at the very top */}
         <div className="w-full bg-white border-b border-purple-100">
-          <div className="container mx-auto px-4 py-4">
+          <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-3 sm:py-4">
             <SearchBar />
           </div>
         </div>
@@ -78,8 +108,8 @@ export default function HomePage() {
         />
 
         {/* Feature Banner Section */}
-        <section className="container mx-auto px-4 py-12">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+        <section className="container mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6 mb-6 sm:mb-8">
             <FeatureBanner
               title="Exclusive Collectibles"
               description="Rare and authentic items from your favorite fandoms"
@@ -102,12 +132,12 @@ export default function HomePage() {
         </section>
 
         {/* Fandom Collection section */}
-        <section className="container mx-auto px-4 py-8">
-          <div className="mb-8">
-            <h2 className="text-3xl md:text-4xl font-bold text-center mb-4 font-primary text-purple-900">
+        <section className="container mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
+          <div className="mb-6 sm:mb-8">
+            <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-center mb-3 sm:mb-4 font-primary text-purple-900 px-4">
               Explore Fandoms
             </h2>
-            <p className="text-center text-purple-700 text-lg font-secondary max-w-2xl mx-auto">
+            <p className="text-center text-purple-700 text-base sm:text-lg font-secondary max-w-2xl mx-auto px-4">
               Discover magical items from your favorite worlds
             </p>
           </div>
@@ -115,7 +145,7 @@ export default function HomePage() {
         </section>
 
         {/* Recently Viewed section */}
-        <section className="container mx-auto px-4 py-8">
+        <section className="container mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
           <RecentlyViewed />
         </section>
       </main>
