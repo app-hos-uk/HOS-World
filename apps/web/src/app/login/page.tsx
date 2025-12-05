@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { apiClient } from '@/lib/api';
 import { CharacterSelector } from '@/components/CharacterSelector';
@@ -21,48 +21,292 @@ export default function LoginPage() {
   const [resetEmail, setResetEmail] = useState('');
   const [resetLoading, setResetLoading] = useState(false);
   const [resetSuccess, setResetSuccess] = useState(false);
+  const [isCheckingAuth, setIsCheckingAuth] = useState(true);
+  const hasCheckedAuth = useRef(false);
+  const isRedirecting = useRef(false);
+  const authCheckInProgress = useRef(false); // Prevent concurrent auth checks
+  const authRequestController = useRef<AbortController | null>(null); // Track active request
 
   useEffect(() => {
-    // Check if user is already logged in
-    const storedToken = localStorage.getItem('auth_token');
-    if (storedToken) {
-      // Check if character is selected
-      checkCharacterSelection(storedToken);
+    // Prevent multiple effect runs
+    // This can happen in React Strict Mode or with browser extensions
+    if (hasCheckedAuth.current || authCheckInProgress.current) {
+      return;
     }
-  }, []);
+    hasCheckedAuth.current = true;
+    authCheckInProgress.current = true;
+    
+    // Reset redirect flag on mount to prevent stale state
+    isRedirecting.current = false;
 
-  const checkCharacterSelection = async (authToken: string) => {
-    try {
-      const response = await apiClient.getCurrentUser();
-      const user = response.data;
-      
-      // Character selection is optional - go directly to home page
-      // Users can select a character later from their profile if they want
-      router.push('/');
-    } catch (error) {
-      console.error('Error checking character:', error);
-      // Even if there's an error, proceed to home page
-      router.push('/');
-    }
-  };
+    // Add small delay to ensure DOM is ready
+    // This helps with React hydration timing issues
+    const checkAuth = async () => {
+      try {
+        // Small delay to stabilize
+        await new Promise(resolve => setTimeout(resolve, 50));
+        
+        // CRITICAL: Check if we're still on login page before proceeding
+        // If user navigated away, don't check auth
+        if (typeof window !== 'undefined' && window.location.pathname !== '/login') {
+          console.log('Not on login page, skipping auth check');
+          setIsCheckingAuth(false);
+          authCheckInProgress.current = false;
+          return;
+        }
+
+        // Chrome-specific: Use try-catch for localStorage access
+        // Chrome extensions can sometimes interfere with localStorage
+        let storedToken: string | null = null;
+        try {
+          storedToken = localStorage.getItem('auth_token');
+        } catch (e) {
+          // Chrome extension or privacy mode might block localStorage
+          console.warn('localStorage access blocked:', e);
+          setIsCheckingAuth(false);
+          authCheckInProgress.current = false;
+          return;
+        }
+        
+        if (!storedToken) {
+          // No token, stay on login page
+          setIsCheckingAuth(false);
+          authCheckInProgress.current = false;
+          return;
+        }
+
+        // Validate token by checking current user
+        // Use fetch directly to avoid triggering onUnauthorized redirect
+        const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api';
+        
+        // CRITICAL: Cancel any existing auth request to prevent duplicates
+        if (authRequestController.current) {
+          console.log('Cancelling previous auth request to prevent duplicates');
+          authRequestController.current.abort();
+        }
+        
+        // Create new abort controller for this request
+        const controller = new AbortController();
+        authRequestController.current = controller;
+        const timeoutId = setTimeout(() => {
+          if (authRequestController.current === controller) {
+            controller.abort();
+          }
+        }, 5000); // 5 second timeout
+
+        try {
+          // CRITICAL: Double-check we're still on login page before making request
+          if (typeof window !== 'undefined' && window.location.pathname !== '/login') {
+            console.log('Navigated away from login, cancelling auth check');
+            controller.abort();
+            setIsCheckingAuth(false);
+            authCheckInProgress.current = false;
+            authRequestController.current = null;
+            return;
+          }
+
+          const response = await fetch(`${apiUrl}/auth/me`, {
+            method: 'GET',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${storedToken}`,
+            },
+            signal: controller.signal,
+          });
+
+          clearTimeout(timeoutId);
+          
+          // CRITICAL: Clear the controller reference if this is still the active request
+          if (authRequestController.current === controller) {
+            authRequestController.current = null;
+          }
+
+          // CRITICAL: Double-check we're still on login page before processing response
+          if (typeof window !== 'undefined' && window.location.pathname !== '/login') {
+            console.log('Not on login page anymore, ignoring auth response');
+            setIsCheckingAuth(false);
+            authCheckInProgress.current = false;
+            return;
+          }
+
+          // CRITICAL: Only redirect if response is 200 OK AND we have valid user data
+          if (response.ok && response.status === 200) {
+            try {
+              const data = await response.json();
+              
+              // Validate response structure
+              if (!data || !data.data) {
+                console.warn('Invalid API response structure:', data);
+                throw new Error('Invalid response structure');
+              }
+              
+              const user = data.data;
+              
+              // CRITICAL: Only redirect if we have a valid user with an ID
+              // AND we're still on the login page
+              // AND we haven't already set the redirect flag
+              if (
+                user && 
+                user.id && 
+                typeof user.id === 'string' &&
+                user.id.length > 0 &&
+                !isRedirecting.current && 
+                window.location.pathname === '/login'
+              ) {
+                console.log('Valid user found, redirecting to home:', user.email);
+                isRedirecting.current = true;
+                setIsCheckingAuth(false);
+                
+                // Use setTimeout to ensure state updates complete
+                setTimeout(() => {
+                  // Double-check we're still on login page before redirecting
+                  // Don't check isRedirecting here since we just set it
+                  if (window.location.pathname === '/login') {
+                    router.replace('/');
+                  } else {
+                    // If we're not on login page anymore, reset the flag
+                    isRedirecting.current = false;
+                  }
+                }, 0);
+                return;
+              } else {
+                console.warn('User validation failed:', {
+                  hasUser: !!user,
+                  hasId: !!(user && user.id),
+                  idType: user?.id ? typeof user.id : 'none',
+                  idLength: user?.id ? user.id.length : 0,
+                  isRedirecting: isRedirecting.current,
+                  pathname: window.location.pathname,
+                });
+              }
+            } catch (parseError) {
+              console.error('Failed to parse auth response:', parseError);
+              // Don't redirect on parse errors
+            }
+          } else {
+            // Response not OK - token is invalid
+            console.log('Auth check failed - invalid token:', response.status, response.statusText);
+          }
+        } catch (fetchError: any) {
+          clearTimeout(timeoutId);
+          
+          // Clear controller reference
+          if (authRequestController.current === controller) {
+            authRequestController.current = null;
+          }
+          
+          // Handle abort errors gracefully (user navigated away or timeout)
+          if (fetchError.name === 'AbortError') {
+            // Check if we're still on login page
+            if (typeof window !== 'undefined' && window.location.pathname === '/login') {
+              console.warn('Auth check aborted - staying on login page');
+            } else {
+              console.log('Auth check aborted - user navigated away');
+            }
+            setIsCheckingAuth(false);
+            authCheckInProgress.current = false;
+            // Don't redirect on abort
+            return;
+          } else {
+            console.error('Auth check error:', fetchError);
+            // Don't redirect on errors
+            throw fetchError;
+          }
+        }
+        
+        // If we get here, token is invalid (401, 403, or other error)
+        // Clear invalid token and stay on login page
+        try {
+          localStorage.removeItem('auth_token');
+        } catch (e) {
+          console.warn('Failed to clear localStorage:', e);
+        }
+        setIsCheckingAuth(false);
+        authCheckInProgress.current = false;
+      } catch (error) {
+        // Network error or other issue
+        console.error('Auth check failed:', error);
+        // Clear token on error to be safe
+        try {
+          localStorage.removeItem('auth_token');
+        } catch (e) {
+          console.warn('Failed to clear localStorage:', e);
+        }
+        // Stay on login page - don't redirect
+        setIsCheckingAuth(false);
+        authCheckInProgress.current = false;
+      } finally {
+        // Always reset the in-progress flag
+        authCheckInProgress.current = false;
+      }
+    };
+
+    checkAuth();
+    
+    // Cleanup function to reset flags and cancel requests if component unmounts
+    return () => {
+      authCheckInProgress.current = false;
+      if (authRequestController.current) {
+        console.log('Component unmounting, cancelling auth request');
+        authRequestController.current.abort();
+        authRequestController.current = null;
+      }
+    };
+  }, [router]);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
     setLoading(true);
 
+    // Validate inputs
+    if (!email || !password) {
+      setError('Please fill in all fields');
+      setLoading(false);
+      return;
+    }
+
     try {
+      console.log('Attempting login with email:', email);
       const response = await apiClient.login({ email, password });
+      console.log('Login response received:', response);
+      console.log('Response structure:', {
+        hasData: !!response.data,
+        dataKeys: response.data ? Object.keys(response.data) : [],
+        hasToken: !!(response.data?.token),
+        hasUser: !!(response.data?.user),
+      });
+      
+      // Check response structure
+      if (!response || !response.data) {
+        console.error('Invalid response structure:', response);
+        throw new Error('Invalid response from server');
+      }
+
       const { token: authToken } = response.data;
 
-      localStorage.setItem('auth_token', authToken);
-      setToken(authToken);
+      if (!authToken) {
+        console.error('No token in response:', response);
+        throw new Error('No token received from server');
+      }
+
+      // Chrome-specific: Ensure localStorage write completes
+      try {
+        localStorage.setItem('auth_token', authToken);
+        setToken(authToken);
+      } catch (e) {
+        console.error('Failed to save token:', e);
+        throw new Error('Failed to save authentication token');
+      }
 
       // Character selection is optional - go directly to home page
-      router.push('/');
+      // Chrome-specific: Use setTimeout to ensure state updates complete before redirect
+      setTimeout(() => {
+        router.replace('/');
+      }, 0);
     } catch (err: any) {
+      console.error('Login error:', err);
       setError(err.message || 'Login failed. Please check your credentials.');
-    } finally {
       setLoading(false);
     }
   };
@@ -80,12 +324,21 @@ export default function LoginPage() {
       });
       const { token: authToken } = response.data;
 
-      localStorage.setItem('auth_token', authToken);
-      setToken(authToken);
+      // Chrome-specific: Ensure localStorage write completes
+      try {
+        localStorage.setItem('auth_token', authToken);
+        setToken(authToken);
+      } catch (e) {
+        console.error('Failed to save token:', e);
+        throw new Error('Failed to save authentication token');
+      }
 
       // Character selection is optional - go directly to home page
       // New users can select a character later from their profile
-      router.push('/');
+      // Chrome-specific: Use setTimeout to ensure state updates complete
+      setTimeout(() => {
+        router.replace('/');
+      }, 0);
     } catch (err: any) {
       setError(err.message || 'Registration failed. Please try again.');
     } finally {
@@ -111,7 +364,7 @@ export default function LoginPage() {
   const handleQuizComplete = async (quizData: { favoriteFandoms: string[]; interests: string[] }) => {
     try {
       await apiClient.post('/auth/fandom-quiz', quizData);
-      router.push('/');
+      router.replace('/');
     } catch (err: any) {
       setError(err.message || 'Failed to save quiz results');
     }
@@ -140,20 +393,33 @@ export default function LoginPage() {
     }
   };
 
+  // Show loading state while checking authentication
+  // Only show if we're actually checking and not redirecting
+  if (isCheckingAuth && !isRedirecting.current) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-purple-50 to-blue-50 flex items-center justify-center p-4 sm:p-6 lg:p-8">
+        <div className="max-w-md w-full text-center">
+          <div className="animate-spin rounded-full h-8 w-8 sm:h-12 sm:w-12 border-b-2 border-purple-600 mx-auto"></div>
+          <p className="mt-4 text-sm sm:text-base text-gray-600">Loading...</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-50 to-blue-50 flex items-center justify-center p-4">
-      <div className="max-w-md w-full space-y-8">
+    <div className="min-h-screen bg-gradient-to-br from-purple-50 to-blue-50 flex items-center justify-center p-4 sm:p-6 lg:p-8">
+      <div className="max-w-md w-full space-y-6 sm:space-y-8">
         {/* Logo/Brand */}
         <div className="text-center">
-          <h1 className="text-4xl font-bold text-purple-600 mb-2">House of Spells</h1>
-          <p className="text-gray-600">Welcome to the magical marketplace</p>
+          <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-purple-600 mb-1 sm:mb-2">House of Spells</h1>
+          <p className="text-sm sm:text-base text-gray-600">Welcome to the magical marketplace</p>
         </div>
 
         {/* Character Selector */}
         {step === 'character' && (
           <CharacterSelector
             onSelect={handleCharacterSelected}
-            onSkip={() => router.push('/')}
+            onSkip={() => router.replace('/')}
           />
         )}
 
@@ -161,14 +427,14 @@ export default function LoginPage() {
         {step === 'quiz' && (
           <FandomQuiz
             onComplete={handleQuizComplete}
-            onSkip={() => router.push('/')}
+            onSkip={() => router.replace('/')}
           />
         )}
 
         {/* Forgot Password Form */}
         {step === 'forgot-password' && (
-          <div className="bg-white rounded-xl shadow-lg p-8">
-            <h2 className="text-2xl font-bold text-center mb-6">Reset Password</h2>
+          <div className="bg-white rounded-xl shadow-lg p-6 sm:p-8">
+            <h2 className="text-xl sm:text-2xl font-bold text-center mb-4 sm:mb-6">Reset Password</h2>
 
             {resetSuccess ? (
               <div className="text-center space-y-4">
@@ -236,8 +502,8 @@ export default function LoginPage() {
 
         {/* Login/Register Form */}
         {step === 'login' && (
-          <div className="bg-white rounded-xl shadow-lg p-8">
-            <h2 className="text-2xl font-bold text-center mb-6">
+          <div className="bg-white rounded-xl shadow-lg p-6 sm:p-8">
+            <h2 className="text-xl sm:text-2xl font-bold text-center mb-4 sm:mb-6">
               {isLogin ? 'Welcome Back!' : 'Join the Magic'}
             </h2>
 
@@ -330,34 +596,34 @@ export default function LoginPage() {
             </div>
 
             {/* Social Login */}
-            <div className="mt-6">
+            <div className="mt-4 sm:mt-6">
               <div className="relative">
                 <div className="absolute inset-0 flex items-center">
                   <div className="w-full border-t border-gray-300"></div>
                 </div>
-                <div className="relative flex justify-center text-sm">
+                <div className="relative flex justify-center text-xs sm:text-sm">
                   <span className="px-2 bg-white text-gray-500">Or continue with</span>
                 </div>
               </div>
 
-              <div className="mt-4 grid grid-cols-3 gap-3">
+              <div className="mt-3 sm:mt-4 grid grid-cols-3 gap-2 sm:gap-3">
                 <button
                   onClick={() => window.location.href = '/api/auth/google'}
-                  className="flex items-center justify-center px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+                  className="flex items-center justify-center px-2 sm:px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
                 >
-                  <span className="text-sm font-medium">Google</span>
+                  <span className="text-xs sm:text-sm font-medium">Google</span>
                 </button>
                 <button
                   onClick={() => window.location.href = '/api/auth/facebook'}
-                  className="flex items-center justify-center px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+                  className="flex items-center justify-center px-2 sm:px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
                 >
-                  <span className="text-sm font-medium">Facebook</span>
+                  <span className="text-xs sm:text-sm font-medium">Facebook</span>
                 </button>
                 <button
                   onClick={() => window.location.href = '/api/auth/apple'}
-                  className="flex items-center justify-center px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+                  className="flex items-center justify-center px-2 sm:px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
                 >
-                  <span className="text-sm font-medium">Apple</span>
+                  <span className="text-xs sm:text-sm font-medium">Apple</span>
                 </button>
               </div>
             </div>

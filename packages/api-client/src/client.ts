@@ -46,22 +46,76 @@ export class ApiClient {
       headers['Authorization'] = `Bearer ${token}`;
     }
 
-    const response = await fetch(`${this.baseUrl}${endpoint}`, {
-      ...options,
-      headers,
-    });
-
-    if (response.status === 401) {
-      this.onUnauthorized();
-      throw new Error('Unauthorized');
+    const url = `${this.baseUrl}${endpoint}`;
+    
+    // Log request in development
+    if (typeof window !== 'undefined' && process.env.NODE_ENV === 'development') {
+      console.log('API Request:', { method: options.method || 'GET', url, headers });
     }
 
-    if (!response.ok) {
-      const error = await response.json().catch(() => ({ message: 'An error occurred' }));
-      throw new Error(error.message || `HTTP error! status: ${response.status}`);
-    }
+    try {
+      const response = await fetch(url, {
+        ...options,
+        headers,
+      });
 
-    return response.json();
+      if (response.status === 401) {
+        this.onUnauthorized();
+        throw new Error('Unauthorized');
+      }
+
+      if (!response.ok) {
+        let errorMessage = `HTTP error! status: ${response.status}`;
+        try {
+          const errorData = await response.json();
+          errorMessage = errorData.message || errorMessage;
+          console.error('API Error Response:', {
+            status: response.status,
+            statusText: response.statusText,
+            error: errorData,
+            url,
+          });
+        } catch (e) {
+          // If response is not JSON, get text
+          try {
+            const text = await response.text();
+            console.error('API Error (non-JSON):', {
+              status: response.status,
+              statusText: response.statusText,
+              text,
+              url,
+            });
+          } catch (textError) {
+            console.error('API Error (unable to read response):', {
+              status: response.status,
+              statusText: response.statusText,
+              url,
+            });
+          }
+        }
+        throw new Error(errorMessage);
+      }
+
+      const data = await response.json();
+      
+      // Log response in development for debugging
+      if (typeof window !== 'undefined' && process.env.NODE_ENV === 'development') {
+        console.log('API Response:', { url, status: response.status, data });
+      }
+      
+      return data;
+    } catch (error: any) {
+      // Enhanced error logging
+      if (typeof window !== 'undefined') {
+        console.error('API Request failed:', { 
+          url, 
+          method: options.method || 'GET',
+          error: error.message, 
+          stack: error.stack,
+        });
+      }
+      throw error;
+    }
   }
 
   // Auth endpoints

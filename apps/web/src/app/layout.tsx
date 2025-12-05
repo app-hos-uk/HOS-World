@@ -22,6 +22,11 @@ const lora = Lora({
 export const metadata: Metadata = {
   title: 'House of Spells Marketplace',
   description: 'Discover magical items from your favorite fandoms',
+  icons: {
+    icon: '/favicon.svg',
+    shortcut: '/favicon.svg',
+    apple: '/favicon.svg',
+  },
 };
 
 export default function RootLayout({
