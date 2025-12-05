@@ -16,8 +16,8 @@ export default function LoginPage() {
   fetch('http://127.0.0.1:7242/ingest/315c2d74-b9bb-430e-9c51-123c9436e40e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'login/page.tsx:11',message:'Component render started',data:{mountId,pathname:pathname||(typeof window!=='undefined'?window.location.pathname:'SSR'),stackTrace:stackTrace.split('\n').slice(0,5).join('\n')},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A,B,C'})}).catch(()=>{});
   // #endregion
   
-  // VERSION MARKER: Login Fix v4.0 - Removed blocking route check
-  console.log('[LOGIN FIX v4.0] Login page component mounted');
+  // VERSION MARKER: Login Fix v5.0 - Disabled Strict Mode, Memoized ThemeProviderWrapper
+  console.log('[LOGIN FIX v5.0] Login page component mounted');
   
   const mountCountRef = useRef(0);
   mountCountRef.current += 1;

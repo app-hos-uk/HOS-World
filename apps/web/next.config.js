@@ -1,6 +1,6 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  reactStrictMode: true,
+  reactStrictMode: false, // TEMPORARILY DISABLED: Causing excessive mounts (8+) in login page
   transpilePackages: [
     '@hos-marketplace/shared-types',
     '@hos-marketplace/theme-system',
