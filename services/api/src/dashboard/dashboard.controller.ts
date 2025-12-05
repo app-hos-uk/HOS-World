@@ -17,7 +17,7 @@ export class DashboardController {
   constructor(private readonly dashboardService: DashboardService) {}
 
   @Get('stats')
-  @Roles('SELLER', 'B2C_SELLER', 'WHOLESALER')
+  @Roles('SELLER', 'B2C_SELLER', 'WHOLESALER', 'ADMIN')
   async getStats(
     @Request() req: any,
     @Query('startDate') startDate?: string,
@@ -27,6 +27,7 @@ export class DashboardController {
     const end = endDate ? new Date(endDate) : undefined;
 
     // Route based on user role
+    // ADMIN can access seller dashboard (will show aggregate data or allow selection)
     if (req.user.role === 'WHOLESALER') {
       const stats = await this.dashboardService.getWholesalerDashboard(req.user.id);
       return {
@@ -38,6 +39,14 @@ export class DashboardController {
       return {
         data: stats,
         message: 'B2C Seller dashboard retrieved successfully',
+      };
+    } else if (req.user.role === 'ADMIN') {
+      // Admin accessing seller dashboard - return admin dashboard stats or allow viewing
+      // For now, return admin dashboard data when accessing this endpoint
+      const stats = await this.dashboardService.getAdminDashboard();
+      return {
+        data: stats,
+        message: 'Admin dashboard retrieved successfully',
       };
     } else {
       const stats = await this.dashboardService.getSellerDashboard(req.user.id, start, end);

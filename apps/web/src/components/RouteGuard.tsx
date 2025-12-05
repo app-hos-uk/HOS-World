@@ -32,7 +32,8 @@ export function RouteGuard({
     }
 
     // Check if user has required role
-    const hasRequiredRole = allowedRoles.includes(user.role);
+    // ADMIN role has access to all dashboards
+    const hasRequiredRole = allowedRoles.includes(user.role) || user.role === 'ADMIN';
 
     if (!hasRequiredRole) {
       if (showAccessDenied) {
@@ -78,7 +79,8 @@ export function RouteGuard({
   }
 
   // Check if user has required role
-  const hasRequiredRole = allowedRoles.includes(user.role);
+  // ADMIN role has access to all dashboards
+  const hasRequiredRole = allowedRoles.includes(user.role) || user.role === 'ADMIN';
 
   if (!hasRequiredRole) {
     return null; // Will redirect in useEffect
