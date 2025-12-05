@@ -55,8 +55,27 @@ export default function LoginPage() {
     hasCheckedAuth.current = true;
     authCheckInProgress.current = true;
     
-    // Reset redirect flag on mount to prevent stale state
-    isRedirecting.current = false;
+    // CRITICAL: Check sessionStorage to see if we're already redirecting
+    // This persists across component re-mounts and prevents redirect loops
+    try {
+      const isRedirectingInSession = sessionStorage.getItem('login_redirecting');
+      if (isRedirectingInSession === 'true') {
+        console.log('Redirect already in progress (from sessionStorage), skipping auth check');
+        isRedirecting.current = true;
+        setIsCheckingAuth(false);
+        authCheckInProgress.current = false;
+        // Don't reset the flag - let the redirect complete
+        return;
+      }
+    } catch (e) {
+      // sessionStorage might not be available
+    }
+    
+    // Only reset redirect flag if we're not already redirecting
+    // This prevents clearing the flag during an active redirect
+    if (!isRedirecting.current) {
+      isRedirecting.current = false;
+    }
 
     // Add small delay to ensure DOM is ready
     // This helps with React hydration timing issues
@@ -183,6 +202,22 @@ export default function LoginPage() {
                 authCheckInProgress.current = false;
                 hasCheckedAuth.current = true; // Prevent any future checks
                 
+                // CRITICAL: Set sessionStorage flag to persist across re-renders/re-mounts
+                // This prevents the component from checking auth again if it re-mounts
+                try {
+                  sessionStorage.setItem('login_redirecting', 'true');
+                  // Clear the flag after 5 seconds as a safety measure
+                  setTimeout(() => {
+                    try {
+                      sessionStorage.removeItem('login_redirecting');
+                    } catch (e) {
+                      // Ignore errors
+                    }
+                  }, 5000);
+                } catch (e) {
+                  // sessionStorage might not be available, continue anyway
+                }
+                
                 // Use immediate redirect with window.location for reliability
                 // This ensures the redirect happens immediately and prevents any loops
                 if (typeof window !== 'undefined' && window.location.pathname === '/login') {
@@ -194,7 +229,8 @@ export default function LoginPage() {
                   
                   // Immediate redirect using window.location for maximum reliability
                   // This bypasses React Router and ensures the redirect completes
-                  window.location.href = '/';
+                  // Use replace to prevent back button issues
+                  window.location.replace('/');
                   return;
                 }
                 
@@ -277,7 +313,11 @@ export default function LoginPage() {
     
     // Cleanup function to reset flags and cancel requests if component unmounts
     return () => {
-      authCheckInProgress.current = false;
+      // CRITICAL: Don't reset flags if we're redirecting
+      // This prevents the component from re-checking auth after redirect starts
+      if (!isRedirecting.current) {
+        authCheckInProgress.current = false;
+      }
       if (authRequestController.current) {
         console.log('Component unmounting, cancelling auth request');
         authRequestController.current.abort();
