@@ -397,4 +397,168 @@ export class ApiClient {
       method: 'GET',
     });
   }
+
+  // Procurement
+  async getProcurementSubmissions(status?: string): Promise<ApiResponse<any[]>> {
+    const url = status ? `/procurement/submissions?status=${status}` : '/procurement/submissions';
+    return this.request<ApiResponse<any[]>>(url, {
+      method: 'GET',
+    });
+  }
+
+  async getProcurementSubmission(id: string): Promise<ApiResponse<any>> {
+    return this.request<ApiResponse<any>>(`/procurement/submissions/${id}`, {
+      method: 'GET',
+    });
+  }
+
+  async approveProcurementSubmission(
+    id: string,
+    data: { selectedQuantity?: number; notes?: string }
+  ): Promise<ApiResponse<any>> {
+    return this.request<ApiResponse<any>>(`/procurement/submissions/${id}/approve`, {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async rejectProcurementSubmission(
+    id: string,
+    data: { reason: string }
+  ): Promise<ApiResponse<any>> {
+    return this.request<ApiResponse<any>>(`/procurement/submissions/${id}/reject`, {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
+  // Fulfillment
+  async getFulfillmentShipments(status?: string): Promise<ApiResponse<any[]>> {
+    const url = status ? `/fulfillment/shipments?status=${status}` : '/fulfillment/shipments';
+    return this.request<ApiResponse<any[]>>(url, {
+      method: 'GET',
+    });
+  }
+
+  async getFulfillmentShipment(id: string): Promise<ApiResponse<any>> {
+    return this.request<ApiResponse<any>>(`/fulfillment/shipments/${id}`, {
+      method: 'GET',
+    });
+  }
+
+  async verifyShipment(
+    id: string,
+    data: { status: string; verificationNotes?: string; trackingNumber?: string }
+  ): Promise<ApiResponse<any>> {
+    return this.request<ApiResponse<any>>(`/fulfillment/shipments/${id}/verify`, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    });
+  }
+
+  // Catalog
+  async getCatalogPending(): Promise<ApiResponse<any[]>> {
+    return this.request<ApiResponse<any[]>>('/catalog/pending', {
+      method: 'GET',
+    });
+  }
+
+  async getCatalogSubmission(submissionId: string): Promise<ApiResponse<any>> {
+    return this.request<ApiResponse<any>>(`/catalog/submissions/${submissionId}`, {
+      method: 'GET',
+    });
+  }
+
+  async createCatalogEntry(
+    submissionId: string,
+    data: {
+      title: string;
+      description: string;
+      keywords: string[];
+      specs?: any;
+      images: string[];
+    }
+  ): Promise<ApiResponse<any>> {
+    return this.request<ApiResponse<any>>(`/catalog/entries/${submissionId}`, {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
+  // Marketing
+  async getMarketingPending(): Promise<ApiResponse<any[]>> {
+    return this.request<ApiResponse<any[]>>('/marketing/pending', {
+      method: 'GET',
+    });
+  }
+
+  async getMarketingMaterials(submissionId?: string, type?: string): Promise<ApiResponse<any[]>> {
+    let url = '/marketing/materials';
+    const params = new URLSearchParams();
+    if (submissionId) params.append('submissionId', submissionId);
+    if (type) params.append('type', type);
+    if (params.toString()) url += `?${params.toString()}`;
+    return this.request<ApiResponse<any[]>>(url, {
+      method: 'GET',
+    });
+  }
+
+  async createMarketingMaterial(data: {
+    submissionId: string;
+    type: string;
+    url: string;
+  }): Promise<ApiResponse<any>> {
+    return this.request<ApiResponse<any>>('/marketing/materials', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
+  // Finance
+  async getFinancePending(): Promise<ApiResponse<any[]>> {
+    return this.request<ApiResponse<any[]>>('/finance/pending', {
+      method: 'GET',
+    });
+  }
+
+  async setFinancePricing(
+    submissionId: string,
+    data: {
+      margin: number;
+      visibilityLevel?: string;
+      notes?: string;
+    }
+  ): Promise<ApiResponse<any>> {
+    return this.request<ApiResponse<any>>(`/finance/pricing/${submissionId}`, {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async approveFinancePricing(
+    submissionId: string,
+    data: { notes?: string }
+  ): Promise<ApiResponse<any>> {
+    return this.request<ApiResponse<any>>(`/finance/approve/${submissionId}`, {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async rejectFinancePricing(
+    submissionId: string,
+    data: { reason: string }
+  ): Promise<ApiResponse<any>> {
+    return this.request<ApiResponse<any>>(`/finance/reject/${submissionId}`, {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
+  // Admin
+  async getUsers(): Promise<ApiResponse<any[]>> {
+    return this.request<ApiResponse<any[]>>('/admin/users', {
+      method: 'GET',
+    });
+  }
 }

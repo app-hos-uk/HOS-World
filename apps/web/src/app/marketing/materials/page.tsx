@@ -1,0 +1,339 @@
+'use client';
+
+import { useEffect, useState } from 'react';
+import { Header } from '@/components/Header';
+import { Footer } from '@/components/Footer';
+import { RouteGuard } from '@/components/RouteGuard';
+import { apiClient } from '@/lib/api';
+
+export default function MarketingMaterialsPage() {
+  const [pendingSubmissions, setPendingSubmissions] = useState<any[]>([]);
+  const [materials, setMaterials] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState<'pending' | 'library'>('pending');
+  const [selectedSubmission, setSelectedSubmission] = useState<any | null>(null);
+  const [showModal, setShowModal] = useState(false);
+  const [actionLoading, setActionLoading] = useState(false);
+
+  // Form state
+  const [materialType, setMaterialType] = useState<string>('BANNER');
+  const [materialUrl, setMaterialUrl] = useState('');
+
+  useEffect(() => {
+    if (activeTab === 'pending') {
+      fetchPending();
+    } else {
+      fetchMaterials();
+    }
+  }, [activeTab]);
+
+  const fetchPending = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      const response = await apiClient.getMarketingPending();
+      if (response?.data) {
+        setPendingSubmissions(response.data);
+      }
+    } catch (err: any) {
+      console.error('Error fetching pending:', err);
+      setError(err.message || 'Failed to load pending submissions');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fetchMaterials = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      const response = await apiClient.getMarketingMaterials();
+      if (response?.data) {
+        setMaterials(response.data);
+      }
+    } catch (err: any) {
+      console.error('Error fetching materials:', err);
+      setError(err.message || 'Failed to load materials');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleCreateMaterial = (submission: any) => {
+    setSelectedSubmission(submission);
+    setMaterialType('BANNER');
+    setMaterialUrl('');
+    setShowModal(true);
+  };
+
+  const handleSubmit = async () => {
+    if (!selectedSubmission || !materialUrl.trim()) {
+      setError('Material URL is required');
+      return;
+    }
+
+    try {
+      setActionLoading(true);
+      await apiClient.createMarketingMaterial({
+        submissionId: selectedSubmission.id,
+        type: materialType,
+        url: materialUrl.trim(),
+      });
+      setShowModal(false);
+      setSelectedSubmission(null);
+      setMaterialUrl('');
+      if (activeTab === 'pending') {
+        await fetchPending();
+      } else {
+        await fetchMaterials();
+      }
+    } catch (err: any) {
+      console.error('Error creating material:', err);
+      setError(err.message || 'Failed to create marketing material');
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  return (
+    <RouteGuard allowedRoles={['MARKETING', 'ADMIN']} showAccessDenied={true}>
+      <div className="min-h-screen bg-white">
+        <Header />
+        <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 lg:py-12">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6 sm:mb-8">
+            <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold">Marketing Materials</h1>
+            <a
+              href="/marketing/dashboard"
+              className="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors font-medium text-sm sm:text-base whitespace-nowrap"
+            >
+              Back to Dashboard
+            </a>
+          </div>
+
+          {/* Tabs */}
+          <div className="mb-6 flex gap-2 border-b">
+            <button
+              onClick={() => setActiveTab('pending')}
+              className={`px-4 py-2 font-medium transition-colors ${
+                activeTab === 'pending'
+                  ? 'border-b-2 border-purple-600 text-purple-600'
+                  : 'text-gray-500 hover:text-gray-700'
+              }`}
+            >
+              Pending Products
+            </button>
+            <button
+              onClick={() => setActiveTab('library')}
+              className={`px-4 py-2 font-medium transition-colors ${
+                activeTab === 'library'
+                  ? 'border-b-2 border-purple-600 text-purple-600'
+                  : 'text-gray-500 hover:text-gray-700'
+              }`}
+            >
+              Materials Library
+            </button>
+          </div>
+
+          {error && (
+            <div className="mb-6 p-4 bg-red-100 border border-red-400 text-red-700 rounded-lg">
+              <p className="font-semibold">Error</p>
+              <p className="text-sm mt-1">{error}</p>
+            </div>
+          )}
+
+          {loading && (
+            <div className="flex items-center justify-center py-12">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600"></div>
+            </div>
+          )}
+
+          {activeTab === 'pending' && !loading && pendingSubmissions.length === 0 && (
+            <div className="bg-white border border-gray-200 rounded-lg p-8 text-center">
+              <p className="text-gray-500 text-lg">No pending products for marketing materials</p>
+            </div>
+          )}
+
+          {activeTab === 'library' && !loading && materials.length === 0 && (
+            <div className="bg-white border border-gray-200 rounded-lg p-8 text-center">
+              <p className="text-gray-500 text-lg">No marketing materials created yet</p>
+            </div>
+          )}
+
+          {activeTab === 'pending' && !loading && pendingSubmissions.length > 0 && (
+            <div className="space-y-4">
+              {pendingSubmissions.map((submission) => {
+                const productData = submission.productData || {};
+                return (
+                  <div
+                    key={submission.id}
+                    className="bg-white border border-gray-200 rounded-lg p-6 hover:shadow-md transition-shadow"
+                  >
+                    <div className="flex flex-col sm:flex-row justify-between gap-4">
+                      <div className="flex-1">
+                        <h3 className="text-lg font-semibold text-gray-900">
+                          {productData.name || 'Untitled Product'}
+                        </h3>
+                        <p className="text-sm text-gray-500 mt-1">
+                          Seller: {submission.seller?.storeName || 'Unknown'}
+                        </p>
+                        <p className="text-sm text-gray-600 mt-2 line-clamp-2">
+                          {productData.description || 'No description'}
+                        </p>
+                      </div>
+
+                      <div className="flex gap-2">
+                        <button
+                          onClick={() => handleCreateMaterial(submission)}
+                          className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors font-medium text-sm whitespace-nowrap"
+                        >
+                          Create Material
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+
+          {activeTab === 'library' && !loading && materials.length > 0 && (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {materials.map((material) => {
+                const productData = material.submission?.productData || {};
+                return (
+                  <div
+                    key={material.id}
+                    className="bg-white border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow"
+                  >
+                    <div className="aspect-video bg-gray-100 rounded mb-3 overflow-hidden">
+                      {material.url ? (
+                        <img
+                          src={material.url}
+                          alt={material.type}
+                          className="w-full h-full object-cover"
+                        />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center text-gray-400">
+                          No Image
+                        </div>
+                      )}
+                    </div>
+                    <p className="text-sm font-medium text-gray-900">
+                      {productData.name || 'Unknown Product'}
+                    </p>
+                    <p className="text-xs text-gray-500 mt-1">{material.type}</p>
+                    <p className="text-xs text-gray-400 mt-1">
+                      {new Date(material.createdAt).toLocaleDateString()}
+                    </p>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+
+          {/* Create Material Modal */}
+          {showModal && selectedSubmission && (
+            <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+              <div className="bg-white rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+                <div className="p-6">
+                  <div className="flex justify-between items-start mb-4">
+                    <h2 className="text-2xl font-bold">Create Marketing Material</h2>
+                    <button
+                      onClick={() => {
+                        setShowModal(false);
+                        setSelectedSubmission(null);
+                      }}
+                      className="text-gray-500 hover:text-gray-700"
+                    >
+                      <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M6 18L18 6M6 6l12 12"
+                        />
+                      </svg>
+                    </button>
+                  </div>
+
+                  <div className="space-y-4">
+                    <div>
+                      <p className="text-sm font-medium text-gray-500">Product</p>
+                      <p className="text-gray-900">
+                        {selectedSubmission.productData?.name || 'Unknown'}
+                      </p>
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Material Type <span className="text-red-500">*</span>
+                      </label>
+                      <select
+                        value={materialType}
+                        onChange={(e) => setMaterialType(e.target.value)}
+                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
+                      >
+                        <option value="BANNER">Banner</option>
+                        <option value="CREATIVE">Creative</option>
+                        <option value="SOCIAL_MEDIA">Social Media</option>
+                      </select>
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Material URL <span className="text-red-500">*</span>
+                      </label>
+                      <input
+                        type="url"
+                        value={materialUrl}
+                        onChange={(e) => setMaterialUrl(e.target.value)}
+                        required
+                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
+                        placeholder="https://example.com/image.jpg"
+                      />
+                      {materialUrl && (
+                        <div className="mt-2">
+                          <img
+                            src={materialUrl}
+                            alt="Preview"
+                            className="max-w-full h-32 object-contain border rounded"
+                            onError={(e) => {
+                              (e.target as HTMLImageElement).style.display = 'none';
+                            }}
+                          />
+                        </div>
+                      )}
+                    </div>
+
+                    <div className="flex gap-3 pt-4">
+                      <button
+                        onClick={handleSubmit}
+                        disabled={actionLoading || !materialUrl.trim()}
+                        className="px-6 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors font-medium disabled:opacity-50"
+                      >
+                        {actionLoading ? 'Creating...' : 'Create Material'}
+                      </button>
+                      <button
+                        onClick={() => {
+                          setShowModal(false);
+                          setSelectedSubmission(null);
+                        }}
+                        disabled={actionLoading}
+                        className="px-6 py-2 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400 transition-colors font-medium"
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+        </main>
+        <Footer />
+      </div>
+    </RouteGuard>
+  );
+}
+
