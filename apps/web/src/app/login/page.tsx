@@ -39,6 +39,14 @@ export default function LoginPage() {
     if (!isMounted) {
       return;
     }
+    
+    // CRITICAL: If we're already redirecting, don't check auth again
+    // This prevents redirect loops and page instability
+    if (isRedirecting.current) {
+      setIsCheckingAuth(false);
+      return;
+    }
+    
     // Prevent multiple effect runs
     // This can happen in React Strict Mode or with browser extensions
     if (hasCheckedAuth.current || authCheckInProgress.current) {
@@ -168,25 +176,30 @@ export default function LoginPage() {
                 window.location.pathname === '/login'
               ) {
                 console.log('Valid user found, redirecting to home:', user.email);
+                
+                // Set flags immediately to prevent any re-checks
                 isRedirecting.current = true;
                 setIsCheckingAuth(false);
+                authCheckInProgress.current = false;
+                hasCheckedAuth.current = true; // Prevent any future checks
                 
-                // Use requestAnimationFrame to ensure DOM is ready and hydration is complete
-                // This prevents hydration errors by ensuring redirect happens after React hydration
-                requestAnimationFrame(() => {
-                  // Double-check we're still on login page and mounted before redirecting
-                  if (
-                    isMounted &&
-                    typeof window !== 'undefined' &&
-                    window.location.pathname === '/login' &&
-                    isRedirecting.current // Ensure flag is still set
-                  ) {
-                    router.replace('/');
-                  } else {
-                    // If conditions changed, reset the flag
-                    isRedirecting.current = false;
+                // Use immediate redirect with window.location for reliability
+                // This ensures the redirect happens immediately and prevents any loops
+                if (typeof window !== 'undefined' && window.location.pathname === '/login') {
+                  // Clear any pending timeouts/animations
+                  if (authRequestController.current) {
+                    authRequestController.current.abort();
+                    authRequestController.current = null;
                   }
-                });
+                  
+                  // Immediate redirect using window.location for maximum reliability
+                  // This bypasses React Router and ensures the redirect completes
+                  window.location.href = '/';
+                  return;
+                }
+                
+                // Fallback to router.replace if window.location fails
+                router.replace('/');
                 return;
               } else {
                 console.warn('User validation failed:', {
