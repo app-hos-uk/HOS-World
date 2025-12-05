@@ -48,12 +48,6 @@ export class ApiClient {
     }
 
     const url = `${this.baseUrl}${endpoint}`;
-    
-    // #region agent log
-    if (typeof window !== 'undefined' && endpoint === '/auth/login') {
-      fetch('http://127.0.0.1:7242/ingest/315c2d74-b9bb-430e-9c51-123c9436e40e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'api-client/client.ts:50',message:'Fetch request starting',data:{url,method:options.method||'GET',hasToken:!!token},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'I'})}).catch(()=>{});
-    }
-    // #endregion
 
     try {
       const response = await fetch(url, {
@@ -61,28 +55,12 @@ export class ApiClient {
         headers,
       });
 
-      // #region agent log
-      if (typeof window !== 'undefined' && endpoint === '/auth/login') {
-        fetch('http://127.0.0.1:7242/ingest/315c2d74-b9bb-430e-9c51-123c9436e40e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'api-client/client.ts:65',message:'Fetch response received',data:{url,status:response.status,statusText:response.statusText,ok:response.ok},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'I'})}).catch(()=>{});
-      }
-      // #endregion
-
       if (response.status === 401) {
-        // #region agent log
-        if (typeof window !== 'undefined' && endpoint === '/auth/login') {
-          fetch('http://127.0.0.1:7242/ingest/315c2d74-b9bb-430e-9c51-123c9436e40e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'api-client/client.ts:72',message:'401 Unauthorized response',data:{url},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'I'})}).catch(()=>{});
-        }
-        // #endregion
         this.onUnauthorized();
         throw new Error('Unauthorized');
       }
 
       if (!response.ok) {
-        // #region agent log
-        if (typeof window !== 'undefined' && endpoint === '/auth/login') {
-          fetch('http://127.0.0.1:7242/ingest/315c2d74-b9bb-430e-9c51-123c9436e40e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'api-client/client.ts:82',message:'Response not OK',data:{url,status:response.status,statusText:response.statusText},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'I'})}).catch(()=>{});
-        }
-        // #endregion
         let errorMessage = `HTTP error! status: ${response.status}`;
         try {
           const errorData = await response.json();
@@ -115,13 +93,6 @@ export class ApiClient {
       }
 
       const data = await response.json();
-      
-      // #region agent log
-      if (typeof window !== 'undefined' && endpoint === '/auth/login') {
-        fetch('http://127.0.0.1:7242/ingest/315c2d74-b9bb-430e-9c51-123c9436e40e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'api-client/client.ts:110',message:'Response JSON parsed',data:{url,status:response.status,hasData:!!data,hasDataField:!!data?.data,hasToken:!!data?.data?.token},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'I'})}).catch(()=>{});
-      }
-      // #endregion
-      
       return data;
     } catch (error: any) {
       // Enhanced error logging
@@ -153,30 +124,10 @@ export class ApiClient {
   }
 
   async login(data: { email: string; password: string }): Promise<ApiResponse<AuthResponse>> {
-    // #region agent log
-    if (typeof window !== 'undefined') {
-      fetch('http://127.0.0.1:7242/ingest/315c2d74-b9bb-430e-9c51-123c9436e40e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'api-client/client.ts:141',message:'API login request starting',data:{endpoint:'/auth/login',baseUrl:this.baseUrl,fullUrl:`${this.baseUrl}/auth/login`,hasEmail:!!data.email},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'I'})}).catch(()=>{});
-    }
-    // #endregion
-    try {
-      const response = await this.request<ApiResponse<AuthResponse>>('/auth/login', {
-        method: 'POST',
-        body: JSON.stringify(data),
-      });
-      // #region agent log
-      if (typeof window !== 'undefined') {
-        fetch('http://127.0.0.1:7242/ingest/315c2d74-b9bb-430e-9c51-123c9436e40e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'api-client/client.ts:149',message:'API login request succeeded',data:{hasResponse:!!response,hasData:!!response?.data,hasToken:!!response?.data?.token},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'I'})}).catch(()=>{});
-      }
-      // #endregion
-      return response;
-    } catch (error: any) {
-      // #region agent log
-      if (typeof window !== 'undefined') {
-        fetch('http://127.0.0.1:7242/ingest/315c2d74-b9bb-430e-9c51-123c9436e40e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'api-client/client.ts:156',message:'API login request failed',data:{error:error?.message||'unknown',errorType:error?.constructor?.name,status:error?.status},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'I'})}).catch(()=>{});
-      }
-      // #endregion
-      throw error;
-    }
+    return this.request<ApiResponse<AuthResponse>>('/auth/login', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
   }
 
   async logout(): Promise<ApiResponse<{ message: string }>> {
@@ -367,5 +318,44 @@ export class ApiClient {
     return this.request<T>(endpoint, {
       method: 'DELETE',
     });
+  }
+
+  // Dashboard endpoints
+  async getAdminDashboardData(): Promise<ApiResponse<any>> {
+    return this.request<ApiResponse<any>>('/dashboard/admin');
+  }
+
+  async getSellerDashboardData(startDate?: string, endDate?: string): Promise<ApiResponse<any>> {
+    const query = startDate || endDate 
+      ? `?${new URLSearchParams({ 
+          ...(startDate && { startDate }), 
+          ...(endDate && { endDate }) 
+        }).toString()}`
+      : '';
+    return this.request<ApiResponse<any>>(`/dashboard/stats${query}`);
+  }
+
+  async getWholesalerDashboardData(): Promise<ApiResponse<any>> {
+    return this.request<ApiResponse<any>>('/dashboard/stats');
+  }
+
+  async getProcurementDashboardData(): Promise<ApiResponse<any>> {
+    return this.request<ApiResponse<any>>('/dashboard/procurement');
+  }
+
+  async getFulfillmentDashboardData(): Promise<ApiResponse<any>> {
+    return this.request<ApiResponse<any>>('/dashboard/fulfillment');
+  }
+
+  async getCatalogDashboardData(): Promise<ApiResponse<any>> {
+    return this.request<ApiResponse<any>>('/dashboard/catalog');
+  }
+
+  async getMarketingDashboardData(): Promise<ApiResponse<any>> {
+    return this.request<ApiResponse<any>>('/dashboard/marketing');
+  }
+
+  async getFinanceDashboardData(): Promise<ApiResponse<any>> {
+    return this.request<ApiResponse<any>>('/dashboard/finance');
   }
 }

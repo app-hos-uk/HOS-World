@@ -9,41 +9,6 @@ import { FandomQuiz } from '@/components/FandomQuiz';
 export default function LoginPage() {
   const router = useRouter();
   const pathname = usePathname();
-  
-  // #region agent log
-  // Move mountId generation to useEffect to avoid creating new ID on every render
-  const mountIdRef = useRef<string | null>(null);
-  if (!mountIdRef.current) {
-    mountIdRef.current = `mount_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-  }
-  const mountId = mountIdRef.current;
-  
-  // Log render start only on mount, not every render
-  useEffect(() => {
-    const stackTrace = new Error().stack || '';
-    fetch('http://127.0.0.1:7242/ingest/315c2d74-b9bb-430e-9c51-123c9436e40e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'login/page.tsx:13',message:'Component render started',data:{mountId,pathname:pathname||(typeof window!=='undefined'?window.location.pathname:'SSR'),stackTrace:stackTrace.split('\n').slice(0,5).join('\n')},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A,B,C'})}).catch(()=>{});
-  }, []);
-  // #endregion
-  
-  // VERSION MARKER: Login Fix v7.0 - Fixed remount loop and removed old v2.0 logs
-  const mountCountRef = useRef(0);
-  mountCountRef.current += 1;
-  
-  // Log mount only once per actual mount, not on every render
-  useEffect(() => {
-    console.log('[LOGIN FIX v7.0] Login page component mounted', {
-      mountId,
-      mountCount: mountCountRef.current,
-      pathname: pathname || (typeof window !== 'undefined' ? window.location.pathname : 'SSR'),
-    });
-  }, []);
-  
-  // #region agent log
-  // Log render count only on mount, not every render - moved to useEffect
-  useEffect(() => {
-    fetch('http://127.0.0.1:7242/ingest/315c2d74-b9bb-430e-9c51-123c9436e40e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'login/page.tsx:31',message:'Component render count',data:{mountId,mountCount:mountCountRef.current,pathname:pathname||(typeof window!=='undefined'?window.location.pathname:'SSR')},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A,C'})}).catch(()=>{});
-  }, []);
-  // #endregion
   const [step, setStep] = useState<'login' | 'character' | 'quiz' | 'forgot-password'>('login');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -66,9 +31,6 @@ export default function LoginPage() {
 
   // Set mounted state after hydration to prevent server/client mismatch
   useEffect(() => {
-    // #region agent log
-    fetch('http://127.0.0.1:7242/ingest/315c2d74-b9bb-430e-9c51-123c9436e40e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'login/page.tsx:37',message:'useEffect setIsMounted executed',data:{mountId,pathname:typeof window!=='undefined'?window.location.pathname:'SSR'},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'E'})}).catch(()=>{});
-    // #endregion
     setIsMounted(true);
   }, []);
 
@@ -89,44 +51,7 @@ export default function LoginPage() {
     }
   }, [loading]);
 
-  // DEBUG: Track component mounts and unmounts with enhanced logging
-  useEffect(() => {
-    const currentPath = typeof window !== 'undefined' ? window.location.pathname : 'SSR';
-    const mountStack = new Error().stack || '';
-    const hasToken = typeof window !== 'undefined' ? !!localStorage.getItem('auth_token') : false;
-    const referrer = typeof window !== 'undefined' ? document.referrer : '';
-    
-    // #region agent log
-    fetch('http://127.0.0.1:7242/ingest/315c2d74-b9bb-430e-9c51-123c9436e40e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'login/page.tsx:93',message:'Component mounted effect',data:{mountId,pathname:currentPath,hasToken,isMounted,referrer,stackTrace:mountStack.split('\n').slice(0,10).join('\n')},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A,B,C'})}).catch(()=>{});
-    // #endregion
-    
-    // Track navigation events
-    if (typeof window !== 'undefined') {
-      const handlePopState = () => {
-        // #region agent log
-        fetch('http://127.0.0.1:7242/ingest/315c2d74-b9bb-430e-9c51-123c9436e40e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'login/page.tsx:102',message:'PopState event',data:{mountId,pathname:window.location.pathname},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'B'})}).catch(()=>{});
-        // #endregion
-      };
-      
-      window.addEventListener('popstate', handlePopState);
-      
-      return () => {
-        window.removeEventListener('popstate', handlePopState);
-        const unmountPath = typeof window !== 'undefined' ? window.location.pathname : 'SSR';
-        const unmountStack = new Error().stack || '';
-        // #region agent log
-        fetch('http://127.0.0.1:7242/ingest/315c2d74-b9bb-430e-9c51-123c9436e40e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'login/page.tsx:110',message:'Component unmounting',data:{mountId,pathname:unmountPath,stackTrace:unmountStack.split('\n').slice(0,10).join('\n')},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'B'})}).catch(()=>{});
-        // #endregion
-      };
-    }
-  }, []);
 
-  // REMOVED: Pathname tracking useEffect - was causing excessive re-renders
-  // Next.js router handles navigation internally, manual tracking unnecessary
-
-  // DISABLED: Auth check removed for maximum stability
-  // Login page will always show immediately without any checks
-  // This prevents all instability issues
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -160,31 +85,17 @@ export default function LoginPage() {
       return;
     }
 
-    // #region agent log
-    fetch('http://127.0.0.1:7242/ingest/315c2d74-b9bb-430e-9c51-123c9436e40e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'login/page.tsx:163',message:'Login API call starting',data:{mountId,email,hasPassword:!!password,apiUrl:process.env.NEXT_PUBLIC_API_URL||'not-set'},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'I'})}).catch(()=>{});
-    // #endregion
-
     try {
       const response = await apiClient.login({ email, password });
       
-      // #region agent log
-      fetch('http://127.0.0.1:7242/ingest/315c2d74-b9bb-430e-9c51-123c9436e40e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'login/page.tsx:168',message:'Login API call succeeded',data:{mountId,hasResponse:!!response,hasData:!!response?.data,hasToken:!!response?.data?.token},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'I'})}).catch(()=>{});
-      // #endregion
-      
       // Check response structure
       if (!response || !response.data) {
-        // #region agent log
-        fetch('http://127.0.0.1:7242/ingest/315c2d74-b9bb-430e-9c51-123c9436e40e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'login/page.tsx:173',message:'Login failed - invalid response',data:{mountId,hasResponse:!!response,hasData:!!response?.data},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'I'})}).catch(()=>{});
-        // #endregion
         throw new Error('Invalid response from server');
       }
 
       const { token: authToken } = response.data;
 
       if (!authToken) {
-        // #region agent log
-        fetch('http://127.0.0.1:7242/ingest/315c2d74-b9bb-430e-9c51-123c9436e40e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'login/page.tsx:180',message:'Login failed - no token',data:{mountId,hasData:!!response.data},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'I'})}).catch(()=>{});
-        // #endregion
         throw new Error('No token received from server');
       }
 
@@ -192,21 +103,15 @@ export default function LoginPage() {
       try {
         localStorage.setItem('auth_token', authToken);
         setToken(authToken);
-        // #region agent log
-        fetch('http://127.0.0.1:7242/ingest/315c2d74-b9bb-430e-9c51-123c9436e40e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'login/page.tsx:187',message:'Token saved to localStorage',data:{mountId,hasToken:!!authToken,tokenLength:authToken?.length},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'I'})}).catch(()=>{});
-        // #endregion
       } catch (e) {
-        // #region agent log
-        fetch('http://127.0.0.1:7242/ingest/315c2d74-b9bb-430e-9c51-123c9436e40e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'login/page.tsx:191',message:'Failed to save token',data:{mountId,error:e instanceof Error?e.message:'unknown'},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'I'})}).catch(()=>{});
-        // #endregion
         console.error('Failed to save token:', e);
         throw new Error('Failed to save authentication token');
       }
 
-      // CRITICAL: Mark login success to prevent onUnauthorized redirects
+      // Mark login success to prevent onUnauthorized redirects
       markLoginSuccess();
 
-      // CRITICAL: Set redirect flag and stop auth check BEFORE redirect
+      // Set redirect flag and stop auth check BEFORE redirect
       isRedirecting.current = true;
       setIsCheckingAuth(false);
       setLoading(false);
@@ -218,19 +123,13 @@ export default function LoginPage() {
         authRequestController.current = null;
       }
 
-      // Immediate redirect - no delays, no sessionStorage flags
-      // #region agent log
-      fetch('http://127.0.0.1:7242/ingest/315c2d74-b9bb-430e-9c51-123c9436e40e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'login/page.tsx:227',message:'Redirecting to home after successful login',data:{mountId,hasToken:!!authToken,pathname:typeof window!=='undefined'?window.location.pathname:'SSR'},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'G'})}).catch(()=>{});
-      // #endregion
+      // Redirect to home
       if (typeof window !== 'undefined') {
         window.location.replace('/');
       } else {
         router.replace('/');
       }
     } catch (err: any) {
-      // #region agent log
-      fetch('http://127.0.0.1:7242/ingest/315c2d74-b9bb-430e-9c51-123c9436e40e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'login/page.tsx:235',message:'Login API call failed',data:{mountId,error:err?.message||'unknown',errorType:err?.constructor?.name,stackTrace:err?.stack?.split('\n').slice(0,5).join('\n')},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'I'})}).catch(()=>{});
-      // #endregion
       console.error('Login error:', err);
       setError(err.message || 'Login failed. Please check your credentials.');
       setLoading(false);
@@ -238,7 +137,6 @@ export default function LoginPage() {
       isRedirecting.current = false;
       hasCheckedAuth.current = false;
       authCheckInProgress.current = false;
-      // CRITICAL: DO NOT redirect on error - stay on login page
     }
   };
 
@@ -299,10 +197,6 @@ export default function LoginPage() {
         authRequestController.current = null;
       }
 
-      // Immediate redirect - no delays
-      // #region agent log
-      fetch('http://127.0.0.1:7242/ingest/315c2d74-b9bb-430e-9c51-123c9436e40e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'login/page.tsx:301',message:'Redirecting to home after register',data:{mountId,hasToken:!!authToken,pathname:typeof window!=='undefined'?window.location.pathname:'SSR'},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'G'})}).catch(()=>{});
-      // #endregion
       if (typeof window !== 'undefined') {
         window.location.replace('/');
       } else {
