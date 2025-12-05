@@ -392,12 +392,6 @@ export class ApiClient {
     });
   }
 
-  async getFandoms(): Promise<ApiResponse<any[]>> {
-    return this.request<ApiResponse<any[]>>('/fandoms', {
-      method: 'GET',
-    });
-  }
-
   // Procurement
   async getProcurementSubmissions(status?: string): Promise<ApiResponse<any[]>> {
     const url = status ? `/procurement/submissions?status=${status}` : '/procurement/submissions';
