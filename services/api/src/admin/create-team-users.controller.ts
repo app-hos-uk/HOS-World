@@ -3,56 +3,47 @@ import { Public } from '../common/decorators/public.decorator';
 import { PrismaService } from '../database/prisma.service';
 import { UserRole } from '@prisma/client';
 import type { ApiResponse } from '@hos-marketplace/shared-types';
-
-// Password hash for "Test123!"
-const PASSWORD_HASH = '$2b$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy';
+import * as bcrypt from 'bcrypt';
 
 const teamUsers = [
   {
     email: 'admin@hos.test',
-    password: PASSWORD_HASH,
     firstName: 'Admin',
     lastName: 'User',
     role: UserRole.ADMIN,
   },
   {
     email: 'procurement@hos.test',
-    password: PASSWORD_HASH,
     firstName: 'Procurement',
     lastName: 'Manager',
     role: UserRole.PROCUREMENT,
   },
   {
     email: 'fulfillment@hos.test',
-    password: PASSWORD_HASH,
     firstName: 'Fulfillment',
     lastName: 'Staff',
     role: UserRole.FULFILLMENT,
   },
   {
     email: 'catalog@hos.test',
-    password: PASSWORD_HASH,
     firstName: 'Catalog',
     lastName: 'Editor',
     role: UserRole.CATALOG,
   },
   {
     email: 'marketing@hos.test',
-    password: PASSWORD_HASH,
     firstName: 'Marketing',
     lastName: 'Manager',
     role: UserRole.MARKETING,
   },
   {
     email: 'finance@hos.test',
-    password: PASSWORD_HASH,
     firstName: 'Finance',
     lastName: 'Manager',
     role: UserRole.FINANCE,
   },
   {
     email: 'cms@hos.test',
-    password: PASSWORD_HASH,
     firstName: 'CMS',
     lastName: 'Editor',
     role: UserRole.CMS_EDITOR,
@@ -66,6 +57,11 @@ export class CreateTeamUsersController {
   @Public()
   @Post('create-team-users')
   async createTeamUsers(): Promise<ApiResponse<any>> {
+    // Generate password hash for "Test123!"
+    const password = 'Test123!';
+    const saltRounds = 10;
+    const passwordHash = await bcrypt.hash(password, saltRounds);
+    
     const results = [];
 
     for (const userData of teamUsers) {
@@ -78,7 +74,7 @@ export class CreateTeamUsersController {
           await this.prisma.user.update({
             where: { id: existingUser.id },
             data: {
-              password: userData.password,
+              password: passwordHash,
               role: userData.role,
               firstName: userData.firstName,
               lastName: userData.lastName,
@@ -89,7 +85,7 @@ export class CreateTeamUsersController {
           await this.prisma.user.create({
             data: {
               email: userData.email,
-              password: userData.password,
+              password: passwordHash,
               firstName: userData.firstName,
               lastName: userData.lastName,
               role: userData.role,
