@@ -25,11 +25,18 @@ export default function LoginPage() {
   }, []);
   // #endregion
   
-  // VERSION MARKER: Login Fix v6.0 - Removed pathname tracking and optimized debug logs
-  console.log('[LOGIN FIX v6.0] Login page component mounted');
-  
+  // VERSION MARKER: Login Fix v7.0 - Fixed remount loop and removed old v2.0 logs
   const mountCountRef = useRef(0);
   mountCountRef.current += 1;
+  
+  // Log mount only once per actual mount, not on every render
+  useEffect(() => {
+    console.log('[LOGIN FIX v7.0] Login page component mounted', {
+      mountId,
+      mountCount: mountCountRef.current,
+      pathname: pathname || (typeof window !== 'undefined' ? window.location.pathname : 'SSR'),
+    });
+  }, []);
   
   // #region agent log
   // Log render count only on mount, not every render - moved to useEffect
@@ -82,22 +89,36 @@ export default function LoginPage() {
     }
   }, [loading]);
 
-  // DEBUG: Track component mounts and unmounts
+  // DEBUG: Track component mounts and unmounts with enhanced logging
   useEffect(() => {
     const currentPath = typeof window !== 'undefined' ? window.location.pathname : 'SSR';
-    const unmountStack = new Error().stack || '';
-    // #region agent log
-    fetch('http://127.0.0.1:7242/ingest/315c2d74-b9bb-430e-9c51-123c9436e40e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'login/page.tsx:57',message:'Component mounted effect',data:{mountId,pathname:currentPath,stackTrace:unmountStack.split('\n').slice(0,5).join('\n')},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A,B,C'})}).catch(()=>{});
-    // #endregion
-    console.log('[LOGIN FIX v2.0] Component mounted, pathname:', currentPath);
+    const mountStack = new Error().stack || '';
+    const hasToken = typeof window !== 'undefined' ? !!localStorage.getItem('auth_token') : false;
+    const referrer = typeof window !== 'undefined' ? document.referrer : '';
     
-    return () => {
-      const unmountPath = typeof window !== 'undefined' ? window.location.pathname : 'SSR';
-      // #region agent log
-      fetch('http://127.0.0.1:7242/ingest/315c2d74-b9bb-430e-9c51-123c9436e40e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'login/page.tsx:65',message:'Component unmounting',data:{mountId,pathname:unmountPath},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'B'})}).catch(()=>{});
-      // #endregion
-      console.log('[LOGIN FIX v2.0] Component unmounting, pathname:', unmountPath);
-    };
+    // #region agent log
+    fetch('http://127.0.0.1:7242/ingest/315c2d74-b9bb-430e-9c51-123c9436e40e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'login/page.tsx:93',message:'Component mounted effect',data:{mountId,pathname:currentPath,hasToken,isMounted,referrer,stackTrace:mountStack.split('\n').slice(0,10).join('\n')},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A,B,C'})}).catch(()=>{});
+    // #endregion
+    
+    // Track navigation events
+    if (typeof window !== 'undefined') {
+      const handlePopState = () => {
+        // #region agent log
+        fetch('http://127.0.0.1:7242/ingest/315c2d74-b9bb-430e-9c51-123c9436e40e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'login/page.tsx:102',message:'PopState event',data:{mountId,pathname:window.location.pathname},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'B'})}).catch(()=>{});
+        // #endregion
+      };
+      
+      window.addEventListener('popstate', handlePopState);
+      
+      return () => {
+        window.removeEventListener('popstate', handlePopState);
+        const unmountPath = typeof window !== 'undefined' ? window.location.pathname : 'SSR';
+        const unmountStack = new Error().stack || '';
+        // #region agent log
+        fetch('http://127.0.0.1:7242/ingest/315c2d74-b9bb-430e-9c51-123c9436e40e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'login/page.tsx:110',message:'Component unmounting',data:{mountId,pathname:unmountPath,stackTrace:unmountStack.split('\n').slice(0,10).join('\n')},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'B'})}).catch(()=>{});
+        // #endregion
+      };
+    }
   }, []);
 
   // REMOVED: Pathname tracking useEffect - was causing excessive re-renders
