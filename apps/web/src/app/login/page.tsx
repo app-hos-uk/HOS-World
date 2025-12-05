@@ -371,11 +371,28 @@ export default function LoginPage() {
         throw new Error('Failed to save authentication token');
       }
 
+      // CRITICAL: Clear any existing sessionStorage redirect flags
+      // This prevents the auth check from interfering with the login redirect
+      try {
+        sessionStorage.removeItem('login_redirecting');
+      } catch (e) {
+        // Ignore sessionStorage errors
+      }
+
+      // Set redirect flag to prevent any auth re-checks
+      isRedirecting.current = true;
+      setIsCheckingAuth(false);
+      setLoading(false);
+
       // Character selection is optional - go directly to home page
-      // Chrome-specific: Use setTimeout to ensure state updates complete before redirect
-      setTimeout(() => {
+      // Use window.location.replace() for immediate, reliable redirect
+      // This matches the auth check redirect behavior
+      if (typeof window !== 'undefined') {
+        window.location.replace('/');
+      } else {
+        // Fallback to router if window is not available
         router.replace('/');
-      }, 0);
+      }
     } catch (err: any) {
       console.error('Login error:', err);
       setError(err.message || 'Login failed. Please check your credentials.');
@@ -405,12 +422,27 @@ export default function LoginPage() {
         throw new Error('Failed to save authentication token');
       }
 
+      // CRITICAL: Clear any existing sessionStorage redirect flags
+      // This prevents the auth check from interfering with the registration redirect
+      try {
+        sessionStorage.removeItem('login_redirecting');
+      } catch (e) {
+        // Ignore sessionStorage errors
+      }
+
+      // Set redirect flag to prevent any auth re-checks
+      isRedirecting.current = true;
+      setIsCheckingAuth(false);
+      setLoading(false);
+
       // Character selection is optional - go directly to home page
-      // New users can select a character later from their profile
-      // Chrome-specific: Use setTimeout to ensure state updates complete
-      setTimeout(() => {
+      // Use window.location.replace() for immediate, reliable redirect
+      if (typeof window !== 'undefined') {
+        window.location.replace('/');
+      } else {
+        // Fallback to router if window is not available
         router.replace('/');
-      }, 0);
+      }
     } catch (err: any) {
       setError(err.message || 'Registration failed. Please try again.');
     } finally {
