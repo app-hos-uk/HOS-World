@@ -23,18 +23,29 @@ export default function SellerDashboardPage() {
   useEffect(() => {
     const fetchDashboardData = async () => {
       try {
+        console.log('[SELLER DASHBOARD] Starting data fetch...');
         setLoading(true);
         setError(null);
+        console.log('[SELLER DASHBOARD] Calling API...');
         const response = await apiClient.getSellerDashboardData();
+        console.log('[SELLER DASHBOARD] API Response:', { hasData: !!response?.data, response });
         if (response?.data) {
           setDashboardData(response.data);
+          console.log('[SELLER DASHBOARD] Data set successfully');
         } else {
+          console.error('[SELLER DASHBOARD] No data in response');
           setError('Failed to load dashboard data');
         }
       } catch (err: any) {
-        console.error('Error fetching seller dashboard:', err);
+        console.error('[SELLER DASHBOARD] Error fetching seller dashboard:', err);
+        console.error('[SELLER DASHBOARD] Error details:', {
+          message: err.message,
+          stack: err.stack,
+          name: err.name,
+        });
         setError(err.message || 'Failed to load dashboard data');
       } finally {
+        console.log('[SELLER DASHBOARD] Setting loading to false');
         setLoading(false);
       }
     };
