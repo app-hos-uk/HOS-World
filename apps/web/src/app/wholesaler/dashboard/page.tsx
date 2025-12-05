@@ -41,7 +41,17 @@ export default function WholesalerDashboardPage() {
       <div className="min-h-screen bg-white">
         <Header />
         <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 lg:py-12">
-          <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold mb-6 sm:mb-6 sm:mb-8">Wholesaler Dashboard</h1>
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6 sm:mb-8">
+            <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold">Wholesaler Dashboard</h1>
+            <div className="flex gap-3">
+              <a
+                href="/seller/submit-product"
+                className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors font-medium text-sm sm:text-base whitespace-nowrap"
+              >
+                Submit New Product
+              </a>
+            </div>
+          </div>
           
           {loading && (
             <div className="flex items-center justify-center py-12">
