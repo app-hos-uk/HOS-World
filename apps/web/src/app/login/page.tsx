@@ -110,31 +110,25 @@ export default function LoginPage() {
       // Mark login success to prevent onUnauthorized redirects
       markLoginSuccess();
 
-      // Fetch user data to get role for redirect
+      // Get role from login response to determine redirect path
       let redirectPath = '/';
-      try {
-        const userResponse = await apiClient.get('/auth/me');
-        if (userResponse?.data) {
-          const user = userResponse.data;
-          // Map role to dashboard path
-          const roleDashboardMap: Record<string, string> = {
-            CUSTOMER: '/',
-            WHOLESALER: '/wholesaler/dashboard',
-            B2C_SELLER: '/seller/dashboard',
-            SELLER: '/seller/dashboard',
-            ADMIN: '/admin/dashboard',
-            PROCUREMENT: '/procurement/dashboard',
-            FULFILLMENT: '/fulfillment/dashboard',
-            CATALOG: '/catalog/dashboard',
-            MARKETING: '/marketing/dashboard',
-            FINANCE: '/finance/dashboard',
-            CMS_EDITOR: '/',
-          };
-          redirectPath = roleDashboardMap[user.role] || '/';
-        }
-      } catch (err) {
-        // If we can't get user info, default to home
-        console.error('Failed to fetch user info:', err);
+      const user = response.data.user;
+      if (user?.role) {
+        // Map role to dashboard path
+        const roleDashboardMap: Record<string, string> = {
+          CUSTOMER: '/',
+          WHOLESALER: '/wholesaler/dashboard',
+          B2C_SELLER: '/seller/dashboard',
+          SELLER: '/seller/dashboard',
+          ADMIN: '/admin/dashboard',
+          PROCUREMENT: '/procurement/dashboard',
+          FULFILLMENT: '/fulfillment/dashboard',
+          CATALOG: '/catalog/dashboard',
+          MARKETING: '/marketing/dashboard',
+          FINANCE: '/finance/dashboard',
+          CMS_EDITOR: '/',
+        };
+        redirectPath = roleDashboardMap[user.role] || '/';
       }
 
       // Set redirect flag and stop auth check BEFORE redirect
