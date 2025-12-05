@@ -37,8 +37,9 @@ export default function LoginPage() {
   useEffect(() => {
     if (loading) {
       // User is actively logging in - cancel any pending auth checks
-      if (authRequestController.current) {
-        authRequestController.current.abort();
+      const controller = authRequestController.current;
+      if (controller) {
+        controller.abort();
         authRequestController.current = null;
       }
       // Prevent auth check from running during login
@@ -126,8 +127,9 @@ export default function LoginPage() {
         const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api';
         
         // Cancel any existing auth request
-        if (authRequestController.current) {
-          authRequestController.current.abort();
+        const existingController = authRequestController.current;
+        if (existingController) {
+          existingController.abort();
         }
         
         // Create new abort controller
@@ -196,8 +198,9 @@ export default function LoginPage() {
                 // Immediate redirect - no delays, no sessionStorage flags
                 if (typeof window !== 'undefined' && window.location.pathname === '/login') {
                   // Cancel any pending requests
-                  if (authRequestController.current) {
-                    authRequestController.current.abort();
+                  const pendingController = authRequestController.current;
+                  if (pendingController) {
+                    pendingController.abort();
                     authRequestController.current = null;
                   }
                   
@@ -250,8 +253,9 @@ export default function LoginPage() {
       if (!isRedirecting.current) {
         authCheckInProgress.current = false;
       }
-      if (authRequestController.current) {
-        authRequestController.current.abort();
+      const cleanupController = authRequestController.current;
+      if (cleanupController) {
+        cleanupController.abort();
         authRequestController.current = null;
       }
     };
@@ -263,8 +267,9 @@ export default function LoginPage() {
     setLoading(true);
 
     // CRITICAL: Cancel any pending auth checks immediately
-    if (authRequestController.current) {
-      authRequestController.current.abort();
+    const loginController = authRequestController.current;
+    if (loginController) {
+      loginController.abort();
       authRequestController.current = null;
     }
     
@@ -320,8 +325,9 @@ export default function LoginPage() {
       setLoading(false);
       
       // Cancel any auth requests
-      if (authRequestController.current) {
-        authRequestController.current.abort();
+      const controller = authRequestController.current;
+      if (controller) {
+        controller.abort();
         authRequestController.current = null;
       }
 
@@ -348,8 +354,9 @@ export default function LoginPage() {
     setLoading(true);
 
     // CRITICAL: Cancel any pending auth checks immediately
-    if (authRequestController.current) {
-      authRequestController.current.abort();
+    const registerController = authRequestController.current;
+    if (registerController) {
+      registerController.abort();
       authRequestController.current = null;
     }
     
@@ -392,8 +399,9 @@ export default function LoginPage() {
       setLoading(false);
       
       // Cancel any auth requests
-      if (authRequestController.current) {
-        authRequestController.current.abort();
+      const controller = authRequestController.current;
+      if (controller) {
+        controller.abort();
         authRequestController.current = null;
       }
 
