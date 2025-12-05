@@ -31,6 +31,7 @@ RUN pnpm install --no-frozen-lockfile
 # Copy packages first (including tsconfig.json files and source files)
 # Use --chown to ensure proper permissions and avoid cache issues
 # Force cache invalidation by copying in a specific order
+# Cache-bust: 2025-12-04 - Fixed api-client TypeScript build error
 RUN echo "Build date: ${BUILD_DATE}" && echo "Forcing fresh package copy..."
 # Copy all package files (package.json, tsconfig.json, and source)
 COPY --chown=node:node packages ./packages

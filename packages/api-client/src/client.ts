@@ -1,3 +1,4 @@
+// Cache-bust: 2025-12-04 - Fixed TypeScript build error (removed process.env checks)
 import type {
   User,
   Product,
