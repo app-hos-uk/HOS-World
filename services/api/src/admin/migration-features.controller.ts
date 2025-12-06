@@ -48,6 +48,10 @@ export class MigrationFeaturesController {
 
       // Split SQL into statements, handling DO blocks properly
       const statements = this.splitSQLStatements(sqlContent);
+      this.logger.log(`📊 Split SQL into ${statements.length} statements`);
+      if (statements.length <= 5) {
+        this.logger.warn(`⚠️ Only ${statements.length} statements found - this seems too few. First statement preview: ${statements[0]?.substring(0, 200)}...`);
+      }
 
       const results: any[] = [];
       let successful = 0;
@@ -190,8 +194,13 @@ export class MigrationFeaturesController {
       const originalLine = lines[i];
       const line = originalLine.trim();
       
-      // Skip comments (but keep empty lines for formatting)
+      // Skip comments
       if (line.startsWith('--')) {
+        continue;
+      }
+
+      // Skip completely empty lines (but we'll add them back for DO blocks)
+      if (!line && !inDoBlock) {
         continue;
       }
 
@@ -226,11 +235,17 @@ export class MigrationFeaturesController {
       if (inDoBlock) {
         currentStatement += originalLine + '\n';
         
-        // Check for END with matching dollar quote (case insensitive, with optional semicolon)
-        const endPattern = new RegExp(`^END\\s+\\${dollarQuoteTag.replace(/\$/g, '\\$')}\\s*;?$`, 'i');
+        // Check for END with matching dollar quote
+        // Pattern: END followed by the dollar quote tag, optional semicolon
+        const escapedTag = dollarQuoteTag.replace(/\$/g, '\\$');
+        const endPattern = new RegExp(`^END\\s+${escapedTag}\\s*;?$`, 'i');
+        
         if (line.match(endPattern)) {
           // Found END, close the block
-          statements.push(currentStatement.trim());
+          const trimmed = currentStatement.trim();
+          if (trimmed.length > 0) {
+            statements.push(trimmed);
+          }
           currentStatement = '';
           inDoBlock = false;
           dollarQuoteTag = '';
@@ -238,7 +253,7 @@ export class MigrationFeaturesController {
         continue;
       }
 
-      // Regular statement handling - preserve original line to maintain formatting
+      // Regular statement handling
       if (line.length > 0) {
         currentStatement += originalLine + '\n';
       }
@@ -258,7 +273,7 @@ export class MigrationFeaturesController {
       statements.push(currentStatement.trim());
     }
 
-    // Filter out empty statements and comments
+    // Filter out empty statements
     return statements
       .map((s) => s.trim())
       .filter((s) => s.length > 0 && !s.startsWith('--'));
