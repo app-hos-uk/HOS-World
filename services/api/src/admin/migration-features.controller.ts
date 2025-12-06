@@ -187,36 +187,48 @@ export class MigrationFeaturesController {
     const lines = sql.split('\n');
 
     for (let i = 0; i < lines.length; i++) {
-      const line = lines[i].trim();
+      const originalLine = lines[i];
+      const line = originalLine.trim();
       
-      // Skip empty lines and comments
-      if (!line || line.startsWith('--')) {
+      // Skip comments (but keep empty lines for formatting)
+      if (line.startsWith('--')) {
         continue;
       }
 
       // Check for DO $$ block start
-      if (line.match(/^DO\s+\$\$/)) {
+      if (line.match(/^DO\s+\$\$/i)) {
+        // If we have a pending statement, save it first
+        if (currentStatement.trim() && !inDoBlock) {
+          statements.push(currentStatement.trim());
+          currentStatement = '';
+        }
         inDoBlock = true;
         dollarQuoteTag = '$$';
-        currentStatement = line + '\n';
+        currentStatement = originalLine + '\n';
         continue;
       }
 
       // Check for DO $tag$ block start (with custom tag)
-      const doMatch = line.match(/^DO\s+\$([^$]+)\$/);
+      const doMatch = line.match(/^DO\s+\$([^$]+)\$/i);
       if (doMatch) {
+        // If we have a pending statement, save it first
+        if (currentStatement.trim() && !inDoBlock) {
+          statements.push(currentStatement.trim());
+          currentStatement = '';
+        }
         inDoBlock = true;
         dollarQuoteTag = `$${doMatch[1]}$`;
-        currentStatement = line + '\n';
+        currentStatement = originalLine + '\n';
         continue;
       }
 
-      // If in DO block, check for END
+      // If in DO block, accumulate lines until we find END
       if (inDoBlock) {
-        currentStatement += line + '\n';
+        currentStatement += originalLine + '\n';
         
-        // Check for END with matching dollar quote
-        if (line.match(new RegExp(`^END\\s+\\${dollarQuoteTag.replace(/\$/g, '\\$')};?$`))) {
+        // Check for END with matching dollar quote (case insensitive, with optional semicolon)
+        const endPattern = new RegExp(`^END\\s+\\${dollarQuoteTag.replace(/\$/g, '\\$')}\\s*;?$`, 'i');
+        if (line.match(endPattern)) {
           // Found END, close the block
           statements.push(currentStatement.trim());
           currentStatement = '';
@@ -226,8 +238,10 @@ export class MigrationFeaturesController {
         continue;
       }
 
-      // Regular statement handling
-      currentStatement += line + '\n';
+      // Regular statement handling - preserve original line to maintain formatting
+      if (line.length > 0) {
+        currentStatement += originalLine + '\n';
+      }
 
       // Check if line ends with semicolon (end of statement)
       if (line.endsWith(';')) {
