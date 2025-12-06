@@ -896,4 +896,17 @@ export class ApiClient {
       body: JSON.stringify(data),
     });
   }
+
+  // Admin Migration
+  async runGlobalFeaturesMigration(): Promise<ApiResponse<any>> {
+    return this.request<ApiResponse<any>>('/admin/migration/run-global-features', {
+      method: 'POST',
+    });
+  }
+
+  async verifyMigration(): Promise<ApiResponse<any>> {
+    return this.request<ApiResponse<any>>('/admin/migration/verify', {
+      method: 'POST',
+    });
+  }
 }

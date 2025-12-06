@@ -35,6 +35,17 @@ export class PrismaService extends PrismaClient implements OnModuleInit, OnModul
   private async syncDatabaseSchema() {
     try {
       this.logger.log('🔄 Running database migrations...');
+      
+      // First, check if _prisma_migrations table exists
+      const migrationsTableExists = await this.checkMigrationsTableExists();
+      
+      if (!migrationsTableExists) {
+        this.logger.log('⚠️ Prisma migrations table not found. Database may need baselining.');
+        this.logger.log('💡 Run the migration SQL manually or use: pnpm db:run-migration-sql');
+        // Don't try to run migrate deploy if table doesn't exist - it will fail
+        return;
+      }
+      
       // Use migrate deploy for production (applies pending migrations)
       const { stdout, stderr } = await execAsync('pnpm prisma migrate deploy', {
         cwd: process.cwd(),
@@ -47,10 +58,28 @@ export class PrismaService extends PrismaClient implements OnModuleInit, OnModul
       // If no migrations to apply, that's okay
       if (error.message?.includes('No pending migrations') || error.message?.includes('already applied')) {
         this.logger.log('✅ Database is up to date - no pending migrations');
+      } else if (error.message?.includes('P3005') || error.message?.includes('not empty')) {
+        this.logger.warn('⚠️ Database needs baselining. Run migration SQL manually.');
+        this.logger.warn('💡 See: services/api/prisma/migrations/run_and_baseline.sql');
       } else {
         // Log error but don't throw - allow app to continue
         this.logger.warn('⚠️ Migration check completed with warnings:', error.message);
       }
+    }
+  }
+
+  private async checkMigrationsTableExists(): Promise<boolean> {
+    try {
+      const result = await this.$queryRaw`
+        SELECT EXISTS (
+          SELECT FROM information_schema.tables 
+          WHERE table_schema = 'public' 
+          AND table_name = '_prisma_migrations'
+        );
+      `;
+      return (result as any[])[0]?.exists || false;
+    } catch (error) {
+      return false;
     }
   }
 

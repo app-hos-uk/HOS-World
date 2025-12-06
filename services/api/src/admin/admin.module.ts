@@ -2,12 +2,13 @@ import { Module } from '@nestjs/common';
 import { CreateTeamUsersController } from './create-team-users.controller';
 import { AdminUsersController } from './users.controller';
 import { AdminController } from './admin.controller';
+import { MigrationController } from './migration.controller';
 import { AdminService } from './admin.service';
 import { DatabaseModule } from '../database/database.module';
 
 @Module({
   imports: [DatabaseModule],
-  controllers: [CreateTeamUsersController, AdminUsersController, AdminController],
+  controllers: [CreateTeamUsersController, AdminUsersController, AdminController, MigrationController],
   providers: [AdminService],
   exports: [AdminService],
 })

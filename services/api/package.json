@@ -31,6 +31,7 @@
     "db:verify-admin": "ts-node src/database/verify-admin.ts",
     "db:fix-admin": "ts-node src/database/fix-admin-now.ts",
     "db:migrate-phase6": "ts-node src/database/run-phase6-migration.ts",
+    "db:run-migration-sql": "ts-node src/database/run-migration.ts",
     "clean": "rm -rf dist"
   },
   "dependencies": {
