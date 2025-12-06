@@ -13,30 +13,57 @@ async function bootstrap() {
 
     const app = await NestFactory.create(AppModule);
 
-    // Enable CORS
+    // Enable CORS FIRST - before any other middleware
     // Support multiple origins for flexibility
     const allowedOrigins = [
       process.env.FRONTEND_URL,
       'https://hos-marketplaceweb-production.up.railway.app',
       'http://localhost:3000',
+      'http://localhost:3001',
     ].filter(Boolean); // Remove undefined values
+
+    console.log('🌐 CORS allowed origins:', allowedOrigins);
 
     app.enableCors({
       origin: (origin, callback) => {
         // Allow requests with no origin (like mobile apps or curl requests)
-        if (!origin) return callback(null, true);
+        if (!origin) {
+          console.log('✅ CORS: Allowing request with no origin');
+          return callback(null, true);
+        }
         
         // Check if origin is in allowed list
-        if (allowedOrigins.some(allowed => origin === allowed)) {
+        const isAllowed = allowedOrigins.some(allowed => {
+          if (origin === allowed) return true;
+          // Also allow if origin starts with allowed (for subdomains)
+          if (allowed && origin.startsWith(allowed)) return true;
+          return false;
+        });
+        
+        if (isAllowed) {
+          console.log(`✅ CORS: Allowing origin: ${origin}`);
           callback(null, true);
         } else {
           console.warn(`⚠️  CORS blocked origin: ${origin}`);
+          console.warn(`⚠️  Allowed origins: ${allowedOrigins.join(', ')}`);
           callback(new Error('Not allowed by CORS'));
         }
       },
       credentials: true,
       methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
-      allowedHeaders: ['Content-Type', 'Authorization'],
+      allowedHeaders: [
+        'Content-Type',
+        'Authorization',
+        'X-Requested-With',
+        'Accept',
+        'Origin',
+        'Access-Control-Request-Method',
+        'Access-Control-Request-Headers',
+      ],
+      exposedHeaders: ['Authorization'],
+      preflightContinue: false,
+      optionsSuccessStatus: 204,
+      maxAge: 86400, // 24 hours
     });
 
     // Add root route handler via middleware BEFORE setting global prefix
