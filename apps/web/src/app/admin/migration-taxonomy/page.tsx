@@ -86,6 +86,25 @@ export default function MigrationTaxonomyPage() {
       if (response && typeof response === 'object') {
         if ('data' in response && response.data) {
           const data = response.data;
+          // Handle the actual backend response structure
+          if (typeof data === 'object' && 'totalStatements' in data) {
+            // Backend returns: { totalStatements, successful, errors, results, verification }
+            const success = data.errors === 0;
+            setResult({
+              success,
+              message: response.message || (success ? 'Migration completed successfully' : `Migration completed with ${data.errors} errors`),
+              summary: {
+                totalStatements: data.totalStatements || 0,
+                successful: data.successful || 0,
+                errors: data.errors || 0,
+              },
+              verification: data.verification || {},
+              details: data.results || [],
+            });
+            await loadStatus();
+            return;
+          }
+          // Fallback: check for success/error fields
           if (typeof data === 'object' && ('success' in data || 'error' in data)) {
             setResult(data as MigrationResult);
             await loadStatus();
