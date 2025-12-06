@@ -132,7 +132,7 @@ export default function ProfilePage() {
       if (response?.data) {
         setProfile(response.data);
         setEditing(false);
-        toast.showSuccess('Profile updated successfully');
+        toast.success('Profile updated successfully');
         // Update currency context if changed
         if (formData.currencyPreference !== currency) {
           setCurrency(formData.currencyPreference);
@@ -141,7 +141,7 @@ export default function ProfilePage() {
         await fetchProfileData();
       }
     } catch (err: any) {
-      toast.showError(err.message || 'Failed to update profile');
+      toast.error(err.message || 'Failed to update profile');
     } finally {
       setSaving(false);
     }
@@ -150,10 +150,10 @@ export default function ProfilePage() {
   const handleUpdateGDPRConsent = async (consentData: { marketing?: boolean; analytics?: boolean; essential?: boolean }) => {
     try {
       await apiClient.updateGDPRConsent(consentData);
-      toast.showSuccess('Consent preferences updated');
+      toast.success('Consent preferences updated');
       await fetchProfileData();
     } catch (err: any) {
-      toast.showError(err.message || 'Failed to update consent');
+      toast.error(err.message || 'Failed to update consent');
     }
   };
 
@@ -173,10 +173,10 @@ export default function ProfilePage() {
         link.click();
         document.body.removeChild(link);
         URL.revokeObjectURL(url);
-        toast.showSuccess('Data exported successfully');
+        toast.success('Data exported successfully');
       }
     } catch (err: any) {
-      toast.showError(err.message || 'Failed to export data');
+      toast.error(err.message || 'Failed to export data');
     } finally {
       setExportingData(false);
     }
@@ -190,7 +190,7 @@ export default function ProfilePage() {
     try {
       setDeletingAccount(true);
       await apiClient.deleteUserData();
-      toast.showSuccess('Account deletion initiated. You will be logged out.');
+      toast.success('Account deletion initiated. You will be logged out.');
       // Logout and redirect
       setTimeout(() => {
         if (typeof window !== 'undefined') {
@@ -198,7 +198,7 @@ export default function ProfilePage() {
         }
       }, 2000);
     } catch (err: any) {
-      toast.showError(err.message || 'Failed to delete account');
+      toast.error(err.message || 'Failed to delete account');
     } finally {
       setDeletingAccount(false);
     }
