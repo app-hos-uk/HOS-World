@@ -46,17 +46,27 @@ export default function AdminMigrationPage() {
         const response = await apiClient.runSQLDirectMigration();
         console.log('Migration response:', response);
         
-        if (response?.data) {
-          setResult(response.data);
-          return;
-        } else if (response?.error) {
-          setResult({
-            success: false,
-            message: 'Migration failed',
-            error: response.error || 'Unknown error',
-          });
-          return;
+        // The API client returns the response directly (not wrapped in data)
+        // Check if it has success property (direct response) or data property (wrapped)
+        if (response && typeof response === 'object') {
+          if ('success' in response || 'error' in response) {
+            // Direct response from backend
+            setResult(response as MigrationResult);
+            return;
+          } else if ('data' in response && response.data) {
+            // Wrapped in ApiResponse
+            setResult(response.data as MigrationResult);
+            return;
+          }
         }
+        
+        // Fallback: treat as error
+        setResult({
+          success: false,
+          message: 'Unexpected response format',
+          error: JSON.stringify(response),
+        });
+        return;
       } catch (apiError: any) {
         console.warn('API client failed, trying direct fetch:', apiError);
         
