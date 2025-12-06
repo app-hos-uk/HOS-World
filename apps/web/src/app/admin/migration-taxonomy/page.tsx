@@ -138,7 +138,30 @@ export default function MigrationTaxonomyPage() {
 
         const fetchData = await fetchResponse.json();
         if (fetchData.data) {
-          setResult(fetchData.data as MigrationResult);
+          const data = fetchData.data;
+          // Handle the actual backend response structure
+          if (typeof data === 'object' && 'totalStatements' in data) {
+            const success = data.errors === 0;
+            setResult({
+              success,
+              message: fetchData.message || (success ? 'Migration completed successfully' : `Migration completed with ${data.errors} errors`),
+              summary: {
+                totalStatements: data.totalStatements || 0,
+                successful: data.successful || 0,
+                errors: data.errors || 0,
+              },
+              verification: data.verification || {},
+              details: data.results || [],
+            });
+          } else if (typeof data === 'object' && ('success' in data || 'error' in data)) {
+            setResult(data as MigrationResult);
+          } else {
+            setResult({
+              success: false,
+              message: 'Unexpected response format',
+              error: JSON.stringify(fetchData),
+            });
+          }
         } else if (typeof fetchData === 'object' && ('success' in fetchData || 'error' in fetchData)) {
           setResult(fetchData as unknown as MigrationResult);
         } else {
