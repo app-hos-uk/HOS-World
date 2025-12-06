@@ -25,11 +25,32 @@ RUN pnpm install --no-frozen-lockfile
 COPY services/api ./services/api
 COPY packages ./packages
 
+# Build workspace packages first (in dependency order)
+# 1. shared-types (no dependencies - must be built first)
+WORKDIR /app/packages/shared-types
+RUN pnpm build
+
+# 2. utils (depends on shared-types)
+WORKDIR /app/packages/utils
+RUN pnpm build
+
+# 3. api-client (depends on shared-types)
+WORKDIR /app/packages/api-client
+RUN pnpm build
+
+# 4. theme-system (depends on shared-types)
+WORKDIR /app/packages/theme-system
+RUN pnpm build
+
+# 5. cms-client (if it has a build script)
+WORKDIR /app/packages/cms-client
+RUN pnpm build || echo "cms-client build skipped if no build script"
+
 # Generate Prisma Client (needed for TypeScript compilation)
 WORKDIR /app/services/api
 RUN pnpm db:generate
 
-# Build
+# Build API service
 WORKDIR /app/services/api
 # Build the application (will show type errors but attempt to compile)
 RUN pnpm build || echo "Build completed with some type errors - checking if dist exists..."
