@@ -5,10 +5,10 @@ import { TagsService } from './tags.service';
 import { CategoriesController } from './categories.controller';
 import { AttributesController } from './attributes.controller';
 import { TagsController } from './tags.controller';
-import { PrismaModule } from '../database/prisma.module';
+import { DatabaseModule } from '../database/database.module';
 
 @Module({
-  imports: [PrismaModule],
+  imports: [DatabaseModule],
   controllers: [CategoriesController, AttributesController, TagsController],
   providers: [CategoriesService, AttributesService, TagsService],
   exports: [CategoriesService, AttributesService, TagsService],
