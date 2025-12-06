@@ -148,3 +148,4 @@ fetch('https://hos-marketplaceapi-production.up.railway.app/api/auth/login', {
 **Status**: ✅ Favicon fixed, enhanced error logging added
 **Next**: Check console for actual login errors (not just favicon)
 
+

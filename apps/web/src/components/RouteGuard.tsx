@@ -34,9 +34,10 @@ export function RouteGuard({
     // Check if user has required role
     // Use effective role (impersonated if set, otherwise actual role)
     const currentRole = effectiveRole || user.role;
-    // ADMIN role has access to all dashboards, but only if not impersonating
+    // ADMIN role has access to all dashboards, even when impersonating
     const isActualAdmin = user.role === 'ADMIN';
-    const hasRequiredRole = allowedRoles.includes(currentRole) || (isActualAdmin && !effectiveRole);
+    // Allow access if: role matches OR user is admin (admin can access any dashboard)
+    const hasRequiredRole = allowedRoles.includes(currentRole) || isActualAdmin;
 
     if (!hasRequiredRole) {
       if (showAccessDenied) {
@@ -84,9 +85,10 @@ export function RouteGuard({
   // Check if user has required role
   // Use effective role (impersonated if set, otherwise actual role)
   const currentRole = effectiveRole || user.role;
-  // ADMIN role has access to all dashboards, but only if not impersonating
+  // ADMIN role has access to all dashboards, even when impersonating
   const isActualAdmin = user.role === 'ADMIN';
-  const hasRequiredRole = allowedRoles.includes(currentRole) || (isActualAdmin && !effectiveRole);
+  // Allow access if: role matches OR user is admin (admin can access any dashboard)
+  const hasRequiredRole = allowedRoles.includes(currentRole) || isActualAdmin;
 
   if (!hasRequiredRole) {
     return null; // Will redirect in useEffect

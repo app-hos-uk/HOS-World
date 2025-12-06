@@ -3,13 +3,19 @@
 import Link from 'next/link';
 import { useTheme } from '@hos-marketplace/theme-system';
 import { useState } from 'react';
+import { usePathname } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
+import { RoleSwitcher } from '@/components/RoleSwitcher';
 import type { UserRole } from '@hos-marketplace/shared-types';
 
 export function Header() {
   const theme = useTheme();
-  const { user, isAuthenticated, logout, hasRole, impersonatedRole, effectiveRole } = useAuth();
+  const pathname = usePathname();
+  const { user, isAuthenticated, logout, hasRole, impersonatedRole, effectiveRole, switchRole } = useAuth();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+
+  // Check if we're on a dashboard page
+  const isDashboardPage = pathname?.includes('/dashboard') || pathname?.includes('/admin') || pathname?.includes('/seller') || pathname?.includes('/wholesaler') || pathname?.includes('/procurement') || pathname?.includes('/fulfillment') || pathname?.includes('/catalog') || pathname?.includes('/marketing') || pathname?.includes('/finance');
 
   const toggleMobileMenu = () => {
     setIsMobileMenuOpen(!isMobileMenuOpen);
@@ -56,6 +62,14 @@ export function Header() {
     await logout();
   };
 
+  const handleBackToAdmin = () => {
+    switchRole(null);
+    // Navigate to admin dashboard
+    if (typeof window !== 'undefined') {
+      window.location.href = '/admin/dashboard';
+    }
+  };
+
   return (
     <header 
       className="w-full bg-white border-b-2 border-purple-200 shadow-sm sticky top-0 z-50"
@@ -73,24 +87,29 @@ export function Header() {
           
           {/* Desktop Navigation */}
           <nav className="hidden md:flex items-center space-x-4 lg:space-x-6">
-            <Link 
-              href="/products" 
-              className="text-sm lg:text-base text-purple-700 hover:text-amber-600 font-medium font-secondary transition-colors duration-300"
-            >
-              Products
-            </Link>
-            <Link 
-              href="/fandoms" 
-              className="text-sm lg:text-base text-purple-700 hover:text-amber-600 font-medium font-secondary transition-colors duration-300"
-            >
-              Fandoms
-            </Link>
-            <Link 
-              href="/cart" 
-              className="text-sm lg:text-base text-purple-700 hover:text-amber-600 font-medium font-secondary transition-colors duration-300"
-            >
-              Cart
-            </Link>
+            {/* Hide Products/Fandoms/Cart on dashboard pages */}
+            {!isDashboardPage && (
+              <>
+                <Link 
+                  href="/products" 
+                  className="text-sm lg:text-base text-purple-700 hover:text-amber-600 font-medium font-secondary transition-colors duration-300"
+                >
+                  Products
+                </Link>
+                <Link 
+                  href="/fandoms" 
+                  className="text-sm lg:text-base text-purple-700 hover:text-amber-600 font-medium font-secondary transition-colors duration-300"
+                >
+                  Fandoms
+                </Link>
+                <Link 
+                  href="/cart" 
+                  className="text-sm lg:text-base text-purple-700 hover:text-amber-600 font-medium font-secondary transition-colors duration-300"
+                >
+                  Cart
+                </Link>
+              </>
+            )}
             {isAuthenticated && user ? (
               <>
                 {/* Dashboard link for authenticated users */}
@@ -100,6 +119,23 @@ export function Header() {
                 >
                   Dashboard
                 </Link>
+                {/* Role Switcher - Show on all dashboards when admin is impersonating */}
+                {(user.role === 'ADMIN' || impersonatedRole) && isDashboardPage && (
+                  <RoleSwitcher />
+                )}
+                {/* Back to Admin button when impersonating */}
+                {impersonatedRole && user.role === 'ADMIN' && (
+                  <button
+                    onClick={handleBackToAdmin}
+                    className="px-3 lg:px-4 py-1.5 lg:py-2 text-sm lg:text-base bg-gradient-to-r from-green-600 to-green-700 hover:from-green-500 hover:to-green-600 text-white font-semibold rounded-lg transition-all duration-300 font-primary flex items-center gap-2"
+                    title="Return to Admin Dashboard"
+                  >
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    Back to Admin
+                  </button>
+                )}
                 {impersonatedRole && (
                   <span className="text-xs lg:text-sm px-2 py-1 bg-amber-500 text-white rounded-full font-medium flex items-center gap-1">
                     <span className="inline-block w-1.5 h-1.5 bg-white rounded-full animate-pulse"></span>
@@ -149,27 +185,32 @@ export function Header() {
         {isMobileMenuOpen && (
           <nav className="md:hidden pb-4 border-t border-purple-200 mt-2 pt-4">
             <div className="flex flex-col space-y-3">
-              <Link 
-                href="/products" 
-                onClick={() => setIsMobileMenuOpen(false)}
-                className="text-base text-purple-700 hover:text-amber-600 font-medium font-secondary transition-colors duration-300 py-2 px-2 rounded-lg hover:bg-purple-50"
-              >
-                Products
-              </Link>
-              <Link 
-                href="/fandoms" 
-                onClick={() => setIsMobileMenuOpen(false)}
-                className="text-base text-purple-700 hover:text-amber-600 font-medium font-secondary transition-colors duration-300 py-2 px-2 rounded-lg hover:bg-purple-50"
-              >
-                Fandoms
-              </Link>
-              <Link 
-                href="/cart" 
-                onClick={() => setIsMobileMenuOpen(false)}
-                className="text-base text-purple-700 hover:text-amber-600 font-medium font-secondary transition-colors duration-300 py-2 px-2 rounded-lg hover:bg-purple-50"
-              >
-                Cart
-              </Link>
+              {/* Hide Products/Fandoms/Cart on dashboard pages */}
+              {!isDashboardPage && (
+                <>
+                  <Link 
+                    href="/products" 
+                    onClick={() => setIsMobileMenuOpen(false)}
+                    className="text-base text-purple-700 hover:text-amber-600 font-medium font-secondary transition-colors duration-300 py-2 px-2 rounded-lg hover:bg-purple-50"
+                  >
+                    Products
+                  </Link>
+                  <Link 
+                    href="/fandoms" 
+                    onClick={() => setIsMobileMenuOpen(false)}
+                    className="text-base text-purple-700 hover:text-amber-600 font-medium font-secondary transition-colors duration-300 py-2 px-2 rounded-lg hover:bg-purple-50"
+                  >
+                    Fandoms
+                  </Link>
+                  <Link 
+                    href="/cart" 
+                    onClick={() => setIsMobileMenuOpen(false)}
+                    className="text-base text-purple-700 hover:text-amber-600 font-medium font-secondary transition-colors duration-300 py-2 px-2 rounded-lg hover:bg-purple-50"
+                  >
+                    Cart
+                  </Link>
+                </>
+              )}
               {isAuthenticated && user ? (
                 <>
                   <Link
@@ -179,6 +220,27 @@ export function Header() {
                   >
                     Dashboard
                   </Link>
+                  {/* Role Switcher for mobile */}
+                  {(user.role === 'ADMIN' || impersonatedRole) && isDashboardPage && (
+                    <div className="px-2">
+                      <RoleSwitcher />
+                    </div>
+                  )}
+                  {/* Back to Admin button when impersonating */}
+                  {impersonatedRole && user.role === 'ADMIN' && (
+                    <button
+                      onClick={() => {
+                        handleBackToAdmin();
+                        setIsMobileMenuOpen(false);
+                      }}
+                      className="px-4 py-2 bg-gradient-to-r from-green-600 to-green-700 hover:from-green-500 hover:to-green-600 text-white font-semibold rounded-lg transition-all duration-300 font-primary text-center flex items-center justify-center gap-2"
+                    >
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      </svg>
+                      Back to Admin
+                    </button>
+                  )}
                   {impersonatedRole && (
                     <div className="px-4 py-2 text-xs bg-amber-500 text-white rounded-lg font-medium flex items-center gap-1">
                       <span className="inline-block w-1.5 h-1.5 bg-white rounded-full animate-pulse"></span>

@@ -223,3 +223,4 @@ The login page should now be stable in Chrome while maintaining compatibility wi
 **Browser**: Chrome-specific fixes
 **Status**: ✅ Applied
 
+

@@ -126,3 +126,4 @@ This ensures server and client render the same initial HTML, preventing hydratio
 **Ready for**: Production deployment
 **Expected**: No hydration errors in Firefox, stable redirects in Chrome
 
+
