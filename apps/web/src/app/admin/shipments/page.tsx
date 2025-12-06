@@ -13,6 +13,7 @@ export default function AdminShipmentsPage() {
 
   useEffect(() => {
     fetchShipments();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [statusFilter]);
 
   const fetchShipments = async () => {

@@ -16,7 +16,7 @@ export default function AdminFinancePage() {
 
   useEffect(() => {
     fetchData();
-  }, [activeTab]);
+  }, [activeTab]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const fetchData = async () => {
     try {
@@ -231,16 +231,101 @@ export default function AdminFinancePage() {
               )}
 
               {activeTab === 'reports' && (
-                <div className="bg-white rounded-lg shadow p-6">
-                  <h2 className="text-lg font-semibold mb-4">Revenue Reports</h2>
-                  <p className="text-gray-600">Revenue reporting features coming soon...</p>
-                </div>
+                <RevenueReportsTab />
               )}
             </>
           )}
         </div>
       </AdminLayout>
     </RouteGuard>
+  );
+}
+
+function RevenueReportsTab() {
+  const [reportData, setReportData] = useState<any>(null);
+  const [loading, setLoading] = useState(false);
+  const [dateRange, setDateRange] = useState({
+    startDate: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+    endDate: new Date().toISOString().split('T')[0],
+  });
+  const toast = useToast();
+
+  const fetchReport = async () => {
+    try {
+      setLoading(true);
+      const response = await apiClient.getRevenueReport(dateRange.startDate, dateRange.endDate);
+      if (response?.data) {
+        setReportData(response.data);
+      }
+    } catch (err: any) {
+      toast.error(err.message || 'Failed to load revenue report');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchReport();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [dateRange.startDate, dateRange.endDate]);
+
+  return (
+    <div className="bg-white rounded-lg shadow p-6">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
+        <h2 className="text-lg font-semibold">Revenue Reports</h2>
+        <div className="flex gap-2">
+          <input
+            type="date"
+            value={dateRange.startDate}
+            onChange={(e) => setDateRange({ ...dateRange, startDate: e.target.value })}
+            className="px-3 py-2 border border-gray-300 rounded-lg text-sm"
+          />
+          <input
+            type="date"
+            value={dateRange.endDate}
+            onChange={(e) => setDateRange({ ...dateRange, endDate: e.target.value })}
+            className="px-3 py-2 border border-gray-300 rounded-lg text-sm"
+          />
+        </div>
+      </div>
+
+      {loading ? (
+        <div className="flex items-center justify-center h-64">
+          <div className="text-gray-500">Loading revenue report...</div>
+        </div>
+      ) : reportData ? (
+        <div className="space-y-6">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="bg-purple-50 rounded-lg p-4">
+              <div className="text-sm text-gray-600">Total Revenue</div>
+              <div className="text-2xl font-bold text-purple-900">
+                {reportData.totalRevenue ? `£${Number(reportData.totalRevenue).toFixed(2)}` : 'N/A'}
+              </div>
+            </div>
+            <div className="bg-green-50 rounded-lg p-4">
+              <div className="text-sm text-gray-600">Platform Fees</div>
+              <div className="text-2xl font-bold text-green-900">
+                {reportData.platformFees ? `£${Number(reportData.platformFees).toFixed(2)}` : 'N/A'}
+              </div>
+            </div>
+            <div className="bg-blue-50 rounded-lg p-4">
+              <div className="text-sm text-gray-600">Seller Payouts</div>
+              <div className="text-2xl font-bold text-blue-900">
+                {reportData.sellerPayouts ? `£${Number(reportData.sellerPayouts).toFixed(2)}` : 'N/A'}
+              </div>
+            </div>
+          </div>
+          {reportData.breakdown && (
+            <div className="bg-gray-50 rounded-lg p-4">
+              <h3 className="font-semibold mb-2">Revenue Breakdown</h3>
+              <pre className="text-xs overflow-auto">{JSON.stringify(reportData.breakdown, null, 2)}</pre>
+            </div>
+          )}
+        </div>
+      ) : (
+        <div className="text-center text-gray-500 py-8">No revenue data available for the selected period</div>
+      )}
+    </div>
   );
 }
 

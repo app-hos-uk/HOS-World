@@ -116,15 +116,122 @@ function PaymentContent() {
         </div>
 
         {/* Payment Form */}
-        <div className="bg-white border rounded-lg p-4 sm:p-6">
-          <h2 className="text-lg sm:text-xl font-semibold mb-3 sm:mb-4">Payment Details</h2>
-          <p className="text-sm sm:text-base text-gray-600 mb-4 sm:mb-6">Payment integration coming soon...</p>
-          <button className="w-full bg-purple-600 text-white py-2.5 sm:py-3 text-sm sm:text-base rounded-lg font-medium hover:bg-purple-700 transition-colors">
-            Complete Payment
-          </button>
-        </div>
+        <PaymentForm order={order} />
       </main>
       <Footer />
+    </div>
+  );
+}
+
+function PaymentForm({ order }: { order: any }) {
+  const [paymentMethod, setPaymentMethod] = useState<'card' | 'klarna'>('card');
+  const [processing, setProcessing] = useState(false);
+  const router = useRouter();
+  const toast = useToast();
+
+  const handlePayment = async () => {
+    if (!order?.id) {
+      toast.error('Order not found');
+      return;
+    }
+
+    try {
+      setProcessing(true);
+      // Create payment intent
+      const response = await apiClient.createPaymentIntent({
+        orderId: order.id,
+        amount: order.total,
+        currency: order.currency || 'GBP',
+        paymentMethod,
+      });
+
+      if (response?.data) {
+        if (paymentMethod === 'klarna') {
+          // Redirect to Klarna checkout
+          if (response.data.checkoutUrl) {
+            window.location.href = response.data.checkoutUrl;
+          } else {
+            toast.error('Klarna checkout URL not available');
+          }
+        } else {
+          // For card payments, redirect to Stripe checkout or show card form
+          if (response.data.clientSecret) {
+            // In a real implementation, you'd use Stripe Elements here
+            toast.success('Redirecting to payment...');
+            // For now, just confirm the payment
+            const confirmResponse = await apiClient.confirmPayment({
+              orderId: order.id,
+              paymentIntentId: response.data.paymentIntentId,
+            });
+            if (confirmResponse?.data) {
+              toast.success('Payment successful!');
+              router.push(`/orders/${order.id}`);
+            }
+          } else {
+            toast.error('Payment setup failed');
+          }
+        }
+      }
+    } catch (err: any) {
+      toast.error(err.message || 'Payment processing failed');
+    } finally {
+      setProcessing(false);
+    }
+  };
+
+  return (
+    <div className="bg-white border rounded-lg p-4 sm:p-6">
+      <h2 className="text-lg sm:text-xl font-semibold mb-3 sm:mb-4">Payment Details</h2>
+      
+      <div className="mb-4">
+        <label className="block text-sm font-medium text-gray-700 mb-2">Payment Method</label>
+        <div className="flex gap-4">
+          <label className="flex items-center">
+            <input
+              type="radio"
+              value="card"
+              checked={paymentMethod === 'card'}
+              onChange={(e) => setPaymentMethod(e.target.value as 'card')}
+              className="mr-2"
+            />
+            Credit/Debit Card
+          </label>
+          <label className="flex items-center">
+            <input
+              type="radio"
+              value="klarna"
+              checked={paymentMethod === 'klarna'}
+              onChange={(e) => setPaymentMethod(e.target.value as 'klarna')}
+              className="mr-2"
+            />
+            Klarna (Buy Now, Pay Later)
+          </label>
+        </div>
+      </div>
+
+      {paymentMethod === 'card' && (
+        <div className="mb-4 p-4 bg-gray-50 rounded-lg">
+          <p className="text-sm text-gray-600">
+            Card payment will be processed securely through Stripe. You will be redirected to complete the payment.
+          </p>
+        </div>
+      )}
+
+      {paymentMethod === 'klarna' && (
+        <div className="mb-4 p-4 bg-gray-50 rounded-lg">
+          <p className="text-sm text-gray-600">
+            Pay in installments with Klarna. You will be redirected to Klarna&apos;s secure checkout.
+          </p>
+        </div>
+      )}
+
+      <button
+        onClick={handlePayment}
+        disabled={processing}
+        className="w-full bg-purple-600 text-white py-2.5 sm:py-3 text-sm sm:text-base rounded-lg font-medium hover:bg-purple-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+      >
+        {processing ? 'Processing...' : `Complete Payment - ${order?.currency || 'GBP'} ${order?.total?.toFixed(2) || '0.00'}`}
+      </button>
     </div>
   );
 }

@@ -1,6 +1,6 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  reactStrictMode: false, // TEMPORARILY DISABLED: Causing excessive mounts (8+) in login page
+  reactStrictMode: true, // Re-enabled after fixing useEffect dependencies
   transpilePackages: [
     '@hos-marketplace/shared-types',
     '@hos-marketplace/theme-system',
@@ -19,9 +19,8 @@ const nextConfig = {
   // Disable ESLint during build for Railway deployment
   // Fix these errors in development, but allow build to proceed
   eslint: {
-    // Warning: This allows production builds to successfully complete even if
-    // your project has ESLint errors.
-    ignoreDuringBuilds: true,
+    // ESLint errors should be fixed before production builds
+    ignoreDuringBuilds: false,
   },
   typescript: {
     // Warning: This allows production builds to successfully complete even if

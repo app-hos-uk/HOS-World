@@ -55,7 +55,7 @@ export default function AccessDeniedPage() {
             </h1>
             
             <p className="text-lg text-gray-600 mb-8">
-              You don't have permission to access this page. This page is restricted to specific user roles.
+              You don&apos;t have permission to access this page. This page is restricted to specific user roles.
             </p>
 
             {user && (

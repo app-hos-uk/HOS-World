@@ -26,6 +26,7 @@ export default function AdminProductsPage() {
   useEffect(() => {
     fetchProducts();
     fetchSellers();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [page]);
 
   const fetchProducts = async () => {

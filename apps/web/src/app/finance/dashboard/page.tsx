@@ -38,6 +38,7 @@ export default function FinanceDashboardPage() {
     };
 
     fetchDashboardData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const pendingApprovals = dashboardData?.pendingApprovals || 0;

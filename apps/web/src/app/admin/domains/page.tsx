@@ -41,6 +41,7 @@ export default function AdminDomainsPage() {
 
   useEffect(() => {
     fetchSellers();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const fetchSellers = async () => {

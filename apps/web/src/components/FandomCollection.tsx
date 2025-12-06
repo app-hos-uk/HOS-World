@@ -1,19 +1,51 @@
 'use client';
 
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useTheme } from '@hos-marketplace/theme-system';
-
-const fandoms = [
-  { id: 1, name: 'Harry Potter', slug: 'harry-potter', image: '/placeholder-fandom.jpg' },
-  { id: 2, name: 'Lord of the Rings', slug: 'lord-of-the-rings', image: '/placeholder-fandom.jpg' },
-  { id: 3, name: 'Game of Thrones', slug: 'game-of-thrones', image: '/placeholder-fandom.jpg' },
-  { id: 4, name: 'Marvel', slug: 'marvel', image: '/placeholder-fandom.jpg' },
-  { id: 5, name: 'Star Wars', slug: 'star-wars', image: '/placeholder-fandom.jpg' },
-  { id: 6, name: 'DC Comics', slug: 'dc-comics', image: '/placeholder-fandom.jpg' },
-];
+import { apiClient } from '@/lib/api';
 
 export function FandomCollection() {
   const theme = useTheme();
+  const [fandoms, setFandoms] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetchFandoms();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const fetchFandoms = async () => {
+    try {
+      const response = await apiClient.getFandoms();
+      if (response?.data && Array.isArray(response.data)) {
+        setFandoms(response.data.slice(0, 6)); // Show first 6 fandoms
+      } else {
+        // Fallback to hardcoded fandoms if API fails
+        setFandoms([
+          { id: 1, name: 'Harry Potter', slug: 'harry-potter', image: '/placeholder-fandom.jpg' },
+          { id: 2, name: 'Lord of the Rings', slug: 'lord-of-the-rings', image: '/placeholder-fandom.jpg' },
+          { id: 3, name: 'Game of Thrones', slug: 'game-of-thrones', image: '/placeholder-fandom.jpg' },
+          { id: 4, name: 'Marvel', slug: 'marvel', image: '/placeholder-fandom.jpg' },
+          { id: 5, name: 'Star Wars', slug: 'star-wars', image: '/placeholder-fandom.jpg' },
+          { id: 6, name: 'DC Comics', slug: 'dc-comics', image: '/placeholder-fandom.jpg' },
+        ]);
+      }
+    } catch (err: any) {
+      console.error('Error fetching fandoms:', err);
+      // Fallback to hardcoded fandoms
+      setFandoms([
+        { id: 1, name: 'Harry Potter', slug: 'harry-potter', image: '/placeholder-fandom.jpg' },
+        { id: 2, name: 'Lord of the Rings', slug: 'lord-of-the-rings', image: '/placeholder-fandom.jpg' },
+        { id: 3, name: 'Game of Thrones', slug: 'game-of-thrones', image: '/placeholder-fandom.jpg' },
+        { id: 4, name: 'Marvel', slug: 'marvel', image: '/placeholder-fandom.jpg' },
+        { id: 5, name: 'Star Wars', slug: 'star-wars', image: '/placeholder-fandom.jpg' },
+        { id: 6, name: 'DC Comics', slug: 'dc-comics', image: '/placeholder-fandom.jpg' },
+      ]);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <section>
@@ -30,8 +62,11 @@ export function FandomCollection() {
         </Link>
       </div>
 
-      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3 sm:gap-4">
-        {fandoms.map((fandom) => (
+      {loading ? (
+        <div className="text-center text-gray-500 py-8">Loading fandoms...</div>
+      ) : (
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3 sm:gap-4">
+          {fandoms.map((fandom) => (
           <Link
             key={fandom.id}
             href={`/fandoms/${fandom.slug}`}
@@ -46,8 +81,9 @@ export function FandomCollection() {
               </h3>
             </div>
           </Link>
-        ))}
-      </div>
+          ))}
+        </div>
+      )}
     </section>
   );
 }

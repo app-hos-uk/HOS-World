@@ -297,6 +297,29 @@ export class ApiClient {
     });
   }
 
+  // Payment endpoints
+  async createPaymentIntent(data: {
+    orderId: string;
+    amount: number;
+    currency?: string;
+    paymentMethod?: string;
+  }): Promise<ApiResponse<any>> {
+    return this.request<ApiResponse<any>>('/payments/intent', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async confirmPayment(data: {
+    orderId: string;
+    paymentIntentId: string;
+  }): Promise<ApiResponse<any>> {
+    return this.request<ApiResponse<any>>('/payments/confirm', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
   // Generic POST method for custom endpoints
   async post<T>(endpoint: string, data: any): Promise<T> {
     return this.request<T>(endpoint, {

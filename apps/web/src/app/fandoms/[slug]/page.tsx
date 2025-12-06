@@ -1,7 +1,12 @@
+'use client';
+
+import { useEffect, useState } from 'react';
 import { Header } from '@/components/Header';
 import { Footer } from '@/components/Footer';
+import { apiClient } from '@/lib/api';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
+import Image from 'next/image';
 
 interface FandomDetailPageProps {
   params: {
@@ -42,6 +47,80 @@ const fandoms: Record<string, { name: string; description: string; slug: string 
     slug: 'dc-comics',
   },
 };
+
+function FandomProducts({ fandomSlug, fandomName }: { fandomSlug: string; fandomName: string }) {
+  const [products, setProducts] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetchProducts();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [fandomSlug]);
+
+  const fetchProducts = async () => {
+    try {
+      setLoading(true);
+      const response = await apiClient.getProducts({ fandom: fandomSlug, limit: 12 });
+      if (response?.data) {
+        setProducts(response.data.items || []);
+      }
+    } catch (err: any) {
+      console.error('Error fetching products:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="text-center text-gray-500 py-12">Loading products...</div>
+    );
+  }
+
+  if (products.length === 0) {
+    return (
+      <div className="text-center text-sm sm:text-base text-gray-500 py-8 sm:py-12">
+        No products found for {fandomName}
+      </div>
+    );
+  }
+
+  return (
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6">
+      {products.map((product) => (
+        <Link key={product.id} href={`/products/${product.id}`} className="group">
+          <div className="bg-white border rounded-lg overflow-hidden hover:shadow-lg transition-shadow">
+            <div className="aspect-square bg-gray-100 relative">
+              {product.images && product.images[0] ? (
+                <Image
+                  src={product.images[0].url}
+                  alt={product.name}
+                  fill
+                  className="object-cover"
+                />
+              ) : (
+                <div className="w-full h-full flex items-center justify-center text-gray-400">
+                  No Image
+                </div>
+              )}
+            </div>
+            <div className="p-4">
+              <h3 className="font-semibold text-gray-900 group-hover:text-purple-600 transition-colors">
+                {product.name}
+              </h3>
+              <p className="text-sm text-gray-600 mt-1 line-clamp-2">{product.description}</p>
+              <div className="mt-2">
+                <span className="text-lg font-bold text-purple-900">
+                  £{Number(product.price).toFixed(2)}
+                </span>
+              </div>
+            </div>
+          </div>
+        </Link>
+      ))}
+    </div>
+  );
+}
 
 export default function FandomDetailPage({ params }: FandomDetailPageProps) {
   const fandom = fandoms[params.slug];
@@ -90,12 +169,7 @@ export default function FandomDetailPage({ params }: FandomDetailPageProps) {
               View All →
             </Link>
           </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6">
-            {/* Products will be loaded here */}
-            <div className="text-center text-sm sm:text-base text-gray-500 py-8 sm:py-12 col-span-full">
-              Products for {fandom.name} coming soon...
-            </div>
-          </div>
+          <FandomProducts fandomSlug={params.slug} fandomName={fandom.name} />
         </div>
 
         {/* Back to Fandoms */}

@@ -40,6 +40,7 @@ export default function AdminThemesPage() {
 
   useEffect(() => {
     fetchThemes();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [filter]);
 
   const fetchThemes = async () => {

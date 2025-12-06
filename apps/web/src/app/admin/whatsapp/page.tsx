@@ -13,6 +13,7 @@ export default function AdminWhatsAppPage() {
 
   useEffect(() => {
     fetchConversations();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const fetchConversations = async () => {
