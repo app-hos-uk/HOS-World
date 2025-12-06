@@ -1004,6 +1004,31 @@ export class ApiClient {
     return this.request<ApiResponse<any>>('/admin/migration-features/verify');
   }
 
+  // Taxonomy Migration
+  async runTaxonomyMigration(): Promise<ApiResponse<any>> {
+    return this.request<ApiResponse<any>>('/admin/migration-taxonomy/run-sql', {
+      method: 'POST',
+    });
+  }
+
+  async verifyTaxonomyMigration(): Promise<ApiResponse<any>> {
+    return this.request<ApiResponse<any>>('/admin/migration-taxonomy/verify', {
+      method: 'GET',
+    });
+  }
+
+  async migrateTaxonomyData(): Promise<ApiResponse<any>> {
+    return this.request<ApiResponse<any>>('/admin/migration-taxonomy-data/migrate', {
+      method: 'POST',
+    });
+  }
+
+  async getTaxonomyMigrationStatus(): Promise<ApiResponse<any>> {
+    return this.request<ApiResponse<any>>('/admin/migration-taxonomy-data/status', {
+      method: 'GET',
+    });
+  }
+
   // Finance - Transactions
   async getTransactions(filters?: { sellerId?: string; customerId?: string; type?: string; startDate?: string; endDate?: string }): Promise<ApiResponse<any[]>> {
     const params = new URLSearchParams();

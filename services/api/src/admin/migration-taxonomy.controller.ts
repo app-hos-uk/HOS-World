@@ -89,7 +89,7 @@ export class MigrationTaxonomyController {
           successful,
           errors,
           results,
-          verification: await this.verifyMigration(),
+          verification: await this.verifyMigrationInternal(),
         },
         message:
           errors === 0
@@ -107,7 +107,7 @@ export class MigrationTaxonomyController {
   }
 
   @Get('verify')
-  async verifyMigration(): Promise<ApiResponse<any>> {
+  async verifyMigrationStatus(): Promise<ApiResponse<any>> {
     const verification = await this.verifyMigrationInternal();
     return {
       data: verification,
