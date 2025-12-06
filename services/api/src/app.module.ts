@@ -48,6 +48,10 @@ import { CurrencyModule } from './currency/currency.module';
 import { GeolocationModule } from './geolocation/geolocation.module';
 import { GDPRModule } from './gdpr/gdpr.module';
 import { ComplianceModule } from './compliance/compliance.module';
+import { ActivityModule } from './activity/activity.module';
+import { DiscrepanciesModule } from './discrepancies/discrepancies.module';
+import { SupportModule } from './support/support.module';
+import { WhatsAppModule } from './whatsapp/whatsapp.module';
 import { JwtAuthGuard } from './common/guards/jwt-auth.guard';
 
 @Module({
@@ -102,6 +106,10 @@ import { JwtAuthGuard } from './common/guards/jwt-auth.guard';
     GeolocationModule,
     GDPRModule,
     ComplianceModule,
+    ActivityModule,
+    DiscrepanciesModule,
+    SupportModule,
+    WhatsAppModule,
   ],
   controllers: [AppController],
   providers: [

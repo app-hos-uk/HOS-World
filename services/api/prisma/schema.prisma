@@ -45,6 +45,13 @@ model User {
   reviews         ProductReview[]
   wishlistItems   WishlistItem[]
   returnRequests  ReturnRequest[]
+  invitedSellers  SellerInvitation[] @relation("InvitedBy")
+  activityLogs    ActivityLog[]
+  transactions    Transaction[] @relation("CustomerTransactions")
+  supportTickets  SupportTicket[] @relation("UserTickets")
+  assignedTickets SupportTicket[] @relation("AssignedTickets")
+  ticketMessages  TicketMessage[] @relation("TicketMessages")
+  whatsappConversations WhatsAppConversation[]
   cartId          String?
 
   // Phase 6: Fandom Experience Relations
@@ -131,6 +138,10 @@ model Seller {
   themeSettings SellerThemeSettings?
   submissions   ProductSubmission[]
   settlements   Settlement[]
+  activityLogs  ActivityLog[]
+  discrepancies Discrepancy[]
+  supportTickets SupportTicket[]
+  whatsappConversations WhatsAppConversation[]
 
   @@map("sellers")
 }
@@ -185,27 +196,28 @@ model SellerThemeSettings {
 
 // Product model
 model Product {
-  id          String        @id @default(uuid())
-  sellerId    String
-  seller      Seller        @relation(fields: [sellerId], references: [id], onDelete: Cascade)
-  name        String
-  description String        @db.Text
-  slug        String
-  sku         String?
-  barcode     String?
-  ean         String?
-  price       Decimal       @db.Decimal(10, 2)
-  tradePrice  Decimal?      @db.Decimal(10, 2)
-  rrp         Decimal?      @db.Decimal(10, 2)
-  currency    String        @default("GBP")
-  taxRate     Decimal       @default(0) @db.Decimal(5, 4)
-  stock       Int           @default(0)
-  fandom      String?
-  category    String?
-  tags        String[]
-  status      ProductStatus @default(DRAFT)
-  createdAt   DateTime      @default(now())
-  updatedAt   DateTime      @updatedAt
+  id              String        @id @default(uuid())
+  sellerId        String?
+  seller          Seller?       @relation(fields: [sellerId], references: [id], onDelete: Cascade)
+  isPlatformOwned Boolean       @default(false)
+  name            String
+  description     String        @db.Text
+  slug            String
+  sku             String?
+  barcode         String?
+  ean             String?
+  price           Decimal       @db.Decimal(10, 2)
+  tradePrice      Decimal?      @db.Decimal(10, 2)
+  rrp             Decimal?      @db.Decimal(10, 2)
+  currency        String        @default("GBP")
+  taxRate         Decimal       @default(0) @db.Decimal(5, 4)
+  stock           Int           @default(0)
+  fandom          String?
+  category        String?
+  tags            String[]
+  status          ProductStatus @default(DRAFT)
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
 
   // Relations
   images            ProductImage[]
@@ -214,6 +226,7 @@ model Product {
   orderItems        OrderItem[]
   reviews           ProductReview[]
   wishlistItems     WishlistItem[]
+  discrepancies     Discrepancy[]
   averageRating     Float?
   reviewCount       Int                @default(0)
   submission        ProductSubmission?
@@ -341,6 +354,9 @@ model Order {
   payments          Payment[]
   returnRequests    ReturnRequest[]
   orderSettlements  OrderSettlement[]
+  transactions      Transaction[]
+  discrepancies     Discrepancy[]
+  supportTickets    SupportTicket[] @relation("OrderTickets")
   createdAt         DateTime          @default(now())
   updatedAt         DateTime          @updatedAt
 
@@ -444,6 +460,7 @@ model ReturnRequest {
   refundMethod String?
   notes        String?      @db.Text
   processedAt  DateTime?
+  transactions Transaction[]
   createdAt    DateTime     @default(now())
   updatedAt    DateTime     @updatedAt
 
@@ -740,6 +757,8 @@ model Settlement {
 
   // Relations
   orderSettlements OrderSettlement[]
+  transactions    Transaction[]
+  discrepancies   Discrepancy[]
 
   @@map("settlements")
 }
@@ -943,4 +962,322 @@ model GDPRConsentLog {
   userAgent   String?
 
   @@map("gdpr_consent_logs")
+}
+
+// Seller Invitation model
+model SellerInvitation {
+  id          String            @id @default(uuid())
+  email       String
+  sellerType  SellerType
+  invitedBy   String
+  user        User              @relation("InvitedBy", fields: [invitedBy], references: [id])
+  token       String            @unique
+  status      InvitationStatus  @default(PENDING)
+  expiresAt   DateTime
+  acceptedAt  DateTime?
+  message     String?           @db.Text
+  createdAt   DateTime          @default(now())
+  updatedAt   DateTime          @updatedAt
+
+  @@index([email])
+  @@index([token])
+  @@index([status])
+}
+
+enum InvitationStatus {
+  PENDING
+  ACCEPTED
+  EXPIRED
+  CANCELLED
+}
+
+// Activity Log model
+model ActivityLog {
+  id          String   @id @default(uuid())
+  userId      String?
+  user        User?    @relation(fields: [userId], references: [id])
+  sellerId    String?
+  seller      Seller?  @relation(fields: [sellerId], references: [id])
+  action      String   // e.g., "PRODUCT_CREATED", "ORDER_FULFILLED"
+  entityType  String   // e.g., "Product", "Order"
+  entityId    String?
+  description String   @db.Text
+  metadata    Json?    // Before/after states, additional context
+  ipAddress   String?
+  userAgent   String?
+  createdAt   DateTime @default(now())
+
+  @@index([userId])
+  @@index([sellerId])
+  @@index([action])
+  @@index([entityType, entityId])
+  @@index([createdAt])
+}
+
+// Transaction model
+model Transaction {
+  id            String            @id @default(uuid())
+  type          TransactionType
+  amount        Decimal           @db.Decimal(10, 2)
+  currency      String             @default("GBP")
+  status        TransactionStatus  @default(PENDING)
+  sellerId      String?
+  seller        Seller?           @relation(fields: [sellerId], references: [id])
+  customerId    String?
+  customer      User?              @relation("CustomerTransactions", fields: [customerId], references: [id])
+  orderId       String?
+  order         Order?             @relation(fields: [orderId], references: [id])
+  settlementId  String?
+  settlement    Settlement?        @relation(fields: [settlementId], references: [id])
+  returnId      String?
+  returnRequest ReturnRequest?     @relation(fields: [returnId], references: [id])
+  description   String?            @db.Text
+  metadata      Json?
+  createdAt     DateTime           @default(now())
+  updatedAt     DateTime           @updatedAt
+
+  @@index([sellerId])
+  @@index([customerId])
+  @@index([orderId])
+  @@index([settlementId])
+  @@index([type])
+  @@index([status])
+  @@index([createdAt])
+}
+
+enum TransactionType {
+  PAYMENT
+  PAYOUT
+  REFUND
+  FEE
+  ADJUSTMENT
+}
+
+enum TransactionStatus {
+  PENDING
+  COMPLETED
+  FAILED
+  CANCELLED
+}
+
+// Discrepancy model
+model Discrepancy {
+  id            String              @id @default(uuid())
+  type          DiscrepancyType
+  sellerId      String?
+  seller        Seller?             @relation(fields: [sellerId], references: [id])
+  orderId       String?
+  order         Order?              @relation(fields: [orderId], references: [id])
+  productId     String?
+  product       Product?            @relation(fields: [productId], references: [id])
+  settlementId  String?
+  settlement    Settlement?         @relation(fields: [settlementId], references: [id])
+  severity      DiscrepancySeverity @default(MEDIUM)
+  status        DiscrepancyStatus   @default(OPEN)
+  expectedValue Json?
+  actualValue   Json?
+  description   String              @db.Text
+  resolvedBy    String?
+  resolvedAt    DateTime?
+  resolution    String?             @db.Text
+  createdAt     DateTime            @default(now())
+  updatedAt     DateTime            @updatedAt
+
+  @@index([sellerId])
+  @@index([type])
+  @@index([severity])
+  @@index([status])
+  @@index([createdAt])
+}
+
+enum DiscrepancyType {
+  INVENTORY
+  PRICING
+  SETTLEMENT
+  ORDER_FULFILLMENT
+}
+
+enum DiscrepancySeverity {
+  LOW
+  MEDIUM
+  HIGH
+  CRITICAL
+}
+
+enum DiscrepancyStatus {
+  OPEN
+  INVESTIGATING
+  RESOLVED
+  DISMISSED
+}
+
+// Support Ticket model
+model SupportTicket {
+  id            String          @id @default(uuid())
+  ticketNumber  String          @unique
+  userId        String?
+  user          User?           @relation("UserTickets", fields: [userId], references: [id])
+  sellerId      String?
+  seller        Seller?         @relation(fields: [sellerId], references: [id])
+  orderId       String?
+  order         Order?          @relation("OrderTickets", fields: [orderId], references: [id])
+  subject       String
+  category      TicketCategory
+  priority      TicketPriority  @default(MEDIUM)
+  status        TicketStatus    @default(OPEN)
+  assignedTo    String?
+  assignedAgent User?           @relation("AssignedTickets", fields: [assignedTo], references: [id])
+  slaDueAt      DateTime?
+  messages      TicketMessage[]
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
+  resolvedAt    DateTime?
+
+  @@index([userId])
+  @@index([sellerId])
+  @@index([status])
+  @@index([assignedTo])
+  @@index([category])
+  @@index([priority])
+  @@index([createdAt])
+}
+
+model TicketMessage {
+  id        String        @id @default(uuid())
+  ticketId  String
+  ticket    SupportTicket @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+  userId    String?
+  user      User?         @relation("TicketMessages", fields: [userId], references: [id])
+  content   String        @db.Text
+  isInternal Boolean      @default(false)
+  attachments Json?
+  createdAt DateTime      @default(now())
+
+  @@index([ticketId])
+  @@index([userId])
+  @@index([createdAt])
+}
+
+enum TicketCategory {
+  ORDER_INQUIRY
+  PRODUCT_QUESTION
+  RETURN_REQUEST
+  PAYMENT_ISSUE
+  TECHNICAL_SUPPORT
+  SELLER_SUPPORT
+  OTHER
+}
+
+enum TicketPriority {
+  LOW
+  MEDIUM
+  HIGH
+  URGENT
+}
+
+enum TicketStatus {
+  OPEN
+  ASSIGNED
+  IN_PROGRESS
+  WAITING_CUSTOMER
+  RESOLVED
+  CLOSED
+}
+
+// Knowledge Base Article model
+model KnowledgeBaseArticle {
+  id          String   @id @default(uuid())
+  title       String
+  slug        String   @unique
+  content     String   @db.Text
+  category    String
+  tags        String[]
+  isPublished Boolean  @default(false)
+  views       Int      @default(0)
+  helpful     Int      @default(0)
+  createdBy   String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([category])
+  @@index([isPublished])
+  @@index([slug])
+  @@index([createdAt])
+}
+
+// WhatsApp Conversation model
+model WhatsAppConversation {
+  id            String              @id @default(uuid())
+  phoneNumber   String
+  userId        String?
+  user          User?               @relation(fields: [userId], references: [id])
+  sellerId      String?
+  seller        Seller?             @relation(fields: [sellerId], references: [id])
+  ticketId      String?
+  ticket        SupportTicket?       @relation(fields: [ticketId], references: [id])
+  status        ConversationStatus   @default(ACTIVE)
+  lastMessageAt DateTime?
+  messages      WhatsAppMessage[]
+  createdAt      DateTime            @default(now())
+  updatedAt      DateTime            @updatedAt
+
+  @@index([phoneNumber])
+  @@index([userId])
+  @@index([sellerId])
+  @@index([ticketId])
+  @@index([status])
+}
+
+model WhatsAppMessage {
+  id             String              @id @default(uuid())
+  conversationId String
+  conversation   WhatsAppConversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  messageId      String              @unique
+  direction      MessageDirection
+  content        String              @db.Text
+  mediaUrl       String?
+  status         MessageStatus       @default(SENT)
+  deliveredAt    DateTime?
+  readAt         DateTime?
+  metadata       Json?
+  createdAt      DateTime            @default(now())
+
+  @@index([conversationId])
+  @@index([messageId])
+  @@index([direction])
+  @@index([status])
+  @@index([createdAt])
+}
+
+model WhatsAppTemplate {
+  id          String   @id @default(uuid())
+  name        String   @unique
+  category    String
+  content     String   @db.Text
+  variables   String[]
+  isActive    Boolean  @default(true)
+  approvedBy  String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([category])
+  @@index([isActive])
+}
+
+enum ConversationStatus {
+  ACTIVE
+  ARCHIVED
+  BLOCKED
+}
+
+enum MessageDirection {
+  INBOUND
+  OUTBOUND
+}
+
+enum MessageStatus {
+  SENT
+  DELIVERED
+  READ
+  FAILED
 }

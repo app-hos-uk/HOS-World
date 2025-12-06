@@ -1,4 +1,4 @@
-import { Module, Logger, OnModuleInit } from '@nestjs/common';
+import { Module, Logger, OnModuleInit, forwardRef } from '@nestjs/common';
 import { JwtModule } from '@nestjs/jwt';
 import { PassportModule } from '@nestjs/passport';
 import { ConfigModule, ConfigService } from '@nestjs/config';
@@ -8,6 +8,7 @@ import { AuthService } from './auth.service';
 import { JwtStrategy } from './strategies/jwt.strategy';
 import { LocalStrategy } from './strategies/local.strategy';
 import { UsersModule } from '../users/users.module';
+import { AdminModule } from '../admin/admin.module';
 
 const logger = new Logger('AuthModule');
 
@@ -24,6 +25,7 @@ const logger = new Logger('AuthModule');
       }),
       inject: [ConfigService],
     }),
+    forwardRef(() => AdminModule),
   ],
   controllers: [AuthController, AuthOAuthController],
   providers: [

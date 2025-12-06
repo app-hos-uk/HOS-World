@@ -163,6 +163,154 @@ export class AuthService {
     };
   }
 
+  async acceptInvitation(
+    token: string,
+    registerDto: RegisterDto,
+    ipAddress?: string,
+  ): Promise<AuthResponse> {
+    // Get invitation
+    const invitation = await this.prisma.sellerInvitation.findUnique({
+      where: { token },
+    });
+
+    if (!invitation) {
+      throw new NotFoundException('Invalid invitation token');
+    }
+
+    if (invitation.status !== 'PENDING') {
+      throw new BadRequestException('Invitation is no longer valid');
+    }
+
+    if (invitation.expiresAt < new Date()) {
+      await this.prisma.sellerInvitation.update({
+        where: { id: invitation.id },
+        data: { status: 'EXPIRED' },
+      });
+      throw new BadRequestException('Invitation has expired');
+    }
+
+    // Verify email matches
+    if (invitation.email !== registerDto.email) {
+      throw new BadRequestException('Email does not match invitation');
+    }
+
+    // Check if user already exists
+    const existingUser = await this.prisma.user.findUnique({
+      where: { email: registerDto.email },
+    });
+
+    if (existingUser) {
+      throw new ConflictException('User with this email already exists');
+    }
+
+    // Validate seller registration
+    if (!registerDto.storeName) {
+      throw new BadRequestException('Store name is required for seller registration');
+    }
+
+    // Determine user role based on seller type
+    let userRole: string;
+    if (invitation.sellerType === 'WHOLESALER') {
+      userRole = 'WHOLESALER';
+    } else {
+      userRole = 'B2C_SELLER';
+    }
+
+    // Hash password
+    const saltRounds = 10;
+    const hashedPassword = await bcrypt.hash(registerDto.password, saltRounds);
+
+    // Determine currency preference based on country
+    const countryCode = this.getCountryCode(registerDto.country);
+    const currencyPreference = this.getCurrencyForCountry(countryCode) || 'GBP';
+
+    // Create user
+    const user = await this.prisma.user.create({
+      data: {
+        email: registerDto.email,
+        password: hashedPassword,
+        firstName: registerDto.firstName,
+        lastName: registerDto.lastName,
+        role: userRole as any,
+        country: registerDto.country,
+        whatsappNumber: registerDto.whatsappNumber,
+        preferredCommunicationMethod: registerDto.preferredCommunicationMethod as any,
+        currencyPreference,
+        gdprConsent: registerDto.gdprConsent,
+        gdprConsentDate: registerDto.gdprConsent ? new Date() : null,
+        dataProcessingConsent: registerDto.dataProcessingConsent || {},
+      },
+      select: {
+        id: true,
+        email: true,
+        firstName: true,
+        lastName: true,
+        role: true,
+        avatar: true,
+        createdAt: true,
+        updatedAt: true,
+      },
+    });
+
+    // Create GDPR consent log
+    if (registerDto.gdprConsent) {
+      const consentTypes = registerDto.dataProcessingConsent || {};
+      for (const [consentType, granted] of Object.entries(consentTypes)) {
+        if (granted) {
+          await this.prisma.gDPRConsentLog.create({
+            data: {
+              userId: user.id,
+              consentType: consentType.toUpperCase(),
+              granted: true,
+              grantedAt: new Date(),
+            },
+          });
+        }
+      }
+    }
+
+    // Generate unique slug for seller
+    const baseSlug = slugify(registerDto.storeName);
+    let slug = baseSlug;
+    let counter = 1;
+
+    while (await this.prisma.seller.findUnique({ where: { slug } })) {
+      slug = `${baseSlug}-${counter}`;
+      counter++;
+    }
+
+    // Create seller profile
+    await this.prisma.seller.create({
+      data: {
+        userId: user.id,
+        storeName: registerDto.storeName,
+        slug,
+        country: registerDto.country,
+        timezone: 'UTC',
+        sellerType: invitation.sellerType,
+        logisticsOption: registerDto.logisticsOption || 'HOS_LOGISTICS',
+      },
+    });
+
+    // Mark invitation as accepted
+    await this.prisma.sellerInvitation.update({
+      where: { id: invitation.id },
+      data: {
+        status: 'ACCEPTED',
+        acceptedAt: new Date(),
+      },
+    });
+
+    // Generate tokens
+    const tokens = await this.generateTokens(user);
+
+    return {
+      user: user as User,
+      token: tokens.accessToken,
+      refreshToken: tokens.refreshToken,
+    };
+  }
+
   async login(loginDto: LoginDto): Promise<AuthResponse> {
     const user = await this.prisma.user.findUnique({
       where: { email: loginDto.email },

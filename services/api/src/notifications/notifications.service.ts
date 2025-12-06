@@ -17,6 +17,27 @@ export class NotificationsService {
     // });
   }
 
+  async sendSellerInvitation(
+    email: string,
+    data: {
+      sellerType: 'WHOLESALER' | 'B2C_SELLER';
+      invitationLink: string;
+      message?: string;
+    },
+  ): Promise<void> {
+    // TODO: Send email
+    // await this.transporter.sendMail({
+    //   to: email,
+    //   subject: `You've been invited to join as a ${data.sellerType === 'WHOLESALER' ? 'Wholesaler' : 'B2C Seller'}`,
+    //   html: this.generateSellerInvitationEmail(data),
+    // });
+
+    // Log notification
+    console.log(`📧 Seller invitation sent to ${email}`);
+    console.log(`   Type: ${data.sellerType}`);
+    console.log(`   Link: ${data.invitationLink}`);
+  }
+
   async sendOrderConfirmation(orderId: string): Promise<void> {
     const order = await this.prisma.order.findUnique({
       where: { id: orderId },

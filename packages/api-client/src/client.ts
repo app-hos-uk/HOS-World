@@ -920,4 +920,15 @@ export class ApiClient {
       method: 'POST',
     });
   }
+
+  // Comprehensive Features Migration
+  async runComprehensiveFeaturesMigration(): Promise<ApiResponse<any>> {
+    return this.request<ApiResponse<any>>('/admin/migration-features/run-sql', {
+      method: 'POST',
+    });
+  }
+
+  async verifyComprehensiveFeaturesMigration(): Promise<ApiResponse<any>> {
+    return this.request<ApiResponse<any>>('/admin/migration-features/verify');
+  }
 }

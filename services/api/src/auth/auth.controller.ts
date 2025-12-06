@@ -7,6 +7,7 @@ import {
   Request,
   HttpCode,
   HttpStatus,
+  Query,
 } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { RegisterDto } from './dto/register.dto';
@@ -17,11 +18,54 @@ import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { LocalAuthGuard } from '../common/guards/local-auth.guard';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
 import { Public } from '../common/decorators/public.decorator';
+import { AdminSellersService } from '../admin/sellers.service';
 import type { ApiResponse, AuthResponse, User } from '@hos-marketplace/shared-types';
 
 @Controller('auth')
 export class AuthController {
-  constructor(private readonly authService: AuthService) {}
+  constructor(
+    private readonly authService: AuthService,
+    private readonly adminSellersService: AdminSellersService,
+  ) {}
+
+  @Public()
+  @Get('invitation')
+  async validateInvitation(@Query('token') token: string): Promise<ApiResponse<any>> {
+    const invitation = await this.adminSellersService.getInvitationByToken(token);
+    return {
+      data: {
+        email: invitation.email,
+        sellerType: invitation.sellerType,
+        expiresAt: invitation.expiresAt,
+      },
+      message: 'Invitation is valid',
+    };
+  }
+
+  @Public()
+  @Post('accept-invitation')
+  @HttpCode(HttpStatus.CREATED)
+  async acceptInvitation(
+    @Body() body: { token: string; registerDto: RegisterDto },
+    @Request() req: any,
+  ): Promise<ApiResponse<AuthResponse>> {
+    // Get IP address for country detection
+    const ipAddress =
+      req.headers['x-forwarded-for']?.split(',')[0] ||
+      req.headers['x-real-ip'] ||
+      req.ip ||
+      req.connection.remoteAddress;
+
+    const result = await this.authService.acceptInvitation(
+      body.token,
+      body.registerDto,
+      ipAddress,
+    );
+    return {
+      data: result,
+      message: 'Invitation accepted and account created successfully',
+    };
+  }
 
   @Public()
   @Post('register')
