@@ -84,7 +84,7 @@ export function GDPRConsentBanner() {
       localStorage.setItem('gdpr_consent_preferences', JSON.stringify(preferences));
       
       setShowBanner(false);
-      toast.showSuccess('Consent preferences saved');
+      toast.success('Consent preferences saved');
     } catch (error: any) {
       // Even if API fails, save to localStorage for non-authenticated users
       localStorage.setItem('gdpr_consent_given', 'true');
@@ -92,7 +92,7 @@ export function GDPRConsentBanner() {
       setShowBanner(false);
       
       if (error.message && !error.message.includes('Unauthorized')) {
-        toast.showError('Failed to save consent preferences');
+        toast.error('Failed to save consent preferences');
       }
     } finally {
       setLoading(false);
