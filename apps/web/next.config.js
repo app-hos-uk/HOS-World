@@ -16,11 +16,12 @@ const nextConfig = {
       },
     ],
   },
-  // Disable ESLint during build for Railway deployment
-  // Fix these errors in development, but allow build to proceed
+  // ESLint configuration
+  // Only fail on errors, warnings are allowed during build
   eslint: {
-    // ESLint errors should be fixed before production builds
+    // Don't ignore builds, but only fail on actual errors (not warnings)
     ignoreDuringBuilds: false,
+    // Custom ESLint config will handle warning vs error distinction
   },
   typescript: {
     // Warning: This allows production builds to successfully complete even if
