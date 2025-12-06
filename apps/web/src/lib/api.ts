@@ -3,11 +3,7 @@ import { ApiClient } from '@hos-marketplace/api-client';
 // Create API client instance
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'https://hos-marketplaceapi-production.up.railway.app/api';
 
-// Log API URL to help debug (always log in production too for troubleshooting)
-if (typeof window !== 'undefined') {
-  console.log('[API] API Base URL:', API_BASE_URL);
-  console.log('[API] NEXT_PUBLIC_API_URL env var:', process.env.NEXT_PUBLIC_API_URL || 'NOT SET');
-}
+// API Base URL configured
 
 // Track login state to prevent redirect loops
 let lastLoginTime: number | null = null;

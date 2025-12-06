@@ -106,9 +106,7 @@ export default function LoginPage() {
     setError('');
     setLoading(true);
 
-    // Debug logging
-    console.log('[LOGIN] Form submitted', { email, hasPassword: !!password });
-    console.log('[LOGIN] API Base URL:', process.env.NEXT_PUBLIC_API_URL || 'NOT SET (using default)');
+    // Form validation
 
     // CRITICAL: Cancel any pending auth checks immediately
     const loginController = authRequestController.current;
@@ -134,14 +132,11 @@ export default function LoginPage() {
     if (!email || !password) {
       setError('Please fill in all fields');
       setLoading(false);
-      console.log('[LOGIN] Validation failed - missing fields');
       return;
     }
 
     try {
-      console.log('[LOGIN] Attempting login API call...');
       const response = await apiClient.login({ email, password });
-      console.log('[LOGIN] Login successful', { hasToken: !!response?.data?.token, userRole: response?.data?.user?.role });
       
       // Check response structure
       if (!response || !response.data) {

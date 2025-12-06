@@ -22,21 +22,56 @@ export default function AdminFinancePage() {
     try {
       setLoading(true);
       switch (activeTab) {
-        case 'transactions':
+        case 'transactions': {
           const txResponse = await apiClient.getTransactions();
-          if (txResponse?.data) setTransactions(txResponse.data);
+          // Handle different response structures
+          let txData: any[] = [];
+          if (txResponse && 'data' in txResponse) {
+            const responseData = txResponse.data as any;
+            if (Array.isArray(responseData)) {
+              txData = responseData;
+            } else if (responseData && typeof responseData === 'object' && 'data' in responseData && Array.isArray(responseData.data)) {
+              txData = responseData.data;
+            }
+          }
+          setTransactions(txData);
           break;
-        case 'payouts':
+        }
+        case 'payouts': {
           const payoutResponse = await apiClient.getPayouts();
-          if (payoutResponse?.data) setPayouts(payoutResponse.data);
+          let payoutData: any[] = [];
+          if (payoutResponse && 'data' in payoutResponse) {
+            const responseData = payoutResponse.data as any;
+            if (Array.isArray(responseData)) {
+              payoutData = responseData;
+            } else if (responseData && typeof responseData === 'object' && 'data' in responseData && Array.isArray(responseData.data)) {
+              payoutData = responseData.data;
+            }
+          }
+          setPayouts(payoutData);
           break;
-        case 'refunds':
+        }
+        case 'refunds': {
           const refundResponse = await apiClient.getRefunds();
-          if (refundResponse?.data) setRefunds(refundResponse.data);
+          let refundData: any[] = [];
+          if (refundResponse && 'data' in refundResponse) {
+            const responseData = refundResponse.data as any;
+            if (Array.isArray(responseData)) {
+              refundData = responseData;
+            } else if (responseData && typeof responseData === 'object' && 'data' in responseData && Array.isArray(responseData.data)) {
+              refundData = responseData.data;
+            }
+          }
+          setRefunds(refundData);
           break;
+        }
       }
     } catch (err: any) {
       toast.error(err.message || 'Failed to load data');
+      // Set empty arrays on error to prevent map errors
+      if (activeTab === 'transactions') setTransactions([]);
+      if (activeTab === 'payouts') setPayouts([]);
+      if (activeTab === 'refunds') setRefunds([]);
     } finally {
       setLoading(false);
     }

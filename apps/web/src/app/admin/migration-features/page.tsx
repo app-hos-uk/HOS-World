@@ -33,7 +33,6 @@ export default function MigrationFeaturesPage() {
     setResult(null);
     try {
       const response = await apiClient.runComprehensiveFeaturesMigration();
-      console.log('Migration response:', response);
 
       if (response && typeof response === 'object') {
         // ApiResponse structure: { data: {...}, message: string }
@@ -100,7 +99,6 @@ export default function MigrationFeaturesPage() {
     setVerification(null);
     try {
       const response = await apiClient.verifyComprehensiveFeaturesMigration();
-      console.log('Verification response:', response);
 
       if (response && typeof response === 'object') {
         // ApiResponse structure: { data: {...}, message: string }
