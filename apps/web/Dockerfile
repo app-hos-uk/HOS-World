@@ -14,7 +14,6 @@ COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
 COPY packages/shared-types/package.json ./packages/shared-types/
 COPY packages/api-client/package.json ./packages/api-client/
 COPY packages/theme-system/package.json ./packages/theme-system/
-COPY packages/ui-components/package.json ./packages/ui-components/
 COPY packages/utils/package.json ./packages/utils/
 COPY packages/cms-client/package.json ./packages/cms-client/
 COPY apps/web/package.json ./apps/web/
@@ -67,11 +66,7 @@ RUN grep -q "async delete" src/client.ts || (echo "ERROR: delete method missing 
 RUN grep -q "Record<string, string>" src/client.ts || (echo "ERROR: headers type fix missing - should use Record<string, string>" && grep -A 2 "const headers" src/client.ts && exit 1)
 RUN pnpm build
 
-# 5. ui-components (depends on shared-types and theme-system)
-WORKDIR /app/packages/ui-components
-RUN pnpm build || echo "ui-components build skipped if no build script"
-
-# 6. cms-client (if exists)
+# 5. cms-client (if exists)
 WORKDIR /app/packages/cms-client
 RUN pnpm build || echo "cms-client build skipped if no build script"
 
@@ -107,7 +102,6 @@ COPY apps/web/package.json ./apps/web/
 COPY packages/shared-types/package.json ./packages/shared-types/
 COPY packages/api-client/package.json ./packages/api-client/
 COPY packages/theme-system/package.json ./packages/theme-system/
-COPY packages/ui-components/package.json ./packages/ui-components/
 COPY packages/utils/package.json ./packages/utils/
 COPY packages/cms-client/package.json ./packages/cms-client/
 
