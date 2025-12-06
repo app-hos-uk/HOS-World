@@ -1053,4 +1053,30 @@ export class ApiClient {
   async getWhatsAppConversations(): Promise<ApiResponse<any[]>> {
     return this.request<ApiResponse<any[]>>('/whatsapp/conversations');
   }
+
+  // Admin - Products
+  async createAdminProduct(data: {
+    name: string;
+    description: string;
+    price: number;
+    currency?: string;
+    stock?: number;
+    category?: string;
+    tags?: string[];
+    sellerId?: string | null;
+    isPlatformOwned?: boolean;
+    status?: 'DRAFT' | 'PUBLISHED';
+    sku?: string;
+    barcode?: string;
+    ean?: string;
+    tradePrice?: number;
+    rrp?: number;
+    taxRate?: number;
+    fandom?: string;
+  }): Promise<ApiResponse<any>> {
+    return this.request<ApiResponse<any>>('/admin/products', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
 }

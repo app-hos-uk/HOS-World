@@ -4,15 +4,28 @@ import { useEffect, useState } from 'react';
 import { RouteGuard } from '@/components/RouteGuard';
 import { AdminLayout } from '@/components/AdminLayout';
 import { apiClient } from '@/lib/api';
+import { useToast } from '@/hooks/useToast';
 
 export default function AdminProductsPage() {
+  const toast = useToast();
   const [products, setProducts] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [page, setPage] = useState(1);
+  const [showCreateForm, setShowCreateForm] = useState(false);
+  const [sellers, setSellers] = useState<any[]>([]);
+  const [formData, setFormData] = useState({
+    name: '',
+    description: '',
+    price: '',
+    stock: '0',
+    isPlatformOwned: true,
+    sellerId: '',
+  });
 
   useEffect(() => {
     fetchProducts();
+    fetchSellers();
   }, [page]);
 
   const fetchProducts = async () => {
@@ -28,6 +41,42 @@ export default function AdminProductsPage() {
       setError(err.message || 'Failed to load products');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchSellers = async () => {
+    try {
+      const response = await apiClient.getUsers();
+      if (response?.data) {
+        const sellerRoles = ['SELLER', 'B2C_SELLER', 'WHOLESALER'];
+        const sellerUsers = response.data.filter((user: any) => 
+          sellerRoles.includes(user.role)
+        );
+        setSellers(sellerUsers);
+      }
+    } catch (err: any) {
+      console.error('Error fetching sellers:', err);
+    }
+  };
+
+  const handleCreateProduct = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      await apiClient.createAdminProduct({
+        name: formData.name,
+        description: formData.description,
+        price: parseFloat(formData.price),
+        stock: parseInt(formData.stock, 10),
+        isPlatformOwned: formData.isPlatformOwned,
+        sellerId: formData.isPlatformOwned ? null : formData.sellerId || null,
+        status: 'DRAFT',
+      });
+      toast.success('Product created successfully');
+      setShowCreateForm(false);
+      setFormData({ name: '', description: '', price: '', stock: '0', isPlatformOwned: true, sellerId: '' });
+      fetchProducts();
+    } catch (err: any) {
+      toast.error(err.message || 'Failed to create product');
     }
   };
 
@@ -65,7 +114,104 @@ export default function AdminProductsPage() {
     <RouteGuard allowedRoles={['ADMIN']}>
       <AdminLayout>
         <div className="space-y-6">
-          <h1 className="text-2xl font-bold text-gray-900">All Products</h1>
+          <div className="flex justify-between items-center">
+            <h1 className="text-2xl font-bold text-gray-900">All Products</h1>
+            <button
+              onClick={() => setShowCreateForm(!showCreateForm)}
+              className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700"
+            >
+              {showCreateForm ? 'Cancel' : '+ Create Product'}
+            </button>
+          </div>
+
+          {showCreateForm && (
+            <div className="bg-white rounded-lg shadow p-6">
+              <h2 className="text-lg font-semibold mb-4">Create New Product</h2>
+              <form onSubmit={handleCreateProduct} className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Product Name</label>
+                  <input
+                    type="text"
+                    required
+                    value={formData.name}
+                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
+                    placeholder="Product name"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
+                  <textarea
+                    required
+                    value={formData.description}
+                    onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
+                    rows={3}
+                    placeholder="Product description"
+                  />
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Price</label>
+                    <input
+                      type="number"
+                      step="0.01"
+                      required
+                      value={formData.price}
+                      onChange={(e) => setFormData({ ...formData, price: e.target.value })}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
+                      placeholder="0.00"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Stock</label>
+                    <input
+                      type="number"
+                      required
+                      value={formData.stock}
+                      onChange={(e) => setFormData({ ...formData, stock: e.target.value })}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
+                      placeholder="0"
+                    />
+                  </div>
+                </div>
+                <div>
+                  <label className="flex items-center space-x-2">
+                    <input
+                      type="checkbox"
+                      checked={formData.isPlatformOwned}
+                      onChange={(e) => setFormData({ ...formData, isPlatformOwned: e.target.checked, sellerId: '' })}
+                      className="rounded border-gray-300 text-purple-600 focus:ring-purple-500"
+                    />
+                    <span className="text-sm text-gray-700">Platform Owned (not assigned to seller)</span>
+                  </label>
+                </div>
+                {!formData.isPlatformOwned && (
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Assign to Seller</label>
+                    <select
+                      value={formData.sellerId}
+                      onChange={(e) => setFormData({ ...formData, sellerId: e.target.value })}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
+                    >
+                      <option value="">Select a seller</option>
+                      {sellers.map((seller) => (
+                        <option key={seller.id} value={seller.id}>
+                          {seller.email} ({seller.role})
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                )}
+                <button
+                  type="submit"
+                  className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700"
+                >
+                  Create Product
+                </button>
+              </form>
+            </div>
+          )}
 
           <div className="bg-white rounded-lg shadow overflow-hidden">
             <table className="min-w-full divide-y divide-gray-200">
