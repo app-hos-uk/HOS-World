@@ -93,23 +93,23 @@ This report identifies unused code, components, and files that can be safely rem
 2. ✅ Unused `@hos-marketplace/ui-components` package
 3. ✅ Unused `generateUniqueSlug()` and `extractSlugFromUrl()` functions
 
-### Medium Priority (Verify First):
-4. ⚠️ Unused API client methods (`runGlobalFeaturesMigration`, etc.)
-5. ⚠️ Placeholder scripts (keep if useful for dev)
+### Medium Priority (Completed):
+4. ✅ Unused API client methods (`runGlobalFeaturesMigration`, etc.) - **REMOVED**
+5. ⚠️ Placeholder scripts (keep if useful for dev) - **KEPT** (useful for development)
 
 ### Low Priority (Optional):
 6. 📄 Documentation files (keep for reference)
 
 ---
 
-## Files to Remove
+## Files Removed ✅
 
 1. ✅ `apps/web/src/app/admin/migration/` (empty directory) - **REMOVED**
 2. ✅ `packages/ui-components/` (entire package) - **REMOVED**
 3. ✅ Remove unused functions from `packages/utils/src/slug.ts` - **REMOVED**
 4. ✅ Update `apps/web/package.json` (remove ui-components dependency) - **UPDATED**
 5. ✅ Update `apps/web/next.config.js` (remove ui-components from transpilePackages) - **UPDATED**
-6. ⚠️ `runGlobalFeaturesMigration()` and `runSQLDirectMigration()` in API client - **VERIFY** (may still be used)
+6. ✅ `runGlobalFeaturesMigration()`, `runSQLDirectMigration()`, and `verifyMigration()` in API client - **REMOVED** (replaced by comprehensive migration methods)
 
 ---
 
