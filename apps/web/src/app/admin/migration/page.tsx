@@ -27,12 +27,12 @@ export default function AdminMigrationPage() {
       setMigrationResult(result);
       
       if (result.success) {
-        toast.showSuccess('Migration completed successfully!');
+        toast.success('Migration completed successfully!');
       } else {
-        toast.showError(result.message || 'Migration failed');
+        toast.error(result.message || 'Migration failed');
       }
     } catch (error: any) {
-      toast.showError(error.message || 'Failed to run migration');
+      toast.error(error.message || 'Failed to run migration');
       setMigrationResult({ success: false, error: error.message });
     } finally {
       setRunning(false);
@@ -49,12 +49,12 @@ export default function AdminMigrationPage() {
       setVerificationResult(result);
       
       if (result.success) {
-        toast.showSuccess('Verification completed');
+        toast.success('Verification completed');
       } else {
-        toast.showError('Verification failed');
+        toast.error('Verification failed');
       }
     } catch (error: any) {
-      toast.showError(error.message || 'Failed to verify migration');
+      toast.error(error.message || 'Failed to verify migration');
       setVerificationResult({ success: false, error: error.message });
     } finally {
       setVerifying(false);
