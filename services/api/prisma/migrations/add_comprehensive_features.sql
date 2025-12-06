@@ -310,16 +310,36 @@ CREATE INDEX IF NOT EXISTS "WhatsAppTemplate_category_idx" ON "WhatsAppTemplate"
 CREATE INDEX IF NOT EXISTS "WhatsAppTemplate_isActive_idx" ON "WhatsAppTemplate"("isActive");
 
 -- 11. Update Product table to add isPlatformOwned column
-DO $$ BEGIN
-    ALTER TABLE "products" ADD COLUMN "isPlatformOwned" BOOLEAN NOT NULL DEFAULT false;
+DO $$ 
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1 FROM information_schema.columns 
+        WHERE table_schema = 'public' 
+        AND table_name = 'products' 
+        AND column_name = 'isPlatformOwned'
+    ) THEN
+        ALTER TABLE "products" ADD COLUMN "isPlatformOwned" BOOLEAN NOT NULL DEFAULT false;
+    END IF;
 EXCEPTION
-    WHEN duplicate_column THEN null;
+    WHEN OTHERS THEN
+        RAISE NOTICE 'Error adding isPlatformOwned column: %', SQLERRM;
 END $$;
 
-DO $$ BEGIN
-    ALTER TABLE "products" ALTER COLUMN "sellerId" DROP NOT NULL;
+DO $$ 
+BEGIN
+    -- Check if column exists and is NOT NULL before trying to alter
+    IF EXISTS (
+        SELECT 1 FROM information_schema.columns 
+        WHERE table_schema = 'public' 
+        AND table_name = 'products' 
+        AND column_name = 'sellerId'
+        AND is_nullable = 'NO'
+    ) THEN
+        ALTER TABLE "products" ALTER COLUMN "sellerId" DROP NOT NULL;
+    END IF;
 EXCEPTION
-    WHEN OTHERS THEN null;
+    WHEN OTHERS THEN
+        RAISE NOTICE 'Error altering sellerId column: %', SQLERRM;
 END $$;
 
 -- 13. Add foreign key constraints
