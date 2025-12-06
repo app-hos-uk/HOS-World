@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { RouteGuard } from '@/components/RouteGuard';
 import { AdminLayout } from '@/components/AdminLayout';
+import { apiClient } from '@/lib/api';
 
 interface Permission {
   id: string;
