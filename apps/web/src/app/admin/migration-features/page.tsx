@@ -74,8 +74,14 @@ export default function MigrationFeaturesPage() {
         const fetchData = await fetchResponse.json();
         if (fetchData.data) {
           setResult(fetchData.data as MigrationResult);
+        } else if (typeof fetchData === 'object' && ('success' in fetchData || 'error' in fetchData)) {
+          setResult(fetchData as unknown as MigrationResult);
         } else {
-          setResult(fetchData as MigrationResult);
+          setResult({
+            success: false,
+            message: 'Unexpected response format',
+            error: JSON.stringify(fetchData),
+          });
         }
       } catch (fetchError: any) {
         setResult({
@@ -97,15 +103,24 @@ export default function MigrationFeaturesPage() {
       console.log('Verification response:', response);
 
       if (response && typeof response === 'object') {
+        // ApiResponse structure: { data: {...}, message: string }
         if ('data' in response && response.data) {
-          setVerification(response.data as Record<string, boolean>);
-        } else {
-          setVerification(response as Record<string, boolean>);
+          const data = response.data;
+          // Check if data is a Record<string, boolean>
+          if (typeof data === 'object' && data !== null && !Array.isArray(data)) {
+            setVerification(data as Record<string, boolean>);
+            return;
+          }
+        }
+        // Fallback: check if response itself is a Record
+        if (typeof response === 'object' && response !== null && !Array.isArray(response) && !('data' in response)) {
+          setVerification(response as unknown as Record<string, boolean>);
+          return;
         }
       }
     } catch (error: any) {
       console.error('Verification error:', error);
-      setVerification({ error: error.message });
+      setVerification({ error: error.message } as Record<string, boolean>);
     } finally {
       setVerifying(false);
     }
