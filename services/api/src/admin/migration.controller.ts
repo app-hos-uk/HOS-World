@@ -19,12 +19,35 @@ export class MigrationController {
     try {
       this.logger.log('🔄 Starting global features migration...');
 
-      // Read the migration SQL file
-      const migrationPath = join(
-        process.cwd(),
-        'prisma/migrations/run_and_baseline.sql',
-      );
-      const sql = readFileSync(migrationPath, 'utf-8');
+      // Read the migration SQL file - try multiple possible paths
+      let migrationPath: string;
+      const possiblePaths = [
+        join(process.cwd(), 'prisma/migrations/run_and_baseline.sql'),
+        join(process.cwd(), 'services/api/prisma/migrations/run_and_baseline.sql'),
+        join(__dirname, '../../prisma/migrations/run_and_baseline.sql'),
+        join(__dirname, '../../../prisma/migrations/run_and_baseline.sql'),
+      ];
+
+      let sql: string;
+      let foundPath: string | null = null;
+
+      for (const path of possiblePaths) {
+        try {
+          sql = readFileSync(path, 'utf-8');
+          foundPath = path;
+          this.logger.log(`✅ Found migration file at: ${path}`);
+          break;
+        } catch (error) {
+          // Try next path
+          continue;
+        }
+      }
+
+      if (!foundPath || !sql) {
+        this.logger.error('❌ Migration SQL file not found. Tried paths:');
+        possiblePaths.forEach(p => this.logger.error(`   - ${p}`));
+        throw new Error('Migration SQL file not found');
+      }
 
       // Split SQL into individual statements
       const statements = sql
@@ -48,11 +71,17 @@ export class MigrationController {
           } catch (error: any) {
             // Ignore errors for IF NOT EXISTS statements
             const errorMessage = error.message || '';
+            const errorCode = error.code || '';
+            
+            // Log all errors for debugging
+            this.logger.warn(`SQL Statement error: ${errorMessage.substring(0, 200)}`);
+            this.logger.warn(`Statement: ${statement.substring(0, 200)}...`);
+            
             if (
               errorMessage.includes('already exists') ||
               errorMessage.includes('duplicate') ||
-              errorMessage.includes('does not exist') ||
-              errorMessage.includes('ON CONFLICT')
+              errorMessage.includes('ON CONFLICT') ||
+              errorCode === '42P07' // PostgreSQL: duplicate_table
             ) {
               // These are expected for idempotent operations
               successCount++;
@@ -60,14 +89,25 @@ export class MigrationController {
                 statement: statement.substring(0, 100) + '...',
                 status: 'skipped (already exists)',
               });
+            } else if (
+              errorMessage.includes('does not exist') &&
+              errorMessage.includes('DROP')
+            ) {
+              // DROP IF EXISTS errors are okay
+              successCount++;
+              results.push({
+                statement: statement.substring(0, 100) + '...',
+                status: 'skipped (does not exist)',
+              });
             } else {
               errorCount++;
               results.push({
                 statement: statement.substring(0, 100) + '...',
                 status: 'error',
                 error: errorMessage,
+                code: errorCode,
               });
-              this.logger.warn(`Migration statement error: ${errorMessage}`);
+              this.logger.error(`❌ Migration statement failed: ${errorMessage}`);
             }
           }
         }
