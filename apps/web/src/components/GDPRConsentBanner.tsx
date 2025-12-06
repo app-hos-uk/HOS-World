@@ -119,7 +119,7 @@ export function GDPRConsentBanner() {
               </h3>
               <p className="text-sm text-gray-600 mb-2">
                 We use cookies and similar technologies to enhance your experience, analyze site usage, and assist in our marketing efforts. 
-                By clicking "Accept All", you consent to our use of cookies. You can customize your preferences or learn more in our{' '}
+                By clicking &quot;Accept All&quot;, you consent to our use of cookies. You can customize your preferences or learn more in our{' '}
                 <Link href="/privacy-policy" className="text-purple-600 hover:underline font-medium">
                   Privacy Policy
                 </Link>.

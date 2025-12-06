@@ -18,7 +18,7 @@ export default function PrivacyPolicyPage() {
           <section className="mb-8">
             <h2 className="text-2xl font-semibold mb-4">1. Introduction</h2>
             <p className="mb-4">
-              House of Spells Marketplace ("we", "our", or "us") is committed to protecting your privacy. 
+              House of Spells Marketplace (&quot;we&quot;, &quot;our&quot;, or &quot;us&quot;) is committed to protecting your privacy. 
               This Privacy Policy explains how we collect, use, disclose, and safeguard your information when you 
               use our marketplace platform.
             </p>
@@ -177,7 +177,7 @@ export default function PrivacyPolicyPage() {
             <h2 className="text-2xl font-semibold mb-4">11. Changes to This Privacy Policy</h2>
             <p className="mb-4">
               We may update our Privacy Policy from time to time. We will notify you of any changes by posting the 
-              new Privacy Policy on this page and updating the "Last updated" date.
+              new Privacy Policy on this page and updating the &quot;Last updated&quot; date.
             </p>
           </section>
 

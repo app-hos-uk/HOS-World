@@ -217,7 +217,7 @@ export default function SellerOnboardingPage() {
                 <div className="space-y-6">
                   <div>
                     <h2 className="text-2xl font-bold mb-2">Store Information</h2>
-                    <p className="text-gray-600">Let's start by setting up your store details</p>
+                    <p className="text-gray-600">Let&apos;s start by setting up your store details</p>
                   </div>
 
                   <div>
