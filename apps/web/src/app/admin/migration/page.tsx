@@ -41,22 +41,58 @@ export default function AdminMigrationPage() {
     setResult(null);
 
     try {
-      const response = await apiClient.runSQLDirectMigration();
-      if (response?.data) {
-        setResult(response.data);
-      } else {
-        setResult({
-          success: false,
-          message: 'No response data',
-          error: 'Unknown error',
-        });
+      // Try API client first
+      try {
+        const response = await apiClient.runSQLDirectMigration();
+        console.log('Migration response:', response);
+        
+        if (response?.data) {
+          setResult(response.data);
+          return;
+        } else if (response?.error) {
+          setResult({
+            success: false,
+            message: 'Migration failed',
+            error: response.error || 'Unknown error',
+          });
+          return;
+        }
+      } catch (apiError: any) {
+        console.warn('API client failed, trying direct fetch:', apiError);
+        
+        // Fallback to direct fetch
+        const token = localStorage.getItem('auth_token');
+        if (!token) {
+          throw new Error('No authentication token found. Please log in again.');
+        }
+
+        const directResponse = await fetch(
+          'https://hos-marketplaceapi-production.up.railway.app/api/admin/migration/run-sql-direct',
+          {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${token}`,
+            },
+          }
+        );
+
+        const data = await directResponse.json();
+        console.log('Direct fetch response:', data);
+        
+        if (data.success !== undefined) {
+          setResult(data);
+        } else {
+          throw new Error(data.error || data.message || 'Unknown error from server');
+        }
       }
     } catch (error: any) {
       console.error('Migration error:', error);
+      const errorMessage = error?.message || error?.error?.message || error?.toString() || JSON.stringify(error) || 'Unknown error';
       setResult({
         success: false,
         message: 'Migration failed',
-        error: error.message || 'Unknown error',
+        error: errorMessage,
       });
     } finally {
       setRunning(false);
