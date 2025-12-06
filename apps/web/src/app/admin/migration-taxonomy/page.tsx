@@ -18,7 +18,7 @@ interface MigrationResult {
     statement: string;
     status: string;
     error?: string;
-  };
+  }>;
   error?: string;
 }
 
