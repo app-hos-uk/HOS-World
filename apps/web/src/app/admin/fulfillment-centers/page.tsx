@@ -22,7 +22,6 @@ export default function AdminFulfillmentCentersPage() {
     contactEmail: '',
     contactPhone: '',
     active: true,
-    isActive: true,
   });
   const [submitting, setSubmitting] = useState(false);
 
