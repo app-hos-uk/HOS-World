@@ -1,7 +1,7 @@
 import { Controller, Post, UseGuards, Logger } from '@nestjs/common';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../common/guards/roles.guard';
-import { Roles } from '../auth/decorators/roles.decorator';
+import { Roles } from '../common/decorators/roles.decorator';
 import { PrismaService } from '../database/prisma.service';
 import { readFileSync } from 'fs';
 import { join } from 'path';
