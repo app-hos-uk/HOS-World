@@ -6,6 +6,7 @@ import { MigrationController } from './migration.controller';
 import { AdminSellersController } from './sellers.controller';
 import { AdminProductsController } from './products.controller';
 import { MigrationFeaturesController } from './migration-features.controller';
+import { MigrationTaxonomyController } from './migration-taxonomy.controller';
 import { AdminService } from './admin.service';
 import { AdminSellersService } from './sellers.service';
 import { AdminProductsService } from './products.service';
@@ -23,6 +24,7 @@ import { ProductsModule } from '../products/products.module';
     AdminSellersController,
     AdminProductsController,
     MigrationFeaturesController,
+    MigrationTaxonomyController,
   ],
   providers: [AdminService, AdminSellersService, AdminProductsService],
   exports: [AdminService, AdminSellersService, AdminProductsService],
