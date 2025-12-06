@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { RouteGuard } from '@/components/RouteGuard';
 import { AdminLayout } from '@/components/AdminLayout';
+import { apiClient } from '@/lib/api';
 
 export default function AdminSettingsPage() {
   const [activeTab, setActiveTab] = useState<'general' | 'email' | 'payment' | 'fulfillment' | 'notifications'>('general');
