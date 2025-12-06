@@ -1,8 +1,19 @@
 /**
  * Format currency amount
+ * Note: Base currency is GBP. For other currencies, amount should already be converted.
  */
-export function formatCurrency(amount: number, currency: string = 'USD', locale: string = 'en-US'): string {
-  return new Intl.NumberFormat(locale, {
+export function formatCurrency(amount: number, currency: string = 'GBP', locale: string = 'en-GB'): string {
+  // Map currency to appropriate locale
+  const localeMap: Record<string, string> = {
+    GBP: 'en-GB',
+    USD: 'en-US',
+    EUR: 'de-DE', // or 'fr-FR', 'es-ES' etc.
+    AED: 'ar-AE',
+  };
+  
+  const selectedLocale = localeMap[currency] || locale;
+  
+  return new Intl.NumberFormat(selectedLocale, {
     style: 'currency',
     currency,
   }).format(amount);
@@ -10,8 +21,9 @@ export function formatCurrency(amount: number, currency: string = 'USD', locale:
 
 /**
  * Format price with tax
+ * Note: Base currency is GBP. For other currencies, price should already be converted.
  */
-export function formatPriceWithTax(price: number, taxRate: number, currency: string = 'USD'): string {
+export function formatPriceWithTax(price: number, taxRate: number, currency: string = 'GBP'): string {
   const taxAmount = price * taxRate;
   const total = price + taxAmount;
   return formatCurrency(total, currency);

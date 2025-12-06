@@ -2,6 +2,9 @@ import type { Metadata } from 'next';
 import { Cinzel, Lora } from 'next/font/google';
 import { ThemeProviderWrapper } from '@/components/ThemeProviderWrapper';
 import { AuthProviderWrapper } from '@/components/AuthProviderWrapper';
+import { CurrencyProvider } from '@/contexts/CurrencyContext';
+import { GDPRConsentBanner } from '@/components/GDPRConsentBanner';
+import { Toaster } from '@/components/Toaster';
 import './globals.css';
 
 // Cinzel for headings, brand, and magical feel
@@ -39,9 +42,13 @@ export default function RootLayout({
     <html lang="en">
       <body className={`${cinzel.variable} ${lora.variable}`}>
         <AuthProviderWrapper>
-          <ThemeProviderWrapper>
-            {children}
-          </ThemeProviderWrapper>
+          <CurrencyProvider>
+            <ThemeProviderWrapper>
+              {children}
+              <GDPRConsentBanner />
+              <Toaster />
+            </ThemeProviderWrapper>
+          </CurrencyProvider>
         </AuthProviderWrapper>
       </body>
     </html>

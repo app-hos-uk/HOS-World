@@ -20,7 +20,8 @@
     "next": "^14.0.4",
     "next-auth": "^4.24.5",
     "react": "^18.2.0",
-    "react-dom": "^18.2.0"
+    "react-dom": "^18.2.0",
+    "react-hot-toast": "^2.6.0"
   },
   "devDependencies": {
     "@types/node": "^20.10.6",

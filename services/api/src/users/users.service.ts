@@ -23,6 +23,10 @@ export class UsersService {
         updatedAt: true,
         loyaltyPoints: true,
         themePreference: true,
+        country: true,
+        whatsappNumber: true,
+        preferredCommunicationMethod: true,
+        currencyPreference: true,
       },
     });
 
@@ -64,6 +68,32 @@ export class UsersService {
       }
     }
 
+    // Global Platform Fields
+    if (updateProfileDto.country !== undefined) {
+      updateData.country = updateProfileDto.country;
+    }
+    if (updateProfileDto.whatsappNumber !== undefined) {
+      updateData.whatsappNumber = updateProfileDto.whatsappNumber;
+    }
+    if (updateProfileDto.preferredCommunicationMethod !== undefined) {
+      updateData.preferredCommunicationMethod = updateProfileDto.preferredCommunicationMethod as any;
+    }
+    if (updateProfileDto.currencyPreference !== undefined) {
+      updateData.currencyPreference = updateProfileDto.currencyPreference;
+      
+      // Update customer profile if exists
+      const customer = await this.prisma.customer.findUnique({
+        where: { userId },
+      });
+      
+      if (customer) {
+        await this.prisma.customer.update({
+          where: { userId },
+          data: { currencyPreference: updateProfileDto.currencyPreference },
+        });
+      }
+    }
+
     const updated = await this.prisma.user.update({
       where: { id: userId },
       data: updateData,
@@ -79,6 +109,10 @@ export class UsersService {
         updatedAt: true,
         loyaltyPoints: true,
         themePreference: true,
+        country: true,
+        whatsappNumber: true,
+        preferredCommunicationMethod: true,
+        currencyPreference: true,
       },
     });
 
@@ -130,5 +164,120 @@ export class UsersService {
     await this.prisma.user.delete({
       where: { id: userId },
     });
+  }
+
+  async getGamificationStats(userId: string): Promise<any> {
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: {
+        id: true,
+        gamificationPoints: true,
+        level: true,
+        characterAvatar: true,
+        favoriteFandoms: true,
+        character: {
+          select: {
+            id: true,
+            name: true,
+            avatar: true,
+            fandom: {
+              select: {
+                id: true,
+                name: true,
+                slug: true,
+              },
+            },
+          },
+        },
+      },
+    });
+
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+
+    // Get badge count
+    const badgeCount = await this.prisma.userBadge.count({
+      where: { userId },
+    });
+
+    // Get quest stats
+    const questStats = await this.prisma.userQuest.groupBy({
+      by: ['status'],
+      where: { userId },
+      _count: true,
+    });
+
+    const completedQuests = questStats.find((q) => q.status === 'COMPLETED')?._count || 0;
+    const activeQuests = questStats.find((q) => q.status === 'IN_PROGRESS')?._count || 0;
+
+    // Calculate progress to next level (every 100 points = 1 level)
+    const currentLevel = user.level || 1;
+    const pointsForCurrentLevel = (currentLevel - 1) * 100;
+    const pointsForNextLevel = currentLevel * 100;
+    const pointsProgress = (user.gamificationPoints || 0) - pointsForCurrentLevel;
+    const pointsNeeded = pointsForNextLevel - (user.gamificationPoints || 0);
+    const progressPercentage = Math.min(
+      100,
+      (pointsProgress / (pointsForNextLevel - pointsForCurrentLevel)) * 100
+    );
+
+    return {
+      points: user.gamificationPoints || 0,
+      level: currentLevel,
+      badgeCount,
+      completedQuests,
+      activeQuests,
+      character: user.character,
+      favoriteFandoms: user.favoriteFandoms || [],
+      progress: {
+        current: pointsProgress,
+        needed: pointsNeeded,
+        percentage: progressPercentage,
+        nextLevel: currentLevel + 1,
+      },
+    };
+  }
+
+  async getUserBadges(userId: string): Promise<any[]> {
+    const userBadges = await this.prisma.userBadge.findMany({
+      where: { userId },
+      include: {
+        badge: true,
+      },
+      orderBy: {
+        earnedAt: 'desc',
+      },
+    });
+
+    return userBadges.map((ub) => ({
+      id: ub.badge.id,
+      name: ub.badge.name,
+      description: ub.badge.description,
+      icon: ub.badge.icon,
+      category: ub.badge.category,
+      rarity: ub.badge.rarity,
+      points: ub.badge.points,
+      earnedAt: ub.earnedAt,
+    }));
+  }
+
+  async getUserCollections(userId: string): Promise<any[]> {
+    const collections = await this.prisma.collection.findMany({
+      where: { userId },
+      orderBy: {
+        createdAt: 'desc',
+      },
+    });
+
+    return collections.map((c) => ({
+      id: c.id,
+      name: c.name,
+      description: c.description,
+      items: c.items,
+      isPublic: c.isPublic,
+      createdAt: c.createdAt,
+      itemCount: Array.isArray(c.items) ? (c.items as any[]).length : 0,
+    }));
   }
 }

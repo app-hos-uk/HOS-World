@@ -1,0 +1,795 @@
+'use client';
+
+import { useEffect, useState } from 'react';
+import { RouteGuard } from '@/components/RouteGuard';
+import { Header } from '@/components/Header';
+import { Footer } from '@/components/Footer';
+import { apiClient } from '@/lib/api';
+import { useToast } from '@/hooks/useToast';
+import { useCurrency } from '@/contexts/CurrencyContext';
+import Link from 'next/link';
+
+interface GamificationStats {
+  points: number;
+  level: number;
+  badgeCount: number;
+  completedQuests: number;
+  activeQuests: number;
+  character?: {
+    id: string;
+    name: string;
+    avatar?: string;
+    fandom?: {
+      name: string;
+      slug: string;
+    };
+  };
+  favoriteFandoms: string[];
+  progress: {
+    current: number;
+    needed: number;
+    percentage: number;
+    nextLevel: number;
+  };
+}
+
+interface Badge {
+  id: string;
+  name: string;
+  description?: string;
+  icon?: string;
+  category: string;
+  rarity: string;
+  points: number;
+  earnedAt: string;
+}
+
+interface Collection {
+  id: string;
+  name: string;
+  description?: string;
+  itemCount: number;
+  isPublic: boolean;
+  createdAt: string;
+}
+
+export default function ProfilePage() {
+  const toast = useToast();
+  const { currency, setCurrency } = useCurrency();
+  const [profile, setProfile] = useState<any>(null);
+  const [stats, setStats] = useState<GamificationStats | null>(null);
+  const [badges, setBadges] = useState<Badge[]>([]);
+  const [collections, setCollections] = useState<Collection[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [activeTab, setActiveTab] = useState<'overview' | 'badges' | 'collections' | 'settings'>('overview');
+  
+  // Settings form state
+  const [editing, setEditing] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [formData, setFormData] = useState({
+    firstName: '',
+    lastName: '',
+    phone: '',
+    country: '',
+    whatsappNumber: '',
+    preferredCommunicationMethod: 'EMAIL' as 'EMAIL' | 'SMS' | 'WHATSAPP' | 'PHONE',
+    currencyPreference: 'GBP',
+  });
+  const [gdprConsent, setGdprConsent] = useState<any>(null);
+  const [gdprConsentHistory, setGdprConsentHistory] = useState<any[]>([]);
+  const [exportingData, setExportingData] = useState(false);
+  const [deletingAccount, setDeletingAccount] = useState(false);
+
+  useEffect(() => {
+    fetchProfileData();
+  }, []);
+
+  const fetchProfileData = async () => {
+    try {
+      setLoading(true);
+      const [profileRes, statsRes, badgesRes, collectionsRes, gdprRes, gdprHistoryRes] = await Promise.all([
+        apiClient.getProfile(),
+        apiClient.getGamificationStats(),
+        apiClient.getBadges(),
+        apiClient.getCollections(),
+        apiClient.getGDPRConsent().catch(() => null), // May fail if not logged in
+        apiClient.getGDPRConsentHistory().catch(() => null), // May fail if not logged in
+      ]);
+
+      if (profileRes?.data) {
+        setProfile(profileRes.data);
+        setFormData({
+          firstName: profileRes.data.firstName || '',
+          lastName: profileRes.data.lastName || '',
+          phone: profileRes.data.phone || '',
+          country: profileRes.data.country || '',
+          whatsappNumber: profileRes.data.whatsappNumber || '',
+          preferredCommunicationMethod: profileRes.data.preferredCommunicationMethod || 'EMAIL',
+          currencyPreference: profileRes.data.currencyPreference || 'GBP',
+        });
+        // Sync currency context
+        if (profileRes.data.currencyPreference) {
+          setCurrency(profileRes.data.currencyPreference);
+        }
+      }
+      if (statsRes?.data) setStats(statsRes.data);
+      if (badgesRes?.data) setBadges(badgesRes.data);
+      if (collectionsRes?.data) setCollections(collectionsRes.data);
+      if (gdprRes?.data) setGdprConsent(gdprRes.data);
+      if (gdprHistoryRes?.data) setGdprConsentHistory(gdprHistoryRes.data);
+    } catch (err: any) {
+      console.error('Error fetching profile data:', err);
+      toast.error(err.message || 'Failed to load profile');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleSaveProfile = async () => {
+    try {
+      setSaving(true);
+      const response = await apiClient.updateProfile(formData);
+      if (response?.data) {
+        setProfile(response.data);
+        setEditing(false);
+        toast.showSuccess('Profile updated successfully');
+        // Update currency context if changed
+        if (formData.currencyPreference !== currency) {
+          setCurrency(formData.currencyPreference);
+        }
+        // Refresh profile data
+        await fetchProfileData();
+      }
+    } catch (err: any) {
+      toast.showError(err.message || 'Failed to update profile');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleUpdateGDPRConsent = async (consentData: { marketing?: boolean; analytics?: boolean; essential?: boolean }) => {
+    try {
+      await apiClient.updateGDPRConsent(consentData);
+      toast.showSuccess('Consent preferences updated');
+      await fetchProfileData();
+    } catch (err: any) {
+      toast.showError(err.message || 'Failed to update consent');
+    }
+  };
+
+  const handleExportData = async () => {
+    try {
+      setExportingData(true);
+      const response = await apiClient.exportUserData();
+      if (response?.data) {
+        // Create download
+        const dataStr = JSON.stringify(response.data, null, 2);
+        const dataBlob = new Blob([dataStr], { type: 'application/json' });
+        const url = URL.createObjectURL(dataBlob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `hos-user-data-${new Date().toISOString().split('T')[0]}.json`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+        toast.showSuccess('Data exported successfully');
+      }
+    } catch (err: any) {
+      toast.showError(err.message || 'Failed to export data');
+    } finally {
+      setExportingData(false);
+    }
+  };
+
+  const handleDeleteAccount = async () => {
+    if (!confirm('Are you sure you want to delete your account? This action cannot be undone. Your data will be anonymized but order history will be retained for legal compliance.')) {
+      return;
+    }
+
+    try {
+      setDeletingAccount(true);
+      await apiClient.deleteUserData();
+      toast.showSuccess('Account deletion initiated. You will be logged out.');
+      // Logout and redirect
+      setTimeout(() => {
+        if (typeof window !== 'undefined') {
+          window.location.href = '/login';
+        }
+      }, 2000);
+    } catch (err: any) {
+      toast.showError(err.message || 'Failed to delete account');
+    } finally {
+      setDeletingAccount(false);
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-white">
+        <Header />
+        <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 lg:py-12">
+          <div className="flex items-center justify-center py-12">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600"></div>
+          </div>
+        </main>
+        <Footer />
+      </div>
+    );
+  }
+
+  return (
+    <RouteGuard allowedRoles={['CUSTOMER', 'ADMIN']} showAccessDenied={true}>
+      <div className="min-h-screen bg-white">
+        <Header />
+        <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 lg:py-12">
+          {/* Profile Header */}
+          <div className="bg-gradient-to-r from-purple-600 to-indigo-600 rounded-lg p-6 sm:p-8 mb-6 text-white">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 sm:gap-6">
+              <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-full bg-white bg-opacity-20 flex items-center justify-center text-4xl sm:text-5xl">
+                {profile?.avatar ? (
+                  <img
+                    src={profile.avatar}
+                    alt={profile.firstName || 'User'}
+                    className="w-full h-full rounded-full object-cover"
+                  />
+                ) : (
+                  <span>{profile?.firstName?.[0] || profile?.email?.[0] || 'U'}</span>
+                )}
+              </div>
+              <div className="flex-1">
+                <h1 className="text-2xl sm:text-3xl font-bold mb-2">
+                  {profile?.firstName && profile?.lastName
+                    ? `${profile.firstName} ${profile.lastName}`
+                    : profile?.email || 'User'}
+                </h1>
+                <p className="text-purple-100 text-sm sm:text-base">{profile?.email}</p>
+                {stats && (
+                  <div className="flex flex-wrap gap-4 mt-4">
+                    <div>
+                      <div className="text-2xl sm:text-3xl font-bold">Level {stats.level}</div>
+                      <div className="text-xs sm:text-sm text-purple-100">Current Level</div>
+                    </div>
+                    <div>
+                      <div className="text-2xl sm:text-3xl font-bold">{stats.points.toLocaleString()}</div>
+                      <div className="text-xs sm:text-sm text-purple-100">Points</div>
+                    </div>
+                    <div>
+                      <div className="text-2xl sm:text-3xl font-bold">{stats.badgeCount}</div>
+                      <div className="text-xs sm:text-sm text-purple-100">Badges</div>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+
+          {/* Tabs */}
+          <div className="bg-white border border-gray-200 rounded-lg mb-6">
+            <div className="flex flex-wrap border-b border-gray-200">
+              <button
+                onClick={() => setActiveTab('overview')}
+                className={`px-4 sm:px-6 py-3 font-medium text-sm sm:text-base transition-colors ${
+                  activeTab === 'overview'
+                    ? 'border-b-2 border-purple-600 text-purple-600'
+                    : 'text-gray-600 hover:text-gray-900'
+                }`}
+              >
+                Overview
+              </button>
+              <button
+                onClick={() => setActiveTab('badges')}
+                className={`px-4 sm:px-6 py-3 font-medium text-sm sm:text-base transition-colors ${
+                  activeTab === 'badges'
+                    ? 'border-b-2 border-purple-600 text-purple-600'
+                    : 'text-gray-600 hover:text-gray-900'
+                }`}
+              >
+                Badges ({badges.length})
+              </button>
+              <button
+                onClick={() => setActiveTab('collections')}
+                className={`px-4 sm:px-6 py-3 font-medium text-sm sm:text-base transition-colors ${
+                  activeTab === 'collections'
+                    ? 'border-b-2 border-purple-600 text-purple-600'
+                    : 'text-gray-600 hover:text-gray-900'
+                }`}
+              >
+                Collections ({collections.length})
+              </button>
+              <button
+                onClick={() => setActiveTab('settings')}
+                className={`px-4 sm:px-6 py-3 font-medium text-sm sm:text-base transition-colors ${
+                  activeTab === 'settings'
+                    ? 'border-b-2 border-purple-600 text-purple-600'
+                    : 'text-gray-600 hover:text-gray-900'
+                }`}
+              >
+                Settings
+              </button>
+            </div>
+          </div>
+
+          {/* Tab Content */}
+          <div className="bg-white border border-gray-200 rounded-lg p-4 sm:p-6">
+            {activeTab === 'overview' && (
+              <div className="space-y-6">
+                {/* Level Progress */}
+                {stats && (
+                  <div>
+                    <div className="flex justify-between items-center mb-2">
+                      <h3 className="text-lg font-semibold">Progress to Level {stats.progress.nextLevel}</h3>
+                      <span className="text-sm text-gray-600">
+                        {stats.progress.current} / {stats.progress.current + stats.progress.needed} points
+                      </span>
+                    </div>
+                    <div className="w-full bg-gray-200 rounded-full h-4">
+                      <div
+                        className="bg-gradient-to-r from-purple-600 to-indigo-600 h-4 rounded-full transition-all duration-300"
+                        style={{ width: `${stats.progress.percentage}%` }}
+                      ></div>
+                    </div>
+                    <p className="text-sm text-gray-600 mt-2">
+                      {stats.progress.needed} more points to reach Level {stats.progress.nextLevel}
+                    </p>
+                  </div>
+                )}
+
+                {/* Character */}
+                {stats?.character && (
+                  <div className="bg-gray-50 rounded-lg p-4">
+                    <h3 className="text-lg font-semibold mb-3">Your Character</h3>
+                    <div className="flex items-center gap-4">
+                      {stats.character.avatar && (
+                        <img
+                          src={stats.character.avatar}
+                          alt={stats.character.name}
+                          className="w-16 h-16 rounded-full object-cover"
+                        />
+                      )}
+                      <div>
+                        <div className="font-semibold">{stats.character.name}</div>
+                        {stats.character.fandom && (
+                          <div className="text-sm text-gray-600">{stats.character.fandom.name}</div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Favorite Fandoms */}
+                {stats && stats.favoriteFandoms.length > 0 && (
+                  <div>
+                    <h3 className="text-lg font-semibold mb-3">Favorite Fandoms</h3>
+                    <div className="flex flex-wrap gap-2">
+                      {stats.favoriteFandoms.map((fandom, idx) => (
+                        <span
+                          key={idx}
+                          className="px-3 py-1 bg-purple-100 text-purple-800 rounded-full text-sm font-medium"
+                        >
+                          {fandom}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Quest Stats */}
+                {stats && (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div className="bg-blue-50 rounded-lg p-4">
+                      <div className="text-2xl font-bold text-blue-600">{stats.activeQuests}</div>
+                      <div className="text-sm text-gray-600">Active Quests</div>
+                    </div>
+                    <div className="bg-green-50 rounded-lg p-4">
+                      <div className="text-2xl font-bold text-green-600">{stats.completedQuests}</div>
+                      <div className="text-sm text-gray-600">Completed Quests</div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Recent Badges */}
+                {badges.length > 0 && (
+                  <div>
+                    <h3 className="text-lg font-semibold mb-3">Recent Badges</h3>
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                      {badges.slice(0, 4).map((badge) => (
+                        <div
+                          key={badge.id}
+                          className="bg-gray-50 rounded-lg p-4 text-center hover:shadow-md transition-shadow"
+                        >
+                          <div className="text-3xl mb-2">{badge.icon || '🏆'}</div>
+                          <div className="text-sm font-medium">{badge.name}</div>
+                          <div className="text-xs text-gray-500 mt-1">{badge.category}</div>
+                        </div>
+                      ))}
+                    </div>
+                    {badges.length > 4 && (
+                      <button
+                        onClick={() => setActiveTab('badges')}
+                        className="mt-4 text-purple-600 hover:text-purple-800 font-medium text-sm"
+                      >
+                        View All Badges →
+                      </button>
+                    )}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {activeTab === 'badges' && (
+              <div>
+                <h2 className="text-2xl font-bold mb-6">Your Badges</h2>
+                {badges.length === 0 ? (
+                  <div className="text-center py-12">
+                    <div className="text-6xl mb-4">🏆</div>
+                    <p className="text-gray-600">No badges earned yet</p>
+                    <p className="text-sm text-gray-500 mt-2">Complete quests and activities to earn badges!</p>
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {badges.map((badge) => (
+                      <div
+                        key={badge.id}
+                        className="bg-gray-50 rounded-lg p-6 hover:shadow-lg transition-shadow"
+                      >
+                        <div className="text-center">
+                          <div className="text-5xl mb-3">{badge.icon || '🏆'}</div>
+                          <h3 className="text-lg font-semibold mb-2">{badge.name}</h3>
+                          {badge.description && (
+                            <p className="text-sm text-gray-600 mb-3">{badge.description}</p>
+                          )}
+                          <div className="flex items-center justify-center gap-2 text-xs">
+                            <span
+                              className={`px-2 py-1 rounded ${
+                                badge.rarity === 'RARE'
+                                  ? 'bg-yellow-100 text-yellow-800'
+                                  : badge.rarity === 'EPIC'
+                                  ? 'bg-purple-100 text-purple-800'
+                                  : 'bg-gray-100 text-gray-800'
+                              }`}
+                            >
+                              {badge.rarity}
+                            </span>
+                            <span className="text-gray-500">{badge.points} points</span>
+                          </div>
+                          <div className="text-xs text-gray-500 mt-3">
+                            Earned {new Date(badge.earnedAt).toLocaleDateString()}
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {activeTab === 'collections' && (
+              <div>
+                <div className="flex justify-between items-center mb-6">
+                  <h2 className="text-2xl font-bold">Your Collections</h2>
+                  <Link
+                    href="/collections/new"
+                    className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors font-medium"
+                  >
+                    + Create Collection
+                  </Link>
+                </div>
+                {collections.length === 0 ? (
+                  <div className="text-center py-12">
+                    <div className="text-6xl mb-4">📚</div>
+                    <p className="text-gray-600">No collections yet</p>
+                    <Link
+                      href="/collections/new"
+                      className="mt-4 inline-block px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors font-medium"
+                    >
+                      Create Your First Collection
+                    </Link>
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {collections.map((collection) => (
+                      <Link
+                        key={collection.id}
+                        href={`/collections/${collection.id}`}
+                        className="bg-gray-50 rounded-lg p-6 hover:shadow-lg transition-shadow block"
+                      >
+                        <div className="text-4xl mb-3">📚</div>
+                        <h3 className="text-lg font-semibold mb-2">{collection.name}</h3>
+                        {collection.description && (
+                          <p className="text-sm text-gray-600 mb-3 line-clamp-2">{collection.description}</p>
+                        )}
+                        <div className="flex items-center justify-between text-sm">
+                          <span className="text-gray-600">{collection.itemCount} items</span>
+                          <span
+                            className={`px-2 py-1 rounded text-xs ${
+                              collection.isPublic
+                                ? 'bg-green-100 text-green-800'
+                                : 'bg-gray-100 text-gray-800'
+                            }`}
+                          >
+                            {collection.isPublic ? 'Public' : 'Private'}
+                          </span>
+                        </div>
+                      </Link>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {activeTab === 'settings' && (
+              <div>
+                <h2 className="text-2xl font-bold mb-6">Account Settings</h2>
+                <div className="space-y-6">
+                  {/* Profile Information */}
+                  <div>
+                    <div className="flex justify-between items-center mb-4">
+                      <h3 className="text-lg font-semibold">Profile Information</h3>
+                      {!editing && (
+                        <button
+                          onClick={() => setEditing(true)}
+                          className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors font-medium text-sm"
+                        >
+                          Edit Profile
+                        </button>
+                      )}
+                    </div>
+                    <div className="bg-gray-50 rounded-lg p-4 sm:p-6 space-y-4">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
+                        <input
+                          type="email"
+                          value={profile?.email || ''}
+                          disabled
+                          className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-gray-100 text-gray-600"
+                        />
+                        <p className="text-xs text-gray-500 mt-1">Email cannot be changed</p>
+                      </div>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">First Name</label>
+                          <input
+                            type="text"
+                            value={editing ? formData.firstName : (profile?.firstName || '')}
+                            onChange={(e) => setFormData({ ...formData, firstName: e.target.value })}
+                            disabled={!editing}
+                            className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-white disabled:bg-gray-100"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">Last Name</label>
+                          <input
+                            type="text"
+                            value={editing ? formData.lastName : (profile?.lastName || '')}
+                            onChange={(e) => setFormData({ ...formData, lastName: e.target.value })}
+                            disabled={!editing}
+                            className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-white disabled:bg-gray-100"
+                          />
+                        </div>
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Phone</label>
+                        <input
+                          type="tel"
+                          value={editing ? formData.phone : (profile?.phone || '')}
+                          onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                          disabled={!editing}
+                          className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-white disabled:bg-gray-100"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Country</label>
+                        <select
+                          value={editing ? formData.country : (profile?.country || '')}
+                          onChange={(e) => setFormData({ ...formData, country: e.target.value })}
+                          disabled={!editing}
+                          className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-white disabled:bg-gray-100"
+                        >
+                          <option value="">Select country</option>
+                          <option value="United Kingdom">United Kingdom</option>
+                          <option value="United States">United States</option>
+                          <option value="United Arab Emirates">United Arab Emirates</option>
+                          <option value="Germany">Germany</option>
+                          <option value="France">France</option>
+                          <option value="Italy">Italy</option>
+                          <option value="Spain">Spain</option>
+                          <option value="Netherlands">Netherlands</option>
+                          <option value="Belgium">Belgium</option>
+                          <option value="Austria">Austria</option>
+                          <option value="Portugal">Portugal</option>
+                          <option value="Ireland">Ireland</option>
+                          <option value="Greece">Greece</option>
+                          <option value="Finland">Finland</option>
+                          <option value="Saudi Arabia">Saudi Arabia</option>
+                          <option value="Kuwait">Kuwait</option>
+                          <option value="Qatar">Qatar</option>
+                          <option value="Bahrain">Bahrain</option>
+                          <option value="Oman">Oman</option>
+                        </select>
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">WhatsApp Number</label>
+                        <input
+                          type="tel"
+                          value={editing ? formData.whatsappNumber : (profile?.whatsappNumber || '')}
+                          onChange={(e) => setFormData({ ...formData, whatsappNumber: e.target.value })}
+                          disabled={!editing}
+                          placeholder="+44 7700 900000"
+                          className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-white disabled:bg-gray-100"
+                        />
+                        <p className="text-xs text-gray-500 mt-1">Include country code (e.g., +44 for UK)</p>
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Preferred Communication Method</label>
+                        <select
+                          value={editing ? formData.preferredCommunicationMethod : (profile?.preferredCommunicationMethod || 'EMAIL')}
+                          onChange={(e) => setFormData({ ...formData, preferredCommunicationMethod: e.target.value as any })}
+                          disabled={!editing}
+                          className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-white disabled:bg-gray-100"
+                        >
+                          <option value="EMAIL">Email</option>
+                          <option value="SMS">SMS</option>
+                          <option value="WHATSAPP">WhatsApp</option>
+                          <option value="PHONE">Phone Call</option>
+                        </select>
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Currency Preference</label>
+                        <select
+                          value={editing ? formData.currencyPreference : (profile?.currencyPreference || 'GBP')}
+                          onChange={(e) => setFormData({ ...formData, currencyPreference: e.target.value })}
+                          disabled={!editing}
+                          className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-white disabled:bg-gray-100"
+                        >
+                          <option value="GBP">£ GBP (British Pound)</option>
+                          <option value="USD">$ USD (US Dollar)</option>
+                          <option value="EUR">€ EUR (Euro)</option>
+                          <option value="AED">د.إ AED (UAE Dirham)</option>
+                        </select>
+                        <p className="text-xs text-gray-500 mt-1">Prices will be displayed in this currency</p>
+                      </div>
+                      {editing && (
+                        <div className="flex gap-3 pt-2">
+                          <button
+                            onClick={handleSaveProfile}
+                            disabled={saving}
+                            className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors font-medium disabled:opacity-50"
+                          >
+                            {saving ? 'Saving...' : 'Save Changes'}
+                          </button>
+                          <button
+                            onClick={() => {
+                              setEditing(false);
+                              // Reset form data
+                              setFormData({
+                                firstName: profile?.firstName || '',
+                                lastName: profile?.lastName || '',
+                                phone: profile?.phone || '',
+                                country: profile?.country || '',
+                                whatsappNumber: profile?.whatsappNumber || '',
+                                preferredCommunicationMethod: profile?.preferredCommunicationMethod || 'EMAIL',
+                                currencyPreference: profile?.currencyPreference || 'GBP',
+                              });
+                            }}
+                            className="px-4 py-2 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300 transition-colors font-medium"
+                          >
+                            Cancel
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* GDPR & Privacy */}
+                  <div>
+                    <h3 className="text-lg font-semibold mb-4">Privacy & Data Management</h3>
+                    <div className="bg-gray-50 rounded-lg p-4 sm:p-6 space-y-6">
+                      {/* GDPR Consent Status */}
+                      {gdprConsent && (
+                        <div>
+                          <h4 className="font-medium mb-3">Consent Preferences</h4>
+                          <div className="space-y-3">
+                            <div className="flex items-center justify-between p-3 bg-white rounded-lg border">
+                              <div>
+                                <div className="font-medium">Essential Cookies</div>
+                                <div className="text-sm text-gray-600">Required for site functionality</div>
+                              </div>
+                              <span className="px-3 py-1 bg-green-100 text-green-800 rounded-full text-sm font-medium">
+                                Always Active
+                              </span>
+                            </div>
+                            <div className="flex items-center justify-between p-3 bg-white rounded-lg border">
+                              <div>
+                                <div className="font-medium">Marketing Communications</div>
+                                <div className="text-sm text-gray-600">Receive promotional emails and offers</div>
+                              </div>
+                              <label className="relative inline-flex items-center cursor-pointer">
+                                <input
+                                  type="checkbox"
+                                  checked={gdprConsent.dataProcessingConsent?.marketing || false}
+                                  onChange={(e) => handleUpdateGDPRConsent({ marketing: e.target.checked })}
+                                  className="sr-only peer"
+                                />
+                                <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-purple-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-purple-600"></div>
+                              </label>
+                            </div>
+                            <div className="flex items-center justify-between p-3 bg-white rounded-lg border">
+                              <div>
+                                <div className="font-medium">Analytics & Tracking</div>
+                                <div className="text-sm text-gray-600">Help us improve our services</div>
+                              </div>
+                              <label className="relative inline-flex items-center cursor-pointer">
+                                <input
+                                  type="checkbox"
+                                  checked={gdprConsent.dataProcessingConsent?.analytics || false}
+                                  onChange={(e) => handleUpdateGDPRConsent({ analytics: e.target.checked })}
+                                  className="sr-only peer"
+                                />
+                                <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-purple-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-purple-600"></div>
+                              </label>
+                            </div>
+                          </div>
+                          {gdprConsent.gdprConsentDate && (
+                            <p className="text-xs text-gray-500 mt-3">
+                              Consent given: {new Date(gdprConsent.gdprConsentDate).toLocaleDateString()}
+                            </p>
+                          )}
+                        </div>
+                      )}
+
+                      {/* Data Export */}
+                      <div className="border-t pt-4">
+                        <h4 className="font-medium mb-3">Data Export (GDPR Article 15)</h4>
+                        <p className="text-sm text-gray-600 mb-3">
+                          Download a copy of all your personal data stored in our system.
+                        </p>
+                        <button
+                          onClick={handleExportData}
+                          disabled={exportingData}
+                          className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium disabled:opacity-50 text-sm"
+                        >
+                          {exportingData ? 'Exporting...' : 'Export My Data'}
+                        </button>
+                      </div>
+
+                      {/* Account Deletion */}
+                      <div className="border-t pt-4">
+                        <h4 className="font-medium mb-3 text-red-600">Delete Account (GDPR Article 17)</h4>
+                        <p className="text-sm text-gray-600 mb-3">
+                          Permanently delete your account. Your data will be anonymized, but order history will be retained for legal compliance. This action cannot be undone.
+                        </p>
+                        <button
+                          onClick={handleDeleteAccount}
+                          disabled={deletingAccount}
+                          className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors font-medium disabled:opacity-50 text-sm"
+                        >
+                          {deletingAccount ? 'Deleting...' : 'Delete My Account'}
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Security */}
+                  <div>
+                    <h3 className="text-lg font-semibold mb-4">Security</h3>
+                    <div className="bg-gray-50 rounded-lg p-4">
+                      <Link
+                        href="/profile/change-password"
+                        className="inline-block px-4 py-2 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300 transition-colors font-medium"
+                      >
+                        Change Password
+                      </Link>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+        </main>
+        <Footer />
+      </div>
+    </RouteGuard>
+  );
+}
+

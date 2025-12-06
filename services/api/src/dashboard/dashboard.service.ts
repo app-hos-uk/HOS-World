@@ -73,6 +73,18 @@ export class DashboardService {
         createdAt: order.createdAt,
       }));
 
+    const submissions = await this.prisma.productSubmission.findMany({
+      where: { sellerId: seller.id },
+      orderBy: { createdAt: 'desc' },
+      take: 10,
+    });
+
+    const submissionsByStatus = await this.prisma.productSubmission.groupBy({
+      by: ['status'],
+      where: { sellerId: seller.id },
+      _count: true,
+    });
+
     return {
       totalSales,
       totalOrders,
@@ -81,6 +93,8 @@ export class DashboardService {
       salesByMonth,
       topProducts,
       recentOrders,
+      submissions,
+      submissionsByStatus,
     };
   }
 
@@ -151,11 +165,57 @@ export class DashboardService {
       },
     });
 
+    // Calculate wholesaler-specific stats
+    const orders = await this.prisma.order.findMany({
+      where: {
+        items: {
+          some: {
+            product: {
+              sellerId: seller.id,
+            },
+          },
+        },
+        paymentStatus: 'PAID',
+      },
+      include: {
+        items: {
+          include: {
+            product: true,
+          },
+        },
+      },
+    });
+
+    const totalSales = orders.reduce((sum, order) => sum + Number(order.total), 0);
+    const totalOrders = orders.length;
+    const averageOrderValue = totalOrders > 0 ? totalSales / totalOrders : 0;
+    const totalProducts = await this.prisma.product.count({
+      where: { sellerId: seller.id },
+    });
+
+    // Calculate bulk order statistics
+    const totalUnitsSold = orders.reduce((sum, order) => {
+      return sum + order.items.reduce((itemSum, item) => {
+        if (item.product.sellerId === seller.id) {
+          return itemSum + item.quantity;
+        }
+        return itemSum;
+      }, 0);
+    }, 0);
+
+    const averageOrderQuantity = totalOrders > 0 ? totalUnitsSold / totalOrders : 0;
+
     return {
       submissions: seller.submissions,
       submissionsByStatus,
       shipmentsInTransit,
       totalSubmissions: seller.submissions.length,
+      totalSales,
+      totalOrders,
+      totalProducts,
+      averageOrderValue,
+      totalUnitsSold,
+      averageOrderQuantity,
     };
   }
 
@@ -294,11 +354,24 @@ export class DashboardService {
       },
     });
 
+    const pendingVerification = shipments.filter((s) => s.status === 'PENDING').length;
+    const verifiedToday = shipments.filter((s) => 
+      s.status === 'VERIFIED' && 
+      s.receivedAt && 
+      new Date(s.receivedAt).toDateString() === new Date().toDateString()
+    ).length;
+    const rejectedCount = shipments.filter((s) => s.status === 'REJECTED').length;
+
     return {
+      recentShipments: shipments.slice(0, 10),
       shipments,
       statistics: stats,
       fulfillmentCenters,
-      totalPending: shipments.filter((s) => s.status === 'PENDING').length,
+      incomingShipments: pendingVerification,
+      pendingVerification,
+      verifiedToday,
+      rejectedCount,
+      totalPending: pendingVerification,
       totalInTransit: shipments.filter((s) => s.status === 'IN_TRANSIT').length,
       totalReceived: shipments.filter((s) => s.status === 'RECEIVED').length,
     };
@@ -348,9 +421,20 @@ export class DashboardService {
       take: 20,
     });
 
+    const completedToday = await this.prisma.catalogEntry.count({
+      where: {
+        completedAt: {
+          gte: new Date(new Date().setHours(0, 0, 0, 0)),
+        },
+      },
+    });
+
     return {
+      pendingSubmissions: pending,
       pendingEntries: pending,
       inProgress: inProgress,
+      completedToday,
+      totalEntries: await this.prisma.catalogEntry.count(),
       totalPending: pending.length,
       totalInProgress: inProgress.length,
     };
@@ -398,11 +482,23 @@ export class DashboardService {
       },
     });
 
+    const materialsCreated = await this.prisma.marketingMaterial.count({
+      where: {
+        createdAt: {
+          gte: new Date(new Date().setHours(0, 0, 0, 0)),
+        },
+      },
+    });
+
     return {
+      pendingSubmissions: pending,
       pendingProducts: pending,
+      materials: materials.slice(0, 8),
       materialsLibrary: materials,
-      totalPending: pending.length,
+      materialsCreated,
+      activeCampaigns: 0, // TODO: Implement campaign tracking
       totalMaterials: materials.length,
+      totalPending: pending.length,
     };
   }
 
@@ -445,9 +541,41 @@ export class DashboardService {
       },
     });
 
+    const totalRevenue = await this.prisma.order.aggregate({
+      where: {
+        paymentStatus: 'PAID',
+      },
+      _sum: {
+        total: true,
+      },
+    });
+
+    const platformFees = await this.prisma.order.aggregate({
+      where: {
+        paymentStatus: 'PAID',
+      },
+      _sum: {
+        platformFee: true,
+      },
+    });
+
+    const payoutsPending = await this.prisma.order.aggregate({
+      where: {
+        paymentStatus: 'PAID',
+        sellerPayoutStatus: 'PENDING',
+      },
+      _sum: {
+        sellerAmount: true,
+      },
+    });
+
     return {
+      pricingApprovals: pending,
       pendingApprovals: pending,
-      pricingHistory,
+      pricingHistory: pricingHistory.slice(0, 10),
+      totalRevenue: Number(totalRevenue._sum.total || 0),
+      platformFees: Number(platformFees._sum.platformFee || 0),
+      payoutsPending: Number(payoutsPending._sum.sellerAmount || 0),
       totalPending: pending.length,
     };
   }

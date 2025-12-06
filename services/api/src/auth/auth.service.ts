@@ -33,7 +33,7 @@ export class AuthService {
     private configService: ConfigService,
   ) {}
 
-  async register(registerDto: RegisterDto): Promise<AuthResponse> {
+  async register(registerDto: RegisterDto, ipAddress?: string): Promise<AuthResponse> {
     // Check if user already exists
     const existingUser = await this.prisma.user.findUnique({
       where: { email: registerDto.email },
@@ -71,7 +71,11 @@ export class AuthService {
     const saltRounds = 10;
     const hashedPassword = await bcrypt.hash(registerDto.password, saltRounds);
 
-    // Create user
+    // Determine currency preference based on country
+    const countryCode = this.getCountryCode(registerDto.country);
+    const currencyPreference = this.getCurrencyForCountry(countryCode) || 'GBP';
+
+    // Create user with global platform fields
     const user = await this.prisma.user.create({
       data: {
         email: registerDto.email,
@@ -79,6 +83,13 @@ export class AuthService {
         firstName: registerDto.firstName,
         lastName: registerDto.lastName,
         role: userRole as any,
+        country: registerDto.country,
+        whatsappNumber: registerDto.whatsappNumber,
+        preferredCommunicationMethod: registerDto.preferredCommunicationMethod as any,
+        currencyPreference,
+        gdprConsent: registerDto.gdprConsent,
+        gdprConsentDate: registerDto.gdprConsent ? new Date() : null,
+        dataProcessingConsent: registerDto.dataProcessingConsent || {},
       },
       select: {
         id: true,
@@ -92,11 +103,30 @@ export class AuthService {
       },
     });
 
+    // Create GDPR consent log
+    if (registerDto.gdprConsent) {
+      const consentTypes = registerDto.dataProcessingConsent || {};
+      for (const [consentType, granted] of Object.entries(consentTypes)) {
+        if (granted) {
+          await this.prisma.gDPRConsentLog.create({
+            data: {
+              userId: user.id,
+              consentType: consentType.toUpperCase(),
+              granted: true,
+              grantedAt: new Date(),
+            },
+          });
+        }
+      }
+    }
+
     // Create customer or seller profile
     if (registerDto.role === 'customer') {
       await this.prisma.customer.create({
         data: {
           userId: user.id,
+          country: registerDto.country,
+          currencyPreference,
         },
       });
     } else if (sellerRoles.includes(registerDto.role)) {
@@ -115,7 +145,7 @@ export class AuthService {
           userId: user.id,
           storeName: registerDto.storeName!,
           slug,
-          country: 'US', // Default, can be updated later
+          country: registerDto.country,
           timezone: 'UTC',
           sellerType: sellerType || registerDto.sellerType || 'B2C_SELLER',
           logisticsOption: registerDto.logisticsOption || 'HOS_LOGISTICS',

@@ -1,17 +1,15 @@
 /**
- * Currency conversion rates (example - should come from API in production)
+ * Currency conversion rates (GBP base - should come from API in production)
  */
 const CURRENCY_RATES: Record<string, number> = {
-  USD: 1,
-  EUR: 0.85,
-  GBP: 0.73,
-  JPY: 110,
-  CAD: 1.25,
-  AUD: 1.35,
+  GBP: 1, // Base currency
+  USD: 1.27, // Approximate
+  EUR: 1.17, // Approximate
+  AED: 4.67, // Approximate
 };
 
 /**
- * Convert amount from one currency to another
+ * Convert amount from one currency to another (GBP base)
  */
 export function convertCurrency(
   amount: number,
@@ -24,7 +22,7 @@ export function convertCurrency(
   const fromRate = rates[fromCurrency] || 1;
   const toRate = rates[toCurrency] || 1;
   
-  // Convert to base currency (USD), then to target currency
+  // Convert to base currency (GBP), then to target currency
   const baseAmount = amount / fromRate;
   return baseAmount * toRate;
 }
@@ -34,9 +32,10 @@ export function convertCurrency(
  */
 export function getCurrencySymbol(currency: string): string {
   const symbols: Record<string, string> = {
+    GBP: '£',
     USD: '$',
     EUR: '€',
-    GBP: '£',
+    AED: 'د.إ',
     JPY: '¥',
     CAD: 'C$',
     AUD: 'A$',

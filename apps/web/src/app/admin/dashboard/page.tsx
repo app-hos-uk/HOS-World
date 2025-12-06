@@ -1,10 +1,8 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { Header } from '@/components/Header';
-import { Footer } from '@/components/Footer';
 import { RouteGuard } from '@/components/RouteGuard';
-import { RoleSwitcher } from '@/components/RoleSwitcher';
+import { AdminLayout } from '@/components/AdminLayout';
 import { apiClient } from '@/lib/api';
 
 interface DashboardStats {
@@ -63,28 +61,11 @@ export default function AdminDashboardPage() {
 
   return (
     <RouteGuard allowedRoles={['ADMIN']} showAccessDenied={true}>
-      <div className="min-h-screen bg-white">
-        <Header />
-        <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 lg:py-12">
-          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6 sm:mb-8">
-            <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold">Admin Dashboard</h1>
-            <div className="flex gap-3 flex-wrap items-center">
-              {/* Role Switcher - Only visible to ADMIN users */}
-              <RoleSwitcher />
-              <a
-                href="/admin/users"
-                className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors font-medium text-sm sm:text-base whitespace-nowrap"
-              >
-                Manage Users
-              </a>
-              <a
-                href="/admin/settings"
-                className="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors font-medium text-sm sm:text-base whitespace-nowrap"
-              >
-                Settings
-              </a>
-            </div>
-          </div>
+      <AdminLayout>
+        <div className="mb-6">
+          <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold">Admin Dashboard</h1>
+          <p className="text-gray-600 mt-2">Overview of platform operations and statistics</p>
+        </div>
           
           {loading && (
             <div className="flex items-center justify-center py-12">
@@ -171,9 +152,7 @@ export default function AdminDashboardPage() {
               </div>
             </>
           )}
-        </main>
-        <Footer />
-      </div>
+      </AdminLayout>
     </RouteGuard>
   );
 }

@@ -2,9 +2,8 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { Header } from '@/components/Header';
-import { Footer } from '@/components/Footer';
 import { RouteGuard } from '@/components/RouteGuard';
+import { DashboardLayout } from '@/components/DashboardLayout';
 import { apiClient } from '@/lib/api';
 
 interface ImageUpload {
@@ -226,15 +225,24 @@ export default function SubmitProductPage() {
     }
   };
 
+  const menuItems = [
+    { title: 'Dashboard', href: '/seller/dashboard', icon: '📊' },
+    { title: 'Submit Product', href: '/seller/submit-product', icon: '➕' },
+    { title: 'My Products', href: '/seller/products', icon: '📦' },
+    { title: 'Orders', href: '/seller/orders', icon: '🛒' },
+    { title: 'Submissions', href: '/seller/submissions', icon: '📝' },
+  ];
+
   return (
-    <RouteGuard allowedRoles={['SELLER', 'B2C_SELLER', 'WHOLESALER']} showAccessDenied={true}>
-      <div className="min-h-screen bg-white">
-        <Header />
-        <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 lg:py-12">
-          <div className="max-w-4xl mx-auto">
-            <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold mb-6 sm:mb-8">
+    <RouteGuard allowedRoles={['SELLER', 'B2C_SELLER', 'WHOLESALER', 'ADMIN']} showAccessDenied={true}>
+      <DashboardLayout role="SELLER" menuItems={menuItems} title="Seller">
+        <div className="max-w-4xl mx-auto">
+          <div className="mb-6">
+            <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold">
               Submit New Product
             </h1>
+            <p className="text-gray-600 mt-2">Submit a new product for review and approval</p>
+          </div>
 
             {success && (
               <div className="mb-6 p-4 bg-green-100 border border-green-400 text-green-700 rounded-lg">
@@ -750,10 +758,8 @@ export default function SubmitProductPage() {
                 </button>
               </div>
             </form>
-          </div>
-        </main>
-        <Footer />
-      </div>
+        </div>
+      </DashboardLayout>
     </RouteGuard>
   );
 }

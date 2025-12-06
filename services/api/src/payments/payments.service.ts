@@ -2,15 +2,18 @@ import { Injectable, NotFoundException, BadRequestException } from '@nestjs/comm
 import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../database/prisma.service';
 import { CreatePaymentDto } from './dto/create-payment.dto';
+import { CurrencyService } from '../currency/currency.service';
 // import Stripe from 'stripe';
 
 @Injectable()
 export class PaymentsService {
   // private stripe: Stripe;
+  private readonly BASE_CURRENCY = 'GBP';
 
   constructor(
     private prisma: PrismaService,
     private configService: ConfigService,
+    private currencyService: CurrencyService,
   ) {
     // Initialize Stripe
     // const stripeKey = this.configService.get<string>('STRIPE_SECRET_KEY');
@@ -63,18 +66,33 @@ export class PaymentsService {
       throw new BadRequestException('Order is already paid');
     }
 
+    // Convert order total to GBP for payment processing
+    let paymentAmountGBP: number;
+    if (order.currency === this.BASE_CURRENCY) {
+      paymentAmountGBP = Number(order.total);
+    } else {
+      paymentAmountGBP = await this.currencyService.convertBetween(
+        Number(order.total),
+        order.currency,
+        this.BASE_CURRENCY,
+      );
+    }
+
     // TODO: Create Stripe Payment Intent
+    // All payments processed in GBP
     // const paymentIntent = await this.stripe.paymentIntents.create({
-    //   amount: Math.round(Number(order.total) * 100), // Convert to cents
-    //   currency: order.currency.toLowerCase(),
+    //   amount: Math.round(paymentAmountGBP * 100), // Convert to pence (GBP)
+    //   currency: 'gbp', // Always GBP for payments
     //   metadata: {
     //     orderId: order.id,
     //     userId,
+    //     originalCurrency: order.currency, // Store original currency for reference
+    //     originalAmount: Number(order.total).toFixed(2),
     //   },
     // });
 
     // Return order with seller information revealed (for payment page)
-    // For now, return placeholder with order details including seller
+    // Include both original currency (for display) and GBP amount (for processing)
     return {
       clientSecret: 'placeholder-client-secret',
       paymentIntentId: 'placeholder-id',
@@ -82,7 +100,9 @@ export class PaymentsService {
         id: order.id,
         orderNumber: order.orderNumber,
         total: Number(order.total),
-        currency: order.currency,
+        currency: order.currency, // Original currency for display
+        totalGBP: paymentAmountGBP, // GBP amount for payment processing
+        currencyGBP: this.BASE_CURRENCY,
         seller: {
           id: order.seller.id,
           storeName: order.seller.storeName,
@@ -98,6 +118,27 @@ export class PaymentsService {
   }
 
   async confirmPayment(paymentIntentId: string, orderId: string): Promise<void> {
+    // Get order to get the amount
+    const order = await this.prisma.order.findUnique({
+      where: { id: orderId },
+    });
+
+    if (!order) {
+      throw new NotFoundException('Order not found');
+    }
+
+    // Convert order total to GBP for payment record
+    let paymentAmountGBP: number;
+    if (order.currency === this.BASE_CURRENCY) {
+      paymentAmountGBP = Number(order.total);
+    } else {
+      paymentAmountGBP = await this.currencyService.convertBetween(
+        Number(order.total),
+        order.currency,
+        this.BASE_CURRENCY,
+      );
+    }
+
     // TODO: Verify payment with Stripe
     // const paymentIntent = await this.stripe.paymentIntents.retrieve(paymentIntentId);
 
@@ -105,15 +146,19 @@ export class PaymentsService {
     //   throw new BadRequestException('Payment not successful');
     // }
 
-    // Create payment record
+    // Create payment record - always in GBP
     await this.prisma.payment.create({
       data: {
         orderId,
         // stripePaymentId: paymentIntent.id,
-        amount: 0, // Will be updated with actual amount
-        currency: 'USD',
+        amount: paymentAmountGBP, // Amount in GBP
+        currency: this.BASE_CURRENCY, // Always GBP for payments
         status: 'PAID',
         paymentMethod: 'card',
+        metadata: {
+          originalCurrency: order.currency,
+          originalAmount: Number(order.total).toFixed(2),
+        } as any,
       },
     });
 

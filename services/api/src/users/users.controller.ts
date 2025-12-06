@@ -28,6 +28,33 @@ export class UsersController {
     };
   }
 
+  @Get('profile/gamification')
+  async getGamificationStats(@Request() req: any): Promise<ApiResponse<any>> {
+    const stats = await this.usersService.getGamificationStats(req.user.id);
+    return {
+      data: stats,
+      message: 'Gamification stats retrieved successfully',
+    };
+  }
+
+  @Get('profile/badges')
+  async getBadges(@Request() req: any): Promise<ApiResponse<any[]>> {
+    const badges = await this.usersService.getUserBadges(req.user.id);
+    return {
+      data: badges,
+      message: 'Badges retrieved successfully',
+    };
+  }
+
+  @Get('profile/collections')
+  async getCollections(@Request() req: any): Promise<ApiResponse<any[]>> {
+    const collections = await this.usersService.getUserCollections(req.user.id);
+    return {
+      data: collections,
+      message: 'Collections retrieved successfully',
+    };
+  }
+
   @Put('profile')
   async updateProfile(
     @Request() req: any,

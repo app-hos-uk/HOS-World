@@ -7,10 +7,16 @@ import { PrismaService } from '../database/prisma.service';
 import { CreateSettlementDto, ProcessSettlementDto } from './dto/create-settlement.dto';
 import { SettlementStatus } from '@prisma/client';
 import { Decimal } from '@prisma/client/runtime/library';
+import { CurrencyService } from '../currency/currency.service';
 
 @Injectable()
 export class SettlementsService {
-  constructor(private prisma: PrismaService) {}
+  private readonly BASE_CURRENCY = 'GBP';
+
+  constructor(
+    private prisma: PrismaService,
+    private currencyService: CurrencyService,
+  ) {}
 
   async calculateSettlement(
     sellerId: string,
@@ -48,9 +54,22 @@ export class SettlementsService {
     const platformFeeRate = new Decimal(0.10); // 10% platform fee (configurable)
 
     for (const order of orders) {
-      const orderTotal = new Decimal(order.total);
-      totalSales = totalSales.add(orderTotal);
-      const fee = orderTotal.mul(platformFeeRate);
+      // Convert order total to GBP if it's in a different currency
+      let orderTotalGBP: Decimal;
+      if (order.currency === this.BASE_CURRENCY) {
+        orderTotalGBP = new Decimal(order.total);
+      } else {
+        // Convert to GBP using currency service
+        const convertedAmount = await this.currencyService.convertBetween(
+          Number(order.total),
+          order.currency,
+          this.BASE_CURRENCY,
+        );
+        orderTotalGBP = new Decimal(convertedAmount);
+      }
+
+      totalSales = totalSales.add(orderTotalGBP);
+      const fee = orderTotalGBP.mul(platformFeeRate);
       platformFees = platformFees.add(fee);
     }
 
@@ -65,11 +84,12 @@ export class SettlementsService {
       totalOrders: orders.length,
       platformFee: Number(platformFees),
       netAmount: Number(netAmount),
-      currency: 'USD',
+      currency: this.BASE_CURRENCY, // All settlements in GBP
       orders: orders.map((o) => ({
         id: o.id,
         orderNumber: o.orderNumber,
         total: Number(o.total),
+        currency: o.currency,
         createdAt: o.createdAt,
       })),
     };
@@ -120,13 +140,26 @@ export class SettlementsService {
     });
 
     // Create order-settlement relationships
+    // Note: Store amounts in GBP for settlements
     for (const order of calculation.orders) {
-      const orderFee = new Decimal(order.total).mul(new Decimal(0.10));
+      // Convert order total to GBP if needed
+      let orderAmountGBP: number;
+      if (order.currency === this.BASE_CURRENCY) {
+        orderAmountGBP = order.total;
+      } else {
+        orderAmountGBP = await this.currencyService.convertBetween(
+          order.total,
+          order.currency,
+          this.BASE_CURRENCY,
+        );
+      }
+
+      const orderFee = new Decimal(orderAmountGBP).mul(new Decimal(0.10));
       await this.prisma.orderSettlement.create({
         data: {
           settlementId: settlement.id,
           orderId: order.id,
-          amount: order.total,
+          amount: orderAmountGBP, // Store in GBP
           platformFee: Number(orderFee),
         },
       });

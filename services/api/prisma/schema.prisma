@@ -23,6 +23,17 @@ model User {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
+  // Global Platform Features
+  country                      String?
+  whatsappNumber               String?
+  preferredCommunicationMethod CommunicationMethod?
+  currencyPreference           String                  @default("GBP")
+  ipAddress                    String?
+  gdprConsent                  Boolean                 @default(false)
+  gdprConsentDate              DateTime?
+  dataProcessingConsent        Json?
+  countryDetectedAt            DateTime?
+
   // Relations
   addresses       Address[]
   orders          Order[]
@@ -49,6 +60,9 @@ model User {
   collections        Collection[]
   sharedItems        SharedItem[]
 
+  // GDPR Relations
+  gdprConsentLogs GDPRConsentLog[]
+
   @@map("users")
 }
 
@@ -66,13 +80,22 @@ enum UserRole {
   CMS_EDITOR
 }
 
+enum CommunicationMethod {
+  EMAIL
+  SMS
+  WHATSAPP
+  PHONE
+}
+
 // Customer profile
 model Customer {
-  id              String  @id @default(uuid())
-  userId          String  @unique
-  user            User    @relation(fields: [userId], references: [id], onDelete: Cascade)
-  loyaltyPoints   Int     @default(0)
-  themePreference String?
+  id                String  @id @default(uuid())
+  userId            String  @unique
+  user              User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  loyaltyPoints     Int     @default(0)
+  themePreference   String?
+  country           String?
+  currencyPreference String @default("GBP")
 
   @@map("customers")
 }
@@ -174,7 +197,7 @@ model Product {
   price       Decimal       @db.Decimal(10, 2)
   tradePrice  Decimal?      @db.Decimal(10, 2)
   rrp         Decimal?      @db.Decimal(10, 2)
-  currency    String        @default("USD")
+  currency    String        @default("GBP")
   taxRate     Decimal       @default(0) @db.Decimal(5, 4)
   stock       Int           @default(0)
   fandom      String?
@@ -246,7 +269,7 @@ model Cart {
   total     Decimal    @default(0) @db.Decimal(10, 2)
   subtotal  Decimal    @default(0) @db.Decimal(10, 2)
   tax       Decimal    @default(0) @db.Decimal(10, 2)
-  currency  String     @default("USD")
+  currency  String     @default("GBP")
   createdAt DateTime   @default(now())
   updatedAt DateTime   @updatedAt
   users     User[]
@@ -305,7 +328,7 @@ model Order {
   subtotal          Decimal           @db.Decimal(10, 2)
   tax               Decimal           @db.Decimal(10, 2)
   total             Decimal           @db.Decimal(10, 2)
-  currency          String            @default("USD")
+  currency          String            @default("GBP")
   status            OrderStatus       @default(PENDING)
   shippingAddressId String
   shippingAddress   Address           @relation("ShippingAddress", fields: [shippingAddressId], references: [id])
@@ -443,7 +466,7 @@ model Payment {
   order           Order         @relation(fields: [orderId], references: [id], onDelete: Cascade)
   stripePaymentId String?       @unique
   amount          Decimal       @db.Decimal(10, 2)
-  currency        String        @default("USD")
+  currency        String        @default("GBP")
   status          PaymentStatus @default(PENDING)
   paymentMethod   String?
   refundAmount    Decimal?      @db.Decimal(10, 2)
@@ -892,4 +915,32 @@ model SharedItem {
   createdAt DateTime @default(now())
 
   @@map("shared_items")
+}
+
+// Currency Exchange Rate model
+model CurrencyExchangeRate {
+  id            String   @id @default(uuid())
+  baseCurrency  String   @default("GBP")
+  targetCurrency String
+  rate          Decimal  @db.Decimal(10, 6)
+  cachedAt      DateTime @default(now())
+  expiresAt     DateTime
+
+  @@unique([baseCurrency, targetCurrency])
+  @@map("currency_exchange_rates")
+}
+
+// GDPR Consent Log model
+model GDPRConsentLog {
+  id          String   @id @default(uuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  consentType String   // "MARKETING", "ANALYTICS", "ESSENTIAL", etc.
+  granted     Boolean
+  grantedAt   DateTime
+  revokedAt   DateTime?
+  ipAddress   String?
+  userAgent   String?
+
+  @@map("gdpr_consent_logs")
 }

@@ -6,6 +6,7 @@ import { useState } from 'react';
 import { usePathname } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import { RoleSwitcher } from '@/components/RoleSwitcher';
+import { CurrencySelector } from '@/components/CurrencySelector';
 import type { UserRole } from '@hos-marketplace/shared-types';
 
 export function Header() {
@@ -124,6 +125,7 @@ export function Header() {
                 >
                   Cart
                 </Link>
+                <CurrencySelector />
               </>
             )}
             {isAuthenticated && user ? (
@@ -219,8 +221,11 @@ export function Header() {
                   >
                     Cart
                   </Link>
+                  <div className="px-2 py-2">
+                    <CurrencySelector />
+                  </div>
                 </>
-              )}
+            )}
               {isAuthenticated && user ? (
                 <>
                   <Link

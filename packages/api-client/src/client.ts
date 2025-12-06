@@ -550,9 +550,350 @@ export class ApiClient {
   }
 
   // Admin
+  async getAdminDashboardData(): Promise<ApiResponse<any>> {
+    return this.request<ApiResponse<any>>('/admin/dashboard', {
+      method: 'GET',
+    });
+  }
+
   async getUsers(): Promise<ApiResponse<any[]>> {
     return this.request<ApiResponse<any[]>>('/admin/users', {
       method: 'GET',
+    });
+  }
+
+  async getUserById(userId: string): Promise<ApiResponse<any>> {
+    return this.request<ApiResponse<any>>(`/admin/users/${userId}`, {
+      method: 'GET',
+    });
+  }
+
+  async updateUser(
+    userId: string,
+    data: {
+      firstName?: string;
+      lastName?: string;
+      email?: string;
+      role?: string;
+      avatar?: string;
+    }
+  ): Promise<ApiResponse<any>> {
+    return this.request<ApiResponse<any>>(`/admin/users/${userId}`, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async deleteUser(userId: string): Promise<ApiResponse<{ message: string }>> {
+    return this.request<ApiResponse<{ message: string }>>(`/admin/users/${userId}`, {
+      method: 'DELETE',
+    });
+  }
+
+  async resetUserPassword(userId: string, newPassword: string): Promise<ApiResponse<{ message: string }>> {
+    return this.request<ApiResponse<{ message: string }>>(`/admin/users/${userId}/reset-password`, {
+      method: 'POST',
+      body: JSON.stringify({ newPassword }),
+    });
+  }
+
+  async getSystemSettings(): Promise<ApiResponse<any>> {
+    return this.request<ApiResponse<any>>('/admin/settings', {
+      method: 'GET',
+    });
+  }
+
+  async updateSystemSettings(settings: any): Promise<ApiResponse<any>> {
+    return this.request<ApiResponse<any>>('/admin/settings', {
+      method: 'PUT',
+      body: JSON.stringify(settings),
+    });
+  }
+
+  async getRolePermissions(role: string): Promise<ApiResponse<string[]>> {
+    return this.request<ApiResponse<string[]>>(`/admin/permissions/${role}`, {
+      method: 'GET',
+    });
+  }
+
+  async updateRolePermissions(role: string, permissions: string[]): Promise<ApiResponse<any>> {
+    return this.request<ApiResponse<any>>(`/admin/permissions/${role}`, {
+      method: 'PUT',
+      body: JSON.stringify({ permissions }),
+    });
+  }
+
+  // Themes
+  async getThemes(type?: string): Promise<ApiResponse<any[]>> {
+    const url = type ? `/themes?type=${type}` : '/themes';
+    return this.request<ApiResponse<any[]>>(url, {
+      method: 'GET',
+    });
+  }
+
+  async getTheme(id: string): Promise<ApiResponse<any>> {
+    return this.request<ApiResponse<any>>(`/themes/${id}`, {
+      method: 'GET',
+    });
+  }
+
+  async updateTheme(id: string, updates: any): Promise<ApiResponse<any>> {
+    return this.request<ApiResponse<any>>(`/themes/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(updates),
+    });
+  }
+
+  async deleteTheme(id: string): Promise<ApiResponse<{ message: string }>> {
+    return this.request<ApiResponse<{ message: string }>>(`/themes/${id}`, {
+      method: 'DELETE',
+    });
+  }
+
+  async getSellerTheme(sellerId?: string): Promise<ApiResponse<any>> {
+    const url = sellerId ? `/themes/seller/${sellerId}` : '/themes/seller/my-theme';
+    return this.request<ApiResponse<any>>(url, {
+      method: 'GET',
+    });
+  }
+
+  async updateSellerTheme(updates: {
+    themeId?: string;
+    customLogoUrl?: string;
+    customFaviconUrl?: string;
+    customColors?: Record<string, string>;
+  }): Promise<ApiResponse<any>> {
+    return this.request<ApiResponse<any>>('/themes/seller/my-theme', {
+      method: 'PUT',
+      body: JSON.stringify(updates),
+    });
+  }
+
+  async getThemeTemplates(): Promise<ApiResponse<any[]>> {
+    return this.request<ApiResponse<any[]>>('/themes/templates/list', {
+      method: 'GET',
+    });
+  }
+
+  async applyThemeTemplate(templateId: string, name?: string): Promise<ApiResponse<any>> {
+    return this.request<ApiResponse<any>>(`/themes/templates/${templateId}/apply`, {
+      method: 'POST',
+      body: JSON.stringify({ name }),
+    });
+  }
+
+  // Domains
+  async getSellerDomains(sellerId: string): Promise<ApiResponse<any>> {
+    return this.request<ApiResponse<any>>(`/domains/sellers/${sellerId}`, {
+      method: 'GET',
+    });
+  }
+
+  async getMyDomains(): Promise<ApiResponse<any>> {
+    return this.request<ApiResponse<any>>('/domains/my-domains', {
+      method: 'GET',
+    });
+  }
+
+  async assignSubDomain(sellerId: string, data: { subDomain: string }): Promise<ApiResponse<any>> {
+    return this.request<ApiResponse<any>>(`/domains/sellers/${sellerId}/subdomain`, {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async assignCustomDomain(
+    sellerId: string,
+    data: { customDomain: string; domainPackagePurchased?: boolean }
+  ): Promise<ApiResponse<any>> {
+    return this.request<ApiResponse<any>>(`/domains/sellers/${sellerId}/custom-domain`, {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async removeSubDomain(sellerId: string): Promise<ApiResponse<{ message: string }>> {
+    return this.request<ApiResponse<{ message: string }>>(`/domains/sellers/${sellerId}/subdomain`, {
+      method: 'DELETE',
+    });
+  }
+
+  async removeCustomDomain(sellerId: string): Promise<ApiResponse<{ message: string }>> {
+    return this.request<ApiResponse<{ message: string }>>(`/domains/sellers/${sellerId}/custom-domain`, {
+      method: 'DELETE',
+    });
+  }
+
+  async getDomainPackages(): Promise<ApiResponse<any[]>> {
+    return this.request<ApiResponse<any[]>>('/domains/packages', {
+      method: 'GET',
+    });
+  }
+
+  async getDNSConfiguration(sellerId: string): Promise<ApiResponse<any>> {
+    return this.request<ApiResponse<any>>(`/domains/sellers/${sellerId}/dns-config`, {
+      method: 'GET',
+    });
+  }
+
+  // Admin - Sellers
+  async getAdminSellers(): Promise<ApiResponse<any[]>> {
+    return this.request<ApiResponse<any[]>>('/admin/sellers', {
+      method: 'GET',
+    });
+  }
+
+  // Currency & Exchange Rates
+  async getCurrencyRates(): Promise<ApiResponse<Record<string, number>>> {
+    return this.request<ApiResponse<Record<string, number>>>('/currency/rates', {
+      method: 'GET',
+    });
+  }
+
+  async convertCurrency(amount: number, from: string, to: string): Promise<ApiResponse<{ amount: number; from: string; to: string; converted: number }>> {
+    return this.request<ApiResponse<{ amount: number; from: string; to: string; converted: number }>>(`/currency/convert?amount=${amount}&from=${from}&to=${to}`, {
+      method: 'GET',
+    });
+  }
+
+  async getUserCurrency(): Promise<ApiResponse<{ currency: string; rates: Record<string, number> }>> {
+    return this.request<ApiResponse<{ currency: string; rates: Record<string, number> }>>('/currency/user-currency', {
+      method: 'GET',
+    });
+  }
+
+  // Geolocation
+  async detectCountry(): Promise<ApiResponse<any>> {
+    return this.request<ApiResponse<any>>('/geolocation/detect', {
+      method: 'GET',
+    });
+  }
+
+  async confirmCountry(data: { country: string; countryCode?: string }): Promise<ApiResponse<any>> {
+    return this.request<ApiResponse<any>>('/geolocation/confirm', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
+  // GDPR
+  async updateGDPRConsent(data: { marketing?: boolean; analytics?: boolean; essential?: boolean }): Promise<ApiResponse<any>> {
+    return this.request<ApiResponse<any>>('/gdpr/consent', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async getGDPRConsent(): Promise<ApiResponse<any>> {
+    return this.request<ApiResponse<any>>('/gdpr/consent', {
+      method: 'GET',
+    });
+  }
+
+  async exportUserData(): Promise<ApiResponse<any>> {
+    return this.request<ApiResponse<any>>('/gdpr/export', {
+      method: 'GET',
+    });
+  }
+
+  async deleteUserData(): Promise<ApiResponse<{ message: string }>> {
+    return this.request<ApiResponse<{ message: string }>>('/gdpr/data', {
+      method: 'DELETE',
+    });
+  }
+
+  async getGDPRConsentHistory(): Promise<ApiResponse<any[]>> {
+    return this.request<ApiResponse<any[]>>('/gdpr/consent-history', {
+      method: 'GET',
+    });
+  }
+
+  // Compliance
+  async getComplianceRequirements(country: string): Promise<ApiResponse<any>> {
+    return this.request<ApiResponse<any>>(`/compliance/requirements/${country}`, {
+      method: 'GET',
+    });
+  }
+
+  async getTaxRates(country: string): Promise<ApiResponse<{ rate: number }>> {
+    return this.request<ApiResponse<{ rate: number }>>(`/compliance/tax-rates/${country}`, {
+      method: 'GET',
+    });
+  }
+
+  async verifyAge(data: { country: string; age: number }): Promise<ApiResponse<any>> {
+    return this.request<ApiResponse<any>>('/compliance/verify-age', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
+  // User Profile & Gamification
+  async getProfile(): Promise<ApiResponse<any>> {
+    return this.request<ApiResponse<any>>('/users/profile', {
+      method: 'GET',
+    });
+  }
+
+  async getGamificationStats(): Promise<ApiResponse<any>> {
+    return this.request<ApiResponse<any>>('/users/profile/gamification', {
+      method: 'GET',
+    });
+  }
+
+  async getBadges(): Promise<ApiResponse<any[]>> {
+    return this.request<ApiResponse<any[]>>('/users/profile/badges', {
+      method: 'GET',
+    });
+  }
+
+  async getCollections(): Promise<ApiResponse<any[]>> {
+    return this.request<ApiResponse<any[]>>('/users/profile/collections', {
+      method: 'GET',
+    });
+  }
+
+  async updateProfile(data: {
+    firstName?: string;
+    lastName?: string;
+    phone?: string;
+    avatar?: string;
+    themePreference?: string;
+  }): Promise<ApiResponse<any>> {
+    return this.request<ApiResponse<any>>('/users/profile', {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async changePassword(data: {
+    currentPassword: string;
+    newPassword: string;
+  }): Promise<ApiResponse<{ message: string }>> {
+    return this.request<ApiResponse<{ message: string }>>('/users/password', {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    });
+  }
+
+  // Seller Profile
+  async getSellerProfile(): Promise<ApiResponse<any>> {
+    return this.request<ApiResponse<any>>('/sellers/me', {
+      method: 'GET',
+    });
+  }
+
+  async updateSellerProfile(data: {
+    storeName?: string;
+    description?: string;
+    logo?: string;
+    country?: string;
+    city?: string;
+    region?: string;
+  }): Promise<ApiResponse<any>> {
+    return this.request<ApiResponse<any>>('/sellers/me', {
+      method: 'PUT',
+      body: JSON.stringify(data),
     });
   }
 }

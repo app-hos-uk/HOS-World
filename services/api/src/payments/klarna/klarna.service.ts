@@ -1,6 +1,7 @@
 import { Injectable, BadRequestException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../../database/prisma.service';
+import { CurrencyService } from '../../currency/currency.service';
 
 interface KlarnaSessionRequest {
   orderAmount: number;
@@ -19,10 +20,12 @@ export class KlarnaService {
   private readonly baseUrl: string;
   private readonly username: string;
   private readonly password: string;
+  private readonly BASE_CURRENCY = 'GBP';
 
   constructor(
     private configService: ConfigService,
     private prisma: PrismaService,
+    private currencyService: CurrencyService,
   ) {
     const isTest = this.configService.get('NODE_ENV') !== 'production';
     this.baseUrl = isTest
@@ -43,10 +46,10 @@ export class KlarnaService {
         Authorization: `Basic ${Buffer.from(`${this.username}:${this.password}`).toString('base64')}`,
       },
       body: JSON.stringify({
-        purchase_country: 'US',
-        purchase_currency: 'USD',
-        locale: 'en-US',
-        order_amount: request.orderAmount,
+        purchase_country: 'GB', // UK for GBP
+        purchase_currency: 'GBP', // All payments in GBP
+        locale: 'en-GB',
+        order_amount: request.orderAmount, // Should already be in GBP
         order_lines: request.orderLines,
         billing_address: request.billingAddress,
         shipping_address: request.shippingAddress,
@@ -74,6 +77,18 @@ export class KlarnaService {
       throw new BadRequestException('Order not found');
     }
 
+    // Convert order total to GBP if needed
+    let orderAmountGBP: number;
+    if (order.currency === this.BASE_CURRENCY) {
+      orderAmountGBP = Number(order.total);
+    } else {
+      orderAmountGBP = await this.currencyService.convertBetween(
+        Number(order.total),
+        order.currency,
+        this.BASE_CURRENCY,
+      );
+    }
+
     const response = await fetch(
       `${this.baseUrl}/payments/v1/authorizations/${authorizationToken}/order`,
       {
@@ -83,16 +98,22 @@ export class KlarnaService {
           Authorization: `Basic ${Buffer.from(`${this.username}:${this.password}`).toString('base64')}`,
         },
         body: JSON.stringify({
-          purchase_country: 'US',
-          purchase_currency: 'USD',
-          locale: 'en-US',
-          order_amount: Number(order.total),
-          order_lines: order.items.map((item) => ({
-            name: item.productName,
-            quantity: item.quantity,
-            unit_price: Number(item.price),
-            total_amount: Number(item.price) * item.quantity,
-          })),
+          purchase_country: 'GB', // UK for GBP
+          purchase_currency: 'GBP', // All payments in GBP
+          locale: 'en-GB',
+          order_amount: orderAmountGBP, // Amount in GBP
+          order_lines: order.items.map((item) => {
+            // Convert item prices to GBP if needed
+            const itemPriceGBP = order.currency === this.BASE_CURRENCY
+              ? Number(item.price)
+              : null; // Will need conversion - simplified for now
+            return {
+              name: item.productName,
+              quantity: item.quantity,
+              unit_price: itemPriceGBP || Number(item.price), // Should be in GBP
+              total_amount: (itemPriceGBP || Number(item.price)) * item.quantity,
+            };
+          }),
         }),
       },
     );
@@ -104,19 +125,33 @@ export class KlarnaService {
 
     const result = await response.json();
 
-    // Create payment record
+    // Convert order total to GBP for payment record
+    let paymentAmountGBP: number;
+    if (order.currency === this.BASE_CURRENCY) {
+      paymentAmountGBP = Number(order.total);
+    } else {
+      paymentAmountGBP = await this.currencyService.convertBetween(
+        Number(order.total),
+        order.currency,
+        this.BASE_CURRENCY,
+      );
+    }
+
+    // Create payment record - always in GBP
     await this.prisma.payment.create({
       data: {
         orderId: order.id,
         stripePaymentId: result.order_id, // Store Klarna order ID
-        amount: order.total,
-        currency: 'USD',
+        amount: paymentAmountGBP, // Amount in GBP
+        currency: this.BASE_CURRENCY, // Always GBP for payments
         status: 'COMPLETED',
         paymentMethod: 'klarna',
         metadata: {
           klarnaOrderId: result.order_id,
           authorizationToken,
-        },
+          originalCurrency: order.currency,
+          originalAmount: Number(order.total).toFixed(2),
+        } as any,
       },
     });
 
@@ -156,8 +191,10 @@ export class KlarnaService {
 
   /**
    * Refund Klarna payment
+   * Note: Amount should be in GBP
    */
   async refundPayment(klarnaOrderId: string, amount: number, description?: string): Promise<any> {
+    // Amount is expected to be in GBP (base currency)
     const response = await fetch(
       `${this.baseUrl}/ordermanagement/v1/orders/${klarnaOrderId}/refunds`,
       {

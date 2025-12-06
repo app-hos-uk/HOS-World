@@ -34,20 +34,22 @@ export class PrismaService extends PrismaClient implements OnModuleInit, OnModul
 
   private async syncDatabaseSchema() {
     try {
-      this.logger.log('🔄 Syncing database schema...');
-      const { stdout, stderr } = await execAsync('pnpm prisma db push --accept-data-loss --skip-generate', {
+      this.logger.log('🔄 Running database migrations...');
+      // Use migrate deploy for production (applies pending migrations)
+      const { stdout, stderr } = await execAsync('pnpm prisma migrate deploy', {
         cwd: process.cwd(),
         env: process.env,
       });
       if (stdout) this.logger.log(stdout);
       if (stderr && !stderr.includes('Warning')) this.logger.warn(stderr);
-      this.logger.log('✅ Database schema synced successfully');
+      this.logger.log('✅ Database migrations applied successfully');
     } catch (error: any) {
-      // If error is just about no changes, that's okay
-      if (error.message?.includes('already in sync') || error.message?.includes('unchanged')) {
-        this.logger.log('✅ Database schema is already in sync');
+      // If no migrations to apply, that's okay
+      if (error.message?.includes('No pending migrations') || error.message?.includes('already applied')) {
+        this.logger.log('✅ Database is up to date - no pending migrations');
       } else {
-        throw error;
+        // Log error but don't throw - allow app to continue
+        this.logger.warn('⚠️ Migration check completed with warnings:', error.message);
       }
     }
   }

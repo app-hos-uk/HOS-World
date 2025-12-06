@@ -44,6 +44,10 @@ import { SettlementsModule } from './settlements/settlements.module';
 import { StorageModule } from './storage/storage.module';
 import { QueueModule } from './queue/queue.module';
 import { AdminModule } from './admin/admin.module';
+import { CurrencyModule } from './currency/currency.module';
+import { GeolocationModule } from './geolocation/geolocation.module';
+import { GDPRModule } from './gdpr/gdpr.module';
+import { ComplianceModule } from './compliance/compliance.module';
 import { JwtAuthGuard } from './common/guards/jwt-auth.guard';
 
 @Module({
@@ -94,6 +98,10 @@ import { JwtAuthGuard } from './common/guards/jwt-auth.guard';
     StorageModule,
     QueueModule,
     AdminModule,
+    CurrencyModule,
+    GeolocationModule,
+    GDPRModule,
+    ComplianceModule,
   ],
   controllers: [AppController],
   providers: [

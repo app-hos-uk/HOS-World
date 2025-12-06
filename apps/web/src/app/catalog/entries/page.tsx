@@ -1,9 +1,8 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { Header } from '@/components/Header';
-import { Footer } from '@/components/Footer';
 import { RouteGuard } from '@/components/RouteGuard';
+import { DashboardLayout } from '@/components/DashboardLayout';
 import { apiClient } from '@/lib/api';
 
 export default function CatalogEntriesPage() {
@@ -112,20 +111,18 @@ export default function CatalogEntriesPage() {
     }
   };
 
+  const menuItems = [
+    { title: 'Dashboard', href: '/catalog/dashboard', icon: '📊' },
+    { title: 'Catalog Entries', href: '/catalog/entries', icon: '📚', badge: pendingSubmissions.length },
+  ];
+
   return (
     <RouteGuard allowedRoles={['CATALOG', 'ADMIN']} showAccessDenied={true}>
-      <div className="min-h-screen bg-white">
-        <Header />
-        <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 lg:py-12">
-          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6 sm:mb-8">
-            <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold">Catalog Entries</h1>
-            <a
-              href="/catalog/dashboard"
-              className="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors font-medium text-sm sm:text-base whitespace-nowrap"
-            >
-              Back to Dashboard
-            </a>
-          </div>
+      <DashboardLayout role="CATALOG" menuItems={menuItems} title="Catalog">
+        <div className="mb-6">
+          <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold">Catalog Entries</h1>
+          <p className="text-gray-600 mt-2">Create marketplace-ready product listings</p>
+        </div>
 
           {error && (
             <div className="mb-6 p-4 bg-red-100 border border-red-400 text-red-700 rounded-lg">
@@ -365,9 +362,7 @@ export default function CatalogEntriesPage() {
               </div>
             </div>
           )}
-        </main>
-        <Footer />
-      </div>
+      </DashboardLayout>
     </RouteGuard>
   );
 }

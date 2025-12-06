@@ -4,12 +4,14 @@ import { Header } from '@/components/Header';
 import { Footer } from '@/components/Footer';
 import { useState, useEffect, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
+import { useCurrency } from '@/contexts/CurrencyContext';
 
 function PaymentContent() {
   const searchParams = useSearchParams();
   const orderId = searchParams.get('orderId');
   const [order, setOrder] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const { formatPrice } = useCurrency();
 
   useEffect(() => {
     if (orderId) {
@@ -88,23 +90,28 @@ function PaymentContent() {
             {order.items?.map((item: any, index: number) => (
               <div key={index} className="flex justify-between">
                 <span>{item.product?.name || 'Product'} x {item.quantity}</span>
-                <span>${item.price * item.quantity}</span>
+                <span>{formatPrice(item.price * item.quantity, order.currency || 'GBP')}</span>
               </div>
             ))}
           </div>
           <div className="border-t mt-4 pt-4">
             <div className="flex justify-between mb-2">
               <span>Subtotal</span>
-              <span>${order.subtotal}</span>
+              <span>{formatPrice(order.subtotal, order.currency || 'GBP')}</span>
             </div>
             <div className="flex justify-between mb-2">
               <span>Tax</span>
-              <span>${order.tax}</span>
+              <span>{formatPrice(order.tax, order.currency || 'GBP')}</span>
             </div>
             <div className="flex justify-between font-bold text-lg">
               <span>Total</span>
-              <span>${order.total}</span>
+              <span>{formatPrice(order.total, order.currency || 'GBP')}</span>
             </div>
+            {order.currency && order.currency !== 'GBP' && (
+              <p className="text-xs text-gray-500 mt-2">
+                Original amount: £{order.total.toFixed(2)} GBP
+              </p>
+            )}
           </div>
         </div>
 

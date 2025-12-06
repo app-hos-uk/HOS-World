@@ -1,9 +1,8 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { Header } from '@/components/Header';
-import { Footer } from '@/components/Footer';
 import { RouteGuard } from '@/components/RouteGuard';
+import { DashboardLayout } from '@/components/DashboardLayout';
 import { apiClient } from '@/lib/api';
 
 export default function MarketingMaterialsPage() {
@@ -96,20 +95,18 @@ export default function MarketingMaterialsPage() {
     }
   };
 
+  const menuItems = [
+    { title: 'Dashboard', href: '/marketing/dashboard', icon: '📊' },
+    { title: 'Marketing Materials', href: '/marketing/materials', icon: '📢', badge: pendingSubmissions.length },
+  ];
+
   return (
     <RouteGuard allowedRoles={['MARKETING', 'ADMIN']} showAccessDenied={true}>
-      <div className="min-h-screen bg-white">
-        <Header />
-        <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 lg:py-12">
-          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6 sm:mb-8">
-            <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold">Marketing Materials</h1>
-            <a
-              href="/marketing/dashboard"
-              className="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors font-medium text-sm sm:text-base whitespace-nowrap"
-            >
-              Back to Dashboard
-            </a>
-          </div>
+      <DashboardLayout role="MARKETING" menuItems={menuItems} title="Marketing">
+        <div className="mb-6">
+          <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold">Marketing Materials</h1>
+          <p className="text-gray-600 mt-2">Create and manage marketing materials for products</p>
+        </div>
 
           {/* Tabs */}
           <div className="mb-6 flex gap-2 border-b">
@@ -330,9 +327,7 @@ export default function MarketingMaterialsPage() {
               </div>
             </div>
           )}
-        </main>
-        <Footer />
-      </div>
+      </DashboardLayout>
     </RouteGuard>
   );
 }

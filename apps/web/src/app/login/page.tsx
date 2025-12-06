@@ -28,10 +28,59 @@ export default function LoginPage() {
   const authCheckInProgress = useRef(false); // Prevent concurrent auth checks
   const authRequestController = useRef<AbortController | null>(null); // Track active request
 
+  // Global Platform Registration Fields
+  const [firstName, setFirstName] = useState('');
+  const [lastName, setLastName] = useState('');
+  const [country, setCountry] = useState('');
+  const [detectedCountry, setDetectedCountry] = useState<any>(null);
+  const [detectingCountry, setDetectingCountry] = useState(false);
+  const [whatsappNumber, setWhatsappNumber] = useState('');
+  const [preferredCommunicationMethod, setPreferredCommunicationMethod] = useState<'EMAIL' | 'SMS' | 'WHATSAPP' | 'PHONE'>('EMAIL');
+  const [gdprConsent, setGdprConsent] = useState(false);
+  const [dataProcessingConsent, setDataProcessingConsent] = useState({
+    marketing: false,
+    analytics: false,
+    essential: true, // Always true
+  });
+  const [currencyPreference, setCurrencyPreference] = useState('GBP');
+
   // Set mounted state after hydration to prevent server/client mismatch
   useEffect(() => {
     setIsMounted(true);
   }, []);
+
+  // Detect country on mount (for registration)
+  useEffect(() => {
+    if (isMounted && !isLogin && !detectedCountry && !detectingCountry) {
+      detectCountry();
+    }
+  }, [isMounted, isLogin]);
+
+  const detectCountry = async () => {
+    setDetectingCountry(true);
+    try {
+      const response = await apiClient.detectCountry();
+      if (response?.data) {
+        setDetectedCountry(response.data);
+        setCountry(response.data.country || '');
+        setCurrencyPreference(response.data.currency || 'GBP');
+      }
+    } catch (error) {
+      console.error('Failed to detect country:', error);
+      // Set defaults
+      setCountry('United Kingdom');
+      setCurrencyPreference('GBP');
+    } finally {
+      setDetectingCountry(false);
+    }
+  };
+
+  const handleCountryConfirm = () => {
+    if (detectedCountry) {
+      setCountry(detectedCountry.country);
+      setCurrencyPreference(detectedCountry.currency || 'GBP');
+    }
+  };
 
   // CRITICAL: Cancel any auth checks immediately when user starts logging in
   useEffect(() => {
@@ -177,6 +226,19 @@ export default function LoginPage() {
     setError('');
     setLoading(true);
 
+    // Validate required fields
+    if (!country) {
+      setError('Please select your country');
+      setLoading(false);
+      return;
+    }
+
+    if (!gdprConsent) {
+      setError('You must accept the GDPR consent to create an account');
+      setLoading(false);
+      return;
+    }
+
     // CRITICAL: Cancel any pending auth checks immediately
     const registerController = authRequestController.current;
     if (registerController) {
@@ -198,12 +260,23 @@ export default function LoginPage() {
     }
 
     try {
+      // Determine role from form or default to customer
+      const role = isLogin ? undefined : 'customer'; // For now, registration is customer only
+      // Seller registration will be handled separately
+      
       const response = await apiClient.register({
         email,
         password,
-        role: 'customer',
+        role: role || 'customer',
+        firstName: firstName || undefined,
+        lastName: lastName || undefined,
+        country,
+        whatsappNumber: whatsappNumber || undefined,
+        preferredCommunicationMethod,
+        gdprConsent,
+        dataProcessingConsent,
       });
-      const { token: authToken } = response.data;
+      const { token: authToken, user } = response.data;
 
       // Save token to localStorage
       try {
@@ -229,10 +302,21 @@ export default function LoginPage() {
         authRequestController.current = null;
       }
 
-      if (typeof window !== 'undefined') {
-        window.location.replace('/');
+      // Redirect based on role
+      if (user?.role && ['SELLER', 'B2C_SELLER', 'WHOLESALER'].includes(user.role)) {
+        // Redirect sellers to onboarding
+        if (typeof window !== 'undefined') {
+          window.location.replace('/seller/onboarding');
+        } else {
+          router.replace('/seller/onboarding');
+        }
       } else {
-        router.replace('/');
+        // Customers go through character selection
+        if (typeof window !== 'undefined') {
+          window.location.replace('/');
+        } else {
+          router.replace('/');
+        }
       }
     } catch (err: any) {
       setError(err.message || 'Registration failed. Please try again.');
@@ -476,6 +560,235 @@ export default function LoginPage() {
                 </div>
               </div>
 
+              {/* Registration-specific fields */}
+              {!isLogin && (
+                <>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label htmlFor="firstName" className="block text-sm font-medium text-gray-700 mb-1">
+                        First Name
+                      </label>
+                      <input
+                        id="firstName"
+                        type="text"
+                        value={firstName}
+                        onChange={(e) => setFirstName(e.target.value)}
+                        className="w-full px-4 py-2.5 bg-white border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 text-gray-900 placeholder-gray-500 text-base"
+                        placeholder="John"
+                        style={{ backgroundColor: '#ffffff', color: '#111827' }}
+                      />
+                    </div>
+                    <div>
+                      <label htmlFor="lastName" className="block text-sm font-medium text-gray-700 mb-1">
+                        Last Name
+                      </label>
+                      <input
+                        id="lastName"
+                        type="text"
+                        value={lastName}
+                        onChange={(e) => setLastName(e.target.value)}
+                        className="w-full px-4 py-2.5 bg-white border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 text-gray-900 placeholder-gray-500 text-base"
+                        placeholder="Doe"
+                        style={{ backgroundColor: '#ffffff', color: '#111827' }}
+                      />
+                    </div>
+                  </div>
+
+                  {/* Country Detection */}
+                  <div>
+                    <label htmlFor="country" className="block text-sm font-medium text-gray-700 mb-1">
+                      Country <span className="text-red-500">*</span>
+                    </label>
+                    {detectingCountry ? (
+                      <div className="w-full px-4 py-2.5 bg-gray-50 border-2 border-gray-300 rounded-lg text-sm text-gray-500">
+                        Detecting your location...
+                      </div>
+                    ) : detectedCountry && !country ? (
+                      <div className="space-y-2">
+                        <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                          <p className="text-sm text-blue-800 font-medium mb-1">
+                            We detected your location: <strong>{detectedCountry.country}</strong>
+                          </p>
+                          <p className="text-xs text-blue-600 mb-2">
+                            Currency: {currencyPreference} ({detectedCountry.currency})
+                          </p>
+                          <div className="flex gap-2">
+                            <button
+                              type="button"
+                              onClick={handleCountryConfirm}
+                              className="px-3 py-1.5 bg-blue-600 text-white text-sm rounded hover:bg-blue-700"
+                            >
+                              Confirm
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => setDetectedCountry(null)}
+                              className="px-3 py-1.5 bg-gray-200 text-gray-700 text-sm rounded hover:bg-gray-300"
+                            >
+                              Change
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    ) : (
+                      <select
+                        id="country"
+                        value={country}
+                        onChange={(e) => {
+                          setCountry(e.target.value);
+                          // Update currency based on country
+                          const countryCurrencies: Record<string, string> = {
+                            'United Kingdom': 'GBP',
+                            'United States': 'USD',
+                            'United Arab Emirates': 'AED',
+                            'Germany': 'EUR',
+                            'France': 'EUR',
+                            'Italy': 'EUR',
+                            'Spain': 'EUR',
+                          };
+                          setCurrencyPreference(countryCurrencies[e.target.value] || 'GBP');
+                        }}
+                        required
+                        className="w-full px-4 py-2.5 bg-white border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 text-gray-900 text-base"
+                        style={{ backgroundColor: '#ffffff', color: '#111827' }}
+                      >
+                        <option value="">Select your country</option>
+                        <option value="United Kingdom">United Kingdom</option>
+                        <option value="United States">United States</option>
+                        <option value="United Arab Emirates">United Arab Emirates</option>
+                        <option value="Germany">Germany</option>
+                        <option value="France">France</option>
+                        <option value="Italy">Italy</option>
+                        <option value="Spain">Spain</option>
+                        <option value="Netherlands">Netherlands</option>
+                        <option value="Belgium">Belgium</option>
+                        <option value="Austria">Austria</option>
+                        <option value="Portugal">Portugal</option>
+                        <option value="Ireland">Ireland</option>
+                        <option value="Greece">Greece</option>
+                        <option value="Finland">Finland</option>
+                        <option value="Saudi Arabia">Saudi Arabia</option>
+                        <option value="Kuwait">Kuwait</option>
+                        <option value="Qatar">Qatar</option>
+                        <option value="Bahrain">Bahrain</option>
+                        <option value="Oman">Oman</option>
+                      </select>
+                    )}
+                    {country && currencyPreference && (
+                      <p className="mt-1 text-xs text-gray-500">
+                        Prices will be displayed in {currencyPreference}
+                      </p>
+                    )}
+                  </div>
+
+                  {/* WhatsApp Number */}
+                  <div>
+                    <label htmlFor="whatsappNumber" className="block text-sm font-medium text-gray-700 mb-1">
+                      WhatsApp Number (Optional)
+                    </label>
+                    <input
+                      id="whatsappNumber"
+                      type="tel"
+                      value={whatsappNumber}
+                      onChange={(e) => setWhatsappNumber(e.target.value)}
+                      className="w-full px-4 py-2.5 bg-white border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 text-gray-900 placeholder-gray-500 text-base"
+                      placeholder="+44 7700 900000"
+                      style={{ backgroundColor: '#ffffff', color: '#111827' }}
+                    />
+                    <p className="mt-1 text-xs text-gray-500">
+                      Include country code (e.g., +44 for UK)
+                    </p>
+                  </div>
+
+                  {/* Communication Preference */}
+                  <div>
+                    <label htmlFor="communicationMethod" className="block text-sm font-medium text-gray-700 mb-1">
+                      Preferred Communication Method <span className="text-red-500">*</span>
+                    </label>
+                    <select
+                      id="communicationMethod"
+                      value={preferredCommunicationMethod}
+                      onChange={(e) => setPreferredCommunicationMethod(e.target.value as any)}
+                      required
+                      className="w-full px-4 py-2.5 bg-white border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 text-gray-900 text-base"
+                      style={{ backgroundColor: '#ffffff', color: '#111827' }}
+                    >
+                      <option value="EMAIL">Email</option>
+                      <option value="SMS">SMS</option>
+                      <option value="WHATSAPP">WhatsApp</option>
+                      <option value="PHONE">Phone Call</option>
+                    </select>
+                  </div>
+
+                  {/* GDPR Consent */}
+                  <div className="space-y-3 p-4 bg-gray-50 rounded-lg border border-gray-200">
+                    <div className="flex items-start">
+                      <input
+                        id="gdprConsent"
+                        type="checkbox"
+                        checked={gdprConsent}
+                        onChange={(e) => setGdprConsent(e.target.checked)}
+                        required
+                        className="mt-1 h-4 w-4 text-purple-600 focus:ring-purple-500 border-gray-300 rounded"
+                      />
+                      <label htmlFor="gdprConsent" className="ml-2 text-sm text-gray-700">
+                        I accept the{' '}
+                        <a href="/privacy-policy" target="_blank" className="text-purple-600 hover:underline">
+                          Privacy Policy
+                        </a>{' '}
+                        and consent to data processing <span className="text-red-500">*</span>
+                      </label>
+                    </div>
+
+                    {/* Granular Consent Options */}
+                    {gdprConsent && (
+                      <div className="ml-6 space-y-2 text-sm">
+                        <div className="flex items-center">
+                          <input
+                            id="consentEssential"
+                            type="checkbox"
+                            checked={dataProcessingConsent.essential}
+                            disabled
+                            className="h-4 w-4 text-purple-600 focus:ring-purple-500 border-gray-300 rounded"
+                          />
+                          <label htmlFor="consentEssential" className="ml-2 text-gray-600">
+                            Essential cookies (required)
+                          </label>
+                        </div>
+                        <div className="flex items-center">
+                          <input
+                            id="consentMarketing"
+                            type="checkbox"
+                            checked={dataProcessingConsent.marketing}
+                            onChange={(e) =>
+                              setDataProcessingConsent({ ...dataProcessingConsent, marketing: e.target.checked })
+                            }
+                            className="h-4 w-4 text-purple-600 focus:ring-purple-500 border-gray-300 rounded"
+                          />
+                          <label htmlFor="consentMarketing" className="ml-2 text-gray-600">
+                            Marketing communications
+                          </label>
+                        </div>
+                        <div className="flex items-center">
+                          <input
+                            id="consentAnalytics"
+                            type="checkbox"
+                            checked={dataProcessingConsent.analytics}
+                            onChange={(e) =>
+                              setDataProcessingConsent({ ...dataProcessingConsent, analytics: e.target.checked })
+                            }
+                            className="h-4 w-4 text-purple-600 focus:ring-purple-500 border-gray-300 rounded"
+                          />
+                          <label htmlFor="consentAnalytics" className="ml-2 text-gray-600">
+                            Analytics and tracking
+                          </label>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </>
+              )}
+
               <button
                 type="submit"
                 disabled={loading}
@@ -487,7 +800,22 @@ export default function LoginPage() {
 
             <div className="mt-6 text-center">
               <button
-                onClick={() => setIsLogin(!isLogin)}
+                type="button"
+                onClick={() => {
+                  setIsLogin(!isLogin);
+                  setError('');
+                  // Reset registration fields when switching to login
+                  if (isLogin) {
+                    setFirstName('');
+                    setLastName('');
+                    setCountry('');
+                    setWhatsappNumber('');
+                    setPreferredCommunicationMethod('EMAIL');
+                    setGdprConsent(false);
+                    setDataProcessingConsent({ marketing: false, analytics: false, essential: true });
+                    setDetectedCountry(null);
+                  }
+                }}
                 className="text-purple-600 hover:underline text-sm"
               >
                 {isLogin

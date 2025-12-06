@@ -1,5 +1,12 @@
 import { IsString, IsOptional, IsEmail, IsEnum } from 'class-validator';
 
+export enum CommunicationMethod {
+  EMAIL = 'EMAIL',
+  SMS = 'SMS',
+  WHATSAPP = 'WHATSAPP',
+  PHONE = 'PHONE',
+}
+
 export class UpdateProfileDto {
   @IsOptional()
   @IsString()
@@ -20,6 +27,23 @@ export class UpdateProfileDto {
   @IsOptional()
   @IsEnum(['light', 'dark', 'accessibility'])
   themePreference?: string;
+
+  // Global Platform Fields
+  @IsOptional()
+  @IsString()
+  country?: string;
+
+  @IsOptional()
+  @IsString()
+  whatsappNumber?: string;
+
+  @IsOptional()
+  @IsEnum(CommunicationMethod)
+  preferredCommunicationMethod?: CommunicationMethod;
+
+  @IsOptional()
+  @IsString()
+  currencyPreference?: string;
 }
 
 export class ChangePasswordDto {

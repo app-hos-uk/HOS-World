@@ -26,8 +26,18 @@ export class AuthController {
   @Public()
   @Post('register')
   @HttpCode(HttpStatus.CREATED)
-  async register(@Body() registerDto: RegisterDto): Promise<ApiResponse<AuthResponse>> {
-    const result = await this.authService.register(registerDto);
+  async register(
+    @Body() registerDto: RegisterDto,
+    @Request() req: any,
+  ): Promise<ApiResponse<AuthResponse>> {
+    // Get IP address for country detection
+    const ipAddress =
+      req.headers['x-forwarded-for']?.split(',')[0] ||
+      req.headers['x-real-ip'] ||
+      req.ip ||
+      req.connection.remoteAddress;
+
+    const result = await this.authService.register(registerDto, ipAddress);
     return {
       data: result,
       message: 'User registered successfully',
