@@ -321,10 +321,6 @@ export class ApiClient {
   }
 
   // Dashboard endpoints
-  async getAdminDashboardData(): Promise<ApiResponse<any>> {
-    return this.request<ApiResponse<any>>('/dashboard/admin');
-  }
-
   async getSellerDashboardData(startDate?: string, endDate?: string): Promise<ApiResponse<any>> {
     const query = startDate || endDate 
       ? `?${new URLSearchParams({ 
