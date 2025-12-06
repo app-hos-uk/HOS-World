@@ -957,4 +957,100 @@ export class ApiClient {
   async verifyComprehensiveFeaturesMigration(): Promise<ApiResponse<any>> {
     return this.request<ApiResponse<any>>('/admin/migration-features/verify');
   }
+
+  // Finance - Transactions
+  async getTransactions(filters?: { sellerId?: string; customerId?: string; type?: string; startDate?: string; endDate?: string }): Promise<ApiResponse<any[]>> {
+    const params = new URLSearchParams();
+    if (filters?.sellerId) params.append('sellerId', filters.sellerId);
+    if (filters?.customerId) params.append('customerId', filters.customerId);
+    if (filters?.type) params.append('type', filters.type);
+    if (filters?.startDate) params.append('startDate', filters.startDate);
+    if (filters?.endDate) params.append('endDate', filters.endDate);
+    const query = params.toString();
+    return this.request<ApiResponse<any[]>>(`/finance/transactions${query ? `?${query}` : ''}`);
+  }
+
+  async createTransaction(data: any): Promise<ApiResponse<any>> {
+    return this.request<ApiResponse<any>>('/finance/transactions', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
+  // Finance - Payouts
+  async getPayouts(sellerId?: string): Promise<ApiResponse<any[]>> {
+    const url = sellerId ? `/finance/payouts?sellerId=${sellerId}` : '/finance/payouts';
+    return this.request<ApiResponse<any[]>>(url);
+  }
+
+  async schedulePayout(data: any): Promise<ApiResponse<any>> {
+    return this.request<ApiResponse<any>>('/finance/payouts/schedule', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
+  // Finance - Refunds
+  async getRefunds(customerId?: string): Promise<ApiResponse<any[]>> {
+    const url = customerId ? `/finance/refunds?customerId=${customerId}` : '/finance/refunds';
+    return this.request<ApiResponse<any[]>>(url);
+  }
+
+  async processRefund(data: any): Promise<ApiResponse<any>> {
+    return this.request<ApiResponse<any>>('/finance/refunds', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
+  // Finance - Reports
+  async getRevenueReport(startDate?: string, endDate?: string): Promise<ApiResponse<any>> {
+    const params = new URLSearchParams();
+    if (startDate) params.append('startDate', startDate);
+    if (endDate) params.append('endDate', endDate);
+    const query = params.toString();
+    return this.request<ApiResponse<any>>(`/finance/reports/revenue${query ? `?${query}` : ''}`);
+  }
+
+  // Support - Tickets
+  async getSupportTickets(filters?: { status?: string; assignedTo?: string; priority?: string }): Promise<ApiResponse<any[]>> {
+    const params = new URLSearchParams();
+    if (filters?.status) params.append('status', filters.status);
+    if (filters?.assignedTo) params.append('assignedTo', filters.assignedTo);
+    if (filters?.priority) params.append('priority', filters.priority);
+    const query = params.toString();
+    return this.request<ApiResponse<any[]>>(`/support/tickets${query ? `?${query}` : ''}`);
+  }
+
+  async createSupportTicket(data: any): Promise<ApiResponse<any>> {
+    return this.request<ApiResponse<any>>('/support/tickets', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
+  // Activity Logs
+  async getActivityLogs(filters?: { sellerId?: string; userId?: string; action?: string }): Promise<ApiResponse<any[]>> {
+    const params = new URLSearchParams();
+    if (filters?.sellerId) params.append('sellerId', filters.sellerId);
+    if (filters?.userId) params.append('userId', filters.userId);
+    if (filters?.action) params.append('action', filters.action);
+    const query = params.toString();
+    return this.request<ApiResponse<any[]>>(`/activity/logs${query ? `?${query}` : ''}`);
+  }
+
+  // Discrepancies
+  async getDiscrepancies(filters?: { sellerId?: string; type?: string; status?: string }): Promise<ApiResponse<any[]>> {
+    const params = new URLSearchParams();
+    if (filters?.sellerId) params.append('sellerId', filters.sellerId);
+    if (filters?.type) params.append('type', filters.type);
+    if (filters?.status) params.append('status', filters.status);
+    const query = params.toString();
+    return this.request<ApiResponse<any[]>>(`/discrepancies${query ? `?${query}` : ''}`);
+  }
+
+  // WhatsApp
+  async getWhatsAppConversations(): Promise<ApiResponse<any[]>> {
+    return this.request<ApiResponse<any[]>>('/whatsapp/conversations');
+  }
 }
