@@ -20,11 +20,19 @@ export default function AdminWhatsAppPage() {
     try {
       setLoading(true);
       const response = await apiClient.getWhatsAppConversations();
-      if (response?.data) {
-        setConversations(response.data);
+      let conversationData: any[] = [];
+      if (response && 'data' in response) {
+        const responseData = response.data as any;
+        if (Array.isArray(responseData)) {
+          conversationData = responseData;
+        } else if (responseData && typeof responseData === 'object' && 'data' in responseData && Array.isArray(responseData.data)) {
+          conversationData = responseData.data;
+        }
       }
+      setConversations(conversationData);
     } catch (err: any) {
       toast.error(err.message || 'Failed to load conversations');
+      setConversations([]);
     } finally {
       setLoading(false);
     }

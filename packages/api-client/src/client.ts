@@ -1033,6 +1033,60 @@ export class ApiClient {
     });
   }
 
+  // Fulfillment Centers
+  async createFulfillmentCenter(data: {
+    name: string;
+    address: string;
+    city: string;
+    country: string;
+    postalCode?: string;
+    contactEmail?: string;
+    contactPhone?: string;
+    active?: boolean;
+  }): Promise<ApiResponse<any>> {
+    return this.request<ApiResponse<any>>('/fulfillment/centers', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async getFulfillmentCenters(activeOnly?: boolean): Promise<ApiResponse<any[]>> {
+    const query = activeOnly ? '?activeOnly=true' : '';
+    return this.request<ApiResponse<any[]>>(`/fulfillment/centers${query}`);
+  }
+
+  // Logistics Partners
+  async createLogisticsPartner(data: {
+    name: string;
+    type: string;
+    contactEmail?: string;
+    contactPhone?: string;
+    website?: string;
+    active?: boolean;
+    isActive?: boolean;
+  }): Promise<ApiResponse<any>> {
+    const payload: any = {
+      name: data.name,
+    };
+    if (data.type) payload.type = data.type;
+    if (data.website) payload.website = data.website;
+    if (data.contactEmail || data.contactPhone) {
+      payload.contactInfo = {};
+      if (data.contactEmail) payload.contactInfo.email = data.contactEmail;
+      if (data.contactPhone) payload.contactInfo.phone = data.contactPhone;
+    }
+    if (data.isActive !== undefined) payload.isActive = data.isActive;
+    return this.request<ApiResponse<any>>('/logistics/partners', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    });
+  }
+
+  async getLogisticsPartners(activeOnly?: boolean): Promise<ApiResponse<any[]>> {
+    const query = activeOnly ? '?activeOnly=true' : '';
+    return this.request<ApiResponse<any[]>>(`/logistics/partners${query}`);
+  }
+
   // Activity Logs
   async getActivityLogs(filters?: { sellerId?: string; userId?: string; action?: string }): Promise<ApiResponse<any[]>> {
     const params = new URLSearchParams();

@@ -20,11 +20,19 @@ export default function AdminActivityPage() {
     try {
       setLoading(true);
       const response = await apiClient.getActivityLogs();
-      if (response?.data) {
-        setLogs(response.data);
+      let logData: any[] = [];
+      if (response && 'data' in response) {
+        const responseData = response.data as any;
+        if (Array.isArray(responseData)) {
+          logData = responseData;
+        } else if (responseData && typeof responseData === 'object' && 'data' in responseData && Array.isArray(responseData.data)) {
+          logData = responseData.data;
+        }
       }
+      setLogs(logData);
     } catch (err: any) {
       toast.error(err.message || 'Failed to load activity logs');
+      setLogs([]);
     } finally {
       setLoading(false);
     }

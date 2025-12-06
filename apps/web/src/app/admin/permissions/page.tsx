@@ -58,7 +58,7 @@ const PERMISSIONS: Permission[] = [
   { id: 'sellers.suspend', name: 'Suspend Sellers', description: 'Suspend seller accounts', category: 'Sellers' },
 ];
 
-const ROLES = [
+const INITIAL_ROLES = [
   'ADMIN',
   'PROCUREMENT',
   'FULFILLMENT',
@@ -87,11 +87,15 @@ const DEFAULT_ROLE_PERMISSIONS: Record<string, string[]> = {
 };
 
 export default function AdminPermissionsPage() {
+  const [roles, setRoles] = useState<string[]>(INITIAL_ROLES);
   const [selectedRole, setSelectedRole] = useState<string>('ADMIN');
   const [rolePermissions, setRolePermissions] = useState<Record<string, string[]>>(
     DEFAULT_ROLE_PERMISSIONS
   );
   const [saving, setSaving] = useState(false);
+  const [showCreateRole, setShowCreateRole] = useState(false);
+  const [newRoleName, setNewRoleName] = useState('');
+  const [creatingRole, setCreatingRole] = useState(false);
 
   const permissionsByCategory = PERMISSIONS.reduce((acc, perm) => {
     if (!acc[perm.category]) {
@@ -157,9 +161,17 @@ export default function AdminPermissionsPage() {
           {/* Role Selector */}
           <div className="lg:col-span-1">
             <div className="bg-white border border-gray-200 rounded-lg p-4">
-              <h2 className="font-semibold mb-4">Select Role</h2>
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="font-semibold">Select Role</h2>
+                <button
+                  onClick={() => setShowCreateRole(true)}
+                  className="text-sm px-3 py-1 bg-purple-600 text-white rounded hover:bg-purple-700"
+                >
+                  + New
+                </button>
+              </div>
               <div className="space-y-2">
-                {ROLES.map((role) => (
+                {roles.map((role) => (
                   <button
                     key={role}
                     onClick={() => setSelectedRole(role)}
@@ -241,6 +253,72 @@ export default function AdminPermissionsPage() {
             </div>
           </div>
         </div>
+
+        {/* Create Role Modal */}
+        {showCreateRole && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
+              <h3 className="text-lg font-semibold mb-4">Create New Role</h3>
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Role Name *</label>
+                  <input
+                    type="text"
+                    value={newRoleName}
+                    onChange={(e) => setNewRoleName(e.target.value.toUpperCase().replace(/\s+/g, '_'))}
+                    placeholder="e.g., MODERATOR"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-purple-500 focus:border-purple-500"
+                  />
+                  <p className="text-xs text-gray-500 mt-1">Use uppercase letters and underscores</p>
+                </div>
+                <div className="flex justify-end gap-3">
+                  <button
+                    onClick={() => {
+                      setShowCreateRole(false);
+                      setNewRoleName('');
+                    }}
+                    className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={async () => {
+                      if (!newRoleName.trim()) {
+                        alert('Please enter a role name');
+                        return;
+                      }
+                      if (roles.includes(newRoleName)) {
+                        alert('Role already exists');
+                        return;
+                      }
+                      setCreatingRole(true);
+                      try {
+                        // Add role to local state
+                        setRoles([...roles, newRoleName]);
+                        setRolePermissions({
+                          ...rolePermissions,
+                          [newRoleName]: [],
+                        });
+                        setSelectedRole(newRoleName);
+                        setShowCreateRole(false);
+                        setNewRoleName('');
+                        alert('Role created successfully! You can now assign permissions.');
+                      } catch (err: any) {
+                        alert('Failed to create role: ' + err.message);
+                      } finally {
+                        setCreatingRole(false);
+                      }
+                    }}
+                    disabled={creatingRole || !newRoleName.trim()}
+                    className="px-4 py-2 text-sm font-medium text-white bg-purple-600 rounded-lg hover:bg-purple-700 disabled:opacity-50"
+                  >
+                    {creatingRole ? 'Creating...' : 'Create Role'}
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
       </AdminLayout>
     </RouteGuard>
   );

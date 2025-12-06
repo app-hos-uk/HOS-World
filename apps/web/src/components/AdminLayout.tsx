@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 
@@ -90,7 +90,6 @@ const menuItems: MenuItem[] = [
       { title: 'Domain Management', href: '/admin/domains', icon: '🌐' },
       { title: 'Fulfillment Centers', href: '/admin/fulfillment-centers', icon: '🏭' },
       { title: 'Logistics Partners', href: '/admin/logistics', icon: '🚛' },
-      { title: 'Database Migration', href: '/admin/migration-features', icon: '🔄' },
     ],
   },
   {
@@ -110,16 +109,6 @@ export function AdminLayout({ children }: AdminLayoutProps) {
   const [expandedMenus, setExpandedMenus] = useState<Set<string>>(new Set());
   const pathname = usePathname();
 
-  const toggleMenu = (title: string) => {
-    const newExpanded = new Set(expandedMenus);
-    if (newExpanded.has(title)) {
-      newExpanded.delete(title);
-    } else {
-      newExpanded.add(title);
-    }
-    setExpandedMenus(newExpanded);
-  };
-
   const isActive = (href: string) => {
     return pathname === href || pathname?.startsWith(href + '/');
   };
@@ -129,6 +118,28 @@ export function AdminLayout({ children }: AdminLayoutProps) {
       return item.children.some((child) => child.href && isActive(child.href));
     }
     return false;
+  };
+
+  // Auto-expand menus when their children are active
+  useEffect(() => {
+    const activeMenus = new Set<string>();
+    menuItems.forEach((item) => {
+      if (item.children && isParentActive(item)) {
+        activeMenus.add(item.title);
+      }
+    });
+    setExpandedMenus(activeMenus);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pathname]);
+
+  const toggleMenu = (title: string) => {
+    const newExpanded = new Set(expandedMenus);
+    if (newExpanded.has(title)) {
+      newExpanded.delete(title);
+    } else {
+      newExpanded.add(title);
+    }
+    setExpandedMenus(newExpanded);
   };
 
   return (

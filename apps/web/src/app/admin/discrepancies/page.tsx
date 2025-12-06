@@ -20,11 +20,19 @@ export default function AdminDiscrepanciesPage() {
     try {
       setLoading(true);
       const response = await apiClient.getDiscrepancies();
-      if (response?.data) {
-        setDiscrepancies(response.data);
+      let discrepancyData: any[] = [];
+      if (response && 'data' in response) {
+        const responseData = response.data as any;
+        if (Array.isArray(responseData)) {
+          discrepancyData = responseData;
+        } else if (responseData && typeof responseData === 'object' && 'data' in responseData && Array.isArray(responseData.data)) {
+          discrepancyData = responseData.data;
+        }
       }
+      setDiscrepancies(discrepancyData);
     } catch (err: any) {
       toast.error(err.message || 'Failed to load discrepancies');
+      setDiscrepancies([]);
     } finally {
       setLoading(false);
     }

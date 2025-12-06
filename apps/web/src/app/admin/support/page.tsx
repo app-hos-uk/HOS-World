@@ -22,11 +22,19 @@ export default function AdminSupportPage() {
       setLoading(true);
       const statusFilter = filter === 'all' ? undefined : filter === 'open' ? 'OPEN' : filter === 'resolved' ? 'RESOLVED' : 'ASSIGNED';
       const response = await apiClient.getSupportTickets({ status: statusFilter });
-      if (response?.data) {
-        setTickets(response.data);
+      let ticketData: any[] = [];
+      if (response && 'data' in response) {
+        const responseData = response.data as any;
+        if (Array.isArray(responseData)) {
+          ticketData = responseData;
+        } else if (responseData && typeof responseData === 'object' && 'data' in responseData && Array.isArray(responseData.data)) {
+          ticketData = responseData.data;
+        }
       }
+      setTickets(ticketData);
     } catch (err: any) {
       toast.error(err.message || 'Failed to load tickets');
+      setTickets([]);
     } finally {
       setLoading(false);
     }
