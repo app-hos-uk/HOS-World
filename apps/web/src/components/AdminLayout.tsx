@@ -49,6 +49,29 @@ const menuItems: MenuItem[] = [
     ],
   },
   {
+    title: 'Finance',
+    icon: '💰',
+    children: [
+      { title: 'Transactions', href: '/admin/finance', icon: '💳' },
+    ],
+  },
+  {
+    title: 'Support',
+    icon: '🎧',
+    children: [
+      { title: 'Tickets', href: '/admin/support', icon: '🎫' },
+    ],
+  },
+  {
+    title: 'Monitoring',
+    icon: '📊',
+    children: [
+      { title: 'Activity Logs', href: '/admin/activity', icon: '📝' },
+      { title: 'Discrepancies', href: '/admin/discrepancies', icon: '⚠️' },
+      { title: 'WhatsApp', href: '/admin/whatsapp', icon: '💬' },
+    ],
+  },
+  {
     title: 'Products',
     icon: '🛍️',
     children: [
