@@ -793,6 +793,48 @@ export class ApiClient {
     });
   }
 
+  async validateInvitation(token: string): Promise<ApiResponse<{ email: string; sellerType: string; expiresAt: string }>> {
+    return this.request<ApiResponse<{ email: string; sellerType: string; expiresAt: string }>>(`/auth/invitation?token=${token}`, {
+      method: 'GET',
+    });
+  }
+
+  async acceptInvitation(data: {
+    token: string;
+    email: string;
+    firstName: string;
+    lastName: string;
+    password: string;
+    storeName: string;
+    country: string;
+    whatsappNumber?: string;
+    preferredCommunicationMethod: 'EMAIL' | 'SMS' | 'WHATSAPP' | 'PHONE';
+    gdprConsent: boolean;
+    dataProcessingConsent?: Record<string, boolean>;
+    logisticsOption?: 'HOS_LOGISTICS' | 'SELLER_OWN' | 'HOS_PARTNER';
+  }): Promise<ApiResponse<{ user: any; token: string; refreshToken: string }>> {
+    return this.request<ApiResponse<{ user: any; token: string; refreshToken: string }>>('/auth/accept-invitation', {
+      method: 'POST',
+      body: JSON.stringify({
+        token: data.token,
+        registerDto: {
+          email: data.email,
+          firstName: data.firstName,
+          lastName: data.lastName,
+          password: data.password,
+          role: 'seller', // Will be determined by invitation sellerType
+          storeName: data.storeName,
+          country: data.country,
+          whatsappNumber: data.whatsappNumber,
+          preferredCommunicationMethod: data.preferredCommunicationMethod,
+          gdprConsent: data.gdprConsent,
+          dataProcessingConsent: data.dataProcessingConsent,
+          logisticsOption: data.logisticsOption,
+        },
+      }),
+    });
+  }
+
   // Currency & Exchange Rates
   async getCurrencyRates(): Promise<ApiResponse<Record<string, number>>> {
     return this.request<ApiResponse<Record<string, number>>>('/currency/rates', {
