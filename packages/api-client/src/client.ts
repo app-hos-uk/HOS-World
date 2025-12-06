@@ -1058,7 +1058,7 @@ export class ApiClient {
   // Logistics Partners
   async createLogisticsPartner(data: {
     name: string;
-    type: string;
+    type?: string;
     contactEmail?: string;
     contactPhone?: string;
     website?: string;
@@ -1071,9 +1071,11 @@ export class ApiClient {
     if (data.type) payload.type = data.type;
     if (data.website) payload.website = data.website;
     if (data.contactEmail || data.contactPhone) {
-      payload.contactInfo = {};
-      if (data.contactEmail) payload.contactInfo.email = data.contactEmail;
-      if (data.contactPhone) payload.contactInfo.phone = data.contactPhone;
+      payload.contactInfo = {
+        name: data.name,
+        email: data.contactEmail || '',
+        phone: data.contactPhone,
+      };
     }
     if (data.isActive !== undefined) payload.isActive = data.isActive;
     return this.request<ApiResponse<any>>('/logistics/partners', {
