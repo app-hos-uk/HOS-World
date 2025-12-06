@@ -30,8 +30,18 @@ export class AdminProductsController {
       price: number;
       currency?: string;
       stock?: number;
-      category?: string;
-      tags?: string[];
+      category?: string; // Keep for backward compatibility
+      tags?: string[]; // Keep for backward compatibility
+      categoryId?: string; // New: taxonomy category ID
+      tagIds?: string[]; // New: taxonomy tag IDs
+      attributes?: Array<{
+        attributeId: string;
+        attributeValueId?: string;
+        textValue?: string;
+        numberValue?: number;
+        booleanValue?: boolean;
+        dateValue?: string;
+      }>; // New: product attributes
       sellerId?: string | null;
       isPlatformOwned?: boolean;
       status?: 'DRAFT' | 'PUBLISHED';
@@ -60,8 +70,18 @@ export class AdminProductsController {
       description?: string;
       price?: number;
       stock?: number;
-      category?: string;
-      tags?: string[];
+      category?: string; // Keep for backward compatibility
+      tags?: string[]; // Keep for backward compatibility
+      categoryId?: string; // New: taxonomy category ID
+      tagIds?: string[]; // New: taxonomy tag IDs
+      attributes?: Array<{
+        attributeId: string;
+        attributeValueId?: string;
+        textValue?: string;
+        numberValue?: number;
+        booleanValue?: boolean;
+        dateValue?: string;
+      }>; // New: product attributes
       sellerId?: string | null;
       status?: 'DRAFT' | 'PUBLISHED';
       sku?: string;
