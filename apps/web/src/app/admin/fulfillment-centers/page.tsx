@@ -68,7 +68,6 @@ export default function AdminFulfillmentCentersPage() {
         contactEmail: formData.contactEmail || undefined,
         contactPhone: formData.contactPhone || undefined,
         active: formData.active,
-        isActive: formData.active,
       });
       if (response?.data) {
         toast.success('Fulfillment center created successfully!');
