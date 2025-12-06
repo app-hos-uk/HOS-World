@@ -46,11 +46,8 @@ export class MigrationFeaturesController {
         };
       }
 
-      // Split SQL into statements (handle both ; and newlines)
-      const statements = sqlContent
-        .split(/;\s*\n/)
-        .map((s) => s.trim())
-        .filter((s) => s.length > 0 && !s.startsWith('--'));
+      // Split SQL into statements, handling DO blocks properly
+      const statements = this.splitSQLStatements(sqlContent);
 
       const results: any[] = [];
       let successful = 0;
@@ -180,6 +177,77 @@ export class MigrationFeaturesController {
     }
 
     return checks;
+  }
+
+  private splitSQLStatements(sql: string): string[] {
+    const statements: string[] = [];
+    let currentStatement = '';
+    let inDoBlock = false;
+    let dollarQuoteTag = '';
+    const lines = sql.split('\n');
+
+    for (let i = 0; i < lines.length; i++) {
+      const line = lines[i].trim();
+      
+      // Skip empty lines and comments
+      if (!line || line.startsWith('--')) {
+        continue;
+      }
+
+      // Check for DO $$ block start
+      if (line.match(/^DO\s+\$\$/)) {
+        inDoBlock = true;
+        dollarQuoteTag = '$$';
+        currentStatement = line + '\n';
+        continue;
+      }
+
+      // Check for DO $tag$ block start (with custom tag)
+      const doMatch = line.match(/^DO\s+\$([^$]+)\$/);
+      if (doMatch) {
+        inDoBlock = true;
+        dollarQuoteTag = `$${doMatch[1]}$`;
+        currentStatement = line + '\n';
+        continue;
+      }
+
+      // If in DO block, check for END
+      if (inDoBlock) {
+        currentStatement += line + '\n';
+        
+        // Check for END with matching dollar quote
+        if (line.match(new RegExp(`^END\\s+\\${dollarQuoteTag.replace(/\$/g, '\\$')};?$`))) {
+          // Found END, close the block
+          statements.push(currentStatement.trim());
+          currentStatement = '';
+          inDoBlock = false;
+          dollarQuoteTag = '';
+        }
+        continue;
+      }
+
+      // Regular statement handling
+      currentStatement += line + '\n';
+
+      // Check if line ends with semicolon (end of statement)
+      if (line.endsWith(';')) {
+        const trimmed = currentStatement.trim();
+        if (trimmed.length > 0) {
+          statements.push(trimmed);
+        }
+        currentStatement = '';
+      }
+    }
+
+    // Add any remaining statement
+    if (currentStatement.trim().length > 0) {
+      statements.push(currentStatement.trim());
+    }
+
+    // Filter out empty statements and comments
+    return statements
+      .map((s) => s.trim())
+      .filter((s) => s.length > 0 && !s.startsWith('--'));
   }
 }
 
