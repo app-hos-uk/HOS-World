@@ -5,6 +5,9 @@ import { RouteGuard } from '@/components/RouteGuard';
 import { AdminLayout } from '@/components/AdminLayout';
 import { apiClient } from '@/lib/api';
 import { useToast } from '@/hooks/useToast';
+import { CategorySelector } from '@/components/taxonomy/CategorySelector';
+import { TagSelector } from '@/components/taxonomy/TagSelector';
+import { AttributeEditor } from '@/components/taxonomy/AttributeEditor';
 
 export default function AdminProductsPage() {
   const toast = useToast();
@@ -21,6 +24,9 @@ export default function AdminProductsPage() {
     stock: '0',
     isPlatformOwned: true,
     sellerId: '',
+    categoryId: '',
+    tagIds: [] as string[],
+    attributes: [] as any[],
   });
 
   useEffect(() => {
@@ -71,10 +77,23 @@ export default function AdminProductsPage() {
         isPlatformOwned: formData.isPlatformOwned,
         sellerId: formData.isPlatformOwned ? null : formData.sellerId || null,
         status: 'DRAFT',
+        categoryId: formData.categoryId || undefined,
+        tagIds: formData.tagIds.length > 0 ? formData.tagIds : undefined,
+        attributes: formData.attributes.length > 0 ? formData.attributes : undefined,
       });
       toast.success('Product created successfully');
       setShowCreateForm(false);
-      setFormData({ name: '', description: '', price: '', stock: '0', isPlatformOwned: true, sellerId: '' });
+      setFormData({ 
+        name: '', 
+        description: '', 
+        price: '', 
+        stock: '0', 
+        isPlatformOwned: true, 
+        sellerId: '',
+        categoryId: '',
+        tagIds: [],
+        attributes: [],
+      });
       fetchProducts();
     } catch (err: any) {
       toast.error(err.message || 'Failed to create product');
@@ -204,6 +223,36 @@ export default function AdminProductsPage() {
                     </select>
                   </div>
                 )}
+                
+                <div className="border-t border-gray-200 pt-4 mt-4">
+                  <h3 className="text-sm font-semibold text-gray-700 mb-4">Taxonomy</h3>
+                  
+                  <div className="space-y-4">
+                    <CategorySelector
+                      value={formData.categoryId}
+                      onChange={(categoryId) => setFormData({ ...formData, categoryId: categoryId || '' })}
+                      label="Category"
+                      placeholder="Select a category"
+                    />
+                    
+                    <TagSelector
+                      value={formData.tagIds}
+                      onChange={(tagIds) => setFormData({ ...formData, tagIds })}
+                      label="Tags"
+                      placeholder="Search and select tags..."
+                    />
+                    
+                    {formData.categoryId && (
+                      <AttributeEditor
+                        categoryId={formData.categoryId}
+                        value={formData.attributes}
+                        onChange={(attributes) => setFormData({ ...formData, attributes })}
+                        label="Product Attributes"
+                      />
+                    )}
+                  </div>
+                </div>
+                
                 <button
                   type="submit"
                   className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700"
