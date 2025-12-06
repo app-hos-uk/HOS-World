@@ -85,8 +85,6 @@ const mockUsers = [
   },
 ];
 
-import { slugify } from '@hos-marketplace/utils';
-
 async function seedAllRoles() {
   const saltRounds = 10;
   const defaultPassword = 'Test123!';
