@@ -152,83 +152,77 @@ export class MigrationController {
       this.logger.log('🔄 Running SQL migration directly (embedded SQL)...');
 
       // Embedded SQL as fallback - this ensures it always works
-      const sql = `
--- Add new columns to users table
-ALTER TABLE "users" 
-ADD COLUMN IF NOT EXISTS "country" TEXT,
-ADD COLUMN IF NOT EXISTS "whatsappNumber" TEXT,
-ADD COLUMN IF NOT EXISTS "preferredCommunicationMethod" TEXT,
-ADD COLUMN IF NOT EXISTS "currencyPreference" TEXT DEFAULT 'GBP',
-ADD COLUMN IF NOT EXISTS "ipAddress" TEXT,
-ADD COLUMN IF NOT EXISTS "gdprConsent" BOOLEAN DEFAULT false,
-ADD COLUMN IF NOT EXISTS "gdprConsentDate" TIMESTAMP,
-ADD COLUMN IF NOT EXISTS "dataProcessingConsent" JSONB,
-ADD COLUMN IF NOT EXISTS "countryDetectedAt" TIMESTAMP;
+      // Execute statements one by one to ensure proper execution
+      const sqlStatements = [
+        // Add columns to users table - execute as separate statements
+        `ALTER TABLE "users" ADD COLUMN IF NOT EXISTS "country" TEXT`,
+        `ALTER TABLE "users" ADD COLUMN IF NOT EXISTS "whatsappNumber" TEXT`,
+        `ALTER TABLE "users" ADD COLUMN IF NOT EXISTS "preferredCommunicationMethod" TEXT`,
+        `ALTER TABLE "users" ADD COLUMN IF NOT EXISTS "currencyPreference" TEXT DEFAULT 'GBP'`,
+        `ALTER TABLE "users" ADD COLUMN IF NOT EXISTS "ipAddress" TEXT`,
+        `ALTER TABLE "users" ADD COLUMN IF NOT EXISTS "gdprConsent" BOOLEAN DEFAULT false`,
+        `ALTER TABLE "users" ADD COLUMN IF NOT EXISTS "gdprConsentDate" TIMESTAMP`,
+        `ALTER TABLE "users" ADD COLUMN IF NOT EXISTS "dataProcessingConsent" JSONB`,
+        `ALTER TABLE "users" ADD COLUMN IF NOT EXISTS "countryDetectedAt" TIMESTAMP`,
+        
+        // Add columns to customers table
+        `ALTER TABLE "customers" ADD COLUMN IF NOT EXISTS "country" TEXT`,
+        `ALTER TABLE "customers" ADD COLUMN IF NOT EXISTS "currencyPreference" TEXT DEFAULT 'GBP'`,
+        
+        // Create CurrencyExchangeRate table
+        `CREATE TABLE IF NOT EXISTS "currency_exchange_rates" (
+          "id" TEXT NOT NULL PRIMARY KEY,
+          "baseCurrency" TEXT NOT NULL DEFAULT 'GBP',
+          "targetCurrency" TEXT NOT NULL,
+          "rate" DECIMAL(10, 6) NOT NULL,
+          "cachedAt" TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+          "expiresAt" TIMESTAMP NOT NULL,
+          CONSTRAINT "currency_exchange_rates_baseCurrency_targetCurrency_key" UNIQUE ("baseCurrency", "targetCurrency")
+        )`,
+        
+        // Create GDPRConsentLog table
+        `CREATE TABLE IF NOT EXISTS "gdpr_consent_logs" (
+          "id" TEXT NOT NULL PRIMARY KEY,
+          "userId" TEXT NOT NULL,
+          "consentType" TEXT NOT NULL,
+          "granted" BOOLEAN NOT NULL,
+          "grantedAt" TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+          "revokedAt" TIMESTAMP,
+          "ipAddress" TEXT,
+          "userAgent" TEXT,
+          CONSTRAINT "gdpr_consent_logs_userId_fkey" FOREIGN KEY ("userId") REFERENCES "users"("id") ON DELETE CASCADE ON UPDATE CASCADE
+        )`,
+        
+        // Create indexes (only after tables exist)
+        `CREATE INDEX IF NOT EXISTS "currency_exchange_rates_baseCurrency_idx" ON "currency_exchange_rates"("baseCurrency")`,
+        `CREATE INDEX IF NOT EXISTS "currency_exchange_rates_targetCurrency_idx" ON "currency_exchange_rates"("targetCurrency")`,
+        `CREATE INDEX IF NOT EXISTS "currency_exchange_rates_expiresAt_idx" ON "currency_exchange_rates"("expiresAt")`,
+        `CREATE INDEX IF NOT EXISTS "gdpr_consent_logs_userId_idx" ON "gdpr_consent_logs"("userId")`,
+        `CREATE INDEX IF NOT EXISTS "gdpr_consent_logs_consentType_idx" ON "gdpr_consent_logs"("consentType")`,
+        `CREATE INDEX IF NOT EXISTS "users_country_idx" ON "users"("country")`,
+        `CREATE INDEX IF NOT EXISTS "users_currencyPreference_idx" ON "users"("currencyPreference")`,
+        
+        // Update default currency
+        `ALTER TABLE "products" ALTER COLUMN "currency" SET DEFAULT 'GBP'`,
+        `ALTER TABLE "carts" ALTER COLUMN "currency" SET DEFAULT 'GBP'`,
+        `ALTER TABLE "orders" ALTER COLUMN "currency" SET DEFAULT 'GBP'`,
+        `ALTER TABLE "payments" ALTER COLUMN "currency" SET DEFAULT 'GBP'`,
+        
+        // Backfill currency preference
+        `UPDATE "users" SET "currencyPreference" = 'GBP' WHERE "currencyPreference" IS NULL`,
+        
+        // Initialize default exchange rates
+        `INSERT INTO "currency_exchange_rates" ("id", "baseCurrency", "targetCurrency", "rate", "cachedAt", "expiresAt")
+         VALUES 
+           (gen_random_uuid()::text, 'GBP', 'GBP', 1.0, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP + INTERVAL '1 hour'),
+           (gen_random_uuid()::text, 'GBP', 'USD', 1.27, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP + INTERVAL '1 hour'),
+           (gen_random_uuid()::text, 'GBP', 'EUR', 1.17, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP + INTERVAL '1 hour'),
+           (gen_random_uuid()::text, 'GBP', 'AED', 4.67, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP + INTERVAL '1 hour')
+         ON CONFLICT ("baseCurrency", "targetCurrency") DO NOTHING`,
+      ];
 
--- Add new columns to customers table
-ALTER TABLE "customers"
-ADD COLUMN IF NOT EXISTS "country" TEXT,
-ADD COLUMN IF NOT EXISTS "currencyPreference" TEXT DEFAULT 'GBP';
-
--- Create CurrencyExchangeRate table
-CREATE TABLE IF NOT EXISTS "currency_exchange_rates" (
-    "id" TEXT NOT NULL PRIMARY KEY,
-    "baseCurrency" TEXT NOT NULL DEFAULT 'GBP',
-    "targetCurrency" TEXT NOT NULL,
-    "rate" DECIMAL(10, 6) NOT NULL,
-    "cachedAt" TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "expiresAt" TIMESTAMP NOT NULL,
-    CONSTRAINT "currency_exchange_rates_baseCurrency_targetCurrency_key" UNIQUE ("baseCurrency", "targetCurrency")
-);
-
--- Create GDPRConsentLog table
-CREATE TABLE IF NOT EXISTS "gdpr_consent_logs" (
-    "id" TEXT NOT NULL PRIMARY KEY,
-    "userId" TEXT NOT NULL,
-    "consentType" TEXT NOT NULL,
-    "granted" BOOLEAN NOT NULL,
-    "grantedAt" TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "revokedAt" TIMESTAMP,
-    "ipAddress" TEXT,
-    "userAgent" TEXT,
-    CONSTRAINT "gdpr_consent_logs_userId_fkey" FOREIGN KEY ("userId") REFERENCES "users"("id") ON DELETE CASCADE ON UPDATE CASCADE
-);
-
--- Create indexes
-CREATE INDEX IF NOT EXISTS "currency_exchange_rates_baseCurrency_idx" ON "currency_exchange_rates"("baseCurrency");
-CREATE INDEX IF NOT EXISTS "currency_exchange_rates_targetCurrency_idx" ON "currency_exchange_rates"("targetCurrency");
-CREATE INDEX IF NOT EXISTS "currency_exchange_rates_expiresAt_idx" ON "currency_exchange_rates"("expiresAt");
-CREATE INDEX IF NOT EXISTS "gdpr_consent_logs_userId_idx" ON "gdpr_consent_logs"("userId");
-CREATE INDEX IF NOT EXISTS "gdpr_consent_logs_consentType_idx" ON "gdpr_consent_logs"("consentType");
-CREATE INDEX IF NOT EXISTS "users_country_idx" ON "users"("country");
-CREATE INDEX IF NOT EXISTS "users_currencyPreference_idx" ON "users"("currencyPreference");
-
--- Update default currency
-ALTER TABLE "products" ALTER COLUMN "currency" SET DEFAULT 'GBP';
-ALTER TABLE "carts" ALTER COLUMN "currency" SET DEFAULT 'GBP';
-ALTER TABLE "orders" ALTER COLUMN "currency" SET DEFAULT 'GBP';
-ALTER TABLE "payments" ALTER COLUMN "currency" SET DEFAULT 'GBP';
-
--- Backfill currency preference
-UPDATE "users" 
-SET "currencyPreference" = 'GBP' 
-WHERE "currencyPreference" IS NULL;
-
--- Initialize default exchange rates
-INSERT INTO "currency_exchange_rates" ("id", "baseCurrency", "targetCurrency", "rate", "cachedAt", "expiresAt")
-VALUES 
-    (gen_random_uuid()::text, 'GBP', 'GBP', 1.0, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP + INTERVAL '1 hour'),
-    (gen_random_uuid()::text, 'GBP', 'USD', 1.27, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP + INTERVAL '1 hour'),
-    (gen_random_uuid()::text, 'GBP', 'EUR', 1.17, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP + INTERVAL '1 hour'),
-    (gen_random_uuid()::text, 'GBP', 'AED', 4.67, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP + INTERVAL '1 hour')
-ON CONFLICT ("baseCurrency", "targetCurrency") DO NOTHING;
-      `.trim();
-
-      // Split SQL into individual statements
-      const statements = sql
-        .split(';')
-        .map((s) => s.trim())
-        .filter((s) => s.length > 0 && !s.startsWith('--'));
+      // Use pre-defined statements array (already properly split)
+      const statements = sqlStatements.map(s => s.trim()).filter(s => s.length > 0);
 
       const results = [];
       let successCount = 0;
