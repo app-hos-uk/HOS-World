@@ -17,7 +17,6 @@ COPY services/api/package.json ./services/api/
 COPY packages/shared-types/package.json ./packages/shared-types/
 COPY packages/api-client/package.json ./packages/api-client/
 COPY packages/theme-system/package.json ./packages/theme-system/
-COPY packages/ui-components/package.json ./packages/ui-components/
 COPY packages/utils/package.json ./packages/utils/
 COPY packages/cms-client/package.json ./packages/cms-client/
 
