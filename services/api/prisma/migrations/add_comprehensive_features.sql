@@ -311,13 +311,13 @@ CREATE INDEX IF NOT EXISTS "WhatsAppTemplate_isActive_idx" ON "WhatsAppTemplate"
 
 -- 11. Update Product table to add isPlatformOwned column
 DO $$ BEGIN
-    ALTER TABLE "Product" ADD COLUMN "isPlatformOwned" BOOLEAN NOT NULL DEFAULT false;
+    ALTER TABLE "products" ADD COLUMN "isPlatformOwned" BOOLEAN NOT NULL DEFAULT false;
 EXCEPTION
     WHEN duplicate_column THEN null;
 END $$;
 
 DO $$ BEGIN
-    ALTER TABLE "Product" ALTER COLUMN "sellerId" DROP NOT NULL;
+    ALTER TABLE "products" ALTER COLUMN "sellerId" DROP NOT NULL;
 EXCEPTION
     WHEN OTHERS THEN null;
 END $$;
