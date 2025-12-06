@@ -36,13 +36,18 @@ export default function MigrationFeaturesPage() {
       console.log('Migration response:', response);
 
       if (response && typeof response === 'object') {
+        // ApiResponse structure: { data: {...}, message: string }
+        if ('data' in response && response.data) {
+          const data = response.data;
+          // Check if data has success/error properties (MigrationResult)
+          if (typeof data === 'object' && ('success' in data || 'error' in data)) {
+            setResult(data as MigrationResult);
+            return;
+          }
+        }
+        // Fallback: check if response itself has success/error (direct MigrationResult)
         if ('success' in response || 'error' in response) {
-          // Direct response from backend
-          setResult(response as MigrationResult);
-          return;
-        } else if ('data' in response && response.data) {
-          // Wrapped in ApiResponse
-          setResult(response.data as MigrationResult);
+          setResult(response as unknown as MigrationResult);
           return;
         }
       }
