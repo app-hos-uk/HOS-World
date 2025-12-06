@@ -77,7 +77,9 @@ const menuItems: MenuItem[] = [
     children: [
       { title: 'All Products', href: '/admin/products', icon: '📦' },
       { title: 'Product Reviews', href: '/admin/reviews', icon: '⭐' },
-      { title: 'Categories & Tags', href: '/admin/categories', icon: '🏷️' },
+      { title: 'Categories', href: '/admin/categories', icon: '📁' },
+      { title: 'Attributes', href: '/admin/attributes', icon: '🔧' },
+      { title: 'Tags', href: '/admin/tags', icon: '🏷️' },
     ],
   },
   {
