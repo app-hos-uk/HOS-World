@@ -4,58 +4,80 @@ import { useState } from 'react';
 import { RouteGuard } from '@/components/RouteGuard';
 import { AdminLayout } from '@/components/AdminLayout';
 import { apiClient } from '@/lib/api';
-import { useToast } from '@/hooks/useToast';
+
+interface MigrationResult {
+  success: boolean;
+  message: string;
+  summary?: {
+    totalStatements: number;
+    successful: number;
+    errors: number;
+  };
+  verification?: {
+    currencyPreferenceColumnExists?: boolean;
+    currencyExchangeRatesTableExists?: boolean;
+    allColumns?: string[];
+  };
+  error?: string;
+  details?: Array<{
+    statement: string;
+    status: string;
+    error?: string;
+  }>;
+}
 
 export default function AdminMigrationPage() {
-  const toast = useToast();
   const [running, setRunning] = useState(false);
+  const [result, setResult] = useState<MigrationResult | null>(null);
   const [verifying, setVerifying] = useState(false);
-  const [migrationResult, setMigrationResult] = useState<any>(null);
-  const [verificationResult, setVerificationResult] = useState<any>(null);
+  const [verification, setVerification] = useState<any>(null);
 
-  const handleRunMigration = async () => {
-    if (!confirm('Are you sure you want to run the global features migration? This will modify the database schema.')) {
+  const runMigration = async () => {
+    if (!confirm('⚠️ This will run database migration SQL. Continue?')) {
       return;
     }
 
     setRunning(true);
-    setMigrationResult(null);
+    setResult(null);
 
     try {
-      const response = await apiClient.runGlobalFeaturesMigration();
-      const result = response.data || response;
-      setMigrationResult(result);
-      
-      if (result.success) {
-        toast.success('Migration completed successfully!');
+      const response = await apiClient.runSQLDirectMigration();
+      if (response?.data) {
+        setResult(response.data);
       } else {
-        toast.error(result.message || 'Migration failed');
+        setResult({
+          success: false,
+          message: 'No response data',
+          error: 'Unknown error',
+        });
       }
     } catch (error: any) {
-      toast.error(error.message || 'Failed to run migration');
-      setMigrationResult({ success: false, error: error.message });
+      console.error('Migration error:', error);
+      setResult({
+        success: false,
+        message: 'Migration failed',
+        error: error.message || 'Unknown error',
+      });
     } finally {
       setRunning(false);
     }
   };
 
-  const handleVerify = async () => {
+  const verifyMigration = async () => {
     setVerifying(true);
-    setVerificationResult(null);
+    setVerification(null);
 
     try {
       const response = await apiClient.verifyMigration();
-      const result = response.data || response;
-      setVerificationResult(result);
-      
-      if (result.success) {
-        toast.success('Verification completed');
-      } else {
-        toast.error('Verification failed');
+      if (response?.data) {
+        setVerification(response.data);
       }
     } catch (error: any) {
-      toast.error(error.message || 'Failed to verify migration');
-      setVerificationResult({ success: false, error: error.message });
+      console.error('Verification error:', error);
+      setVerification({
+        success: false,
+        error: error.message || 'Unknown error',
+      });
     } finally {
       setVerifying(false);
     }
@@ -64,128 +86,189 @@ export default function AdminMigrationPage() {
   return (
     <RouteGuard allowedRoles={['ADMIN']} showAccessDenied={true}>
       <AdminLayout>
-        <div className="p-6">
-          <h1 className="text-3xl font-bold text-gray-900 mb-6">Database Migration</h1>
-
-          <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-6">
-            <h2 className="text-lg font-semibold text-yellow-800 mb-2">⚠️ Important</h2>
-            <p className="text-yellow-700">
-              This will run the global features migration, which adds new columns and tables to the database.
-              Make sure you have a database backup before proceeding.
+        <div className="max-w-4xl mx-auto">
+          <div className="mb-6">
+            <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold">Database Migration</h1>
+            <p className="text-gray-600 mt-2">
+              Run SQL migration to add missing database columns and tables
             </p>
           </div>
 
-          <div className="space-y-6">
-            {/* Run Migration Section */}
-            <div className="bg-white border rounded-lg p-6">
-              <h2 className="text-xl font-semibold mb-4">Run Global Features Migration</h2>
-              <p className="text-gray-600 mb-4">
-                This migration will:
-              </p>
-              <ul className="list-disc list-inside text-gray-600 mb-4 space-y-1">
-                <li>Add new columns to users table (country, WhatsApp, GDPR fields, etc.)</li>
-                <li>Add new columns to customers table</li>
-                <li>Create currency_exchange_rates table</li>
-                <li>Create gdpr_consent_logs table</li>
-                <li>Update currency defaults to GBP</li>
-                <li>Create Prisma migrations table and baseline</li>
-              </ul>
-              
-              <button
-                onClick={handleRunMigration}
-                disabled={running}
-                className="px-6 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700 disabled:bg-gray-400 disabled:cursor-not-allowed font-medium transition-colors"
-              >
-                {running ? 'Running Migration...' : 'Run Migration'}
-              </button>
+          {/* Migration Section */}
+          <div className="bg-white rounded-lg shadow-md p-6 mb-6">
+            <h2 className="text-xl font-semibold mb-4">Run Migration</h2>
+            <p className="text-gray-600 mb-4">
+              This will execute SQL to add:
+            </p>
+            <ul className="list-disc list-inside text-gray-600 mb-6 space-y-1">
+              <li><code className="bg-gray-100 px-2 py-1 rounded">currencyPreference</code> column to users table</li>
+              <li><code className="bg-gray-100 px-2 py-1 rounded">country</code> column to users table</li>
+              <li><code className="bg-gray-100 px-2 py-1 rounded">currency_exchange_rates</code> table</li>
+              <li><code className="bg-gray-100 px-2 py-1 rounded">gdpr_consent_logs</code> table</li>
+              <li>And other required columns</li>
+            </ul>
 
-              {migrationResult && (
-                <div className={`mt-4 p-4 rounded-lg ${migrationResult.success ? 'bg-green-50 border border-green-200' : 'bg-red-50 border border-red-200'}`}>
-                  <h3 className={`font-semibold mb-2 ${migrationResult.success ? 'text-green-800' : 'text-red-800'}`}>
-                    {migrationResult.success ? '✅ Migration Successful' : '❌ Migration Failed'}
-                  </h3>
-                  {migrationResult.summary && (
-                    <div className="text-sm text-gray-700 mb-2">
-                      <p>Total Statements: {migrationResult.summary.totalStatements}</p>
-                      <p>Successful: {migrationResult.summary.successful}</p>
-                      <p>Errors: {migrationResult.summary.errors}</p>
-                    </div>
-                  )}
-                  {migrationResult.verification && (
-                    <div className="text-sm text-gray-700">
-                      <p>Country Column Exists: {migrationResult.verification.countryColumnExists ? '✅' : '❌'}</p>
-                    </div>
-                  )}
-                  {migrationResult.error && (
-                    <p className="text-sm text-red-700 mt-2">{migrationResult.error}</p>
-                  )}
-                  <pre className="mt-2 text-xs bg-gray-100 p-2 rounded overflow-auto max-h-40">
-                    {JSON.stringify(migrationResult, null, 2)}
-                  </pre>
-                </div>
+            <button
+              onClick={runMigration}
+              disabled={running}
+              className="bg-purple-600 hover:bg-purple-700 text-white font-semibold py-3 px-6 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+            >
+              {running ? (
+                <>
+                  <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
+                  Running Migration...
+                </>
+              ) : (
+                <>
+                  <span>🚀</span>
+                  Run SQL Migration
+                </>
               )}
-            </div>
+            </button>
 
-            {/* Verify Migration Section */}
-            <div className="bg-white border rounded-lg p-6">
-              <h2 className="text-xl font-semibold mb-4">Verify Migration</h2>
-              <p className="text-gray-600 mb-4">
-                Check if the migration was applied successfully.
-              </p>
-              
-              <button
-                onClick={handleVerify}
-                disabled={verifying}
-                className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed font-medium transition-colors"
-              >
-                {verifying ? 'Verifying...' : 'Verify Migration'}
-              </button>
+            {result && (
+              <div className={`mt-6 p-4 rounded-lg ${
+                result.success 
+                  ? 'bg-green-50 border border-green-200' 
+                  : 'bg-red-50 border border-red-200'
+              }`}>
+                <h3 className={`font-semibold mb-2 ${
+                  result.success ? 'text-green-800' : 'text-red-800'
+                }`}>
+                  {result.success ? '✅ Migration Completed' : '❌ Migration Failed'}
+                </h3>
+                
+                {result.success && result.summary && (
+                  <div className="text-sm text-green-700 space-y-1">
+                    <p>Total Statements: {result.summary.totalStatements}</p>
+                    <p>✅ Successful: {result.summary.successful}</p>
+                    {result.summary.errors > 0 && (
+                      <p>⚠️ Errors: {result.summary.errors} (may be expected for idempotent operations)</p>
+                    )}
+                  </div>
+                )}
 
-              {verificationResult && (
-                <div className={`mt-4 p-4 rounded-lg ${verificationResult.success ? 'bg-green-50 border border-green-200' : 'bg-red-50 border border-red-200'}`}>
-                  <h3 className={`font-semibold mb-2 ${verificationResult.success ? 'text-green-800' : 'text-red-800'}`}>
-                    {verificationResult.success ? '✅ Verification Results' : '❌ Verification Failed'}
-                  </h3>
-                  {verificationResult.usersColumns && (
-                    <div className="text-sm text-gray-700 mb-2">
-                      <p className="font-medium">Users Columns Found:</p>
-                      <ul className="list-disc list-inside ml-4">
-                        {verificationResult.usersColumns.map((col: string) => (
-                          <li key={col}>{col}</li>
-                        ))}
-                      </ul>
-                    </div>
-                  )}
-                  {verificationResult.newTables && (
-                    <div className="text-sm text-gray-700 mb-2">
-                      <p className="font-medium">New Tables Found:</p>
-                      <ul className="list-disc list-inside ml-4">
-                        {verificationResult.newTables.map((table: string) => (
-                          <li key={table}>{table}</li>
-                        ))}
-                      </ul>
-                    </div>
-                  )}
-                  {verificationResult.migrationsTableExists !== undefined && (
-                    <div className="text-sm text-gray-700 mb-2">
-                      <p>Prisma Migrations Table: {verificationResult.migrationsTableExists ? '✅ Exists' : '❌ Missing'}</p>
-                    </div>
-                  )}
-                  {verificationResult.allColumnsPresent !== undefined && (
-                    <div className="text-sm text-gray-700 mb-2">
-                      <p>All Required Columns Present: {verificationResult.allColumnsPresent ? '✅ Yes' : '❌ No'}</p>
-                    </div>
-                  )}
-                  {verificationResult.error && (
-                    <p className="text-sm text-red-700 mt-2">{verificationResult.error}</p>
-                  )}
-                </div>
+                {result.verification && (
+                  <div className="mt-4 text-sm">
+                    <p className="font-semibold mb-2">Verification:</p>
+                    <ul className="space-y-1">
+                      <li>
+                        {result.verification.currencyPreferenceColumnExists ? '✅' : '❌'} 
+                        currencyPreference column: {result.verification.currencyPreferenceColumnExists ? 'Exists' : 'Missing'}
+                      </li>
+                      <li>
+                        {result.verification.currencyExchangeRatesTableExists ? '✅' : '❌'} 
+                        currency_exchange_rates table: {result.verification.currencyExchangeRatesTableExists ? 'Exists' : 'Missing'}
+                      </li>
+                      {result.verification.allColumns && (
+                        <li>
+                          Found columns: {result.verification.allColumns.join(', ')}
+                        </li>
+                      )}
+                    </ul>
+                  </div>
+                )}
+
+                {result.error && (
+                  <div className="mt-4 text-sm text-red-700">
+                    <p className="font-semibold">Error:</p>
+                    <p className="font-mono text-xs bg-red-100 p-2 rounded mt-1">
+                      {result.error}
+                    </p>
+                  </div>
+                )}
+
+                {result.success && (
+                  <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded">
+                    <p className="text-sm text-blue-800">
+                      <strong>Next Step:</strong> Redeploy the API service to regenerate Prisma client, then refresh this page.
+                    </p>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+
+          {/* Verification Section */}
+          <div className="bg-white rounded-lg shadow-md p-6">
+            <h2 className="text-xl font-semibold mb-4">Verify Migration</h2>
+            <p className="text-gray-600 mb-4">
+              Check if migration columns and tables exist in the database
+            </p>
+
+            <button
+              onClick={verifyMigration}
+              disabled={verifying}
+              className="bg-gray-600 hover:bg-gray-700 text-white font-semibold py-3 px-6 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+            >
+              {verifying ? (
+                <>
+                  <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
+                  Verifying...
+                </>
+              ) : (
+                <>
+                  <span>🔍</span>
+                  Verify Migration
+                </>
               )}
-            </div>
+            </button>
+
+            {verification && (
+              <div className={`mt-6 p-4 rounded-lg ${
+                verification.success !== false
+                  ? 'bg-green-50 border border-green-200' 
+                  : 'bg-red-50 border border-red-200'
+              }`}>
+                <h3 className="font-semibold mb-2">Verification Results</h3>
+                
+                {verification.usersColumns && (
+                  <div className="text-sm space-y-2">
+                    <p><strong>User Columns Found:</strong></p>
+                    <ul className="list-disc list-inside ml-4">
+                      {verification.usersColumns.map((col: string) => (
+                        <li key={col} className="text-green-700">✅ {col}</li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+
+                {verification.newTables && (
+                  <div className="text-sm space-y-2 mt-4">
+                    <p><strong>Tables Found:</strong></p>
+                    <ul className="list-disc list-inside ml-4">
+                      {verification.newTables.map((table: string) => (
+                        <li key={table} className="text-green-700">✅ {table}</li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+
+                {verification.allColumnsPresent !== undefined && (
+                  <div className="mt-4">
+                    <p className={`font-semibold ${
+                      verification.allColumnsPresent ? 'text-green-700' : 'text-red-700'
+                    }`}>
+                      {verification.allColumnsPresent 
+                        ? '✅ All required columns and tables are present!' 
+                        : '❌ Some columns or tables are missing'}
+                    </p>
+                  </div>
+                )}
+
+                {verification.error && (
+                  <div className="mt-4 text-sm text-red-700">
+                    <p className="font-semibold">Error:</p>
+                    <p className="font-mono text-xs bg-red-100 p-2 rounded mt-1">
+                      {verification.error}
+                    </p>
+                  </div>
+                )}
+              </div>
+            )}
           </div>
         </div>
       </AdminLayout>
     </RouteGuard>
   );
 }
-

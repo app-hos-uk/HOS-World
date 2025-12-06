@@ -909,6 +909,12 @@ export class ApiClient {
     });
   }
 
+  async runSQLDirectMigration(): Promise<ApiResponse<any>> {
+    return this.request<ApiResponse<any>>('/admin/migration/run-sql-direct', {
+      method: 'POST',
+    });
+  }
+
   async verifyMigration(): Promise<ApiResponse<any>> {
     return this.request<ApiResponse<any>>('/admin/migration/verify', {
       method: 'POST',
