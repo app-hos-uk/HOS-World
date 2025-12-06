@@ -121,11 +121,6 @@ export default function ProcurementSubmissionsPage() {
     }
   };
 
-  const menuItems = [
-    { title: 'Dashboard', href: '/procurement/dashboard', icon: '📊' },
-    { title: 'Review Submissions', href: '/procurement/submissions', icon: '📦', badge: submissions.filter(s => s.status === 'SUBMITTED' || s.status === 'UNDER_REVIEW').length },
-  ];
-
   return (
     <RouteGuard allowedRoles={['PROCUREMENT', 'ADMIN']} showAccessDenied={true}>
       <DashboardLayout role="PROCUREMENT" menuItems={menuItems} title="Procurement">
