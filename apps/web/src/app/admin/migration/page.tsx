@@ -46,16 +46,21 @@ export default function AdminMigrationPage() {
         const response = await apiClient.runSQLDirectMigration();
         console.log('Migration response:', response);
         
-        // The API client returns the response directly (not wrapped in data)
-        // Check if it has success property (direct response) or data property (wrapped)
+        // The API client returns ApiResponse<any>, but backend returns MigrationResult directly
+        // Check if it has data property (wrapped in ApiResponse) or success property (direct)
         if (response && typeof response === 'object') {
+          // Check if wrapped in ApiResponse format
+          if ('data' in response && response.data) {
+            const data = response.data as any;
+            // Check if data has success property (MigrationResult)
+            if (data && typeof data === 'object' && ('success' in data || 'error' in data)) {
+              setResult(data as MigrationResult);
+              return;
+            }
+          }
+          // Check if direct MigrationResult format
           if ('success' in response || 'error' in response) {
-            // Direct response from backend
-            setResult(response as MigrationResult);
-            return;
-          } else if ('data' in response && response.data) {
-            // Wrapped in ApiResponse
-            setResult(response.data as MigrationResult);
+            setResult(response as unknown as MigrationResult);
             return;
           }
         }
