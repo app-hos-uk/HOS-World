@@ -8,16 +8,18 @@ import type { UserRole } from '@hos-marketplace/shared-types';
 
 export function Header() {
   const theme = useTheme();
-  const { user, isAuthenticated, logout, hasRole } = useAuth();
+  const { user, isAuthenticated, logout, hasRole, impersonatedRole, effectiveRole } = useAuth();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   const toggleMobileMenu = () => {
     setIsMobileMenuOpen(!isMobileMenuOpen);
   };
 
-  // Get dashboard link based on user role
+  // Get dashboard link based on effective role (impersonated if set)
   const getDashboardLink = (): string => {
     if (!user) return '/';
+    
+    const currentRole = effectiveRole || user.role;
     
     const roleDashboardMap: Record<UserRole, string> = {
       CUSTOMER: '/',
@@ -33,7 +35,21 @@ export function Header() {
       CMS_EDITOR: '/',
     };
 
-    return roleDashboardMap[user.role] || '/';
+    return roleDashboardMap[currentRole] || '/';
+  };
+
+  const ROLE_LABELS: Record<UserRole, string> = {
+    CUSTOMER: 'Customer',
+    WHOLESALER: 'Wholesaler',
+    B2C_SELLER: 'B2C Seller',
+    SELLER: 'Seller',
+    ADMIN: 'Admin',
+    PROCUREMENT: 'Procurement',
+    FULFILLMENT: 'Fulfillment',
+    CATALOG: 'Catalog',
+    MARKETING: 'Marketing',
+    FINANCE: 'Finance',
+    CMS_EDITOR: 'CMS Editor',
   };
 
   const handleLogout = async () => {
@@ -84,6 +100,12 @@ export function Header() {
                 >
                   Dashboard
                 </Link>
+                {impersonatedRole && (
+                  <span className="text-xs lg:text-sm px-2 py-1 bg-amber-500 text-white rounded-full font-medium flex items-center gap-1">
+                    <span className="inline-block w-1.5 h-1.5 bg-white rounded-full animate-pulse"></span>
+                    Viewing as {ROLE_LABELS[impersonatedRole]}
+                  </span>
+                )}
                 <span className="text-sm lg:text-base text-purple-700 font-medium">
                   {user.email}
                 </span>
@@ -157,6 +179,12 @@ export function Header() {
                   >
                     Dashboard
                   </Link>
+                  {impersonatedRole && (
+                    <div className="px-4 py-2 text-xs bg-amber-500 text-white rounded-lg font-medium flex items-center gap-1">
+                      <span className="inline-block w-1.5 h-1.5 bg-white rounded-full animate-pulse"></span>
+                      Viewing as {ROLE_LABELS[impersonatedRole]}
+                    </div>
+                  )}
                   <div className="px-4 py-2 text-base text-purple-700 font-medium">
                     {user.email}
                   </div>

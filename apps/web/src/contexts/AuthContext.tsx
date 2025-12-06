@@ -13,6 +13,10 @@ interface AuthContextType {
   hasAnyRole: (roles: UserRole[]) => boolean;
   refreshUser: () => Promise<void>;
   logout: () => Promise<void>;
+  // Role switching (admin only)
+  impersonatedRole: UserRole | null;
+  switchRole: (role: UserRole | null) => void;
+  effectiveRole: UserRole | null; // Returns impersonated role if set, otherwise user role
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -20,8 +24,37 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
+  const [impersonatedRole, setImpersonatedRole] = useState<UserRole | null>(null);
   const router = useRouter();
   const pathname = usePathname();
+
+  // Load impersonated role from localStorage on mount
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const stored = localStorage.getItem('admin_impersonated_role');
+      if (stored) {
+        try {
+          const role = stored as UserRole;
+          // Only set if we don't have a user yet, or if user is admin
+          // If user is loaded and not admin, we'll clear it in the next effect
+          if (!user || user.role === 'ADMIN') {
+            setImpersonatedRole(role);
+          }
+        } catch (e) {
+          // Invalid role stored, clear it
+          localStorage.removeItem('admin_impersonated_role');
+        }
+      }
+    }
+  }, []); // Run once on mount
+
+  // Clear impersonated role if user is not admin
+  useEffect(() => {
+    if (user && user.role !== 'ADMIN' && impersonatedRole) {
+      localStorage.removeItem('admin_impersonated_role');
+      setImpersonatedRole(null);
+    }
+  }, [user, impersonatedRole]);
 
   const fetchUser = useCallback(async () => {
     try {
@@ -69,20 +102,41 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return () => window.removeEventListener('storage', handleStorageChange);
   }, [fetchUser]);
 
+  // Get effective role (impersonated if set, otherwise actual user role)
+  const effectiveRole = impersonatedRole || user?.role || null;
+
   const hasRole = useCallback((role: UserRole | UserRole[]): boolean => {
     if (!user) return false;
     
+    const currentRole = impersonatedRole || user.role;
+    
     if (Array.isArray(role)) {
-      return role.includes(user.role);
+      return role.includes(currentRole);
     }
     
-    return user.role === role;
-  }, [user]);
+    return currentRole === role;
+  }, [user, impersonatedRole]);
 
   const hasAnyRole = useCallback((roles: UserRole[]): boolean => {
     if (!user) return false;
-    return roles.includes(user.role);
-  }, [user]);
+    const currentRole = impersonatedRole || user.role;
+    return roles.includes(currentRole);
+  }, [user, impersonatedRole]);
+
+  const switchRole = useCallback((role: UserRole | null) => {
+    setImpersonatedRole(role);
+    if (typeof window !== 'undefined') {
+      if (role) {
+        localStorage.setItem('admin_impersonated_role', role);
+      } else {
+        localStorage.removeItem('admin_impersonated_role');
+      }
+    }
+    // Force a re-render by updating pathname (will cause RouteGuard to re-evaluate)
+    if (role) {
+      router.refresh();
+    }
+  }, [router]);
 
   const refreshUser = useCallback(async () => {
     await fetchUser();
@@ -95,7 +149,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       console.error('Logout error:', error);
     }
     localStorage.removeItem('auth_token');
+    localStorage.removeItem('admin_impersonated_role');
     setUser(null);
+    setImpersonatedRole(null);
     router.push('/login');
   }, [router]);
 
@@ -107,6 +163,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     hasAnyRole,
     refreshUser,
     logout,
+    impersonatedRole,
+    switchRole,
+    effectiveRole,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
