@@ -62,7 +62,7 @@ export default function AdminMigrationPage() {
   };
 
   return (
-    <RouteGuard requiredRole="ADMIN">
+    <RouteGuard allowedRoles={['ADMIN']} showAccessDenied={true}>
       <AdminLayout>
         <div className="p-6">
           <h1 className="text-3xl font-bold text-gray-900 mb-6">Database Migration</h1>
