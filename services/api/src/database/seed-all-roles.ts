@@ -1,5 +1,6 @@
 import { PrismaClient, UserRole, SellerType } from '@prisma/client';
 import * as bcrypt from 'bcrypt';
+import { slugify } from '@hos-marketplace/utils';
 
 const prisma = new PrismaClient();
 
@@ -84,17 +85,7 @@ const mockUsers = [
   },
 ];
 
-function slugify(text: string): string {
-  return text
-    .toString()
-    .toLowerCase()
-    .trim()
-    .replace(/\s+/g, '-')
-    .replace(/[^\w\-]+/g, '')
-    .replace(/\-\-+/g, '-')
-    .replace(/^-+/, '')
-    .replace(/-+$/, '');
-}
+import { slugify } from '@hos-marketplace/utils';
 
 async function seedAllRoles() {
   const saltRounds = 10;

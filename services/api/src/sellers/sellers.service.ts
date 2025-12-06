@@ -7,6 +7,7 @@ import {
 import { PrismaService } from '../database/prisma.service';
 import { UpdateSellerDto } from './dto/update-seller.dto';
 import { SellerType, LogisticsOption } from '@prisma/client';
+import { slugify } from '@hos-marketplace/utils';
 
 @Injectable()
 export class SellersService {
@@ -75,7 +76,7 @@ export class SellersService {
 
     // If updating slug (via storeName), ensure uniqueness
     if (updateSellerDto.storeName && updateSellerDto.storeName !== seller.storeName) {
-      const baseSlug = this.slugify(updateSellerDto.storeName);
+      const baseSlug = slugify(updateSellerDto.storeName);
       let slug = baseSlug;
       let counter = 1;
 
@@ -172,16 +173,5 @@ export class SellersService {
     });
   }
 
-  private slugify(text: string): string {
-    return text
-      .toString()
-      .toLowerCase()
-      .trim()
-      .replace(/\s+/g, '-')
-      .replace(/[^\w\-]+/g, '')
-      .replace(/\-\-+/g, '-')
-      .replace(/^-+/, '')
-      .replace(/-+$/, '');
-  }
 }
 

@@ -1,21 +1,11 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../database/prisma.service';
+import { slugify } from '@hos-marketplace/utils';
 
 @Injectable()
 export class KnowledgeBaseService {
   constructor(private prisma: PrismaService) {}
 
-  private slugify(text: string): string {
-    return text
-      .toString()
-      .toLowerCase()
-      .trim()
-      .replace(/\s+/g, '-')
-      .replace(/[^\w\-]+/g, '')
-      .replace(/\-\-+/g, '-')
-      .replace(/^-+/, '')
-      .replace(/-+$/, '');
-  }
 
   async createArticle(data: {
     title: string;
@@ -25,7 +15,7 @@ export class KnowledgeBaseService {
     isPublished?: boolean;
     createdBy: string;
   }) {
-    const baseSlug = this.slugify(data.title);
+    const baseSlug = slugify(data.title);
     let slug = baseSlug;
     let counter = 1;
 
@@ -67,7 +57,7 @@ export class KnowledgeBaseService {
 
     let slug = article.slug;
     if (data.title && data.title !== article.title) {
-      const baseSlug = this.slugify(data.title);
+      const baseSlug = slugify(data.title);
       slug = baseSlug;
       let counter = 1;
 

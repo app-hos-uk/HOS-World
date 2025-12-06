@@ -10,19 +10,7 @@ import { UpdateProductDto } from './dto/update-product.dto';
 import { SearchProductsDto } from './dto/search-products.dto';
 import type { Product, PaginatedResponse } from '@hos-marketplace/shared-types';
 import { Prisma } from '@prisma/client';
-
-// Slugify helper
-function slugify(text: string): string {
-  return text
-    .toString()
-    .toLowerCase()
-    .trim()
-    .replace(/\s+/g, '-')
-    .replace(/[^\w\-]+/g, '')
-    .replace(/\-\-+/g, '-')
-    .replace(/^-+/, '')
-    .replace(/-+$/, '');
-}
+import { slugify } from '@hos-marketplace/utils';
 
 @Injectable()
 export class ProductsService {

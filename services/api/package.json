@@ -36,6 +36,7 @@
   },
   "dependencies": {
     "@hos-marketplace/shared-types": "workspace:*",
+    "@hos-marketplace/utils": "workspace:*",
     "@nestjs/cache-manager": "^2.1.1",
     "@nestjs/common": "^10.3.0",
     "@nestjs/config": "^3.1.1",

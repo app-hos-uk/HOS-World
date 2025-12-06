@@ -1,6 +1,7 @@
 import { Injectable, BadRequestException, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../database/prisma.service';
 import { ProductsService } from '../products/products.service';
+import { slugify } from '@hos-marketplace/utils';
 
 @Injectable()
 export class AdminProductsService {
@@ -44,7 +45,7 @@ export class AdminProductsService {
     }
 
     // Generate slug
-    const baseSlug = this.slugify(data.name);
+    const baseSlug = slugify(data.name);
     let slug = baseSlug;
     let counter = 1;
 
@@ -133,7 +134,7 @@ export class AdminProductsService {
     // Update slug if name changed
     let slug = product.slug;
     if (data.name && data.name !== product.name) {
-      const baseSlug = this.slugify(data.name);
+      const baseSlug = slugify(data.name);
       slug = baseSlug;
       let counter = 1;
 
@@ -247,16 +248,5 @@ export class AdminProductsService {
     };
   }
 
-  private slugify(text: string): string {
-    return text
-      .toString()
-      .toLowerCase()
-      .trim()
-      .replace(/\s+/g, '-')
-      .replace(/[^\w\-]+/g, '')
-      .replace(/\-\-+/g, '-')
-      .replace(/^-+/, '')
-      .replace(/-+$/, '');
-  }
 }
 
