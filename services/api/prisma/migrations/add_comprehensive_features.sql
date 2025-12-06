@@ -1,6 +1,79 @@
 -- Migration: Add Comprehensive Features (Seller Invitations, Finance, Support, WhatsApp, Activity Tracking, Discrepancies)
 -- This migration adds all new models for the comprehensive admin features
 
+-- 0. Create all enum types first (before tables that use them)
+DO $$ BEGIN
+    CREATE TYPE "InvitationStatus" AS ENUM ('PENDING', 'ACCEPTED', 'EXPIRED', 'CANCELLED');
+EXCEPTION
+    WHEN duplicate_object THEN null;
+END $$;
+
+DO $$ BEGIN
+    CREATE TYPE "TransactionType" AS ENUM ('PAYMENT', 'PAYOUT', 'REFUND', 'FEE', 'ADJUSTMENT');
+EXCEPTION
+    WHEN duplicate_object THEN null;
+END $$;
+
+DO $$ BEGIN
+    CREATE TYPE "TransactionStatus" AS ENUM ('PENDING', 'COMPLETED', 'FAILED', 'CANCELLED');
+EXCEPTION
+    WHEN duplicate_object THEN null;
+END $$;
+
+DO $$ BEGIN
+    CREATE TYPE "DiscrepancyType" AS ENUM ('INVENTORY', 'PRICING', 'SETTLEMENT', 'ORDER_FULFILLMENT');
+EXCEPTION
+    WHEN duplicate_object THEN null;
+END $$;
+
+DO $$ BEGIN
+    CREATE TYPE "DiscrepancySeverity" AS ENUM ('LOW', 'MEDIUM', 'HIGH', 'CRITICAL');
+EXCEPTION
+    WHEN duplicate_object THEN null;
+END $$;
+
+DO $$ BEGIN
+    CREATE TYPE "DiscrepancyStatus" AS ENUM ('OPEN', 'INVESTIGATING', 'RESOLVED', 'DISMISSED');
+EXCEPTION
+    WHEN duplicate_object THEN null;
+END $$;
+
+DO $$ BEGIN
+    CREATE TYPE "TicketCategory" AS ENUM ('ORDER_INQUIRY', 'PRODUCT_QUESTION', 'RETURN_REQUEST', 'PAYMENT_ISSUE', 'TECHNICAL_SUPPORT', 'SELLER_SUPPORT', 'OTHER');
+EXCEPTION
+    WHEN duplicate_object THEN null;
+END $$;
+
+DO $$ BEGIN
+    CREATE TYPE "TicketPriority" AS ENUM ('LOW', 'MEDIUM', 'HIGH', 'URGENT');
+EXCEPTION
+    WHEN duplicate_object THEN null;
+END $$;
+
+DO $$ BEGIN
+    CREATE TYPE "TicketStatus" AS ENUM ('OPEN', 'ASSIGNED', 'IN_PROGRESS', 'WAITING_CUSTOMER', 'RESOLVED', 'CLOSED');
+EXCEPTION
+    WHEN duplicate_object THEN null;
+END $$;
+
+DO $$ BEGIN
+    CREATE TYPE "ConversationStatus" AS ENUM ('ACTIVE', 'ARCHIVED', 'BLOCKED');
+EXCEPTION
+    WHEN duplicate_object THEN null;
+END $$;
+
+DO $$ BEGIN
+    CREATE TYPE "MessageDirection" AS ENUM ('INBOUND', 'OUTBOUND');
+EXCEPTION
+    WHEN duplicate_object THEN null;
+END $$;
+
+DO $$ BEGIN
+    CREATE TYPE "MessageStatus" AS ENUM ('SENT', 'DELIVERED', 'READ', 'FAILED');
+EXCEPTION
+    WHEN duplicate_object THEN null;
+END $$;
+
 -- 1. Seller Invitation Model
 CREATE TABLE IF NOT EXISTS "SellerInvitation" (
     "id" TEXT NOT NULL,
@@ -47,9 +120,6 @@ CREATE INDEX IF NOT EXISTS "ActivityLog_entityType_entityId_idx" ON "ActivityLog
 CREATE INDEX IF NOT EXISTS "ActivityLog_createdAt_idx" ON "ActivityLog"("createdAt");
 
 -- 3. Transaction Model
-CREATE TYPE "TransactionType" AS ENUM ('PAYMENT', 'PAYOUT', 'REFUND', 'FEE', 'ADJUSTMENT');
-CREATE TYPE "TransactionStatus" AS ENUM ('PENDING', 'COMPLETED', 'FAILED', 'CANCELLED');
-
 CREATE TABLE IF NOT EXISTS "Transaction" (
     "id" TEXT NOT NULL,
     "type" "TransactionType" NOT NULL,
@@ -78,10 +148,6 @@ CREATE INDEX IF NOT EXISTS "Transaction_status_idx" ON "Transaction"("status");
 CREATE INDEX IF NOT EXISTS "Transaction_createdAt_idx" ON "Transaction"("createdAt");
 
 -- 4. Discrepancy Model
-CREATE TYPE "DiscrepancyType" AS ENUM ('INVENTORY', 'PRICING', 'SETTLEMENT', 'ORDER_FULFILLMENT');
-CREATE TYPE "DiscrepancySeverity" AS ENUM ('LOW', 'MEDIUM', 'HIGH', 'CRITICAL');
-CREATE TYPE "DiscrepancyStatus" AS ENUM ('OPEN', 'INVESTIGATING', 'RESOLVED', 'DISMISSED');
-
 CREATE TABLE IF NOT EXISTS "Discrepancy" (
     "id" TEXT NOT NULL,
     "type" "DiscrepancyType" NOT NULL,
@@ -110,10 +176,6 @@ CREATE INDEX IF NOT EXISTS "Discrepancy_status_idx" ON "Discrepancy"("status");
 CREATE INDEX IF NOT EXISTS "Discrepancy_createdAt_idx" ON "Discrepancy"("createdAt");
 
 -- 5. Support Ticket Model
-CREATE TYPE "TicketCategory" AS ENUM ('ORDER_INQUIRY', 'PRODUCT_QUESTION', 'RETURN_REQUEST', 'PAYMENT_ISSUE', 'TECHNICAL_SUPPORT', 'SELLER_SUPPORT', 'OTHER');
-CREATE TYPE "TicketPriority" AS ENUM ('LOW', 'MEDIUM', 'HIGH', 'URGENT');
-CREATE TYPE "TicketStatus" AS ENUM ('OPEN', 'ASSIGNED', 'IN_PROGRESS', 'WAITING_CUSTOMER', 'RESOLVED', 'CLOSED');
-
 CREATE TABLE IF NOT EXISTS "SupportTicket" (
     "id" TEXT NOT NULL,
     "ticketNumber" TEXT NOT NULL,
@@ -184,10 +246,6 @@ CREATE INDEX IF NOT EXISTS "KnowledgeBaseArticle_slug_idx" ON "KnowledgeBaseArti
 CREATE INDEX IF NOT EXISTS "KnowledgeBaseArticle_createdAt_idx" ON "KnowledgeBaseArticle"("createdAt");
 
 -- 8. WhatsApp Conversation Model
-CREATE TYPE "ConversationStatus" AS ENUM ('ACTIVE', 'ARCHIVED', 'BLOCKED');
-CREATE TYPE "MessageDirection" AS ENUM ('INBOUND', 'OUTBOUND');
-CREATE TYPE "MessageStatus" AS ENUM ('SENT', 'DELIVERED', 'READ', 'FAILED');
-
 CREATE TABLE IF NOT EXISTS "WhatsAppConversation" (
     "id" TEXT NOT NULL,
     "phoneNumber" TEXT NOT NULL,
@@ -251,14 +309,7 @@ CREATE UNIQUE INDEX IF NOT EXISTS "WhatsAppTemplate_name_key" ON "WhatsAppTempla
 CREATE INDEX IF NOT EXISTS "WhatsAppTemplate_category_idx" ON "WhatsAppTemplate"("category");
 CREATE INDEX IF NOT EXISTS "WhatsAppTemplate_isActive_idx" ON "WhatsAppTemplate"("isActive");
 
--- 11. Create InvitationStatus enum if not exists
-DO $$ BEGIN
-    CREATE TYPE "InvitationStatus" AS ENUM ('PENDING', 'ACCEPTED', 'EXPIRED', 'CANCELLED');
-EXCEPTION
-    WHEN duplicate_object THEN null;
-END $$;
-
--- 12. Update Product table to add isPlatformOwned column
+-- 11. Update Product table to add isPlatformOwned column
 ALTER TABLE "Product" ADD COLUMN IF NOT EXISTS "isPlatformOwned" BOOLEAN NOT NULL DEFAULT false;
 ALTER TABLE "Product" ALTER COLUMN "sellerId" DROP NOT NULL;
 
