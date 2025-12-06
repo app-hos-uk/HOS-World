@@ -5,7 +5,6 @@ const nextConfig = {
     '@hos-marketplace/shared-types',
     '@hos-marketplace/theme-system',
     '@hos-marketplace/api-client',
-    '@hos-marketplace/ui-components',
     '@hos-marketplace/utils',
   ],
   images: {

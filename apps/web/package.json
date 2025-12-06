@@ -15,7 +15,6 @@
     "@hos-marketplace/api-client": "workspace:*",
     "@hos-marketplace/shared-types": "workspace:*",
     "@hos-marketplace/theme-system": "workspace:*",
-    "@hos-marketplace/ui-components": "workspace:*",
     "@hos-marketplace/utils": "workspace:*",
     "next": "^14.0.4",
     "next-auth": "^4.24.5",

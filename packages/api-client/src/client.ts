@@ -928,25 +928,6 @@ export class ApiClient {
     });
   }
 
-  // Admin Migration
-  async runGlobalFeaturesMigration(): Promise<ApiResponse<any>> {
-    return this.request<ApiResponse<any>>('/admin/migration/run-global-features', {
-      method: 'POST',
-    });
-  }
-
-  async runSQLDirectMigration(): Promise<ApiResponse<any>> {
-    return this.request<ApiResponse<any>>('/admin/migration/run-sql-direct', {
-      method: 'POST',
-    });
-  }
-
-  async verifyMigration(): Promise<ApiResponse<any>> {
-    return this.request<ApiResponse<any>>('/admin/migration/verify', {
-      method: 'POST',
-    });
-  }
-
   // Comprehensive Features Migration
   async runComprehensiveFeaturesMigration(): Promise<ApiResponse<any>> {
     return this.request<ApiResponse<any>>('/admin/migration-features/run-sql', {

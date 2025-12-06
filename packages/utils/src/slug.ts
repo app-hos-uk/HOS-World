@@ -13,33 +13,4 @@ export function slugify(text: string): string {
     .replace(/-+$/, '');            // Trim hyphen from end
 }
 
-/**
- * Generate unique slug by appending number if needed
- */
-export function generateUniqueSlug(baseSlug: string, existingSlugs: string[]): string {
-  let slug = slugify(baseSlug);
-  let counter = 1;
-
-  while (existingSlugs.includes(slug)) {
-    slug = `${slugify(baseSlug)}-${counter}`;
-    counter++;
-  }
-
-  return slug;
-}
-
-/**
- * Extract slug from URL
- */
-export function extractSlugFromUrl(url: string): string {
-  try {
-    const urlObj = new URL(url);
-    const pathname = urlObj.pathname;
-    const parts = pathname.split('/').filter(Boolean);
-    return parts[parts.length - 1] || '';
-  } catch {
-    return '';
-  }
-}
-
 
