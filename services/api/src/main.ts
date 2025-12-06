@@ -11,10 +11,11 @@ async function bootstrap() {
       DATABASE_URL: process.env.DATABASE_URL ? '***set***' : '***missing***',
     });
 
-    const app = await NestFactory.create(AppModule);
+    const app = await NestFactory.create(AppModule, {
+      cors: true, // Enable CORS at NestJS level first
+    });
 
-    // Enable CORS FIRST - before any other middleware
-    // Support multiple origins for flexibility
+    // Define allowed origins - MUST be before any middleware
     const allowedOrigins = [
       process.env.FRONTEND_URL,
       'https://hos-marketplaceweb-production.up.railway.app',
@@ -24,6 +25,36 @@ async function bootstrap() {
 
     console.log('🌐 CORS allowed origins:', allowedOrigins);
 
+    // CRITICAL: Handle OPTIONS requests FIRST - before any other middleware
+    // This ensures preflight requests are handled even if the app has errors
+    app.use((req: any, res: any, next: any) => {
+      // Handle preflight OPTIONS requests immediately
+      if (req.method === 'OPTIONS') {
+        const origin = req.headers.origin;
+        
+        // Check if origin is allowed
+        const isAllowed = !origin || allowedOrigins.some(allowed => {
+          if (!allowed) return false;
+          return origin === allowed || origin.startsWith(allowed);
+        });
+        
+        if (isAllowed || !origin) {
+          console.log(`✅ CORS Preflight: Allowing ${origin || 'no-origin'} for ${req.path}`);
+          res.header('Access-Control-Allow-Origin', origin || '*');
+          res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, PATCH, OPTIONS, HEAD');
+          res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With, Accept, Origin, X-API-Key, Access-Control-Request-Method, Access-Control-Request-Headers');
+          res.header('Access-Control-Allow-Credentials', 'true');
+          res.header('Access-Control-Max-Age', '86400');
+          return res.status(204).send();
+        } else {
+          console.warn(`⚠️  CORS Preflight blocked: ${origin}`);
+          return res.status(403).json({ error: 'CORS not allowed' });
+        }
+      }
+      next();
+    });
+
+    // Enhanced CORS configuration for all other requests
     app.enableCors({
       origin: (origin, callback) => {
         // Allow requests with no origin (like mobile apps or curl requests)
@@ -34,9 +65,10 @@ async function bootstrap() {
         
         // Check if origin is in allowed list
         const isAllowed = allowedOrigins.some(allowed => {
+          if (!allowed) return false;
           if (origin === allowed) return true;
           // Also allow if origin starts with allowed (for subdomains)
-          if (allowed && origin.startsWith(allowed)) return true;
+          if (origin.startsWith(allowed)) return true;
           return false;
         });
         
@@ -50,7 +82,7 @@ async function bootstrap() {
         }
       },
       credentials: true,
-      methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+      methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS', 'HEAD'],
       allowedHeaders: [
         'Content-Type',
         'Authorization',
@@ -59,11 +91,27 @@ async function bootstrap() {
         'Origin',
         'Access-Control-Request-Method',
         'Access-Control-Request-Headers',
+        'X-API-Key',
       ],
-      exposedHeaders: ['Authorization'],
+      exposedHeaders: ['Authorization', 'Content-Type'],
       preflightContinue: false,
       optionsSuccessStatus: 204,
       maxAge: 86400, // 24 hours
+    });
+
+    // Add CORS headers to all responses (safety net)
+    app.use((req: any, res: any, next: any) => {
+      const origin = req.headers.origin;
+      const isAllowed = !origin || allowedOrigins.some(allowed => {
+        if (!allowed) return false;
+        return origin === allowed || origin.startsWith(allowed);
+      });
+      
+      if (isAllowed || !origin) {
+        res.header('Access-Control-Allow-Origin', origin || '*');
+        res.header('Access-Control-Allow-Credentials', 'true');
+      }
+      next();
     });
 
     // Add root route handler via middleware BEFORE setting global prefix

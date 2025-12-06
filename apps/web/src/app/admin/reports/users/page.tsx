@@ -1,0 +1,104 @@
+'use client';
+
+import { useEffect, useState } from 'react';
+import { RouteGuard } from '@/components/RouteGuard';
+import { AdminLayout } from '@/components/AdminLayout';
+import { apiClient } from '@/lib/api';
+
+export default function AdminUserAnalyticsPage() {
+  const [analytics, setAnalytics] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    fetchAnalytics();
+  }, []);
+
+  const fetchAnalytics = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      const response = await apiClient.getUsers();
+      if (response?.data) {
+        const users = response.data;
+        const analytics = {
+          totalUsers: users.length,
+          byRole: users.reduce((acc: any, user: any) => {
+            acc[user.role] = (acc[user.role] || 0) + 1;
+            return acc;
+          }, {}),
+        };
+        setAnalytics(analytics);
+      }
+    } catch (err: any) {
+      console.error('Error fetching user analytics:', err);
+      setError(err.message || 'Failed to load user analytics');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (loading) {
+    return (
+      <RouteGuard allowedRoles={['ADMIN']}>
+        <AdminLayout>
+          <div className="flex items-center justify-center h-64">
+            <div className="text-gray-500">Loading user analytics...</div>
+          </div>
+        </AdminLayout>
+      </RouteGuard>
+    );
+  }
+
+  return (
+    <RouteGuard allowedRoles={['ADMIN']}>
+      <AdminLayout>
+        <div className="space-y-6">
+          <h1 className="text-2xl font-bold text-gray-900">User Analytics</h1>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="bg-white rounded-lg shadow p-6">
+              <h3 className="text-sm font-medium text-gray-500">Total Users</h3>
+              <p className="text-3xl font-bold text-gray-900 mt-2">
+                {analytics?.totalUsers || 0}
+              </p>
+            </div>
+            <div className="bg-white rounded-lg shadow p-6">
+              <h3 className="text-sm font-medium text-gray-500">Active Users</h3>
+              <p className="text-3xl font-bold text-gray-900 mt-2">
+                {analytics?.activeUsers || 0}
+              </p>
+            </div>
+            <div className="bg-white rounded-lg shadow p-6">
+              <h3 className="text-sm font-medium text-gray-500">New This Month</h3>
+              <p className="text-3xl font-bold text-gray-900 mt-2">
+                {analytics?.newUsers || 0}
+              </p>
+            </div>
+          </div>
+
+          {analytics?.byRole && (
+            <div className="bg-white rounded-lg shadow p-6">
+              <h3 className="text-lg font-semibold mb-4">Users by Role</h3>
+              <div className="space-y-2">
+                {Object.entries(analytics.byRole).map(([role, count]: [string, any]) => (
+                  <div key={role} className="flex justify-between items-center">
+                    <span className="text-gray-700">{role}</span>
+                    <span className="font-semibold">{count}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {error && (
+            <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+              <p className="text-red-800">Error: {error}</p>
+            </div>
+          )}
+        </div>
+      </AdminLayout>
+    </RouteGuard>
+  );
+}
+

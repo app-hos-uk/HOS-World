@@ -75,3 +75,4 @@ This SQL will:
 
 **The key is to fill in `updatedAt` with the same timestamp as `createdAt`!**
 
+

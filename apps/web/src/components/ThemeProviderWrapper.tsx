@@ -16,3 +16,4 @@ const ThemeProviderWrapperComponent = ({ children }: { children: React.ReactNode
 // Memoize to prevent unnecessary remounts
 export const ThemeProviderWrapper = memo(ThemeProviderWrapperComponent);
 
+

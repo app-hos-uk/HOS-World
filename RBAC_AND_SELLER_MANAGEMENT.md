@@ -347,3 +347,4 @@ async findAll() {
 4. Add seller type guards and decorators
 5. Update frontend to handle different seller types
 
+

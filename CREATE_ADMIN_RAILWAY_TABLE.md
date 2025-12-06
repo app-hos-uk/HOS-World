@@ -78,3 +78,4 @@ railway run psql $DATABASE_URL -c "INSERT INTO users (id, email, password, \"fir
 
 **The key is to fill in the ID field with a UUID!**
 
+

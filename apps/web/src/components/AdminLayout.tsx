@@ -67,7 +67,6 @@ const menuItems: MenuItem[] = [
       { title: 'Domain Management', href: '/admin/domains', icon: '🌐' },
       { title: 'Fulfillment Centers', href: '/admin/fulfillment-centers', icon: '🏭' },
       { title: 'Logistics Partners', href: '/admin/logistics', icon: '🚛' },
-      { title: 'Database Migration', href: '/admin/migration', icon: '🔄' },
     ],
   },
   {
