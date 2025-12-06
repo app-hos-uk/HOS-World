@@ -20,7 +20,6 @@ export default function AdminLogisticsPage() {
     contactPhone: '',
     website: '',
     active: true,
-    isActive: true,
   });
   const [submitting, setSubmitting] = useState(false);
 
@@ -64,7 +63,6 @@ export default function AdminLogisticsPage() {
         contactEmail: formData.contactEmail || undefined,
         contactPhone: formData.contactPhone || undefined,
         active: formData.active,
-        isActive: formData.active,
       });
       if (response?.data) {
         toast.success('Logistics partner created successfully!');
