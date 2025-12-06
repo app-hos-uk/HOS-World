@@ -27,10 +27,7 @@ export const metadata: Metadata = {
   title: 'House of Spells Marketplace',
   description: 'Discover magical items from your favorite fandoms',
   icons: {
-    icon: [
-      { url: '/favicon.svg', type: 'image/svg+xml' },
-      { url: '/favicon.ico', sizes: 'any' },
-    ],
+    icon: '/favicon.svg',
     shortcut: '/favicon.svg',
     apple: '/favicon.svg',
   },
