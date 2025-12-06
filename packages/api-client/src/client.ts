@@ -744,6 +744,32 @@ export class ApiClient {
     });
   }
 
+  async inviteSeller(data: { email: string; sellerType: 'WHOLESALER' | 'B2C_SELLER'; message?: string }): Promise<ApiResponse<any>> {
+    return this.request<ApiResponse<any>>('/admin/sellers/invite', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async getSellerInvitations(status?: string): Promise<ApiResponse<any[]>> {
+    const url = status ? `/admin/sellers/invitations?status=${status}` : '/admin/sellers/invitations';
+    return this.request<ApiResponse<any[]>>(url, {
+      method: 'GET',
+    });
+  }
+
+  async resendSellerInvitation(id: string): Promise<ApiResponse<any>> {
+    return this.request<ApiResponse<any>>(`/admin/sellers/invitations/${id}/resend`, {
+      method: 'PUT',
+    });
+  }
+
+  async cancelSellerInvitation(id: string): Promise<ApiResponse<any>> {
+    return this.request<ApiResponse<any>>(`/admin/sellers/invitations/${id}`, {
+      method: 'DELETE',
+    });
+  }
+
   // Currency & Exchange Rates
   async getCurrencyRates(): Promise<ApiResponse<Record<string, number>>> {
     return this.request<ApiResponse<Record<string, number>>>('/currency/rates', {
