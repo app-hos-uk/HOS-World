@@ -116,6 +116,11 @@ export class ApiClient {
     lastName?: string;
     role: 'customer' | 'seller';
     storeName?: string;
+    country: string;
+    whatsappNumber?: string;
+    preferredCommunicationMethod: 'EMAIL' | 'SMS' | 'WHATSAPP' | 'PHONE';
+    gdprConsent: boolean;
+    dataProcessingConsent?: Record<string, boolean>;
   }): Promise<ApiResponse<AuthResponse>> {
     return this.request<ApiResponse<AuthResponse>>('/auth/register', {
       method: 'POST',
