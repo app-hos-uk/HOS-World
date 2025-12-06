@@ -31,9 +31,10 @@ export default function SellersPage() {
             try {
               // Try to get seller profile by slug or userId
               const products = await apiClient.getProducts({ sellerId: user.id, limit: 1 });
+              const productData = products?.data as any;
               return {
                 ...user,
-                hasProducts: products?.data?.items?.length > 0,
+                hasProducts: (productData?.items || productData?.data || []).length > 0,
               };
             } catch {
               return { ...user, hasProducts: false };

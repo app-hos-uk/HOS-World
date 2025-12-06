@@ -418,7 +418,7 @@ export default function LoginPage() {
                 <div className="p-4 bg-green-100 text-green-700 rounded-lg">
                   <p className="font-semibold">Email sent!</p>
                   <p className="text-sm mt-1">
-                    If an account exists with that email, you'll receive password reset instructions.
+                    If an account exists with that email, you&apos;ll receive password reset instructions.
                   </p>
                 </div>
                 <p className="text-sm text-gray-600">Redirecting to login...</p>
@@ -426,7 +426,7 @@ export default function LoginPage() {
             ) : (
               <>
                 <p className="text-gray-600 text-center mb-6">
-                  Enter your email address and we'll send you a link to reset your password.
+                  Enter your email address and we&apos;ll send you a link to reset your password.
                 </p>
 
                 {error && (

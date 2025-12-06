@@ -12,7 +12,12 @@ export default function ProductsPage() {
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
-  const [filters, setFilters] = useState({
+  const [filters, setFilters] = useState<{
+    query: string;
+    fandom: string;
+    category: string;
+    sortBy: 'newest' | 'relevance' | 'price_asc' | 'price_desc' | 'popular';
+  }>({
     query: '',
     fandom: '',
     category: '',
@@ -33,8 +38,8 @@ export default function ProductsPage() {
         ...filters,
       });
       if (response?.data) {
-        setProducts(response.data.items || []);
-        setTotalPages(response.data.totalPages || 1);
+        setProducts((response.data as any).items || response.data.data || []);
+        setTotalPages((response.data as any).totalPages || Math.ceil(((response.data as any).total || 0) / 20) || 1);
       }
     } catch (err: any) {
       console.error('Error fetching products:', err);
@@ -63,7 +68,7 @@ export default function ProductsPage() {
           />
           <select
             value={filters.sortBy}
-            onChange={(e) => setFilters({ ...filters, sortBy: e.target.value })}
+            onChange={(e) => setFilters({ ...filters, sortBy: e.target.value as typeof filters.sortBy })}
             className="px-4 py-2 border border-gray-300 rounded-lg"
           >
             <option value="newest">Newest</option>

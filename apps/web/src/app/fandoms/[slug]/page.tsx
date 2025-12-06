@@ -62,7 +62,7 @@ function FandomProducts({ fandomSlug, fandomName }: { fandomSlug: string; fandom
       setLoading(true);
       const response = await apiClient.getProducts({ fandom: fandomSlug, limit: 12 });
       if (response?.data) {
-        setProducts(response.data.items || []);
+        setProducts((response.data as any).items || (response.data as any).data || []);
       }
     } catch (err: any) {
       console.error('Error fetching products:', err);

@@ -3,8 +3,10 @@
 import { Header } from '@/components/Header';
 import { Footer } from '@/components/Footer';
 import { useState, useEffect, Suspense } from 'react';
-import { useSearchParams } from 'next/navigation';
+import { useSearchParams, useRouter } from 'next/navigation';
 import { useCurrency } from '@/contexts/CurrencyContext';
+import { apiClient } from '@/lib/api';
+import { useToast } from '@/hooks/useToast';
 
 function PaymentContent() {
   const searchParams = useSearchParams();
