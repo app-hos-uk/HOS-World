@@ -187,10 +187,3 @@ export default function FandomDetailPage({ params }: FandomDetailPageProps) {
   );
 }
 
-// Generate static params for known fandoms
-export async function generateStaticParams() {
-  return Object.keys(fandoms).map((slug) => ({
-    slug,
-  }));
-}
-
