@@ -42,7 +42,7 @@ export default function WholesalerDashboardPage() {
   }, []);
 
   const pendingApprovals = dashboardData?.submissionsByStatus?.find(
-    (s) => s.status === 'SUBMITTED' || s.status === 'UNDER_REVIEW'
+    (s: any) => s.status === 'SUBMITTED' || s.status === 'UNDER_REVIEW'
   )?._count || 0;
 
   return (
