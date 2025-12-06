@@ -194,54 +194,36 @@ export class MigrationFeaturesController {
       const originalLine = lines[i];
       const line = originalLine.trim();
       
-      // Skip comments
+      // Skip comment lines
       if (line.startsWith('--')) {
         continue;
       }
 
-      // Skip completely empty lines (but we'll add them back for DO blocks)
-      if (!line && !inDoBlock) {
-        continue;
-      }
-
-      // Check for DO $$ block start
-      if (line.match(/^DO\s+\$\$/i)) {
-        // If we have a pending statement, save it first
-        if (currentStatement.trim() && !inDoBlock) {
-          statements.push(currentStatement.trim());
-          currentStatement = '';
-        }
-        inDoBlock = true;
-        dollarQuoteTag = '$$';
-        currentStatement = originalLine + '\n';
-        continue;
-      }
-
-      // Check for DO $tag$ block start (with custom tag)
-      const doMatch = line.match(/^DO\s+\$([^$]+)\$/i);
+      // Check for DO $$ block start (must be at start of line)
+      const doMatch = line.match(/^DO\s+(\$\$|\$[^$]+\$)/i);
       if (doMatch) {
-        // If we have a pending statement, save it first
+        // Save any pending statement before starting DO block
         if (currentStatement.trim() && !inDoBlock) {
           statements.push(currentStatement.trim());
           currentStatement = '';
         }
         inDoBlock = true;
-        dollarQuoteTag = `$${doMatch[1]}$`;
+        dollarQuoteTag = doMatch[1];
         currentStatement = originalLine + '\n';
         continue;
       }
 
-      // If in DO block, accumulate lines until we find END
+      // If in DO block, accumulate all lines
       if (inDoBlock) {
         currentStatement += originalLine + '\n';
         
-        // Check for END with matching dollar quote
-        // Pattern: END followed by the dollar quote tag, optional semicolon
+        // Check for END statement (must match the dollar quote tag)
+        // Pattern: END followed by whitespace, then the dollar quote tag, optional semicolon
         const escapedTag = dollarQuoteTag.replace(/\$/g, '\\$');
-        const endPattern = new RegExp(`^END\\s+${escapedTag}\\s*;?$`, 'i');
+        const endPattern = new RegExp(`^END\\s+${escapedTag}\\s*;?\\s*$`, 'i');
         
-        if (line.match(endPattern)) {
-          // Found END, close the block
+        if (endPattern.test(line)) {
+          // Found END, close the DO block
           const trimmed = currentStatement.trim();
           if (trimmed.length > 0) {
             statements.push(trimmed);
@@ -253,12 +235,13 @@ export class MigrationFeaturesController {
         continue;
       }
 
-      // Regular statement handling
+      // Regular statement handling (not in DO block)
+      // Add non-empty lines to current statement
       if (line.length > 0) {
         currentStatement += originalLine + '\n';
       }
 
-      // Check if line ends with semicolon (end of statement)
+      // If line ends with semicolon, it's the end of a statement
       if (line.endsWith(';')) {
         const trimmed = currentStatement.trim();
         if (trimmed.length > 0) {
@@ -268,15 +251,17 @@ export class MigrationFeaturesController {
       }
     }
 
-    // Add any remaining statement
+    // Add any remaining statement (shouldn't happen in well-formed SQL, but handle it)
     if (currentStatement.trim().length > 0) {
       statements.push(currentStatement.trim());
     }
 
-    // Filter out empty statements
-    return statements
+    // Filter out empty statements and comments
+    const filtered = statements
       .map((s) => s.trim())
       .filter((s) => s.length > 0 && !s.startsWith('--'));
+
+    return filtered;
   }
 }
 
