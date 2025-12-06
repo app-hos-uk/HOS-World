@@ -860,6 +860,10 @@ export class ApiClient {
     phone?: string;
     avatar?: string;
     themePreference?: string;
+    country?: string;
+    whatsappNumber?: string;
+    preferredCommunicationMethod?: 'EMAIL' | 'SMS' | 'WHATSAPP' | 'PHONE';
+    currencyPreference?: string;
   }): Promise<ApiResponse<any>> {
     return this.request<ApiResponse<any>>('/users/profile', {
       method: 'PUT',

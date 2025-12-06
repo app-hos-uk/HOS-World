@@ -10,7 +10,7 @@ interface AdminLayoutProps {
 
 interface MenuItem {
   title: string;
-  href: string;
+  href?: string;
   icon: string;
   badge?: number;
   children?: MenuItem[];
@@ -103,7 +103,7 @@ export function AdminLayout({ children }: AdminLayoutProps) {
 
   const isParentActive = (item: MenuItem) => {
     if (item.children) {
-      return item.children.some((child) => isActive(child.href));
+      return item.children.some((child) => child.href && isActive(child.href));
     }
     return false;
   };
@@ -159,29 +159,36 @@ export function AdminLayout({ children }: AdminLayoutProps) {
                         {isExpanded && (
                           <ul className="ml-4 mt-1 space-y-1">
                             {item.children!.map((child) => (
-                              <li key={child.href}>
-                                <Link
-                                  href={child.href}
-                                  className={`flex items-center gap-2 px-3 py-2 text-sm rounded-lg transition-colors ${
-                                    isActive(child.href)
-                                      ? 'bg-purple-100 text-purple-700 font-medium'
-                                      : 'text-gray-600 hover:bg-gray-50'
-                                  }`}
-                                >
-                                  <span>{child.icon}</span>
-                                  <span>{child.title}</span>
-                                  {child.badge && (
-                                    <span className="ml-auto bg-red-500 text-white text-xs px-2 py-0.5 rounded-full">
-                                      {child.badge}
-                                    </span>
-                                  )}
-                                </Link>
+                              <li key={child.href || child.title}>
+                                {child.href ? (
+                                  <Link
+                                    href={child.href}
+                                    className={`flex items-center gap-2 px-3 py-2 text-sm rounded-lg transition-colors ${
+                                      isActive(child.href)
+                                        ? 'bg-purple-100 text-purple-700 font-medium'
+                                        : 'text-gray-600 hover:bg-gray-50'
+                                    }`}
+                                  >
+                                    <span>{child.icon}</span>
+                                    <span>{child.title}</span>
+                                    {child.badge && (
+                                      <span className="ml-auto bg-red-500 text-white text-xs px-2 py-0.5 rounded-full">
+                                        {child.badge}
+                                      </span>
+                                    )}
+                                  </Link>
+                                ) : (
+                                  <span className="flex items-center gap-2 px-3 py-2 text-sm text-gray-600">
+                                    <span>{child.icon}</span>
+                                    <span>{child.title}</span>
+                                  </span>
+                                )}
                               </li>
                             ))}
                           </ul>
                         )}
                       </>
-                    ) : (
+                    ) : item.href ? (
                       <Link
                         href={item.href}
                         className={`flex items-center gap-2 px-3 py-2 text-sm font-medium rounded-lg transition-colors ${
@@ -198,6 +205,11 @@ export function AdminLayout({ children }: AdminLayoutProps) {
                           </span>
                         )}
                       </Link>
+                    ) : (
+                      <span className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-gray-700">
+                        <span>{item.icon}</span>
+                        <span>{item.title}</span>
+                      </span>
                     )}
                   </li>
                 );
