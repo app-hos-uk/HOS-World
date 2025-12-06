@@ -27,32 +27,32 @@ model User {
   country                      String?
   whatsappNumber               String?
   preferredCommunicationMethod CommunicationMethod?
-  currencyPreference           String                  @default("GBP")
+  currencyPreference           String               @default("GBP")
   ipAddress                    String?
-  gdprConsent                  Boolean                 @default(false)
+  gdprConsent                  Boolean              @default(false)
   gdprConsentDate              DateTime?
   dataProcessingConsent        Json?
   countryDetectedAt            DateTime?
 
   // Relations
-  addresses       Address[]
-  orders          Order[]
-  cart            Cart?           @relation(fields: [cartId], references: [id])
-  sellerProfile   Seller?
-  customerProfile Customer?
-  loyaltyPoints   Int             @default(0)
-  themePreference String?
-  reviews         ProductReview[]
-  wishlistItems   WishlistItem[]
-  returnRequests  ReturnRequest[]
-  invitedSellers  SellerInvitation[] @relation("InvitedBy")
-  activityLogs    ActivityLog[]
-  transactions    Transaction[] @relation("CustomerTransactions")
-  supportTickets  SupportTicket[] @relation("UserTickets")
-  assignedTickets SupportTicket[] @relation("AssignedTickets")
-  ticketMessages  TicketMessage[] @relation("TicketMessages")
+  addresses             Address[]
+  orders                Order[]
+  cart                  Cart?                  @relation(fields: [cartId], references: [id])
+  sellerProfile         Seller?
+  customerProfile       Customer?
+  loyaltyPoints         Int                    @default(0)
+  themePreference       String?
+  reviews               ProductReview[]
+  wishlistItems         WishlistItem[]
+  returnRequests        ReturnRequest[]
+  invitedSellers        SellerInvitation[]     @relation("InvitedBy")
+  activityLogs          ActivityLog[]
+  transactions          Transaction[]          @relation("CustomerTransactions")
+  supportTickets        SupportTicket[]        @relation("UserTickets")
+  assignedTickets       SupportTicket[]        @relation("AssignedTickets")
+  ticketMessages        TicketMessage[]        @relation("TicketMessages")
   whatsappConversations WhatsAppConversation[]
-  cartId          String?
+  cartId                String?
 
   // Phase 6: Fandom Experience Relations
   characterAvatarId  String?
@@ -96,13 +96,13 @@ enum CommunicationMethod {
 
 // Customer profile
 model Customer {
-  id                String  @id @default(uuid())
-  userId            String  @unique
-  user              User    @relation(fields: [userId], references: [id], onDelete: Cascade)
-  loyaltyPoints     Int     @default(0)
-  themePreference   String?
-  country           String?
-  currencyPreference String @default("GBP")
+  id                 String  @id @default(uuid())
+  userId             String  @unique
+  user               User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  loyaltyPoints      Int     @default(0)
+  themePreference    String?
+  country            String?
+  currencyPreference String  @default("GBP")
 
   @@map("customers")
 }
@@ -133,15 +133,16 @@ model Seller {
   updatedAt              DateTime        @updatedAt
 
   // Relations
-  products      Product[]
-  orders        Order[]
-  themeSettings SellerThemeSettings?
-  submissions   ProductSubmission[]
-  settlements   Settlement[]
-  activityLogs  ActivityLog[]
-  discrepancies Discrepancy[]
-  supportTickets SupportTicket[]
+  products              Product[]
+  orders                Order[]
+  themeSettings         SellerThemeSettings?
+  submissions           ProductSubmission[]
+  settlements           Settlement[]
+  activityLogs          ActivityLog[]
+  discrepancies         Discrepancy[]
+  supportTickets        SupportTicket[]
   whatsappConversations WhatsAppConversation[]
+  transactions          Transaction[]
 
   @@map("sellers")
 }
@@ -356,7 +357,7 @@ model Order {
   orderSettlements  OrderSettlement[]
   transactions      Transaction[]
   discrepancies     Discrepancy[]
-  supportTickets    SupportTicket[] @relation("OrderTickets")
+  supportTickets    SupportTicket[]   @relation("OrderTickets")
   createdAt         DateTime          @default(now())
   updatedAt         DateTime          @updatedAt
 
@@ -449,20 +450,20 @@ model WishlistItem {
 
 // Return Request model
 model ReturnRequest {
-  id           String       @id @default(uuid())
+  id           String        @id @default(uuid())
   orderId      String
-  order        Order        @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  order        Order         @relation(fields: [orderId], references: [id], onDelete: Cascade)
   userId       String
-  user         User         @relation(fields: [userId], references: [id], onDelete: Cascade)
-  reason       String       @db.Text
-  status       ReturnStatus @default(PENDING)
-  refundAmount Decimal?     @db.Decimal(10, 2)
+  user         User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  reason       String        @db.Text
+  status       ReturnStatus  @default(PENDING)
+  refundAmount Decimal?      @db.Decimal(10, 2)
   refundMethod String?
-  notes        String?      @db.Text
+  notes        String?       @db.Text
   processedAt  DateTime?
   transactions Transaction[]
-  createdAt    DateTime     @default(now())
-  updatedAt    DateTime     @updatedAt
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
 
   @@map("return_requests")
 }
@@ -757,8 +758,8 @@ model Settlement {
 
   // Relations
   orderSettlements OrderSettlement[]
-  transactions    Transaction[]
-  discrepancies   Discrepancy[]
+  transactions     Transaction[]
+  discrepancies    Discrepancy[]
 
   @@map("settlements")
 }
@@ -938,12 +939,12 @@ model SharedItem {
 
 // Currency Exchange Rate model
 model CurrencyExchangeRate {
-  id            String   @id @default(uuid())
-  baseCurrency  String   @default("GBP")
+  id             String   @id @default(uuid())
+  baseCurrency   String   @default("GBP")
   targetCurrency String
-  rate          Decimal  @db.Decimal(10, 6)
-  cachedAt      DateTime @default(now())
-  expiresAt     DateTime
+  rate           Decimal  @db.Decimal(10, 6)
+  cachedAt       DateTime @default(now())
+  expiresAt      DateTime
 
   @@unique([baseCurrency, targetCurrency])
   @@map("currency_exchange_rates")
@@ -951,10 +952,10 @@ model CurrencyExchangeRate {
 
 // GDPR Consent Log model
 model GDPRConsentLog {
-  id          String   @id @default(uuid())
+  id          String    @id @default(uuid())
   userId      String
-  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  consentType String   // "MARKETING", "ANALYTICS", "ESSENTIAL", etc.
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  consentType String // "MARKETING", "ANALYTICS", "ESSENTIAL", etc.
   granted     Boolean
   grantedAt   DateTime
   revokedAt   DateTime?
@@ -966,18 +967,18 @@ model GDPRConsentLog {
 
 // Seller Invitation model
 model SellerInvitation {
-  id          String            @id @default(uuid())
-  email       String
-  sellerType  SellerType
-  invitedBy   String
-  user        User              @relation("InvitedBy", fields: [invitedBy], references: [id])
-  token       String            @unique
-  status      InvitationStatus  @default(PENDING)
-  expiresAt   DateTime
-  acceptedAt  DateTime?
-  message     String?           @db.Text
-  createdAt   DateTime          @default(now())
-  updatedAt   DateTime          @updatedAt
+  id         String           @id @default(uuid())
+  email      String
+  sellerType SellerType
+  invitedBy  String
+  user       User             @relation("InvitedBy", fields: [invitedBy], references: [id])
+  token      String           @unique
+  status     InvitationStatus @default(PENDING)
+  expiresAt  DateTime
+  acceptedAt DateTime?
+  message    String?          @db.Text
+  createdAt  DateTime         @default(now())
+  updatedAt  DateTime         @updatedAt
 
   @@index([email])
   @@index([token])
@@ -998,11 +999,11 @@ model ActivityLog {
   user        User?    @relation(fields: [userId], references: [id])
   sellerId    String?
   seller      Seller?  @relation(fields: [sellerId], references: [id])
-  action      String   // e.g., "PRODUCT_CREATED", "ORDER_FULFILLED"
-  entityType  String   // e.g., "Product", "Order"
+  action      String // e.g., "PRODUCT_CREATED", "ORDER_FULFILLED"
+  entityType  String // e.g., "Product", "Order"
   entityId    String?
   description String   @db.Text
-  metadata    Json?    // Before/after states, additional context
+  metadata    Json? // Before/after states, additional context
   ipAddress   String?
   userAgent   String?
   createdAt   DateTime @default(now())
@@ -1019,22 +1020,22 @@ model Transaction {
   id            String            @id @default(uuid())
   type          TransactionType
   amount        Decimal           @db.Decimal(10, 2)
-  currency      String             @default("GBP")
-  status        TransactionStatus  @default(PENDING)
+  currency      String            @default("GBP")
+  status        TransactionStatus @default(PENDING)
   sellerId      String?
   seller        Seller?           @relation(fields: [sellerId], references: [id])
   customerId    String?
-  customer      User?              @relation("CustomerTransactions", fields: [customerId], references: [id])
+  customer      User?             @relation("CustomerTransactions", fields: [customerId], references: [id])
   orderId       String?
-  order         Order?             @relation(fields: [orderId], references: [id])
+  order         Order?            @relation(fields: [orderId], references: [id])
   settlementId  String?
-  settlement    Settlement?        @relation(fields: [settlementId], references: [id])
+  settlement    Settlement?       @relation(fields: [settlementId], references: [id])
   returnId      String?
-  returnRequest ReturnRequest?     @relation(fields: [returnId], references: [id])
-  description   String?            @db.Text
+  returnRequest ReturnRequest?    @relation(fields: [returnId], references: [id])
+  description   String?           @db.Text
   metadata      Json?
-  createdAt     DateTime           @default(now())
-  updatedAt     DateTime           @updatedAt
+  createdAt     DateTime          @default(now())
+  updatedAt     DateTime          @updatedAt
 
   @@index([sellerId])
   @@index([customerId])
@@ -1113,25 +1114,26 @@ enum DiscrepancyStatus {
 
 // Support Ticket model
 model SupportTicket {
-  id            String          @id @default(uuid())
-  ticketNumber  String          @unique
-  userId        String?
-  user          User?           @relation("UserTickets", fields: [userId], references: [id])
-  sellerId      String?
-  seller        Seller?         @relation(fields: [sellerId], references: [id])
-  orderId       String?
-  order         Order?          @relation("OrderTickets", fields: [orderId], references: [id])
-  subject       String
-  category      TicketCategory
-  priority      TicketPriority  @default(MEDIUM)
-  status        TicketStatus    @default(OPEN)
-  assignedTo    String?
-  assignedAgent User?           @relation("AssignedTickets", fields: [assignedTo], references: [id])
-  slaDueAt      DateTime?
-  messages      TicketMessage[]
-  createdAt     DateTime        @default(now())
-  updatedAt     DateTime        @updatedAt
-  resolvedAt    DateTime?
+  id                    String                 @id @default(uuid())
+  ticketNumber          String                 @unique
+  userId                String?
+  user                  User?                  @relation("UserTickets", fields: [userId], references: [id])
+  sellerId              String?
+  seller                Seller?                @relation(fields: [sellerId], references: [id])
+  orderId               String?
+  order                 Order?                 @relation("OrderTickets", fields: [orderId], references: [id])
+  subject               String
+  category              TicketCategory
+  priority              TicketPriority         @default(MEDIUM)
+  status                TicketStatus           @default(OPEN)
+  assignedTo            String?
+  assignedAgent         User?                  @relation("AssignedTickets", fields: [assignedTo], references: [id])
+  slaDueAt              DateTime?
+  messages              TicketMessage[]
+  whatsappConversations WhatsAppConversation[]
+  createdAt             DateTime               @default(now())
+  updatedAt             DateTime               @updatedAt
+  resolvedAt            DateTime?
 
   @@index([userId])
   @@index([sellerId])
@@ -1143,15 +1145,15 @@ model SupportTicket {
 }
 
 model TicketMessage {
-  id        String        @id @default(uuid())
-  ticketId  String
-  ticket    SupportTicket @relation(fields: [ticketId], references: [id], onDelete: Cascade)
-  userId    String?
-  user      User?         @relation("TicketMessages", fields: [userId], references: [id])
-  content   String        @db.Text
-  isInternal Boolean      @default(false)
+  id          String        @id @default(uuid())
+  ticketId    String
+  ticket      SupportTicket @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+  userId      String?
+  user        User?         @relation("TicketMessages", fields: [userId], references: [id])
+  content     String        @db.Text
+  isInternal  Boolean       @default(false)
   attachments Json?
-  createdAt DateTime      @default(now())
+  createdAt   DateTime      @default(now())
 
   @@index([ticketId])
   @@index([userId])
@@ -1207,19 +1209,19 @@ model KnowledgeBaseArticle {
 
 // WhatsApp Conversation model
 model WhatsAppConversation {
-  id            String              @id @default(uuid())
+  id            String             @id @default(uuid())
   phoneNumber   String
   userId        String?
-  user          User?               @relation(fields: [userId], references: [id])
+  user          User?              @relation(fields: [userId], references: [id])
   sellerId      String?
-  seller        Seller?             @relation(fields: [sellerId], references: [id])
+  seller        Seller?            @relation(fields: [sellerId], references: [id])
   ticketId      String?
-  ticket        SupportTicket?       @relation(fields: [ticketId], references: [id])
-  status        ConversationStatus   @default(ACTIVE)
+  ticket        SupportTicket?     @relation(fields: [ticketId], references: [id])
+  status        ConversationStatus @default(ACTIVE)
   lastMessageAt DateTime?
   messages      WhatsAppMessage[]
-  createdAt      DateTime            @default(now())
-  updatedAt      DateTime            @updatedAt
+  createdAt     DateTime           @default(now())
+  updatedAt     DateTime           @updatedAt
 
   @@index([phoneNumber])
   @@index([userId])
@@ -1229,18 +1231,18 @@ model WhatsAppConversation {
 }
 
 model WhatsAppMessage {
-  id             String              @id @default(uuid())
+  id             String               @id @default(uuid())
   conversationId String
   conversation   WhatsAppConversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
-  messageId      String              @unique
+  messageId      String               @unique
   direction      MessageDirection
-  content        String              @db.Text
+  content        String               @db.Text
   mediaUrl       String?
-  status         MessageStatus       @default(SENT)
+  status         MessageStatus        @default(SENT)
   deliveredAt    DateTime?
   readAt         DateTime?
   metadata       Json?
-  createdAt      DateTime            @default(now())
+  createdAt      DateTime             @default(now())
 
   @@index([conversationId])
   @@index([messageId])
@@ -1250,15 +1252,15 @@ model WhatsAppMessage {
 }
 
 model WhatsAppTemplate {
-  id          String   @id @default(uuid())
-  name        String   @unique
-  category    String
-  content     String   @db.Text
-  variables   String[]
-  isActive    Boolean  @default(true)
-  approvedBy  String?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id         String   @id @default(uuid())
+  name       String   @unique
+  category   String
+  content    String   @db.Text
+  variables  String[]
+  isActive   Boolean  @default(true)
+  approvedBy String?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
 
   @@index([category])
   @@index([isActive])

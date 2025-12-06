@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { apiClient } from '@/lib/api-client';
+import { apiClient } from '@/lib/api';
 import AdminLayout from '@/components/AdminLayout';
 import RouteGuard from '@/components/RouteGuard';
 
