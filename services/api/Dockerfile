@@ -76,12 +76,21 @@ COPY --from=base /app/package.json ./
 COPY --from=base /app/pnpm-lock.yaml ./
 COPY --from=base /app/pnpm-workspace.yaml ./
 COPY --from=base /app/services/api/package.json ./services/api/
-COPY --from=base /app/packages ./packages
+
+# Copy all package.json files from packages (needed for workspace resolution)
+COPY --from=base /app/packages/shared-types/package.json ./packages/shared-types/
+COPY --from=base /app/packages/api-client/package.json ./packages/api-client/
+COPY --from=base /app/packages/theme-system/package.json ./packages/theme-system/
+COPY --from=base /app/packages/utils/package.json ./packages/utils/
+COPY --from=base /app/packages/cms-client/package.json ./packages/cms-client/
 
 # Install all dependencies (needed for workspace packages, Prisma, and native modules)
 # Set environment to force native module compilation
 ENV npm_config_build_from_source=true
 RUN pnpm install --no-frozen-lockfile
+
+# Copy built packages (with dist folders) after install to preserve built files
+COPY --from=base /app/packages ./packages
 
 # Explicitly rebuild bcrypt native module - try multiple methods
 RUN cd /app && \
