@@ -71,15 +71,21 @@ export default function FinanceDashboardPage() {
                 </div>
                 <div className="bg-white border rounded-lg p-4 sm:p-6">
                   <h3 className="text-sm sm:text-base lg:text-lg font-semibold mb-2">Total Revenue</h3>
-                  <p className="text-2xl sm:text-3xl font-bold">$0</p>
+                  <p className="text-2xl sm:text-3xl font-bold">
+                    ${dashboardData?.totalRevenue?.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) || '0.00'}
+                  </p>
                 </div>
                 <div className="bg-white border rounded-lg p-4 sm:p-6">
                   <h3 className="text-sm sm:text-base lg:text-lg font-semibold mb-2">Platform Fees</h3>
-                  <p className="text-2xl sm:text-3xl font-bold">$0</p>
+                  <p className="text-2xl sm:text-3xl font-bold">
+                    ${dashboardData?.platformFees?.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) || '0.00'}
+                  </p>
                 </div>
                 <div className="bg-white border rounded-lg p-4 sm:p-6">
                   <h3 className="text-sm sm:text-base lg:text-lg font-semibold mb-2">Payouts Pending</h3>
-                  <p className="text-2xl sm:text-3xl font-bold">$0</p>
+                  <p className="text-2xl sm:text-3xl font-bold">
+                    ${dashboardData?.payoutsPending?.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) || '0.00'}
+                  </p>
                 </div>
               </div>
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">

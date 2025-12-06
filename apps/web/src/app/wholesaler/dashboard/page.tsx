@@ -82,7 +82,7 @@ export default function WholesalerDashboardPage() {
                 </div>
                 <div className="bg-white border rounded-lg p-4 sm:p-6">
                   <h3 className="text-sm sm:text-base lg:text-lg font-semibold mb-2">Pending Payments</h3>
-                  <p className="text-2xl sm:text-3xl font-bold">-</p>
+                  <p className="text-2xl sm:text-3xl font-bold">{dashboardData?.pendingPayments?.toLocaleString() || '0'}</p>
                 </div>
               </div>
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:p-6">

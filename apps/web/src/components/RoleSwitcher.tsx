@@ -112,11 +112,28 @@ export function RoleSwitcher() {
     }
   };
 
+  const handleBackToAdmin = () => {
+    handleRoleSwitch(null);
+  };
+
   const currentEffectiveRole = effectiveRole || user.role;
   const isImpersonating = !!impersonatedRole;
 
   return (
-    <div className="relative">
+    <div className="relative flex items-center gap-2">
+      {/* Back to Admin button - Show when impersonating */}
+      {isImpersonating && (
+        <button
+          onClick={handleBackToAdmin}
+          className="px-3 py-2 text-sm bg-gradient-to-r from-green-600 to-green-700 hover:from-green-500 hover:to-green-600 text-white font-semibold rounded-lg transition-all duration-300 flex items-center gap-1.5"
+          title="Return to Admin Dashboard"
+        >
+          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+          Back to Admin
+        </button>
+      )}
       <button
         onClick={() => setIsOpen(!isOpen)}
         className={`

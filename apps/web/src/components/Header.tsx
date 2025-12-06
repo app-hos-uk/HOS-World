@@ -14,8 +14,24 @@ export function Header() {
   const { user, isAuthenticated, logout, hasRole, impersonatedRole, effectiveRole, switchRole } = useAuth();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
-  // Check if we're on a dashboard page
-  const isDashboardPage = pathname?.includes('/dashboard') || pathname?.includes('/admin') || pathname?.includes('/seller') || pathname?.includes('/wholesaler') || pathname?.includes('/procurement') || pathname?.includes('/fulfillment') || pathname?.includes('/catalog') || pathname?.includes('/marketing') || pathname?.includes('/finance');
+  // Check if we're on a dashboard page - be more specific to avoid hiding menus on non-dashboard pages
+  const isDashboardPage = pathname?.includes('/dashboard') || 
+    pathname === '/admin/dashboard' ||
+    pathname === '/seller/dashboard' ||
+    pathname === '/wholesaler/dashboard' ||
+    pathname === '/procurement/dashboard' ||
+    pathname === '/fulfillment/dashboard' ||
+    pathname === '/catalog/dashboard' ||
+    pathname === '/marketing/dashboard' ||
+    pathname === '/finance/dashboard' ||
+    pathname?.startsWith('/admin/') && pathname !== '/admin' ||
+    pathname?.startsWith('/seller/') && pathname !== '/seller' ||
+    pathname?.startsWith('/wholesaler/') ||
+    pathname?.startsWith('/procurement/') ||
+    pathname?.startsWith('/fulfillment/') ||
+    pathname?.startsWith('/catalog/') ||
+    pathname?.startsWith('/marketing/') ||
+    pathname?.startsWith('/finance/');
 
   const toggleMobileMenu = () => {
     setIsMobileMenuOpen(!isMobileMenuOpen);
@@ -119,12 +135,12 @@ export function Header() {
                 >
                   Dashboard
                 </Link>
-                {/* Role Switcher - Show on all dashboards when admin is impersonating */}
-                {(user.role === 'ADMIN' || impersonatedRole) && isDashboardPage && (
+                {/* Role Switcher - Show on all dashboards when admin is logged in */}
+                {user.role === 'ADMIN' && isDashboardPage && (
                   <RoleSwitcher />
                 )}
-                {/* Back to Admin button when impersonating */}
-                {impersonatedRole && user.role === 'ADMIN' && (
+                {/* Back to Admin button when impersonating - Only show if RoleSwitcher is not visible */}
+                {impersonatedRole && user.role === 'ADMIN' && !isDashboardPage && (
                   <button
                     onClick={handleBackToAdmin}
                     className="px-3 lg:px-4 py-1.5 lg:py-2 text-sm lg:text-base bg-gradient-to-r from-green-600 to-green-700 hover:from-green-500 hover:to-green-600 text-white font-semibold rounded-lg transition-all duration-300 font-primary flex items-center gap-2"
@@ -135,12 +151,6 @@ export function Header() {
                     </svg>
                     Back to Admin
                   </button>
-                )}
-                {impersonatedRole && (
-                  <span className="text-xs lg:text-sm px-2 py-1 bg-amber-500 text-white rounded-full font-medium flex items-center gap-1">
-                    <span className="inline-block w-1.5 h-1.5 bg-white rounded-full animate-pulse"></span>
-                    Viewing as {ROLE_LABELS[impersonatedRole]}
-                  </span>
                 )}
                 <span className="text-sm lg:text-base text-purple-700 font-medium">
                   {user.email}
@@ -221,13 +231,13 @@ export function Header() {
                     Dashboard
                   </Link>
                   {/* Role Switcher for mobile */}
-                  {(user.role === 'ADMIN' || impersonatedRole) && isDashboardPage && (
+                  {user.role === 'ADMIN' && isDashboardPage && (
                     <div className="px-2">
                       <RoleSwitcher />
                     </div>
                   )}
-                  {/* Back to Admin button when impersonating */}
-                  {impersonatedRole && user.role === 'ADMIN' && (
+                  {/* Back to Admin button when impersonating - Only show if RoleSwitcher is not visible */}
+                  {impersonatedRole && user.role === 'ADMIN' && !isDashboardPage && (
                     <button
                       onClick={() => {
                         handleBackToAdmin();
@@ -240,12 +250,6 @@ export function Header() {
                       </svg>
                       Back to Admin
                     </button>
-                  )}
-                  {impersonatedRole && (
-                    <div className="px-4 py-2 text-xs bg-amber-500 text-white rounded-lg font-medium flex items-center gap-1">
-                      <span className="inline-block w-1.5 h-1.5 bg-white rounded-full animate-pulse"></span>
-                      Viewing as {ROLE_LABELS[impersonatedRole]}
-                    </div>
                   )}
                   <div className="px-4 py-2 text-base text-purple-700 font-medium">
                     {user.email}
