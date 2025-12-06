@@ -151,13 +151,13 @@ export class MigrationFeaturesController {
       }
     }
 
-    // Check if Product table has isPlatformOwned column
+    // Check if Product table has isPlatformOwned column (table name is 'products' in database)
     try {
       const result = await this.prisma.$queryRawUnsafe(
         `SELECT EXISTS (
           SELECT FROM information_schema.columns 
           WHERE table_schema = 'public' 
-          AND table_name = 'Product' 
+          AND table_name = 'products' 
           AND column_name = 'isPlatformOwned'
         );`,
       );
@@ -166,13 +166,13 @@ export class MigrationFeaturesController {
       checks['productIsPlatformOwnedColumnExists'] = false;
     }
 
-    // Check if Product.sellerId is nullable
+    // Check if Product.sellerId is nullable (table name is 'products' in database)
     try {
       const result = await this.prisma.$queryRawUnsafe(
         `SELECT is_nullable 
          FROM information_schema.columns 
          WHERE table_schema = 'public' 
-         AND table_name = 'Product' 
+         AND table_name = 'products' 
          AND column_name = 'sellerId';`,
       );
       checks['productSellerIdNullable'] = (result as any)[0]?.is_nullable === 'YES';
