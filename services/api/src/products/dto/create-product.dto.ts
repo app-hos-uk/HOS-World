@@ -122,16 +122,55 @@ export class CreateProductDto {
 
   @IsOptional()
   @IsString()
-  category?: string;
+  category?: string; // Keep for backward compatibility
 
   @IsOptional()
   @IsArray()
   @IsString({ each: true })
-  tags?: string[];
+  tags?: string[]; // Keep for backward compatibility
+
+  @IsOptional()
+  @IsString()
+  categoryId?: string; // New: taxonomy category ID
+
+  @IsOptional()
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => ProductAttributeDto)
+  attributes?: ProductAttributeDto[]; // New: product attributes
+
+  @IsOptional()
+  @IsArray()
+  @IsString({ each: true })
+  tagIds?: string[]; // New: taxonomy tag IDs
 
   @IsOptional()
   @IsEnum(ProductStatus)
   status?: ProductStatus;
+}
+
+export class ProductAttributeDto {
+  @IsString()
+  attributeId: string;
+
+  @IsOptional()
+  @IsString()
+  attributeValueId?: string; // For SELECT type attributes
+
+  @IsOptional()
+  @IsString()
+  textValue?: string; // For TEXT type
+
+  @IsOptional()
+  @IsNumber()
+  numberValue?: number; // For NUMBER type
+
+  @IsOptional()
+  @IsBoolean()
+  booleanValue?: boolean; // For BOOLEAN type
+
+  @IsOptional()
+  dateValue?: string; // For DATE type (ISO string)
 }
 
 

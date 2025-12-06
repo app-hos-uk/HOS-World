@@ -52,6 +52,7 @@ import { ActivityModule } from './activity/activity.module';
 import { DiscrepanciesModule } from './discrepancies/discrepancies.module';
 import { SupportModule } from './support/support.module';
 import { WhatsAppModule } from './whatsapp/whatsapp.module';
+import { TaxonomyModule } from './taxonomy/taxonomy.module';
 import { JwtAuthGuard } from './common/guards/jwt-auth.guard';
 
 @Module({
@@ -110,6 +111,7 @@ import { JwtAuthGuard } from './common/guards/jwt-auth.guard';
     DiscrepanciesModule,
     SupportModule,
     WhatsAppModule,
+    TaxonomyModule,
   ],
   controllers: [AppController],
   providers: [

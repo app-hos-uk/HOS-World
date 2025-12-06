@@ -40,6 +40,51 @@ export class ProductsService {
       counter++;
     }
 
+    // Validate categoryId if provided
+    if (createProductDto.categoryId) {
+      const category = await this.prisma.category.findUnique({
+        where: { id: createProductDto.categoryId },
+      });
+      if (!category) {
+        throw new NotFoundException('Category not found');
+      }
+    }
+
+    // Validate tagIds if provided
+    if (createProductDto.tagIds && createProductDto.tagIds.length > 0) {
+      const tags = await this.prisma.tag.findMany({
+        where: { id: { in: createProductDto.tagIds } },
+      });
+      if (tags.length !== createProductDto.tagIds.length) {
+        throw new BadRequestException('One or more tags not found');
+      }
+    }
+
+    // Validate attributes if provided
+    if (createProductDto.attributes && createProductDto.attributes.length > 0) {
+      const attributeIds = [...new Set(createProductDto.attributes.map(a => a.attributeId))];
+      const attributes = await this.prisma.attribute.findMany({
+        where: { id: { in: attributeIds } },
+        include: { values: true },
+      });
+      if (attributes.length !== attributeIds.length) {
+        throw new BadRequestException('One or more attributes not found');
+      }
+
+      // Validate attribute values for SELECT type
+      for (const attrDto of createProductDto.attributes) {
+        const attribute = attributes.find(a => a.id === attrDto.attributeId);
+        if (!attribute) continue;
+
+        if (attribute.type === 'SELECT' && attrDto.attributeValueId) {
+          const valueExists = attribute.values.some(v => v.id === attrDto.attributeValueId);
+          if (!valueExists) {
+            throw new BadRequestException(`Attribute value not found for attribute ${attribute.name}`);
+          }
+        }
+      }
+    }
+
     // Create product
     const product = await this.prisma.product.create({
       data: {
@@ -57,8 +102,9 @@ export class ProductsService {
         taxRate: createProductDto.taxRate || 0,
         stock: createProductDto.stock,
         fandom: createProductDto.fandom,
-        category: createProductDto.category,
-        tags: createProductDto.tags || [],
+        category: createProductDto.category, // Keep for backward compatibility
+        tags: createProductDto.tags || [], // Keep for backward compatibility
+        categoryId: createProductDto.categoryId, // New taxonomy field
         status: createProductDto.status || 'DRAFT',
         images: {
           create: createProductDto.images.map((img, index) => ({
@@ -76,6 +122,24 @@ export class ProductsService {
               })),
             }
           : undefined,
+        // New taxonomy relations
+        tagsRelation: createProductDto.tagIds && createProductDto.tagIds.length > 0
+          ? {
+              create: createProductDto.tagIds.map(tagId => ({ tagId })),
+            }
+          : undefined,
+        attributes: createProductDto.attributes && createProductDto.attributes.length > 0
+          ? {
+              create: createProductDto.attributes.map(attr => ({
+                attributeId: attr.attributeId,
+                attributeValueId: attr.attributeValueId,
+                textValue: attr.textValue,
+                numberValue: attr.numberValue,
+                booleanValue: attr.booleanValue,
+                dateValue: attr.dateValue ? new Date(attr.dateValue) : undefined,
+              })),
+            }
+          : undefined,
       },
       include: {
         images: true,
@@ -85,6 +149,30 @@ export class ProductsService {
             id: true,
             storeName: true,
             slug: true,
+          },
+        },
+        categoryRelation: {
+          include: {
+            parent: {
+              include: {
+                parent: true,
+              },
+            },
+          },
+        },
+        tagsRelation: {
+          include: {
+            tag: true,
+          },
+        },
+        attributes: {
+          include: {
+            attribute: {
+              include: {
+                values: true,
+              },
+            },
+            attributeValue: true,
           },
         },
       },
@@ -116,7 +204,45 @@ export class ProductsService {
     }
 
     if (searchDto.category) {
-      where.category = searchDto.category;
+      where.category = searchDto.category; // Backward compatibility
+    }
+
+    if (searchDto.categoryId) {
+      where.categoryId = searchDto.categoryId;
+    }
+
+    if (searchDto.tagIds && searchDto.tagIds.length > 0) {
+      where.tagsRelation = {
+        some: {
+          tagId: { in: searchDto.tagIds },
+        },
+      };
+    }
+
+    if (searchDto.attributeFilters && searchDto.attributeFilters.length > 0) {
+      where.attributes = {
+        some: {
+          OR: searchDto.attributeFilters.map(filter => {
+            const condition: any = { attributeId: filter.attributeId };
+            if (filter.value) {
+              condition.OR = [
+                { textValue: filter.value },
+                { attributeValue: { slug: filter.value } },
+              ];
+            }
+            if (filter.minValue !== undefined || filter.maxValue !== undefined) {
+              condition.numberValue = {};
+              if (filter.minValue !== undefined) {
+                condition.numberValue.gte = filter.minValue;
+              }
+              if (filter.maxValue !== undefined) {
+                condition.numberValue.lte = filter.maxValue;
+              }
+            }
+            return condition;
+          }),
+        },
+      };
     }
 
     if (searchDto.sellerId) {
@@ -178,6 +304,30 @@ export class ProductsService {
             orderBy: { order: 'asc' },
           },
           variations: true,
+          categoryRelation: {
+            include: {
+              parent: {
+                include: {
+                  parent: true,
+                },
+              },
+            },
+          },
+          tagsRelation: {
+            include: {
+              tag: true,
+            },
+          },
+          attributes: {
+            include: {
+              attribute: {
+                include: {
+                  values: true,
+                },
+              },
+              attributeValue: true,
+            },
+          },
           // Seller information hidden for identity privacy
         },
       }),
@@ -203,6 +353,30 @@ export class ProductsService {
           orderBy: { order: 'asc' },
         },
         variations: true,
+        categoryRelation: {
+          include: {
+            parent: {
+              include: {
+                parent: true,
+              },
+            },
+          },
+        },
+        tagsRelation: {
+          include: {
+            tag: true,
+          },
+        },
+        attributes: {
+          include: {
+            attribute: {
+              include: {
+                values: true,
+              },
+            },
+            attributeValue: true,
+          },
+        },
         ...(includeSeller ? {
           seller: {
             select: {
@@ -243,6 +417,30 @@ export class ProductsService {
           orderBy: { order: 'asc' },
         },
         variations: true,
+        categoryRelation: {
+          include: {
+            parent: {
+              include: {
+                parent: true,
+              },
+            },
+          },
+        },
+        tagsRelation: {
+          include: {
+            tag: true,
+          },
+        },
+        attributes: {
+          include: {
+            attribute: {
+              include: {
+                values: true,
+              },
+            },
+            attributeValue: true,
+          },
+        },
         ...(includeSeller ? {
           seller: {
             select: {
@@ -270,6 +468,30 @@ export class ProductsService {
           orderBy: { order: 'asc' },
         },
         variations: true,
+        categoryRelation: {
+          include: {
+            parent: {
+              include: {
+                parent: true,
+              },
+            },
+          },
+        },
+        tagsRelation: {
+          include: {
+            tag: true,
+          },
+        },
+        attributes: {
+          include: {
+            attribute: {
+              include: {
+                values: true,
+              },
+            },
+            attributeValue: true,
+          },
+        },
         ...(includeSeller ? {
           seller: {
             select: {
@@ -312,26 +534,112 @@ export class ProductsService {
       throw new ForbiddenException('You do not have permission to update this product');
     }
 
+    // Validate categoryId if provided
+    if (updateProductDto.categoryId !== undefined) {
+      if (updateProductDto.categoryId) {
+        const category = await this.prisma.category.findUnique({
+          where: { id: updateProductDto.categoryId },
+        });
+        if (!category) {
+          throw new NotFoundException('Category not found');
+        }
+      }
+    }
+
+    // Validate tagIds if provided
+    if (updateProductDto.tagIds && updateProductDto.tagIds.length > 0) {
+      const tags = await this.prisma.tag.findMany({
+        where: { id: { in: updateProductDto.tagIds } },
+      });
+      if (tags.length !== updateProductDto.tagIds.length) {
+        throw new BadRequestException('One or more tags not found');
+      }
+    }
+
+    // Validate attributes if provided
+    if (updateProductDto.attributes && updateProductDto.attributes.length > 0) {
+      const attributeIds = [...new Set(updateProductDto.attributes.map(a => a.attributeId))];
+      const attributes = await this.prisma.attribute.findMany({
+        where: { id: { in: attributeIds } },
+        include: { values: true },
+      });
+      if (attributes.length !== attributeIds.length) {
+        throw new BadRequestException('One or more attributes not found');
+      }
+
+      // Validate attribute values for SELECT type
+      for (const attrDto of updateProductDto.attributes) {
+        const attribute = attributes.find(a => a.id === attrDto.attributeId);
+        if (!attribute) continue;
+
+        if (attribute.type === 'SELECT' && attrDto.attributeValueId) {
+          const valueExists = attribute.values.some(v => v.id === attrDto.attributeValueId);
+          if (!valueExists) {
+            throw new BadRequestException(`Attribute value not found for attribute ${attribute.name}`);
+          }
+        }
+      }
+    }
+
+    // Prepare update data
+    const updateData: any = {
+      name: updateProductDto.name,
+      description: updateProductDto.description,
+      sku: updateProductDto.sku,
+      barcode: updateProductDto.barcode,
+      ean: updateProductDto.ean,
+      price: updateProductDto.price,
+      tradePrice: updateProductDto.tradePrice,
+      rrp: updateProductDto.rrp,
+      currency: updateProductDto.currency,
+      taxRate: updateProductDto.taxRate,
+      stock: updateProductDto.stock,
+      fandom: updateProductDto.fandom,
+      category: updateProductDto.category, // Backward compatibility
+      tags: updateProductDto.tags, // Backward compatibility
+      categoryId: updateProductDto.categoryId,
+      status: updateProductDto.status,
+    };
+
+    // Handle tagsRelation update
+    if (updateProductDto.tagIds !== undefined) {
+      // Delete existing tags
+      await this.prisma.productTag.deleteMany({
+        where: { productId },
+      });
+      // Create new tags
+      if (updateProductDto.tagIds.length > 0) {
+        updateData.tagsRelation = {
+          create: updateProductDto.tagIds.map(tagId => ({ tagId })),
+        };
+      }
+    }
+
+    // Handle attributes update
+    if (updateProductDto.attributes !== undefined) {
+      // Delete existing attributes
+      await this.prisma.productAttribute.deleteMany({
+        where: { productId },
+      });
+      // Create new attributes
+      if (updateProductDto.attributes.length > 0) {
+        updateData.attributes = {
+          create: updateProductDto.attributes.map(attr => ({
+            attributeId: attr.attributeId,
+            attributeValueId: attr.attributeValueId,
+            textValue: attr.textValue,
+            numberValue: attr.numberValue,
+            booleanValue: attr.booleanValue,
+            dateValue: attr.dateValue ? new Date(attr.dateValue) : undefined,
+          })),
+        };
+      }
+    }
+
     // Update product
     const updated = await this.prisma.product.update({
       where: { id: productId },
-      data: {
-        name: updateProductDto.name,
-        description: updateProductDto.description,
-        sku: updateProductDto.sku,
-        barcode: updateProductDto.barcode,
-        ean: updateProductDto.ean,
-        price: updateProductDto.price,
-        tradePrice: updateProductDto.tradePrice,
-        rrp: updateProductDto.rrp,
-        currency: updateProductDto.currency,
-        taxRate: updateProductDto.taxRate,
-        stock: updateProductDto.stock,
-        fandom: updateProductDto.fandom,
-        category: updateProductDto.category,
-        tags: updateProductDto.tags,
-        status: updateProductDto.status,
-      },
+      data: updateData,
       include: {
         images: {
           orderBy: { order: 'asc' },
@@ -342,6 +650,30 @@ export class ProductsService {
             id: true,
             storeName: true,
             slug: true,
+          },
+        },
+        categoryRelation: {
+          include: {
+            parent: {
+              include: {
+                parent: true,
+              },
+            },
+          },
+        },
+        tagsRelation: {
+          include: {
+            tag: true,
+          },
+        },
+        attributes: {
+          include: {
+            attribute: {
+              include: {
+                values: true,
+              },
+            },
+            attributeValue: true,
           },
         },
       },
@@ -389,25 +721,86 @@ export class ProductsService {
       currency: product.currency,
       taxRate: Number(product.taxRate),
       stock: product.stock,
-      images: product.images.map((img: any) => ({
+      images: product.images?.map((img: any) => ({
         id: img.id,
         url: img.url,
         alt: img.alt || undefined,
         order: img.order,
         type: img.type.toLowerCase() as any,
-      })),
+      })) || [],
       variations: product.variations?.map((v: any) => ({
         id: v.id,
         name: v.name,
         options: Array.isArray(v.options) ? v.options : [],
-      })),
+      })) || [],
       fandom: product.fandom || undefined,
-      category: product.category || undefined,
-      tags: product.tags || [],
+      category: product.category || undefined, // Backward compatibility
+      tags: product.tags || [], // Backward compatibility
       status: product.status.toLowerCase() as any,
       createdAt: product.createdAt,
       updatedAt: product.updatedAt,
     };
+
+    // Add taxonomy data if available
+    if (product.categoryRelation) {
+      mapped.categoryId = product.categoryRelation.id;
+      mapped.categoryData = {
+        id: product.categoryRelation.id,
+        name: product.categoryRelation.name,
+        slug: product.categoryRelation.slug,
+        path: product.categoryRelation.path,
+        level: product.categoryRelation.level,
+        parent: product.categoryRelation.parent ? {
+          id: product.categoryRelation.parent.id,
+          name: product.categoryRelation.parent.name,
+          slug: product.categoryRelation.parent.slug,
+        } : undefined,
+      };
+    }
+
+    if (product.tagsRelation && product.tagsRelation.length > 0) {
+      mapped.tagIds = product.tagsRelation.map((pt: any) => pt.tagId);
+      mapped.tagsData = product.tagsRelation.map((pt: any) => ({
+        id: pt.tag.id,
+        name: pt.tag.name,
+        slug: pt.tag.slug,
+        category: pt.tag.category,
+      }));
+    }
+
+    if (product.attributes && product.attributes.length > 0) {
+      mapped.attributes = product.attributes.map((pa: any) => {
+        const attr: any = {
+          id: pa.id,
+          attributeId: pa.attributeId,
+          attribute: {
+            id: pa.attribute.id,
+            name: pa.attribute.name,
+            slug: pa.attribute.slug,
+            type: pa.attribute.type,
+          },
+        };
+
+        // Add value based on attribute type
+        if (pa.attribute.type === 'SELECT' && pa.attributeValue) {
+          attr.value = {
+            id: pa.attributeValue.id,
+            value: pa.attributeValue.value,
+            slug: pa.attributeValue.slug,
+          };
+        } else if (pa.attribute.type === 'TEXT' && pa.textValue) {
+          attr.value = pa.textValue;
+        } else if (pa.attribute.type === 'NUMBER' && pa.numberValue !== null) {
+          attr.value = Number(pa.numberValue);
+        } else if (pa.attribute.type === 'BOOLEAN' && pa.booleanValue !== null) {
+          attr.value = pa.booleanValue;
+        } else if (pa.attribute.type === 'DATE' && pa.dateValue) {
+          attr.value = pa.dateValue.toISOString();
+        }
+
+        return attr;
+      });
+    }
 
     // Only include seller information if explicitly requested (e.g., at payment page)
     if (includeSeller && product.seller) {

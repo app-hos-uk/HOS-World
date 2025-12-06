@@ -1,4 +1,4 @@
-import { IsOptional, IsString, IsNumber, IsBoolean, IsEnum, Min, Max } from 'class-validator';
+import { IsOptional, IsString, IsNumber, IsBoolean, IsEnum, IsArray, Min, Max } from 'class-validator';
 import { Type } from 'class-transformer';
 
 export enum SortBy {
@@ -20,7 +20,25 @@ export class SearchProductsDto {
 
   @IsOptional()
   @IsString()
-  category?: string;
+  category?: string; // Keep for backward compatibility
+
+  @IsOptional()
+  @IsString()
+  categoryId?: string; // New: taxonomy category ID
+
+  @IsOptional()
+  @IsArray()
+  @IsString({ each: true })
+  tagIds?: string[]; // New: taxonomy tag IDs
+
+  @IsOptional()
+  @IsArray()
+  attributeFilters?: Array<{
+    attributeId: string;
+    value?: string;
+    minValue?: number;
+    maxValue?: number;
+  }>; // New: attribute filters
 
   @IsOptional()
   @Type(() => Number)

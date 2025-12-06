@@ -60,10 +60,26 @@ export class UpdateProductDto {
   fandom?: string;
 
   @IsOptional()
-  category?: string;
+  category?: string; // Keep for backward compatibility
 
   @IsOptional()
-  tags?: string[];
+  tags?: string[]; // Keep for backward compatibility
+
+  @IsOptional()
+  categoryId?: string; // New: taxonomy category ID
+
+  @IsOptional()
+  attributes?: Array<{
+    attributeId: string;
+    attributeValueId?: string;
+    textValue?: string;
+    numberValue?: number;
+    booleanValue?: boolean;
+    dateValue?: string;
+  }>; // New: product attributes
+
+  @IsOptional()
+  tagIds?: string[]; // New: taxonomy tag IDs
 
   @IsOptional()
   status?: string;

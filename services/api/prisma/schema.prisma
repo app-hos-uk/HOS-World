@@ -214,8 +214,9 @@ model Product {
   taxRate         Decimal       @default(0) @db.Decimal(5, 4)
   stock           Int           @default(0)
   fandom          String?
-  category        String?
-  tags            String[]
+  category        String? // Keep for backward compatibility during migration
+  tags            String[] // Keep for backward compatibility during migration
+  categoryId      String? // New: relation to Category
   status          ProductStatus @default(DRAFT)
   createdAt       DateTime      @default(now())
   updatedAt       DateTime      @updatedAt
@@ -233,6 +234,9 @@ model Product {
   submission        ProductSubmission?
   pricing           ProductPricing?
   duplicateProducts DuplicateProduct[]
+  categoryRelation  Category?          @relation(fields: [categoryId], references: [id])
+  tagsRelation      ProductTag[]
+  attributes        ProductAttribute[]
 
   @@unique([sellerId, slug])
   @@map("products")
@@ -1282,4 +1286,142 @@ enum MessageStatus {
   DELIVERED
   READ
   FAILED
+}
+
+// Taxonomy System Models
+
+// Category Model (3-level hierarchy)
+model Category {
+  id          String      @id @default(uuid())
+  name        String
+  slug        String      @unique
+  parentId    String?
+  parent      Category?   @relation("CategoryHierarchy", fields: [parentId], references: [id])
+  children    Category[]  @relation("CategoryHierarchy")
+  level       Int // 0 = root, 1 = subcategory, 2 = product type
+  path        String // Full path: "/clothing/t-shirts/graphic-tees"
+  description String?     @db.Text
+  image       String?
+  order       Int         @default(0)
+  isActive    Boolean     @default(true)
+  products    Product[]
+  attributes  Attribute[] // Category-specific attributes
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+
+  @@index([parentId])
+  @@index([level])
+  @@index([slug])
+  @@map("categories")
+}
+
+// Attribute Model
+model Attribute {
+  id                String             @id @default(uuid())
+  name              String // e.g., "Size", "Color", "Material"
+  slug              String             @unique
+  type              AttributeType
+  isRequired        Boolean            @default(false)
+  isFilterable      Boolean            @default(true)
+  isSearchable      Boolean            @default(false)
+  isGlobal          Boolean            @default(false) // Global vs category-specific
+  categoryId        String? // null = global, set = category-specific
+  category          Category?          @relation(fields: [categoryId], references: [id])
+  values            AttributeValue[]
+  productAttributes ProductAttribute[]
+  createdAt         DateTime           @default(now())
+  updatedAt         DateTime           @updatedAt
+
+  @@index([categoryId])
+  @@index([isGlobal])
+  @@map("attributes")
+}
+
+enum AttributeType {
+  TEXT
+  NUMBER
+  SELECT
+  BOOLEAN
+  DATE
+}
+
+// Attribute Value Model (for SELECT type attributes)
+model AttributeValue {
+  id                String             @id @default(uuid())
+  attributeId       String
+  attribute         Attribute          @relation(fields: [attributeId], references: [id], onDelete: Cascade)
+  value             String // e.g., "Small", "Red", "Cotton"
+  slug              String
+  order             Int                @default(0)
+  productAttributes ProductAttribute[]
+  createdAt         DateTime           @default(now())
+  updatedAt         DateTime           @updatedAt
+
+  @@unique([attributeId, slug])
+  @@index([attributeId])
+  @@map("attribute_values")
+}
+
+// Product Attribute Junction
+model ProductAttribute {
+  id               String          @id @default(uuid())
+  productId        String
+  product          Product         @relation(fields: [productId], references: [id], onDelete: Cascade)
+  attributeId      String
+  attribute        Attribute       @relation(fields: [attributeId], references: [id])
+  attributeValueId String?
+  attributeValue   AttributeValue? @relation(fields: [attributeValueId], references: [id])
+  textValue        String? // For TEXT type
+  numberValue      Decimal?        @db.Decimal(10, 2) // For NUMBER type
+  booleanValue     Boolean? // For BOOLEAN type
+  dateValue        DateTime? // For DATE type
+  createdAt        DateTime        @default(now())
+  updatedAt        DateTime        @updatedAt
+
+  @@unique([productId, attributeId])
+  @@index([productId])
+  @@index([attributeId])
+  @@map("product_attributes")
+}
+
+// Tag Model
+model Tag {
+  id          String       @id @default(uuid())
+  name        String
+  slug        String       @unique
+  category    TagCategory
+  description String?      @db.Text
+  synonyms    String[] // Alternative names for search
+  isActive    Boolean      @default(true)
+  products    ProductTag[]
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+
+  @@index([category])
+  @@index([slug])
+  @@map("tags")
+}
+
+enum TagCategory {
+  THEME
+  OCCASION
+  STYLE
+  CHARACTER
+  FANDOM
+  CUSTOM
+}
+
+// Product Tag Junction
+model ProductTag {
+  id        String   @id @default(uuid())
+  productId String
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  tagId     String
+  tag       Tag      @relation(fields: [tagId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  @@unique([productId, tagId])
+  @@index([productId])
+  @@index([tagId])
+  @@map("product_tags")
 }
