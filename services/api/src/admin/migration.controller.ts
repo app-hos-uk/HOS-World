@@ -6,7 +6,7 @@ import { PrismaService } from '../database/prisma.service';
 import { readFileSync } from 'fs';
 import { join } from 'path';
 
-@Controller('api/admin/migration')
+@Controller('admin/migration')
 @UseGuards(JwtAuthGuard, RolesGuard)
 @Roles('ADMIN')
 export class MigrationController {
