@@ -23,12 +23,13 @@ export default function AdminMigrationPage() {
 
     try {
       const response = await apiClient.runGlobalFeaturesMigration();
-      setMigrationResult(response);
+      const result = response.data || response;
+      setMigrationResult(result);
       
-      if (response.success) {
+      if (result.success) {
         toast.showSuccess('Migration completed successfully!');
       } else {
-        toast.showError(response.message || 'Migration failed');
+        toast.showError(result.message || 'Migration failed');
       }
     } catch (error: any) {
       toast.showError(error.message || 'Failed to run migration');
@@ -44,9 +45,10 @@ export default function AdminMigrationPage() {
 
     try {
       const response = await apiClient.verifyMigration();
-      setVerificationResult(response);
+      const result = response.data || response;
+      setVerificationResult(result);
       
-      if (response.success) {
+      if (result.success) {
         toast.showSuccess('Verification completed');
       } else {
         toast.showError('Verification failed');
