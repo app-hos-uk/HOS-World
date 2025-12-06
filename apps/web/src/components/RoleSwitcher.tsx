@@ -76,7 +76,9 @@ export function RoleSwitcher() {
 
   // Only show for admin users - check actual user role, not effective role
   // This allows admins to see the switcher even when impersonating
-  const isActualAdmin = user?.role === 'ADMIN';
+  // Normalize role to uppercase to handle any case variations
+  const normalizedRole = user?.role?.toUpperCase();
+  const isActualAdmin = normalizedRole === 'ADMIN';
   
   if (!user) {
     // User not loaded yet - don't show anything
@@ -85,7 +87,7 @@ export function RoleSwitcher() {
   
   if (!isActualAdmin) {
     // User is not an admin - log for debugging
-    console.warn('[RoleSwitcher] Not showing - User is not ADMIN. Current role:', user.role, 'User:', user);
+    console.warn('[RoleSwitcher] Not showing - User is not ADMIN. Current role:', user.role, 'Normalized:', normalizedRole, 'User:', user);
     return null;
   }
 
