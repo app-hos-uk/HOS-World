@@ -1206,4 +1206,209 @@ export class ApiClient {
       body: JSON.stringify(data),
     });
   }
+
+  // Taxonomy - Categories
+  async getCategories(): Promise<ApiResponse<any[]>> {
+    return this.request<ApiResponse<any[]>>('/taxonomy/categories');
+  }
+
+  async getCategoryTree(): Promise<ApiResponse<any[]>> {
+    return this.request<ApiResponse<any[]>>('/taxonomy/categories/tree');
+  }
+
+  async getCategory(id: string): Promise<ApiResponse<any>> {
+    return this.request<ApiResponse<any>>(`/taxonomy/categories/${id}`);
+  }
+
+  async createCategory(data: {
+    name: string;
+    slug?: string;
+    parentId?: string;
+    level?: number;
+    description?: string;
+    image?: string;
+    order?: number;
+    isActive?: boolean;
+  }): Promise<ApiResponse<any>> {
+    return this.request<ApiResponse<any>>('/taxonomy/categories', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async updateCategory(id: string, data: {
+    name?: string;
+    slug?: string;
+    parentId?: string;
+    description?: string;
+    image?: string;
+    order?: number;
+    isActive?: boolean;
+  }): Promise<ApiResponse<any>> {
+    return this.request<ApiResponse<any>>(`/taxonomy/categories/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async deleteCategory(id: string): Promise<ApiResponse<any>> {
+    return this.request<ApiResponse<any>>(`/taxonomy/categories/${id}`, {
+      method: 'DELETE',
+    });
+  }
+
+  // Taxonomy - Attributes
+  async getAttributes(filters?: {
+    categoryId?: string;
+    isGlobal?: boolean;
+    type?: 'TEXT' | 'NUMBER' | 'SELECT' | 'BOOLEAN' | 'DATE';
+  }): Promise<ApiResponse<any[]>> {
+    const params = new URLSearchParams();
+    if (filters?.categoryId) params.append('categoryId', filters.categoryId);
+    if (filters?.isGlobal !== undefined) params.append('isGlobal', String(filters.isGlobal));
+    if (filters?.type) params.append('type', filters.type);
+    const query = params.toString();
+    return this.request<ApiResponse<any[]>>(`/taxonomy/attributes${query ? `?${query}` : ''}`);
+  }
+
+  async getGlobalAttributes(): Promise<ApiResponse<any[]>> {
+    return this.request<ApiResponse<any[]>>('/taxonomy/attributes/global');
+  }
+
+  async getAttributesForCategory(categoryId: string): Promise<ApiResponse<any>> {
+    return this.request<ApiResponse<any>>(`/taxonomy/attributes/category/${categoryId}`);
+  }
+
+  async getAttribute(id: string): Promise<ApiResponse<any>> {
+    return this.request<ApiResponse<any>>(`/taxonomy/attributes/${id}`);
+  }
+
+  async getAttributeValues(attributeId: string): Promise<ApiResponse<any[]>> {
+    return this.request<ApiResponse<any[]>>(`/taxonomy/attributes/${attributeId}/values`);
+  }
+
+  async createAttribute(data: {
+    name: string;
+    slug?: string;
+    type: 'TEXT' | 'NUMBER' | 'SELECT' | 'BOOLEAN' | 'DATE';
+    isRequired?: boolean;
+    isFilterable?: boolean;
+    isSearchable?: boolean;
+    isGlobal?: boolean;
+    categoryId?: string;
+  }): Promise<ApiResponse<any>> {
+    return this.request<ApiResponse<any>>('/taxonomy/attributes', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async createAttributeValue(attributeId: string, data: {
+    value: string;
+    slug?: string;
+    order?: number;
+  }): Promise<ApiResponse<any>> {
+    return this.request<ApiResponse<any>>(`/taxonomy/attributes/${attributeId}/values`, {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async updateAttribute(id: string, data: {
+    name?: string;
+    slug?: string;
+    type?: 'TEXT' | 'NUMBER' | 'SELECT' | 'BOOLEAN' | 'DATE';
+    isRequired?: boolean;
+    isFilterable?: boolean;
+    isSearchable?: boolean;
+    isGlobal?: boolean;
+    categoryId?: string;
+  }): Promise<ApiResponse<any>> {
+    return this.request<ApiResponse<any>>(`/taxonomy/attributes/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async updateAttributeValue(valueId: string, data: {
+    value?: string;
+    order?: number;
+  }): Promise<ApiResponse<any>> {
+    return this.request<ApiResponse<any>>(`/taxonomy/attributes/values/${valueId}`, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async deleteAttribute(id: string): Promise<ApiResponse<any>> {
+    return this.request<ApiResponse<any>>(`/taxonomy/attributes/${id}`, {
+      method: 'DELETE',
+    });
+  }
+
+  async deleteAttributeValue(valueId: string): Promise<ApiResponse<any>> {
+    return this.request<ApiResponse<any>>(`/taxonomy/attributes/values/${valueId}`, {
+      method: 'DELETE',
+    });
+  }
+
+  // Taxonomy - Tags
+  async getTags(filters?: {
+    category?: 'THEME' | 'OCCASION' | 'STYLE' | 'CHARACTER' | 'FANDOM' | 'CUSTOM';
+    isActive?: boolean;
+    search?: string;
+  }): Promise<ApiResponse<any[]>> {
+    const params = new URLSearchParams();
+    if (filters?.category) params.append('category', filters.category);
+    if (filters?.isActive !== undefined) params.append('isActive', String(filters.isActive));
+    if (filters?.search) params.append('search', filters.search);
+    const query = params.toString();
+    return this.request<ApiResponse<any[]>>(`/taxonomy/tags${query ? `?${query}` : ''}`);
+  }
+
+  async searchTags(query: string): Promise<ApiResponse<any[]>> {
+    return this.request<ApiResponse<any[]>>(`/taxonomy/tags/search?q=${encodeURIComponent(query)}`);
+  }
+
+  async getTagsByCategory(category: 'THEME' | 'OCCASION' | 'STYLE' | 'CHARACTER' | 'FANDOM' | 'CUSTOM'): Promise<ApiResponse<any[]>> {
+    return this.request<ApiResponse<any[]>>(`/taxonomy/tags/category/${category}`);
+  }
+
+  async getTag(id: string): Promise<ApiResponse<any>> {
+    return this.request<ApiResponse<any>>(`/taxonomy/tags/${id}`);
+  }
+
+  async createTag(data: {
+    name: string;
+    slug?: string;
+    category: 'THEME' | 'OCCASION' | 'STYLE' | 'CHARACTER' | 'FANDOM' | 'CUSTOM';
+    description?: string;
+    synonyms?: string[];
+    isActive?: boolean;
+  }): Promise<ApiResponse<any>> {
+    return this.request<ApiResponse<any>>('/taxonomy/tags', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async updateTag(id: string, data: {
+    name?: string;
+    slug?: string;
+    category?: 'THEME' | 'OCCASION' | 'STYLE' | 'CHARACTER' | 'FANDOM' | 'CUSTOM';
+    description?: string;
+    synonyms?: string[];
+    isActive?: boolean;
+  }): Promise<ApiResponse<any>> {
+    return this.request<ApiResponse<any>>(`/taxonomy/tags/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async deleteTag(id: string): Promise<ApiResponse<any>> {
+    return this.request<ApiResponse<any>>(`/taxonomy/tags/${id}`, {
+      method: 'DELETE',
+    });
+  }
 }
