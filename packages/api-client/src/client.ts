@@ -1268,6 +1268,16 @@ export class ApiClient {
     stock?: number;
     category?: string;
     tags?: string[];
+    categoryId?: string;
+    tagIds?: string[];
+    attributes?: Array<{
+      attributeId: string;
+      attributeValueId?: string;
+      textValue?: string;
+      numberValue?: number;
+      booleanValue?: boolean;
+      dateValue?: string;
+    }>;
     sellerId?: string | null;
     isPlatformOwned?: boolean;
     status?: 'DRAFT' | 'PUBLISHED';
@@ -1281,6 +1291,42 @@ export class ApiClient {
   }): Promise<ApiResponse<any>> {
     return this.request<ApiResponse<any>>('/admin/products', {
       method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async updateAdminProduct(
+    id: string,
+    data: {
+      name?: string;
+      description?: string;
+      price?: number;
+      stock?: number;
+      category?: string;
+      tags?: string[];
+      categoryId?: string;
+      tagIds?: string[];
+      attributes?: Array<{
+        attributeId: string;
+        attributeValueId?: string;
+        textValue?: string;
+        numberValue?: number;
+        booleanValue?: boolean;
+        dateValue?: string;
+      }>;
+      sellerId?: string | null;
+      status?: 'DRAFT' | 'PUBLISHED';
+      sku?: string;
+      barcode?: string;
+      ean?: string;
+      tradePrice?: number;
+      rrp?: number;
+      taxRate?: number;
+      fandom?: string;
+    },
+  ): Promise<ApiResponse<any>> {
+    return this.request<ApiResponse<any>>(`/admin/products/${id}`, {
+      method: 'PUT',
       body: JSON.stringify(data),
     });
   }
