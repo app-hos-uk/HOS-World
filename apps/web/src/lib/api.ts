@@ -60,6 +60,24 @@ export const apiClient = ApiClient.create({
     if (typeof window !== 'undefined') {
       const currentPath = window.location.pathname;
       
+      // Public pages that should never redirect to login
+      const publicPages = ['/', '/products', '/fandoms', '/sellers', '/help', '/shipping', '/returns', '/privacy-policy'];
+      const isPublicPage = publicPages.includes(currentPath) || 
+                          currentPath.startsWith('/products/') ||
+                          currentPath.startsWith('/fandoms/') ||
+                          currentPath.startsWith('/sellers/');
+      
+      // Don't redirect if we're on a public page
+      if (isPublicPage) {
+        // Just clear the token silently, don't redirect
+        try {
+          localStorage.removeItem('auth_token');
+        } catch (e) {
+          // Ignore
+        }
+        return;
+      }
+      
       // Don't redirect if we're already on login page
       if (currentPath === '/login' || currentPath.includes('/login')) {
         // Just clear the token, don't redirect
@@ -78,7 +96,7 @@ export const apiClient = ApiClient.create({
         return;
       }
       
-      // Clear token and redirect to login
+      // Clear token and redirect to login (only for protected pages)
       try {
         localStorage.removeItem('auth_token');
         // Clear login time on unauthorized
@@ -88,8 +106,8 @@ export const apiClient = ApiClient.create({
         // Ignore localStorage errors
       }
       
-      // Only redirect if we're not on login page and not in cooldown
-      if (currentPath !== '/login' && !currentPath.includes('/login')) {
+      // Only redirect if we're not on login page, not on public page, and not in cooldown
+      if (currentPath !== '/login' && !currentPath.includes('/login') && !isPublicPage) {
         try {
           window.location.href = '/login';
         } catch (e) {

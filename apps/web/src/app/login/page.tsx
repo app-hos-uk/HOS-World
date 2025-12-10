@@ -177,7 +177,7 @@ export default function LoginPage() {
           CATALOG: '/catalog/dashboard',
           MARKETING: '/marketing/dashboard',
           FINANCE: '/finance/dashboard',
-          CMS_EDITOR: '/',
+          CMS_EDITOR: '/cms/dashboard',
         };
         redirectPath = roleDashboardMap[user.role] || '/';
       }

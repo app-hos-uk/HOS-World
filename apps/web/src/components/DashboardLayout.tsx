@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface MenuItem {
   title: string;
@@ -21,9 +22,14 @@ interface DashboardLayoutProps {
 export function DashboardLayout({ children, role, menuItems, title }: DashboardLayoutProps) {
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const pathname = usePathname();
+  const { logout, user } = useAuth();
 
   const isActive = (href: string) => {
     return pathname === href || pathname?.startsWith(href + '/');
+  };
+
+  const handleLogout = async () => {
+    await logout();
   };
 
   return (
@@ -107,7 +113,17 @@ export function DashboardLayout({ children, role, menuItems, title }: DashboardL
               ☰
             </button>
             <div className="flex items-center gap-4">
-              <span className="text-sm text-gray-600">{title}</span>
+              {user && (
+                <span className="text-sm text-gray-600 hidden sm:inline">
+                  {user.firstName} {user.lastName}
+                </span>
+              )}
+              <button
+                onClick={handleLogout}
+                className="px-4 py-2 text-sm text-red-600 hover:text-red-700 hover:bg-red-50 rounded-lg transition-colors font-medium"
+              >
+                Logout
+              </button>
             </div>
           </div>
         </div>

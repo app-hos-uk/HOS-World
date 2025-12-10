@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface AdminLayoutProps {
   children: React.ReactNode;
@@ -92,7 +93,6 @@ const menuItems: MenuItem[] = [
       { title: 'Domain Management', href: '/admin/domains', icon: '🌐' },
       { title: 'Fulfillment Centers', href: '/admin/fulfillment-centers', icon: '🏭' },
       { title: 'Logistics Partners', href: '/admin/logistics', icon: '🚛' },
-      { title: 'Taxonomy Migration', href: '/admin/migration-taxonomy', icon: '🔄' },
     ],
   },
   {
@@ -111,6 +111,11 @@ export function AdminLayout({ children }: AdminLayoutProps) {
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [expandedMenus, setExpandedMenus] = useState<Set<string>>(new Set());
   const pathname = usePathname();
+  const { logout, user } = useAuth();
+
+  const handleLogout = async () => {
+    await logout();
+  };
 
   const isActive = (href: string) => {
     return pathname === href || pathname?.startsWith(href + '/');
@@ -287,7 +292,17 @@ export function AdminLayout({ children }: AdminLayoutProps) {
               ☰
             </button>
             <div className="flex items-center gap-4">
-              <span className="text-sm text-gray-600">Admin Portal</span>
+              {user && (
+                <span className="text-sm text-gray-600 hidden sm:inline">
+                  {user.firstName} {user.lastName}
+                </span>
+              )}
+              <button
+                onClick={handleLogout}
+                className="px-4 py-2 text-sm text-red-600 hover:text-red-700 hover:bg-red-50 rounded-lg transition-colors font-medium"
+              >
+                Logout
+              </button>
             </div>
           </div>
         </div>

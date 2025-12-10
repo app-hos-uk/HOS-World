@@ -43,7 +43,7 @@ const ROLE_DASHBOARD_MAP: Record<UserRole, string> = {
   CATALOG: '/catalog/dashboard',
   MARKETING: '/marketing/dashboard',
   FINANCE: '/finance/dashboard',
-  CMS_EDITOR: '/',
+  CMS_EDITOR: '/cms/dashboard',
 };
 
 export function RoleSwitcher() {

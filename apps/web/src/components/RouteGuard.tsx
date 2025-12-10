@@ -56,7 +56,7 @@ export function RouteGuard({
           CATALOG: '/catalog/dashboard',
           MARKETING: '/marketing/dashboard',
           FINANCE: '/finance/dashboard',
-          CMS_EDITOR: '/',
+          CMS_EDITOR: '/cms/dashboard',
         };
 
         const defaultRedirect = roleRedirectMap[currentRole] || '/';

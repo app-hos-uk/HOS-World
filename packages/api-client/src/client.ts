@@ -979,6 +979,84 @@ export class ApiClient {
     });
   }
 
+  async getSellerProducts(): Promise<ApiResponse<any[]>> {
+    // Get seller profile first to get seller database ID
+    const profileResponse = await this.getSellerProfile();
+    if (!profileResponse?.data?.id) {
+      return { data: [], message: 'Seller profile not found' };
+    }
+    // The seller object has an 'id' field which is the seller's database ID
+    // The products service expects sellerId to be the userId, which it then converts to seller database ID
+    // So we need to use the userId from the seller's user relation
+    const userId = profileResponse.data.user?.id || profileResponse.data.userId;
+    if (!userId) {
+      return { data: [], message: 'User ID not found in seller profile' };
+    }
+    // Use products endpoint with sellerId filter (expects userId)
+    const url = `/products?sellerId=${userId}`;
+    const response = await this.request<ApiResponse<any>>(url, {
+      method: 'GET',
+    });
+    // Extract products from paginated response
+    const products = response.data?.data || response.data || [];
+    return { data: Array.isArray(products) ? products : [], message: 'Products retrieved successfully' };
+  }
+
+  async getSellerOrders(status?: string): Promise<ApiResponse<any[]>> {
+    // Orders endpoint automatically filters by user role (seller gets their orders)
+    const response = await this.getOrders();
+    let orders = Array.isArray(response.data) ? response.data : [];
+    // Filter by status if provided
+    if (status) {
+      orders = orders.filter((order: any) => order.status === status);
+    }
+    return { data: orders, message: 'Orders retrieved successfully' };
+  }
+
+  async getSellerSubmissions(status?: string): Promise<ApiResponse<any[]>> {
+    // Submissions endpoint automatically filters by user
+    return this.getSubmissions(status);
+  }
+
+  async getWholesalerProducts(): Promise<ApiResponse<any[]>> {
+    // Wholesalers are sellers with WHOLESALER role, use same approach as sellers
+    const profileResponse = await this.getSellerProfile();
+    if (!profileResponse?.data?.id) {
+      return { data: [], message: 'Seller profile not found' };
+    }
+    // The seller object has an 'id' field which is the seller's database ID
+    // The products service expects sellerId to be the userId, which it then converts to seller database ID
+    // So we need to use the userId from the seller's user relation
+    const userId = profileResponse.data.user?.id || profileResponse.data.userId;
+    if (!userId) {
+      return { data: [], message: 'User ID not found in seller profile' };
+    }
+    // Use products endpoint with sellerId filter (expects userId)
+    const url = `/products?sellerId=${userId}`;
+    const response = await this.request<ApiResponse<any>>(url, {
+      method: 'GET',
+    });
+    // Extract products from paginated response
+    const products = response.data?.data || response.data || [];
+    return { data: Array.isArray(products) ? products : [], message: 'Products retrieved successfully' };
+  }
+
+  async getWholesalerOrders(status?: string): Promise<ApiResponse<any[]>> {
+    // Orders endpoint automatically filters by user role (wholesaler gets their orders)
+    const response = await this.getOrders();
+    let orders = Array.isArray(response.data) ? response.data : [];
+    // Filter by status if provided
+    if (status) {
+      orders = orders.filter((order: any) => order.status === status);
+    }
+    return { data: orders, message: 'Orders retrieved successfully' };
+  }
+
+  async getWholesalerSubmissions(status?: string): Promise<ApiResponse<any[]>> {
+    // Submissions endpoint automatically filters by user
+    return this.getSubmissions(status);
+  }
+
   async updateSellerProfile(data: {
     storeName?: string;
     description?: string;
@@ -1409,6 +1487,246 @@ export class ApiClient {
   async deleteTag(id: string): Promise<ApiResponse<any>> {
     return this.request<ApiResponse<any>>(`/taxonomy/tags/${id}`, {
       method: 'DELETE',
+    });
+  }
+
+  // CMS Content Management
+  async getCMSPages(): Promise<ApiResponse<any[]>> {
+    return this.request<ApiResponse<any[]>>('/cms/pages');
+  }
+
+  async getCMSPage(id: string): Promise<ApiResponse<any>> {
+    return this.request<ApiResponse<any>>(`/cms/pages/${id}`);
+  }
+
+  async createCMSPage(data: {
+    title: string;
+    slug: string;
+    content: string;
+    metaTitle?: string;
+    metaDescription?: string;
+    keywords?: string;
+  }): Promise<ApiResponse<any>> {
+    return this.request<ApiResponse<any>>('/cms/pages', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async updateCMSPage(id: string, data: {
+    title?: string;
+    slug?: string;
+    content?: string;
+    metaTitle?: string;
+    metaDescription?: string;
+    keywords?: string;
+  }): Promise<ApiResponse<any>> {
+    return this.request<ApiResponse<any>>(`/cms/pages/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async deleteCMSPage(id: string): Promise<ApiResponse<any>> {
+    return this.request<ApiResponse<any>>(`/cms/pages/${id}`, {
+      method: 'DELETE',
+    });
+  }
+
+  async getCMSBanners(type?: 'hero' | 'promotional' | 'sidebar'): Promise<ApiResponse<any[]>> {
+    const url = type ? `/cms/banners?type=${type}` : '/cms/banners';
+    return this.request<ApiResponse<any[]>>(url);
+  }
+
+  async getCMSBanner(id: string): Promise<ApiResponse<any>> {
+    return this.request<ApiResponse<any>>(`/cms/banners/${id}`);
+  }
+
+  async createCMSBanner(data: {
+    title: string;
+    type: 'hero' | 'promotional' | 'sidebar';
+    image: string;
+    link?: string;
+    content?: string;
+    active?: boolean;
+  }): Promise<ApiResponse<any>> {
+    return this.request<ApiResponse<any>>('/cms/banners', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async updateCMSBanner(id: string, data: {
+    title?: string;
+    type?: 'hero' | 'promotional' | 'sidebar';
+    image?: string;
+    link?: string;
+    content?: string;
+    active?: boolean;
+  }): Promise<ApiResponse<any>> {
+    return this.request<ApiResponse<any>>(`/cms/banners/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async deleteCMSBanner(id: string): Promise<ApiResponse<any>> {
+    return this.request<ApiResponse<any>>(`/cms/banners/${id}`, {
+      method: 'DELETE',
+    });
+  }
+
+  async getCMSBlogPosts(limit?: number): Promise<ApiResponse<any[]>> {
+    const url = limit ? `/cms/blog?limit=${limit}` : '/cms/blog';
+    return this.request<ApiResponse<any[]>>(url);
+  }
+
+  async getCMSBlogPost(id: string): Promise<ApiResponse<any>> {
+    return this.request<ApiResponse<any>>(`/cms/blog/${id}`);
+  }
+
+  async createCMSBlogPost(data: {
+    title: string;
+    slug: string;
+    excerpt: string;
+    content: string;
+    coverImage?: string;
+    author?: string;
+  }): Promise<ApiResponse<any>> {
+    return this.request<ApiResponse<any>>('/cms/blog', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async updateCMSBlogPost(id: string, data: {
+    title?: string;
+    slug?: string;
+    excerpt?: string;
+    content?: string;
+    coverImage?: string;
+    author?: string;
+    publishedAt?: string;
+  }): Promise<ApiResponse<any>> {
+    return this.request<ApiResponse<any>>(`/cms/blog/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async deleteCMSBlogPost(id: string): Promise<ApiResponse<any>> {
+    return this.request<ApiResponse<any>>(`/cms/blog/${id}`, {
+      method: 'DELETE',
+    });
+  }
+
+  async publishCMSBlogPost(id: string): Promise<ApiResponse<any>> {
+    return this.request<ApiResponse<any>>(`/cms/blog/${id}/publish`, {
+      method: 'POST',
+    });
+  }
+
+  // CMS Media - Uses uploads endpoint
+  async getCMSMedia(): Promise<ApiResponse<any[]>> {
+    // Note: There's no dedicated media list endpoint in the backend
+    // This would need to be implemented or use a different approach
+    // For now, return empty array with a note that this needs backend implementation
+    console.warn('getCMSMedia: Backend endpoint /cms/media does not exist. This method needs backend implementation.');
+    return { data: [], message: 'Media endpoint not implemented in backend' };
+  }
+
+  async uploadCMSMedia(formData: FormData): Promise<ApiResponse<any>> {
+    // Use the uploads endpoint instead of non-existent /cms/media
+    const token = this.getToken();
+    const headers: Record<string, string> = {};
+    if (token) {
+      headers['Authorization'] = `Bearer ${token}`;
+    }
+
+    const url = `${this.baseUrl}/uploads/single`;
+
+    try {
+      const response = await fetch(url, {
+        method: 'POST',
+        headers,
+        body: formData,
+      });
+
+      if (response.status === 401) {
+        this.onUnauthorized();
+        throw new Error('Unauthorized');
+      }
+
+      if (!response.ok) {
+        let errorMessage = `HTTP error! status: ${response.status}`;
+        try {
+          const errorData = await response.json();
+          errorMessage = errorData.message || errorMessage;
+          console.error('API Error Response:', {
+            status: response.status,
+            statusText: response.statusText,
+            error: errorData,
+            url,
+          });
+        } catch (e) {
+          // If response is not JSON, get text
+          try {
+            const text = await response.text();
+            console.error('API Error (non-JSON):', {
+              status: response.status,
+              statusText: response.statusText,
+              text,
+              url,
+            });
+          } catch (textError) {
+            console.error('API Error (unable to read response):', {
+              status: response.status,
+              statusText: response.statusText,
+              url,
+            });
+          }
+        }
+        throw new Error(errorMessage);
+      }
+
+      // Backend returns ApiResponse structure: { data: { url: string }, message: string }
+      const result = await response.json();
+      // Ensure the response matches ApiResponse structure
+      if (result && typeof result === 'object' && 'data' in result) {
+        return result as ApiResponse<any>;
+      }
+      // If backend doesn't return ApiResponse structure, wrap it
+      return {
+        data: result,
+        message: 'File uploaded successfully',
+      } as ApiResponse<any>;
+    } catch (error: any) {
+      // Enhanced error logging - matches pattern used in request() method
+      if (typeof window !== 'undefined') {
+        console.error('API Request failed:', {
+          url,
+          method: 'POST',
+          error: error.message,
+          stack: error.stack,
+        });
+      }
+      throw error;
+    }
+  }
+
+  // CMS Settings - Uses admin settings endpoint
+  async getCMSSettings(): Promise<ApiResponse<any>> {
+    // CMS settings should use admin settings endpoint
+    return this.request<ApiResponse<any>>('/admin/settings', {
+      method: 'GET',
+    });
+  }
+
+  async updateCMSSettings(settings: any): Promise<ApiResponse<any>> {
+    // CMS settings should use admin settings endpoint
+    return this.request<ApiResponse<any>>('/admin/settings', {
+      method: 'PUT',
+      body: JSON.stringify(settings),
     });
   }
 }
