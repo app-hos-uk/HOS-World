@@ -3,21 +3,40 @@ import {
   NotFoundException,
   ForbiddenException,
   BadRequestException,
+  Logger,
 } from '@nestjs/common';
 import { PrismaService } from '../database/prisma.service';
 import { CreateSubmissionDto } from './dto/create-submission.dto';
 import { UpdateSubmissionDto } from './dto/update-submission.dto';
 import { ProductSubmissionStatus } from '@prisma/client';
 import { DuplicatesService } from '../duplicates/duplicates.service';
+import { ErrorCacheService } from '../cache/error-cache.service';
 
 @Injectable()
 export class SubmissionsService {
+  private readonly logger = new Logger(SubmissionsService.name);
+
   constructor(
     private prisma: PrismaService,
     private duplicatesService: DuplicatesService,
+    private errorCacheService: ErrorCacheService,
   ) {}
 
   async create(userId: string, createSubmissionDto: CreateSubmissionDto) {
+    const operationKey = `submission:create:${userId}`;
+    
+    return this.errorCacheService.executeWithErrorCache(
+      operationKey,
+      async () => this.createSubmissionInternal(userId, createSubmissionDto),
+      {
+        userId,
+        productName: createSubmissionDto.name,
+        sku: createSubmissionDto.sku,
+      },
+    );
+  }
+
+  private async createSubmissionInternal(userId: string, createSubmissionDto: CreateSubmissionDto) {
     // Verify seller exists
     const seller = await this.prisma.seller.findUnique({
       where: { userId },

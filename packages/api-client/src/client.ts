@@ -114,7 +114,7 @@ export class ApiClient {
     password: string;
     firstName?: string;
     lastName?: string;
-    role: 'customer' | 'seller';
+    role: 'customer' | 'seller' | 'wholesaler' | 'b2c_seller';
     storeName?: string;
     country: string;
     whatsappNumber?: string;

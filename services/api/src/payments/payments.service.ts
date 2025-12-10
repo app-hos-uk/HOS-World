@@ -1,19 +1,22 @@
-import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../database/prisma.service';
 import { CreatePaymentDto } from './dto/create-payment.dto';
 import { CurrencyService } from '../currency/currency.service';
+import { ErrorCacheService } from '../cache/error-cache.service';
 // import Stripe from 'stripe';
 
 @Injectable()
 export class PaymentsService {
   // private stripe: Stripe;
+  private readonly logger = new Logger(PaymentsService.name);
   private readonly BASE_CURRENCY = 'GBP';
 
   constructor(
     private prisma: PrismaService,
     private configService: ConfigService,
     private currencyService: CurrencyService,
+    private errorCacheService: ErrorCacheService,
   ) {
     // Initialize Stripe
     // const stripeKey = this.configService.get<string>('STRIPE_SECRET_KEY');
@@ -23,6 +26,16 @@ export class PaymentsService {
   }
 
   async createPaymentIntent(userId: string, createPaymentDto: CreatePaymentDto): Promise<any> {
+    const operationKey = `payment:create:${userId}:${createPaymentDto.orderId}`;
+    
+    return this.errorCacheService.executeWithErrorCache(
+      operationKey,
+      async () => this.createPaymentIntentInternal(userId, createPaymentDto),
+      { userId, orderId: createPaymentDto.orderId },
+    );
+  }
+
+  private async createPaymentIntentInternal(userId: string, createPaymentDto: CreatePaymentDto): Promise<any> {
     // Get order with seller information (revealed at payment page)
     const order = await this.prisma.order.findFirst({
       where: {

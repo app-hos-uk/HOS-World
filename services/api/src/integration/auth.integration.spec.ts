@@ -45,6 +45,9 @@ describe('Authentication Integration Tests', () => {
         firstName: 'Integration',
         lastName: 'Test',
         role: 'customer',
+        country: 'United Kingdom',
+        preferredCommunicationMethod: 'EMAIL',
+        gdprConsent: true,
       });
 
       expect(result).toHaveProperty('user');
@@ -78,6 +81,9 @@ describe('Authentication Integration Tests', () => {
         firstName: 'Password',
         lastName: 'Test',
         role: 'customer',
+        country: 'United Kingdom',
+        preferredCommunicationMethod: 'EMAIL',
+        gdprConsent: true,
       });
 
       const user = await prismaService.user.findUnique({
@@ -114,6 +120,9 @@ describe('Authentication Integration Tests', () => {
         firstName: 'Login',
         lastName: 'Test',
         role: 'customer',
+        country: 'United Kingdom',
+        preferredCommunicationMethod: 'EMAIL',
+        gdprConsent: true,
       });
 
       testUserId = result.user.id;

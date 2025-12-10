@@ -40,6 +40,9 @@ describe('Authentication E2E Tests', () => {
           firstName: 'Test',
           lastName: 'User',
           role: 'customer',
+          country: 'United Kingdom',
+          preferredCommunicationMethod: 'EMAIL',
+          gdprConsent: true,
         })
         .expect(201)
         .expect((res) => {
@@ -63,6 +66,9 @@ describe('Authentication E2E Tests', () => {
           firstName: 'Test',
           lastName: 'User',
           role: 'customer',
+          country: 'United Kingdom',
+          preferredCommunicationMethod: 'EMAIL',
+          gdprConsent: true,
         })
         .expect(201);
 
@@ -75,6 +81,9 @@ describe('Authentication E2E Tests', () => {
           firstName: 'Test',
           lastName: 'User',
           role: 'customer',
+          country: 'United Kingdom',
+          preferredCommunicationMethod: 'EMAIL',
+          gdprConsent: true,
         })
         .expect(409);
     });
@@ -103,6 +112,9 @@ describe('Authentication E2E Tests', () => {
           firstName: 'Login',
           lastName: 'Test',
           role: 'customer',
+          country: 'United Kingdom',
+          preferredCommunicationMethod: 'EMAIL',
+          gdprConsent: true,
         });
     });
 
@@ -145,15 +157,26 @@ describe('Authentication E2E Tests', () => {
 
   describe('GET /api/users/profile (Protected)', () => {
     it('should access profile with valid token', async () => {
-      // Login first
-      const loginResponse = await request(app.getHttpServer())
-        .post('/api/auth/login')
+      // Register first
+      const registerResponse = await request(app.getHttpServer())
+        .post('/api/auth/register')
         .send({
           email: `profile-test-${Date.now()}@example.com`,
           password: 'Test123!@#',
           firstName: 'Profile',
           lastName: 'Test',
           role: 'customer',
+          country: 'United Kingdom',
+          preferredCommunicationMethod: 'EMAIL',
+          gdprConsent: true,
+        });
+
+      // Login to get token
+      const loginResponse = await request(app.getHttpServer())
+        .post('/api/auth/login')
+        .send({
+          email: registerResponse.body.data.user.email,
+          password: 'Test123!@#',
         });
 
       const token = loginResponse.body.data.token;

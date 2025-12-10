@@ -3,20 +3,37 @@ import {
   NotFoundException,
   ForbiddenException,
   BadRequestException,
+  Logger,
 } from '@nestjs/common';
 import { PrismaService } from '../database/prisma.service';
 import { CreateProductDto } from './dto/create-product.dto';
 import { UpdateProductDto } from './dto/update-product.dto';
 import { SearchProductsDto } from './dto/search-products.dto';
+import { ErrorCacheService } from '../cache/error-cache.service';
 import type { Product, PaginatedResponse } from '@hos-marketplace/shared-types';
 import { Prisma } from '@prisma/client';
 import { slugify } from '@hos-marketplace/utils';
 
 @Injectable()
 export class ProductsService {
-  constructor(private prisma: PrismaService) {}
+  private readonly logger = new Logger(ProductsService.name);
+
+  constructor(
+    private prisma: PrismaService,
+    private errorCacheService: ErrorCacheService,
+  ) {}
 
   async create(sellerId: string, createProductDto: CreateProductDto): Promise<Product> {
+    const operationKey = `product:create:${sellerId}`;
+    
+    return this.errorCacheService.executeWithErrorCache(
+      operationKey,
+      async () => this.createProduct(sellerId, createProductDto),
+      { sellerId, productName: createProductDto.name },
+    );
+  }
+
+  private async createProduct(sellerId: string, createProductDto: CreateProductDto): Promise<Product> {
     // Verify seller exists
     const seller = await this.prisma.seller.findUnique({
       where: { userId: sellerId },

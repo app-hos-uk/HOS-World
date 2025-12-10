@@ -490,4 +490,60 @@ export class AuthService {
       },
     });
   }
+
+  /**
+   * Convert country name to country code
+   */
+  private getCountryCode(countryName: string): string {
+    const countryMap: Record<string, string> = {
+      'United Kingdom': 'GB',
+      'United States': 'US',
+      'United Arab Emirates': 'AE',
+      'Germany': 'DE',
+      'France': 'FR',
+      'Italy': 'IT',
+      'Spain': 'ES',
+      'Netherlands': 'NL',
+      'Belgium': 'BE',
+      'Austria': 'AT',
+      'Portugal': 'PT',
+      'Ireland': 'IE',
+      'Greece': 'GR',
+      'Finland': 'FI',
+      'Saudi Arabia': 'SA',
+      'Kuwait': 'KW',
+      'Qatar': 'QA',
+      'Bahrain': 'BH',
+      'Oman': 'OM',
+    };
+    return countryMap[countryName] || 'GB';
+  }
+
+  /**
+   * Get currency for a country code
+   */
+  private getCurrencyForCountry(countryCode: string): string {
+    const currencyMap: Record<string, string> = {
+      GB: 'GBP',
+      US: 'USD',
+      AE: 'AED',
+      DE: 'EUR',
+      FR: 'EUR',
+      IT: 'EUR',
+      ES: 'EUR',
+      NL: 'EUR',
+      BE: 'EUR',
+      AT: 'EUR',
+      PT: 'EUR',
+      IE: 'EUR',
+      GR: 'EUR',
+      FI: 'EUR',
+      SA: 'AED',
+      KW: 'AED',
+      QA: 'AED',
+      BH: 'AED',
+      OM: 'AED',
+    };
+    return currencyMap[countryCode] || 'GBP';
+  }
 }

@@ -46,6 +46,9 @@ describe('Cart and Orders Integration Tests', () => {
       lastName: 'Test',
       role: 'seller',
       storeName: `Store ${Date.now()}`,
+      country: 'United Kingdom',
+      preferredCommunicationMethod: 'EMAIL',
+      gdprConsent: true,
     });
     sellerUserId = sellerResult.user.id;
 
@@ -66,6 +69,9 @@ describe('Cart and Orders Integration Tests', () => {
       firstName: 'Customer',
       lastName: 'Test',
       role: 'customer',
+      country: 'United Kingdom',
+      preferredCommunicationMethod: 'EMAIL',
+      gdprConsent: true,
     });
     customerUserId = customerResult.user.id;
 

@@ -31,6 +31,9 @@ describe('Products Integration Tests', () => {
       lastName: 'Integration',
       role: 'seller',
       storeName: `Test Store ${Date.now()}`,
+      country: 'United Kingdom',
+      preferredCommunicationMethod: 'EMAIL',
+      gdprConsent: true,
     });
 
     sellerUserId = sellerResult.user.id;

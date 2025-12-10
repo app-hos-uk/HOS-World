@@ -2,6 +2,7 @@ import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../database/prisma.service';
 import { CacheService } from '../cache/cache.service';
+import { ErrorCacheService } from '../cache/error-cache.service';
 
 @Injectable()
 export class CurrencyService {
@@ -17,6 +18,7 @@ export class CurrencyService {
     private prisma: PrismaService,
     private cache: CacheService,
     private configService: ConfigService,
+    private errorCacheService: ErrorCacheService,
   ) {
     this.apiKey = this.configService.get<string>('EXCHANGE_RATE_API_KEY') || '';
   }
@@ -58,34 +60,47 @@ export class CurrencyService {
       return Number(dbRate.rate);
     }
 
-    // Fetch from API
+    // Fetch from API with error caching
+    const apiKey = `currency:api:${this.baseCurrency}:${targetCurrency}`;
+    
     try {
-      const rate = await this.fetchRateFromAPI(targetCurrency);
-      
-      // Update database
-      const expiresAt = new Date(Date.now() + this.cacheDuration * 1000);
-      await this.prisma.currencyExchangeRate.upsert({
-        where: {
-          baseCurrency_targetCurrency: {
-            baseCurrency: this.baseCurrency,
-            targetCurrency,
-          },
+      const rate = await this.errorCacheService.executeWithErrorCache(
+        apiKey,
+        async () => {
+          const fetchedRate = await this.fetchRateFromAPI(targetCurrency);
+          
+          // Update database
+          const expiresAt = new Date(Date.now() + this.cacheDuration * 1000);
+          await this.prisma.currencyExchangeRate.upsert({
+            where: {
+              baseCurrency_targetCurrency: {
+                baseCurrency: this.baseCurrency,
+                targetCurrency,
+              },
+            },
+            create: {
+              baseCurrency: this.baseCurrency,
+              targetCurrency,
+              rate: fetchedRate,
+              expiresAt,
+            },
+            update: {
+              rate: fetchedRate,
+              cachedAt: new Date(),
+              expiresAt,
+            },
+          });
+
+          // Cache the rate
+          await this.cache.set(cacheKey, fetchedRate, this.cacheDuration);
+
+          return fetchedRate;
         },
-        create: {
+        {
           baseCurrency: this.baseCurrency,
           targetCurrency,
-          rate,
-          expiresAt,
         },
-        update: {
-          rate,
-          cachedAt: new Date(),
-          expiresAt,
-        },
-      });
-
-      // Cache the rate
-      await this.cache.set(cacheKey, rate, this.cacheDuration);
+      );
 
       return rate;
     } catch (error) {

@@ -1,8 +1,10 @@
 import { Module, Global } from '@nestjs/common';
 import { CacheService } from './cache.service';
+import { ErrorCacheService } from './error-cache.service';
 import { CacheModule as NestCacheModule } from '@nestjs/cache-manager';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { RedisService } from './redis.service';
+import { DatabaseModule } from '../database/database.module';
 
 @Global()
 @Module({
@@ -19,9 +21,10 @@ import { RedisService } from './redis.service';
       },
       inject: [ConfigService],
     }),
+    DatabaseModule,
   ],
-  providers: [CacheService, RedisService],
-  exports: [CacheService, RedisService],
+  providers: [CacheService, ErrorCacheService, RedisService],
+  exports: [CacheService, ErrorCacheService, RedisService],
 })
 export class CacheModule {}
 

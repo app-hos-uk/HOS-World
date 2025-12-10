@@ -38,6 +38,9 @@ describe('Cart E2E Tests', () => {
         lastName: 'Test',
         role: 'seller',
         storeName: `Test Store ${Date.now()}`,
+        country: 'United Kingdom',
+        preferredCommunicationMethod: 'EMAIL',
+        gdprConsent: true,
       });
 
     sellerToken = sellerResponse.body.data.token;
@@ -66,6 +69,9 @@ describe('Cart E2E Tests', () => {
         firstName: 'Customer',
         lastName: 'Test',
         role: 'customer',
+        country: 'United Kingdom',
+        preferredCommunicationMethod: 'EMAIL',
+        gdprConsent: true,
       });
 
     customerToken = customerResponse.body.data.token;

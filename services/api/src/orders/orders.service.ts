@@ -3,20 +3,40 @@ import {
   NotFoundException,
   BadRequestException,
   ForbiddenException,
+  Logger,
 } from '@nestjs/common';
 import { PrismaService } from '../database/prisma.service';
 import { CreateOrderDto } from './dto/create-order.dto';
 import { UpdateOrderDto } from './dto/update-order.dto';
 import { AddOrderNoteDto } from './dto/add-order-note.dto';
+import { CurrencyService } from '../currency/currency.service';
+import { ErrorCacheService } from '../cache/error-cache.service';
 import type { Order, OrderStatus, PaymentStatus } from '@hos-marketplace/shared-types';
 import { OrderStatus as PrismaOrderStatus, PaymentStatus as PrismaPaymentStatus } from '@prisma/client';
 import { Decimal } from '@prisma/client/runtime/library';
 
 @Injectable()
 export class OrdersService {
-  constructor(private prisma: PrismaService) {}
+  private readonly logger = new Logger(OrdersService.name);
+  private readonly BASE_CURRENCY = 'GBP'; // All payments processed in GBP
+
+  constructor(
+    private prisma: PrismaService,
+    private currencyService: CurrencyService,
+    private errorCacheService: ErrorCacheService,
+  ) {}
 
   async create(userId: string, createOrderDto: CreateOrderDto): Promise<Order> {
+    const operationKey = `order:create:${userId}`;
+    
+    return this.errorCacheService.executeWithErrorCache(
+      operationKey,
+      async () => this.createOrder(userId, createOrderDto),
+      { userId, shippingAddressId: createOrderDto.shippingAddressId },
+    );
+  }
+
+  private async createOrder(userId: string, createOrderDto: CreateOrderDto): Promise<Order> {
     // Get user's cart
     const cart = await this.prisma.cart.findUnique({
       where: { userId },
@@ -73,7 +93,25 @@ export class OrdersService {
         continue;
       }
 
-      // Calculate totals for this seller's items
+      // Validate and normalize currencies - all items must be converted to GBP for payment
+      const currencies = new Set(items.map((item) => item.product.currency || this.BASE_CURRENCY));
+      const uniqueCurrencies = Array.from(currencies);
+
+      // Validate currency consistency and log for transparency
+      if (uniqueCurrencies.length > 1) {
+        this.logger.warn(
+          `Order contains products with multiple currencies: ${uniqueCurrencies.join(', ')}. Converting all to ${this.BASE_CURRENCY} for payment processing.`,
+        );
+      }
+
+      // Store original currencies for display purposes (in order items metadata)
+      const originalCurrencies = items.map((item) => ({
+        productId: item.productId,
+        currency: item.product.currency || this.BASE_CURRENCY,
+        originalPrice: item.price,
+      }));
+
+      // Calculate totals for this seller's items (converting all to GBP)
       let subtotal = new Decimal(0);
       let tax = new Decimal(0);
 
@@ -84,9 +122,63 @@ export class OrdersService {
           );
         }
 
-        const itemTotal = new Decimal(item.price).mul(item.quantity);
+        // Get product currency or default to GBP
+        const productCurrency = item.product.currency || this.BASE_CURRENCY;
+        
+        // Convert price to GBP if needed
+        let priceInGBP = new Decimal(item.price);
+        if (productCurrency !== this.BASE_CURRENCY) {
+          const conversionKey = `currency:convert:${productCurrency}:${this.BASE_CURRENCY}:${item.productId}`;
+          
+          try {
+            // Use error cache to prevent repeated conversion failures
+            const convertedPrice = await this.errorCacheService.executeWithErrorCache(
+              conversionKey,
+              async () => {
+                return await this.currencyService.convertBetween(
+                  Number(item.price),
+                  productCurrency,
+                  this.BASE_CURRENCY,
+                );
+              },
+              {
+                productId: item.productId,
+                originalPrice: item.price,
+                originalCurrency: productCurrency,
+                targetCurrency: this.BASE_CURRENCY,
+              },
+            );
+            
+            priceInGBP = new Decimal(convertedPrice);
+            this.logger.debug(
+              `Converted ${item.price} ${productCurrency} to ${priceInGBP.toString()} ${this.BASE_CURRENCY}`,
+            );
+          } catch (error) {
+            // If conversion fails repeatedly, throw error to prevent order creation with wrong currency
+            const errorEntry = await this.errorCacheService.getError(conversionKey);
+            if (errorEntry && errorEntry.count >= 3) {
+              this.logger.error(
+                `Currency conversion failed ${errorEntry.count} times for product ${item.productId}. Cannot proceed with order.`,
+              );
+              throw new BadRequestException(
+                `Unable to process order: Currency conversion failed for product ${item.product.name}. Please try again later.`,
+              );
+            }
+            
+            // For first few failures, log and use fallback rate
+            this.logger.warn(
+              `Currency conversion failed for product ${item.productId}: ${error.message}. Using fallback rate.`,
+            );
+            // Use a conservative fallback: assume 1:1 if conversion fails (should be improved with default rates)
+            // In production, this should use a default exchange rate from config
+            const fallbackRate = 1.0; // This should come from config or default rates
+            priceInGBP = new Decimal(Number(item.price) * fallbackRate);
+          }
+        }
+
+        const itemTotal = priceInGBP.mul(item.quantity);
         subtotal = subtotal.add(itemTotal);
-        const itemTax = itemTotal.mul(item.product.taxRate);
+        const itemTax = itemTotal.mul(item.product.taxRate || 0);
         tax = tax.add(itemTax);
       }
 
@@ -95,7 +187,8 @@ export class OrdersService {
       // Generate order number
       const orderNumber = this.generateOrderNumber();
 
-      // Create order
+      // Create order - always in GBP for payment processing
+      // Store original currency in order items for display purposes
       const order = await this.prisma.order.create({
         data: {
           userId,
@@ -104,7 +197,7 @@ export class OrdersService {
           subtotal,
           tax,
           total,
-          currency: items[0].product.currency,
+          currency: this.BASE_CURRENCY, // Always GBP for payment processing
           status: 'PENDING',
           paymentStatus: 'PENDING',
           shippingAddressId: createOrderDto.shippingAddressId,
@@ -114,7 +207,7 @@ export class OrdersService {
             create: items.map((item) => ({
               productId: item.productId,
               quantity: item.quantity,
-              price: item.price,
+              price: item.price, // Store original price for reference
               variationOptions: item.variationOptions,
             })),
           },
