@@ -1,6 +1,6 @@
 {
   "name": "@hos-marketplace/api",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "NestJS backend API for House of Spells Marketplace",
   "author": "House of Spells",
   "private": true,
