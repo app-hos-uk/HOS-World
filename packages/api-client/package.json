@@ -1,6 +1,6 @@
 {
   "name": "@hos-marketplace/api-client",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "API client for House of Spells Marketplace",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
