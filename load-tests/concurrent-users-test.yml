@@ -1,0 +1,228 @@
+# Concurrent Users Load Test Configuration
+# Run with: artillery run load-tests/concurrent-users-test.yml
+# Or with custom target: artillery run --target https://your-api-url.com load-tests/concurrent-users-test.yml
+
+config:
+  target: '{{ $processEnvironment.API_URL || "http://localhost:3001/api" }}'
+  phases:
+    # Phase 1: Warm-up (gradual ramp-up)
+    - duration: 60
+      arrivalRate: 5
+      name: "Warm-up Phase"
+      rampTo: 20
+    
+    # Phase 2: Normal Load (100 concurrent users)
+    - duration: 300
+      arrivalRate: 20
+      name: "Normal Load - 100 Concurrent Users"
+    
+    # Phase 3: Moderate Load (250 concurrent users)
+    - duration: 300
+      arrivalRate: 50
+      name: "Moderate Load - 250 Concurrent Users"
+    
+    # Phase 4: High Load (500 concurrent users)
+    - duration: 300
+      arrivalRate: 100
+      name: "High Load - 500 Concurrent Users"
+    
+    # Phase 5: Peak Load (1000 concurrent users)
+    - duration: 300
+      arrivalRate: 200
+      name: "Peak Load - 1000 Concurrent Users"
+    
+    # Phase 6: Stress Test (2000 concurrent users)
+    - duration: 180
+      arrivalRate: 400
+      name: "Stress Test - 2000 Concurrent Users"
+    
+    # Phase 7: Spike Test (sudden increase to 5000)
+    - duration: 60
+      arrivalRate: 1000
+      name: "Spike Test - 5000 Concurrent Users"
+    
+    # Phase 8: Cool-down
+    - duration: 120
+      arrivalRate: 50
+      name: "Cool-down Phase"
+      rampTo: 0
+  
+  # Default HTTP settings
+  http:
+    timeout: 30
+    pool: 100
+  
+  # Plugins for better reporting
+  plugins:
+    expect: {}
+    metrics-by-endpoint:
+      stripQueryString: true
+  
+  # Processor for helper functions
+  processor: "./load-tests/helpers.js"
+
+# Test scenarios with different user behaviors
+scenarios:
+  # Scenario 1: Anonymous Browsing (40% of traffic)
+  - name: "Anonymous Browsing"
+    weight: 40
+    flow:
+      - get:
+          url: "/health"
+          capture:
+            - json: "$.status"
+              as: "healthStatus"
+      
+      - think: 1
+      
+      - get:
+          url: "/products?page={{ $randomInt(1, 10) }}&limit=20"
+          expect:
+            - statusCode: 200
+            - contentType: json
+      
+      - think: 2
+      
+      - get:
+          url: "/search?q={{ $randomString() }}&page=1&limit=20"
+          expect:
+            - statusCode: 200
+      
+      - think: 3
+      
+      - get:
+          url: "/products/{{ $pick(['product-id-1', 'product-id-2', 'product-id-3']) }}"
+          expect:
+            - statusCode: [200, 404]  # Product might not exist in test data
+
+  # Scenario 2: Authenticated User Journey (35% of traffic)
+  - name: "Authenticated User Journey"
+    weight: 35
+    flow:
+      # Login
+      - post:
+          url: "/auth/login"
+          json:
+            email: "{{ $pick(['testuser1@example.com', 'testuser2@example.com', 'testuser3@example.com']) }}"
+            password: "testpassword123"
+          capture:
+            - json: "$.data.accessToken"
+              as: "authToken"
+            - json: "$.data.user.id"
+              as: "userId"
+          expect:
+            - statusCode: 200
+      
+      - think: 1
+      
+      # Browse products
+      - get:
+          url: "/products?page={{ $randomInt(1, 5) }}&limit=20"
+          headers:
+            Authorization: "Bearer {{ authToken }}"
+          expect:
+            - statusCode: 200
+      
+      - think: 2
+      
+      # View cart
+      - get:
+          url: "/cart"
+          headers:
+            Authorization: "Bearer {{ authToken }}"
+          expect:
+            - statusCode: 200
+      
+      - think: 1
+      
+      # Add to cart
+      - post:
+          url: "/cart/items"
+          json:
+            productId: "{{ $randomString() }}"
+            quantity: {{ $randomInt(1, 3) }}
+          headers:
+            Authorization: "Bearer {{ authToken }}"
+          expect:
+            - statusCode: [200, 201, 400]  # 400 if product doesn't exist
+      
+      - think: 2
+      
+      # View orders
+      - get:
+          url: "/orders"
+          headers:
+            Authorization: "Bearer {{ authToken }}"
+          expect:
+            - statusCode: 200
+
+  # Scenario 3: Product Search Heavy (15% of traffic)
+  - name: "Product Search Heavy"
+    weight: 15
+    flow:
+      - get:
+          url: "/search?q={{ $randomString() }}&page={{ $randomInt(1, 5) }}&limit=20"
+          expect:
+            - statusCode: 200
+            - hasProperty: data
+      
+      - think: 1
+      
+      - get:
+          url: "/search/suggestions?q={{ $randomString() }}"
+          expect:
+            - statusCode: 200
+      
+      - think: 2
+      
+      - get:
+          url: "/products?fandom={{ $pick(['harry-potter', 'marvel', 'star-wars']) }}&page=1&limit=20"
+          expect:
+            - statusCode: 200
+
+  # Scenario 4: Seller Operations (10% of traffic)
+  - name: "Seller Operations"
+    weight: 10
+    flow:
+      # Seller login
+      - post:
+          url: "/auth/login"
+          json:
+            email: "{{ $pick(['seller1@example.com', 'seller2@example.com']) }}"
+            password: "sellerpassword123"
+          capture:
+            - json: "$.data.accessToken"
+              as: "sellerToken"
+          expect:
+            - statusCode: 200
+      
+      - think: 1
+      
+      # View seller products
+      - get:
+          url: "/products/seller"
+          headers:
+            Authorization: "Bearer {{ sellerToken }}"
+          expect:
+            - statusCode: 200
+      
+      - think: 2
+      
+      # View seller orders
+      - get:
+          url: "/orders"
+          headers:
+            Authorization: "Bearer {{ sellerToken }}"
+          expect:
+            - statusCode: 200
+      
+      - think: 1
+      
+      # View seller dashboard data
+      - get:
+          url: "/seller/analytics"
+          headers:
+            Authorization: "Bearer {{ sellerToken }}"
+          expect:
+            - statusCode: [200, 404]  # Endpoint might not exist
+
