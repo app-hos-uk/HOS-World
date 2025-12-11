@@ -113,27 +113,86 @@ export class MigrationController {
         }
       }
 
-      // Verify migration
-      const usersTableCheck = await this.prisma.$queryRaw`
-        SELECT column_name FROM information_schema.columns 
-        WHERE table_name = 'users' AND column_name = 'country';
-      `;
+      // Verify migration - check multiple things
+      const verification: Record<string, boolean> = {};
+      
+      // Check if _prisma_migrations table exists (most important!)
+      try {
+        const migrationsTableCheck = await this.prisma.$queryRaw`
+          SELECT EXISTS (
+            SELECT FROM information_schema.tables 
+            WHERE table_schema = 'public' 
+            AND table_name = '_prisma_migrations'
+          ) as exists;
+        `;
+        verification.prismaMigrationsTableExists = (migrationsTableCheck as any[])[0]?.exists || false;
+      } catch (error) {
+        this.logger.error('Error checking _prisma_migrations table:', error);
+        verification.prismaMigrationsTableExists = false;
+      }
 
-      const hasCountryColumn = (usersTableCheck as any[]).length > 0;
+      // Check if country column exists in users table
+      try {
+        const usersTableCheck = await this.prisma.$queryRaw`
+          SELECT column_name FROM information_schema.columns 
+          WHERE table_name = 'users' AND column_name = 'country';
+        `;
+        verification.countryColumnExists = (usersTableCheck as any[]).length > 0;
+      } catch (error) {
+        this.logger.error('Error checking country column:', error);
+        verification.countryColumnExists = false;
+      }
+
+      // Check if currency_exchange_rates table exists
+      try {
+        const currencyTableCheck = await this.prisma.$queryRaw`
+          SELECT EXISTS (
+            SELECT FROM information_schema.tables 
+            WHERE table_schema = 'public' 
+            AND table_name = 'currency_exchange_rates'
+          ) as exists;
+        `;
+        verification.currencyExchangeRatesTableExists = (currencyTableCheck as any[])[0]?.exists || false;
+      } catch (error) {
+        this.logger.error('Error checking currency_exchange_rates table:', error);
+        verification.currencyExchangeRatesTableExists = false;
+      }
+
+      // Check if gdpr_consent_logs table exists
+      try {
+        const gdprTableCheck = await this.prisma.$queryRaw`
+          SELECT EXISTS (
+            SELECT FROM information_schema.tables 
+            WHERE table_schema = 'public' 
+            AND table_name = 'gdpr_consent_logs'
+          ) as exists;
+        `;
+        verification.gdprConsentLogsTableExists = (gdprTableCheck as any[])[0]?.exists || false;
+      } catch (error) {
+        this.logger.error('Error checking gdpr_consent_logs table:', error);
+        verification.gdprConsentLogsTableExists = false;
+      }
 
       this.logger.log(`✅ Migration completed: ${successCount} successful, ${errorCount} errors`);
+      this.logger.log(`📊 Verification: ${JSON.stringify(verification)}`);
+
+      // Warn if _prisma_migrations table wasn't created
+      if (!verification.prismaMigrationsTableExists) {
+        this.logger.warn('⚠️ WARNING: _prisma_migrations table was not created! This is critical for Prisma.');
+        this.logger.warn('💡 The CREATE TABLE statement may have failed. Check the details above.');
+      }
 
       return {
         success: true,
-        message: 'Migration completed',
+        message: verification.prismaMigrationsTableExists 
+          ? 'Migration completed successfully' 
+          : 'Migration completed but _prisma_migrations table not found - check details',
         summary: {
           totalStatements: statements.length,
           successful: successCount,
           errors: errorCount,
         },
-        verification: {
-          countryColumnExists: hasCountryColumn,
-        },
+        verification,
         details: results,
       };
     } catch (error: any) {
