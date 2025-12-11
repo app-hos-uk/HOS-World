@@ -1,0 +1,109 @@
+# Quick Load Test - 5 minute test for monitoring
+# Run with: artillery run load-tests/quick-load-test.yml
+
+config:
+  target: 'https://hos-marketplaceapi-production.up.railway.app/api'
+  phases:
+    # Phase 1: Warm-up
+    - duration: 30
+      arrivalRate: 5
+      name: "Warm-up"
+      rampTo: 20
+    
+    # Phase 2: Normal Load (50 concurrent users)
+    - duration: 120
+      arrivalRate: 10
+      name: "Normal Load - 50 Concurrent Users"
+    
+    # Phase 3: Moderate Load (100 concurrent users)
+    - duration: 120
+      arrivalRate: 20
+      name: "Moderate Load - 100 Concurrent Users"
+    
+    # Phase 4: High Load (200 concurrent users)
+    - duration: 90
+      arrivalRate: 40
+      name: "High Load - 200 Concurrent Users"
+    
+    # Phase 5: Cool-down
+    - duration: 30
+      arrivalRate: 10
+      name: "Cool-down"
+      rampTo: 0
+  
+  http:
+    timeout: 30
+    pool: 50
+  
+  plugins:
+    expect: {}
+    metrics-by-endpoint:
+      stripQueryString: true
+
+scenarios:
+  # Scenario 1: Health Check & Product Browsing
+  - name: "Health and Products"
+    weight: 50
+    flow:
+      - get:
+          url: "/health"
+          expect:
+            - statusCode: 200
+      
+      - think: 1
+      
+      - get:
+          url: "/products?page=1&limit=20"
+          expect:
+            - statusCode: 200
+            - contentType: json
+      
+      - think: 2
+      
+      - get:
+          url: "/products?page={{ $randomInt(1, 5) }}&limit=20"
+          expect:
+            - statusCode: 200
+
+  # Scenario 2: Search Operations
+  - name: "Search Operations"
+    weight: 30
+    flow:
+      - get:
+          url: "/search?q=wand&page=1&limit=20"
+          expect:
+            - statusCode: 200
+      
+      - think: 1
+      
+      - get:
+          url: "/search?q={{ $randomString() }}&page=1&limit=20"
+          expect:
+            - statusCode: 200
+      
+      - think: 2
+      
+      - get:
+          url: "/products?fandom=harry-potter&page=1&limit=20"
+          expect:
+            - statusCode: 200
+
+  # Scenario 3: Product Details
+  - name: "Product Details"
+    weight: 20
+    flow:
+      - get:
+          url: "/products?page=1&limit=5"
+          capture:
+            - json: "$.data.data[0].id"
+              as: "productId"
+          expect:
+            - statusCode: 200
+      
+      - think: 1
+      
+      - get:
+          url: "/products/{{ productId }}"
+          expect:
+            - statusCode: [200, 404]
+
