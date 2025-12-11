@@ -123,8 +123,10 @@ export default function ReturnsPage() {
                   ))}
                 </div>
               )}
-              <section className="mt-8">
-                <h2 className="text-xl sm:text-2xl font-semibold mb-3 sm:mb-4">Return Policy</h2>
+            </>
+          )}
+          <section className="mt-8">
+            <h2 className="text-xl sm:text-2xl font-semibold mb-3 sm:mb-4">Return Policy</h2>
             <p className="text-sm sm:text-base text-gray-600 mb-3 sm:mb-4">
               We want you to be completely satisfied with your purchase. You can return most items
               within 30 days of delivery for a full refund.
