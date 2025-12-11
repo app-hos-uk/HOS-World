@@ -215,6 +215,13 @@ export class SearchService implements OnModuleInit {
       limit?: number;
     } = {},
   ): Promise<SearchResult> {
+    // If Elasticsearch is not configured, use database search directly
+    const elasticsearchNode = this.configService.get<string>('ELASTICSEARCH_NODE');
+    if (!elasticsearchNode) {
+      this.logger.debug('Elasticsearch not configured, using database search');
+      return this.searchInDatabase(query, filters);
+    }
+
     const page = filters.page || 1;
     const limit = filters.limit || 20;
     const from = (page - 1) * limit;
@@ -373,7 +380,18 @@ export class SearchService implements OnModuleInit {
 
       // Apply filters
       if (filters.category) {
-        where.category = filters.category;
+        // Category can be ID or slug - try to find by slug first
+        const category = await this.prisma.category.findFirst({
+          where: {
+            OR: [
+              { id: filters.category },
+              { slug: filters.category },
+            ],
+          },
+        });
+        if (category) {
+          where.categoryId = category.id;
+        }
       }
 
       if (filters.fandom) {
