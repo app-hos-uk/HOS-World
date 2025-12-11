@@ -128,6 +128,146 @@ export class NotificationsService {
       },
     });
   }
+
+  async sendReturnRequested(returnRequestId: string): Promise<void> {
+    const returnRequest = await this.prisma.returnRequest.findUnique({
+      where: { id: returnRequestId },
+      include: {
+        user: {
+          select: {
+            email: true,
+          },
+        },
+        order: {
+          select: {
+            orderNumber: true,
+          },
+        },
+      },
+    });
+
+    if (!returnRequest) {
+      return;
+    }
+
+    await this.prisma.notification.create({
+      data: {
+        userId: returnRequest.userId,
+        type: 'RETURN_REQUESTED',
+        subject: `Return Request Submitted - Order ${returnRequest.order.orderNumber}`,
+        content: `Your return request for order ${returnRequest.order.orderNumber} has been submitted and is under review.`,
+        email: returnRequest.user.email,
+        status: 'SENT',
+        sentAt: new Date(),
+      },
+    });
+  }
+
+  async sendReturnApproved(returnRequestId: string): Promise<void> {
+    const returnRequest = await this.prisma.returnRequest.findUnique({
+      where: { id: returnRequestId },
+      include: {
+        user: {
+          select: {
+            email: true,
+          },
+        },
+        order: {
+          select: {
+            orderNumber: true,
+          },
+        },
+      },
+    });
+
+    if (!returnRequest) {
+      return;
+    }
+
+    await this.prisma.notification.create({
+      data: {
+        userId: returnRequest.userId,
+        type: 'RETURN_APPROVED',
+        subject: `Return Approved - Order ${returnRequest.order.orderNumber}`,
+        content: `Your return request for order ${returnRequest.order.orderNumber} has been approved. Please follow the instructions to return your item.`,
+        email: returnRequest.user.email,
+        status: 'SENT',
+        sentAt: new Date(),
+      },
+    });
+  }
+
+  async sendReturnCompleted(returnRequestId: string): Promise<void> {
+    const returnRequest = await this.prisma.returnRequest.findUnique({
+      where: { id: returnRequestId },
+      include: {
+        user: {
+          select: {
+            email: true,
+          },
+        },
+        order: {
+          select: {
+            orderNumber: true,
+          },
+        },
+      },
+    });
+
+    if (!returnRequest) {
+      return;
+    }
+
+    const refundInfo = returnRequest.refundAmount
+      ? ` A refund of ${returnRequest.refundAmount} ${returnRequest.order.currency || 'GBP'} will be processed.`
+      : '';
+
+    await this.prisma.notification.create({
+      data: {
+        userId: returnRequest.userId,
+        type: 'RETURN_APPROVED', // Using existing type, could add RETURN_COMPLETED
+        subject: `Return Completed - Order ${returnRequest.order.orderNumber}`,
+        content: `Your return for order ${returnRequest.order.orderNumber} has been processed.${refundInfo}`,
+        email: returnRequest.user.email,
+        status: 'SENT',
+        sentAt: new Date(),
+      },
+    });
+  }
+
+  async sendReturnRejected(returnRequestId: string): Promise<void> {
+    const returnRequest = await this.prisma.returnRequest.findUnique({
+      where: { id: returnRequestId },
+      include: {
+        user: {
+          select: {
+            email: true,
+          },
+        },
+        order: {
+          select: {
+            orderNumber: true,
+          },
+        },
+      },
+    });
+
+    if (!returnRequest) {
+      return;
+    }
+
+    await this.prisma.notification.create({
+      data: {
+        userId: returnRequest.userId,
+        type: 'RETURN_APPROVED', // Using existing type
+        subject: `Return Request Update - Order ${returnRequest.order.orderNumber}`,
+        content: `Your return request for order ${returnRequest.order.orderNumber} has been reviewed. Please contact support for more information.`,
+        email: returnRequest.user.email,
+        status: 'SENT',
+        sentAt: new Date(),
+      },
+    });
+  }
 }
 
 

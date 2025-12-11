@@ -392,7 +392,7 @@ export class AuthService {
     await this.prisma.user.update({
       where: { id: userId },
       data: {
-        characterAvatar: characterId,
+        characterAvatarId: characterId,
         favoriteFandoms: favoriteFandoms || [],
       },
     });
@@ -453,42 +453,14 @@ export class AuthService {
   }
 
   async getLinkedAccounts(userId: string) {
-    return this.prisma.oAuthAccount.findMany({
-      where: { userId },
-      select: {
-        id: true,
-        provider: true,
-        providerId: true,
-        createdAt: true,
-      },
-    });
+    // TODO: Implement OAuth account linking when OAuthAccount model is added
+    // For now, return empty array
+    return [];
   }
 
   async unlinkOAuthAccount(userId: string, provider: string): Promise<void> {
-    const user = await this.prisma.user.findUnique({
-      where: { id: userId },
-      include: {
-        oAuthAccounts: true,
-      },
-    });
-
-    if (!user) {
-      throw new ConflictException('User not found');
-    }
-
-    const hasPassword = user.password && user.password.length > 0;
-    const oauthCount = user.oAuthAccounts.length;
-
-    if (!hasPassword && oauthCount === 1) {
-      throw new ConflictException('Cannot unlink the only authentication method');
-    }
-
-    await this.prisma.oAuthAccount.deleteMany({
-      where: {
-        userId,
-        provider: provider as any,
-      },
-    });
+    // TODO: Implement OAuth account unlinking when OAuthAccount model is added
+    throw new BadRequestException('OAuth account unlinking not yet implemented');
   }
 
   /**

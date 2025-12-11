@@ -125,6 +125,12 @@ export function Header() {
                 >
                   Cart
                 </Link>
+                <Link 
+                  href="/help" 
+                  className="text-sm lg:text-base text-purple-700 hover:text-amber-600 font-medium font-secondary transition-colors duration-300"
+                >
+                  Help
+                </Link>
                 <CurrencySelector />
               </>
             )}
@@ -220,6 +226,13 @@ export function Header() {
                     className="text-base text-purple-700 hover:text-amber-600 font-medium font-secondary transition-colors duration-300 py-2 px-2 rounded-lg hover:bg-purple-50"
                   >
                     Cart
+                  </Link>
+                  <Link 
+                    href="/help" 
+                    onClick={() => setIsMobileMenuOpen(false)}
+                    className="text-base text-purple-700 hover:text-amber-600 font-medium font-secondary transition-colors duration-300 py-2 px-2 rounded-lg hover:bg-purple-50"
+                  >
+                    Help
                   </Link>
                   <div className="px-2 py-2">
                     <CurrencySelector />

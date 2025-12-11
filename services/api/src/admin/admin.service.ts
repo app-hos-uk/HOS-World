@@ -20,7 +20,7 @@ export class AdminService {
         sellerProfile: {
           select: {
             storeName: true,
-            isActive: true,
+            verified: true,
           },
         },
       },
@@ -85,7 +85,7 @@ export class AdminService {
 
     return this.prisma.user.update({
       where: { id: userId },
-      data: updateData,
+      data: updateData as any,
       select: {
         id: true,
         email: true,

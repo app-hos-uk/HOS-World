@@ -6,6 +6,7 @@ import {
 } from '@nestjs/common';
 import { PrismaService } from '../database/prisma.service';
 import { CreateReturnDto } from './dto/create-return.dto';
+import { NotificationsService } from '../notifications/notifications.service';
 
 interface ReturnRequest {
   id: string;
@@ -23,7 +24,10 @@ interface ReturnRequest {
 
 @Injectable()
 export class ReturnsService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private notificationsService: NotificationsService,
+  ) {}
 
   async create(userId: string, createReturnDto: CreateReturnDto): Promise<ReturnRequest> {
     // Verify order exists and belongs to user
@@ -62,7 +66,22 @@ export class ReturnsService {
         notes: createReturnDto.notes,
         status: 'PENDING',
       },
+      include: {
+        user: {
+          select: {
+            email: true,
+          },
+        },
+        order: {
+          select: {
+            orderNumber: true,
+          },
+        },
+      },
     });
+
+    // Send notification to customer
+    await this.notificationsService.sendReturnRequested(returnRequest.id);
 
     return this.mapToReturnType(returnRequest);
   }
@@ -143,6 +162,33 @@ export class ReturnsService {
           paymentStatus: 'REFUNDED',
         },
       });
+    }
+
+    // Send notification based on status change
+    const returnRequestWithUser = await this.prisma.returnRequest.findUnique({
+      where: { id },
+      include: {
+        user: {
+          select: {
+            email: true,
+          },
+        },
+        order: {
+          select: {
+            orderNumber: true,
+          },
+        },
+      },
+    });
+
+    if (returnRequestWithUser) {
+      if (status === 'APPROVED') {
+        await this.notificationsService.sendReturnApproved(returnRequestWithUser.id);
+      } else if (status === 'COMPLETED') {
+        await this.notificationsService.sendReturnCompleted(returnRequestWithUser.id);
+      } else if (status === 'REJECTED') {
+        await this.notificationsService.sendReturnRejected(returnRequestWithUser.id);
+      }
     }
 
     return this.mapToReturnType(updated);

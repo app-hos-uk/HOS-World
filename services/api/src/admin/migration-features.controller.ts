@@ -112,14 +112,14 @@ export class MigrationFeaturesController {
 
   @Get('verify')
   async verifyMigration(): Promise<ApiResponse<any>> {
-    const verification = await this.verifyMigration();
+    const verification = await this.performVerification();
     return {
       data: verification,
       message: 'Migration verification completed',
     };
   }
 
-  private async verifyMigration() {
+  private async performVerification() {
     const checks: Record<string, boolean> = {};
 
     // Check if all new tables exist

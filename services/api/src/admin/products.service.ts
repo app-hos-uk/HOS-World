@@ -123,7 +123,7 @@ export class AdminProductsService {
         categoryId: data.categoryId, // New taxonomy field
         sellerId: data.sellerId,
         isPlatformOwned: data.isPlatformOwned || false,
-        status: data.status || 'DRAFT',
+        status: (data.status as any) || 'DRAFT',
         sku: data.sku,
         barcode: data.barcode,
         ean: data.ean,

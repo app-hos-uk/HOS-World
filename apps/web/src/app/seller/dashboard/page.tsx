@@ -27,6 +27,7 @@ export default function SellerDashboardPage() {
     { title: 'My Products', href: '/seller/products', icon: '📦' },
     { title: 'Orders', href: '/seller/orders', icon: '🛒' },
     { title: 'Submissions', href: '/seller/submissions', icon: '📝' },
+    { title: 'Support', href: '/seller/support', icon: '🎧' },
   ];
 
   useEffect(() => {

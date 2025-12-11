@@ -77,5 +77,25 @@ export class ChatbotController {
       message: 'Chat history retrieved successfully',
     };
   }
+
+  @UseGuards(JwtAuthGuard)
+  @Post('conversation')
+  async createConversation(
+    @Body()
+    body: {
+      userId?: string;
+      sellerId?: string;
+    },
+    @Request() req: any,
+  ): Promise<ApiResponse<{ conversationId: string }>> {
+    const conversationId = await this.chatbotService.createConversation(
+      body.userId || req.user?.id,
+      body.sellerId,
+    );
+    return {
+      data: { conversationId },
+      message: 'Conversation created successfully',
+    };
+  }
 }
 

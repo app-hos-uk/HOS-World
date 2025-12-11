@@ -11,7 +11,7 @@
     "type-check": "tsc --noEmit"
   },
   "dependencies": {
-    "@hos-marketplace/shared-types": "workspace:*"
+    "@hos-marketplace/shared-types": "file:../shared-types"
   },
   "devDependencies": {
     "typescript": "^5.3.3"

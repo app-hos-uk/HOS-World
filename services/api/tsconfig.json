@@ -19,7 +19,9 @@
     "noFallthroughCasesInSwitch": false,
     "noEmitOnError": false,
     "paths": {
-      "@/*": ["src/*"]
+      "@/*": ["src/*"],
+      "@hos-marketplace/utils": ["../../packages/utils/dist"],
+      "@hos-marketplace/shared-types": ["../../packages/shared-types/dist"]
     }
   },
   "include": ["src/**/*"],

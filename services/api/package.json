@@ -35,8 +35,8 @@
     "clean": "rm -rf dist"
   },
   "dependencies": {
-    "@hos-marketplace/shared-types": "workspace:*",
-    "@hos-marketplace/utils": "workspace:*",
+    "@hos-marketplace/shared-types": "file:../../packages/shared-types",
+    "@hos-marketplace/utils": "file:../../packages/utils",
     "@nestjs/cache-manager": "^2.1.1",
     "@nestjs/common": "^10.3.0",
     "@nestjs/config": "^3.1.1",

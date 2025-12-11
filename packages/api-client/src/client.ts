@@ -1162,20 +1162,176 @@ export class ApiClient {
   }
 
   // Support - Tickets
-  async getSupportTickets(filters?: { status?: string; assignedTo?: string; priority?: string }): Promise<ApiResponse<any[]>> {
+  async getSupportTickets(filters?: { 
+    userId?: string;
+    sellerId?: string;
+    orderId?: string;
+    category?: string;
+    priority?: string;
+    status?: string;
+    assignedTo?: string;
+    startDate?: string;
+    endDate?: string;
+    page?: number;
+    limit?: number;
+  }): Promise<ApiResponse<any>> {
     const params = new URLSearchParams();
+    if (filters?.userId) params.append('userId', filters.userId);
+    if (filters?.sellerId) params.append('sellerId', filters.sellerId);
+    if (filters?.orderId) params.append('orderId', filters.orderId);
+    if (filters?.category) params.append('category', filters.category);
+    if (filters?.priority) params.append('priority', filters.priority);
     if (filters?.status) params.append('status', filters.status);
     if (filters?.assignedTo) params.append('assignedTo', filters.assignedTo);
-    if (filters?.priority) params.append('priority', filters.priority);
+    if (filters?.startDate) params.append('startDate', filters.startDate);
+    if (filters?.endDate) params.append('endDate', filters.endDate);
+    if (filters?.page) params.append('page', filters.page.toString());
+    if (filters?.limit) params.append('limit', filters.limit.toString());
     const query = params.toString();
-    return this.request<ApiResponse<any[]>>(`/support/tickets${query ? `?${query}` : ''}`);
+    return this.request<ApiResponse<any>>(`/support/tickets${query ? `?${query}` : ''}`);
   }
 
-  async createSupportTicket(data: any): Promise<ApiResponse<any>> {
+  async getSupportTicketById(id: string): Promise<ApiResponse<any>> {
+    return this.request<ApiResponse<any>>(`/support/tickets/${id}`);
+  }
+
+  async createSupportTicket(data: {
+    userId?: string;
+    sellerId?: string;
+    orderId?: string;
+    subject: string;
+    category: 'ORDER_INQUIRY' | 'PRODUCT_QUESTION' | 'RETURN_REQUEST' | 'PAYMENT_ISSUE' | 'TECHNICAL_SUPPORT' | 'SELLER_SUPPORT' | 'OTHER';
+    priority?: 'LOW' | 'MEDIUM' | 'HIGH' | 'URGENT';
+    initialMessage: string;
+  }): Promise<ApiResponse<any>> {
     return this.request<ApiResponse<any>>('/support/tickets', {
       method: 'POST',
       body: JSON.stringify(data),
     });
+  }
+
+  async updateSupportTicket(id: string, data: {
+    subject?: string;
+    category?: string;
+    priority?: string;
+    status?: string;
+  }): Promise<ApiResponse<any>> {
+    return this.request<ApiResponse<any>>(`/support/tickets/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async addTicketMessage(id: string, data: {
+    content: string;
+    isInternal?: boolean;
+    attachments?: any;
+  }): Promise<ApiResponse<any>> {
+    return this.request<ApiResponse<any>>(`/support/tickets/${id}/messages`, {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async assignTicket(id: string, assignedTo: string): Promise<ApiResponse<any>> {
+    return this.request<ApiResponse<any>>(`/support/tickets/${id}/assign`, {
+      method: 'PUT',
+      body: JSON.stringify({ assignedTo }),
+    });
+  }
+
+  async updateTicketStatus(id: string, status: 'OPEN' | 'ASSIGNED' | 'IN_PROGRESS' | 'WAITING_CUSTOMER' | 'RESOLVED' | 'CLOSED'): Promise<ApiResponse<any>> {
+    return this.request<ApiResponse<any>>(`/support/tickets/${id}/status`, {
+      method: 'PUT',
+      body: JSON.stringify({ status }),
+    });
+  }
+
+  // Support - Chatbot
+  async sendChatbotMessage(data: {
+    userId?: string;
+    sellerId?: string;
+    message: string;
+    conversationId?: string;
+    context?: {
+      orderId?: string;
+      productId?: string;
+      ticketId?: string;
+    };
+  }): Promise<ApiResponse<any>> {
+    return this.request<ApiResponse<any>>('/support/chatbot/message', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async escalateToHuman(data: {
+    userId?: string;
+    sellerId?: string;
+    message: string;
+    conversationId?: string;
+    reason?: string;
+  }): Promise<ApiResponse<any>> {
+    return this.request<ApiResponse<any>>('/support/chatbot/escalate', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async getChatHistory(conversationId: string): Promise<ApiResponse<any[]>> {
+    return this.request<ApiResponse<any[]>>(`/support/chatbot/history/${conversationId}`);
+  }
+
+  async createChatConversation(data?: {
+    userId?: string;
+    sellerId?: string;
+  }): Promise<ApiResponse<{ conversationId: string }>> {
+    return this.request<ApiResponse<{ conversationId: string }>>('/support/chatbot/conversation', {
+      method: 'POST',
+      body: JSON.stringify(data || {}),
+    });
+  }
+
+  // Knowledge Base
+  async getKnowledgeBaseArticles(filters?: {
+    category?: string;
+    tags?: string;
+    isPublished?: boolean;
+    search?: string;
+    page?: number;
+    limit?: number;
+  }): Promise<ApiResponse<any>> {
+    const params = new URLSearchParams();
+    if (filters?.category) params.append('category', filters.category);
+    if (filters?.tags) params.append('tags', filters.tags);
+    if (filters?.isPublished !== undefined) params.append('isPublished', filters.isPublished.toString());
+    if (filters?.search) params.append('search', filters.search);
+    if (filters?.page) params.append('page', filters.page.toString());
+    if (filters?.limit) params.append('limit', filters.limit.toString());
+    const query = params.toString();
+    return this.request<ApiResponse<any>>(`/support/kb/articles${query ? `?${query}` : ''}`);
+  }
+
+  async getKnowledgeBaseArticle(id: string): Promise<ApiResponse<any>> {
+    return this.request<ApiResponse<any>>(`/support/kb/articles/${id}`);
+  }
+
+  async getKnowledgeBaseArticleBySlug(slug: string): Promise<ApiResponse<any>> {
+    return this.request<ApiResponse<any>>(`/support/kb/articles/slug/${slug}`);
+  }
+
+  async searchKnowledgeBase(query: string, filters?: {
+    category?: string;
+    tags?: string;
+    limit?: number;
+  }): Promise<ApiResponse<any[]>> {
+    const params = new URLSearchParams();
+    params.append('query', query);
+    if (filters?.category) params.append('category', filters.category);
+    if (filters?.tags) params.append('tags', filters.tags);
+    if (filters?.limit) params.append('limit', filters.limit.toString());
+    const queryString = params.toString();
+    return this.request<ApiResponse<any[]>>(`/support/kb/search?${queryString}`);
   }
 
   // Fulfillment Centers
@@ -1773,6 +1929,30 @@ export class ApiClient {
     return this.request<ApiResponse<any>>('/admin/settings', {
       method: 'PUT',
       body: JSON.stringify(settings),
+    });
+  }
+
+  // Returns Management
+  async getReturns(): Promise<ApiResponse<any[]>> {
+    return this.request<ApiResponse<any[]>>('/returns', {
+      method: 'GET',
+    });
+  }
+
+  async getReturnById(id: string): Promise<ApiResponse<any>> {
+    return this.request<ApiResponse<any>>(`/returns/${id}`, {
+      method: 'GET',
+    });
+  }
+
+  async createReturn(data: {
+    orderId: string;
+    reason: string;
+    notes?: string;
+  }): Promise<ApiResponse<any>> {
+    return this.request<ApiResponse<any>>('/returns', {
+      method: 'POST',
+      body: JSON.stringify(data),
     });
   }
 }

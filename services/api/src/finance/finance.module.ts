@@ -1,4 +1,5 @@
 import { Module } from '@nestjs/common';
+import { ConfigModule } from '@nestjs/config';
 import { FinanceService } from './finance.service';
 import { FinanceController } from './finance.controller';
 import { TransactionsController } from './transactions.controller';
@@ -12,7 +13,7 @@ import { ReportsService } from './reports.service';
 import { DatabaseModule } from '../database/database.module';
 
 @Module({
-  imports: [DatabaseModule],
+  imports: [DatabaseModule, ConfigModule],
   controllers: [
     FinanceController,
     TransactionsController,
