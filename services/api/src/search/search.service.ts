@@ -326,9 +326,144 @@ export class SearchService implements OnModuleInit {
         total: result.body.hits.total.value || result.body.hits.total,
         aggregations: result.body.aggregations,
       };
-    } catch (error) {
-      this.logger.error('Search error:', error);
-      throw error;
+    } catch (error: any) {
+      this.logger.warn('Elasticsearch search failed, falling back to database search:', error.message);
+      // Fallback to database search instead of throwing error
+      return this.searchInDatabase(query, filters);
+    }
+  }
+
+  /**
+   * Fallback database search when Elasticsearch is unavailable
+   */
+  private async searchInDatabase(
+    query: string,
+    filters: {
+      category?: string;
+      fandom?: string;
+      sellerId?: string;
+      minPrice?: number;
+      maxPrice?: number;
+      minRating?: number;
+      inStock?: boolean;
+      page?: number;
+      limit?: number;
+    },
+  ): Promise<{
+    hits: any[];
+    total: number;
+    aggregations?: any;
+  }> {
+    try {
+      const page = filters.page || 1;
+      const limit = filters.limit || 20;
+      const skip = (page - 1) * limit;
+
+      const where: any = {
+        status: 'ACTIVE',
+      };
+
+      // Text search in name and description
+      if (query) {
+        where.OR = [
+          { name: { contains: query, mode: 'insensitive' } },
+          { description: { contains: query, mode: 'insensitive' } },
+        ];
+      }
+
+      // Apply filters
+      if (filters.category) {
+        where.category = filters.category;
+      }
+
+      if (filters.fandom) {
+        where.fandom = filters.fandom;
+      }
+
+      if (filters.sellerId) {
+        where.sellerId = filters.sellerId;
+      }
+
+      if (filters.minPrice !== undefined) {
+        where.price = { gte: filters.minPrice };
+      }
+
+      if (filters.maxPrice !== undefined) {
+        where.price = { ...where.price, lte: filters.maxPrice };
+      }
+
+      if (filters.minRating !== undefined) {
+        where.averageRating = { gte: filters.minRating };
+      }
+
+      if (filters.inStock) {
+        where.stock = { gt: 0 };
+      }
+
+      const [products, total] = await Promise.all([
+        this.prisma.product.findMany({
+          where,
+          skip,
+          take: limit,
+          include: {
+            images: {
+              select: { url: true },
+              orderBy: { order: 'asc' },
+              take: 1,
+            },
+            seller: {
+              select: {
+                id: true,
+                storeName: true,
+                slug: true,
+              },
+            },
+            categoryRelation: {
+              select: {
+                id: true,
+                name: true,
+                slug: true,
+              },
+            },
+          },
+          orderBy: {
+            createdAt: 'desc',
+          },
+        }),
+        this.prisma.product.count({ where }),
+      ]);
+
+      return {
+        hits: products.map((product) => ({
+          id: product.id,
+          name: product.name,
+          description: product.description || '',
+          category: product.categoryRelation?.name || null,
+          fandom: product.fandom || null,
+          sellerId: product.sellerId,
+          sellerName: product.seller?.storeName || null,
+          sellerSlug: product.seller?.slug || null,
+          price: parseFloat(product.price?.toString() || '0'),
+          stock: product.stock || 0,
+          isActive: product.status === 'ACTIVE',
+          tags: [],
+          averageRating: product.averageRating || 0,
+          reviewCount: product.reviewCount || 0,
+          createdAt: product.createdAt,
+          updatedAt: product.updatedAt,
+          images: product.images.map((img) => img.url),
+        })),
+        total,
+        aggregations: {},
+      };
+    } catch (error: any) {
+      this.logger.error('Database search fallback failed:', error);
+      // Return empty results instead of throwing
+      return {
+        hits: [],
+        total: 0,
+        aggregations: {},
+      };
     }
   }
 

@@ -1,7 +1,8 @@
 import { Module } from '@nestjs/common';
-import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
+import { ThrottlerModule } from '@nestjs/throttler';
 import { APP_GUARD } from '@nestjs/core';
 import { ConfigModule, ConfigService } from '@nestjs/config';
+import { CustomThrottlerGuard } from './custom-throttler.guard';
 
 @Module({
   imports: [
@@ -10,7 +11,7 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
       useFactory: (configService: ConfigService) => [
         {
           ttl: configService.get('RATE_LIMIT_TTL') || 60000, // 1 minute
-          limit: configService.get('RATE_LIMIT_MAX') || 100, // 100 requests per minute
+          limit: configService.get('RATE_LIMIT_MAX') || 300, // 300 requests per minute (increased for production)
         },
       ],
       inject: [ConfigService],
@@ -19,7 +20,7 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
   providers: [
     {
       provide: APP_GUARD,
-      useClass: ThrottlerGuard,
+      useClass: CustomThrottlerGuard,
     },
   ],
 })

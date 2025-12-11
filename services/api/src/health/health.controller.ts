@@ -1,7 +1,9 @@
 import { Controller, Get } from '@nestjs/common';
+import { SkipThrottle } from '@nestjs/throttler';
 import { PrismaService } from '../database/prisma.service';
 import { RedisService } from '../cache/redis.service';
 
+@SkipThrottle() // Exclude all health endpoints from rate limiting
 @Controller('health')
 export class HealthController {
   constructor(
