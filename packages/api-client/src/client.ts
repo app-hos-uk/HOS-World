@@ -189,6 +189,7 @@ export class ApiClient {
     });
   }
 
+  // AI Chat History - renamed from getChatHistory to avoid duplicate
   async getAIChatHistory(characterId?: string): Promise<ApiResponse<any[]>> {
     const query = characterId ? `?characterId=${characterId}` : '';
     return this.request<ApiResponse<any[]>>(`/ai/chat/history${query}`);
@@ -1278,6 +1279,7 @@ export class ApiClient {
     });
   }
 
+  // Support Chatbot History - renamed from getChatHistory to avoid duplicate
   async getChatbotHistory(conversationId: string): Promise<ApiResponse<any[]>> {
     return this.request<ApiResponse<any[]>>(`/support/chatbot/history/${conversationId}`);
   }
