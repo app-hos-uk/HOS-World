@@ -34,10 +34,6 @@ export function ReturnRequestForm({
         reason,
         notes: notes || undefined,
       });
-        orderId,
-        reason,
-        notes: notes || undefined,
-      });
 
       if (onSuccess) {
         onSuccess();
