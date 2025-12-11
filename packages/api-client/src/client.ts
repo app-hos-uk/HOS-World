@@ -189,7 +189,7 @@ export class ApiClient {
     });
   }
 
-  async getChatHistory(characterId?: string): Promise<ApiResponse<any[]>> {
+  async getAIChatHistory(characterId?: string): Promise<ApiResponse<any[]>> {
     const query = characterId ? `?characterId=${characterId}` : '';
     return this.request<ApiResponse<any[]>>(`/ai/chat/history${query}`);
   }
@@ -1278,7 +1278,7 @@ export class ApiClient {
     });
   }
 
-  async getChatHistory(conversationId: string): Promise<ApiResponse<any[]>> {
+  async getChatbotHistory(conversationId: string): Promise<ApiResponse<any[]>> {
     return this.request<ApiResponse<any[]>>(`/support/chatbot/history/${conversationId}`);
   }
 
