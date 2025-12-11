@@ -34,14 +34,14 @@ export default function MigrationsPage() {
 
     try {
       // Use fetch directly since we need to call admin endpoints
-      const token = localStorage.getItem('token');
+      const token = localStorage.getItem('auth_token');
       if (!token) {
         toast.error('Please login first');
         return;
       }
 
-      // Get API URL from apiClient or environment
-      const apiUrl = (apiClient as any).baseUrl || process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api';
+      // Get API URL from environment
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'https://hos-marketplaceapi-production.up.railway.app/api';
       const response = await fetch(`${apiUrl}${endpoint}`, {
         method: 'POST',
         headers: {
