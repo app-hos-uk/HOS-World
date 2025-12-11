@@ -213,6 +213,19 @@ export class MigrationController {
       // Embedded SQL as fallback - this ensures it always works
       // Execute statements one by one to ensure proper execution
       const sqlStatements = [
+        // CRITICAL: Create _prisma_migrations table FIRST
+        `CREATE TABLE IF NOT EXISTS "_prisma_migrations" (
+          "id" VARCHAR(36) NOT NULL,
+          "checksum" VARCHAR(64) NOT NULL,
+          "finished_at" TIMESTAMP,
+          "migration_name" VARCHAR(255) NOT NULL,
+          "logs" TEXT,
+          "rolled_back_at" TIMESTAMP,
+          "started_at" TIMESTAMP NOT NULL DEFAULT now(),
+          "applied_steps_count" INTEGER NOT NULL DEFAULT 0,
+          CONSTRAINT "_prisma_migrations_pkey" PRIMARY KEY ("id")
+        )`,
+        
         // Add columns to users table - execute as separate statements
         `ALTER TABLE "users" ADD COLUMN IF NOT EXISTS "country" TEXT`,
         `ALTER TABLE "users" ADD COLUMN IF NOT EXISTS "whatsappNumber" TEXT`,
