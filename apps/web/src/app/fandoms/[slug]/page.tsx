@@ -6,7 +6,7 @@ import { Footer } from '@/components/Footer';
 import { apiClient } from '@/lib/api';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
-import Image from 'next/image';
+import { ProductCard } from '@/components/ProductCard';
 
 interface FandomDetailPageProps {
   params: {
@@ -88,35 +88,7 @@ function FandomProducts({ fandomSlug, fandomName }: { fandomSlug: string; fandom
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6">
       {products.map((product) => (
-        <Link key={product.id} href={`/products/${product.id}`} className="group">
-          <div className="bg-white border rounded-lg overflow-hidden hover:shadow-lg transition-shadow">
-            <div className="aspect-square bg-gray-100 relative">
-              {product.images && product.images[0] ? (
-                <Image
-                  src={product.images[0].url}
-                  alt={product.name}
-                  fill
-                  className="object-cover"
-                />
-              ) : (
-                <div className="w-full h-full flex items-center justify-center text-gray-400">
-                  No Image
-                </div>
-              )}
-            </div>
-            <div className="p-4">
-              <h3 className="font-semibold text-gray-900 group-hover:text-purple-600 transition-colors">
-                {product.name}
-              </h3>
-              <p className="text-sm text-gray-600 mt-1 line-clamp-2">{product.description}</p>
-              <div className="mt-2">
-                <span className="text-lg font-bold text-purple-900">
-                  £{Number(product.price).toFixed(2)}
-                </span>
-              </div>
-            </div>
-          </div>
-        </Link>
+        <ProductCard key={product.id} product={product} />
       ))}
     </div>
   );

@@ -1,10 +1,16 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import dynamic from 'next/dynamic';
 import { Header } from '@/components/Header';
 import { Footer } from '@/components/Footer';
-import { ReturnRequestForm } from '@/components/ReturnRequestForm';
 import { apiClient } from '@/lib/api';
+
+// Lazy load heavy form component
+const ReturnRequestForm = dynamic(() => import('@/components/ReturnRequestForm').then(mod => ({ default: mod.ReturnRequestForm })), {
+  loading: () => <div className="text-center py-4">Loading return form...</div>,
+  ssr: false,
+});
 
 interface ReturnRequest {
   id: string;

@@ -1,20 +1,17 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo, useCallback } from 'react';
 import { RouteGuard } from '@/components/RouteGuard';
 import { AdminLayout } from '@/components/AdminLayout';
 import { apiClient } from '@/lib/api';
+import { OrderItem } from '@/components/OrderItem';
 
 export default function AdminOrdersPage() {
   const [orders, setOrders] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    fetchOrders();
-  }, []);
-
-  const fetchOrders = async () => {
+  const fetchOrders = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
@@ -28,7 +25,11 @@ export default function AdminOrdersPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    fetchOrders();
+  }, [fetchOrders]);
 
   if (loading) {
     return (
@@ -96,35 +97,7 @@ export default function AdminOrdersPage() {
                   </tr>
                 ) : (
                   orders.map((order) => (
-                    <tr key={order.id} className="hover:bg-gray-50">
-                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                        {order.id.substring(0, 8)}...
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        {order.user?.email || order.customer?.email || 'N/A'}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                        {order.total ? `${order.currency || 'GBP'} ${order.total.toFixed(2)}` : 'N/A'}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <span
-                          className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                            order.status === 'COMPLETED'
-                              ? 'bg-green-100 text-green-800'
-                              : order.status === 'CANCELLED'
-                              ? 'bg-red-100 text-red-800'
-                              : 'bg-yellow-100 text-yellow-800'
-                          }`}
-                        >
-                          {order.status}
-                        </span>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        {order.createdAt
-                          ? new Date(order.createdAt).toLocaleDateString()
-                          : 'N/A'}
-                      </td>
-                    </tr>
+                    <OrderItem key={order.id} order={order} onRetry={fetchOrders} />
                   ))
                 )}
               </tbody>

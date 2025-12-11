@@ -1,10 +1,20 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
+import dynamic from 'next/dynamic';
 import { useRouter } from 'next/navigation';
 import { apiClient, markLoginSuccess } from '@/lib/api';
-import { CharacterSelector } from '@/components/CharacterSelector';
-import { FandomQuiz } from '@/components/FandomQuiz';
+
+// Lazy load heavy components
+const CharacterSelector = dynamic(() => import('@/components/CharacterSelector').then(mod => ({ default: mod.CharacterSelector })), {
+  loading: () => <div className="text-center py-8">Loading character selector...</div>,
+  ssr: false,
+});
+
+const FandomQuiz = dynamic(() => import('@/components/FandomQuiz').then(mod => ({ default: mod.FandomQuiz })), {
+  loading: () => <div className="text-center py-8">Loading fandom quiz...</div>,
+  ssr: false,
+});
 
 export default function LoginPage() {
   const router = useRouter();

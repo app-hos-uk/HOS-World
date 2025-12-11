@@ -309,43 +309,49 @@ export class ProductsService {
         orderBy = { createdAt: 'desc' };
     }
 
-    // Execute query
+    // Execute query with optimized includes (only what's needed for listing)
     const [products, total] = await Promise.all([
       this.prisma.product.findMany({
         where,
         skip,
         take: limit,
         orderBy,
-        include: {
+        select: {
+          id: true,
+          name: true,
+          description: true,
+          price: true,
+          currency: true,
+          fandom: true,
+          slug: true,
           images: {
+            select: {
+              url: true,
+              order: true,
+            },
             orderBy: { order: 'asc' },
+            take: 1, // Only first image for listing
           },
-          variations: true,
           categoryRelation: {
-            include: {
-              parent: {
-                include: {
-                  parent: true,
-                },
-              },
+            select: {
+              id: true,
+              name: true,
+              slug: true,
             },
           },
           tagsRelation: {
-            include: {
-              tag: true,
-            },
-          },
-          attributes: {
-            include: {
-              attribute: {
-                include: {
-                  values: true,
+            select: {
+              tag: {
+                select: {
+                  id: true,
+                  name: true,
+                  slug: true,
                 },
               },
-              attributeValue: true,
             },
+            take: 5, // Limit tags for listing
           },
-          // Seller information hidden for identity privacy
+          // Exclude heavy relations: variations, attributes, seller (not needed for listing)
         },
       }),
       this.prisma.product.count({ where }),
@@ -724,10 +730,11 @@ export class ProductsService {
   }
 
   private mapToProductType(product: any, includeSeller: boolean = false): Product {
+    // Handle both full includes and optimized selects
     const mapped: any = {
       id: product.id,
       name: product.name,
-      description: product.description,
+      description: product.description || null,
       slug: product.slug,
       sku: product.sku || undefined,
       barcode: product.barcode || undefined,

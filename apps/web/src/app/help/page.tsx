@@ -1,10 +1,16 @@
 'use client';
 
+import dynamic from 'next/dynamic';
 import { Header } from '@/components/Header';
 import { Footer } from '@/components/Footer';
-import { AISupportChat } from '@/components/AISupportChat';
 import Link from 'next/link';
 import { useAuth } from '@/contexts/AuthContext';
+
+// Lazy load heavy AI component
+const AISupportChat = dynamic(() => import('@/components/AISupportChat').then(mod => ({ default: mod.AISupportChat })), {
+  loading: () => <div className="text-center py-4">Loading AI support...</div>,
+  ssr: false,
+});
 
 export default function HelpPage() {
   const { isAuthenticated } = useAuth();

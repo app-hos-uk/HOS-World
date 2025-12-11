@@ -1,10 +1,16 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import dynamic from 'next/dynamic';
 import { RouteGuard } from '@/components/RouteGuard';
 import { DashboardLayout } from '@/components/DashboardLayout';
-import { AISupportChat } from '@/components/AISupportChat';
 import { apiClient } from '@/lib/api';
+
+// Lazy load heavy AI component
+const AISupportChat = dynamic(() => import('@/components/AISupportChat').then(mod => ({ default: mod.AISupportChat })), {
+  loading: () => <div className="text-center py-4">Loading AI support...</div>,
+  ssr: false,
+});
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/useToast';
 

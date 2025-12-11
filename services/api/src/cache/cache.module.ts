@@ -1,6 +1,7 @@
 import { Module, Global } from '@nestjs/common';
 import { CacheService } from './cache.service';
 import { ErrorCacheService } from './error-cache.service';
+import { CacheWarmingService } from './cache-warming.service';
 import { CacheModule as NestCacheModule } from '@nestjs/cache-manager';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { RedisService } from './redis.service';
@@ -23,8 +24,8 @@ import { DatabaseModule } from '../database/database.module';
     }),
     DatabaseModule,
   ],
-  providers: [CacheService, ErrorCacheService, RedisService],
-  exports: [CacheService, ErrorCacheService, RedisService],
+  providers: [CacheService, ErrorCacheService, RedisService, CacheWarmingService],
+  exports: [CacheService, ErrorCacheService, RedisService, CacheWarmingService],
 })
 export class CacheModule {}
 

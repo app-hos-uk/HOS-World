@@ -1,5 +1,6 @@
 import { NestFactory } from '@nestjs/core';
 import { ValidationPipe } from '@nestjs/common';
+import * as compression from 'compression';
 import { AppModule } from './app.module';
 
 async function bootstrap() {
@@ -132,6 +133,19 @@ async function bootstrap() {
       }
       next();
     });
+
+    // Enable response compression
+    app.use(compression({
+      filter: (req, res) => {
+        // Compress all responses except health checks
+        if (req.headers['x-no-compression']) {
+          return false;
+        }
+        return compression.filter(req, res);
+      },
+      level: 6, // Compression level (1-9, 6 is a good balance)
+      threshold: 1024, // Only compress responses larger than 1KB
+    }));
 
     // Global prefix for all routes
     app.setGlobalPrefix('api');

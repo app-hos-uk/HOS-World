@@ -288,12 +288,37 @@ export class OrdersService {
 
     const orders = await this.prisma.order.findMany({
       where,
-      include: {
+      take: 50, // Add pagination limit
+      orderBy: { createdAt: 'desc' },
+      select: {
+        id: true,
+        status: true,
+        total: true,
+        currency: true,
+        createdAt: true,
+        user: {
+          select: {
+            email: true,
+          },
+        },
+        customer: {
+          select: {
+            email: true,
+          },
+        },
         items: {
-          include: {
+          select: {
+            id: true,
+            quantity: true,
+            price: true,
             product: {
-              include: {
+              select: {
+                id: true,
+                name: true,
                 images: {
+                  select: {
+                    url: true,
+                  },
                   orderBy: { order: 'asc' },
                   take: 1,
                 },
