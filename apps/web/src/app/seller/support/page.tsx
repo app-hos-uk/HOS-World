@@ -421,7 +421,7 @@ export default function SellerSupportPage() {
                 userId={user?.id}
                 onEscalate={() => {
                   setShowCreateForm(true);
-                  toast.info('You can create a support ticket below');
+                  toast.success('You can create a support ticket below');
                 }}
               />
             </div>
