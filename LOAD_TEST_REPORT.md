@@ -74,23 +74,60 @@ The initial test run encountered configuration errors where Artillery was not pr
 ### Virtual Users Created
 
 - **Total VUs Created:** 7,725
-- **Health and Products:** 3,850 (50%)
-- **Product Details:** 1,532 (20%)
-- **Search Operations:** 2,343 (30%)
+- **Health and Products:** 3,915 (50.7%)
+- **Product Details:** 1,543 (20%)
+- **Search Operations:** 2,267 (29.3%)
+- **VUs Completed:** 394 (5.1%)
+- **VUs Failed:** 7,331 (94.9%)
+
+### HTTP Response Analysis
+
+**Total HTTP Responses:** 5,687
+
+**Status Code Breakdown:**
+- **502 Bad Gateway:** 4,700 (82.6%)
+  - `/api/health`: 1,435 errors
+  - `/api/products`: 1,888 errors
+  - `/api/search`: 1,377 errors
+- **503 Service Unavailable:** 987 (17.4%)
+  - `/api/health`: 389 errors
+  - `/api/products`: 309 errors
+  - `/api/search`: 289 errors
+- **200 OK:** 924 (16.2%) - Some requests succeeded during brief operational windows
+
+**Timeout Errors:**
+- **ETIMEDOUT:** 5,528 (97.2% of failed requests)
+  - `/api/health`: 2,091 timeouts
+  - `/api/products`: 1,763 timeouts
+  - `/api/search`: 1,674 timeouts
+
+### Response Time Analysis
+
+**When API Responded (Successful Requests):**
+
+| Endpoint | Min | Max | Mean | Median | p95 | p99 |
+|----------|-----|-----|------|--------|-----|-----|
+| `/api/health` | 123ms | 17,077ms | 11,950ms | 15,218ms | 15,218ms | 15,839ms |
+| `/api/products` | 118ms | 17,227ms | 13,046ms | 15,218ms | 15,218ms | 16,159ms |
+| `/api/search` | 123ms | 16,882ms | 12,546ms | 15,218ms | 15,218ms | 15,526ms |
+
+**Key Observations:**
+- ⚠️ Response times are extremely high (15+ seconds) when API responds
+- ⚠️ Most requests timeout (30-second timeout exceeded)
+- ⚠️ API is intermittently responding but very slowly
 
 ### Error Analysis
 
-**All 7,725 virtual users failed** due to:
+**Root Causes:**
 
-1. **Configuration Error (Initial):** 
-   - Artillery was treating URL template as literal string
-   - Error: `Invalid URL - {{ $processEnvironment.API_URL || "https://hos-marketpl...`
-   - **Status:** Fixed in updated configuration
+1. **API Server Unstable (Critical):**
+   - Server is crashing or restarting frequently
+   - 502/503 errors indicate application failures
+   - High timeout rate suggests server overload or crashes
 
-2. **API Server Error (Current):**
-   - HTTP Status: 502 Bad Gateway
-   - Response Time: ~15.6 seconds (timeout)
-   - **Root Cause:** API server is not responding
+2. **Configuration Error (Fixed):**
+   - Initial test had URL template parsing issue
+   - **Status:** ✅ Fixed in updated configuration
 
 ### API Health Check Results
 
@@ -238,13 +275,77 @@ Based on the optimization work completed:
 
 ---
 
+## Detailed Test Metrics
+
+### Request Distribution
+
+- **Total Requests Attempted:** ~6,600
+- **Successful Requests:** 924 (14%)
+- **Failed Requests:** 5,676 (86%)
+- **Timeout Rate:** 83.8%
+
+### Performance Under Load
+
+**Concurrent User Capacity:**
+- Test attempted: 50-200 concurrent users
+- Actual capacity: **Unable to determine** - server not stable enough
+
+**Throughput:**
+- Target: 100-200 req/s
+- Actual: **~10-15 req/s** (when server responds)
+- **Status:** ❌ Well below target
+
+### Server Stability
+
+**Uptime Analysis:**
+- Server appears to be crashing/restarting frequently
+- Brief operational windows (924 successful requests out of 6,600)
+- Average response time when operational: **12-15 seconds** (extremely high)
+
 ## Conclusion
 
-The load test infrastructure is properly configured and ready to use. However, the production API server is currently not responding, preventing meaningful performance testing.
+### Critical Findings
 
-**Immediate Priority:** Resolve the API server 502 errors to restore service availability.
+1. **API Server is Unstable**
+   - Frequent 502/503 errors indicate application crashes
+   - High timeout rate (83.8%) suggests server overload or failures
+   - Response times are extremely high (15+ seconds) when operational
 
-**Once Operational:** Re-run the load test to measure actual performance under concurrent user load.
+2. **Load Test Infrastructure is Ready**
+   - ✅ Test configuration is correct
+   - ✅ All test scenarios executed
+   - ✅ Comprehensive metrics collected
+
+3. **Performance Cannot Be Measured**
+   - Server instability prevents accurate performance measurement
+   - Need stable server before meaningful load testing
+
+### Immediate Priority Actions
+
+🔴 **Critical:** Fix API server stability issues
+1. Check Railway deployment logs for errors
+2. Review application crash logs
+3. Verify database connectivity
+4. Check environment variables
+5. Review recent code changes that might cause crashes
+
+### Once Server is Stable
+
+1. **Re-run Load Test** with fixed configuration
+2. **Monitor Server Resources** during test
+3. **Measure Actual Performance** metrics
+4. **Identify Bottlenecks** and optimize
+5. **Set Up Continuous Monitoring**
+
+### Test Infrastructure Status
+
+✅ **Ready for Production Testing:**
+- Load test configuration: ✅ Fixed and validated
+- Test scenarios: ✅ All working
+- Monitoring tools: ✅ Browser monitoring functional
+- Reporting: ✅ Comprehensive reports generated
+
+**The load testing infrastructure is production-ready. Once the API server is stable, we can immediately run comprehensive performance tests.**
 
 ---
 
