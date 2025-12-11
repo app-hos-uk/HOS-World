@@ -1,4 +1,4 @@
-// Cache-bust: 2025-12-04 - Fixed TypeScript build error (removed process.env checks)
+// Cache-bust: 2025-12-11 - Fixed duplicate getChatHistory methods (renamed to getAIChatHistory and getChatbotHistory)
 import type {
   User,
   Product,
