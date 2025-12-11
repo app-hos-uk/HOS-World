@@ -13,9 +13,13 @@ export class CacheWarmingService implements OnModuleInit {
 
   async onModuleInit() {
     // Warm cache in background (don't block startup)
-    this.warmCache().catch((err) => {
-      this.logger.error('Failed to warm cache on startup', err);
-    });
+    // Delay cache warming to allow database to connect first
+    setTimeout(() => {
+      this.warmCache().catch((err) => {
+        this.logger.warn('⚠️ Cache warming failed (non-critical):', err.message);
+        // Don't log full error stack to avoid cluttering logs
+      });
+    }, 10000); // Wait 10 seconds for database to be ready
   }
 
   /**

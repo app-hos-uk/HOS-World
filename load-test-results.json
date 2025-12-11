@@ -1,0 +1,824 @@
+{
+  "aggregate": {
+    "counters": {
+      "vusers.created_by_name.Search Operations": 2343,
+      "vusers.created": 7725,
+      "errors.Invalid URL - {{ $processEnvironment.API_URL || \"https://hos-marketplaceapi-production.up.railway.app/api\" }}/search?q=wand&page=1&limit=20": 2343,
+      "vusers.failed": 7725,
+      "vusers.created_by_name.Health and Products": 3850,
+      "errors.Invalid URL - {{ $processEnvironment.API_URL || \"https://hos-marketplaceapi-production.up.railway.app/api\" }}/health": 3850,
+      "vusers.created_by_name.Product Details": 1532,
+      "errors.Invalid URL - {{ $processEnvironment.API_URL || \"https://hos-marketplaceapi-production.up.railway.app/api\" }}/products?page=1&limit=5": 1532
+    },
+    "rates": {},
+    "firstCounterAt": 1765452659605,
+    "lastCounterAt": 1765453046543,
+    "firstMetricAt": 1765452659605,
+    "lastMetricAt": 1765453046543,
+    "period": 1765453040000,
+    "summaries": {},
+    "histograms": {}
+  },
+  "intermediate": [
+    {
+      "counters": {
+        "vusers.created_by_name.Search Operations": 3,
+        "vusers.created": 5,
+        "errors.Invalid URL - {{ $processEnvironment.API_URL || \"https://hos-marketplaceapi-production.up.railway.app/api\" }}/search?q=wand&page=1&limit=20": 3,
+        "vusers.failed": 5,
+        "vusers.created_by_name.Health and Products": 1,
+        "errors.Invalid URL - {{ $processEnvironment.API_URL || \"https://hos-marketplaceapi-production.up.railway.app/api\" }}/health": 1,
+        "vusers.created_by_name.Product Details": 1,
+        "errors.Invalid URL - {{ $processEnvironment.API_URL || \"https://hos-marketplaceapi-production.up.railway.app/api\" }}/products?page=1&limit=5": 1
+      },
+      "rates": {},
+      "firstCounterAt": 1765452659605,
+      "lastCounterAt": 1765452659704,
+      "firstMetricAt": 1765452659605,
+      "lastMetricAt": 1765452659704,
+      "period": "1765452650000",
+      "summaries": {},
+      "histograms": {}
+    },
+    {
+      "counters": {
+        "vusers.created_by_name.Search Operations": 26,
+        "vusers.created": 80,
+        "errors.Invalid URL - {{ $processEnvironment.API_URL || \"https://hos-marketplaceapi-production.up.railway.app/api\" }}/search?q=wand&page=1&limit=20": 26,
+        "vusers.failed": 80,
+        "vusers.created_by_name.Health and Products": 39,
+        "errors.Invalid URL - {{ $processEnvironment.API_URL || \"https://hos-marketplaceapi-production.up.railway.app/api\" }}/health": 39,
+        "vusers.created_by_name.Product Details": 15,
+        "errors.Invalid URL - {{ $processEnvironment.API_URL || \"https://hos-marketplaceapi-production.up.railway.app/api\" }}/products?page=1&limit=5": 15
+      },
+      "rates": {},
+      "firstCounterAt": 1765452660516,
+      "lastCounterAt": 1765452669804,
+      "firstMetricAt": 1765452660516,
+      "lastMetricAt": 1765452669804,
+      "period": "1765452660000",
+      "summaries": {},
+      "histograms": {}
+    },
+    {
+      "counters": {
+        "vusers.created_by_name.Health and Products": 66,
+        "vusers.created": 132,
+        "errors.Invalid URL - {{ $processEnvironment.API_URL || \"https://hos-marketplaceapi-production.up.railway.app/api\" }}/health": 66,
+        "vusers.failed": 132,
+        "vusers.created_by_name.Search Operations": 37,
+        "errors.Invalid URL - {{ $processEnvironment.API_URL || \"https://hos-marketplaceapi-production.up.railway.app/api\" }}/search?q=wand&page=1&limit=20": 37,
+        "vusers.created_by_name.Product Details": 29,
+        "errors.Invalid URL - {{ $processEnvironment.API_URL || \"https://hos-marketplaceapi-production.up.railway.app/api\" }}/products?page=1&limit=5": 29
+      },
+      "rates": {},
+      "firstCounterAt": 1765452670036,
+      "lastCounterAt": 1765452679906,
+      "firstMetricAt": 1765452670036,
+      "lastMetricAt": 1765452679906,
+      "period": "1765452670000",
+      "summaries": {},
+      "histograms": {}
+    },
+    {
+      "counters": {
+        "vusers.created_by_name.Search Operations": 49,
+        "vusers.created": 168,
+        "errors.Invalid URL - {{ $processEnvironment.API_URL || \"https://hos-marketplaceapi-production.up.railway.app/api\" }}/search?q=wand&page=1&limit=20": 49,
+        "vusers.failed": 168,
+        "vusers.created_by_name.Product Details": 34,
+        "errors.Invalid URL - {{ $processEnvironment.API_URL || \"https://hos-marketplaceapi-production.up.railway.app/api\" }}/products?page=1&limit=5": 34,
+        "vusers.created_by_name.Health and Products": 85,
+        "errors.Invalid URL - {{ $processEnvironment.API_URL || \"https://hos-marketplaceapi-production.up.railway.app/api\" }}/health": 85
+      },
+      "rates": {},
+      "firstCounterAt": 1765452680102,
+      "lastCounterAt": 1765452689814,
+      "firstMetricAt": 1765452680102,
+      "lastMetricAt": 1765452689814,
+      "period": "1765452680000",
+      "summaries": {},
+      "histograms": {}
+    },
+    {
+      "counters": {
+        "vusers.created_by_name.Search Operations": 26,
+        "vusers.created": 100,
+        "errors.Invalid URL - {{ $processEnvironment.API_URL || \"https://hos-marketplaceapi-production.up.railway.app/api\" }}/search?q=wand&page=1&limit=20": 26,
+        "vusers.failed": 100,
+        "vusers.created_by_name.Health and Products": 53,
+        "errors.Invalid URL - {{ $processEnvironment.API_URL || \"https://hos-marketplaceapi-production.up.railway.app/api\" }}/health": 53,
+        "vusers.created_by_name.Product Details": 21,
+        "errors.Invalid URL - {{ $processEnvironment.API_URL || \"https://hos-marketplaceapi-production.up.railway.app/api\" }}/products?page=1&limit=5": 21
+      },
+      "rates": {},
+      "firstCounterAt": 1765452690038,
+      "lastCounterAt": 1765452699814,
+      "firstMetricAt": 1765452690038,
+      "lastMetricAt": 1765452699814,
+      "period": "1765452690000",
+      "summaries": {},
+      "histograms": {}
+    },
+    {
+      "counters": {
+        "vusers.created_by_name.Search Operations": 30,
+        "vusers.created": 100,
+        "errors.Invalid URL - {{ $processEnvironment.API_URL || \"https://hos-marketplaceapi-production.up.railway.app/api\" }}/search?q=wand&page=1&limit=20": 30,
+        "vusers.failed": 100,
+        "vusers.created_by_name.Product Details": 16,
+        "errors.Invalid URL - {{ $processEnvironment.API_URL || \"https://hos-marketplaceapi-production.up.railway.app/api\" }}/products?page=1&limit=5": 16,
+        "vusers.created_by_name.Health and Products": 54,
+        "errors.Invalid URL - {{ $processEnvironment.API_URL || \"https://hos-marketplaceapi-production.up.railway.app/api\" }}/health": 54
+      },
+      "rates": {},
+      "firstCounterAt": 1765452700038,
+      "lastCounterAt": 1765452709814,
+      "firstMetricAt": 1765452700038,
+      "lastMetricAt": 1765452709814,
+      "period": "1765452700000",
+      "summaries": {},
+      "histograms": {}
+    },
+    {
+      "counters": {
+        "vusers.created_by_name.Search Operations": 28,
+        "vusers.created": 100,
+        "errors.Invalid URL - {{ $processEnvironment.API_URL || \"https://hos-marketplaceapi-production.up.railway.app/api\" }}/search?q=wand&page=1&limit=20": 28,
+        "vusers.failed": 100,
+        "vusers.created_by_name.Health and Products": 55,
+        "errors.Invalid URL - {{ $processEnvironment.API_URL || \"https://hos-marketplaceapi-production.up.railway.app/api\" }}/health": 55,
+        "vusers.created_by_name.Product Details": 17,
+        "errors.Invalid URL - {{ $processEnvironment.API_URL || \"https://hos-marketplaceapi-production.up.railway.app/api\" }}/products?page=1&limit=5": 17
+      },
+      "rates": {},
+      "firstCounterAt": 1765452710038,
+      "lastCounterAt": 1765452719816,
+      "firstMetricAt": 1765452710038,
+      "lastMetricAt": 1765452719816,
+      "period": "1765452710000",
+      "summaries": {},
+      "histograms": {}
+    },
+    {
+      "counters": {
+        "vusers.created_by_name.Health and Products": 46,
+        "vusers.created": 100,
+        "errors.Invalid URL - {{ $processEnvironment.API_URL || \"https://hos-marketplaceapi-production.up.railway.app/api\" }}/health": 46,
+        "vusers.failed": 100,
+        "vusers.created_by_name.Search Operations": 34,
+        "errors.Invalid URL - {{ $processEnvironment.API_URL || \"https://hos-marketplaceapi-production.up.railway.app/api\" }}/search?q=wand&page=1&limit=20": 34,
+        "vusers.created_by_name.Product Details": 20,
+        "errors.Invalid URL - {{ $processEnvironment.API_URL || \"https://hos-marketplaceapi-production.up.railway.app/api\" }}/products?page=1&limit=5": 20
+      },
+      "rates": {},
+      "firstCounterAt": 1765452720039,
+      "lastCounterAt": 1765452729813,
+      "firstMetricAt": 1765452720039,
+      "lastMetricAt": 1765452729813,
+      "period": "1765452720000",
+      "summaries": {},
+      "histograms": {}
+    },
+    {
+      "counters": {
+        "vusers.created_by_name.Search Operations": 28,
+        "vusers.created": 100,
+        "errors.Invalid URL - {{ $processEnvironment.API_URL || \"https://hos-marketplaceapi-production.up.railway.app/api\" }}/search?q=wand&page=1&limit=20": 28,
+        "vusers.failed": 100,
+        "vusers.created_by_name.Health and Products": 50,
+        "errors.Invalid URL - {{ $processEnvironment.API_URL || \"https://hos-marketplaceapi-production.up.railway.app/api\" }}/health": 50,
+        "vusers.created_by_name.Product Details": 22,
+        "errors.Invalid URL - {{ $processEnvironment.API_URL || \"https://hos-marketplaceapi-production.up.railway.app/api\" }}/products?page=1&limit=5": 22
+      },
+      "rates": {},
+      "firstCounterAt": 1765452730038,
+      "lastCounterAt": 1765452739813,
+      "firstMetricAt": 1765452730038,
+      "lastMetricAt": 1765452739813,
+      "period": "1765452730000",
+      "summaries": {},
+      "histograms": {}
+    },
+    {
+      "counters": {
+        "vusers.created_by_name.Health and Products": 53,
+        "vusers.created": 100,
+        "errors.Invalid URL - {{ $processEnvironment.API_URL || \"https://hos-marketplaceapi-production.up.railway.app/api\" }}/health": 53,
+        "vusers.failed": 100,
+        "vusers.created_by_name.Product Details": 18,
+        "errors.Invalid URL - {{ $processEnvironment.API_URL || \"https://hos-marketplaceapi-production.up.railway.app/api\" }}/products?page=1&limit=5": 18,
+        "vusers.created_by_name.Search Operations": 29,
+        "errors.Invalid URL - {{ $processEnvironment.API_URL || \"https://hos-marketplaceapi-production.up.railway.app/api\" }}/search?q=wand&page=1&limit=20": 29
+      },
+      "rates": {},
+      "firstCounterAt": 1765452740037,
+      "lastCounterAt": 1765452749813,
+      "firstMetricAt": 1765452740037,
+      "lastMetricAt": 1765452749813,
+      "period": "1765452740000",
+      "summaries": {},
+      "histograms": {}
+    },
+    {
+      "counters": {
+        "vusers.created_by_name.Health and Products": 49,
+        "vusers.created": 100,
+        "errors.Invalid URL - {{ $processEnvironment.API_URL || \"https://hos-marketplaceapi-production.up.railway.app/api\" }}/health": 49,
+        "vusers.failed": 100,
+        "vusers.created_by_name.Search Operations": 29,
+        "errors.Invalid URL - {{ $processEnvironment.API_URL || \"https://hos-marketplaceapi-production.up.railway.app/api\" }}/search?q=wand&page=1&limit=20": 29,
+        "vusers.created_by_name.Product Details": 22,
+        "errors.Invalid URL - {{ $processEnvironment.API_URL || \"https://hos-marketplaceapi-production.up.railway.app/api\" }}/products?page=1&limit=5": 22
+      },
+      "rates": {},
+      "firstCounterAt": 1765452750037,
+      "lastCounterAt": 1765452759812,
+      "firstMetricAt": 1765452750037,
+      "lastMetricAt": 1765452759812,
+      "period": "1765452750000",
+      "summaries": {},
+      "histograms": {}
+    },
+    {
+      "counters": {
+        "vusers.created_by_name.Search Operations": 44,
+        "vusers.created": 100,
+        "errors.Invalid URL - {{ $processEnvironment.API_URL || \"https://hos-marketplaceapi-production.up.railway.app/api\" }}/search?q=wand&page=1&limit=20": 44,
+        "vusers.failed": 100,
+        "vusers.created_by_name.Health and Products": 46,
+        "errors.Invalid URL - {{ $processEnvironment.API_URL || \"https://hos-marketplaceapi-production.up.railway.app/api\" }}/health": 46,
+        "vusers.created_by_name.Product Details": 10,
+        "errors.Invalid URL - {{ $processEnvironment.API_URL || \"https://hos-marketplaceapi-production.up.railway.app/api\" }}/products?page=1&limit=5": 10
+      },
+      "rates": {},
+      "firstCounterAt": 1765452760037,
+      "lastCounterAt": 1765452769812,
+      "firstMetricAt": 1765452760037,
+      "lastMetricAt": 1765452769812,
+      "period": "1765452760000",
+      "summaries": {},
+      "histograms": {}
+    },
+    {
+      "counters": {
+        "vusers.created_by_name.Health and Products": 45,
+        "vusers.created": 100,
+        "errors.Invalid URL - {{ $processEnvironment.API_URL || \"https://hos-marketplaceapi-production.up.railway.app/api\" }}/health": 45,
+        "vusers.failed": 100,
+        "vusers.created_by_name.Search Operations": 29,
+        "errors.Invalid URL - {{ $processEnvironment.API_URL || \"https://hos-marketplaceapi-production.up.railway.app/api\" }}/search?q=wand&page=1&limit=20": 29,
+        "vusers.created_by_name.Product Details": 26,
+        "errors.Invalid URL - {{ $processEnvironment.API_URL || \"https://hos-marketplaceapi-production.up.railway.app/api\" }}/products?page=1&limit=5": 26
+      },
+      "rates": {},
+      "firstCounterAt": 1765452770037,
+      "lastCounterAt": 1765452779865,
+      "firstMetricAt": 1765452770037,
+      "lastMetricAt": 1765452779865,
+      "period": "1765452770000",
+      "summaries": {},
+      "histograms": {}
+    },
+    {
+      "counters": {
+        "vusers.created_by_name.Search Operations": 26,
+        "vusers.created": 100,
+        "errors.Invalid URL - {{ $processEnvironment.API_URL || \"https://hos-marketplaceapi-production.up.railway.app/api\" }}/search?q=wand&page=1&limit=20": 26,
+        "vusers.failed": 100,
+        "vusers.created_by_name.Health and Products": 54,
+        "errors.Invalid URL - {{ $processEnvironment.API_URL || \"https://hos-marketplaceapi-production.up.railway.app/api\" }}/health": 54,
+        "vusers.created_by_name.Product Details": 20,
+        "errors.Invalid URL - {{ $processEnvironment.API_URL || \"https://hos-marketplaceapi-production.up.railway.app/api\" }}/products?page=1&limit=5": 20
+      },
+      "rates": {},
+      "firstCounterAt": 1765452780038,
+      "lastCounterAt": 1765452789812,
+      "firstMetricAt": 1765452780038,
+      "lastMetricAt": 1765452789812,
+      "period": "1765452780000",
+      "summaries": {},
+      "histograms": {}
+    },
+    {
+      "counters": {
+        "vusers.created_by_name.Health and Products": 45,
+        "vusers.created": 100,
+        "errors.Invalid URL - {{ $processEnvironment.API_URL || \"https://hos-marketplaceapi-production.up.railway.app/api\" }}/health": 45,
+        "vusers.failed": 100,
+        "vusers.created_by_name.Search Operations": 31,
+        "errors.Invalid URL - {{ $processEnvironment.API_URL || \"https://hos-marketplaceapi-production.up.railway.app/api\" }}/search?q=wand&page=1&limit=20": 31,
+        "vusers.created_by_name.Product Details": 24,
+        "errors.Invalid URL - {{ $processEnvironment.API_URL || \"https://hos-marketplaceapi-production.up.railway.app/api\" }}/products?page=1&limit=5": 24
+      },
+      "rates": {},
+      "firstCounterAt": 1765452790036,
+      "lastCounterAt": 1765452799811,
+      "firstMetricAt": 1765452790036,
+      "lastMetricAt": 1765452799811,
+      "period": "1765452790000",
+      "summaries": {},
+      "histograms": {}
+    },
+    {
+      "counters": {
+        "vusers.created_by_name.Health and Products": 60,
+        "vusers.created": 114,
+        "errors.Invalid URL - {{ $processEnvironment.API_URL || \"https://hos-marketplaceapi-production.up.railway.app/api\" }}/health": 60,
+        "vusers.failed": 114,
+        "vusers.created_by_name.Product Details": 17,
+        "errors.Invalid URL - {{ $processEnvironment.API_URL || \"https://hos-marketplaceapi-production.up.railway.app/api\" }}/products?page=1&limit=5": 17,
+        "vusers.created_by_name.Search Operations": 37,
+        "errors.Invalid URL - {{ $processEnvironment.API_URL || \"https://hos-marketplaceapi-production.up.railway.app/api\" }}/search?q=wand&page=1&limit=20": 37
+      },
+      "rates": {},
+      "firstCounterAt": 1765452800036,
+      "lastCounterAt": 1765452809994,
+      "firstMetricAt": 1765452800036,
+      "lastMetricAt": 1765452809994,
+      "period": "1765452800000",
+      "summaries": {},
+      "histograms": {}
+    },
+    {
+      "counters": {
+        "vusers.created_by_name.Search Operations": 63,
+        "vusers.created": 200,
+        "errors.Invalid URL - {{ $processEnvironment.API_URL || \"https://hos-marketplaceapi-production.up.railway.app/api\" }}/search?q=wand&page=1&limit=20": 63,
+        "vusers.failed": 200,
+        "vusers.created_by_name.Health and Products": 99,
+        "errors.Invalid URL - {{ $processEnvironment.API_URL || \"https://hos-marketplaceapi-production.up.railway.app/api\" }}/health": 99,
+        "vusers.created_by_name.Product Details": 38,
+        "errors.Invalid URL - {{ $processEnvironment.API_URL || \"https://hos-marketplaceapi-production.up.railway.app/api\" }}/products?page=1&limit=5": 38
+      },
+      "rates": {},
+      "firstCounterAt": 1765452810037,
+      "lastCounterAt": 1765452819993,
+      "firstMetricAt": 1765452810037,
+      "lastMetricAt": 1765452819993,
+      "period": "1765452810000",
+      "summaries": {},
+      "histograms": {}
+    },
+    {
+      "counters": {
+        "vusers.created_by_name.Product Details": 37,
+        "vusers.created": 200,
+        "errors.Invalid URL - {{ $processEnvironment.API_URL || \"https://hos-marketplaceapi-production.up.railway.app/api\" }}/products?page=1&limit=5": 37,
+        "vusers.failed": 200,
+        "vusers.created_by_name.Search Operations": 68,
+        "errors.Invalid URL - {{ $processEnvironment.API_URL || \"https://hos-marketplaceapi-production.up.railway.app/api\" }}/search?q=wand&page=1&limit=20": 68,
+        "vusers.created_by_name.Health and Products": 95,
+        "errors.Invalid URL - {{ $processEnvironment.API_URL || \"https://hos-marketplaceapi-production.up.railway.app/api\" }}/health": 95
+      },
+      "rates": {},
+      "firstCounterAt": 1765452820037,
+      "lastCounterAt": 1765452829993,
+      "firstMetricAt": 1765452820037,
+      "lastMetricAt": 1765452829993,
+      "period": "1765452820000",
+      "summaries": {},
+      "histograms": {}
+    },
+    {
+      "counters": {
+        "vusers.created_by_name.Health and Products": 94,
+        "vusers.created": 200,
+        "errors.Invalid URL - {{ $processEnvironment.API_URL || \"https://hos-marketplaceapi-production.up.railway.app/api\" }}/health": 94,
+        "vusers.failed": 200,
+        "vusers.created_by_name.Product Details": 53,
+        "errors.Invalid URL - {{ $processEnvironment.API_URL || \"https://hos-marketplaceapi-production.up.railway.app/api\" }}/products?page=1&limit=5": 53,
+        "vusers.created_by_name.Search Operations": 53,
+        "errors.Invalid URL - {{ $processEnvironment.API_URL || \"https://hos-marketplaceapi-production.up.railway.app/api\" }}/search?q=wand&page=1&limit=20": 53
+      },
+      "rates": {},
+      "firstCounterAt": 1765452830175,
+      "lastCounterAt": 1765452839992,
+      "firstMetricAt": 1765452830175,
+      "lastMetricAt": 1765452839992,
+      "period": "1765452830000",
+      "summaries": {},
+      "histograms": {}
+    },
+    {
+      "counters": {
+        "vusers.created_by_name.Health and Products": 93,
+        "vusers.created": 200,
+        "errors.Invalid URL - {{ $processEnvironment.API_URL || \"https://hos-marketplaceapi-production.up.railway.app/api\" }}/health": 93,
+        "vusers.failed": 200,
+        "vusers.created_by_name.Product Details": 37,
+        "errors.Invalid URL - {{ $processEnvironment.API_URL || \"https://hos-marketplaceapi-production.up.railway.app/api\" }}/products?page=1&limit=5": 37,
+        "vusers.created_by_name.Search Operations": 70,
+        "errors.Invalid URL - {{ $processEnvironment.API_URL || \"https://hos-marketplaceapi-production.up.railway.app/api\" }}/search?q=wand&page=1&limit=20": 70
+      },
+      "rates": {},
+      "firstCounterAt": 1765452840036,
+      "lastCounterAt": 1765452849992,
+      "firstMetricAt": 1765452840036,
+      "lastMetricAt": 1765452849992,
+      "period": "1765452840000",
+      "summaries": {},
+      "histograms": {}
+    },
+    {
+      "counters": {
+        "vusers.created_by_name.Health and Products": 108,
+        "vusers.created": 200,
+        "errors.Invalid URL - {{ $processEnvironment.API_URL || \"https://hos-marketplaceapi-production.up.railway.app/api\" }}/health": 108,
+        "vusers.failed": 200,
+        "vusers.created_by_name.Search Operations": 58,
+        "errors.Invalid URL - {{ $processEnvironment.API_URL || \"https://hos-marketplaceapi-production.up.railway.app/api\" }}/search?q=wand&page=1&limit=20": 58,
+        "vusers.created_by_name.Product Details": 34,
+        "errors.Invalid URL - {{ $processEnvironment.API_URL || \"https://hos-marketplaceapi-production.up.railway.app/api\" }}/products?page=1&limit=5": 34
+      },
+      "rates": {},
+      "firstCounterAt": 1765452850036,
+      "lastCounterAt": 1765452859992,
+      "firstMetricAt": 1765452850036,
+      "lastMetricAt": 1765452859992,
+      "period": "1765452850000",
+      "summaries": {},
+      "histograms": {}
+    },
+    {
+      "counters": {
+        "vusers.created_by_name.Search Operations": 67,
+        "vusers.created": 200,
+        "errors.Invalid URL - {{ $processEnvironment.API_URL || \"https://hos-marketplaceapi-production.up.railway.app/api\" }}/search?q=wand&page=1&limit=20": 67,
+        "vusers.failed": 200,
+        "vusers.created_by_name.Health and Products": 103,
+        "errors.Invalid URL - {{ $processEnvironment.API_URL || \"https://hos-marketplaceapi-production.up.railway.app/api\" }}/health": 103,
+        "vusers.created_by_name.Product Details": 30,
+        "errors.Invalid URL - {{ $processEnvironment.API_URL || \"https://hos-marketplaceapi-production.up.railway.app/api\" }}/products?page=1&limit=5": 30
+      },
+      "rates": {},
+      "firstCounterAt": 1765452860036,
+      "lastCounterAt": 1765452869992,
+      "firstMetricAt": 1765452860036,
+      "lastMetricAt": 1765452869992,
+      "period": "1765452860000",
+      "summaries": {},
+      "histograms": {}
+    },
+    {
+      "counters": {
+        "vusers.created_by_name.Health and Products": 111,
+        "vusers.created": 200,
+        "errors.Invalid URL - {{ $processEnvironment.API_URL || \"https://hos-marketplaceapi-production.up.railway.app/api\" }}/health": 111,
+        "vusers.failed": 200,
+        "vusers.created_by_name.Product Details": 37,
+        "errors.Invalid URL - {{ $processEnvironment.API_URL || \"https://hos-marketplaceapi-production.up.railway.app/api\" }}/products?page=1&limit=5": 37,
+        "vusers.created_by_name.Search Operations": 52,
+        "errors.Invalid URL - {{ $processEnvironment.API_URL || \"https://hos-marketplaceapi-production.up.railway.app/api\" }}/search?q=wand&page=1&limit=20": 52
+      },
+      "rates": {},
+      "firstCounterAt": 1765452870036,
+      "lastCounterAt": 1765452879991,
+      "firstMetricAt": 1765452870036,
+      "lastMetricAt": 1765452879991,
+      "period": "1765452870000",
+      "summaries": {},
+      "histograms": {}
+    },
+    {
+      "counters": {
+        "vusers.created_by_name.Search Operations": 59,
+        "vusers.created": 200,
+        "errors.Invalid URL - {{ $processEnvironment.API_URL || \"https://hos-marketplaceapi-production.up.railway.app/api\" }}/search?q=wand&page=1&limit=20": 59,
+        "vusers.failed": 200,
+        "vusers.created_by_name.Health and Products": 93,
+        "errors.Invalid URL - {{ $processEnvironment.API_URL || \"https://hos-marketplaceapi-production.up.railway.app/api\" }}/health": 93,
+        "vusers.created_by_name.Product Details": 48,
+        "errors.Invalid URL - {{ $processEnvironment.API_URL || \"https://hos-marketplaceapi-production.up.railway.app/api\" }}/products?page=1&limit=5": 48
+      },
+      "rates": {},
+      "firstCounterAt": 1765452880035,
+      "lastCounterAt": 1765452889991,
+      "firstMetricAt": 1765452880035,
+      "lastMetricAt": 1765452889991,
+      "period": "1765452880000",
+      "summaries": {},
+      "histograms": {}
+    },
+    {
+      "counters": {
+        "vusers.created_by_name.Search Operations": 64,
+        "vusers.created": 200,
+        "errors.Invalid URL - {{ $processEnvironment.API_URL || \"https://hos-marketplaceapi-production.up.railway.app/api\" }}/search?q=wand&page=1&limit=20": 64,
+        "vusers.failed": 200,
+        "vusers.created_by_name.Product Details": 43,
+        "errors.Invalid URL - {{ $processEnvironment.API_URL || \"https://hos-marketplaceapi-production.up.railway.app/api\" }}/products?page=1&limit=5": 43,
+        "vusers.created_by_name.Health and Products": 93,
+        "errors.Invalid URL - {{ $processEnvironment.API_URL || \"https://hos-marketplaceapi-production.up.railway.app/api\" }}/health": 93
+      },
+      "rates": {},
+      "firstCounterAt": 1765452890035,
+      "lastCounterAt": 1765452899993,
+      "firstMetricAt": 1765452890035,
+      "lastMetricAt": 1765452899993,
+      "period": "1765452890000",
+      "summaries": {},
+      "histograms": {}
+    },
+    {
+      "counters": {
+        "vusers.created_by_name.Health and Products": 98,
+        "vusers.created": 200,
+        "errors.Invalid URL - {{ $processEnvironment.API_URL || \"https://hos-marketplaceapi-production.up.railway.app/api\" }}/health": 98,
+        "vusers.failed": 200,
+        "vusers.created_by_name.Product Details": 39,
+        "errors.Invalid URL - {{ $processEnvironment.API_URL || \"https://hos-marketplaceapi-production.up.railway.app/api\" }}/products?page=1&limit=5": 39,
+        "vusers.created_by_name.Search Operations": 63,
+        "errors.Invalid URL - {{ $processEnvironment.API_URL || \"https://hos-marketplaceapi-production.up.railway.app/api\" }}/search?q=wand&page=1&limit=20": 63
+      },
+      "rates": {},
+      "firstCounterAt": 1765452900036,
+      "lastCounterAt": 1765452909991,
+      "firstMetricAt": 1765452900036,
+      "lastMetricAt": 1765452909991,
+      "period": "1765452900000",
+      "summaries": {},
+      "histograms": {}
+    },
+    {
+      "counters": {
+        "vusers.created_by_name.Search Operations": 64,
+        "vusers.created": 200,
+        "errors.Invalid URL - {{ $processEnvironment.API_URL || \"https://hos-marketplaceapi-production.up.railway.app/api\" }}/search?q=wand&page=1&limit=20": 64,
+        "vusers.failed": 200,
+        "vusers.created_by_name.Health and Products": 102,
+        "errors.Invalid URL - {{ $processEnvironment.API_URL || \"https://hos-marketplaceapi-production.up.railway.app/api\" }}/health": 102,
+        "vusers.created_by_name.Product Details": 34,
+        "errors.Invalid URL - {{ $processEnvironment.API_URL || \"https://hos-marketplaceapi-production.up.railway.app/api\" }}/products?page=1&limit=5": 34
+      },
+      "rates": {},
+      "firstCounterAt": 1765452910035,
+      "lastCounterAt": 1765452919990,
+      "firstMetricAt": 1765452910035,
+      "lastMetricAt": 1765452919990,
+      "period": "1765452910000",
+      "summaries": {},
+      "histograms": {}
+    },
+    {
+      "counters": {
+        "vusers.created_by_name.Product Details": 44,
+        "vusers.created": 226,
+        "errors.Invalid URL - {{ $processEnvironment.API_URL || \"https://hos-marketplaceapi-production.up.railway.app/api\" }}/products?page=1&limit=5": 44,
+        "vusers.failed": 226,
+        "vusers.created_by_name.Search Operations": 71,
+        "errors.Invalid URL - {{ $processEnvironment.API_URL || \"https://hos-marketplaceapi-production.up.railway.app/api\" }}/search?q=wand&page=1&limit=20": 71,
+        "vusers.created_by_name.Health and Products": 111,
+        "errors.Invalid URL - {{ $processEnvironment.API_URL || \"https://hos-marketplaceapi-production.up.railway.app/api\" }}/health": 111
+      },
+      "rates": {},
+      "firstCounterAt": 1765452920034,
+      "lastCounterAt": 1765452929992,
+      "firstMetricAt": 1765452920034,
+      "lastMetricAt": 1765452929992,
+      "period": "1765452920000",
+      "summaries": {},
+      "histograms": {}
+    },
+    {
+      "counters": {
+        "vusers.created_by_name.Search Operations": 123,
+        "vusers.created": 400,
+        "errors.Invalid URL - {{ $processEnvironment.API_URL || \"https://hos-marketplaceapi-production.up.railway.app/api\" }}/search?q=wand&page=1&limit=20": 123,
+        "vusers.failed": 400,
+        "vusers.created_by_name.Product Details": 76,
+        "errors.Invalid URL - {{ $processEnvironment.API_URL || \"https://hos-marketplaceapi-production.up.railway.app/api\" }}/products?page=1&limit=5": 76,
+        "vusers.created_by_name.Health and Products": 201,
+        "errors.Invalid URL - {{ $processEnvironment.API_URL || \"https://hos-marketplaceapi-production.up.railway.app/api\" }}/health": 201
+      },
+      "rates": {},
+      "firstCounterAt": 1765452930010,
+      "lastCounterAt": 1765452939992,
+      "firstMetricAt": 1765452930010,
+      "lastMetricAt": 1765452939992,
+      "period": "1765452930000",
+      "summaries": {},
+      "histograms": {}
+    },
+    {
+      "counters": {
+        "vusers.created_by_name.Search Operations": 125,
+        "vusers.created": 400,
+        "errors.Invalid URL - {{ $processEnvironment.API_URL || \"https://hos-marketplaceapi-production.up.railway.app/api\" }}/search?q=wand&page=1&limit=20": 125,
+        "vusers.failed": 400,
+        "vusers.created_by_name.Health and Products": 196,
+        "errors.Invalid URL - {{ $processEnvironment.API_URL || \"https://hos-marketplaceapi-production.up.railway.app/api\" }}/health": 196,
+        "vusers.created_by_name.Product Details": 79,
+        "errors.Invalid URL - {{ $processEnvironment.API_URL || \"https://hos-marketplaceapi-production.up.railway.app/api\" }}/products?page=1&limit=5": 79
+      },
+      "rates": {},
+      "firstCounterAt": 1765452940009,
+      "lastCounterAt": 1765452949992,
+      "firstMetricAt": 1765452940009,
+      "lastMetricAt": 1765452949992,
+      "period": "1765452940000",
+      "summaries": {},
+      "histograms": {}
+    },
+    {
+      "counters": {
+        "vusers.created_by_name.Search Operations": 121,
+        "vusers.created": 400,
+        "errors.Invalid URL - {{ $processEnvironment.API_URL || \"https://hos-marketplaceapi-production.up.railway.app/api\" }}/search?q=wand&page=1&limit=20": 121,
+        "vusers.failed": 400,
+        "vusers.created_by_name.Health and Products": 203,
+        "errors.Invalid URL - {{ $processEnvironment.API_URL || \"https://hos-marketplaceapi-production.up.railway.app/api\" }}/health": 203,
+        "vusers.created_by_name.Product Details": 76,
+        "errors.Invalid URL - {{ $processEnvironment.API_URL || \"https://hos-marketplaceapi-production.up.railway.app/api\" }}/products?page=1&limit=5": 76
+      },
+      "rates": {},
+      "firstCounterAt": 1765452950009,
+      "lastCounterAt": 1765452959993,
+      "firstMetricAt": 1765452950009,
+      "lastMetricAt": 1765452959993,
+      "period": "1765452950000",
+      "summaries": {},
+      "histograms": {}
+    },
+    {
+      "counters": {
+        "vusers.created_by_name.Product Details": 92,
+        "vusers.created": 400,
+        "errors.Invalid URL - {{ $processEnvironment.API_URL || \"https://hos-marketplaceapi-production.up.railway.app/api\" }}/products?page=1&limit=5": 92,
+        "vusers.failed": 400,
+        "vusers.created_by_name.Search Operations": 123,
+        "errors.Invalid URL - {{ $processEnvironment.API_URL || \"https://hos-marketplaceapi-production.up.railway.app/api\" }}/search?q=wand&page=1&limit=20": 123,
+        "vusers.created_by_name.Health and Products": 185,
+        "errors.Invalid URL - {{ $processEnvironment.API_URL || \"https://hos-marketplaceapi-production.up.railway.app/api\" }}/health": 185
+      },
+      "rates": {},
+      "firstCounterAt": 1765452960014,
+      "lastCounterAt": 1765452969991,
+      "firstMetricAt": 1765452960014,
+      "lastMetricAt": 1765452969991,
+      "period": "1765452960000",
+      "summaries": {},
+      "histograms": {}
+    },
+    {
+      "counters": {
+        "vusers.created_by_name.Health and Products": 209,
+        "vusers.created": 400,
+        "errors.Invalid URL - {{ $processEnvironment.API_URL || \"https://hos-marketplaceapi-production.up.railway.app/api\" }}/health": 209,
+        "vusers.failed": 400,
+        "vusers.created_by_name.Search Operations": 112,
+        "errors.Invalid URL - {{ $processEnvironment.API_URL || \"https://hos-marketplaceapi-production.up.railway.app/api\" }}/search?q=wand&page=1&limit=20": 112,
+        "vusers.created_by_name.Product Details": 79,
+        "errors.Invalid URL - {{ $processEnvironment.API_URL || \"https://hos-marketplaceapi-production.up.railway.app/api\" }}/products?page=1&limit=5": 79
+      },
+      "rates": {},
+      "firstCounterAt": 1765452970009,
+      "lastCounterAt": 1765452979991,
+      "firstMetricAt": 1765452970009,
+      "lastMetricAt": 1765452979991,
+      "period": "1765452970000",
+      "summaries": {},
+      "histograms": {}
+    },
+    {
+      "counters": {
+        "vusers.created_by_name.Health and Products": 213,
+        "vusers.created": 400,
+        "errors.Invalid URL - {{ $processEnvironment.API_URL || \"https://hos-marketplaceapi-production.up.railway.app/api\" }}/health": 213,
+        "vusers.failed": 400,
+        "vusers.created_by_name.Search Operations": 109,
+        "errors.Invalid URL - {{ $processEnvironment.API_URL || \"https://hos-marketplaceapi-production.up.railway.app/api\" }}/search?q=wand&page=1&limit=20": 109,
+        "vusers.created_by_name.Product Details": 78,
+        "errors.Invalid URL - {{ $processEnvironment.API_URL || \"https://hos-marketplaceapi-production.up.railway.app/api\" }}/products?page=1&limit=5": 78
+      },
+      "rates": {},
+      "firstCounterAt": 1765452980009,
+      "lastCounterAt": 1765452989990,
+      "firstMetricAt": 1765452980009,
+      "lastMetricAt": 1765452989990,
+      "period": "1765452980000",
+      "summaries": {},
+      "histograms": {}
+    },
+    {
+      "counters": {
+        "vusers.created_by_name.Health and Products": 217,
+        "vusers.created": 400,
+        "errors.Invalid URL - {{ $processEnvironment.API_URL || \"https://hos-marketplaceapi-production.up.railway.app/api\" }}/health": 217,
+        "vusers.failed": 400,
+        "vusers.created_by_name.Search Operations": 111,
+        "errors.Invalid URL - {{ $processEnvironment.API_URL || \"https://hos-marketplaceapi-production.up.railway.app/api\" }}/search?q=wand&page=1&limit=20": 111,
+        "vusers.created_by_name.Product Details": 72,
+        "errors.Invalid URL - {{ $processEnvironment.API_URL || \"https://hos-marketplaceapi-production.up.railway.app/api\" }}/products?page=1&limit=5": 72
+      },
+      "rates": {},
+      "firstCounterAt": 1765452990008,
+      "lastCounterAt": 1765452999990,
+      "firstMetricAt": 1765452990008,
+      "lastMetricAt": 1765452999990,
+      "period": "1765452990000",
+      "summaries": {},
+      "histograms": {}
+    },
+    {
+      "counters": {
+        "vusers.created_by_name.Search Operations": 116,
+        "vusers.created": 400,
+        "errors.Invalid URL - {{ $processEnvironment.API_URL || \"https://hos-marketplaceapi-production.up.railway.app/api\" }}/search?q=wand&page=1&limit=20": 116,
+        "vusers.failed": 400,
+        "vusers.created_by_name.Health and Products": 193,
+        "errors.Invalid URL - {{ $processEnvironment.API_URL || \"https://hos-marketplaceapi-production.up.railway.app/api\" }}/health": 193,
+        "vusers.created_by_name.Product Details": 91,
+        "errors.Invalid URL - {{ $processEnvironment.API_URL || \"https://hos-marketplaceapi-production.up.railway.app/api\" }}/products?page=1&limit=5": 91
+      },
+      "rates": {},
+      "firstCounterAt": 1765453000008,
+      "lastCounterAt": 1765453009990,
+      "firstMetricAt": 1765453000008,
+      "lastMetricAt": 1765453009990,
+      "period": "1765453000000",
+      "summaries": {},
+      "histograms": {}
+    },
+    {
+      "counters": {
+        "vusers.created_by_name.Health and Products": 159,
+        "vusers.created": 360,
+        "errors.Invalid URL - {{ $processEnvironment.API_URL || \"https://hos-marketplaceapi-production.up.railway.app/api\" }}/health": 159,
+        "vusers.failed": 360,
+        "vusers.created_by_name.Search Operations": 120,
+        "errors.Invalid URL - {{ $processEnvironment.API_URL || \"https://hos-marketplaceapi-production.up.railway.app/api\" }}/search?q=wand&page=1&limit=20": 120,
+        "vusers.created_by_name.Product Details": 81,
+        "errors.Invalid URL - {{ $processEnvironment.API_URL || \"https://hos-marketplaceapi-production.up.railway.app/api\" }}/products?page=1&limit=5": 81
+      },
+      "rates": {},
+      "firstCounterAt": 1765453010008,
+      "lastCounterAt": 1765453019810,
+      "firstMetricAt": 1765453010008,
+      "lastMetricAt": 1765453019810,
+      "period": "1765453010000",
+      "summaries": {},
+      "histograms": {}
+    },
+    {
+      "counters": {
+        "vusers.created_by_name.Health and Products": 39,
+        "vusers.created": 87,
+        "errors.Invalid URL - {{ $processEnvironment.API_URL || \"https://hos-marketplaceapi-production.up.railway.app/api\" }}/health": 39,
+        "vusers.failed": 87,
+        "vusers.created_by_name.Search Operations": 35,
+        "errors.Invalid URL - {{ $processEnvironment.API_URL || \"https://hos-marketplaceapi-production.up.railway.app/api\" }}/search?q=wand&page=1&limit=20": 35,
+        "vusers.created_by_name.Product Details": 13,
+        "errors.Invalid URL - {{ $processEnvironment.API_URL || \"https://hos-marketplaceapi-production.up.railway.app/api\" }}/products?page=1&limit=5": 13
+      },
+      "rates": {},
+      "firstCounterAt": 1765453020039,
+      "lastCounterAt": 1765453029708,
+      "firstMetricAt": 1765453020039,
+      "lastMetricAt": 1765453029708,
+      "period": "1765453020000",
+      "summaries": {},
+      "histograms": {}
+    },
+    {
+      "counters": {
+        "vusers.created_by_name.Product Details": 7,
+        "vusers.created": 38,
+        "errors.Invalid URL - {{ $processEnvironment.API_URL || \"https://hos-marketplaceapi-production.up.railway.app/api\" }}/products?page=1&limit=5": 7,
+        "vusers.failed": 38,
+        "vusers.created_by_name.Health and Products": 27,
+        "errors.Invalid URL - {{ $processEnvironment.API_URL || \"https://hos-marketplaceapi-production.up.railway.app/api\" }}/health": 27,
+        "vusers.created_by_name.Search Operations": 4,
+        "errors.Invalid URL - {{ $processEnvironment.API_URL || \"https://hos-marketplaceapi-production.up.railway.app/api\" }}/search?q=wand&page=1&limit=20": 4
+      },
+      "rates": {},
+      "firstCounterAt": 1765453030042,
+      "lastCounterAt": 1765453039605,
+      "firstMetricAt": 1765453030042,
+      "lastMetricAt": 1765453039605,
+      "period": "1765453030000",
+      "summaries": {},
+      "histograms": {}
+    },
+    {
+      "counters": {
+        "vusers.created_by_name.Health and Products": 7,
+        "vusers.created": 15,
+        "errors.Invalid URL - {{ $processEnvironment.API_URL || \"https://hos-marketplaceapi-production.up.railway.app/api\" }}/health": 7,
+        "vusers.failed": 15,
+        "vusers.created_by_name.Search Operations": 6,
+        "errors.Invalid URL - {{ $processEnvironment.API_URL || \"https://hos-marketplaceapi-production.up.railway.app/api\" }}/search?q=wand&page=1&limit=20": 6,
+        "vusers.created_by_name.Product Details": 2,
+        "errors.Invalid URL - {{ $processEnvironment.API_URL || \"https://hos-marketplaceapi-production.up.railway.app/api\" }}/products?page=1&limit=5": 2
+      },
+      "rates": {},
+      "firstCounterAt": 1765453040542,
+      "lastCounterAt": 1765453046543,
+      "firstMetricAt": 1765453040542,
+      "lastMetricAt": 1765453046543,
+      "period": "1765453040000",
+      "summaries": {},
+      "histograms": {}
+    }
+  ]
+}

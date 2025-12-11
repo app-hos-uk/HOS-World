@@ -1,7 +1,14 @@
 import { NestFactory } from '@nestjs/core';
 import { ValidationPipe } from '@nestjs/common';
-import * as compression from 'compression';
 import { AppModule } from './app.module';
+
+// Conditionally import compression - handle gracefully if not available
+let compression: any;
+try {
+  compression = require('compression');
+} catch (error) {
+  console.warn('⚠️ Compression module not available - responses will not be compressed');
+}
 
 async function bootstrap() {
   try {
@@ -11,6 +18,14 @@ async function bootstrap() {
       PORT: process.env.PORT,
       DATABASE_URL: process.env.DATABASE_URL ? '***set***' : '***missing***',
     });
+
+    // Validate critical environment variables
+    if (!process.env.DATABASE_URL) {
+      console.error('❌ CRITICAL: DATABASE_URL environment variable is not set!');
+      console.error('❌ Application cannot start without database connection.');
+      console.error('❌ Please set DATABASE_URL in Railway environment variables.');
+      process.exit(1);
+    }
 
     const app = await NestFactory.create(AppModule, {
       cors: true, // Enable CORS at NestJS level first
@@ -134,18 +149,21 @@ async function bootstrap() {
       next();
     });
 
-    // Enable response compression
-    app.use(compression({
-      filter: (req, res) => {
-        // Compress all responses except health checks
-        if (req.headers['x-no-compression']) {
-          return false;
-        }
-        return compression.filter(req, res);
-      },
-      level: 6, // Compression level (1-9, 6 is a good balance)
-      threshold: 1024, // Only compress responses larger than 1KB
-    }));
+    // Enable response compression (if available)
+    if (compression) {
+      app.use(compression({
+        filter: (req, res) => {
+          // Compress all responses except health checks
+          if (req.headers['x-no-compression']) {
+            return false;
+          }
+          return compression.filter(req, res);
+        },
+        level: 6, // Compression level (1-9, 6 is a good balance)
+        threshold: 1024, // Only compress responses larger than 1KB
+      }));
+      console.log('✅ Response compression enabled');
+    }
 
     // Global prefix for all routes
     app.setGlobalPrefix('api');

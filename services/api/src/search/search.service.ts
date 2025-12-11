@@ -40,9 +40,14 @@ export class SearchService implements OnModuleInit {
           ),
         ]);
         
-        // Optionally sync existing products on startup
+        // Optionally sync existing products on startup (delayed to avoid blocking)
         if (this.configService.get('SYNC_PRODUCTS_ON_STARTUP') === 'true') {
-          await this.syncAllProducts();
+          // Delay sync to allow app to start first
+          setTimeout(() => {
+            this.syncAllProducts().catch((err) => {
+              this.logger.warn('⚠️ Product sync failed (non-critical):', err.message);
+            });
+          }, 30000); // Wait 30 seconds for app to be fully ready
         }
       } catch (error) {
         this.logger.warn('Elasticsearch initialization failed, search features will be disabled:', error.message);

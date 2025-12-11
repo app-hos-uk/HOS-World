@@ -10,11 +10,14 @@ export class PrismaService extends PrismaClient implements OnModuleInit, OnModul
   private readonly logger = new Logger(PrismaService.name);
 
   async onModuleInit() {
-    // Don't block startup - connect in background
-    // Return immediately so NestJS doesn't wait
-    this.$connect()
-      .then(async () => {
-        this.logger.log('Database connected successfully');
+    // Connect to database with retry logic for Railway deployments
+    const maxRetries = 5;
+    let retries = 0;
+    
+    const connectWithRetry = async (): Promise<void> => {
+      try {
+        await this.$connect();
+        this.logger.log('✅ Database connected successfully');
         
         // Sync database schema if needed (for production deployments)
         if (process.env.NODE_ENV === 'production' && process.env.SYNC_DB_SCHEMA !== 'false') {
@@ -23,13 +26,25 @@ export class PrismaService extends PrismaClient implements OnModuleInit, OnModul
             this.logger.warn('⚠️ Database schema sync failed:', error.message);
           });
         }
-      })
-      .catch((error) => {
-        this.logger.error('Failed to connect to database:', error.message);
-        // Don't throw - allow app to start and retry connection
-        // This helps with Railway deployments where DB might not be ready immediately
-      });
-    // Return immediately - don't wait for connection
+      } catch (error: any) {
+        retries++;
+        if (retries < maxRetries) {
+          this.logger.warn(`⚠️ Database connection attempt ${retries}/${maxRetries} failed, retrying in 2s...`, error.message);
+          await new Promise(resolve => setTimeout(resolve, 2000));
+          return connectWithRetry();
+        } else {
+          this.logger.error('❌ Failed to connect to database after multiple retries:', error.message);
+          this.logger.error('❌ Application will continue but database operations may fail');
+          // Don't throw - allow app to start and retry connection later
+          // This helps with Railway deployments where DB might not be ready immediately
+        }
+      }
+    };
+    
+    // Start connection in background - don't block startup
+    connectWithRetry().catch(() => {
+      // Ignore errors - already logged
+    });
   }
 
   private async syncDatabaseSchema() {
