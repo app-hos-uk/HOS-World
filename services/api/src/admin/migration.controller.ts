@@ -49,11 +49,8 @@ export class MigrationController {
         throw new Error('Migration SQL file not found');
       }
 
-      // Split SQL into individual statements
-      const statements = sql
-        .split(';')
-        .map((s) => s.trim())
-        .filter((s) => s.length > 0 && !s.startsWith('--'));
+      // Split SQL into individual statements using proper parser
+      const statements = this.splitSQLStatements(sql);
 
       const results = [];
       let successCount = 0;
@@ -424,6 +421,82 @@ export class MigrationController {
         error: error.message,
       };
     }
+  }
+
+  /**
+   * Split SQL into statements, handling multi-line CREATE TABLE statements properly
+   */
+  private splitSQLStatements(sql: string): string[] {
+    const statements: string[] = [];
+    let currentStatement = '';
+    const lines = sql.split('\n');
+
+    for (let i = 0; i < lines.length; i++) {
+      const originalLine = lines[i];
+      const line = originalLine.trim();
+      
+      // Skip comment lines
+      if (line.startsWith('--')) {
+        continue;
+      }
+
+      // Add non-empty lines to current statement
+      if (line.length > 0) {
+        currentStatement += originalLine + '\n';
+      }
+
+      // If line ends with semicolon and we're not in a string, it's the end of a statement
+      if (line.endsWith(';') && !this.isInString(currentStatement)) {
+        const trimmed = currentStatement.trim();
+        if (trimmed.length > 0) {
+          statements.push(trimmed);
+        }
+        currentStatement = '';
+      }
+    }
+
+    // Add any remaining statement
+    if (currentStatement.trim()) {
+      statements.push(currentStatement.trim());
+    }
+
+    return statements.filter((s) => s.length > 0);
+  }
+
+  /**
+   * Check if we're inside a string literal
+   */
+  private isInString(sql: string): boolean {
+    let inString = false;
+    let escapeNext = false;
+    let quoteChar = '';
+
+    for (let i = 0; i < sql.length; i++) {
+      const char = sql[i];
+
+      if (escapeNext) {
+        escapeNext = false;
+        continue;
+      }
+
+      if (char === '\\') {
+        escapeNext = true;
+        continue;
+      }
+
+      if ((char === "'" || char === '"') && !inString) {
+        inString = true;
+        quoteChar = char;
+        continue;
+      }
+
+      if (char === quoteChar && inString) {
+        inString = false;
+        quoteChar = '';
+      }
+    }
+
+    return inString;
   }
 }
 
