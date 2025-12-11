@@ -53,8 +53,36 @@ export default function MigrationsPage() {
       const data = await response.json();
 
       if (response.ok) {
-        setResults((prev) => ({ ...prev, [migrationType]: data.data || data }));
-        toast.success(`Migration ${migrationType} completed successfully!`);
+        // Handle different response formats
+        const migrationData = data.data || data;
+        
+        // Determine success based on errors count or success field
+        const isSuccess = 
+          (migrationData.success !== undefined ? migrationData.success : 
+           migrationData.errors !== undefined ? migrationData.errors === 0 : 
+           true);
+        
+        // Normalize the response format
+        const normalizedResult: MigrationResult = {
+          success: isSuccess,
+          message: data.message || migrationData.message || 'Migration completed',
+          summary: migrationData.summary || {
+            totalStatements: migrationData.totalStatements || 0,
+            successful: migrationData.successful || 0,
+            errors: migrationData.errors || 0,
+          },
+          verification: migrationData.verification,
+          details: migrationData.details || migrationData.results,
+          error: migrationData.error,
+        };
+        
+        setResults((prev) => ({ ...prev, [migrationType]: normalizedResult }));
+        
+        if (isSuccess) {
+          toast.success(`Migration ${migrationType} completed successfully!`);
+        } else {
+          toast.error(`Migration ${migrationType} completed with errors`);
+        }
       } else {
         setResults((prev) => ({
           ...prev,
