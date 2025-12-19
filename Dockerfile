@@ -9,8 +9,9 @@ RUN npm install -g pnpm
 
 WORKDIR /app
 
-# Copy package files
-COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
+# Copy package files (pnpm-lock.yaml is optional - will be generated if missing)
+COPY package.json pnpm-workspace.yaml ./
+COPY pnpm-lock.yaml* ./
 COPY services/api/package.json ./services/api/
 
 # Copy all package.json files from packages
@@ -73,10 +74,10 @@ RUN npm install -g pnpm
 
 WORKDIR /app
 
-# Copy package files for production install
+# Copy package files for production install (pnpm-lock.yaml is optional)
 COPY --from=base /app/package.json ./
-COPY --from=base /app/pnpm-lock.yaml ./
 COPY --from=base /app/pnpm-workspace.yaml ./
+COPY --from=base /app/pnpm-lock.yaml* ./
 COPY --from=base /app/services/api/package.json ./services/api/
 
 # Copy all package.json files from packages (needed for workspace resolution)

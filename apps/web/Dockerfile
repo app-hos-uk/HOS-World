@@ -8,7 +8,9 @@ RUN npm install -g pnpm
 WORKDIR /app
 
 # Copy package files (order matters for Docker layer caching)
-COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
+# pnpm-lock.yaml is optional - will be generated if missing
+COPY package.json pnpm-workspace.yaml ./
+COPY pnpm-lock.yaml* ./
 
 # Copy all package.json files from packages (must be before install)
 COPY packages/shared-types/package.json ./packages/shared-types/
@@ -96,8 +98,9 @@ RUN npm install -g pnpm
 
 WORKDIR /app
 
-# Copy package files for production install
-COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
+# Copy package files for production install (pnpm-lock.yaml is optional)
+COPY package.json pnpm-workspace.yaml ./
+COPY pnpm-lock.yaml* ./
 COPY apps/web/package.json ./apps/web/
 COPY packages/shared-types/package.json ./packages/shared-types/
 COPY packages/api-client/package.json ./packages/api-client/
