@@ -123,7 +123,7 @@ export class AdminProductsService {
         categoryId: data.categoryId, // New taxonomy field
         sellerId: data.sellerId,
         isPlatformOwned: data.isPlatformOwned || false,
-        status: (data.status as any) || 'DRAFT',
+        status: data.status === 'PUBLISHED' ? 'ACTIVE' : (data.status as any) || 'DRAFT',
         sku: data.sku,
         barcode: data.barcode,
         ean: data.ean,
@@ -296,6 +296,11 @@ export class AdminProductsService {
       ...data,
       slug,
     };
+
+    // Map 'PUBLISHED' status to 'ACTIVE' (ProductStatus enum doesn't have PUBLISHED)
+    if (updateData.status === 'PUBLISHED') {
+      updateData.status = 'ACTIVE';
+    }
 
     // Handle tagsRelation update
     if (data.tagIds !== undefined) {

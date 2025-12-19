@@ -29,6 +29,7 @@ export default function SubmitProductPage() {
   const [success, setSuccess] = useState(false);
   const [fandoms, setFandoms] = useState<any[]>([]);
   const [loadingFandoms, setLoadingFandoms] = useState(true);
+  const [fandomsError, setFandomsError] = useState<string>('');
 
   // Form state
   const [formData, setFormData] = useState({
@@ -63,12 +64,19 @@ export default function SubmitProductPage() {
     const loadFandoms = async () => {
       try {
         setLoadingFandoms(true);
+        setFandomsError('');
         const response = await apiClient.getFandoms();
-        if (response?.data) {
+        if (response?.data && Array.isArray(response.data)) {
           setFandoms(response.data);
+          if (response.data.length === 0) {
+            setFandomsError('No fandoms available. You can still submit without selecting a fandom.');
+          }
+        } else {
+          setFandomsError('Unable to load fandoms. You can still submit without selecting a fandom.');
         }
-      } catch (err) {
+      } catch (err: any) {
         console.error('Error loading fandoms:', err);
+        setFandomsError('Unable to load fandoms. You can still submit without selecting a fandom.');
       } finally {
         setLoadingFandoms(false);
       }
@@ -510,27 +518,35 @@ export default function SubmitProductPage() {
                         htmlFor="fandom"
                         className="block text-sm font-medium text-gray-700 mb-1"
                       >
-                        Fandom
+                        Fandom <span className="text-gray-500 text-xs font-normal">(Optional)</span>
                       </label>
                       {loadingFandoms ? (
                         <div className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-gray-50">
                           Loading fandoms...
                         </div>
                       ) : (
-                        <select
-                          id="fandom"
-                          name="fandom"
-                          value={formData.fandom}
-                          onChange={handleInputChange}
-                          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-                        >
-                          <option value="">Select a fandom</option>
-                          {fandoms.map((fandom) => (
-                            <option key={fandom.id || fandom.slug} value={fandom.slug || fandom.name}>
-                              {fandom.name}
-                            </option>
-                          ))}
-                        </select>
+                        <>
+                          <select
+                            id="fandom"
+                            name="fandom"
+                            value={formData.fandom}
+                            onChange={handleInputChange}
+                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                          >
+                            <option value="">Select a fandom (Optional)</option>
+                            {fandoms.map((fandom) => (
+                              <option key={fandom.id || fandom.slug} value={fandom.slug || fandom.name}>
+                                {fandom.name}
+                              </option>
+                            ))}
+                          </select>
+                          {fandomsError && (
+                            <p className="mt-1 text-xs text-amber-600">{fandomsError}</p>
+                          )}
+                          {fandoms.length === 0 && !loadingFandoms && !fandomsError && (
+                            <p className="mt-1 text-xs text-gray-500">No fandoms available. This field is optional.</p>
+                          )}
+                        </>
                       )}
                     </div>
 
@@ -539,7 +555,7 @@ export default function SubmitProductPage() {
                         htmlFor="category"
                         className="block text-sm font-medium text-gray-700 mb-1"
                       >
-                        Category
+                        Category <span className="text-gray-500 text-xs font-normal">(Optional)</span>
                       </label>
                       <input
                         type="text"
@@ -548,7 +564,7 @@ export default function SubmitProductPage() {
                         value={formData.category}
                         onChange={handleInputChange}
                         className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-                        placeholder="e.g., Collectibles, Apparel, Accessories"
+                        placeholder="e.g., Collectibles, Apparel, Accessories (Optional)"
                       />
                     </div>
                   </div>

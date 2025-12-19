@@ -110,7 +110,31 @@ export default function ProductsPage() {
         {loading ? (
           <div className="text-center text-gray-500 py-12">Loading products...</div>
         ) : products.length === 0 ? (
-          <div className="text-center text-gray-500 py-12">No products found</div>
+          <div className="text-center py-12">
+            <div className="max-w-md mx-auto">
+              <p className="text-xl font-semibold text-gray-700 mb-2">No products available</p>
+              <p className="text-gray-500 mb-4">
+                {filters.query || filters.fandom || filters.category
+                  ? 'No products match your search criteria. Try adjusting your filters.'
+                  : 'There are currently no products available. Please check back later.'}
+              </p>
+              {(filters.query || filters.fandom || filters.category) && (
+                <button
+                  onClick={() => {
+                    setFilters({
+                      query: '',
+                      fandom: '',
+                      category: '',
+                      sortBy: 'newest',
+                    });
+                  }}
+                  className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
+                >
+                  Clear Filters
+                </button>
+              )}
+            </div>
+          </div>
         ) : (
           <>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6">
