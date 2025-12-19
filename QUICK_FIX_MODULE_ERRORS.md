@@ -67,3 +67,4 @@ test -f node_modules/@hos-marketplace/shared-types/package.json && echo "✅ sha
 
 All three should show ✅.
 
+

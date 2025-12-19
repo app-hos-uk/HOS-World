@@ -46,3 +46,4 @@ model GiftCardTransaction {
 -- Add to Order model relations:
 -- giftCardTransactions GiftCardTransaction[]
 
+

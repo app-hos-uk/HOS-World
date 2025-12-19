@@ -68,3 +68,4 @@ export const ProductCard = memo(({ product }: ProductCardProps) => {
 
 ProductCard.displayName = 'ProductCard';
 
+
