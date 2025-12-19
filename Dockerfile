@@ -11,7 +11,8 @@ WORKDIR /app
 
 # Copy package files (pnpm-lock.yaml is optional - will be generated if missing)
 COPY package.json pnpm-workspace.yaml ./
-COPY pnpm-lock.yaml* ./
+# Copy lock file if it exists, otherwise pnpm will generate it
+RUN if [ -f pnpm-lock.yaml ]; then echo "Lock file found"; else echo "No lock file - pnpm will generate it"; fi
 COPY services/api/package.json ./services/api/
 
 # Copy all package.json files from packages
@@ -77,7 +78,8 @@ WORKDIR /app
 # Copy package files for production install (pnpm-lock.yaml is optional)
 COPY --from=base /app/package.json ./
 COPY --from=base /app/pnpm-workspace.yaml ./
-COPY --from=base /app/pnpm-lock.yaml* ./
+# Lock file will be in base stage if generated, copy if exists
+RUN if [ -f /app/pnpm-lock.yaml ]; then cp /app/pnpm-lock.yaml ./; else echo "No lock file in base stage"; fi
 COPY --from=base /app/services/api/package.json ./services/api/
 
 # Copy all package.json files from packages (needed for workspace resolution)
