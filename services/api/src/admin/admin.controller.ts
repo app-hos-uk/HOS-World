@@ -8,11 +8,13 @@ import {
   Param,
   UseGuards,
   ParseUUIDPipe,
+  Request,
 } from '@nestjs/common';
 import { AdminService } from './admin.service';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../common/guards/roles.guard';
 import { Roles } from '../common/decorators/roles.decorator';
+import { CreateSellerDto } from './dto/create-seller.dto';
 import type { ApiResponse } from '@hos-marketplace/shared-types';
 
 @Controller('admin')
@@ -132,6 +134,23 @@ export class AdminController {
     return {
       data: sellers,
       message: 'Sellers retrieved successfully',
+    };
+  }
+
+  /**
+   * Create a seller directly (for testing purposes)
+   * Bypasses email invitation system
+   * Seller will need to complete onboarding after login
+   */
+  @Post('sellers/create')
+  async createSellerDirectly(
+    @Body() createSellerDto: CreateSellerDto,
+    @Request() req: any,
+  ): Promise<ApiResponse<any>> {
+    const result = await this.adminService.createSellerDirectly(createSellerDto);
+    return {
+      data: result,
+      message: result.message,
     };
   }
 }

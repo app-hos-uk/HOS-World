@@ -1,6 +1,8 @@
-import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException, ConflictException } from '@nestjs/common';
 import { PrismaService } from '../database/prisma.service';
 import * as bcrypt from 'bcrypt';
+import { CreateSellerDto } from './dto/create-seller.dto';
+import { slugify } from '@hos-marketplace/utils';
 
 @Injectable()
 export class AdminService {
@@ -263,6 +265,179 @@ export class AdminService {
       })),
       recentActivity,
     };
+  }
+
+  /**
+   * Create a seller directly (for testing purposes when email server is not configured)
+   * The seller will need to complete their profile through the normal onboarding flow
+   */
+  async createSellerDirectly(createSellerDto: CreateSellerDto) {
+    // Check if user with this email already exists
+    const existingUser = await this.prisma.user.findUnique({
+      where: { email: createSellerDto.email },
+    });
+
+    if (existingUser) {
+      throw new ConflictException('User with this email already exists');
+    }
+
+    // Hash password
+    const hashedPassword = await bcrypt.hash(createSellerDto.password, 10);
+
+    // Get country code and currency
+    const countryCode = createSellerDto.country 
+      ? this.getCountryCode(createSellerDto.country)
+      : 'GB';
+    const currency = this.getCurrencyForCountry(countryCode);
+
+    // Generate store name if not provided
+    const storeName = createSellerDto.storeName || `Store-${Date.now()}`;
+
+    // Generate unique slug
+    let slug = slugify(storeName);
+    while (await this.prisma.seller.findUnique({ where: { slug } })) {
+      slug = `${slugify(storeName)}-${Date.now()}`;
+    }
+
+    // Create user
+    const user = await this.prisma.user.create({
+      data: {
+        email: createSellerDto.email,
+        password: hashedPassword,
+        role: 'B2C_SELLER',
+        country: countryCode,
+        currencyPreference: currency,
+        gdprConsent: true,
+        gdprConsentDate: new Date(),
+        preferredCommunicationMethod: 'EMAIL',
+      },
+    });
+
+    // Create seller profile
+    const seller = await this.prisma.seller.create({
+      data: {
+        userId: user.id,
+        storeName: storeName,
+        slug: slug,
+        country: countryCode,
+        timezone: 'UTC',
+        sellerType: 'B2C_SELLER',
+        logisticsOption: 'HOS_LOGISTICS',
+        verified: false, // Seller needs to complete onboarding
+      },
+    });
+
+    // Create customer profile (sellers are also customers)
+    await this.prisma.customer.create({
+      data: {
+        userId: user.id,
+      },
+    });
+
+    // Create GDPR consent log
+    await this.prisma.gDPRConsentLog.create({
+      data: {
+        userId: user.id,
+        consentType: 'MARKETING',
+        granted: true,
+        grantedAt: new Date(),
+      },
+    });
+
+    return {
+      id: seller.id,
+      userId: user.id,
+      email: user.email,
+      storeName: seller.storeName,
+      slug: seller.slug,
+      message: 'Seller created successfully. They can now login and complete their profile through the onboarding flow.',
+    };
+  }
+
+  /**
+   * Helper method to get country code from country name
+   */
+  private getCountryCode(countryName: string): string {
+    const countryMap: { [key: string]: string } = {
+      'United Kingdom': 'GB',
+      'United States': 'US',
+      'Canada': 'CA',
+      'Australia': 'AU',
+      'Germany': 'DE',
+      'France': 'FR',
+      'Italy': 'IT',
+      'Spain': 'ES',
+      'Netherlands': 'NL',
+      'Belgium': 'BE',
+      'Switzerland': 'CH',
+      'Austria': 'AT',
+      'Sweden': 'SE',
+      'Norway': 'NO',
+      'Denmark': 'DK',
+      'Finland': 'FI',
+      'Poland': 'PL',
+      'Ireland': 'IE',
+      'Portugal': 'PT',
+      'Greece': 'GR',
+      'Czech Republic': 'CZ',
+      'Hungary': 'HU',
+      'Romania': 'RO',
+      'Bulgaria': 'BG',
+      'Croatia': 'HR',
+      'Slovakia': 'SK',
+      'Slovenia': 'SI',
+      'Estonia': 'EE',
+      'Latvia': 'LV',
+      'Lithuania': 'LT',
+      'Luxembourg': 'LU',
+      'Malta': 'MT',
+      'Cyprus': 'CY',
+    };
+
+    return countryMap[countryName] || 'GB';
+  }
+
+  /**
+   * Helper method to get currency for country code
+   */
+  private getCurrencyForCountry(countryCode: string): string {
+    const currencyMap: { [key: string]: string } = {
+      GB: 'GBP',
+      US: 'USD',
+      CA: 'CAD',
+      AU: 'AUD',
+      DE: 'EUR',
+      FR: 'EUR',
+      IT: 'EUR',
+      ES: 'EUR',
+      NL: 'EUR',
+      BE: 'EUR',
+      CH: 'CHF',
+      AT: 'EUR',
+      SE: 'SEK',
+      NO: 'NOK',
+      DK: 'DKK',
+      FI: 'EUR',
+      PL: 'PLN',
+      IE: 'EUR',
+      PT: 'EUR',
+      GR: 'EUR',
+      CZ: 'CZK',
+      HU: 'HUF',
+      RO: 'RON',
+      BG: 'BGN',
+      HR: 'EUR',
+      SK: 'EUR',
+      SI: 'EUR',
+      EE: 'EUR',
+      LV: 'EUR',
+      LT: 'EUR',
+      LU: 'EUR',
+      MT: 'EUR',
+      CY: 'EUR',
+    };
+
+    return currencyMap[countryCode] || 'GBP';
   }
 }
 
