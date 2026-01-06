@@ -21,9 +21,6 @@ async function bootstrap() {
   console.log('═══════════════════════════════════════════════════════════');
   
   try {
-    // #region agent log
-    fetch('http://127.0.0.1:7243/ingest/315c2d74-b9bb-430e-9c51-123c9436e40e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'main.ts:6',message:'Bootstrap started',data:{nodeVersion:process.version,workingDir:process.cwd(),hasMainJs:require('fs').existsSync('./dist/main.js'),hasDbUrl:!!process.env.DATABASE_URL,port:process.env.PORT},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
-    // #endregion
     console.log('🚀 Starting API server...');
     console.log('[DEBUG] Hypothesis A: Checking Prisma client availability...');
     console.log('[DEBUG] Hypothesis B: About to initialize AppModule...');
@@ -94,9 +91,6 @@ async function bootstrap() {
     console.log('Working directory:', process.cwd());
     console.log('Checking dist/main.js exists:', require('fs').existsSync('./dist/main.js'));
 
-    // #region agent log
-    fetch('http://127.0.0.1:7243/ingest/315c2d74-b9bb-430e-9c51-123c9436e40e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'main.ts:17',message:'Before NestFactory.create',data:{},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'B'})}).catch(()=>{});
-    // #endregion
     console.log('[DEBUG] Hypothesis B: Creating NestFactory with AppModule...');
     try {
       const app = await NestFactory.create(AppModule, {
@@ -127,9 +121,6 @@ async function bootstrap() {
       console.error('[DEBUG] Hypothesis B: Stack:', moduleError?.stack);
       throw moduleError; // Re-throw to be caught by outer try-catch
     }
-    // #region agent log
-    fetch('http://127.0.0.1:7243/ingest/315c2d74-b9bb-430e-9c51-123c9436e40e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'main.ts:20',message:'After NestFactory.create - AppModule initialized',data:{},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'B'})}).catch(()=>{});
-    // #endregion
 
     // Define allowed origins - MUST be before any middleware
     const allowedOrigins = [
@@ -263,24 +254,15 @@ async function bootstrap() {
 
     const port = process.env.PORT || 3001;
     console.log(`📡 About to listen on port: ${port}`);
-    // #region agent log
-    fetch('http://127.0.0.1:7243/ingest/315c2d74-b9bb-430e-9c51-123c9436e40e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'main.ts:151',message:'Before app.listen',data:{port},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'C'})}).catch(()=>{});
-    // #endregion
     
     // Use app.listen() to ensure all routes are properly registered
     await app.listen(port, '0.0.0.0');
-    // #region agent log
-    fetch('http://127.0.0.1:7243/ingest/315c2d74-b9bb-430e-9c51-123c9436e40e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'main.ts:155',message:'After app.listen - Server started successfully',data:{port},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'C'})}).catch(()=>{});
-    // #endregion
     
     console.log(`✅ Server is listening on port ${port}`);
     console.log(`✅ API server is running on: http://0.0.0.0:${port}/api`);
     console.log(`✅ Health check available at: http://0.0.0.0:${port}/api/health`);
     console.log(`✅ Root endpoint available at: http://0.0.0.0:${port}/`);
   } catch (error) {
-    // #region agent log
-    fetch('http://127.0.0.1:7243/ingest/315c2d74-b9bb-430e-9c51-123c9436e40e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'main.ts:161',message:'Bootstrap error caught',data:{errorName:error?.name,errorMessage:error?.message,errorStack:error?.stack?.substring(0,500),hasDbUrl:!!process.env.DATABASE_URL},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'D'})}).catch(()=>{});
-    // #endregion
     console.error('═══════════════════════════════════════════════════════════');
     console.error('❌ CRITICAL ERROR: Failed to start API server');
     console.error('═══════════════════════════════════════════════════════════');

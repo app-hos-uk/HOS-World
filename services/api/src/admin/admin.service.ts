@@ -111,10 +111,13 @@ export class AdminService {
     if (isSellerRole) {
       const storeName = data.storeName!;
       const baseSlug = storeName.toLowerCase().trim().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
-      let slug = baseSlug || `seller-${user.id.slice(0, 8)}`;
+      // If baseSlug is empty after sanitization, use a fallback prefix
+      const slugPrefix = baseSlug || `seller-${user.id.slice(0, 8)}`;
+      let slug = slugPrefix;
       let counter = 1;
       while (await this.prisma.seller.findUnique({ where: { slug } })) {
-        slug = `${baseSlug}-${counter}`;
+        // Always use slugPrefix (never empty) to avoid invalid slugs like "-1", "-2"
+        slug = `${slugPrefix}-${counter}`;
         counter++;
       }
 

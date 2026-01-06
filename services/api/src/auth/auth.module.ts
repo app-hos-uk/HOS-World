@@ -9,6 +9,7 @@ import { JwtStrategy } from './strategies/jwt.strategy';
 import { LocalStrategy } from './strategies/local.strategy';
 import { UsersModule } from '../users/users.module';
 import { AdminModule } from '../admin/admin.module';
+import { GeolocationModule } from '../geolocation/geolocation.module';
 
 const logger = new Logger('AuthModule');
 
@@ -26,6 +27,7 @@ const logger = new Logger('AuthModule');
       inject: [ConfigService],
     }),
     forwardRef(() => AdminModule),
+    GeolocationModule,
   ],
   controllers: [AuthController, AuthOAuthController],
   providers: [

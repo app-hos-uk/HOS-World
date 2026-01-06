@@ -10,9 +10,6 @@ export class PrismaService extends PrismaClient implements OnModuleInit, OnModul
   private readonly logger = new Logger(PrismaService.name);
 
   async onModuleInit() {
-    // #region agent log
-    fetch('http://127.0.0.1:7243/ingest/315c2d74-b9bb-430e-9c51-123c9436e40e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'prisma.service.ts:12',message:'PrismaService onModuleInit started',data:{hasRefreshTokenModel:typeof (this as any).refreshToken !== 'undefined'},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
-    // #endregion
     this.logger.log('[DEBUG] Hypothesis A: PrismaService onModuleInit - checking RefreshToken model...');
     // Check if RefreshToken model exists in Prisma client
     try {
@@ -53,9 +50,6 @@ export class PrismaService extends PrismaClient implements OnModuleInit, OnModul
     // Return immediately so NestJS doesn't wait
     this.$connect()
       .then(async () => {
-        // #region agent log
-        fetch('http://127.0.0.1:7243/ingest/315c2d74-b9bb-430e-9c51-123c9436e40e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'prisma.service.ts:16',message:'Database connected',data:{hasRefreshTokenModel:typeof (this as any).refreshToken !== 'undefined'},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
-        // #endregion
         this.logger.log('[DEBUG] Hypothesis C: ✅ Database connected successfully');
         this.logger.log('Database connected successfully');
         
@@ -68,9 +62,6 @@ export class PrismaService extends PrismaClient implements OnModuleInit, OnModul
         }
       })
       .catch((error) => {
-        // #region agent log
-        fetch('http://127.0.0.1:7243/ingest/315c2d74-b9bb-430e-9c51-123c9436e40e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'prisma.service.ts:27',message:'Database connection failed',data:{errorMessage:error?.message,errorName:error?.name},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'C'})}).catch(()=>{});
-        // #endregion
         this.logger.error('[DEBUG] Hypothesis C: ❌ Database connection failed');
         this.logger.error('Failed to connect to database:', error.message);
         // Don't throw - allow app to start and retry connection

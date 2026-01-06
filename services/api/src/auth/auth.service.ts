@@ -9,6 +9,7 @@ import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 import * as bcrypt from 'bcrypt';
 import { PrismaService } from '../database/prisma.service';
+import { GeolocationService } from '../geolocation/geolocation.service';
 import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
 import { slugify } from '@hos-marketplace/utils';
@@ -19,10 +20,38 @@ export class AuthService {
   private refreshTokenAvailable: boolean = false;
   private refreshTokenChecked: boolean = false;
 
+  // Simple country name to country code mapping
+  private readonly countryCodeMap: Record<string, string> = {
+    'United Kingdom': 'GB',
+    'United States': 'US',
+    'USA': 'US',
+    'Canada': 'CA',
+    'Australia': 'AU',
+    'Germany': 'DE',
+    'France': 'FR',
+    'Italy': 'IT',
+    'Spain': 'ES',
+    'Netherlands': 'NL',
+    'Belgium': 'BE',
+    'Austria': 'AT',
+    'Portugal': 'PT',
+    'Ireland': 'IE',
+    'Greece': 'GR',
+    'Finland': 'FI',
+    'United Arab Emirates': 'AE',
+    'UAE': 'AE',
+    'Saudi Arabia': 'SA',
+    'Kuwait': 'KW',
+    'Qatar': 'QA',
+    'Bahrain': 'BH',
+    'Oman': 'OM',
+  };
+
   constructor(
     private prisma: PrismaService,
     private jwtService: JwtService,
     private configService: ConfigService,
+    private geolocationService: GeolocationService,
   ) {
     // Check if RefreshToken model is available on startup
     this.checkRefreshTokenAvailability();
@@ -49,6 +78,26 @@ export class AuthService {
       this.refreshTokenAvailable = false;
       this.refreshTokenChecked = true;
     }
+  }
+
+  /**
+   * Get country code from country name
+   */
+  private getCountryCode(country: string | undefined): string {
+    if (!country) return 'GB';
+    // Try exact match first
+    if (this.countryCodeMap[country]) {
+      return this.countryCodeMap[country];
+    }
+    // Try case-insensitive match
+    const countryLower = country.toLowerCase();
+    for (const [name, code] of Object.entries(this.countryCodeMap)) {
+      if (name.toLowerCase() === countryLower) {
+        return code;
+      }
+    }
+    // Default to GB if not found
+    return 'GB';
   }
 
   async register(registerDto: RegisterDto, ipAddress?: string): Promise<AuthResponse> {
@@ -91,7 +140,7 @@ export class AuthService {
 
     // Determine currency preference based on country
     const countryCode = this.getCountryCode(registerDto.country);
-    const currencyPreference = this.getCurrencyForCountry(countryCode) || 'GBP';
+    const currencyPreference = this.geolocationService.getCurrencyForCountry(countryCode) || 'GBP';
 
     // Create user with global platform fields
     const user = await this.prisma.user.create({
@@ -247,7 +296,7 @@ export class AuthService {
 
     // Determine currency preference based on country
     const countryCode = this.getCountryCode(registerDto.country);
-    const currencyPreference = this.getCurrencyForCountry(countryCode) || 'GBP';
+    const currencyPreference = this.geolocationService.getCurrencyForCountry(countryCode) || 'GBP';
 
     // Create user
     const user = await this.prisma.user.create({
@@ -411,10 +460,6 @@ export class AuthService {
     const tokenHash = await bcrypt.hash(refreshToken, 10);
     const expiresAt = new Date();
     expiresAt.setDate(expiresAt.getDate() + 30); // 30 days
-
-    // #region agent log
-    fetch('http://127.0.0.1:7243/ingest/315c2d74-b9bb-430e-9c51-123c9436e40e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'auth.service.ts:386',message:'Before refreshToken.create',data:{hasRefreshTokenModel:this.refreshTokenAvailable,userId:user.id},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
-    // #endregion
     
     // Defensive check: ensure RefreshToken model exists
     if (!this.refreshTokenAvailable) {
@@ -506,7 +551,7 @@ export class AuthService {
       const isValid = await bcrypt.compare(refreshToken, storedToken.tokenHash);
       if (isValid) {
         tokenFound = true;
-        // Revoke the old token (rotation)
+        // Revoke the old token (rotation) - CRITICAL: must succeed before issuing new tokens
         if (this.refreshTokenAvailable && refreshTokenModel) {
           try {
             await refreshTokenModel.update({
@@ -514,8 +559,10 @@ export class AuthService {
               data: { revokedAt: new Date() },
             });
           } catch (updateError: any) {
-            console.warn('[AUTH] ⚠️ Failed to revoke old token:', updateError?.message);
-            // Continue anyway - token rotation is best-effort
+            console.error('[AUTH] ❌ CRITICAL: Failed to revoke old refresh token:', updateError?.message);
+            console.error('[AUTH] Token rotation aborted - old token remains valid');
+            // Fail the refresh to prevent token replay attacks
+            throw new UnauthorizedException('Token refresh failed - unable to revoke previous token. Please log in again.');
           }
         }
         break;
@@ -590,7 +637,7 @@ export class AuthService {
     await this.prisma.user.update({
       where: { id: userId },
       data: {
-        characterAvatar: characterId,
+        characterAvatarId: characterId,
         favoriteFandoms: favoriteFandoms || [],
       },
     });
@@ -650,42 +697,48 @@ export class AuthService {
     return oauthService.validateOrCreateOAuthUser(oauthData);
   }
 
+  // OAuth account methods - commented out as oAuthAccount model doesn't exist in schema
+  // These would need to be implemented when OAuth account model is added to Prisma schema
   async getLinkedAccounts(userId: string) {
-    return this.prisma.oAuthAccount.findMany({
-      where: { userId },
-      select: {
-        id: true,
-        provider: true,
-        providerId: true,
-        createdAt: true,
-      },
-    });
+    // TODO: Implement when oAuthAccount model is added to Prisma schema
+    // return this.prisma.oAuthAccount.findMany({
+    //   where: { userId },
+    //   select: {
+    //     id: true,
+    //     provider: true,
+    //     providerId: true,
+    //     createdAt: true,
+    //   },
+    // });
+    return [];
   }
 
   async unlinkOAuthAccount(userId: string, provider: string): Promise<void> {
-    const user = await this.prisma.user.findUnique({
-      where: { id: userId },
-      include: {
-        oAuthAccounts: true,
-      },
-    });
-
-    if (!user) {
-      throw new ConflictException('User not found');
-    }
-
-    const hasPassword = user.password && user.password.length > 0;
-    const oauthCount = user.oAuthAccounts.length;
-
-    if (!hasPassword && oauthCount === 1) {
-      throw new ConflictException('Cannot unlink the only authentication method');
-    }
-
-    await this.prisma.oAuthAccount.deleteMany({
-      where: {
-        userId,
-        provider: provider as any,
-      },
-    });
+    // TODO: Implement when oAuthAccount model is added to Prisma schema
+    // const user = await this.prisma.user.findUnique({
+    //   where: { id: userId },
+    //   include: {
+    //     oAuthAccounts: true,
+    //   },
+    // });
+    //
+    // if (!user) {
+    //   throw new ConflictException('User not found');
+    // }
+    //
+    // const hasPassword = user.password && user.password.length > 0;
+    // const oauthCount = user.oAuthAccounts.length;
+    //
+    // if (!hasPassword && oauthCount === 1) {
+    //   throw new ConflictException('Cannot unlink the only authentication method');
+    // }
+    //
+    // await this.prisma.oAuthAccount.deleteMany({
+    //   where: {
+    //     userId,
+    //     provider: provider as any,
+    //   },
+    // });
+    throw new BadRequestException('OAuth account unlinking not yet implemented');
   }
 }

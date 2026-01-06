@@ -119,6 +119,16 @@ export class AdminController {
     };
   }
 
+  // IMPORTANT: Specific routes must come before parameterized routes
+  // Otherwise /permissions/catalog will match /permissions/:role with role="catalog"
+  @Get('permissions/catalog')
+  @UseGuards(PermissionsGuard)
+  @Permissions('system.permissions')
+  async getPermissionCatalog(): Promise<ApiResponse<any>> {
+    const catalog = await this.adminService.getPermissionCatalog();
+    return { data: catalog, message: 'Permission catalog retrieved successfully' };
+  }
+
   @Get('permissions/:role')
   @UseGuards(PermissionsGuard)
   @Permissions('system.permissions')
@@ -142,14 +152,6 @@ export class AdminController {
       data: updated,
       message: 'Permissions updated successfully',
     };
-  }
-
-  @Get('permissions/catalog')
-  @UseGuards(PermissionsGuard)
-  @Permissions('system.permissions')
-  async getPermissionCatalog(): Promise<ApiResponse<any>> {
-    const catalog = await this.adminService.getPermissionCatalog();
-    return { data: catalog, message: 'Permission catalog retrieved successfully' };
   }
 
   @Get('roles')

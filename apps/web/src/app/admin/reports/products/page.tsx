@@ -23,9 +23,9 @@ export default function AdminProductAnalyticsPage() {
         const products = response.data.data;
         const analytics = {
           totalProducts: products.length,
-          published: products.filter((p: any) => p.published).length,
-          draft: products.filter((p: any) => p.published === false).length,
-          totalValue: products.reduce((sum: number, p: any) => sum + (p.price || 0), 0),
+          published: products.filter((p: any) => p.status === 'ACTIVE').length,
+          draft: products.filter((p: any) => p.status === 'DRAFT').length,
+          totalValue: products.reduce((sum: number, p: any) => sum + (Number(p.price) || 0), 0),
         };
         setAnalytics(analytics);
       }

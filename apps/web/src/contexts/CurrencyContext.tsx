@@ -22,18 +22,9 @@ export function CurrencyProvider({ children }: { children: React.ReactNode }) {
   const [rates, setRates] = useState<Record<string, number>>({});
   const [loading, setLoading] = useState(true);
   const pathname = usePathname();
-  const hasLoadedOnce = useRef(false);
+  const lastPathnameRef = useRef<string | null>(null);
 
-  // Load user's currency preference and rates
-  useEffect(() => {
-    // Defensive: avoid repeated requests if this provider gets remounted/re-rendered unexpectedly.
-    if (hasLoadedOnce.current) return;
-    hasLoadedOnce.current = true;
-    loadCurrencyData();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  const loadCurrencyData = async () => {
+  const loadCurrencyData = useCallback(async () => {
     try {
       setLoading(true);
       // Only call the authenticated endpoint when we actually have a token.
@@ -90,14 +81,45 @@ export function CurrencyProvider({ children }: { children: React.ReactNode }) {
     } finally {
       setLoading(false);
     }
-  };
+  }, [pathname]);
+
+  // Load user's currency preference and rates
+  // Re-run when pathname changes to ensure we use the current pathname value
+  useEffect(() => {
+    // Only reload if pathname actually changed (avoid duplicate calls on same route)
+    if (lastPathnameRef.current === pathname) return;
+    lastPathnameRef.current = pathname;
+    loadCurrencyData();
+  }, [pathname, loadCurrencyData]);
+
+  const updateCurrencyPreference = useCallback(async (newCurrency: string) => {
+    try {
+      // Update user profile only if logged in
+      const token =
+        typeof window !== 'undefined'
+          ? (() => {
+              try {
+                return localStorage.getItem('auth_token');
+              } catch {
+                return null;
+              }
+            })()
+          : null;
+      if (!token) return;
+
+      await apiClient.updateProfile({ currencyPreference: newCurrency });
+    } catch (error) {
+      // User not logged in or update failed - just save to localStorage
+      console.error('Failed to update currency preference:', error);
+    }
+  }, []);
 
   const setCurrency = useCallback((newCurrency: string) => {
     setCurrencyState(newCurrency);
     localStorage.setItem('currency_preference', newCurrency);
     // Update user preference if logged in
     updateCurrencyPreference(newCurrency).catch(console.error);
-  }, []);
+  }, [updateCurrencyPreference]);
 
   const convertPrice = useCallback(
     (amount: number, fromCurrency: string = 'GBP'): number => {
@@ -127,28 +149,6 @@ export function CurrencyProvider({ children }: { children: React.ReactNode }) {
     },
     [currency, convertPrice]
   );
-
-  const updateCurrencyPreference = async (newCurrency: string) => {
-    try {
-      // Update user profile only if logged in
-      const token =
-        typeof window !== 'undefined'
-          ? (() => {
-              try {
-                return localStorage.getItem('auth_token');
-              } catch {
-                return null;
-              }
-            })()
-          : null;
-      if (!token) return;
-
-      await apiClient.updateProfile({ currencyPreference: newCurrency });
-    } catch (error) {
-      // User not logged in or update failed - just save to localStorage
-      console.error('Failed to update currency preference:', error);
-    }
-  };
 
   return (
     <CurrencyContext.Provider

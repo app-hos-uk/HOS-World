@@ -44,7 +44,7 @@ export class AdminProductsController {
       }>; // New: product attributes
       sellerId?: string | null;
       isPlatformOwned?: boolean;
-      status?: 'DRAFT' | 'PUBLISHED';
+      status?: 'DRAFT' | 'ACTIVE' | 'INACTIVE' | 'OUT_OF_STOCK';
       sku?: string;
       barcode?: string;
       ean?: string;
@@ -84,7 +84,7 @@ export class AdminProductsController {
         dateValue?: string;
       }>; // New: product attributes
       sellerId?: string | null;
-      status?: 'DRAFT' | 'PUBLISHED';
+      status?: 'DRAFT' | 'ACTIVE' | 'INACTIVE' | 'OUT_OF_STOCK';
       sku?: string;
       barcode?: string;
       ean?: string;
