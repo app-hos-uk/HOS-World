@@ -10,10 +10,53 @@ export class PrismaService extends PrismaClient implements OnModuleInit, OnModul
   private readonly logger = new Logger(PrismaService.name);
 
   async onModuleInit() {
+    // #region agent log
+    fetch('http://127.0.0.1:7243/ingest/315c2d74-b9bb-430e-9c51-123c9436e40e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'prisma.service.ts:12',message:'PrismaService onModuleInit started',data:{hasRefreshTokenModel:typeof (this as any).refreshToken !== 'undefined'},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
+    // #endregion
+    this.logger.log('[DEBUG] Hypothesis A: PrismaService onModuleInit - checking RefreshToken model...');
+    // Check if RefreshToken model exists in Prisma client
+    try {
+      // PrismaClient exposes models as properties (e.g., this.user, this.refreshToken)
+      // Check both camelCase (refreshToken) and the actual property
+      const hasRefreshToken = typeof (this as any).refreshToken !== 'undefined';
+      const hasRefreshTokenAlt = typeof (this as any).refresh_token !== 'undefined';
+      const hasRefreshTokenCheck = 'refreshToken' in this || 'refresh_token' in this;
+      
+      this.logger.log(`[DEBUG] Hypothesis A: Prisma client check - hasRefreshToken (camelCase): ${hasRefreshToken}`);
+      this.logger.log(`[DEBUG] Hypothesis A: Prisma client check - hasRefreshToken (snake_case): ${hasRefreshTokenAlt}`);
+      this.logger.log(`[DEBUG] Hypothesis A: Prisma client check - 'refreshToken' in this: ${hasRefreshTokenCheck}`);
+      
+      // Also check if we can access it via the model name from schema
+      const allKeys = Object.getOwnPropertyNames(Object.getPrototypeOf(this)).concat(Object.keys(this));
+      const refreshTokenKeys = allKeys.filter(k => k.toLowerCase().includes('refreshtoken') || k.toLowerCase().includes('refresh_token'));
+      this.logger.log(`[DEBUG] Hypothesis A: Keys containing 'refreshToken': ${refreshTokenKeys.join(', ') || 'none'}`);
+      
+      // Check known models to verify Prisma client is working
+      const hasUser = typeof (this as any).user !== 'undefined';
+      const hasProduct = typeof (this as any).product !== 'undefined';
+      this.logger.log(`[DEBUG] Hypothesis A: Known models - user: ${hasUser}, product: ${hasProduct}`);
+      
+      if (hasRefreshToken || hasRefreshTokenAlt || hasRefreshTokenCheck) {
+        this.logger.log('[DEBUG] Hypothesis A: ✅ RefreshToken model found in Prisma client');
+      } else {
+        this.logger.error('[DEBUG] Hypothesis A: ❌ RefreshToken model NOT found in Prisma client!');
+        this.logger.error('[DEBUG] Hypothesis A: Available Prisma models (first 20):', Object.keys(this).filter(k => !k.startsWith('$') && !k.startsWith('_') && k !== 'logger').slice(0, 20).join(', '));
+        this.logger.error('[DEBUG] Hypothesis A: This will cause crashes when auth methods try to use refreshToken!');
+        this.logger.error('[DEBUG] Hypothesis A: Solution: Ensure Prisma client is regenerated with: pnpm db:generate');
+        this.logger.error('[DEBUG] Hypothesis A: Also verify schema.prisma contains: model RefreshToken');
+      }
+    } catch (error: any) {
+      this.logger.error('[DEBUG] Hypothesis A: ❌ Error checking RefreshToken model:', error?.message || error);
+      this.logger.error('[DEBUG] Hypothesis A: Error stack:', error?.stack);
+    }
     // Don't block startup - connect in background
     // Return immediately so NestJS doesn't wait
     this.$connect()
       .then(async () => {
+        // #region agent log
+        fetch('http://127.0.0.1:7243/ingest/315c2d74-b9bb-430e-9c51-123c9436e40e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'prisma.service.ts:16',message:'Database connected',data:{hasRefreshTokenModel:typeof (this as any).refreshToken !== 'undefined'},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
+        // #endregion
+        this.logger.log('[DEBUG] Hypothesis C: ✅ Database connected successfully');
         this.logger.log('Database connected successfully');
         
         // Sync database schema if needed (for production deployments)
@@ -25,6 +68,10 @@ export class PrismaService extends PrismaClient implements OnModuleInit, OnModul
         }
       })
       .catch((error) => {
+        // #region agent log
+        fetch('http://127.0.0.1:7243/ingest/315c2d74-b9bb-430e-9c51-123c9436e40e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'prisma.service.ts:27',message:'Database connection failed',data:{errorMessage:error?.message,errorName:error?.name},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'C'})}).catch(()=>{});
+        // #endregion
+        this.logger.error('[DEBUG] Hypothesis C: ❌ Database connection failed');
         this.logger.error('Failed to connect to database:', error.message);
         // Don't throw - allow app to start and retry connection
         // This helps with Railway deployments where DB might not be ready immediately

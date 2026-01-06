@@ -17,6 +17,7 @@ export default function AdminProductsPage() {
   const [page, setPage] = useState(1);
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [sellers, setSellers] = useState<any[]>([]);
+  const [publishNow, setPublishNow] = useState(true);
   const [formData, setFormData] = useState({
     name: '',
     description: '',
@@ -28,6 +29,8 @@ export default function AdminProductsPage() {
     tagIds: [] as string[],
     attributes: [] as any[],
   });
+  const [images, setImages] = useState<Array<{ url: string; alt?: string; order?: number }>>([]);
+  const [uploadingImages, setUploadingImages] = useState(false);
 
   useEffect(() => {
     fetchProducts();
@@ -39,10 +42,9 @@ export default function AdminProductsPage() {
     try {
       setLoading(true);
       setError(null);
-      const response = await apiClient.getProducts({ page, limit: 50 });
-      if (response?.data?.data) {
-        setProducts(response.data.data);
-      }
+      const response = await apiClient.getAdminProducts({ page, limit: 50 });
+      const list = response?.data?.products || response?.data?.data || [];
+      setProducts(Array.isArray(list) ? list : []);
     } catch (err: any) {
       console.error('Error fetching products:', err);
       setError(err.message || 'Failed to load products');
@@ -69,6 +71,10 @@ export default function AdminProductsPage() {
   const handleCreateProduct = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
+      if (images.length === 0) {
+        toast.error('Please upload at least 1 product image');
+        return;
+      }
       await apiClient.createAdminProduct({
         name: formData.name,
         description: formData.description,
@@ -76,10 +82,11 @@ export default function AdminProductsPage() {
         stock: parseInt(formData.stock, 10),
         isPlatformOwned: formData.isPlatformOwned,
         sellerId: formData.isPlatformOwned ? null : formData.sellerId || null,
-        status: 'DRAFT',
+        status: publishNow ? 'ACTIVE' : 'DRAFT',
         categoryId: formData.categoryId || undefined,
         tagIds: formData.tagIds.length > 0 ? formData.tagIds : undefined,
         attributes: formData.attributes.length > 0 ? formData.attributes : undefined,
+        images: images.length > 0 ? images : undefined,
       });
       toast.success('Product created successfully');
       setShowCreateForm(false);
@@ -94,46 +101,78 @@ export default function AdminProductsPage() {
         tagIds: [],
         attributes: [],
       });
+      setImages([]);
+      setPublishNow(true);
       fetchProducts();
     } catch (err: any) {
       toast.error(err.message || 'Failed to create product');
     }
   };
 
-  if (loading) {
-    return (
-      <RouteGuard allowedRoles={['ADMIN']}>
-        <AdminLayout>
-          <div className="flex items-center justify-center h-64">
-            <div className="text-gray-500">Loading products...</div>
-          </div>
-        </AdminLayout>
-      </RouteGuard>
-    );
-  }
+  const uploadImages = async (files: FileList | null) => {
+    if (!files || files.length === 0) return;
 
-  if (error) {
-    return (
-      <RouteGuard allowedRoles={['ADMIN']}>
-        <AdminLayout>
-          <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-            <p className="text-red-800">Error: {error}</p>
-            <button
-              onClick={fetchProducts}
-              className="mt-2 px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700"
-            >
-              Retry
-            </button>
-          </div>
-        </AdminLayout>
-      </RouteGuard>
-    );
-  }
+    const allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+    const maxSizeBytes = 10 * 1024 * 1024;
+    const fileArr = Array.from(files);
+    const limited = fileArr.slice(0, 4);
+    if (fileArr.length > 4) {
+      toast.error('You can upload up to 4 images at a time');
+      return;
+    }
+
+    for (const f of fileArr) {
+      if (!allowedTypes.includes(f.type)) {
+        toast.error('Only JPEG, PNG, GIF, and WebP images are allowed');
+        return;
+      }
+      if (f.size > maxSizeBytes) {
+        toast.error('Max image size is 10MB');
+        return;
+      }
+    }
+
+    try {
+      setUploadingImages(true);
+      const res = await apiClient.uploadMultipleFiles(limited, 'products');
+      const urls = res?.data?.urls || [];
+      if (urls.length === 0) throw new Error('Upload failed (no URLs returned)');
+      setImages((prev) => [...prev, ...urls.map((url, idx) => ({ url, alt: '', order: prev.length + idx }))]);
+    } catch (e: any) {
+      toast.error(e.message || 'Failed to upload image');
+    } finally {
+      setUploadingImages(false);
+    }
+  };
+
+  const removeImage = (idx: number) => {
+    setImages((prev) => prev.filter((_, i) => i !== idx).map((img, i) => ({ ...img, order: i })));
+  };
+
+  const updateImageAlt = (idx: number, alt: string) => {
+    setImages((prev) => prev.map((img, i) => (i === idx ? { ...img, alt } : img)));
+  };
 
   return (
     <RouteGuard allowedRoles={['ADMIN']}>
       <AdminLayout>
         <div className="space-y-6">
+          {loading && (
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 text-sm text-blue-800">
+              Loading products…
+            </div>
+          )}
+          {error && (
+            <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+              <p className="text-red-800">Error: {error}</p>
+              <button
+                onClick={fetchProducts}
+                className="mt-2 px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700"
+              >
+                Retry
+              </button>
+            </div>
+          )}
           <div className="flex justify-between items-center">
             <h1 className="text-2xl font-bold text-gray-900">All Products</h1>
             <button
@@ -154,7 +193,7 @@ export default function AdminProductsPage() {
                     type="text"
                     required
                     value={formData.name}
-                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                    onChange={(e) => setFormData((prev) => ({ ...prev, name: e.target.value }))}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
                     placeholder="Product name"
                   />
@@ -164,7 +203,7 @@ export default function AdminProductsPage() {
                   <textarea
                     required
                     value={formData.description}
-                    onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                    onChange={(e) => setFormData((prev) => ({ ...prev, description: e.target.value }))}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
                     rows={3}
                     placeholder="Product description"
@@ -178,7 +217,7 @@ export default function AdminProductsPage() {
                       step="0.01"
                       required
                       value={formData.price}
-                      onChange={(e) => setFormData({ ...formData, price: e.target.value })}
+                      onChange={(e) => setFormData((prev) => ({ ...prev, price: e.target.value }))}
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
                       placeholder="0.00"
                     />
@@ -189,7 +228,7 @@ export default function AdminProductsPage() {
                       type="number"
                       required
                       value={formData.stock}
-                      onChange={(e) => setFormData({ ...formData, stock: e.target.value })}
+                      onChange={(e) => setFormData((prev) => ({ ...prev, stock: e.target.value }))}
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
                       placeholder="0"
                     />
@@ -200,7 +239,9 @@ export default function AdminProductsPage() {
                     <input
                       type="checkbox"
                       checked={formData.isPlatformOwned}
-                      onChange={(e) => setFormData({ ...formData, isPlatformOwned: e.target.checked, sellerId: '' })}
+                      onChange={(e) =>
+                        setFormData((prev) => ({ ...prev, isPlatformOwned: e.target.checked, sellerId: '' }))
+                      }
                       className="rounded border-gray-300 text-purple-600 focus:ring-purple-500"
                     />
                     <span className="text-sm text-gray-700">Platform Owned (not assigned to seller)</span>
@@ -211,7 +252,7 @@ export default function AdminProductsPage() {
                     <label className="block text-sm font-medium text-gray-700 mb-1">Assign to Seller</label>
                     <select
                       value={formData.sellerId}
-                      onChange={(e) => setFormData({ ...formData, sellerId: e.target.value })}
+                      onChange={(e) => setFormData((prev) => ({ ...prev, sellerId: e.target.value }))}
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
                     >
                       <option value="">Select a seller</option>
@@ -251,6 +292,69 @@ export default function AdminProductsPage() {
                       />
                     )}
                   </div>
+                </div>
+
+                <div className="border-t border-gray-200 pt-4 mt-4">
+                  <h3 className="text-sm font-semibold text-gray-700 mb-4">Images</h3>
+                  <div className="p-4 border border-gray-200 rounded-lg bg-gray-50">
+                    <div className="flex items-center justify-between gap-3 flex-wrap">
+                      <div>
+                        <div className="font-medium text-gray-900">Upload product images</div>
+                        <div className="text-xs text-gray-600">JPEG/PNG/GIF/WebP, max 10MB each</div>
+                      </div>
+                      <label className="inline-flex items-center px-4 py-2 bg-purple-600 text-white rounded hover:bg-purple-700 cursor-pointer">
+                        <input
+                          type="file"
+                          accept="image/jpeg,image/png,image/gif,image/webp"
+                          multiple
+                          className="hidden"
+                          disabled={uploadingImages}
+                          onChange={(e) => uploadImages(e.target.files)}
+                        />
+                        {uploadingImages ? 'Uploading…' : 'Choose Files'}
+                      </label>
+                    </div>
+
+                    {images.length > 0 && (
+                      <div className="mt-4 space-y-3">
+                        {images.map((img, idx) => (
+                          <div key={idx} className="flex items-start gap-3 p-3 border border-gray-200 rounded-lg bg-white">
+                            <img src={img.url} alt={img.alt || 'Product image'} className="w-20 h-20 object-cover rounded" />
+                            <div className="flex-1">
+                              <input
+                                type="text"
+                                value={img.alt || ''}
+                                onChange={(e) => updateImageAlt(idx, e.target.value)}
+                                className="w-full px-3 py-2 border border-gray-300 rounded text-sm mb-2"
+                                placeholder="Alt text (optional)"
+                              />
+                              <p className="text-xs text-gray-500 truncate">{img.url}</p>
+                            </div>
+                            <button
+                              type="button"
+                              onClick={() => removeImage(idx)}
+                              className="px-3 py-1 text-red-600 hover:text-red-800 text-sm"
+                            >
+                              Remove
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <input
+                    id="publishNow"
+                    type="checkbox"
+                    checked={publishNow}
+                    onChange={(e) => setPublishNow(e.target.checked)}
+                    className="rounded border-gray-300 text-purple-600 focus:ring-purple-500"
+                  />
+                  <label htmlFor="publishNow" className="text-sm text-gray-700">
+                    Publish to storefront immediately (sets status ACTIVE)
+                  </label>
                 </div>
                 
                 <button
@@ -298,17 +402,19 @@ export default function AdminProductsPage() {
                         <div className="text-sm text-gray-500">{product.slug}</div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                        {product.currency || 'GBP'} {product.price?.toFixed(2) || '0.00'}
+                        {product.currency || 'GBP'} {Number(product.price || 0).toFixed(2)}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <span
                           className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                            product.published
+                            product.status === 'ACTIVE'
                               ? 'bg-green-100 text-green-800'
-                              : 'bg-yellow-100 text-yellow-800'
+                              : product.status === 'DRAFT'
+                              ? 'bg-yellow-100 text-yellow-800'
+                              : 'bg-gray-100 text-gray-800'
                           }`}
                         >
-                          {product.published ? 'Published' : 'Draft'}
+                          {product.status || 'UNKNOWN'}
                         </span>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">

@@ -2,13 +2,15 @@ import {
   Controller,
   Post,
   Delete,
+  Get,
   Body,
   UseGuards,
   UploadedFile,
   UploadedFiles,
   UseInterceptors,
   Param,
-  ParseUUIDPipe,
+  Res,
+  NotFoundException,
 } from '@nestjs/common';
 import { FileInterceptor, FilesInterceptor } from '@nestjs/platform-express';
 import { UploadsService } from './uploads.service';
@@ -17,23 +19,53 @@ import { RolesGuard } from '../common/guards/roles.guard';
 import { Roles } from '../common/decorators/roles.decorator';
 import type { ApiResponse } from '@hos-marketplace/shared-types';
 import { diskStorage } from 'multer';
-import { extname } from 'path';
+import { extname, join } from 'path';
+import { ConfigService } from '@nestjs/config';
+import { randomUUID } from 'crypto';
+import { Response } from 'express';
+import { existsSync, mkdirSync } from 'fs';
 
-const storage = diskStorage({
-  destination: './uploads',
-  filename: (req, file, cb) => {
-    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
-    cb(null, `${uniqueSuffix}${extname(file.originalname)}`);
-  },
-});
+// Create storage configuration (reads from env directly since decorators evaluate before constructor)
+function createStorage() {
+  const uploadBasePath = process.env.UPLOAD_BASE_PATH || '/data/uploads';
+  
+  return diskStorage({
+    destination: (req, file, cb) => {
+      // Get folder from body or default to 'uploads'
+      const folder = (req.body?.folder as string) || 'uploads';
+      // Sanitize folder name
+      const safeFolder = folder.replace(/[^a-zA-Z0-9_-]/g, '').substring(0, 50) || 'uploads';
+      const destPath = join(uploadBasePath, safeFolder);
+      
+      // Ensure directory exists
+      if (!existsSync(destPath)) {
+        mkdirSync(destPath, { recursive: true });
+      }
+      
+      cb(null, destPath);
+    },
+    filename: (req, file, cb) => {
+      // Generate UUID-based filename
+      const ext = extname(file.originalname).toLowerCase();
+      const filename = `${randomUUID()}${ext}`;
+      cb(null, filename);
+    },
+  });
+}
 
 @Controller('uploads')
-@UseGuards(JwtAuthGuard)
 export class UploadsController {
-  constructor(private readonly uploadsService: UploadsService) {}
+  constructor(
+    private readonly uploadsService: UploadsService,
+    private readonly configService: ConfigService,
+  ) {}
 
   @Post('single')
-  @UseInterceptors(FileInterceptor('file', { storage, limits: { fileSize: 10 * 1024 * 1024 } }))
+  @UseGuards(JwtAuthGuard)
+  @UseInterceptors(FileInterceptor('file', { 
+    storage: createStorage(),
+    limits: { fileSize: 10 * 1024 * 1024 } 
+  }))
   async uploadSingle(
     @UploadedFile() file: Express.Multer.File,
     @Body('folder') folder?: string,
@@ -46,7 +78,11 @@ export class UploadsController {
   }
 
   @Post('multiple')
-  @UseInterceptors(FilesInterceptor('files', 10, { storage, limits: { fileSize: 10 * 1024 * 1024 } }))
+  @UseGuards(JwtAuthGuard)
+  @UseInterceptors(FilesInterceptor('files', 10, { 
+    storage: createStorage(),
+    limits: { fileSize: 10 * 1024 * 1024 } 
+  }))
   async uploadMultiple(
     @UploadedFiles() files: Express.Multer.File[],
     @Body('folder') folder?: string,
@@ -58,8 +94,30 @@ export class UploadsController {
     };
   }
 
+  @Get(':folder/:filename')
+  async serveFile(
+    @Param('folder') folder: string,
+    @Param('filename') filename: string,
+    @Res() res: Response,
+  ): Promise<void> {
+    try {
+      const filePath = this.uploadsService.getFileForServing(folder, filename);
+      
+      // Set caching headers (1 year for images)
+      res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
+      res.setHeader('Content-Type', this.getContentType(filename));
+      
+      res.sendFile(filePath);
+    } catch (error) {
+      if (error instanceof NotFoundException) {
+        throw error;
+      }
+      throw new NotFoundException('File not found');
+    }
+  }
+
   @Delete(':url')
-  @UseGuards(RolesGuard)
+  @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('SELLER', 'ADMIN')
   async deleteFile(@Param('url') url: string): Promise<ApiResponse<{ message: string }>> {
     await this.uploadsService.deleteFile(decodeURIComponent(url));
@@ -67,6 +125,22 @@ export class UploadsController {
       data: { message: 'File deleted successfully' },
       message: 'File deleted successfully',
     };
+  }
+
+  /**
+   * Get content type based on file extension
+   */
+  private getContentType(filename: string): string {
+    const ext = filename.substring(filename.lastIndexOf('.')).toLowerCase();
+    const contentTypes: Record<string, string> = {
+      '.jpg': 'image/jpeg',
+      '.jpeg': 'image/jpeg',
+      '.png': 'image/png',
+      '.gif': 'image/gif',
+      '.webp': 'image/webp',
+      '.svg': 'image/svg+xml',
+    };
+    return contentTypes[ext] || 'application/octet-stream';
   }
 }
 

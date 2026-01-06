@@ -1,5 +1,8 @@
-import { Injectable, BadRequestException } from '@nestjs/common';
+import { Injectable, BadRequestException, NotFoundException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { existsSync, unlinkSync, mkdirSync } from 'fs';
+import { join } from 'path';
+import { randomUUID } from 'crypto';
 
 interface UploadResult {
   url: string;
@@ -9,7 +12,66 @@ interface UploadResult {
 
 @Injectable()
 export class UploadsService {
-  constructor(private configService: ConfigService) {}
+  private readonly uploadBasePath: string;
+  private readonly apiBaseUrl: string;
+
+  constructor(private configService: ConfigService) {
+    // Railway Volume path (configurable via env, defaults to /data/uploads)
+    this.uploadBasePath = this.configService.get<string>('UPLOAD_BASE_PATH') || '/data/uploads';
+    
+    // API base URL for constructing absolute URLs
+    // Priority: API_URL env var > construct from PORT > fallback to production URL
+    const apiUrl = this.configService.get<string>('API_URL');
+    if (apiUrl) {
+      this.apiBaseUrl = apiUrl.endsWith('/api') ? apiUrl : `${apiUrl}/api`;
+    } else {
+      const port = this.configService.get<string>('PORT') || '3001';
+      const host = process.env.RAILWAY_PUBLIC_DOMAIN || 
+                   process.env.RAILWAY_ENVIRONMENT_NAME ? 
+                   `https://hos-marketplaceapi-production.up.railway.app` : 
+                   `http://localhost:${port}`;
+      this.apiBaseUrl = `${host}/api`;
+    }
+  }
+
+  /**
+   * Sanitize folder name to prevent path traversal
+   */
+  private sanitizeFolder(folder: string): string {
+    // Remove path traversal attempts, keep only alphanumeric, dash, underscore
+    return folder.replace(/[^a-zA-Z0-9_-]/g, '').substring(0, 50) || 'uploads';
+  }
+
+  /**
+   * Sanitize filename and generate UUID-based name
+   */
+  private sanitizeFilename(originalname: string): string {
+    // Get file extension
+    const ext = originalname.substring(originalname.lastIndexOf('.')).toLowerCase();
+    // Generate UUID filename
+    return `${randomUUID()}${ext}`;
+  }
+
+  /**
+   * Get full file path on disk
+   */
+  private getFilePath(folder: string, filename: string): string {
+    const safeFolder = this.sanitizeFolder(folder);
+    const fullPath = join(this.uploadBasePath, safeFolder);
+    // Ensure directory exists
+    if (!existsSync(fullPath)) {
+      mkdirSync(fullPath, { recursive: true });
+    }
+    return join(fullPath, filename);
+  }
+
+  /**
+   * Get public URL for a file
+   */
+  private getPublicUrl(folder: string, filename: string): string {
+    const safeFolder = this.sanitizeFolder(folder);
+    return `${this.apiBaseUrl}/uploads/${safeFolder}/${filename}`;
+  }
 
   async uploadFile(file: Express.Multer.File, folder: string = 'uploads'): Promise<UploadResult> {
     // Validate file
@@ -37,18 +99,21 @@ export class UploadsService {
       throw new BadRequestException('File size exceeds 10MB limit');
     }
 
-    // TODO: Implement actual upload to S3 or Cloudinary
-    // For now, return placeholder structure
+    // Sanitize folder - multer already saved the file with UUID filename
+    const safeFolder = this.sanitizeFolder(folder);
+    // Use the filename that multer generated (already UUID-based)
+    const savedFilename = file.filename;
     
-    // Example: Upload to S3
-    // const s3Url = await this.uploadToS3(file, folder);
-    
-    // Example: Upload to Cloudinary
-    // const cloudinaryUrl = await this.uploadToCloudinary(file, folder);
+    if (!savedFilename) {
+      throw new BadRequestException('File was not saved properly');
+    }
 
-    // Placeholder response - will be implemented with actual storage service
+    // Construct public URL using the saved filename
+    const publicUrl = this.getPublicUrl(safeFolder, savedFilename);
+
     return {
-      url: `/uploads/${folder}/${Date.now()}-${file.originalname}`,
+      url: publicUrl,
+      key: `${safeFolder}/${savedFilename}`,
     };
   }
 
@@ -68,21 +133,44 @@ export class UploadsService {
     return Promise.all(uploadPromises);
   }
 
-  async deleteFile(url: string): Promise<void> {
-    // TODO: Implement file deletion from storage
-    // Extract file key/ID from URL and delete from S3/Cloudinary
-    console.log('Delete file:', url);
+  /**
+   * Get file path for serving
+   */
+  getFileForServing(folder: string, filename: string): string {
+    const safeFolder = this.sanitizeFolder(folder);
+    const safeFilename = filename.replace(/[^a-zA-Z0-9._-]/g, ''); // Basic sanitization
+    const filePath = join(this.uploadBasePath, safeFolder, safeFilename);
+    
+    if (!existsSync(filePath)) {
+      throw new NotFoundException('File not found');
+    }
+    
+    return filePath;
   }
 
-  // TODO: Implement actual S3 upload
-  // private async uploadToS3(file: Express.Multer.File, folder: string): Promise<string> {
-  //   // AWS S3 upload logic
-  // }
+  async deleteFile(url: string): Promise<void> {
+    try {
+      // Extract folder and filename from URL
+      // URL format: /api/uploads/{folder}/{filename}
+      const urlMatch = url.match(/\/uploads\/([^/]+)\/([^/]+)$/);
+      if (!urlMatch) {
+        throw new BadRequestException('Invalid file URL format');
+      }
 
-  // TODO: Implement actual Cloudinary upload
-  // private async uploadToCloudinary(file: Express.Multer.File, folder: string): Promise<string> {
-  //   // Cloudinary upload logic
-  // }
+      const [, folder, filename] = urlMatch;
+      const filePath = this.getFilePath(folder, filename);
+
+      if (existsSync(filePath)) {
+        unlinkSync(filePath);
+      }
+    } catch (error) {
+      if (error instanceof BadRequestException || error instanceof NotFoundException) {
+        throw error;
+      }
+      console.error('Error deleting file:', error);
+      throw new BadRequestException('Failed to delete file');
+    }
+  }
 }
 
 

@@ -95,71 +95,94 @@ export class OrdersService {
       // Generate order number
       const orderNumber = this.generateOrderNumber();
 
-      // Create order
-      const order = await this.prisma.order.create({
-        data: {
-          userId,
-          sellerId: seller.id,
-          orderNumber,
-          subtotal,
-          tax,
-          total,
-          currency: items[0].product.currency,
-          status: 'PENDING',
-          paymentStatus: 'PENDING',
-          shippingAddressId: createOrderDto.shippingAddressId,
-          billingAddressId: createOrderDto.billingAddressId,
-          paymentMethod: createOrderDto.paymentMethod,
-          items: {
-            create: items.map((item) => ({
-              productId: item.productId,
-              quantity: item.quantity,
-              price: item.price,
-              variationOptions: item.variationOptions,
-            })),
+      // Use transaction to ensure atomicity: order creation + stock decrement + cart clearing
+      const order = await this.prisma.$transaction(async (tx) => {
+        // Re-check stock availability within transaction (prevent race conditions)
+        for (const item of items) {
+          const product = await tx.product.findUnique({
+            where: { id: item.productId },
+            select: { stock: true, name: true },
+          });
+
+          if (!product) {
+            throw new NotFoundException(`Product ${item.productId} not found`);
+          }
+
+          if (product.stock < item.quantity) {
+            throw new BadRequestException(
+              `Insufficient stock for product: ${product.name}. Available: ${product.stock}, Requested: ${item.quantity}`,
+            );
+          }
+        }
+
+        // Create order
+        const createdOrder = await tx.order.create({
+          data: {
+            userId,
+            sellerId: seller.id,
+            orderNumber,
+            subtotal,
+            tax,
+            total,
+            currency: items[0].product.currency,
+            status: 'PENDING',
+            paymentStatus: 'PENDING',
+            shippingAddressId: createOrderDto.shippingAddressId,
+            billingAddressId: createOrderDto.billingAddressId,
+            paymentMethod: createOrderDto.paymentMethod,
+            items: {
+              create: items.map((item) => ({
+                productId: item.productId,
+                quantity: item.quantity,
+                price: item.price,
+                variationOptions: item.variationOptions,
+              })),
+            },
           },
-        },
-        include: {
-          items: {
-            include: {
-              product: {
-                include: {
-                  images: {
-                    orderBy: { order: 'asc' },
-                    take: 1,
+          include: {
+            items: {
+              include: {
+                product: {
+                  include: {
+                    images: {
+                      orderBy: { order: 'asc' },
+                      take: 1,
+                    },
                   },
                 },
               },
             },
-          },
-          shippingAddress: true,
-          billingAddress: true,
-          seller: {
-            select: {
-              id: true,
-              storeName: true,
-              slug: true,
-            },
-          },
-        },
-      });
-
-      // Update product stock
-      for (const item of items) {
-        await this.prisma.product.update({
-          where: { id: item.productId },
-          data: {
-            stock: {
-              decrement: item.quantity,
+            shippingAddress: true,
+            billingAddress: true,
+            seller: {
+              select: {
+                id: true,
+                storeName: true,
+                slug: true,
+              },
             },
           },
         });
-      }
+
+        // Update product stock atomically within transaction
+        for (const item of items) {
+          await tx.product.update({
+            where: { id: item.productId },
+            data: {
+              stock: {
+                decrement: item.quantity,
+              },
+            },
+          });
+        }
+
+        return createdOrder;
+      });
 
       orders.push(this.mapToOrderType(order, true)); // Include seller at order creation (payment stage)
     }
 
-    // Clear cart after order creation
+    // Clear cart after all orders are created (outside transaction to avoid long locks)
     await this.prisma.cartItem.deleteMany({
       where: { cartId: cart.id },
     });

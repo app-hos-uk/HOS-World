@@ -84,7 +84,7 @@ export default function AdminPlatformMetricsPage() {
             <div className="bg-white rounded-lg shadow p-6">
               <h3 className="text-sm font-medium text-gray-500">Total Revenue</h3>
               <p className="text-3xl font-bold text-green-600 mt-2">
-                £{metrics?.totalRevenue?.toFixed(2) || '0.00'}
+                £{Number(metrics?.totalRevenue || 0).toFixed(2)}
               </p>
             </div>
             <div className="bg-white rounded-lg shadow p-6">

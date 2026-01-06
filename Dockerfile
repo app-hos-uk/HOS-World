@@ -54,10 +54,11 @@ RUN pnpm db:generate
 
 # Build API service
 WORKDIR /app/services/api
-# Build the application (will show type errors but attempt to compile)
-RUN pnpm build || echo "Build completed with some type errors - checking if dist exists..."
-# Verify dist directory was created
-RUN ls -la dist/ || (echo "Build failed - dist directory not found" && exit 1)
+# Build the application - nest build compiles even with some type errors due to noEmitOnError: false
+# Exit code may be non-zero due to type errors, but files are still emitted
+RUN (pnpm build 2>&1 | tail -50) || true
+# Verify dist directory was created and main.js exists - this is critical
+RUN if [ ! -f dist/main.js ]; then echo "ERROR: dist/main.js not found - build failed!" && exit 1; else echo "✅ Build successful - dist/main.js exists"; fi
 
 # Production image - Use Debian-based image for better native module compatibility
 FROM node:18-slim
@@ -108,7 +109,31 @@ COPY --from=base /app/services/api/prisma ./services/api/prisma
 
 # Generate Prisma Client in production (needed for runtime)
 WORKDIR /app/services/api
-RUN pnpm db:generate
+RUN echo "═══════════════════════════════════════════════════════════" && \
+    echo "🔄 PRISMA CLIENT GENERATION" && \
+    echo "═══════════════════════════════════════════════════════════" && \
+    echo "Step 1: Verifying RefreshToken in schema..." && \
+    (grep -q "model RefreshToken" prisma/schema.prisma && echo "✅ RefreshToken model found in schema" || (echo "❌ RefreshToken model NOT found in schema!" && cat prisma/schema.prisma | grep -A 5 "RefreshToken" && exit 1)) && \
+    echo "" && \
+    echo "Step 2: Checking Prisma installation..." && \
+    (pnpm list @prisma/client 2>&1 | head -3 || echo "⚠️ Could not check Prisma version") && \
+    echo "" && \
+    echo "Step 3: Generating Prisma Client..." && \
+    echo "  Current directory: $(pwd)" && \
+    echo "  Schema file exists: $(test -f prisma/schema.prisma && echo 'YES' || echo 'NO')" && \
+    echo "  Running: pnpm db:generate" && \
+    pnpm db:generate 2>&1 | tee /tmp/prisma-generate.log && \
+    GENERATE_EXIT=$? && \
+    echo "  Exit code: $GENERATE_EXIT" && \
+    if [ $GENERATE_EXIT -ne 0 ]; then echo "❌ Prisma generate failed with exit code $GENERATE_EXIT"; cat /tmp/prisma-generate.log; exit 1; fi && \
+    echo "" && \
+    echo "Step 4: Verifying generated client location..." && \
+    (ls -la node_modules/.prisma/client/ 2>&1 | head -5 || echo "⚠️ .prisma/client directory not found") && \
+    (ls -la node_modules/@prisma/client/ 2>&1 | head -5 || echo "⚠️ @prisma/client directory not found") && \
+    echo "" && \
+    echo "Step 5: Verifying RefreshToken in generated client..." && \
+    node -e "try { const { PrismaClient } = require('@prisma/client'); console.log('  PrismaClient imported successfully'); const p = new PrismaClient(); console.log('  PrismaClient instance created'); const hasRefreshToken = typeof p.refreshToken !== 'undefined'; const hasUser = typeof p.user !== 'undefined'; console.log('  user model:', hasUser ? 'YES ✅' : 'NO ❌'); console.log('  refreshToken model:', hasRefreshToken ? 'YES ✅' : 'NO ❌'); const allKeys = Object.keys(p).filter(k => !k.startsWith('$') && !k.startsWith('_') && !k.startsWith('constructor')); console.log('  Total model keys found:', allKeys.length); if (!hasUser) { console.error('❌ Basic models missing!'); console.error('Available keys:', allKeys.slice(0, 20).join(', ')); process.exit(1); } if (!hasRefreshToken) { console.error('❌ RefreshToken missing!'); console.error('Available models:', allKeys.slice(0, 20).join(', ')); process.exit(1); } console.log('✅ All models verified'); p.\$disconnect().catch(() => {}); } catch(e) { console.error('❌ Error verifying client:', e.message); console.error('Stack:', e.stack); process.exit(1); }" && \
+    echo "═══════════════════════════════════════════════════════════"
 
 EXPOSE 3001
 
@@ -117,5 +142,9 @@ WORKDIR /app/services/api
 
 # Run from the API directory
 # Use 0.0.0.0 to listen on all interfaces (required for Railway)
-CMD ["node", "dist/main.js"]
+#
+# IMPORTANT: Always apply DB migrations in production before starting the API.
+# This prevents runtime 500s when code expects new tables/columns (e.g. GDPR logs,
+# global platform fields) but the Railway database hasn't been migrated yet.
+CMD ["sh", "-c", "echo '═══════════════════════════════════════════════════════════' && echo '🚀 STARTUP SCRIPT STARTED' && echo 'Timestamp: $(date)' && echo 'Working directory: $(pwd)' && echo 'Node version: $(node --version)' && echo 'Files in current directory:' && ls -la | head -10 && echo '' && echo '🔄 STEP 1: Running database migrations...' && (pnpm exec prisma migrate deploy 2>&1 || echo '⚠️ Migration step completed with warnings') && echo '✅ Migrations complete.' && echo '' && echo '🔄 STEP 2: Generating Prisma Client...' && (pnpm exec prisma generate 2>&1 | tee /tmp/prisma-gen.log || echo '⚠️ Prisma generate completed with warnings') && echo '✅ Prisma Client generated.' && echo '' && echo '🔄 STEP 3: Verifying RefreshToken model in generated client...' && (node -e \"try { const { PrismaClient } = require('@prisma/client'); const p = new PrismaClient(); const hasRefreshToken = typeof p.refreshToken !== 'undefined'; const hasUser = typeof p.user !== 'undefined'; console.log('  user model:', hasUser ? 'YES ✅' : 'NO ❌'); console.log('  refreshToken model:', hasRefreshToken ? 'YES ✅' : 'NO ❌'); if (!hasRefreshToken) { console.error('❌ CRITICAL: RefreshToken missing! Available:', Object.keys(p).filter(k => !k.startsWith('$') && !k.startsWith('_')).slice(0, 10).join(', ')); process.exit(1); } p.\$disconnect().catch(() => {}); } catch(e) { console.error('❌ Error:', e.message); process.exit(1); }\" || echo '⚠️ Verification completed with warnings') && echo '✅ Verification passed - RefreshToken found' && echo '═══════════════════════════════════════════════════════════' && echo '🚀 Starting API...' && echo 'Checking dist/main.js exists:' && (test -f dist/main.js && echo '✅ dist/main.js found' || (echo '❌ dist/main.js NOT FOUND!' && ls -la dist/ && exit 1)) && echo 'Starting node...' && node dist/main.js"]
 

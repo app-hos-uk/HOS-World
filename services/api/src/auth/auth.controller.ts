@@ -99,9 +99,23 @@ export class AuthController {
     };
   }
 
+  @Public()
+  @Post('refresh')
+  @HttpCode(HttpStatus.OK)
+  async refresh(@Body() body: { refreshToken: string }): Promise<ApiResponse<AuthResponse>> {
+    const result = await this.authService.refresh(body.refreshToken);
+    return {
+      data: result,
+      message: 'Token refreshed successfully',
+    };
+  }
+
   @Post('logout')
   @HttpCode(HttpStatus.OK)
-  async logout(): Promise<ApiResponse<{ message: string }>> {
+  @UseGuards(JwtAuthGuard)
+  async logout(@Request() req: any): Promise<ApiResponse<{ message: string }>> {
+    // Revoke all refresh tokens for this user
+    await this.authService.revokeAllTokens(req.user.id);
     return {
       data: { message: 'Logged out successfully' },
       message: 'Logout successful',

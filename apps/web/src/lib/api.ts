@@ -99,6 +99,7 @@ export const apiClient = ApiClient.create({
       // Clear token and redirect to login (only for protected pages)
       try {
         localStorage.removeItem('auth_token');
+        localStorage.removeItem('refresh_token');
         // Clear login time on unauthorized
         lastLoginTime = null;
         sessionStorage.removeItem('last_login_time');

@@ -1,8 +1,9 @@
-import { Controller, Post, UseGuards, Logger } from '@nestjs/common';
+import { Controller, Post, UseGuards, Logger, ForbiddenException } from '@nestjs/common';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../common/guards/roles.guard';
 import { Roles } from '../common/decorators/roles.decorator';
 import { PrismaService } from '../database/prisma.service';
+import { ConfigService } from '@nestjs/config';
 import { readFileSync } from 'fs';
 import { join } from 'path';
 
@@ -12,10 +13,26 @@ import { join } from 'path';
 export class MigrationController {
   private readonly logger = new Logger(MigrationController.name);
 
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly configService: ConfigService,
+  ) {}
+
+  /**
+   * Check if admin migrations are enabled
+   */
+  private checkMigrationsEnabled(): void {
+    const enabled = this.configService.get<string>('ENABLE_ADMIN_MIGRATIONS') === 'true';
+    if (!enabled) {
+      this.logger.warn('Admin migration endpoint called but ENABLE_ADMIN_MIGRATIONS is not set to "true"');
+      throw new ForbiddenException('Admin migrations are disabled in production. Set ENABLE_ADMIN_MIGRATIONS=true to enable.');
+    }
+  }
 
   @Post('run-global-features')
   async runGlobalFeaturesMigration() {
+    this.checkMigrationsEnabled();
+    
     try {
       this.logger.log('🔄 Starting global features migration...');
 
@@ -148,6 +165,8 @@ export class MigrationController {
 
   @Post('run-sql-direct')
   async runSQLDirect() {
+    this.checkMigrationsEnabled();
+    
     try {
       this.logger.log('🔄 Running SQL migration directly (embedded SQL)...');
 

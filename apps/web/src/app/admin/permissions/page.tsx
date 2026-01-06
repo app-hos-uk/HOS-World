@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { RouteGuard } from '@/components/RouteGuard';
 import { AdminLayout } from '@/components/AdminLayout';
 import { apiClient } from '@/lib/api';
@@ -58,54 +58,56 @@ const PERMISSIONS: Permission[] = [
   { id: 'sellers.suspend', name: 'Suspend Sellers', description: 'Suspend seller accounts', category: 'Sellers' },
 ];
 
-const INITIAL_ROLES = [
-  'ADMIN',
-  'PROCUREMENT',
-  'FULFILLMENT',
-  'CATALOG',
-  'MARKETING',
-  'FINANCE',
-  'SELLER',
-  'B2C_SELLER',
-  'WHOLESALER',
-  'CUSTOMER',
-  'CMS_EDITOR',
-];
-
-const DEFAULT_ROLE_PERMISSIONS: Record<string, string[]> = {
-  ADMIN: PERMISSIONS.map((p) => p.id),
-  PROCUREMENT: ['submissions.review', 'submissions.approve', 'submissions.reject', 'products.view'],
-  FULFILLMENT: ['shipments.verify', 'orders.view', 'orders.manage'],
-  CATALOG: ['catalog.create', 'products.view', 'products.edit'],
-  MARKETING: ['marketing.create', 'products.view'],
-  FINANCE: ['pricing.approve', 'orders.view', 'orders.refund'],
-  SELLER: ['products.create', 'products.edit', 'orders.view', 'orders.manage'],
-  B2C_SELLER: ['products.create', 'products.edit', 'orders.view', 'orders.manage'],
-  WHOLESALER: ['products.create', 'products.edit', 'orders.view'],
-  CUSTOMER: ['products.view', 'orders.view'],
-  CMS_EDITOR: ['products.view', 'products.edit', 'catalog.create'],
-};
-
 export default function AdminPermissionsPage() {
-  const [roles, setRoles] = useState<string[]>(INITIAL_ROLES);
+  const [roles, setRoles] = useState<string[]>([]);
   const [selectedRole, setSelectedRole] = useState<string>('ADMIN');
-  const [rolePermissions, setRolePermissions] = useState<Record<string, string[]>>(
-    DEFAULT_ROLE_PERMISSIONS
-  );
+  const [rolePermissions, setRolePermissions] = useState<Record<string, string[]>>({});
   const [saving, setSaving] = useState(false);
   const [showCreateRole, setShowCreateRole] = useState(false);
   const [newRoleName, setNewRoleName] = useState('');
   const [creatingRole, setCreatingRole] = useState(false);
 
-  const permissionsByCategory = PERMISSIONS.reduce((acc, perm) => {
-    if (!acc[perm.category]) {
-      acc[perm.category] = [];
-    }
-    acc[perm.category].push(perm);
-    return acc;
-  }, {} as Record<string, Permission[]>);
+  const permissionsByCategory = useMemo(() => {
+    return PERMISSIONS.reduce((acc, perm) => {
+      if (!acc[perm.category]) {
+        acc[perm.category] = [];
+      }
+      acc[perm.category].push(perm);
+      return acc;
+    }, {} as Record<string, Permission[]>);
+  }, []);
 
   const currentPermissions = rolePermissions[selectedRole] || [];
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const rolesRes = await apiClient.listPermissionRoles();
+        const roleNames = rolesRes?.data || [];
+        setRoles(roleNames);
+        if (roleNames.length > 0 && !roleNames.includes(selectedRole)) {
+          setSelectedRole(roleNames[0]);
+        }
+      } catch (e) {
+        // fallback: show at least ADMIN
+        setRoles(['ADMIN']);
+      }
+    })();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  useEffect(() => {
+    if (!selectedRole) return;
+    (async () => {
+      try {
+        const permsRes = await apiClient.getRolePermissions(selectedRole);
+        const perms = permsRes?.data || [];
+        setRolePermissions((prev) => ({ ...prev, [selectedRole]: perms }));
+      } catch (e) {
+        setRolePermissions((prev) => ({ ...prev, [selectedRole]: [] }));
+      }
+    })();
+  }, [selectedRole]);
 
   const togglePermission = (permissionId: string) => {
     const newPermissions = { ...rolePermissions };
@@ -293,13 +295,12 @@ export default function AdminPermissionsPage() {
                       }
                       setCreatingRole(true);
                       try {
-                        // Add role to local state
-                        setRoles([...roles, newRoleName]);
-                        setRolePermissions({
-                          ...rolePermissions,
-                          [newRoleName]: [],
-                        });
-                        setSelectedRole(newRoleName);
+                      await apiClient.createPermissionRole(newRoleName);
+                      const rolesRes = await apiClient.listPermissionRoles();
+                      const roleNames = rolesRes?.data || [];
+                      setRoles(roleNames);
+                      setRolePermissions((prev) => ({ ...prev, [newRoleName]: [] }));
+                      setSelectedRole(newRoleName);
                         setShowCreateRole(false);
                         setNewRoleName('');
                         alert('Role created successfully! You can now assign permissions.');

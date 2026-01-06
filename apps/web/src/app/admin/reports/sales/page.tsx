@@ -52,7 +52,7 @@ export default function AdminSalesReportsPage() {
             <div className="bg-white rounded-lg shadow p-6">
               <h3 className="text-sm font-medium text-gray-500">Total Sales</h3>
               <p className="text-3xl font-bold text-gray-900 mt-2">
-                £{report?.totalSales?.toFixed(2) || '0.00'}
+                £{Number(report?.totalSales || 0).toFixed(2)}
               </p>
             </div>
             <div className="bg-white rounded-lg shadow p-6">
@@ -64,7 +64,7 @@ export default function AdminSalesReportsPage() {
             <div className="bg-white rounded-lg shadow p-6">
               <h3 className="text-sm font-medium text-gray-500">Average Order</h3>
               <p className="text-3xl font-bold text-gray-900 mt-2">
-                £{report?.averageOrderValue?.toFixed(2) || '0.00'}
+                £{Number(report?.averageOrderValue || 0).toFixed(2)}
               </p>
             </div>
             <div className="bg-white rounded-lg shadow p-6">

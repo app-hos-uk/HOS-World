@@ -10,9 +10,12 @@ import {
   ParseUUIDPipe,
 } from '@nestjs/common';
 import { AdminService } from './admin.service';
+import { CreateAdminUserDto } from './dto/create-user.dto';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../common/guards/roles.guard';
 import { Roles } from '../common/decorators/roles.decorator';
+import { Permissions } from '../common/decorators/permissions.decorator';
+import { PermissionsGuard } from '../common/guards/permissions.guard';
 import type { ApiResponse } from '@hos-marketplace/shared-types';
 
 @Controller('admin')
@@ -36,6 +39,17 @@ export class AdminController {
     return {
       data: users,
       message: 'Users retrieved successfully',
+    };
+  }
+
+  @Post('users')
+  @UseGuards(PermissionsGuard)
+  @Permissions('users.create')
+  async createUser(@Body() dto: CreateAdminUserDto): Promise<ApiResponse<any>> {
+    const user = await this.adminService.createUser(dto);
+    return {
+      data: user,
+      message: 'User created successfully',
     };
   }
 
@@ -106,6 +120,8 @@ export class AdminController {
   }
 
   @Get('permissions/:role')
+  @UseGuards(PermissionsGuard)
+  @Permissions('system.permissions')
   async getRolePermissions(@Param('role') role: string): Promise<ApiResponse<string[]>> {
     const permissions = await this.adminService.getRolePermissions(role);
     return {
@@ -115,6 +131,8 @@ export class AdminController {
   }
 
   @Put('permissions/:role')
+  @UseGuards(PermissionsGuard)
+  @Permissions('system.permissions')
   async updateRolePermissions(
     @Param('role') role: string,
     @Body() body: { permissions: string[] },
@@ -124,6 +142,30 @@ export class AdminController {
       data: updated,
       message: 'Permissions updated successfully',
     };
+  }
+
+  @Get('permissions/catalog')
+  @UseGuards(PermissionsGuard)
+  @Permissions('system.permissions')
+  async getPermissionCatalog(): Promise<ApiResponse<any>> {
+    const catalog = await this.adminService.getPermissionCatalog();
+    return { data: catalog, message: 'Permission catalog retrieved successfully' };
+  }
+
+  @Get('roles')
+  @UseGuards(PermissionsGuard)
+  @Permissions('system.permissions')
+  async listRoles(): Promise<ApiResponse<string[]>> {
+    const roles = await this.adminService.listPermissionRoles();
+    return { data: roles, message: 'Roles retrieved successfully' };
+  }
+
+  @Post('roles')
+  @UseGuards(PermissionsGuard)
+  @Permissions('system.permissions')
+  async createRole(@Body() body: { name: string }): Promise<ApiResponse<any>> {
+    const created = await this.adminService.createPermissionRole(body.name);
+    return { data: created, message: 'Role created successfully' };
   }
 
   @Get('sellers')

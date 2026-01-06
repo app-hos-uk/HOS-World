@@ -26,13 +26,20 @@ model User {
   // Global Platform Features
   country                      String?
   whatsappNumber               String?
-  preferredCommunicationMethod CommunicationMethod?
+  // IMPORTANT: Keep as String to match existing production migrations which created this column as TEXT.
+  // Validation still happens at the API boundary (DTO). Using a Prisma enum here requires a Postgres enum
+  // type to exist in the DB, which is not currently present in production.
+  preferredCommunicationMethod String?
   currencyPreference           String               @default("GBP")
   ipAddress                    String?
   gdprConsent                  Boolean              @default(false)
   gdprConsentDate              DateTime?
   dataProcessingConsent        Json?
   countryDetectedAt            DateTime?
+
+  // RBAC: optional permission-role (custom role) for fine-grained permissions
+  permissionRoleId String?
+  permissionRole   PermissionRole? @relation(fields: [permissionRoleId], references: [id])
 
   // Relations
   addresses             Address[]
@@ -41,6 +48,7 @@ model User {
   sellerProfile         Seller?
   customerProfile       Customer?
   loyaltyPoints         Int                    @default(0)
+  refreshTokens         RefreshToken[]
   themePreference       String?
   reviews               ProductReview[]
   wishlistItems         WishlistItem[]
@@ -73,6 +81,19 @@ model User {
   @@map("users")
 }
 
+// Custom role definitions stored in DB (role name + permission ids)
+model PermissionRole {
+  id          String   @id @default(uuid())
+  name        String   @unique
+  permissions Json     // array of permission ids (e.g. ["users.view","orders.view"])
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  users User[]
+
+  @@map("permission_roles")
+}
+
 enum UserRole {
   CUSTOMER
   WHOLESALER
@@ -87,12 +108,7 @@ enum UserRole {
   CMS_EDITOR
 }
 
-enum CommunicationMethod {
-  EMAIL
-  SMS
-  WHATSAPP
-  PHONE
-}
+// Note: Communication method values are validated in DTOs (see `src/auth/dto/register.dto.ts`).
 
 // Customer profile
 model Customer {
@@ -497,6 +513,21 @@ model Payment {
   updatedAt       DateTime      @updatedAt
 
   @@map("payments")
+}
+
+// Refresh Token model for secure token rotation and revocation
+model RefreshToken {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tokenHash String   // Hashed refresh token (bcrypt)
+  expiresAt DateTime
+  revokedAt DateTime?
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+  @@index([expiresAt])
+  @@map("refresh_tokens")
 }
 
 // Notification model (for email notifications)

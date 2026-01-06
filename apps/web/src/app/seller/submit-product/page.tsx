@@ -52,6 +52,7 @@ export default function SubmitProductPage() {
   const [images, setImages] = useState<ImageUpload[]>([]);
   const [variations, setVariations] = useState<Variation[]>([]);
   const [newImageUrl, setNewImageUrl] = useState('');
+  const [uploadingImages, setUploadingImages] = useState(false);
   const [currentVariation, setCurrentVariation] = useState<Variation>({
     name: '',
     options: [],
@@ -95,6 +96,51 @@ export default function SubmitProductPage() {
         },
       ]);
       setNewImageUrl('');
+    }
+  };
+
+  const uploadImages = async (files: FileList | null) => {
+    if (!files || files.length === 0) return;
+
+    const allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+    const maxSizeBytes = 10 * 1024 * 1024; // 10MB (matches backend multer limit)
+
+    const fileArr = Array.from(files);
+    const limited = fileArr.slice(0, 4);
+    if (fileArr.length > 4) {
+      setError('You can upload up to 4 images at a time');
+      return;
+    }
+    for (const f of fileArr) {
+      if (!allowedTypes.includes(f.type)) {
+        setError('Only JPEG, PNG, GIF, and WebP images are allowed');
+        return;
+      }
+      if (f.size > maxSizeBytes) {
+        setError('Max image size is 10MB');
+        return;
+      }
+    }
+
+    try {
+      setError('');
+      setUploadingImages(true);
+
+      const res = await apiClient.uploadMultipleFiles(limited, 'products');
+      const urls = res?.data?.urls || [];
+      if (urls.length === 0) throw new Error('Upload failed (no URLs returned)');
+      setImages((prev) => [
+        ...prev,
+        ...urls.map((url, idx) => ({
+          url,
+          alt: '',
+          order: prev.length + idx,
+        })),
+      ]);
+    } catch (err: any) {
+      setError(err.message || 'Failed to upload image');
+    } finally {
+      setUploadingImages(false);
     }
   };
 
@@ -576,27 +622,50 @@ export default function SubmitProductPage() {
                   Product Images <span className="text-red-500">*</span>
                 </h2>
                 <div className="space-y-4">
-                  <div className="flex gap-2">
-                    <input
-                      type="url"
-                      value={newImageUrl}
-                      onChange={(e) => setNewImageUrl(e.target.value)}
-                      onKeyPress={(e) => {
-                        if (e.key === 'Enter') {
-                          e.preventDefault();
-                          addImage();
-                        }
-                      }}
-                      className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-                      placeholder="Enter image URL"
-                    />
-                    <button
-                      type="button"
-                      onClick={addImage}
-                      className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
-                    >
-                      Add Image
-                    </button>
+                  <div className="p-4 border border-gray-200 rounded-lg bg-gray-50">
+                    <div className="flex items-center justify-between gap-3 flex-wrap">
+                      <div>
+                        <div className="font-medium text-gray-900">Upload images</div>
+                        <div className="text-xs text-gray-600">JPEG/PNG/GIF/WebP, max 10MB each</div>
+                      </div>
+                      <label className="inline-flex items-center px-4 py-2 bg-purple-600 text-white rounded hover:bg-purple-700 cursor-pointer">
+                        <input
+                          type="file"
+                          accept="image/jpeg,image/png,image/gif,image/webp"
+                          multiple
+                          className="hidden"
+                          disabled={uploadingImages}
+                          onChange={(e) => uploadImages(e.target.files)}
+                        />
+                        {uploadingImages ? 'Uploading…' : 'Choose Files'}
+                      </label>
+                    </div>
+
+                    <div className="mt-4">
+                      <div className="text-sm font-medium text-gray-700 mb-2">Or paste an image URL</div>
+                      <div className="flex gap-2">
+                        <input
+                          type="url"
+                          value={newImageUrl}
+                          onChange={(e) => setNewImageUrl(e.target.value)}
+                          onKeyPress={(e) => {
+                            if (e.key === 'Enter') {
+                              e.preventDefault();
+                              addImage();
+                            }
+                          }}
+                          className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent bg-white"
+                          placeholder="https://example.com/image.jpg"
+                        />
+                        <button
+                          type="button"
+                          onClick={addImage}
+                          className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
+                        >
+                          Add URL
+                        </button>
+                      </div>
+                    </div>
                   </div>
 
                   {images.length > 0 && (

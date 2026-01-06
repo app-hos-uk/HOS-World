@@ -11,10 +11,14 @@ import { SearchProductsDto } from './dto/search-products.dto';
 import type { Product, PaginatedResponse } from '@hos-marketplace/shared-types';
 import { Prisma } from '@prisma/client';
 import { slugify } from '@hos-marketplace/utils';
+import { ProductsElasticsearchHook } from './products-elasticsearch.hook';
 
 @Injectable()
 export class ProductsService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private elasticsearchHook: ProductsElasticsearchHook,
+  ) {}
 
   async create(sellerId: string, createProductDto: CreateProductDto): Promise<Product> {
     // Verify seller exists
@@ -178,7 +182,14 @@ export class ProductsService {
       },
     });
 
-    return this.mapToProductType(product);
+    const mappedProduct = this.mapToProductType(product);
+    
+    // Sync with Elasticsearch and cache (fire and forget - don't block response)
+    this.elasticsearchHook.onProductCreated(product).catch((error) => {
+      console.error('Failed to sync product to Elasticsearch:', error);
+    });
+
+    return mappedProduct;
   }
 
   async findAll(searchDto: SearchProductsDto): Promise<PaginatedResponse<Product>> {
@@ -679,7 +690,14 @@ export class ProductsService {
       },
     });
 
-    return this.mapToProductType(updated);
+    const mappedProduct = this.mapToProductType(updated);
+    
+    // Sync with Elasticsearch and cache (fire and forget - don't block response)
+    this.elasticsearchHook.onProductUpdated(updated).catch((error) => {
+      console.error('Failed to sync product update to Elasticsearch:', error);
+    });
+
+    return mappedProduct;
   }
 
   async delete(sellerId: string, productId: string): Promise<void> {
@@ -700,6 +718,12 @@ export class ProductsService {
     if (!seller || product.sellerId !== seller.id) {
       throw new ForbiddenException('You do not have permission to delete this product');
     }
+
+    // Delete from Elasticsearch and cache before deleting from DB
+    await this.elasticsearchHook.onProductDeleted(productId).catch((error) => {
+      console.error('Failed to delete product from Elasticsearch:', error);
+      // Continue with DB deletion even if Elasticsearch fails
+    });
 
     await this.prisma.product.delete({
       where: { id: productId },

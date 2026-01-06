@@ -104,7 +104,9 @@ export default function AdminOrdersPage() {
                         {order.user?.email || order.customer?.email || 'N/A'}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                        {order.total ? `${order.currency || 'GBP'} ${order.total.toFixed(2)}` : 'N/A'}
+                        {order.total !== undefined && order.total !== null
+                          ? `${order.currency || 'GBP'} ${Number(order.total || 0).toFixed(2)}`
+                          : 'N/A'}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <span

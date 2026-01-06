@@ -1,6 +1,7 @@
 'use client';
 
-import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react';
+import { usePathname } from 'next/navigation';
 import { apiClient } from '@/lib/api';
 import { getCurrencySymbol } from '@hos-marketplace/utils';
 
@@ -20,38 +21,61 @@ export function CurrencyProvider({ children }: { children: React.ReactNode }) {
   const [currency, setCurrencyState] = useState<string>('GBP');
   const [rates, setRates] = useState<Record<string, number>>({});
   const [loading, setLoading] = useState(true);
+  const pathname = usePathname();
+  const hasLoadedOnce = useRef(false);
 
   // Load user's currency preference and rates
   useEffect(() => {
+    // Defensive: avoid repeated requests if this provider gets remounted/re-rendered unexpectedly.
+    if (hasLoadedOnce.current) return;
+    hasLoadedOnce.current = true;
     loadCurrencyData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const loadCurrencyData = async () => {
     try {
       setLoading(true);
-      // Try to get user's currency preference
-      try {
+      // Only call the authenticated endpoint when we actually have a token.
+      // This avoids noisy 401s on public pages like /login.
+      const isAuthFlowPage =
+        typeof window !== 'undefined' &&
+        (pathname === '/login' || pathname.startsWith('/login') || pathname.startsWith('/auth/callback'));
+
+      const token =
+        typeof window !== 'undefined'
+          ? (() => {
+              try {
+                return localStorage.getItem('auth_token');
+              } catch {
+                return null;
+              }
+            })()
+          : null;
+
+      if (token && !isAuthFlowPage) {
+        // Try to get user's currency preference
         const userCurrencyResponse = await apiClient.getUserCurrency();
         if (userCurrencyResponse?.data) {
           setCurrencyState(userCurrencyResponse.data.currency || 'GBP');
           setRates(userCurrencyResponse.data.rates || {});
-        } else {
-          // Fallback to public rates
-          const ratesResponse = await apiClient.getCurrencyRates();
-          if (ratesResponse?.data) {
-            setRates(ratesResponse.data);
+          return;
+        }
+      }
+
+      // Guest / fallback: use public rates + saved preference
+      const ratesResponse = await apiClient.getCurrencyRates();
+      if (ratesResponse?.data) {
+        setRates(ratesResponse.data);
+      }
+      if (typeof window !== 'undefined') {
+        try {
+          const savedCurrency = localStorage.getItem('currency_preference');
+          if (savedCurrency) {
+            setCurrencyState(savedCurrency);
           }
-        }
-      } catch (error) {
-        // User not logged in, get public rates
-        const ratesResponse = await apiClient.getCurrencyRates();
-        if (ratesResponse?.data) {
-          setRates(ratesResponse.data);
-        }
-        // Check localStorage for saved preference
-        const savedCurrency = localStorage.getItem('currency_preference');
-        if (savedCurrency) {
-          setCurrencyState(savedCurrency);
+        } catch {
+          // ignore
         }
       }
     } catch (error) {
@@ -106,7 +130,19 @@ export function CurrencyProvider({ children }: { children: React.ReactNode }) {
 
   const updateCurrencyPreference = async (newCurrency: string) => {
     try {
-      // Update user profile if logged in
+      // Update user profile only if logged in
+      const token =
+        typeof window !== 'undefined'
+          ? (() => {
+              try {
+                return localStorage.getItem('auth_token');
+              } catch {
+                return null;
+              }
+            })()
+          : null;
+      if (!token) return;
+
       await apiClient.updateProfile({ currencyPreference: newCurrency });
     } catch (error) {
       // User not logged in or update failed - just save to localStorage

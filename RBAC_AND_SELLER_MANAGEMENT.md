@@ -348,3 +348,4 @@ async findAll() {
 5. Update frontend to handle different seller types
 
 
+

@@ -44,6 +44,10 @@ export default function LoginPage() {
   });
   const [currencyPreference, setCurrencyPreference] = useState('GBP');
 
+  // Backend OAuth endpoints (Nest has global prefix `/api`)
+  const oauthBaseUrl =
+    process.env.NEXT_PUBLIC_API_URL || 'https://hos-marketplaceapi-production.up.railway.app/api';
+
   // Set mounted state after hydration to prevent server/client mismatch
   useEffect(() => {
     setIsMounted(true);
@@ -443,6 +447,8 @@ export default function LoginPage() {
                     <input
                       id="reset-email"
                       type="email"
+                      name="email"
+                      autoComplete="email"
                       value={resetEmail}
                       onChange={(e) => setResetEmail(e.target.value)}
                       required
@@ -499,6 +505,8 @@ export default function LoginPage() {
                 <input
                   id="email"
                   type="email"
+                  name="email"
+                  autoComplete="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   required
@@ -527,6 +535,8 @@ export default function LoginPage() {
                   <input
                     id="password"
                     type={showPassword ? 'text' : 'password'}
+                    name="password"
+                    autoComplete={isLogin ? 'current-password' : 'new-password'}
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     required
@@ -566,6 +576,8 @@ export default function LoginPage() {
                       <input
                         id="firstName"
                         type="text"
+                        name="given-name"
+                        autoComplete="given-name"
                         value={firstName}
                         onChange={(e) => setFirstName(e.target.value)}
                         className="w-full px-4 py-2.5 bg-white border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 text-gray-900 placeholder-gray-500 text-base"
@@ -580,6 +592,8 @@ export default function LoginPage() {
                       <input
                         id="lastName"
                         type="text"
+                        name="family-name"
+                        autoComplete="family-name"
                         value={lastName}
                         onChange={(e) => setLastName(e.target.value)}
                         className="w-full px-4 py-2.5 bg-white border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 text-gray-900 placeholder-gray-500 text-base"
@@ -628,6 +642,8 @@ export default function LoginPage() {
                     ) : (
                       <select
                         id="country"
+                        name="country"
+                        autoComplete="country-name"
                         value={country}
                         onChange={(e) => {
                           setCountry(e.target.value);
@@ -684,6 +700,8 @@ export default function LoginPage() {
                     <input
                       id="whatsappNumber"
                       type="tel"
+                      name="tel"
+                      autoComplete="tel"
                       value={whatsappNumber}
                       onChange={(e) => setWhatsappNumber(e.target.value)}
                       className="w-full px-4 py-2.5 bg-white border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 text-gray-900 placeholder-gray-500 text-base"
@@ -832,19 +850,19 @@ export default function LoginPage() {
 
               <div className="mt-3 sm:mt-4 grid grid-cols-3 gap-2 sm:gap-3">
                 <button
-                  onClick={() => window.location.href = '/api/auth/google'}
+                  onClick={() => (window.location.href = `${oauthBaseUrl}/auth/google`)}
                   className="flex items-center justify-center px-2 sm:px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
                 >
                   <span className="text-xs sm:text-sm font-medium">Google</span>
                 </button>
                 <button
-                  onClick={() => window.location.href = '/api/auth/facebook'}
+                  onClick={() => (window.location.href = `${oauthBaseUrl}/auth/facebook`)}
                   className="flex items-center justify-center px-2 sm:px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
                 >
                   <span className="text-xs sm:text-sm font-medium">Facebook</span>
                 </button>
                 <button
-                  onClick={() => window.location.href = '/api/auth/apple'}
+                  onClick={() => (window.location.href = `${oauthBaseUrl}/auth/apple`)}
                   className="flex items-center justify-center px-2 sm:px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
                 >
                   <span className="text-xs sm:text-sm font-medium">Apple</span>

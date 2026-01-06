@@ -33,15 +33,18 @@ export function GDPRConsentBanner() {
       const consentGiven = localStorage.getItem(consentKey);
       
       if (!consentGiven) {
-        // Check if user is logged in and has consent
-        try {
-          const response = await apiClient.getGDPRConsent();
-          if (response?.data?.gdprConsent) {
-            localStorage.setItem(consentKey, 'true');
-            return; // Don't show banner if consent already given
+        // Only call the API if the user is logged in (prevents 401 spam on expired/no token)
+        const token = localStorage.getItem('auth_token');
+        if (token) {
+          try {
+            const response = await apiClient.getGDPRConsent();
+            if (response?.data?.gdprConsent) {
+              localStorage.setItem(consentKey, 'true');
+              return; // Don't show banner if consent already given
+            }
+          } catch (error) {
+            // User not logged in / expired token / no consent — we'll show banner
           }
-        } catch (error) {
-          // User not logged in or no consent - show banner
         }
         
         // Show banner if no consent recorded

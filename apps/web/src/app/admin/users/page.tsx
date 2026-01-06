@@ -41,7 +41,20 @@ export default function AdminUsersPage() {
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [showEditModal, setShowEditModal] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [showCreateModal, setShowCreateModal] = useState(false);
   const [actionLoading, setActionLoading] = useState(false);
+  const [permissionRoles, setPermissionRoles] = useState<string[]>([]);
+
+  // Create form state
+  const [createForm, setCreateForm] = useState({
+    firstName: '',
+    lastName: '',
+    email: '',
+    password: '',
+    role: 'CUSTOMER',
+    storeName: '',
+    permissionRoleName: '',
+  });
 
   // Edit form state
   const [editForm, setEditForm] = useState({
@@ -53,6 +66,11 @@ export default function AdminUsersPage() {
 
   useEffect(() => {
     fetchUsers();
+    // Load permission roles for optional assignment
+    apiClient
+      .listPermissionRoles()
+      .then((res) => setPermissionRoles(res?.data || []))
+      .catch(() => setPermissionRoles([]));
   }, []);
 
   const fetchUsers = async () => {
@@ -107,6 +125,57 @@ export default function AdminUsersPage() {
   const handleDelete = (user: User) => {
     setSelectedUser(user);
     setShowDeleteModal(true);
+  };
+
+  const handleCreateUser = async () => {
+    try {
+      setActionLoading(true);
+
+      // Minimal client-side validation
+      if (!createForm.email || !createForm.password) {
+        toast.error('Email and password are required');
+        return;
+      }
+
+      const sellerRoles = ['SELLER', 'B2C_SELLER', 'WHOLESALER'];
+      if (sellerRoles.includes(createForm.role) && !createForm.storeName) {
+        toast.error('Store name is required for seller roles');
+        return;
+      }
+
+      await toast.promise(
+        apiClient.createUser({
+          email: createForm.email,
+          password: createForm.password,
+          firstName: createForm.firstName || undefined,
+          lastName: createForm.lastName || undefined,
+          role: createForm.role,
+          storeName: createForm.storeName || undefined,
+          permissionRoleName: createForm.permissionRoleName || undefined,
+        }),
+        {
+          loading: 'Creating user...',
+          success: 'User created successfully',
+          error: (err: any) => err.message || 'Failed to create user',
+        },
+      );
+
+      setShowCreateModal(false);
+      setCreateForm({
+        firstName: '',
+        lastName: '',
+        email: '',
+        password: '',
+        role: 'CUSTOMER',
+        storeName: '',
+        permissionRoleName: '',
+      });
+      await fetchUsers();
+    } catch (err: any) {
+      console.error('Error creating user:', err);
+    } finally {
+      setActionLoading(false);
+    }
   };
 
   const confirmDelete = async () => {
@@ -166,9 +235,18 @@ export default function AdminUsersPage() {
   return (
     <RouteGuard allowedRoles={['ADMIN']} showAccessDenied={true}>
       <AdminLayout>
-        <div className="mb-6">
-          <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold">User Management</h1>
-          <p className="text-gray-600 mt-2">Manage all platform users, roles, and permissions</p>
+        <div className="mb-6 flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
+          <div>
+            <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold">User Management</h1>
+            <p className="text-gray-600 mt-2">Manage all platform users, roles, and permissions</p>
+          </div>
+
+          <button
+            onClick={() => setShowCreateModal(true)}
+            className="inline-flex items-center justify-center px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors font-medium"
+          >
+            + Create User
+          </button>
         </div>
 
         {error && (
@@ -469,6 +547,148 @@ export default function AdminUsersPage() {
                     </button>
                     <button
                       onClick={() => setShowEditModal(false)}
+                      disabled={actionLoading}
+                      className="px-6 py-2 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400 transition-colors font-medium"
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Create User Modal */}
+        {showCreateModal && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50 overflow-y-auto">
+            <div className="bg-white rounded-lg max-w-md w-full my-4">
+              <div className="p-4 sm:p-6">
+                <div className="flex justify-between items-start mb-4">
+                  <h2 className="text-2xl font-bold">Create User</h2>
+                  <button
+                    onClick={() => setShowCreateModal(false)}
+                    className="text-gray-500 hover:text-gray-700"
+                  >
+                    ✕
+                  </button>
+                </div>
+
+                <div className="space-y-4">
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">First Name</label>
+                      <input
+                        type="text"
+                        value={createForm.firstName}
+                        onChange={(e) => setCreateForm({ ...createForm, firstName: e.target.value })}
+                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Last Name</label>
+                      <input
+                        type="text"
+                        value={createForm.lastName}
+                        onChange={(e) => setCreateForm({ ...createForm, lastName: e.target.value })}
+                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Email *</label>
+                    <input
+                      type="email"
+                      value={createForm.email}
+                      onChange={(e) => setCreateForm({ ...createForm, email: e.target.value })}
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
+                      placeholder="user@example.com"
+                      required
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Password *</label>
+                    <input
+                      type="password"
+                      value={createForm.password}
+                      onChange={(e) => setCreateForm({ ...createForm, password: e.target.value })}
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
+                      placeholder="Min 8 characters"
+                      minLength={8}
+                      required
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Role *</label>
+                    <select
+                      value={createForm.role}
+                      onChange={(e) => setCreateForm({ ...createForm, role: e.target.value })}
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
+                    >
+                      {ROLES.map((role) => (
+                        <option key={role} value={role}>
+                          {role}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  {/* Optional permission role assignment (for custom permission profiles) */}
+                  {createForm.role === 'ADMIN' && permissionRoles.length > 0 && (
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Permission Role (optional)
+                      </label>
+                      <select
+                        value={createForm.permissionRoleName}
+                        onChange={(e) =>
+                          setCreateForm({ ...createForm, permissionRoleName: e.target.value })
+                        }
+                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
+                      >
+                        <option value="">Full Admin (no restrictions)</option>
+                        {permissionRoles.map((r) => (
+                          <option key={r} value={r}>
+                            {r}
+                          </option>
+                        ))}
+                      </select>
+                      <p className="text-xs text-gray-500 mt-1">
+                        Assign a permission profile created in Admin → Permissions.
+                      </p>
+                    </div>
+                  )}
+
+                  {['SELLER', 'B2C_SELLER', 'WHOLESALER'].includes(createForm.role) && (
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Store Name *</label>
+                      <input
+                        type="text"
+                        value={createForm.storeName}
+                        onChange={(e) => setCreateForm({ ...createForm, storeName: e.target.value })}
+                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
+                        placeholder="Store name"
+                        required
+                      />
+                      <p className="text-xs text-gray-500 mt-1">
+                        Required when creating SELLER/B2C_SELLER/WHOLESALER users.
+                      </p>
+                    </div>
+                  )}
+
+                  <div className="flex gap-3 pt-2">
+                    <button
+                      onClick={handleCreateUser}
+                      disabled={actionLoading}
+                      className="flex-1 px-6 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors font-medium disabled:opacity-50"
+                    >
+                      {actionLoading ? 'Creating...' : 'Create User'}
+                    </button>
+                    <button
+                      onClick={() => setShowCreateModal(false)}
                       disabled={actionLoading}
                       className="px-6 py-2 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400 transition-colors font-medium"
                     >

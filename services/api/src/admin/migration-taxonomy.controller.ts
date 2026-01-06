@@ -4,8 +4,10 @@ import {
   Get,
   UseGuards,
   Logger,
+  ForbiddenException,
 } from '@nestjs/common';
 import { PrismaService } from '../database/prisma.service';
+import { ConfigService } from '@nestjs/config';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../common/guards/roles.guard';
 import { Roles } from '../common/decorators/roles.decorator';
@@ -19,10 +21,23 @@ import type { ApiResponse } from '@hos-marketplace/shared-types';
 export class MigrationTaxonomyController {
   private readonly logger = new Logger(MigrationTaxonomyController.name);
 
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private configService: ConfigService,
+  ) {}
+
+  private checkMigrationsEnabled(): void {
+    const enabled = this.configService.get<string>('ENABLE_ADMIN_MIGRATIONS') === 'true';
+    if (!enabled) {
+      this.logger.warn('Admin migration endpoint called but ENABLE_ADMIN_MIGRATIONS is not set to "true"');
+      throw new ForbiddenException('Admin migrations are disabled in production. Set ENABLE_ADMIN_MIGRATIONS=true to enable.');
+    }
+  }
 
   @Post('run-sql')
   async runSQLMigration(): Promise<ApiResponse<any>> {
+    this.checkMigrationsEnabled();
+    
     try {
       this.logger.log('🔄 Running taxonomy system migration...');
 

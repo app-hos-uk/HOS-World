@@ -52,6 +52,7 @@ export class AdminProductsController {
       rrp?: number;
       taxRate?: number;
       fandom?: string;
+      images?: Array<{ url: string; alt?: string; order?: number }>;
     },
   ): Promise<ApiResponse<any>> {
     const product = await this.productsService.createProduct(body);
@@ -91,6 +92,7 @@ export class AdminProductsController {
       rrp?: number;
       taxRate?: number;
       fandom?: string;
+      images?: Array<{ url: string; alt?: string; order?: number }>;
     },
   ): Promise<ApiResponse<any>> {
     const product = await this.productsService.updateProduct(id, body);

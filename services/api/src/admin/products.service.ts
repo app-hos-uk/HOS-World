@@ -1,6 +1,7 @@
 import { Injectable, BadRequestException, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../database/prisma.service';
 import { ProductsService } from '../products/products.service';
+import { ProductsElasticsearchHook } from '../products/products-elasticsearch.hook';
 import { slugify } from '@hos-marketplace/utils';
 
 @Injectable()
@@ -8,6 +9,7 @@ export class AdminProductsService {
   constructor(
     private prisma: PrismaService,
     private productsService: ProductsService,
+    private elasticsearchHook: ProductsElasticsearchHook,
   ) {}
 
   async createProduct(data: {
@@ -38,6 +40,7 @@ export class AdminProductsService {
     rrp?: number;
     taxRate?: number;
     fandom?: string;
+    images?: Array<{ url: string; alt?: string; order?: number }>;
   }) {
     // Validate: if sellerId is provided, seller must exist
     if (data.sellerId) {
@@ -131,6 +134,15 @@ export class AdminProductsService {
         rrp: data.rrp,
         taxRate: data.taxRate || 0,
         fandom: data.fandom,
+        images: data.images && data.images.length > 0
+          ? {
+              create: data.images.map((img, idx) => ({
+                url: img.url,
+                alt: img.alt,
+                order: img.order ?? idx,
+              })),
+            }
+          : undefined,
         // New taxonomy relations
         tagsRelation: data.tagIds && data.tagIds.length > 0
           ? {
@@ -174,6 +186,11 @@ export class AdminProductsService {
       },
     });
 
+    // Sync with Elasticsearch and cache (fire and forget - don't block response)
+    this.elasticsearchHook.onProductCreated(product).catch((error) => {
+      console.error('Failed to sync product to Elasticsearch:', error);
+    });
+
     return product;
   }
 
@@ -205,6 +222,7 @@ export class AdminProductsService {
       rrp?: number;
       taxRate?: number;
       fandom?: string;
+      images?: Array<{ url: string; alt?: string; order?: number }>;
     },
   ) {
     const product = await this.prisma.product.findUnique({
@@ -297,6 +315,22 @@ export class AdminProductsService {
       slug,
     };
 
+    // Handle images update (replace all images)
+    if (data.images !== undefined) {
+      await this.prisma.productImage.deleteMany({
+        where: { productId },
+      });
+      if (data.images && data.images.length > 0) {
+        updateData.images = {
+          create: data.images.map((img, idx) => ({
+            url: img.url,
+            alt: img.alt,
+            order: img.order ?? idx,
+          })),
+        };
+      }
+    }
+
     // Handle tagsRelation update
     if (data.tagIds !== undefined) {
       // Delete existing tags
@@ -357,6 +391,11 @@ export class AdminProductsService {
           },
         },
       },
+    });
+
+    // Sync with Elasticsearch and cache (fire and forget - don't block response)
+    this.elasticsearchHook.onProductUpdated(updated).catch((error) => {
+      console.error('Failed to sync product update to Elasticsearch:', error);
     });
 
     return updated;

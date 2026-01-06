@@ -8,6 +8,12 @@ import type { User } from '@hos-marketplace/shared-types';
 export class UsersService {
   constructor(private prisma: PrismaService) {}
 
+  // Hard-protected admin accounts that must never be deleted via self-service endpoints.
+  private readonly protectedAdminEmails = new Set([
+    'app@houseofspells.co.uk',
+    'mail@jsabu.com',
+  ]);
+
   async getProfile(userId: string): Promise<User> {
     const user = await this.prisma.user.findUnique({
       where: { id: userId },
@@ -76,7 +82,7 @@ export class UsersService {
       updateData.whatsappNumber = updateProfileDto.whatsappNumber;
     }
     if (updateProfileDto.preferredCommunicationMethod !== undefined) {
-      updateData.preferredCommunicationMethod = updateProfileDto.preferredCommunicationMethod as any;
+      updateData.preferredCommunicationMethod = updateProfileDto.preferredCommunicationMethod;
     }
     if (updateProfileDto.currencyPreference !== undefined) {
       updateData.currencyPreference = updateProfileDto.currencyPreference;
@@ -158,6 +164,10 @@ export class UsersService {
 
     if (!user) {
       throw new NotFoundException('User not found');
+    }
+
+    if (this.protectedAdminEmails.has(user.email)) {
+      throw new BadRequestException('This account is protected and cannot be deleted');
     }
 
     // Delete user (cascading deletes will handle related records)

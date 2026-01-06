@@ -16,11 +16,40 @@ import type { User, AuthResponse } from '@hos-marketplace/shared-types';
 
 @Injectable()
 export class AuthService {
+  private refreshTokenAvailable: boolean = false;
+  private refreshTokenChecked: boolean = false;
+
   constructor(
     private prisma: PrismaService,
     private jwtService: JwtService,
     private configService: ConfigService,
-  ) {}
+  ) {
+    // Check if RefreshToken model is available on startup
+    this.checkRefreshTokenAvailability();
+  }
+
+  private checkRefreshTokenAvailability() {
+    if (this.refreshTokenChecked) return;
+    try {
+      this.refreshTokenAvailable = typeof (this.prisma as any).refreshToken !== 'undefined';
+      this.refreshTokenChecked = true;
+      if (!this.refreshTokenAvailable) {
+        console.error('═══════════════════════════════════════════════════════════');
+        console.error('⚠️  WARNING: RefreshToken model not available in Prisma client!');
+        console.error('═══════════════════════════════════════════════════════════');
+        console.error('Auth methods will skip refresh token storage.');
+        console.error('This may cause issues with token refresh functionality.');
+        console.error('Solution: Regenerate Prisma client with: pnpm db:generate');
+        console.error('═══════════════════════════════════════════════════════════');
+      } else {
+        console.log('[AUTH] ✅ RefreshToken model available');
+      }
+    } catch (error: any) {
+      console.error('[AUTH] Error checking RefreshToken availability:', error?.message);
+      this.refreshTokenAvailable = false;
+      this.refreshTokenChecked = true;
+    }
+  }
 
   async register(registerDto: RegisterDto, ipAddress?: string): Promise<AuthResponse> {
     // Check if user already exists
@@ -74,7 +103,7 @@ export class AuthService {
         role: userRole as any,
         country: registerDto.country,
         whatsappNumber: registerDto.whatsappNumber,
-        preferredCommunicationMethod: registerDto.preferredCommunicationMethod as any,
+        preferredCommunicationMethod: registerDto.preferredCommunicationMethod,
         currencyPreference,
         gdprConsent: registerDto.gdprConsent,
         gdprConsentDate: registerDto.gdprConsent ? new Date() : null,
@@ -92,20 +121,27 @@ export class AuthService {
       },
     });
 
-    // Create GDPR consent log
+    // Create GDPR consent log (best-effort)
+    // If the prod DB hasn't been migrated yet (missing gdpr_consent_logs table/columns),
+    // we should not fail registration — the account creation is higher priority.
     if (registerDto.gdprConsent) {
-      const consentTypes = registerDto.dataProcessingConsent || {};
-      for (const [consentType, granted] of Object.entries(consentTypes)) {
-        if (granted) {
-          await this.prisma.gDPRConsentLog.create({
-            data: {
-              userId: user.id,
-              consentType: consentType.toUpperCase(),
-              granted: true,
-              grantedAt: new Date(),
-            },
-          });
+      try {
+        const consentTypes = registerDto.dataProcessingConsent || {};
+        for (const [consentType, granted] of Object.entries(consentTypes)) {
+          if (granted) {
+            await this.prisma.gDPRConsentLog.create({
+              data: {
+                userId: user.id,
+                consentType: consentType.toUpperCase(),
+                granted: true,
+                grantedAt: new Date(),
+                ipAddress,
+              },
+            });
+          }
         }
+      } catch (e) {
+        // Swallow and continue – registration should succeed even if logging fails.
       }
     }
 
@@ -223,7 +259,7 @@ export class AuthService {
         role: userRole as any,
         country: registerDto.country,
         whatsappNumber: registerDto.whatsappNumber,
-        preferredCommunicationMethod: registerDto.preferredCommunicationMethod as any,
+        preferredCommunicationMethod: registerDto.preferredCommunicationMethod,
         currencyPreference,
         gdprConsent: registerDto.gdprConsent,
         gdprConsentDate: registerDto.gdprConsent ? new Date() : null,
@@ -356,14 +392,57 @@ export class AuthService {
       sub: user.id,
       email: user.email,
       role: user.role,
+      permissionRoleId: user.permissionRoleId,
     };
 
+    // Shorten access token TTL to 15 minutes for better security
+    const accessTokenTTL = this.configService.get<string>('JWT_EXPIRES_IN') || '15m';
     const accessToken = this.jwtService.sign(payload, {
-      expiresIn: this.configService.get<string>('JWT_EXPIRES_IN') || '7d',
+      expiresIn: accessTokenTTL,
     });
 
+    // Generate refresh token
+    const refreshTokenTTL = '30d';
     const refreshToken = this.jwtService.sign(payload, {
-      expiresIn: '30d',
+      expiresIn: refreshTokenTTL,
+    });
+
+    // Hash and store refresh token in DB
+    const tokenHash = await bcrypt.hash(refreshToken, 10);
+    const expiresAt = new Date();
+    expiresAt.setDate(expiresAt.getDate() + 30); // 30 days
+
+    // #region agent log
+    fetch('http://127.0.0.1:7243/ingest/315c2d74-b9bb-430e-9c51-123c9436e40e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'auth.service.ts:386',message:'Before refreshToken.create',data:{hasRefreshTokenModel:this.refreshTokenAvailable,userId:user.id},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
+    // #endregion
+    
+    // Defensive check: ensure RefreshToken model exists
+    if (!this.refreshTokenAvailable) {
+      console.warn('[AUTH] ⚠️ RefreshToken model not available - skipping token storage');
+      console.warn('[AUTH] Token will be generated but not stored in database');
+      // Continue without storing refresh token - this allows the service to start
+      // but refresh functionality won't work until Prisma client is regenerated
+      return {
+        accessToken,
+        refreshToken,
+      };
+    }
+    
+    const refreshTokenModel = (this.prisma as any).refreshToken;
+    if (!refreshTokenModel) {
+      console.warn('[AUTH] ⚠️ RefreshToken model not found - skipping storage');
+      return {
+        accessToken,
+        refreshToken,
+      };
+    }
+    
+    await refreshTokenModel.create({
+      data: {
+        userId: user.id,
+        tokenHash,
+        expiresAt,
+      },
     });
 
     return {
@@ -378,6 +457,125 @@ export class AuthService {
     } catch (error) {
       return null;
     }
+  }
+
+  async refresh(refreshToken: string): Promise<AuthResponse> {
+    if (!refreshToken) {
+      throw new UnauthorizedException('Invalid or expired token');
+    }
+
+    // Validate JWT structure first
+    const payload = await this.validateToken(refreshToken);
+    if (!payload?.sub) {
+      throw new UnauthorizedException('Invalid or expired token');
+    }
+
+    // Find user
+    const user = await this.prisma.user.findUnique({
+      where: { id: payload.sub },
+      include: { permissionRole: true },
+    });
+
+    if (!user) {
+      throw new UnauthorizedException('User not found');
+    }
+
+    // Find and verify refresh token in DB
+    if (!this.refreshTokenAvailable) {
+      console.warn('[AUTH] ⚠️ RefreshToken model not available - refresh token functionality disabled');
+      throw new UnauthorizedException('Token refresh is currently unavailable. Please log in again.');
+    }
+    
+    const refreshTokenModel = (this.prisma as any).refreshToken;
+    if (!refreshTokenModel) {
+      console.warn('[AUTH] ⚠️ RefreshToken model not found during refresh');
+      throw new UnauthorizedException('Token refresh is currently unavailable. Please log in again.');
+    }
+    const refreshTokens = await refreshTokenModel.findMany({
+      where: {
+        userId: user.id,
+        revokedAt: null,
+        expiresAt: { gt: new Date() },
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+
+    // Check if provided token matches any stored token
+    let tokenFound = false;
+    for (const storedToken of refreshTokens) {
+      const isValid = await bcrypt.compare(refreshToken, storedToken.tokenHash);
+      if (isValid) {
+        tokenFound = true;
+        // Revoke the old token (rotation)
+        if (this.refreshTokenAvailable && refreshTokenModel) {
+          try {
+            await refreshTokenModel.update({
+              where: { id: storedToken.id },
+              data: { revokedAt: new Date() },
+            });
+          } catch (updateError: any) {
+            console.warn('[AUTH] ⚠️ Failed to revoke old token:', updateError?.message);
+            // Continue anyway - token rotation is best-effort
+          }
+        }
+        break;
+      }
+    }
+
+    if (!tokenFound) {
+      throw new UnauthorizedException('Invalid or expired refresh token');
+    }
+
+    // Generate new tokens (rotation)
+    const { password, ...userWithoutPassword } = user as any;
+    const tokens = await this.generateTokens(userWithoutPassword);
+
+    return {
+      user: userWithoutPassword as User,
+      token: tokens.accessToken,
+      refreshToken: tokens.refreshToken,
+    };
+  }
+
+  /**
+   * Revoke all refresh tokens for a user (logout)
+   */
+  async revokeAllTokens(userId: string): Promise<void> {
+    const refreshTokenModel = (this.prisma as any).refreshToken;
+    if (!refreshTokenModel) {
+      console.warn('[AUTH] ⚠️ RefreshToken model not found, skipping token revocation');
+      return;
+    }
+    await refreshTokenModel.updateMany({
+      where: {
+        userId,
+        revokedAt: null,
+      },
+      data: {
+        revokedAt: new Date(),
+      },
+    });
+  }
+
+  /**
+   * Clean up expired refresh tokens (should be called periodically)
+   */
+  async cleanupExpiredTokens(): Promise<void> {
+    if (!this.refreshTokenAvailable) {
+      console.warn('[AUTH] ⚠️ RefreshToken model not available, skipping cleanup');
+      return;
+    }
+    
+    const refreshTokenModel = (this.prisma as any).refreshToken;
+    if (!refreshTokenModel) {
+      console.warn('[AUTH] ⚠️ RefreshToken model not found, skipping cleanup');
+      return;
+    }
+    await refreshTokenModel.deleteMany({
+      where: {
+        expiresAt: { lt: new Date() },
+      },
+    });
   }
 
   async selectCharacter(userId: string, characterId: string, favoriteFandoms?: string[]): Promise<void> {

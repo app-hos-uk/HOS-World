@@ -1,19 +1,135 @@
+// IMMEDIATE LOG - This should appear first if script runs at all
+console.log('═══════════════════════════════════════════════════════════');
+console.log('📝 main.ts LOADED');
+console.log('Timestamp:', new Date().toISOString());
+console.log('Node version:', process.version);
+console.log('═══════════════════════════════════════════════════════════');
+
 import { NestFactory } from '@nestjs/core';
 import { ValidationPipe } from '@nestjs/common';
 import { AppModule } from './app.module';
 
 async function bootstrap() {
+  // Immediate log to verify script is running
+  console.log('═══════════════════════════════════════════════════════════');
+  console.log('🚀 BOOTSTRAP STARTED');
+  console.log('═══════════════════════════════════════════════════════════');
+  console.log('Timestamp:', new Date().toISOString());
+  console.log('Node version:', process.version);
+  console.log('Working directory:', process.cwd());
+  console.log('dist/main.js exists:', require('fs').existsSync('./dist/main.js'));
+  console.log('═══════════════════════════════════════════════════════════');
+  
   try {
+    // #region agent log
+    fetch('http://127.0.0.1:7243/ingest/315c2d74-b9bb-430e-9c51-123c9436e40e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'main.ts:6',message:'Bootstrap started',data:{nodeVersion:process.version,workingDir:process.cwd(),hasMainJs:require('fs').existsSync('./dist/main.js'),hasDbUrl:!!process.env.DATABASE_URL,port:process.env.PORT},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
+    // #endregion
     console.log('🚀 Starting API server...');
+    console.log('[DEBUG] Hypothesis A: Checking Prisma client availability...');
+    console.log('[DEBUG] Hypothesis B: About to initialize AppModule...');
+    console.log('[DEBUG] Hypothesis C: Database connection will be tested...');
+    console.log('[DEBUG] Hypothesis D: Error handler ready...');
+    
+    // Pre-flight check: Verify Prisma client can be imported and has RefreshToken
+    console.log('═══════════════════════════════════════════════════════════');
+    console.log('🔍 PRE-FLIGHT CHECK: Verifying Prisma Client');
+    console.log('═══════════════════════════════════════════════════════════');
+    try {
+      console.log('[1/4] Importing PrismaClient...');
+      const { PrismaClient } = require('@prisma/client');
+      console.log('[2/4] Creating PrismaClient instance...');
+      const testClient = new PrismaClient();
+      
+      console.log('[3/4] Checking for models...');
+      const hasRefreshToken = typeof testClient.refreshToken !== 'undefined';
+      const hasUser = typeof testClient.user !== 'undefined';
+      const hasProduct = typeof testClient.product !== 'undefined';
+      
+      console.log(`    ✓ user model: ${hasUser ? 'YES ✅' : 'NO ❌'}`);
+      console.log(`    ✓ product model: ${hasProduct ? 'YES ✅' : 'NO ❌'}`);
+      console.log(`    ✓ refreshToken model: ${hasRefreshToken ? 'YES ✅' : 'NO ❌'}`);
+      
+      if (!hasUser || !hasProduct) {
+        console.error('❌ CRITICAL: Basic Prisma models missing! Prisma client generation failed.');
+        console.error('Available properties:', Object.keys(testClient).filter(k => !k.startsWith('$') && !k.startsWith('_')).slice(0, 20).join(', '));
+        await testClient.$disconnect();
+        throw new Error('Prisma client missing basic models - generation failed');
+      }
+      
+      if (!hasRefreshToken) {
+        console.error('═══════════════════════════════════════════════════════════');
+        console.error('❌ CRITICAL ERROR: RefreshToken model missing from PrismaClient!');
+        console.error('═══════════════════════════════════════════════════════════');
+        console.error('This will cause the service to crash when auth methods are called.');
+        console.error('');
+        console.error('Available models:', Object.keys(testClient).filter(k => !k.startsWith('$') && !k.startsWith('_')).slice(0, 20).join(', '));
+        console.error('');
+        console.error('SOLUTION:');
+        console.error('1. Verify schema.prisma contains: model RefreshToken');
+        console.error('2. Regenerate Prisma client: pnpm db:generate');
+        console.error('3. Verify the generated client includes refreshToken');
+        console.error('═══════════════════════════════════════════════════════════');
+        await testClient.$disconnect();
+        // Continue to let NestJS initialization show the error, but log it clearly
+      } else {
+        console.log('[4/4] ✅ Pre-flight check PASSED - All models found');
+        console.log('═══════════════════════════════════════════════════════════');
+        await testClient.$disconnect();
+      }
+    } catch (preflightError: any) {
+      console.error('═══════════════════════════════════════════════════════════');
+      console.error('❌ PRE-FLIGHT CHECK FAILED');
+      console.error('═══════════════════════════════════════════════════════════');
+      console.error('Error:', preflightError?.message);
+      console.error('Stack:', preflightError?.stack);
+      console.error('═══════════════════════════════════════════════════════════');
+      // Continue anyway - let module initialization show the real error
+    }
     console.log('Environment:', {
       NODE_ENV: process.env.NODE_ENV,
       PORT: process.env.PORT,
       DATABASE_URL: process.env.DATABASE_URL ? '***set***' : '***missing***',
     });
+    console.log('Node version:', process.version);
+    console.log('Working directory:', process.cwd());
+    console.log('Checking dist/main.js exists:', require('fs').existsSync('./dist/main.js'));
 
-    const app = await NestFactory.create(AppModule, {
-      cors: true, // Enable CORS at NestJS level first
-    });
+    // #region agent log
+    fetch('http://127.0.0.1:7243/ingest/315c2d74-b9bb-430e-9c51-123c9436e40e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'main.ts:17',message:'Before NestFactory.create',data:{},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'B'})}).catch(()=>{});
+    // #endregion
+    console.log('[DEBUG] Hypothesis B: Creating NestFactory with AppModule...');
+    try {
+      const app = await NestFactory.create(AppModule, {
+        cors: true, // Enable CORS at NestJS level first
+      });
+      console.log('[DEBUG] Hypothesis B: ✅ AppModule initialized successfully');
+      
+      // Verify Prisma client has RefreshToken model after module initialization
+      try {
+        const prismaService = app.get('PrismaService', { strict: false });
+        if (prismaService) {
+          const hasRefreshToken = typeof (prismaService as any).refreshToken !== 'undefined';
+          console.log(`[DEBUG] Hypothesis A: After AppModule init - RefreshToken available: ${hasRefreshToken ? 'YES ✅' : 'NO ❌'}`);
+          if (!hasRefreshToken) {
+            console.error('[DEBUG] Hypothesis A: ❌ CRITICAL: RefreshToken model missing from Prisma client!');
+            console.error('[DEBUG] Hypothesis A: This will cause crashes. Prisma client needs regeneration.');
+            console.error('[DEBUG] Hypothesis A: Available models:', Object.keys(prismaService).filter(k => !k.startsWith('$') && !k.startsWith('_') && k !== 'logger').slice(0, 10).join(', '));
+          }
+        } else {
+          console.warn('[DEBUG] Hypothesis A: ⚠️ PrismaService not found in app context');
+        }
+      } catch (checkError: any) {
+        console.warn('[DEBUG] Hypothesis A: ⚠️ Could not verify RefreshToken model:', checkError?.message);
+      }
+    } catch (moduleError: any) {
+      console.error('[DEBUG] Hypothesis B: ❌ AppModule initialization failed!');
+      console.error('[DEBUG] Hypothesis B: Error:', moduleError?.message);
+      console.error('[DEBUG] Hypothesis B: Stack:', moduleError?.stack);
+      throw moduleError; // Re-throw to be caught by outer try-catch
+    }
+    // #region agent log
+    fetch('http://127.0.0.1:7243/ingest/315c2d74-b9bb-430e-9c51-123c9436e40e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'main.ts:20',message:'After NestFactory.create - AppModule initialized',data:{},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'B'})}).catch(()=>{});
+    // #endregion
 
     // Define allowed origins - MUST be before any middleware
     const allowedOrigins = [
@@ -147,21 +263,83 @@ async function bootstrap() {
 
     const port = process.env.PORT || 3001;
     console.log(`📡 About to listen on port: ${port}`);
+    // #region agent log
+    fetch('http://127.0.0.1:7243/ingest/315c2d74-b9bb-430e-9c51-123c9436e40e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'main.ts:151',message:'Before app.listen',data:{port},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'C'})}).catch(()=>{});
+    // #endregion
     
     // Use app.listen() to ensure all routes are properly registered
     await app.listen(port, '0.0.0.0');
+    // #region agent log
+    fetch('http://127.0.0.1:7243/ingest/315c2d74-b9bb-430e-9c51-123c9436e40e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'main.ts:155',message:'After app.listen - Server started successfully',data:{port},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'C'})}).catch(()=>{});
+    // #endregion
     
     console.log(`✅ Server is listening on port ${port}`);
     console.log(`✅ API server is running on: http://0.0.0.0:${port}/api`);
     console.log(`✅ Health check available at: http://0.0.0.0:${port}/api/health`);
     console.log(`✅ Root endpoint available at: http://0.0.0.0:${port}/`);
   } catch (error) {
-    console.error('❌ Failed to start API server:', error);
-    console.error('Error stack:', error.stack);
-    process.exit(1);
+    // #region agent log
+    fetch('http://127.0.0.1:7243/ingest/315c2d74-b9bb-430e-9c51-123c9436e40e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'main.ts:161',message:'Bootstrap error caught',data:{errorName:error?.name,errorMessage:error?.message,errorStack:error?.stack?.substring(0,500),hasDbUrl:!!process.env.DATABASE_URL},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'D'})}).catch(()=>{});
+    // #endregion
+    console.error('═══════════════════════════════════════════════════════════');
+    console.error('❌ CRITICAL ERROR: Failed to start API server');
+    console.error('═══════════════════════════════════════════════════════════');
+    console.error('Error name:', error?.name || 'Unknown');
+    console.error('Error message:', error?.message || 'Unknown error');
+    console.error('');
+    console.error('Full error object:');
+    console.error(JSON.stringify(error, Object.getOwnPropertyNames(error), 2));
+    console.error('');
+    console.error('Error stack:');
+    console.error(error?.stack || 'No stack trace available');
+    console.error('');
+    console.error('Environment:');
+    console.error('  NODE_ENV:', process.env.NODE_ENV);
+    console.error('  PORT:', process.env.PORT);
+    console.error('  DATABASE_URL:', process.env.DATABASE_URL ? '***set***' : '***missing***');
+    console.error('  Working directory:', process.cwd());
+    console.error('═══════════════════════════════════════════════════════════');
+    // Give Railway time to capture logs before exiting
+    setTimeout(() => {
+      process.exit(1);
+    }, 5000);
   }
 }
 
-bootstrap();
+// Add unhandled error handlers to catch any errors outside bootstrap
+process.on('uncaughtException', (error) => {
+  console.error('═══════════════════════════════════════════════════════════');
+  console.error('❌ UNCAUGHT EXCEPTION');
+  console.error('═══════════════════════════════════════════════════════════');
+  console.error('Error:', error.message);
+  console.error('Stack:', error.stack);
+  console.error('═══════════════════════════════════════════════════════════');
+  setTimeout(() => process.exit(1), 5000);
+});
+
+process.on('unhandledRejection', (reason, promise) => {
+  console.error('═══════════════════════════════════════════════════════════');
+  console.error('❌ UNHANDLED REJECTION');
+  console.error('═══════════════════════════════════════════════════════════');
+  console.error('Reason:', reason);
+  console.error('Promise:', promise);
+  console.error('═══════════════════════════════════════════════════════════');
+});
+
+// IMMEDIATE LOG - Before bootstrap call
+console.log('═══════════════════════════════════════════════════════════');
+console.log('📝 About to call bootstrap()');
+console.log('Timestamp:', new Date().toISOString());
+console.log('═══════════════════════════════════════════════════════════');
+
+bootstrap().catch((error) => {
+  console.error('═══════════════════════════════════════════════════════════');
+  console.error('❌ BOOTSTRAP PROMISE REJECTED');
+  console.error('═══════════════════════════════════════════════════════════');
+  console.error('Error:', error?.message);
+  console.error('Stack:', error?.stack);
+  console.error('═══════════════════════════════════════════════════════════');
+  setTimeout(() => process.exit(1), 5000);
+});
 
 

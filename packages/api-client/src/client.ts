@@ -14,6 +14,8 @@ export class ApiClient {
   private baseUrl: string;
   private getToken: () => string | null;
   private onUnauthorized: () => void;
+  private unauthorizedHandled = false;
+  private refreshInFlight: Promise<boolean> | null = null;
 
   private constructor(config: {
     baseUrl: string;
@@ -37,58 +39,84 @@ export class ApiClient {
     endpoint: string,
     options: RequestInit = {}
   ): Promise<T> {
-    const token = this.getToken();
     const headers: Record<string, string> = {
       'Content-Type': 'application/json',
       ...(options.headers as Record<string, string> || {}),
     };
 
-    if (token) {
-      headers['Authorization'] = `Bearer ${token}`;
-    }
-
     const url = `${this.baseUrl}${endpoint}`;
 
     try {
-      const response = await fetch(url, {
-        ...options,
-        headers,
-      });
+      const isAuthEndpoint =
+        endpoint.startsWith('/auth/login') ||
+        endpoint.startsWith('/auth/register') ||
+        endpoint.startsWith('/auth/accept-invitation') ||
+        endpoint.startsWith('/auth/refresh');
 
-      if (response.status === 401) {
-        this.onUnauthorized();
-        throw new Error('Unauthorized');
+      const doFetch = async () => {
+        const nextHeaders: Record<string, string> = { ...headers };
+        const token = this.getToken();
+        if (token) nextHeaders['Authorization'] = `Bearer ${token}`;
+        return fetch(url, { ...options, headers: nextHeaders });
+      };
+
+      let response = await doFetch();
+
+      // For protected endpoints, try to refresh once on 401 before logging out.
+      if (response.status === 401 && !isAuthEndpoint) {
+        const refreshed = await this.tryRefreshToken();
+        if (refreshed) {
+          response = await doFetch();
+        }
       }
 
+      // NOTE: We intentionally parse the error body (if any) before throwing.
+      // This preserves useful backend messages like "Invalid credentials" for /auth/login.
       if (!response.ok) {
         let errorMessage = `HTTP error! status: ${response.status}`;
         try {
           const errorData = await response.json();
-          errorMessage = errorData.message || errorMessage;
-          console.error('API Error Response:', {
-            status: response.status,
-            statusText: response.statusText,
-            error: errorData,
-            url,
-          });
-        } catch (e) {
-          // If response is not JSON, get text
-          try {
-            const text = await response.text();
-            console.error('API Error (non-JSON):', {
+          // Nest often returns `message` as string | string[]
+          const msg = (errorData as any)?.message;
+          errorMessage = Array.isArray(msg) ? msg.join(', ') : msg || errorMessage;
+          if (!(response.status === 401 && this.unauthorizedHandled)) {
+            console.error('API Error Response:', {
               status: response.status,
               statusText: response.statusText,
-              text,
-              url,
-            });
-          } catch (textError) {
-            console.error('API Error (unable to read response):', {
-              status: response.status,
-              statusText: response.statusText,
+              error: errorData,
               url,
             });
           }
+        } catch (e) {
+          try {
+            const text = await response.text();
+            if (text) errorMessage = text;
+            if (!(response.status === 401 && this.unauthorizedHandled)) {
+              console.error('API Error (non-JSON):', {
+                status: response.status,
+                statusText: response.statusText,
+                text,
+                url,
+              });
+            }
+          } catch (textError) {
+            if (!(response.status === 401 && this.unauthorizedHandled)) {
+              console.error('API Error (unable to read response):', {
+                status: response.status,
+                statusText: response.statusText,
+                url,
+              });
+            }
+          }
         }
+
+        if (response.status === 401 && !isAuthEndpoint) {
+          if (!this.unauthorizedHandled) {
+            this.unauthorizedHandled = true;
+            this.onUnauthorized();
+          }
+        }
+
         throw new Error(errorMessage);
       }
 
@@ -97,14 +125,53 @@ export class ApiClient {
     } catch (error: any) {
       // Enhanced error logging
       if (typeof window !== 'undefined') {
-        console.error('API Request failed:', { 
-          url, 
-          method: options.method || 'GET',
-          error: error.message, 
-          stack: error.stack,
-        });
+        if (!(this.unauthorizedHandled && String(error?.message || '').toLowerCase().includes('invalid or expired token'))) {
+          console.error('API Request failed:', { 
+            url, 
+            method: options.method || 'GET',
+            error: error.message, 
+            stack: error.stack,
+          });
+        }
       }
       throw error;
+    }
+  }
+
+  private async tryRefreshToken(): Promise<boolean> {
+    if (typeof window === 'undefined') return false;
+    try {
+      const existing = localStorage.getItem('refresh_token');
+      if (!existing) return false;
+
+      if (this.refreshInFlight) return await this.refreshInFlight;
+
+      this.refreshInFlight = (async () => {
+        try {
+          const res = await fetch(`${this.baseUrl}/auth/refresh`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ refreshToken: existing }),
+          });
+          if (!res.ok) return false;
+          const json = await res.json();
+          const token = json?.data?.token;
+          const refreshToken = json?.data?.refreshToken;
+          if (!token || !refreshToken) return false;
+          localStorage.setItem('auth_token', token);
+          localStorage.setItem('refresh_token', refreshToken);
+          this.unauthorizedHandled = false;
+          return true;
+        } catch {
+          return false;
+        } finally {
+          this.refreshInFlight = null;
+        }
+      })();
+
+      return await this.refreshInFlight;
+    } catch {
+      return false;
     }
   }
 
@@ -586,6 +653,21 @@ export class ApiClient {
     });
   }
 
+  async createUser(data: {
+    email: string;
+    password: string;
+    firstName?: string;
+    lastName?: string;
+    role: string;
+    storeName?: string;
+    permissionRoleName?: string;
+  }): Promise<ApiResponse<any>> {
+    return this.request<ApiResponse<any>>('/admin/users', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
   async getUserById(userId: string): Promise<ApiResponse<any>> {
     return this.request<ApiResponse<any>>(`/admin/users/${userId}`, {
       method: 'GET',
@@ -644,6 +726,25 @@ export class ApiClient {
     return this.request<ApiResponse<any>>(`/admin/permissions/${role}`, {
       method: 'PUT',
       body: JSON.stringify({ permissions }),
+    });
+  }
+
+  async listPermissionRoles(): Promise<ApiResponse<string[]>> {
+    return this.request<ApiResponse<string[]>>('/admin/roles', {
+      method: 'GET',
+    });
+  }
+
+  async createPermissionRole(name: string): Promise<ApiResponse<any>> {
+    return this.request<ApiResponse<any>>('/admin/roles', {
+      method: 'POST',
+      body: JSON.stringify({ name }),
+    });
+  }
+
+  async getPermissionCatalog(): Promise<ApiResponse<Array<{ id: string }>>> {
+    return this.request<ApiResponse<Array<{ id: string }>>>('/admin/permissions/catalog', {
+      method: 'GET',
     });
   }
 
@@ -1280,7 +1381,7 @@ export class ApiClient {
     }>;
     sellerId?: string | null;
     isPlatformOwned?: boolean;
-    status?: 'DRAFT' | 'PUBLISHED';
+    status?: 'DRAFT' | 'ACTIVE' | 'INACTIVE' | 'OUT_OF_STOCK';
     sku?: string;
     barcode?: string;
     ean?: string;
@@ -1288,6 +1389,7 @@ export class ApiClient {
     rrp?: number;
     taxRate?: number;
     fandom?: string;
+    images?: Array<{ url: string; alt?: string; order?: number }>;
   }): Promise<ApiResponse<any>> {
     return this.request<ApiResponse<any>>('/admin/products', {
       method: 'POST',
@@ -1315,7 +1417,7 @@ export class ApiClient {
         dateValue?: string;
       }>;
       sellerId?: string | null;
-      status?: 'DRAFT' | 'PUBLISHED';
+      status?: 'DRAFT' | 'ACTIVE' | 'INACTIVE' | 'OUT_OF_STOCK';
       sku?: string;
       barcode?: string;
       ean?: string;
@@ -1323,11 +1425,34 @@ export class ApiClient {
       rrp?: number;
       taxRate?: number;
       fandom?: string;
+      images?: Array<{ url: string; alt?: string; order?: number }>;
     },
   ): Promise<ApiResponse<any>> {
     return this.request<ApiResponse<any>>(`/admin/products/${id}`, {
       method: 'PUT',
       body: JSON.stringify(data),
+    });
+  }
+
+  async getAdminProducts(params?: {
+    sellerId?: string | null;
+    status?: string;
+    category?: string;
+    search?: string;
+    page?: number;
+    limit?: number;
+  }): Promise<ApiResponse<any>> {
+    const qp = new URLSearchParams();
+    if (params?.sellerId === null) qp.append('sellerId', 'null');
+    if (params?.sellerId) qp.append('sellerId', params.sellerId);
+    if (params?.status) qp.append('status', params.status);
+    if (params?.category) qp.append('category', params.category);
+    if (params?.search) qp.append('search', params.search);
+    if (params?.page) qp.append('page', String(params.page));
+    if (params?.limit) qp.append('limit', String(params.limit));
+    const query = qp.toString();
+    return this.request<ApiResponse<any>>(`/admin/products${query ? `?${query}` : ''}`, {
+      method: 'GET',
     });
   }
 
@@ -1758,6 +1883,59 @@ export class ApiClient {
       }
       throw error;
     }
+  }
+
+  // Uploads (generic)
+  async uploadSingleFile(file: File, folder: string = 'uploads'): Promise<ApiResponse<{ url: string }>> {
+    const token = this.getToken();
+    const headers: Record<string, string> = {};
+    if (token) headers['Authorization'] = `Bearer ${token}`;
+
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('folder', folder);
+
+    const url = `${this.baseUrl}/uploads/single`;
+    const response = await fetch(url, { method: 'POST', headers, body: formData });
+
+    if (response.status === 401) {
+      this.onUnauthorized();
+      throw new Error('Unauthorized');
+    }
+
+    const result = await response.json();
+    if (!response.ok) {
+      const msg = (result as any)?.message;
+      throw new Error(Array.isArray(msg) ? msg.join(', ') : msg || `HTTP error! status: ${response.status}`);
+    }
+
+    return result as ApiResponse<{ url: string }>;
+  }
+
+  async uploadMultipleFiles(files: File[], folder: string = 'uploads'): Promise<ApiResponse<{ urls: string[] }>> {
+    const token = this.getToken();
+    const headers: Record<string, string> = {};
+    if (token) headers['Authorization'] = `Bearer ${token}`;
+
+    const formData = new FormData();
+    files.forEach((f) => formData.append('files', f));
+    formData.append('folder', folder);
+
+    const url = `${this.baseUrl}/uploads/multiple`;
+    const response = await fetch(url, { method: 'POST', headers, body: formData });
+
+    if (response.status === 401) {
+      this.onUnauthorized();
+      throw new Error('Unauthorized');
+    }
+
+    const result = await response.json();
+    if (!response.ok) {
+      const msg = (result as any)?.message;
+      throw new Error(Array.isArray(msg) ? msg.join(', ') : msg || `HTTP error! status: ${response.status}`);
+    }
+
+    return result as ApiResponse<{ urls: string[] }>;
   }
 
   // CMS Settings - Uses admin settings endpoint
