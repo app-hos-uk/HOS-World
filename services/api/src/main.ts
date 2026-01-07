@@ -98,23 +98,8 @@ async function bootstrap() {
       });
       console.log('[DEBUG] Hypothesis B: ✅ AppModule initialized successfully');
       
-      // Verify Prisma client has RefreshToken model after module initialization
-      try {
-        const prismaService = app.get('PrismaService', { strict: false });
-        if (prismaService) {
-          const hasRefreshToken = typeof (prismaService as any).refreshToken !== 'undefined';
-          console.log(`[DEBUG] Hypothesis A: After AppModule init - RefreshToken available: ${hasRefreshToken ? 'YES ✅' : 'NO ❌'}`);
-          if (!hasRefreshToken) {
-            console.error('[DEBUG] Hypothesis A: ❌ CRITICAL: RefreshToken model missing from Prisma client!');
-            console.error('[DEBUG] Hypothesis A: This will cause crashes. Prisma client needs regeneration.');
-            console.error('[DEBUG] Hypothesis A: Available models:', Object.keys(prismaService).filter(k => !k.startsWith('$') && !k.startsWith('_') && k !== 'logger').slice(0, 10).join(', '));
-          }
-        } else {
-          console.warn('[DEBUG] Hypothesis A: ⚠️ PrismaService not found in app context');
-        }
-      } catch (checkError: any) {
-        console.warn('[DEBUG] Hypothesis A: ⚠️ Could not verify RefreshToken model:', checkError?.message);
-      }
+      // Note: PrismaService verification is done in DatabaseModule.onModuleInit()
+      // We don't need to check it here as it may not be ready yet during app creation
     } catch (moduleError: any) {
       console.error('[DEBUG] Hypothesis B: ❌ AppModule initialization failed!');
       console.error('[DEBUG] Hypothesis B: Error:', moduleError?.message);
