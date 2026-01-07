@@ -96,8 +96,7 @@ COPY --from=base /app/packages ./packages
 RUN cd /app && \
     (npm rebuild bcrypt --build-from-source 2>&1 || true) && \
     (cd services/api && pnpm rebuild bcrypt 2>&1 || true) && \
-    echo "Verifying bcrypt binding..." && \
-    (find /app -name "bcrypt_lib.node" -type f 2>/dev/null | head -1 | xargs -I {} sh -c 'echo "Found: {}" && ls -la {}' || echo "bcrypt binding check completed")
+    echo "bcrypt rebuild completed"
 
 # Copy built files
 COPY --from=base /app/services/api/dist ./services/api/dist
@@ -116,5 +115,6 @@ WORKDIR /app/services/api
 # Run from the API directory
 # Use 0.0.0.0 to listen on all interfaces (required for Railway)
 # Database schema will be synced automatically in PrismaService.onModuleInit()
-CMD ["node", "dist/main.js"]
+# Use shell form to avoid Railway parsing issues
+CMD node dist/main.js
 
