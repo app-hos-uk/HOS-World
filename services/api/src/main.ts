@@ -92,8 +92,9 @@ async function bootstrap() {
     console.log('Checking dist/main.js exists:', require('fs').existsSync('./dist/main.js'));
 
     console.log('[DEBUG] Hypothesis B: Creating NestFactory with AppModule...');
+    let app;
     try {
-      const app = await NestFactory.create(AppModule, {
+      app = await NestFactory.create(AppModule, {
         cors: true, // Enable CORS at NestJS level first
       });
       console.log('[DEBUG] Hypothesis B: ✅ AppModule initialized successfully');
