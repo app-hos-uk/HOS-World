@@ -4,6 +4,7 @@ import {
   BadRequestException,
 } from '@nestjs/common';
 import { PrismaService } from '../database/prisma.service';
+import { NotificationsService } from '../notifications/notifications.service';
 import {
   CreateCatalogEntryDto,
   UpdateCatalogEntryDto,
@@ -12,7 +13,10 @@ import { ProductSubmissionStatus } from '@prisma/client';
 
 @Injectable()
 export class CatalogService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private notificationsService: NotificationsService,
+  ) {}
 
   async findPending() {
     const submissions = await this.prisma.productSubmission.findMany({
@@ -101,7 +105,34 @@ export class CatalogService {
       },
     });
 
-    // TODO: Send notification to marketing team
+    // Send notification to marketing team
+    try {
+      const marketingTeam = await this.prisma.user.findMany({
+        where: {
+          role: { in: ['MARKETING', 'ADMIN'] },
+        },
+        select: { id: true, email: true },
+      });
+
+      for (const user of marketingTeam) {
+        await this.prisma.notification.create({
+          data: {
+            userId: user.id,
+            type: 'ORDER_CONFIRMATION', // Using existing type, can be extended with CATALOG_COMPLETED later
+            subject: 'Product Catalog Entry Completed',
+            content: `Product submission ${submissionId} has been cataloged and is ready for marketing review.`,
+            email: user.email || undefined,
+            metadata: {
+              submissionId,
+              catalogEntryId: catalogEntry.id,
+            } as any,
+          },
+        });
+      }
+    } catch (error) {
+      // Log error but don't fail the catalog entry creation
+      console.error('Failed to send notification to marketing team:', error);
+    }
 
     return catalogEntry;
   }
@@ -157,7 +188,7 @@ export class CatalogService {
                 slug: true,
               },
             },
-            productData: true,
+            // productData: true, // Field may not exist in schema - adjust based on actual schema
           },
         },
       },

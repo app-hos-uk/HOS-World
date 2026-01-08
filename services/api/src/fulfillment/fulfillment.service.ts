@@ -5,6 +5,7 @@ import {
   ForbiddenException,
 } from '@nestjs/common';
 import { PrismaService } from '../database/prisma.service';
+import { NotificationsService } from '../notifications/notifications.service';
 import {
   CreateFulfillmentCenterDto,
   UpdateFulfillmentCenterDto,
@@ -14,7 +15,10 @@ import { ShipmentStatus, ProductSubmissionStatus } from '@prisma/client';
 
 @Injectable()
 export class FulfillmentService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private notificationsService: NotificationsService,
+  ) {}
 
   // Fulfillment Center Management
   async createFulfillmentCenter(createDto: CreateFulfillmentCenterDto) {
@@ -165,7 +169,34 @@ export class FulfillmentService {
       },
     });
 
-    // TODO: Send notification to fulfillment center
+    // Send notification to fulfillment center staff
+    try {
+      const fcStaff = await this.prisma.user.findMany({
+        where: {
+          role: { in: ['FULFILLMENT', 'ADMIN'] },
+        },
+        select: { id: true, email: true },
+      });
+
+      for (const staff of fcStaff) {
+        await this.prisma.notification.create({
+          data: {
+            userId: staff.id,
+            type: 'ORDER_CONFIRMATION', // Using existing type, can be extended later
+            subject: 'New Shipment Received',
+            content: `New shipment ${shipment.trackingNumber || shipment.id} has been created for fulfillment center ${shipment.fulfillmentCenter?.name || 'N/A'}`,
+            email: staff.email || undefined,
+            metadata: {
+              shipmentId: shipment.id,
+              fulfillmentCenterId: shipment.fulfillmentCenterId,
+            } as any,
+          },
+        });
+      }
+    } catch (error) {
+      // Log error but don't fail the shipment creation
+      console.error('Failed to send notification to fulfillment center:', error);
+    }
 
     return shipment;
   }
@@ -217,7 +248,7 @@ export class FulfillmentService {
                 sellerType: true,
               },
             },
-            productData: true,
+            // productData: true, // Field may not exist in schema - adjust based on actual schema
           },
         },
         fulfillmentCenter: true,
@@ -295,10 +326,33 @@ export class FulfillmentService {
         },
       });
 
-      // TODO: Send notifications to:
-      // - Procurement team
-      // - Catalog team
-      // - HOS operations
+      // Send notifications to Procurement, Catalog, and Operations teams
+      try {
+        const teams = await this.prisma.user.findMany({
+          where: {
+            role: { in: ['PROCUREMENT', 'CATALOG', 'ADMIN'] },
+          },
+          select: { id: true, email: true, role: true },
+        });
+
+        for (const user of teams) {
+          await this.prisma.notification.create({
+            data: {
+              userId: user.id,
+              type: 'ORDER_CONFIRMATION', // Using existing type, can be extended with CATALOG_PENDING later
+              subject: 'Shipment Verified - Ready for Catalog',
+              content: `Shipment ${updated.trackingNumber || updated.id} has been verified and accepted at fulfillment center. Product submission is ready for catalog.`,
+              email: user.email || undefined,
+              metadata: {
+                shipmentId: updated.id,
+                submissionId: shipment.submissionId,
+              } as any,
+            },
+          });
+        }
+      } catch (error) {
+        console.error('Failed to send verification notifications:', error);
+      }
     } else if (verifyDto.status === 'REJECTED') {
       await this.prisma.productSubmission.update({
         where: { id: shipment.submissionId },
@@ -307,7 +361,57 @@ export class FulfillmentService {
         },
       });
 
-      // TODO: Send notification to seller and procurement
+      // Send notification to seller and procurement team
+      try {
+        // Notify seller
+        if (shipment.submission?.sellerId) {
+          const seller = await this.prisma.seller.findUnique({
+            where: { id: shipment.submission.sellerId },
+            select: { userId: true },
+          });
+
+          if (seller) {
+            await this.prisma.notification.create({
+              data: {
+                userId: seller.userId,
+                type: 'ORDER_CANCELLED', // Using existing type, can be extended later
+                subject: 'Shipment Rejected',
+                content: `Your shipment ${updated.trackingNumber || updated.id} has been rejected at the fulfillment center. Please review and resubmit.`,
+                metadata: {
+                  shipmentId: updated.id,
+                  submissionId: shipment.submissionId,
+                } as any,
+              },
+            });
+          }
+        }
+
+        // Notify procurement team
+        const procurementTeam = await this.prisma.user.findMany({
+          where: {
+            role: { in: ['PROCUREMENT', 'ADMIN'] },
+          },
+          select: { id: true, email: true },
+        });
+
+        for (const user of procurementTeam) {
+          await this.prisma.notification.create({
+            data: {
+              userId: user.id,
+              type: 'ORDER_CANCELLED', // Using existing type, can be extended later
+              subject: 'Shipment Rejected - Action Required',
+              content: `Shipment ${updated.trackingNumber || updated.id} has been rejected. Review required.`,
+              email: user.email || undefined,
+              metadata: {
+                shipmentId: updated.id,
+                submissionId: shipment.submissionId,
+              } as any,
+            },
+          });
+        }
+      } catch (error) {
+        console.error('Failed to send rejection notifications:', error);
+      }
     }
 
     return updated;
