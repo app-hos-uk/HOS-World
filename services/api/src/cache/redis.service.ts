@@ -45,12 +45,15 @@ export class RedisService implements OnModuleInit, OnModuleDestroy {
         });
 
         await this.client.connect();
-      } catch (error) {
-        this.logger.warn('Redis connection failed, using fallback:', error.message);
+      } catch (error: any) {
+        this.logger.warn(`Redis connection failed, using fallback: ${error?.message || 'Unknown error'}`, 'RedisService');
+        this.logger.debug(error?.stack, 'RedisService');
         this.isConnected = false;
       }
-    })().catch(() => {
-      // Ignore errors
+    })().catch((error: any) => {
+      this.logger.error(`Redis initialization error: ${error?.message || 'Unknown error'}`, 'RedisService');
+      this.logger.debug(error?.stack, 'RedisService');
+      this.isConnected = false;
     });
     // Return immediately - don't wait for connection
   }

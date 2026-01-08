@@ -64,7 +64,10 @@
     "redis": "^4.6.11",
     "reflect-metadata": "^0.1.14",
     "rxjs": "^7.8.1",
-    "stripe": "^14.9.0"
+    "stripe": "^14.9.0",
+    "@nestjs/swagger": "^7.1.17",
+    "helmet": "^7.1.0",
+    "compression": "^1.7.4"
   },
   "devDependencies": {
     "@nestjs/cli": "^10.2.1",
@@ -80,6 +83,7 @@
     "@types/passport-jwt": "^4.0.1",
     "@types/passport-local": "^1.0.9",
     "@types/supertest": "^6.0.2",
+    "@types/compression": "^1.7.5",
     "@typescript-eslint/eslint-plugin": "^6.17.0",
     "@typescript-eslint/parser": "^6.17.0",
     "eslint": "^8.56.0",

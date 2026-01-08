@@ -12,7 +12,7 @@ export class ThemesSeedService implements OnModuleInit {
       try {
         // Check if themes table exists by attempting a simple query
         // If table doesn't exist, Prisma will throw an error
-        await this.prisma.$queryRaw`SELECT 1 FROM themes LIMIT 1`.catch(() => {
+        await this.prisma.$queryRaw`SELECT 1 FROM themes LIMIT 1`.catch((err: any) => {
           throw new Error('Themes table does not exist. Please run database migrations first.');
         });
         
@@ -21,17 +21,19 @@ export class ThemesSeedService implements OnModuleInit {
         if (themeCount === 0) {
           await this.seedDefaultThemes();
         }
-      } catch (error) {
+      } catch (error: any) {
         // Don't throw - allow app to start even if seeding fails
         // This is expected if migrations haven't been run yet
-        if (error.message?.includes('does not exist') || error.message?.includes('table')) {
+        if (error?.message?.includes('does not exist') || error?.message?.includes('table')) {
           console.warn('⚠️ Themes table not found. Skipping theme seeding. Please run database migrations.');
         } else {
-          console.warn('⚠️ Theme seeding failed:', error.message);
+          console.warn(`⚠️ Theme seeding failed: ${error?.message || 'Unknown error'}`);
+          console.debug(error?.stack);
         }
       }
-    })().catch(() => {
-      // Ignore errors
+    })().catch((error: any) => {
+      console.error(`Theme seeding initialization error: ${error?.message || 'Unknown error'}`);
+      console.debug(error?.stack);
     });
     // Return immediately - don't wait for seeding
   }

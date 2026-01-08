@@ -8,6 +8,8 @@ import {
   Query,
   UseGuards,
   ParseUUIDPipe,
+  DefaultValuePipe,
+  ParseIntPipe,
 } from '@nestjs/common';
 import { AdminProductsService } from './products.service';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
@@ -108,16 +110,16 @@ export class AdminProductsController {
     @Query('status') status?: string,
     @Query('category') category?: string,
     @Query('search') search?: string,
-    @Query('page') page?: string,
-    @Query('limit') limit?: string,
+    @Query('page', new DefaultValuePipe(1), ParseIntPipe) page: number = 1,
+    @Query('limit', new DefaultValuePipe(20), ParseIntPipe) limit: number = 20,
   ): Promise<ApiResponse<any>> {
     const result = await this.productsService.getAllProducts({
       sellerId: sellerId === 'null' ? null : sellerId,
       status,
       category,
       search,
-      page: page ? parseInt(page, 10) : undefined,
-      limit: limit ? parseInt(limit, 10) : undefined,
+      page,
+      limit: Math.min(limit, 100), // Max 100 per page
     });
     return {
       data: result,

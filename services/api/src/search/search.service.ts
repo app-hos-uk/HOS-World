@@ -45,11 +45,13 @@ export class SearchService implements OnModuleInit {
           await this.syncAllProducts();
         }
       } catch (error) {
-        this.logger.warn('Elasticsearch initialization failed, search features will be disabled:', error.message);
+        this.logger.warn(`Elasticsearch initialization failed, search features will be disabled: ${error?.message || 'Unknown error'}`, 'SearchService');
+        this.logger.debug(error?.stack, 'SearchService');
         // Don't throw - allow app to start without Elasticsearch
       }
-    }).catch(() => {
-      // Ignore errors
+    }).catch((error: any) => {
+      this.logger.error(`Elasticsearch initialization error: ${error?.message || 'Unknown error'}`, 'SearchService');
+      this.logger.debug(error?.stack, 'SearchService');
     });
     // Return immediately - don't wait for Elasticsearch
   }

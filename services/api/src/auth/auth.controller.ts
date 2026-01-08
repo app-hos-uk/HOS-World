@@ -9,6 +9,7 @@ import {
   HttpStatus,
   Query,
 } from '@nestjs/common';
+import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth, ApiBody } from '@nestjs/swagger';
 import { AuthService } from './auth.service';
 import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
@@ -21,6 +22,7 @@ import { Public } from '../common/decorators/public.decorator';
 import { AdminSellersService } from '../admin/sellers.service';
 import type { ApiResponse, AuthResponse, User } from '@hos-marketplace/shared-types';
 
+@ApiTags('auth')
 @Controller('auth')
 export class AuthController {
   constructor(
@@ -70,6 +72,11 @@ export class AuthController {
   @Public()
   @Post('register')
   @HttpCode(HttpStatus.CREATED)
+  @ApiOperation({ summary: 'Register a new user', description: 'Create a new user account with email and password' })
+  @ApiBody({ type: RegisterDto })
+  @ApiResponse({ status: 201, description: 'User registered successfully' })
+  @ApiResponse({ status: 400, description: 'Invalid input data' })
+  @ApiResponse({ status: 409, description: 'User already exists' })
   async register(
     @Body() registerDto: RegisterDto,
     @Request() req: any,
@@ -91,6 +98,10 @@ export class AuthController {
   @Public()
   @Post('login')
   @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Login user', description: 'Authenticate user with email and password' })
+  @ApiBody({ type: LoginDto })
+  @ApiResponse({ status: 200, description: 'Login successful' })
+  @ApiResponse({ status: 401, description: 'Invalid credentials' })
   async login(@Body() loginDto: LoginDto): Promise<ApiResponse<AuthResponse>> {
     const result = await this.authService.login(loginDto);
     return {

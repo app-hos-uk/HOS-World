@@ -11,6 +11,7 @@ import {
   Request,
   ParseUUIDPipe,
 } from '@nestjs/common';
+import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth, ApiParam, ApiQuery } from '@nestjs/swagger';
 import { ProductsService } from './products.service';
 import { ProductsBulkService } from './products-bulk.service';
 import { CreateProductDto } from './dto/create-product.dto';
@@ -22,6 +23,7 @@ import { Roles } from '../common/decorators/roles.decorator';
 import { Public } from '../common/decorators/public.decorator';
 import type { ApiResponse, PaginatedResponse, Product } from '@hos-marketplace/shared-types';
 
+@ApiTags('products')
 @Controller('products')
 export class ProductsController {
   constructor(
@@ -31,6 +33,8 @@ export class ProductsController {
 
   @Public()
   @Get()
+  @ApiOperation({ summary: 'Get all products', description: 'Retrieve a paginated list of products with optional filters' })
+  @ApiResponse({ status: 200, description: 'Products retrieved successfully' })
   async findAll(@Query() searchDto: SearchProductsDto): Promise<ApiResponse<PaginatedResponse<Product>>> {
     const result = await this.productsService.findAll(searchDto);
     return {
@@ -41,6 +45,10 @@ export class ProductsController {
 
   @Public()
   @Get(':id')
+  @ApiOperation({ summary: 'Get product by ID', description: 'Retrieve a single product by its UUID' })
+  @ApiParam({ name: 'id', description: 'Product UUID', type: String })
+  @ApiResponse({ status: 200, description: 'Product retrieved successfully' })
+  @ApiResponse({ status: 404, description: 'Product not found' })
   async findOne(@Param('id', ParseUUIDPipe) id: string): Promise<ApiResponse<Product>> {
     const product = await this.productsService.findOne(id);
     return {
@@ -62,6 +70,11 @@ export class ProductsController {
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('SELLER')
   @Post()
+  @ApiBearerAuth('JWT-auth')
+  @ApiOperation({ summary: 'Create a new product', description: 'Create a new product (Seller only)' })
+  @ApiResponse({ status: 201, description: 'Product created successfully' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  @ApiResponse({ status: 403, description: 'Forbidden - Seller role required' })
   async create(
     @Request() req: any,
     @Body() createProductDto: CreateProductDto,

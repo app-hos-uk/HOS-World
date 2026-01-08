@@ -1,110 +1,155 @@
-// IMMEDIATE LOG - This should appear first if script runs at all
-console.log('═══════════════════════════════════════════════════════════');
-console.log('📝 main.ts LOADED');
-console.log('Timestamp:', new Date().toISOString());
-console.log('Node version:', process.version);
-console.log('═══════════════════════════════════════════════════════════');
-
 import { NestFactory } from '@nestjs/core';
 import { ValidationPipe } from '@nestjs/common';
 import { AppModule } from './app.module';
+import { Logger } from './common/logger/logger.service';
+import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
+import helmet from 'helmet';
+import compression from 'compression';
+import { randomUUID } from 'crypto';
+import express from 'express';
+
+// Initialize logger
+const logger = new Logger();
+
+// Validate required environment variables
+function validateEnvironment() {
+  const required = ['DATABASE_URL', 'JWT_SECRET', 'JWT_REFRESH_SECRET'];
+  const missing: string[] = [];
+
+  for (const key of required) {
+    const value = process.env[key];
+    if (!value || value.includes('your-') || value.includes('change-in-production')) {
+      missing.push(key);
+    }
+  }
+
+  if (missing.length > 0) {
+    logger.error(
+      `Missing or invalid required environment variables: ${missing.join(', ')}`,
+      'Environment Validation',
+    );
+    logger.error(
+      'Please set these variables in Railway dashboard or .env file',
+      'Environment Validation',
+    );
+    process.exit(1);
+  }
+
+  // Warn about weak JWT secrets
+  if (process.env.JWT_SECRET && process.env.JWT_SECRET.length < 32) {
+    logger.warn(
+      'JWT_SECRET is too short (minimum 32 characters recommended)',
+      'Environment Validation',
+    );
+  }
+
+  logger.info('Environment variables validated successfully', 'Environment Validation');
+}
 
 async function bootstrap() {
-  // Immediate log to verify script is running
-  console.log('═══════════════════════════════════════════════════════════');
-  console.log('🚀 BOOTSTRAP STARTED');
-  console.log('═══════════════════════════════════════════════════════════');
-  console.log('Timestamp:', new Date().toISOString());
-  console.log('Node version:', process.version);
-  console.log('Working directory:', process.cwd());
-  console.log('dist/main.js exists:', require('fs').existsSync('./dist/main.js'));
-  console.log('═══════════════════════════════════════════════════════════');
+  // Validate environment variables first
+  validateEnvironment();
+
+  logger.info('═══════════════════════════════════════════════════════════', 'Bootstrap');
+  logger.info('🚀 BOOTSTRAP STARTED', 'Bootstrap');
+  logger.info('═══════════════════════════════════════════════════════════', 'Bootstrap');
+  logger.info(`Timestamp: ${new Date().toISOString()}`, 'Bootstrap');
+  logger.info(`Node version: ${process.version}`, 'Bootstrap');
+  logger.info(`Working directory: ${process.cwd()}`, 'Bootstrap');
+  logger.info(`dist/main.js exists: ${require('fs').existsSync('./dist/main.js')}`, 'Bootstrap');
+  logger.info('═══════════════════════════════════════════════════════════', 'Bootstrap');
   
   try {
-    console.log('🚀 Starting API server...');
-    console.log('[DEBUG] Hypothesis A: Checking Prisma client availability...');
-    console.log('[DEBUG] Hypothesis B: About to initialize AppModule...');
-    console.log('[DEBUG] Hypothesis C: Database connection will be tested...');
-    console.log('[DEBUG] Hypothesis D: Error handler ready...');
+    logger.info('🚀 Starting API server...', 'Bootstrap');
     
     // Pre-flight check: Verify Prisma client can be imported and has RefreshToken
-    console.log('═══════════════════════════════════════════════════════════');
-    console.log('🔍 PRE-FLIGHT CHECK: Verifying Prisma Client');
-    console.log('═══════════════════════════════════════════════════════════');
+    logger.debug('🔍 PRE-FLIGHT CHECK: Verifying Prisma Client', 'Bootstrap');
     try {
-      console.log('[1/4] Importing PrismaClient...');
       const { PrismaClient } = require('@prisma/client');
-      console.log('[2/4] Creating PrismaClient instance...');
       const testClient = new PrismaClient();
       
-      console.log('[3/4] Checking for models...');
       const hasRefreshToken = typeof testClient.refreshToken !== 'undefined';
       const hasUser = typeof testClient.user !== 'undefined';
       const hasProduct = typeof testClient.product !== 'undefined';
       
-      console.log(`    ✓ user model: ${hasUser ? 'YES ✅' : 'NO ❌'}`);
-      console.log(`    ✓ product model: ${hasProduct ? 'YES ✅' : 'NO ❌'}`);
-      console.log(`    ✓ refreshToken model: ${hasRefreshToken ? 'YES ✅' : 'NO ❌'}`);
+      logger.debug(`user model: ${hasUser ? 'YES ✅' : 'NO ❌'}`, 'Bootstrap');
+      logger.debug(`product model: ${hasProduct ? 'YES ✅' : 'NO ❌'}`, 'Bootstrap');
+      logger.debug(`refreshToken model: ${hasRefreshToken ? 'YES ✅' : 'NO ❌'}`, 'Bootstrap');
       
       if (!hasUser || !hasProduct) {
-        console.error('❌ CRITICAL: Basic Prisma models missing! Prisma client generation failed.');
-        console.error('Available properties:', Object.keys(testClient).filter(k => !k.startsWith('$') && !k.startsWith('_')).slice(0, 20).join(', '));
+        logger.error('CRITICAL: Basic Prisma models missing! Prisma client generation failed.', 'Bootstrap');
+        const available = Object.keys(testClient)
+          .filter((k) => !k.startsWith('$') && !k.startsWith('_'))
+          .slice(0, 20)
+          .join(', ');
+        logger.error(`Available properties: ${available}`, 'Bootstrap');
         await testClient.$disconnect();
         throw new Error('Prisma client missing basic models - generation failed');
       }
       
       if (!hasRefreshToken) {
-        console.error('═══════════════════════════════════════════════════════════');
-        console.error('❌ CRITICAL ERROR: RefreshToken model missing from PrismaClient!');
-        console.error('═══════════════════════════════════════════════════════════');
-        console.error('This will cause the service to crash when auth methods are called.');
-        console.error('');
-        console.error('Available models:', Object.keys(testClient).filter(k => !k.startsWith('$') && !k.startsWith('_')).slice(0, 20).join(', '));
-        console.error('');
-        console.error('SOLUTION:');
-        console.error('1. Verify schema.prisma contains: model RefreshToken');
-        console.error('2. Regenerate Prisma client: pnpm db:generate');
-        console.error('3. Verify the generated client includes refreshToken');
-        console.error('═══════════════════════════════════════════════════════════');
+        logger.warn('RefreshToken model missing from PrismaClient!', 'Bootstrap');
+        logger.warn('This may cause issues when auth methods are called.', 'Bootstrap');
+        logger.warn('Solution: Regenerate Prisma client with: pnpm db:generate', 'Bootstrap');
         await testClient.$disconnect();
-        // Continue to let NestJS initialization show the error, but log it clearly
       } else {
-        console.log('[4/4] ✅ Pre-flight check PASSED - All models found');
-        console.log('═══════════════════════════════════════════════════════════');
+        logger.debug('✅ Pre-flight check PASSED - All models found', 'Bootstrap');
         await testClient.$disconnect();
       }
     } catch (preflightError: any) {
-      console.error('═══════════════════════════════════════════════════════════');
-      console.error('❌ PRE-FLIGHT CHECK FAILED');
-      console.error('═══════════════════════════════════════════════════════════');
-      console.error('Error:', preflightError?.message);
-      console.error('Stack:', preflightError?.stack);
-      console.error('═══════════════════════════════════════════════════════════');
+      logger.error(`PRE-FLIGHT CHECK FAILED: ${preflightError?.message}`, 'Bootstrap');
+      logger.debug(preflightError?.stack, 'Bootstrap');
       // Continue anyway - let module initialization show the real error
     }
-    console.log('Environment:', {
-      NODE_ENV: process.env.NODE_ENV,
-      PORT: process.env.PORT,
-      DATABASE_URL: process.env.DATABASE_URL ? '***set***' : '***missing***',
-    });
-    console.log('Node version:', process.version);
-    console.log('Working directory:', process.cwd());
-    console.log('Checking dist/main.js exists:', require('fs').existsSync('./dist/main.js'));
 
-    console.log('[DEBUG] Hypothesis B: Creating NestFactory with AppModule...');
+    logger.debug('Creating NestFactory with AppModule...', 'Bootstrap');
     let app;
     try {
       app = await NestFactory.create(AppModule, {
         cors: true, // Enable CORS at NestJS level first
+        logger: logger,
       });
-      console.log('[DEBUG] Hypothesis B: ✅ AppModule initialized successfully');
+      logger.info('✅ AppModule initialized successfully', 'Bootstrap');
+
+      // Add security headers (helmet)
+      app.use(helmet({
+        contentSecurityPolicy: {
+          directives: {
+            defaultSrc: ["'self'"],
+            styleSrc: ["'self'", "'unsafe-inline'"],
+            scriptSrc: ["'self'"],
+            imgSrc: ["'self'", 'data:', 'https:'],
+          },
+        },
+        crossOriginEmbedderPolicy: false, // Allow embedding for API docs
+      }));
+      logger.info('✅ Security headers configured', 'Bootstrap');
+
+      // Add response compression
+      app.use(compression());
+      logger.info('✅ Response compression enabled', 'Bootstrap');
+
+      // Add request ID tracking middleware
+      app.use((req: any, res: any, next: any) => {
+        const requestId = randomUUID();
+        req['requestId'] = requestId;
+        res.setHeader('X-Request-ID', requestId);
+        // Add request ID to logger context
+        req['logger'] = {
+          log: (message: string) => logger.log(message, `[${requestId}]`),
+          error: (message: string) => logger.error(message, `[${requestId}]`),
+          warn: (message: string) => logger.warn(message, `[${requestId}]`),
+          debug: (message: string) => logger.debug(message, `[${requestId}]`),
+        };
+        next();
+      });
+      logger.info('✅ Request ID tracking enabled', 'Bootstrap');
       
       // Note: PrismaService verification is done in DatabaseModule.onModuleInit()
       // We don't need to check it here as it may not be ready yet during app creation
     } catch (moduleError: any) {
-      console.error('[DEBUG] Hypothesis B: ❌ AppModule initialization failed!');
-      console.error('[DEBUG] Hypothesis B: Error:', moduleError?.message);
-      console.error('[DEBUG] Hypothesis B: Stack:', moduleError?.stack);
+      logger.error(`❌ AppModule initialization failed: ${moduleError?.message}`, 'Bootstrap');
+      logger.error(moduleError?.stack, 'Bootstrap');
       throw moduleError; // Re-throw to be caught by outer try-catch
     }
 
@@ -114,9 +159,9 @@ async function bootstrap() {
       'https://hos-marketplaceweb-production.up.railway.app',
       'http://localhost:3000',
       'http://localhost:3001',
-    ].filter(Boolean); // Remove undefined values
+    ].filter(Boolean) as string[]; // Remove undefined values
 
-    console.log('🌐 CORS allowed origins:', allowedOrigins);
+    logger.info(`🌐 CORS allowed origins: ${allowedOrigins.join(', ')}`, 'Bootstrap');
 
     // CRITICAL: Handle OPTIONS requests FIRST - before any other middleware
     // This ensures preflight requests are handled even if the app has errors
@@ -132,7 +177,7 @@ async function bootstrap() {
         });
         
         if (isAllowed || !origin) {
-          console.log(`✅ CORS Preflight: Allowing ${origin || 'no-origin'} for ${req.path}`);
+          logger.debug(`CORS Preflight: Allowing ${origin || 'no-origin'} for ${req.path}`, 'CORS');
           res.header('Access-Control-Allow-Origin', origin || '*');
           res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, PATCH, OPTIONS, HEAD');
           res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With, Accept, Origin, X-API-Key, Access-Control-Request-Method, Access-Control-Request-Headers');
@@ -140,7 +185,7 @@ async function bootstrap() {
           res.header('Access-Control-Max-Age', '86400');
           return res.status(204).send();
         } else {
-          console.warn(`⚠️  CORS Preflight blocked: ${origin}`);
+          logger.warn(`CORS Preflight blocked: ${origin}`, 'CORS');
           return res.status(403).json({ error: 'CORS not allowed' });
         }
       }
@@ -152,25 +197,39 @@ async function bootstrap() {
       origin: (origin, callback) => {
         // Allow requests with no origin (like mobile apps or curl requests)
         if (!origin) {
-          console.log('✅ CORS: Allowing request with no origin');
+          logger.debug('CORS: Allowing request with no origin', 'CORS');
           return callback(null, true);
         }
         
-        // Check if origin is in allowed list
-        const isAllowed = allowedOrigins.some(allowed => {
+        // Check if origin is in allowed list - use exact match for security
+        const isAllowed = allowedOrigins.some((allowed) => {
           if (!allowed) return false;
+          // Exact match
           if (origin === allowed) return true;
-          // Also allow if origin starts with allowed (for subdomains)
-          if (origin.startsWith(allowed)) return true;
+          // For subdomains, check if origin is a subdomain of allowed
+          // e.g., https://admin.hos-marketplace.com matches https://hos-marketplace.com
+          try {
+            const originUrl = new URL(origin);
+            const allowedUrl = new URL(allowed);
+            // Same protocol and base domain
+            if (
+              originUrl.protocol === allowedUrl.protocol &&
+              originUrl.hostname.endsWith('.' + allowedUrl.hostname)
+            ) {
+              return true;
+            }
+          } catch {
+            // Invalid URL, skip
+          }
           return false;
         });
         
         if (isAllowed) {
-          console.log(`✅ CORS: Allowing origin: ${origin}`);
+          logger.debug(`CORS: Allowing origin: ${origin}`, 'CORS');
           callback(null, true);
         } else {
-          console.warn(`⚠️  CORS blocked origin: ${origin}`);
-          console.warn(`⚠️  Allowed origins: ${allowedOrigins.join(', ')}`);
+          logger.warn(`CORS blocked origin: ${origin}`, 'CORS');
+          logger.debug(`Allowed origins: ${allowedOrigins.join(', ')}`, 'CORS');
           callback(new Error('Not allowed by CORS'));
         }
       },
@@ -219,8 +278,9 @@ async function bootstrap() {
             health: '/api/health',
             products: '/api/products',
             auth: '/api/auth',
+            docs: '/api/docs',
           },
-          documentation: 'API documentation coming soon',
+          documentation: 'API documentation available at /api/docs',
         });
       }
       next();
@@ -229,44 +289,83 @@ async function bootstrap() {
     // Global prefix for all routes
     app.setGlobalPrefix('api');
 
+    // Configure Swagger/OpenAPI documentation
+    const config = new DocumentBuilder()
+      .setTitle('House of Spells Marketplace API')
+      .setDescription('Complete API documentation for the House of Spells Marketplace platform')
+      .setVersion('1.0.0')
+      .addBearerAuth(
+        {
+          type: 'http',
+          scheme: 'bearer',
+          bearerFormat: 'JWT',
+          name: 'JWT',
+          description: 'Enter JWT token',
+          in: 'header',
+        },
+        'JWT-auth',
+      )
+      .addTag('auth', 'Authentication endpoints')
+      .addTag('products', 'Product management')
+      .addTag('orders', 'Order processing')
+      .addTag('cart', 'Shopping cart operations')
+      .addTag('users', 'User management')
+      .addTag('admin', 'Admin operations')
+      .addTag('sellers', 'Seller operations')
+      .addTag('health', 'Health check endpoints')
+      .addServer('https://hos-marketplaceapi-production.up.railway.app', 'Production')
+      .addServer('http://localhost:3001', 'Local Development')
+      .build();
+
+    const document = SwaggerModule.createDocument(app, config);
+    SwaggerModule.setup('api/docs', app, document, {
+      swaggerOptions: {
+        persistAuthorization: true,
+        tagsSorter: 'alpha',
+        operationsSorter: 'alpha',
+      },
+    });
+    logger.info('✅ Swagger documentation available at /api/docs', 'Bootstrap');
+
     // Global validation pipe
     app.useGlobalPipes(
       new ValidationPipe({
         whitelist: true,
         forbidNonWhitelisted: true,
         transform: true,
+        transformOptions: {
+          enableImplicitConversion: true,
+        },
       }),
     );
 
+    // Add request size limits
+    app.use(express.json({ limit: '10mb' }));
+    app.use(express.urlencoded({ limit: '10mb', extended: true }));
+    logger.info('✅ Request size limits configured (10MB)', 'Bootstrap');
+
     const port = process.env.PORT || 3001;
-    console.log(`📡 About to listen on port: ${port}`);
+    logger.info(`📡 About to listen on port: ${port}`, 'Bootstrap');
     
     // Use app.listen() to ensure all routes are properly registered
     await app.listen(port, '0.0.0.0');
     
-    console.log(`✅ Server is listening on port ${port}`);
-    console.log(`✅ API server is running on: http://0.0.0.0:${port}/api`);
-    console.log(`✅ Health check available at: http://0.0.0.0:${port}/api/health`);
-    console.log(`✅ Root endpoint available at: http://0.0.0.0:${port}/`);
-  } catch (error) {
-    console.error('═══════════════════════════════════════════════════════════');
-    console.error('❌ CRITICAL ERROR: Failed to start API server');
-    console.error('═══════════════════════════════════════════════════════════');
-    console.error('Error name:', error?.name || 'Unknown');
-    console.error('Error message:', error?.message || 'Unknown error');
-    console.error('');
-    console.error('Full error object:');
-    console.error(JSON.stringify(error, Object.getOwnPropertyNames(error), 2));
-    console.error('');
-    console.error('Error stack:');
-    console.error(error?.stack || 'No stack trace available');
-    console.error('');
-    console.error('Environment:');
-    console.error('  NODE_ENV:', process.env.NODE_ENV);
-    console.error('  PORT:', process.env.PORT);
-    console.error('  DATABASE_URL:', process.env.DATABASE_URL ? '***set***' : '***missing***');
-    console.error('  Working directory:', process.cwd());
-    console.error('═══════════════════════════════════════════════════════════');
+    logger.info(`✅ Server is listening on port ${port}`, 'Bootstrap');
+    logger.info(`✅ API server is running on: http://0.0.0.0:${port}/api`, 'Bootstrap');
+    logger.info(`✅ Health check available at: http://0.0.0.0:${port}/api/health`, 'Bootstrap');
+    logger.info(`✅ Root endpoint available at: http://0.0.0.0:${port}/`, 'Bootstrap');
+  } catch (error: any) {
+    logger.error('═══════════════════════════════════════════════════════════', 'Bootstrap');
+    logger.error('❌ CRITICAL ERROR: Failed to start API server', 'Bootstrap');
+    logger.error('═══════════════════════════════════════════════════════════', 'Bootstrap');
+    logger.error(`Error name: ${error?.name || 'Unknown'}`, 'Bootstrap');
+    logger.error(`Error message: ${error?.message || 'Unknown error'}`, 'Bootstrap');
+    logger.error(`Error stack: ${error?.stack || 'No stack trace available'}`, 'Bootstrap');
+    logger.error(`NODE_ENV: ${process.env.NODE_ENV}`, 'Bootstrap');
+    logger.error(`PORT: ${process.env.PORT}`, 'Bootstrap');
+    logger.error(`DATABASE_URL: ${process.env.DATABASE_URL ? '***set***' : '***missing***'}`, 'Bootstrap');
+    logger.error(`Working directory: ${process.cwd()}`, 'Bootstrap');
+    logger.error('═══════════════════════════════════════════════════════════', 'Bootstrap');
     // Give Railway time to capture logs before exiting
     setTimeout(() => {
       process.exit(1);
@@ -276,37 +375,41 @@ async function bootstrap() {
 
 // Add unhandled error handlers to catch any errors outside bootstrap
 process.on('uncaughtException', (error) => {
-  console.error('═══════════════════════════════════════════════════════════');
-  console.error('❌ UNCAUGHT EXCEPTION');
-  console.error('═══════════════════════════════════════════════════════════');
-  console.error('Error:', error.message);
-  console.error('Stack:', error.stack);
-  console.error('═══════════════════════════════════════════════════════════');
+  logger.error('═══════════════════════════════════════════════════════════', 'Process');
+  logger.error('❌ UNCAUGHT EXCEPTION', 'Process');
+  logger.error('═══════════════════════════════════════════════════════════', 'Process');
+  logger.error(`Error: ${error.message}`, 'Process');
+  logger.error(`Stack: ${error.stack}`, 'Process');
+  logger.error('═══════════════════════════════════════════════════════════', 'Process');
   setTimeout(() => process.exit(1), 5000);
 });
 
 process.on('unhandledRejection', (reason, promise) => {
-  console.error('═══════════════════════════════════════════════════════════');
-  console.error('❌ UNHANDLED REJECTION');
-  console.error('═══════════════════════════════════════════════════════════');
-  console.error('Reason:', reason);
-  console.error('Promise:', promise);
-  console.error('═══════════════════════════════════════════════════════════');
+  logger.error('═══════════════════════════════════════════════════════════', 'Process');
+  logger.error('❌ UNHANDLED REJECTION', 'Process');
+  logger.error('═══════════════════════════════════════════════════════════', 'Process');
+  logger.error(`Reason: ${reason}`, 'Process');
+  logger.error(`Promise: ${promise}`, 'Process');
+  logger.error('═══════════════════════════════════════════════════════════', 'Process');
+  // In production, consider exiting on unhandled rejections
+  if (process.env.NODE_ENV === 'production') {
+    setTimeout(() => process.exit(1), 5000);
+  }
 });
 
-// IMMEDIATE LOG - Before bootstrap call
-console.log('═══════════════════════════════════════════════════════════');
-console.log('📝 About to call bootstrap()');
-console.log('Timestamp:', new Date().toISOString());
-console.log('═══════════════════════════════════════════════════════════');
+// Start bootstrap
+logger.info('═══════════════════════════════════════════════════════════', 'Bootstrap');
+logger.info('📝 About to call bootstrap()', 'Bootstrap');
+logger.info(`Timestamp: ${new Date().toISOString()}`, 'Bootstrap');
+logger.info('═══════════════════════════════════════════════════════════', 'Bootstrap');
 
 bootstrap().catch((error) => {
-  console.error('═══════════════════════════════════════════════════════════');
-  console.error('❌ BOOTSTRAP PROMISE REJECTED');
-  console.error('═══════════════════════════════════════════════════════════');
-  console.error('Error:', error?.message);
-  console.error('Stack:', error?.stack);
-  console.error('═══════════════════════════════════════════════════════════');
+  logger.error('═══════════════════════════════════════════════════════════', 'Bootstrap');
+  logger.error('❌ BOOTSTRAP PROMISE REJECTED', 'Bootstrap');
+  logger.error('═══════════════════════════════════════════════════════════', 'Bootstrap');
+  logger.error(`Error: ${error?.message}`, 'Bootstrap');
+  logger.error(`Stack: ${error?.stack}`, 'Bootstrap');
+  logger.error('═══════════════════════════════════════════════════════════', 'Bootstrap');
   setTimeout(() => process.exit(1), 5000);
 });
 

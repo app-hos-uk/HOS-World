@@ -46,28 +46,51 @@ export class PrismaService extends PrismaClient implements OnModuleInit, OnModul
       this.logger.error('[DEBUG] Hypothesis A: ❌ Error checking RefreshToken model:', error?.message || error);
       this.logger.error('[DEBUG] Hypothesis A: Error stack:', error?.stack);
     }
-    // Don't block startup - connect in background
+    // Don't block startup - connect in background with retry logic
     // Return immediately so NestJS doesn't wait
-    this.$connect()
+    this.connectWithRetry()
       .then(async () => {
-        this.logger.log('[DEBUG] Hypothesis C: ✅ Database connected successfully');
-        this.logger.log('Database connected successfully');
+        this.logger.log('✅ Database connected successfully', 'PrismaService');
         
         // Sync database schema if needed (for production deployments)
         if (process.env.NODE_ENV === 'production' && process.env.SYNC_DB_SCHEMA !== 'false') {
           // Run schema sync in background - don't block
-          this.syncDatabaseSchema().catch((error) => {
-            this.logger.warn('⚠️ Database schema sync failed:', error.message);
+          this.syncDatabaseSchema().catch((error: any) => {
+            this.logger.warn(`⚠️ Database schema sync failed: ${error?.message || 'Unknown error'}`, 'PrismaService');
+            this.logger.debug(error?.stack, 'PrismaService');
           });
         }
       })
-      .catch((error) => {
-        this.logger.error('[DEBUG] Hypothesis C: ❌ Database connection failed');
-        this.logger.error('Failed to connect to database:', error.message);
+      .catch((error: any) => {
+        this.logger.error(`❌ Database connection failed after retries: ${error?.message || 'Unknown error'}`, 'PrismaService');
+        this.logger.debug(error?.stack, 'PrismaService');
         // Don't throw - allow app to start and retry connection
         // This helps with Railway deployments where DB might not be ready immediately
       });
     // Return immediately - don't wait for connection
+  }
+
+  /**
+   * Connect to database with exponential backoff retry
+   */
+  private async connectWithRetry(maxRetries = 5, initialDelay = 1000): Promise<void> {
+    for (let attempt = 1; attempt <= maxRetries; attempt++) {
+      try {
+        await this.$connect();
+        this.logger.log(`Database connected on attempt ${attempt}`, 'PrismaService');
+        return;
+      } catch (error: any) {
+        if (attempt === maxRetries) {
+          throw error;
+        }
+        const delay = initialDelay * Math.pow(2, attempt - 1);
+        this.logger.warn(
+          `Database connection attempt ${attempt} failed, retrying in ${delay}ms: ${error?.message || 'Unknown error'}`,
+          'PrismaService',
+        );
+        await new Promise((resolve) => setTimeout(resolve, delay));
+      }
+    }
   }
 
   private async syncDatabaseSchema() {

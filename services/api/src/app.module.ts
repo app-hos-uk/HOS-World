@@ -55,6 +55,7 @@ import { WhatsAppModule } from './whatsapp/whatsapp.module';
 import { TaxonomyModule } from './taxonomy/taxonomy.module';
 import { CMSModule } from './cms/cms.module';
 import { JwtAuthGuard } from './common/guards/jwt-auth.guard';
+import { LoggerModule } from './common/logger/logger.module';
 
 @Module({
   imports: [
@@ -63,6 +64,7 @@ import { JwtAuthGuard } from './common/guards/jwt-auth.guard';
       envFilePath: process.env.NODE_ENV === 'test' ? undefined : '.env',
       ignoreEnvFile: process.env.NODE_ENV === 'test',
     }),
+    LoggerModule,
     DatabaseModule,
     CacheModule,
     RateLimitModule,

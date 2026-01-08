@@ -87,14 +87,17 @@ export class AuthModule implements OnModuleInit {
           const { AppleStrategy } = await import('./strategies/apple.strategy');
           new AppleStrategy(this.configService, this.authService);
           logger.log('Apple OAuth strategy registered');
-        } catch (error) {
-          logger.warn('Failed to register Apple OAuth strategy:', error.message);
+        } catch (error: any) {
+          logger.warn(`Failed to register Apple OAuth strategy: ${error?.message || 'Unknown error'}`, 'AuthModule');
+          logger.debug(error?.stack, 'AuthModule');
         }
       } else {
-        logger.debug('Apple OAuth not configured - skipping strategy');
+        logger.debug('Apple OAuth not configured - skipping strategy', 'AuthModule');
       }
-    }).catch(() => {
-      // Ignore errors - don't block startup
+    }).catch((error: any) => {
+      logger.error(`OAuth strategy initialization error: ${error?.message || 'Unknown error'}`, 'AuthModule');
+      logger.debug(error?.stack, 'AuthModule');
+      // Don't block startup - OAuth is optional
     });
   }
 }
