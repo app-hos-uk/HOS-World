@@ -6,6 +6,12 @@ import {
   Logger,
   ForbiddenException,
 } from '@nestjs/common';
+import {
+  ApiTags,
+  ApiOperation,
+  ApiResponse as SwaggerApiResponse,
+  ApiBearerAuth,
+} from '@nestjs/swagger';
 import { PrismaService } from '../database/prisma.service';
 import { ConfigService } from '@nestjs/config';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
@@ -15,6 +21,8 @@ import * as fs from 'fs';
 import * as path from 'path';
 import type { ApiResponse } from '@hos-marketplace/shared-types';
 
+@ApiTags('admin')
+@ApiBearerAuth('JWT-auth')
 @Controller('admin/migration-features')
 @UseGuards(JwtAuthGuard, RolesGuard)
 @Roles('ADMIN')
@@ -35,6 +43,10 @@ export class MigrationFeaturesController {
   }
 
   @Post('run-sql')
+  @ApiOperation({ summary: 'Run features migration', description: 'Runs comprehensive features migration SQL. Requires ENABLE_ADMIN_MIGRATIONS=true. Admin access required.' })
+  @SwaggerApiResponse({ status: 200, description: 'Migration completed' })
+  @SwaggerApiResponse({ status: 401, description: 'Unauthorized' })
+  @SwaggerApiResponse({ status: 403, description: 'Forbidden - Admin access required or migrations disabled' })
   async runSQLMigration(): Promise<ApiResponse<any>> {
     this.checkMigrationsEnabled();
     
@@ -95,7 +107,7 @@ export class MigrationFeaturesController {
       }
 
       // Verify migration
-      const verification = await this.verifyMigration();
+      const verification = await this.verifyMigrationInternal();
 
       return {
         data: {
@@ -126,15 +138,19 @@ export class MigrationFeaturesController {
   }
 
   @Get('verify')
+  @ApiOperation({ summary: 'Verify features migration', description: 'Verifies that features migration was successful. Admin access required.' })
+  @SwaggerApiResponse({ status: 200, description: 'Migration verification completed' })
+  @SwaggerApiResponse({ status: 401, description: 'Unauthorized' })
+  @SwaggerApiResponse({ status: 403, description: 'Forbidden - Admin access required' })
   async verifyMigration(): Promise<ApiResponse<any>> {
-    const verification = await this.verifyMigration();
+    const verification = await this.verifyMigrationInternal();
     return {
       data: verification,
       message: 'Migration verification completed',
     };
   }
 
-  private async verifyMigration() {
+  private async verifyMigrationInternal() {
     const checks: Record<string, boolean> = {};
 
     // Check if all new tables exist
