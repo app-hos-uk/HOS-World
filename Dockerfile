@@ -106,6 +106,13 @@ COPY --from=base /app/services/api/dist ./services/api/dist
 COPY --from=base /app/services/api/package.json ./services/api/
 COPY --from=base /app/services/api/prisma ./services/api/prisma
 
+# Reinstall dependencies after copying updated package.json to ensure express is available
+WORKDIR /app/services/api
+RUN pnpm install --no-frozen-lockfile && \
+    echo "Verifying express is installed..." && \
+    (node -e "require('express'); console.log('✅ express module found')" || (echo "❌ express not found, installing..." && pnpm add express && echo "✅ express installed")) && \
+    echo "✅ Dependencies verified"
+
 # Generate Prisma Client in production (needed for runtime)
 WORKDIR /app/services/api
 RUN echo "═══════════════════════════════════════════════════════════" && \
