@@ -4,9 +4,9 @@ import { AppModule } from './app.module';
 import { Logger } from './common/logger/logger.service';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import helmet from 'helmet';
-import compression from 'compression';
+import compression = require('compression');
 import { randomUUID } from 'crypto';
-import express from 'express';
+import * as express from 'express';
 
 // Initialize logger
 const logger = new Logger();
@@ -339,9 +339,10 @@ async function bootstrap() {
       }),
     );
 
-    // Add request size limits
-    app.use(express.json({ limit: '10mb' }));
-    app.use(express.urlencoded({ limit: '10mb', extended: true }));
+    // Add request size limits (NestJS handles JSON parsing, but we can set limits via the underlying Express instance)
+    const expressApp = app.getHttpAdapter().getInstance();
+    expressApp.use(express.json({ limit: '10mb' }));
+    expressApp.use(express.urlencoded({ limit: '10mb', extended: true }));
     logger.info('✅ Request size limits configured (10MB)', 'Bootstrap');
 
     const port = process.env.PORT || 3001;
