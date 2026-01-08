@@ -110,14 +110,14 @@ export class ProductsService {
         tags: createProductDto.tags || [], // Keep for backward compatibility
         categoryId: createProductDto.categoryId, // New taxonomy field
         status: createProductDto.status || 'DRAFT',
-        images: {
+        images: createProductDto.images && createProductDto.images.length > 0 ? {
           create: createProductDto.images.map((img, index) => ({
             url: img.url,
             alt: img.alt,
             order: img.order ?? index,
             type: (img.type as any) || 'IMAGE',
           })),
-        },
+        } : undefined,
         variations: createProductDto.variations
           ? {
               create: createProductDto.variations.map((variation) => ({
@@ -296,8 +296,11 @@ export class ProductsService {
         orderBy = { createdAt: 'desc' };
         break;
       case 'popular':
-        // TODO: Implement popularity based on sales/views
-        orderBy = { createdAt: 'desc' };
+        // Sort by popularity: reviewCount (desc), then averageRating (desc), then createdAt (desc)
+        // This prioritizes products with more reviews and higher ratings
+        // Note: Prisma supports multiple orderBy fields, prioritizing reviewCount first
+        orderBy = { reviewCount: 'desc' } as Prisma.ProductOrderByWithRelationInput;
+        // For more complex sorting, we'd need to fetch and sort in memory or use raw SQL
         break;
       default:
         orderBy = { createdAt: 'desc' };

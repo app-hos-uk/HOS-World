@@ -33,6 +33,8 @@
     "db:migrate-phase6": "ts-node src/database/run-phase6-migration.ts",
     "db:run-migration-sql": "ts-node src/database/run-migration.ts",
     "verify:deployment": "ts-node scripts/verify-deployment.ts",
+    "verify:oauth": "ts-node scripts/verify-oauth-table.ts",
+    "verify:env": "ts-node scripts/verify-env-vars.ts",
     "clean": "rm -rf dist"
   },
   "dependencies": {
