@@ -28,7 +28,6 @@ export class AdminService {
         sellerProfile: {
           select: {
             storeName: true,
-            isActive: true,
           },
         },
       },
@@ -351,9 +350,23 @@ export class AdminService {
       }
     }
 
+    // Convert role string to enum if provided
+    const updatePayload: any = { ...updateData };
+    if (updatePayload.role) {
+      // Validate and convert role string to UserRole enum
+      const roleString = updatePayload.role.toUpperCase();
+      const validRoles = Object.values(UserRole) as string[];
+      if (!validRoles.includes(roleString)) {
+        throw new BadRequestException(
+          `Invalid role: ${updatePayload.role}. Valid roles are: ${validRoles.join(', ')}`
+        );
+      }
+      updatePayload.role = roleString as UserRole;
+    }
+
     return this.prisma.user.update({
       where: { id: userId },
-      data: updateData,
+      data: updatePayload,
       select: {
         id: true,
         email: true,
@@ -435,30 +448,7 @@ export class AdminService {
     return { message: 'Settings updated successfully', settings };
   }
 
-  async getRolePermissions(role: string) {
-    // TODO: Implement permissions storage (could use a Permissions model)
-    // For now, return default permissions based on role
-    const defaultPermissions: Record<string, string[]> = {
-      ADMIN: ['*'], // All permissions
-      PROCUREMENT: ['submissions.review', 'submissions.approve', 'submissions.reject'],
-      FULFILLMENT: ['shipments.verify', 'orders.view', 'orders.manage'],
-      CATALOG: ['catalog.create', 'products.view', 'products.edit'],
-      MARKETING: ['marketing.create', 'products.view'],
-      FINANCE: ['pricing.approve', 'orders.view', 'orders.refund'],
-      SELLER: ['products.create', 'products.edit', 'orders.view', 'orders.manage'],
-      B2C_SELLER: ['products.create', 'products.edit', 'orders.view', 'orders.manage'],
-      WHOLESALER: ['products.create', 'products.edit', 'orders.view'],
-      CUSTOMER: ['products.view', 'orders.view'],
-      CMS_EDITOR: ['products.view', 'products.edit', 'catalog.create'],
-    };
-
-    return defaultPermissions[role] || [];
-  }
-
-  async updateRolePermissions(role: string, permissions: string[]) {
-    // TODO: Implement permissions update (could use a RolePermissions model)
-    return { message: 'Permissions updated successfully', role, permissions };
-  }
+  // Duplicate methods removed - using Prisma-based implementations above (lines 252-294)
 
   async getAllSellers() {
     const sellers = await this.prisma.seller.findMany({
