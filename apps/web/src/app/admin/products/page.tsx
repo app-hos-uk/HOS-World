@@ -50,11 +50,12 @@ export default function AdminProductsPage() {
       setLoading(true);
       setError(null);
       const response = await apiClient.getAdminProducts({ page, limit: 50 });
-      const list = response?.data?.products || response?.data?.data || [];
+      const list = response?.data?.products || response?.data?.data || response?.data || [];
       setProducts(Array.isArray(list) ? list : []);
     } catch (err: any) {
       console.error('Error fetching products:', err);
       setError(err.message || 'Failed to load products');
+      setProducts([]); // Reset to empty array on error
     } finally {
       setLoading(false);
     }
