@@ -442,7 +442,7 @@ export default function AdminProductsPage() {
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
                     >
                       <option value="">Select a seller</option>
-                      {sellers.map((seller) => (
+                      {(Array.isArray(sellers) ? sellers : []).map((seller) => (
                         <option key={seller.id} value={seller.id}>
                           {seller.email} ({seller.role})
                         </option>
@@ -596,7 +596,7 @@ export default function AdminProductsPage() {
                     </td>
                   </tr>
                 ) : (
-                  products.map((product) => (
+                  (Array.isArray(products) ? products : []).map((product) => (
                     <tr key={product.id} className="hover:bg-gray-50">
                       <td className="px-6 py-4">
                         <div className="text-sm font-medium text-gray-900">
