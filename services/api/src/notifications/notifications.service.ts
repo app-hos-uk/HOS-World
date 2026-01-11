@@ -342,6 +342,155 @@ export class NotificationsService {
       </html>
     `;
   }
+
+  async getUserNotifications(userId: string): Promise<any[]> {
+    const notifications = await this.prisma.notification.findMany({
+      where: { userId },
+      orderBy: { createdAt: 'desc' },
+      take: 50, // Limit to last 50 notifications
+    });
+    return notifications;
+  }
+
+  /**
+   * Send notification to all users with a specific role
+   */
+  async sendNotificationToRole(
+    role: string,
+    type: string,
+    subject: string,
+    content: string,
+    metadata?: any,
+  ): Promise<void> {
+    try {
+      const users = await this.prisma.user.findMany({
+        where: { role: role as any },
+        select: { id: true, email: true },
+      });
+
+      if (users.length === 0) {
+        this.logger.warn(`No users found with role: ${role}`);
+        return;
+      }
+
+      const notifications = users.map((user) => ({
+        userId: user.id,
+        type: type as any,
+        subject,
+        content,
+        email: user.email,
+        status: 'PENDING' as const,
+        metadata: metadata ? (metadata as any) : undefined,
+      }));
+
+      await this.prisma.notification.createMany({
+        data: notifications,
+      });
+
+      // Send emails
+      for (const user of users) {
+        await this.sendEmail(user.email, subject, `
+          <!DOCTYPE html>
+          <html>
+          <head>
+            <style>
+              body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+              .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+              .header { background: #4a5568; color: white; padding: 20px; text-align: center; }
+              .content { padding: 20px; background: #f7fafc; }
+              .footer { text-align: center; padding: 20px; color: #718096; font-size: 12px; }
+            </style>
+          </head>
+          <body>
+            <div class="container">
+              <div class="header">
+                <h1>${subject}</h1>
+              </div>
+              <div class="content">
+                ${content.replace(/\n/g, '<br>')}
+              </div>
+              <div class="footer">
+                <p>House of Spells Marketplace</p>
+              </div>
+            </div>
+          </body>
+          </html>
+        `);
+      }
+
+      this.logger.log(`✅ Sent ${notifications.length} notifications to ${role} team`);
+    } catch (error: any) {
+      this.logger.error(`Failed to send notifications to ${role}: ${error?.message}`);
+    }
+  }
+
+  /**
+   * Send notification to a specific user
+   */
+  async sendNotificationToUser(
+    userId: string,
+    type: string,
+    subject: string,
+    content: string,
+    metadata?: any,
+  ): Promise<void> {
+    try {
+      const user = await this.prisma.user.findUnique({
+        where: { id: userId },
+        select: { id: true, email: true },
+      });
+
+      if (!user) {
+        this.logger.warn(`User not found: ${userId}`);
+        return;
+      }
+
+      await this.prisma.notification.create({
+        data: {
+          userId: user.id,
+          type: type as any,
+          subject,
+          content,
+          email: user.email,
+          status: 'SENT',
+          sentAt: new Date(),
+          metadata: metadata ? (metadata as any) : undefined,
+        },
+      });
+
+      await this.sendEmail(user.email, subject, `
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <style>
+            body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+            .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+            .header { background: #4a5568; color: white; padding: 20px; text-align: center; }
+            .content { padding: 20px; background: #f7fafc; }
+            .footer { text-align: center; padding: 20px; color: #718096; font-size: 12px; }
+          </style>
+        </head>
+        <body>
+          <div class="container">
+            <div class="header">
+              <h1>${subject}</h1>
+            </div>
+            <div class="content">
+              ${content.replace(/\n/g, '<br>')}
+            </div>
+            <div class="footer">
+              <p>House of Spells Marketplace</p>
+            </div>
+          </div>
+        </body>
+        </html>
+      `);
+
+      this.logger.log(`✅ Sent notification to user ${userId}`);
+    } catch (error: any) {
+      this.logger.error(`Failed to send notification to user ${userId}: ${error?.message}`);
+    }
+  }
 }
 
 

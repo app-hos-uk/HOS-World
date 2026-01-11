@@ -1,14 +1,25 @@
 #!/usr/bin/env ts-node
 /**
  * Script to verify required environment variables are set
- * Usage: pnpm ts-node scripts/verify-env-vars.ts
+ * Usage: pnpm verify:env
+ * 
+ * Note: This checks the local .env file. For production verification,
+ * check Railway dashboard or set RAILWAY=true to check process.env directly.
  */
 
 import * as dotenv from 'dotenv';
 import * as path from 'path';
 
-// Load .env file
-dotenv.config({ path: path.join(__dirname, '../.env') });
+// Check if we should use process.env (for Railway/production) or .env file
+const useProcessEnv = process.env.RAILWAY === 'true' || process.env.CHECK_PROCESS_ENV === 'true';
+
+if (!useProcessEnv) {
+  // Load .env file for local development
+  dotenv.config({ path: path.join(__dirname, '../.env') });
+  console.log('ℹ️  Checking local .env file. Set RAILWAY=true to check process.env (for production)\n');
+} else {
+  console.log('ℹ️  Checking process.env (production/Railway mode)\n');
+}
 
 interface EnvVarCheck {
   name: string;

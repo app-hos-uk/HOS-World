@@ -36,11 +36,12 @@ export class PrismaService extends PrismaClient implements OnModuleInit, OnModul
       if (hasRefreshToken || hasRefreshTokenAlt || hasRefreshTokenCheck) {
         this.logger.log('[DEBUG] Hypothesis A: ✅ RefreshToken model found in Prisma client');
       } else {
-        this.logger.error('[DEBUG] Hypothesis A: ❌ RefreshToken model NOT found in Prisma client!');
-        this.logger.error('[DEBUG] Hypothesis A: Available Prisma models (first 20):', Object.keys(this).filter(k => !k.startsWith('$') && !k.startsWith('_') && k !== 'logger').slice(0, 20).join(', '));
-        this.logger.error('[DEBUG] Hypothesis A: This will cause crashes when auth methods try to use refreshToken!');
-        this.logger.error('[DEBUG] Hypothesis A: Solution: Ensure Prisma client is regenerated with: pnpm db:generate');
-        this.logger.error('[DEBUG] Hypothesis A: Also verify schema.prisma contains: model RefreshToken');
+        const service = this as any;
+        service.logger.error('[DEBUG] Hypothesis A: ❌ RefreshToken model NOT found in Prisma client!');
+        service.logger.error('[DEBUG] Hypothesis A: Available Prisma models (first 20):', Object.keys(service).filter((k: string) => !k.startsWith('$') && !k.startsWith('_') && k !== 'logger').slice(0, 20).join(', '));
+        service.logger.error('[DEBUG] Hypothesis A: This will cause crashes when auth methods try to use refreshToken!');
+        service.logger.error('[DEBUG] Hypothesis A: Solution: Ensure Prisma client is regenerated with: pnpm db:generate');
+        service.logger.error('[DEBUG] Hypothesis A: Also verify schema.prisma contains: model RefreshToken');
       }
     } catch (error: any) {
       this.logger.error('[DEBUG] Hypothesis A: ❌ Error checking RefreshToken model:', error?.message || error);

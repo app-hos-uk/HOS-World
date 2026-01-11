@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { apiClient } from '@/lib/api';
+import { getPublicApiBaseUrl } from '@/lib/apiBaseUrl';
 
 interface SocialShareProps {
   type: 'PRODUCT' | 'COLLECTION' | 'WISHLIST' | 'ACHIEVEMENT' | 'QUEST';
@@ -19,7 +20,7 @@ export function SocialShare({ type, itemId, itemName, itemImage }: SocialSharePr
       const token = localStorage.getItem('auth_token');
       
       // Generate share URL
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api';
+      const apiUrl = getPublicApiBaseUrl() || 'http://localhost:3001/api/v1';
       const urlResponse = await fetch(`${apiUrl}/social-sharing/share-url?type=${type}&itemId=${itemId}`, {
         headers: {
           Authorization: `Bearer ${token}`,
@@ -37,7 +38,7 @@ export function SocialShare({ type, itemId, itemName, itemImage }: SocialSharePr
         setTimeout(() => setCopied(false), 2000);
         
         // Record share
-        const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api';
+        const apiUrl = getPublicApiBaseUrl() || 'http://localhost:3001/api/v1';
         await fetch(`${apiUrl}/social-sharing/share`, {
           method: 'POST',
           headers: {

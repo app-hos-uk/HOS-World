@@ -3,11 +3,10 @@ import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../database/prisma.service';
 import { CreatePaymentDto } from './dto/create-payment.dto';
 import { CurrencyService } from '../currency/currency.service';
-import Stripe from 'stripe';
+import { PaymentProviderService } from './payment-provider.service';
 
 @Injectable()
 export class PaymentsService {
-  private stripe: Stripe | null = null;
   private readonly BASE_CURRENCY = 'GBP';
   private readonly logger = new Logger(PaymentsService.name);
 
@@ -15,15 +14,9 @@ export class PaymentsService {
     private prisma: PrismaService,
     private configService: ConfigService,
     private currencyService: CurrencyService,
+    private paymentProviderService: PaymentProviderService,
   ) {
-    // Initialize Stripe
-    const stripeKey = this.configService.get<string>('STRIPE_SECRET_KEY');
-    if (stripeKey) {
-      this.stripe = new Stripe(stripeKey, { apiVersion: '2024-01-05' });
-      this.logger.log('Stripe initialized');
-    } else {
-      this.logger.warn('STRIPE_SECRET_KEY not set - Stripe payments disabled');
-    }
+    this.logger.log('PaymentsService initialized with payment provider framework');
   }
 
   async createPaymentIntent(userId: string, createPaymentDto: CreatePaymentDto): Promise<any> {
@@ -70,57 +63,57 @@ export class PaymentsService {
       throw new BadRequestException('Order is already paid');
     }
 
-    // Convert order total to GBP for payment processing
+    // Use provided amount if available (e.g., after gift card redemption), otherwise use order total
+    const paymentAmount = createPaymentDto.amount !== undefined ? createPaymentDto.amount : Number(order.total);
+    const paymentCurrency = createPaymentDto.currency || order.currency;
+
+    // Convert payment amount to GBP for payment processing
     let paymentAmountGBP: number;
-    if (order.currency === this.BASE_CURRENCY) {
-      paymentAmountGBP = Number(order.total);
+    if (paymentCurrency === this.BASE_CURRENCY) {
+      paymentAmountGBP = paymentAmount;
     } else {
       paymentAmountGBP = await this.currencyService.convertBetween(
-        Number(order.total),
-        order.currency,
+        paymentAmount,
+        paymentCurrency,
         this.BASE_CURRENCY,
       );
     }
 
-    // Create Stripe Payment Intent if Stripe is configured
+    // Determine payment provider (default to 'stripe' or first available)
+    const paymentMethod = createPaymentDto.paymentMethod || 'stripe';
+    const availableProviders = this.paymentProviderService.getAvailableProviders();
+    
+    if (availableProviders.length === 0) {
+      throw new BadRequestException('No payment providers are available');
+    }
+
+    const providerName = this.paymentProviderService.isProviderAvailable(paymentMethod)
+      ? paymentMethod
+      : availableProviders[0];
+
+    const provider = this.paymentProviderService.getProvider(providerName);
+
+    // Create payment intent using provider
     let clientSecret: string | null = null;
     let paymentIntentId: string | null = null;
 
-    if (this.stripe) {
-      try {
-        const paymentIntent = await this.stripe.paymentIntents.create({
-          amount: Math.round(paymentAmountGBP * 100), // Convert to pence (GBP)
-          currency: 'gbp', // Always GBP for payments
-          metadata: {
-            orderId: order.id,
-            userId,
-            originalCurrency: order.currency, // Store original currency for reference
-            originalAmount: Number(order.total).toFixed(2),
-          },
-        });
+    try {
+      const result = await provider.createPaymentIntent({
+        amount: paymentAmountGBP,
+        currency: this.BASE_CURRENCY.toLowerCase(),
+        orderId: order.id,
+        customerId: userId,
+        metadata: {
+          originalCurrency: order.currency,
+          originalAmount: Number(order.total).toFixed(2),
+        },
+      });
 
-        clientSecret = paymentIntent.client_secret;
-        paymentIntentId = paymentIntent.id;
-
-        // Store payment intent ID in order metadata for webhook lookup
-        await this.prisma.order.update({
-          where: { id: order.id },
-          data: {
-            metadata: {
-              ...((order.metadata as any) || {}),
-              stripePaymentIntentId: paymentIntent.id,
-            } as any,
-          },
-        });
-      } catch (error) {
-        this.logger.error('Failed to create Stripe payment intent:', error);
-        throw new BadRequestException('Failed to create payment intent');
-      }
-    } else {
-      // Fallback for development/testing without Stripe
-      paymentIntentId = `test_${order.id}_${Date.now()}`;
-      clientSecret = 'test_client_secret';
-      this.logger.warn('Stripe not configured - using test payment intent');
+      paymentIntentId = result.paymentIntentId;
+      clientSecret = result.clientSecret || null;
+    } catch (error: any) {
+      this.logger.error(`Failed to create payment intent with ${providerName}:`, error);
+      throw new BadRequestException(`Failed to create payment intent: ${error.message}`);
     }
 
     // Return order with seller information revealed (for payment page)
@@ -165,33 +158,38 @@ export class PaymentsService {
       return;
     }
 
-    // Verify payment with Stripe if configured
-    if (this.stripe) {
-      try {
-        const paymentIntent = await this.stripe.paymentIntents.retrieve(paymentIntentId);
+    // Get payment record to determine provider
+    const payment = await this.prisma.payment.findFirst({
+      where: {
+        orderId,
+        stripePaymentId: paymentIntentId, // This field stores payment intent ID from any provider
+      },
+    });
 
-        if (paymentIntent.status !== 'succeeded') {
-          throw new BadRequestException(`Payment not successful. Status: ${paymentIntent.status}`);
-        }
+    // Determine provider from payment method or default to stripe
+    const providerName = payment?.paymentMethod === 'klarna' ? 'klarna' : 'stripe';
+    const provider = this.paymentProviderService.getProvider(providerName);
 
-        // Verify order ID matches
-        if (paymentIntent.metadata.orderId !== orderId) {
-          throw new BadRequestException('Payment intent does not match order');
-        }
+    try {
+      const result = await provider.confirmPayment({
+        paymentIntentId,
+        orderId,
+      });
 
-        // Process payment (webhook may have already done this, but idempotent)
-        await this.markPaymentAsPaid(order, paymentIntent.id, paymentIntent.amount / 100);
-      } catch (error) {
-        if (error instanceof BadRequestException) {
-          throw error;
-        }
-        this.logger.error('Failed to verify payment with Stripe:', error);
-        throw new BadRequestException('Failed to verify payment');
+      if (!result.success) {
+        throw new BadRequestException(
+          result.error || `Payment not successful. Status: ${result.status}`,
+        );
       }
-    } else {
-      // Fallback for development/testing without Stripe
-      this.logger.warn('Stripe not configured - marking payment as paid without verification');
-      await this.markPaymentAsPaid(order, paymentIntentId, Number(order.total));
+
+      // Process payment (webhook may have already done this, but idempotent)
+      await this.markPaymentAsPaid(order, result.paymentId, result.amount);
+    } catch (error) {
+      if (error instanceof BadRequestException) {
+        throw error;
+      }
+      this.logger.error(`Failed to verify payment with ${providerName}:`, error);
+      throw new BadRequestException('Failed to verify payment');
     }
   }
 
@@ -256,92 +254,63 @@ export class PaymentsService {
     this.logger.log(`Payment confirmed for order ${order.id}`);
   }
 
-  async handleWebhook(payload: Buffer | string, signature: string): Promise<void> {
-    if (!this.stripe) {
-      this.logger.warn('Stripe not configured - webhook ignored');
-      return;
-    }
+  async handleWebhook(
+    payload: Buffer | string,
+    signature: string,
+    providerName: string = 'stripe',
+  ): Promise<void> {
+    const provider = this.paymentProviderService.getProvider(providerName);
 
-    const webhookSecret = this.configService.get<string>('STRIPE_WEBHOOK_SECRET');
-    if (!webhookSecret) {
-      this.logger.error('STRIPE_WEBHOOK_SECRET not configured - cannot verify webhook');
-      throw new BadRequestException('Webhook secret not configured');
-    }
-
-    let event: Stripe.Event;
-    try {
-      // Verify webhook signature
-      event = this.stripe.webhooks.constructEvent(
-        payload,
-        signature,
-        webhookSecret,
-      );
-    } catch (error) {
-      this.logger.error('Webhook signature verification failed:', error);
+    if (!provider.validateWebhook(payload, signature)) {
+      this.logger.error(`Webhook signature validation failed for ${providerName}`);
       throw new BadRequestException('Invalid webhook signature');
     }
 
-    this.logger.log(`Received Stripe webhook: ${event.type}`);
+    const event = typeof payload === 'string' ? JSON.parse(payload) : JSON.parse(payload.toString());
+    this.logger.log(`Received ${providerName} webhook: ${event.type || 'unknown'}`);
 
-    // Handle different event types
-    switch (event.type) {
-      case 'payment_intent.succeeded':
-        await this.handlePaymentSuccess(event.data.object as Stripe.PaymentIntent);
-        break;
-      case 'payment_intent.payment_failed':
-        await this.handlePaymentFailure(event.data.object as Stripe.PaymentIntent);
-        break;
-      default:
-        this.logger.log(`Unhandled webhook event type: ${event.type}`);
+    const result = await provider.processWebhook(event);
+
+    if (result.processed && result.orderId) {
+      const order = await this.prisma.order.findUnique({
+        where: { id: result.orderId },
+      });
+
+      if (!order) {
+        this.logger.error(`Order not found for webhook: ${result.orderId}`);
+        return;
+      }
+
+      // Handle based on event type
+      if (event.type?.includes('succeeded') || event.type?.includes('success')) {
+        await this.handlePaymentSuccess(order, result.paymentId || '', result.metadata);
+      } else if (event.type?.includes('failed') || event.type?.includes('failure')) {
+        await this.handlePaymentFailure(order, result.paymentId || '');
+      }
     }
   }
 
   /**
    * Handle successful payment (webhook authoritative)
    */
-  private async handlePaymentSuccess(paymentIntent: Stripe.PaymentIntent): Promise<void> {
-    const orderId = paymentIntent.metadata.orderId;
-    if (!orderId) {
-      this.logger.error('Payment intent missing orderId metadata');
-      return;
-    }
-
-    const order = await this.prisma.order.findUnique({
-      where: { id: orderId },
-    });
-
-    if (!order) {
-      this.logger.error(`Order not found for payment intent ${paymentIntent.id}`);
-      return;
-    }
-
+  private async handlePaymentSuccess(
+    order: any,
+    paymentId: string,
+    metadata?: Record<string, any>,
+  ): Promise<void> {
     // Webhook is authoritative - mark as paid
-    await this.markPaymentAsPaid(order, paymentIntent.id, paymentIntent.amount / 100);
-    this.logger.log(`Payment succeeded for order ${orderId} via webhook`);
+    const amount = metadata?.amount || Number(order.total);
+    await this.markPaymentAsPaid(order, paymentId, amount);
+    this.logger.log(`Payment succeeded for order ${order.id} via webhook`);
   }
 
   /**
    * Handle failed payment
    */
-  private async handlePaymentFailure(paymentIntent: Stripe.PaymentIntent): Promise<void> {
-    const orderId = paymentIntent.metadata.orderId;
-    if (!orderId) {
-      this.logger.error('Payment intent missing orderId metadata');
-      return;
-    }
-
-    const order = await this.prisma.order.findUnique({
-      where: { id: orderId },
-    });
-
-    if (!order) {
-      this.logger.error(`Order not found for payment intent ${paymentIntent.id}`);
-      return;
-    }
-
+  private async handlePaymentFailure(order: any, paymentId: string): Promise<void> {
     // Update order payment status to FAILED
     await this.prisma.order.update({
-      where: { id: orderId },
+      where: { id: order.id },
       data: {
         paymentStatus: 'FAILED',
       },
@@ -350,19 +319,26 @@ export class PaymentsService {
     // Create payment record with FAILED status
     await this.prisma.payment.create({
       data: {
-        orderId,
-        stripePaymentId: paymentIntent.id,
-        amount: paymentIntent.amount / 100,
+        orderId: order.id,
+        stripePaymentId: paymentId, // Store payment ID from any provider
+        amount: Number(order.total),
         currency: this.BASE_CURRENCY,
         status: 'FAILED',
         paymentMethod: 'card',
         metadata: {
-          failureReason: paymentIntent.last_payment_error?.message || 'Payment failed',
+          failureReason: 'Payment failed',
         } as any,
       },
     });
 
-    this.logger.log(`Payment failed for order ${orderId} via webhook`);
+    this.logger.log(`Payment failed for order ${order.id} via webhook`);
+  }
+
+  /**
+   * Get available payment providers
+   */
+  getAvailableProviders(): string[] {
+    return this.paymentProviderService.getAvailableProviders();
   }
 }
 

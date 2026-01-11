@@ -4,12 +4,16 @@ import {
   BadRequestException,
 } from '@nestjs/common';
 import { PrismaService } from '../database/prisma.service';
+import { NotificationsService } from '../notifications/notifications.service';
 import { SetPricingDto, ApprovePricingDto } from './dto/set-pricing.dto';
 import { ProductSubmissionStatus, VisibilityLevel } from '@prisma/client';
 
 @Injectable()
 export class FinanceService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private notificationsService: NotificationsService,
+  ) {}
 
   async findPending() {
     const submissions = await this.prisma.productSubmission.findMany({
@@ -127,7 +131,14 @@ export class FinanceService {
       },
     });
 
-    // TODO: Send notification to HOS Admin for publishing
+    // Send notification to HOS Admin for publishing
+    await this.notificationsService.sendNotificationToRole(
+      'ADMIN',
+      'ORDER_CONFIRMATION', // Using existing type as placeholder
+      'Product Ready for Publishing',
+      `A product submission from ${updated.seller?.storeName || 'Unknown Seller'} has completed all review stages and is ready for publishing.`,
+      { submissionId },
+    );
 
     return updated;
   }
@@ -157,6 +168,7 @@ export class FinanceService {
         seller: {
           select: {
             id: true,
+            userId: true,
             storeName: true,
             slug: true,
           },
@@ -164,7 +176,16 @@ export class FinanceService {
       },
     });
 
-    // TODO: Send notification to seller
+    // Send notification to seller
+    if (updated.seller?.userId) {
+      await this.notificationsService.sendNotificationToUser(
+        updated.seller.userId,
+        'ORDER_CANCELLED', // Using existing type as placeholder
+        'Product Submission Rejected',
+        `Your product submission has been rejected by Finance. Reason: ${reason}`,
+        { submissionId },
+      );
+    }
 
     return updated;
   }

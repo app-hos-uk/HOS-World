@@ -6,6 +6,12 @@ import {
   Logger,
   ForbiddenException,
 } from '@nestjs/common';
+import {
+  ApiTags,
+  ApiOperation,
+  ApiResponse as SwaggerApiResponse,
+  ApiBearerAuth,
+} from '@nestjs/swagger';
 import { PrismaService } from '../database/prisma.service';
 import { ConfigService } from '@nestjs/config';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
@@ -15,6 +21,8 @@ import * as fs from 'fs';
 import * as path from 'path';
 import type { ApiResponse } from '@hos-marketplace/shared-types';
 
+@ApiTags('admin')
+@ApiBearerAuth('JWT-auth')
 @Controller('admin/migration-taxonomy')
 @UseGuards(JwtAuthGuard, RolesGuard)
 @Roles('ADMIN')
@@ -35,6 +43,10 @@ export class MigrationTaxonomyController {
   }
 
   @Post('run-sql')
+  @ApiOperation({ summary: 'Run taxonomy migration', description: 'Runs taxonomy system migration SQL. Requires ENABLE_ADMIN_MIGRATIONS=true. Admin access required.' })
+  @SwaggerApiResponse({ status: 200, description: 'Migration completed' })
+  @SwaggerApiResponse({ status: 401, description: 'Unauthorized' })
+  @SwaggerApiResponse({ status: 403, description: 'Forbidden - Admin access required or migrations disabled' })
   async runSQLMigration(): Promise<ApiResponse<any>> {
     this.checkMigrationsEnabled();
     
@@ -122,6 +134,10 @@ export class MigrationTaxonomyController {
   }
 
   @Get('verify')
+  @ApiOperation({ summary: 'Verify taxonomy migration', description: 'Verifies that taxonomy migration was successful. Admin access required.' })
+  @SwaggerApiResponse({ status: 200, description: 'Migration verification completed' })
+  @SwaggerApiResponse({ status: 401, description: 'Unauthorized' })
+  @SwaggerApiResponse({ status: 403, description: 'Forbidden - Admin access required' })
   async verifyMigrationStatus(): Promise<ApiResponse<any>> {
     const verification = await this.verifyMigrationInternal();
     return {

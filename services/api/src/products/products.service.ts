@@ -6,10 +6,11 @@ import {
 } from '@nestjs/common';
 import { PrismaService } from '../database/prisma.service';
 import { CreateProductDto } from './dto/create-product.dto';
+import { CreateBundleDto } from './dto/create-bundle.dto';
 import { UpdateProductDto } from './dto/update-product.dto';
 import { SearchProductsDto } from './dto/search-products.dto';
 import type { Product, PaginatedResponse } from '@hos-marketplace/shared-types';
-import { Prisma } from '@prisma/client';
+import { Prisma, ProductStatus, ImageType } from '@prisma/client';
 import { slugify } from '@hos-marketplace/utils';
 import { ProductsElasticsearchHook } from './products-elasticsearch.hook';
 
@@ -109,13 +110,15 @@ export class ProductsService {
         category: createProductDto.category, // Keep for backward compatibility
         tags: createProductDto.tags || [], // Keep for backward compatibility
         categoryId: createProductDto.categoryId, // New taxonomy field
-        status: createProductDto.status || 'DRAFT',
+        status: (createProductDto.status as ProductStatus) || ProductStatus.DRAFT,
+        productType: createProductDto.productType || 'SIMPLE',
+        parentProductId: createProductDto.parentProductId, // For variant products
         images: createProductDto.images && createProductDto.images.length > 0 ? {
           create: createProductDto.images.map((img, index) => ({
             url: img.url,
             alt: img.alt,
             order: img.order ?? index,
-            type: (img.type as any) || 'IMAGE',
+            type: (img.type as ImageType) || ImageType.IMAGE,
           })),
         } : undefined,
         variations: createProductDto.variations
@@ -137,7 +140,7 @@ export class ProductsService {
               create: createProductDto.attributes.map(attr => ({
                 attributeId: attr.attributeId,
                 attributeValueId: attr.attributeValueId,
-                textValue: attr.textValue,
+                textValue: attr.value || attr.textValue,
                 numberValue: attr.numberValue,
                 booleanValue: attr.booleanValue,
                 dateValue: attr.dateValue ? new Date(attr.dateValue) : undefined,
@@ -359,7 +362,7 @@ export class ProductsService {
     };
   }
 
-  async findOne(id: string, includeSeller: boolean = false): Promise<Product> {
+  async findOne(id: string, includeSeller: boolean = false, includeBundles: boolean = false): Promise<Product> {
     const product = await this.prisma.product.findUnique({
       where: { id },
       include: {
@@ -391,6 +394,24 @@ export class ProductsService {
             attributeValue: true,
           },
         },
+        ...(includeBundles ? {
+          bundleItems: {
+            include: {
+              product: {
+                select: {
+                  id: true,
+                  name: true,
+                  price: true,
+                  images: {
+                    take: 1,
+                    orderBy: { order: 'asc' },
+                  },
+                },
+              },
+            },
+            orderBy: { order: 'asc' },
+          },
+        } : {}),
         ...(includeSeller ? {
           seller: {
             select: {
@@ -407,7 +428,7 @@ export class ProductsService {
       throw new NotFoundException('Product not found');
     }
 
-    return this.mapToProductType(product, includeSeller);
+    return this.mapToProductType(product, includeSeller, includeBundles);
   }
 
   async findBySlug(sellerSlug: string, productSlug: string, includeSeller: boolean = false): Promise<Product> {
@@ -733,7 +754,7 @@ export class ProductsService {
     });
   }
 
-  private mapToProductType(product: any, includeSeller: boolean = false): Product {
+  private mapToProductType(product: any, includeSeller: boolean = false, includeBundles: boolean = false): Product {
     const mapped: any = {
       id: product.id,
       name: product.name,
@@ -748,12 +769,14 @@ export class ProductsService {
       currency: product.currency,
       taxRate: Number(product.taxRate),
       stock: product.stock,
+      productType: product.productType || 'SIMPLE',
+      parentProductId: product.parentProductId || undefined,
       images: product.images?.map((img: any) => ({
         id: img.id,
         url: img.url,
         alt: img.alt || undefined,
         order: img.order,
-        type: img.type.toLowerCase() as any,
+        type: img.type as ImageType,
       })) || [],
       variations: product.variations?.map((v: any) => ({
         id: v.id,
@@ -763,7 +786,7 @@ export class ProductsService {
       fandom: product.fandom || undefined,
       category: product.category || undefined, // Backward compatibility
       tags: product.tags || [], // Backward compatibility
-      status: product.status.toLowerCase() as any,
+      status: product.status as ProductStatus,
       createdAt: product.createdAt,
       updatedAt: product.updatedAt,
     };
@@ -829,6 +852,24 @@ export class ProductsService {
       });
     }
 
+    // Include bundle items if requested
+    if (includeBundles && product.bundleItems && product.bundleItems.length > 0) {
+      mapped.bundleItems = product.bundleItems.map((item: any) => ({
+        id: item.id,
+        productId: item.productId,
+        product: {
+          id: item.product.id,
+          name: item.product.name,
+          price: Number(item.product.price),
+          imageUrl: item.product.images?.[0]?.url || null,
+        },
+        quantity: item.quantity,
+        priceOverride: item.priceOverride ? Number(item.priceOverride) : undefined,
+        isRequired: item.isRequired,
+        order: item.order,
+      }));
+    }
+
     // Only include seller information if explicitly requested (e.g., at payment page)
     if (includeSeller && product.seller) {
       mapped.sellerId = product.seller.userId || product.seller.id;
@@ -840,5 +881,106 @@ export class ProductsService {
     }
 
     return mapped as Product;
+  }
+
+  /**
+   * Create a bundle product
+   */
+  async createBundle(sellerId: string, createBundleDto: CreateBundleDto): Promise<Product> {
+    // Verify seller exists
+    const seller = await this.prisma.seller.findUnique({
+      where: { userId: sellerId },
+    });
+
+    if (!seller) {
+      throw new NotFoundException('Seller not found');
+    }
+
+    // Validate bundle items
+    if (!createBundleDto.items || createBundleDto.items.length === 0) {
+      throw new BadRequestException('Bundle must contain at least one product');
+    }
+
+    // Verify all products exist and belong to the same seller (or are platform-owned)
+    const productIds = createBundleDto.items.map(item => item.productId);
+    const products = await this.prisma.product.findMany({
+      where: {
+        id: { in: productIds },
+        OR: [
+          { sellerId: seller.id },
+          { isPlatformOwned: true },
+        ],
+      },
+    });
+
+    if (products.length !== productIds.length) {
+      throw new BadRequestException('One or more products not found or not accessible');
+    }
+
+    // Generate slug
+    const baseSlug = slugify(createBundleDto.name);
+    let slug = baseSlug;
+    let counter = 1;
+
+    while (
+      await this.prisma.product.findUnique({
+        where: { sellerId_slug: { sellerId: seller.id, slug } },
+      })
+    ) {
+      slug = `${baseSlug}-${counter}`;
+      counter++;
+    }
+
+    // Calculate bundle stock (minimum of all items)
+    const bundleStock = createBundleDto.stock || Math.min(...products.map(p => p.stock || 0));
+
+    // Create bundle product
+    const bundle = await this.prisma.product.create({
+      data: {
+        sellerId: seller.id,
+        name: createBundleDto.name,
+        description: createBundleDto.description,
+        slug,
+        sku: createBundleDto.sku,
+        price: createBundleDto.price,
+        currency: 'GBP',
+        stock: bundleStock,
+        categoryId: createBundleDto.categoryId,
+        productType: 'BUNDLED',
+        status: 'DRAFT',
+        bundleItems: {
+          create: createBundleDto.items.map((item, index) => ({
+            productId: item.productId,
+            quantity: item.quantity,
+            priceOverride: item.priceOverride,
+            isRequired: item.isRequired ?? true,
+            order: item.order ?? index,
+          })),
+        },
+      },
+      include: {
+        bundleItems: {
+          include: {
+            product: {
+              select: {
+                id: true,
+                name: true,
+                price: true,
+                images: {
+                  take: 1,
+                  orderBy: { order: 'asc' },
+                },
+              },
+            },
+          },
+          orderBy: { order: 'asc' },
+        },
+      },
+    });
+
+    // Index in Elasticsearch
+    await this.elasticsearchHook.onProductCreated(bundle.id);
+
+    return this.mapToProductType(bundle, false, true);
   }
 }

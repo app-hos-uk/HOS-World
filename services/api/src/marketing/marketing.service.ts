@@ -4,12 +4,16 @@ import {
   BadRequestException,
 } from '@nestjs/common';
 import { PrismaService } from '../database/prisma.service';
+import { NotificationsService } from '../notifications/notifications.service';
 import { CreateMaterialDto, UpdateMaterialDto } from './dto/create-material.dto';
 import { MaterialType, ProductSubmissionStatus } from '@prisma/client';
 
 @Injectable()
 export class MarketingService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private notificationsService: NotificationsService,
+  ) {}
 
   async findPending() {
     const submissions = await this.prisma.productSubmission.findMany({
@@ -227,7 +231,14 @@ export class MarketingService {
       },
     });
 
-    // TODO: Send notification to finance team
+    // Send notification to finance team
+    await this.notificationsService.sendNotificationToRole(
+      'FINANCE',
+      'ORDER_CONFIRMATION', // Using existing type as placeholder
+      'Marketing Materials Completed',
+      `Marketing materials have been completed for submission from ${updated.seller?.storeName || 'Unknown Seller'}. The product is ready for finance review.`,
+      { submissionId },
+    );
 
     return updated;
   }

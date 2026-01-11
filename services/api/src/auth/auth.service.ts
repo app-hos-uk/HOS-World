@@ -4,6 +4,7 @@ import {
   UnauthorizedException,
   BadRequestException,
   NotFoundException,
+  Logger,
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
@@ -17,6 +18,7 @@ import type { User, AuthResponse } from '@hos-marketplace/shared-types';
 
 @Injectable()
 export class AuthService {
+  private readonly logger = new Logger(AuthService.name);
   private refreshTokenAvailable: boolean = false;
   private refreshTokenChecked: boolean = false;
 
@@ -227,6 +229,44 @@ export class AuthService {
       });
     }
 
+    // Create tenant membership for new user (default to platform tenant)
+    try {
+      // Get or create platform tenant
+      let platformTenant = await this.prisma.tenant.findUnique({
+        where: { id: 'platform' },
+      });
+
+      if (!platformTenant) {
+        platformTenant = await this.prisma.tenant.create({
+          data: {
+            id: 'platform',
+            name: 'Platform',
+            subdomain: 'platform',
+            isActive: true,
+          },
+        });
+      }
+
+      // Create tenant membership
+      await this.prisma.tenantUser.create({
+        data: {
+          tenantId: platformTenant.id,
+          userId: user.id,
+          role: userRole, // Use the user's role as tenant role
+          isActive: true,
+        },
+      });
+
+      // Set default tenant for user
+      await this.prisma.user.update({
+        where: { id: user.id },
+        data: { defaultTenantId: platformTenant.id },
+      });
+    } catch (error: any) {
+      // Log error but don't fail registration if tenant system isn't fully set up
+      this.logger.warn(`Failed to create tenant membership for user ${user.id}: ${error?.message}`);
+    }
+
     // Generate tokens
     const tokens = await this.generateTokens(user);
 
@@ -386,42 +426,85 @@ export class AuthService {
   }
 
   async login(loginDto: LoginDto): Promise<AuthResponse> {
-    const user = await this.prisma.user.findUnique({
-      where: { email: loginDto.email },
-      select: {
-        id: true,
-        email: true,
-        password: true,
-        firstName: true,
-        lastName: true,
-        role: true,
-        avatar: true,
-        createdAt: true,
-        updatedAt: true,
-      },
-    });
+    // #region agent log
+    fetch('http://127.0.0.1:7242/ingest/8743deaa-734d-4185-9f60-b0828f74ef5b',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'auth.service.ts:428',message:'Login entry',data:{email:loginDto.email,hasEmail:!!loginDto.email},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'D'})}).catch(()=>{});
+    // #endregion
+    try {
+      // #region agent log
+      fetch('http://127.0.0.1:7242/ingest/8743deaa-734d-4185-9f60-b0828f74ef5b',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'auth.service.ts:430',message:'Before user query',data:{email:loginDto.email},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'C'})}).catch(()=>{});
+      // #endregion
+      const user = await this.prisma.user.findUnique({
+        where: { email: loginDto.email },
+        select: {
+          id: true,
+          email: true,
+          password: true,
+          firstName: true,
+          lastName: true,
+          role: true,
+          avatar: true,
+          createdAt: true,
+          updatedAt: true,
+        },
+      });
+      // #region agent log
+      fetch('http://127.0.0.1:7242/ingest/8743deaa-734d-4185-9f60-b0828f74ef5b',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'auth.service.ts:442',message:'After user query',data:{userFound:!!user,hasPassword:!!user?.password},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'C'})}).catch(()=>{});
+      // #endregion
 
-    if (!user) {
-      throw new UnauthorizedException('Invalid credentials');
+      if (!user) {
+        // #region agent log
+        fetch('http://127.0.0.1:7242/ingest/8743deaa-734d-4185-9f60-b0828f74ef5b',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'auth.service.ts:444',message:'User not found',data:{email:loginDto.email},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'D'})}).catch(()=>{});
+        // #endregion
+        throw new UnauthorizedException('Invalid credentials');
+      }
+
+      // Verify password
+      if (!user.password) {
+        // #region agent log
+        fetch('http://127.0.0.1:7242/ingest/8743deaa-734d-4185-9f60-b0828f74ef5b',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'auth.service.ts:449',message:'No password (OAuth user)',data:{email:loginDto.email},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'D'})}).catch(()=>{});
+        // #endregion
+        throw new UnauthorizedException('Invalid credentials. This account uses OAuth login.');
+      }
+      // #region agent log
+      fetch('http://127.0.0.1:7242/ingest/8743deaa-734d-4185-9f60-b0828f74ef5b',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'auth.service.ts:452',message:'Before password compare',data:{email:loginDto.email},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'D'})}).catch(()=>{});
+      // #endregion
+      const isPasswordValid = await bcrypt.compare(loginDto.password, user.password);
+      // #region agent log
+      fetch('http://127.0.0.1:7242/ingest/8743deaa-734d-4185-9f60-b0828f74ef5b',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'auth.service.ts:453',message:'After password compare',data:{isValid:isPasswordValid},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'D'})}).catch(()=>{});
+      // #endregion
+      if (!isPasswordValid) {
+        // #region agent log
+        fetch('http://127.0.0.1:7242/ingest/8743deaa-734d-4185-9f60-b0828f74ef5b',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'auth.service.ts:454',message:'Invalid password',data:{email:loginDto.email},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'D'})}).catch(()=>{});
+        // #endregion
+        throw new UnauthorizedException('Invalid credentials');
+      }
+
+      // Remove password from response
+      const { password, ...userWithoutPassword } = user;
+
+      // Generate tokens
+      // #region agent log
+      fetch('http://127.0.0.1:7242/ingest/8743deaa-734d-4185-9f60-b0828f74ef5b',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'auth.service.ts:461',message:'Before generateTokens',data:{userId:userWithoutPassword.id},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'E'})}).catch(()=>{});
+      // #endregion
+      const tokens = await this.generateTokens(userWithoutPassword);
+      // #region agent log
+      fetch('http://127.0.0.1:7242/ingest/8743deaa-734d-4185-9f60-b0828f74ef5b',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'auth.service.ts:462',message:'After generateTokens',data:{hasAccessToken:!!tokens.accessToken,hasRefreshToken:!!tokens.refreshToken},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'E'})}).catch(()=>{});
+      // #endregion
+
+      // #region agent log
+      fetch('http://127.0.0.1:7242/ingest/8743deaa-734d-4185-9f60-b0828f74ef5b',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'auth.service.ts:463',message:'Login success',data:{userId:userWithoutPassword.id,email:userWithoutPassword.email},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'D'})}).catch(()=>{});
+      // #endregion
+      return {
+        user: userWithoutPassword as User,
+        token: tokens.accessToken,
+        refreshToken: tokens.refreshToken,
+      };
+    } catch (error: any) {
+      // #region agent log
+      fetch('http://127.0.0.1:7242/ingest/8743deaa-734d-4185-9f60-b0828f74ef5b',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'auth.service.ts:468',message:'Login error',data:{errorMessage:error?.message,errorName:error?.name,errorStack:error?.stack?.substring(0,200)},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'C'})}).catch(()=>{});
+      // #endregion
+      throw error;
     }
-
-    // Verify password
-    const isPasswordValid = await bcrypt.compare(loginDto.password, user.password);
-    if (!isPasswordValid) {
-      throw new UnauthorizedException('Invalid credentials');
-    }
-
-    // Remove password from response
-    const { password, ...userWithoutPassword } = user;
-
-    // Generate tokens
-    const tokens = await this.generateTokens(userWithoutPassword);
-
-    return {
-      user: userWithoutPassword as User,
-      token: tokens.accessToken,
-      refreshToken: tokens.refreshToken,
-    };
   }
 
   async validateUser(email: string, password: string): Promise<any> {
@@ -429,7 +512,7 @@ export class AuthService {
       where: { email },
     });
 
-    if (user && (await bcrypt.compare(password, user.password))) {
+    if (user && user.password && (await bcrypt.compare(password, user.password))) {
       const { password: _, ...result } = user;
       return result;
     }
@@ -437,63 +520,100 @@ export class AuthService {
   }
 
   async generateTokens(user: any): Promise<{ accessToken: string; refreshToken: string }> {
-    const payload = {
-      sub: user.id,
-      email: user.email,
-      role: user.role,
-      permissionRoleId: user.permissionRoleId,
-    };
+    // #region agent log
+    fetch('http://127.0.0.1:7242/ingest/8743deaa-734d-4185-9f60-b0828f74ef5b',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'auth.service.ts:522',message:'generateTokens entry',data:{userId:user?.id,hasUser:!!user},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'E'})}).catch(()=>{});
+    // #endregion
+    try {
+      const payload = {
+        sub: user.id,
+        email: user.email,
+        role: user.role,
+        permissionRoleId: user.permissionRoleId,
+      };
+      // #region agent log
+      fetch('http://127.0.0.1:7242/ingest/8743deaa-734d-4185-9f60-b0828f74ef5b',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'auth.service.ts:528',message:'Before JWT sign',data:{hasUserId:!!payload.sub,hasEmail:!!payload.email},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'E'})}).catch(()=>{});
+      // #endregion
 
-    // Shorten access token TTL to 15 minutes for better security
-    const accessTokenTTL = this.configService.get<string>('JWT_EXPIRES_IN') || '15m';
-    const accessToken = this.jwtService.sign(payload, {
-      expiresIn: accessTokenTTL,
-    });
+      // Shorten access token TTL to 15 minutes for better security
+      const accessTokenTTL = this.configService.get<string>('JWT_EXPIRES_IN') || '15m';
+      const accessToken = this.jwtService.sign(payload, {
+        expiresIn: accessTokenTTL,
+      });
+      // #region agent log
+      fetch('http://127.0.0.1:7242/ingest/8743deaa-734d-4185-9f60-b0828f74ef5b',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'auth.service.ts:533',message:'After access token sign',data:{hasAccessToken:!!accessToken},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'E'})}).catch(()=>{});
+      // #endregion
 
-    // Generate refresh token
-    const refreshTokenTTL = '30d';
-    const refreshToken = this.jwtService.sign(payload, {
-      expiresIn: refreshTokenTTL,
-    });
+      // Generate refresh token
+      const refreshTokenTTL = '30d';
+      const refreshToken = this.jwtService.sign(payload, {
+        expiresIn: refreshTokenTTL,
+      });
+      // #region agent log
+      fetch('http://127.0.0.1:7242/ingest/8743deaa-734d-4185-9f60-b0828f74ef5b',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'auth.service.ts:550',message:'After refresh token sign',data:{hasRefreshToken:!!refreshToken},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'E'})}).catch(()=>{});
+      // #endregion
 
-    // Hash and store refresh token in DB
-    const tokenHash = await bcrypt.hash(refreshToken, 10);
-    const expiresAt = new Date();
-    expiresAt.setDate(expiresAt.getDate() + 30); // 30 days
-    
-    // Defensive check: ensure RefreshToken model exists
-    if (!this.refreshTokenAvailable) {
-      console.warn('[AUTH] ⚠️ RefreshToken model not available - skipping token storage');
-      console.warn('[AUTH] Token will be generated but not stored in database');
-      // Continue without storing refresh token - this allows the service to start
-      // but refresh functionality won't work until Prisma client is regenerated
+      // Hash and store refresh token in DB
+      // #region agent log
+      fetch('http://127.0.0.1:7242/ingest/8743deaa-734d-4185-9f60-b0828f74ef5b',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'auth.service.ts:556',message:'Before token storage',data:{refreshTokenAvailable:this.refreshTokenAvailable},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'E'})}).catch(()=>{});
+      // #endregion
+      const tokenHash = await bcrypt.hash(refreshToken, 10);
+      const expiresAt = new Date();
+      expiresAt.setDate(expiresAt.getDate() + 30); // 30 days
+      
+      // Defensive check: ensure RefreshToken model exists
+      if (!this.refreshTokenAvailable) {
+        // #region agent log
+        fetch('http://127.0.0.1:7242/ingest/8743deaa-734d-4185-9f60-b0828f74ef5b',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'auth.service.ts:562',message:'RefreshToken model not available',data:{},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'E'})}).catch(()=>{});
+        // #endregion
+        console.warn('[AUTH] ⚠️ RefreshToken model not available - skipping token storage');
+        console.warn('[AUTH] Token will be generated but not stored in database');
+        // Continue without storing refresh token - this allows the service to start
+        // but refresh functionality won't work until Prisma client is regenerated
+        return {
+          accessToken,
+          refreshToken,
+        };
+      }
+      
+      const refreshTokenModel = (this.prisma as any).refreshToken;
+      if (!refreshTokenModel) {
+        // #region agent log
+        fetch('http://127.0.0.1:7242/ingest/8743deaa-734d-4185-9f60-b0828f74ef5b',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'auth.service.ts:571',message:'RefreshToken model not found',data:{},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'E'})}).catch(()=>{});
+        // #endregion
+        console.warn('[AUTH] ⚠️ RefreshToken model not found - skipping storage');
+        return {
+          accessToken,
+          refreshToken,
+        };
+      }
+      
+      // #region agent log
+      fetch('http://127.0.0.1:7242/ingest/8743deaa-734d-4185-9f60-b0828f74ef5b',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'auth.service.ts:578',message:'Before refreshTokenModel.create',data:{userId:user.id},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'E'})}).catch(()=>{});
+      // #endregion
+      await refreshTokenModel.create({
+        data: {
+          userId: user.id,
+          tokenHash,
+          expiresAt,
+        },
+      });
+      // #region agent log
+      fetch('http://127.0.0.1:7242/ingest/8743deaa-734d-4185-9f60-b0828f74ef5b',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'auth.service.ts:585',message:'After refreshTokenModel.create',data:{},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'E'})}).catch(()=>{});
+      // #endregion
+
+      // #region agent log
+      fetch('http://127.0.0.1:7242/ingest/8743deaa-734d-4185-9f60-b0828f74ef5b',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'auth.service.ts:589',message:'generateTokens success',data:{hasAccessToken:!!accessToken,hasRefreshToken:!!refreshToken},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'E'})}).catch(()=>{});
+      // #endregion
       return {
         accessToken,
         refreshToken,
       };
+    } catch (error: any) {
+      // #region agent log
+      fetch('http://127.0.0.1:7242/ingest/8743deaa-734d-4185-9f60-b0828f74ef5b',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'auth.service.ts:595',message:'generateTokens error',data:{errorMessage:error?.message,errorName:error?.name,errorStack:error?.stack?.substring(0,200)},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'E'})}).catch(()=>{});
+      // #endregion
+      throw error;
     }
-    
-    const refreshTokenModel = (this.prisma as any).refreshToken;
-    if (!refreshTokenModel) {
-      console.warn('[AUTH] ⚠️ RefreshToken model not found - skipping storage');
-      return {
-        accessToken,
-        refreshToken,
-      };
-    }
-    
-    await refreshTokenModel.create({
-      data: {
-        userId: user.id,
-        tokenHash,
-        expiresAt,
-      },
-    });
-
-    return {
-      accessToken,
-      refreshToken,
-    };
   }
 
   async validateToken(token: string): Promise<any> {
@@ -697,48 +817,58 @@ export class AuthService {
     return oauthService.validateOrCreateOAuthUser(oauthData);
   }
 
-  // OAuth account methods - commented out as oAuthAccount model doesn't exist in schema
-  // These would need to be implemented when OAuth account model is added to Prisma schema
+  // OAuth account methods
   async getLinkedAccounts(userId: string) {
-    // TODO: Implement when oAuthAccount model is added to Prisma schema
-    // return this.prisma.oAuthAccount.findMany({
-    //   where: { userId },
-    //   select: {
-    //     id: true,
-    //     provider: true,
-    //     providerId: true,
-    //     createdAt: true,
-    //   },
-    // });
-    return [];
+    return this.prisma.oAuthAccount.findMany({
+      where: { userId },
+      select: {
+        id: true,
+        provider: true,
+        providerId: true,
+        createdAt: true,
+      },
+    });
   }
 
   async unlinkOAuthAccount(userId: string, provider: string): Promise<void> {
-    // TODO: Implement when oAuthAccount model is added to Prisma schema
-    // const user = await this.prisma.user.findUnique({
-    //   where: { id: userId },
-    //   include: {
-    //     oAuthAccounts: true,
-    //   },
-    // });
-    //
-    // if (!user) {
-    //   throw new ConflictException('User not found');
-    // }
-    //
-    // const hasPassword = user.password && user.password.length > 0;
-    // const oauthCount = user.oAuthAccounts.length;
-    //
-    // if (!hasPassword && oauthCount === 1) {
-    //   throw new ConflictException('Cannot unlink the only authentication method');
-    // }
-    //
-    // await this.prisma.oAuthAccount.deleteMany({
-    //   where: {
-    //     userId,
-    //     provider: provider as any,
-    //   },
-    // });
-    throw new BadRequestException('OAuth account unlinking not yet implemented');
+    // Get user with OAuth accounts
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      include: {
+        oAuthAccounts: true,
+      },
+    });
+
+    if (!user) {
+      throw new ConflictException('User not found');
+    }
+
+    // Validate that user has at least one authentication method remaining
+    const hasPassword = user.password && user.password.length > 0;
+    const oauthAccounts = user.oAuthAccounts || [];
+    const oauthCount = oauthAccounts.length;
+
+    // Prevent unlinking if it's the only authentication method
+    if (!hasPassword && oauthCount === 1) {
+      throw new ConflictException('Cannot unlink the only authentication method. Please set a password first.');
+    }
+
+    // Find the specific OAuth account to unlink
+    const accountToUnlink = oauthAccounts.find(
+      (account) => account.provider === provider,
+    );
+
+    if (!accountToUnlink) {
+      throw new ConflictException(`No ${provider} account linked to this user`);
+    }
+
+    // Delete the OAuth account
+    await this.prisma.oAuthAccount.delete({
+      where: {
+        id: accountToUnlink.id,
+      },
+    });
+
+    this.logger.log(`OAuth account unlinked: ${provider} for user ${userId}`);
   }
 }

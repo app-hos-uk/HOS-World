@@ -1,6 +1,7 @@
 import { Injectable, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../database/prisma.service';
 import { ProductsService } from './products.service';
+import { ProductStatus } from '@prisma/client';
 
 @Injectable()
 export class ProductsBulkService {
@@ -85,7 +86,7 @@ export class ProductsBulkService {
           fandom: productData.fandom,
           category: productData.category,
           tags: productData.tags ? productData.tags.split(',').map((t: string) => t.trim()) : [],
-          status: productData.status || 'DRAFT',
+          status: ((productData.status as ProductStatus) || ProductStatus.DRAFT),
           images: productData.images
             ? productData.images.split('|').map((url: string, index: number) => ({
                 url: url.trim(),

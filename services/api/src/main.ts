@@ -1,5 +1,5 @@
 import { NestFactory } from '@nestjs/core';
-import { ValidationPipe } from '@nestjs/common';
+import { ValidationPipe, VersioningType } from '@nestjs/common';
 import { AppModule } from './app.module';
 import { Logger } from './common/logger/logger.service';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
@@ -275,16 +275,30 @@ async function bootstrap() {
           status: 'running',
           endpoints: {
             api: '/api',
+            apiV1: '/api/v1',
             health: '/api/health',
-            products: '/api/products',
-            auth: '/api/auth',
+            products: '/api/v1/products',
+            auth: '/api/v1/auth',
             docs: '/api/docs',
+          },
+          versioning: {
+            type: 'URI',
+            defaultVersion: '1',
+            prefix: 'v',
           },
           documentation: 'API documentation available at /api/docs',
         });
       }
       next();
     });
+
+    // Enable API versioning
+    app.enableVersioning({
+      type: VersioningType.URI,
+      defaultVersion: '1',
+      prefix: 'v',
+    });
+    logger.info('✅ API versioning enabled (v1 default)', 'Bootstrap');
 
     // Global prefix for all routes
     app.setGlobalPrefix('api');
@@ -313,8 +327,10 @@ async function bootstrap() {
       .addTag('admin', 'Admin operations')
       .addTag('sellers', 'Seller operations')
       .addTag('health', 'Health check endpoints')
-      .addServer('https://hos-marketplaceapi-production.up.railway.app', 'Production')
-      .addServer('http://localhost:3001', 'Local Development')
+      .addServer('https://hos-marketplaceapi-production.up.railway.app/api/v1', 'Production (v1)')
+      .addServer('https://hos-marketplaceapi-production.up.railway.app/api', 'Production (legacy)')
+      .addServer('http://localhost:3001/api/v1', 'Local Development (v1)')
+      .addServer('http://localhost:3001/api', 'Local Development (legacy)')
       .build();
 
     const document = SwaggerModule.createDocument(app, config);

@@ -480,5 +480,27 @@ export class AdminProductsService {
     };
   }
 
+  async deleteProduct(productId: string) {
+    const product = await this.prisma.product.findUnique({
+      where: { id: productId },
+    });
+
+    if (!product) {
+      throw new NotFoundException('Product not found');
+    }
+
+    // Delete product (cascade will handle related records)
+    await this.prisma.product.delete({
+      where: { id: productId },
+    });
+
+    // Sync with Elasticsearch (fire and forget)
+    this.elasticsearchHook.onProductDeleted(productId).catch((error) => {
+      console.error('Failed to sync product deletion to Elasticsearch:', error);
+    });
+
+    return { message: 'Product deleted successfully' };
+  }
+
 }
 

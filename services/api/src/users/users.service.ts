@@ -179,13 +179,8 @@ export class UsersService {
   async getGamificationStats(userId: string): Promise<any> {
     const user = await this.prisma.user.findUnique({
       where: { id: userId },
-      select: {
-        id: true,
-        gamificationPoints: true,
-        level: true,
-        characterAvatar: true,
-        favoriteFandoms: true,
-        character: {
+      include: {
+        characterAvatar: {
           select: {
             id: true,
             name: true,
@@ -238,7 +233,7 @@ export class UsersService {
       badgeCount,
       completedQuests,
       activeQuests,
-      character: user.character,
+      character: user.characterAvatar,
       favoriteFandoms: user.favoriteFandoms || [],
       progress: {
         current: pointsProgress,

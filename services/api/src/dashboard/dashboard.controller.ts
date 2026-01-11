@@ -5,12 +5,21 @@ import {
   UseGuards,
   Request,
 } from '@nestjs/common';
+import {
+  ApiTags,
+  ApiOperation,
+  ApiResponse as SwaggerApiResponse,
+  ApiBearerAuth,
+  ApiQuery,
+} from '@nestjs/swagger';
 import { DashboardService } from './dashboard.service';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../common/guards/roles.guard';
 import { Roles } from '../common/decorators/roles.decorator';
 import type { ApiResponse } from '@hos-marketplace/shared-types';
 
+@ApiTags('dashboard')
+@ApiBearerAuth('JWT-auth')
 @Controller('dashboard')
 @UseGuards(JwtAuthGuard, RolesGuard)
 export class DashboardController {
@@ -18,6 +27,15 @@ export class DashboardController {
 
   @Get('stats')
   @Roles('SELLER', 'B2C_SELLER', 'WHOLESALER', 'ADMIN')
+  @ApiOperation({
+    summary: 'Get dashboard statistics',
+    description: 'Retrieves dashboard statistics based on user role. Supports date range filtering.',
+  })
+  @ApiQuery({ name: 'startDate', required: false, type: String, description: 'Start date (ISO format)' })
+  @ApiQuery({ name: 'endDate', required: false, type: String, description: 'End date (ISO format)' })
+  @SwaggerApiResponse({ status: 200, description: 'Dashboard statistics retrieved successfully' })
+  @SwaggerApiResponse({ status: 401, description: 'Unauthorized' })
+  @SwaggerApiResponse({ status: 403, description: 'Forbidden - Insufficient permissions' })
   async getStats(
     @Request() req: any,
     @Query('startDate') startDate?: string,
@@ -59,6 +77,13 @@ export class DashboardController {
 
   @Get('procurement')
   @Roles('PROCUREMENT', 'ADMIN')
+  @ApiOperation({
+    summary: 'Get procurement dashboard (Procurement/Admin only)',
+    description: 'Retrieves procurement dashboard statistics. Procurement or Admin access required.',
+  })
+  @SwaggerApiResponse({ status: 200, description: 'Procurement dashboard retrieved successfully' })
+  @SwaggerApiResponse({ status: 401, description: 'Unauthorized' })
+  @SwaggerApiResponse({ status: 403, description: 'Forbidden - Procurement/Admin access required' })
   async getProcurementDashboard(): Promise<ApiResponse<any>> {
     const dashboard = await this.dashboardService.getProcurementDashboard();
     return {
@@ -69,6 +94,13 @@ export class DashboardController {
 
   @Get('fulfillment')
   @Roles('FULFILLMENT', 'ADMIN')
+  @ApiOperation({
+    summary: 'Get fulfillment dashboard (Fulfillment/Admin only)',
+    description: 'Retrieves fulfillment dashboard statistics. Fulfillment or Admin access required.',
+  })
+  @SwaggerApiResponse({ status: 200, description: 'Fulfillment dashboard retrieved successfully' })
+  @SwaggerApiResponse({ status: 401, description: 'Unauthorized' })
+  @SwaggerApiResponse({ status: 403, description: 'Forbidden - Fulfillment/Admin access required' })
   async getFulfillmentDashboard(): Promise<ApiResponse<any>> {
     const dashboard = await this.dashboardService.getFulfillmentDashboard();
     return {
@@ -79,6 +111,13 @@ export class DashboardController {
 
   @Get('catalog')
   @Roles('CATALOG', 'ADMIN')
+  @ApiOperation({
+    summary: 'Get catalog dashboard (Catalog/Admin only)',
+    description: 'Retrieves catalog dashboard statistics. Catalog or Admin access required.',
+  })
+  @SwaggerApiResponse({ status: 200, description: 'Catalog dashboard retrieved successfully' })
+  @SwaggerApiResponse({ status: 401, description: 'Unauthorized' })
+  @SwaggerApiResponse({ status: 403, description: 'Forbidden - Catalog/Admin access required' })
   async getCatalogDashboard(): Promise<ApiResponse<any>> {
     const dashboard = await this.dashboardService.getCatalogDashboard();
     return {
@@ -89,6 +128,13 @@ export class DashboardController {
 
   @Get('marketing')
   @Roles('MARKETING', 'ADMIN')
+  @ApiOperation({
+    summary: 'Get marketing dashboard (Marketing/Admin only)',
+    description: 'Retrieves marketing dashboard statistics. Marketing or Admin access required.',
+  })
+  @SwaggerApiResponse({ status: 200, description: 'Marketing dashboard retrieved successfully' })
+  @SwaggerApiResponse({ status: 401, description: 'Unauthorized' })
+  @SwaggerApiResponse({ status: 403, description: 'Forbidden - Marketing/Admin access required' })
   async getMarketingDashboard(): Promise<ApiResponse<any>> {
     const dashboard = await this.dashboardService.getMarketingDashboard();
     return {
@@ -99,6 +145,13 @@ export class DashboardController {
 
   @Get('finance')
   @Roles('FINANCE', 'ADMIN')
+  @ApiOperation({
+    summary: 'Get finance dashboard (Finance/Admin only)',
+    description: 'Retrieves finance dashboard statistics. Finance or Admin access required.',
+  })
+  @SwaggerApiResponse({ status: 200, description: 'Finance dashboard retrieved successfully' })
+  @SwaggerApiResponse({ status: 401, description: 'Unauthorized' })
+  @SwaggerApiResponse({ status: 403, description: 'Forbidden - Finance/Admin access required' })
   async getFinanceDashboard(): Promise<ApiResponse<any>> {
     const dashboard = await this.dashboardService.getFinanceDashboard();
     return {
@@ -109,6 +162,13 @@ export class DashboardController {
 
   @Get('admin')
   @Roles('ADMIN')
+  @ApiOperation({
+    summary: 'Get admin dashboard (Admin only)',
+    description: 'Retrieves admin dashboard statistics. Admin access required.',
+  })
+  @SwaggerApiResponse({ status: 200, description: 'Admin dashboard retrieved successfully' })
+  @SwaggerApiResponse({ status: 401, description: 'Unauthorized' })
+  @SwaggerApiResponse({ status: 403, description: 'Forbidden - Admin access required' })
   async getAdminDashboard(): Promise<ApiResponse<any>> {
     const dashboard = await this.dashboardService.getAdminDashboard();
     return {

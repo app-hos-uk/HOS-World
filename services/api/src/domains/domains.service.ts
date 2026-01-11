@@ -103,9 +103,14 @@ export class DomainsService {
       },
     });
 
-    // TODO: Generate DNS configuration documentation
-
-    return updated;
+    // Generate DNS configuration documentation
+    const dnsConfig = await this.getDNSConfiguration(sellerId);
+    
+    // Return updated seller with DNS configuration
+    return {
+      ...updated,
+      dnsConfiguration: dnsConfig,
+    };
   }
 
   async createSubDomain(sellerId: string, createDto: CreateSubDomainDto) {

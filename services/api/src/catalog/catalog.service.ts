@@ -249,15 +249,29 @@ export class CatalogService {
     });
 
     // Update submission status
-    await this.prisma.productSubmission.update({
+    const submission = await this.prisma.productSubmission.update({
       where: { id: submissionId },
       data: {
         status: 'CATALOG_COMPLETED',
         catalogCompletedAt: new Date(),
       },
+      include: {
+        seller: {
+          select: {
+            storeName: true,
+          },
+        },
+      },
     });
 
-    // TODO: Send notification to marketing team
+    // Send notification to marketing team
+    await this.notificationsService.sendNotificationToRole(
+      'MARKETING',
+      'ORDER_CONFIRMATION', // Using existing type as placeholder
+      'Catalog Entry Completed',
+      `A catalog entry has been completed for submission from ${submission.seller?.storeName || 'Unknown Seller'}. The product is ready for marketing review.`,
+      { submissionId, catalogEntryId: updated.id },
+    );
 
     return updated;
   }

@@ -1,4 +1,4 @@
-import { Injectable, ConflictException, NotFoundException } from '@nestjs/common';
+import { Injectable, ConflictException, NotFoundException, NotImplementedException } from '@nestjs/common';
 import { PrismaService } from '../database/prisma.service';
 import { CreateNewsletterSubscriptionDto } from './dto/create-newsletter-subscription.dto';
 
@@ -6,11 +6,16 @@ import { CreateNewsletterSubscriptionDto } from './dto/create-newsletter-subscri
 export class NewsletterService {
   constructor(private prisma: PrismaService) {}
 
+  private throwNotImplemented(): never {
+    throw new NotImplementedException('Newsletter feature is not available. NewsletterSubscription model is not in the database schema.');
+  }
+
   async subscribe(
     dto: CreateNewsletterSubscriptionDto,
     userId?: string,
   ): Promise<any> {
-    // Check if already subscribed
+    this.throwNotImplemented();
+    /* // Check if already subscribed
     const existing = await this.prisma.newsletterSubscription.findUnique({
       where: { email: dto.email },
     });
@@ -43,10 +48,12 @@ export class NewsletterService {
         tags: dto.tags || {},
       },
     });
+    */ // End commented code
   }
 
   async unsubscribe(email: string): Promise<void> {
-    const subscription = await this.prisma.newsletterSubscription.findUnique({
+    this.throwNotImplemented();
+    /* const subscription = await this.prisma.newsletterSubscription.findUnique({
       where: { email },
     });
 
@@ -61,10 +68,12 @@ export class NewsletterService {
         unsubscribedAt: new Date(),
       },
     });
+    */ // End commented code
   }
 
   async getSubscriptionStatus(email: string): Promise<any> {
-    const subscription = await this.prisma.newsletterSubscription.findUnique({
+    this.throwNotImplemented();
+    /* const subscription = await this.prisma.newsletterSubscription.findUnique({
       where: { email },
     });
 
@@ -73,10 +82,12 @@ export class NewsletterService {
       subscribed: subscription?.status === 'subscribed',
       status: subscription?.status || 'not_subscribed',
     };
+    */ // End commented code
   }
 
   async getAllSubscriptions(status?: string, page = 1, limit = 50): Promise<any> {
-    const skip = (page - 1) * limit;
+    this.throwNotImplemented();
+    /* const skip = (page - 1) * limit;
     
     const where: any = {};
     if (status) {
@@ -100,15 +111,18 @@ export class NewsletterService {
       limit,
       totalPages: Math.ceil(total / limit),
     };
+    */ // End commented code
   }
 
   async getSubscribedEmails(): Promise<string[]> {
-    const subscriptions = await this.prisma.newsletterSubscription.findMany({
+    this.throwNotImplemented();
+    /* const subscriptions = await this.prisma.newsletterSubscription.findMany({
       where: { status: 'subscribed' },
       select: { email: true },
     });
 
     return subscriptions.map((s) => s.email);
+    */ // End commented code
   }
 }
 

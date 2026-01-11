@@ -32,6 +32,13 @@ export class ReturnsService {
         id: createReturnDto.orderId,
         userId,
       },
+      include: {
+        items: {
+          include: {
+            product: true,
+          },
+        },
+      },
     });
 
     if (!order) {
@@ -43,17 +50,56 @@ export class ReturnsService {
       throw new BadRequestException('Order must be delivered to request a return');
     }
 
-    // Check if return already exists for this order
-    const existingReturn = await this.prisma.returnRequest.findFirst({
-      where: {
-        orderId: createReturnDto.orderId,
-      },
-    });
+    // If item-level returns are specified, validate them
+    if (createReturnDto.items && createReturnDto.items.length > 0) {
+      // Validate each item
+      for (const returnItem of createReturnDto.items) {
+        const orderItem = order.items.find(
+          (item) => item.id === returnItem.orderItemId,
+        );
+        if (!orderItem) {
+          throw new BadRequestException(
+            `Order item ${returnItem.orderItemId} not found in order`,
+          );
+        }
+        if (returnItem.quantity > orderItem.quantity) {
+          throw new BadRequestException(
+            `Return quantity (${returnItem.quantity}) exceeds ordered quantity (${orderItem.quantity}) for item ${orderItem.id}`,
+          );
+        }
 
-    if (existingReturn) {
-      throw new BadRequestException('Return request already exists for this order');
+        // Check if item is already being returned
+        const existingReturnItem = await this.prisma.returnItem.findFirst({
+          where: {
+            orderItemId: returnItem.orderItemId,
+            returnRequest: {
+              status: {
+                in: ['PENDING', 'APPROVED', 'PROCESSING'],
+              },
+            },
+          },
+        });
+
+        if (existingReturnItem) {
+          throw new BadRequestException(
+            `Item ${returnItem.orderItemId} is already being returned`,
+          );
+        }
+      }
+    } else {
+      // Full order return - check if return already exists
+      const existingReturn = await this.prisma.returnRequest.findFirst({
+        where: {
+          orderId: createReturnDto.orderId,
+        },
+      });
+
+      if (existingReturn) {
+        throw new BadRequestException('Return request already exists for this order');
+      }
     }
 
+    // Create return request
     const returnRequest = await this.prisma.returnRequest.create({
       data: {
         orderId: createReturnDto.orderId,
@@ -61,6 +107,33 @@ export class ReturnsService {
         reason: createReturnDto.reason,
         notes: createReturnDto.notes,
         status: 'PENDING',
+        items: createReturnDto.items
+          ? {
+              create: createReturnDto.items.map((item) => ({
+                orderItemId: item.orderItemId,
+                quantity: item.quantity,
+                reason: item.reason || createReturnDto.reason,
+                status: 'PENDING',
+              })),
+            }
+          : undefined,
+      },
+      include: {
+        items: {
+          include: {
+            orderItem: {
+              include: {
+                product: {
+                  select: {
+                    id: true,
+                    name: true,
+                    price: true,
+                  },
+                },
+              },
+            },
+          },
+        },
       },
     });
 
@@ -84,6 +157,21 @@ export class ReturnsService {
             total: true,
           },
         },
+        items: {
+          include: {
+            orderItem: {
+              include: {
+                product: {
+                  select: {
+                    id: true,
+                    name: true,
+                    price: true,
+                  },
+                },
+              },
+            },
+          },
+        },
       },
       orderBy: { createdAt: 'desc' },
     });
@@ -96,6 +184,21 @@ export class ReturnsService {
       where: { id },
       include: {
         order: true,
+        items: {
+          include: {
+            orderItem: {
+              include: {
+                product: {
+                  select: {
+                    id: true,
+                    name: true,
+                    price: true,
+                  },
+                },
+              },
+            },
+          },
+        },
       },
     });
 

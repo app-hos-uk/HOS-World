@@ -7,6 +7,7 @@ import { RedisService } from './redis.service';
 @Global()
 @Module({
   imports: [
+    ConfigModule, // Make ConfigModule available for RedisService
     NestCacheModule.registerAsync({
       imports: [ConfigModule],
       useFactory: async (configService: ConfigService) => {

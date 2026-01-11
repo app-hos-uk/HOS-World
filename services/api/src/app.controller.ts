@@ -1,5 +1,5 @@
 import { Controller, Get, Optional, Inject } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
+import { ApiTags, ApiOperation, ApiResponse as SwaggerApiResponse } from '@nestjs/swagger';
 import { AppService } from './app.service';
 import { Public } from './common/decorators/public.decorator';
 import { PrismaService } from './database/prisma.service';
@@ -21,7 +21,7 @@ export class AppController {
   @Public()
   @Get()
   @ApiOperation({ summary: 'Get API information' })
-  @ApiResponse({ status: 200, description: 'API information retrieved successfully' })
+  @SwaggerApiResponse({ status: 200, description: 'API information retrieved successfully' })
   getHello(): string {
     return this.appService.getHello();
   }
@@ -29,7 +29,7 @@ export class AppController {
   @Public()
   @Get('health')
   @ApiOperation({ summary: 'Health check endpoint', description: 'Returns the health status of the API and all dependencies' })
-  @ApiResponse({
+  @SwaggerApiResponse({
     status: 200,
     description: 'Health check completed',
     schema: {

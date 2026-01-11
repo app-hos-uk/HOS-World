@@ -70,7 +70,17 @@ export class KlarnaService {
   async confirmPayment(authorizationToken: string, orderId: string): Promise<any> {
     const order = await this.prisma.order.findUnique({
       where: { id: orderId },
-      include: { items: true },
+      include: {
+        items: {
+          include: {
+            product: {
+              select: {
+                name: true,
+              },
+            },
+          },
+        },
+      },
     });
 
     if (!order) {
@@ -108,7 +118,7 @@ export class KlarnaService {
               ? Number(item.price)
               : null; // Will need conversion - simplified for now
             return {
-              name: item.productName,
+              name: item.product?.name || 'Product',
               quantity: item.quantity,
               unit_price: itemPriceGBP || Number(item.price), // Should be in GBP
               total_amount: (itemPriceGBP || Number(item.price)) * item.quantity,
@@ -144,7 +154,7 @@ export class KlarnaService {
         stripePaymentId: result.order_id, // Store Klarna order ID
         amount: paymentAmountGBP, // Amount in GBP
         currency: this.BASE_CURRENCY, // Always GBP for payments
-        status: 'COMPLETED',
+        status: 'PAID',
         paymentMethod: 'klarna',
         metadata: {
           klarnaOrderId: result.order_id,

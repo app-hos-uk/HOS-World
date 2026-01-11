@@ -79,11 +79,15 @@ export default function AdminUsersPage() {
       setError(null);
       const response = await apiClient.getUsers();
       if (response?.data) {
-        setUsers(response.data);
+        // Ensure response.data is an array before setting it
+        setUsers(Array.isArray(response.data) ? response.data : []);
+      } else {
+        setUsers([]);
       }
     } catch (err: any) {
       console.error('Error fetching users:', err);
       setError(err.message || 'Failed to load users');
+      setUsers([]); // Reset to empty array on error
     } finally {
       setLoading(false);
     }
@@ -207,13 +211,15 @@ export default function AdminUsersPage() {
     }
   };
 
-  const filteredUsers = users.filter((user) => {
-    const matchesSearch =
-      user.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      `${user.firstName} ${user.lastName}`.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesRole = roleFilter === 'ALL' || user.role === roleFilter;
-    return matchesSearch && matchesRole;
-  });
+  const filteredUsers = Array.isArray(users) 
+    ? users.filter((user) => {
+        const matchesSearch =
+          user.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          `${user.firstName} ${user.lastName}`.toLowerCase().includes(searchTerm.toLowerCase());
+        const matchesRole = roleFilter === 'ALL' || user.role === roleFilter;
+        return matchesSearch && matchesRole;
+      })
+    : [];
 
   const getRoleBadgeColor = (role: string) => {
     const colors: Record<string, string> = {

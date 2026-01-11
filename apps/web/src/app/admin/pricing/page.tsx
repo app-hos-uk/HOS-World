@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { RouteGuard } from '@/components/RouteGuard';
 import { AdminLayout } from '@/components/AdminLayout';
 import { apiClient } from '@/lib/api';
+import { getPublicApiBaseUrl } from '@/lib/apiBaseUrl';
 
 export default function AdminPricingPage() {
   const [pending, setPending] = useState<any[]>([]);
@@ -22,7 +23,7 @@ export default function AdminPricingPage() {
       // For now, using direct fetch
       const token = localStorage.getItem('auth_token');
       const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL || 'https://hos-marketplaceapi-production.up.railway.app/api'}/finance/pending`,
+        `${getPublicApiBaseUrl() || 'https://hos-marketplaceapi-production.up.railway.app/api/v1'}/finance/pending`,
         {
           headers: {
             'Authorization': `Bearer ${token}`,

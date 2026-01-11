@@ -69,7 +69,7 @@ export class ChatbotService {
         },
       });
       if (product) {
-        contextPrompt += `The customer is asking about product "${product.name}" (${product.price} ${product.currency}, stock: ${product.stock}). `;
+        contextPrompt += `The customer is asking about product "${product.name}" (${product.price} GBP, stock: ${product.stock}). `;
       }
     }
 

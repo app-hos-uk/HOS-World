@@ -1,9 +1,7 @@
 import { ApiClient } from '@hos-marketplace/api-client';
+import { getPublicApiBaseUrl } from './apiBaseUrl';
 
-// Create API client instance
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'https://hos-marketplaceapi-production.up.railway.app/api';
-
-// API Base URL configured
+const API_BASE_URL = getPublicApiBaseUrl();
 
 // Track login state to prevent redirect loops
 let lastLoginTime: number | null = null;

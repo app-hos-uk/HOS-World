@@ -54,15 +54,31 @@ import { SupportModule } from './support/support.module';
 import { WhatsAppModule } from './whatsapp/whatsapp.module';
 import { TaxonomyModule } from './taxonomy/taxonomy.module';
 import { CMSModule } from './cms/cms.module';
+import { CollectionsModule } from './collections/collections.module';
+import { BadgesModule } from './badges/badges.module';
+import { QuestsModule } from './quests/quests.module';
+import { PromotionsModule } from './promotions/promotions.module';
+import { ShippingModule } from './shipping/shipping.module';
+import { CourierModule } from './shipping/courier/courier.module';
+import { InventoryModule } from './inventory/inventory.module';
+import { WebhooksModule } from './webhooks/webhooks.module';
+import { CustomerGroupsModule } from './customer-groups/customer-groups.module';
+import { ReturnPoliciesModule } from './return-policies/return-policies.module';
+import { TaxModule } from './tax/tax.module';
+import { AnalyticsModule } from './analytics/analytics.module';
+import { TenantsModule } from './tenants/tenants.module';
 import { JwtAuthGuard } from './common/guards/jwt-auth.guard';
 import { LoggerModule } from './common/logger/logger.module';
+import { MonitoringModule } from './monitoring/monitoring.module';
+import { APP_INTERCEPTOR } from '@nestjs/core';
+import { MonitoringInterceptor } from './monitoring/monitoring.interceptor';
 
 @Module({
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
-      envFilePath: process.env.NODE_ENV === 'test' ? undefined : '.env',
-      ignoreEnvFile: process.env.NODE_ENV === 'test',
+      envFilePath: process.env.NODE_ENV === 'test' || process.env.IGNORE_ENV_FILE === 'true' ? undefined : '.env',
+      ignoreEnvFile: process.env.NODE_ENV === 'test' || process.env.IGNORE_ENV_FILE === 'true',
     }),
     LoggerModule,
     DatabaseModule,
@@ -116,6 +132,20 @@ import { LoggerModule } from './common/logger/logger.module';
     WhatsAppModule,
     TaxonomyModule,
     CMSModule,
+    CollectionsModule,
+    BadgesModule,
+    QuestsModule,
+    PromotionsModule,
+    ShippingModule,
+    CourierModule,
+    InventoryModule,
+    WebhooksModule,
+    CustomerGroupsModule,
+    ReturnPoliciesModule,
+    TaxModule,
+    AnalyticsModule,
+    TenantsModule,
+    MonitoringModule,
   ],
   controllers: [AppController],
   providers: [
@@ -123,6 +153,10 @@ import { LoggerModule } from './common/logger/logger.module';
     {
       provide: APP_GUARD,
       useClass: JwtAuthGuard,
+    },
+    {
+      provide: APP_INTERCEPTOR,
+      useClass: MonitoringInterceptor,
     },
   ],
 })

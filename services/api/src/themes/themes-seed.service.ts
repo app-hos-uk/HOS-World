@@ -151,12 +151,12 @@ export class ThemesSeedService implements OnModuleInit {
           type: 'SELLER',
           sellerId: null, // Templates don't belong to specific sellers
           config: {
-            ...baseConfig,
+            ...(baseConfig as any),
             colors: {
-              ...baseConfig.colors,
+              ...((baseConfig as any)?.colors || {}),
               ...template.colors,
             },
-          },
+          } as any,
           isActive: true,
         },
       });

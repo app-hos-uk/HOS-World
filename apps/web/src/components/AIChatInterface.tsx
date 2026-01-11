@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { apiClient } from '@/lib/api';
+import { getPublicApiBaseUrl } from '@/lib/apiBaseUrl';
 
 interface Message {
   role: 'user' | 'assistant';
@@ -48,8 +49,13 @@ export function AIChatInterface({ characterId, character, onClose }: AIChatInter
 
   const loadCharacter = async () => {
     try {
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api';
+      const apiUrl = getPublicApiBaseUrl() || 'http://localhost:3001/api/v1';
       const response = await fetch(`${apiUrl}/characters/${characterId}`);
+      
+      if (!response.ok) {
+        throw new Error(`Failed to load character: ${response.status} ${response.statusText}`);
+      }
+      
       const data = await response.json();
       setCharacterInfo(data.data);
     } catch (error) {
@@ -59,13 +65,18 @@ export function AIChatInterface({ characterId, character, onClose }: AIChatInter
 
   const loadChatHistory = async () => {
     try {
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api';
+      const apiUrl = getPublicApiBaseUrl() || 'http://localhost:3001/api/v1';
       const token = localStorage.getItem('auth_token');
       const response = await fetch(`${apiUrl}/ai/chat/history?characterId=${characterId}`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
       });
+      
+      if (!response.ok) {
+        throw new Error(`Failed to load chat history: ${response.status} ${response.statusText}`);
+      }
+      
       const data = await response.json();
       
       if (data.data && data.data.length > 0) {
@@ -92,7 +103,7 @@ export function AIChatInterface({ characterId, character, onClose }: AIChatInter
     setLoading(true);
 
     try {
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api';
+      const apiUrl = getPublicApiBaseUrl() || 'http://localhost:3001/api/v1';
       const token = localStorage.getItem('auth_token');
       const response = await fetch(`${apiUrl}/ai/chat/${characterId}`, {
         method: 'POST',
@@ -102,6 +113,10 @@ export function AIChatInterface({ characterId, character, onClose }: AIChatInter
         },
         body: JSON.stringify({ message: userMessage.content }),
       });
+
+      if (!response.ok) {
+        throw new Error(`Failed to send message: ${response.status} ${response.statusText}`);
+      }
 
       const data = await response.json();
       

@@ -1,5 +1,3 @@
-import { PartialType } from '@nestjs/mapped-types';
-import { CreateProductDto } from './create-product.dto';
 import { IsOptional } from 'class-validator';
 
 // Use PartialType if available, otherwise define manually

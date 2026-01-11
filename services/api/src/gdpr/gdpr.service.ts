@@ -218,7 +218,7 @@ export class GDPRService {
     // Delete non-essential data
     await this.prisma.collection.deleteMany({ where: { userId } });
     await this.prisma.sharedItem.deleteMany({ where: { userId } });
-    await this.prisma.aiChat.deleteMany({ where: { userId } });
+    await this.prisma.aIChat.deleteMany({ where: { userId } });
     await this.prisma.userBadge.deleteMany({ where: { userId } });
     await this.prisma.userQuest.deleteMany({ where: { userId } });
     await this.prisma.wishlistItem.deleteMany({ where: { userId } });

@@ -1,13 +1,15 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, Suspense } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { Header } from '@/components/Header';
 import { Footer } from '@/components/Footer';
 import { apiClient } from '@/lib/api';
 import Link from 'next/link';
 import Image from 'next/image';
 
-export default function ProductsPage() {
+function ProductsContent() {
+  const searchParams = useSearchParams();
   const [products, setProducts] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
@@ -24,10 +26,29 @@ export default function ProductsPage() {
     sortBy: 'newest',
   });
 
+  // Read query parameter from URL on mount and when searchParams change
+  // Use searchParams.toString() to get a stable string representation that only changes when actual params change
+  const searchQuery = searchParams.get('q') || '';
+  
+  useEffect(() => {
+    // useSearchParams().get() already returns URL-decoded values, so no need for decodeURIComponent()
+    const queryParam = searchParams.get('q');
+    const newQuery = queryParam || '';
+    
+    setFilters(prev => ({
+      ...prev,
+      query: newQuery,
+    }));
+    
+    // Reset to page 1 when search query changes (added or removed)
+    // This ensures users start at page 1 when switching between search and browse
+    setPage(1);
+  }, [searchQuery]); // Use the extracted query value instead of the entire searchParams object
+
   useEffect(() => {
     fetchProducts();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [page, filters]);
+  }, [page, filters]); // Removed searchParams - filters already updates when searchParams changes via the first effect
 
   const fetchProducts = async () => {
     try {
@@ -63,7 +84,10 @@ export default function ProductsPage() {
             type="text"
             placeholder="Search products..."
             value={filters.query}
-            onChange={(e) => setFilters({ ...filters, query: e.target.value })}
+            onChange={(e) => {
+              setFilters({ ...filters, query: e.target.value });
+              setPage(1); // Reset to page 1 when search query changes manually
+            }}
             className="px-4 py-2 border border-gray-300 rounded-lg"
           />
           <select
@@ -144,6 +168,27 @@ export default function ProductsPage() {
       </main>
       <Footer />
     </div>
+  );
+}
+
+export default function ProductsPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-white">
+        <Header />
+        <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 lg:py-12">
+          <div className="flex items-center justify-center py-12">
+            <div className="text-center">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600 mx-auto mb-4"></div>
+              <p className="text-sm sm:text-base text-gray-600">Loading products...</p>
+            </div>
+          </div>
+        </main>
+        <Footer />
+      </div>
+    }>
+      <ProductsContent />
+    </Suspense>
   );
 }
 

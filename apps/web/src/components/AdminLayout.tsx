@@ -57,6 +57,11 @@ const menuItems: MenuItem[] = [
     ],
   },
   {
+    title: 'Promotions',
+    icon: '🎁',
+    href: '/admin/promotions',
+  },
+  {
     title: 'Support',
     icon: '🎧',
     children: [
@@ -77,6 +82,8 @@ const menuItems: MenuItem[] = [
     icon: '🛍️',
     children: [
       { title: 'All Products', href: '/admin/products', icon: '📦' },
+      { title: 'Create Product', href: '/admin/products/create', icon: '➕' },
+      { title: 'Price Management', href: '/admin/products/pricing', icon: '💰' },
       { title: 'Product Reviews', href: '/admin/reviews', icon: '⭐' },
       { title: 'Categories', href: '/admin/categories', icon: '📁' },
       { title: 'Attributes', href: '/admin/attributes', icon: '🔧' },
@@ -92,7 +99,12 @@ const menuItems: MenuItem[] = [
       { title: 'Themes', href: '/admin/themes', icon: '🎨' },
       { title: 'Domain Management', href: '/admin/domains', icon: '🌐' },
       { title: 'Fulfillment Centers', href: '/admin/fulfillment-centers', icon: '🏭' },
+      { title: 'Warehouses', href: '/admin/warehouses', icon: '📦' },
+      { title: 'Inventory Dashboard', href: '/admin/inventory', icon: '📊' },
+      { title: 'Tax Zones', href: '/admin/tax-zones', icon: '💰' },
       { title: 'Logistics Partners', href: '/admin/logistics', icon: '🚛' },
+      { title: 'Customer Groups', href: '/admin/customer-groups', icon: '👥' },
+      { title: 'Return Policies', href: '/admin/return-policies', icon: '↩️' },
     ],
   },
   {

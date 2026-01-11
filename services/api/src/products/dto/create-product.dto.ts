@@ -1,20 +1,52 @@
 import {
   IsString,
-  IsNotEmpty,
   IsNumber,
   IsOptional,
+  IsBoolean,
   IsArray,
   IsEnum,
   ValidateNested,
   Min,
-  IsUrl,
-  IsBoolean,
 } from 'class-validator';
 import { Type } from 'class-transformer';
-import { ProductStatus } from '@prisma/client';
+
+export enum ProductType {
+  SIMPLE = 'SIMPLE',
+  VARIANT = 'VARIANT',
+  BUNDLED = 'BUNDLED',
+}
+
+export class ProductAttributeDto {
+  @IsString()
+  attributeId: string;
+
+  @IsOptional()
+  @IsString()
+  attributeValueId?: string;
+
+  @IsOptional()
+  @IsString()
+  value?: string;
+
+  @IsOptional()
+  @IsNumber()
+  numberValue?: number;
+
+  @IsOptional()
+  @IsBoolean()
+  booleanValue?: boolean;
+
+  @IsOptional()
+  @IsString()
+  dateValue?: string;
+
+  @IsOptional()
+  @IsString()
+  textValue?: string;
+}
 
 export class ProductImageDto {
-  @IsUrl()
+  @IsString()
   url: string;
 
   @IsOptional()
@@ -26,44 +58,23 @@ export class ProductImageDto {
   order?: number;
 
   @IsOptional()
-  @IsEnum(['IMAGE', 'VIDEO', 'IMAGE_360'])
+  @IsString()
   type?: string;
-}
-
-export class VariationOptionDto {
-  @IsString()
-  value: string;
-
-  @IsOptional()
-  @IsNumber()
-  priceModifier?: number;
-
-  @IsOptional()
-  @IsNumber()
-  stock?: number;
-
-  @IsOptional()
-  @IsString()
-  sku?: string;
 }
 
 export class ProductVariationDto {
   @IsString()
   name: string;
 
-  @IsArray()
-  @ValidateNested({ each: true })
-  @Type(() => VariationOptionDto)
-  options: VariationOptionDto[];
+  @IsOptional()
+  options?: any;
 }
 
 export class CreateProductDto {
   @IsString()
-  @IsNotEmpty()
   name: string;
 
   @IsString()
-  @IsNotEmpty()
   description: string;
 
   @IsOptional()
@@ -80,16 +91,19 @@ export class CreateProductDto {
 
   @IsNumber()
   @Min(0)
+  @Type(() => Number)
   price: number;
 
   @IsOptional()
   @IsNumber()
   @Min(0)
+  @Type(() => Number)
   tradePrice?: number;
 
   @IsOptional()
   @IsNumber()
   @Min(0)
+  @Type(() => Number)
   rrp?: number;
 
   @IsOptional()
@@ -99,22 +113,14 @@ export class CreateProductDto {
   @IsOptional()
   @IsNumber()
   @Min(0)
+  @Type(() => Number)
   taxRate?: number;
 
+  @IsOptional()
   @IsNumber()
   @Min(0)
-  stock: number;
-
-  @IsArray()
-  @ValidateNested({ each: true })
-  @Type(() => ProductImageDto)
-  images: ProductImageDto[];
-
-  @IsOptional()
-  @IsArray()
-  @ValidateNested({ each: true })
-  @Type(() => ProductVariationDto)
-  variations?: ProductVariationDto[];
+  @Type(() => Number)
+  stock?: number;
 
   @IsOptional()
   @IsString()
@@ -122,55 +128,54 @@ export class CreateProductDto {
 
   @IsOptional()
   @IsString()
-  category?: string; // Keep for backward compatibility
+  category?: string; // Legacy field
+
+  @IsOptional()
+  @IsString()
+  categoryId?: string;
 
   @IsOptional()
   @IsArray()
   @IsString({ each: true })
-  tags?: string[]; // Keep for backward compatibility
+  tags?: string[]; // Legacy field
+
+  @IsOptional()
+  @IsArray()
+  @IsString({ each: true })
+  tagIds?: string[];
+
+  @IsOptional()
+  @IsEnum(ProductType)
+  productType?: ProductType;
 
   @IsOptional()
   @IsString()
-  categoryId?: string; // New: taxonomy category ID
+  parentProductId?: string; // For variant products
 
   @IsOptional()
   @IsArray()
   @ValidateNested({ each: true })
   @Type(() => ProductAttributeDto)
-  attributes?: ProductAttributeDto[]; // New: product attributes
+  attributes?: ProductAttributeDto[];
 
   @IsOptional()
   @IsArray()
   @IsString({ each: true })
-  tagIds?: string[]; // New: taxonomy tag IDs
+  imageUrls?: string[];
 
   @IsOptional()
-  @IsEnum(ProductStatus)
-  status?: ProductStatus;
+  @IsString()
+  status?: string;
+
+  @IsOptional()
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => ProductImageDto)
+  images?: ProductImageDto[];
+
+  @IsOptional()
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => ProductVariationDto)
+  variations?: ProductVariationDto[];
 }
-
-export class ProductAttributeDto {
-  @IsString()
-  attributeId: string;
-
-  @IsOptional()
-  @IsString()
-  attributeValueId?: string; // For SELECT type attributes
-
-  @IsOptional()
-  @IsString()
-  textValue?: string; // For TEXT type
-
-  @IsOptional()
-  @IsNumber()
-  numberValue?: number; // For NUMBER type
-
-  @IsOptional()
-  @IsBoolean()
-  booleanValue?: boolean; // For BOOLEAN type
-
-  @IsOptional()
-  dateValue?: string; // For DATE type (ISO string)
-}
-
-

@@ -30,16 +30,19 @@ export default function AdminSellersPage() {
       setError(null);
       // Get users with seller roles
       const response = await apiClient.getUsers();
-      if (response?.data) {
+      if (response?.data && Array.isArray(response.data)) {
         const sellerRoles = ['SELLER', 'B2C_SELLER', 'WHOLESALER'];
         const sellerUsers = response.data.filter((user: any) => 
           sellerRoles.includes(user.role)
         );
         setSellers(sellerUsers);
+      } else {
+        setSellers([]);
       }
     } catch (err: any) {
       console.error('Error fetching sellers:', err);
       setError(err.message || 'Failed to load sellers');
+      setSellers([]);
     } finally {
       setLoading(false);
     }

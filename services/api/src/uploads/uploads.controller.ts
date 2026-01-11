@@ -4,6 +4,7 @@ import {
   Delete,
   Get,
   Body,
+  Query,
   UseGuards,
   UploadedFile,
   UploadedFiles,
@@ -12,11 +13,23 @@ import {
   Res,
   NotFoundException,
 } from '@nestjs/common';
+import {
+  ApiTags,
+  ApiOperation,
+  ApiResponse as SwaggerApiResponse,
+  ApiBearerAuth,
+  ApiConsumes,
+  ApiParam,
+  ApiBody,
+  ApiQuery,
+} from '@nestjs/swagger';
 import { FileInterceptor, FilesInterceptor } from '@nestjs/platform-express';
 import { UploadsService } from './uploads.service';
+import { StorageService } from '../storage/storage.service';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../common/guards/roles.guard';
 import { Roles } from '../common/decorators/roles.decorator';
+import { Public } from '../common/decorators/public.decorator';
 import type { ApiResponse } from '@hos-marketplace/shared-types';
 import { diskStorage } from 'multer';
 import { extname, join } from 'path';
@@ -53,10 +66,12 @@ function createStorage() {
   });
 }
 
+@ApiTags('uploads')
 @Controller('uploads')
 export class UploadsController {
   constructor(
     private readonly uploadsService: UploadsService,
+    private readonly storageService: StorageService,
     private readonly configService: ConfigService,
   ) {}
 
@@ -64,8 +79,33 @@ export class UploadsController {
   @UseGuards(JwtAuthGuard)
   @UseInterceptors(FileInterceptor('file', { 
     storage: createStorage(),
-    limits: { fileSize: 10 * 1024 * 1024 } 
+    limits: { fileSize: 250 * 1024 } // 250KB limit for product images
   }))
+  @ApiBearerAuth('JWT-auth')
+  @ApiOperation({
+    summary: 'Upload single file',
+    description: 'Uploads a single file. Supports images up to 250KB for product images.',
+  })
+  @ApiConsumes('multipart/form-data')
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: {
+        file: {
+          type: 'string',
+          format: 'binary',
+          description: 'File to upload',
+        },
+        folder: {
+          type: 'string',
+          description: 'Optional folder name (default: uploads)',
+        },
+      },
+    },
+  })
+  @SwaggerApiResponse({ status: 201, description: 'File uploaded successfully' })
+  @SwaggerApiResponse({ status: 400, description: 'Invalid file or file too large' })
+  @SwaggerApiResponse({ status: 401, description: 'Unauthorized' })
   async uploadSingle(
     @UploadedFile() file: Express.Multer.File,
     @Body('folder') folder?: string,
@@ -79,10 +119,38 @@ export class UploadsController {
 
   @Post('multiple')
   @UseGuards(JwtAuthGuard)
-  @UseInterceptors(FilesInterceptor('files', 10, { 
+  @UseInterceptors(FilesInterceptor('files', 4, { 
     storage: createStorage(),
-    limits: { fileSize: 10 * 1024 * 1024 } 
+    limits: { fileSize: 250 * 1024 } // 250KB limit, max 4 files for product images
   }))
+  @ApiBearerAuth('JWT-auth')
+  @ApiOperation({
+    summary: 'Upload multiple files',
+    description: 'Uploads multiple files (up to 4). Supports images up to 250KB each for product images.',
+  })
+  @ApiConsumes('multipart/form-data')
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: {
+        files: {
+          type: 'array',
+          items: {
+            type: 'string',
+            format: 'binary',
+          },
+          description: 'Files to upload (max 10)',
+        },
+        folder: {
+          type: 'string',
+          description: 'Optional folder name (default: uploads)',
+        },
+      },
+    },
+  })
+  @SwaggerApiResponse({ status: 201, description: 'Files uploaded successfully' })
+  @SwaggerApiResponse({ status: 400, description: 'Invalid files or files too large' })
+  @SwaggerApiResponse({ status: 401, description: 'Unauthorized' })
   async uploadMultiple(
     @UploadedFiles() files: Express.Multer.File[],
     @Body('folder') folder?: string,
@@ -94,7 +162,16 @@ export class UploadsController {
     };
   }
 
+  @Public()
   @Get(':folder/:filename')
+  @ApiOperation({
+    summary: 'Serve uploaded file',
+    description: 'Serves an uploaded file. Public endpoint, no authentication required.',
+  })
+  @ApiParam({ name: 'folder', description: 'Folder name', type: String })
+  @ApiParam({ name: 'filename', description: 'File name', type: String })
+  @SwaggerApiResponse({ status: 200, description: 'File served successfully', type: 'file' })
+  @SwaggerApiResponse({ status: 404, description: 'File not found' })
   async serveFile(
     @Param('folder') folder: string,
     @Param('filename') filename: string,
@@ -116,9 +193,40 @@ export class UploadsController {
     }
   }
 
+  @Get('cloudinary/signature')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth('JWT-auth')
+  @ApiOperation({
+    summary: 'Get Cloudinary upload signature',
+    description: 'Returns Cloudinary upload signature for direct frontend uploads. Allows frontend to upload directly to Cloudinary without going through backend.',
+  })
+  @ApiQuery({ name: 'folder', required: false, type: String, description: 'Upload folder (default: uploads)' })
+  @SwaggerApiResponse({ status: 200, description: 'Upload signature retrieved successfully' })
+  @SwaggerApiResponse({ status: 400, description: 'Cloudinary not configured' })
+  @SwaggerApiResponse({ status: 401, description: 'Unauthorized' })
+  async getCloudinarySignature(
+    @Query('folder') folder?: string,
+  ): Promise<ApiResponse<{ signature: string; timestamp: number; apiKey: string; cloudName: string; folder: string }>> {
+    const signature = await this.storageService.getCloudinaryUploadSignature(folder || 'uploads');
+    return {
+      data: signature,
+      message: 'Upload signature retrieved successfully',
+    };
+  }
+
   @Delete(':url')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('SELLER', 'ADMIN')
+  @ApiBearerAuth('JWT-auth')
+  @ApiOperation({
+    summary: 'Delete uploaded file (Seller/Admin only)',
+    description: 'Deletes an uploaded file. Seller and Admin access required.',
+  })
+  @ApiParam({ name: 'url', description: 'File URL (URL encoded)', type: String })
+  @SwaggerApiResponse({ status: 200, description: 'File deleted successfully' })
+  @SwaggerApiResponse({ status: 401, description: 'Unauthorized' })
+  @SwaggerApiResponse({ status: 403, description: 'Forbidden - Seller/Admin access required' })
+  @SwaggerApiResponse({ status: 404, description: 'File not found' })
   async deleteFile(@Param('url') url: string): Promise<ApiResponse<{ message: string }>> {
     await this.uploadsService.deleteFile(decodeURIComponent(url));
     return {

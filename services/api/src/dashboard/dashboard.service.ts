@@ -10,6 +10,8 @@ interface DashboardStats {
   salesByMonth: Array<{ month: string; sales: number }>;
   topProducts: Array<{ id: string; name: string; sales: number }>;
   recentOrders: any[];
+  submissions?: any[];
+  submissionsByStatus?: any[];
 }
 
 @Injectable()
@@ -490,13 +492,33 @@ export class DashboardService {
       },
     });
 
+    // Count active campaigns (marketing materials with active status or recent activity)
+    const activeCampaigns = await this.prisma.marketingMaterial.count({
+      where: {
+        OR: [
+          {
+            createdAt: {
+              gte: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000), // Created in last 30 days
+            },
+          },
+          {
+            submission: {
+              status: {
+                in: ['MARKETING_COMPLETED', 'FINANCE_PENDING', 'PUBLISHED'],
+              },
+            },
+          },
+        ],
+      },
+    });
+
     return {
       pendingSubmissions: pending,
       pendingProducts: pending,
       materials: materials.slice(0, 8),
       materialsLibrary: materials,
       materialsCreated,
-      activeCampaigns: 0, // TODO: Implement campaign tracking
+      activeCampaigns,
       totalMaterials: materials.length,
       totalPending: pending.length,
     };
@@ -550,22 +572,27 @@ export class DashboardService {
       },
     });
 
-    const platformFees = await this.prisma.order.aggregate({
-      where: {
-        paymentStatus: 'PAID',
-      },
+    // Calculate platform fees from OrderSettlement records
+    const platformFeesResult = await this.prisma.orderSettlement.aggregate({
       _sum: {
         platformFee: true,
       },
-    });
-
-    const payoutsPending = await this.prisma.order.aggregate({
       where: {
-        paymentStatus: 'PAID',
-        sellerPayoutStatus: 'PENDING',
+        order: {
+          paymentStatus: 'PAID',
+        },
       },
+    });
+    
+    // Calculate pending payouts from Settlement records with PENDING or PROCESSING status
+    const payoutsPendingResult = await this.prisma.settlement.aggregate({
       _sum: {
-        sellerAmount: true,
+        netAmount: true,
+      },
+      where: {
+        status: {
+          in: ['PENDING', 'PROCESSING'],
+        },
       },
     });
 
@@ -574,8 +601,8 @@ export class DashboardService {
       pendingApprovals: pending,
       pricingHistory: pricingHistory.slice(0, 10),
       totalRevenue: Number(totalRevenue._sum.total || 0),
-      platformFees: Number(platformFees._sum.platformFee || 0),
-      payoutsPending: Number(payoutsPending._sum.sellerAmount || 0),
+      platformFees: Number(platformFeesResult._sum.platformFee || 0),
+      payoutsPending: Number(payoutsPendingResult._sum.netAmount || 0),
       totalPending: pending.length,
     };
   }

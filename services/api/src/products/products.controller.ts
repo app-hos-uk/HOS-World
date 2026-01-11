@@ -11,7 +11,7 @@ import {
   Request,
   ParseUUIDPipe,
 } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth, ApiParam, ApiQuery } from '@nestjs/swagger';
+import { ApiTags, ApiOperation, ApiResponse as SwaggerApiResponse, ApiBearerAuth, ApiParam, ApiQuery, ApiBody } from '@nestjs/swagger';
 import { ProductsService } from './products.service';
 import { ProductsBulkService } from './products-bulk.service';
 import { CreateProductDto } from './dto/create-product.dto';
@@ -34,7 +34,7 @@ export class ProductsController {
   @Public()
   @Get()
   @ApiOperation({ summary: 'Get all products', description: 'Retrieve a paginated list of products with optional filters' })
-  @ApiResponse({ status: 200, description: 'Products retrieved successfully' })
+  @SwaggerApiResponse({ status: 200, description: 'Products retrieved successfully' })
   async findAll(@Query() searchDto: SearchProductsDto): Promise<ApiResponse<PaginatedResponse<Product>>> {
     const result = await this.productsService.findAll(searchDto);
     return {
@@ -47,8 +47,8 @@ export class ProductsController {
   @Get(':id')
   @ApiOperation({ summary: 'Get product by ID', description: 'Retrieve a single product by its UUID' })
   @ApiParam({ name: 'id', description: 'Product UUID', type: String })
-  @ApiResponse({ status: 200, description: 'Product retrieved successfully' })
-  @ApiResponse({ status: 404, description: 'Product not found' })
+  @SwaggerApiResponse({ status: 200, description: 'Product retrieved successfully' })
+  @SwaggerApiResponse({ status: 404, description: 'Product not found' })
   async findOne(@Param('id', ParseUUIDPipe) id: string): Promise<ApiResponse<Product>> {
     const product = await this.productsService.findOne(id);
     return {
@@ -59,6 +59,10 @@ export class ProductsController {
 
   @Public()
   @Get('slug/:slug')
+  @ApiOperation({ summary: 'Get product by slug', description: 'Retrieve a single product by its slug' })
+  @ApiParam({ name: 'slug', description: 'Product slug', type: String })
+  @SwaggerApiResponse({ status: 200, description: 'Product retrieved successfully' })
+  @SwaggerApiResponse({ status: 404, description: 'Product not found' })
   async findBySlug(@Param('slug') slug: string): Promise<ApiResponse<Product>> {
     const product = await this.productsService.findBySlugOnly(slug);
     return {
@@ -72,9 +76,9 @@ export class ProductsController {
   @Post()
   @ApiBearerAuth('JWT-auth')
   @ApiOperation({ summary: 'Create a new product', description: 'Create a new product (Seller only)' })
-  @ApiResponse({ status: 201, description: 'Product created successfully' })
-  @ApiResponse({ status: 401, description: 'Unauthorized' })
-  @ApiResponse({ status: 403, description: 'Forbidden - Seller role required' })
+  @SwaggerApiResponse({ status: 201, description: 'Product created successfully' })
+  @SwaggerApiResponse({ status: 401, description: 'Unauthorized' })
+  @SwaggerApiResponse({ status: 403, description: 'Forbidden - Seller role required' })
   async create(
     @Request() req: any,
     @Body() createProductDto: CreateProductDto,
@@ -89,6 +93,14 @@ export class ProductsController {
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('SELLER')
   @Put(':id')
+  @ApiBearerAuth('JWT-auth')
+  @ApiOperation({ summary: 'Update product', description: 'Update an existing product (Seller only)' })
+  @ApiParam({ name: 'id', description: 'Product UUID', type: String })
+  @ApiBody({ type: UpdateProductDto })
+  @SwaggerApiResponse({ status: 200, description: 'Product updated successfully' })
+  @SwaggerApiResponse({ status: 401, description: 'Unauthorized' })
+  @SwaggerApiResponse({ status: 403, description: 'Forbidden - Seller role required' })
+  @SwaggerApiResponse({ status: 404, description: 'Product not found' })
   async update(
     @Request() req: any,
     @Param('id', ParseUUIDPipe) id: string,
@@ -104,6 +116,13 @@ export class ProductsController {
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('SELLER')
   @Delete(':id')
+  @ApiBearerAuth('JWT-auth')
+  @ApiOperation({ summary: 'Delete product', description: 'Delete a product (Seller only)' })
+  @ApiParam({ name: 'id', description: 'Product UUID', type: String })
+  @SwaggerApiResponse({ status: 200, description: 'Product deleted successfully' })
+  @SwaggerApiResponse({ status: 401, description: 'Unauthorized' })
+  @SwaggerApiResponse({ status: 403, description: 'Forbidden - Seller role required' })
+  @SwaggerApiResponse({ status: 404, description: 'Product not found' })
   async delete(
     @Request() req: any,
     @Param('id', ParseUUIDPipe) id: string,
@@ -118,6 +137,11 @@ export class ProductsController {
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('SELLER')
   @Get('export/csv')
+  @ApiBearerAuth('JWT-auth')
+  @ApiOperation({ summary: 'Export products to CSV', description: 'Export all seller products to CSV format (Seller only)' })
+  @SwaggerApiResponse({ status: 200, description: 'Products exported successfully' })
+  @SwaggerApiResponse({ status: 401, description: 'Unauthorized' })
+  @SwaggerApiResponse({ status: 403, description: 'Forbidden - Seller role required' })
   async exportProducts(@Request() req: any): Promise<ApiResponse<any[]>> {
     const products = await this.productsBulkService.exportProducts(req.user.id);
     return {
@@ -129,6 +153,25 @@ export class ProductsController {
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('SELLER')
   @Post('import')
+  @ApiBearerAuth('JWT-auth')
+  @ApiOperation({ summary: 'Import products', description: 'Import products from JSON array (Seller only)' })
+  @ApiBody({
+    schema: {
+      type: 'object',
+      required: ['products'],
+      properties: {
+        products: {
+          type: 'array',
+          items: { type: 'object' },
+          description: 'Array of product objects to import',
+        },
+      },
+    },
+  })
+  @SwaggerApiResponse({ status: 201, description: 'Products imported successfully' })
+  @SwaggerApiResponse({ status: 400, description: 'Invalid input data' })
+  @SwaggerApiResponse({ status: 401, description: 'Unauthorized' })
+  @SwaggerApiResponse({ status: 403, description: 'Forbidden - Seller role required' })
   async importProducts(
     @Request() req: any,
     @Body() body: { products: any[] },

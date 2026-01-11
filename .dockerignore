@@ -1,0 +1,27 @@
+# Keep Docker build context small and avoid symlink loops in pnpm store
+.pnpm-store/
+
+# Dependencies / builds
+node_modules/
+**/node_modules/
+.next/
+**/.next/
+dist/
+**/dist/
+coverage/
+**/coverage/
+
+# VCS / IDE
+.git/
+.idea/
+.vscode/
+.cursor/
+
+# Logs
+*.log
+logs/
+
+# Local env
+.env
+.env*.local
+

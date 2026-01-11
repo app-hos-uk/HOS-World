@@ -1,4 +1,10 @@
-import { Controller, Post, UseGuards, Logger, ForbiddenException } from '@nestjs/common';
+import { Controller, Post, Get, UseGuards, Logger, ForbiddenException } from '@nestjs/common';
+import {
+  ApiTags,
+  ApiOperation,
+  ApiResponse as SwaggerApiResponse,
+  ApiBearerAuth,
+} from '@nestjs/swagger';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../common/guards/roles.guard';
 import { Roles } from '../common/decorators/roles.decorator';
@@ -7,6 +13,8 @@ import { ConfigService } from '@nestjs/config';
 import { readFileSync } from 'fs';
 import { join } from 'path';
 
+@ApiTags('admin')
+@ApiBearerAuth('JWT-auth')
 @Controller('admin/migration')
 @UseGuards(JwtAuthGuard, RolesGuard)
 @Roles('ADMIN')
@@ -30,6 +38,10 @@ export class MigrationController {
   }
 
   @Post('run-global-features')
+  @ApiOperation({ summary: 'Run global features migration', description: 'Runs the global features migration SQL. Requires ENABLE_ADMIN_MIGRATIONS=true. Admin access required.' })
+  @SwaggerApiResponse({ status: 200, description: 'Migration completed' })
+  @SwaggerApiResponse({ status: 401, description: 'Unauthorized' })
+  @SwaggerApiResponse({ status: 403, description: 'Forbidden - Admin access required or migrations disabled' })
   async runGlobalFeaturesMigration() {
     this.checkMigrationsEnabled();
     
@@ -164,6 +176,10 @@ export class MigrationController {
   }
 
   @Post('run-sql-direct')
+  @ApiOperation({ summary: 'Run SQL migration directly', description: 'Runs embedded SQL migration directly. Requires ENABLE_ADMIN_MIGRATIONS=true. Admin access required.' })
+  @SwaggerApiResponse({ status: 200, description: 'Migration completed' })
+  @SwaggerApiResponse({ status: 401, description: 'Unauthorized' })
+  @SwaggerApiResponse({ status: 403, description: 'Forbidden - Admin access required or migrations disabled' })
   async runSQLDirect() {
     this.checkMigrationsEnabled();
     
@@ -330,6 +346,10 @@ export class MigrationController {
   }
 
   @Post('verify')
+  @ApiOperation({ summary: 'Verify migration', description: 'Verifies that migration was successful by checking for new columns and tables. Admin access required.' })
+  @SwaggerApiResponse({ status: 200, description: 'Migration verification completed' })
+  @SwaggerApiResponse({ status: 401, description: 'Unauthorized' })
+  @SwaggerApiResponse({ status: 403, description: 'Forbidden - Admin access required' })
   async verifyMigration() {
     try {
       // Check if new columns exist

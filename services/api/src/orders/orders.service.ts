@@ -3,8 +3,12 @@ import {
   NotFoundException,
   BadRequestException,
   ForbiddenException,
+  Inject,
+  Optional,
+  Logger,
 } from '@nestjs/common';
 import { PrismaService } from '../database/prisma.service';
+import { TaxService } from '../tax/tax.service';
 import { CreateOrderDto } from './dto/create-order.dto';
 import { UpdateOrderDto } from './dto/update-order.dto';
 import { AddOrderNoteDto } from './dto/add-order-note.dto';
@@ -14,10 +18,15 @@ import { Decimal } from '@prisma/client/runtime/library';
 
 @Injectable()
 export class OrdersService {
-  constructor(private prisma: PrismaService) {}
+  private readonly logger = new Logger(OrdersService.name);
+
+  constructor(
+    private prisma: PrismaService,
+    @Optional() @Inject(TaxService) private taxService?: TaxService,
+  ) {}
 
   async create(userId: string, createOrderDto: CreateOrderDto): Promise<Order> {
-    // Get user's cart
+    // Get user's cart with product tax classes
     const cart = await this.prisma.cart.findUnique({
       where: { userId },
       include: {
@@ -26,6 +35,12 @@ export class OrdersService {
             product: {
               include: {
                 seller: true,
+                taxClass: {
+                  select: {
+                    id: true,
+                    name: true,
+                  },
+                },
               },
             },
           },
@@ -50,6 +65,14 @@ export class OrdersService {
     if (!shippingAddress || !billingAddress) {
       throw new NotFoundException('Address not found');
     }
+
+    // Prepare location for tax calculation (use shipping address for tax calculation)
+    const taxLocation = {
+      country: shippingAddress.country,
+      state: shippingAddress.state || undefined,
+      city: shippingAddress.city || undefined,
+      postalCode: shippingAddress.postalCode || undefined,
+    };
 
     // Group items by seller
     const itemsBySeller = new Map<string, typeof cart.items>();
@@ -86,7 +109,31 @@ export class OrdersService {
 
         const itemTotal = new Decimal(item.price).mul(item.quantity);
         subtotal = subtotal.add(itemTotal);
-        const itemTax = itemTotal.mul(item.product.taxRate);
+
+        let itemTax = new Decimal(0);
+
+        // Use TaxService if available and product has taxClassId
+        if (this.taxService && item.product.taxClassId && taxLocation.country) {
+          try {
+            const taxCalculation = await this.taxService.calculateTax(
+              Number(itemTotal),
+              item.product.taxClassId,
+              taxLocation,
+            );
+            itemTax = new Decimal(taxCalculation.tax);
+          } catch (error) {
+            this.logger.warn(
+              `Failed to calculate tax for product ${item.productId} in order creation, falling back to product.taxRate`,
+              error,
+            );
+            // Fallback to product taxRate
+            itemTax = itemTotal.mul(item.product.taxRate || 0);
+          }
+        } else {
+          // Fallback to product taxRate (legacy behavior)
+          itemTax = itemTotal.mul(item.product.taxRate || 0);
+        }
+
         tax = tax.add(itemTax);
       }
 

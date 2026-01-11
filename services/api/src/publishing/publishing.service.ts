@@ -5,13 +5,15 @@ import {
 } from '@nestjs/common';
 import { PrismaService } from '../database/prisma.service';
 import { ProductsService } from '../products/products.service';
-import { ProductSubmissionStatus } from '@prisma/client';
+import { NotificationsService } from '../notifications/notifications.service';
+import { ProductSubmissionStatus, ProductStatus, ImageType } from '@prisma/client';
 
 @Injectable()
 export class PublishingService {
   constructor(
     private prisma: PrismaService,
     private productsService: ProductsService,
+    private notificationsService: NotificationsService,
   ) {}
 
   async publish(submissionId: string, userId: string) {
@@ -62,12 +64,12 @@ export class PublishingService {
       fandom: productData.fandom,
       category: productData.category,
       tags: productData.tags || [],
-      status: 'ACTIVE',
+      status: 'ACTIVE' as any, // Status is handled separately
       images: catalogEntry.images.map((url, index) => ({
         url,
         alt: catalogEntry.title,
         order: index,
-        type: 'IMAGE' as any,
+        type: ImageType.IMAGE,
       })),
       variations: productData.variations || [],
     });
@@ -99,7 +101,17 @@ export class PublishingService {
     });
 
     // TODO: Publish to seller domains if applicable
-    // TODO: Send notification to seller
+    
+    // Send notification to seller
+    if (submission.seller?.userId) {
+      await this.notificationsService.sendNotificationToUser(
+        submission.seller.userId,
+        'ORDER_CONFIRMATION', // Using existing type as placeholder
+        'Product Published Successfully',
+        `Your product submission "${product.name}" has been published and is now live on the marketplace.`,
+        { productId: product.id, submissionId },
+      );
+    }
 
     return {
       product,

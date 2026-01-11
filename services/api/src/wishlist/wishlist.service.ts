@@ -1,6 +1,7 @@
 import { Injectable, NotFoundException, ConflictException } from '@nestjs/common';
 import { PrismaService } from '../database/prisma.service';
 import type { Product } from '@hos-marketplace/shared-types';
+import { ProductStatus, ImageType } from '@prisma/client';
 
 @Injectable()
 export class WishlistService {
@@ -147,13 +148,13 @@ export class WishlistService {
         url: img.url,
         alt: img.alt || undefined,
         order: img.order,
-        type: img.type.toLowerCase() as any,
+        type: img.type as ImageType,
       })) || [],
       variations: undefined,
       fandom: product.fandom || undefined,
       category: product.category || undefined,
       tags: product.tags || [],
-      status: product.status.toLowerCase() as any,
+      status: product.status as ProductStatus,
       createdAt: product.createdAt,
       updatedAt: product.updatedAt,
     };

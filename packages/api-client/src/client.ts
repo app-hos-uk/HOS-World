@@ -39,6 +39,13 @@ export class ApiClient {
     endpoint: string,
     options: RequestInit = {}
   ): Promise<T> {
+    // Validate baseUrl at runtime (when API call is made)
+    if (!this.baseUrl) {
+      const errorMessage = 'API base URL is not configured. Please set NEXT_PUBLIC_API_URL environment variable.';
+      console.error('❌', errorMessage);
+      throw new Error(errorMessage);
+    }
+
     const headers: Record<string, string> = {
       'Content-Type': 'application/json',
       ...(options.headers as Record<string, string> || {}),
@@ -56,7 +63,9 @@ export class ApiClient {
       const doFetch = async () => {
         const nextHeaders: Record<string, string> = { ...headers };
         const token = this.getToken();
-        if (token) nextHeaders['Authorization'] = `Bearer ${token}`;
+        if (token) {
+          nextHeaders['Authorization'] = `Bearer ${token}`;
+        }
         return fetch(url, { ...options, headers: nextHeaders });
       };
 
@@ -140,6 +149,8 @@ export class ApiClient {
 
   private async tryRefreshToken(): Promise<boolean> {
     if (typeof window === 'undefined') return false;
+    if (!this.baseUrl) return false;
+    
     try {
       const existing = localStorage.getItem('refresh_token');
       if (!existing) return false;
@@ -365,11 +376,31 @@ export class ApiClient {
   }
 
   // Payment endpoints
+  /**
+   * Create a payment intent for an order.
+   * 
+   * @param data - Payment intent data (MUST use named properties, not positional arguments)
+   * @param data.orderId - Order ID (required)
+   * @param data.paymentMethod - Payment provider name, e.g., 'stripe', 'klarna' (optional)
+   * @param data.amount - Payment amount (required, critical for accurate processing after gift card redemptions)
+   * @param data.currency - Payment currency, e.g., 'GBP' (required, critical for currency conversion)
+   * 
+   * @example
+   * ```typescript
+   * // ✅ CORRECT: Use named properties
+   * await apiClient.createPaymentIntent({
+   *   orderId: 'order-123',
+   *   paymentMethod: 'stripe',
+   *   amount: 100.50,
+   *   currency: 'GBP'
+   * });
+   * ```
+   */
   async createPaymentIntent(data: {
     orderId: string;
-    amount: number;
-    currency?: string;
     paymentMethod?: string;
+    amount: number; // Required: critical for accurate payment processing, especially after gift card redemptions
+    currency: string; // Required: critical for currency conversion and payment processing
   }): Promise<ApiResponse<any>> {
     return this.request<ApiResponse<any>>('/payments/intent', {
       method: 'POST',
@@ -642,7 +673,7 @@ export class ApiClient {
 
   // Admin
   async getAdminDashboardData(): Promise<ApiResponse<any>> {
-    return this.request<ApiResponse<any>>('/admin/dashboard', {
+    return this.request<ApiResponse<any>>('/dashboard/admin', {
       method: 'GET',
     });
   }
@@ -1008,7 +1039,7 @@ export class ApiClient {
     });
   }
 
-  async getTaxRates(country: string): Promise<ApiResponse<{ rate: number }>> {
+  async getTaxRateByCountry(country: string): Promise<ApiResponse<{ rate: number }>> {
     return this.request<ApiResponse<{ rate: number }>>(`/compliance/tax-rates/${country}`, {
       method: 'GET',
     });
@@ -1040,8 +1071,109 @@ export class ApiClient {
     });
   }
 
-  async getCollections(): Promise<ApiResponse<any[]>> {
-    return this.request<ApiResponse<any[]>>('/users/profile/collections', {
+  async getCollections(includePublic?: boolean): Promise<ApiResponse<any[]>> {
+    const query = includePublic ? '?includePublic=true' : '';
+    return this.request<ApiResponse<any[]>>(`/collections${query}`, {
+      method: 'GET',
+    });
+  }
+
+  async getCollection(id: string): Promise<ApiResponse<any>> {
+    return this.request<ApiResponse<any>>(`/collections/${id}`, {
+      method: 'GET',
+    });
+  }
+
+  async createCollection(data: { name: string; description?: string; isPublic?: boolean }): Promise<ApiResponse<any>> {
+    return this.request<ApiResponse<any>>('/collections', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async updateCollection(id: string, data: { name?: string; description?: string; isPublic?: boolean }): Promise<ApiResponse<any>> {
+    return this.request<ApiResponse<any>>(`/collections/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async deleteCollection(id: string): Promise<ApiResponse<any>> {
+    return this.request<ApiResponse<any>>(`/collections/${id}`, {
+      method: 'DELETE',
+    });
+  }
+
+  async addProductToCollection(collectionId: string, productId: string): Promise<ApiResponse<any>> {
+    return this.request<ApiResponse<any>>(`/collections/${collectionId}/products/${productId}`, {
+      method: 'POST',
+    });
+  }
+
+  async removeProductFromCollection(collectionId: string, productId: string): Promise<ApiResponse<any>> {
+    return this.request<ApiResponse<any>>(`/collections/${collectionId}/products/${productId}`, {
+      method: 'DELETE',
+    });
+  }
+
+  // Quests
+  async getQuests(): Promise<ApiResponse<any[]>> {
+    return this.request<ApiResponse<any[]>>('/quests', {
+      method: 'GET',
+    });
+  }
+
+  async getQuest(id: string): Promise<ApiResponse<any>> {
+    return this.request<ApiResponse<any>>(`/quests/${id}`, {
+      method: 'GET',
+    });
+  }
+
+  async getAvailableQuests(): Promise<ApiResponse<any[]>> {
+    return this.request<ApiResponse<any[]>>('/quests/available', {
+      method: 'GET',
+    });
+  }
+
+  async getActiveQuests(): Promise<ApiResponse<any[]>> {
+    return this.request<ApiResponse<any[]>>('/quests/active', {
+      method: 'GET',
+    });
+  }
+
+  async getCompletedQuests(): Promise<ApiResponse<any[]>> {
+    return this.request<ApiResponse<any[]>>('/quests/completed', {
+      method: 'GET',
+    });
+  }
+
+  async startQuest(questId: string): Promise<ApiResponse<any>> {
+    return this.request<ApiResponse<any>>(`/quests/${questId}/start`, {
+      method: 'POST',
+    });
+  }
+
+  async completeQuest(questId: string): Promise<ApiResponse<any>> {
+    return this.request<ApiResponse<any>>(`/quests/${questId}/complete`, {
+      method: 'POST',
+    });
+  }
+
+  // Badges - additional methods
+  async getAllBadges(): Promise<ApiResponse<any[]>> {
+    return this.request<ApiResponse<any[]>>('/badges', {
+      method: 'GET',
+    });
+  }
+
+  async getBadge(id: string): Promise<ApiResponse<any>> {
+    return this.request<ApiResponse<any>>(`/badges/${id}`, {
+      method: 'GET',
+    });
+  }
+
+  async getMyBadges(): Promise<ApiResponse<any[]>> {
+    return this.request<ApiResponse<any[]>>('/badges/my-badges', {
       method: 'GET',
     });
   }
@@ -1807,6 +1939,10 @@ export class ApiClient {
   }
 
   async uploadCMSMedia(formData: FormData): Promise<ApiResponse<any>> {
+    if (!this.baseUrl) {
+      throw new Error('API base URL is not configured. Please set NEXT_PUBLIC_API_URL environment variable.');
+    }
+    
     // Use the uploads endpoint instead of non-existent /cms/media
     const token = this.getToken();
     const headers: Record<string, string> = {};
@@ -1887,6 +2023,10 @@ export class ApiClient {
 
   // Uploads (generic)
   async uploadSingleFile(file: File, folder: string = 'uploads'): Promise<ApiResponse<{ url: string }>> {
+    if (!this.baseUrl) {
+      throw new Error('API base URL is not configured. Please set NEXT_PUBLIC_API_URL environment variable.');
+    }
+    
     const token = this.getToken();
     const headers: Record<string, string> = {};
     if (token) headers['Authorization'] = `Bearer ${token}`;
@@ -1913,6 +2053,10 @@ export class ApiClient {
   }
 
   async uploadMultipleFiles(files: File[], folder: string = 'uploads'): Promise<ApiResponse<{ urls: string[] }>> {
+    if (!this.baseUrl) {
+      throw new Error('API base URL is not configured. Please set NEXT_PUBLIC_API_URL environment variable.');
+    }
+    
     const token = this.getToken();
     const headers: Record<string, string> = {};
     if (token) headers['Authorization'] = `Bearer ${token}`;
@@ -1952,5 +2096,775 @@ export class ApiClient {
       method: 'PUT',
       body: JSON.stringify(settings),
     });
+  }
+
+  // Gift Cards
+  async createGiftCard(data: {
+    type: 'digital' | 'physical';
+    amount: number;
+    currency?: string;
+    issuedToEmail?: string;
+    issuedToName?: string;
+    message?: string;
+    expiresAt?: string;
+  }): Promise<ApiResponse<any>> {
+    return this.request<ApiResponse<any>>('/gift-cards', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async validateGiftCard(code: string): Promise<ApiResponse<any>> {
+    return this.request<ApiResponse<any>>(`/gift-cards/validate/${code}`, {
+      method: 'GET',
+    });
+  }
+
+  async redeemGiftCard(data: { code: string; amount: number; orderId?: string }): Promise<ApiResponse<any>> {
+    return this.request<ApiResponse<any>>('/gift-cards/redeem', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async getMyGiftCards(): Promise<ApiResponse<any[]>> {
+    return this.request<ApiResponse<any[]>>('/gift-cards/my-gift-cards', {
+      method: 'GET',
+    });
+  }
+
+  async getGiftCardTransactions(giftCardId: string): Promise<ApiResponse<any[]>> {
+    return this.request<ApiResponse<any[]>>(`/gift-cards/${giftCardId}/transactions`, {
+      method: 'GET',
+    });
+  }
+
+  // Promotions & Coupons
+  async getPromotions(): Promise<ApiResponse<any[]>> {
+    return this.request<ApiResponse<any[]>>('/promotions');
+  }
+
+  async getPromotion(id: string): Promise<ApiResponse<any>> {
+    return this.request<ApiResponse<any>>(`/promotions/${id}`);
+  }
+
+  async validateCoupon(couponCode: string): Promise<ApiResponse<any>> {
+    return this.request<ApiResponse<any>>('/promotions/coupons/validate', {
+      method: 'POST',
+      body: JSON.stringify({ couponCode }),
+    });
+  }
+
+  async applyCoupon(cartId: string, couponCode: string): Promise<ApiResponse<Cart>> {
+    return this.request<ApiResponse<Cart>>('/promotions/coupons/apply', {
+      method: 'POST',
+      body: JSON.stringify({ cartId, couponCode }),
+    });
+  }
+
+  async removeCoupon(cartId: string): Promise<ApiResponse<Cart>> {
+    return this.request<ApiResponse<Cart>>('/promotions/coupons/remove', {
+      method: 'POST',
+      body: JSON.stringify({ cartId }),
+    });
+  }
+
+  // Shipping
+  async getShippingMethods(sellerId?: string): Promise<ApiResponse<any[]>> {
+    const query = sellerId ? `?sellerId=${sellerId}` : '';
+    return this.request<ApiResponse<any[]>>(`/shipping/methods${query}`);
+  }
+
+  async getShippingOptions(data: {
+    cartItems: Array<{ productId: string; quantity: number; price: number }>;
+    cartValue: number;
+    destination: { country: string; state?: string; city?: string; postalCode?: string };
+    sellerId?: string;
+  }): Promise<ApiResponse<any[]>> {
+    return this.request<ApiResponse<any[]>>('/shipping/options', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
+  // Inventory & Warehouses
+  async getProductInventory(productId: string): Promise<ApiResponse<any>> {
+    return this.request<ApiResponse<any>>(`/inventory/products/${productId}`);
+  }
+
+  async getWarehouses(): Promise<ApiResponse<any[]>> {
+    return this.request<ApiResponse<any[]>>('/inventory/warehouses');
+  }
+
+  async createWarehouse(data: {
+    name: string;
+    code: string;
+    address: string;
+    city: string;
+    state?: string;
+    country: string;
+    postalCode: string;
+  }): Promise<ApiResponse<any>> {
+    return this.request<ApiResponse<any>>('/inventory/warehouses', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async updateWarehouse(id: string, data: {
+    name?: string;
+    address?: string;
+    city?: string;
+    state?: string;
+    country?: string;
+    postalCode?: string;
+    isActive?: boolean;
+  }): Promise<ApiResponse<any>> {
+    return this.request<ApiResponse<any>>(`/inventory/warehouses/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async deleteWarehouse(id: string): Promise<ApiResponse<any>> {
+    return this.request<ApiResponse<any>>(`/inventory/warehouses/${id}`, {
+      method: 'DELETE',
+    });
+  }
+
+  // Stock Transfers
+  async createStockTransfer(data: {
+    fromWarehouseId: string;
+    toWarehouseId: string;
+    productId: string;
+    quantity: number;
+    notes?: string;
+  }): Promise<ApiResponse<any>> {
+    return this.request<ApiResponse<any>>('/inventory/transfers', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async getStockTransfers(filters?: {
+    fromWarehouseId?: string;
+    toWarehouseId?: string;
+    productId?: string;
+    status?: string;
+    page?: number;
+    limit?: number;
+  }): Promise<ApiResponse<any>> {
+    const queryParams = new URLSearchParams();
+    if (filters?.fromWarehouseId) queryParams.append('fromWarehouseId', filters.fromWarehouseId);
+    if (filters?.toWarehouseId) queryParams.append('toWarehouseId', filters.toWarehouseId);
+    if (filters?.productId) queryParams.append('productId', filters.productId);
+    if (filters?.status) queryParams.append('status', filters.status);
+    if (filters?.page) queryParams.append('page', filters.page.toString());
+    if (filters?.limit) queryParams.append('limit', filters.limit.toString());
+    const query = queryParams.toString();
+    return this.request<ApiResponse<any>>(`/inventory/transfers${query ? `?${query}` : ''}`);
+  }
+
+  async completeStockTransfer(transferId: string): Promise<ApiResponse<any>> {
+    return this.request<ApiResponse<any>>(`/inventory/transfers/${transferId}/complete`, {
+      method: 'POST',
+    });
+  }
+
+  // Stock Movements
+  async getStockMovements(filters?: {
+    inventoryLocationId?: string;
+    productId?: string;
+    warehouseId?: string;
+    movementType?: string;
+    referenceType?: string;
+    referenceId?: string;
+    startDate?: string;
+    endDate?: string;
+    page?: number;
+    limit?: number;
+  }): Promise<ApiResponse<any>> {
+    const queryParams = new URLSearchParams();
+    if (filters?.inventoryLocationId) queryParams.append('inventoryLocationId', filters.inventoryLocationId);
+    if (filters?.productId) queryParams.append('productId', filters.productId);
+    if (filters?.warehouseId) queryParams.append('warehouseId', filters.warehouseId);
+    if (filters?.movementType) queryParams.append('movementType', filters.movementType);
+    if (filters?.referenceType) queryParams.append('referenceType', filters.referenceType);
+    if (filters?.referenceId) queryParams.append('referenceId', filters.referenceId);
+    if (filters?.startDate) queryParams.append('startDate', filters.startDate);
+    if (filters?.endDate) queryParams.append('endDate', filters.endDate);
+    if (filters?.page) queryParams.append('page', filters.page.toString());
+    if (filters?.limit) queryParams.append('limit', filters.limit.toString());
+    const query = queryParams.toString();
+    return this.request<ApiResponse<any>>(`/inventory/movements${query ? `?${query}` : ''}`);
+  }
+
+  async recordStockMovement(data: {
+    inventoryLocationId: string;
+    productId: string;
+    quantity: number;
+    movementType: 'IN' | 'OUT' | 'ADJUST' | 'RESERVE' | 'RELEASE';
+    referenceType?: string;
+    referenceId?: string;
+    notes?: string;
+  }): Promise<ApiResponse<any>> {
+    return this.request<ApiResponse<any>>('/inventory/movements', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async getInventoryLocations(warehouseId?: string, productId?: string): Promise<ApiResponse<any[]>> {
+    const queryParams = new URLSearchParams();
+    if (warehouseId) queryParams.append('warehouseId', warehouseId);
+    if (productId) queryParams.append('productId', productId);
+    const query = queryParams.toString();
+    return this.request<ApiResponse<any[]>>(`/inventory/locations${query ? `?${query}` : ''}`);
+  }
+
+  // Customer Groups
+  async getCustomerGroups(includeInactive?: boolean): Promise<ApiResponse<any[]>> {
+    const query = includeInactive ? '?includeInactive=true' : '';
+    return this.request<ApiResponse<any[]>>(`/customer-groups${query}`);
+  }
+
+  async getCustomerGroup(id: string): Promise<ApiResponse<any>> {
+    return this.request<ApiResponse<any>>(`/customer-groups/${id}`);
+  }
+
+  async createCustomerGroup(data: {
+    name: string;
+    description?: string;
+    type: string;
+    isActive?: boolean;
+  }): Promise<ApiResponse<any>> {
+    return this.request<ApiResponse<any>>('/customer-groups', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async updateCustomerGroup(id: string, data: Partial<{
+    name: string;
+    description?: string;
+    type: string;
+    isActive?: boolean;
+  }>): Promise<ApiResponse<any>> {
+    return this.request<ApiResponse<any>>(`/customer-groups/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async addCustomerToGroup(groupId: string, userId: string): Promise<ApiResponse<any>> {
+    return this.request<ApiResponse<any>>(`/customer-groups/${groupId}/customers/${userId}`, {
+      method: 'POST',
+    });
+  }
+
+  async removeCustomerFromGroup(userId: string): Promise<ApiResponse<any>> {
+    return this.request<ApiResponse<any>>(`/customer-groups/customers/${userId}`, {
+      method: 'DELETE',
+    });
+  }
+
+  async getMyCustomerGroup(): Promise<ApiResponse<any>> {
+    return this.request<ApiResponse<any>>('/customer-groups/my/group');
+  }
+
+  // Return Policies
+  async getReturnPolicies(sellerId?: string, productId?: string, categoryId?: string): Promise<ApiResponse<any[]>> {
+    const params = new URLSearchParams();
+    if (sellerId) params.append('sellerId', sellerId);
+    if (productId) params.append('productId', productId);
+    if (categoryId) params.append('categoryId', categoryId);
+    const query = params.toString() ? `?${params.toString()}` : '';
+    return this.request<ApiResponse<any[]>>(`/return-policies${query}`);
+  }
+
+  async getReturnPolicy(id: string): Promise<ApiResponse<any>> {
+    return this.request<ApiResponse<any>>(`/return-policies/${id}`);
+  }
+
+  async getApplicableReturnPolicy(productId: string, sellerId?: string, categoryId?: string): Promise<ApiResponse<any>> {
+    const params = new URLSearchParams();
+    if (sellerId) params.append('sellerId', sellerId);
+    if (categoryId) params.append('categoryId', categoryId);
+    const query = params.toString() ? `?${params.toString()}` : '';
+    return this.request<ApiResponse<any>>(`/return-policies/applicable/${productId}${query}`);
+  }
+
+  async checkReturnEligibility(orderId: string, productId?: string): Promise<ApiResponse<any>> {
+    const query = productId ? `?productId=${productId}` : '';
+    return this.request<ApiResponse<any>>(`/return-policies/eligibility/${orderId}${query}`);
+  }
+
+  async createReturnPolicy(data: {
+    name: string;
+    description?: string;
+    sellerId?: string;
+    productId?: string;
+    categoryId?: string;
+    isReturnable?: boolean;
+    returnWindowDays: number;
+    requiresApproval?: boolean;
+    requiresInspection?: boolean;
+    refundMethod?: string;
+    restockingFee?: number;
+    priority?: number;
+    isActive?: boolean;
+  }): Promise<ApiResponse<any>> {
+    return this.request<ApiResponse<any>>('/return-policies', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async updateReturnPolicy(id: string, data: Partial<{
+    name: string;
+    description?: string;
+    sellerId?: string;
+    productId?: string;
+    categoryId?: string;
+    isReturnable?: boolean;
+    returnWindowDays?: number;
+    requiresApproval?: boolean;
+    requiresInspection?: boolean;
+    refundMethod?: string;
+    restockingFee?: number;
+    priority?: number;
+    isActive?: boolean;
+  }>): Promise<ApiResponse<any>> {
+    return this.request<ApiResponse<any>>(`/return-policies/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async deleteReturnPolicy(id: string): Promise<ApiResponse<any>> {
+    return this.request<ApiResponse<any>>(`/return-policies/${id}`, {
+      method: 'DELETE',
+    });
+  }
+
+  async evaluateReturnPolicy(orderId: string, productId?: string): Promise<ApiResponse<any>> {
+    return this.request<ApiResponse<any>>('/return-policies/evaluate', {
+      method: 'POST',
+      body: JSON.stringify({ orderId, productId }),
+    });
+  }
+
+  // Return Requests
+  async getReturns(): Promise<ApiResponse<any[]>> {
+    return this.request<ApiResponse<any[]>>('/returns');
+  }
+
+  async getReturn(id: string): Promise<ApiResponse<any>> {
+    return this.request<ApiResponse<any>>(`/returns/${id}`);
+  }
+
+  async createReturnRequest(data: {
+    orderId: string;
+    reason: string;
+    notes?: string;
+    items?: Array<{
+      orderItemId: string;
+      quantity: number;
+      reason?: string;
+    }>;
+  }): Promise<ApiResponse<any>> {
+    return this.request<ApiResponse<any>>('/returns', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async updateReturnStatus(id: string, data: {
+    status: string;
+    refundAmount?: number;
+    refundMethod?: string;
+  }): Promise<ApiResponse<any>> {
+    return this.request<ApiResponse<any>>(`/returns/${id}/status`, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    });
+  }
+
+  // Payment Providers
+  async getPaymentProviders(): Promise<ApiResponse<string[]>> {
+    return this.request<ApiResponse<string[]>>('/payments/providers');
+  }
+
+  // Tax Zones & Classes
+  async getTaxZones(includeInactive?: boolean): Promise<ApiResponse<any[]>> {
+    const query = includeInactive ? '?includeInactive=true' : '';
+    return this.request<ApiResponse<any[]>>(`/tax/zones${query}`);
+  }
+
+  async getTaxZone(id: string): Promise<ApiResponse<any>> {
+    return this.request<ApiResponse<any>>(`/tax/zones/${id}`);
+  }
+
+  async createTaxZone(data: {
+    name: string;
+    country?: string;
+    state?: string;
+    city?: string;
+    postalCodes?: string[];
+    isActive?: boolean;
+  }): Promise<ApiResponse<any>> {
+    return this.request<ApiResponse<any>>('/tax/zones', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async updateTaxZone(id: string, data: {
+    name?: string;
+    country?: string;
+    state?: string;
+    city?: string;
+    postalCodes?: string[];
+    isActive?: boolean;
+  }): Promise<ApiResponse<any>> {
+    return this.request<ApiResponse<any>>(`/tax/zones/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async deleteTaxZone(id: string): Promise<ApiResponse<any>> {
+    return this.request<ApiResponse<any>>(`/tax/zones/${id}`, {
+      method: 'DELETE',
+    });
+  }
+
+  async getTaxClasses(): Promise<ApiResponse<any[]>> {
+    return this.request<ApiResponse<any[]>>('/tax/classes');
+  }
+
+  async getTaxClass(id: string): Promise<ApiResponse<any>> {
+    return this.request<ApiResponse<any>>(`/tax/classes/${id}`);
+  }
+
+  async createTaxClass(data: {
+    name: string;
+    description?: string;
+  }): Promise<ApiResponse<any>> {
+    return this.request<ApiResponse<any>>('/tax/classes', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async updateTaxClass(id: string, data: {
+    name?: string;
+    description?: string;
+  }): Promise<ApiResponse<any>> {
+    return this.request<ApiResponse<any>>(`/tax/classes/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async deleteTaxClass(id: string): Promise<ApiResponse<any>> {
+    return this.request<ApiResponse<any>>(`/tax/classes/${id}`, {
+      method: 'DELETE',
+    });
+  }
+
+  async getTaxRates(taxZoneId?: string, taxClassId?: string): Promise<ApiResponse<any[]>> {
+    const queryParams = new URLSearchParams();
+    if (taxZoneId) queryParams.append('taxZoneId', taxZoneId);
+    if (taxClassId) queryParams.append('taxClassId', taxClassId);
+    const query = queryParams.toString();
+    return this.request<ApiResponse<any[]>>(`/tax/rates${query ? `?${query}` : ''}`);
+  }
+
+  async createTaxRate(data: {
+    taxZoneId: string;
+    taxClassId?: string;
+    rate: number;
+    isInclusive?: boolean;
+    isActive?: boolean;
+  }): Promise<ApiResponse<any>> {
+    return this.request<ApiResponse<any>>('/tax/rates', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async updateTaxRate(id: string, data: {
+    rate?: number;
+    isInclusive?: boolean;
+    isActive?: boolean;
+  }): Promise<ApiResponse<any>> {
+    return this.request<ApiResponse<any>>(`/tax/rates/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async deleteTaxRate(id: string): Promise<ApiResponse<any>> {
+    return this.request<ApiResponse<any>>(`/tax/rates/${id}`, {
+      method: 'DELETE',
+    });
+  }
+
+  async calculateTax(data: {
+    amount: number;
+    taxClassId: string;
+    location: { country: string; state?: string; city?: string; postalCode?: string };
+  }): Promise<ApiResponse<any>> {
+    return this.request<ApiResponse<any>>('/tax/calculate', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
+  // Wishlist
+  async addToWishlist(productId: string): Promise<ApiResponse<{ message: string }>> {
+    return this.request<ApiResponse<{ message: string }>>(`/wishlist/products/${productId}`, {
+      method: 'POST',
+    });
+  }
+
+  async removeFromWishlist(productId: string): Promise<ApiResponse<{ message: string }>> {
+    return this.request<ApiResponse<{ message: string }>>(`/wishlist/products/${productId}`, {
+      method: 'DELETE',
+    });
+  }
+
+  async getWishlist(): Promise<ApiResponse<any[]>> {
+    return this.request<ApiResponse<any[]>>('/wishlist');
+  }
+
+  async checkWishlistStatus(productId: string): Promise<ApiResponse<{ inWishlist: boolean }>> {
+    return this.request<ApiResponse<{ inWishlist: boolean }>>(`/wishlist/products/${productId}/check`);
+  }
+
+  // Reviews
+  async getProductReviews(productId: string): Promise<ApiResponse<any[]>> {
+    return this.request<ApiResponse<any[]>>(`/reviews/products/${productId}`);
+  }
+
+  async createReview(productId: string, data: { rating: number; title: string; comment: string }): Promise<ApiResponse<any>> {
+    return this.request<ApiResponse<any>>(`/reviews/products/${productId}`, {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async updateReview(reviewId: string, data: { rating?: number; title?: string; comment?: string }): Promise<ApiResponse<any>> {
+    return this.request<ApiResponse<any>>(`/reviews/${reviewId}`, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async deleteReview(reviewId: string): Promise<ApiResponse<any>> {
+    return this.request<ApiResponse<any>>(`/reviews/${reviewId}`, {
+      method: 'DELETE',
+    });
+  }
+
+  // Addresses
+  async getAddresses(): Promise<ApiResponse<any[]>> {
+    return this.request<ApiResponse<any[]>>('/addresses');
+  }
+
+  async getAddress(id: string): Promise<ApiResponse<any>> {
+    return this.request<ApiResponse<any>>(`/addresses/${id}`);
+  }
+
+  async createAddress(data: {
+    street: string;
+    city: string;
+    state?: string;
+    postalCode: string;
+    country: string;
+    isDefault?: boolean;
+  }): Promise<ApiResponse<any>> {
+    return this.request<ApiResponse<any>>('/addresses', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async updateAddress(id: string, data: {
+    street?: string;
+    city?: string;
+    state?: string;
+    postalCode?: string;
+    country?: string;
+    isDefault?: boolean;
+  }): Promise<ApiResponse<any>> {
+    return this.request<ApiResponse<any>>(`/addresses/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async deleteAddress(id: string): Promise<ApiResponse<any>> {
+    return this.request<ApiResponse<any>>(`/addresses/${id}`, {
+      method: 'DELETE',
+    });
+  }
+
+  async setDefaultAddress(id: string): Promise<ApiResponse<any>> {
+    return this.request<ApiResponse<any>>(`/addresses/${id}/set-default`, {
+      method: 'POST',
+    });
+  }
+
+  // File Uploads - Using existing uploadSingleFile and uploadMultipleFiles methods
+  // Alias methods for convenience
+  async uploadFile(file: File, folder?: string): Promise<ApiResponse<string>> {
+    const result = await this.uploadSingleFile(file, folder || 'uploads');
+    // Transform response format if needed
+    if (result?.data?.url) {
+      return { data: result.data.url, message: result.message || 'Upload successful' } as ApiResponse<string>;
+    }
+    return result as any;
+  }
+
+  // Bulk Product Operations - Note: Export returns JSON, convert to CSV on frontend
+  async exportProducts(): Promise<ApiResponse<any[]>> {
+    return this.request<ApiResponse<any[]>>('/products/export/csv');
+  }
+
+  async importProducts(products: any[]): Promise<ApiResponse<any>> {
+    return this.request<ApiResponse<any>>('/products/import', {
+      method: 'POST',
+      body: JSON.stringify({ products }),
+    });
+  }
+
+  // Analytics
+  async getSalesTrends(filters?: {
+    startDate?: string;
+    endDate?: string;
+    sellerId?: string;
+    period?: 'daily' | 'weekly' | 'monthly' | 'yearly';
+    compareWithPrevious?: boolean;
+  }): Promise<ApiResponse<any>> {
+    const queryParams = new URLSearchParams();
+    if (filters) {
+      Object.entries(filters).forEach(([key, value]) => {
+        if (value !== undefined && value !== null) {
+          queryParams.append(key, String(value));
+        }
+      });
+    }
+    const query = queryParams.toString();
+    return this.request<ApiResponse<any>>(`/analytics/sales/trends${query ? `?${query}` : ''}`);
+  }
+
+  async getCustomerMetrics(filters?: {
+    startDate?: string;
+    endDate?: string;
+  }): Promise<ApiResponse<any>> {
+    const queryParams = new URLSearchParams();
+    if (filters) {
+      Object.entries(filters).forEach(([key, value]) => {
+        if (value !== undefined && value !== null) {
+          queryParams.append(key, String(value));
+        }
+      });
+    }
+    const query = queryParams.toString();
+    return this.request<ApiResponse<any>>(`/analytics/customers/metrics${query ? `?${query}` : ''}`);
+  }
+
+  async getProductPerformance(filters?: {
+    startDate?: string;
+    endDate?: string;
+    sellerId?: string;
+    limit?: number;
+  }): Promise<ApiResponse<any>> {
+    const queryParams = new URLSearchParams();
+    if (filters) {
+      Object.entries(filters).forEach(([key, value]) => {
+        if (value !== undefined && value !== null) {
+          queryParams.append(key, String(value));
+        }
+      });
+    }
+    const query = queryParams.toString();
+    return this.request<ApiResponse<any>>(`/analytics/products/performance${query ? `?${query}` : ''}`);
+  }
+
+  async getInventoryMetrics(filters?: {
+    warehouseId?: string;
+    startDate?: string;
+    endDate?: string;
+  }): Promise<ApiResponse<any>> {
+    const queryParams = new URLSearchParams();
+    if (filters) {
+      Object.entries(filters).forEach(([key, value]) => {
+        if (value !== undefined && value !== null) {
+          queryParams.append(key, String(value));
+        }
+      });
+    }
+    const query = queryParams.toString();
+    return this.request<ApiResponse<any>>(`/analytics/inventory/metrics${query ? `?${query}` : ''}`);
+  }
+
+  async getRevenueGrowth(filters: {
+    startDate: string;
+    endDate: string;
+    comparisonType?: 'month' | 'year';
+  }): Promise<ApiResponse<any>> {
+    const queryParams = new URLSearchParams();
+    Object.entries(filters).forEach(([key, value]) => {
+      if (value !== undefined && value !== null) {
+        queryParams.append(key, String(value));
+      }
+    });
+    const query = queryParams.toString();
+    return this.request<ApiResponse<any>>(`/analytics/revenue/growth?${query}`);
+  }
+
+  async exportAnalytics(
+    reportType: 'sales' | 'customers' | 'products' | 'inventory',
+    format: 'csv' | 'xlsx' | 'pdf',
+    filters?: {
+      startDate?: string;
+      endDate?: string;
+    }
+  ): Promise<Blob> {
+    const queryParams = new URLSearchParams();
+    queryParams.append('reportType', reportType);
+    queryParams.append('format', format);
+    if (filters) {
+      Object.entries(filters).forEach(([key, value]) => {
+        if (value !== undefined && value !== null) {
+          queryParams.append(key, String(value));
+        }
+      });
+    }
+    const query = queryParams.toString();
+
+    // For file downloads, we need to handle the response as a blob
+    const token = this.getToken();
+    const headers: Record<string, string> = {};
+    if (token) {
+      headers['Authorization'] = `Bearer ${token}`;
+    }
+
+    const baseUrl = this.baseUrl || '';
+    const url = `${baseUrl}/analytics/export/${format}?${query}`;
+
+    const response = await fetch(url, {
+      method: 'GET',
+      headers,
+    });
+
+    if (!response.ok) {
+      throw new Error(`Export failed: ${response.statusText}`);
+    }
+
+    return response.blob();
   }
 }

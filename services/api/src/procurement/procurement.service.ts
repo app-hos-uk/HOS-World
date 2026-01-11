@@ -8,12 +8,14 @@ import { PrismaService } from '../database/prisma.service';
 import { ApproveSubmissionDto, RejectSubmissionDto, SelectQuantityDto } from './dto/approve-submission.dto';
 import { ProductSubmissionStatus } from '@prisma/client';
 import { DuplicatesService } from '../duplicates/duplicates.service';
+import { NotificationsService } from '../notifications/notifications.service';
 
 @Injectable()
 export class ProcurementService {
   constructor(
     private prisma: PrismaService,
     private duplicatesService: DuplicatesService,
+    private notificationsService: NotificationsService,
   ) {}
 
   async findAll(status?: ProductSubmissionStatus) {
@@ -158,7 +160,16 @@ export class ProcurementService {
       },
     });
 
-    // TODO: Send notification to seller about approval
+    // Send notification to seller about approval
+    if (updated.seller?.userId) {
+      await this.notificationsService.sendNotificationToUser(
+        updated.seller.userId,
+        'ORDER_CONFIRMATION', // Using existing type as placeholder
+        'Product Submission Approved',
+        `Your product submission has been approved by Procurement and is moving to the next stage.`,
+        { submissionId: id },
+      );
+    }
 
     return updated;
   }
@@ -196,7 +207,16 @@ export class ProcurementService {
       },
     });
 
-    // TODO: Send notification to seller about rejection
+    // Send notification to seller about rejection
+    if (updated.seller?.userId) {
+      await this.notificationsService.sendNotificationToUser(
+        updated.seller.userId,
+        'ORDER_CANCELLED', // Using existing type as placeholder
+        'Product Submission Rejected',
+        `Your product submission has been rejected by Procurement. Reason: ${rejectDto.reason}${rejectDto.notes ? `\n\nNotes: ${rejectDto.notes}` : ''}`,
+        { submissionId: id },
+      );
+    }
 
     return updated;
   }

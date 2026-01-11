@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Auth Token Diagnostic Tool</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; max-width: 800px; margin: 0 auto; }
+        .section { margin: 20px 0; padding: 15px; border: 1px solid #ddd; border-radius: 5px; }
+        .success { background-color: #d4edda; border-color: #c3e6cb; }
+        .error { background-color: #f8d7da; border-color: #f5c6cb; }
+        .warning { background-color: #fff3cd; border-color: #ffeaa7; }
+        .info { background-color: #d1ecf1; border-color: #bee5eb; }
+        code { background: #f4f4f4; padding: 2px 6px; border-radius: 3px; }
+        button { padding: 10px 20px; margin: 5px; cursor: pointer; }
+    </style>
+</head>
+<body>
+    <h1>🔍 Authentication Token Diagnostic Tool</h1>
+    
+    <div class="section info">
+        <h2>Instructions</h2>
+        <p>This tool helps diagnose 401 authentication errors. Run it in your browser console or save as HTML and open it.</p>
+        <p><strong>API URL:</strong> <span id="apiUrl">Loading...</span></p>
+    </div>
+
+    <div class="section" id="tokenCheck">
+        <h2>1. Token Status</h2>
+        <div id="tokenStatus">Checking...</div>
+    </div>
+
+    <div class="section" id="tokenExpiry">
+        <h2>2. Token Expiration</h2>
+        <div id="expiryStatus">Checking...</div>
+    </div>
+
+    <div class="section" id="apiTest">
+        <h2>3. API Connection Test</h2>
+        <button onclick="testAPI()">Test API Connection</button>
+        <div id="apiStatus" style="margin-top: 10px;">Click button to test</div>
+    </div>
+
+    <div class="section" id="authTest">
+        <h2>4. Authenticated Request Test</h2>
+        <button onclick="testAuth()">Test Admin Dashboard Endpoint</button>
+        <div id="authStatus" style="margin-top: 10px;">Click button to test</div>
+    </div>
+
+    <div class="section">
+        <h2>Actions</h2>
+        <button onclick="clearTokens()">Clear Tokens (Logout)</button>
+        <button onclick="refreshPage()">Refresh Page</button>
+    </div>
+
+    <script>
+        const API_BASE_URL = 'https://hos-marketplaceapi-production.up.railway.app/api/v1';
+        
+        function getToken() {
+            try {
+                return localStorage.getItem('auth_token');
+            } catch (e) {
+                return null;
+            }
+        }
+
+        function getRefreshToken() {
+            try {
+                return localStorage.getItem('refresh_token');
+            } catch (e) {
+                return null;
+            }
+        }
+
+        function decodeToken(token) {
+            try {
+                const parts = token.split('.');
+                if (parts.length !== 3) return null;
+                const payload = JSON.parse(atob(parts[1]));
+                return payload;
+            } catch (e) {
+                return null;
+            }
+        }
+
+        function checkToken() {
+            const token = getToken();
+            const refreshToken = getRefreshToken();
+            const statusDiv = document.getElementById('tokenStatus');
+            
+            if (!token) {
+                statusDiv.innerHTML = '<div class="error"><strong>❌ No token found</strong><br>You need to log in. Token is not stored in localStorage.</div>';
+                return null;
+            }
+            
+            const payload = decodeToken(token);
+            if (!payload) {
+                statusDiv.innerHTML = '<div class="error"><strong>❌ Invalid token format</strong><br>The token exists but cannot be decoded. It may be corrupted.</div>';
+                return null;
+            }
+
+            const hasRefresh = refreshToken ? '✅ Yes' : '❌ No';
+            statusDiv.innerHTML = `
+                <div class="success">
+                    <strong>✅ Token found</strong><br>
+                    <strong>User ID:</strong> ${payload.sub || 'N/A'}<br>
+                    <strong>Email:</strong> ${payload.email || 'N/A'}<br>
+                    <strong>Role:</strong> ${payload.role || 'N/A'}<br>
+                    <strong>Refresh Token:</strong> ${hasRefresh}<br>
+                    <strong>Token (first 50 chars):</strong> <code>${token.substring(0, 50)}...</code>
+                </div>
+            `;
+            
+            return { token, payload, refreshToken };
+        }
+
+        function checkExpiry() {
+            const token = getToken();
+            const expiryDiv = document.getElementById('expiryStatus');
+            
+            if (!token) {
+                expiryDiv.innerHTML = '<div class="warning">No token to check</div>';
+                return;
+            }
+
+            const payload = decodeToken(token);
+            if (!payload || !payload.exp) {
+                expiryDiv.innerHTML = '<div class="error">❌ Cannot decode token expiration</div>';
+                return;
+            }
+
+            const expiration = new Date(payload.exp * 1000);
+            const now = new Date();
+            const isExpired = expiration < now;
+            const timeUntilExpiry = expiration - now;
+            const minutesUntilExpiry = Math.floor(timeUntilExpiry / 60000);
+
+            if (isExpired) {
+                expiryDiv.innerHTML = `
+                    <div class="error">
+                        <strong>❌ Token is EXPIRED</strong><br>
+                        <strong>Expired at:</strong> ${expiration.toLocaleString()}<br>
+                        <strong>Current time:</strong> ${now.toLocaleString()}<br>
+                        <strong>Expired:</strong> ${Math.abs(minutesUntilExpiry)} minutes ago<br>
+                        <strong>Solution:</strong> You need to log in again or use the refresh token.
+                    </div>
+                `;
+            } else {
+                expiryDiv.innerHTML = `
+                    <div class="success">
+                        <strong>✅ Token is valid</strong><br>
+                        <strong>Expires at:</strong> ${expiration.toLocaleString()}<br>
+                        <strong>Time until expiry:</strong> ${minutesUntilExpiry} minutes<br>
+                        <strong>Token age:</strong> ${Math.floor((now - new Date(payload.iat * 1000)) / 60000)} minutes old
+                    </div>
+                `;
+            }
+        }
+
+        async function testAPI() {
+            const statusDiv = document.getElementById('apiStatus');
+            statusDiv.innerHTML = 'Testing...';
+            
+            try {
+                const response = await fetch(`${API_BASE_URL}/health`, {
+                    method: 'GET',
+                    headers: { 'Content-Type': 'application/json' }
+                });
+                
+                const text = await response.text();
+                let data;
+                try {
+                    data = JSON.parse(text);
+                } catch {
+                    data = { message: text };
+                }
+
+                if (response.ok) {
+                    statusDiv.innerHTML = `
+                        <div class="success">
+                            <strong>✅ API is reachable</strong><br>
+                            <strong>Status:</strong> ${response.status} ${response.statusText}<br>
+                            <strong>Response:</strong> <pre>${JSON.stringify(data, null, 2)}</pre>
+                        </div>
+                    `;
+                } else {
+                    statusDiv.innerHTML = `
+                        <div class="warning">
+                            <strong>⚠️ API responded with error</strong><br>
+                            <strong>Status:</strong> ${response.status} ${response.statusText}<br>
+                            <strong>Response:</strong> <pre>${JSON.stringify(data, null, 2)}</pre>
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                statusDiv.innerHTML = `
+                    <div class="error">
+                        <strong>❌ Cannot reach API</strong><br>
+                        <strong>Error:</strong> ${error.message}<br>
+                        <strong>Possible causes:</strong>
+                        <ul>
+                            <li>API is down</li>
+                            <li>CORS issue</li>
+                            <li>Network connectivity problem</li>
+                            <li>Wrong API URL</li>
+                        </ul>
+                    </div>
+                `;
+            }
+        }
+
+        async function testAuth() {
+            const statusDiv = document.getElementById('authStatus');
+            const token = getToken();
+            
+            if (!token) {
+                statusDiv.innerHTML = '<div class="error">❌ No token available. Please log in first.</div>';
+                return;
+            }
+
+            statusDiv.innerHTML = 'Testing authenticated request...';
+            
+            try {
+                const response = await fetch(`${API_BASE_URL}/dashboard/admin`, {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+                
+                const text = await response.text();
+                let data;
+                try {
+                    data = JSON.parse(text);
+                } catch {
+                    data = { message: text };
+                }
+
+                if (response.ok) {
+                    statusDiv.innerHTML = `
+                        <div class="success">
+                            <strong>✅ Authenticated request successful!</strong><br>
+                            <strong>Status:</strong> ${response.status} ${response.statusText}<br>
+                            <strong>Response preview:</strong> <pre>${JSON.stringify(data, null, 2).substring(0, 500)}...</pre>
+                        </div>
+                    `;
+                } else if (response.status === 401) {
+                    statusDiv.innerHTML = `
+                        <div class="error">
+                            <strong>❌ 401 Unauthorized</strong><br>
+                            <strong>Status:</strong> ${response.status} ${response.statusText}<br>
+                            <strong>Error:</strong> ${data.message || JSON.stringify(data)}<br>
+                            <strong>Possible causes:</strong>
+                            <ul>
+                                <li>Token is expired</li>
+                                <li>Token is invalid</li>
+                                <li>JWT_SECRET mismatch</li>
+                                <li>User doesn't have ADMIN role</li>
+                            </ul>
+                            <strong>Solution:</strong> Log in again to get a fresh token.
+                        </div>
+                    `;
+                } else {
+                    statusDiv.innerHTML = `
+                        <div class="warning">
+                            <strong>⚠️ Request failed</strong><br>
+                            <strong>Status:</strong> ${response.status} ${response.statusText}<br>
+                            <strong>Response:</strong> <pre>${JSON.stringify(data, null, 2)}</pre>
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                statusDiv.innerHTML = `
+                    <div class="error">
+                        <strong>❌ Request failed</strong><br>
+                        <strong>Error:</strong> ${error.message}<br>
+                    </div>
+                `;
+            }
+        }
+
+        function clearTokens() {
+            if (confirm('Are you sure you want to clear all tokens? This will log you out.')) {
+                try {
+                    localStorage.removeItem('auth_token');
+                    localStorage.removeItem('refresh_token');
+                    alert('Tokens cleared! Redirecting to login...');
+                    window.location.href = '/login';
+                } catch (e) {
+                    alert('Error clearing tokens: ' + e.message);
+                }
+            }
+        }
+
+        function refreshPage() {
+            window.location.reload();
+        }
+
+        // Initialize
+        document.getElementById('apiUrl').textContent = API_BASE_URL;
+        checkToken();
+        checkExpiry();
+    </script>
+</body>
+</html>

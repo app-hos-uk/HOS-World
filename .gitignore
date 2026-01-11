@@ -67,4 +67,7 @@ web-build/
 logs
 *.log
 
+# pnpm store (can be created inside repo; contains symlinks that can cause deploy scanners to loop)
+.pnpm-store/
+
 

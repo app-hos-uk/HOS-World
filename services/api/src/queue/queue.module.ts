@@ -3,9 +3,12 @@ import { QueueService } from './queue.service';
 import { DatabaseModule } from '../database/database.module';
 import { CacheModule } from '../cache/cache.module';
 import { ConfigModule } from '@nestjs/config';
+import { NotificationsModule } from '../notifications/notifications.module';
+import { SearchModule } from '../search/search.module';
+import { StorageModule } from '../storage/storage.module';
 
 @Module({
-  imports: [DatabaseModule, CacheModule, ConfigModule],
+  imports: [DatabaseModule, CacheModule, ConfigModule, NotificationsModule, SearchModule, StorageModule],
   providers: [QueueService],
   exports: [QueueService],
 })

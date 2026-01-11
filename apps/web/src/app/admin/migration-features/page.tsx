@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { apiClient } from '@/lib/api';
 import { AdminLayout } from '@/components/AdminLayout';
 import { RouteGuard } from '@/components/RouteGuard';
+import { getPublicApiBaseUrl } from '@/lib/apiBaseUrl';
 
 interface MigrationResult {
   success: boolean;
@@ -61,7 +62,7 @@ export default function MigrationFeaturesPage() {
       // Fallback: try direct fetch
       try {
         const token = localStorage.getItem('auth_token');
-        const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api';
+        const apiUrl = getPublicApiBaseUrl() || 'http://localhost:3001/api/v1';
         const fetchResponse = await fetch(`${apiUrl}/admin/migration-features/run-sql`, {
           method: 'POST',
           headers: {

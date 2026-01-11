@@ -15,6 +15,7 @@ const logger = new Logger('AuthModule');
 
 @Module({
   imports: [
+    ConfigModule,
     PassportModule,
     JwtModule.registerAsync({
       imports: [ConfigModule],

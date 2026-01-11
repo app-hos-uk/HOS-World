@@ -26,12 +26,22 @@ export class SearchService implements OnModuleInit {
     Promise.resolve().then(async () => {
       // Only initialize Elasticsearch if configured
       const elasticsearchNode = this.configService.get<string>('ELASTICSEARCH_NODE');
-      if (!elasticsearchNode) {
-        this.logger.warn('ELASTICSEARCH_NODE not configured - search features will be disabled');
+      if (!this.isElasticsearchConfigured(elasticsearchNode)) {
+        this.logger.warn('Elasticsearch not configured - search features will be disabled');
         return;
       }
 
       try {
+        // Verify connectivity first. If we can't ping quickly, treat as disabled to avoid log spam.
+        const canConnect = await this.canPingElasticsearch();
+        if (!canConnect) {
+          this.logger.warn(
+            'Elasticsearch is configured but unreachable (ping failed) - search features will be disabled',
+            'SearchService',
+          );
+          return;
+        }
+
         // Set a timeout for Elasticsearch connection
         await Promise.race([
           this.createIndex(),
@@ -54,6 +64,31 @@ export class SearchService implements OnModuleInit {
       this.logger.debug(error?.stack, 'SearchService');
     });
     // Return immediately - don't wait for Elasticsearch
+  }
+
+  private isElasticsearchConfigured(node?: string | null): boolean {
+    if (!node) return false;
+    const trimmed = node.trim();
+    if (!trimmed) return false;
+
+    // Common docker-compose placeholder values that should not be treated as “configured” in production.
+    if (trimmed === 'http://localhost:9200') return false;
+    if (trimmed === 'http://elasticsearch:9200') return false;
+    if (trimmed === 'https://elasticsearch:9200') return false;
+    return true;
+  }
+
+  private async canPingElasticsearch(): Promise<boolean> {
+    try {
+      // Keep this fast — we only need a yes/no to avoid triggering a large sync.
+      await Promise.race([
+        this.elasticsearchService.ping(),
+        new Promise((_, reject) => setTimeout(() => reject(new Error('ping timeout')), 1500)),
+      ]);
+      return true;
+    } catch {
+      return false;
+    }
   }
 
   /**
@@ -94,6 +129,7 @@ export class SearchService implements OnModuleInit {
                 analyzer: 'product_analyzer',
               },
               category: { type: 'keyword' },
+              categoryId: { type: 'keyword' },
               fandom: { type: 'keyword' },
               sellerId: { type: 'keyword' },
               sellerName: { type: 'keyword' },
@@ -106,6 +142,19 @@ export class SearchService implements OnModuleInit {
               reviewCount: { type: 'integer' },
               createdAt: { type: 'date' },
               updatedAt: { type: 'date' },
+              // Attributes for faceted search (nested structure)
+              attributes: {
+                type: 'nested',
+                properties: {
+                  attributeId: { type: 'keyword' },
+                  attributeName: { type: 'keyword' },
+                  attributeSlug: { type: 'keyword' },
+                  value: { type: 'keyword' }, // For SELECT type attributes (slug from AttributeValue)
+                  textValue: { type: 'text' }, // For TEXT type attributes
+                  numberValue: { type: 'float' }, // For NUMBER type attributes
+                  booleanValue: { type: 'boolean' }, // For BOOLEAN type attributes
+                },
+              },
             },
           },
         },
@@ -119,6 +168,50 @@ export class SearchService implements OnModuleInit {
    */
   async indexProduct(product: any): Promise<void> {
     try {
+      // Fetch product attributes for indexing
+      const productAttributes = await this.prisma.productAttribute.findMany({
+        where: { productId: product.id },
+        include: {
+          attribute: {
+            select: {
+              id: true,
+              name: true,
+              slug: true,
+              type: true,
+            },
+          },
+          attributeValue: {
+            select: {
+              id: true,
+              value: true,
+              slug: true,
+            },
+          },
+        },
+      });
+
+      // Transform attributes for Elasticsearch nested structure
+      const attributes = productAttributes.map((pa) => {
+        const attrData: any = {
+          attributeId: pa.attributeId,
+          attributeName: pa.attribute.name,
+          attributeSlug: pa.attribute.slug,
+        };
+
+        // Map value based on attribute type
+        if (pa.attribute.type === 'SELECT' && pa.attributeValue) {
+          attrData.value = pa.attributeValue.slug;
+        } else if (pa.textValue !== null) {
+          attrData.textValue = pa.textValue;
+        } else if (pa.numberValue !== null) {
+          attrData.numberValue = parseFloat(pa.numberValue.toString());
+        } else if (pa.booleanValue !== null) {
+          attrData.booleanValue = pa.booleanValue;
+        }
+
+        return attrData;
+      });
+
       await this.elasticsearchService.index({
         index: this.indexName,
         id: product.id,
@@ -127,23 +220,27 @@ export class SearchService implements OnModuleInit {
           name: product.name,
           description: product.description || '',
           category: product.category || null,
+          categoryId: product.categoryId || null,
           fandom: product.fandom || null,
           sellerId: product.sellerId,
           sellerName: product.seller?.storeName || null,
           sellerSlug: product.seller?.slug || null,
           price: parseFloat(product.price || '0'),
           stock: product.stock || 0,
-          isActive: product.isActive,
+          isActive: product.status === 'ACTIVE',
           tags: product.tags || [],
           averageRating: product.averageRating || 0,
           reviewCount: product.reviewCount || 0,
+          attributes: attributes.length > 0 ? attributes : [],
           createdAt: product.createdAt,
           updatedAt: product.updatedAt,
         },
       });
-      this.logger.debug(`Indexed product: ${product.id}`);
-    } catch (error) {
-      this.logger.error(`Failed to index product ${product.id}:`, error);
+      this.logger.debug(`Indexed product: ${product.id} with ${attributes.length} attributes`);
+    } catch (error: any) {
+      // Avoid log spam during outages; keep one error line with message + product id.
+      const msg = String(error?.message || 'Unknown error');
+      this.logger.error(`Failed to index product ${product.id}: ${msg}`);
     }
   }
 
@@ -152,25 +249,8 @@ export class SearchService implements OnModuleInit {
    */
   async updateProduct(product: any): Promise<void> {
     try {
-      await this.elasticsearchService.update({
-        index: this.indexName,
-        id: product.id,
-        body: {
-          doc: {
-            name: product.name,
-            description: product.description || '',
-            category: product.category || null,
-            fandom: product.fandom || null,
-            price: parseFloat(product.price || '0'),
-            stock: product.stock || 0,
-            isActive: product.isActive,
-            tags: product.tags || [],
-            averageRating: product.averageRating || 0,
-            reviewCount: product.reviewCount || 0,
-            updatedAt: product.updatedAt,
-          },
-        },
-      });
+      // Re-index the product to include updated attributes
+      await this.indexProduct(product);
       this.logger.debug(`Updated indexed product: ${product.id}`);
     } catch (error) {
       this.logger.error(`Failed to update product ${product.id}:`, error);
@@ -202,12 +282,21 @@ export class SearchService implements OnModuleInit {
     query: string,
     filters: {
       category?: string;
+      categoryId?: string;
       fandom?: string;
       sellerId?: string;
       minPrice?: number;
       maxPrice?: number;
       minRating?: number;
       inStock?: boolean;
+      attributes?: Array<{
+        attributeId: string;
+        values?: string[]; // For SELECT type (attribute value slugs)
+        minValue?: number; // For NUMBER type
+        maxValue?: number; // For NUMBER type
+        booleanValue?: boolean; // For BOOLEAN type
+        textValue?: string; // For TEXT type (partial match)
+      }>;
       page?: number;
       limit?: number;
     } = {},
@@ -239,6 +328,10 @@ export class SearchService implements OnModuleInit {
       filterClauses.push({ term: { category: filters.category } });
     }
 
+    if (filters.categoryId) {
+      filterClauses.push({ term: { categoryId: filters.categoryId } });
+    }
+
     if (filters.fandom) {
       filterClauses.push({ term: { fandom: filters.fandom } });
     }
@@ -266,6 +359,64 @@ export class SearchService implements OnModuleInit {
       filterClauses.push({ range: { stock: { gt: 0 } } });
     }
 
+    // Attribute-based filters (nested queries)
+    if (filters.attributes && filters.attributes.length > 0) {
+      const attributeFilters = filters.attributes.map((attrFilter) => {
+        const nestedQuery: any = {
+          nested: {
+            path: 'attributes',
+            query: {
+              bool: {
+                must: [{ term: { 'attributes.attributeId': attrFilter.attributeId } }],
+              },
+            },
+          },
+        };
+
+        // Add value filters based on attribute type
+        const mustClauses: any[] = [{ term: { 'attributes.attributeId': attrFilter.attributeId } }];
+
+        if (attrFilter.values && attrFilter.values.length > 0) {
+          // SELECT type - filter by value slugs
+          mustClauses.push({
+            terms: { 'attributes.value': attrFilter.values },
+          });
+        } else if (attrFilter.minValue !== undefined || attrFilter.maxValue !== undefined) {
+          // NUMBER type - range filter
+          const range: any = {};
+          if (attrFilter.minValue !== undefined) range.gte = attrFilter.minValue;
+          if (attrFilter.maxValue !== undefined) range.lte = attrFilter.maxValue;
+          mustClauses.push({ range: { 'attributes.numberValue': range } });
+        } else if (attrFilter.booleanValue !== undefined) {
+          // BOOLEAN type
+          mustClauses.push({ term: { 'attributes.booleanValue': attrFilter.booleanValue } });
+        } else if (attrFilter.textValue) {
+          // TEXT type - partial match
+          mustClauses.push({
+            match: { 'attributes.textValue': attrFilter.textValue },
+          });
+        }
+
+        return {
+          nested: {
+            path: 'attributes',
+            query: {
+              bool: {
+                must: mustClauses,
+              },
+            },
+          },
+        };
+      });
+
+      // All attribute filters must match (AND logic)
+      filterClauses.push({
+        bool: {
+          must: attributeFilters,
+        },
+      });
+    }
+
     // Always filter active products
     filterClauses.push({ term: { isActive: true } });
 
@@ -286,6 +437,9 @@ export class SearchService implements OnModuleInit {
         categories: {
           terms: { field: 'category', size: 20 },
         },
+        categoryIds: {
+          terms: { field: 'categoryId', size: 20 },
+        },
         fandoms: {
           terms: { field: 'fandom', size: 20 },
         },
@@ -304,6 +458,29 @@ export class SearchService implements OnModuleInit {
         average_rating: {
           stats: { field: 'averageRating' },
         },
+        // Attribute-based aggregations (nested)
+        attributes: {
+          nested: { path: 'attributes' },
+          aggs: {
+            by_attribute: {
+              terms: { field: 'attributes.attributeId', size: 20 },
+              aggs: {
+                attribute_name: {
+                  terms: { field: 'attributes.attributeName', size: 1 },
+                },
+                values: {
+                  terms: { field: 'attributes.value', size: 50 }, // For SELECT type attributes
+                },
+                number_stats: {
+                  stats: { field: 'attributes.numberValue' }, // For NUMBER type attributes
+                },
+                boolean_counts: {
+                  terms: { field: 'attributes.booleanValue', size: 2 }, // For BOOLEAN type attributes
+                },
+              },
+            },
+          },
+        },
       },
     };
 
@@ -313,15 +490,21 @@ export class SearchService implements OnModuleInit {
         body,
       });
 
-      const hits = result.body.hits.hits.map((hit: any) => ({
-        ...hit._source,
-        score: hit._score,
+      // Elasticsearch v8+ returns result directly, not in .body
+      // Type assertion to handle both old and new API formats
+      const resultAny = result as any;
+      const hits = (resultAny.hits?.hits || resultAny.body?.hits?.hits || []).map((hit: any) => ({
+        ...(hit._source || hit.source || {}),
+        score: hit._score || hit.score || 0,
       }));
+
+      const totalHits = resultAny.hits?.total || resultAny.body?.hits?.total;
+      const total = typeof totalHits === 'object' ? (totalHits.value || totalHits) : totalHits;
 
       return {
         hits,
-        total: result.body.hits.total.value || result.body.hits.total,
-        aggregations: result.body.aggregations,
+        total: total || 0,
+        aggregations: resultAny.aggregations || resultAny.body?.aggregations || {},
       };
     } catch (error) {
       this.logger.error('Search error:', error);
@@ -337,12 +520,24 @@ export class SearchService implements OnModuleInit {
     let skip = 0;
     const take = 100;
 
+    // If the cluster is unreachable, stop early to prevent log spam.
+    if (!(await this.canPingElasticsearch())) {
+      this.logger.warn('Elasticsearch unreachable - aborting product sync', 'SearchService');
+      return;
+    }
+
     while (true) {
       const products = await this.prisma.product.findMany({
         skip,
         take,
         include: {
-          seller: true,
+          seller: {
+            select: {
+              id: true,
+              storeName: true,
+              slug: true,
+            },
+          },
         },
       });
 
@@ -382,8 +577,10 @@ export class SearchService implements OnModuleInit {
         },
       });
 
+      const resultAny = result as any;
+      const suggestData = resultAny.suggest || resultAny.body?.suggest;
       const suggestions =
-        result.body.suggest?.product_suggest?.[0]?.options?.map(
+        suggestData?.product_suggest?.[0]?.options?.map(
           (option: any) => option.text,
         ) || [];
 

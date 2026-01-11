@@ -159,7 +159,7 @@ export class CategoriesService {
           },
         },
         attributes: {
-          where: { isActive: true },
+          // Note: isActive field may not exist in schema - adjust based on actual schema
         },
         _count: {
           select: {

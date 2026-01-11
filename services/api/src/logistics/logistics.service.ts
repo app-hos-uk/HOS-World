@@ -12,7 +12,10 @@ export class LogisticsService {
 
   async createPartner(createDto: CreateLogisticsPartnerDto) {
     return this.prisma.logisticsPartner.create({
-      data: createDto,
+      data: {
+        ...createDto,
+        contactInfo: createDto.contactInfo as any, // Cast to Json type
+      },
     });
   }
 
@@ -62,7 +65,10 @@ export class LogisticsService {
 
     return this.prisma.logisticsPartner.update({
       where: { id },
-      data: updateDto,
+      data: {
+        ...updateDto,
+        contactInfo: updateDto.contactInfo ? (updateDto.contactInfo as any) : undefined, // Cast to Json type
+      },
     });
   }
 

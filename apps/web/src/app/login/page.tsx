@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { apiClient, markLoginSuccess } from '@/lib/api';
 import { CharacterSelector } from '@/components/CharacterSelector';
 import { FandomQuiz } from '@/components/FandomQuiz';
+import { getPublicApiBaseUrl } from '@/lib/apiBaseUrl';
 
 export default function LoginPage() {
   const router = useRouter();
@@ -44,9 +45,8 @@ export default function LoginPage() {
   });
   const [currencyPreference, setCurrencyPreference] = useState('GBP');
 
-  // Backend OAuth endpoints (Nest has global prefix `/api`)
-  const oauthBaseUrl =
-    process.env.NEXT_PUBLIC_API_URL || 'https://hos-marketplaceapi-production.up.railway.app/api';
+  // Backend OAuth endpoints (Nest uses URI versioning: `/api/v1`)
+  const oauthBaseUrl = getPublicApiBaseUrl() || 'https://hos-marketplaceapi-production.up.railway.app/api/v1';
 
   // Set mounted state after hydration to prevent server/client mismatch
   useEffect(() => {

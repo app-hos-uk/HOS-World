@@ -11,15 +11,27 @@ export enum LogLevel {
 export class Logger implements NestLoggerService {
   private readonly logLevel: LogLevel;
   private readonly isDevelopment: boolean;
+  private readonly suppressNestRouteLogs: boolean;
 
   constructor() {
     this.isDevelopment = process.env.NODE_ENV !== 'production';
     const envLogLevel = process.env.LOG_LEVEL?.toUpperCase() || 'INFO';
     this.logLevel = LogLevel[envLogLevel as keyof typeof LogLevel] ?? LogLevel.INFO;
+    // In production, Nest can emit hundreds of "Mapped { ... } route" lines on startup (RouterExplorer),
+    // which can trigger Railway's log rate limiting. Default to suppressing those unless explicitly disabled.
+    this.suppressNestRouteLogs =
+      !this.isDevelopment && process.env.SUPPRESS_NEST_ROUTE_LOGS !== 'false';
   }
 
   private shouldLog(level: LogLevel): boolean {
     return level >= this.logLevel;
+  }
+
+  private shouldSuppress(message: string, context?: string): boolean {
+    if (!this.suppressNestRouteLogs) return false;
+    // Suppress Nest route mapping spam on startup.
+    if (context === 'RouterExplorer' && message.startsWith('Mapped {')) return true;
+    return false;
   }
 
   private formatMessage(level: string, message: string, context?: string): string {
@@ -36,6 +48,7 @@ export class Logger implements NestLoggerService {
 
   log(message: string, context?: string) {
     if (this.shouldLog(LogLevel.INFO)) {
+      if (this.shouldSuppress(message, context)) return;
       console.log(this.formatMessage('INFO', message, context));
     }
   }

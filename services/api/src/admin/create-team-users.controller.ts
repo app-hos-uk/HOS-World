@@ -1,4 +1,9 @@
 import { Controller, Post } from '@nestjs/common';
+import {
+  ApiTags,
+  ApiOperation,
+  ApiResponse as SwaggerApiResponse,
+} from '@nestjs/swagger';
 import { Public } from '../common/decorators/public.decorator';
 import { PrismaService } from '../database/prisma.service';
 import { UserRole } from '@prisma/client';
@@ -50,12 +55,15 @@ const teamUsers = [
   },
 ];
 
+@ApiTags('admin')
 @Controller('admin')
 export class CreateTeamUsersController {
   constructor(private prisma: PrismaService) {}
 
   @Public()
   @Post('create-team-users')
+  @ApiOperation({ summary: 'Create team users', description: 'Creates or updates team users (Admin, Procurement, Fulfillment, Catalog, Marketing, Finance, CMS Editor) with default password. Public endpoint for development/testing.' })
+  @SwaggerApiResponse({ status: 201, description: 'Team users created/updated successfully' })
   async createTeamUsers(): Promise<ApiResponse<any>> {
     // Generate password hash for "Test123!"
     const password = 'Test123!';
@@ -110,6 +118,8 @@ export class CreateTeamUsersController {
 
   @Public()
   @Post('create-business-users')
+  @ApiOperation({ summary: 'Create business users', description: 'Creates or updates business users (Seller, B2C Seller, Wholesaler, Customer) with default password. Public endpoint for development/testing.' })
+  @SwaggerApiResponse({ status: 201, description: 'Business users created/updated successfully' })
   async createBusinessUsers(): Promise<ApiResponse<any>> {
     // Generate password hash for "Test123!"
     const password = 'Test123!';

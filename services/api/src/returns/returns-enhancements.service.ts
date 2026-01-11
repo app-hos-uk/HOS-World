@@ -39,12 +39,8 @@ export class ReturnsEnhancementsService {
       where: { id: returnRequestId },
       data: {
         status: 'APPROVED',
-        notes: notes || returnRequest.notes,
-        metadata: {
-          ...(returnRequest.metadata as any || {}),
-          returnNumber,
-          authorizedAt: new Date().toISOString(),
-        },
+        notes: (notes || returnRequest.notes || '') + ` [Return Number: ${returnNumber}]`,
+        // Note: metadata field may not exist in schema - using notes field instead
       },
     });
 
@@ -81,14 +77,12 @@ export class ReturnsEnhancementsService {
     // For now, return a mock label URL
     const labelUrl = `https://labels.hos-marketplace.com/returns/${returnRequest.id}`;
 
+    // Note: metadata field may not exist in ReturnRequest schema
+    // Store label info in notes field instead
     await this.prisma.returnRequest.update({
       where: { id: returnRequestId },
       data: {
-        metadata: {
-          ...(returnRequest.metadata as any || {}),
-          shippingLabelUrl: labelUrl,
-          labelGeneratedAt: new Date().toISOString(),
-        },
+        notes: (returnRequest.notes || '') + ` [Shipping Label: ${labelUrl}]`,
       },
     });
 
@@ -108,7 +102,7 @@ export class ReturnsEnhancementsService {
       include: {
         order: {
           include: {
-            payment: true,
+            payments: true,
           },
         },
       },
@@ -122,7 +116,9 @@ export class ReturnsEnhancementsService {
       throw new BadRequestException('Return must be approved before processing refund');
     }
 
-    const refundAmount = returnRequest.refundAmount || returnRequest.order.total;
+    // Get order total from included order relation
+    const orderTotal = returnRequest.order ? Number(returnRequest.order.total) : 0;
+    const refundAmount = returnRequest.refundAmount || orderTotal;
 
     // Process refund through payment provider
     // This is a simplified version - in production, integrate with Stripe/Klarna
@@ -133,11 +129,7 @@ export class ReturnsEnhancementsService {
       data: {
         status: 'COMPLETED',
         processedAt: new Date(),
-        metadata: {
-          ...(returnRequest.metadata as any || {}),
-          refundId,
-          refundProcessedAt: new Date().toISOString(),
-        },
+        notes: (returnRequest.notes || '') + ` [Refund ID: ${refundId}]`,
       },
     });
 

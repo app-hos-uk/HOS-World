@@ -183,11 +183,7 @@ export class TagsService {
       },
       take: 20,
       orderBy: {
-        _relevance: {
-          fields: ['name'],
-          search: query,
-          sort: 'asc',
-        },
+        name: 'asc',
       },
     });
   }

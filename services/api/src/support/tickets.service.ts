@@ -275,9 +275,15 @@ export class TicketsService {
       throw new NotFoundException('Ticket not found');
     }
 
+    // Cast category to enum if provided
+    const updateData: any = { ...data };
+    if (updateData.category && typeof updateData.category === 'string') {
+      updateData.category = updateData.category as any; // Type assertion for enum
+    }
+
     return this.prisma.supportTicket.update({
       where: { id },
-      data,
+      data: updateData,
       include: {
         user: {
           select: {

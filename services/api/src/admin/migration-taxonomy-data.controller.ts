@@ -6,6 +6,12 @@ import {
   Logger,
   ForbiddenException,
 } from '@nestjs/common';
+import {
+  ApiTags,
+  ApiOperation,
+  ApiResponse as SwaggerApiResponse,
+  ApiBearerAuth,
+} from '@nestjs/swagger';
 import { PrismaService } from '../database/prisma.service';
 import { ConfigService } from '@nestjs/config';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
@@ -14,6 +20,8 @@ import { Roles } from '../common/decorators/roles.decorator';
 import { slugify } from '@hos-marketplace/utils';
 import type { ApiResponse } from '@hos-marketplace/shared-types';
 
+@ApiTags('admin')
+@ApiBearerAuth('JWT-auth')
 @Controller('admin/migration-taxonomy-data')
 @UseGuards(JwtAuthGuard, RolesGuard)
 @Roles('ADMIN')
@@ -34,6 +42,10 @@ export class MigrationTaxonomyDataController {
   }
 
   @Post('migrate')
+  @ApiOperation({ summary: 'Migrate taxonomy data', description: 'Migrates existing category strings and tag arrays to new taxonomy system. Requires ENABLE_ADMIN_MIGRATIONS=true. Admin access required.' })
+  @SwaggerApiResponse({ status: 200, description: 'Data migration completed' })
+  @SwaggerApiResponse({ status: 401, description: 'Unauthorized' })
+  @SwaggerApiResponse({ status: 403, description: 'Forbidden - Admin access required or migrations disabled' })
   async migrateData(): Promise<ApiResponse<any>> {
     this.checkMigrationsEnabled();
     
@@ -256,6 +268,10 @@ export class MigrationTaxonomyDataController {
   }
 
   @Get('status')
+  @ApiOperation({ summary: 'Get taxonomy migration status', description: 'Retrieves the status of taxonomy data migration. Admin access required.' })
+  @SwaggerApiResponse({ status: 200, description: 'Migration status retrieved successfully' })
+  @SwaggerApiResponse({ status: 401, description: 'Unauthorized' })
+  @SwaggerApiResponse({ status: 403, description: 'Forbidden - Admin access required' })
   async getMigrationStatus(): Promise<ApiResponse<any>> {
     try {
       // Count products with old category strings

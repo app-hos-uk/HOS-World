@@ -119,6 +119,15 @@ export function Header() {
                 >
                   Fandoms
                 </Link>
+                {isAuthenticated && (
+                  <Link 
+                    href="/wishlist" 
+                    className="text-sm lg:text-base text-purple-700 hover:text-amber-600 font-medium font-secondary transition-colors duration-300"
+                    title="Wishlist"
+                  >
+                    ❤️ Wishlist
+                  </Link>
+                )}
                 <Link 
                   href="/cart" 
                   className="text-sm lg:text-base text-purple-700 hover:text-amber-600 font-medium font-secondary transition-colors duration-300"
@@ -214,6 +223,15 @@ export function Header() {
                   >
                     Fandoms
                   </Link>
+                  {isAuthenticated && (
+                    <Link 
+                      href="/wishlist" 
+                      onClick={() => setIsMobileMenuOpen(false)}
+                      className="text-base text-purple-700 hover:text-amber-600 font-medium font-secondary transition-colors duration-300 py-2 px-2 rounded-lg hover:bg-purple-50"
+                    >
+                      ❤️ Wishlist
+                    </Link>
+                  )}
                   <Link 
                     href="/cart" 
                     onClick={() => setIsMobileMenuOpen(false)}

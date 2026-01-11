@@ -1,5 +1,5 @@
 // OAuth methods for AuthService
-import { Injectable, ConflictException } from '@nestjs/common';
+import { Injectable, ConflictException, NotImplementedException } from '@nestjs/common';
 import { PrismaService } from '../database/prisma.service';
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
@@ -28,8 +28,11 @@ export class AuthOAuthService {
    * Validate or create user from OAuth provider
    */
   async validateOrCreateOAuthUser(oauthData: OAuthUserData): Promise<AuthResponse> {
+    // OAuthAccount model not in schema - feature disabled
+    throw new NotImplementedException('OAuth authentication is not available. OAuthAccount model is not in the database schema.');
+    
     // Check if OAuth account already exists
-    const existingOAuth = await this.prisma.oAuthAccount.findUnique({
+    /* const existingOAuth = await this.prisma.oAuthAccount.findUnique({
       where: {
         provider_providerId: {
           provider: oauthData.provider,
@@ -93,7 +96,7 @@ export class AuthOAuthService {
             create: {
               provider: oauthData.provider,
               providerId: oauthData.providerId,
-              accessToken: oauthData.accessToken,
+              accessToken: oauthData.accessToken || null,
               refreshToken: oauthData.refreshToken,
             },
           },
@@ -110,52 +113,21 @@ export class AuthOAuthService {
       token: tokens.accessToken,
       refreshToken: tokens.refreshToken,
     };
+    */ // End of commented OAuth code
   }
 
   /**
    * Unlink OAuth account from user
    */
   async unlinkOAuthAccount(userId: string, provider: string): Promise<void> {
-    const user = await this.prisma.user.findUnique({
-      where: { id: userId },
-      include: {
-        oAuthAccounts: true,
-      },
-    });
-
-    if (!user) {
-      throw new ConflictException('User not found');
-    }
-
-    // Don't allow unlinking if it's the only authentication method
-    const hasPassword = user.password && user.password.length > 0;
-    const oauthCount = user.oAuthAccounts.length;
-
-    if (!hasPassword && oauthCount === 1) {
-      throw new ConflictException('Cannot unlink the only authentication method');
-    }
-
-    await this.prisma.oAuthAccount.deleteMany({
-      where: {
-        userId,
-        provider: provider as any,
-      },
-    });
+    throw new NotImplementedException('OAuth authentication is not available. OAuthAccount model is not in the database schema.');
   }
 
   /**
    * Get linked OAuth accounts for user
    */
   async getLinkedAccounts(userId: string) {
-    return this.prisma.oAuthAccount.findMany({
-      where: { userId },
-      select: {
-        id: true,
-        provider: true,
-        providerId: true,
-        createdAt: true,
-      },
-    });
+    throw new NotImplementedException('OAuth authentication is not available. OAuthAccount model is not in the database schema.');
   }
 
   private async generateTokens(user: any): Promise<{ accessToken: string; refreshToken: string }> {
@@ -177,6 +149,7 @@ export class AuthOAuthService {
   }
 
   private mapToUser(user: any): User {
+    // Map to User type (loyaltyPoints is only on Customer, not base User)
     return {
       id: user.id,
       email: user.email,
@@ -185,9 +158,8 @@ export class AuthOAuthService {
       phone: user.phone || undefined,
       role: user.role,
       avatar: user.avatar || undefined,
-      loyaltyPoints: user.loyaltyPoints || 0,
-      createdAt: user.createdAt.toISOString(),
-      updatedAt: user.updatedAt.toISOString(),
+      createdAt: user.createdAt instanceof Date ? user.createdAt : new Date(user.createdAt),
+      updatedAt: user.updatedAt instanceof Date ? user.updatedAt : new Date(user.updatedAt),
     };
   }
 }

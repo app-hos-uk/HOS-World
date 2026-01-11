@@ -1,0 +1,5 @@
+# Copy these values to your .env file in services/api/.env
+
+DATABASE_URL=postgresql://postgres:pYPWIdwzfQxyQQuobcwivtlfgFPgoekM@postgres.railway.internal:5432/railway
+JWT_SECRET=EDLd7c1od2DTOXo8LQDxzNa0OM+drNeozaPMlggG2kQ=
+JWT_REFRESH_SECRET=9KFJvUbcTrgjW8Ui6gOa0De/GE/XF4wfksEcCgBp2fo=

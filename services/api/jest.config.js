@@ -3,7 +3,9 @@ module.exports = {
   rootDir: 'src',
   testRegex: '.*\\.spec\\.ts$',
   transform: {
-    '^.+\\.(t|j)s$': 'ts-jest',
+    '^.+\\.(t|j)s$': ['ts-jest', {
+      isolatedModules: true,
+    }],
   },
   collectCoverageFrom: [
     '**/*.(t|j)s',
@@ -20,11 +22,6 @@ module.exports = {
   transformIgnorePatterns: [
     'node_modules/(?!(@nestjs|@elastic|bcrypt))',
   ],
-  transform: {
-    '^.+\\.(t|j)s$': ['ts-jest', {
-      isolatedModules: true,
-    }],
-  },
 };
 
 

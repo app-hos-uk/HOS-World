@@ -5,6 +5,7 @@ import { RouteGuard } from '@/components/RouteGuard';
 import { AdminLayout } from '@/components/AdminLayout';
 import { apiClient } from '@/lib/api';
 import { useToast } from '@/hooks/useToast';
+import { getPublicApiBaseUrl } from '@/lib/apiBaseUrl';
 
 interface Theme {
   id: string;
@@ -78,7 +79,7 @@ export default function AdminThemesPage() {
       if (uploadForm.description) formData.append('description', uploadForm.description);
 
       await toast.promise(
-        fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api'}/themes/upload`, {
+        fetch(`${getPublicApiBaseUrl() || 'http://localhost:3001/api/v1'}/themes/upload`, {
           method: 'POST',
           headers: {
             Authorization: `Bearer ${localStorage.getItem('auth_token')}`,

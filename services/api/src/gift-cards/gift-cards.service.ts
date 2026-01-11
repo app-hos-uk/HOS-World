@@ -3,6 +3,7 @@ import {
   NotFoundException,
   BadRequestException,
   ForbiddenException,
+  NotImplementedException,
 } from '@nestjs/common';
 import { PrismaService } from '../database/prisma.service';
 import { CreateGiftCardDto } from './dto/create-gift-card.dto';
@@ -11,6 +12,8 @@ import { RedeemGiftCardDto } from './dto/redeem-gift-card.dto';
 @Injectable()
 export class GiftCardsService {
   constructor(private prisma: PrismaService) {}
+
+  // GiftCard model is now in schema - no need for throwNotImplemented
 
   /**
    * Generate unique gift card code
@@ -30,26 +33,57 @@ export class GiftCardsService {
    */
   async create(userId: string, dto: CreateGiftCardDto): Promise<any> {
     // Generate unique code
-    let code = this.generateCode();
-    let exists = await this.prisma.giftCard.findUnique({ where: { code } });
-    while (exists) {
+    let code: string;
+    let isUnique = false;
+    let attempts = 0;
+    const maxAttempts = 10;
+
+    while (!isUnique && attempts < maxAttempts) {
       code = this.generateCode();
-      exists = await this.prisma.giftCard.findUnique({ where: { code } });
+      const existing = await (this.prisma as any).giftCard.findUnique({
+        where: { code },
+      });
+      if (!existing) {
+        isUnique = true;
+      }
+      attempts++;
     }
 
-    const giftCard = await this.prisma.giftCard.create({
+    if (!isUnique) {
+      throw new BadRequestException('Failed to generate unique gift card code');
+    }
+
+    // Parse expiresAt if provided
+    const expiresAt = dto.expiresAt ? new Date(dto.expiresAt) : null;
+    if (expiresAt && expiresAt < new Date()) {
+      throw new BadRequestException('Expiration date must be in the future');
+    }
+
+    // Create gift card
+    const giftCard = await (this.prisma as any).giftCard.create({
       data: {
-        code,
+        code: code!,
+        userId,
         type: dto.type,
         amount: dto.amount,
-        currency: dto.currency || 'USD',
-        balance: dto.amount,
-        status: 'active',
+        balance: dto.amount, // Initial balance equals amount
+        currency: dto.currency || 'GBP',
+        status: 'ACTIVE',
         issuedToEmail: dto.issuedToEmail,
         issuedToName: dto.issuedToName,
-        purchasedByUserId: userId,
-        expiresAt: dto.expiresAt ? new Date(dto.expiresAt) : null,
+        expiresAt,
         message: dto.message,
+      },
+    });
+
+    // Create initial transaction record
+    await (this.prisma as any).giftCardTransaction.create({
+      data: {
+        giftCardId: giftCard.id,
+        type: 'PURCHASE',
+        amount: dto.amount,
+        balanceAfter: dto.amount,
+        notes: 'Gift card purchased',
       },
     });
 
@@ -60,32 +94,47 @@ export class GiftCardsService {
    * Validate gift card code
    */
   async validate(code: string): Promise<any> {
-    const giftCard = await this.prisma.giftCard.findUnique({
+    const giftCard = await (this.prisma as any).giftCard.findUnique({
       where: { code: code.toUpperCase() },
+      include: {
+        user: {
+          select: {
+            id: true,
+            email: true,
+            firstName: true,
+            lastName: true,
+          },
+        },
+      },
     });
 
     if (!giftCard) {
       throw new NotFoundException('Gift card not found');
     }
 
-    if (giftCard.status !== 'active') {
-      throw new BadRequestException(`Gift card is ${giftCard.status}`);
-    }
-
-    if (giftCard.balance <= 0) {
-      throw new BadRequestException('Gift card has no balance');
-    }
-
-    if (giftCard.expiresAt && new Date(giftCard.expiresAt) < new Date()) {
+    // Check if expired
+    if (giftCard.expiresAt && giftCard.expiresAt < new Date()) {
       throw new BadRequestException('Gift card has expired');
     }
 
+    // Check if already fully redeemed
+    if (giftCard.status === 'REDEEMED' || Number(giftCard.balance) <= 0) {
+      throw new BadRequestException('Gift card has no remaining balance');
+    }
+
+    // Check if cancelled
+    if (giftCard.status === 'CANCELLED') {
+      throw new BadRequestException('Gift card has been cancelled');
+    }
+
     return {
-      valid: true,
+      id: giftCard.id,
       code: giftCard.code,
       balance: giftCard.balance,
       currency: giftCard.currency,
+      status: giftCard.status,
       expiresAt: giftCard.expiresAt,
+      owner: giftCard.user,
     };
   }
 
@@ -93,7 +142,8 @@ export class GiftCardsService {
    * Redeem gift card (apply to order)
    */
   async redeem(userId: string, dto: RedeemGiftCardDto): Promise<any> {
-    const giftCard = await this.prisma.giftCard.findUnique({
+    // Validate gift card
+    const giftCard = await (this.prisma as any).giftCard.findUnique({
       where: { code: dto.code.toUpperCase() },
     });
 
@@ -101,91 +151,125 @@ export class GiftCardsService {
       throw new NotFoundException('Gift card not found');
     }
 
-    if (giftCard.status !== 'active') {
-      throw new BadRequestException(`Gift card is ${giftCard.status}`);
+    // Check if user owns the gift card or if it's unassigned
+    if (giftCard.userId && giftCard.userId !== userId) {
+      throw new ForbiddenException('You do not own this gift card');
     }
 
-    if (giftCard.balance < dto.amount) {
-      throw new BadRequestException('Insufficient balance');
+    // Check if expired
+    if (giftCard.expiresAt && giftCard.expiresAt < new Date()) {
+      throw new BadRequestException('Gift card has expired');
     }
 
-    // Update balance
-    const balanceBefore = giftCard.balance;
-    const balanceAfter = balanceBefore - dto.amount;
+    // Check if already fully redeemed
+    if (giftCard.status === 'REDEEMED' || Number(giftCard.balance) <= 0) {
+      throw new BadRequestException('Gift card has no remaining balance');
+    }
 
-    const updated = await this.prisma.giftCard.update({
-      where: { code: giftCard.code },
+    // Check if cancelled
+    if (giftCard.status === 'CANCELLED') {
+      throw new BadRequestException('Gift card has been cancelled');
+    }
+
+    const currentBalance = Number(giftCard.balance);
+    const redeemAmount = dto.amount;
+
+    if (redeemAmount > currentBalance) {
+      throw new BadRequestException(`Insufficient balance. Available: ${currentBalance}`);
+    }
+
+    // Calculate new balance
+    const newBalance = currentBalance - redeemAmount;
+
+    // Update gift card
+    const updatedGiftCard = await this.prisma.giftCard.update({
+      where: { id: giftCard.id },
       data: {
-        balance: balanceAfter,
-        redeemedByUserId: userId,
-        redeemedAt: dto.orderId ? new Date() : null,
-        status: balanceAfter === 0 ? 'redeemed' : 'active',
+        balance: newBalance,
+        status: newBalance <= 0 ? 'REDEEMED' : 'ACTIVE',
+        redeemedAt: newBalance <= 0 ? new Date() : giftCard.redeemedAt,
+        userId: giftCard.userId || userId, // Assign to user if not already assigned
       },
     });
 
-    // Create transaction record if order exists
-    if (dto.orderId) {
-      await this.prisma.giftCardTransaction.create({
-        data: {
-          giftCardId: giftCard.id,
-          orderId: dto.orderId,
-          amount: dto.amount,
-          balanceBefore,
-          balanceAfter,
-          type: 'redeemed',
-        },
-      });
-    }
+    // Create transaction record
+    await (this.prisma as any).giftCardTransaction.create({
+      data: {
+        giftCardId: giftCard.id,
+        orderId: dto.orderId,
+        type: 'REDEMPTION',
+        amount: redeemAmount,
+        balanceAfter: newBalance,
+        notes: dto.orderId ? `Redeemed for order ${dto.orderId}` : 'Redeemed',
+      },
+    });
 
-    return updated;
+    return updatedGiftCard;
   }
 
   /**
    * Get user's gift cards
    */
   async getMyGiftCards(userId: string): Promise<any[]> {
-    return this.prisma.giftCard.findMany({
-      where: {
-        OR: [
-          { purchasedByUserId: userId },
-          { redeemedByUserId: userId },
-        ],
+    const giftCards = await (this.prisma as any).giftCard.findMany({
+      where: { userId },
+      orderBy: { createdAt: 'desc' },
+      include: {
+        transactions: {
+          orderBy: { createdAt: 'desc' },
+          take: 5, // Last 5 transactions
+        },
       },
-      orderBy: { issuedAt: 'desc' },
     });
+
+    return giftCards.map((gc) => ({
+      id: gc.id,
+      code: gc.code,
+      type: gc.type,
+      amount: gc.amount,
+      balance: gc.balance,
+      currency: gc.currency,
+      status: gc.status,
+      expiresAt: gc.expiresAt,
+      purchasedAt: gc.purchasedAt,
+      redeemedAt: gc.redeemedAt,
+      recentTransactions: gc.transactions,
+    }));
   }
 
   /**
    * Get gift card transactions
    */
   async getTransactions(giftCardId: string, userId: string): Promise<any[]> {
-    const giftCard = await this.prisma.giftCard.findFirst({
-      where: {
-        id: giftCardId,
-        OR: [
-          { purchasedByUserId: userId },
-          { redeemedByUserId: userId },
-        ],
-      },
+    // Verify user owns the gift card
+    const giftCard = await this.prisma.giftCard.findUnique({
+      where: { id: giftCardId },
     });
 
     if (!giftCard) {
-      throw new ForbiddenException('Gift card not found');
+      throw new NotFoundException('Gift card not found');
     }
 
-    return this.prisma.giftCardTransaction.findMany({
+    if (giftCard.userId !== userId) {
+      throw new ForbiddenException('You do not have access to this gift card');
+    }
+
+    const transactions = await (this.prisma as any).giftCardTransaction.findMany({
       where: { giftCardId },
-      orderBy: { createdAt: 'desc' },
       include: {
         order: {
           select: {
             id: true,
             orderNumber: true,
             total: true,
+            status: true,
           },
         },
       },
+      orderBy: { createdAt: 'desc' },
     });
+
+    return transactions;
   }
 
   /**
@@ -200,30 +284,45 @@ export class GiftCardsService {
       throw new NotFoundException('Gift card not found');
     }
 
-    const balanceBefore = giftCard.balance;
-    const balanceAfter = balanceBefore + amount;
+    // Verify the order exists and used this gift card
+    const transaction = await (this.prisma as any).giftCardTransaction.findFirst({
+      where: {
+        giftCardId,
+        orderId,
+        type: 'REDEMPTION',
+      },
+    });
 
-    const updated = await this.prisma.giftCard.update({
+    if (!transaction) {
+      throw new BadRequestException('This gift card was not used for the specified order');
+    }
+
+    const currentBalance = Number(giftCard.balance);
+    const newBalance = currentBalance + amount;
+
+    // Update gift card
+    const updatedGiftCard = await this.prisma.giftCard.update({
       where: { id: giftCardId },
       data: {
-        balance: balanceAfter,
-        status: balanceAfter > 0 ? 'active' : giftCard.status,
+        balance: newBalance,
+        status: 'ACTIVE', // Reactivate if it was redeemed
+        redeemedAt: null, // Clear redeemed date
       },
     });
 
     // Create refund transaction
-    await this.prisma.giftCardTransaction.create({
+    await (this.prisma as any).giftCardTransaction.create({
       data: {
         giftCardId,
         orderId,
+        type: 'REFUND',
         amount,
-        balanceBefore,
-        balanceAfter,
-        type: 'refunded',
+        balanceAfter: newBalance,
+        notes: `Refund for order ${orderId}`,
       },
     });
 
-    return updated;
+    return updatedGiftCard;
   }
 }
 

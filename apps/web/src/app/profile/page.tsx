@@ -61,7 +61,7 @@ export default function ProfilePage() {
   const [badges, setBadges] = useState<Badge[]>([]);
   const [collections, setCollections] = useState<Collection[]>([]);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<'overview' | 'badges' | 'collections' | 'settings'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'badges' | 'collections' | 'settings' | 'addresses'>('overview');
   
   // Settings form state
   const [editing, setEditing] = useState(false);
@@ -80,9 +80,28 @@ export default function ProfilePage() {
   const [exportingData, setExportingData] = useState(false);
   const [deletingAccount, setDeletingAccount] = useState(false);
 
+  // Address management state
+  const [addresses, setAddresses] = useState<any[]>([]);
+  const [showAddressForm, setShowAddressForm] = useState(false);
+  const [editingAddress, setEditingAddress] = useState<any>(null);
+  const [addressForm, setAddressForm] = useState({
+    street: '',
+    city: '',
+    state: '',
+    postalCode: '',
+    country: '',
+    isDefault: false,
+  });
+
   useEffect(() => {
     fetchProfileData();
   }, []);
+
+  useEffect(() => {
+    if (activeTab === 'addresses') {
+      fetchAddresses();
+    }
+  }, [activeTab]);
 
   const fetchProfileData = async () => {
     try {
@@ -204,6 +223,66 @@ export default function ProfilePage() {
     }
   };
 
+  // Address management functions
+  const fetchAddresses = async () => {
+    try {
+      const response = await apiClient.getAddresses();
+      if (response?.data) {
+        setAddresses(response.data);
+      }
+    } catch (err: any) {
+      console.error('Error fetching addresses:', err);
+      toast.error(err.message || 'Failed to load addresses');
+    }
+  };
+
+  const handleSaveAddress = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      if (editingAddress) {
+        await apiClient.updateAddress(editingAddress.id, addressForm);
+        toast.success('Address updated successfully!');
+      } else {
+        await apiClient.createAddress(addressForm);
+        toast.success('Address added successfully!');
+      }
+      setShowAddressForm(false);
+      setEditingAddress(null);
+      setAddressForm({
+        street: '',
+        city: '',
+        state: '',
+        postalCode: '',
+        country: '',
+        isDefault: false,
+      });
+      fetchAddresses();
+    } catch (err: any) {
+      toast.error(err.message || 'Failed to save address');
+    }
+  };
+
+  const handleDeleteAddress = async (id: string) => {
+    if (!confirm('Are you sure you want to delete this address?')) return;
+    try {
+      await apiClient.deleteAddress(id);
+      toast.success('Address deleted successfully!');
+      fetchAddresses();
+    } catch (err: any) {
+      toast.error(err.message || 'Failed to delete address');
+    }
+  };
+
+  const handleSetDefault = async (id: string) => {
+    try {
+      await apiClient.setDefaultAddress(id);
+      toast.success('Default address updated!');
+      fetchAddresses();
+    } catch (err: any) {
+      toast.error(err.message || 'Failed to set default address');
+    }
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen bg-white">
@@ -296,6 +375,16 @@ export default function ProfilePage() {
                 }`}
               >
                 Collections ({collections.length})
+              </button>
+              <button
+                onClick={() => setActiveTab('addresses')}
+                className={`px-4 sm:px-6 py-3 font-medium text-sm sm:text-base transition-colors ${
+                  activeTab === 'addresses'
+                    ? 'border-b-2 border-purple-600 text-purple-600'
+                    : 'text-gray-600 hover:text-gray-900'
+                }`}
+              >
+                Addresses
               </button>
               <button
                 onClick={() => setActiveTab('settings')}
@@ -515,6 +604,175 @@ export default function ProfilePage() {
                     ))}
                   </div>
                 )}
+              </div>
+            )}
+
+            {activeTab === 'addresses' && (
+              <div className="space-y-6">
+                <div className="flex justify-between items-center">
+                  <h3 className="text-lg font-semibold">Saved Addresses</h3>
+                  <button
+                    onClick={() => {
+                      setEditingAddress(null);
+                      setAddressForm({
+                        street: '',
+                        city: '',
+                        state: '',
+                        postalCode: '',
+                        country: '',
+                        isDefault: false,
+                      });
+                      setShowAddressForm(true);
+                    }}
+                    className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors text-sm font-medium"
+                  >
+                    + Add Address
+                  </button>
+                </div>
+
+                {showAddressForm && (
+                  <div className="bg-gray-50 rounded-lg p-6">
+                    <h4 className="font-semibold mb-4">{editingAddress ? 'Edit' : 'Add'} Address</h4>
+                    <form onSubmit={handleSaveAddress} className="space-y-4">
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">Street Address *</label>
+                          <input
+                            type="text"
+                            value={addressForm.street}
+                            onChange={(e) => setAddressForm({ ...addressForm, street: e.target.value })}
+                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
+                            required
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">City *</label>
+                          <input
+                            type="text"
+                            value={addressForm.city}
+                            onChange={(e) => setAddressForm({ ...addressForm, city: e.target.value })}
+                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
+                            required
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">State/Region</label>
+                          <input
+                            type="text"
+                            value={addressForm.state}
+                            onChange={(e) => setAddressForm({ ...addressForm, state: e.target.value })}
+                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">Postal Code *</label>
+                          <input
+                            type="text"
+                            value={addressForm.postalCode}
+                            onChange={(e) => setAddressForm({ ...addressForm, postalCode: e.target.value })}
+                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
+                            required
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">Country *</label>
+                          <input
+                            type="text"
+                            value={addressForm.country}
+                            onChange={(e) => setAddressForm({ ...addressForm, country: e.target.value })}
+                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
+                            required
+                          />
+                        </div>
+                      </div>
+                      <div className="flex items-center">
+                        <input
+                          type="checkbox"
+                          checked={addressForm.isDefault}
+                          onChange={(e) => setAddressForm({ ...addressForm, isDefault: e.target.checked })}
+                          className="mr-2"
+                        />
+                        <label className="text-sm text-gray-700">Set as default address</label>
+                      </div>
+                      <div className="flex gap-3">
+                        <button
+                          type="submit"
+                          className="px-6 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
+                        >
+                          {editingAddress ? 'Update' : 'Add'} Address
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setShowAddressForm(false);
+                            setEditingAddress(null);
+                          }}
+                          className="px-6 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+                        >
+                          Cancel
+                        </button>
+                      </div>
+                    </form>
+                  </div>
+                )}
+
+                <div className="space-y-4">
+                  {addresses.length === 0 ? (
+                    <p className="text-gray-600 text-center py-8">No addresses saved. Add your first address above.</p>
+                  ) : (
+                    addresses.map((address) => (
+                      <div key={address.id} className="border border-gray-200 rounded-lg p-4">
+                        <div className="flex justify-between items-start">
+                          <div className="flex-1">
+                            {address.isDefault && (
+                              <span className="inline-block px-2 py-1 bg-purple-100 text-purple-800 text-xs font-semibold rounded mb-2">
+                                Default
+                              </span>
+                            )}
+                            <p className="font-medium">{address.street}</p>
+                            <p className="text-gray-600">
+                              {address.city}, {address.state} {address.postalCode}
+                            </p>
+                            <p className="text-gray-600">{address.country}</p>
+                          </div>
+                          <div className="flex gap-2">
+                            {!address.isDefault && (
+                              <button
+                                onClick={() => handleSetDefault(address.id)}
+                                className="px-3 py-1 text-sm border border-gray-300 rounded hover:bg-gray-50"
+                              >
+                                Set Default
+                              </button>
+                            )}
+                            <button
+                              onClick={() => {
+                                setEditingAddress(address);
+                                setAddressForm({
+                                  street: address.street,
+                                  city: address.city,
+                                  state: address.state || '',
+                                  postalCode: address.postalCode,
+                                  country: address.country,
+                                  isDefault: address.isDefault,
+                                });
+                                setShowAddressForm(true);
+                              }}
+                              className="px-3 py-1 text-sm border border-gray-300 rounded hover:bg-gray-50"
+                            >
+                              Edit
+                            </button>
+                            <button
+                              onClick={() => handleDeleteAddress(address.id)}
+                              className="px-3 py-1 text-sm border border-red-300 text-red-600 rounded hover:bg-red-50"
+                            >
+                              Delete
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    ))
+                  )}
+                </div>
               </div>
             )}
 

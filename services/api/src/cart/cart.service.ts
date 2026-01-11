@@ -3,8 +3,15 @@ import {
   NotFoundException,
   BadRequestException,
   ForbiddenException,
+  Inject,
+  Optional,
+  Logger,
 } from '@nestjs/common';
 import { PrismaService } from '../database/prisma.service';
+import { PromotionsService } from '../promotions/promotions.service';
+import { ShippingService } from '../shipping/shipping.service';
+import { TaxService } from '../tax/tax.service';
+import { ProductStatus, ImageType } from '@prisma/client';
 import { AddToCartDto } from './dto/add-to-cart.dto';
 import { UpdateCartItemDto } from './dto/update-cart-item.dto';
 import type { Cart, CartItem, Product } from '@hos-marketplace/shared-types';
@@ -12,7 +19,14 @@ import { Decimal } from '@prisma/client/runtime/library';
 
 @Injectable()
 export class CartService {
-  constructor(private prisma: PrismaService) {}
+  private readonly logger = new Logger(CartService.name);
+
+  constructor(
+    private prisma: PrismaService,
+    @Optional() @Inject(PromotionsService) private promotionsService?: PromotionsService,
+    @Optional() @Inject(ShippingService) private shippingService?: ShippingService,
+    @Optional() @Inject(TaxService) private taxService?: TaxService,
+  ) {}
 
   async getCart(userId: string): Promise<Cart> {
     let cart = await this.prisma.cart.findUnique({
@@ -36,7 +50,7 @@ export class CartService {
               },
             },
           },
-          orderBy: { createdAt: 'desc' },
+          orderBy: { id: 'desc' },
         },
       },
     });
@@ -245,6 +259,12 @@ export class CartService {
                   orderBy: { order: 'asc' },
                   take: 1,
                 },
+                taxClass: {
+                  select: {
+                    id: true,
+                    name: true,
+                  },
+                },
                 seller: {
                   select: {
                     id: true,
@@ -266,22 +286,122 @@ export class CartService {
     let subtotal = new Decimal(0);
     let tax = new Decimal(0);
 
+    // Get user's location for tax calculation (default address or user country)
+    let userLocation: {
+      country: string;
+      state?: string;
+      city?: string;
+      postalCode?: string;
+    } | null = null;
+
+    if (cart.userId && this.taxService) {
+      try {
+        // Try to get default address first
+        const defaultAddress = await this.prisma.address.findFirst({
+          where: {
+            userId: cart.userId,
+            isDefault: true,
+          },
+        });
+
+        if (defaultAddress) {
+          userLocation = {
+            country: defaultAddress.country,
+            state: defaultAddress.state || undefined,
+            city: defaultAddress.city || undefined,
+            postalCode: defaultAddress.postalCode || undefined,
+          };
+        } else {
+          // Fallback to user's country
+          const user = await this.prisma.user.findUnique({
+            where: { id: cart.userId },
+            select: { country: true },
+          });
+
+          if (user?.country) {
+            userLocation = {
+              country: user.country,
+            };
+          }
+        }
+      } catch (error) {
+        this.logger.warn('Failed to get user location for tax calculation', error);
+      }
+    }
+
+    // Calculate tax per item using tax zones if available, otherwise fallback to product.taxRate
     for (const item of cart.items) {
       const itemTotal = new Decimal(item.price).mul(item.quantity);
       subtotal = subtotal.add(itemTotal);
-      const itemTax = itemTotal.mul(item.product.taxRate);
+
+      let itemTax = new Decimal(0);
+
+      // Use TaxService if available and product has taxClassId and user location is known
+      if (
+        this.taxService &&
+        item.product.taxClassId &&
+        userLocation &&
+        userLocation.country
+      ) {
+        try {
+          const taxCalculation = await this.taxService.calculateTax(
+            Number(itemTotal),
+            item.product.taxClassId,
+            userLocation,
+          );
+          itemTax = new Decimal(taxCalculation.tax);
+        } catch (error) {
+          this.logger.warn(
+            `Failed to calculate tax for product ${item.productId}, falling back to product.taxRate`,
+            error,
+          );
+          // Fallback to product taxRate
+          itemTax = itemTotal.mul(item.product.taxRate || 0);
+        }
+      } else {
+        // Fallback to product taxRate (legacy behavior)
+        itemTax = itemTotal.mul(item.product.taxRate || 0);
+      }
+
       tax = tax.add(itemTax);
     }
 
-    const total = subtotal.add(tax);
+    // Apply promotions and discounts
+    let discount = new Decimal(0);
+    let shipping = new Decimal(0);
+    const cartSubtotal = Number(subtotal);
+
+    if (this.promotionsService && cart.userId) {
+      try {
+        const promotionResult = await this.promotionsService.applyPromotionsToCart(
+          cartId,
+          cart.userId,
+          cart.items.map((item) => ({
+            productId: item.productId,
+            price: Number(item.price),
+            quantity: item.quantity,
+          })),
+          cart.couponCode || undefined,
+        );
+        discount = new Decimal(promotionResult.discount);
+      } catch (error) {
+        // Log error but don't fail cart calculation
+        console.error('Error applying promotions:', error);
+      }
+    }
+
+    // Calculate total: subtotal + tax - discount + shipping
+    const total = subtotal.add(tax).sub(discount).add(shipping);
 
     const updatedCart = await this.prisma.cart.update({
       where: { id: cartId },
       data: {
         subtotal,
         tax,
+        discount,
+        shipping,
         total,
-        currency: cart.items[0]?.product.currency || 'USD',
+        currency: cart.items[0]?.product.currency || 'GBP',
       },
       include: {
         items: {
@@ -302,7 +422,7 @@ export class CartService {
               },
             },
           },
-          orderBy: { createdAt: 'desc' },
+          orderBy: { id: 'desc' },
         },
       },
     });
@@ -352,13 +472,13 @@ export class CartService {
         url: img.url,
         alt: img.alt || undefined,
         order: img.order,
-        type: img.type.toLowerCase() as any,
+        type: img.type as ImageType,
       })) || [],
       variations: undefined,
       fandom: product.fandom || undefined,
       category: product.category || undefined,
       tags: product.tags || [],
-      status: product.status.toLowerCase() as any,
+      status: product.status as ProductStatus,
       createdAt: product.createdAt,
       updatedAt: product.updatedAt,
     };

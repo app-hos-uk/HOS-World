@@ -1,4 +1,5 @@
 import { Module } from '@nestjs/common';
+import { ConfigModule } from '@nestjs/config';
 import { CreateTeamUsersController } from './create-team-users.controller';
 import { AdminUsersController } from './users.controller';
 import { AdminController } from './admin.controller';
@@ -16,7 +17,7 @@ import { NotificationsModule } from '../notifications/notifications.module';
 import { ProductsModule } from '../products/products.module';
 
 @Module({
-  imports: [DatabaseModule, NotificationsModule, ProductsModule],
+  imports: [DatabaseModule, ConfigModule, NotificationsModule, ProductsModule],
   controllers: [
     CreateTeamUsersController,
     AdminUsersController,

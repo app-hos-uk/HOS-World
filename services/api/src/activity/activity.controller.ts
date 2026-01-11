@@ -96,13 +96,13 @@ export class ActivityController {
   @SwaggerApiResponse({ status: 404, description: 'Seller not found' })
   async getSellerLogs(
     @Param('sellerId', ParseUUIDPipe) sellerId: string,
+    @Request() req: any,
     @Query('action') action?: string,
     @Query('entityType') entityType?: string,
     @Query('startDate') startDate?: string,
     @Query('endDate') endDate?: string,
     @Query('page') page?: string,
     @Query('limit') limit?: string,
-    @Request() req: any,
   ): Promise<ApiResponse<any>> {
     // Check if user has access to this seller's logs
     if (req.user.role !== 'ADMIN') {

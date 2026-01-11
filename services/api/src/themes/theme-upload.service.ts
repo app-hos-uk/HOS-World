@@ -194,10 +194,111 @@ export class ThemeUploadService {
       throw new BadRequestException('Theme not found');
     }
 
-    // TODO: Generate preview images from theme assets
-    // This could involve rendering the theme and taking screenshots
+    // If preview images already exist, return them
+    if (theme.previewImages && Array.isArray(theme.previewImages) && theme.previewImages.length > 0) {
+      return theme.previewImages as string[];
+    }
 
-    return theme.previewImages || [];
+    // Generate preview images from theme assets
+    // Strategy:
+    // 1. Extract theme assets from storage
+    // 2. Create a preview HTML file with the theme applied
+    // 3. Generate screenshots (if headless browser available) or use placeholder images
+    // 4. Upload preview images to storage
+    // 5. Update theme record with preview image URLs
+
+    try {
+      const previewImages: string[] = [];
+      
+      // If theme has assets, try to generate previews
+      const assets = theme.assets as any;
+      
+      if (assets && (assets.images || assets.css || assets.js)) {
+        // Extract first few images from theme assets as previews
+        if (assets.images && Array.isArray(assets.images) && assets.images.length > 0) {
+          // Use first 3 images as previews
+          const imageAssets = assets.images.slice(0, 3);
+          
+          for (const imagePath of imageAssets) {
+            try {
+              // If storageUrl exists, try to construct preview URL
+              if (theme.storageUrl) {
+                // For now, use the image paths directly
+                // In production, you would:
+                // 1. Download the image from storage
+                // 2. Resize/optimize it for preview
+                // 3. Upload the preview version
+                // 4. Return the preview URL
+                
+                // Construct preview URL (assuming images are in the theme package)
+                const previewUrl = `${theme.storageUrl}/${imagePath}`;
+                previewImages.push(previewUrl);
+              }
+            } catch (error) {
+              // Skip images that can't be processed
+              console.warn(`Failed to process preview image: ${imagePath}`, error);
+            }
+          }
+        }
+        
+        // If no images found, create a placeholder preview
+        if (previewImages.length === 0) {
+          // Generate a placeholder preview image
+          // In production, you could use a library like canvas or sharp to create a preview
+          const placeholderUrl = await this.createPlaceholderPreview(theme);
+          if (placeholderUrl) {
+            previewImages.push(placeholderUrl);
+          }
+        }
+      } else {
+        // No assets available, create a simple placeholder
+        const placeholderUrl = await this.createPlaceholderPreview(theme);
+        if (placeholderUrl) {
+          previewImages.push(placeholderUrl);
+        }
+      }
+      
+      // Update theme with preview images
+      if (previewImages.length > 0) {
+        await this.prisma.theme.update({
+          where: { id: themeId },
+          data: {
+            previewImages: previewImages as any,
+          },
+        });
+      }
+      
+      return previewImages;
+    } catch (error: any) {
+      // If preview generation fails, return empty array or existing previews
+      console.error('Failed to generate preview images:', error);
+      return theme.previewImages ? (theme.previewImages as string[]) : [];
+    }
+  }
+  
+  private async createPlaceholderPreview(theme: any): Promise<string | null> {
+    try {
+      // Create a simple placeholder image
+      // In production, you could:
+      // 1. Use canvas to create an image with theme name
+      // 2. Use a screenshot service
+      // 3. Use a template preview generator
+      
+      // For now, return null (no placeholder generated)
+      // In production, implement actual preview generation:
+      // const canvas = createCanvas(800, 600);
+      // const ctx = canvas.getContext('2d');
+      // // Draw theme preview
+      // const buffer = canvas.toBuffer('image/png');
+      // const file = { buffer, originalname: `preview-${theme.id}.png`, mimetype: 'image/png' };
+      // const result = await this.storageService.uploadFile(file, 'themes/previews');
+      // return result.url;
+      
+      return null;
+    } catch (error) {
+      console.error('Failed to create placeholder preview:', error);
+      return null;
+    }
   }
 }
 
