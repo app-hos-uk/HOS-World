@@ -172,14 +172,14 @@ export default function LeaderboardPage() {
             )}
             {stats.currentUserPoints !== undefined && (
               <div className="bg-white/10 backdrop-blur-sm rounded-lg p-4 text-center">
-                <p className="text-purple-200 text-sm">Your Points</p>
-                <p className="text-3xl font-bold text-white">{stats.currentUserPoints.toLocaleString()}</p>
-              </div>
-            )}
-            <div className="bg-white/10 backdrop-blur-sm rounded-lg p-4 text-center">
-              <p className="text-purple-200 text-sm">Top Score</p>
-              <p className="text-3xl font-bold text-yellow-400">{stats.topPlayerPoints.toLocaleString()}</p>
-            </div>
+              <p className="text-purple-200 text-sm">Your Points</p>
+               <p className="text-3xl font-bold text-white">{(stats.currentUserPoints ?? 0).toLocaleString()}</p>
+             </div>
+           )}
+           <div className="bg-white/10 backdrop-blur-sm rounded-lg p-4 text-center">
+             <p className="text-purple-200 text-sm">Top Score</p>
+             <p className="text-3xl font-bold text-yellow-400">{(stats.topPlayerPoints ?? 0).toLocaleString()}</p>
+           </div>
           </div>
         )}
 
