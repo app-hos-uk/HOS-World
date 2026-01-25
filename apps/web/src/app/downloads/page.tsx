@@ -196,7 +196,7 @@ export default function DownloadsPage() {
 
         toast.success('Download started!');
       } else {
-        toast.info('Download link will be sent to your email');
+        toast.success('Download link will be sent to your email');
       }
     } catch (err: any) {
       toast.error('Failed to start download');
