@@ -35,8 +35,8 @@ interface Order {
     quantity: number;
     price: number;
   }>;
-  createdAt: string;
-  updatedAt?: string;
+  createdAt: string | Date;
+  updatedAt?: string | Date;
 }
 
 const ORDER_STATUSES = [
