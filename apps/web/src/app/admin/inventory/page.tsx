@@ -143,7 +143,7 @@ export default function AdminInventoryDashboardPage() {
   };
 
   return (
-    <RouteGuard requiredRole="ADMIN">
+    <RouteGuard allowedRoles={['ADMIN']}>
       <AdminLayout>
         <div className="container mx-auto px-4 py-8">
           <div className="mb-6">
