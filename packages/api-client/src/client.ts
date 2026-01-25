@@ -1488,6 +1488,13 @@ export class ApiClient {
     });
   }
 
+  async replyToSupportTicket(id: string, data: { content: string; sender?: string }): Promise<ApiResponse<any>> {
+    return this.request<ApiResponse<any>>(`/support/tickets/${id}/reply`, {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
   // Fulfillment Centers
   async createFulfillmentCenter(data: {
     name: string;
