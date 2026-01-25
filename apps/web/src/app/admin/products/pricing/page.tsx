@@ -79,7 +79,7 @@ export default function PriceManagementPage() {
         rrp: pricingData.rrp ? parseFloat(pricingData.rrp) : undefined,
         stock: parseInt(pricingData.stock, 10),
         taxRate: pricingData.taxRate ? parseFloat(pricingData.taxRate) : undefined,
-        currency: pricingData.currency,
+        // Note: currency is managed at platform/tenant level, not per-product
       });
       toast.success('Pricing updated successfully');
       setShowPricingModal(false);
