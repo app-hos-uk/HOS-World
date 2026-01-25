@@ -1481,6 +1481,13 @@ export class ApiClient {
     });
   }
 
+  async updateSupportTicket(id: string, data: { status?: string; priority?: string; assignedTo?: string }): Promise<ApiResponse<any>> {
+    return this.request<ApiResponse<any>>(`/support/tickets/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    });
+  }
+
   // Fulfillment Centers
   async createFulfillmentCenter(data: {
     name: string;
