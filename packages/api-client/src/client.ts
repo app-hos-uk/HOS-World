@@ -2996,4 +2996,91 @@ export class ApiClient {
 
     return response.blob();
   }
+
+  // ============================================================
+  // SETTLEMENTS API
+  // ============================================================
+
+  async getSettlements(filters?: {
+    sellerId?: string;
+    status?: string;
+    startDate?: string;
+    endDate?: string;
+  }): Promise<ApiResponse<any[]>> {
+    const queryParams = new URLSearchParams();
+    if (filters) {
+      Object.entries(filters).forEach(([key, value]) => {
+        if (value) queryParams.append(key, value);
+      });
+    }
+    const query = queryParams.toString();
+    return this.request<ApiResponse<any[]>>(`/settlements${query ? `?${query}` : ''}`);
+  }
+
+  async getSettlement(id: string): Promise<ApiResponse<any>> {
+    return this.request<ApiResponse<any>>(`/settlements/${id}`);
+  }
+
+  async createSettlement(data: {
+    sellerId: string;
+    periodStart: string;
+    periodEnd: string;
+    notes?: string;
+  }): Promise<ApiResponse<any>> {
+    return this.request<ApiResponse<any>>('/settlements', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async processSettlement(id: string): Promise<ApiResponse<any>> {
+    return this.request<ApiResponse<any>>(`/settlements/${id}/process`, {
+      method: 'POST',
+    });
+  }
+
+  async markSettlementPaid(id: string, data: {
+    paymentReference: string;
+    paymentMethod?: string;
+    notes?: string;
+  }): Promise<ApiResponse<any>> {
+    return this.request<ApiResponse<any>>(`/settlements/${id}/mark-paid`, {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async cancelSettlement(id: string, data: {
+    reason: string;
+  }): Promise<ApiResponse<any>> {
+    return this.request<ApiResponse<any>>(`/settlements/${id}/cancel`, {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async retrySettlement(id: string): Promise<ApiResponse<any>> {
+    return this.request<ApiResponse<any>>(`/settlements/${id}/retry`, {
+      method: 'POST',
+    });
+  }
+
+  async getSellerSettlements(sellerId?: string): Promise<ApiResponse<any[]>> {
+    const query = sellerId ? `?sellerId=${sellerId}` : '';
+    return this.request<ApiResponse<any[]>>(`/settlements/seller${query}`);
+  }
+
+  async getSettlementsSummary(filters?: {
+    startDate?: string;
+    endDate?: string;
+  }): Promise<ApiResponse<any>> {
+    const queryParams = new URLSearchParams();
+    if (filters) {
+      Object.entries(filters).forEach(([key, value]) => {
+        if (value) queryParams.append(key, value);
+      });
+    }
+    const query = queryParams.toString();
+    return this.request<ApiResponse<any>>(`/settlements/summary${query ? `?${query}` : ''}`);
+  }
 }
