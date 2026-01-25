@@ -2148,6 +2148,47 @@ export class ApiClient {
     return this.request<ApiResponse<any>>(`/promotions/${id}`);
   }
 
+  async createPromotion(data: {
+    name: string;
+    type: string;
+    discountType: string;
+    discountValue: number;
+    conditions?: any;
+    actions?: any;
+    startDate?: string;
+    endDate?: string;
+    isActive?: boolean;
+    sellerId?: string;
+  }): Promise<ApiResponse<any>> {
+    return this.request<ApiResponse<any>>('/promotions', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async updatePromotion(id: string, data: {
+    name?: string;
+    type?: string;
+    discountType?: string;
+    discountValue?: number;
+    conditions?: any;
+    actions?: any;
+    startDate?: string;
+    endDate?: string;
+    isActive?: boolean;
+  }): Promise<ApiResponse<any>> {
+    return this.request<ApiResponse<any>>(`/promotions/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async deletePromotion(id: string): Promise<ApiResponse<null>> {
+    return this.request<ApiResponse<null>>(`/promotions/${id}`, {
+      method: 'DELETE',
+    });
+  }
+
   async validateCoupon(couponCode: string): Promise<ApiResponse<any>> {
     return this.request<ApiResponse<any>>('/promotions/coupons/validate', {
       method: 'POST',

@@ -5,6 +5,7 @@ import { RouteGuard } from '@/components/RouteGuard';
 import { AdminLayout } from '@/components/AdminLayout';
 import { apiClient } from '@/lib/api';
 import { useToast } from '@/hooks/useToast';
+import { DataExport } from '@/components/DataExport';
 
 interface User {
   id: string;
@@ -247,12 +248,25 @@ export default function AdminUsersPage() {
             <p className="text-gray-600 mt-2">Manage all platform users, roles, and permissions</p>
           </div>
 
-          <button
-            onClick={() => setShowCreateModal(true)}
-            className="inline-flex items-center justify-center px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors font-medium"
-          >
-            + Create User
-          </button>
+          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2">
+            <DataExport
+              data={filteredUsers}
+              columns={[
+                { key: 'email', header: 'Email' },
+                { key: 'firstName', header: 'First Name' },
+                { key: 'lastName', header: 'Last Name' },
+                { key: 'role', header: 'Role' },
+                { key: 'createdAt', header: 'Created', format: (v) => v ? new Date(v).toLocaleDateString() : '' },
+              ]}
+              filename="users-export"
+            />
+            <button
+              onClick={() => setShowCreateModal(true)}
+              className="inline-flex items-center justify-center px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors font-medium"
+            >
+              + Create User
+            </button>
+          </div>
         </div>
 
         {error && (

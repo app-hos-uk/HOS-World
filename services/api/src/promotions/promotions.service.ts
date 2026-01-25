@@ -132,6 +132,24 @@ export class PromotionsService {
   }
 
   /**
+   * Delete a promotion
+   */
+  async delete(id: string) {
+    // First verify the promotion exists
+    await this.findOne(id);
+
+    // Delete associated coupons first
+    await this.prisma.coupon.deleteMany({
+      where: { promotionId: id },
+    });
+
+    // Delete the promotion
+    return this.prisma.promotion.delete({
+      where: { id },
+    });
+  }
+
+  /**
    * Create a coupon for a promotion
    */
   async createCoupon(createDto: CreateCouponDto) {

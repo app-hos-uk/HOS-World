@@ -3,6 +3,7 @@ import {
   Get,
   Post,
   Put,
+  Delete,
   Body,
   Param,
   UseGuards,
@@ -106,6 +107,25 @@ export class PromotionsController {
     return {
       data: promotion,
       message: 'Promotion updated successfully',
+    };
+  }
+
+  @Delete(':id')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('ADMIN', 'MARKETING')
+  @ApiBearerAuth('JWT-auth')
+  @ApiOperation({
+    summary: 'Delete promotion',
+    description: 'Deletes a promotion by ID. Requires ADMIN or MARKETING role.',
+  })
+  @ApiParam({ name: 'id', description: 'Promotion UUID', type: String })
+  @SwaggerApiResponse({ status: 200, description: 'Promotion deleted successfully' })
+  @SwaggerApiResponse({ status: 404, description: 'Promotion not found' })
+  async remove(@Param('id') id: string): Promise<ApiResponse<null>> {
+    await this.promotionsService.delete(id);
+    return {
+      data: null,
+      message: 'Promotion deleted successfully',
     };
   }
 

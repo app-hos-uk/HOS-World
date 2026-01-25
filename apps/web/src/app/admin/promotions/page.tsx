@@ -70,17 +70,16 @@ export default function AdminPromotionsPage() {
     }
   };
 
-  // TODO: Implement delete when backend DELETE endpoint is added
-  // const handleDeletePromotion = async (id: string) => {
-  //   if (!confirm('Are you sure you want to delete this promotion?')) return;
-  //   try {
-  //     await apiClient.delete<ApiResponse<any>>(`/promotions/${id}`);
-  //     toast.success('Promotion deleted successfully!');
-  //     fetchPromotions();
-  //   } catch (err: any) {
-  //     toast.error(err.message || 'Failed to delete promotion');
-  //   }
-  // };
+  const handleDeletePromotion = async (id: string) => {
+    if (!confirm('Are you sure you want to delete this promotion?')) return;
+    try {
+      await apiClient.deletePromotion(id);
+      toast.success('Promotion deleted successfully!');
+      fetchPromotions();
+    } catch (err: any) {
+      toast.error(err.message || 'Failed to delete promotion');
+    }
+  };
 
   return (
     <RouteGuard allowedRoles={['ADMIN']} showAccessDenied={true}>
@@ -146,8 +145,12 @@ export default function AdminPromotionsPage() {
                         {promo.startDate && new Date(promo.startDate).toLocaleDateString()} - {promo.endDate && new Date(promo.endDate).toLocaleDateString()}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                        <span className="text-gray-400 text-xs">Update via PUT endpoint</span>
-                        {/* TODO: Add DELETE endpoint to backend PromotionsController */}
+                        <button
+                          onClick={() => handleDeletePromotion(promo.id)}
+                          className="text-red-600 hover:text-red-900 transition-colors"
+                        >
+                          Delete
+                        </button>
                       </td>
                     </tr>
                   ))

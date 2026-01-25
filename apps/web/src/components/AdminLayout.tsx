@@ -1,9 +1,10 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
+import { AdminBreadcrumbs } from '@/components/Breadcrumbs';
 
 interface AdminLayoutProps {
   children: React.ReactNode;
@@ -122,8 +123,68 @@ const menuItems: MenuItem[] = [
 export function AdminLayout({ children }: AdminLayoutProps) {
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [expandedMenus, setExpandedMenus] = useState<Set<string>>(new Set());
+  const [searchQuery, setSearchQuery] = useState('');
+  const [showSearchResults, setShowSearchResults] = useState(false);
   const pathname = usePathname();
+  const router = useRouter();
   const { logout, user } = useAuth();
+
+  // Flatten menu items for search
+  const flattenedMenuItems = useMemo(() => {
+    const items: { title: string; href: string; icon: string; parent?: string }[] = [];
+    menuItems.forEach((item) => {
+      if (item.href) {
+        items.push({ title: item.title, href: item.href, icon: item.icon });
+      }
+      if (item.children) {
+        item.children.forEach((child) => {
+          if (child.href) {
+            items.push({ 
+              title: child.title, 
+              href: child.href, 
+              icon: child.icon,
+              parent: item.title 
+            });
+          }
+        });
+      }
+    });
+    return items;
+  }, []);
+
+  // Filter menu items based on search
+  const searchResults = useMemo(() => {
+    if (!searchQuery.trim()) return [];
+    const query = searchQuery.toLowerCase();
+    return flattenedMenuItems.filter(
+      (item) => 
+        item.title.toLowerCase().includes(query) ||
+        item.parent?.toLowerCase().includes(query)
+    );
+  }, [searchQuery, flattenedMenuItems]);
+
+  // Handle keyboard shortcut for search
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+        e.preventDefault();
+        const searchInput = document.getElementById('admin-sidebar-search');
+        searchInput?.focus();
+      }
+      if (e.key === 'Escape') {
+        setShowSearchResults(false);
+        setSearchQuery('');
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
+
+  const handleSearchSelect = useCallback((href: string) => {
+    router.push(href);
+    setSearchQuery('');
+    setShowSearchResults(false);
+  }, [router]);
 
   const handleLogout = async () => {
     await logout();
@@ -180,6 +241,63 @@ export function AdminLayout({ children }: AdminLayoutProps) {
             >
               ✕
             </button>
+          </div>
+
+          {/* Search */}
+          <div className="px-3 py-3 border-b border-gray-200 relative">
+            <div className="relative">
+              <input
+                id="admin-sidebar-search"
+                type="text"
+                placeholder="Search... (⌘K)"
+                value={searchQuery}
+                onChange={(e) => {
+                  setSearchQuery(e.target.value);
+                  setShowSearchResults(true);
+                }}
+                onFocus={() => setShowSearchResults(true)}
+                onBlur={() => setTimeout(() => setShowSearchResults(false), 200)}
+                className="w-full px-3 py-2 pl-9 text-sm bg-gray-100 border border-transparent rounded-lg focus:bg-white focus:border-purple-500 focus:ring-1 focus:ring-purple-500 outline-none transition-colors"
+              />
+              <svg
+                className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+                />
+              </svg>
+            </div>
+            
+            {/* Search Results Dropdown */}
+            {showSearchResults && searchResults.length > 0 && (
+              <div className="absolute left-3 right-3 top-full mt-1 bg-white rounded-lg shadow-lg border border-gray-200 z-50 max-h-64 overflow-y-auto">
+                {searchResults.map((item) => (
+                  <button
+                    key={item.href}
+                    onClick={() => handleSearchSelect(item.href)}
+                    className="w-full px-3 py-2 text-left hover:bg-purple-50 flex items-center gap-2 text-sm"
+                  >
+                    <span>{item.icon}</span>
+                    <span className="font-medium">{item.title}</span>
+                    {item.parent && (
+                      <span className="text-gray-400 text-xs">in {item.parent}</span>
+                    )}
+                  </button>
+                ))}
+              </div>
+            )}
+            
+            {showSearchResults && searchQuery && searchResults.length === 0 && (
+              <div className="absolute left-3 right-3 top-full mt-1 bg-white rounded-lg shadow-lg border border-gray-200 z-50 p-3 text-sm text-gray-500 text-center">
+                No results found
+              </div>
+            )}
           </div>
 
           {/* Navigation */}
@@ -317,6 +435,11 @@ export function AdminLayout({ children }: AdminLayoutProps) {
               </button>
             </div>
           </div>
+        </div>
+
+        {/* Breadcrumbs */}
+        <div className="px-4 sm:px-6 lg:px-8 py-3 bg-gray-50 border-b border-gray-200">
+          <AdminBreadcrumbs />
         </div>
 
         {/* Page Content */}
