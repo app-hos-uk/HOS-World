@@ -75,28 +75,35 @@ export function GDPRConsentBanner() {
     try {
       setLoading(true);
       
-      // Update consent via API
-      await apiClient.updateGDPRConsent({
-        marketing: preferences.marketing,
-        analytics: preferences.analytics,
-        essential: preferences.essential,
-      });
+      // Check if user is logged in before calling API
+      const token = localStorage.getItem('auth_token');
+      if (token) {
+        try {
+          // Update consent via API for authenticated users
+          await apiClient.updateGDPRConsent({
+            marketing: preferences.marketing,
+            analytics: preferences.analytics,
+            essential: preferences.essential,
+          });
+        } catch (apiError: any) {
+          // Silently handle API errors (e.g., expired token)
+          // Consent will still be saved to localStorage
+          console.debug('GDPR consent API call failed, saving locally:', apiError?.message);
+        }
+      }
 
-      // Mark consent as given in localStorage
+      // Always save to localStorage (works for both authenticated and anonymous users)
       localStorage.setItem('gdpr_consent_given', 'true');
       localStorage.setItem('gdpr_consent_preferences', JSON.stringify(preferences));
       
       setShowBanner(false);
       toast.success('Consent preferences saved');
     } catch (error: any) {
-      // Even if API fails, save to localStorage for non-authenticated users
+      // Fallback: save to localStorage even if something unexpected fails
       localStorage.setItem('gdpr_consent_given', 'true');
       localStorage.setItem('gdpr_consent_preferences', JSON.stringify(preferences));
       setShowBanner(false);
-      
-      if (error.message && !error.message.includes('Unauthorized')) {
-        toast.error('Failed to save consent preferences');
-      }
+      console.error('Error saving consent:', error);
     } finally {
       setLoading(false);
     }
