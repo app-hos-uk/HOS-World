@@ -364,6 +364,13 @@ export class ApiClient {
     return this.request<ApiResponse<Order>>(`/orders/${id}`);
   }
 
+  async updateOrderStatus(id: string, status: string): Promise<ApiResponse<Order>> {
+    return this.request<ApiResponse<Order>>(`/orders/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify({ status }),
+    });
+  }
+
   async createOrder(data: {
     shippingAddressId: string;
     billingAddressId?: string;
