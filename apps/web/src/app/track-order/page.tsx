@@ -21,9 +21,9 @@ interface Order {
   status: string;
   total: number;
   currency?: string;
-  createdAt: string;
+  createdAt: string | Date;
   trackingNumber?: string;
-  estimatedDelivery?: string;
+  estimatedDelivery?: string | Date;
   shippingAddress?: {
     street?: string;
     city?: string;
