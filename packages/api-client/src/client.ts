@@ -1474,6 +1474,10 @@ export class ApiClient {
     return this.request<ApiResponse<any[]>>(`/support/tickets${query ? `?${query}` : ''}`);
   }
 
+  async getSupportTicket(id: string): Promise<ApiResponse<any>> {
+    return this.request<ApiResponse<any>>(`/support/tickets/${id}`);
+  }
+
   async createSupportTicket(data: any): Promise<ApiResponse<any>> {
     return this.request<ApiResponse<any>>('/support/tickets', {
       method: 'POST',
