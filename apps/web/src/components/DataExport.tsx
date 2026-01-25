@@ -5,7 +5,7 @@ import { useCallback } from 'react';
 interface ExportColumn {
   key: string;
   header: string;
-  format?: (value: any) => string;
+  format?: (value: any, row: any) => string;
 }
 
 interface DataExportProps {
@@ -29,7 +29,7 @@ export function DataExport({ data, columns, filename = 'export', className = '' 
         .map((col) => {
           let value = item[col.key];
           if (col.format) {
-            value = col.format(value);
+            value = col.format(value, item);
           }
           // Handle null/undefined
           if (value === null || value === undefined) {
@@ -68,7 +68,7 @@ export function DataExport({ data, columns, filename = 'export', className = '' 
       columns.forEach((col) => {
         let value = item[col.key];
         if (col.format) {
-          value = col.format(value);
+          value = col.format(value, item);
         }
         row[col.header] = value;
       });
@@ -132,7 +132,7 @@ export function useDataExport() {
         .map((col) => {
           let value = item[col.key];
           if (col.format) {
-            value = col.format(value);
+            value = col.format(value, item);
           }
           if (value === null || value === undefined) {
             value = '';
@@ -163,7 +163,7 @@ export function useDataExport() {
       columns.forEach((col) => {
         let value = item[col.key];
         if (col.format) {
-          value = col.format(value);
+          value = col.format(value, item);
         }
         row[col.header] = value;
       });

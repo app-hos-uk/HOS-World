@@ -34,6 +34,8 @@
     "db:fix-admin": "ts-node src/database/fix-admin-now.ts",
     "db:migrate-phase6": "ts-node src/database/run-phase6-migration.ts",
     "db:run-migration-sql": "ts-node src/database/run-migration.ts",
+    "db:migrate-seller-role": "ts-node src/database/migrate-seller-role.ts",
+    "db:migrate-seller-role:dry": "ts-node src/database/migrate-seller-role.ts --dry-run",
     "verify:deployment": "ts-node scripts/verify-deployment.ts",
     "verify:oauth": "ts-node scripts/verify-oauth-table.ts",
     "verify:env": "ts-node scripts/verify-env-vars.ts",

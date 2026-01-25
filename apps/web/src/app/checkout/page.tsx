@@ -2,13 +2,21 @@
 
 import { Header } from '@/components/Header';
 import { Footer } from '@/components/Footer';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { apiClient } from '@/lib/api';
 import { useCurrency } from '@/contexts/CurrencyContext';
 import { useToast } from '@/hooks/useToast';
 import Link from 'next/link';
 import type { ApiResponse } from '@hos-marketplace/shared-types';
+
+interface StockIssue {
+  productId: string;
+  productName: string;
+  requested: number;
+  available: number;
+  type: 'out_of_stock' | 'insufficient' | 'low_stock';
+}
 
 export default function CheckoutPage() {
   const router = useRouter();
@@ -24,6 +32,7 @@ export default function CheckoutPage() {
   const [taxAmount, setTaxAmount] = useState<number>(0);
   const [loading, setLoading] = useState(true);
   const [creatingOrder, setCreatingOrder] = useState(false);
+  const [stockIssues, setStockIssues] = useState<StockIssue[]>([]);
 
   useEffect(() => {
     loadCheckoutData();
@@ -55,6 +64,46 @@ export default function CheckoutPage() {
 
       if (cartResponse?.data) {
         setCart(cartResponse.data);
+        
+        // Check stock availability for all cart items
+        const issues: StockIssue[] = [];
+        for (const item of cartResponse.data.items || []) {
+          const stock = item.product?.stock;
+          if (stock !== undefined) {
+            if (stock <= 0) {
+              issues.push({
+                productId: item.productId,
+                productName: item.product?.name || 'Unknown Product',
+                requested: item.quantity,
+                available: 0,
+                type: 'out_of_stock',
+              });
+            } else if (stock < item.quantity) {
+              issues.push({
+                productId: item.productId,
+                productName: item.product?.name || 'Unknown Product',
+                requested: item.quantity,
+                available: stock,
+                type: 'insufficient',
+              });
+            } else if (stock <= 5) {
+              issues.push({
+                productId: item.productId,
+                productName: item.product?.name || 'Unknown Product',
+                requested: item.quantity,
+                available: stock,
+                type: 'low_stock',
+              });
+            }
+          }
+        }
+        setStockIssues(issues);
+        
+        // Show warning if critical stock issues
+        const criticalIssues = issues.filter(i => i.type !== 'low_stock');
+        if (criticalIssues.length > 0) {
+          toast.error(`${criticalIssues.length} item(s) have stock issues. Please update your cart.`);
+        }
       }
 
       if (addressesResponse?.data) {
@@ -168,6 +217,15 @@ export default function CheckoutPage() {
     }
   };
 
+  // Check for critical stock issues that prevent checkout
+  const hasCriticalStockIssues = useMemo(() => {
+    return stockIssues.some(issue => issue.type === 'out_of_stock' || issue.type === 'insufficient');
+  }, [stockIssues]);
+
+  const getStockIssueForItem = (productId: string): StockIssue | undefined => {
+    return stockIssues.find(issue => issue.productId === productId);
+  };
+
   const handleCreateOrder = async () => {
     if (!shippingAddressId) {
       toast.error('Please select a shipping address');
@@ -182,6 +240,12 @@ export default function CheckoutPage() {
     if (!cart || !cart.items || cart.items.length === 0) {
       toast.error('Your cart is empty');
       router.push('/cart');
+      return;
+    }
+
+    // Prevent order creation if stock issues exist
+    if (hasCriticalStockIssues) {
+      toast.error('Please resolve stock issues before placing order');
       return;
     }
 
@@ -203,7 +267,11 @@ export default function CheckoutPage() {
       console.error('Error creating order:', error);
       const errorMessage = error.message || 'Failed to create order';
       toast.error(errorMessage);
-      // Don't redirect on error - let user try again
+      // Check if it's a stock-related error and update issues
+      if (errorMessage.toLowerCase().includes('stock') || errorMessage.toLowerCase().includes('insufficient')) {
+        // Reload cart to get fresh stock data
+        loadCheckoutData();
+      }
     } finally {
       setCreatingOrder(false);
     }
@@ -351,16 +419,54 @@ export default function CheckoutPage() {
             {/* Order Items */}
             <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 sm:p-6">
               <h2 className="text-lg font-semibold mb-4">Order Items</h2>
-              <div className="space-y-3">
-                {cart.items.map((item: any) => (
-                  <div key={item.id} className="flex justify-between items-center py-2 border-b last:border-b-0">
+              
+              {/* Stock Issues Warning Banner */}
+              {hasCriticalStockIssues && (
+                <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-4">
+                  <div className="flex items-start gap-3">
+                    <span className="text-red-500 text-xl">⚠️</span>
                     <div>
-                      <p className="font-medium">{item.product?.name || 'Product'}</p>
-                      <p className="text-sm text-gray-600">Quantity: {item.quantity}</p>
+                      <p className="font-medium text-red-800">Stock Issues Detected</p>
+                      <p className="text-sm text-red-600 mt-1">
+                        Some items in your cart have stock availability issues. 
+                        Please <Link href="/cart" className="underline font-medium">return to your cart</Link> to update quantities.
+                      </p>
                     </div>
-                    <p className="font-semibold">{formatPrice(item.price * item.quantity)}</p>
                   </div>
-                ))}
+                </div>
+              )}
+              
+              <div className="space-y-3">
+                {cart.items.map((item: any) => {
+                  const stockIssue = getStockIssueForItem(item.productId);
+                  return (
+                    <div 
+                      key={item.id} 
+                      className={`flex justify-between items-start py-3 border-b last:border-b-0 ${
+                        stockIssue && stockIssue.type !== 'low_stock' ? 'bg-red-50 -mx-2 px-2 rounded' : ''
+                      }`}
+                    >
+                      <div className="flex-1">
+                        <p className="font-medium">{item.product?.name || 'Product'}</p>
+                        <p className="text-sm text-gray-600">Quantity: {item.quantity}</p>
+                        
+                        {/* Stock Warning */}
+                        {stockIssue && (
+                          <p className={`text-xs mt-1 ${
+                            stockIssue.type === 'out_of_stock' ? 'text-red-600 font-medium' :
+                            stockIssue.type === 'insufficient' ? 'text-orange-600 font-medium' :
+                            'text-yellow-600'
+                          }`}>
+                            {stockIssue.type === 'out_of_stock' && '❌ Out of Stock'}
+                            {stockIssue.type === 'insufficient' && `⚠️ Only ${stockIssue.available} available (you requested ${stockIssue.requested})`}
+                            {stockIssue.type === 'low_stock' && `⚡ Low stock (${stockIssue.available} remaining)`}
+                          </p>
+                        )}
+                      </div>
+                      <p className="font-semibold">{formatPrice(item.price * item.quantity)}</p>
+                    </div>
+                  );
+                })}
               </div>
             </div>
           </div>
@@ -407,11 +513,17 @@ export default function CheckoutPage() {
 
               <button
                 onClick={handleCreateOrder}
-                disabled={creatingOrder || !shippingAddressId || (shippingOptions.length > 0 && !selectedShippingMethod)}
+                disabled={creatingOrder || !shippingAddressId || (shippingOptions.length > 0 && !selectedShippingMethod) || hasCriticalStockIssues}
                 className="w-full px-6 py-3 bg-gradient-to-r from-purple-700 to-indigo-700 hover:from-purple-600 hover:to-indigo-600 text-white font-semibold rounded-lg transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                {creatingOrder ? 'Creating Order...' : 'Place Order'}
+                {creatingOrder ? 'Creating Order...' : hasCriticalStockIssues ? 'Stock Issues - Update Cart' : 'Place Order'}
               </button>
+              
+              {hasCriticalStockIssues && (
+                <p className="text-center mt-2 text-sm text-red-600">
+                  Please resolve stock issues to continue
+                </p>
+              )}
 
               <Link
                 href="/cart"

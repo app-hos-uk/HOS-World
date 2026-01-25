@@ -75,15 +75,43 @@ export default function AdminInventoryDashboardPage() {
       const movementsData = movementsRes?.data?.movements || [];
       setRecentMovements(movementsData);
 
-      // Calculate stats (simplified - would need more endpoints for accurate stats)
-      setStats({
-        totalWarehouses: warehouses.length,
-        activeWarehouses,
-        totalProducts: 0, // Would need products count endpoint
-        lowStockProducts: 0, // Would need low stock alert endpoint
-        totalStockValue: 0, // Would need inventory value calculation
-        pendingTransfers: transfersData.length,
-      });
+      // Fetch inventory metrics for product stats
+      try {
+        const metricsRes = await apiClient.getInventoryMetrics();
+        const metrics = metricsRes?.data || {};
+        
+        // Helper to safely convert to number, returning 0 for invalid values
+        const safeNumber = (value: unknown): number => {
+          if (value === null || value === undefined) return 0;
+          const num = Number(value);
+          return Number.isFinite(num) ? num : 0;
+        };
+        
+        // Use totalProducts if it exists, otherwise fall back to totalQuantity
+        // Check for field existence (not nullish) rather than truthiness to preserve 0 values
+        const productCount = metrics.totalProducts !== undefined && metrics.totalProducts !== null
+          ? safeNumber(metrics.totalProducts)
+          : safeNumber(metrics.totalQuantity);
+        
+        setStats({
+          totalWarehouses: warehouses.length,
+          activeWarehouses,
+          totalProducts: productCount,
+          lowStockProducts: safeNumber(metrics.lowStockItems),
+          totalStockValue: safeNumber(metrics.totalValue),
+          pendingTransfers: transfersData.length,
+        });
+      } catch (metricsErr) {
+        console.warn('Could not fetch inventory metrics, using defaults:', metricsErr);
+        setStats({
+          totalWarehouses: warehouses.length,
+          activeWarehouses,
+          totalProducts: 0,
+          lowStockProducts: 0,
+          totalStockValue: 0,
+          pendingTransfers: transfersData.length,
+        });
+      }
     } catch (err: any) {
       console.error('Error fetching inventory dashboard data:', err);
       toast.error(err.message || 'Failed to load inventory data');
@@ -174,16 +202,16 @@ export default function AdminInventoryDashboardPage() {
                 </div>
                 <div className="bg-white rounded-lg shadow p-4">
                   <div className="text-sm text-gray-600 mb-1">Total Products</div>
-                  <div className="text-2xl font-bold text-blue-600">{stats?.totalProducts || 'N/A'}</div>
+                  <div className="text-2xl font-bold text-blue-600">{(stats?.totalProducts ?? 0).toLocaleString()}</div>
                 </div>
                 <div className="bg-white rounded-lg shadow p-4">
                   <div className="text-sm text-gray-600 mb-1">Low Stock Items</div>
-                  <div className="text-2xl font-bold text-red-600">{stats?.lowStockProducts || 'N/A'}</div>
+                  <div className="text-2xl font-bold text-red-600">{(stats?.lowStockProducts ?? 0).toLocaleString()}</div>
                 </div>
                 <div className="bg-white rounded-lg shadow p-4">
                   <div className="text-sm text-gray-600 mb-1">Total Stock Value</div>
                   <div className="text-2xl font-bold text-purple-600">
-                    £{stats?.totalStockValue?.toLocaleString() || 'N/A'}
+                    £{(stats?.totalStockValue ?? 0).toLocaleString()}
                   </div>
                 </div>
               </div>

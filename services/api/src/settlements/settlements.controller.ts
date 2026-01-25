@@ -20,6 +20,7 @@ import {
   ApiQuery,
 } from '@nestjs/swagger';
 import { SettlementsService } from './settlements.service';
+import { SettlementSchedulerService } from './settlement-scheduler.service';
 import { CreateSettlementDto, ProcessSettlementDto } from './dto/create-settlement.dto';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../common/guards/roles.guard';
@@ -32,7 +33,10 @@ import { SettlementStatus } from '@prisma/client';
 @Controller('settlements')
 @UseGuards(JwtAuthGuard, RolesGuard)
 export class SettlementsController {
-  constructor(private readonly settlementsService: SettlementsService) {}
+  constructor(
+    private readonly settlementsService: SettlementsService,
+    private readonly schedulerService: SettlementSchedulerService,
+  ) {}
 
   @Roles('ADMIN', 'FINANCE')
   @Post()
@@ -156,6 +160,78 @@ export class SettlementsController {
     return {
       data: calculation,
       message: 'Settlement calculated successfully',
+    };
+  }
+
+  // ============================================================
+  // AUTOMATION ENDPOINTS - For scheduled/manual settlement tasks
+  // ============================================================
+
+  @Roles('ADMIN', 'FINANCE')
+  @Post('automation/weekly')
+  @ApiOperation({
+    summary: 'Trigger weekly settlement creation (Admin/Finance only)',
+    description: 'Manually triggers the weekly settlement creation for all active sellers. Creates settlements for the previous week.',
+  })
+  @SwaggerApiResponse({ status: 201, description: 'Weekly settlements created' })
+  @SwaggerApiResponse({ status: 401, description: 'Unauthorized' })
+  @SwaggerApiResponse({ status: 403, description: 'Forbidden - Admin/Finance access required' })
+  async triggerWeeklySettlements(): Promise<ApiResponse<any>> {
+    const result = await this.schedulerService.createWeeklySettlements();
+    return {
+      data: result,
+      message: `Weekly settlements processed: ${result.created} created, ${result.failed} failed`,
+    };
+  }
+
+  @Roles('ADMIN')
+  @Post('automation/cleanup-reservations')
+  @ApiOperation({
+    summary: 'Cleanup expired stock reservations (Admin only)',
+    description: 'Manually triggers cleanup of expired stock reservations.',
+  })
+  @SwaggerApiResponse({ status: 200, description: 'Reservations cleaned up' })
+  @SwaggerApiResponse({ status: 401, description: 'Unauthorized' })
+  @SwaggerApiResponse({ status: 403, description: 'Forbidden - Admin access required' })
+  async cleanupReservations(): Promise<ApiResponse<any>> {
+    const result = await this.schedulerService.cleanupExpiredReservations();
+    return {
+      data: result,
+      message: `Cleaned up ${result.cleaned} expired reservations`,
+    };
+  }
+
+  @Roles('ADMIN', 'FINANCE')
+  @Get('automation/reminders')
+  @ApiOperation({
+    summary: 'Check pending settlement reminders (Admin/Finance only)',
+    description: 'Checks for settlements that have been pending for more than 7 days and need attention.',
+  })
+  @SwaggerApiResponse({ status: 200, description: 'Reminders checked' })
+  @SwaggerApiResponse({ status: 401, description: 'Unauthorized' })
+  @SwaggerApiResponse({ status: 403, description: 'Forbidden - Admin/Finance access required' })
+  async checkReminders(): Promise<ApiResponse<any>> {
+    const result = await this.schedulerService.sendSettlementReminders();
+    return {
+      data: result,
+      message: `Found ${result.sent} settlements needing attention`,
+    };
+  }
+
+  @Roles('ADMIN', 'FINANCE')
+  @Get('automation/status')
+  @ApiOperation({
+    summary: 'Get automation status (Admin/Finance only)',
+    description: 'Returns the current status of automated settlement processing.',
+  })
+  @SwaggerApiResponse({ status: 200, description: 'Status retrieved' })
+  @SwaggerApiResponse({ status: 401, description: 'Unauthorized' })
+  @SwaggerApiResponse({ status: 403, description: 'Forbidden - Admin/Finance access required' })
+  async getAutomationStatus(): Promise<ApiResponse<any>> {
+    const status = this.schedulerService.getStatus();
+    return {
+      data: status,
+      message: 'Automation status retrieved',
     };
   }
 }

@@ -1,11 +1,12 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { RouteGuard } from '@/components/RouteGuard';
 import { Header } from '@/components/Header';
 import { Footer } from '@/components/Footer';
 import { apiClient } from '@/lib/api';
 import { useToast } from '@/hooks/useToast';
+import Link from 'next/link';
 
 interface Quest {
   id: string;
@@ -13,6 +14,7 @@ interface Quest {
   name: string;
   description?: string;
   type: string;
+  difficulty?: 'EASY' | 'MEDIUM' | 'HARD' | 'EPIC';
   fandom?: {
     id: string;
     name: string;
@@ -38,6 +40,7 @@ export default function QuestsPage() {
   const [completedQuests, setCompletedQuests] = useState<Quest[]>([]);
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
+  const [fandomFilter, setFandomFilter] = useState<string>('');
 
   useEffect(() => {
     fetchQuests();
@@ -89,6 +92,52 @@ export default function QuestsPage() {
     }
   };
 
+  // Calculate stats
+  const stats = useMemo(() => {
+    const totalPointsEarned = completedQuests.reduce((sum, q) => sum + (q.points || 0), 0);
+    const badgesEarned = completedQuests.filter(q => q.badge).length;
+    const uniqueFandoms = new Set([
+      ...availableQuests.filter(q => q.fandom).map(q => q.fandom!.id),
+      ...activeQuests.filter(q => q.fandom).map(q => q.fandom!.id),
+      ...completedQuests.filter(q => q.fandom).map(q => q.fandom!.id),
+    ]).size;
+    
+    return {
+      totalPointsEarned,
+      badgesEarned,
+      questsCompleted: completedQuests.length,
+      questsInProgress: activeQuests.length,
+      uniqueFandoms,
+    };
+  }, [availableQuests, activeQuests, completedQuests]);
+
+  // Get all unique fandoms
+  const allFandoms = useMemo(() => {
+    const fandoms = new Map<string, { id: string; name: string }>();
+    [...availableQuests, ...activeQuests, ...completedQuests].forEach(q => {
+      if (q.fandom) {
+        fandoms.set(q.fandom.id, q.fandom);
+      }
+    });
+    return Array.from(fandoms.values());
+  }, [availableQuests, activeQuests, completedQuests]);
+
+  // Filter quests by fandom
+  const filterByFandom = (quests: Quest[]) => {
+    if (!fandomFilter) return quests;
+    return quests.filter(q => q.fandom?.id === fandomFilter);
+  };
+
+  const getDifficultyColor = (difficulty?: string) => {
+    switch (difficulty) {
+      case 'EASY': return 'bg-green-100 text-green-800';
+      case 'MEDIUM': return 'bg-yellow-100 text-yellow-800';
+      case 'HARD': return 'bg-orange-100 text-orange-800';
+      case 'EPIC': return 'bg-purple-100 text-purple-800';
+      default: return 'bg-gray-100 text-gray-800';
+    }
+  };
+
   const renderQuestCard = (quest: Quest, showActions: boolean = true) => {
     const progress = quest.progress as any;
     const progressPercentage = progress?.percentage || 0;
@@ -112,12 +161,17 @@ export default function QuestsPage() {
                   {quest.fandom.name}
                 </span>
               )}
+              {quest.difficulty && (
+                <span className={`px-2 py-1 rounded text-xs ${getDifficultyColor(quest.difficulty)}`}>
+                  {quest.difficulty}
+                </span>
+              )}
               <span className="px-2 py-1 bg-blue-100 text-blue-800 rounded text-xs">
-                {quest.points} points
+                ⭐ {quest.points} points
               </span>
               {quest.badge && (
                 <span className="px-2 py-1 bg-yellow-100 text-yellow-800 rounded text-xs">
-                  Badge: {quest.badge.name}
+                  🏅 {quest.badge.name}
                 </span>
               )}
             </div>
@@ -183,14 +237,84 @@ export default function QuestsPage() {
 
   return (
     <RouteGuard allowedRoles={['CUSTOMER', 'ADMIN']} showAccessDenied={true}>
-      <div className="min-h-screen bg-white">
+      <div className="min-h-screen bg-gray-50">
         <Header />
         <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 lg:py-12">
-          <h1 className="text-3xl font-bold mb-6">Quests</h1>
+          {/* Header */}
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
+            <div>
+              <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Quests</h1>
+              <p className="text-gray-600 mt-1">Complete quests to earn points and unlock badges</p>
+            </div>
+            <Link
+              href="/leaderboard"
+              className="inline-flex items-center px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors font-medium"
+            >
+              🏆 View Leaderboard
+            </Link>
+          </div>
+
+          {/* Stats */}
+          <div className="grid grid-cols-2 sm:grid-cols-5 gap-4 mb-6">
+            <div className="bg-white rounded-lg shadow p-4">
+              <h3 className="text-xs font-medium text-gray-500 uppercase">Points Earned</h3>
+              <p className="text-2xl font-bold text-purple-600 mt-1">{stats.totalPointsEarned.toLocaleString()}</p>
+            </div>
+            <div className="bg-white rounded-lg shadow p-4">
+              <h3 className="text-xs font-medium text-gray-500 uppercase">Badges Earned</h3>
+              <p className="text-2xl font-bold text-yellow-600 mt-1">{stats.badgesEarned}</p>
+            </div>
+            <div className="bg-white rounded-lg shadow p-4">
+              <h3 className="text-xs font-medium text-gray-500 uppercase">Completed</h3>
+              <p className="text-2xl font-bold text-green-600 mt-1">{stats.questsCompleted}</p>
+            </div>
+            <div className="bg-white rounded-lg shadow p-4">
+              <h3 className="text-xs font-medium text-gray-500 uppercase">In Progress</h3>
+              <p className="text-2xl font-bold text-blue-600 mt-1">{stats.questsInProgress}</p>
+            </div>
+            <div className="bg-white rounded-lg shadow p-4">
+              <h3 className="text-xs font-medium text-gray-500 uppercase">Fandoms</h3>
+              <p className="text-2xl font-bold text-pink-600 mt-1">{stats.uniqueFandoms}</p>
+            </div>
+          </div>
+
+          {/* Filter */}
+          {allFandoms.length > 0 && (
+            <div className="bg-white rounded-lg shadow p-4 mb-6">
+              <div className="flex flex-wrap items-center gap-4">
+                <span className="text-sm font-medium text-gray-700">Filter by Fandom:</span>
+                <div className="flex flex-wrap gap-2">
+                  <button
+                    onClick={() => setFandomFilter('')}
+                    className={`px-3 py-1 rounded-full text-sm font-medium transition-colors ${
+                      fandomFilter === ''
+                        ? 'bg-purple-600 text-white'
+                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                    }`}
+                  >
+                    All
+                  </button>
+                  {allFandoms.map(fandom => (
+                    <button
+                      key={fandom.id}
+                      onClick={() => setFandomFilter(fandom.id)}
+                      className={`px-3 py-1 rounded-full text-sm font-medium transition-colors ${
+                        fandomFilter === fandom.id
+                          ? 'bg-purple-600 text-white'
+                          : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                      }`}
+                    >
+                      {fandom.name}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
+          )}
 
           {/* Tabs */}
-          <div className="bg-white border border-gray-200 rounded-lg mb-6">
-            <div className="flex flex-wrap border-b border-gray-200">
+          <div className="bg-white rounded-lg shadow overflow-hidden mb-6">
+            <div className="flex flex-wrap border-b border-gray-200 bg-gray-50">
               <button
                 onClick={() => setActiveTab('available')}
                 className={`px-6 py-3 font-medium transition-colors ${
@@ -225,18 +349,20 @@ export default function QuestsPage() {
           </div>
 
           {/* Tab Content */}
-          <div className="bg-white border border-gray-200 rounded-lg p-6">
+          <div className="bg-white rounded-lg shadow p-6">
             {activeTab === 'available' && (
               <div>
-                {availableQuests.length === 0 ? (
+                {filterByFandom(availableQuests).length === 0 ? (
                   <div className="text-center py-12">
                     <div className="text-6xl mb-4">🎯</div>
-                    <p className="text-gray-600">No available quests</p>
+                    <p className="text-gray-600">
+                      {fandomFilter ? 'No quests available for this fandom' : 'No available quests'}
+                    </p>
                     <p className="text-sm text-gray-500 mt-2">Check back later for new quests!</p>
                   </div>
                 ) : (
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    {availableQuests.map((quest) => renderQuestCard(quest, true))}
+                    {filterByFandom(availableQuests).map((quest) => renderQuestCard(quest, true))}
                   </div>
                 )}
               </div>
@@ -244,15 +370,17 @@ export default function QuestsPage() {
 
             {activeTab === 'active' && (
               <div>
-                {activeQuests.length === 0 ? (
+                {filterByFandom(activeQuests).length === 0 ? (
                   <div className="text-center py-12">
                     <div className="text-6xl mb-4">⚡</div>
-                    <p className="text-gray-600">No active quests</p>
+                    <p className="text-gray-600">
+                      {fandomFilter ? 'No active quests for this fandom' : 'No active quests'}
+                    </p>
                     <p className="text-sm text-gray-500 mt-2">Start a quest from the Available tab!</p>
                   </div>
                 ) : (
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    {activeQuests.map((quest) => renderQuestCard(quest, true))}
+                    {filterByFandom(activeQuests).map((quest) => renderQuestCard(quest, true))}
                   </div>
                 )}
               </div>
@@ -260,15 +388,17 @@ export default function QuestsPage() {
 
             {activeTab === 'completed' && (
               <div>
-                {completedQuests.length === 0 ? (
+                {filterByFandom(completedQuests).length === 0 ? (
                   <div className="text-center py-12">
                     <div className="text-6xl mb-4">✅</div>
-                    <p className="text-gray-600">No completed quests yet</p>
+                    <p className="text-gray-600">
+                      {fandomFilter ? 'No completed quests for this fandom' : 'No completed quests yet'}
+                    </p>
                     <p className="text-sm text-gray-500 mt-2">Complete quests to earn points and badges!</p>
                   </div>
                 ) : (
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    {completedQuests.map((quest) => renderQuestCard(quest, false))}
+                    {filterByFandom(completedQuests).map((quest) => renderQuestCard(quest, false))}
                   </div>
                 )}
               </div>

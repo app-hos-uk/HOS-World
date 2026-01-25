@@ -2,7 +2,7 @@
 
 import { Header } from '@/components/Header';
 import { Footer } from '@/components/Footer';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { apiClient } from '@/lib/api';
 import { useCurrency } from '@/contexts/CurrencyContext';
@@ -10,15 +10,38 @@ import { useToast } from '@/hooks/useToast';
 import Link from 'next/link';
 import Image from 'next/image';
 
+interface CartItem {
+  id: string;
+  productId: string;
+  quantity: number;
+  price: number;
+  product?: {
+    id: string;
+    name: string;
+    stock?: number;
+    images?: Array<{ url: string }>;
+    estimatedDelivery?: string;
+  };
+}
+
+interface Cart {
+  id: string;
+  items: CartItem[];
+  discount?: number;
+  shipping?: number;
+  couponCode?: string;
+}
+
 export default function CartPage() {
   const router = useRouter();
   const { formatPrice } = useCurrency();
   const toast = useToast();
-  const [cart, setCart] = useState<any>(null);
+  const [cart, setCart] = useState<Cart | null>(null);
   const [loading, setLoading] = useState(true);
   const [couponCode, setCouponCode] = useState('');
   const [applyingCoupon, setApplyingCoupon] = useState(false);
   const [removingCoupon, setRemovingCoupon] = useState(false);
+  const [movingToWishlist, setMovingToWishlist] = useState<string | null>(null);
 
   useEffect(() => {
     fetchCart();
@@ -103,6 +126,35 @@ export default function CartPage() {
     }
   };
 
+  const handleMoveToWishlist = async (item: CartItem) => {
+    setMovingToWishlist(item.id);
+    
+    try {
+      // Step 1: Add to wishlist first
+      await apiClient.addToWishlist(item.productId);
+      
+      // Step 2: Remove from cart (only reached if wishlist add succeeded)
+      try {
+        await apiClient.removeCartItem(item.id);
+        setCart(prev => prev ? {
+          ...prev,
+          items: prev.items.filter(i => i.id !== item.id)
+        } : null);
+        toast.success('Moved to wishlist');
+      } catch (removeErr: any) {
+        // Item was added to wishlist but couldn't be removed from cart
+        // Inform user of partial success - item is in wishlist but still in cart
+        toast.error('Added to wishlist, but failed to remove from cart. Please remove it manually.');
+        console.error('Failed to remove cart item after adding to wishlist:', removeErr);
+      }
+    } catch (addErr: any) {
+      // Failed to add to wishlist - no changes made to cart
+      toast.error(addErr.message || 'Failed to add to wishlist');
+    } finally {
+      setMovingToWishlist(null);
+    }
+  };
+
   const handleCheckout = () => {
     // Use defensive check to match the pattern at line 126
     // Prevents crash if cart.items is undefined
@@ -111,6 +163,27 @@ export default function CartPage() {
       return;
     }
     router.push('/checkout');
+  };
+
+  // Calculate cart stats
+  const cartStats = useMemo(() => {
+    if (!cart?.items) return { itemCount: 0, totalQuantity: 0, lowStockItems: 0 };
+    return {
+      itemCount: cart.items.length,
+      totalQuantity: cart.items.reduce((sum, item) => sum + item.quantity, 0),
+      lowStockItems: cart.items.filter(item => 
+        item.product?.stock !== undefined && item.product.stock > 0 && item.product.stock <= 5
+      ).length,
+    };
+  }, [cart]);
+
+  const getStockWarning = (item: CartItem) => {
+    const stock = item.product?.stock;
+    if (stock === undefined) return null;
+    if (stock <= 0) return { text: 'Out of Stock', type: 'error' };
+    if (stock < item.quantity) return { text: `Only ${stock} available`, type: 'warning' };
+    if (stock <= 5) return { text: `Only ${stock} left in stock`, type: 'info' };
+    return null;
   };
 
   if (loading) {
@@ -161,63 +234,105 @@ export default function CartPage() {
           {/* Cart Items */}
           <div className="lg:col-span-2">
             <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 sm:p-6">
-              {cart.items.map((item: any) => (
-                <div key={item.id} className="flex flex-col sm:flex-row gap-4 py-4 sm:py-6 border-b border-gray-200 last:border-b-0">
-                  {/* Product Image */}
-                  <div className="flex-shrink-0">
-                    {item.product?.images?.[0]?.url ? (
-                      <Image
-                        src={item.product.images[0].url}
-                        alt={item.product.name || 'Product'}
-                        width={100}
-                        height={100}
-                        className="rounded-lg object-cover"
-                      />
-                    ) : (
-                      <div className="w-24 h-24 bg-gray-200 rounded-lg flex items-center justify-center">
-                        <span className="text-gray-400 text-xs">No Image</span>
-                      </div>
-                    )}
-                  </div>
+              {cart.items.map((item: CartItem) => {
+                const stockWarning = getStockWarning(item);
+                const isMoving = movingToWishlist === item.id;
+                
+                return (
+                  <div key={item.id} className="flex flex-col sm:flex-row gap-4 py-4 sm:py-6 border-b border-gray-200 last:border-b-0">
+                    {/* Product Image */}
+                    <div className="flex-shrink-0 relative">
+                      {item.product?.images?.[0]?.url ? (
+                        <Image
+                          src={item.product.images[0].url}
+                          alt={item.product.name || 'Product'}
+                          width={100}
+                          height={100}
+                          className="rounded-lg object-cover"
+                        />
+                      ) : (
+                        <div className="w-24 h-24 bg-gray-200 rounded-lg flex items-center justify-center">
+                          <span className="text-gray-400 text-xs">No Image</span>
+                        </div>
+                      )}
+                    </div>
 
-                  {/* Product Details */}
-                  <div className="flex-1">
-                    <Link href={`/products/${item.productId}`} className="hover:text-purple-700">
-                      <h3 className="font-semibold text-base sm:text-lg mb-2">{item.product?.name || 'Product'}</h3>
-                    </Link>
-                    <p className="text-sm text-gray-600 mb-2">{formatPrice(item.price)} each</p>
-                    
-                    {/* Quantity Controls */}
-                    <div className="flex items-center gap-3 mt-4">
-                      <button
-                        onClick={() => handleUpdateQuantity(item.id, item.quantity - 1)}
-                        className="w-8 h-8 rounded border border-gray-300 hover:bg-gray-100 flex items-center justify-center"
-                        disabled={item.quantity <= 1}
-                      >
-                        −
-                      </button>
-                      <span className="w-12 text-center font-medium">{item.quantity}</span>
-                      <button
-                        onClick={() => handleUpdateQuantity(item.id, item.quantity + 1)}
-                        className="w-8 h-8 rounded border border-gray-300 hover:bg-gray-100 flex items-center justify-center"
-                      >
-                        +
-                      </button>
-                      <button
-                        onClick={() => handleRemoveItem(item.id)}
-                        className="ml-auto text-red-600 hover:text-red-700 text-sm"
-                      >
-                        Remove
-                      </button>
+                    {/* Product Details */}
+                    <div className="flex-1">
+                      <Link href={`/products/${item.productId}`} className="hover:text-purple-700">
+                        <h3 className="font-semibold text-base sm:text-lg mb-1">{item.product?.name || 'Product'}</h3>
+                      </Link>
+                      <p className="text-sm text-gray-600 mb-2">{formatPrice(item.price)} each</p>
+                      
+                      {/* Stock Warning */}
+                      {stockWarning && (
+                        <p className={`text-xs mb-2 ${
+                          stockWarning.type === 'error' ? 'text-red-600' :
+                          stockWarning.type === 'warning' ? 'text-orange-600' :
+                          'text-yellow-600'
+                        }`}>
+                          ⚠️ {stockWarning.text}
+                        </p>
+                      )}
+                      
+                      {/* Quantity Controls */}
+                      <div className="flex flex-wrap items-center gap-3 mt-3">
+                        <div className="flex items-center">
+                          <button
+                            onClick={() => handleUpdateQuantity(item.id, item.quantity - 1)}
+                            className="w-8 h-8 rounded-l border border-gray-300 hover:bg-gray-100 flex items-center justify-center disabled:opacity-50"
+                            disabled={item.quantity <= 1}
+                          >
+                            −
+                          </button>
+                          <span className="w-12 h-8 flex items-center justify-center border-t border-b border-gray-300 font-medium bg-white">
+                            {item.quantity}
+                          </span>
+                          <button
+                            onClick={() => handleUpdateQuantity(item.id, item.quantity + 1)}
+                            className="w-8 h-8 rounded-r border border-gray-300 hover:bg-gray-100 flex items-center justify-center disabled:opacity-50"
+                            disabled={
+                              // Disable if: at/over stock limit, OR at maximum quantity (99)
+                              (item.product?.stock != null && item.quantity >= item.product.stock) ||
+                              item.quantity >= 99
+                            }
+                          >
+                            +
+                          </button>
+                        </div>
+                        <div className="flex items-center gap-2 ml-auto">
+                          <button
+                            onClick={() => handleMoveToWishlist(item)}
+                            disabled={isMoving}
+                            className="text-purple-600 hover:text-purple-700 text-sm flex items-center gap-1 disabled:opacity-50"
+                          >
+                            {isMoving ? (
+                              <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-purple-600"></div>
+                            ) : (
+                              '💜'
+                            )}
+                            <span className="hidden sm:inline">Save for Later</span>
+                          </button>
+                          <span className="text-gray-300">|</span>
+                          <button
+                            onClick={() => handleRemoveItem(item.id)}
+                            className="text-red-600 hover:text-red-700 text-sm"
+                          >
+                            Remove
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Item Total */}
+                    <div className="text-right">
+                      <p className="font-semibold text-base sm:text-lg text-purple-600">
+                        {formatPrice(item.price * item.quantity)}
+                      </p>
                     </div>
                   </div>
-
-                  {/* Item Total */}
-                  <div className="text-right">
-                    <p className="font-semibold text-base sm:text-lg">{formatPrice(item.price * item.quantity)}</p>
-                  </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
 
             {/* Coupon Code Section */}
@@ -262,6 +377,14 @@ export default function CartPage() {
               <h2 className="text-lg font-semibold mb-4">Order Summary</h2>
               
               <div className="space-y-3 mb-4">
+                <div className="flex justify-between text-sm">
+                  <span className="text-gray-600">
+                    Items ({cartStats.itemCount})
+                  </span>
+                  <span className="text-gray-600">
+                    {cartStats.totalQuantity} unit{cartStats.totalQuantity !== 1 ? 's' : ''}
+                  </span>
+                </div>
                 <div className="flex justify-between">
                   <span className="text-gray-600">Subtotal</span>
                   <span className="font-medium">{formatPrice(subtotal)}</span>
@@ -297,6 +420,14 @@ export default function CartPage() {
                   <span className="text-2xl font-bold text-purple-600">{formatPrice(total)}</span>
                 </div>
               </div>
+
+              {cartStats.lowStockItems > 0 && (
+                <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3 mb-4">
+                  <p className="text-sm text-yellow-800">
+                    ⚠️ {cartStats.lowStockItems} item{cartStats.lowStockItems !== 1 ? 's' : ''} in your cart {cartStats.lowStockItems !== 1 ? 'have' : 'has'} limited stock
+                  </p>
+                </div>
+              )}
 
               <button
                 onClick={handleCheckout}

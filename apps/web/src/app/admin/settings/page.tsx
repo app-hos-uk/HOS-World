@@ -1,54 +1,84 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { RouteGuard } from '@/components/RouteGuard';
 import { AdminLayout } from '@/components/AdminLayout';
 import { apiClient } from '@/lib/api';
+import { useToast } from '@/hooks/useToast';
+
+const defaultSettings = {
+  // General Settings
+  platformName: 'House of Spells Marketplace',
+  platformUrl: 'https://hos-marketplace.com',
+  maintenanceMode: false,
+  allowRegistration: true,
+  requireEmailVerification: false,
+  
+  // Email Settings
+  smtpHost: '',
+  smtpPort: 587,
+  smtpUser: '',
+  smtpFrom: 'noreply@hos-marketplace.com',
+  emailNotifications: true,
+  
+  // Payment Settings
+  stripeEnabled: false,
+  stripeTestMode: true,
+  defaultCurrency: 'USD',
+  platformFee: 5.0,
+  
+  // Fulfillment Settings
+  autoCreateShipments: false,
+  defaultFulfillmentCenter: '',
+  requireTrackingNumber: true,
+  
+  // Notification Settings
+  notifyOnNewSubmission: true,
+  notifyOnNewOrder: true,
+  notifyOnShipmentReceived: true,
+};
 
 export default function AdminSettingsPage() {
+  const toast = useToast();
   const [activeTab, setActiveTab] = useState<'general' | 'email' | 'payment' | 'fulfillment' | 'notifications'>('general');
   const [saving, setSaving] = useState(false);
+  const [loading, setLoading] = useState(true);
   
-  const [settings, setSettings] = useState({
-    // General Settings
-    platformName: 'House of Spells Marketplace',
-    platformUrl: 'https://hos-marketplace.com',
-    maintenanceMode: false,
-    allowRegistration: true,
-    requireEmailVerification: false,
-    
-    // Email Settings
-    smtpHost: '',
-    smtpPort: 587,
-    smtpUser: '',
-    smtpFrom: 'noreply@hos-marketplace.com',
-    emailNotifications: true,
-    
-    // Payment Settings
-    stripeEnabled: false,
-    stripeTestMode: true,
-    defaultCurrency: 'USD',
-    platformFee: 5.0,
-    
-    // Fulfillment Settings
-    autoCreateShipments: false,
-    defaultFulfillmentCenter: '',
-    requireTrackingNumber: true,
-    
-    // Notification Settings
-    notifyOnNewSubmission: true,
-    notifyOnNewOrder: true,
-    notifyOnShipmentReceived: true,
-  });
+  const [settings, setSettings] = useState(defaultSettings);
+
+  // Fetch existing settings on mount
+  useEffect(() => {
+    fetchSettings();
+  }, []);
+
+  const fetchSettings = async () => {
+    try {
+      setLoading(true);
+      const response = await apiClient.getSystemSettings();
+      if (response?.data) {
+        // Merge fetched settings with defaults to ensure all fields exist
+        setSettings({
+          ...defaultSettings,
+          ...response.data,
+        });
+      }
+    } catch (err: any) {
+      console.error('Error fetching settings:', err);
+      // Keep default settings if fetch fails
+      toast.error('Failed to load settings. Using defaults.');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleSave = async () => {
     try {
       setSaving(true);
       await apiClient.updateSystemSettings(settings);
-      alert('Settings saved successfully!');
-    } catch (error) {
+      toast.success('Settings saved successfully!');
+    } catch (error: any) {
       console.error('Error saving settings:', error);
-      alert('Failed to save settings');
+      toast.error(error.message || 'Failed to save settings');
     } finally {
       setSaving(false);
     }
@@ -74,6 +104,14 @@ export default function AdminSettingsPage() {
           <p className="text-gray-600 mt-2">Configure platform-wide settings and preferences</p>
         </div>
 
+        {loading ? (
+          <div className="flex items-center justify-center py-12">
+            <div className="text-center">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600 mx-auto mb-4"></div>
+              <p className="text-gray-600">Loading settings...</p>
+            </div>
+          </div>
+        ) : (
         <div className="bg-white border border-gray-200 rounded-lg">
           {/* Tabs */}
           <div className="border-b border-gray-200">
@@ -380,6 +418,7 @@ export default function AdminSettingsPage() {
             </div>
           </div>
         </div>
+        )}
       </AdminLayout>
     </RouteGuard>
   );

@@ -196,7 +196,10 @@ enum UserRole {
   CUSTOMER
   WHOLESALER
   B2C_SELLER
-  SELLER // Legacy - will be deprecated
+  // DEPRECATED: SELLER role is legacy and should be migrated to B2C_SELLER.
+  // Run `pnpm db:migrate-seller-role` to migrate existing users.
+  // After migration, update code to use B2C_SELLER only, then remove this value.
+  SELLER
   ADMIN
   PROCUREMENT
   FULFILLMENT

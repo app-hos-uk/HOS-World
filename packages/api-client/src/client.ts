@@ -630,6 +630,34 @@ export class ApiClient {
     });
   }
 
+  async updateMarketingMaterial(id: string, data: {
+    type?: string;
+    url?: string;
+  }): Promise<ApiResponse<any>> {
+    return this.request<ApiResponse<any>>(`/marketing/materials/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async deleteMarketingMaterial(id: string): Promise<ApiResponse<any>> {
+    return this.request<ApiResponse<any>>(`/marketing/materials/${id}`, {
+      method: 'DELETE',
+    });
+  }
+
+  async markMarketingComplete(submissionId: string): Promise<ApiResponse<any>> {
+    return this.request<ApiResponse<any>>(`/marketing/submissions/${submissionId}/complete`, {
+      method: 'POST',
+    });
+  }
+
+  async getMarketingDashboardStats(): Promise<ApiResponse<any>> {
+    return this.request<ApiResponse<any>>('/marketing/dashboard/stats', {
+      method: 'GET',
+    });
+  }
+
   // Finance
   async getFinancePending(): Promise<ApiResponse<any[]>> {
     return this.request<ApiResponse<any[]>>('/finance/pending', {
@@ -1175,6 +1203,41 @@ export class ApiClient {
   async getMyBadges(): Promise<ApiResponse<any[]>> {
     return this.request<ApiResponse<any[]>>('/badges/my-badges', {
       method: 'GET',
+    });
+  }
+
+  // Leaderboard
+  async getLeaderboard(params?: { timeframe?: string; category?: string; limit?: number }): Promise<ApiResponse<any>> {
+    const query = params 
+      ? `?${Object.entries(params).filter(([, v]) => v).map(([k, v]) => `${k}=${v}`).join('&')}`
+      : '';
+    return this.request<ApiResponse<any>>(`/gamification/leaderboard${query}`, {
+      method: 'GET',
+    });
+  }
+
+  async getGamificationProfile(): Promise<ApiResponse<any>> {
+    return this.request<ApiResponse<any>>('/gamification/profile', {
+      method: 'GET',
+    });
+  }
+
+  // Digital Products
+  async getDigitalProducts(): Promise<ApiResponse<any[]>> {
+    return this.request<ApiResponse<any[]>>('/digital-products/my-purchases', {
+      method: 'GET',
+    });
+  }
+
+  async getDigitalProduct(id: string): Promise<ApiResponse<any>> {
+    return this.request<ApiResponse<any>>(`/digital-products/${id}`, {
+      method: 'GET',
+    });
+  }
+
+  async downloadDigitalProduct(id: string): Promise<ApiResponse<{ downloadUrl: string }>> {
+    return this.request<ApiResponse<{ downloadUrl: string }>>(`/digital-products/${id}/download`, {
+      method: 'POST',
     });
   }
 
