@@ -301,16 +301,16 @@ export default function WishlistPage() {
                           {item.product?.name || 'Product'}
                         </h3>
                       </Link>
-                      <div className="flex items-center gap-2 mb-4">
-                        <p className="text-purple-600 font-bold">
-                          {formatPrice(item.product?.price, item.product?.currency || 'GBP')}
-                        </p>
-                        {item.product?.originalPrice && item.product.originalPrice > (item.product?.price || 0) && (
-                          <p className="text-gray-400 line-through text-sm">
-                            {formatPrice(item.product.originalPrice, item.product.currency || 'GBP')}
-                          </p>
-                        )}
-                      </div>
+                     <div className="flex items-center gap-2 mb-4">
+                       <p className="text-purple-600 font-bold">
+                         {formatPrice(item.product?.price ?? 0, item.product?.currency || 'GBP')}
+                       </p>
+                       {item.product?.originalPrice && item.product.originalPrice > (item.product?.price || 0) && (
+                         <p className="text-gray-400 line-through text-sm">
+                           {formatPrice(item.product.originalPrice, item.product?.currency || 'GBP')}
+                         </p>
+                       )}
+                     </div>
                       <div className="flex gap-2">
                         <button
                           onClick={() => handleMoveToCart(item.productId)}
