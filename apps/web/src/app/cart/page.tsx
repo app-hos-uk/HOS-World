@@ -67,6 +67,10 @@ export default function CartPage() {
       toast.error('Please enter a coupon code');
       return;
     }
+    if (!cart) {
+      toast.error('No cart available');
+      return;
+    }
 
     try {
       setApplyingCoupon(true);
@@ -84,6 +88,7 @@ export default function CartPage() {
   };
 
   const handleRemoveCoupon = async () => {
+    if (!cart) return;
     try {
       setRemovingCoupon(true);
       const response = await apiClient.removeCoupon(cart.id);
