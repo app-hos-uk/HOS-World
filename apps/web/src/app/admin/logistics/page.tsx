@@ -56,16 +56,13 @@ export default function AdminLogisticsPage() {
     e.preventDefault();
     setSubmitting(true);
     try {
-      // Backend expects nested contactInfo structure
+      // API client internally transforms contactEmail/contactPhone to contactInfo
       const response = await apiClient.createLogisticsPartner({
         name: formData.name,
         type: formData.type,
         website: formData.website || undefined,
-        contactInfo: (formData.contactEmail || formData.contactPhone) ? {
-          name: formData.name, // Use partner name as contact name
-          email: formData.contactEmail || '',
-          phone: formData.contactPhone || undefined,
-        } : undefined,
+        contactEmail: formData.contactEmail || undefined,
+        contactPhone: formData.contactPhone || undefined,
         isActive: formData.active !== undefined ? formData.active : true,
       });
       if (response?.data) {
