@@ -31,8 +31,8 @@ interface Order {
   shippingCost?: number;
   discount?: number;
   currency?: string;
-  createdAt: string;
-  updatedAt?: string;
+  createdAt: string | Date;
+  updatedAt?: string | Date;
   shippingAddress?: {
     street?: string;
     city?: string;
@@ -42,7 +42,7 @@ interface Order {
   };
   items?: OrderItem[];
   trackingNumber?: string;
-  estimatedDelivery?: string;
+  estimatedDelivery?: string | Date;
 }
 
 export default function OrdersPage() {
