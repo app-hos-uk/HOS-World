@@ -278,7 +278,7 @@ export default function SellerOrdersPage() {
             <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded">
               Error: {error}
               <button
-                onClick={fetchOrders}
+                onClick={() => fetchOrders(statusFilter)}
                 className="ml-4 px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700"
               >
                 Retry
