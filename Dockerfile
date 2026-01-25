@@ -44,9 +44,19 @@ RUN pnpm build
 WORKDIR /app/packages/theme-system
 RUN pnpm build
 
-# 5. cms-client (if it has a build script)
+# 5. cms-client (only if it has a build script)
 WORKDIR /app/packages/cms-client
-RUN pnpm build || echo "cms-client build skipped if no build script"
+# Check if build script exists in package.json before running - fail properly if build exists but fails
+# Pattern '"build"[[:space:]]*:' specifically matches the "build" key in scripts, not occurrences in
+# other fields like "prebuild", "buildId", descriptions, or dependency names containing "build"
+# Use grep -q (quiet mode) to suppress output and only use exit code for the conditional
+# Note: Using POSIX [[:space:]] instead of \s for maximum compatibility across grep implementations
+RUN BUILD_SCRIPT_EXISTS=$(grep -qE '"build"[[:space:]]*:' package.json 2>/dev/null && echo 1 || echo 0) && \
+    if [ "$BUILD_SCRIPT_EXISTS" = "1" ]; then \
+      echo "Building cms-client..." && pnpm build; \
+    else \
+      echo "cms-client has no build script - skipping"; \
+    fi
 
 # Generate Prisma Client (needed for TypeScript compilation)
 WORKDIR /app/services/api
