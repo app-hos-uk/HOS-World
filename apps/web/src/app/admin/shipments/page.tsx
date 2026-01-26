@@ -229,11 +229,10 @@ export default function AdminShipmentsPage() {
     
     try {
       setActionLoading(true);
-      await apiClient.updateFulfillmentShipment(selectedShipment.id, {
+      await apiClient.verifyShipment(selectedShipment.id, {
         status: updateForm.status,
         trackingNumber: updateForm.trackingNumber || undefined,
-        carrier: updateForm.carrier || undefined,
-        notes: updateForm.notes || undefined,
+        verificationNotes: updateForm.notes || undefined,
       });
       toast.success('Shipment updated successfully');
       setShowUpdateModal(false);
