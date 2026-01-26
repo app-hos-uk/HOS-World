@@ -3,8 +3,83 @@
 @tailwind utilities;
 
 :root {
+  /* Font Families */
   --font-cinzel: 'Cinzel', serif;
   --font-lora: 'Lora', serif;
+  --font-inter: 'Inter', system-ui, sans-serif;
+  
+  /* Primary Purple Palette - Softer for Admin UI */
+  --primary-50: #faf5ff;
+  --primary-100: #f3e8ff;
+  --primary-200: #e9d5ff;
+  --primary-300: #d8b4fe;
+  --primary-400: #c084fc;
+  --primary-500: #a855f7;
+  --primary-600: #9333ea;
+  --primary-700: #7c3aed;
+  --primary-800: #6b21a8;
+  --primary-900: #581c87;
+  
+  /* Neutral Gray - Warmer Zinc tones */
+  --gray-50: #fafafa;
+  --gray-100: #f4f4f5;
+  --gray-200: #e4e4e7;
+  --gray-300: #d4d4d8;
+  --gray-400: #a1a1aa;
+  --gray-500: #71717a;
+  --gray-600: #52525b;
+  --gray-700: #3f3f46;
+  --gray-800: #27272a;
+  --gray-900: #18181b;
+  
+  /* Semantic Colors */
+  --success-50: #ecfdf5;
+  --success-500: #10b981;
+  --success-600: #059669;
+  --warning-50: #fffbeb;
+  --warning-500: #f59e0b;
+  --warning-600: #d97706;
+  --error-50: #fef2f2;
+  --error-500: #ef4444;
+  --error-600: #dc2626;
+  --info-50: #eff6ff;
+  --info-500: #3b82f6;
+  --info-600: #2563eb;
+  
+  /* Spacing Scale */
+  --spacing-xs: 0.25rem;   /* 4px */
+  --spacing-sm: 0.5rem;    /* 8px */
+  --spacing-md: 1rem;      /* 16px */
+  --spacing-lg: 1.5rem;    /* 24px */
+  --spacing-xl: 2rem;      /* 32px */
+  --spacing-2xl: 2.5rem;   /* 40px */
+  --spacing-3xl: 3rem;     /* 48px */
+  
+  /* Border Radius */
+  --radius-sm: 0.375rem;   /* 6px */
+  --radius-md: 0.5rem;     /* 8px */
+  --radius-lg: 0.75rem;    /* 12px */
+  --radius-xl: 1rem;       /* 16px */
+  --radius-2xl: 1.5rem;    /* 24px */
+  --radius-full: 9999px;
+  
+  /* Shadows */
+  --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+  --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+  --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+  
+  /* Legacy variables for compatibility */
+  --color-primary: var(--primary-600);
+  --color-secondary: var(--primary-500);
+  --color-background: #ffffff;
+  --color-surface: var(--gray-50);
+  --color-text-primary: var(--gray-900);
+  --color-text-secondary: var(--gray-600);
+  --color-accent: var(--primary-500);
+  --color-error: var(--error-500);
+  --color-success: var(--success-500);
+  --color-warning: var(--warning-500);
+  --font-family-primary: var(--font-lora);
 }
 
 * {
@@ -24,12 +99,17 @@ body {
 }
 
 body {
-  background: #ffffff; /* White background as per requirements */
+  background: #ffffff;
 }
 
 a {
   color: inherit;
   text-decoration: none;
+}
+
+/* Tabular numbers for stats and metrics */
+.tabular-nums {
+  font-variant-numeric: tabular-nums;
 }
 
 @layer utilities {
@@ -38,4 +118,243 @@ a {
   }
 }
 
-
+/* Admin Dashboard Styles */
+@layer components {
+  /* Admin Layout Base */
+  .admin-layout {
+    font-family: var(--font-inter);
+  }
+  
+  /* Stat Card Component */
+  .stat-card {
+    @apply bg-white rounded-xl border border-gray-100 p-5 shadow-sm 
+           hover:shadow-md transition-all duration-200 cursor-pointer;
+  }
+  
+  .stat-card-label {
+    @apply text-xs font-medium text-gray-500 uppercase tracking-wide;
+  }
+  
+  .stat-card-value {
+    @apply text-3xl font-semibold text-gray-900 mt-2 tabular-nums;
+  }
+  
+  .stat-card-trend {
+    @apply text-xs mt-1 flex items-center gap-1;
+  }
+  
+  .stat-card-trend-up {
+    @apply text-green-600;
+  }
+  
+  .stat-card-trend-down {
+    @apply text-red-600;
+  }
+  
+  /* Section Card Component */
+  .section-card {
+    @apply bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden;
+  }
+  
+  .section-card-header {
+    @apply px-5 py-4 border-b border-gray-100 flex items-center justify-between;
+  }
+  
+  .section-card-title {
+    @apply text-base font-semibold text-gray-900;
+  }
+  
+  .section-card-body {
+    @apply p-5;
+  }
+  
+  /* Table Improvements */
+  .admin-table {
+    @apply min-w-full divide-y divide-gray-100;
+  }
+  
+  .admin-table thead {
+    @apply bg-gray-50/50;
+  }
+  
+  .admin-table th {
+    @apply px-4 py-3 text-left text-[11px] font-semibold text-gray-500 
+           uppercase tracking-wider;
+  }
+  
+  .admin-table tbody {
+    @apply divide-y divide-gray-50;
+  }
+  
+  .admin-table tbody tr {
+    @apply hover:bg-gray-50/50 transition-colors;
+  }
+  
+  .admin-table td {
+    @apply px-4 py-3.5 text-sm text-gray-900;
+  }
+  
+  /* Button Hierarchy */
+  .btn-primary {
+    @apply px-4 py-2.5 bg-purple-600 text-white rounded-lg font-medium 
+           shadow-sm hover:bg-purple-700 active:bg-purple-800
+           transition-colors disabled:opacity-50 disabled:cursor-not-allowed;
+  }
+  
+  .btn-secondary {
+    @apply px-4 py-2.5 bg-white text-gray-700 rounded-lg font-medium 
+           border border-gray-200 hover:bg-gray-50 active:bg-gray-100
+           transition-colors disabled:opacity-50 disabled:cursor-not-allowed;
+  }
+  
+  .btn-ghost {
+    @apply px-3 py-2 text-sm text-gray-600 hover:text-gray-900 
+           hover:bg-gray-100 rounded-lg transition-colors;
+  }
+  
+  .btn-danger {
+    @apply px-4 py-2.5 bg-red-600 text-white rounded-lg font-medium 
+           shadow-sm hover:bg-red-700 active:bg-red-800
+           transition-colors disabled:opacity-50 disabled:cursor-not-allowed;
+  }
+  
+  .btn-success {
+    @apply px-4 py-2.5 bg-green-600 text-white rounded-lg font-medium 
+           shadow-sm hover:bg-green-700 active:bg-green-800
+           transition-colors disabled:opacity-50 disabled:cursor-not-allowed;
+  }
+  
+  /* Badge Styles */
+  .badge {
+    @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium;
+  }
+  
+  .badge-primary {
+    @apply bg-purple-100 text-purple-800;
+  }
+  
+  .badge-success {
+    @apply bg-green-100 text-green-800;
+  }
+  
+  .badge-warning {
+    @apply bg-yellow-100 text-yellow-800;
+  }
+  
+  .badge-error {
+    @apply bg-red-100 text-red-800;
+  }
+  
+  .badge-info {
+    @apply bg-blue-100 text-blue-800;
+  }
+  
+  .badge-gray {
+    @apply bg-gray-100 text-gray-800;
+  }
+  
+  /* Input Styles */
+  .input {
+    @apply w-full px-4 py-2.5 border border-gray-200 rounded-lg 
+           text-sm text-gray-900 placeholder-gray-400
+           focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent
+           transition-shadow;
+  }
+  
+  .input-error {
+    @apply border-red-300 focus:ring-red-500;
+  }
+  
+  /* Select Styles */
+  .select {
+    @apply w-full px-4 py-2.5 border border-gray-200 rounded-lg 
+           text-sm text-gray-900 bg-white
+           focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent
+           transition-shadow cursor-pointer;
+  }
+  
+  /* Quick Action Button */
+  .quick-action {
+    @apply flex flex-col items-center justify-center p-4 rounded-xl 
+           bg-gray-50 hover:bg-gray-100 transition-colors cursor-pointer
+           border border-transparent hover:border-gray-200;
+  }
+  
+  .quick-action-icon {
+    @apply text-2xl mb-2;
+  }
+  
+  .quick-action-label {
+    @apply text-sm font-medium text-gray-700 text-center;
+  }
+  
+  /* Chart Container */
+  .chart-container {
+    @apply bg-white rounded-xl border border-gray-100 shadow-sm p-5;
+  }
+  
+  .chart-title {
+    @apply text-base font-semibold text-gray-900 mb-4;
+  }
+  
+  /* Modal Overlay */
+  .modal-overlay {
+    @apply fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center 
+           justify-center p-4 z-50;
+  }
+  
+  .modal-content {
+    @apply bg-white rounded-2xl shadow-xl max-w-lg w-full max-h-[90vh] 
+           overflow-y-auto;
+  }
+  
+  .modal-header {
+    @apply px-6 py-4 border-b border-gray-100 flex items-center justify-between;
+  }
+  
+  .modal-title {
+    @apply text-lg font-semibold text-gray-900;
+  }
+  
+  .modal-body {
+    @apply p-6;
+  }
+  
+  .modal-footer {
+    @apply px-6 py-4 border-t border-gray-100 flex justify-end gap-3;
+  }
+  
+  /* Empty State */
+  .empty-state {
+    @apply text-center py-12;
+  }
+  
+  .empty-state-icon {
+    @apply text-5xl mb-4;
+  }
+  
+  .empty-state-title {
+    @apply text-lg font-medium text-gray-900 mb-2;
+  }
+  
+  .empty-state-description {
+    @apply text-sm text-gray-500 mb-4;
+  }
+  
+  /* Loading Spinner */
+  .spinner {
+    @apply animate-spin rounded-full border-2 border-gray-200 border-t-purple-600;
+  }
+  
+  .spinner-sm {
+    @apply w-4 h-4;
+  }
+  
+  .spinner-md {
+    @apply w-8 h-8;
+  }
+  
+  .spinner-lg {
+    @apply w-12 h-12;
+  }
+}

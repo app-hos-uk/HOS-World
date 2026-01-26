@@ -5,6 +5,9 @@ import { RouteGuard } from '@/components/RouteGuard';
 import { AdminLayout } from '@/components/AdminLayout';
 import { apiClient } from '@/lib/api';
 import Link from 'next/link';
+import { StatCard } from '@/components/ui/StatCard';
+import { SectionCard, ChartCard, ActivityItem, EmptyState } from '@/components/ui/SectionCard';
+import { StatusBadge } from '@/components/ui/Badge';
 import {
   LineChart,
   Line,
@@ -43,15 +46,15 @@ interface AdminDashboardData {
   topProducts?: Array<{ name: string; sales: number; revenue: number }>;
 }
 
-const COLORS = ['#8b5cf6', '#06b6d4', '#10b981', '#f59e0b', '#ef4444', '#ec4899'];
+const COLORS = ['#a855f7', '#06b6d4', '#10b981', '#f59e0b', '#ef4444', '#ec4899'];
 
 const quickActions = [
-  { title: 'Create Product', href: '/admin/products/create', icon: '➕', color: 'bg-purple-100 text-purple-700' },
-  { title: 'View Orders', href: '/admin/orders', icon: '🛒', color: 'bg-blue-100 text-blue-700' },
-  { title: 'Pending Submissions', href: '/admin/submissions', icon: '📋', color: 'bg-yellow-100 text-yellow-700' },
-  { title: 'Invite Seller', href: '/admin/sellers', icon: '👤', color: 'bg-green-100 text-green-700' },
-  { title: 'View Reports', href: '/admin/reports/sales', icon: '📊', color: 'bg-indigo-100 text-indigo-700' },
-  { title: 'Settings', href: '/admin/settings', icon: '⚙️', color: 'bg-gray-100 text-gray-700' },
+  { title: 'Create Product', href: '/admin/products/create', icon: '➕', bgColor: 'bg-purple-50', iconColor: 'text-purple-600' },
+  { title: 'View Orders', href: '/admin/orders', icon: '🛒', bgColor: 'bg-blue-50', iconColor: 'text-blue-600' },
+  { title: 'Submissions', href: '/admin/submissions', icon: '📋', bgColor: 'bg-amber-50', iconColor: 'text-amber-600' },
+  { title: 'Invite Seller', href: '/admin/sellers', icon: '👤', bgColor: 'bg-emerald-50', iconColor: 'text-emerald-600' },
+  { title: 'View Reports', href: '/admin/reports/sales', icon: '📊', bgColor: 'bg-indigo-50', iconColor: 'text-indigo-600' },
+  { title: 'Settings', href: '/admin/settings', icon: '⚙️', bgColor: 'bg-gray-50', iconColor: 'text-gray-600' },
 ];
 
 export default function AdminDashboardPage() {
@@ -129,265 +132,285 @@ export default function AdminDashboardPage() {
   return (
     <RouteGuard allowedRoles={['ADMIN']} showAccessDenied={true}>
       <AdminLayout>
-        <div className="mb-6">
-          <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-gray-900">Admin Dashboard</h1>
-          <p className="text-gray-600 mt-2">Overview of platform operations and statistics</p>
+        {/* Page Header */}
+        <div className="mb-8">
+          <h1 className="text-2xl font-semibold text-gray-900">Dashboard</h1>
+          <p className="text-sm text-gray-500 mt-1">Overview of platform operations and key metrics</p>
         </div>
           
         {loading && (
-          <div className="flex items-center justify-center py-12">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600"></div>
+          <div className="flex items-center justify-center py-20">
+            <div className="spinner spinner-lg"></div>
           </div>
         )}
 
         {error && (
-          <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded mb-6">
-            Error: {error}
+          <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-xl mb-6">
+            <p className="font-medium">Error loading dashboard</p>
+            <p className="text-sm mt-1">{error}</p>
           </div>
         )}
 
         {!loading && !error && (
           <div className="space-y-6">
             {/* Quick Actions */}
-            <div className="bg-white border rounded-lg p-4 sm:p-6">
-              <h2 className="text-lg font-semibold text-gray-900 mb-4">Quick Actions</h2>
+            <SectionCard title="Quick Actions">
               <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
                 {quickActions.map((action) => (
                   <Link
                     key={action.title}
                     href={action.href}
-                    className={`flex flex-col items-center justify-center p-4 rounded-lg ${action.color} hover:opacity-80 transition-opacity`}
+                    className={`quick-action ${action.bgColor}`}
                   >
-                    <span className="text-2xl mb-2">{action.icon}</span>
-                    <span className="text-sm font-medium text-center">{action.title}</span>
+                    <span className={`quick-action-icon ${action.iconColor}`}>{action.icon}</span>
+                    <span className="quick-action-label">{action.title}</span>
                   </Link>
                 ))}
               </div>
-            </div>
+            </SectionCard>
 
             {/* Main Stats Cards */}
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-4">
-              <div className="bg-white border rounded-lg p-4 sm:p-6">
-                <div className="flex items-center justify-between">
-                  <h3 className="text-sm font-medium text-gray-500">Total Revenue</h3>
-                  <span className="text-2xl">💰</span>
-                </div>
-                <p className="text-2xl font-bold text-gray-900 mt-2">
-                  £{(stats.totalRevenue || 0).toLocaleString()}
-                </p>
-                <p className="text-xs text-green-600 mt-1">+12% from last month</p>
-              </div>
-              <div className="bg-white border rounded-lg p-4 sm:p-6">
-                <div className="flex items-center justify-between">
-                  <h3 className="text-sm font-medium text-gray-500">Total Products</h3>
-                  <span className="text-2xl">📦</span>
-                </div>
-                <p className="text-2xl font-bold text-gray-900 mt-2">{stats.totalProducts.toLocaleString()}</p>
-              </div>
-              <div className="bg-white border rounded-lg p-4 sm:p-6">
-                <div className="flex items-center justify-between">
-                  <h3 className="text-sm font-medium text-gray-500">Total Orders</h3>
-                  <span className="text-2xl">🛒</span>
-                </div>
-                <p className="text-2xl font-bold text-gray-900 mt-2">{stats.totalOrders.toLocaleString()}</p>
-              </div>
-              <div className="bg-white border rounded-lg p-4 sm:p-6">
-                <div className="flex items-center justify-between">
-                  <h3 className="text-sm font-medium text-gray-500">Total Sellers</h3>
-                  <span className="text-2xl">👤</span>
-                </div>
-                <p className="text-2xl font-bold text-gray-900 mt-2">{stats.totalSellers.toLocaleString()}</p>
-              </div>
-              <div className="bg-white border rounded-lg p-4 sm:p-6">
-                <div className="flex items-center justify-between">
-                  <h3 className="text-sm font-medium text-gray-500">Total Customers</h3>
-                  <span className="text-2xl">👥</span>
-                </div>
-                <p className="text-2xl font-bold text-gray-900 mt-2">{stats.totalCustomers.toLocaleString()}</p>
-              </div>
-              <div className="bg-white border rounded-lg p-4 sm:p-6">
-                <div className="flex items-center justify-between">
-                  <h3 className="text-sm font-medium text-gray-500">Pending Approvals</h3>
-                  <span className="text-2xl">⏳</span>
-                </div>
-                <p className="text-2xl font-bold text-orange-600 mt-2">{pendingApprovals.toLocaleString()}</p>
-                {pendingApprovals > 0 && (
-                  <Link href="/admin/submissions" className="text-xs text-purple-600 hover:underline mt-1 block">
-                    Review now
-                  </Link>
-                )}
-              </div>
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
+              <StatCard
+                label="Total Revenue"
+                value={`£${(stats.totalRevenue || 0).toLocaleString()}`}
+                icon={<span className="text-lg">💰</span>}
+                iconBgColor="bg-green-50"
+                trend={{ value: 12, label: 'vs last month', isPositive: true }}
+              />
+              <StatCard
+                label="Total Products"
+                value={stats.totalProducts}
+                icon={<span className="text-lg">📦</span>}
+                iconBgColor="bg-purple-50"
+              />
+              <StatCard
+                label="Total Orders"
+                value={stats.totalOrders}
+                icon={<span className="text-lg">🛒</span>}
+                iconBgColor="bg-blue-50"
+              />
+              <StatCard
+                label="Total Sellers"
+                value={stats.totalSellers}
+                icon={<span className="text-lg">🏪</span>}
+                iconBgColor="bg-amber-50"
+              />
+              <StatCard
+                label="Total Customers"
+                value={stats.totalCustomers}
+                icon={<span className="text-lg">👥</span>}
+                iconBgColor="bg-indigo-50"
+              />
+              <StatCard
+                label="Pending Approvals"
+                value={pendingApprovals}
+                icon={<span className="text-lg">⏳</span>}
+                iconBgColor="bg-orange-50"
+                valueColor={pendingApprovals > 0 ? 'text-orange-600' : 'text-gray-900'}
+                onClick={pendingApprovals > 0 ? () => window.location.href = '/admin/submissions' : undefined}
+              />
             </div>
 
             {/* Charts Row */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              {/* Sales Trend Chart */}
-              <div className="bg-white border rounded-lg p-4 sm:p-6">
-                <h2 className="text-lg font-semibold text-gray-900 mb-4">Revenue Trend</h2>
-                <div className="h-64">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <LineChart data={salesTrendData}>
-                      <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-                      <XAxis dataKey="period" stroke="#6b7280" fontSize={12} />
-                      <YAxis stroke="#6b7280" fontSize={12} />
-                      <Tooltip 
-                        contentStyle={{ backgroundColor: '#fff', border: '1px solid #e5e7eb', borderRadius: '8px' }}
-                        formatter={(value: number) => [`£${value.toLocaleString()}`, 'Revenue']}
-                      />
-                      <Legend />
-                      <Line 
-                        type="monotone" 
-                        dataKey="revenue" 
-                        stroke="#8b5cf6" 
-                        strokeWidth={2}
-                        dot={{ fill: '#8b5cf6', strokeWidth: 2 }}
-                        name="Revenue (£)"
-                      />
-                    </LineChart>
-                  </ResponsiveContainer>
-                </div>
-              </div>
+              {/* Revenue Trend Chart */}
+              <ChartCard title="Revenue Trend" subtitle="Last 6 months performance">
+                <ResponsiveContainer width="100%" height="100%">
+                  <LineChart data={salesTrendData}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#f3f4f6" />
+                    <XAxis 
+                      dataKey="period" 
+                      stroke="#9ca3af" 
+                      fontSize={12}
+                      tickLine={false}
+                      axisLine={false}
+                    />
+                    <YAxis 
+                      stroke="#9ca3af" 
+                      fontSize={12}
+                      tickLine={false}
+                      axisLine={false}
+                      tickFormatter={(value) => `£${value / 1000}k`}
+                    />
+                    <Tooltip 
+                      contentStyle={{ 
+                        backgroundColor: '#fff', 
+                        border: '1px solid #e5e7eb', 
+                        borderRadius: '12px',
+                        boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)'
+                      }}
+                      formatter={(value: number) => [`£${value.toLocaleString()}`, 'Revenue']}
+                    />
+                    <Line 
+                      type="monotone" 
+                      dataKey="revenue" 
+                      stroke="#a855f7" 
+                      strokeWidth={2.5}
+                      dot={{ fill: '#a855f7', strokeWidth: 2, r: 4 }}
+                      activeDot={{ r: 6, stroke: '#a855f7', strokeWidth: 2 }}
+                    />
+                  </LineChart>
+                </ResponsiveContainer>
+              </ChartCard>
 
               {/* Order Status Pie Chart */}
-              <div className="bg-white border rounded-lg p-4 sm:p-6">
-                <h2 className="text-lg font-semibold text-gray-900 mb-4">Orders by Status</h2>
-                <div className="h-64">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <PieChart>
-                      <Pie
-                        data={orderStatusData}
-                        cx="50%"
-                        cy="50%"
-                        innerRadius={60}
-                        outerRadius={80}
-                        fill="#8884d8"
-                        paddingAngle={5}
-                        dataKey="value"
-                        label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
-                      >
-                        {orderStatusData.map((entry, index) => (
-                          <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                        ))}
-                      </Pie>
-                      <Tooltip />
-                    </PieChart>
-                  </ResponsiveContainer>
-                </div>
-              </div>
+              <ChartCard title="Orders by Status" subtitle="Current order distribution">
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                    <Pie
+                      data={orderStatusData}
+                      cx="50%"
+                      cy="50%"
+                      innerRadius={60}
+                      outerRadius={85}
+                      fill="#8884d8"
+                      paddingAngle={3}
+                      dataKey="value"
+                      label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                      labelLine={false}
+                    >
+                      {orderStatusData.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                      ))}
+                    </Pie>
+                    <Tooltip 
+                      contentStyle={{ 
+                        backgroundColor: '#fff', 
+                        border: '1px solid #e5e7eb', 
+                        borderRadius: '12px',
+                        boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)'
+                      }}
+                    />
+                  </PieChart>
+                </ResponsiveContainer>
+              </ChartCard>
             </div>
 
             {/* Top Products and Recent Activity Row */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               {/* Top Products Bar Chart */}
-              <div className="bg-white border rounded-lg p-4 sm:p-6">
-                <h2 className="text-lg font-semibold text-gray-900 mb-4">Top Selling Products</h2>
-                <div className="h-64">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <BarChart data={topProductsData} layout="vertical">
-                      <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-                      <XAxis type="number" stroke="#6b7280" fontSize={12} />
-                      <YAxis dataKey="name" type="category" width={120} stroke="#6b7280" fontSize={11} />
-                      <Tooltip 
-                        contentStyle={{ backgroundColor: '#fff', border: '1px solid #e5e7eb', borderRadius: '8px' }}
-                      />
-                      <Bar dataKey="sales" fill="#8b5cf6" radius={[0, 4, 4, 0]} name="Sales" />
-                    </BarChart>
-                  </ResponsiveContainer>
-                </div>
-              </div>
+              <ChartCard title="Top Selling Products" subtitle="By number of sales">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={topProductsData} layout="vertical">
+                    <CartesianGrid strokeDasharray="3 3" stroke="#f3f4f6" horizontal={true} vertical={false} />
+                    <XAxis 
+                      type="number" 
+                      stroke="#9ca3af" 
+                      fontSize={12}
+                      tickLine={false}
+                      axisLine={false}
+                    />
+                    <YAxis 
+                      dataKey="name" 
+                      type="category" 
+                      width={100} 
+                      stroke="#9ca3af" 
+                      fontSize={11}
+                      tickLine={false}
+                      axisLine={false}
+                    />
+                    <Tooltip 
+                      contentStyle={{ 
+                        backgroundColor: '#fff', 
+                        border: '1px solid #e5e7eb', 
+                        borderRadius: '12px',
+                        boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)'
+                      }}
+                    />
+                    <Bar 
+                      dataKey="sales" 
+                      fill="#a855f7" 
+                      radius={[0, 6, 6, 0]} 
+                      name="Sales"
+                    />
+                  </BarChart>
+                </ResponsiveContainer>
+              </ChartCard>
 
               {/* Recent Activity */}
-              <div className="bg-white border rounded-lg p-4 sm:p-6">
-                <div className="flex items-center justify-between mb-4">
-                  <h2 className="text-lg font-semibold text-gray-900">Recent Activity</h2>
-                  <Link href="/admin/activity" className="text-sm text-purple-600 hover:underline">
-                    View all
-                  </Link>
-                </div>
+              <SectionCard 
+                title="Recent Activity" 
+                action={{ label: 'View all', href: '/admin/activity' }}
+              >
                 {dashboardData?.recentActivity && dashboardData.recentActivity.length > 0 ? (
-                  <div className="space-y-3">
-                    {dashboardData.recentActivity.slice(0, 6).map((activity: any, index: number) => (
-                      <div key={activity.id || index} className="flex items-start gap-3 p-3 bg-gray-50 rounded-lg">
-                        <div className="flex-shrink-0 w-8 h-8 bg-purple-100 rounded-full flex items-center justify-center">
-                          <span className="text-sm">📝</span>
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <p className="text-sm font-medium text-gray-900 truncate">
-                            {activity.seller?.storeName || activity.user?.email || 'Unknown'}
-                          </p>
-                          <p className="text-xs text-gray-500">{activity.status || activity.action}</p>
-                          <p className="text-xs text-gray-400 mt-1">
-                            {activity.createdAt ? new Date(activity.createdAt).toLocaleString() : 'Recently'}
-                          </p>
-                        </div>
-                      </div>
+                  <div className="space-y-2">
+                    {dashboardData.recentActivity.slice(0, 5).map((activity: any, index: number) => (
+                      <ActivityItem
+                        key={activity.id || index}
+                        icon={<span className="text-sm">📝</span>}
+                        iconBg="bg-purple-100"
+                        title={activity.seller?.storeName || activity.user?.email || 'System Activity'}
+                        subtitle={activity.status || activity.action}
+                        timestamp={activity.createdAt ? new Date(activity.createdAt).toLocaleString() : 'Recently'}
+                      />
                     ))}
                   </div>
                 ) : (
-                  <div className="text-center py-8 text-gray-500">
-                    <span className="text-4xl mb-2 block">📭</span>
-                    <p>No recent activity</p>
-                  </div>
+                  <EmptyState
+                    icon="📭"
+                    title="No recent activity"
+                    description="Activity will appear here as events occur"
+                  />
                 )}
-              </div>
+              </SectionCard>
             </div>
 
             {/* Status Summary Cards */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {/* Submissions by Status */}
-              <div className="bg-white border rounded-lg p-4 sm:p-6">
-                <div className="flex items-center justify-between mb-4">
-                  <h2 className="text-lg font-semibold text-gray-900">Submissions by Status</h2>
-                  <Link href="/admin/submissions" className="text-sm text-purple-600 hover:underline">
-                    View all
-                  </Link>
-                </div>
+              <SectionCard
+                title="Submissions by Status"
+                action={{ label: 'View all', href: '/admin/submissions' }}
+              >
                 {dashboardData?.submissionsByStatus && dashboardData.submissionsByStatus.length > 0 ? (
-                  <div className="space-y-3">
+                  <div className="space-y-2">
                     {dashboardData.submissionsByStatus.map((item: any) => (
-                      <div key={item.status} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                        <div className="flex items-center gap-2">
-                          <span className={`w-3 h-3 rounded-full ${
-                            item.status === 'APPROVED' ? 'bg-green-500' :
-                            item.status === 'REJECTED' ? 'bg-red-500' :
-                            item.status === 'SUBMITTED' ? 'bg-yellow-500' :
-                            'bg-gray-400'
-                          }`}></span>
-                          <span className="text-sm font-medium text-gray-700">{item.status}</span>
+                      <div key={item.status} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
+                        <div className="flex items-center gap-3">
+                          <StatusBadge status={item.status} />
                         </div>
-                        <span className="text-lg font-bold text-gray-900">{item._count}</span>
+                        <span className="text-lg font-semibold text-gray-900 tabular-nums">{item._count}</span>
                       </div>
                     ))}
                   </div>
                 ) : (
-                  <p className="text-sm text-gray-500 text-center py-4">No submissions data</p>
+                  <EmptyState
+                    icon="📋"
+                    title="No submissions"
+                    description="Product submissions will appear here"
+                  />
                 )}
-              </div>
+              </SectionCard>
 
               {/* Orders by Status List */}
-              <div className="bg-white border rounded-lg p-4 sm:p-6">
-                <div className="flex items-center justify-between mb-4">
-                  <h2 className="text-lg font-semibold text-gray-900">Orders Overview</h2>
-                  <Link href="/admin/orders" className="text-sm text-purple-600 hover:underline">
-                    View all
-                  </Link>
-                </div>
+              <SectionCard
+                title="Orders Overview"
+                action={{ label: 'View all', href: '/admin/orders' }}
+              >
                 {dashboardData?.ordersByStatus && dashboardData.ordersByStatus.length > 0 ? (
-                  <div className="space-y-3">
+                  <div className="space-y-2">
                     {dashboardData.ordersByStatus.map((item: any, index: number) => (
-                      <div key={item.status} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                        <div className="flex items-center gap-2">
-                          <span className="w-3 h-3 rounded-full" style={{ backgroundColor: COLORS[index % COLORS.length] }}></span>
+                      <div key={item.status} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
+                        <div className="flex items-center gap-3">
+                          <span 
+                            className="w-3 h-3 rounded-full" 
+                            style={{ backgroundColor: COLORS[index % COLORS.length] }}
+                          />
                           <span className="text-sm font-medium text-gray-700">{item.status}</span>
                         </div>
-                        <span className="text-lg font-bold text-gray-900">{item._count}</span>
+                        <span className="text-lg font-semibold text-gray-900 tabular-nums">{item._count}</span>
                       </div>
                     ))}
                   </div>
                 ) : (
-                  <p className="text-sm text-gray-500 text-center py-4">No orders data</p>
+                  <EmptyState
+                    icon="🛒"
+                    title="No orders"
+                    description="Order data will appear here"
+                  />
                 )}
-              </div>
+              </SectionCard>
             </div>
           </div>
         )}

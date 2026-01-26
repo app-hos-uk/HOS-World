@@ -185,7 +185,7 @@ export default function AdminAttributesPage() {
       // Try to get products using this attribute
       const response = await apiClient.getProducts({ limit: 50 });
       if (response?.data) {
-        const products = Array.isArray(response.data) ? response.data : response.data.products || [];
+        const products = Array.isArray(response.data) ? response.data : response.data.data || [];
         // Filter products that have this attribute (simplified - backend should provide this)
         const withAttribute = products.filter((p: any) => 
           p.attributes?.some((a: any) => a.attributeId === attributeId)

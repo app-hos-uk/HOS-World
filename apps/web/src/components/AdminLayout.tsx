@@ -224,27 +224,27 @@ export function AdminLayout({ children }: AdminLayoutProps) {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 font-inter">
       {/* Sidebar */}
       <div
-        className={`fixed inset-y-0 left-0 z-50 w-64 bg-white border-r border-gray-200 transition-transform duration-300 ${
+        className={`fixed inset-y-0 left-0 z-50 w-64 bg-white border-r border-gray-100 transition-transform duration-300 shadow-sm ${
           sidebarOpen ? 'translate-x-0' : '-translate-x-full'
         } lg:translate-x-0`}
       >
         <div className="flex flex-col h-full">
           {/* Logo/Header */}
-          <div className="flex items-center justify-between h-16 px-4 border-b border-gray-200">
-            <h2 className="text-xl font-bold text-purple-600">Admin Panel</h2>
+          <div className="flex items-center justify-between h-16 px-4 border-b border-gray-100 bg-gradient-to-r from-purple-600 to-purple-700">
+            <h2 className="text-xl font-semibold text-white tracking-tight">Admin Panel</h2>
             <button
               onClick={() => setSidebarOpen(false)}
-              className="lg:hidden text-gray-500 hover:text-gray-700"
+              className="lg:hidden text-white/80 hover:text-white"
             >
               ✕
             </button>
           </div>
 
           {/* Search */}
-          <div className="px-3 py-3 border-b border-gray-200 relative">
+          <div className="px-3 py-3 border-b border-gray-100 relative">
             <div className="relative">
               <input
                 id="admin-sidebar-search"
@@ -257,7 +257,7 @@ export function AdminLayout({ children }: AdminLayoutProps) {
                 }}
                 onFocus={() => setShowSearchResults(true)}
                 onBlur={() => setTimeout(() => setShowSearchResults(false), 200)}
-                className="w-full px-3 py-2 pl-9 text-sm bg-gray-100 border border-transparent rounded-lg focus:bg-white focus:border-purple-500 focus:ring-1 focus:ring-purple-500 outline-none transition-colors"
+                className="w-full px-3 py-2.5 pl-9 text-sm bg-gray-50 border border-gray-200 rounded-lg focus:bg-white focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20 outline-none transition-all"
               />
               <svg
                 className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400"
@@ -390,10 +390,10 @@ export function AdminLayout({ children }: AdminLayoutProps) {
           </nav>
 
           {/* Footer */}
-          <div className="border-t border-gray-200 p-4">
+          <div className="border-t border-gray-100 p-3">
             <Link
               href="/"
-              className="flex items-center gap-2 px-3 py-2 text-sm text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
+              className="flex items-center gap-2.5 px-3 py-2.5 text-sm text-gray-600 hover:bg-gray-50 rounded-lg transition-colors font-medium"
             >
               <span>🏠</span>
               <span>Back to Site</span>
@@ -413,23 +413,32 @@ export function AdminLayout({ children }: AdminLayoutProps) {
       {/* Main Content */}
       <div className={`lg:pl-64 transition-all duration-300`}>
         {/* Top Bar */}
-        <div className="sticky top-0 z-30 bg-white border-b border-gray-200">
-          <div className="flex items-center justify-between h-16 px-4 sm:px-6 lg:px-8">
+        <div className="sticky top-0 z-30 bg-white/95 backdrop-blur-sm border-b border-gray-100">
+          <div className="flex items-center justify-between h-14 px-4 sm:px-6 lg:px-8">
             <button
               onClick={() => setSidebarOpen(true)}
-              className="lg:hidden text-gray-500 hover:text-gray-700"
+              className="lg:hidden p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
             >
-              ☰
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+              </svg>
             </button>
-            <div className="flex items-center gap-4">
+            <div className="flex items-center gap-3 ml-auto">
               {user && (
-                <span className="text-sm text-gray-600 hidden sm:inline">
-                  {user.firstName} {user.lastName}
-                </span>
+                <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 bg-gray-50 rounded-lg">
+                  <div className="w-7 h-7 bg-purple-100 rounded-full flex items-center justify-center">
+                    <span className="text-xs font-medium text-purple-600">
+                      {user.firstName?.[0]}{user.lastName?.[0]}
+                    </span>
+                  </div>
+                  <span className="text-sm font-medium text-gray-700">
+                    {user.firstName} {user.lastName}
+                  </span>
+                </div>
               )}
               <button
                 onClick={handleLogout}
-                className="px-4 py-2 text-sm text-red-600 hover:text-red-700 hover:bg-red-50 rounded-lg transition-colors font-medium"
+                className="px-3 py-1.5 text-sm text-red-600 hover:text-red-700 hover:bg-red-50 rounded-lg transition-colors font-medium"
               >
                 Logout
               </button>
@@ -438,12 +447,12 @@ export function AdminLayout({ children }: AdminLayoutProps) {
         </div>
 
         {/* Breadcrumbs */}
-        <div className="px-4 sm:px-6 lg:px-8 py-3 bg-gray-50 border-b border-gray-200">
+        <div className="px-4 sm:px-6 lg:px-8 py-2.5 bg-gray-50/50 border-b border-gray-100">
           <AdminBreadcrumbs />
         </div>
 
         {/* Page Content */}
-        <main className="p-4 sm:p-6 lg:p-8">{children}</main>
+        <main className="p-4 sm:p-6 lg:p-8 bg-gray-50/30 min-h-[calc(100vh-7rem)]">{children}</main>
       </div>
     </div>
   );
