@@ -140,7 +140,6 @@ export default function AdminTagsPage() {
         description: formData.description || undefined,
         synonyms: synonyms.length > 0 ? synonyms : undefined,
         isActive: formData.isActive,
-        color: formData.color || undefined,
       });
       toast.success('Tag created successfully');
       resetForm();
@@ -164,7 +163,6 @@ export default function AdminTagsPage() {
         description: formData.description || undefined,
         synonyms: synonyms.length > 0 ? synonyms : undefined,
         isActive: formData.isActive,
-        color: formData.color || undefined,
       });
       toast.success('Tag updated successfully');
       resetForm();
