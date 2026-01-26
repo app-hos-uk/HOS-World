@@ -8,6 +8,7 @@ import {
   HttpCode,
   HttpStatus,
   Query,
+  Version,
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse as SwaggerApiResponse, ApiBearerAuth, ApiBody, ApiQuery } from '@nestjs/swagger';
 import { AuthService } from './auth.service';
@@ -23,6 +24,7 @@ import { AdminSellersService } from '../admin/sellers.service';
 import type { ApiResponse, AuthResponse, User } from '@hos-marketplace/shared-types';
 
 @ApiTags('auth')
+@Version('1')
 @Controller('auth')
 export class AuthController {
   constructor(

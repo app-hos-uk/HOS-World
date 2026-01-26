@@ -13,6 +13,7 @@ import {
   HttpCode,
   HttpStatus,
   ParseIntPipe,
+Version,
 } from '@nestjs/common';
 import {
   ApiTags,
@@ -32,6 +33,7 @@ import { Public } from '../common/decorators/public.decorator';
 import type { ApiResponse } from '@hos-marketplace/shared-types';
 
 @ApiTags('reviews')
+@Version('1')
 @Controller('reviews')
 export class ReviewsController {
   constructor(private readonly reviewsService: ReviewsService) {}

@@ -8,6 +8,7 @@ import {
   Param,
   Query,
   UseGuards,
+Version,
 } from '@nestjs/common';
 import {
   ApiTags,
@@ -25,6 +26,7 @@ import { Roles } from '../common/decorators/roles.decorator';
 import type { ApiResponse } from '@hos-marketplace/shared-types';
 
 @ApiTags('return-policies')
+@Version('1')
 @Controller('return-policies')
 @UseGuards(JwtAuthGuard, RolesGuard)
 @Roles('ADMIN', 'SELLER', 'B2C_SELLER')

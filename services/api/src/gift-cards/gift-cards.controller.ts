@@ -7,6 +7,7 @@ import {
   UseGuards,
   Request,
   ParseUUIDPipe,
+Version,
 } from '@nestjs/common';
 import {
   ApiTags,
@@ -26,6 +27,7 @@ import { Public } from '../common/decorators/public.decorator';
 import type { ApiResponse } from '@hos-marketplace/shared-types';
 
 @ApiTags('gift-cards')
+@Version('1')
 @Controller('gift-cards')
 export class GiftCardsController {
   constructor(private readonly giftCardsService: GiftCardsService) {}

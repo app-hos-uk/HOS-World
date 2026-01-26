@@ -7,6 +7,7 @@ import {
   Query,
   UseGuards,
   Request,
+Version,
 } from '@nestjs/common';
 import {
   ApiTags,
@@ -25,6 +26,7 @@ import { Public } from '../../common/decorators/public.decorator';
 import type { ApiResponse } from '@hos-marketplace/shared-types';
 
 @ApiTags('shipping')
+@Version('1')
 @Controller('shipping/courier')
 @UseGuards(JwtAuthGuard, RolesGuard)
 @ApiBearerAuth('JWT-auth')

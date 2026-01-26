@@ -7,6 +7,7 @@ import {
   UseGuards,
   Request,
   ParseUUIDPipe,
+Version,
 } from '@nestjs/common';
 import {
   ApiTags,
@@ -24,6 +25,7 @@ import type { ApiResponse } from '@hos-marketplace/shared-types';
 
 @ApiTags('publishing')
 @ApiBearerAuth('JWT-auth')
+@Version('1')
 @Controller('publishing')
 @UseGuards(JwtAuthGuard, RolesGuard)
 @Roles('ADMIN')

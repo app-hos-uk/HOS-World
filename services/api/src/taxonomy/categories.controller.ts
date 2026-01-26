@@ -8,6 +8,7 @@ import {
   Param,
   UseGuards,
   ParseUUIDPipe,
+Version,
 } from '@nestjs/common';
 import {
   ApiTags,
@@ -25,6 +26,7 @@ import { Public } from '../common/decorators/public.decorator';
 import type { ApiResponse } from '@hos-marketplace/shared-types';
 
 @ApiTags('taxonomy')
+@Version('1')
 @Controller('taxonomy/categories')
 export class CategoriesController {
   constructor(private readonly categoriesService: CategoriesService) {}

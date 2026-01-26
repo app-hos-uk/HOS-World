@@ -12,6 +12,7 @@ import {
   Param,
   Res,
   NotFoundException,
+Version,
 } from '@nestjs/common';
 import {
   ApiTags,
@@ -67,6 +68,7 @@ function createStorage() {
 }
 
 @ApiTags('uploads')
+@Version('1')
 @Controller('uploads')
 export class UploadsController {
   constructor(

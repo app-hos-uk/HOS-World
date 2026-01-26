@@ -1,4 +1,5 @@
-import { Controller, Post } from '@nestjs/common';
+import { Controller, Post Version,
+} from '@nestjs/common';
 import {
   ApiTags,
   ApiOperation,
@@ -56,6 +57,7 @@ const teamUsers = [
 ];
 
 @ApiTags('admin')
+@Version('1')
 @Controller('admin')
 export class CreateTeamUsersController {
   constructor(private prisma: PrismaService) {}

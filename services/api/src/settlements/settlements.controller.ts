@@ -9,6 +9,7 @@ import {
   UseGuards,
   Request,
   ParseUUIDPipe,
+Version,
 } from '@nestjs/common';
 import {
   ApiTags,
@@ -30,6 +31,7 @@ import { SettlementStatus } from '@prisma/client';
 
 @ApiTags('settlements')
 @ApiBearerAuth('JWT-auth')
+@Version('1')
 @Controller('settlements')
 @UseGuards(JwtAuthGuard, RolesGuard)
 export class SettlementsController {

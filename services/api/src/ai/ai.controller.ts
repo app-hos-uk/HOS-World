@@ -7,6 +7,7 @@ import {
   Query,
   UseGuards,
   Request,
+Version,
 } from '@nestjs/common';
 import {
   ApiTags,
@@ -25,6 +26,7 @@ import type { ApiResponse } from '@hos-marketplace/shared-types';
 
 @ApiTags('ai')
 @ApiBearerAuth('JWT-auth')
+@Version('1')
 @Controller('ai')
 @UseGuards(JwtAuthGuard)
 export class AIController {

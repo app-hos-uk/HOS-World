@@ -11,6 +11,7 @@ import {
   ParseIntPipe,
   HttpCode,
   HttpStatus,
+Version,
 } from '@nestjs/common';
 import {
   ApiTags,
@@ -27,6 +28,7 @@ import type { ApiResponse } from '@hos-marketplace/shared-types';
 
 @ApiTags('wishlist')
 @ApiBearerAuth('JWT-auth')
+@Version('1')
 @Controller('wishlist')
 @UseGuards(JwtAuthGuard)
 export class WishlistController {

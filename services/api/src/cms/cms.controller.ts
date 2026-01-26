@@ -8,6 +8,7 @@ import {
   Body,
   Query,
   UseGuards,
+Version,
 } from '@nestjs/common';
 import {
   ApiTags,
@@ -26,6 +27,7 @@ import type { ApiResponse } from '@hos-marketplace/shared-types';
 
 @ApiTags('cms')
 @ApiBearerAuth('JWT-auth')
+@Version('1')
 @Controller('cms')
 @UseGuards(JwtAuthGuard, RolesGuard)
 @Roles('CMS_EDITOR', 'ADMIN')

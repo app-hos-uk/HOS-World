@@ -1,4 +1,5 @@
-import { Controller, Get, Header } from '@nestjs/common';
+import { Controller, Get, Header Version,
+} from '@nestjs/common';
 import {
   ApiTags,
   ApiOperation,
@@ -9,6 +10,7 @@ import { MonitoringService } from './monitoring.service';
 import { Public } from '../common/decorators/public.decorator';
 
 @ApiTags('monitoring')
+@Version('1')
 @Controller('metrics')
 export class MetricsController {
   constructor(

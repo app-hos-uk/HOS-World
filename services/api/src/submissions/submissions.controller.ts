@@ -10,6 +10,7 @@ import {
   UseGuards,
   Request,
   ParseUUIDPipe,
+Version,
 } from '@nestjs/common';
 import {
   ApiTags,
@@ -31,6 +32,7 @@ import { ProductSubmissionStatus } from '@prisma/client';
 
 @ApiTags('submissions')
 @ApiBearerAuth('JWT-auth')
+@Version('1')
 @Controller('submissions')
 @UseGuards(JwtAuthGuard, RolesGuard)
 @Roles('WHOLESALER', 'B2C_SELLER', 'SELLER')

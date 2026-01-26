@@ -11,6 +11,7 @@ import {
   ParseUUIDPipe,
   HttpCode,
   HttpStatus,
+Version,
 } from '@nestjs/common';
 import {
   ApiTags,
@@ -29,6 +30,7 @@ import type { ApiResponse } from '@hos-marketplace/shared-types';
 
 @ApiTags('tenants')
 @ApiBearerAuth('JWT-auth')
+@Version('1')
 @Controller('tenants')
 @UseGuards(JwtAuthGuard, RolesGuard)
 export class TenantsController {

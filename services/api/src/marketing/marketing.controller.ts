@@ -10,6 +10,7 @@ import {
   UseGuards,
   Request,
   ParseUUIDPipe,
+  Version,
 } from '@nestjs/common';
 import {
   ApiTags,
@@ -30,6 +31,7 @@ import { MaterialType } from '@prisma/client';
 
 @ApiTags('marketing')
 @ApiBearerAuth('JWT-auth')
+@Version('1')
 @Controller('marketing')
 @UseGuards(JwtAuthGuard, RolesGuard)
 @Roles('MARKETING', 'ADMIN')

@@ -1,4 +1,5 @@
-import { Controller, Get, Post, Body, UseGuards, Request, Ip } from '@nestjs/common';
+import { Controller, Get, Post, Body, UseGuards, Request, Ip Version,
+} from '@nestjs/common';
 import {
   ApiTags,
   ApiOperation,
@@ -12,6 +13,7 @@ import { Public } from '../common/decorators/public.decorator';
 import type { ApiResponse } from '@hos-marketplace/shared-types';
 
 @ApiTags('geolocation')
+@Version('1')
 @Controller('geolocation')
 export class GeolocationController {
   constructor(private readonly geolocationService: GeolocationService) {}

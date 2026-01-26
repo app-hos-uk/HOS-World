@@ -1,4 +1,5 @@
-import { Controller, Get, UseGuards, Query, DefaultValuePipe, ParseIntPipe } from '@nestjs/common';
+import { Controller, Get, UseGuards, Query, DefaultValuePipe, ParseIntPipe Version,
+} from '@nestjs/common';
 import {
   ApiTags,
   ApiOperation,
@@ -14,6 +15,7 @@ import type { ApiResponse, PaginatedResponse } from '@hos-marketplace/shared-typ
 
 @ApiTags('admin')
 @ApiBearerAuth('JWT-auth')
+@Version('1')
 @Controller('admin')
 @UseGuards(JwtAuthGuard, RolesGuard)
 @Roles('ADMIN')

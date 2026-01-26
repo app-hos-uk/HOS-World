@@ -4,6 +4,7 @@ import {
   Param,
   UseGuards,
   ParseUUIDPipe,
+Version,
 } from '@nestjs/common';
 import {
   ApiTags,
@@ -20,6 +21,7 @@ import { Public } from '../common/decorators/public.decorator';
 import type { ApiResponse } from '@hos-marketplace/shared-types';
 
 @ApiTags('duplicates')
+@Version('1')
 @Controller('duplicates')
 export class DuplicatesController {
   constructor(private readonly duplicatesService: DuplicatesService) {}

@@ -1,4 +1,5 @@
-import { Controller, Post, Get, UseGuards, Logger, ForbiddenException } from '@nestjs/common';
+import { Controller, Post, Get, UseGuards, Logger, ForbiddenException Version,
+} from '@nestjs/common';
 import {
   ApiTags,
   ApiOperation,
@@ -15,6 +16,7 @@ import { join } from 'path';
 
 @ApiTags('admin')
 @ApiBearerAuth('JWT-auth')
+@Version('1')
 @Controller('admin/migration')
 @UseGuards(JwtAuthGuard, RolesGuard)
 @Roles('ADMIN')

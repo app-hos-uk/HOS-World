@@ -9,6 +9,7 @@ import {
   Request,
   ParseIntPipe,
   DefaultValuePipe,
+Version,
 } from '@nestjs/common';
 import {
   ApiTags,
@@ -26,6 +27,7 @@ import { Public } from '../common/decorators/public.decorator';
 import type { ApiResponse } from '@hos-marketplace/shared-types';
 
 @ApiTags('social-sharing')
+@Version('1')
 @Controller('social-sharing')
 export class SocialSharingController {
   constructor(private readonly socialSharingService: SocialSharingService) {}

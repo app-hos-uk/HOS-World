@@ -8,6 +8,7 @@ import {
   Request,
   HttpCode,
   HttpStatus,
+  Version,
 } from '@nestjs/common';
 import {
   ApiTags,
@@ -23,6 +24,7 @@ import type { ApiResponse, User } from '@hos-marketplace/shared-types';
 
 @ApiTags('users')
 @ApiBearerAuth('JWT-auth')
+@Version('1')
 @Controller('users')
 @UseGuards(JwtAuthGuard)
 export class UsersController {

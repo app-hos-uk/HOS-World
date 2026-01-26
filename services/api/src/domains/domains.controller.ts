@@ -8,6 +8,7 @@ import {
   UseGuards,
   Request,
   ParseUUIDPipe,
+Version,
 } from '@nestjs/common';
 import {
   ApiTags,
@@ -28,6 +29,7 @@ import { Roles } from '../common/decorators/roles.decorator';
 import type { ApiResponse } from '@hos-marketplace/shared-types';
 
 @ApiTags('domains')
+@Version('1')
 @Controller('domains')
 export class DomainsController {
   constructor(private readonly domainsService: DomainsService) {}

@@ -9,6 +9,7 @@ import {
   ParseBoolPipe,
   DefaultValuePipe,
   ParseIntPipe,
+Version,
 } from '@nestjs/common';
 import {
   ApiTags,
@@ -29,6 +30,7 @@ import * as ExcelJS from 'exceljs';
 import PDFDocument from 'pdfkit';
 
 @ApiTags('analytics')
+@Version('1')
 @Controller('analytics')
 @UseGuards(JwtAuthGuard, RolesGuard)
 @ApiBearerAuth('JWT-auth')

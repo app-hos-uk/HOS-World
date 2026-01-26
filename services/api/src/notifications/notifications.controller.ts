@@ -1,4 +1,5 @@
-import { Controller, Get, UseGuards, Request } from '@nestjs/common';
+import { Controller, Get, UseGuards, Request Version,
+} from '@nestjs/common';
 import {
   ApiTags,
   ApiOperation,
@@ -11,6 +12,7 @@ import type { ApiResponse } from '@hos-marketplace/shared-types';
 
 @ApiTags('notifications')
 @ApiBearerAuth('JWT-auth')
+@Version('1')
 @Controller('notifications')
 @UseGuards(JwtAuthGuard)
 export class NotificationsController {
