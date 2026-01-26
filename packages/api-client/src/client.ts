@@ -1377,6 +1377,28 @@ export class ApiClient {
     country?: string;
     city?: string;
     region?: string;
+    timezone?: string;
+    // Business compliance fields
+    legalBusinessName?: string;
+    companyName?: string;
+    vatNumber?: string;
+    // Bank details
+    bankName?: string;
+    accountHolder?: string;
+    accountNumber?: string;
+    sortCode?: string;
+    // Operations contact
+    opsContactName?: string;
+    opsContactEmail?: string;
+    opsContactPhone?: string;
+    // Warehouse address
+    warehouseAddress?: {
+      street: string;
+      city: string;
+      state?: string;
+      postalCode: string;
+      country: string;
+    };
   }): Promise<ApiResponse<any>> {
     return this.request<ApiResponse<any>>('/sellers/me', {
       method: 'PUT',
