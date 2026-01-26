@@ -120,8 +120,14 @@ export default function AdminProductsPage() {
       setLoading(true);
       setError(null);
       const response = await apiClient.getAdminProducts({ page, limit: 100 });
+      // #region agent log
+      fetch('http://127.0.0.1:7243/ingest/4ddd1cb6-338c-42a8-a75d-41c4889e463f',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'admin/products/page.tsx:fetchProducts',message:'API response structure',data:{hasData:!!response?.data,dataType:typeof response?.data,hasProducts:!!response?.data?.products,hasNestedData:!!response?.data?.data,sample:response?.data?.products?.[0] || response?.data?.data?.[0] || response?.data?.[0]},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'D'})}).catch(()=>{});
+      // #endregion
       const list = response?.data?.products || response?.data?.data || response?.data || [];
       const productList = Array.isArray(list) ? list : [];
+      // #region agent log
+      if(productList.length>0){fetch('http://127.0.0.1:7243/ingest/4ddd1cb6-338c-42a8-a75d-41c4889e463f',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'admin/products/page.tsx:fetchProducts:priceCheck',message:'First product price details',data:{price:productList[0]?.price,priceType:typeof productList[0]?.price,stock:productList[0]?.stock,stockType:typeof productList[0]?.stock},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'A,B'})}).catch(()=>{});}
+      // #endregion
       setProducts(productList);
       calculateStats(productList);
     } catch (err: any) {
@@ -178,9 +184,11 @@ export default function AdminProductsPage() {
     const lowStock = productList.filter(p => p.stock > 0 && p.stock <= 10);
     const platform = productList.filter(p => p.isPlatformOwned);
     const seller = productList.filter(p => !p.isPlatformOwned && p.sellerId);
-    const avgPrice = productList.length > 0 
-      ? productList.reduce((sum, p) => sum + (p.price || 0), 0) / productList.length 
-      : 0;
+    const priceSum = productList.reduce((sum, p) => sum + (p.price || 0), 0);
+    const avgPrice = productList.length > 0 ? priceSum / productList.length : 0;
+    // #region agent log
+    fetch('http://127.0.0.1:7243/ingest/4ddd1cb6-338c-42a8-a75d-41c4889e463f',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'admin/products/page.tsx:calculateStats',message:'Stats calculation',data:{productCount:productList.length,priceSum,priceSumType:typeof priceSum,avgPrice,avgPriceType:typeof avgPrice,isNaN:Number.isNaN(avgPrice)},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'E'})}).catch(()=>{});
+    // #endregion
 
     setStats({
       totalProducts: productList.length,
