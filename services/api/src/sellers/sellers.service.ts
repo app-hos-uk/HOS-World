@@ -38,7 +38,14 @@ export class SellersService {
       throw new NotFoundException('Seller profile not found');
     }
 
-    return seller;
+    // Mask sensitive bank details in response
+    return {
+      ...seller,
+      accountNumberLast4: seller.accountNumberEnc ? seller.accountNumberEnc.slice(-4) : null,
+      sortCodeLast4: seller.sortCodeEnc ? seller.sortCodeEnc.slice(-4) : null,
+      accountNumberEnc: undefined,
+      sortCodeEnc: undefined,
+    };
   }
 
   async findBySlug(slug: string) {
@@ -74,6 +81,19 @@ export class SellersService {
       throw new NotFoundException('Seller profile not found');
     }
 
+    // Build update data, excluding nested objects and sensitive fields that need special handling
+    const { warehouseAddress, accountNumber, sortCode, ...restDto } = updateSellerDto;
+    const updateData: any = { ...restDto };
+
+    // Handle bank account fields - store encrypted
+    // TODO: Implement proper encryption for production
+    if (accountNumber) {
+      updateData.accountNumberEnc = accountNumber; // In production, encrypt this
+    }
+    if (sortCode) {
+      updateData.sortCodeEnc = sortCode; // In production, encrypt this
+    }
+
     // If updating slug (via storeName), ensure uniqueness
     if (updateSellerDto.storeName && updateSellerDto.storeName !== seller.storeName) {
       const baseSlug = slugify(updateSellerDto.storeName);
@@ -84,31 +104,12 @@ export class SellersService {
         slug = `${baseSlug}-${counter}`;
         counter++;
       }
-
-      return this.prisma.seller.update({
-        where: { userId },
-        data: {
-          ...updateSellerDto,
-          slug,
-        },
-        include: {
-          user: {
-            select: {
-              id: true,
-              email: true,
-              firstName: true,
-              lastName: true,
-              role: true,
-              avatar: true,
-            },
-          },
-        },
-      });
+      updateData.slug = slug;
     }
 
-    return this.prisma.seller.update({
+    const updated = await this.prisma.seller.update({
       where: { userId },
-      data: updateSellerDto,
+      data: updateData,
       include: {
         user: {
           select: {
@@ -122,6 +123,15 @@ export class SellersService {
         },
       },
     });
+
+    // Mask sensitive data in response
+    return {
+      ...updated,
+      accountNumberLast4: updated.accountNumberEnc ? updated.accountNumberEnc.slice(-4) : null,
+      sortCodeLast4: updated.sortCodeEnc ? updated.sortCodeEnc.slice(-4) : null,
+      accountNumberEnc: undefined,
+      sortCodeEnc: undefined,
+    };
   }
 
   async updateSellerType(userId: string, sellerType: SellerType) {

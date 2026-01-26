@@ -33,6 +33,12 @@ export class UsersService {
         whatsappNumber: true,
         preferredCommunicationMethod: true,
         currencyPreference: true,
+        // Marketing dates
+        birthday: true,
+        anniversary: true,
+        // Team member fields
+        department: true,
+        employeeId: true,
       },
     });
 
@@ -98,6 +104,14 @@ export class UsersService {
           data: { currencyPreference: updateProfileDto.currencyPreference },
         });
       }
+    }
+
+    // Marketing dates
+    if (updateProfileDto.birthday !== undefined) {
+      updateData.birthday = updateProfileDto.birthday ? new Date(updateProfileDto.birthday) : null;
+    }
+    if (updateProfileDto.anniversary !== undefined) {
+      updateData.anniversary = updateProfileDto.anniversary ? new Date(updateProfileDto.anniversary) : null;
     }
 
     const updated = await this.prisma.user.update({

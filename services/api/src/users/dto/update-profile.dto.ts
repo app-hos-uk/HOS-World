@@ -1,4 +1,4 @@
-import { IsString, IsOptional, IsEmail, IsEnum } from 'class-validator';
+import { IsString, IsOptional, IsEmail, IsEnum, IsDateString } from 'class-validator';
 
 export enum CommunicationMethod {
   EMAIL = 'EMAIL',
@@ -44,6 +44,15 @@ export class UpdateProfileDto {
   @IsOptional()
   @IsString()
   currencyPreference?: string;
+
+  // Marketing dates (optional for personalized campaigns)
+  @IsOptional()
+  @IsDateString()
+  birthday?: string;
+
+  @IsOptional()
+  @IsDateString()
+  anniversary?: string;
 }
 
 export class ChangePasswordDto {
