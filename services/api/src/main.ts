@@ -292,13 +292,15 @@ async function bootstrap() {
       next();
     });
 
-    // Enable API versioning
-    app.enableVersioning({
-      type: VersioningType.URI,
-      defaultVersion: '1',
-      prefix: 'v',
-    });
-    logger.info('✅ API versioning enabled (v1 default)', 'Bootstrap');
+    // API versioning disabled - using /api prefix only
+    // To re-enable versioning in the future, add @Version('1') to controllers
+    // and uncomment the following:
+    // app.enableVersioning({
+    //   type: VersioningType.URI,
+    //   defaultVersion: '1',
+    //   prefix: 'v',
+    // });
+    logger.info('✅ API routes use /api prefix (versioning disabled)', 'Bootstrap');
 
     // Global prefix for all routes
     app.setGlobalPrefix('api');
