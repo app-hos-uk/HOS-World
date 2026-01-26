@@ -219,10 +219,8 @@ export default function AdminCategoriesPage() {
         parentId: category.parentId,
         level: category.level,
         image: category.image,
-        icon: category.icon,
         order: category.order + 1,
         isActive: false, // Start as inactive
-        isFeatured: false,
       });
       toast.success('Category duplicated successfully');
       fetchCategories();
