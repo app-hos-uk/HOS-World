@@ -31,26 +31,34 @@ import { RolesGuard } from '../common/guards/roles.guard';
 import { Roles } from '../common/decorators/roles.decorator';
 import { Public } from '../common/decorators/public.decorator';
 import type { ApiResponse } from '@hos-marketplace/shared-types';
-import { diskStorage } from 'multer';
+import { diskStorage, memoryStorage } from 'multer';
 import { extname, join } from 'path';
 import { ConfigService } from '@nestjs/config';
 import { randomUUID } from 'crypto';
 import { Response } from 'express';
 import { existsSync, mkdirSync } from 'fs';
+import { StorageProvider } from '../storage/storage.service';
 
-// Create storage configuration (reads from env directly since decorators evaluate before constructor)
+// Determine storage provider at module load time
+const storageProvider = process.env.STORAGE_PROVIDER || 'local';
+const useCloudStorage = ['cloudinary', 's3', 'minio'].includes(storageProvider);
+
+// Create storage configuration based on provider
 function createStorage() {
+  // For cloud storage (Cloudinary, S3, MinIO), use memory storage to get buffer
+  if (useCloudStorage) {
+    return memoryStorage();
+  }
+  
+  // For local storage, use disk storage
   const uploadBasePath = process.env.UPLOAD_BASE_PATH || '/data/uploads';
   
   return diskStorage({
     destination: (req, file, cb) => {
-      // Get folder from body or default to 'uploads'
       const folder = (req.body?.folder as string) || 'uploads';
-      // Sanitize folder name
       const safeFolder = folder.replace(/[^a-zA-Z0-9_-]/g, '').substring(0, 50) || 'uploads';
       const destPath = join(uploadBasePath, safeFolder);
       
-      // Ensure directory exists
       if (!existsSync(destPath)) {
         mkdirSync(destPath, { recursive: true });
       }
@@ -58,7 +66,6 @@ function createStorage() {
       cb(null, destPath);
     },
     filename: (req, file, cb) => {
-      // Generate UUID-based filename
       const ext = extname(file.originalname).toLowerCase();
       const filename = `${randomUUID()}${ext}`;
       cb(null, filename);
@@ -110,7 +117,19 @@ export class UploadsController {
     @UploadedFile() file: Express.Multer.File,
     @Body('folder') folder?: string,
   ): Promise<ApiResponse<{ url: string }>> {
-    const result = await this.uploadsService.uploadFile(file, folder || 'uploads');
+    const targetFolder = folder || 'products';
+    
+    // Use StorageService for cloud providers (Cloudinary, S3, MinIO)
+    if (useCloudStorage) {
+      const result = await this.storageService.uploadFile(file, targetFolder);
+      return {
+        data: { url: result.url },
+        message: 'File uploaded successfully',
+      };
+    }
+    
+    // Fallback to local disk storage
+    const result = await this.uploadsService.uploadFile(file, targetFolder);
     return {
       data: { url: result.url },
       message: 'File uploaded successfully',
@@ -155,7 +174,19 @@ export class UploadsController {
     @UploadedFiles() files: Express.Multer.File[],
     @Body('folder') folder?: string,
   ): Promise<ApiResponse<{ urls: string[] }>> {
-    const results = await this.uploadsService.uploadMultipleFiles(files, folder || 'uploads');
+    const targetFolder = folder || 'products';
+    
+    // Use StorageService for cloud providers (Cloudinary, S3, MinIO)
+    if (useCloudStorage) {
+      const results = await this.storageService.uploadMultipleFiles(files, targetFolder);
+      return {
+        data: { urls: results.map((r) => r.url) },
+        message: 'Files uploaded successfully',
+      };
+    }
+    
+    // Fallback to local disk storage
+    const results = await this.uploadsService.uploadMultipleFiles(files, targetFolder);
     return {
       data: { urls: results.map((r) => r.url) },
       message: 'Files uploaded successfully',
