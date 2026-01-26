@@ -2189,3 +2189,63 @@ enum DeliveryStatus {
   FAILED
   RETRYING
 }
+
+// Integration Configuration model - Stores third-party API credentials and settings
+model IntegrationConfig {
+  id            String   @id @default(uuid())
+  category      String   // PAYMENT, SHIPPING, TAX, EMAIL, STORAGE, ANALYTICS, etc.
+  provider      String   // stripe, fedex, avalara, sendgrid, etc.
+  displayName   String   // User-friendly name
+  description   String?  @db.Text
+  isActive      Boolean  @default(false)
+  isTestMode    Boolean  @default(true)
+  credentials   String   @db.Text // Encrypted JSON containing API keys/secrets
+  settings      Json?    // Provider-specific non-sensitive settings
+  webhookUrl    String?  // Generated webhook URL for this integration
+  webhookSecret String?  // For webhook signature verification
+  lastTestedAt  DateTime?
+  testStatus    String?  // SUCCESS, FAILED, NEVER_TESTED
+  testMessage   String?  @db.Text // Error message or success details
+  priority      Int      @default(0) // For ordering when multiple providers in same category
+  metadata      Json?    // Additional provider-specific metadata
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  // Relations
+  logs IntegrationLog[]
+
+  @@unique([category, provider])
+  @@index([category])
+  @@index([isActive])
+  @@index([provider])
+  @@map("integration_configs")
+}
+
+// Integration Log model - Tracks API calls and events for integrations
+model IntegrationLog {
+  id              String            @id @default(uuid())
+  integrationId   String
+  integration     IntegrationConfig @relation(fields: [integrationId], references: [id], onDelete: Cascade)
+  action          String            // API_CALL, WEBHOOK_RECEIVED, TEST_CONNECTION, ERROR, CONFIG_CHANGE
+  provider        String            // Denormalized for easier querying
+  endpoint        String?           // API endpoint called
+  method          String?           // HTTP method (GET, POST, PUT, DELETE)
+  statusCode      Int?              // HTTP response status code
+  duration        Int?              // Request duration in milliseconds
+  requestSummary  String?  @db.Text // Truncated/sanitized request (no secrets)
+  responseSummary String?  @db.Text // Truncated/sanitized response
+  errorMessage    String?  @db.Text // Error details if failed
+  metadata        Json?             // Additional context data
+  ipAddress       String?           // IP address of the caller (for config changes)
+  userId          String?           // User who triggered the action
+  createdAt       DateTime @default(now())
+
+  @@index([integrationId])
+  @@index([createdAt])
+  @@index([provider])
+  @@index([action])
+  @@map("integration_logs")
+}
+
+// Integration Category enum reference (stored as String for flexibility)
+// Categories: PAYMENT, SHIPPING, TAX, EMAIL, SMS, STORAGE, SEARCH, ANALYTICS, MAPS, OAUTH

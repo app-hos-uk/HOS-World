@@ -72,6 +72,7 @@ import { LoggerModule } from './common/logger/logger.module';
 import { MonitoringModule } from './monitoring/monitoring.module';
 import { APP_INTERCEPTOR } from '@nestjs/core';
 import { MonitoringInterceptor } from './monitoring/monitoring.interceptor';
+import { IntegrationsModule } from './integrations/integrations.module';
 
 @Module({
   imports: [
@@ -146,6 +147,7 @@ import { MonitoringInterceptor } from './monitoring/monitoring.interceptor';
     AnalyticsModule,
     TenantsModule,
     MonitoringModule,
+    IntegrationsModule,
   ],
   controllers: [AppController],
   providers: [

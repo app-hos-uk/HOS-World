@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import Link from 'next/link';
 import { RouteGuard } from '@/components/RouteGuard';
 import { AdminLayout } from '@/components/AdminLayout';
 import { apiClient } from '@/lib/api';
@@ -102,6 +103,66 @@ export default function AdminSettingsPage() {
         <div className="mb-6">
           <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold">System Settings</h1>
           <p className="text-gray-600 mt-2">Configure platform-wide settings and preferences</p>
+        </div>
+
+        {/* Quick Access Cards */}
+        <div className="grid gap-4 md:grid-cols-3 mb-6">
+          <Link
+            href="/admin/settings/integrations"
+            className="group bg-gradient-to-br from-purple-50 to-purple-100 border border-purple-200 rounded-lg p-5 hover:shadow-md transition-all"
+          >
+            <div className="flex items-center gap-3 mb-2">
+              <span className="text-2xl">🔌</span>
+              <h3 className="font-semibold text-gray-900 group-hover:text-purple-700">Integrations</h3>
+            </div>
+            <p className="text-sm text-gray-600">
+              Configure third-party services: shipping carriers, tax services, payment gateways
+            </p>
+            <span className="inline-flex items-center mt-3 text-sm text-purple-600 font-medium group-hover:gap-2 transition-all">
+              Manage Integrations
+              <svg className="w-4 h-4 ml-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+              </svg>
+            </span>
+          </Link>
+
+          <Link
+            href="/admin/settings/integrations/shipping"
+            className="group bg-gradient-to-br from-blue-50 to-blue-100 border border-blue-200 rounded-lg p-5 hover:shadow-md transition-all"
+          >
+            <div className="flex items-center gap-3 mb-2">
+              <span className="text-2xl">🚚</span>
+              <h3 className="font-semibold text-gray-900 group-hover:text-blue-700">Shipping Carriers</h3>
+            </div>
+            <p className="text-sm text-gray-600">
+              Royal Mail, FedEx, DHL - Generate labels and track shipments
+            </p>
+            <span className="inline-flex items-center mt-3 text-sm text-blue-600 font-medium group-hover:gap-2 transition-all">
+              Configure Carriers
+              <svg className="w-4 h-4 ml-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+              </svg>
+            </span>
+          </Link>
+
+          <Link
+            href="/admin/settings/integrations/tax"
+            className="group bg-gradient-to-br from-green-50 to-green-100 border border-green-200 rounded-lg p-5 hover:shadow-md transition-all"
+          >
+            <div className="flex items-center gap-3 mb-2">
+              <span className="text-2xl">📊</span>
+              <h3 className="font-semibold text-gray-900 group-hover:text-green-700">Tax Services</h3>
+            </div>
+            <p className="text-sm text-gray-600">
+              Avalara, TaxJar - Automated tax calculation and compliance
+            </p>
+            <span className="inline-flex items-center mt-3 text-sm text-green-600 font-medium group-hover:gap-2 transition-all">
+              Configure Tax
+              <svg className="w-4 h-4 ml-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+              </svg>
+            </span>
+          </Link>
         </div>
 
         {loading ? (

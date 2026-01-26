@@ -63,10 +63,22 @@ export class SettlementSchedulerService {
 
       this.logger.log(`Settlement period: ${periodStart.toISOString()} to ${periodEnd.toISOString()}`);
 
-      // Get all active sellers
+      // Get sellers who have completed orders in the settlement period
+      // We don't filter by verified status because:
+      // 1. Settlements are for any seller who has fulfilled orders
+      // 2. Verification is an onboarding status, not a payment eligibility status
+      // 3. Non-verified sellers who completed orders should still receive payment
       const sellers = await this.prisma.seller.findMany({
         where: {
-          isActive: true,
+          orders: {
+            some: {
+              status: 'DELIVERED',
+              createdAt: {
+                gte: periodStart,
+                lte: periodEnd,
+              },
+            },
+          },
         },
         select: {
           id: true,
@@ -75,7 +87,7 @@ export class SettlementSchedulerService {
         },
       });
 
-      this.logger.log(`Processing ${sellers.length} active sellers...`);
+      this.logger.log(`Processing ${sellers.length} sellers with orders in settlement period...`);
 
       for (const seller of sellers) {
         try {

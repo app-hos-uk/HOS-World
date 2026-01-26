@@ -211,5 +211,132 @@ export class RedisService implements OnModuleInit, OnModuleDestroy {
       this.logger.error(`Failed to set expiration on Redis key ${key}:`, error);
     }
   }
+
+  // ==================== Sorted Set Operations ====================
+
+  /**
+   * Add member to sorted set with score
+   * @param key - The sorted set key
+   * @param score - The score for the member
+   * @param member - The member value
+   */
+  async zadd(key: string, score: number, member: string): Promise<number> {
+    if (!this.isConnected) return 0;
+    
+    try {
+      return await this.client.zAdd(key, { score, value: member });
+    } catch (error) {
+      this.logger.error(`Failed to zadd to Redis sorted set ${key}:`, error);
+      return 0;
+    }
+  }
+
+  /**
+   * Remove member from sorted set
+   * @param key - The sorted set key
+   * @param member - The member to remove
+   */
+  async zrem(key: string, member: string): Promise<number> {
+    if (!this.isConnected) return 0;
+    
+    try {
+      return await this.client.zRem(key, member);
+    } catch (error) {
+      this.logger.error(`Failed to zrem from Redis sorted set ${key}:`, error);
+      return 0;
+    }
+  }
+
+  /**
+   * Get members from sorted set by score range
+   * 
+   * NOTE: Uses zRange with BY: 'SCORE' instead of zRangeByScore.
+   * zRangeByScore has a known bug in node-redis v4.x where LIMIT options
+   * can return empty arrays. zRange with BY: 'SCORE' is the recommended approach.
+   * 
+   * @param key - The sorted set key
+   * @param minScore - Minimum score (inclusive)
+   * @param maxScore - Maximum score (inclusive)
+   * @param offset - Optional offset for pagination
+   * @param count - Optional count for pagination
+   */
+  async zrangebyscore(
+    key: string,
+    minScore: number,
+    maxScore: number,
+    offset?: number,
+    count?: number,
+  ): Promise<string[]> {
+    if (!this.isConnected) return [];
+    
+    try {
+      // Use zRange with BY: 'SCORE' - this is the recommended approach in node-redis v4
+      // zRangeByScore has known issues with LIMIT options in some versions
+      const options: {
+        BY: 'SCORE';
+        LIMIT?: { offset: number; count: number };
+      } = {
+        BY: 'SCORE',
+      };
+      
+      if (offset !== undefined && count !== undefined) {
+        options.LIMIT = { offset, count };
+      }
+      
+      return await this.client.zRange(key, minScore, maxScore, options);
+    } catch (error) {
+      this.logger.error(`Failed to zrangebyscore from Redis sorted set ${key}:`, error);
+      return [];
+    }
+  }
+
+  /**
+   * Get the number of members in a sorted set
+   * @param key - The sorted set key
+   */
+  async zcard(key: string): Promise<number> {
+    if (!this.isConnected) return 0;
+    
+    try {
+      return await this.client.zCard(key);
+    } catch (error) {
+      this.logger.error(`Failed to zcard Redis sorted set ${key}:`, error);
+      return 0;
+    }
+  }
+
+  // ==================== Atomic Operations for Distributed Locking ====================
+
+  /**
+   * Set a key only if it doesn't exist (SETNX) with optional TTL
+   * Used for distributed locking across multiple server instances.
+   * 
+   * @param key - The key to set
+   * @param value - The value to set
+   * @param ttlSeconds - Optional TTL in seconds (prevents deadlocks)
+   * @returns true if the key was set, false if it already existed
+   */
+  async setNX(key: string, value: string, ttlSeconds?: number): Promise<boolean> {
+    if (!this.isConnected) return false;
+    
+    try {
+      // Use SET with NX (only set if not exists) and optionally EX (expire) flags
+      // This is atomic and race-condition safe
+      // Build options object conditionally to avoid passing undefined values
+      const options: { NX: true; EX?: number } = { NX: true };
+      
+      if (ttlSeconds !== undefined && ttlSeconds > 0) {
+        options.EX = ttlSeconds;
+      }
+      
+      const result = await this.client.set(key, value, options);
+      
+      // Redis returns 'OK' if set, null if key already existed
+      return result === 'OK';
+    } catch (error) {
+      this.logger.error(`Failed to setNX Redis key ${key}:`, error);
+      return false;
+    }
+  }
 }
 

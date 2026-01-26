@@ -3163,4 +3163,101 @@ export class ApiClient {
     const query = queryParams.toString();
     return this.request<ApiResponse<any>>(`/settlements/summary${query ? `?${query}` : ''}`);
   }
+
+  // ==================== Integrations ====================
+
+  async getIntegrations(category?: string): Promise<ApiResponse<any[]>> {
+    const query = category ? `?category=${encodeURIComponent(category)}` : '';
+    return this.request<ApiResponse<any[]>>(`/integrations${query}`);
+  }
+
+  async getIntegrationById(id: string): Promise<ApiResponse<any>> {
+    return this.request<ApiResponse<any>>(`/integrations/${encodeURIComponent(id)}`);
+  }
+
+  async getIntegrationsByCategory(category: string): Promise<ApiResponse<any[]>> {
+    return this.request<ApiResponse<any[]>>(`/integrations/category/${encodeURIComponent(category)}`);
+  }
+
+  async getActiveIntegration(category: string): Promise<ApiResponse<any>> {
+    return this.request<ApiResponse<any>>(`/integrations/category/${encodeURIComponent(category)}/active`);
+  }
+
+  async getAvailableProviders(): Promise<ApiResponse<any>> {
+    return this.request<ApiResponse<any>>('/integrations/providers');
+  }
+
+  async getProviderMetadata(provider: string): Promise<ApiResponse<any>> {
+    return this.request<ApiResponse<any>>(`/integrations/providers/${encodeURIComponent(provider)}`);
+  }
+
+  async createIntegration(data: {
+    category: string;
+    provider: string;
+    displayName: string;
+    description?: string;
+    isActive?: boolean;
+    isTestMode?: boolean;
+    credentials: Record<string, any>;
+    settings?: Record<string, any>;
+    priority?: number;
+  }): Promise<ApiResponse<any>> {
+    return this.request<ApiResponse<any>>('/integrations', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async updateIntegration(id: string, data: {
+    displayName?: string;
+    description?: string;
+    isActive?: boolean;
+    isTestMode?: boolean;
+    credentials?: Record<string, any>;
+    settings?: Record<string, any>;
+    priority?: number;
+  }): Promise<ApiResponse<any>> {
+    return this.request<ApiResponse<any>>(`/integrations/${encodeURIComponent(id)}`, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async deleteIntegration(id: string): Promise<ApiResponse<any>> {
+    return this.request<ApiResponse<any>>(`/integrations/${encodeURIComponent(id)}`, {
+      method: 'DELETE',
+    });
+  }
+
+  async testIntegrationConnection(id: string, credentials?: Record<string, any>): Promise<ApiResponse<any>> {
+    return this.request<ApiResponse<any>>(`/integrations/${encodeURIComponent(id)}/test`, {
+      method: 'POST',
+      body: JSON.stringify({ credentials }),
+    });
+  }
+
+  async getIntegrationLogs(id: string, options?: {
+    limit?: number;
+    offset?: number;
+    action?: string;
+  }): Promise<ApiResponse<any>> {
+    const queryParams = new URLSearchParams();
+    if (options?.limit) queryParams.append('limit', options.limit.toString());
+    if (options?.offset) queryParams.append('offset', options.offset.toString());
+    if (options?.action) queryParams.append('action', options.action);
+    const query = queryParams.toString();
+    return this.request<ApiResponse<any>>(`/integrations/${encodeURIComponent(id)}/logs${query ? `?${query}` : ''}`);
+  }
+
+  async activateIntegration(id: string): Promise<ApiResponse<any>> {
+    return this.request<ApiResponse<any>>(`/integrations/${encodeURIComponent(id)}/activate`, {
+      method: 'PUT',
+    });
+  }
+
+  async deactivateIntegration(id: string): Promise<ApiResponse<any>> {
+    return this.request<ApiResponse<any>>(`/integrations/${encodeURIComponent(id)}/deactivate`, {
+      method: 'PUT',
+    });
+  }
 }
