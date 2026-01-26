@@ -88,6 +88,8 @@ export default function AdminUsersPage() {
     lastName: '',
     email: '',
     password: '',
+    confirmPassword: '',
+    phone: '',
     role: 'CUSTOMER',
     storeName: '',
     permissionRoleName: '',
@@ -106,15 +108,41 @@ export default function AdminUsersPage() {
     try {
       setLoading(true);
       setError(null);
+      // #region agent log
+      console.log('[DEBUG] fetchUsers: Starting API call');
+      // #endregion
       const response = await apiClient.getUsers();
+      // #region agent log
+      console.log('[DEBUG] fetchUsers: Response received', { 
+        hasData: !!response?.data,
+        dataType: typeof response?.data,
+        isArray: Array.isArray(response?.data),
+        hasNestedData: !!(response?.data as any)?.data,
+        responseKeys: response?.data ? Object.keys(response.data) : []
+      });
+      // #endregion
       if (response?.data) {
-        const userList = Array.isArray(response.data) ? response.data : [];
+        // Handle both paginated response { data: { data: users, pagination } } 
+        // and flat array response { data: users }
+        let userList: User[] = [];
+        if (Array.isArray(response.data)) {
+          userList = response.data;
+        } else if ((response.data as any)?.data && Array.isArray((response.data as any).data)) {
+          // Paginated response format
+          userList = (response.data as any).data;
+        }
+        // #region agent log
+        console.log('[DEBUG] fetchUsers: Parsed users', { count: userList.length });
+        // #endregion
         setUsers(userList);
         calculateStats(userList);
       } else {
         setUsers([]);
       }
     } catch (err: any) {
+      // #region agent log
+      console.log('[DEBUG] fetchUsers: Error', { message: err?.message });
+      // #endregion
       console.error('Error fetching users:', err);
       setError(err.message || 'Failed to load users');
       setUsers([]);
@@ -271,6 +299,12 @@ export default function AdminUsersPage() {
         return;
       }
 
+      if (createForm.password !== createForm.confirmPassword) {
+        toast.error('Passwords do not match');
+        setActionLoading(false);
+        return;
+      }
+
       const sellerRoles = ['SELLER', 'B2C_SELLER', 'WHOLESALER'];
       if (sellerRoles.includes(createForm.role) && !createForm.storeName) {
         toast.error('Store name is required for seller roles');
@@ -295,6 +329,7 @@ export default function AdminUsersPage() {
         password: createForm.password,
         firstName: createForm.firstName || undefined,
         lastName: createForm.lastName || undefined,
+        phone: createForm.phone || undefined,
         role: createForm.role,
         storeName: createForm.storeName || undefined,
         permissionRoleName: createForm.permissionRoleName || undefined,
@@ -317,6 +352,8 @@ export default function AdminUsersPage() {
         lastName: '',
         email: '',
         password: '',
+        confirmPassword: '',
+        phone: '',
         role: 'CUSTOMER',
         storeName: '',
         permissionRoleName: '',
@@ -988,16 +1025,41 @@ export default function AdminUsersPage() {
                     </div>
 
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Password *</label>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Phone</label>
                       <input
-                        type="password"
-                        value={createForm.password}
-                        onChange={(e) => setCreateForm({ ...createForm, password: e.target.value })}
+                        type="tel"
+                        value={createForm.phone}
+                        onChange={(e) => setCreateForm({ ...createForm, phone: e.target.value })}
                         className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
-                        placeholder="Min 8 characters"
-                        minLength={8}
-                        required
+                        placeholder="+1234567890"
                       />
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Password *</label>
+                        <input
+                          type="password"
+                          value={createForm.password}
+                          onChange={(e) => setCreateForm({ ...createForm, password: e.target.value })}
+                          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
+                          placeholder="Min 8 characters"
+                          minLength={8}
+                          required
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Confirm Password *</label>
+                        <input
+                          type="password"
+                          value={createForm.confirmPassword}
+                          onChange={(e) => setCreateForm({ ...createForm, confirmPassword: e.target.value })}
+                          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
+                          placeholder="Confirm password"
+                          minLength={8}
+                          required
+                        />
+                      </div>
                     </div>
 
                     <div>

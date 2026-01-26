@@ -42,6 +42,7 @@ export class AdminService {
     password: string;
     firstName?: string;
     lastName?: string;
+    phone?: string;
     role: UserRole;
     storeName?: string;
     permissionRoleName?: string;
@@ -84,6 +85,7 @@ export class AdminService {
         password: hashedPassword,
         firstName: data.firstName,
         lastName: data.lastName,
+        phone: data.phone,
         role: data.role,
         permissionRoleId,
       },
@@ -92,6 +94,7 @@ export class AdminService {
         email: true,
         firstName: true,
         lastName: true,
+        phone: true,
         role: true,
         permissionRoleId: true,
         avatar: true,

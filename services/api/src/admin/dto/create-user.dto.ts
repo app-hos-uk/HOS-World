@@ -1,4 +1,4 @@
-import { IsEmail, IsEnum, IsOptional, IsString, MinLength } from 'class-validator';
+import { IsEmail, IsEnum, IsOptional, IsString, MinLength, Matches } from 'class-validator';
 import { UserRole } from '@prisma/client';
 
 export class CreateAdminUserDto {
@@ -16,6 +16,11 @@ export class CreateAdminUserDto {
   @IsOptional()
   @IsString()
   lastName?: string;
+
+  @IsOptional()
+  @IsString()
+  @Matches(/^\+?[1-9]\d{1,14}$/, { message: 'Phone must be a valid E.164 format' })
+  phone?: string;
 
   @IsEnum(UserRole)
   role: UserRole;

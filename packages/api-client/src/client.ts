@@ -724,6 +724,7 @@ export class ApiClient {
     password: string;
     firstName?: string;
     lastName?: string;
+    phone?: string;
     role: string;
     storeName?: string;
     permissionRoleName?: string;
