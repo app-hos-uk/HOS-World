@@ -261,32 +261,56 @@ export default function AdminUsersPage() {
 
       if (!createForm.email || !createForm.password) {
         toast.error('Email and password are required');
+        setActionLoading(false);
+        return;
+      }
+
+      if (createForm.password.length < 8) {
+        toast.error('Password must be at least 8 characters');
+        setActionLoading(false);
         return;
       }
 
       const sellerRoles = ['SELLER', 'B2C_SELLER', 'WHOLESALER'];
       if (sellerRoles.includes(createForm.role) && !createForm.storeName) {
         toast.error('Store name is required for seller roles');
+        setActionLoading(false);
         return;
       }
 
-      await toast.promise(
-        apiClient.createUser({
-          email: createForm.email,
-          password: createForm.password,
-          firstName: createForm.firstName || undefined,
-          lastName: createForm.lastName || undefined,
-          role: createForm.role,
-          storeName: createForm.storeName || undefined,
-          permissionRoleName: createForm.permissionRoleName || undefined,
-        }),
-        {
-          loading: 'Creating user...',
-          success: 'User created successfully',
-          error: (err: any) => err.message || 'Failed to create user',
-        },
-      );
+      // #region agent log
+      console.log('[DEBUG] handleCreateUser: Sending request', { 
+        email: createForm.email, 
+        role: createForm.role, 
+        hasPassword: !!createForm.password,
+        passwordLength: createForm.password.length,
+        hasStoreName: !!createForm.storeName,
+        firstName: createForm.firstName,
+        lastName: createForm.lastName
+      });
+      // #endregion
 
+      const payload = {
+        email: createForm.email,
+        password: createForm.password,
+        firstName: createForm.firstName || undefined,
+        lastName: createForm.lastName || undefined,
+        role: createForm.role,
+        storeName: createForm.storeName || undefined,
+        permissionRoleName: createForm.permissionRoleName || undefined,
+      };
+
+      // #region agent log
+      console.log('[DEBUG] handleCreateUser: Payload', payload);
+      // #endregion
+
+      const response = await apiClient.createUser(payload);
+
+      // #region agent log
+      console.log('[DEBUG] handleCreateUser: Response', { success: true, data: response?.data });
+      // #endregion
+
+      toast.success('User created successfully');
       setShowCreateModal(false);
       setCreateForm({
         firstName: '',
@@ -299,7 +323,11 @@ export default function AdminUsersPage() {
       });
       await fetchUsers();
     } catch (err: any) {
+      // #region agent log
+      console.log('[DEBUG] handleCreateUser: Error', { message: err?.message, status: err?.status, response: err?.response });
+      // #endregion
       console.error('Error creating user:', err);
+      toast.error(err.message || 'Failed to create user');
     } finally {
       setActionLoading(false);
     }
