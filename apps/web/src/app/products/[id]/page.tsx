@@ -44,10 +44,16 @@ export default function ProductDetailPage() {
     try {
       setLoading(true);
       const response = await apiClient.getProduct(productId);
+      // #region agent log
+      console.log('[DEBUG] fetchProduct response:', {hasData:!!response?.data,dataType:typeof response?.data,isError:response?.error,statusCode:response?.statusCode,imagesType:typeof response?.data?.images,imagesIsArray:Array.isArray(response?.data?.images),imagesLength:response?.data?.images?.length});
+      // #endregion
       if (response?.data) {
         setProduct(response.data);
       }
     } catch (err: any) {
+      // #region agent log
+      console.log('[DEBUG] fetchProduct error:', {error:err?.message,statusCode:err?.statusCode});
+      // #endregion
       console.error('Error fetching product:', err);
       toast.error(err.message || 'Failed to load product');
     } finally {
@@ -59,11 +65,21 @@ export default function ProductDetailPage() {
     try {
       setReviewsLoading(true);
       const response = await apiClient.getProductReviews(productId);
-      if (response?.data) {
+      // #region agent log
+      console.log('[DEBUG] fetchReviews response:', {hasData:!!response?.data,dataType:typeof response?.data,isArray:Array.isArray(response?.data),isError:response?.error,statusCode:response?.statusCode,dataKeys:response?.data?Object.keys(response.data).slice(0,5):null});
+      // #endregion
+      // FIX: Ensure data is an array before setting
+      if (response?.data && Array.isArray(response.data)) {
         setReviews(response.data);
+      } else {
+        setReviews([]);
       }
     } catch (err: any) {
+      // #region agent log
+      console.log('[DEBUG] fetchReviews error:', {error:err?.message});
+      // #endregion
       console.error('Error fetching reviews:', err);
+      setReviews([]);
     } finally {
       setReviewsLoading(false);
     }
@@ -195,6 +211,9 @@ export default function ProductDetailPage() {
                 <span className="text-gray-400">No Image</span>
               </div>
             )}
+            {/* #region agent log */}
+            {(() => { console.log('[DEBUG] render:images', {hasProduct:!!product,imagesType:typeof product?.images,imagesIsArray:Array.isArray(product?.images),imagesLength:product?.images?.length}); return null; })()}
+            {/* #endregion */}
             {product.images && product.images.length > 1 && (
               <div className="grid grid-cols-4 gap-2">
                 {product.images.slice(1, 5).map((image: any, index: number) => {
@@ -397,6 +416,9 @@ export default function ProductDetailPage() {
           )}
 
           {/* Reviews List */}
+          {/* #region agent log */}
+          {(() => { console.log('[DEBUG] render:reviews', {reviewsType:typeof reviews,reviewsIsArray:Array.isArray(reviews),reviewsLength:reviews?.length,reviewsLoading}); return null; })()}
+          {/* #endregion */}
           {reviewsLoading ? (
             <div className="flex items-center justify-center py-8">
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-600"></div>
