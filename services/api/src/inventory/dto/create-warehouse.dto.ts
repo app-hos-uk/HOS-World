@@ -1,4 +1,4 @@
-import { IsString, IsOptional, IsBoolean } from 'class-validator';
+import { IsString, IsOptional, IsBoolean, IsNumber, IsEmail } from 'class-validator';
 
 export class CreateWarehouseDto {
   @IsString()
@@ -22,6 +22,34 @@ export class CreateWarehouseDto {
 
   @IsString()
   postalCode: string;
+
+  @IsOptional()
+  @IsNumber()
+  latitude?: number;
+
+  @IsOptional()
+  @IsNumber()
+  longitude?: number;
+
+  @IsOptional()
+  @IsEmail()
+  contactEmail?: string;
+
+  @IsOptional()
+  @IsString()
+  contactPhone?: string;
+
+  @IsOptional()
+  @IsString()
+  managerName?: string;
+
+  @IsOptional()
+  @IsNumber()
+  capacity?: number;
+
+  @IsOptional()
+  @IsString()
+  warehouseType?: string;
 
   @IsOptional()
   @IsBoolean()

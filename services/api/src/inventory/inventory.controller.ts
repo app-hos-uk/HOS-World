@@ -18,6 +18,8 @@ import {
   ApiQuery,
 } from '@nestjs/swagger';
 import { InventoryService } from './inventory.service';
+import { WarehouseRoutingService } from './warehouse-routing.service';
+import { GeocodingService } from './geocoding.service';
 import { CreateWarehouseDto } from './dto/create-warehouse.dto';
 import { CreateInventoryLocationDto } from './dto/create-inventory-location.dto';
 import { ReserveStockDto } from './dto/reserve-stock.dto';
@@ -33,7 +35,11 @@ import type { ApiResponse } from '@hos-marketplace/shared-types';
 @ApiTags('inventory')
 @Controller('inventory')
 export class InventoryController {
-  constructor(private readonly inventoryService: InventoryService) {}
+  constructor(
+    private readonly inventoryService: InventoryService,
+    private readonly warehouseRoutingService: WarehouseRoutingService,
+    private readonly geocodingService: GeocodingService,
+  ) {}
 
   @Post('warehouses')
   @UseGuards(JwtAuthGuard, RolesGuard)
@@ -431,6 +437,240 @@ export class InventoryController {
     return {
       data: result,
       message: 'Stock movements retrieved successfully',
+    };
+  }
+
+  // Warehouse Routing Endpoints
+  @Post('routing/nearest-warehouse')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('ADMIN', 'FULFILLMENT', 'SELLER', 'B2C_SELLER')
+  @ApiBearerAuth('JWT-auth')
+  @ApiOperation({
+    summary: 'Find nearest warehouse with stock',
+    description: 'Finds the nearest warehouse that has sufficient stock for the requested products.',
+  })
+  @SwaggerApiResponse({ status: 200, description: 'Nearest warehouse found' })
+  @SwaggerApiResponse({ status: 404, description: 'No warehouse with sufficient stock found' })
+  async findNearestWarehouse(
+    @Body() body: {
+      latitude: number;
+      longitude: number;
+      productQuantities: Array<{ productId: string; quantity: number }>;
+    },
+  ): Promise<ApiResponse<any>> {
+    const result = await this.warehouseRoutingService.findNearestWarehouseWithStock(
+      body.latitude,
+      body.longitude,
+      body.productQuantities,
+    );
+    return {
+      data: result,
+      message: result ? 'Nearest warehouse found' : 'No warehouse with sufficient stock found',
+    };
+  }
+
+  @Post('routing/nearest-fulfillment-center')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('ADMIN', 'FULFILLMENT')
+  @ApiBearerAuth('JWT-auth')
+  @ApiOperation({
+    summary: 'Find nearest fulfillment center',
+    description: 'Finds the nearest fulfillment center based on customer coordinates.',
+  })
+  @SwaggerApiResponse({ status: 200, description: 'Nearest fulfillment center found' })
+  @SwaggerApiResponse({ status: 404, description: 'No fulfillment center found' })
+  async findNearestFulfillmentCenter(
+    @Body() body: {
+      latitude: number;
+      longitude: number;
+    },
+  ): Promise<ApiResponse<any>> {
+    const result = await this.warehouseRoutingService.findNearestFulfillmentCenter(
+      body.latitude,
+      body.longitude,
+    );
+    return {
+      data: result,
+      message: result ? 'Nearest fulfillment center found' : 'No fulfillment center found',
+    };
+  }
+
+  @Post('routing/optimal-source')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('ADMIN', 'FULFILLMENT', 'SELLER', 'B2C_SELLER')
+  @ApiBearerAuth('JWT-auth')
+  @ApiOperation({
+    summary: 'Find optimal fulfillment source',
+    description: 'Finds the optimal warehouse or fulfillment center for an order based on shipping address.',
+  })
+  @SwaggerApiResponse({ status: 200, description: 'Optimal fulfillment source found' })
+  async findOptimalFulfillmentSource(
+    @Body() body: {
+      shippingAddressId: string;
+      productQuantities: Array<{ productId: string; quantity: number }>;
+    },
+  ): Promise<ApiResponse<any>> {
+    // Get coordinates for the shipping address
+    const coords = await this.geocodingService.getCoordinatesForAddress(
+      body.shippingAddressId,
+    );
+
+    if (!coords) {
+      return {
+        data: {
+          warehouseId: null,
+          fulfillmentCenterId: null,
+          distance: null,
+          routingMethod: 'MANUAL',
+          message: 'Could not determine coordinates for shipping address',
+        },
+        message: 'Manual routing required - could not geocode address',
+      };
+    }
+
+    const result = await this.warehouseRoutingService.findOptimalFulfillmentSource(
+      coords.latitude,
+      coords.longitude,
+      body.productQuantities,
+    );
+
+    return {
+      data: result,
+      message: result.message,
+    };
+  }
+
+  @Post('routing/warehouses-by-distance')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('ADMIN', 'FULFILLMENT')
+  @ApiBearerAuth('JWT-auth')
+  @ApiOperation({
+    summary: 'Get warehouses sorted by distance',
+    description: 'Gets all warehouses sorted by distance from customer, with stock availability.',
+  })
+  @SwaggerApiResponse({ status: 200, description: 'Warehouses retrieved successfully' })
+  async getWarehousesByDistance(
+    @Body() body: {
+      latitude: number;
+      longitude: number;
+      productQuantities: Array<{ productId: string; quantity: number }>;
+    },
+  ): Promise<ApiResponse<any[]>> {
+    const result = await this.warehouseRoutingService.getWarehousesWithStockByDistance(
+      body.latitude,
+      body.longitude,
+      body.productQuantities,
+    );
+    return {
+      data: result,
+      message: 'Warehouses retrieved and sorted by distance',
+    };
+  }
+
+  @Post('geocode/:addressId')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('ADMIN', 'FULFILLMENT', 'SELLER', 'B2C_SELLER')
+  @ApiBearerAuth('JWT-auth')
+  @ApiOperation({
+    summary: 'Geocode an address',
+    description: 'Geocodes an address and saves the coordinates.',
+  })
+  @ApiParam({ name: 'addressId', description: 'Address UUID', type: String })
+  @SwaggerApiResponse({ status: 200, description: 'Address geocoded successfully' })
+  @SwaggerApiResponse({ status: 404, description: 'Address not found' })
+  async geocodeAddress(
+    @Param('addressId') addressId: string,
+  ): Promise<ApiResponse<any>> {
+    const result = await this.geocodingService.geocodeAndSaveAddress(addressId);
+    return {
+      data: result,
+      message: result ? 'Address geocoded successfully' : 'Could not geocode address',
+    };
+  }
+
+  @Get('metrics')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('ADMIN', 'FULFILLMENT')
+  @ApiBearerAuth('JWT-auth')
+  @ApiOperation({
+    summary: 'Get inventory metrics',
+    description: 'Retrieves overall inventory metrics for the dashboard.',
+  })
+  @SwaggerApiResponse({ status: 200, description: 'Metrics retrieved successfully' })
+  async getInventoryMetrics(): Promise<ApiResponse<any>> {
+    const metrics = await this.inventoryService.getInventoryMetrics();
+    return {
+      data: metrics,
+      message: 'Inventory metrics retrieved successfully',
+    };
+  }
+
+  @Get('locations')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('ADMIN', 'FULFILLMENT', 'SELLER', 'B2C_SELLER')
+  @ApiBearerAuth('JWT-auth')
+  @ApiOperation({
+    summary: 'Get inventory locations',
+    description: 'Retrieves inventory locations with optional filters.',
+  })
+  @ApiQuery({ name: 'warehouseId', required: false, type: String })
+  @ApiQuery({ name: 'productId', required: false, type: String })
+  @SwaggerApiResponse({ status: 200, description: 'Inventory locations retrieved successfully' })
+  async getInventoryLocations(
+    @Query('warehouseId') warehouseId?: string,
+    @Query('productId') productId?: string,
+  ): Promise<ApiResponse<any[]>> {
+    const locations = await this.inventoryService.getInventoryLocations({
+      warehouseId,
+      productId,
+    });
+    return {
+      data: locations,
+      message: 'Inventory locations retrieved successfully',
+    };
+  }
+
+  // Warehouse CRUD
+  @Put('warehouses/:id')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('ADMIN')
+  @ApiBearerAuth('JWT-auth')
+  @ApiOperation({
+    summary: 'Update warehouse',
+    description: 'Updates an existing warehouse. Requires ADMIN role.',
+  })
+  @ApiParam({ name: 'id', description: 'Warehouse UUID', type: String })
+  @SwaggerApiResponse({ status: 200, description: 'Warehouse updated successfully' })
+  @SwaggerApiResponse({ status: 404, description: 'Warehouse not found' })
+  async updateWarehouse(
+    @Param('id') id: string,
+    @Body() updateDto: Partial<CreateWarehouseDto>,
+  ): Promise<ApiResponse<any>> {
+    const warehouse = await this.inventoryService.updateWarehouse(id, updateDto);
+    return {
+      data: warehouse,
+      message: 'Warehouse updated successfully',
+    };
+  }
+
+  @Delete('warehouses/:id')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('ADMIN')
+  @ApiBearerAuth('JWT-auth')
+  @ApiOperation({
+    summary: 'Delete warehouse',
+    description: 'Deletes a warehouse. Requires ADMIN role.',
+  })
+  @ApiParam({ name: 'id', description: 'Warehouse UUID', type: String })
+  @SwaggerApiResponse({ status: 200, description: 'Warehouse deleted successfully' })
+  @SwaggerApiResponse({ status: 404, description: 'Warehouse not found' })
+  async deleteWarehouse(
+    @Param('id') id: string,
+  ): Promise<ApiResponse<any>> {
+    await this.inventoryService.deleteWarehouse(id);
+    return {
+      data: null,
+      message: 'Warehouse deleted successfully',
     };
   }
 }

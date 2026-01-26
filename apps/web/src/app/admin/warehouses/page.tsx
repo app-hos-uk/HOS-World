@@ -17,6 +17,13 @@ interface Warehouse {
   state?: string;
   country: string;
   postalCode: string;
+  latitude?: number;
+  longitude?: number;
+  contactEmail?: string;
+  contactPhone?: string;
+  managerName?: string;
+  capacity?: number;
+  warehouseType?: string;
   isActive: boolean;
   createdAt: string;
   updatedAt: string;
@@ -38,6 +45,13 @@ export default function AdminWarehousesPage() {
     state: '',
     country: '',
     postalCode: '',
+    latitude: '',
+    longitude: '',
+    contactEmail: '',
+    contactPhone: '',
+    managerName: '',
+    capacity: '',
+    warehouseType: 'DISTRIBUTION',
     isActive: true,
   });
   const [submitting, setSubmitting] = useState(false);
@@ -67,11 +81,28 @@ export default function AdminWarehousesPage() {
     e.preventDefault();
     try {
       setSubmitting(true);
+      const payload = {
+        name: formData.name,
+        code: formData.code,
+        address: formData.address,
+        city: formData.city,
+        state: formData.state || undefined,
+        country: formData.country,
+        postalCode: formData.postalCode,
+        latitude: formData.latitude ? parseFloat(formData.latitude) : undefined,
+        longitude: formData.longitude ? parseFloat(formData.longitude) : undefined,
+        contactEmail: formData.contactEmail || undefined,
+        contactPhone: formData.contactPhone || undefined,
+        managerName: formData.managerName || undefined,
+        capacity: formData.capacity ? parseInt(formData.capacity, 10) : undefined,
+        warehouseType: formData.warehouseType || undefined,
+        isActive: formData.isActive,
+      };
       if (isEditMode && editingWarehouse) {
-        await apiClient.updateWarehouse(editingWarehouse.id, formData);
+        await apiClient.updateWarehouse(editingWarehouse.id, payload);
         toast.success('Warehouse updated successfully!');
       } else {
-        await apiClient.createWarehouse(formData);
+        await apiClient.createWarehouse(payload);
         toast.success('Warehouse created successfully!');
       }
       setIsModalOpen(false);
@@ -96,6 +127,13 @@ export default function AdminWarehousesPage() {
       state: warehouse.state || '',
       country: warehouse.country,
       postalCode: warehouse.postalCode,
+      latitude: warehouse.latitude?.toString() || '',
+      longitude: warehouse.longitude?.toString() || '',
+      contactEmail: warehouse.contactEmail || '',
+      contactPhone: warehouse.contactPhone || '',
+      managerName: warehouse.managerName || '',
+      capacity: warehouse.capacity?.toString() || '',
+      warehouseType: warehouse.warehouseType || 'DISTRIBUTION',
       isActive: warehouse.isActive,
     });
     setIsModalOpen(true);
@@ -124,6 +162,13 @@ export default function AdminWarehousesPage() {
       state: '',
       country: '',
       postalCode: '',
+      latitude: '',
+      longitude: '',
+      contactEmail: '',
+      contactPhone: '',
+      managerName: '',
+      capacity: '',
+      warehouseType: 'DISTRIBUTION',
       isActive: true,
     });
     setIsEditMode(false);
@@ -175,10 +220,16 @@ export default function AdminWarehousesPage() {
                       Code
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Name
+                      Name / Type
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                       Location
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Coordinates
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Contact
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                       Status
@@ -191,7 +242,7 @@ export default function AdminWarehousesPage() {
                 <tbody className="bg-white divide-y divide-gray-200">
                   {warehouses.length === 0 ? (
                     <tr>
-                      <td colSpan={5} className="px-6 py-8 text-center text-gray-500">
+                      <td colSpan={7} className="px-6 py-8 text-center text-gray-500">
                         No warehouses found. Create your first warehouse to get started.
                       </td>
                     </tr>
@@ -205,12 +256,42 @@ export default function AdminWarehousesPage() {
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
                           <div className="text-sm font-medium text-gray-900">{warehouse.name}</div>
+                          {warehouse.warehouseType && (
+                            <span className="text-xs px-1.5 py-0.5 bg-gray-100 text-gray-600 rounded">
+                              {warehouse.warehouseType.replace('_', ' ')}
+                            </span>
+                          )}
+                          {warehouse.capacity && (
+                            <div className="text-xs text-gray-500">Capacity: {warehouse.capacity}</div>
+                          )}
                         </td>
                         <td className="px-6 py-4">
                           <div className="text-sm text-gray-900">
                             {warehouse.city}, {warehouse.state || ''} {warehouse.country}
                           </div>
-                          <div className="text-sm text-gray-500">{warehouse.address}</div>
+                          <div className="text-xs text-gray-500">{warehouse.address}</div>
+                          <div className="text-xs text-gray-400">{warehouse.postalCode}</div>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          {warehouse.latitude != null && warehouse.longitude != null ? (
+                            <div className="text-xs">
+                              <div className="text-gray-900">{Number(warehouse.latitude).toFixed(4)}</div>
+                              <div className="text-gray-500">{Number(warehouse.longitude).toFixed(4)}</div>
+                            </div>
+                          ) : (
+                            <span className="text-xs text-gray-400">Not set</span>
+                          )}
+                        </td>
+                        <td className="px-6 py-4">
+                          {warehouse.contactEmail || warehouse.contactPhone || warehouse.managerName ? (
+                            <div className="text-xs">
+                              {warehouse.managerName && <div className="text-gray-900 font-medium">{warehouse.managerName}</div>}
+                              {warehouse.contactEmail && <div className="text-gray-600">{warehouse.contactEmail}</div>}
+                              {warehouse.contactPhone && <div className="text-gray-500">{warehouse.contactPhone}</div>}
+                            </div>
+                          ) : (
+                            <span className="text-xs text-gray-400">-</span>
+                          )}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
                           <span
@@ -226,13 +307,13 @@ export default function AdminWarehousesPage() {
                         <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                           <button
                             onClick={() => handleEdit(warehouse)}
-                            className="text-purple-600 hover:text-purple-900 mr-4"
+                            className="text-purple-600 hover:text-purple-900 mr-3"
                           >
                             Edit
                           </button>
                           <Link
                             href={`/admin/warehouses/transfers?fromWarehouse=${warehouse.id}`}
-                            className="text-blue-600 hover:text-blue-900 mr-4"
+                            className="text-blue-600 hover:text-blue-900 mr-3"
                           >
                             Transfers
                           </Link>
@@ -277,7 +358,7 @@ export default function AdminWarehousesPage() {
                     leaveFrom="opacity-100 scale-100"
                     leaveTo="opacity-0 scale-95"
                   >
-                    <Dialog.Panel className="w-full max-w-md transform overflow-hidden rounded-2xl bg-white p-6 text-left align-middle shadow-xl transition-all">
+                    <Dialog.Panel className="w-full max-w-2xl transform overflow-hidden rounded-2xl bg-white p-6 text-left align-middle shadow-xl transition-all max-h-[90vh] overflow-y-auto">
                       <Dialog.Title
                         as="h3"
                         className="text-lg font-medium leading-6 text-gray-900 mb-4"
@@ -379,6 +460,103 @@ export default function AdminWarehousesPage() {
                               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
                             />
                           </div>
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-4">
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                              Latitude
+                            </label>
+                            <input
+                              type="number"
+                              step="any"
+                              value={formData.latitude}
+                              onChange={(e) => setFormData({ ...formData, latitude: e.target.value })}
+                              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
+                              placeholder="e.g., 51.5074"
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                              Longitude
+                            </label>
+                            <input
+                              type="number"
+                              step="any"
+                              value={formData.longitude}
+                              onChange={(e) => setFormData({ ...formData, longitude: e.target.value })}
+                              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
+                              placeholder="e.g., -0.1278"
+                            />
+                          </div>
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-4">
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                              Contact Email
+                            </label>
+                            <input
+                              type="email"
+                              value={formData.contactEmail}
+                              onChange={(e) => setFormData({ ...formData, contactEmail: e.target.value })}
+                              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                              Contact Phone
+                            </label>
+                            <input
+                              type="tel"
+                              value={formData.contactPhone}
+                              onChange={(e) => setFormData({ ...formData, contactPhone: e.target.value })}
+                              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
+                            />
+                          </div>
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-4">
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                              Manager Name
+                            </label>
+                            <input
+                              type="text"
+                              value={formData.managerName}
+                              onChange={(e) => setFormData({ ...formData, managerName: e.target.value })}
+                              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                              Capacity (units)
+                            </label>
+                            <input
+                              type="number"
+                              value={formData.capacity}
+                              onChange={(e) => setFormData({ ...formData, capacity: e.target.value })}
+                              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
+                              placeholder="Storage capacity"
+                            />
+                          </div>
+                        </div>
+
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">
+                            Warehouse Type
+                          </label>
+                          <select
+                            value={formData.warehouseType}
+                            onChange={(e) => setFormData({ ...formData, warehouseType: e.target.value })}
+                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
+                          >
+                            <option value="DISTRIBUTION">Distribution</option>
+                            <option value="RETURNS">Returns Processing</option>
+                            <option value="COLD_STORAGE">Cold Storage</option>
+                            <option value="BULK">Bulk Storage</option>
+                            <option value="CROSS_DOCK">Cross-Dock</option>
+                          </select>
                         </div>
 
                         {isEditMode && (

@@ -71,9 +71,25 @@ export class FulfillmentService {
       throw new NotFoundException('Fulfillment center not found');
     }
 
+    // Build update data object with only defined values
+    // This prevents undefined values from setting fields to null
+    const updateData: Record<string, any> = {};
+    
+    if (updateDto.name !== undefined) updateData.name = updateDto.name;
+    if (updateDto.address !== undefined) updateData.address = updateDto.address;
+    if (updateDto.city !== undefined) updateData.city = updateDto.city;
+    if (updateDto.country !== undefined) updateData.country = updateDto.country;
+    if (updateDto.postalCode !== undefined) updateData.postalCode = updateDto.postalCode;
+    if (updateDto.latitude !== undefined) updateData.latitude = updateDto.latitude;
+    if (updateDto.longitude !== undefined) updateData.longitude = updateDto.longitude;
+    if (updateDto.contactEmail !== undefined) updateData.contactEmail = updateDto.contactEmail;
+    if (updateDto.contactPhone !== undefined) updateData.contactPhone = updateDto.contactPhone;
+    if (updateDto.capacity !== undefined) updateData.capacity = updateDto.capacity;
+    if (updateDto.isActive !== undefined) updateData.isActive = updateDto.isActive;
+
     return this.prisma.fulfillmentCenter.update({
       where: { id },
-      data: updateDto,
+      data: updateData,
     });
   }
 

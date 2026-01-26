@@ -508,6 +508,8 @@ model Address {
   postalCode String
   country    String
   phone      String?
+  latitude   Float?   // For geo-based routing
+  longitude  Float?   // For geo-based routing
   isDefault  Boolean  @default(false)
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
@@ -516,6 +518,9 @@ model Address {
   shippingOrders Order[] @relation("ShippingAddress")
   billingOrders  Order[] @relation("BillingAddress")
 
+  @@index([userId])
+  @@index([country])
+  @@index([city])
   @@map("addresses")
 }
 
@@ -540,6 +545,15 @@ model Order {
   paymentMethod        String?
   paymentStatus        PaymentStatus         @default(PENDING)
   trackingCode         String?
+  
+  // Fulfillment routing
+  fulfillingWarehouseId  String?
+  fulfillingWarehouse    Warehouse?          @relation(fields: [fulfillingWarehouseId], references: [id])
+  fulfillmentCenterId    String?
+  fulfillmentCenter      FulfillmentCenter?  @relation(fields: [fulfillmentCenterId], references: [id])
+  estimatedDistance      Float?              // Distance in km from warehouse to customer
+  routingMethod          String?             // NEAREST, ZONE_BASED, MANUAL
+  
   notes                OrderNote[]
   payments             Payment[]
   returnRequests       ReturnRequest[]
@@ -553,6 +567,11 @@ model Order {
   createdAt            DateTime              @default(now())
   updatedAt            DateTime              @updatedAt
 
+  @@index([fulfillingWarehouseId])
+  @@index([fulfillmentCenterId])
+  @@index([status])
+  @@index([userId])
+  @@index([sellerId])
   @@map("orders")
 }
 
@@ -906,18 +925,28 @@ model ProductSubmission {
 
 // Fulfillment Center model
 model FulfillmentCenter {
-  id        String   @id @default(uuid())
-  name      String
-  address   String
-  city      String
-  country   String
-  isActive  Boolean  @default(true)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id         String   @id @default(uuid())
+  name       String
+  address    String
+  city       String
+  country    String
+  postalCode String?
+  latitude   Float?
+  longitude  Float?
+  contactEmail String?
+  contactPhone String?
+  capacity   Int?     // Storage capacity in cubic meters or units
+  isActive   Boolean  @default(true)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
 
   // Relations
   shipments Shipment[]
+  orders    Order[]
 
+  @@index([isActive])
+  @@index([city])
+  @@index([country])
   @@map("fulfillment_centers")
 }
 
@@ -1926,15 +1955,25 @@ model Warehouse {
   state         String?
   country       String
   postalCode    String
+  latitude      Float?
+  longitude     Float?
+  contactEmail  String?
+  contactPhone  String?
+  managerName   String?
+  capacity      Int?                // Storage capacity in cubic meters or units
+  warehouseType String?             @default("DISTRIBUTION") // DISTRIBUTION, RETURNS, COLD_STORAGE, etc.
   isActive      Boolean             @default(true)
   inventory     InventoryLocation[]
   transfersFrom StockTransfer[]     @relation("FromWarehouse")
   transfersTo   StockTransfer[]     @relation("ToWarehouse")
+  orders        Order[]
   createdAt     DateTime            @default(now())
   updatedAt     DateTime            @updatedAt
 
   @@index([code])
   @@index([isActive])
+  @@index([city])
+  @@index([country])
   @@map("warehouses")
 }
 

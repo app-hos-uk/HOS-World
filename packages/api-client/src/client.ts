@@ -1508,11 +1508,39 @@ export class ApiClient {
     postalCode?: string;
     contactEmail?: string;
     contactPhone?: string;
-    active?: boolean;
+    latitude?: number;
+    longitude?: number;
+    capacity?: number;
+    isActive?: boolean;
   }): Promise<ApiResponse<any>> {
     return this.request<ApiResponse<any>>('/fulfillment/centers', {
       method: 'POST',
       body: JSON.stringify(data),
+    });
+  }
+
+  async updateFulfillmentCenter(id: string, data: {
+    name?: string;
+    address?: string;
+    city?: string;
+    country?: string;
+    postalCode?: string;
+    contactEmail?: string;
+    contactPhone?: string;
+    latitude?: number;
+    longitude?: number;
+    capacity?: number;
+    isActive?: boolean;
+  }): Promise<ApiResponse<any>> {
+    return this.request<ApiResponse<any>>(`/fulfillment/centers/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async deleteFulfillmentCenter(id: string): Promise<ApiResponse<any>> {
+    return this.request<ApiResponse<any>>(`/fulfillment/centers/${id}`, {
+      method: 'DELETE',
     });
   }
 
@@ -2333,6 +2361,13 @@ export class ApiClient {
     state?: string;
     country: string;
     postalCode: string;
+    latitude?: number;
+    longitude?: number;
+    contactEmail?: string;
+    contactPhone?: string;
+    managerName?: string;
+    capacity?: number;
+    warehouseType?: string;
   }): Promise<ApiResponse<any>> {
     return this.request<ApiResponse<any>>('/inventory/warehouses', {
       method: 'POST',
@@ -2347,6 +2382,13 @@ export class ApiClient {
     state?: string;
     country?: string;
     postalCode?: string;
+    latitude?: number;
+    longitude?: number;
+    contactEmail?: string;
+    contactPhone?: string;
+    managerName?: string;
+    capacity?: number;
+    warehouseType?: string;
     isActive?: boolean;
   }): Promise<ApiResponse<any>> {
     return this.request<ApiResponse<any>>(`/inventory/warehouses/${id}`, {
@@ -2392,6 +2434,44 @@ export class ApiClient {
     if (filters?.limit) queryParams.append('limit', filters.limit.toString());
     const query = queryParams.toString();
     return this.request<ApiResponse<any>>(`/inventory/transfers${query ? `?${query}` : ''}`);
+  }
+
+  // Warehouse Routing
+  async findNearestWarehouse(data: {
+    latitude: number;
+    longitude: number;
+    productQuantities: Array<{ productId: string; quantity: number }>;
+  }): Promise<ApiResponse<any>> {
+    return this.request<ApiResponse<any>>('/inventory/routing/nearest-warehouse', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async findNearestFulfillmentCenter(data: {
+    latitude: number;
+    longitude: number;
+  }): Promise<ApiResponse<any>> {
+    return this.request<ApiResponse<any>>('/inventory/routing/nearest-fulfillment-center', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async getOptimalFulfillmentSource(data: {
+    shippingAddressId: string;
+    productQuantities: Array<{ productId: string; quantity: number }>;
+  }): Promise<ApiResponse<any>> {
+    return this.request<ApiResponse<any>>('/inventory/routing/optimal-source', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async geocodeAddress(addressId: string): Promise<ApiResponse<any>> {
+    return this.request<ApiResponse<any>>(`/inventory/geocode/${addressId}`, {
+      method: 'POST',
+    });
   }
 
   async completeStockTransfer(transferId: string): Promise<ApiResponse<any>> {

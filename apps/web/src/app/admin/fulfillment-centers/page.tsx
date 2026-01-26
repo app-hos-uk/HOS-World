@@ -21,7 +21,10 @@ export default function AdminFulfillmentCentersPage() {
     postalCode: '',
     contactEmail: '',
     contactPhone: '',
-    active: true,
+    latitude: '',
+    longitude: '',
+    capacity: '',
+    isActive: true,
   });
   const [submitting, setSubmitting] = useState(false);
 
@@ -66,7 +69,10 @@ export default function AdminFulfillmentCentersPage() {
         postalCode: formData.postalCode || undefined,
         contactEmail: formData.contactEmail || undefined,
         contactPhone: formData.contactPhone || undefined,
-        active: formData.active,
+        latitude: formData.latitude ? parseFloat(formData.latitude) : undefined,
+        longitude: formData.longitude ? parseFloat(formData.longitude) : undefined,
+        capacity: formData.capacity ? parseInt(formData.capacity, 10) : undefined,
+        isActive: formData.isActive,
       });
       if (response?.data) {
         toast.success('Fulfillment center created successfully!');
@@ -79,7 +85,10 @@ export default function AdminFulfillmentCentersPage() {
           postalCode: '',
           contactEmail: '',
           contactPhone: '',
-          active: true,
+          latitude: '',
+          longitude: '',
+          capacity: '',
+          isActive: true,
         });
         fetchCenters();
       } else {
@@ -147,6 +156,12 @@ export default function AdminFulfillmentCentersPage() {
                     Location
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Coordinates
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Contact
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Status
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -157,32 +172,60 @@ export default function AdminFulfillmentCentersPage() {
               <tbody className="bg-white divide-y divide-gray-200">
                 {centers.length === 0 ? (
                   <tr>
-                    <td colSpan={4} className="px-6 py-4 text-center text-gray-500">
+                    <td colSpan={6} className="px-6 py-4 text-center text-gray-500">
                       No fulfillment centers found
                     </td>
                   </tr>
                 ) : (
                   centers.map((center) => (
                     <tr key={center.id} className="hover:bg-gray-50">
-                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                        {center.name || 'N/A'}
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="text-sm font-medium text-gray-900">{center.name || 'N/A'}</div>
+                        {center.capacity && (
+                          <div className="text-xs text-gray-500">Capacity: {center.capacity} units</div>
+                        )}
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        {center.address || center.location || 'N/A'}
+                      <td className="px-6 py-4">
+                        <div className="text-sm text-gray-900">{center.city}, {center.country}</div>
+                        <div className="text-xs text-gray-500">{center.address}</div>
+                        {center.postalCode && (
+                          <div className="text-xs text-gray-500">{center.postalCode}</div>
+                        )}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        {center.latitude != null && center.longitude != null ? (
+                          <div className="text-xs">
+                            <div className="text-gray-900">{Number(center.latitude).toFixed(4)}</div>
+                            <div className="text-gray-500">{Number(center.longitude).toFixed(4)}</div>
+                          </div>
+                        ) : (
+                          <span className="text-xs text-gray-400">Not set</span>
+                        )}
+                      </td>
+                      <td className="px-6 py-4">
+                        {center.contactEmail || center.contactPhone ? (
+                          <div className="text-xs">
+                            {center.contactEmail && <div className="text-gray-900">{center.contactEmail}</div>}
+                            {center.contactPhone && <div className="text-gray-500">{center.contactPhone}</div>}
+                          </div>
+                        ) : (
+                          <span className="text-xs text-gray-400">-</span>
+                        )}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <span
                           className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                            center.active !== false
+                            center.isActive !== false
                               ? 'bg-green-100 text-green-800'
                               : 'bg-gray-100 text-gray-800'
                           }`}
                         >
-                          {center.active !== false ? 'Active' : 'Inactive'}
+                          {center.isActive !== false ? 'Active' : 'Inactive'}
                         </span>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm">
-                        <button className="text-purple-600 hover:text-purple-900">Edit</button>
+                        <button className="text-purple-600 hover:text-purple-900 mr-3">Edit</button>
+                        <button className="text-red-600 hover:text-red-900">Delete</button>
                       </td>
                     </tr>
                   ))
@@ -218,7 +261,7 @@ export default function AdminFulfillmentCentersPage() {
                   leaveFrom="opacity-100 scale-100"
                   leaveTo="opacity-0 scale-95"
                 >
-                  <Dialog.Panel className="w-full max-w-md transform overflow-hidden rounded-2xl bg-white p-6 text-left align-middle shadow-xl transition-all">
+                  <Dialog.Panel className="w-full max-w-lg transform overflow-hidden rounded-2xl bg-white p-6 text-left align-middle shadow-xl transition-all max-h-[90vh] overflow-y-auto">
                     <Dialog.Title as="h3" className="text-lg font-medium leading-6 text-gray-900 mb-4">
                       Add Fulfillment Center
                     </Dialog.Title>
@@ -294,11 +337,45 @@ export default function AdminFulfillmentCentersPage() {
                           />
                         </div>
                       </div>
+                      <div className="grid grid-cols-2 gap-4">
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700">Latitude</label>
+                          <input
+                            type="number"
+                            step="any"
+                            value={formData.latitude}
+                            onChange={(e) => setFormData({ ...formData, latitude: e.target.value })}
+                            placeholder="e.g., 51.5074"
+                            className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-purple-500 focus:border-purple-500"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700">Longitude</label>
+                          <input
+                            type="number"
+                            step="any"
+                            value={formData.longitude}
+                            onChange={(e) => setFormData({ ...formData, longitude: e.target.value })}
+                            placeholder="e.g., -0.1278"
+                            className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-purple-500 focus:border-purple-500"
+                          />
+                        </div>
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700">Capacity (units)</label>
+                        <input
+                          type="number"
+                          value={formData.capacity}
+                          onChange={(e) => setFormData({ ...formData, capacity: e.target.value })}
+                          placeholder="Storage capacity"
+                          className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-purple-500 focus:border-purple-500"
+                        />
+                      </div>
                       <div className="flex items-center">
                         <input
                           type="checkbox"
-                          checked={formData.active}
-                          onChange={(e) => setFormData({ ...formData, active: e.target.checked })}
+                          checked={formData.isActive}
+                          onChange={(e) => setFormData({ ...formData, isActive: e.target.checked })}
                           className="h-4 w-4 text-purple-600 focus:ring-purple-500 border-gray-300 rounded"
                         />
                         <label className="ml-2 block text-sm text-gray-900">Active</label>

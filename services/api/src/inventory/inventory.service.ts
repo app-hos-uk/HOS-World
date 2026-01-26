@@ -40,6 +40,13 @@ export class InventoryService {
         state: createDto.state,
         country: createDto.country,
         postalCode: createDto.postalCode,
+        latitude: createDto.latitude,
+        longitude: createDto.longitude,
+        contactEmail: createDto.contactEmail,
+        contactPhone: createDto.contactPhone,
+        managerName: createDto.managerName,
+        capacity: createDto.capacity,
+        warehouseType: createDto.warehouseType,
         isActive: createDto.isActive ?? true,
       },
     });
@@ -1016,5 +1023,164 @@ export class InventoryService {
     }
 
     return allocations;
+  }
+
+  /**
+   * Get inventory metrics for dashboard
+   */
+  async getInventoryMetrics() {
+    const [
+      totalWarehouses,
+      activeWarehouses,
+      totalLocations,
+      lowStockItems,
+      totalQuantity,
+      totalValue,
+    ] = await Promise.all([
+      this.prisma.warehouse.count(),
+      this.prisma.warehouse.count({ where: { isActive: true } }),
+      this.prisma.inventoryLocation.count(),
+      this.prisma.inventoryLocation.count({
+        where: {
+          quantity: { lte: this.prisma.inventoryLocation.fields.lowStockThreshold },
+        },
+      }).catch(() => 0), // Fallback if the complex query fails
+      this.prisma.inventoryLocation.aggregate({
+        _sum: { quantity: true },
+      }),
+      this.prisma.$queryRaw`
+        SELECT COALESCE(SUM(il.quantity * p.price), 0) as total_value
+        FROM inventory_locations il
+        JOIN products p ON il."productId" = p.id
+      `.catch(() => [{ total_value: 0 }]),
+    ]);
+
+    // Count low stock items manually if the above query failed
+    let lowStockCount = lowStockItems;
+    if (typeof lowStockItems !== 'number') {
+      const locations = await this.prisma.inventoryLocation.findMany({
+        select: { quantity: true, lowStockThreshold: true },
+      });
+      lowStockCount = locations.filter(l => l.quantity <= l.lowStockThreshold).length;
+    }
+
+    return {
+      totalWarehouses,
+      activeWarehouses,
+      totalLocations,
+      lowStockItems: lowStockCount,
+      totalQuantity: totalQuantity._sum.quantity || 0,
+      totalProducts: totalLocations,
+      totalValue: Array.isArray(totalValue) && totalValue[0] 
+        ? Number(totalValue[0].total_value) || 0 
+        : 0,
+    };
+  }
+
+  /**
+   * Get inventory locations with filters
+   */
+  async getInventoryLocations(filters: {
+    warehouseId?: string;
+    productId?: string;
+  }) {
+    const where: any = {};
+    if (filters.warehouseId) where.warehouseId = filters.warehouseId;
+    if (filters.productId) where.productId = filters.productId;
+
+    return this.prisma.inventoryLocation.findMany({
+      where,
+      include: {
+        warehouse: {
+          select: {
+            id: true,
+            name: true,
+            code: true,
+            city: true,
+            country: true,
+          },
+        },
+        product: {
+          select: {
+            id: true,
+            name: true,
+            sku: true,
+            price: true,
+          },
+        },
+      },
+      orderBy: { updatedAt: 'desc' },
+    });
+  }
+
+  /**
+   * Update a warehouse
+   * Only updates fields that are explicitly provided (not undefined)
+   */
+  async updateWarehouse(id: string, updateDto: Partial<CreateWarehouseDto>) {
+    const warehouse = await this.prisma.warehouse.findUnique({
+      where: { id },
+    });
+
+    if (!warehouse) {
+      throw new NotFoundException('Warehouse not found');
+    }
+
+    // Build update data object with only defined values
+    // This prevents undefined values from setting fields to null
+    const updateData: Record<string, any> = {};
+    
+    if (updateDto.name !== undefined) updateData.name = updateDto.name;
+    if (updateDto.address !== undefined) updateData.address = updateDto.address;
+    if (updateDto.city !== undefined) updateData.city = updateDto.city;
+    if (updateDto.state !== undefined) updateData.state = updateDto.state;
+    if (updateDto.country !== undefined) updateData.country = updateDto.country;
+    if (updateDto.postalCode !== undefined) updateData.postalCode = updateDto.postalCode;
+    if (updateDto.latitude !== undefined) updateData.latitude = updateDto.latitude;
+    if (updateDto.longitude !== undefined) updateData.longitude = updateDto.longitude;
+    if (updateDto.contactEmail !== undefined) updateData.contactEmail = updateDto.contactEmail;
+    if (updateDto.contactPhone !== undefined) updateData.contactPhone = updateDto.contactPhone;
+    if (updateDto.managerName !== undefined) updateData.managerName = updateDto.managerName;
+    if (updateDto.capacity !== undefined) updateData.capacity = updateDto.capacity;
+    if (updateDto.warehouseType !== undefined) updateData.warehouseType = updateDto.warehouseType;
+    if (updateDto.isActive !== undefined) updateData.isActive = updateDto.isActive;
+
+    return this.prisma.warehouse.update({
+      where: { id },
+      data: updateData,
+    });
+  }
+
+  /**
+   * Delete a warehouse
+   */
+  async deleteWarehouse(id: string) {
+    const warehouse = await this.prisma.warehouse.findUnique({
+      where: { id },
+      include: {
+        inventory: { take: 1 },
+        transfersFrom: { take: 1 },
+        transfersTo: { take: 1 },
+      },
+    });
+
+    if (!warehouse) {
+      throw new NotFoundException('Warehouse not found');
+    }
+
+    // Check if warehouse has any inventory or transfers
+    if (
+      warehouse.inventory.length > 0 ||
+      warehouse.transfersFrom.length > 0 ||
+      warehouse.transfersTo.length > 0
+    ) {
+      throw new BadRequestException(
+        'Cannot delete warehouse with existing inventory or transfers. Deactivate it instead.',
+      );
+    }
+
+    return this.prisma.warehouse.delete({
+      where: { id },
+    });
   }
 }

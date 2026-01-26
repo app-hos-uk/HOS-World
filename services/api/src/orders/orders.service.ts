@@ -9,6 +9,8 @@ import {
 } from '@nestjs/common';
 import { PrismaService } from '../database/prisma.service';
 import { TaxService } from '../tax/tax.service';
+import { WarehouseRoutingService } from '../inventory/warehouse-routing.service';
+import { GeocodingService } from '../inventory/geocoding.service';
 import { CreateOrderDto } from './dto/create-order.dto';
 import { UpdateOrderDto } from './dto/update-order.dto';
 import { AddOrderNoteDto } from './dto/add-order-note.dto';
@@ -23,6 +25,8 @@ export class OrdersService {
   constructor(
     private prisma: PrismaService,
     @Optional() @Inject(TaxService) private taxService?: TaxService,
+    @Optional() private warehouseRoutingService?: WarehouseRoutingService,
+    @Optional() private geocodingService?: GeocodingService,
   ) {}
 
   async create(userId: string, createOrderDto: CreateOrderDto): Promise<Order> {
@@ -142,6 +146,54 @@ export class OrdersService {
       // Generate order number
       const orderNumber = this.generateOrderNumber();
 
+      // Determine optimal fulfillment source (warehouse routing)
+      let fulfillingWarehouseId: string | null = null;
+      let fulfillmentCenterId: string | null = null;
+      let estimatedDistance: number | null = null;
+      let routingMethod = 'MANUAL';
+
+      if (this.warehouseRoutingService && this.geocodingService) {
+        try {
+          // Get or geocode customer coordinates from shipping address
+          const customerCoords = await this.geocodingService.getCoordinatesForAddress(
+            createOrderDto.shippingAddressId,
+          );
+
+          if (customerCoords) {
+            // Prepare product quantities for routing
+            const productQuantities = items.map((item) => ({
+              productId: item.productId,
+              quantity: item.quantity,
+            }));
+
+            // Find optimal fulfillment source
+            const routingResult = await this.warehouseRoutingService.findOptimalFulfillmentSource(
+              customerCoords.latitude,
+              customerCoords.longitude,
+              productQuantities,
+            );
+
+            fulfillingWarehouseId = routingResult.warehouseId;
+            fulfillmentCenterId = routingResult.fulfillmentCenterId;
+            estimatedDistance = routingResult.distance;
+            routingMethod = routingResult.routingMethod;
+
+            this.logger.log(
+              `Order ${orderNumber}: ${routingResult.message}`,
+            );
+          } else {
+            this.logger.warn(
+              `Order ${orderNumber}: Could not determine customer coordinates for routing`,
+            );
+          }
+        } catch (routingError) {
+          this.logger.error(
+            `Order ${orderNumber}: Warehouse routing failed, proceeding without assignment`,
+            routingError,
+          );
+        }
+      }
+
       // Use transaction to ensure atomicity: order creation + stock decrement + cart clearing
       const order = await this.prisma.$transaction(async (tx) => {
         // Re-check stock availability within transaction (prevent race conditions)
@@ -162,7 +214,7 @@ export class OrdersService {
           }
         }
 
-        // Create order
+        // Create order with fulfillment routing
         const createdOrder = await tx.order.create({
           data: {
             userId,
@@ -177,6 +229,10 @@ export class OrdersService {
             shippingAddressId: createOrderDto.shippingAddressId,
             billingAddressId: createOrderDto.billingAddressId,
             paymentMethod: createOrderDto.paymentMethod,
+            fulfillingWarehouseId,
+            fulfillmentCenterId,
+            estimatedDistance,
+            routingMethod,
             items: {
               create: items.map((item) => ({
                 productId: item.productId,
@@ -206,6 +262,23 @@ export class OrdersService {
                 id: true,
                 storeName: true,
                 slug: true,
+              },
+            },
+            fulfillingWarehouse: {
+              select: {
+                id: true,
+                name: true,
+                code: true,
+                city: true,
+                country: true,
+              },
+            },
+            fulfillmentCenter: {
+              select: {
+                id: true,
+                name: true,
+                city: true,
+                country: true,
               },
             },
           },
