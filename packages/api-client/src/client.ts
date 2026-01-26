@@ -2919,11 +2919,17 @@ export class ApiClient {
   }
 
   async createAddress(data: {
+    label?: string;
+    firstName: string;
+    lastName: string;
+    phone?: string;
     street: string;
     city: string;
     state?: string;
     postalCode: string;
     country: string;
+    latitude?: number;
+    longitude?: number;
     isDefault?: boolean;
   }): Promise<ApiResponse<any>> {
     return this.request<ApiResponse<any>>('/addresses', {
@@ -2933,11 +2939,17 @@ export class ApiClient {
   }
 
   async updateAddress(id: string, data: {
+    label?: string;
+    firstName?: string;
+    lastName?: string;
+    phone?: string;
     street?: string;
     city?: string;
     state?: string;
     postalCode?: string;
     country?: string;
+    latitude?: number;
+    longitude?: number;
     isDefault?: boolean;
   }): Promise<ApiResponse<any>> {
     return this.request<ApiResponse<any>>(`/addresses/${id}`, {
