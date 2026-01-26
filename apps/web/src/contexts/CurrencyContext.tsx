@@ -141,16 +141,17 @@ export function CurrencyProvider({ children }: { children: React.ReactNode }) {
   const formatPrice = useCallback(
     (amount: number, fromCurrency: string = 'GBP'): string => {
       // #region agent log
-      fetch('http://127.0.0.1:7243/ingest/4ddd1cb6-338c-42a8-a75d-41c4889e463f',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'CurrencyContext.tsx:formatPrice',message:'formatPrice called',data:{amount,amountType:typeof amount,fromCurrency,currency,ratesKeys:Object.keys(rates)},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'A,B,C,D'})}).catch(()=>{});
+      console.log('[DEBUG] formatPrice called:', {amount, amountType: typeof amount, fromCurrency, currency, ratesKeys: Object.keys(rates)});
       // #endregion
       const convertedAmount = convertPrice(amount, fromCurrency);
       // #region agent log
-      fetch('http://127.0.0.1:7243/ingest/4ddd1cb6-338c-42a8-a75d-41c4889e463f',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'CurrencyContext.tsx:formatPrice:afterConvert',message:'after convertPrice',data:{convertedAmount,convertedType:typeof convertedAmount,isNaN:Number.isNaN(convertedAmount)},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'A,B,C'})}).catch(()=>{});
+      console.log('[DEBUG] formatPrice afterConvert:', {convertedAmount, convertedType: typeof convertedAmount, isNaN: Number.isNaN(convertedAmount)});
       // #endregion
       const symbol = getCurrencySymbol(currency);
       
-      // Format with appropriate decimal places
-      const formatted = convertedAmount.toFixed(2);
+      // Format with appropriate decimal places - ensure convertedAmount is a number
+      const safeAmount = typeof convertedAmount === 'number' && !Number.isNaN(convertedAmount) ? convertedAmount : 0;
+      const formatted = safeAmount.toFixed(2);
       return `${symbol}${formatted}`;
     },
     [currency, convertPrice, rates]
