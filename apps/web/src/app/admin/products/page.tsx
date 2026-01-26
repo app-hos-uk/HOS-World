@@ -469,7 +469,6 @@ export default function AdminProductsPage() {
       await apiClient.createAdminProduct({
         name: `${product.name} (Copy)`,
         description: product.description,
-        shortDescription: product.shortDescription,
         price: product.price,
         stock: 0, // Start with 0 stock
         taxRate: product.taxRate,
@@ -479,15 +478,7 @@ export default function AdminProductsPage() {
         categoryId: product.categoryId || product.categoryRelation?.categoryId,
         tagIds: product.tagsRelation?.map(t => t.tagId) || product.tags?.map(t => t.id),
         attributes: product.attributes,
-        images: product.images,
-        weight: product.weight,
-        length: product.length,
-        width: product.width,
-        height: product.height,
-        metaTitle: product.metaTitle,
-        metaDescription: product.metaDescription,
-        isFeatured: false,
-        isHidden: false,
+        images: product.images?.map(img => ({ url: img.url, alt: img.alt, order: img.order })),
       });
       toast.success('Product duplicated successfully');
       fetchProducts();
