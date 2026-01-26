@@ -59,6 +59,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const fetchUser = useCallback(async () => {
     try {
       const token = typeof window !== 'undefined' ? localStorage.getItem('auth_token') : null;
+      // #region agent log
+      console.log('[DEBUG] AuthContext.fetchUser: token exists?', !!token);
+      // #endregion
       
       if (!token) {
         setUser(null);
@@ -67,6 +70,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
 
       const response = await apiClient.getCurrentUser();
+      // #region agent log
+      console.log('[DEBUG] AuthContext.fetchUser: getCurrentUser response', { hasData: !!response?.data, role: response?.data?.role });
+      // #endregion
       
       if (response?.data) {
         // Normalize role to uppercase to match backend
@@ -76,10 +82,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         };
         setUser(normalizedUser);
       } else {
+        // #region agent log
+        console.log('[DEBUG] AuthContext.fetchUser: No data in response, clearing token');
+        // #endregion
         setUser(null);
         localStorage.removeItem('auth_token');
       }
-    } catch (error) {
+    } catch (error: any) {
+      // #region agent log
+      console.log('[DEBUG] AuthContext.fetchUser: Error', { message: error?.message, status: error?.status });
+      // #endregion
       console.error('Failed to fetch user:', error);
       setUser(null);
       localStorage.removeItem('auth_token');
