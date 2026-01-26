@@ -260,17 +260,8 @@ export default function AdminSellersPage() {
   };
 
   const handleToggleStatus = async (seller: Seller) => {
-    try {
-      setActionLoading(true);
-      const newStatus = seller.isActive === false ? true : false;
-      await apiClient.updateUser(seller.id, { isActive: newStatus });
-      toast.success(`Seller ${newStatus ? 'activated' : 'deactivated'}`);
-      fetchSellers();
-    } catch (err: any) {
-      toast.error(err.message || 'Failed to update seller status');
-    } finally {
-      setActionLoading(false);
-    }
+    // TODO: Implement seller status toggle when backend supports it
+    toast.error('Seller status toggle is not yet supported by the API');
   };
 
   const getRoleBadge = (role: string) => {
