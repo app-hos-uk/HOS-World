@@ -1,4 +1,4 @@
-import { Controller, Get, Query, UseGuards, Request, Version } from '@nestjs/common';
+import { Controller, Get, Query, UseGuards, Request } from '@nestjs/common';
 import {
   ApiTags,
   ApiOperation,
