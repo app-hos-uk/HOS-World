@@ -158,12 +158,8 @@ export default function AdminCategoriesPage() {
         parentId: formData.parentId || undefined,
         level,
         image: formData.image || undefined,
-        icon: formData.icon || undefined,
         order: formData.order,
         isActive: formData.isActive,
-        isFeatured: formData.isFeatured,
-        metaTitle: formData.metaTitle || undefined,
-        metaDescription: formData.metaDescription || undefined,
       });
       toast.success('Category created successfully');
       resetForm();
@@ -182,12 +178,8 @@ export default function AdminCategoriesPage() {
         description: formData.description || undefined,
         parentId: formData.parentId || undefined,
         image: formData.image || undefined,
-        icon: formData.icon || undefined,
         order: formData.order,
         isActive: formData.isActive,
-        isFeatured: formData.isFeatured,
-        metaTitle: formData.metaTitle || undefined,
-        metaDescription: formData.metaDescription || undefined,
       });
       toast.success('Category updated successfully');
       resetForm();
