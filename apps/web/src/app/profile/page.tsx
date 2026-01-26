@@ -74,6 +74,9 @@ export default function ProfilePage() {
     whatsappNumber: '',
     preferredCommunicationMethod: 'EMAIL' as 'EMAIL' | 'SMS' | 'WHATSAPP' | 'PHONE',
     currencyPreference: 'GBP',
+    // Marketing dates (optional)
+    birthday: '',
+    anniversary: '',
   });
   const [gdprConsent, setGdprConsent] = useState<any>(null);
   const [gdprConsentHistory, setGdprConsentHistory] = useState<any[]>([]);
@@ -85,6 +88,10 @@ export default function ProfilePage() {
   const [showAddressForm, setShowAddressForm] = useState(false);
   const [editingAddress, setEditingAddress] = useState<any>(null);
   const [addressForm, setAddressForm] = useState({
+    label: 'HOME' as 'HOME' | 'WORK' | 'OTHER',
+    firstName: '',
+    lastName: '',
+    phone: '',
     street: '',
     city: '',
     state: '',
@@ -125,6 +132,8 @@ export default function ProfilePage() {
           whatsappNumber: profileRes.data.whatsappNumber || '',
           preferredCommunicationMethod: profileRes.data.preferredCommunicationMethod || 'EMAIL',
           currencyPreference: profileRes.data.currencyPreference || 'GBP',
+          birthday: profileRes.data.birthday ? new Date(profileRes.data.birthday).toISOString().split('T')[0] : '',
+          anniversary: profileRes.data.anniversary ? new Date(profileRes.data.anniversary).toISOString().split('T')[0] : '',
         });
         // Sync currency context
         if (profileRes.data.currencyPreference) {
@@ -249,6 +258,10 @@ export default function ProfilePage() {
       setShowAddressForm(false);
       setEditingAddress(null);
       setAddressForm({
+        label: 'HOME',
+        firstName: '',
+        lastName: '',
+        phone: '',
         street: '',
         city: '',
         state: '',
@@ -615,6 +628,10 @@ export default function ProfilePage() {
                     onClick={() => {
                       setEditingAddress(null);
                       setAddressForm({
+                        label: 'HOME',
+                        firstName: '',
+                        lastName: '',
+                        phone: '',
                         street: '',
                         city: '',
                         state: '',
@@ -634,14 +651,73 @@ export default function ProfilePage() {
                   <div className="bg-gray-50 rounded-lg p-6">
                     <h4 className="font-semibold mb-4">{editingAddress ? 'Edit' : 'Add'} Address</h4>
                     <form onSubmit={handleSaveAddress} className="space-y-4">
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      {/* Address Label */}
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Address Type</label>
+                        <div className="flex gap-3">
+                          {(['HOME', 'WORK', 'OTHER'] as const).map((type) => (
+                            <button
+                              key={type}
+                              type="button"
+                              onClick={() => setAddressForm({ ...addressForm, label: type })}
+                              className={`px-4 py-2 rounded-lg border text-sm font-medium transition-colors ${
+                                addressForm.label === type
+                                  ? 'bg-purple-600 text-white border-purple-600'
+                                  : 'bg-white text-gray-700 border-gray-300 hover:border-purple-300'
+                              }`}
+                            >
+                              {type === 'HOME' ? '🏠 Home' : type === 'WORK' ? '💼 Work' : '📍 Other'}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+
+                      {/* Contact Details */}
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                         <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">First Name *</label>
+                          <input
+                            type="text"
+                            value={addressForm.firstName}
+                            onChange={(e) => setAddressForm({ ...addressForm, firstName: e.target.value })}
+                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
+                            placeholder="Recipient first name"
+                            required
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">Last Name *</label>
+                          <input
+                            type="text"
+                            value={addressForm.lastName}
+                            onChange={(e) => setAddressForm({ ...addressForm, lastName: e.target.value })}
+                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
+                            placeholder="Recipient last name"
+                            required
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">Phone</label>
+                          <input
+                            type="tel"
+                            value={addressForm.phone}
+                            onChange={(e) => setAddressForm({ ...addressForm, phone: e.target.value })}
+                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
+                            placeholder="+44 7700 900000"
+                          />
+                        </div>
+                      </div>
+
+                      {/* Address Details */}
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="md:col-span-2">
                           <label className="block text-sm font-medium text-gray-700 mb-1">Street Address *</label>
                           <input
                             type="text"
                             value={addressForm.street}
                             onChange={(e) => setAddressForm({ ...addressForm, street: e.target.value })}
                             className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
+                            placeholder="House number and street name"
                             required
                           />
                         </div>
@@ -656,7 +732,7 @@ export default function ProfilePage() {
                           />
                         </div>
                         <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-1">State/Region</label>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">State/Province/Region</label>
                           <input
                             type="text"
                             value={addressForm.state}
@@ -676,13 +752,25 @@ export default function ProfilePage() {
                         </div>
                         <div>
                           <label className="block text-sm font-medium text-gray-700 mb-1">Country *</label>
-                          <input
-                            type="text"
+                          <select
                             value={addressForm.country}
                             onChange={(e) => setAddressForm({ ...addressForm, country: e.target.value })}
                             className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
                             required
-                          />
+                          >
+                            <option value="">Select country</option>
+                            <option value="United Kingdom">United Kingdom</option>
+                            <option value="United States">United States</option>
+                            <option value="Germany">Germany</option>
+                            <option value="France">France</option>
+                            <option value="Italy">Italy</option>
+                            <option value="Spain">Spain</option>
+                            <option value="Netherlands">Netherlands</option>
+                            <option value="Belgium">Belgium</option>
+                            <option value="Ireland">Ireland</option>
+                            <option value="United Arab Emirates">United Arab Emirates</option>
+                            <option value="Saudi Arabia">Saudi Arabia</option>
+                          </select>
                         </div>
                       </div>
                       <div className="flex items-center">
@@ -690,9 +778,9 @@ export default function ProfilePage() {
                           type="checkbox"
                           checked={addressForm.isDefault}
                           onChange={(e) => setAddressForm({ ...addressForm, isDefault: e.target.checked })}
-                          className="mr-2"
+                          className="mr-2 rounded border-gray-300 text-purple-600"
                         />
-                        <label className="text-sm text-gray-700">Set as default address</label>
+                        <label className="text-sm text-gray-700">Set as default shipping address</label>
                       </div>
                       <div className="flex gap-3">
                         <button
@@ -724,16 +812,33 @@ export default function ProfilePage() {
                       <div key={address.id} className="border border-gray-200 rounded-lg p-4">
                         <div className="flex justify-between items-start">
                           <div className="flex-1">
-                            {address.isDefault && (
-                              <span className="inline-block px-2 py-1 bg-purple-100 text-purple-800 text-xs font-semibold rounded mb-2">
-                                Default
-                              </span>
-                            )}
-                            <p className="font-medium">{address.street}</p>
+                            <div className="flex items-center gap-2 mb-2">
+                              {address.label && (
+                                <span className={`inline-block px-2 py-1 text-xs font-semibold rounded ${
+                                  address.label === 'HOME' ? 'bg-blue-100 text-blue-800' :
+                                  address.label === 'WORK' ? 'bg-green-100 text-green-800' :
+                                  'bg-gray-100 text-gray-800'
+                                }`}>
+                                  {address.label === 'HOME' ? '🏠 Home' : address.label === 'WORK' ? '💼 Work' : '📍 Other'}
+                                </span>
+                              )}
+                              {address.isDefault && (
+                                <span className="inline-block px-2 py-1 bg-purple-100 text-purple-800 text-xs font-semibold rounded">
+                                  Default
+                                </span>
+                              )}
+                            </div>
+                            <p className="font-medium">
+                              {address.firstName && address.lastName 
+                                ? `${address.firstName} ${address.lastName}` 
+                                : address.street}
+                            </p>
+                            {address.firstName && <p className="text-gray-600">{address.street}</p>}
                             <p className="text-gray-600">
-                              {address.city}, {address.state} {address.postalCode}
+                              {address.city}{address.state ? `, ${address.state}` : ''} {address.postalCode}
                             </p>
                             <p className="text-gray-600">{address.country}</p>
+                            {address.phone && <p className="text-gray-500 text-sm mt-1">📞 {address.phone}</p>}
                           </div>
                           <div className="flex gap-2">
                             {!address.isDefault && (
@@ -748,6 +853,10 @@ export default function ProfilePage() {
                               onClick={() => {
                                 setEditingAddress(address);
                                 setAddressForm({
+                                  label: address.label || 'HOME',
+                                  firstName: address.firstName || '',
+                                  lastName: address.lastName || '',
+                                  phone: address.phone || '',
                                   street: address.street,
                                   city: address.city,
                                   state: address.state || '',
@@ -907,6 +1016,36 @@ export default function ProfilePage() {
                         </select>
                         <p className="text-xs text-gray-500 mt-1">Prices will be displayed in this currency</p>
                       </div>
+
+                      {/* Special Dates - Optional for marketing */}
+                      <div className="border-t pt-4 mt-4">
+                        <h4 className="text-sm font-semibold text-gray-700 mb-3">Special Dates (Optional)</h4>
+                        <p className="text-xs text-gray-500 mb-3">Share your special dates to receive personalized offers and birthday surprises!</p>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">Birthday</label>
+                            <input
+                              type="date"
+                              value={editing ? formData.birthday : (profile?.birthday ? new Date(profile.birthday).toISOString().split('T')[0] : '')}
+                              onChange={(e) => setFormData({ ...formData, birthday: e.target.value })}
+                              disabled={!editing}
+                              className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-white disabled:bg-gray-100"
+                            />
+                            <p className="text-xs text-gray-500 mt-1">Get birthday discounts and surprises</p>
+                          </div>
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">Anniversary</label>
+                            <input
+                              type="date"
+                              value={editing ? formData.anniversary : (profile?.anniversary ? new Date(profile.anniversary).toISOString().split('T')[0] : '')}
+                              onChange={(e) => setFormData({ ...formData, anniversary: e.target.value })}
+                              disabled={!editing}
+                              className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-white disabled:bg-gray-100"
+                            />
+                            <p className="text-xs text-gray-500 mt-1">Receive gift suggestions for special occasions</p>
+                          </div>
+                        </div>
+                      </div>
                       {editing && (
                         <div className="flex gap-3 pt-2">
                           <button
@@ -928,6 +1067,8 @@ export default function ProfilePage() {
                                 whatsappNumber: profile?.whatsappNumber || '',
                                 preferredCommunicationMethod: profile?.preferredCommunicationMethod || 'EMAIL',
                                 currencyPreference: profile?.currencyPreference || 'GBP',
+                                birthday: profile?.birthday ? new Date(profile.birthday).toISOString().split('T')[0] : '',
+                                anniversary: profile?.anniversary ? new Date(profile.anniversary).toISOString().split('T')[0] : '',
                               });
                             }}
                             className="px-4 py-2 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300 transition-colors font-medium"
