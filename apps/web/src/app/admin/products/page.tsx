@@ -516,7 +516,7 @@ export default function AdminProductsPage() {
     }
   };
 
-  const handleStatusChange = async (product: Product, newStatus: string) => {
+  const handleStatusChange = async (product: Product, newStatus: 'ACTIVE' | 'INACTIVE' | 'DRAFT' | 'OUT_OF_STOCK') => {
     try {
       await apiClient.updateAdminProduct(product.id, { status: newStatus });
       toast.success(`Product status changed to ${newStatus}`);
@@ -1259,7 +1259,7 @@ export default function AdminProductsPage() {
                             {/* Status dropdown for quick status change */}
                             <select
                               value={product.status}
-                              onChange={(e) => handleStatusChange(product, e.target.value)}
+                              onChange={(e) => handleStatusChange(product, e.target.value as 'ACTIVE' | 'INACTIVE' | 'DRAFT' | 'OUT_OF_STOCK')}
                               className="px-1 py-1 text-xs border border-gray-300 rounded bg-white text-gray-600 cursor-pointer"
                               title="Change status"
                             >
