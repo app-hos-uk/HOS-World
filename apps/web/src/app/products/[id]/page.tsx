@@ -45,14 +45,14 @@ export default function ProductDetailPage() {
       setLoading(true);
       const response = await apiClient.getProduct(productId);
       // #region agent log
-      console.log('[DEBUG] fetchProduct response:', {hasData:!!response?.data,dataType:typeof response?.data,isError:response?.error,statusCode:response?.statusCode,imagesType:typeof response?.data?.images,imagesIsArray:Array.isArray(response?.data?.images),imagesLength:response?.data?.images?.length});
+      console.log('[DEBUG] fetchProduct response:', {hasData:!!response?.data,dataType:typeof response?.data,imagesType:typeof response?.data?.images,imagesIsArray:Array.isArray(response?.data?.images),imagesLength:response?.data?.images?.length});
       // #endregion
       if (response?.data) {
         setProduct(response.data);
       }
     } catch (err: any) {
       // #region agent log
-      console.log('[DEBUG] fetchProduct error:', {error:err?.message,statusCode:err?.statusCode});
+      console.log('[DEBUG] fetchProduct error:', {error:err?.message});
       // #endregion
       console.error('Error fetching product:', err);
       toast.error(err.message || 'Failed to load product');
@@ -66,7 +66,7 @@ export default function ProductDetailPage() {
       setReviewsLoading(true);
       const response = await apiClient.getProductReviews(productId);
       // #region agent log
-      console.log('[DEBUG] fetchReviews response:', {hasData:!!response?.data,dataType:typeof response?.data,isArray:Array.isArray(response?.data),isError:response?.error,statusCode:response?.statusCode,dataKeys:response?.data?Object.keys(response.data).slice(0,5):null});
+      console.log('[DEBUG] fetchReviews response:', {hasData:!!response?.data,dataType:typeof response?.data,isArray:Array.isArray(response?.data)});
       // #endregion
       // FIX: Ensure data is an array before setting
       if (response?.data && Array.isArray(response.data)) {
