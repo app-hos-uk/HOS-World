@@ -95,12 +95,16 @@ export default function TaxIntegrationsPage() {
     try {
       setLoading(true);
       const response = await apiClient.getIntegrationsByCategory('TAX');
-      if (response?.data) {
+      // Ensure data is an array before setting state
+      if (response?.data && Array.isArray(response.data)) {
         setIntegrations(response.data);
+      } else {
+        setIntegrations([]);
       }
     } catch (error: any) {
       console.error('Error fetching tax integrations:', error);
       toast.error('Failed to load tax integrations');
+      setIntegrations([]);
     } finally {
       setLoading(false);
     }

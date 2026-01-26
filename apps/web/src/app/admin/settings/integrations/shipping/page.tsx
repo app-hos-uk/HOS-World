@@ -85,12 +85,16 @@ export default function ShippingIntegrationsPage() {
     try {
       setLoading(true);
       const response = await apiClient.getIntegrationsByCategory('SHIPPING');
-      if (response?.data) {
+      // Ensure data is an array before setting state
+      if (response?.data && Array.isArray(response.data)) {
         setIntegrations(response.data);
+      } else {
+        setIntegrations([]);
       }
     } catch (error: any) {
       console.error('Error fetching shipping integrations:', error);
       toast.error('Failed to load shipping integrations');
+      setIntegrations([]);
     } finally {
       setLoading(false);
     }

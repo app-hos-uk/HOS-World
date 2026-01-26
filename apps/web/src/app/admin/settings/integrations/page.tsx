@@ -115,15 +115,24 @@ export default function IntegrationsPage() {
         apiClient.getIntegrations(),
         apiClient.getAvailableProviders(),
       ]);
-      if (integrationsRes?.data) {
+      // Ensure data is an array before setting state
+      if (integrationsRes?.data && Array.isArray(integrationsRes.data)) {
         setIntegrations(integrationsRes.data);
+      } else {
+        setIntegrations([]);
       }
-      if (providersRes?.data) {
+      // Ensure providers data is an object
+      if (providersRes?.data && typeof providersRes.data === 'object' && !Array.isArray(providersRes.data)) {
         setAvailableProviders(providersRes.data);
+      } else {
+        setAvailableProviders({});
       }
     } catch (error: any) {
       console.error('Error fetching integrations:', error);
       toast.error('Failed to load integrations');
+      // Reset to empty on error
+      setIntegrations([]);
+      setAvailableProviders({});
     } finally {
       setLoading(false);
     }
