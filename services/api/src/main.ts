@@ -273,18 +273,16 @@ async function bootstrap() {
           message: 'House of Spells Marketplace API',
           version: '1.0.0',
           status: 'running',
+          timestamp: new Date().toISOString(),
           endpoints: {
-            api: '/api',
-            apiV1: '/api/v1',
+            base: '/api',
             health: '/api/health',
-            products: '/api/v1/products',
-            auth: '/api/v1/auth',
+            auth: '/api/auth',
+            products: '/api/products',
+            orders: '/api/orders',
+            users: '/api/users',
+            admin: '/api/admin',
             docs: '/api/docs',
-          },
-          versioning: {
-            type: 'URI',
-            defaultVersion: '1',
-            prefix: 'v',
           },
           documentation: 'API documentation available at /api/docs',
         });
@@ -329,10 +327,8 @@ async function bootstrap() {
       .addTag('admin', 'Admin operations')
       .addTag('sellers', 'Seller operations')
       .addTag('health', 'Health check endpoints')
-      .addServer('https://hos-marketplaceapi-production.up.railway.app/api/v1', 'Production (v1)')
-      .addServer('https://hos-marketplaceapi-production.up.railway.app/api', 'Production (legacy)')
-      .addServer('http://localhost:3001/api/v1', 'Local Development (v1)')
-      .addServer('http://localhost:3001/api', 'Local Development (legacy)')
+      .addServer('https://hos-marketplaceapi-production.up.railway.app/api', 'Production')
+      .addServer('http://localhost:3001/api', 'Local Development')
       .build();
 
     const document = SwaggerModule.createDocument(app, config);

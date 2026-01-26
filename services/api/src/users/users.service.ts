@@ -33,12 +33,6 @@ export class UsersService {
         whatsappNumber: true,
         preferredCommunicationMethod: true,
         currencyPreference: true,
-        // Marketing dates
-        birthday: true,
-        anniversary: true,
-        // Team member fields
-        department: true,
-        employeeId: true,
       },
     });
 

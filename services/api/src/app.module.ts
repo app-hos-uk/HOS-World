@@ -73,6 +73,8 @@ import { MonitoringModule } from './monitoring/monitoring.module';
 import { APP_INTERCEPTOR } from '@nestjs/core';
 import { MonitoringInterceptor } from './monitoring/monitoring.interceptor';
 import { IntegrationsModule } from './integrations/integrations.module';
+import { GamificationModule } from './gamification/gamification.module';
+import { DigitalProductsModule } from './digital-products/digital-products.module';
 
 @Module({
   imports: [
@@ -148,6 +150,8 @@ import { IntegrationsModule } from './integrations/integrations.module';
     TenantsModule,
     MonitoringModule,
     IntegrationsModule,
+    GamificationModule,
+    DigitalProductsModule,
   ],
   controllers: [AppController],
   providers: [

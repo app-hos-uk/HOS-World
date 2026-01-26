@@ -1223,7 +1223,7 @@ export class ApiClient {
     });
   }
 
-  // Leaderboard
+  // Leaderboard & Gamification
   async getLeaderboard(params?: { timeframe?: string; category?: string; limit?: number }): Promise<ApiResponse<any>> {
     const query = params 
       ? `?${Object.entries(params).filter(([, v]) => v).map(([k, v]) => `${k}=${v}`).join('&')}`
@@ -1234,7 +1234,7 @@ export class ApiClient {
   }
 
   async getGamificationProfile(): Promise<ApiResponse<any>> {
-    return this.request<ApiResponse<any>>('/gamification/profile', {
+    return this.request<ApiResponse<any>>('/users/profile/gamification', {
       method: 'GET',
     });
   }
