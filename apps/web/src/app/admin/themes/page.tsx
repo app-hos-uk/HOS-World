@@ -258,18 +258,8 @@ export default function AdminThemesPage() {
   };
 
   const handleDuplicate = async (theme: Theme) => {
-    try {
-      setActionLoading(true);
-      await apiClient.duplicateTheme?.(theme.id, {
-        name: `${theme.name} (Copy)`,
-      });
-      toast.success('Theme duplicated successfully');
-      await fetchThemes();
-    } catch (err: any) {
-      toast.error(err.message || 'Failed to duplicate theme');
-    } finally {
-      setActionLoading(false);
-    }
+    // TODO: Implement theme duplication when backend supports it
+    toast.error('Theme duplication is not yet supported by the API');
   };
 
   const handleToggleActive = async (theme: Theme) => {
