@@ -103,6 +103,7 @@ export function CategorySelector({
           >
             {hasChildren && (
               <button
+                type="button"
                 onClick={(e) => {
                   e.stopPropagation();
                   toggleLevel(level + 1);
