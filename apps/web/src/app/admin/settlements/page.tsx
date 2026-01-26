@@ -83,8 +83,8 @@ export default function AdminSettlementsPage() {
       setLoading(true);
       setError(null);
       const response = await apiClient.getSettlements();
-      const data = response?.data || [];
-      const settlementList = Array.isArray(data) ? data : (data.data || []);
+      const data: any = response?.data;
+      const settlementList = Array.isArray(data) ? data : (data?.data || []);
       setSettlements(settlementList);
       calculateStats(settlementList);
     } catch (err: any) {
