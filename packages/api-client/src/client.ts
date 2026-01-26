@@ -726,8 +726,17 @@ export class ApiClient {
     lastName?: string;
     phone?: string;
     role: string;
-    storeName?: string;
+    // Admin specific
     permissionRoleName?: string;
+    // Seller/Wholesaler specific
+    storeName?: string;
+    companyName?: string;
+    vatNumber?: string;
+    // Wholesaler specific
+    businessType?: string;
+    // Team member specific
+    department?: string;
+    employeeId?: string;
   }): Promise<ApiResponse<any>> {
     return this.request<ApiResponse<any>>('/admin/users', {
       method: 'POST',

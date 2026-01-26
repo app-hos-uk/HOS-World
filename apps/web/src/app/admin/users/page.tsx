@@ -82,8 +82,9 @@ export default function AdminUsersPage() {
   const [permissionRoles, setPermissionRoles] = useState<string[]>([]);
   const [selectedUsers, setSelectedUsers] = useState<Set<string>>(new Set());
 
-  // Create form state
+  // Create form state with role-specific fields
   const [createForm, setCreateForm] = useState({
+    // Basic info (all roles)
     firstName: '',
     lastName: '',
     email: '',
@@ -91,9 +92,23 @@ export default function AdminUsersPage() {
     confirmPassword: '',
     phone: '',
     role: 'CUSTOMER',
-    storeName: '',
+    // Admin specific
     permissionRoleName: '',
+    // Seller/Wholesaler specific
+    storeName: '',
+    companyName: '',
+    vatNumber: '',
+    // Wholesaler specific
+    businessType: '',
+    // Team member specific
+    department: '',
+    employeeId: '',
   });
+
+  // Helper to check role categories
+  const isSellerRole = ['SELLER', 'B2C_SELLER', 'WHOLESALER'].includes(createForm.role);
+  const isTeamRole = ['PROCUREMENT', 'FULFILLMENT', 'CATALOG', 'MARKETING', 'FINANCE', 'CMS_EDITOR'].includes(createForm.role);
+  const isWholesaler = createForm.role === 'WHOLESALER';
 
   // Edit form state
   const [editForm, setEditForm] = useState({
@@ -324,15 +339,24 @@ export default function AdminUsersPage() {
       });
       // #endregion
 
-      const payload = {
+      const payload: any = {
         email: createForm.email,
         password: createForm.password,
         firstName: createForm.firstName || undefined,
         lastName: createForm.lastName || undefined,
         phone: createForm.phone || undefined,
         role: createForm.role,
-        storeName: createForm.storeName || undefined,
+        // Admin specific
         permissionRoleName: createForm.permissionRoleName || undefined,
+        // Seller/Wholesaler specific
+        storeName: createForm.storeName || undefined,
+        companyName: createForm.companyName || undefined,
+        vatNumber: createForm.vatNumber || undefined,
+        // Wholesaler specific
+        businessType: createForm.businessType || undefined,
+        // Team member specific
+        department: createForm.department || undefined,
+        employeeId: createForm.employeeId || undefined,
       };
 
       // #region agent log
@@ -355,8 +379,13 @@ export default function AdminUsersPage() {
         confirmPassword: '',
         phone: '',
         role: 'CUSTOMER',
-        storeName: '',
         permissionRoleName: '',
+        storeName: '',
+        companyName: '',
+        vatNumber: '',
+        businessType: '',
+        department: '',
+        employeeId: '',
       });
       await fetchUsers();
     } catch (err: any) {
@@ -1076,33 +1105,115 @@ export default function AdminUsersPage() {
                       <p className="text-xs text-gray-500 mt-1">{ROLE_DESCRIPTIONS[createForm.role]}</p>
                     </div>
 
+                    {/* ADMIN specific fields */}
                     {createForm.role === 'ADMIN' && permissionRoles.length > 0 && (
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Permission Role</label>
-                        <select
-                          value={createForm.permissionRoleName}
-                          onChange={(e) => setCreateForm({ ...createForm, permissionRoleName: e.target.value })}
-                          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
-                        >
-                          <option value="">Full Admin (no restrictions)</option>
-                          {permissionRoles.map((r) => (
-                            <option key={r} value={r}>{r}</option>
-                          ))}
-                        </select>
+                      <div className="bg-red-50 p-4 rounded-lg space-y-4">
+                        <h4 className="text-sm font-semibold text-red-800">Admin Configuration</h4>
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">Permission Role</label>
+                          <select
+                            value={createForm.permissionRoleName}
+                            onChange={(e) => setCreateForm({ ...createForm, permissionRoleName: e.target.value })}
+                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
+                          >
+                            <option value="">Full Admin (no restrictions)</option>
+                            {permissionRoles.map((r) => (
+                              <option key={r} value={r}>{r}</option>
+                            ))}
+                          </select>
+                        </div>
                       </div>
                     )}
 
-                    {['SELLER', 'B2C_SELLER', 'WHOLESALER'].includes(createForm.role) && (
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Store Name *</label>
-                        <input
-                          type="text"
-                          value={createForm.storeName}
-                          onChange={(e) => setCreateForm({ ...createForm, storeName: e.target.value })}
-                          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
-                          placeholder="Store name"
-                          required
-                        />
+                    {/* SELLER/B2C_SELLER/WHOLESALER specific fields */}
+                    {isSellerRole && (
+                      <div className="bg-blue-50 p-4 rounded-lg space-y-4">
+                        <h4 className="text-sm font-semibold text-blue-800">Business Information</h4>
+                        <div className="grid grid-cols-2 gap-3">
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">Store Name *</label>
+                            <input
+                              type="text"
+                              value={createForm.storeName}
+                              onChange={(e) => setCreateForm({ ...createForm, storeName: e.target.value })}
+                              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
+                              placeholder="Your store name"
+                              required
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">Company Name</label>
+                            <input
+                              type="text"
+                              value={createForm.companyName}
+                              onChange={(e) => setCreateForm({ ...createForm, companyName: e.target.value })}
+                              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
+                              placeholder="Legal company name"
+                            />
+                          </div>
+                        </div>
+                        <div className="grid grid-cols-2 gap-3">
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">VAT/Tax ID</label>
+                            <input
+                              type="text"
+                              value={createForm.vatNumber}
+                              onChange={(e) => setCreateForm({ ...createForm, vatNumber: e.target.value })}
+                              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
+                              placeholder="GB123456789"
+                            />
+                          </div>
+                          {isWholesaler && (
+                            <div>
+                              <label className="block text-sm font-medium text-gray-700 mb-1">Business Type</label>
+                              <select
+                                value={createForm.businessType}
+                                onChange={(e) => setCreateForm({ ...createForm, businessType: e.target.value })}
+                                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
+                              >
+                                <option value="">Select type</option>
+                                <option value="RETAIL">Retail</option>
+                                <option value="DISTRIBUTOR">Distributor</option>
+                                <option value="RESELLER">Reseller</option>
+                              </select>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* TEAM ROLES specific fields */}
+                    {isTeamRole && (
+                      <div className="bg-purple-50 p-4 rounded-lg space-y-4">
+                        <h4 className="text-sm font-semibold text-purple-800">Team Member Details</h4>
+                        <div className="grid grid-cols-2 gap-3">
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">Department</label>
+                            <select
+                              value={createForm.department}
+                              onChange={(e) => setCreateForm({ ...createForm, department: e.target.value })}
+                              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
+                            >
+                              <option value="">Select department</option>
+                              <option value="OPERATIONS">Operations</option>
+                              <option value="WAREHOUSE">Warehouse</option>
+                              <option value="CUSTOMER_SERVICE">Customer Service</option>
+                              <option value="MARKETING">Marketing</option>
+                              <option value="FINANCE">Finance</option>
+                              <option value="CONTENT">Content</option>
+                            </select>
+                          </div>
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">Employee ID</label>
+                            <input
+                              type="text"
+                              value={createForm.employeeId}
+                              onChange={(e) => setCreateForm({ ...createForm, employeeId: e.target.value })}
+                              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
+                              placeholder="EMP-001"
+                            />
+                          </div>
+                        </div>
                       </div>
                     )}
 

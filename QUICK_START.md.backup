@@ -1,0 +1,109 @@
+# Quick Start Guide - Development Server
+
+## Step-by-Step Instructions
+
+### 1. Navigate to the Project Directory
+
+Open your terminal and run:
+
+```bash
+cd "/Users/sabuj/Desktop/HOS-latest Sabu"
+```
+
+**Important:** Always start from the root directory of the project, not from `apps/web`.
+
+### 2. Check if Port 3000 is Available
+
+If you get a "port already in use" error, kill any existing processes:
+
+```bash
+# Kill any process on port 3000
+lsof -ti:3000 | xargs kill -9 2>/dev/null
+```
+
+### 3. Start the Development Server
+
+You have two options:
+
+#### Option A: Using the Startup Script (Recommended)
+
+```bash
+./start-dev.sh
+```
+
+#### Option B: Manual Start
+
+```bash
+# From the root directory
+npm run dev --workspace=apps/web
+```
+
+Or if you prefer to navigate to the web app:
+
+```bash
+cd apps/web
+npm run dev
+```
+
+### 4. Access the Application
+
+Once the server starts, open your browser and navigate to:
+
+**http://localhost:3000**
+
+## Troubleshooting
+
+### Error: "EPERM: operation not permitted"
+
+This means port 3000 is already in use or you don't have permission. Try:
+
+1. Kill existing processes:
+   ```bash
+   lsof -ti:3000 | xargs kill -9
+   ```
+
+2. Use a different port:
+   ```bash
+   cd apps/web
+   PORT=3001 npm run dev
+   ```
+   Then access: http://localhost:3001
+
+### Error: "react not found"
+
+This means dependencies aren't installed. Run:
+
+```bash
+# From the root directory
+npm install
+```
+
+### Error: "Cannot find module"
+
+Make sure workspace packages are built:
+
+```bash
+# From the root directory
+cd packages/shared-types && npm run build && cd ../..
+cd packages/theme-system && npm run build && cd ../..
+cd packages/utils && npm run build && cd ../..
+cd packages/api-client && npm run build && cd ../..
+```
+
+### Server Starts But Page Doesn't Load
+
+1. Check the terminal for compilation errors
+2. Open browser developer console (F12) and check for errors
+3. Try clearing the Next.js cache:
+   ```bash
+   cd apps/web
+   rm -rf .next
+   npm run dev
+   ```
+
+## Common Issues
+
+- **Wrong directory**: Always start from the project root (`/Users/sabuj/Desktop/HOS-latest Sabu`)
+- **Port in use**: Kill existing processes or use a different port
+- **Missing dependencies**: Run `npm install` from the root directory
+- **Workspace packages not built**: Build them as shown above

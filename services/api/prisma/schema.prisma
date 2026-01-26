@@ -96,6 +96,17 @@ model User {
   defaultTenantId   String?
   defaultTenant     Tenant?      @relation("DefaultTenant", fields: [defaultTenantId], references: [id], onDelete: SetNull)
 
+  // Marketing dates (for personalized campaigns)
+  birthday    DateTime? // Store month/day for birthday discounts
+  anniversary DateTime? // Optional for gift suggestions
+
+  // Team member specific fields
+  department   String?
+  employeeId   String?
+  managerId    String?
+  manager      User?   @relation("ManagerReports", fields: [managerId], references: [id], onDelete: SetNull)
+  directReports User[] @relation("ManagerReports")
+
   @@map("users")
 }
 
@@ -221,6 +232,14 @@ model Customer {
   country            String?
   currencyPreference String  @default("GBP")
 
+  // B2B/Wholesaler fields (null for regular customers)
+  companyName       String?
+  businessRegNumber String?
+  vatNumber         String?
+  businessType      String? // RETAIL, DISTRIBUTOR, RESELLER
+  creditTerms       String? // NET_30, NET_60, PREPAID
+  billingAddressId  String?
+
   @@map("customers")
 }
 
@@ -248,6 +267,25 @@ model Seller {
   logisticsOption        LogisticsOption @default(HOS_LOGISTICS)
   createdAt              DateTime        @default(now())
   updatedAt              DateTime        @updatedAt
+
+  // Business compliance fields
+  legalBusinessName String?
+  companyName       String?
+  vatNumber         String?
+
+  // Bank details (encrypted)
+  bankName          String?
+  accountHolder     String?
+  accountNumberEnc  String? // Encrypted
+  sortCodeEnc       String? // Encrypted
+
+  // Warehouse/operations address
+  warehouseAddressId String?
+
+  // Operations contact
+  opsContactName  String?
+  opsContactEmail String?
+  opsContactPhone String?
 
   // Relations
   products              Product[]

@@ -1,4 +1,4 @@
-import { IsEmail, IsEnum, IsOptional, IsString, MinLength, Matches } from 'class-validator';
+import { IsEmail, IsEnum, IsOptional, IsString, MinLength, Matches, IsIn } from 'class-validator';
 import { UserRole } from '@prisma/client';
 
 export class CreateAdminUserDto {
@@ -25,15 +25,38 @@ export class CreateAdminUserDto {
   @IsEnum(UserRole)
   role: UserRole;
 
-  // Required only when creating seller roles
+  // Admin specific: assign a permission-role (custom role) for fine-grained permissions
+  @IsOptional()
+  @IsString()
+  permissionRoleName?: string;
+
+  // Seller/Wholesaler specific
   @IsOptional()
   @IsString()
   storeName?: string;
 
-  // Optional: assign a permission-role (custom role) for fine-grained permissions
   @IsOptional()
   @IsString()
-  permissionRoleName?: string;
+  companyName?: string;
+
+  @IsOptional()
+  @IsString()
+  vatNumber?: string;
+
+  // Wholesaler specific
+  @IsOptional()
+  @IsString()
+  @IsIn(['RETAIL', 'DISTRIBUTOR', 'RESELLER'], { message: 'Business type must be RETAIL, DISTRIBUTOR, or RESELLER' })
+  businessType?: string;
+
+  // Team member specific
+  @IsOptional()
+  @IsString()
+  department?: string;
+
+  @IsOptional()
+  @IsString()
+  employeeId?: string;
 }
 
 

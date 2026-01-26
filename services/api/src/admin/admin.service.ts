@@ -44,8 +44,17 @@ export class AdminService {
     lastName?: string;
     phone?: string;
     role: UserRole;
-    storeName?: string;
+    // Admin specific
     permissionRoleName?: string;
+    // Seller/Wholesaler specific
+    storeName?: string;
+    companyName?: string;
+    vatNumber?: string;
+    // Wholesaler specific
+    businessType?: string;
+    // Team member specific
+    department?: string;
+    employeeId?: string;
   }) {
     const normalizedEmail = data.email.trim().toLowerCase();
 
@@ -78,7 +87,18 @@ export class AdminService {
       permissionRoleId = pr.id;
     }
 
-    // Create user
+    // Check if this is a team role
+    const teamRoles: UserRole[] = [
+      UserRole.PROCUREMENT,
+      UserRole.FULFILLMENT,
+      UserRole.CATALOG,
+      UserRole.MARKETING,
+      UserRole.FINANCE,
+      UserRole.CMS_EDITOR,
+    ];
+    const isTeamRole = teamRoles.includes(data.role);
+
+    // Create user with role-specific fields
     const user = await this.prisma.user.create({
       data: {
         email: normalizedEmail,
@@ -88,6 +108,11 @@ export class AdminService {
         phone: data.phone,
         role: data.role,
         permissionRoleId,
+        // Team member specific fields
+        ...(isTeamRole && {
+          department: data.department,
+          employeeId: data.employeeId,
+        }),
       },
       select: {
         id: true,
@@ -97,6 +122,8 @@ export class AdminService {
         phone: true,
         role: true,
         permissionRoleId: true,
+        department: true,
+        employeeId: true,
         avatar: true,
         createdAt: true,
         updatedAt: true,
@@ -107,6 +134,18 @@ export class AdminService {
     if (data.role === UserRole.CUSTOMER) {
       await this.prisma.customer.create({
         data: { userId: user.id },
+      });
+    }
+
+    // Create wholesaler customer profile with business fields
+    if (data.role === UserRole.WHOLESALER) {
+      await this.prisma.customer.create({
+        data: {
+          userId: user.id,
+          companyName: data.companyName,
+          vatNumber: data.vatNumber,
+          businessType: data.businessType,
+        },
       });
     }
 
@@ -132,6 +171,9 @@ export class AdminService {
           timezone: 'UTC',
           sellerType: data.role === UserRole.WHOLESALER ? 'WHOLESALER' : 'B2C_SELLER',
           logisticsOption: 'HOS_LOGISTICS',
+          // Business fields
+          companyName: data.companyName,
+          vatNumber: data.vatNumber,
         },
       });
     }
