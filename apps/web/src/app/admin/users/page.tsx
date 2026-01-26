@@ -338,15 +338,8 @@ export default function AdminUsersPage() {
       toast.error('Cannot modify the primary admin user');
       return;
     }
-
-    try {
-      const newStatus = user.isActive === false ? true : false;
-      await apiClient.updateUser(user.id, { isActive: newStatus });
-      toast.success(`User ${newStatus ? 'activated' : 'deactivated'}`);
-      fetchUsers();
-    } catch (err: any) {
-      toast.error(err.message || 'Failed to update user status');
-    }
+    // TODO: Implement user status toggle when backend supports it
+    toast.error('User status toggle is not yet supported by the API');
   };
 
   const handleBulkAction = async (action: 'activate' | 'deactivate' | 'delete') => {
@@ -365,14 +358,16 @@ export default function AdminUsersPage() {
 
     if (!confirm(`${action === 'delete' ? 'Delete' : action === 'activate' ? 'Activate' : 'Deactivate'} ${selectedList.length} users?`)) return;
 
+    if (action !== 'delete') {
+      // TODO: Implement user status toggle when backend supports it
+      toast.error('User activate/deactivate is not yet supported by the API');
+      return;
+    }
+
     let success = 0;
     for (const id of selectedList) {
       try {
-        if (action === 'delete') {
-          await apiClient.deleteUser(id);
-        } else {
-          await apiClient.updateUser(id, { isActive: action === 'activate' });
-        }
+        await apiClient.deleteUser(id);
         success++;
       } catch {
         // Continue on error
