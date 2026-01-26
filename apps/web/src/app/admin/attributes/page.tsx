@@ -345,7 +345,6 @@ export default function AdminAttributesPage() {
       await apiClient.createAttributeValue(attributeId, {
         value: newValue.trim(),
         order: attribute?.values?.length || 0,
-        colorHex: attribute?.type === 'COLOR' ? colorHex : undefined,
       });
       toast.success('Value added successfully');
       setNewValue('');
@@ -450,7 +449,6 @@ export default function AdminAttributesPage() {
           await apiClient.createAttributeValue(response.data.id, {
             value: val.value,
             order: val.order,
-            colorHex: val.colorHex,
           });
         }
       }
