@@ -66,13 +66,16 @@ export default function AdminCustomerGroupsPage() {
       setLoading(true);
       setError(null);
       const response = await apiClient.getCustomerGroups(includeInactive);
-      if (response?.data) {
+      if (response?.data && Array.isArray(response.data)) {
         setGroups(response.data);
+      } else {
+        setGroups([]);
       }
     } catch (err: any) {
       console.error('Error fetching customer groups:', err);
       setError(err.message || 'Failed to load customer groups');
       toast.error(err.message || 'Failed to load customer groups');
+      setGroups([]);
     } finally {
       setLoading(false);
     }

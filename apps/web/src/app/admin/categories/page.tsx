@@ -85,16 +85,19 @@ export default function AdminCategoriesPage() {
       setLoading(true);
       setError(null);
       const response = await apiClient.getCategoryTree();
-      if (response?.data) {
+      if (response?.data && Array.isArray(response.data)) {
         setCategories(response.data);
         calculateStats(response.data);
         // Expand all root categories by default
         const rootIds = new Set(response.data.map((c: Category) => c.id));
         setExpandedIds(rootIds);
+      } else {
+        setCategories([]);
       }
     } catch (err: any) {
       console.error('Error fetching categories:', err);
       setError(err.message || 'Failed to load categories');
+      setCategories([]);
     } finally {
       setLoading(false);
     }

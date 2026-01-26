@@ -20,12 +20,15 @@ export default function AdminCatalogPage() {
       setLoading(true);
       setError(null);
       const response = await apiClient.getCatalogPending();
-      if (response?.data) {
+      if (response?.data && Array.isArray(response.data)) {
         setEntries(response.data);
+      } else {
+        setEntries([]);
       }
     } catch (err: any) {
       console.error('Error fetching catalog entries:', err);
       setError(err.message || 'Failed to load catalog entries');
+      setEntries([]);
     } finally {
       setLoading(false);
     }

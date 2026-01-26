@@ -35,12 +35,15 @@ export default function AdminPromotionsPage() {
     try {
       setLoading(true);
       const response = await apiClient.getPromotions();
-      if (response?.data) {
+      if (response?.data && Array.isArray(response.data)) {
         setPromotions(response.data);
+      } else {
+        setPromotions([]);
       }
     } catch (err: any) {
       console.error('Error fetching promotions:', err);
       toast.error(err.message || 'Failed to load promotions');
+      setPromotions([]);
     } finally {
       setLoading(false);
     }

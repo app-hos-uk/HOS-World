@@ -84,13 +84,16 @@ export default function AdminTagsPage() {
       setError(null);
       // Fetch all tags (including inactive for admin)
       const response = await apiClient.getTags({});
-      if (response?.data) {
+      if (response?.data && Array.isArray(response.data)) {
         setTags(response.data);
         calculateStats(response.data);
+      } else {
+        setTags([]);
       }
     } catch (err: any) {
       console.error('Error fetching tags:', err);
       setError(err.message || 'Failed to load tags');
+      setTags([]);
     } finally {
       setLoading(false);
     }

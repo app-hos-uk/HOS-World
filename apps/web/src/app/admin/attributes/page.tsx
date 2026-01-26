@@ -117,13 +117,16 @@ export default function AdminAttributesPage() {
       setLoading(true);
       setError(null);
       const response = await apiClient.getAttributes();
-      if (response?.data) {
+      if (response?.data && Array.isArray(response.data)) {
         setAttributes(response.data);
         calculateStats(response.data);
+      } else {
+        setAttributes([]);
       }
     } catch (err: any) {
       console.error('Error fetching attributes:', err);
       setError(err.message || 'Failed to load attributes');
+      setAttributes([]);
     } finally {
       setLoading(false);
     }
@@ -152,11 +155,14 @@ export default function AdminAttributesPage() {
   const fetchCategories = useCallback(async () => {
     try {
       const response = await apiClient.getCategories();
-      if (response?.data) {
+      if (response?.data && Array.isArray(response.data)) {
         setCategories(response.data);
+      } else {
+        setCategories([]);
       }
     } catch (err: any) {
       console.error('Error fetching categories:', err);
+      setCategories([]);
     }
   }, []);
 

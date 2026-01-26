@@ -83,13 +83,16 @@ export default function AdminReturnPoliciesPage() {
       setLoading(true);
       setError(null);
       const response = await apiClient.getReturnPolicies();
-      if (response?.data) {
+      if (response?.data && Array.isArray(response.data)) {
         setPolicies(response.data);
+      } else {
+        setPolicies([]);
       }
     } catch (err: any) {
       console.error('Error fetching return policies:', err);
       setError(err.message || 'Failed to load return policies');
       toast.error(err.message || 'Failed to load return policies');
+      setPolicies([]);
     } finally {
       setLoading(false);
     }
