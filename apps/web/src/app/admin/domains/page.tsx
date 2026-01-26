@@ -285,11 +285,11 @@ export default function AdminDomainsPage() {
     try {
       setActionLoading(true);
       await toast.promise(
-        apiClient.verifyDNS?.(seller.id),
+        apiClient.getDNSConfiguration(seller.id),
         {
-          loading: 'Verifying DNS records...',
-          success: 'DNS verification complete',
-          error: (err) => err.message || 'DNS verification failed',
+          loading: 'Checking DNS configuration...',
+          success: 'DNS configuration retrieved',
+          error: (err: any) => err.message || 'Failed to check DNS',
         }
       );
       await fetchSellers();
