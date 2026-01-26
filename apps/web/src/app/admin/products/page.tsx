@@ -113,7 +113,7 @@ export default function AdminProductsPage() {
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [productToDelete, setProductToDelete] = useState<Product | null>(null);
   const [showBulkModal, setShowBulkModal] = useState(false);
-  const [bulkAction, setBulkAction] = useState<'publish' | 'unpublish' | 'delete'>('publish');
+  const [bulkAction, setBulkAction] = useState<'publish' | 'unpublish' | 'inactive' | 'delete'>('publish');
 
   const fetchProducts = useCallback(async () => {
     try {
@@ -496,6 +496,36 @@ export default function AdminProductsPage() {
     }
   };
 
+  const handleDeactivate = async (product: Product) => {
+    try {
+      await apiClient.updateAdminProduct(product.id, { status: 'DRAFT' });
+      toast.success('Product deactivated (moved to Draft)');
+      fetchProducts();
+    } catch (err: any) {
+      toast.error(err.message || 'Failed to deactivate product');
+    }
+  };
+
+  const handleSetInactive = async (product: Product) => {
+    try {
+      await apiClient.updateAdminProduct(product.id, { status: 'INACTIVE' });
+      toast.success('Product set to Inactive');
+      fetchProducts();
+    } catch (err: any) {
+      toast.error(err.message || 'Failed to set product inactive');
+    }
+  };
+
+  const handleStatusChange = async (product: Product, newStatus: string) => {
+    try {
+      await apiClient.updateAdminProduct(product.id, { status: newStatus });
+      toast.success(`Product status changed to ${newStatus}`);
+      fetchProducts();
+    } catch (err: any) {
+      toast.error(err.message || 'Failed to change product status');
+    }
+  };
+
   const handleDeleteClick = (product: Product) => {
     setProductToDelete(product);
     setShowDeleteModal(true);
@@ -544,6 +574,8 @@ export default function AdminProductsPage() {
           await apiClient.updateAdminProduct(id, { status: 'ACTIVE' });
         } else if (bulkAction === 'unpublish') {
           await apiClient.updateAdminProduct(id, { status: 'DRAFT' });
+        } else if (bulkAction === 'inactive') {
+          await apiClient.updateAdminProduct(id, { status: 'INACTIVE' });
         } else if (bulkAction === 'delete') {
           const token = localStorage.getItem('auth_token');
           const apiUrl = getPublicApiBaseUrl();
@@ -763,6 +795,12 @@ export default function AdminProductsPage() {
                   className="px-4 py-2 bg-yellow-600 text-white rounded-lg hover:bg-yellow-700 text-sm"
                 >
                   Unpublish
+                </button>
+                <button
+                  onClick={() => { setBulkAction('inactive'); setShowBulkModal(true); }}
+                  className="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 text-sm"
+                >
+                  Set Inactive
                 </button>
                 <button
                   onClick={() => { setBulkAction('delete'); setShowBulkModal(true); }}
@@ -1195,18 +1233,40 @@ export default function AdminProductsPage() {
                           {new Date(product.createdAt).toLocaleDateString()}
                         </td>
                         <td className="px-4 py-3 text-right">
-                          <div className="flex justify-end gap-1">
+                          <div className="flex justify-end gap-1 items-center">
                             <button onClick={() => handleEdit(product)} className="px-2 py-1 text-sm text-purple-600 hover:bg-purple-50 rounded">
                               Edit
                             </button>
                             <button onClick={() => handleDuplicateProduct(product)} className="px-2 py-1 text-sm text-gray-600 hover:bg-gray-50 rounded" title="Duplicate">
                               📋
                             </button>
+                            {/* Status-based actions */}
                             {product.status === 'DRAFT' && (
-                              <button onClick={() => handleApprove(product)} className="px-2 py-1 text-sm text-green-600 hover:bg-green-50 rounded">
+                              <button onClick={() => handleApprove(product)} className="px-2 py-1 text-sm text-green-600 hover:bg-green-50 rounded" title="Publish product">
                                 Publish
                               </button>
                             )}
+                            {product.status === 'ACTIVE' && (
+                              <button onClick={() => handleDeactivate(product)} className="px-2 py-1 text-sm text-yellow-600 hover:bg-yellow-50 rounded" title="Move to Draft">
+                                Deactivate
+                              </button>
+                            )}
+                            {product.status === 'INACTIVE' && (
+                              <button onClick={() => handleApprove(product)} className="px-2 py-1 text-sm text-green-600 hover:bg-green-50 rounded" title="Reactivate product">
+                                Reactivate
+                              </button>
+                            )}
+                            {/* Status dropdown for quick status change */}
+                            <select
+                              value={product.status}
+                              onChange={(e) => handleStatusChange(product, e.target.value)}
+                              className="px-1 py-1 text-xs border border-gray-300 rounded bg-white text-gray-600 cursor-pointer"
+                              title="Change status"
+                            >
+                              <option value="ACTIVE">Active</option>
+                              <option value="DRAFT">Draft</option>
+                              <option value="INACTIVE">Inactive</option>
+                            </select>
                             <button onClick={() => handleDeleteClick(product)} className="px-2 py-1 text-sm text-red-600 hover:bg-red-50 rounded">
                               Delete
                             </button>
@@ -1342,20 +1402,28 @@ export default function AdminProductsPage() {
             <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
               <div className="bg-white rounded-lg max-w-md w-full p-6">
                 <h2 className="text-2xl font-bold mb-4">
-                  {bulkAction === 'publish' ? 'Publish Products' : bulkAction === 'unpublish' ? 'Unpublish Products' : 'Delete Products'}
+                  {bulkAction === 'publish' ? 'Publish Products' : 
+                   bulkAction === 'unpublish' ? 'Unpublish Products' : 
+                   bulkAction === 'inactive' ? 'Set Products Inactive' : 
+                   'Delete Products'}
                 </h2>
                 <p className="text-gray-600 mb-6">
-                  Are you sure you want to {bulkAction} <strong>{selectedProducts.size}</strong> products?
+                  Are you sure you want to {bulkAction === 'inactive' ? 'set inactive' : bulkAction} <strong>{selectedProducts.size}</strong> products?
                   {bulkAction === 'delete' && ' This cannot be undone.'}
                 </p>
                 <div className="flex gap-3">
                   <button 
                     onClick={handleBulkAction} 
                     className={`flex-1 px-6 py-2 text-white rounded-lg font-medium ${
-                      bulkAction === 'delete' ? 'bg-red-600 hover:bg-red-700' : 'bg-purple-600 hover:bg-purple-700'
+                      bulkAction === 'delete' ? 'bg-red-600 hover:bg-red-700' : 
+                      bulkAction === 'inactive' ? 'bg-gray-600 hover:bg-gray-700' : 
+                      'bg-purple-600 hover:bg-purple-700'
                     }`}
                   >
-                    {bulkAction === 'publish' ? 'Publish All' : bulkAction === 'unpublish' ? 'Unpublish All' : 'Delete All'}
+                    {bulkAction === 'publish' ? 'Publish All' : 
+                     bulkAction === 'unpublish' ? 'Unpublish All' : 
+                     bulkAction === 'inactive' ? 'Set All Inactive' : 
+                     'Delete All'}
                   </button>
                   <button onClick={() => setShowBulkModal(false)} className="px-6 py-2 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400 font-medium">
                     Cancel
