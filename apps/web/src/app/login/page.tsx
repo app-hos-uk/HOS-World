@@ -140,13 +140,7 @@ export default function LoginPage() {
     }
 
     try {
-      // #region agent log
-      console.log('[DEBUG] Login attempt starting...', { email });
-      // #endregion
       const response = await apiClient.login({ email, password });
-      // #region agent log
-      console.log('[DEBUG] Login response received:', { hasResponse: !!response, hasData: !!response?.data, hasToken: !!response?.data?.token, hasUser: !!response?.data?.user, userRole: response?.data?.user?.role });
-      // #endregion
       
       // Check response structure
       if (!response || !response.data) {
@@ -163,9 +157,6 @@ export default function LoginPage() {
       try {
         localStorage.setItem('auth_token', authToken);
         setToken(authToken);
-        // #region agent log
-        console.log('[DEBUG] Token saved to localStorage successfully');
-        // #endregion
       } catch (e) {
         console.error('Failed to save token:', e);
         throw new Error('Failed to save authentication token');
@@ -208,18 +199,12 @@ export default function LoginPage() {
       }
 
       // Redirect to role-specific dashboard or home
-      // #region agent log
-      console.log('[DEBUG] Redirecting to:', redirectPath);
-      // #endregion
       if (typeof window !== 'undefined') {
         window.location.replace(redirectPath);
       } else {
         router.replace(redirectPath);
       }
     } catch (err: any) {
-      // #region agent log
-      console.log('[DEBUG] Login error:', { message: err?.message, name: err?.name });
-      // #endregion
       console.error('[LOGIN] Login error:', err);
       console.error('[LOGIN] Error details:', {
         message: err.message,

@@ -140,13 +140,7 @@ export function CurrencyProvider({ children }: { children: React.ReactNode }) {
 
   const formatPrice = useCallback(
     (amount: number, fromCurrency: string = 'GBP'): string => {
-      // #region agent log
-      console.log('[DEBUG] formatPrice called:', {amount, amountType: typeof amount, fromCurrency, currency, ratesKeys: Object.keys(rates)});
-      // #endregion
       const convertedAmount = convertPrice(amount, fromCurrency);
-      // #region agent log
-      console.log('[DEBUG] formatPrice afterConvert:', {convertedAmount, convertedType: typeof convertedAmount, isNaN: Number.isNaN(convertedAmount)});
-      // #endregion
       const symbol = getCurrencySymbol(currency);
       
       // Format with appropriate decimal places - ensure convertedAmount is a number

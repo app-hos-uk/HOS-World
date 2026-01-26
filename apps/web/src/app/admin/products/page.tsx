@@ -120,14 +120,8 @@ export default function AdminProductsPage() {
       setLoading(true);
       setError(null);
       const response = await apiClient.getAdminProducts({ page, limit: 100 });
-      // #region agent log
-      console.log('[DEBUG] fetchProducts API response:', {hasData: !!response?.data, dataType: typeof response?.data, hasProducts: !!response?.data?.products, hasNestedData: !!response?.data?.data});
-      // #endregion
       const list = response?.data?.products || response?.data?.data || response?.data || [];
       const productList = Array.isArray(list) ? list : [];
-      // #region agent log
-      if(productList.length > 0) { console.log('[DEBUG] First product price details:', {price: productList[0]?.price, priceType: typeof productList[0]?.price, stock: productList[0]?.stock, stockType: typeof productList[0]?.stock}); }
-      // #endregion
       setProducts(productList);
       calculateStats(productList);
     } catch (err: any) {
@@ -186,9 +180,6 @@ export default function AdminProductsPage() {
     const seller = productList.filter(p => !p.isPlatformOwned && p.sellerId);
     const priceSum = productList.reduce((sum, p) => sum + (Number(p.price) || 0), 0);
     const avgPrice = productList.length > 0 ? priceSum / productList.length : 0;
-    // #region agent log
-    console.log('[DEBUG] calculateStats:', {productCount: productList.length, priceSum, priceSumType: typeof priceSum, avgPrice, avgPriceType: typeof avgPrice, isNaN: Number.isNaN(avgPrice)});
-    // #endregion
 
     setStats({
       totalProducts: productList.length,
