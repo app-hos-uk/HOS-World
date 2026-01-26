@@ -62,7 +62,7 @@ export default function MigrationFeaturesPage() {
       // Fallback: try direct fetch
       try {
         const token = localStorage.getItem('auth_token');
-        const apiUrl = getPublicApiBaseUrl() || 'http://localhost:3001/api/v1';
+        const apiUrl = getPublicApiBaseUrl() || 'http://localhost:3001/api';
         const fetchResponse = await fetch(`${apiUrl}/admin/migration-features/run-sql`, {
           method: 'POST',
           headers: {

@@ -8,7 +8,6 @@ import {
   Param,
   Query,
   UseGuards,
-Version,
 } from '@nestjs/common';
 import {
   ApiTags,
@@ -29,7 +28,6 @@ import { Public } from '../common/decorators/public.decorator';
 import type { ApiResponse } from '@hos-marketplace/shared-types';
 
 @ApiTags('tax')
-@Version('1')
 @Controller('tax')
 export class TaxController {
   constructor(private readonly taxService: TaxService) {}

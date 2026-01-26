@@ -7,7 +7,6 @@ import {
   UseGuards,
   Request,
   Headers,
-Version,
 } from '@nestjs/common';
 import {
   ApiTags,
@@ -22,7 +21,6 @@ import type { ApiResponse } from '@hos-marketplace/shared-types';
 
 @ApiTags('gdpr')
 @ApiBearerAuth('JWT-auth')
-@Version('1')
 @Controller('gdpr')
 @UseGuards(JwtAuthGuard)
 export class GDPRController {

@@ -9,7 +9,6 @@ import {
   UseGuards,
   ParseUUIDPipe,
   Request,
-Version,
 } from '@nestjs/common';
 import {
   ApiTags,
@@ -28,7 +27,6 @@ import { Public } from '../common/decorators/public.decorator';
 import type { ApiResponse } from '@hos-marketplace/shared-types';
 
 @ApiTags('support')
-@Version('1')
 @Controller('support/tickets')
 export class TicketsController {
   constructor(private readonly ticketsService: TicketsService) {}

@@ -49,7 +49,7 @@ export function AIChatInterface({ characterId, character, onClose }: AIChatInter
 
   const loadCharacter = async () => {
     try {
-      const apiUrl = getPublicApiBaseUrl() || 'http://localhost:3001/api/v1';
+      const apiUrl = getPublicApiBaseUrl() || 'http://localhost:3001/api';
       const response = await fetch(`${apiUrl}/characters/${characterId}`);
       
       if (!response.ok) {
@@ -65,7 +65,7 @@ export function AIChatInterface({ characterId, character, onClose }: AIChatInter
 
   const loadChatHistory = async () => {
     try {
-      const apiUrl = getPublicApiBaseUrl() || 'http://localhost:3001/api/v1';
+      const apiUrl = getPublicApiBaseUrl() || 'http://localhost:3001/api';
       const token = localStorage.getItem('auth_token');
       const response = await fetch(`${apiUrl}/ai/chat/history?characterId=${characterId}`, {
         headers: {
@@ -103,7 +103,7 @@ export function AIChatInterface({ characterId, character, onClose }: AIChatInter
     setLoading(true);
 
     try {
-      const apiUrl = getPublicApiBaseUrl() || 'http://localhost:3001/api/v1';
+      const apiUrl = getPublicApiBaseUrl() || 'http://localhost:3001/api';
       const token = localStorage.getItem('auth_token');
       const response = await fetch(`${apiUrl}/ai/chat/${characterId}`, {
         method: 'POST',

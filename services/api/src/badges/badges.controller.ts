@@ -5,7 +5,6 @@ import {
   UseGuards,
   Request,
   ParseUUIDPipe,
-Version,
 } from '@nestjs/common';
 import {
   ApiTags,
@@ -20,7 +19,6 @@ import { Public } from '../common/decorators/public.decorator';
 import type { ApiResponse } from '@hos-marketplace/shared-types';
 
 @ApiTags('badges')
-@Version('1')
 @Controller('badges')
 export class BadgesController {
   constructor(private readonly badgesService: BadgesService) {}

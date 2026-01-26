@@ -8,7 +8,6 @@ import {
   Param,
   Query,
   UseGuards,
-Version,
 } from '@nestjs/common';
 import {
   ApiTags,
@@ -32,7 +31,6 @@ import { Request } from '@nestjs/common';
 import type { ApiResponse } from '@hos-marketplace/shared-types';
 
 @ApiTags('inventory')
-@Version('1')
 @Controller('inventory')
 export class InventoryController {
   constructor(private readonly inventoryService: InventoryService) {}

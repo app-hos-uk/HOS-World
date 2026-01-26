@@ -9,7 +9,6 @@ import {
   Query,
   UseGuards,
   ParseUUIDPipe,
-Version,
 } from '@nestjs/common';
 import {
   ApiTags,
@@ -34,7 +33,6 @@ import type { ApiResponse } from '@hos-marketplace/shared-types';
 import { AttributeType } from '@prisma/client';
 
 @ApiTags('taxonomy')
-@Version('1')
 @Controller('taxonomy/attributes')
 export class AttributesController {
   constructor(private readonly attributesService: AttributesService) {}

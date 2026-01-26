@@ -20,7 +20,7 @@ export function SocialShare({ type, itemId, itemName, itemImage }: SocialSharePr
       const token = localStorage.getItem('auth_token');
       
       // Generate share URL
-      const apiUrl = getPublicApiBaseUrl() || 'http://localhost:3001/api/v1';
+      const apiUrl = getPublicApiBaseUrl() || 'http://localhost:3001/api';
       const urlResponse = await fetch(`${apiUrl}/social-sharing/share-url?type=${type}&itemId=${itemId}`, {
         headers: {
           Authorization: `Bearer ${token}`,
@@ -38,7 +38,7 @@ export function SocialShare({ type, itemId, itemName, itemImage }: SocialSharePr
         setTimeout(() => setCopied(false), 2000);
         
         // Record share
-        const apiUrl = getPublicApiBaseUrl() || 'http://localhost:3001/api/v1';
+        const apiUrl = getPublicApiBaseUrl() || 'http://localhost:3001/api';
         await fetch(`${apiUrl}/social-sharing/share`, {
           method: 'POST',
           headers: {

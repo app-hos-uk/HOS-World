@@ -1,5 +1,4 @@
-import { Controller, Get, Optional, Inject Version,
-} from '@nestjs/common';
+import { Controller, Get, Optional, Inject } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse as SwaggerApiResponse } from '@nestjs/swagger';
 import { AppService } from './app.service';
 import { Public } from './common/decorators/public.decorator';

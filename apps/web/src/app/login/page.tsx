@@ -45,8 +45,8 @@ export default function LoginPage() {
   });
   const [currencyPreference, setCurrencyPreference] = useState('GBP');
 
-  // Backend OAuth endpoints (Nest uses URI versioning: `/api/v1`)
-  const oauthBaseUrl = getPublicApiBaseUrl() || 'https://hos-marketplaceapi-production.up.railway.app/api/v1';
+  // Backend OAuth endpoints
+  const oauthBaseUrl = getPublicApiBaseUrl() || 'https://hos-marketplaceapi-production.up.railway.app/api';
 
   // Set mounted state after hydration to prevent server/client mismatch
   useEffect(() => {

@@ -9,7 +9,6 @@ import {
   Query,
   UseGuards,
   Request,
-Version,
 } from '@nestjs/common';
 import {
   ApiTags,
@@ -27,7 +26,6 @@ import { Roles } from '../common/decorators/roles.decorator';
 import type { ApiResponse } from '@hos-marketplace/shared-types';
 
 @ApiTags('webhooks')
-@Version('1')
 @Controller('webhooks')
 @UseGuards(JwtAuthGuard, RolesGuard)
 @Roles('ADMIN', 'SELLER', 'B2C_SELLER')

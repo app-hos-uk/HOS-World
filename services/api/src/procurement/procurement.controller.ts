@@ -8,7 +8,6 @@ import {
   UseGuards,
   Request,
   ParseUUIDPipe,
-Version,
 } from '@nestjs/common';
 import {
   ApiTags,
@@ -29,7 +28,6 @@ import { ProductSubmissionStatus } from '@prisma/client';
 
 @ApiTags('procurement')
 @ApiBearerAuth('JWT-auth')
-@Version('1')
 @Controller('procurement')
 @UseGuards(JwtAuthGuard, RolesGuard)
 @Roles('PROCUREMENT', 'ADMIN')

@@ -10,8 +10,7 @@ import { Public } from './common/decorators/public.decorator';
 @Controller()
 export class RootController {
   @Public()
-  @Version('1')
-  @Get()
+    @Get()
   @ApiOperation({
     summary: 'Get API root information',
     description: 'Returns basic API information and available endpoints. Public endpoint, no authentication required.',

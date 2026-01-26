@@ -6,7 +6,6 @@ import {
   Request,
   ParseUUIDPipe,
   Param,
-Version,
 } from '@nestjs/common';
 import {
   ApiTags,
@@ -24,7 +23,6 @@ import { Public } from '../common/decorators/public.decorator';
 import type { ApiResponse } from '@hos-marketplace/shared-types';
 
 @ApiTags('activity')
-@Version('1')
 @Controller('activity')
 export class ActivityController {
   constructor(private readonly activityService: ActivityService) {}

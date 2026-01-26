@@ -200,7 +200,7 @@ export default function AdminThemesPage() {
       formData.append('type', uploadForm.type);
 
       await toast.promise(
-        fetch(`${getPublicApiBaseUrl() || 'http://localhost:3001/api/v1'}/themes/upload`, {
+        fetch(`${getPublicApiBaseUrl() || 'http://localhost:3001/api'}/themes/upload`, {
           method: 'POST',
           headers: {
             Authorization: `Bearer ${localStorage.getItem('auth_token')}`,

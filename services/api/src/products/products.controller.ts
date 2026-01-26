@@ -10,8 +10,7 @@ import {
   UseGuards,
   Request,
   ParseUUIDPipe,
-  Version,
-} from '@nestjs/common';
+  } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse as SwaggerApiResponse, ApiBearerAuth, ApiParam, ApiQuery, ApiBody } from '@nestjs/swagger';
 import { ProductsService } from './products.service';
 import { ProductsBulkService } from './products-bulk.service';
@@ -25,7 +24,6 @@ import { Public } from '../common/decorators/public.decorator';
 import type { ApiResponse, PaginatedResponse, Product } from '@hos-marketplace/shared-types';
 
 @ApiTags('products')
-@Version('1')
 @Controller('products')
 export class ProductsController {
   constructor(

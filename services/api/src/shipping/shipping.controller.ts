@@ -8,7 +8,6 @@ import {
   Query,
   UseGuards,
   Request,
-Version,
 } from '@nestjs/common';
 import {
   ApiTags,
@@ -29,7 +28,6 @@ import type { ApiResponse } from '@hos-marketplace/shared-types';
 import type { ShippingOption } from './types/shipping.types';
 
 @ApiTags('shipping')
-@Version('1')
 @Controller('shipping')
 export class ShippingController {
   constructor(private readonly shippingService: ShippingService) {}

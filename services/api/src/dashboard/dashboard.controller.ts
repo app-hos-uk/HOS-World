@@ -4,8 +4,7 @@ import {
   Query,
   UseGuards,
   Request,
-  Version,
-} from '@nestjs/common';
+  } from '@nestjs/common';
 import {
   ApiTags,
   ApiOperation,
@@ -21,7 +20,6 @@ import type { ApiResponse } from '@hos-marketplace/shared-types';
 
 @ApiTags('dashboard')
 @ApiBearerAuth('JWT-auth')
-@Version('1')
 @Controller('dashboard')
 @UseGuards(JwtAuthGuard, RolesGuard)
 export class DashboardController {

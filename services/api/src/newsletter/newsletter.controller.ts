@@ -8,7 +8,6 @@ import {
   Request,
   ParseIntPipe,
   DefaultValuePipe,
-Version,
 } from '@nestjs/common';
 import {
   ApiTags,
@@ -27,7 +26,6 @@ import { Public } from '../common/decorators/public.decorator';
 import type { ApiResponse } from '@hos-marketplace/shared-types';
 
 @ApiTags('newsletter')
-@Version('1')
 @Controller('newsletter')
 export class NewsletterController {
   constructor(private readonly newsletterService: NewsletterService) {}

@@ -8,7 +8,6 @@ import {
   UseGuards,
   Request,
   ParseUUIDPipe,
-Version,
 } from '@nestjs/common';
 import {
   ApiTags,
@@ -27,7 +26,6 @@ import type { ApiResponse } from '@hos-marketplace/shared-types';
 
 @ApiTags('finance')
 @ApiBearerAuth('JWT-auth')
-@Version('1')
 @Controller('finance')
 @UseGuards(JwtAuthGuard, RolesGuard)
 @Roles('FINANCE', 'ADMIN')

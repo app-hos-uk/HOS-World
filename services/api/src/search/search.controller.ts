@@ -8,7 +8,6 @@ import {
   DefaultValuePipe,
   ParseFloatPipe,
   Optional,
-Version,
 } from '@nestjs/common';
 import {
   ApiTags,
@@ -22,7 +21,6 @@ import { Public } from '../common/decorators/public.decorator';
 import type { ApiResponse } from '@hos-marketplace/shared-types';
 
 @ApiTags('search')
-@Version('1')
 @Controller('search')
 export class SearchController {
   constructor(private readonly searchService: SearchService) {}

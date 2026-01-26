@@ -9,7 +9,6 @@ import {
   UseGuards,
   Request,
   Query,
-Version,
 } from '@nestjs/common';
 import {
   ApiTags,
@@ -29,7 +28,6 @@ import { Public } from '../common/decorators/public.decorator';
 import type { ApiResponse } from '@hos-marketplace/shared-types';
 
 @ApiTags('promotions')
-@Version('1')
 @Controller('promotions')
 export class PromotionsController {
   constructor(private readonly promotionsService: PromotionsService) {}
