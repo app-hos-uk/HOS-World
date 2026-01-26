@@ -270,7 +270,6 @@ export default function AdminProductsPage() {
       await apiClient.createAdminProduct({
         name: formData.name,
         description: formData.description,
-        shortDescription: formData.shortDescription || undefined,
         price: parseFloat(formData.price),
         stock: parseInt(formData.stock, 10),
         taxRate: formData.taxRate ? parseFloat(formData.taxRate) : undefined,
@@ -284,16 +283,7 @@ export default function AdminProductsPage() {
           url: img.url, 
           alt: img.alt, 
           order: img.order,
-          isPrimary: img.isPrimary,
         })) : undefined,
-        weight: formData.weight ? parseFloat(formData.weight) : undefined,
-        length: formData.length ? parseFloat(formData.length) : undefined,
-        width: formData.width ? parseFloat(formData.width) : undefined,
-        height: formData.height ? parseFloat(formData.height) : undefined,
-        metaTitle: formData.metaTitle || undefined,
-        metaDescription: formData.metaDescription || undefined,
-        isFeatured: formData.isFeatured,
-        isHidden: formData.isHidden,
       });
       toast.success('Product created successfully');
       resetForm();
@@ -451,7 +441,6 @@ export default function AdminProductsPage() {
       await apiClient.updateAdminProduct(editingProduct.id, {
         name: formData.name,
         description: formData.description,
-        shortDescription: formData.shortDescription || undefined,
         price: parseFloat(formData.price),
         stock: parseInt(formData.stock, 10),
         taxRate: formData.taxRate ? parseFloat(formData.taxRate) : undefined,
@@ -463,17 +452,8 @@ export default function AdminProductsPage() {
           url: img.url, 
           alt: img.alt, 
           order: img.order,
-          isPrimary: img.isPrimary,
         })) : undefined,
         sellerId: formData.isPlatformOwned ? null : formData.sellerId || null,
-        weight: formData.weight ? parseFloat(formData.weight) : undefined,
-        length: formData.length ? parseFloat(formData.length) : undefined,
-        width: formData.width ? parseFloat(formData.width) : undefined,
-        height: formData.height ? parseFloat(formData.height) : undefined,
-        metaTitle: formData.metaTitle || undefined,
-        metaDescription: formData.metaDescription || undefined,
-        isFeatured: formData.isFeatured,
-        isHidden: formData.isHidden,
       });
       toast.success('Product updated successfully');
       setShowEditModal(false);
