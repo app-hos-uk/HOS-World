@@ -306,10 +306,19 @@ export default function OrderDetailPage() {
               )}
 
               {/* Order Notes */}
-              {order.notes && (
+              {order.notes && order.notes.length > 0 && (
                 <div className="bg-white rounded-lg shadow border border-gray-200 p-4 sm:p-6">
-                  <h2 className="text-lg font-semibold text-gray-900 mb-2">Order Notes</h2>
-                  <p className="text-gray-700">{order.notes}</p>
+                  <h2 className="text-lg font-semibold text-gray-900 mb-4">Order Notes</h2>
+                  <div className="space-y-3">
+                    {order.notes.filter(note => !note.internal).map((note) => (
+                      <div key={note.id} className="border-l-4 border-purple-200 pl-4 py-2">
+                        <p className="text-gray-700">{note.content}</p>
+                        <p className="text-xs text-gray-400 mt-1">
+                          {new Date(note.createdAt).toLocaleDateString()}
+                        </p>
+                      </div>
+                    ))}
+                  </div>
                 </div>
               )}
             </div>
