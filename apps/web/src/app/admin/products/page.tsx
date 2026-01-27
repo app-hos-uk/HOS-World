@@ -580,19 +580,6 @@ export default function AdminProductsPage() {
     setSelectedProducts(new Set());
   };
 
-  const resetForm = () => {
-    setShowCreateForm(false);
-    setFormData({ 
-      name: '', description: '', shortDescription: '', price: '', stock: '0',
-      taxRate: '', taxClassId: '', isPlatformOwned: true, sellerId: '',
-      categoryId: '', tagIds: [], attributes: [],
-      weight: '', length: '', width: '', height: '',
-      metaTitle: '', metaDescription: '', isFeatured: false, isHidden: false,
-    });
-    setImages([]);
-    setPublishNow(true);
-  };
-
   const exportColumns = [
     { key: 'name', header: 'Name' },
     { key: 'sku', header: 'SKU' },
@@ -950,13 +937,13 @@ export default function AdminProductsPage() {
 
                     {/* Taxonomy */}
                     <div className="border-t pt-4">
-                      <CategorySelector value={formData.categoryId} onChange={(categoryId) => setFormData({ ...formData, categoryId: categoryId || '' })} label="Category" />
+                      <CategorySelector value={formData.categoryId} onChange={(categoryId) => setFormData(prev => ({ ...prev, categoryId: categoryId || '' }))} label="Category" />
                       <div className="mt-4">
-                        <TagSelector value={formData.tagIds} onChange={(tagIds) => setFormData({ ...formData, tagIds })} label="Tags" />
+                        <TagSelector value={formData.tagIds} onChange={(tagIds) => setFormData(prev => ({ ...prev, tagIds }))} label="Tags" />
                       </div>
                       {formData.categoryId && (
                         <div className="mt-4">
-                          <AttributeEditor categoryId={formData.categoryId} value={formData.attributes} onChange={(attributes) => setFormData({ ...formData, attributes })} label="Product Attributes" />
+                          <AttributeEditor categoryId={formData.categoryId} value={formData.attributes} onChange={(attributes) => setFormData(prev => ({ ...prev, attributes }))} label="Product Attributes" />
                         </div>
                       )}
                     </div>

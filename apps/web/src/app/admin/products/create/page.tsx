@@ -71,12 +71,15 @@ export default function ProductCreationPage() {
 
   const handleCreateProduct = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Validate before setting loading state (early return won't reach finally block)
+    if (images.length === 0) {
+      toast.error('Please upload at least 1 product image');
+      return;
+    }
+    
     try {
       setLoading(true);
-      if (images.length === 0) {
-        toast.error('Please upload at least 1 product image');
-        return;
-      }
       
       // Create product as DRAFT (no price/stock - those are managed separately)
       const response = await apiClient.createAdminProduct({
@@ -342,14 +345,14 @@ export default function ProductCreationPage() {
                 <div className="space-y-4">
                   <CategorySelector
                     value={formData.categoryId}
-                    onChange={(categoryId) => setFormData({ ...formData, categoryId: categoryId || '' })}
+                    onChange={(categoryId) => setFormData((prev) => ({ ...prev, categoryId: categoryId || '' }))}
                     label="Category"
                     placeholder="Select a category"
                   />
                   
                   <TagSelector
                     value={formData.tagIds}
-                    onChange={(tagIds) => setFormData({ ...formData, tagIds })}
+                    onChange={(tagIds) => setFormData((prev) => ({ ...prev, tagIds }))}
                     label="Tags"
                     placeholder="Search and select tags..."
                   />
@@ -358,7 +361,7 @@ export default function ProductCreationPage() {
                     <AttributeEditor
                       categoryId={formData.categoryId}
                       value={formData.attributes}
-                      onChange={(attributes) => setFormData({ ...formData, attributes })}
+                      onChange={(attributes) => setFormData((prev) => ({ ...prev, attributes }))}
                       label="Product Attributes"
                     />
                   )}
