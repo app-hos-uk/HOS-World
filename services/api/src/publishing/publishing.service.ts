@@ -62,7 +62,8 @@ export class PublishingService {
       taxRate: productData.taxRate || 0,
       stock: submission.selectedQuantity || productData.stock || 0,
       fandom: productData.fandom,
-      category: productData.category,
+      category: productData.category, // Legacy field - kept for backward compatibility
+      categoryId: productData.categoryId, // New taxonomy category ID
       tags: productData.tags || [],
       status: 'ACTIVE' as any, // Status is handled separately
       images: catalogEntry.images.map((url, index) => ({

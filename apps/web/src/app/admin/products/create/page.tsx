@@ -8,6 +8,7 @@ import { useToast } from '@/hooks/useToast';
 import { CategorySelector } from '@/components/taxonomy/CategorySelector';
 import { TagSelector } from '@/components/taxonomy/TagSelector';
 import { AttributeEditor } from '@/components/taxonomy/AttributeEditor';
+import { FandomSelector } from '@/components/taxonomy/FandomSelector';
 import { getPublicApiBaseUrl } from '@/lib/apiBaseUrl';
 import { useRouter } from 'next/navigation';
 
@@ -252,13 +253,11 @@ export default function ProductCreationPage() {
                 </div>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Fandom</label>
-                <input
-                  type="text"
+                <FandomSelector
                   value={formData.fandom}
-                  onChange={(e) => setFormData((prev) => ({ ...prev, fandom: e.target.value }))}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
-                  placeholder="e.g., Harry Potter, Game of Thrones"
+                  onChange={(fandomSlug) => setFormData((prev) => ({ ...prev, fandom: fandomSlug || '' }))}
+                  label="Fandom"
+                  placeholder="Select a fandom"
                 />
               </div>
               <div>

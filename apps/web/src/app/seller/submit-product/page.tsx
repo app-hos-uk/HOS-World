@@ -4,6 +4,8 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { RouteGuard } from '@/components/RouteGuard';
 import { DashboardLayout } from '@/components/DashboardLayout';
+import { CategorySelector } from '@/components/taxonomy/CategorySelector';
+import { FandomSelector } from '@/components/taxonomy/FandomSelector';
 import { apiClient } from '@/lib/api';
 
 interface ImageUpload {
@@ -27,8 +29,6 @@ export default function SubmitProductPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState(false);
-  const [fandoms, setFandoms] = useState<any[]>([]);
-  const [loadingFandoms, setLoadingFandoms] = useState(true);
 
   // Form state
   const [formData, setFormData] = useState({
@@ -45,7 +45,7 @@ export default function SubmitProductPage() {
     stock: '',
     quantity: '',
     fandom: '',
-    category: '',
+    categoryId: '',
     tags: '',
   });
 
@@ -59,24 +59,6 @@ export default function SubmitProductPage() {
   });
   const [newOptionName, setNewOptionName] = useState('');
   const [newOptionValue, setNewOptionValue] = useState('');
-
-  useEffect(() => {
-    const loadFandoms = async () => {
-      try {
-        setLoadingFandoms(true);
-        const response = await apiClient.getFandoms();
-        if (response?.data) {
-          setFandoms(response.data);
-        }
-      } catch (err) {
-        console.error('Error loading fandoms:', err);
-      } finally {
-        setLoadingFandoms(false);
-      }
-    };
-
-    loadFandoms();
-  }, []);
 
   const handleInputChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
@@ -238,7 +220,7 @@ export default function SubmitProductPage() {
         stock: parseInt(formData.stock),
         quantity: formData.quantity ? parseInt(formData.quantity) : undefined,
         fandom: formData.fandom || undefined,
-        category: formData.category.trim() || undefined,
+        categoryId: formData.categoryId || undefined,
         tags: formData.tags
           .split(',')
           .map((tag) => tag.trim())
@@ -552,49 +534,20 @@ export default function SubmitProductPage() {
                 <div className="space-y-4 sm:space-y-6">
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
-                      <label
-                        htmlFor="fandom"
-                        className="block text-sm font-medium text-gray-700 mb-1"
-                      >
-                        Fandom
-                      </label>
-                      {loadingFandoms ? (
-                        <div className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-gray-50">
-                          Loading fandoms...
-                        </div>
-                      ) : (
-                        <select
-                          id="fandom"
-                          name="fandom"
-                          value={formData.fandom}
-                          onChange={handleInputChange}
-                          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-                        >
-                          <option value="">Select a fandom</option>
-                          {fandoms.map((fandom) => (
-                            <option key={fandom.id || fandom.slug} value={fandom.slug || fandom.name}>
-                              {fandom.name}
-                            </option>
-                          ))}
-                        </select>
-                      )}
+                      <FandomSelector
+                        value={formData.fandom}
+                        onChange={(fandomSlug) => setFormData({ ...formData, fandom: fandomSlug || '' })}
+                        label="Fandom"
+                        placeholder="Select a fandom"
+                      />
                     </div>
 
                     <div>
-                      <label
-                        htmlFor="category"
-                        className="block text-sm font-medium text-gray-700 mb-1"
-                      >
-                        Category
-                      </label>
-                      <input
-                        type="text"
-                        id="category"
-                        name="category"
-                        value={formData.category}
-                        onChange={handleInputChange}
-                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-                        placeholder="e.g., Collectibles, Apparel, Accessories"
+                      <CategorySelector
+                        value={formData.categoryId}
+                        onChange={(categoryId) => setFormData({ ...formData, categoryId: categoryId || '' })}
+                        label="Category"
+                        placeholder="Select a category"
                       />
                     </div>
                   </div>

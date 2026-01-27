@@ -3,6 +3,7 @@
 import { useEffect, useState, useMemo, useCallback } from 'react';
 import { RouteGuard } from '@/components/RouteGuard';
 import { AdminLayout } from '@/components/AdminLayout';
+import { CategorySelector } from '@/components/taxonomy/CategorySelector';
 import { apiClient } from '@/lib/api';
 import { useToast } from '@/hooks/useToast';
 
@@ -251,6 +252,13 @@ export default function AdminAttributesPage() {
 
   const handleCreateAttribute = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Validate category is selected for category-specific attributes
+    if (!formData.isGlobal && !formData.categoryId) {
+      toast.error('Please select a category for category-specific attributes');
+      return;
+    }
+    
     try {
       const data: any = {
         name: formData.name,
@@ -290,6 +298,13 @@ export default function AdminAttributesPage() {
   const handleUpdateAttribute = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!editingAttribute) return;
+    
+    // Validate category is selected for category-specific attributes
+    if (!formData.isGlobal && !formData.categoryId) {
+      toast.error('Please select a category for category-specific attributes');
+      return;
+    }
+    
     try {
       const data: any = {
         name: formData.name,
@@ -699,18 +714,13 @@ export default function AdminAttributesPage() {
                   </div>
                   {!formData.isGlobal && (
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Category *</label>
-                      <select
+                      <CategorySelector
                         value={formData.categoryId}
-                        onChange={(e) => setFormData({ ...formData, categoryId: e.target.value })}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
-                        required={!formData.isGlobal}
-                      >
-                        <option value="">Select a category</option>
-                        {categories.map((cat) => (
-                          <option key={cat.id} value={cat.id}>{cat.name}</option>
-                        ))}
-                      </select>
+                        onChange={(categoryId) => setFormData({ ...formData, categoryId: categoryId || '' })}
+                        label="Category"
+                        required={true}
+                        placeholder="Select a category"
+                      />
                     </div>
                   )}
                 </div>

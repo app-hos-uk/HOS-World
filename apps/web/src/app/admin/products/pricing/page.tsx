@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { RouteGuard } from '@/components/RouteGuard';
 import { AdminLayout } from '@/components/AdminLayout';
 import { apiClient } from '@/lib/api';
@@ -24,6 +24,8 @@ export default function PriceManagementPage() {
   const [selectedProduct, setSelectedProduct] = useState<any | null>(null);
   const [showPricingModal, setShowPricingModal] = useState(false);
   const [updating, setUpdating] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [statusFilter, setStatusFilter] = useState<'ALL' | 'DRAFT' | 'ACTIVE' | 'INACTIVE'>('ALL');
   const [pricingData, setPricingData] = useState({
     price: '',
     tradePrice: '',
@@ -42,7 +44,7 @@ export default function PriceManagementPage() {
     try {
       setLoading(true);
       setError(null);
-      const response = await apiClient.getAdminProducts({ page: 1, limit: 100 });
+      const response = await apiClient.getAdminProducts({ page: 1, limit: 500 });
       const list = response?.data?.products || response?.data?.data || [];
       setProducts(Array.isArray(list) ? list : []);
     } catch (err: any) {
@@ -52,6 +54,35 @@ export default function PriceManagementPage() {
       setLoading(false);
     }
   };
+
+  // Filter products based on search query and status
+  const filteredProducts = useMemo(() => {
+    let filtered = products;
+
+    // Search filter
+    if (searchQuery.trim()) {
+      const query = searchQuery.toLowerCase().trim();
+      filtered = filtered.filter((product) => {
+        const name = (product.name || '').toLowerCase();
+        const sku = (product.sku || '').toLowerCase();
+        const barcode = (product.barcode || '').toLowerCase();
+        const description = (product.description || '').toLowerCase();
+        return (
+          name.includes(query) ||
+          sku.includes(query) ||
+          barcode.includes(query) ||
+          description.includes(query)
+        );
+      });
+    }
+
+    // Status filter
+    if (statusFilter !== 'ALL') {
+      filtered = filtered.filter((product) => product.status === statusFilter);
+    }
+
+    return filtered;
+  }, [products, searchQuery, statusFilter]);
 
   const handleEditPricing = (product: any) => {
     setSelectedProduct(product);
@@ -126,6 +157,62 @@ export default function PriceManagementPage() {
             </button>
           </div>
 
+          {/* Search and Filters */}
+          <div className="bg-white rounded-lg shadow p-4">
+            <div className="flex flex-col sm:flex-row gap-4">
+              <div className="flex-1">
+                <div className="relative">
+                  <input
+                    type="text"
+                    placeholder="Search by name, SKU, or barcode..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                  />
+                  <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400">
+                    🔍
+                  </span>
+                  {searchQuery && (
+                    <button
+                      onClick={() => setSearchQuery('')}
+                      className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                    >
+                      ✕
+                    </button>
+                  )}
+                </div>
+              </div>
+              <div className="sm:w-48">
+                <select
+                  value={statusFilter}
+                  onChange={(e) => setStatusFilter(e.target.value as any)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
+                >
+                  <option value="ALL">All Statuses</option>
+                  <option value="DRAFT">Draft Only</option>
+                  <option value="ACTIVE">Active Only</option>
+                  <option value="INACTIVE">Inactive Only</option>
+                </select>
+              </div>
+            </div>
+            {(searchQuery || statusFilter !== 'ALL') && (
+              <div className="mt-3 flex items-center justify-between text-sm text-gray-600">
+                <span>
+                  Showing {filteredProducts.length} of {products.length} products
+                </span>
+                <button
+                  onClick={() => {
+                    setSearchQuery('');
+                    setStatusFilter('ALL');
+                  }}
+                  className="text-purple-600 hover:text-purple-700 font-medium"
+                >
+                  Clear filters
+                </button>
+              </div>
+            )}
+          </div>
+
           {loading && (
             <div className="flex items-center justify-center py-12">
               <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600"></div>
@@ -170,14 +257,16 @@ export default function PriceManagementPage() {
                   </tr>
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
-                  {products.length === 0 ? (
+                  {filteredProducts.length === 0 ? (
                     <tr>
                       <td colSpan={6} className="px-6 py-4 text-center text-gray-500">
-                        No products found
+                        {searchQuery || statusFilter !== 'ALL'
+                          ? 'No products match your search criteria'
+                          : 'No products found'}
                       </td>
                     </tr>
                   ) : (
-                    products.map((product) => (
+                    filteredProducts.map((product) => (
                       <tr key={product.id} className="hover:bg-gray-50">
                         <td className="px-6 py-4">
                           <div className="text-sm font-medium text-gray-900">

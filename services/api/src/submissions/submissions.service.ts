@@ -42,7 +42,8 @@ export class SubmissionsService {
       stock: createSubmissionDto.stock,
       quantity: createSubmissionDto.quantity, // For wholesalers
       fandom: createSubmissionDto.fandom,
-      category: createSubmissionDto.category,
+      category: createSubmissionDto.category, // Legacy field - kept for backward compatibility
+      categoryId: createSubmissionDto.categoryId, // New taxonomy category ID
       tags: createSubmissionDto.tags || [],
       images: createSubmissionDto.images,
       variations: createSubmissionDto.variations || [],
@@ -317,7 +318,8 @@ export class SubmissionsService {
         stock: submissionDto.stock,
         quantity: submissionDto.quantity,
         fandom: submissionDto.fandom,
-        category: submissionDto.category,
+        category: submissionDto.category, // Legacy field - kept for backward compatibility
+        categoryId: submissionDto.categoryId, // New taxonomy category ID
         tags: submissionDto.tags || [],
         images: submissionDto.images,
         variations: submissionDto.variations || [],

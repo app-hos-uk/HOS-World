@@ -85,7 +85,11 @@ export class CreateSubmissionDto {
 
   @IsOptional()
   @IsString()
-  category?: string;
+  category?: string; // Legacy field - kept for backward compatibility
+
+  @IsOptional()
+  @IsString()
+  categoryId?: string; // New taxonomy category ID
 
   @IsOptional()
   @IsArray()
