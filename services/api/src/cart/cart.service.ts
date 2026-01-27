@@ -479,7 +479,7 @@ export class CartService {
   private mapToProductType(product: any): Product {
     return {
       id: product.id,
-      sellerId: product.seller.userId || product.sellerId,
+      sellerId: product.seller?.userId || product.sellerId || '',
       name: product.name,
       description: product.description,
       slug: product.slug,

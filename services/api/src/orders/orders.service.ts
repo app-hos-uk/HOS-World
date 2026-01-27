@@ -81,7 +81,7 @@ export class OrdersService {
     // Group items by seller
     const itemsBySeller = new Map<string, typeof cart.items>();
     for (const item of cart.items) {
-      const sellerId = item.product.seller.userId;
+      const sellerId = item.product.seller?.userId || item.product.sellerId || 'platform';
       if (!itemsBySeller.has(sellerId)) {
         itemsBySeller.set(sellerId, []);
       }

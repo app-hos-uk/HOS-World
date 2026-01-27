@@ -107,6 +107,11 @@ export default function ProductDetailPage() {
   const handleAddToCart = async () => {
     if (!product) return;
 
+    if (!isAuthenticated) {
+      toast.error('Please login to add items to cart');
+      return;
+    }
+
     try {
       setAddingToCart(true);
       await apiClient.addToCart(product.id, quantity);

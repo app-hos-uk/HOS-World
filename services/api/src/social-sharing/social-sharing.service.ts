@@ -32,7 +32,7 @@ export class SocialSharingService {
           name: product.name,
           price: product.price,
           image: product.images[0]?.url,
-          seller: product.seller.storeName,
+          seller: product.seller?.storeName || 'House of Spells',
           url: `/products/${product.id}`,
         };
         break;
