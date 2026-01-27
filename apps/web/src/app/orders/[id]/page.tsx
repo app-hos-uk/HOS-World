@@ -24,6 +24,14 @@ interface OrderItem {
   };
 }
 
+interface OrderNote {
+  id: string;
+  content: string;
+  internal: boolean;
+  createdAt: string | Date;
+  createdBy: string;
+}
+
 interface Order {
   id: string;
   orderNumber?: string;
@@ -58,7 +66,7 @@ interface Order {
   items?: OrderItem[];
   trackingNumber?: string;
   estimatedDelivery?: string | Date;
-  notes?: string;
+  notes?: OrderNote[];
 }
 
 export default function OrderDetailPage() {
