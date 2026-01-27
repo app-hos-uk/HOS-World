@@ -12,6 +12,7 @@ import { getPublicApiBaseUrl } from '@/lib/apiBaseUrl';
 import { useCurrency } from '@/contexts/CurrencyContext';
 import { DataExport } from '@/components/DataExport';
 import Image from 'next/image';
+import Link from 'next/link';
 
 interface Product {
   id: string;
@@ -631,12 +632,12 @@ export default function AdminProductsPage() {
             </div>
             <div className="flex gap-2">
               <DataExport data={filteredProducts} columns={exportColumns} filename="products-export" />
-              <a
+              <Link
                 href="/admin/products/create"
                 className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700"
               >
                 + Create Product
-              </a>
+              </Link>
             </div>
           </div>
 

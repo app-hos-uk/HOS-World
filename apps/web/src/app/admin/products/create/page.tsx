@@ -21,7 +21,8 @@ import { useRouter } from 'next/navigation';
  * 
  * Access: CATALOG, ADMIN roles
  */
-const initialFormData = {
+// Factory function to create fresh form data with new array instances each time
+const getInitialFormData = () => ({
   name: '',
   description: '',
   sku: '',
@@ -33,14 +34,14 @@ const initialFormData = {
   tagIds: [] as string[],
   attributes: [] as any[],
   fandom: '',
-};
+});
 
 export default function ProductCreationPage() {
   const router = useRouter();
   const toast = useToast();
   const [loading, setLoading] = useState(false);
   const [sellers, setSellers] = useState<any[]>([]);
-  const [formData, setFormData] = useState(initialFormData);
+  const [formData, setFormData] = useState(getInitialFormData);
   const [images, setImages] = useState<Array<{ url: string; alt?: string; order?: number; size?: number; width?: number; height?: number; format?: string; uploadedAt?: Date }>>([]);
   const [uploadingImages, setUploadingImages] = useState(false);
   const [lastCreatedProduct, setLastCreatedProduct] = useState<string | null>(null);
@@ -100,8 +101,8 @@ export default function ProductCreationPage() {
       const createdProductName = formData.name;
       setLastCreatedProduct(createdProductName);
       
-      // Reset form for adding another product
-      setFormData(initialFormData);
+      // Reset form for adding another product (call function to get fresh object with new array instances)
+      setFormData(getInitialFormData());
       setImages([]);
       
       toast.success(`"${createdProductName}" created successfully! Form reset for next product.`);
