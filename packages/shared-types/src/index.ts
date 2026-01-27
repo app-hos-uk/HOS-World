@@ -259,6 +259,8 @@ export interface Address {
   country: string;
   phone?: string;
   isDefault: boolean;
+  latitude?: number;
+  longitude?: number;
 }
 
 // API Response Types

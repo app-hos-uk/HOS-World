@@ -6,6 +6,7 @@ import { useState, useEffect, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { apiClient } from '@/lib/api';
 import { useCurrency } from '@/contexts/CurrencyContext';
+import { useCart } from '@/contexts/CartContext';
 import { useToast } from '@/hooks/useToast';
 import Link from 'next/link';
 import type { ApiResponse } from '@hos-marketplace/shared-types';
@@ -21,6 +22,7 @@ interface StockIssue {
 export default function CheckoutPage() {
   const router = useRouter();
   const { formatPrice } = useCurrency();
+  const { refreshCart } = useCart();
   const toast = useToast();
   const [cart, setCart] = useState<any>(null);
   const [addresses, setAddresses] = useState<any[]>([]);
@@ -251,13 +253,15 @@ export default function CheckoutPage() {
 
     try {
       setCreatingOrder(true);
+      // Note: paymentMethod is optional at order creation stage; payment is handled on payment page
       const orderResponse = await apiClient.createOrder({
         shippingAddressId,
         billingAddressId: billingAddressId || shippingAddressId,
-        paymentMethodId: selectedShippingMethod || undefined,
       });
 
       if (orderResponse?.data) {
+        // Refresh cart context to clear the header cart badge (cart is cleared on backend)
+        await refreshCart();
         toast.success('Order created successfully!');
         router.push(`/payment?orderId=${orderResponse.data.id}`);
       } else {

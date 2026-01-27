@@ -124,4 +124,53 @@ export class OrdersController {
       message: 'Note added successfully',
     };
   }
+
+  @Post(':id/cancel')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Cancel order', description: 'Cancels an order. Customers can only cancel orders that are PENDING or CONFIRMED. Stock is restored on cancellation.' })
+  @ApiParam({ name: 'id', description: 'Order UUID', type: String })
+  @SwaggerApiResponse({ status: 200, description: 'Order cancelled successfully' })
+  @SwaggerApiResponse({ status: 400, description: 'Order cannot be cancelled in current status' })
+  @SwaggerApiResponse({ status: 401, description: 'Unauthorized' })
+  @SwaggerApiResponse({ status: 403, description: 'Forbidden - Cannot cancel this order' })
+  @SwaggerApiResponse({ status: 404, description: 'Order not found' })
+  async cancel(
+    @Request() req: any,
+    @Param('id', ParseUUIDPipe) id: string,
+  ): Promise<ApiResponse<Order>> {
+    const order = await this.ordersService.cancel(id, req.user.id, req.user.role);
+    return {
+      data: order,
+      message: 'Order cancelled successfully',
+    };
+  }
+
+  @Post(':id/reorder')
+  @HttpCode(HttpStatus.CREATED)
+  @ApiOperation({ summary: 'Reorder items', description: 'Adds all items from a previous order back to the cart. Only available for completed or delivered orders.' })
+  @ApiParam({ name: 'id', description: 'Order UUID', type: String })
+  @SwaggerApiResponse({ status: 201, description: 'Items added to cart successfully' })
+  @SwaggerApiResponse({ status: 400, description: 'Order not eligible for reorder' })
+  @SwaggerApiResponse({ status: 401, description: 'Unauthorized' })
+  @SwaggerApiResponse({ status: 403, description: 'Forbidden - Cannot reorder this order' })
+  @SwaggerApiResponse({ status: 404, description: 'Order not found' })
+  async reorder(
+    @Request() req: any,
+    @Param('id', ParseUUIDPipe) id: string,
+  ): Promise<ApiResponse<{ itemsAdded: number; itemsUpdated: number }>> {
+    const result = await this.ordersService.reorder(id, req.user.id);
+    // Build a descriptive message
+    const parts: string[] = [];
+    if (result.itemsAdded > 0) {
+      parts.push(`${result.itemsAdded} new item(s) added`);
+    }
+    if (result.itemsUpdated > 0) {
+      parts.push(`${result.itemsUpdated} existing item(s) updated`);
+    }
+    const message = parts.length > 0 ? parts.join(', ') + ' in cart' : 'No items were added to cart';
+    return {
+      data: result,
+      message,
+    };
+  }
 }

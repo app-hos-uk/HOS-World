@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { RouteGuard } from '@/components/RouteGuard';
 import { Header } from '@/components/Header';
 import { Footer } from '@/components/Footer';
+import { MapPicker } from '@/components/MapPicker';
 import { apiClient } from '@/lib/api';
 import { useToast } from '@/hooks/useToast';
 import { useCurrency } from '@/contexts/CurrencyContext';
@@ -98,6 +99,8 @@ export default function ProfilePage() {
     postalCode: '',
     country: '',
     isDefault: false,
+    latitude: undefined as number | undefined,
+    longitude: undefined as number | undefined,
   });
 
   useEffect(() => {
@@ -140,9 +143,24 @@ export default function ProfilePage() {
           setCurrency(profileRes.data.currencyPreference);
         }
       }
-      if (statsRes?.data) setStats(statsRes.data);
-      if (badgesRes?.data) setBadges(badgesRes.data);
-      if (collectionsRes?.data) setCollections(collectionsRes.data);
+      if (statsRes?.data) {
+        // Ensure favoriteFandoms is always an array
+        const statsData = {
+          ...statsRes.data,
+          favoriteFandoms: Array.isArray(statsRes.data.favoriteFandoms) 
+            ? statsRes.data.favoriteFandoms 
+            : []
+        };
+        setStats(statsData);
+      }
+      // Ensure badges is always an array
+      if (badgesRes?.data) {
+        setBadges(Array.isArray(badgesRes.data) ? badgesRes.data : []);
+      }
+      // Ensure collections is always an array
+      if (collectionsRes?.data) {
+        setCollections(Array.isArray(collectionsRes.data) ? collectionsRes.data : []);
+      }
       if (gdprRes?.data) setGdprConsent(gdprRes.data);
       if (gdprHistoryRes?.data) setGdprConsentHistory(gdprHistoryRes.data);
     } catch (err: any) {
@@ -236,12 +254,16 @@ export default function ProfilePage() {
   const fetchAddresses = async () => {
     try {
       const response = await apiClient.getAddresses();
+      // Ensure addresses is always an array
       if (response?.data) {
-        setAddresses(response.data);
+        setAddresses(Array.isArray(response.data) ? response.data : []);
+      } else {
+        setAddresses([]);
       }
     } catch (err: any) {
       console.error('Error fetching addresses:', err);
       toast.error(err.message || 'Failed to load addresses');
+      setAddresses([]); // Set empty array on error
     }
   };
 
@@ -268,6 +290,8 @@ export default function ProfilePage() {
         postalCode: '',
         country: '',
         isDefault: false,
+        latitude: undefined,
+        longitude: undefined,
       });
       fetchAddresses();
     } catch (err: any) {
@@ -460,7 +484,7 @@ export default function ProfilePage() {
                 )}
 
                 {/* Favorite Fandoms */}
-                {stats && stats.favoriteFandoms.length > 0 && (
+                {stats && Array.isArray(stats.favoriteFandoms) && stats.favoriteFandoms.length > 0 && (
                   <div>
                     <h3 className="text-lg font-semibold mb-3">Favorite Fandoms</h3>
                     <div className="flex flex-wrap gap-2">
@@ -638,6 +662,8 @@ export default function ProfilePage() {
                         postalCode: '',
                         country: '',
                         isDefault: false,
+                        latitude: undefined,
+                        longitude: undefined,
                       });
                       setShowAddressForm(true);
                     }}
@@ -782,6 +808,26 @@ export default function ProfilePage() {
                         />
                         <label className="text-sm text-gray-700">Set as default shipping address</label>
                       </div>
+                      
+                      {/* Map Picker for Location Selection */}
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          Location on Map (Optional)
+                        </label>
+                        <p className="text-xs text-gray-500 mb-2">
+                          Click on the map to set your exact location. This helps with accurate delivery routing.
+                        </p>
+                        <MapPicker
+                          latitude={addressForm.latitude}
+                          longitude={addressForm.longitude}
+                          onLocationChange={(lat, lng) => {
+                            setAddressForm({ ...addressForm, latitude: lat, longitude: lng });
+                          }}
+                          height="350px"
+                          className="w-full"
+                        />
+                      </div>
+                      
                       <div className="flex gap-3">
                         <button
                           type="submit"
@@ -863,6 +909,8 @@ export default function ProfilePage() {
                                   postalCode: address.postalCode,
                                   country: address.country,
                                   isDefault: address.isDefault,
+                                  latitude: address.latitude,
+                                  longitude: address.longitude,
                                 });
                                 setShowAddressForm(true);
                               }}

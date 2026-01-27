@@ -35,7 +35,7 @@ export function AuthCallbackClient() {
         const role = me?.data?.role ? String(me.data.role).toUpperCase() : null;
 
         const roleDashboardMap: Record<string, string> = {
-          CUSTOMER: '/',
+          CUSTOMER: '/customer/dashboard',
           WHOLESALER: '/wholesaler/dashboard',
           B2C_SELLER: '/seller/dashboard',
           SELLER: '/seller/dashboard',

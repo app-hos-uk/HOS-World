@@ -316,7 +316,18 @@ export class OrdersService {
       },
     });
 
-    // For now, return the first order (in a real system, you might want to handle multiple orders differently)
+    // IMPORTANT: Multi-seller limitation
+    // When a cart contains items from multiple sellers, separate orders are created for each seller.
+    // Currently, only the first order is returned to the frontend. This means:
+    // 1. The customer only sees and pays for the first order
+    // 2. Other orders remain in PENDING status without payment
+    // 3. The customer's order history may be incomplete
+    // 
+    // TODO: To properly support multi-seller orders, consider:
+    // - Returning an array of order IDs and handling multiple payments
+    // - Creating a parent "checkout session" that groups multiple orders
+    // - Using a split payment flow (Stripe Connect, PayPal for Marketplaces)
+    // - Showing all created orders on the payment/confirmation page
     return orders[0];
   }
 
@@ -532,6 +543,244 @@ export class OrdersService {
     const timestamp = Date.now().toString(36).toUpperCase();
     const random = Math.random().toString(36).substring(2, 6).toUpperCase();
     return `HOS-${timestamp}-${random}`;
+  }
+
+  /**
+   * Cancel an order and restore stock.
+   * Customers can only cancel orders in PENDING or CONFIRMED status.
+   * Sellers and admins can cancel orders in any non-final status.
+   */
+  async cancel(id: string, userId: string, role: string): Promise<Order> {
+    const order = await this.prisma.order.findUnique({
+      where: { id },
+      include: {
+        items: true,
+        seller: true,
+      },
+    });
+
+    if (!order) {
+      throw new NotFoundException('Order not found');
+    }
+
+    // Check permissions
+    if (role === 'CUSTOMER' && order.userId !== userId) {
+      throw new ForbiddenException('You do not have permission to cancel this order');
+    }
+
+    if (role === 'SELLER') {
+      const seller = await this.prisma.seller.findUnique({
+        where: { userId },
+      });
+      if (!seller || order.sellerId !== seller.id) {
+        throw new ForbiddenException('You do not have permission to cancel this order');
+      }
+    }
+
+    // Define cancellable statuses based on role
+    const customerCancellableStatuses = ['PENDING', 'CONFIRMED'];
+    const adminSellerCancellableStatuses = ['PENDING', 'CONFIRMED', 'PROCESSING'];
+    const finalStatuses = ['SHIPPED', 'DELIVERED', 'CANCELLED', 'REFUNDED'];
+
+    const currentStatus = order.status;
+
+    if (finalStatuses.includes(currentStatus)) {
+      throw new BadRequestException(
+        `Order cannot be cancelled. Current status: ${currentStatus}. Orders that are shipped, delivered, or already cancelled cannot be cancelled.`,
+      );
+    }
+
+    if (role === 'CUSTOMER' && !customerCancellableStatuses.includes(currentStatus)) {
+      throw new BadRequestException(
+        `Customers can only cancel orders that are PENDING or CONFIRMED. Current status: ${currentStatus}`,
+      );
+    }
+
+    if ((role === 'SELLER' || role === 'ADMIN') && !adminSellerCancellableStatuses.includes(currentStatus)) {
+      throw new BadRequestException(
+        `Orders can only be cancelled when PENDING, CONFIRMED, or PROCESSING. Current status: ${currentStatus}`,
+      );
+    }
+
+    // Use transaction to cancel order and restore stock atomically
+    const cancelledOrder = await this.prisma.$transaction(async (tx) => {
+      // Restore stock for all order items
+      for (const item of order.items) {
+        await tx.product.update({
+          where: { id: item.productId },
+          data: {
+            stock: {
+              increment: item.quantity,
+            },
+          },
+        });
+      }
+
+      // Update order status
+      return tx.order.update({
+        where: { id },
+        data: {
+          status: 'CANCELLED',
+          paymentStatus: order.paymentStatus === 'PAID' ? 'REFUNDED' : 'CANCELLED',
+        },
+        include: {
+          items: {
+            include: {
+              product: {
+                include: {
+                  images: {
+                    orderBy: { order: 'asc' },
+                    take: 1,
+                  },
+                },
+              },
+            },
+          },
+          shippingAddress: true,
+          billingAddress: true,
+          seller: {
+            select: {
+              id: true,
+              storeName: true,
+              slug: true,
+            },
+          },
+          notes: {
+            orderBy: { createdAt: 'desc' },
+          },
+        },
+      });
+    });
+
+    this.logger.log(`Order ${order.orderNumber} cancelled by user ${userId} (role: ${role})`);
+
+    return this.mapToOrderType(cancelledOrder);
+  }
+
+  /**
+   * Reorder items from a previous order by adding them to the cart.
+   */
+  async reorder(id: string, userId: string): Promise<{ itemsAdded: number; itemsUpdated: number }> {
+    const order = await this.prisma.order.findUnique({
+      where: { id },
+      include: {
+        items: {
+          include: {
+            product: true,
+          },
+        },
+      },
+    });
+
+    if (!order) {
+      throw new NotFoundException('Order not found');
+    }
+
+    // Only allow reordering of own orders
+    if (order.userId !== userId) {
+      throw new ForbiddenException('You do not have permission to reorder this order');
+    }
+
+    // Only allow reordering of completed/delivered orders
+    const reorderableStatuses = ['DELIVERED', 'COMPLETED'];
+    if (!reorderableStatuses.includes(order.status)) {
+      throw new BadRequestException(
+        `Only delivered or completed orders can be reordered. Current status: ${order.status}`,
+      );
+    }
+
+    // Get or create cart
+    let cart = await this.prisma.cart.findUnique({
+      where: { userId },
+    });
+
+    if (!cart) {
+      cart = await this.prisma.cart.create({
+        data: {
+          userId,
+          subtotal: 0,
+          tax: 0,
+          total: 0,
+        },
+      });
+    }
+
+    let itemsAdded = 0;
+    let itemsUpdated = 0;
+
+    for (const item of order.items) {
+      // Check if product still exists and has stock
+      const product = await this.prisma.product.findUnique({
+        where: { id: item.productId },
+      });
+
+      if (!product) {
+        this.logger.warn(`Product ${item.productId} no longer exists, skipping reorder`);
+        continue;
+      }
+
+      if (product.stock <= 0) {
+        this.logger.warn(`Product ${item.productId} is out of stock, skipping reorder`);
+        continue;
+      }
+
+      // Determine quantity to add (limited by available stock)
+      const quantityToAdd = Math.min(item.quantity, product.stock);
+
+      // Check if item already exists in cart
+      const existingCartItem = await this.prisma.cartItem.findFirst({
+        where: {
+          cartId: cart.id,
+          productId: item.productId,
+        },
+      });
+
+      if (existingCartItem) {
+        // Update quantity of existing cart item
+        const newQuantity = Math.min(
+          existingCartItem.quantity + quantityToAdd,
+          product.stock,
+        );
+        await this.prisma.cartItem.update({
+          where: { id: existingCartItem.id },
+          data: { quantity: newQuantity },
+        });
+        itemsUpdated++;
+      } else {
+        // Add new cart item
+        await this.prisma.cartItem.create({
+          data: {
+            cartId: cart.id,
+            productId: item.productId,
+            quantity: quantityToAdd,
+            price: Number(product.price),
+          },
+        });
+        itemsAdded++;
+      }
+    }
+
+    // Recalculate cart totals
+    const cartItems = await this.prisma.cartItem.findMany({
+      where: { cartId: cart.id },
+    });
+
+    const subtotal = cartItems.reduce(
+      (sum, item) => sum + Number(item.price) * item.quantity,
+      0,
+    );
+
+    await this.prisma.cart.update({
+      where: { id: cart.id },
+      data: {
+        subtotal,
+        total: subtotal, // Tax calculated separately
+      },
+    });
+
+    this.logger.log(`Reorder from order ${order.orderNumber}: ${itemsAdded} items added, ${itemsUpdated} items updated in cart for user ${userId}`);
+
+    return { itemsAdded, itemsUpdated };
   }
 
   private mapToOrderType(order: any, includeSeller: boolean = false): Order {

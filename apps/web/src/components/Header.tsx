@@ -5,6 +5,7 @@ import { useTheme } from '@hos-marketplace/theme-system';
 import { useState } from 'react';
 import { usePathname } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
+import { useCart } from '@/contexts/CartContext';
 import { RoleSwitcher } from '@/components/RoleSwitcher';
 import { CurrencySelector } from '@/components/CurrencySelector';
 import type { UserRole } from '@hos-marketplace/shared-types';
@@ -13,6 +14,7 @@ export function Header() {
   const theme = useTheme();
   const pathname = usePathname();
   const { user, isAuthenticated, logout, hasRole, impersonatedRole, effectiveRole, switchRole } = useAuth();
+  const { cartItemCount } = useCart();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   // Check if we're on a dashboard page - be more specific to avoid hiding menus on non-dashboard pages
@@ -20,6 +22,7 @@ export function Header() {
     pathname === '/admin/dashboard' ||
     pathname === '/seller/dashboard' ||
     pathname === '/wholesaler/dashboard' ||
+    pathname === '/customer/dashboard' ||
     pathname === '/procurement/dashboard' ||
     pathname === '/fulfillment/dashboard' ||
     pathname === '/catalog/dashboard' ||
@@ -28,6 +31,7 @@ export function Header() {
     pathname?.startsWith('/admin/') && pathname !== '/admin' ||
     pathname?.startsWith('/seller/') && pathname !== '/seller' ||
     pathname?.startsWith('/wholesaler/') ||
+    pathname?.startsWith('/customer/') ||
     pathname?.startsWith('/procurement/') ||
     pathname?.startsWith('/fulfillment/') ||
     pathname?.startsWith('/catalog/') ||
@@ -45,7 +49,7 @@ export function Header() {
     const currentRole = effectiveRole || user.role;
     
     const roleDashboardMap: Record<UserRole, string> = {
-      CUSTOMER: '/',
+      CUSTOMER: '/customer/dashboard',
       WHOLESALER: '/wholesaler/dashboard',
       B2C_SELLER: '/seller/dashboard',
       SELLER: '/seller/dashboard',
@@ -130,9 +134,14 @@ export function Header() {
                 )}
                 <Link 
                   href="/cart" 
-                  className="text-sm lg:text-base text-purple-700 hover:text-amber-600 font-medium font-secondary transition-colors duration-300"
+                  className="relative text-sm lg:text-base text-purple-700 hover:text-amber-600 font-medium font-secondary transition-colors duration-300"
                 >
                   Cart
+                  {cartItemCount > 0 && (
+                    <span className="absolute -top-2 -right-2 bg-red-600 text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center">
+                      {cartItemCount > 99 ? '99+' : cartItemCount}
+                    </span>
+                  )}
                 </Link>
                 <CurrencySelector />
               </>
@@ -235,9 +244,14 @@ export function Header() {
                   <Link 
                     href="/cart" 
                     onClick={() => setIsMobileMenuOpen(false)}
-                    className="text-base text-purple-700 hover:text-amber-600 font-medium font-secondary transition-colors duration-300 py-2 px-2 rounded-lg hover:bg-purple-50"
+                    className="relative text-base text-purple-700 hover:text-amber-600 font-medium font-secondary transition-colors duration-300 py-2 px-2 rounded-lg hover:bg-purple-50"
                   >
                     Cart
+                    {cartItemCount > 0 && (
+                      <span className="ml-2 bg-red-600 text-white text-xs font-bold rounded-full px-2 py-0.5">
+                        {cartItemCount > 99 ? '99+' : cartItemCount}
+                      </span>
+                    )}
                   </Link>
                   <div className="px-2 py-2">
                     <CurrencySelector />

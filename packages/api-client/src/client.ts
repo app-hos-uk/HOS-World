@@ -371,10 +371,22 @@ export class ApiClient {
     });
   }
 
+  async cancelOrder(id: string): Promise<ApiResponse<Order>> {
+    return this.request<ApiResponse<Order>>(`/orders/${id}/cancel`, {
+      method: 'POST',
+    });
+  }
+
+  async reorderItems(orderId: string): Promise<ApiResponse<{ itemsAdded: number; itemsUpdated: number }>> {
+    return this.request<ApiResponse<{ itemsAdded: number; itemsUpdated: number }>>(`/orders/${orderId}/reorder`, {
+      method: 'POST',
+    });
+  }
+
   async createOrder(data: {
     shippingAddressId: string;
     billingAddressId?: string;
-    paymentMethodId?: string;
+    paymentMethod?: string;
   }): Promise<ApiResponse<Order>> {
     return this.request<ApiResponse<Order>>('/orders', {
       method: 'POST',

@@ -171,7 +171,7 @@ export default function LoginPage() {
       if (user?.role) {
         // Map role to dashboard path
         const roleDashboardMap: Record<string, string> = {
-          CUSTOMER: '/',
+          CUSTOMER: '/customer/dashboard',
           WHOLESALER: '/wholesaler/dashboard',
           B2C_SELLER: '/seller/dashboard',
           SELLER: '/seller/dashboard',

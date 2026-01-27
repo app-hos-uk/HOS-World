@@ -10,6 +10,7 @@ import { apiClient } from '@/lib/api';
 import { useToast } from '@/hooks/useToast';
 import { useCurrency } from '@/contexts/CurrencyContext';
 import { useAuth } from '@/contexts/AuthContext';
+import { useCart } from '@/contexts/CartContext';
 import Image from 'next/image';
 import Link from 'next/link';
 
@@ -19,6 +20,7 @@ export default function ProductDetailPage() {
   const toast = useToast();
   const { formatPrice } = useCurrency();
   const { isAuthenticated } = useAuth();
+  const { addToCart: addToCartContext } = useCart();
   const [product, setProduct] = useState<any>(null);
   const [reviews, setReviews] = useState<any[]>([]);
   const [isInWishlist, setIsInWishlist] = useState(false);
@@ -114,7 +116,7 @@ export default function ProductDetailPage() {
 
     try {
       setAddingToCart(true);
-      await apiClient.addToCart(product.id, quantity);
+      await addToCartContext(product.id, quantity);
       toast.success('Product added to cart!');
     } catch (err: any) {
       toast.error(err.message || 'Failed to add to cart');

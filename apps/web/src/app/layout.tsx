@@ -3,6 +3,7 @@ import { Cinzel, Lora, Inter } from 'next/font/google';
 import { ThemeProviderWrapper } from '@/components/ThemeProviderWrapper';
 import { AuthProviderWrapper } from '@/components/AuthProviderWrapper';
 import { CurrencyProvider } from '@/contexts/CurrencyContext';
+import { CartProvider } from '@/contexts/CartContext';
 import { GDPRConsentBanner } from '@/components/GDPRConsentBanner';
 import { Toaster } from '@/components/Toaster';
 import './globals.css';
@@ -51,11 +52,13 @@ export default function RootLayout({
       <body className={`${cinzel.variable} ${lora.variable} ${inter.variable}`}>
         <AuthProviderWrapper>
           <CurrencyProvider>
-            <ThemeProviderWrapper>
-              {children}
-              <GDPRConsentBanner />
-              <Toaster />
-            </ThemeProviderWrapper>
+            <CartProvider>
+              <ThemeProviderWrapper>
+                {children}
+                <GDPRConsentBanner />
+                <Toaster />
+              </ThemeProviderWrapper>
+            </CartProvider>
           </CurrencyProvider>
         </AuthProviderWrapper>
       </body>
