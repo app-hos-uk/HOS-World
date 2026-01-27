@@ -76,8 +76,8 @@ export default function CustomerDashboardPage() {
 
       // Fetch wishlist
       const wishlistResponse = await apiClient.getWishlist().catch(() => ({ data: [] }));
-      const wishlistData = wishlistResponse?.data;
-      const wishlistArray = Array.isArray(wishlistData) 
+      const wishlistData = wishlistResponse?.data as any;
+      const wishlistArray: any[] = Array.isArray(wishlistData) 
         ? wishlistData 
         : (wishlistData?.products || []);
       const wishlistItems = wishlistArray.length;
