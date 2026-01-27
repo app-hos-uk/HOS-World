@@ -272,7 +272,7 @@ export class CartService {
     return this.recalculateCart(cart.id);
   }
 
-  private async recalculateCart(cartId: string): Promise<Cart> {
+  async recalculateCart(cartId: string): Promise<Cart> {
     const cart = await this.prisma.cart.findUnique({
       where: { id: cartId },
       include: {

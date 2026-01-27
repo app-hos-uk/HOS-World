@@ -21,12 +21,13 @@ interface DashboardStats {
   cartItems: number;
 }
 
-interface Order {
+// Local Order type that matches what we receive from JSON API (dates as strings)
+interface DashboardOrder {
   id: string;
   orderNumber?: string;
   status: string;
   total: number;
-  createdAt: string;
+  createdAt: string | Date;
   items?: any[];
 }
 
@@ -40,8 +41,8 @@ export default function CustomerDashboardPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [stats, setStats] = useState<DashboardStats | null>(null);
-  const [recentOrders, setRecentOrders] = useState<Order[]>([]);
-  const [allOrders, setAllOrders] = useState<Order[]>([]);
+  const [recentOrders, setRecentOrders] = useState<DashboardOrder[]>([]);
+  const [allOrders, setAllOrders] = useState<DashboardOrder[]>([]);
   const [profileStats, setProfileStats] = useState<any>(null);
   const [recentWishlist, setRecentWishlist] = useState<any[]>([]);
   const [recentActivity, setRecentActivity] = useState<any[]>([]);
@@ -58,7 +59,7 @@ export default function CustomerDashboardPage() {
 
       // Fetch orders
       const ordersResponse = await apiClient.getOrders().catch(() => ({ data: [] }));
-      const orders: Order[] = Array.isArray(ordersResponse?.data) ? ordersResponse.data : [];
+      const orders: DashboardOrder[] = Array.isArray(ordersResponse?.data) ? ordersResponse.data : [];
       setAllOrders(orders);
       
       // Calculate stats

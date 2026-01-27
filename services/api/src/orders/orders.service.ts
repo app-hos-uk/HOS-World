@@ -11,6 +11,7 @@ import { PrismaService } from '../database/prisma.service';
 import { TaxService } from '../tax/tax.service';
 import { WarehouseRoutingService } from '../inventory/warehouse-routing.service';
 import { GeocodingService } from '../inventory/geocoding.service';
+import { CartService } from '../cart/cart.service';
 import { CreateOrderDto } from './dto/create-order.dto';
 import { UpdateOrderDto } from './dto/update-order.dto';
 import { AddOrderNoteDto } from './dto/add-order-note.dto';
@@ -27,6 +28,7 @@ export class OrdersService {
     @Optional() @Inject(TaxService) private taxService?: TaxService,
     @Optional() private warehouseRoutingService?: WarehouseRoutingService,
     @Optional() private geocodingService?: GeocodingService,
+    @Optional() private cartService?: CartService,
   ) {}
 
   async create(userId: string, createOrderDto: CreateOrderDto): Promise<Order> {
@@ -760,23 +762,30 @@ export class OrdersService {
       }
     }
 
-    // Recalculate cart totals
-    const cartItems = await this.prisma.cartItem.findMany({
-      where: { cartId: cart.id },
-    });
+    // Recalculate cart totals using CartService (handles tax, promotions, etc.)
+    if (this.cartService) {
+      await this.cartService.recalculateCart(cart.id);
+    } else {
+      // Fallback: manual calculation without tax (should not happen in production)
+      const cartItems = await this.prisma.cartItem.findMany({
+        where: { cartId: cart.id },
+      });
 
-    const subtotal = cartItems.reduce(
-      (sum, item) => sum + Number(item.price) * item.quantity,
-      0,
-    );
+      const subtotal = cartItems.reduce(
+        (sum, item) => sum + Number(item.price) * item.quantity,
+        0,
+      );
 
-    await this.prisma.cart.update({
-      where: { id: cart.id },
-      data: {
-        subtotal,
-        total: subtotal, // Tax calculated separately
-      },
-    });
+      await this.prisma.cart.update({
+        where: { id: cart.id },
+        data: {
+          subtotal,
+          total: subtotal,
+        },
+      });
+      
+      this.logger.warn(`CartService not available, using fallback cart calculation without tax for user ${userId}`);
+    }
 
     this.logger.log(`Reorder from order ${order.orderNumber}: ${itemsAdded} items added, ${itemsUpdated} items updated in cart for user ${userId}`);
 
