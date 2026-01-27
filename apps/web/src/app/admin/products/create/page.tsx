@@ -21,26 +21,29 @@ import { useRouter } from 'next/navigation';
  * 
  * Access: CATALOG, ADMIN roles
  */
+const initialFormData = {
+  name: '',
+  description: '',
+  sku: '',
+  barcode: '',
+  ean: '',
+  isPlatformOwned: true,
+  sellerId: '',
+  categoryId: '',
+  tagIds: [] as string[],
+  attributes: [] as any[],
+  fandom: '',
+};
+
 export default function ProductCreationPage() {
   const router = useRouter();
   const toast = useToast();
   const [loading, setLoading] = useState(false);
   const [sellers, setSellers] = useState<any[]>([]);
-  const [formData, setFormData] = useState({
-    name: '',
-    description: '',
-    sku: '',
-    barcode: '',
-    ean: '',
-    isPlatformOwned: true,
-    sellerId: '',
-    categoryId: '',
-    tagIds: [] as string[],
-    attributes: [] as any[],
-    fandom: '',
-  });
+  const [formData, setFormData] = useState(initialFormData);
   const [images, setImages] = useState<Array<{ url: string; alt?: string; order?: number; size?: number; width?: number; height?: number; format?: string; uploadedAt?: Date }>>([]);
   const [uploadingImages, setUploadingImages] = useState(false);
+  const [lastCreatedProduct, setLastCreatedProduct] = useState<string | null>(null);
 
   useEffect(() => {
     fetchSellers();
@@ -75,7 +78,7 @@ export default function ProductCreationPage() {
       }
       
       // Create product as DRAFT (no price/stock - those are managed separately)
-      await apiClient.createAdminProduct({
+      const response = await apiClient.createAdminProduct({
         name: formData.name,
         description: formData.description,
         sku: formData.sku || undefined,
@@ -92,8 +95,16 @@ export default function ProductCreationPage() {
         images: images.length > 0 ? images.map(img => ({ url: img.url, alt: img.alt, order: img.order })) : undefined,
         fandom: formData.fandom || undefined,
       });
-      toast.success('Product created successfully (DRAFT status). Price management required before activation.');
-      router.push('/admin/products');
+      
+      // Store created product name for success message
+      const createdProductName = formData.name;
+      setLastCreatedProduct(createdProductName);
+      
+      // Reset form for adding another product
+      setFormData(initialFormData);
+      setImages([]);
+      
+      toast.success(`"${createdProductName}" created successfully! Form reset for next product.`);
     } catch (err: any) {
       toast.error(err.message || 'Failed to create product');
     } finally {
@@ -195,6 +206,39 @@ export default function ProductCreationPage() {
               Back to Products
             </button>
           </div>
+
+          {/* Success Banner */}
+          {lastCreatedProduct && (
+            <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <span className="text-green-600 text-xl">✓</span>
+                  <div>
+                    <p className="font-medium text-green-800">
+                      Product "{lastCreatedProduct}" created successfully!
+                    </p>
+                    <p className="text-sm text-green-600">
+                      Form has been reset. You can add another product or view all products.
+                    </p>
+                  </div>
+                </div>
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => setLastCreatedProduct(null)}
+                    className="px-3 py-1.5 text-sm text-green-700 hover:text-green-900"
+                  >
+                    Dismiss
+                  </button>
+                  <button
+                    onClick={() => router.push('/admin/products')}
+                    className="px-3 py-1.5 text-sm bg-green-600 text-white rounded-lg hover:bg-green-700"
+                  >
+                    View All Products
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
 
           <div className="bg-white rounded-lg shadow p-6">
             <form onSubmit={handleCreateProduct} className="space-y-4">
