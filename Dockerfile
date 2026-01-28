@@ -158,7 +158,7 @@ WORKDIR /app/services/api
 
 # Run from the API directory
 # Use 0.0.0.0 to listen on all interfaces (required for Railway)
-# Database schema will be synced automatically in PrismaService.onModuleInit()
+# Run migrations before starting (adds enum values, new tables, etc.)
 # Use simple shell form to avoid Railway parsing issues
-CMD node dist/main.js
+CMD npx prisma migrate deploy && node dist/main.js
 
