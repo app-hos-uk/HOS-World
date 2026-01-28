@@ -12,7 +12,6 @@ import {
   ParseUUIDPipe,
   HttpCode,
   HttpStatus,
-  ParseIntPipe,
 } from '@nestjs/common';
 import {
   ApiTags,
@@ -24,17 +23,28 @@ import {
   ApiQuery,
 } from '@nestjs/swagger';
 import { ReviewsService } from './reviews.service';
+import { ProductsService } from '../products/products.service';
 import { CreateReviewDto } from './dto/create-review.dto';
 import { UpdateReviewDto } from './dto/update-review.dto';
 import { ReviewHelpfulDto } from './dto/review-helpful.dto';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { Public } from '../common/decorators/public.decorator';
+import { isUuid } from '../common/utils/uuid';
 import type { ApiResponse } from '@hos-marketplace/shared-types';
 
 @ApiTags('reviews')
 @Controller('reviews')
 export class ReviewsController {
-  constructor(private readonly reviewsService: ReviewsService) {}
+  constructor(
+    private readonly reviewsService: ReviewsService,
+    private readonly productsService: ProductsService,
+  ) {}
+
+  private async resolveProductId(idOrSlug: string): Promise<string> {
+    if (isUuid(idOrSlug)) return idOrSlug;
+    const product = await this.productsService.findBySlugOnly(idOrSlug);
+    return product.id;
+  }
 
   @UseGuards(JwtAuthGuard)
   @Post('products/:productId')
@@ -44,7 +54,7 @@ export class ReviewsController {
     summary: 'Create product review',
     description: 'Creates a new review for a product. User must have purchased the product to review it.',
   })
-  @ApiParam({ name: 'productId', description: 'Product UUID', type: String })
+  @ApiParam({ name: 'productId', description: 'Product UUID or slug', type: String })
   @ApiBody({ type: CreateReviewDto })
   @SwaggerApiResponse({ status: 201, description: 'Review created successfully' })
   @SwaggerApiResponse({ status: 400, description: 'Invalid request data or product not purchased' })
@@ -52,9 +62,10 @@ export class ReviewsController {
   @SwaggerApiResponse({ status: 404, description: 'Product not found' })
   async create(
     @Request() req: any,
-    @Param('productId', ParseUUIDPipe) productId: string,
+    @Param('productId') productIdOrSlug: string,
     @Body() createReviewDto: CreateReviewDto,
   ): Promise<ApiResponse<any>> {
+    const productId = await this.resolveProductId(productIdOrSlug);
     const review = await this.reviewsService.create(req.user.id, productId, createReviewDto);
     return {
       data: review,
@@ -68,16 +79,17 @@ export class ReviewsController {
     summary: 'Get product reviews',
     description: 'Retrieves all reviews for a specific product. Public endpoint, no authentication required.',
   })
-  @ApiParam({ name: 'productId', description: 'Product UUID', type: String })
+  @ApiParam({ name: 'productId', description: 'Product UUID or slug', type: String })
   @ApiQuery({ name: 'page', required: false, type: Number, description: 'Page number (default: 1)' })
   @ApiQuery({ name: 'limit', required: false, type: Number, description: 'Items per page (default: 10)' })
   @SwaggerApiResponse({ status: 200, description: 'Reviews retrieved successfully' })
   @SwaggerApiResponse({ status: 404, description: 'Product not found' })
   async findAll(
-    @Param('productId', ParseUUIDPipe) productId: string,
+    @Param('productId') productIdOrSlug: string,
     @Query('page') pageStr?: string,
     @Query('limit') limitStr?: string,
   ): Promise<ApiResponse<any>> {
+    const productId = await this.resolveProductId(productIdOrSlug);
     const page = pageStr ? parseInt(pageStr, 10) : 1;
     const limit = limitStr ? parseInt(limitStr, 10) : 10;
     const result = await this.reviewsService.findAll(productId, page, limit);

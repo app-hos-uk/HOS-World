@@ -10,7 +10,8 @@ import {
   UseGuards,
   Request,
   ParseUUIDPipe,
-  } from '@nestjs/common';
+} from '@nestjs/common';
+import { isUuid } from '../common/utils/uuid';
 import { ApiTags, ApiOperation, ApiResponse as SwaggerApiResponse, ApiBearerAuth, ApiParam, ApiQuery, ApiBody } from '@nestjs/swagger';
 import { ProductsService } from './products.service';
 import { ProductsBulkService } from './products-bulk.service';
@@ -45,12 +46,14 @@ export class ProductsController {
 
   @Public()
   @Get(':id')
-  @ApiOperation({ summary: 'Get product by ID', description: 'Retrieve a single product by its UUID' })
-  @ApiParam({ name: 'id', description: 'Product UUID', type: String })
+  @ApiOperation({ summary: 'Get product by ID or slug', description: 'Retrieve a single product by UUID or slug' })
+  @ApiParam({ name: 'id', description: 'Product UUID or slug', type: String })
   @SwaggerApiResponse({ status: 200, description: 'Product retrieved successfully' })
   @SwaggerApiResponse({ status: 404, description: 'Product not found' })
-  async findOne(@Param('id', ParseUUIDPipe) id: string): Promise<ApiResponse<Product>> {
-    const product = await this.productsService.findOne(id);
+  async findOne(@Param('id') id: string): Promise<ApiResponse<Product>> {
+    const product = isUuid(id)
+      ? await this.productsService.findOne(id)
+      : await this.productsService.findBySlugOnly(id);
     return {
       data: product,
       message: 'Product retrieved successfully',
