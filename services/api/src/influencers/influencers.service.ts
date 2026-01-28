@@ -26,19 +26,11 @@ export class InfluencersService {
    * Get influencer profile by user ID. Auto-creates profile + storefront if missing (e.g. login-only user).
    */
   async findByUserId(userId: string) {
-    let influencer = await this.prisma.influencer.findUnique({
-      where: { userId },
-      include: {
-        storefront: true,
-        user: {
-          select: { email: true, firstName: true, lastName: true },
-        },
-      },
-    });
-
-    if (!influencer) {
-      await this.storefrontsService.findByUserId(userId);
-      influencer = await this.prisma.influencer.findUnique({
+    // #region agent log
+    fetch('http://127.0.0.1:7244/ingest/25f24f4e-a9b4-48c0-a492-7ec1e970ba34',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'influencers.service.ts:findByUserId:entry',message:'findByUserId entry',data:{userId},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'H2,H4'})}).catch(()=>{});
+    // #endregion
+    try {
+      let influencer = await this.prisma.influencer.findUnique({
         where: { userId },
         include: {
           storefront: true,
@@ -47,13 +39,40 @@ export class InfluencersService {
           },
         },
       });
-    }
+      // #region agent log
+      fetch('http://127.0.0.1:7244/ingest/25f24f4e-a9b4-48c0-a492-7ec1e970ba34',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'influencers.service.ts:findByUserId:afterFindUnique',message:'after first findUnique',data:{hasInfluencer:!!influencer},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'H1,H2,H4'})}).catch(()=>{});
+      // #endregion
 
-    if (!influencer) {
-      throw new NotFoundException('Influencer profile not found');
-    }
+      if (!influencer) {
+        // #region agent log
+        fetch('http://127.0.0.1:7244/ingest/25f24f4e-a9b4-48c0-a492-7ec1e970ba34',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'influencers.service.ts:findByUserId:callStorefronts',message:'calling storefrontsService.findByUserId',data:{userId},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'H2'})}).catch(()=>{});
+        // #endregion
+        await this.storefrontsService.findByUserId(userId);
+        influencer = await this.prisma.influencer.findUnique({
+          where: { userId },
+          include: {
+            storefront: true,
+            user: {
+              select: { email: true, firstName: true, lastName: true },
+            },
+          },
+        });
+      }
 
-    return influencer;
+      if (!influencer) {
+        throw new NotFoundException('Influencer profile not found');
+      }
+      // #region agent log
+      fetch('http://127.0.0.1:7244/ingest/25f24f4e-a9b4-48c0-a492-7ec1e970ba34',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'influencers.service.ts:findByUserId:return',message:'findByUserId returning',data:{hasInfluencer:true},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'H3'})}).catch(()=>{});
+      // #endregion
+      return influencer;
+    } catch (err: any) {
+      // #region agent log
+      fetch('http://127.0.0.1:7244/ingest/25f24f4e-a9b4-48c0-a492-7ec1e970ba34',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'influencers.service.ts:findByUserId:catch',message:'findByUserId error',data:{code:err?.code,name:err?.name,message:err?.message},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'H1,H2,H4,H5'})}).catch(()=>{});
+      // #endregion
+      this.logger.error(`[DEBUG] GET /influencers/me error: ${err?.code ?? 'n/a'} ${err?.name ?? 'Error'} ${err?.message ?? err}`, err?.stack);
+      throw err;
+    }
   }
 
   /**

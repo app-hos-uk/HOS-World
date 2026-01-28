@@ -17,11 +17,17 @@ export class InfluencerStorefrontsService {
    * Ensure user has an Influencer profile and storefront; create if missing (e.g. "login only" user).
    */
   private async ensureInfluencerProfile(userId: string) {
+    // #region agent log
+    fetch('http://127.0.0.1:7244/ingest/25f24f4e-a9b4-48c0-a492-7ec1e970ba34',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'influencer-storefronts.service.ts:ensureInfluencerProfile:entry',message:'ensureInfluencerProfile entry',data:{userId},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'H1,H2,H5'})}).catch(()=>{});
+    // #endregion
     try {
       let influencer = await this.prisma.influencer.findUnique({
         where: { userId },
         include: { storefront: true },
       });
+      // #region agent log
+      fetch('http://127.0.0.1:7244/ingest/25f24f4e-a9b4-48c0-a492-7ec1e970ba34',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'influencer-storefronts.service.ts:ensureInfluencerProfile:afterFindUnique',message:'after findUnique',data:{hasInfluencer:!!influencer},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'H1'})}).catch(()=>{});
+      // #endregion
       if (influencer) return influencer;
 
       const user = await this.prisma.user.findUnique({
@@ -55,6 +61,10 @@ export class InfluencerStorefrontsService {
       if (!refreshed?.storefront) throw new NotFoundException('Influencer profile not found');
       return refreshed;
     } catch (err: any) {
+      // #region agent log
+      fetch('http://127.0.0.1:7244/ingest/25f24f4e-a9b4-48c0-a492-7ec1e970ba34',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'influencer-storefronts.service.ts:ensureInfluencerProfile:catch',message:'ensureInfluencerProfile error',data:{code:err?.code,name:err?.name,message:err?.message},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'H1,H5'})}).catch(()=>{});
+      // #endregion
+      this.logger.error(`[DEBUG] ensureInfluencerProfile error: ${err?.code ?? 'n/a'} ${err?.name ?? 'Error'} ${err?.message ?? err}`, err?.stack);
       if (err?.code === 'P2021' || (err?.message && String(err.message).includes('does not exist'))) {
         this.logger.warn('Influencer tables missing; run migrations.', err?.message);
         throw new ServiceUnavailableException(
@@ -89,7 +99,13 @@ export class InfluencerStorefrontsService {
    * Get storefront for influencer
    */
   async findByUserId(userId: string) {
+    // #region agent log
+    fetch('http://127.0.0.1:7244/ingest/25f24f4e-a9b4-48c0-a492-7ec1e970ba34',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'influencer-storefronts.service.ts:findByUserId:entry',message:'findByUserId storefront entry',data:{userId},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'H2'})}).catch(()=>{});
+    // #endregion
     const influencer = await this.ensureInfluencerProfile(userId);
+    // #region agent log
+    fetch('http://127.0.0.1:7244/ingest/25f24f4e-a9b4-48c0-a492-7ec1e970ba34',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'influencer-storefronts.service.ts:findByUserId:afterEnsure',message:'after ensureInfluencerProfile',data:{hasStorefront:!!influencer.storefront},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'H2'})}).catch(()=>{});
+    // #endregion
     if (influencer.storefront) return influencer.storefront;
     return this.prisma.influencerStorefront.create({
       data: { influencerId: influencer.id },
