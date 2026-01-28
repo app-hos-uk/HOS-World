@@ -6,23 +6,27 @@ import {
   Logger,
 } from '@nestjs/common';
 import { PrismaService } from '../database/prisma.service';
+import { InfluencerStorefrontsService } from '../influencer-storefronts/influencer-storefronts.service';
 import { UpdateInfluencerDto, UpdateInfluencerCommissionDto, CreateProductLinkDto } from './dto/update-influencer.dto';
 
 @Injectable()
 export class InfluencersService {
   private readonly logger = new Logger(InfluencersService.name);
 
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private storefrontsService: InfluencerStorefrontsService,
+  ) {}
 
   // ============================================
   // INFLUENCER SELF-SERVICE
   // ============================================
 
   /**
-   * Get influencer profile by user ID
+   * Get influencer profile by user ID. Auto-creates profile + storefront if missing (e.g. login-only user).
    */
   async findByUserId(userId: string) {
-    const influencer = await this.prisma.influencer.findUnique({
+    let influencer = await this.prisma.influencer.findUnique({
       where: { userId },
       include: {
         storefront: true,
@@ -31,6 +35,19 @@ export class InfluencersService {
         },
       },
     });
+
+    if (!influencer) {
+      await this.storefrontsService.findByUserId(userId);
+      influencer = await this.prisma.influencer.findUnique({
+        where: { userId },
+        include: {
+          storefront: true,
+          user: {
+            select: { email: true, firstName: true, lastName: true },
+          },
+        },
+      });
+    }
 
     if (!influencer) {
       throw new NotFoundException('Influencer profile not found');
@@ -48,7 +65,22 @@ export class InfluencersService {
     });
 
     if (!influencer) {
-      throw new NotFoundException('Influencer profile not found');
+      await this.storefrontsService.findByUserId(userId);
+      const refetched = await this.prisma.influencer.findUnique({
+        where: { userId },
+      });
+      if (!refetched) throw new NotFoundException('Influencer profile not found');
+      return this.prisma.influencer.update({
+        where: { id: refetched.id },
+        data: {
+          displayName: dto.displayName,
+          bio: dto.bio,
+          profileImage: dto.profileImage,
+          bannerImage: dto.bannerImage,
+          socialLinks: dto.socialLinks,
+        },
+        include: { storefront: true },
+      });
     }
 
     return this.prisma.influencer.update({
@@ -70,6 +102,7 @@ export class InfluencersService {
    * Get influencer analytics
    */
   async getAnalytics(userId: string) {
+    await this.findByUserId(userId);
     const influencer = await this.prisma.influencer.findUnique({
       where: { userId },
       include: {
