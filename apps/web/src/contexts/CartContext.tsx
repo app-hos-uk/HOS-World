@@ -97,7 +97,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
 
   const updateCartItem = useCallback(async (itemId: string, quantity: number) => {
     try {
-      await apiClient.updateCartItem(itemId, { quantity });
+      await apiClient.updateCartItem(itemId, quantity);
       // Refresh cart after updating
       await fetchCart();
     } catch (error) {

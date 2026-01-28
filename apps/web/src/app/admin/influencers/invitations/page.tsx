@@ -5,6 +5,8 @@ import { apiClient } from '@/lib/api';
 import { useToast } from '@/hooks/useToast';
 import { AdminLayout } from '@/components/AdminLayout';
 
+const api = apiClient as any;
+
 interface Invitation {
   id: string;
   email: string;
@@ -36,7 +38,7 @@ export default function AdminInfluencerInvitationsPage() {
   const fetchInvitations = useCallback(async () => {
     try {
       setLoading(true);
-      const response = await apiClient.getInfluencerInvitations({
+      const response = await api.getInfluencerInvitations({
         status: statusFilter || undefined,
         limit: 100,
       });
@@ -61,7 +63,7 @@ export default function AdminInfluencerInvitationsPage() {
 
     try {
       setSending(true);
-      await apiClient.createInfluencerInvitation({
+      await api.createInfluencerInvitation({
         email: inviteForm.email,
         message: inviteForm.message || undefined,
         baseCommissionRate: inviteForm.baseCommissionRate
@@ -83,7 +85,7 @@ export default function AdminInfluencerInvitationsPage() {
     if (!confirm('Are you sure you want to cancel this invitation?')) return;
 
     try {
-      await apiClient.cancelInfluencerInvitation(id);
+      await api.cancelInfluencerInvitation(id);
       toast.success('Invitation cancelled');
       fetchInvitations();
     } catch (err: any) {
@@ -93,7 +95,7 @@ export default function AdminInfluencerInvitationsPage() {
 
   const handleResend = async (id: string) => {
     try {
-      await apiClient.resendInfluencerInvitation(id);
+      await api.resendInfluencerInvitation(id);
       toast.success('Invitation resent');
       fetchInvitations();
     } catch (err: any) {

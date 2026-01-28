@@ -5,6 +5,9 @@ import { apiClient } from '@/lib/api';
 import { useToast } from '@/hooks/useToast';
 import { AdminLayout } from '@/components/AdminLayout';
 
+// Influencer/campaign methods exist at runtime; cast for type-check until api-client types are regenerated
+const api = apiClient as any;
+
 interface Campaign {
   id: string;
   name: string;
@@ -51,11 +54,11 @@ export default function AdminInfluencerCampaignsPage() {
     try {
       setLoading(true);
       const [campaignsRes, influencersRes] = await Promise.all([
-        apiClient.getAdminCampaigns({ status: statusFilter || undefined, limit: 100 }),
-        apiClient.getInfluencers({ status: 'ACTIVE', limit: 100 }),
+        api.getAdminCampaigns({ status: statusFilter || undefined, limit: 100 }),
+        api.getInfluencers({ status: 'ACTIVE', limit: 100 }),
       ]);
-      setCampaigns(campaignsRes.data || []);
-      setInfluencers(influencersRes.data || []);
+      setCampaigns(campaignsRes?.data || []);
+      setInfluencers(influencersRes?.data || []);
     } catch (err: any) {
       console.error('Error fetching campaigns:', err);
     } finally {
@@ -76,7 +79,7 @@ export default function AdminInfluencerCampaignsPage() {
 
     try {
       setCreating(true);
-      await apiClient.createCampaign({
+      await api.createCampaign({
         influencerId: form.influencerId,
         name: form.name,
         description: form.description || undefined,
@@ -99,7 +102,7 @@ export default function AdminInfluencerCampaignsPage() {
 
   const handleUpdateStatus = async (id: string, status: string) => {
     try {
-      await apiClient.updateCampaign(id, { status });
+      await api.updateCampaign(id, { status });
       toast.success('Campaign status updated');
       fetchData();
     } catch (err: any) {
@@ -111,7 +114,7 @@ export default function AdminInfluencerCampaignsPage() {
     if (!confirm('Are you sure you want to delete this campaign?')) return;
 
     try {
-      await apiClient.deleteCampaign(id);
+      await api.deleteCampaign(id);
       toast.success('Campaign deleted');
       fetchData();
     } catch (err: any) {

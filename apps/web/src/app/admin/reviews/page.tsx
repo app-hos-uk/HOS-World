@@ -60,7 +60,8 @@ export default function AdminReviewsPage() {
   const fetchProducts = async () => {
     try {
       const response = await apiClient.getAdminProducts({ page: 1, limit: 100 });
-      const productList = response?.data?.products || response?.data?.data || response?.data || [];
+      const raw = response?.data as { products?: unknown[]; data?: unknown[] } | unknown[] | undefined;
+      const productList = Array.isArray(raw) ? raw : (raw as any)?.products ?? (raw as any)?.data ?? [];
       setProducts(Array.isArray(productList) ? productList : []);
       
       // Auto-select first product if available

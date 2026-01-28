@@ -61,7 +61,7 @@ export function Header() {
       MARKETING: '/marketing/dashboard',
       FINANCE: '/finance/dashboard',
       CMS_EDITOR: '/cms/dashboard',
-    };
+    } as Record<UserRole, string>;
 
     return roleDashboardMap[currentRole] || '/';
   };
@@ -79,7 +79,7 @@ export function Header() {
     MARKETING: 'Marketing',
     FINANCE: 'Finance',
     CMS_EDITOR: 'CMS Editor',
-  };
+  } as Record<UserRole, string>;
 
   const handleLogout = async () => {
     await logout();

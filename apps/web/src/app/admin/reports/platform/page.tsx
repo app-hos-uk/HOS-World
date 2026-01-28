@@ -25,14 +25,15 @@ export default function AdminPlatformMetricsPage() {
         apiClient.getOrders().catch(() => ({ data: { data: [] } })),
       ]);
 
-      // Handle both paginated ({ data: { data: [...], pagination: {...} } }) and flat ({ data: [...] }) responses
-      // Ensure all data sources are arrays to prevent runtime errors
-      const usersData = usersRes?.data?.data || usersRes?.data || [];
+      // Handle both paginated ({ data: { data: [...] } }) and flat ({ data: [...] }) responses
+      const usersRaw = usersRes?.data as { data?: unknown[] } | unknown[] | undefined;
+      const usersData = Array.isArray(usersRaw) ? usersRaw : (usersRaw as { data?: unknown[] })?.data ?? [];
       const users = Array.isArray(usersData) ? usersData : [];
-      const productsData = productsRes?.data?.data || productsRes?.data || [];
+      const productsRaw = productsRes?.data as { data?: unknown[] } | unknown[] | undefined;
+      const productsData = Array.isArray(productsRaw) ? productsRaw : (productsRaw as { data?: unknown[] })?.data ?? [];
       const products = Array.isArray(productsData) ? productsData : [];
-      // Orders API returns flat array { data: Order[] }, but handle paginated structure for future-proofing
-      const ordersData = (ordersRes?.data as any)?.data || ordersRes?.data || [];
+      const ordersRaw = ordersRes?.data as { data?: unknown[] } | unknown[] | undefined;
+      const ordersData = Array.isArray(ordersRaw) ? ordersRaw : (ordersRaw as { data?: unknown[] })?.data ?? [];
       const orders = Array.isArray(ordersData) ? ordersData : [];
 
       setMetrics({

@@ -6,6 +6,8 @@ import { apiClient } from '@/lib/api';
 import { useToast } from '@/hooks/useToast';
 import { AdminLayout } from '@/components/AdminLayout';
 
+const api = apiClient as any;
+
 interface Influencer {
   id: string;
   displayName: string;
@@ -42,7 +44,7 @@ export default function AdminInfluencersPage() {
   const fetchInfluencers = useCallback(async () => {
     try {
       setLoading(true);
-      const response = await apiClient.getInfluencers({
+      const response = await api.getInfluencers({
         status: filters.status || undefined,
         tier: filters.tier || undefined,
         search: filters.search || undefined,

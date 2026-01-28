@@ -11,6 +11,8 @@ import { useCurrency } from '@/contexts/CurrencyContext';
 import Link from 'next/link';
 import Image from 'next/image';
 
+const api = apiClient as any;
+
 interface OrderItem {
   id: string;
   productId: string;
@@ -436,7 +438,7 @@ export default function OrderDetailPage() {
                       <button
                         onClick={async () => {
                           try {
-                            const response = await apiClient.reorderItems(orderId);
+                            const response = await api.reorderItems(orderId);
                             if (response?.data) {
                               const { itemsAdded, itemsUpdated } = response.data;
                               // Build an accurate toast message
@@ -468,7 +470,7 @@ export default function OrderDetailPage() {
                       onClick={async () => {
                         if (!confirm('Are you sure you want to cancel this order?')) return;
                         try {
-                          await apiClient.cancelOrder(orderId);
+                          await api.cancelOrder(orderId);
                           toast.success('Order cancelled successfully');
                           fetchOrder(); // Refresh order details
                         } catch (err: any) {

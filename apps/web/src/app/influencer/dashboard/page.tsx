@@ -6,6 +6,8 @@ import Link from 'next/link';
 import { apiClient } from '@/lib/api';
 import { useToast } from '@/hooks/useToast';
 
+const api = apiClient as any;
+
 interface Analytics {
   totalClicks: number;
   totalConversions: number;
@@ -48,8 +50,8 @@ export default function InfluencerDashboardPage() {
     try {
       setLoading(true);
       const [profileRes, analyticsRes] = await Promise.all([
-        apiClient.getMyInfluencerProfile(),
-        apiClient.getMyInfluencerAnalytics(),
+        api.getMyInfluencerProfile(),
+        api.getMyInfluencerAnalytics(),
       ]);
       setProfile(profileRes.data);
       setAnalytics(analyticsRes.data);

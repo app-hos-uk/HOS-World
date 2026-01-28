@@ -5,6 +5,8 @@ import Link from 'next/link';
 import { apiClient } from '@/lib/api';
 import { useToast } from '@/hooks/useToast';
 
+const api = apiClient as any;
+
 interface Storefront {
   id: string;
   primaryColor: string;
@@ -56,8 +58,8 @@ export default function InfluencerStorefrontPage() {
     try {
       setLoading(true);
       const [profileRes, storefrontRes] = await Promise.all([
-        apiClient.getMyInfluencerProfile(),
-        apiClient.getMyStorefront(),
+        api.getMyInfluencerProfile(),
+        api.getMyStorefront(),
       ]);
       setProfile(profileRes.data);
       if (storefrontRes.data) {
@@ -73,7 +75,7 @@ export default function InfluencerStorefrontPage() {
   const handleSave = async () => {
     try {
       setSaving(true);
-      await apiClient.updateMyStorefront({
+      await api.updateMyStorefront({
         primaryColor: storefront.primaryColor,
         secondaryColor: storefront.secondaryColor,
         backgroundColor: storefront.backgroundColor,

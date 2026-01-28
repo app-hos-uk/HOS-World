@@ -3,6 +3,8 @@
 import { useState, useEffect } from 'react';
 import { apiClient } from '@/lib/api';
 
+const api = apiClient as any;
+
 interface Commission {
   id: string;
   orderId: string;
@@ -38,8 +40,8 @@ export default function InfluencerEarningsPage() {
     try {
       setLoading(true);
       const [commissionsRes, earningsRes] = await Promise.all([
-        apiClient.getMyCommissions({ status: statusFilter || undefined, limit: 100 }),
-        apiClient.getMyEarnings(),
+        api.getMyCommissions({ status: statusFilter || undefined, limit: 100 }),
+        api.getMyEarnings(),
       ]);
       setCommissions(commissionsRes.data || []);
       setEarnings(earningsRes.data);

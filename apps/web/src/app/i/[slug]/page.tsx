@@ -5,6 +5,8 @@ import { useParams } from 'next/navigation';
 import Link from 'next/link';
 import { apiClient } from '@/lib/api';
 
+const api = apiClient as any;
+
 interface Influencer {
   displayName: string;
   slug: string;
@@ -58,7 +60,7 @@ export default function InfluencerStorefrontPage() {
   const fetchStorefront = async () => {
     try {
       setLoading(true);
-      const response = await apiClient.getInfluencerStorefront(slug);
+      const response = await api.getInfluencerStorefront(slug);
       setInfluencer(response.data?.influencer);
       setStorefront(response.data?.storefront);
       setFeaturedProducts(response.data?.featuredProducts || []);
@@ -80,9 +82,9 @@ export default function InfluencerStorefrontPage() {
       }
 
       // Track the referral
-      const storedInfluencer = await apiClient.getInfluencerStorefront(slug);
+      const storedInfluencer = await api.getInfluencerStorefront(slug);
       if (storedInfluencer.data?.influencer?.referralCode) {
-        await apiClient.trackReferral({
+        await api.trackReferral({
           referralCode: storedInfluencer.data.influencer.referralCode,
           visitorId,
           landingPage: `/i/${slug}`,

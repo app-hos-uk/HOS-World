@@ -20,8 +20,8 @@ export default function SellersPage() {
       setLoading(true);
       // Get users with seller roles - using admin endpoint if available, or search by products
       const response = await apiClient.getUsers();
-      // Handle paginated response: { data: { data: [...], pagination: {...} } }
-      const userData = response?.data?.data || response?.data;
+      const raw = response?.data as { data?: unknown[] } | unknown[] | undefined;
+      const userData = Array.isArray(raw) ? raw : (raw as { data?: unknown[] })?.data ?? [];
       const users = Array.isArray(userData) ? userData : [];
       if (users.length > 0) {
         const sellerRoles = ['SELLER', 'B2C_SELLER', 'WHOLESALER'];

@@ -53,8 +53,9 @@ export default function ProductCreationPage() {
   const fetchSellers = async () => {
     try {
       const response = await apiClient.getUsers();
-      // Handle paginated response: { data: { data: [...], pagination: {...} } }
-      const userData = response?.data?.data || response?.data;
+      // Handle paginated { data: { data: [...] } } or flat { data: [...] }
+      const raw = response?.data as { data?: unknown[] } | unknown[] | undefined;
+      const userData = Array.isArray(raw) ? raw : (raw as { data?: unknown[] })?.data ?? [];
       const users = Array.isArray(userData) ? userData : [];
       const sellerRoles = ['SELLER', 'B2C_SELLER', 'WHOLESALER'];
       const sellerUsers = users.filter((user: any) => 

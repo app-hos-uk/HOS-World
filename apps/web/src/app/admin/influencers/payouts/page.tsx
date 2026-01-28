@@ -5,6 +5,8 @@ import { apiClient } from '@/lib/api';
 import { useToast } from '@/hooks/useToast';
 import { AdminLayout } from '@/components/AdminLayout';
 
+const api = apiClient as any;
+
 interface Payout {
   id: string;
   influencerId: string;
@@ -57,8 +59,8 @@ export default function AdminInfluencerPayoutsPage() {
     try {
       setLoading(true);
       const [payoutsRes, influencersRes] = await Promise.all([
-        apiClient.getAdminPayouts({ status: statusFilter || undefined, limit: 100 }),
-        apiClient.getInfluencers({ status: 'ACTIVE', limit: 100 }),
+        api.getAdminPayouts({ status: statusFilter || undefined, limit: 100 }),
+        api.getInfluencers({ status: 'ACTIVE', limit: 100 }),
       ]);
       setPayouts(payoutsRes.data || []);
       setInfluencers(influencersRes.data || []);
@@ -82,7 +84,7 @@ export default function AdminInfluencerPayoutsPage() {
 
     try {
       setCreating(true);
-      await apiClient.createPayout({
+      await api.createPayout({
         influencerId: createForm.influencerId,
         periodStart: createForm.periodStart,
         periodEnd: createForm.periodEnd,
@@ -103,7 +105,7 @@ export default function AdminInfluencerPayoutsPage() {
     if (!showPayModal) return;
 
     try {
-      await apiClient.markPayoutPaid(showPayModal.id, payForm);
+      await api.markPayoutPaid(showPayModal.id, payForm);
       toast.success('Payout marked as paid');
       setShowPayModal(null);
       setPayForm({ paymentMethod: '', paymentRef: '' });
@@ -117,7 +119,7 @@ export default function AdminInfluencerPayoutsPage() {
     if (!confirm('Are you sure you want to cancel this payout?')) return;
 
     try {
-      await apiClient.cancelPayout(id);
+      await api.cancelPayout(id);
       toast.success('Payout cancelled');
       fetchData();
     } catch (err: any) {

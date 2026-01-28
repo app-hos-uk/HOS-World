@@ -5,6 +5,8 @@ import { apiClient } from '@/lib/api';
 import { useToast } from '@/hooks/useToast';
 import { AdminLayout } from '@/components/AdminLayout';
 
+const api = apiClient as any;
+
 interface Commission {
   id: string;
   orderId: string;
@@ -32,7 +34,7 @@ export default function AdminInfluencerCommissionsPage() {
   const fetchCommissions = useCallback(async () => {
     try {
       setLoading(true);
-      const response = await apiClient.getAdminCommissions({
+      const response = await api.getAdminCommissions({
         status: statusFilter || undefined,
         limit: 100,
       });
@@ -50,7 +52,7 @@ export default function AdminInfluencerCommissionsPage() {
 
   const handleApprove = async (id: string) => {
     try {
-      await apiClient.approveCommission(id);
+      await api.approveCommission(id);
       toast.success('Commission approved');
       fetchCommissions();
     } catch (err: any) {
@@ -60,7 +62,7 @@ export default function AdminInfluencerCommissionsPage() {
 
   const handleUpdateStatus = async (id: string, status: string) => {
     try {
-      await apiClient.updateCommissionStatus(id, status);
+      await api.updateCommissionStatus(id, status);
       toast.success('Status updated');
       fetchCommissions();
     } catch (err: any) {
