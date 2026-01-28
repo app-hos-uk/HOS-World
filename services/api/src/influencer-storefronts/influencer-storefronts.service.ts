@@ -209,9 +209,9 @@ export class InfluencerStorefrontsService {
       throw new NotFoundException('Storefront not found');
     }
 
-    // Get featured products
+    // Get featured products (or fallback to recent ACTIVE products when none set)
     let featuredProducts: any[] = [];
-    if (influencer.storefront?.featuredProductIds.length) {
+    if (influencer.storefront?.featuredProductIds?.length) {
       featuredProducts = await this.prisma.product.findMany({
         where: {
           id: { in: influencer.storefront.featuredProductIds },
@@ -224,6 +224,20 @@ export class InfluencerStorefrontsService {
           price: true,
           images: { take: 1, select: { url: true, alt: true } },
         },
+      });
+    }
+    if (featuredProducts.length === 0) {
+      featuredProducts = await this.prisma.product.findMany({
+        where: { status: 'ACTIVE' },
+        select: {
+          id: true,
+          name: true,
+          slug: true,
+          price: true,
+          images: { take: 1, select: { url: true, alt: true } },
+        },
+        orderBy: { createdAt: 'desc' },
+        take: 12,
       });
     }
 

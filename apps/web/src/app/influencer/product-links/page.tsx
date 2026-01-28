@@ -58,9 +58,12 @@ export default function InfluencerProductLinksPage() {
   const fetchProducts = async () => {
     try {
       const response = await apiClient.getProducts({ status: 'ACTIVE', limit: 100 });
-      setProducts(response.data?.data || []);
+      const raw = response.data;
+      const list = Array.isArray(raw) ? raw : (raw as any)?.data ?? [];
+      setProducts(list);
     } catch (err: any) {
       console.error('Error fetching products:', err);
+      setProducts([]);
     }
   };
 
@@ -254,9 +257,11 @@ export default function InfluencerProductLinksPage() {
                 <div className="space-y-2 max-h-64 overflow-auto">
                   {filteredProducts.length === 0 ? (
                     <p className="text-center text-gray-500 py-4">
-                      {availableProducts.length === 0 
-                        ? 'All products have links already'
-                        : 'No products found'}
+                      {products.length === 0
+                        ? 'No products in the marketplace yet. Products will appear here once added by sellers.'
+                        : availableProducts.length === 0
+                          ? 'All products have links already'
+                          : 'No products found'}
                     </p>
                   ) : (
                     filteredProducts.map((product) => (
