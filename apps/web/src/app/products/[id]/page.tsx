@@ -14,9 +14,14 @@ import { useCart } from '@/contexts/CartContext';
 import Image from 'next/image';
 import Link from 'next/link';
 
+const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+function isUuid(s: string): boolean {
+  return UUID_REGEX.test(s);
+}
+
 export default function ProductDetailPage() {
   const params = useParams();
-  const productId = params.id as string;
+  const productIdOrSlug = params.id as string;
   const toast = useToast();
   const { formatPrice } = useCurrency();
   const { isAuthenticated } = useAuth();
@@ -32,72 +37,86 @@ export default function ProductDetailPage() {
   const [showReviewForm, setShowReviewForm] = useState(false);
   const [reviewForm, setReviewForm] = useState({ rating: 5, comment: '', title: '' });
 
+  // Resolve product by UUID or slug, then load reviews/wishlist using product.id
   useEffect(() => {
-    if (productId) {
-      fetchProduct();
-      fetchReviews();
-      if (isAuthenticated) {
-        checkWishlistStatus();
-      }
-    }
-  }, [productId, isAuthenticated]);
-
-  const fetchProduct = async () => {
-    try {
+    if (!productIdOrSlug) return;
+    let cancelled = false;
+    const load = async () => {
       setLoading(true);
-      const response = await apiClient.getProduct(productId);
-      if (response?.data) {
-        setProduct(response.data);
+      setProduct(null);
+      try {
+        const response = isUuid(productIdOrSlug)
+          ? await apiClient.getProduct(productIdOrSlug)
+          : await apiClient.getProductBySlug(productIdOrSlug);
+        if (!cancelled && response?.data) {
+          setProduct(response.data);
+        }
+      } catch (err: any) {
+        if (!cancelled) {
+          console.error('Error fetching product:', err);
+          toast.error(err.message || 'Failed to load product');
+        }
+      } finally {
+        if (!cancelled) setLoading(false);
       }
-    } catch (err: any) {
-      console.error('Error fetching product:', err);
-      toast.error(err.message || 'Failed to load product');
-    } finally {
-      setLoading(false);
-    }
-  };
+    };
+    load();
+    return () => { cancelled = true; };
+  }, [productIdOrSlug]);
 
-  const fetchReviews = async () => {
-    try {
-      setReviewsLoading(true);
-      const response = await apiClient.getProductReviews(productId);
-      // Ensure data is an array before setting (API may return object wrapper)
-      if (response?.data && Array.isArray(response.data)) {
-        setReviews(response.data);
-      } else {
-        setReviews([]);
+  useEffect(() => {
+    if (!product?.id) return;
+    let cancelled = false;
+    const fetchReviews = async () => {
+      try {
+        setReviewsLoading(true);
+        const response = await apiClient.getProductReviews(product.id);
+        if (!cancelled && response?.data && Array.isArray(response.data)) {
+          setReviews(response.data);
+        } else if (!cancelled) {
+          setReviews([]);
+        }
+      } catch (err: any) {
+        if (!cancelled) {
+          console.error('Error fetching reviews:', err);
+          setReviews([]);
+        }
+      } finally {
+        if (!cancelled) setReviewsLoading(false);
       }
-    } catch (err: any) {
-      console.error('Error fetching reviews:', err);
-      setReviews([]);
-    } finally {
-      setReviewsLoading(false);
-    }
-  };
+    };
+    fetchReviews();
+    return () => { cancelled = true; };
+  }, [product?.id]);
 
-  const checkWishlistStatus = async () => {
-    try {
-      const response = await apiClient.checkWishlistStatus(productId);
-      // Backend returns { inWishlist: boolean }
-      setIsInWishlist(response?.data?.inWishlist || false);
-    } catch (err) {
-      setIsInWishlist(false);
-    }
-  };
+  useEffect(() => {
+    if (!product?.id || !isAuthenticated) return;
+    let cancelled = false;
+    const check = async () => {
+      try {
+        const response = await apiClient.checkWishlistStatus(product.id);
+        if (!cancelled) setIsInWishlist(response?.data?.inWishlist ?? false);
+      } catch {
+        if (!cancelled) setIsInWishlist(false);
+      }
+    };
+    check();
+    return () => { cancelled = true; };
+  }, [product?.id, isAuthenticated]);
 
   const handleToggleWishlist = async () => {
-    if (!isAuthenticated) {
-      toast.error('Please login to add items to wishlist');
+    if (!isAuthenticated || !product?.id) {
+      if (!isAuthenticated) toast.error('Please login to add items to wishlist');
       return;
     }
 
     try {
       if (isInWishlist) {
-        await apiClient.removeFromWishlist(productId);
+        await apiClient.removeFromWishlist(product.id);
         setIsInWishlist(false);
         toast.success('Removed from wishlist');
       } else {
-        await apiClient.addToWishlist(productId);
+        await apiClient.addToWishlist(product.id);
         setIsInWishlist(true);
         toast.success('Added to wishlist');
       }
@@ -127,13 +146,13 @@ export default function ProductDetailPage() {
 
   const handleSubmitReview = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!isAuthenticated) {
-      toast.error('Please login to submit a review');
+    if (!isAuthenticated || !product?.id) {
+      if (!isAuthenticated) toast.error('Please login to submit a review');
       return;
     }
 
     try {
-      await apiClient.createReview(productId, {
+      await apiClient.createReview(product.id, {
         rating: reviewForm.rating,
         comment: reviewForm.comment,
         title: reviewForm.title,
