@@ -104,6 +104,18 @@ echo "  Email: customer@hos.test    | Password: $PASSWORD | Role: CUSTOMER"
 echo "  Email: wholesaler@hos.test  | Password: $PASSWORD | Role: WHOLESALER"
 echo "  Email: seller@hos.test      | Password: $PASSWORD | Role: B2C_SELLER"
 echo ""
+echo "Creating influencer test user (influencer@hos.test / Test!123)..."
+echo -n "  POST $API_URL/admin/create-influencer-test-user ... "
+infl_response=$(curl -s -w "\n%{http_code}" -X POST "$API_URL/admin/create-influencer-test-user" -H "Content-Type: application/json")
+infl_code=$(echo "$infl_response" | tail -n1)
+if [ "$infl_code" -eq 201 ] || [ "$infl_code" -eq 200 ]; then
+    echo -e "${GREEN}✅ Success${NC}"
+else
+    echo -e "${RED}❌ HTTP $infl_code${NC}"
+fi
+echo ""
+echo "  Email: influencer@hos.test  | Password: Test!123  | Role: INFLUENCER (for influencer dashboard testing)"
+echo ""
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 echo ""
 echo "✅ Registration-compatible users created!"

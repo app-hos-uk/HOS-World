@@ -1,6 +1,7 @@
 import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../database/prisma.service';
 import * as bcrypt from 'bcrypt';
+import { randomBytes } from 'crypto';
 import { UserRole } from '@prisma/client';
 
 @Injectable()
@@ -178,7 +179,59 @@ export class AdminService {
       });
     }
 
+    // Create influencer profile + storefront when role is INFLUENCER
+    if (data.role === UserRole.INFLUENCER) {
+      const displayName =
+        [data.firstName, data.lastName].filter(Boolean).join(' ') ||
+        data.email.split('@')[0];
+      const referralCode = await this.generateUniqueReferralCode(displayName);
+      const slug = await this.generateUniqueInfluencerSlug(displayName);
+      const influencer = await this.prisma.influencer.create({
+        data: {
+          userId: user.id,
+          displayName,
+          slug,
+          referralCode,
+          status: 'ACTIVE',
+        },
+      });
+      await this.prisma.influencerStorefront.create({
+        data: { influencerId: influencer.id },
+      });
+    }
+
     return user;
+  }
+
+  private async generateUniqueReferralCode(prefix: string): Promise<string> {
+    const base = prefix.toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 6) || 'INF';
+    let attempts = 0;
+    while (attempts < 15) {
+      const suffix = attempts < 10
+        ? Math.floor(Math.random() * 100).toString().padStart(2, '0')
+        : randomBytes(2).toString('hex').toUpperCase();
+      const code = base + suffix;
+      const existing = await this.prisma.influencer.findUnique({
+        where: { referralCode: code },
+      });
+      if (!existing) return code;
+      attempts++;
+    }
+    return randomBytes(4).toString('hex').toUpperCase();
+  }
+
+  private async generateUniqueInfluencerSlug(displayName: string): Promise<string> {
+    let slug = displayName.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '') || 'influencer';
+    let attempts = 0;
+    while (attempts < 15) {
+      const candidate = attempts === 0 ? slug : `${slug}-${attempts}`;
+      const existing = await this.prisma.influencer.findUnique({
+        where: { slug: candidate },
+      });
+      if (!existing) return candidate;
+      attempts++;
+    }
+    return `${slug}-${randomBytes(3).toString('hex')}`;
   }
 
   // ---- Permission Roles (custom roles) ----

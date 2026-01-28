@@ -9,6 +9,7 @@ import { PrismaService } from '../database/prisma.service';
 import { UserRole } from '@prisma/client';
 import type { ApiResponse } from '@hos-marketplace/shared-types';
 import * as bcrypt from 'bcrypt';
+import { randomBytes } from 'crypto';
 
 const teamUsers = [
   {
@@ -257,6 +258,100 @@ export class CreateTeamUsersController {
       },
       message: 'Business users creation completed',
     };
+  }
+
+  @Public()
+  @Post('create-influencer-test-user')
+  @ApiOperation({ summary: 'Create influencer test user', description: 'Creates or updates influencer@hos.test with password Test!123 and influencer profile. Public endpoint for development/testing.' })
+  @SwaggerApiResponse({ status: 201, description: 'Influencer test user created/updated' })
+  async createInfluencerTestUser(): Promise<ApiResponse<any>> {
+    const email = 'influencer@hos.test';
+    const password = 'Test!123';
+    const passwordHash = await bcrypt.hash(password, 10);
+    const displayName = 'Test Influencer';
+
+    const existingUser = await this.prisma.user.findUnique({
+      where: { email },
+      include: { influencerProfile: true },
+    });
+
+    if (existingUser) {
+      await this.prisma.user.update({
+        where: { id: existingUser.id },
+        data: { password: passwordHash, role: UserRole.INFLUENCER, firstName: 'Test', lastName: 'Influencer' },
+      });
+      if (!existingUser.influencerProfile) {
+        const slug = await this.uniqueInfluencerSlug(displayName);
+        const referralCode = await this.uniqueReferralCode(displayName);
+        const inf = await this.prisma.influencer.create({
+          data: {
+            userId: existingUser.id,
+            displayName,
+            slug,
+            referralCode,
+            status: 'ACTIVE',
+          },
+        });
+        await this.prisma.influencerStorefront.create({
+          data: { influencerId: inf.id },
+        });
+      }
+      return {
+        data: { email, status: 'updated', role: 'INFLUENCER' },
+        message: 'Influencer test user updated. Login: influencer@hos.test / Test!123',
+      };
+    }
+
+    const user = await this.prisma.user.create({
+      data: {
+        email,
+        password: passwordHash,
+        firstName: 'Test',
+        lastName: 'Influencer',
+        role: UserRole.INFLUENCER,
+      },
+    });
+
+    const slug = await this.uniqueInfluencerSlug(displayName);
+    const referralCode = await this.uniqueReferralCode(displayName);
+    const influencer = await this.prisma.influencer.create({
+      data: {
+        userId: user.id,
+        displayName,
+        slug,
+        referralCode,
+        status: 'ACTIVE',
+      },
+    });
+    await this.prisma.influencerStorefront.create({
+      data: { influencerId: influencer.id },
+    });
+
+    return {
+      data: { email, status: 'created', role: 'INFLUENCER', slug, referralCode },
+      message: 'Influencer test user created. Login: influencer@hos.test / Test!123',
+    };
+  }
+
+  private async uniqueReferralCode(prefix: string): Promise<string> {
+    const base = (prefix.toUpperCase().replace(/[^A-Z0-9]/g, '') || 'INF').slice(0, 6);
+    for (let i = 0; i < 20; i++) {
+      const suffix = randomBytes(2).toString('hex').toUpperCase();
+      const code = base + suffix;
+      const ex = await this.prisma.influencer.findUnique({ where: { referralCode: code } });
+      if (!ex) return code;
+    }
+    return randomBytes(4).toString('hex').toUpperCase();
+  }
+
+  private async uniqueInfluencerSlug(displayName: string): Promise<string> {
+    let slug = displayName.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '') || 'influencer';
+    for (let i = 0; i < 20; i++) {
+      const s = i === 0 ? slug : `${slug}-${i}`;
+      const ex = await this.prisma.influencer.findUnique({ where: { slug: s } });
+      if (!ex) return s;
+    }
+    return `${slug}-${randomBytes(3).toString('hex')}`;
   }
 }
 
