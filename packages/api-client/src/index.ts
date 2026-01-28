@@ -7,3 +7,20 @@ export * from './orders';
 export { ThemesApi } from './themes';
 export type { Theme as ApiTheme, SellerTheme, ThemePreference } from './themes';
 export * from './types';
+export type {
+  InfluencerProfile,
+  InfluencerAnalytics,
+  InfluencerProductLink,
+  InfluencerStorefront,
+  UpdateStorefrontDto,
+  GetInfluencerStorefrontResponse,
+  PublicInfluencerInfo,
+  PublicStorefrontProduct,
+  InfluencerInvitation,
+  AcceptInfluencerInvitationDto,
+  TrackReferralDto,
+  InfluencerCommission,
+  InfluencerEarningsSummary,
+  PaginatedDataResponse,
+  PaginationMeta,
+} from './influencer-types';

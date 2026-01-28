@@ -9,6 +9,20 @@ import type {
   PaginatedResponse,
   SearchFilters,
 } from '@hos-marketplace/shared-types';
+import type {
+  InfluencerProfile,
+  InfluencerAnalytics,
+  InfluencerProductLink,
+  InfluencerStorefront,
+  UpdateStorefrontDto,
+  GetInfluencerStorefrontResponse,
+  InfluencerInvitation,
+  AcceptInfluencerInvitationDto,
+  TrackReferralDto,
+  InfluencerCommission,
+  InfluencerEarningsSummary,
+  PaginatedDataResponse,
+} from './influencer-types';
 
 export class ApiClient {
   private baseUrl: string;
@@ -300,8 +314,8 @@ export class ApiClient {
     return this.request<ApiResponse<{ url: string }>>(`/social-sharing/share-url?type=${type}&itemId=${itemId}`);
   }
 
-  // Products endpoints
-  async getProducts(filters?: SearchFilters): Promise<ApiResponse<PaginatedResponse<Product>>> {
+  // Products endpoints (filters may include status for admin/listing use)
+  async getProducts(filters?: SearchFilters & { status?: string }): Promise<ApiResponse<PaginatedResponse<Product>>> {
     const queryParams = new URLSearchParams();
     if (filters) {
       Object.entries(filters).forEach(([key, value]) => {
@@ -3361,25 +3375,20 @@ export class ApiClient {
   }
 
   // Public invitation endpoints
-  async getInfluencerInvitationByToken(token: string): Promise<ApiResponse<any>> {
-    return this.request<ApiResponse<any>>(`/influencer-invitations/token/${token}`);
+  async getInfluencerInvitationByToken(token: string): Promise<ApiResponse<InfluencerInvitation>> {
+    return this.request<ApiResponse<InfluencerInvitation>>(`/influencer-invitations/token/${token}`);
   }
 
-  async acceptInfluencerInvitation(token: string, data: {
-    password: string;
-    firstName: string;
-    lastName: string;
-    displayName: string;
-  }): Promise<ApiResponse<any>> {
-    return this.request<ApiResponse<any>>(`/influencer-invitations/accept/${token}`, {
+  async acceptInfluencerInvitation(token: string, data: AcceptInfluencerInvitationDto): Promise<ApiResponse<unknown>> {
+    return this.request<ApiResponse<unknown>>(`/influencer-invitations/accept/${token}`, {
       method: 'POST',
       body: JSON.stringify(data),
     });
   }
 
   // Influencer Self-Service
-  async getMyInfluencerProfile(): Promise<ApiResponse<any>> {
-    return this.request<ApiResponse<any>>('/influencers/me');
+  async getMyInfluencerProfile(): Promise<ApiResponse<InfluencerProfile>> {
+    return this.request<ApiResponse<InfluencerProfile>>('/influencers/me');
   }
 
   async updateMyInfluencerProfile(data: {
@@ -3388,57 +3397,45 @@ export class ApiClient {
     profileImage?: string;
     bannerImage?: string;
     socialLinks?: Record<string, string>;
-  }): Promise<ApiResponse<any>> {
-    return this.request<ApiResponse<any>>('/influencers/me', {
+  }): Promise<ApiResponse<InfluencerProfile>> {
+    return this.request<ApiResponse<InfluencerProfile>>('/influencers/me', {
       method: 'PUT',
       body: JSON.stringify(data),
     });
   }
 
-  async getMyInfluencerAnalytics(): Promise<ApiResponse<any>> {
-    return this.request<ApiResponse<any>>('/influencers/me/analytics');
+  async getMyInfluencerAnalytics(): Promise<ApiResponse<InfluencerAnalytics>> {
+    return this.request<ApiResponse<InfluencerAnalytics>>('/influencers/me/analytics');
   }
 
-  async getMyProductLinks(options?: { page?: number; limit?: number }): Promise<ApiResponse<any>> {
+  async getMyProductLinks(options?: { page?: number; limit?: number }): Promise<PaginatedDataResponse<InfluencerProductLink[]>> {
     const queryParams = new URLSearchParams();
     if (options?.page) queryParams.append('page', options.page.toString());
     if (options?.limit) queryParams.append('limit', options.limit.toString());
     const query = queryParams.toString();
-    return this.request<ApiResponse<any>>(`/influencers/me/product-links${query ? `?${query}` : ''}`);
+    return this.request<PaginatedDataResponse<InfluencerProductLink[]>>(`/influencers/me/product-links${query ? `?${query}` : ''}`);
   }
 
-  async createProductLink(productId: string, customSlug?: string): Promise<ApiResponse<any>> {
-    return this.request<ApiResponse<any>>('/influencers/me/product-links', {
+  async createProductLink(productId: string, customSlug?: string): Promise<ApiResponse<InfluencerProductLink>> {
+    return this.request<ApiResponse<InfluencerProductLink>>('/influencers/me/product-links', {
       method: 'POST',
       body: JSON.stringify({ productId, customSlug }),
     });
   }
 
-  async deleteProductLink(id: string): Promise<ApiResponse<any>> {
-    return this.request<ApiResponse<any>>(`/influencers/me/product-links/${id}`, {
+  async deleteProductLink(id: string): Promise<ApiResponse<null>> {
+    return this.request<ApiResponse<null>>(`/influencers/me/product-links/${id}`, {
       method: 'DELETE',
     });
   }
 
   // Storefront
-  async getMyStorefront(): Promise<ApiResponse<any>> {
-    return this.request<ApiResponse<any>>('/influencers/me/storefront');
+  async getMyStorefront(): Promise<ApiResponse<InfluencerStorefront>> {
+    return this.request<ApiResponse<InfluencerStorefront>>('/influencers/me/storefront');
   }
 
-  async updateMyStorefront(data: {
-    primaryColor?: string;
-    secondaryColor?: string;
-    backgroundColor?: string;
-    textColor?: string;
-    fontFamily?: string;
-    layoutType?: string;
-    showBanner?: boolean;
-    showBio?: boolean;
-    showSocialLinks?: boolean;
-    metaTitle?: string;
-    metaDescription?: string;
-  }): Promise<ApiResponse<any>> {
-    return this.request<ApiResponse<any>>('/influencers/me/storefront', {
+  async updateMyStorefront(data: UpdateStorefrontDto): Promise<ApiResponse<InfluencerStorefront>> {
+    return this.request<ApiResponse<InfluencerStorefront>>('/influencers/me/storefront', {
       method: 'PUT',
       body: JSON.stringify(data),
     });
@@ -3459,19 +3456,13 @@ export class ApiClient {
   }
 
   // Public influencer storefront
-  async getInfluencerStorefront(slug: string): Promise<ApiResponse<any>> {
-    return this.request<ApiResponse<any>>(`/i/${encodeURIComponent(slug)}`);
+  async getInfluencerStorefront(slug: string): Promise<ApiResponse<GetInfluencerStorefrontResponse>> {
+    return this.request<ApiResponse<GetInfluencerStorefrontResponse>>(`/i/${encodeURIComponent(slug)}`);
   }
 
   // Referrals
-  async trackReferral(data: {
-    referralCode: string;
-    visitorId?: string;
-    landingPage?: string;
-    productId?: string;
-    utmParams?: Record<string, string>;
-  }): Promise<ApiResponse<any>> {
-    return this.request<ApiResponse<any>>('/referrals/track', {
+  async trackReferral(data: TrackReferralDto): Promise<ApiResponse<unknown>> {
+    return this.request<ApiResponse<unknown>>('/referrals/track', {
       method: 'POST',
       body: JSON.stringify(data),
     });
@@ -3495,17 +3486,17 @@ export class ApiClient {
     page?: number;
     limit?: number;
     status?: string;
-  }): Promise<ApiResponse<any>> {
+  }): Promise<PaginatedDataResponse<InfluencerCommission[]>> {
     const queryParams = new URLSearchParams();
     if (options?.page) queryParams.append('page', options.page.toString());
     if (options?.limit) queryParams.append('limit', options.limit.toString());
     if (options?.status) queryParams.append('status', options.status);
     const query = queryParams.toString();
-    return this.request<ApiResponse<any>>(`/influencers/me/commissions${query ? `?${query}` : ''}`);
+    return this.request<PaginatedDataResponse<InfluencerCommission[]>>(`/influencers/me/commissions${query ? `?${query}` : ''}`);
   }
 
-  async getMyEarnings(): Promise<ApiResponse<any>> {
-    return this.request<ApiResponse<any>>('/influencers/me/earnings');
+  async getMyEarnings(): Promise<ApiResponse<InfluencerEarningsSummary>> {
+    return this.request<ApiResponse<InfluencerEarningsSummary>>('/influencers/me/earnings');
   }
 
   // Payouts

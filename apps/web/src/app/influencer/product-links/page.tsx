@@ -4,8 +4,6 @@ import { useState, useEffect, useCallback } from 'react';
 import { apiClient } from '@/lib/api';
 import { useToast } from '@/hooks/useToast';
 
-const api = apiClient as any;
-
 interface ProductLink {
   id: string;
   productId: string;
@@ -48,7 +46,7 @@ export default function InfluencerProductLinksPage() {
   const fetchLinks = async () => {
     try {
       setLoading(true);
-      const response = await api.getMyProductLinks({ limit: 100 });
+      const response = await apiClient.getMyProductLinks({ limit: 100 });
       setLinks(response.data || []);
     } catch (err: any) {
       console.error('Error fetching product links:', err);
@@ -59,8 +57,8 @@ export default function InfluencerProductLinksPage() {
 
   const fetchProducts = async () => {
     try {
-      const response = await api.getProducts({ status: 'ACTIVE', limit: 100 });
-      setProducts(response.data?.items || response.data?.data || []);
+      const response = await apiClient.getProducts({ status: 'ACTIVE', limit: 100 });
+      setProducts(response.data?.data || []);
     } catch (err: any) {
       console.error('Error fetching products:', err);
     }
@@ -74,7 +72,7 @@ export default function InfluencerProductLinksPage() {
 
     try {
       setCreating(true);
-      await api.createProductLink(selectedProductId);
+      await apiClient.createProductLink(selectedProductId);
       toast.success('Product link created successfully');
       setShowAddModal(false);
       setSelectedProductId('');
@@ -90,7 +88,7 @@ export default function InfluencerProductLinksPage() {
     if (!confirm('Are you sure you want to delete this product link?')) return;
 
     try {
-      await api.deleteProductLink(id);
+      await apiClient.deleteProductLink(id);
       toast.success('Product link deleted');
       fetchLinks();
     } catch (err: any) {

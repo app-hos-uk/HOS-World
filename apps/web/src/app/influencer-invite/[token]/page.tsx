@@ -5,8 +5,6 @@ import { useParams, useRouter } from 'next/navigation';
 import { apiClient } from '@/lib/api';
 import { useToast } from '@/hooks/useToast';
 
-const api = apiClient as any;
-
 interface Invitation {
   id: string;
   email: string;
@@ -42,7 +40,7 @@ export default function AcceptInfluencerInvitePage() {
   const fetchInvitation = async () => {
     try {
       setLoading(true);
-      const response = await api.getInfluencerInvitationByToken(token);
+      const response = await apiClient.getInfluencerInvitationByToken(token);
       setInvitation(response.data);
     } catch (err: any) {
       console.error('Error fetching invitation:', err);
@@ -67,7 +65,7 @@ export default function AcceptInfluencerInvitePage() {
 
     try {
       setSubmitting(true);
-      await api.acceptInfluencerInvitation(token, {
+      await apiClient.acceptInfluencerInvitation(token, {
         password: form.password,
         firstName: form.firstName,
         lastName: form.lastName,

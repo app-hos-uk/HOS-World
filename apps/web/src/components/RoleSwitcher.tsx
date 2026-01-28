@@ -10,6 +10,8 @@ const AVAILABLE_ROLES: UserRole[] = [
   'WHOLESALER',
   'B2C_SELLER',
   'SELLER',
+  'ADMIN',
+  'INFLUENCER' as UserRole,
   'PROCUREMENT',
   'FULFILLMENT',
   'CATALOG',
@@ -18,33 +20,35 @@ const AVAILABLE_ROLES: UserRole[] = [
   'CMS_EDITOR',
 ];
 
-const ROLE_LABELS: Record<UserRole, string> = {
+const ROLE_LABELS = {
   CUSTOMER: 'Customer',
   WHOLESALER: 'Wholesaler',
   B2C_SELLER: 'B2C Seller',
   SELLER: 'Seller',
   ADMIN: 'Admin',
+  INFLUENCER: 'Influencer',
   PROCUREMENT: 'Procurement',
   FULFILLMENT: 'Fulfillment',
   CATALOG: 'Catalog',
   MARKETING: 'Marketing',
   FINANCE: 'Finance',
   CMS_EDITOR: 'CMS Editor',
-};
+} as Record<UserRole, string>;
 
-const ROLE_DASHBOARD_MAP: Record<UserRole, string> = {
+const ROLE_DASHBOARD_MAP = {
   CUSTOMER: '/',
   WHOLESALER: '/wholesaler/dashboard',
   B2C_SELLER: '/seller/dashboard',
   SELLER: '/seller/dashboard',
   ADMIN: '/admin/dashboard',
+  INFLUENCER: '/influencer/dashboard',
   PROCUREMENT: '/procurement/dashboard',
   FULFILLMENT: '/fulfillment/dashboard',
   CATALOG: '/catalog/dashboard',
   MARKETING: '/marketing/dashboard',
   FINANCE: '/finance/dashboard',
   CMS_EDITOR: '/cms/dashboard',
-};
+} as Record<UserRole, string>;
 
 export function RoleSwitcher() {
   const { user, impersonatedRole, switchRole, effectiveRole, loading } = useAuth();

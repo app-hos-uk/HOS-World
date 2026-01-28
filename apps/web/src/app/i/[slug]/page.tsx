@@ -4,41 +4,11 @@ import { useState, useEffect } from 'react';
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
 import { apiClient } from '@/lib/api';
-
-const api = apiClient as any;
-
-interface Influencer {
-  displayName: string;
-  slug: string;
-  bio?: string;
-  profileImage?: string;
-  bannerImage?: string;
-  socialLinks?: Record<string, string>;
-  referralCode: string;
-}
-
-interface Storefront {
-  primaryColor: string;
-  secondaryColor: string;
-  backgroundColor: string;
-  textColor: string;
-  fontFamily: string;
-  layoutType: string;
-  showBanner: boolean;
-  showBio: boolean;
-  showSocialLinks: boolean;
-  metaTitle?: string;
-  metaDescription?: string;
-  contentBlocks?: any[];
-}
-
-interface Product {
-  id: string;
-  name: string;
-  slug: string;
-  price: number;
-  images: Array<{ url: string; alt?: string }>;
-}
+import type {
+  PublicInfluencerInfo,
+  InfluencerStorefront,
+  PublicStorefrontProduct,
+} from '@hos-marketplace/api-client';
 
 export default function InfluencerStorefrontPage() {
   const params = useParams();
@@ -46,9 +16,9 @@ export default function InfluencerStorefrontPage() {
   
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [influencer, setInfluencer] = useState<Influencer | null>(null);
-  const [storefront, setStorefront] = useState<Storefront | null>(null);
-  const [featuredProducts, setFeaturedProducts] = useState<Product[]>([]);
+  const [influencer, setInfluencer] = useState<PublicInfluencerInfo | null>(null);
+  const [storefront, setStorefront] = useState<InfluencerStorefront | null>(null);
+  const [featuredProducts, setFeaturedProducts] = useState<PublicStorefrontProduct[]>([]);
 
   useEffect(() => {
     if (slug) {
@@ -60,7 +30,7 @@ export default function InfluencerStorefrontPage() {
   const fetchStorefront = async () => {
     try {
       setLoading(true);
-      const response = await api.getInfluencerStorefront(slug);
+      const response = await apiClient.getInfluencerStorefront(slug);
       setInfluencer(response.data?.influencer);
       setStorefront(response.data?.storefront);
       setFeaturedProducts(response.data?.featuredProducts || []);
@@ -82,9 +52,9 @@ export default function InfluencerStorefrontPage() {
       }
 
       // Track the referral
-      const storedInfluencer = await api.getInfluencerStorefront(slug);
+      const storedInfluencer = await apiClient.getInfluencerStorefront(slug);
       if (storedInfluencer.data?.influencer?.referralCode) {
-        await api.trackReferral({
+        await apiClient.trackReferral({
           referralCode: storedInfluencer.data.influencer.referralCode,
           visitorId,
           landingPage: `/i/${slug}`,
