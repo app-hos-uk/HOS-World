@@ -46,7 +46,7 @@ export class InfluencerPayoutsController {
     @Query('page') page?: string,
     @Query('limit') limit?: string,
   ): Promise<ApiResponse<any>> {
-    const result = await this.payoutsService.findByInfluencer(req.user.sub, {
+    const result = await this.payoutsService.findByInfluencer(req.user.id, {
       page: page ? parseInt(page, 10) : 1,
       limit: limit ? parseInt(limit, 10) : 20,
     });
@@ -128,7 +128,7 @@ export class InfluencerPayoutsController {
     @Param('id', ParseUUIDPipe) id: string,
     @Body() body: { paymentMethod?: string; paymentRef?: string },
   ): Promise<ApiResponse<any>> {
-    const payout = await this.payoutsService.markPaid(id, req.user.sub, body);
+    const payout = await this.payoutsService.markPaid(id, req.user.id, body);
     return {
       data: payout,
       message: 'Payout marked as paid successfully',

@@ -65,7 +65,7 @@ export class ReferralsController {
     @Query('limit') limit?: string,
     @Query('converted') converted?: string,
   ): Promise<ApiResponse<any>> {
-    const result = await this.referralsService.findByInfluencer(req.user.sub, {
+    const result = await this.referralsService.findByInfluencer(req.user.id, {
       page: page ? parseInt(page, 10) : 1,
       limit: limit ? parseInt(limit, 10) : 20,
       converted: converted !== undefined ? converted === 'true' : undefined,

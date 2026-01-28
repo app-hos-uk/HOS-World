@@ -32,7 +32,7 @@ export class InfluencerStorefrontsController {
   @ApiOperation({ summary: 'Get my storefront settings' })
   @SwaggerApiResponse({ status: 200, description: 'Storefront retrieved successfully' })
   async getMyStorefront(@Request() req: any): Promise<ApiResponse<any>> {
-    const storefront = await this.storefrontsService.findByUserId(req.user.sub);
+    const storefront = await this.storefrontsService.findByUserId(req.user.id);
     return {
       data: storefront,
       message: 'Storefront retrieved successfully',
@@ -49,7 +49,7 @@ export class InfluencerStorefrontsController {
     @Request() req: any,
     @Body() dto: any,
   ): Promise<ApiResponse<any>> {
-    const storefront = await this.storefrontsService.update(req.user.sub, dto);
+    const storefront = await this.storefrontsService.update(req.user.id, dto);
     return {
       data: storefront,
       message: 'Storefront updated successfully',
@@ -66,7 +66,7 @@ export class InfluencerStorefrontsController {
     @Request() req: any,
     @Body() body: { contentBlocks: any[] },
   ): Promise<ApiResponse<any>> {
-    const storefront = await this.storefrontsService.updateContentBlocks(req.user.sub, body.contentBlocks);
+    const storefront = await this.storefrontsService.updateContentBlocks(req.user.id, body.contentBlocks);
     return {
       data: storefront,
       message: 'Content blocks updated successfully',
@@ -83,7 +83,7 @@ export class InfluencerStorefrontsController {
     @Request() req: any,
     @Body() body: { productIds: string[] },
   ): Promise<ApiResponse<any>> {
-    const storefront = await this.storefrontsService.updateFeaturedProducts(req.user.sub, body.productIds);
+    const storefront = await this.storefrontsService.updateFeaturedProducts(req.user.id, body.productIds);
     return {
       data: storefront,
       message: 'Featured products updated successfully',

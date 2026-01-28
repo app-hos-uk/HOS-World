@@ -49,7 +49,7 @@ export class InfluencerCampaignsController {
     @Query('limit') limit?: string,
     @Query('status') status?: string,
   ): Promise<ApiResponse<any>> {
-    const result = await this.campaignsService.findByInfluencer(req.user.sub, {
+    const result = await this.campaignsService.findByInfluencer(req.user.id, {
       page: page ? parseInt(page, 10) : 1,
       limit: limit ? parseInt(limit, 10) : 20,
       status,

@@ -47,7 +47,7 @@ export class InfluencerCommissionsController {
     @Query('limit') limit?: string,
     @Query('status') status?: string,
   ): Promise<ApiResponse<any>> {
-    const result = await this.commissionsService.findByInfluencer(req.user.sub, {
+    const result = await this.commissionsService.findByInfluencer(req.user.id, {
       page: page ? parseInt(page, 10) : 1,
       limit: limit ? parseInt(limit, 10) : 20,
       status,
@@ -66,7 +66,7 @@ export class InfluencerCommissionsController {
   @ApiOperation({ summary: 'Get my earnings summary' })
   @SwaggerApiResponse({ status: 200, description: 'Earnings summary retrieved successfully' })
   async getMyEarnings(@Request() req: any): Promise<ApiResponse<any>> {
-    const earnings = await this.commissionsService.getEarningsSummary(req.user.sub);
+    const earnings = await this.commissionsService.getEarningsSummary(req.user.id);
     return {
       data: earnings,
       message: 'Earnings summary retrieved successfully',

@@ -51,7 +51,7 @@ export class InfluencerInvitationsController {
     @Request() req: any,
     @Body() dto: CreateInfluencerInvitationDto,
   ): Promise<ApiResponse<any>> {
-    const invitation = await this.invitationsService.create(req.user.sub, dto);
+    const invitation = await this.invitationsService.create(req.user.id, dto);
     return {
       data: invitation,
       message: 'Invitation sent successfully',

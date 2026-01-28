@@ -47,7 +47,7 @@ export class InfluencersController {
   })
   @SwaggerApiResponse({ status: 200, description: 'Profile retrieved successfully' })
   async getMyProfile(@Request() req: any): Promise<ApiResponse<any>> {
-    const influencer = await this.influencersService.findByUserId(req.user.sub);
+    const influencer = await this.influencersService.findByUserId(req.user.id);
     return {
       data: influencer,
       message: 'Profile retrieved successfully',
@@ -68,7 +68,7 @@ export class InfluencersController {
     @Request() req: any,
     @Body() dto: UpdateInfluencerDto,
   ): Promise<ApiResponse<any>> {
-    const influencer = await this.influencersService.update(req.user.sub, dto);
+    const influencer = await this.influencersService.update(req.user.id, dto);
     return {
       data: influencer,
       message: 'Profile updated successfully',
@@ -85,7 +85,7 @@ export class InfluencersController {
   })
   @SwaggerApiResponse({ status: 200, description: 'Analytics retrieved successfully' })
   async getMyAnalytics(@Request() req: any): Promise<ApiResponse<any>> {
-    const analytics = await this.influencersService.getAnalytics(req.user.sub);
+    const analytics = await this.influencersService.getAnalytics(req.user.id);
     return {
       data: analytics,
       message: 'Analytics retrieved successfully',
@@ -108,7 +108,7 @@ export class InfluencersController {
     @Query('page') page?: string,
     @Query('limit') limit?: string,
   ): Promise<ApiResponse<any>> {
-    const result = await this.influencersService.getProductLinks(req.user.sub, {
+    const result = await this.influencersService.getProductLinks(req.user.id, {
       page: page ? parseInt(page, 10) : 1,
       limit: limit ? parseInt(limit, 10) : 20,
     });
@@ -133,7 +133,7 @@ export class InfluencersController {
     @Request() req: any,
     @Body() dto: CreateProductLinkDto,
   ): Promise<ApiResponse<any>> {
-    const link = await this.influencersService.createProductLink(req.user.sub, dto);
+    const link = await this.influencersService.createProductLink(req.user.id, dto);
     return {
       data: link,
       message: 'Product link created successfully',
@@ -154,7 +154,7 @@ export class InfluencersController {
     @Request() req: any,
     @Param('id', ParseUUIDPipe) id: string,
   ): Promise<ApiResponse<any>> {
-    const result = await this.influencersService.deleteProductLink(req.user.sub, id);
+    const result = await this.influencersService.deleteProductLink(req.user.id, id);
     return {
       data: null,
       message: result.message,
