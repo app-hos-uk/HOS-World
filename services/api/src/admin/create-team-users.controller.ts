@@ -272,32 +272,48 @@ export class CreateTeamUsersController {
 
     const existingUser = await this.prisma.user.findUnique({
       where: { email },
-      include: { influencerProfile: true },
     });
+
+    let profileCreated = false;
+    let slug: string | undefined;
+    let referralCode: string | undefined;
 
     if (existingUser) {
       await this.prisma.user.update({
         where: { id: existingUser.id },
         data: { password: passwordHash, role: UserRole.INFLUENCER, firstName: 'Test', lastName: 'Influencer' },
       });
-      if (!existingUser.influencerProfile) {
-        const slug = await this.uniqueInfluencerSlug(displayName);
-        const referralCode = await this.uniqueReferralCode(displayName);
-        const inf = await this.prisma.influencer.create({
-          data: {
-            userId: existingUser.id,
-            displayName,
-            slug,
-            referralCode,
-            status: 'ACTIVE',
-          },
-        });
-        await this.prisma.influencerStorefront.create({
-          data: { influencerId: inf.id },
-        });
+      let hasProfile = false;
+      try {
+        hasProfile = !!(await this.prisma.influencer.findUnique({ where: { userId: existingUser.id } }));
+      } catch {
+        // Influencer table may not exist yet
+      }
+      if (!hasProfile) {
+        try {
+          slug = await this.uniqueInfluencerSlug(displayName);
+          referralCode = await this.uniqueReferralCode(displayName);
+          const inf = await this.prisma.influencer.create({
+            data: {
+              userId: existingUser.id,
+              displayName,
+              slug,
+              referralCode,
+              status: 'ACTIVE',
+            },
+          });
+          await this.prisma.influencerStorefront.create({
+            data: { influencerId: inf.id },
+          });
+          profileCreated = true;
+        } catch {
+          // Tables may not exist yet (migrations not run). User can still login.
+        }
+      } else {
+        profileCreated = true;
       }
       return {
-        data: { email, status: 'updated', role: 'INFLUENCER' },
+        data: { email, status: 'updated', role: 'INFLUENCER', profileCreated, slug, referralCode },
         message: 'Influencer test user updated. Login: influencer@hos.test / Test!123',
       };
     }
@@ -312,24 +328,31 @@ export class CreateTeamUsersController {
       },
     });
 
-    const slug = await this.uniqueInfluencerSlug(displayName);
-    const referralCode = await this.uniqueReferralCode(displayName);
-    const influencer = await this.prisma.influencer.create({
-      data: {
-        userId: user.id,
-        displayName,
-        slug,
-        referralCode,
-        status: 'ACTIVE',
-      },
-    });
-    await this.prisma.influencerStorefront.create({
-      data: { influencerId: influencer.id },
-    });
+    try {
+      slug = await this.uniqueInfluencerSlug(displayName);
+      referralCode = await this.uniqueReferralCode(displayName);
+      const influencer = await this.prisma.influencer.create({
+        data: {
+          userId: user.id,
+          displayName,
+          slug,
+          referralCode,
+          status: 'ACTIVE',
+        },
+      });
+      await this.prisma.influencerStorefront.create({
+        data: { influencerId: influencer.id },
+      });
+      profileCreated = true;
+    } catch {
+      // Influencer/Storefront tables may not exist (migrations not run). User can still login.
+    }
 
     return {
-      data: { email, status: 'created', role: 'INFLUENCER', slug, referralCode },
-      message: 'Influencer test user created. Login: influencer@hos.test / Test!123',
+      data: { email, status: 'created', role: 'INFLUENCER', profileCreated, slug, referralCode },
+      message: profileCreated
+        ? 'Influencer test user created. Login: influencer@hos.test / Test!123'
+        : 'Influencer test user created (login only). Run DB migrations and call this endpoint again to create influencer profile.',
     };
   }
 
