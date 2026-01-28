@@ -124,44 +124,43 @@ export class InfluencersService {
     await this.findByUserId(userId);
     const influencer = await this.prisma.influencer.findUnique({
       where: { userId },
-      include: {
-        commissions: {
-          orderBy: { createdAt: 'desc' },
-          take: 100,
-        },
-        referrals: {
-          orderBy: { createdAt: 'desc' },
-          take: 100,
-        },
-      },
     });
 
     if (!influencer) {
       throw new NotFoundException('Influencer profile not found');
     }
 
-    // Calculate analytics
-    const pendingCommission = influencer.commissions
+    let commissions: { status: string; amount: unknown }[] = [];
+    let referrals: { createdAt: Date; convertedAt: Date | null }[] = [];
+    try {
+      const withRelations = await this.prisma.influencer.findUnique({
+        where: { userId },
+        include: {
+          commissions: { orderBy: { createdAt: 'desc' }, take: 100 },
+          referrals: { orderBy: { createdAt: 'desc' }, take: 100 },
+        },
+      });
+      if (withRelations?.commissions) commissions = withRelations.commissions;
+      if (withRelations?.referrals) referrals = withRelations.referrals;
+    } catch {
+      // commissions/referrals tables may not exist yet; use denormalized stats only
+    }
+
+    const pendingCommission = commissions
       .filter(c => c.status === 'PENDING')
       .reduce((sum, c) => sum + Number(c.amount), 0);
-
-    const approvedCommission = influencer.commissions
+    const approvedCommission = commissions
       .filter(c => c.status === 'APPROVED')
       .reduce((sum, c) => sum + Number(c.amount), 0);
-
-    const paidCommission = influencer.commissions
+    const paidCommission = commissions
       .filter(c => c.status === 'PAID')
       .reduce((sum, c) => sum + Number(c.amount), 0);
 
-    // Clicks/conversions by day (last 30 days)
     const thirtyDaysAgo = new Date();
     thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-
-    const recentReferrals = influencer.referrals.filter(r => r.createdAt >= thirtyDaysAgo);
-    
+    const recentReferrals = referrals.filter(r => r.createdAt >= thirtyDaysAgo);
     const clicksByDay: Record<string, number> = {};
     const conversionsByDay: Record<string, number> = {};
-    
     recentReferrals.forEach(r => {
       const dateKey = r.createdAt.toISOString().split('T')[0];
       clicksByDay[dateKey] = (clicksByDay[dateKey] || 0) + 1;
@@ -174,7 +173,7 @@ export class InfluencersService {
     return {
       totalClicks: influencer.totalClicks,
       totalConversions: influencer.totalConversions,
-      conversionRate: influencer.totalClicks > 0 
+      conversionRate: influencer.totalClicks > 0
         ? (influencer.totalConversions / influencer.totalClicks * 100).toFixed(2)
         : 0,
       totalSalesAmount: Number(influencer.totalSalesAmount),

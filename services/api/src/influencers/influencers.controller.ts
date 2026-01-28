@@ -21,6 +21,7 @@ import {
   ApiQuery,
 } from '@nestjs/swagger';
 import { InfluencersService } from './influencers.service';
+import { InfluencerStorefrontsService } from '../influencer-storefronts/influencer-storefronts.service';
 import { UpdateInfluencerDto, UpdateInfluencerCommissionDto, CreateProductLinkDto } from './dto/update-influencer.dto';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../common/guards/roles.guard';
@@ -31,7 +32,10 @@ import type { ApiResponse } from '@hos-marketplace/shared-types';
 @ApiTags('influencers')
 @Controller()
 export class InfluencersController {
-  constructor(private readonly influencersService: InfluencersService) {}
+  constructor(
+    private readonly influencersService: InfluencersService,
+    private readonly storefrontsService: InfluencerStorefrontsService,
+  ) {}
 
   // ============================================
   // INFLUENCER SELF-SERVICE ENDPOINTS
@@ -268,16 +272,16 @@ export class InfluencersController {
   @Public()
   @Get('i/:slug')
   @ApiOperation({
-    summary: 'Get influencer by slug',
-    description: 'Get public influencer profile and storefront data.',
+    summary: 'Get public storefront by slug',
+    description: 'Get public influencer profile, storefront and featured products. Matches frontend GetInfluencerStorefrontResponse.',
   })
   @ApiParam({ name: 'slug', description: 'Influencer slug' })
-  @SwaggerApiResponse({ status: 200, description: 'Influencer retrieved successfully' })
-  async findBySlug(@Param('slug') slug: string): Promise<ApiResponse<any>> {
-    const influencer = await this.influencersService.findBySlug(slug);
+  @SwaggerApiResponse({ status: 200, description: 'Storefront retrieved successfully' })
+  async getPublicStorefrontBySlug(@Param('slug') slug: string): Promise<ApiResponse<any>> {
+    const data = await this.storefrontsService.getPublicStorefront(slug);
     return {
-      data: influencer,
-      message: 'Influencer retrieved successfully',
+      data,
+      message: 'Storefront retrieved successfully',
     };
   }
 }
