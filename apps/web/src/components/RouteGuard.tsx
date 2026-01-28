@@ -51,13 +51,14 @@ export function RouteGuard({
           B2C_SELLER: '/seller/dashboard',
           SELLER: '/seller/dashboard',
           ADMIN: '/admin/dashboard',
+          INFLUENCER: '/influencer/dashboard',
           PROCUREMENT: '/procurement/dashboard',
           FULFILLMENT: '/fulfillment/dashboard',
           CATALOG: '/catalog/dashboard',
           MARKETING: '/marketing/dashboard',
           FINANCE: '/finance/dashboard',
           CMS_EDITOR: '/cms/dashboard',
-        };
+        } as Record<UserRole, string>;
 
         const defaultRedirect = roleRedirectMap[currentRole] || '/';
         router.push(defaultRedirect);
