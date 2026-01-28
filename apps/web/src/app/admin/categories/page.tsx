@@ -28,7 +28,7 @@ interface Category {
 
 interface Stats {
   totalCategories: number;
-  rootCategories: number;
+  rootCategories: number; // Phantoms (level 0)
   activeCategories: number;
   inactiveCategories: number;
   totalProducts: number;
@@ -88,9 +88,9 @@ export default function AdminCategoriesPage() {
       if (response?.data && Array.isArray(response.data)) {
         setCategories(response.data);
         calculateStats(response.data);
-        // Expand all root categories by default
-        const rootIds = new Set(response.data.map((c: Category) => c.id));
-        setExpandedIds(rootIds);
+        // Expand all Phantoms (top-level) by default
+        const phantomIds = new Set(response.data.map((c: Category) => c.id));
+        setExpandedIds(phantomIds);
       } else {
         setCategories([]);
       }
@@ -145,11 +145,11 @@ export default function AdminCategoriesPage() {
     try {
       let level = 0;
       if (formData.parentId) {
-        const parent = findCategory(categories, formData.parentId);
-        if (parent) {
-          level = parent.level + 1;
+        const phantom = findCategory(categories, formData.parentId);
+        if (phantom) {
+          level = phantom.level + 1;
           if (level > 2) {
-            toast.error('Maximum category depth is 3 levels');
+            toast.error('Maximum category depth is 3 levels (Phantom → Category → Sub-category)');
             return;
           }
         }
@@ -164,7 +164,7 @@ export default function AdminCategoriesPage() {
         order: formData.order,
         isActive: formData.isActive,
       });
-      toast.success('Category created successfully');
+      toast.success(formData.parentId ? 'Category created successfully' : 'Phantom created successfully');
       resetForm();
       fetchCategories();
     } catch (err: any) {
@@ -245,8 +245,8 @@ export default function AdminCategoriesPage() {
   };
 
   const handleMoveCategory = async (categoryId: string, direction: 'up' | 'down') => {
-    const parent = findParentCategory(categories, categoryId);
-    const siblings = parent ? parent.children || [] : categories;
+    const phantom = findParentCategory(categories, categoryId);
+    const siblings = phantom ? phantom.children || [] : categories;
     const index = siblings.findIndex(c => c.id === categoryId);
     if (index === -1) return;
 
@@ -274,9 +274,9 @@ export default function AdminCategoriesPage() {
     return null;
   };
 
-  const findParentCategory = (cats: Category[], id: string, parent: Category | null = null): Category | null => {
+  const findParentCategory = (cats: Category[], id: string, phantom: Category | null = null): Category | null => {
     for (const cat of cats) {
-      if (cat.id === id) return parent;
+      if (cat.id === id) return phantom;
       if (cat.children) {
         const found = findParentCategory(cat.children, id, cat);
         if (found !== null) return found;
@@ -587,7 +587,7 @@ export default function AdminCategoriesPage() {
           <div className="flex justify-between items-center">
             <div>
               <h1 className="text-2xl font-bold text-gray-900">Product Categories</h1>
-              <p className="text-gray-600 mt-1">Organize products in a 3-level hierarchy</p>
+              <p className="text-gray-600 mt-1">Phantom → Category → Sub-category hierarchy</p>
             </div>
             <button
               onClick={() => {
@@ -599,8 +599,9 @@ export default function AdminCategoriesPage() {
                 });
               }}
               className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 flex items-center gap-2"
+              title="Create a new Phantom (top-level) or category under a Phantom"
             >
-              <span>+</span> Add Category
+              <span>+</span> Create Phantom / Add Category
             </button>
           </div>
 
@@ -612,7 +613,7 @@ export default function AdminCategoriesPage() {
                 <p className="text-2xl font-bold text-purple-600">{stats.totalCategories}</p>
               </div>
               <div className="bg-white rounded-lg shadow p-4">
-                <p className="text-sm text-gray-600">Root</p>
+                <p className="text-sm text-gray-600">Phantom</p>
                 <p className="text-2xl font-bold text-blue-600">{stats.rootCategories}</p>
               </div>
               <div className="bg-white rounded-lg shadow p-4">
@@ -699,7 +700,7 @@ export default function AdminCategoriesPage() {
           {showCreateForm && (
             <div className="bg-white rounded-lg shadow p-6">
               <h2 className="text-lg font-semibold mb-4">
-                {editingCategory ? 'Edit Category' : 'Create New Category'}
+                {editingCategory ? 'Edit Category' : (formData.parentId ? 'Create New Category' : 'Create New Phantom')}
               </h2>
               <form onSubmit={editingCategory ? handleUpdateCategory : handleCreateCategory} className="space-y-4">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -715,13 +716,13 @@ export default function AdminCategoriesPage() {
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Parent Category</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Phantom</label>
                     <select
                       value={formData.parentId}
                       onChange={(e) => setFormData({ ...formData, parentId: e.target.value })}
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
                     >
-                      <option value="">None (Root Category)</option>
+                      <option value="">None (Create as Phantom)</option>
                       {getAllCategoriesFlat(categories)
                         .filter((cat) => !editingCategory || cat.id !== editingCategory.id)
                         .filter((cat) => cat.level < 2)
@@ -831,7 +832,7 @@ export default function AdminCategoriesPage() {
                     type="submit"
                     className="px-6 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700"
                   >
-                    {editingCategory ? 'Update Category' : 'Create Category'}
+                    {editingCategory ? 'Update Category' : (formData.parentId ? 'Create Category' : 'Create Phantom')}
                   </button>
                   <button
                     type="button"
@@ -855,7 +856,7 @@ export default function AdminCategoriesPage() {
             <div className="p-4">
               {filteredCategories.length === 0 ? (
                 <div className="text-center py-8 text-gray-500">
-                  {searchTerm ? 'No categories match your search.' : 'No categories found. Create your first category to get started.'}
+                  {searchTerm ? 'No categories match your search.' : 'No Phantoms or categories found. Create your first Phantom to get started.'}
                 </div>
               ) : viewMode === 'tree' ? (
                 <div className="space-y-2">{renderCategoryTree(filteredCategories)}</div>

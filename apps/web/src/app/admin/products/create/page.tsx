@@ -41,7 +41,7 @@ export default function ProductCreationPage() {
   const toast = useToast();
   const [loading, setLoading] = useState(false);
   const [sellers, setSellers] = useState<any[]>([]);
-  const [formData, setFormData] = useState(getInitialFormData);
+  const [formData, setFormData] = useState(getInitialFormData());
   const [images, setImages] = useState<Array<{ url: string; alt?: string; order?: number; size?: number; width?: number; height?: number; format?: string; uploadedAt?: Date }>>([]);
   const [uploadingImages, setUploadingImages] = useState(false);
   const [lastCreatedProduct, setLastCreatedProduct] = useState<string | null>(null);
@@ -53,16 +53,14 @@ export default function ProductCreationPage() {
   const fetchSellers = async () => {
     try {
       const response = await apiClient.getUsers();
-      if (response?.data) {
-        const users = Array.isArray(response.data) ? response.data : [];
-        const sellerRoles = ['SELLER', 'B2C_SELLER', 'WHOLESALER'];
-        const sellerUsers = users.filter((user: any) => 
-          sellerRoles.includes(user.role)
-        );
-        setSellers(sellerUsers);
-      } else {
-        setSellers([]);
-      }
+      // Handle paginated response: { data: { data: [...], pagination: {...} } }
+      const userData = response?.data?.data || response?.data;
+      const users = Array.isArray(userData) ? userData : [];
+      const sellerRoles = ['SELLER', 'B2C_SELLER', 'WHOLESALER'];
+      const sellerUsers = users.filter((user: any) => 
+        sellerRoles.includes(user.role)
+      );
+      setSellers(sellerUsers);
     } catch (err: any) {
       console.error('Error fetching sellers:', err);
       setSellers([]); // Reset to empty array on error

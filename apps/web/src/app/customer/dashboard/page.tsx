@@ -637,7 +637,11 @@ export default function CustomerDashboardPage() {
                 <div className="bg-gradient-to-br from-green-500 to-emerald-600 rounded-xl p-6 text-white">
                   <p className="text-green-200 text-sm mb-1">Average Order Value</p>
                   <p className="text-3xl font-bold">
-                    {formatPrice(allOrders.length ? stats?.totalSpent! / stats?.completedOrders! || 0 : 0)}
+                    {formatPrice(
+                      allOrders.length && stats?.completedOrders && stats.completedOrders > 0
+                        ? stats.totalSpent! / stats.completedOrders
+                        : 0
+                    )}
                   </p>
                 </div>
                 <div className="bg-gradient-to-br from-amber-500 to-orange-600 rounded-xl p-6 text-white">

@@ -104,6 +104,7 @@ export class AdminProductsController {
       tradePrice?: number;
       rrp?: number;
       taxRate?: number;
+      taxClassId?: string;
       fandom?: string;
       images?: Array<{ url: string; alt?: string; order?: number }>;
     },
@@ -183,6 +184,7 @@ export class AdminProductsController {
       tradePrice?: number;
       rrp?: number;
       taxRate?: number;
+      taxClassId?: string;
       fandom?: string;
       images?: Array<{ url: string; alt?: string; order?: number }>;
     },

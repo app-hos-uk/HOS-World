@@ -51,6 +51,17 @@ const menuItems: MenuItem[] = [
     ],
   },
   {
+    title: 'Influencers',
+    icon: '⭐',
+    children: [
+      { title: 'All Influencers', href: '/admin/influencers', icon: '👤' },
+      { title: 'Invitations', href: '/admin/influencers/invitations', icon: '✉️' },
+      { title: 'Commissions', href: '/admin/influencers/commissions', icon: '💰' },
+      { title: 'Payouts', href: '/admin/influencers/payouts', icon: '💸' },
+      { title: 'Campaigns', href: '/admin/influencers/campaigns', icon: '📢' },
+    ],
+  },
+  {
     title: 'Finance',
     icon: '💰',
     children: [

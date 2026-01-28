@@ -7,6 +7,13 @@ import { apiClient } from '@/lib/api';
 import { useToast } from '@/hooks/useToast';
 import { useRouter } from 'next/navigation';
 
+interface TaxClass {
+  id: string;
+  name: string;
+  description?: string;
+  rates?: Array<{ rate: number; taxZone?: { name: string } }>;
+}
+
 /**
  * Price Management Interface
  * 
@@ -19,6 +26,7 @@ export default function PriceManagementPage() {
   const router = useRouter();
   const toast = useToast();
   const [products, setProducts] = useState<any[]>([]);
+  const [taxClasses, setTaxClasses] = useState<TaxClass[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [selectedProduct, setSelectedProduct] = useState<any | null>(null);
@@ -31,13 +39,14 @@ export default function PriceManagementPage() {
     tradePrice: '',
     rrp: '',
     stock: '0',
-    taxRate: '',
     taxClassId: '',
+    taxRate: '',
     currency: 'GBP',
   });
 
   useEffect(() => {
     fetchProducts();
+    fetchTaxClasses();
   }, []);
 
   const fetchProducts = async () => {
@@ -52,6 +61,17 @@ export default function PriceManagementPage() {
       setError(err.message || 'Failed to load products');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchTaxClasses = async () => {
+    try {
+      const response = await apiClient.getTaxClasses();
+      const classes = response?.data || [];
+      setTaxClasses(Array.isArray(classes) ? classes : []);
+    } catch (err: any) {
+      console.error('Error fetching tax classes:', err);
+      // Don't show error - tax classes are optional
     }
   };
 
@@ -91,11 +111,21 @@ export default function PriceManagementPage() {
       tradePrice: product.tradePrice?.toString() || '',
       rrp: product.rrp?.toString() || '',
       stock: product.stock?.toString() || '0',
-      taxRate: product.taxRate?.toString() || '',
       taxClassId: product.taxClassId || '',
+      taxRate: product.taxRate != null ? String(Number(product.taxRate)) : '',
       currency: product.currency || 'GBP',
     });
     setShowPricingModal(true);
+  };
+
+  // Get display name for tax class with rate info
+  const getTaxClassDisplay = (taxClassId: string | undefined) => {
+    if (!taxClassId) return 'Not set';
+    const taxClass = taxClasses.find(tc => tc.id === taxClassId);
+    if (!taxClass) return 'Unknown';
+    // Show first rate if available
+    const rate = taxClass.rates?.[0]?.rate;
+    return rate !== undefined ? `${taxClass.name} (${(Number(rate) * 100).toFixed(0)}%)` : taxClass.name;
   };
 
   const handleUpdatePricing = async (e: React.FormEvent) => {
@@ -109,7 +139,8 @@ export default function PriceManagementPage() {
         tradePrice: pricingData.tradePrice ? parseFloat(pricingData.tradePrice) : undefined,
         rrp: pricingData.rrp ? parseFloat(pricingData.rrp) : undefined,
         stock: parseInt(pricingData.stock, 10),
-        taxRate: pricingData.taxRate ? parseFloat(pricingData.taxRate) : undefined,
+        ...(pricingData.taxClassId ? { taxClassId: pricingData.taxClassId } : {}),
+        ...(pricingData.taxRate !== '' ? { taxRate: parseFloat(pricingData.taxRate) } : {}),
         // Note: currency is managed at platform/tenant level, not per-product
       });
       toast.success('Pricing updated successfully');
@@ -246,7 +277,7 @@ export default function PriceManagementPage() {
                       Stock
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Tax Rate
+                      Tax Class
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                       Status
@@ -281,7 +312,11 @@ export default function PriceManagementPage() {
                           {product.stock || 0}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                          {product.taxRate ? `${product.taxRate}%` : 'Not set'}
+                          {product.taxClassId
+                            ? getTaxClassDisplay(product.taxClassId)
+                            : product.taxRate != null
+                              ? `${(Number(product.taxRate) * 100).toFixed(0)}% (override)`
+                              : getTaxClassDisplay(undefined)}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
                           <span
@@ -410,32 +445,43 @@ export default function PriceManagementPage() {
                         />
                       </div>
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Tax Rate (%)</label>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Tax Class</label>
+                        <select
+                          value={pricingData.taxClassId}
+                          onChange={(e) => setPricingData({ ...pricingData, taxClassId: e.target.value })}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
+                        >
+                          <option value="">No tax class (uses default rate)</option>
+                          {taxClasses.map((tc) => {
+                            const rate = tc.rates?.[0]?.rate;
+                            const rateDisplay = rate !== undefined ? ` (${(Number(rate) * 100).toFixed(0)}%)` : '';
+                            return (
+                              <option key={tc.id} value={tc.id}>
+                                {tc.name}{rateDisplay}
+                              </option>
+                            );
+                          })}
+                        </select>
+                        {taxClasses.length === 0 && (
+                          <p className="mt-1 text-xs text-gray-500">
+                            No tax classes configured. <a href="/admin/tax" className="text-purple-600 hover:underline">Configure tax classes</a>
+                          </p>
+                        )}
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Tax rate (optional override)</label>
                         <input
                           type="number"
                           step="0.01"
                           min="0"
-                          max="100"
+                          max="1"
                           value={pricingData.taxRate}
                           onChange={(e) => setPricingData({ ...pricingData, taxRate: e.target.value })}
                           className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
-                          placeholder="20.00"
+                          placeholder="e.g. 0.2 for 20%"
                         />
+                        <p className="mt-1 text-xs text-gray-500">Decimal 0–1. Leave empty when using a tax class.</p>
                       </div>
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Tax Class</label>
-                      <select
-                        value={pricingData.taxClassId}
-                        onChange={(e) => setPricingData({ ...pricingData, taxClassId: e.target.value })}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
-                      >
-                        <option value="">Select tax class</option>
-                        <option value="STANDARD">Standard (20%)</option>
-                        <option value="REDUCED">Reduced (5%)</option>
-                        <option value="ZERO">Zero Rate (0%)</option>
-                        <option value="EXEMPT">Exempt</option>
-                      </select>
                     </div>
                     <div className="flex gap-3 pt-4">
                       <button

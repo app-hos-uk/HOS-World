@@ -28,6 +28,7 @@ interface Stats {
   admins: number;
   sellers: number;
   customers: number;
+  influencers: number;
   teamMembers: number;
   newThisMonth: number;
   active: number;
@@ -119,6 +120,29 @@ export default function AdminUsersPage() {
     isActive: true,
   });
 
+  // Calculate stats from user list - pure function to avoid closure issues
+  // Returns stats object; caller is responsible for setting state
+  const calculateUserStats = (userList: User[]) => {
+    // Calculate current month boundary at call time (not captured in closure)
+    const now = new Date();
+    const firstOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+    
+    const sellerRoles = ['SELLER', 'B2C_SELLER', 'WHOLESALER'];
+    const teamRoles = ['PROCUREMENT', 'FULFILLMENT', 'CATALOG', 'MARKETING', 'FINANCE', 'CMS_EDITOR'];
+    
+    return {
+      total: userList.length,
+      admins: userList.filter(u => u.role === 'ADMIN').length,
+      sellers: userList.filter(u => sellerRoles.includes(u.role)).length,
+      customers: userList.filter(u => u.role === 'CUSTOMER').length,
+      influencers: userList.filter(u => u.role === 'INFLUENCER').length,
+      teamMembers: userList.filter(u => teamRoles.includes(u.role)).length,
+      newThisMonth: userList.filter(u => new Date(u.createdAt) >= firstOfMonth).length,
+      active: userList.filter(u => u.isActive !== false).length,
+      inactive: userList.filter(u => u.isActive === false).length,
+    };
+  };
+
   const fetchUsers = useCallback(async () => {
     try {
       setLoading(true);
@@ -136,24 +160,26 @@ export default function AdminUsersPage() {
         responseKeys: response?.data ? Object.keys(response.data) : []
       });
       // #endregion
+      
+      // Handle both paginated response { data: { data: users, pagination } } 
+      // and flat array response { data: users }
+      let userList: User[] = [];
       if (response?.data) {
-        // Handle both paginated response { data: { data: users, pagination } } 
-        // and flat array response { data: users }
-        let userList: User[] = [];
         if (Array.isArray(response.data)) {
           userList = response.data;
         } else if ((response.data as any)?.data && Array.isArray((response.data as any).data)) {
           // Paginated response format
           userList = (response.data as any).data;
         }
-        // #region agent log
-        console.log('[DEBUG] fetchUsers: Parsed users', { count: userList.length });
-        // #endregion
-        setUsers(userList);
-        calculateStats(userList);
-      } else {
-        setUsers([]);
       }
+      
+      // #region agent log
+      console.log('[DEBUG] fetchUsers: Parsed users', { count: userList.length });
+      // #endregion
+      
+      // Always update both users and stats
+      setUsers(userList);
+      setStats(calculateUserStats(userList));
     } catch (err: any) {
       // #region agent log
       console.log('[DEBUG] fetchUsers: Error', { message: err?.message });
@@ -161,29 +187,11 @@ export default function AdminUsersPage() {
       console.error('Error fetching users:', err);
       setError(err.message || 'Failed to load users');
       setUsers([]);
+      setStats(calculateUserStats([])); // Reset stats on error
     } finally {
       setLoading(false);
     }
-  }, []);
-
-  const calculateStats = (userList: User[]) => {
-    const now = new Date();
-    const firstOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
-    
-    const sellerRoles = ['SELLER', 'B2C_SELLER', 'WHOLESALER'];
-    const teamRoles = ['PROCUREMENT', 'FULFILLMENT', 'CATALOG', 'MARKETING', 'FINANCE', 'CMS_EDITOR'];
-    
-    setStats({
-      total: userList.length,
-      admins: userList.filter(u => u.role === 'ADMIN').length,
-      sellers: userList.filter(u => sellerRoles.includes(u.role)).length,
-      customers: userList.filter(u => u.role === 'CUSTOMER').length,
-      teamMembers: userList.filter(u => teamRoles.includes(u.role)).length,
-      newThisMonth: userList.filter(u => new Date(u.createdAt) >= firstOfMonth).length,
-      active: userList.filter(u => u.isActive !== false).length,
-      inactive: userList.filter(u => u.isActive === false).length,
-    });
-  };
+  }, []); // No dependencies needed - calculateUserStats is a pure function
 
   useEffect(() => {
     fetchUsers();
@@ -577,6 +585,13 @@ export default function AdminUsersPage() {
               >
                 <p className="text-xs text-gray-500">Team</p>
                 <p className="text-xl font-bold text-purple-600">{stats.teamMembers}</p>
+              </button>
+              <button
+                onClick={() => setRoleFilter('INFLUENCER')}
+                className={`bg-white rounded-lg shadow p-3 text-left hover:shadow-md transition-shadow ${roleFilter === 'INFLUENCER' ? 'ring-2 ring-purple-500' : ''}`}
+              >
+                <p className="text-xs text-gray-500">Influencers</p>
+                <p className="text-xl font-bold text-amber-600">{stats.influencers}</p>
               </button>
               <div className="bg-white rounded-lg shadow p-3">
                 <p className="text-xs text-gray-500">New This Month</p>

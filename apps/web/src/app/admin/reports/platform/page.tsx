@@ -20,14 +20,20 @@ export default function AdminPlatformMetricsPage() {
       setError(null);
       // Fetch multiple data sources
       const [usersRes, productsRes, ordersRes] = await Promise.all([
-        apiClient.getUsers().catch(() => ({ data: [] })),
+        apiClient.getUsers().catch(() => ({ data: { data: [] } })),
         apiClient.getProducts({ limit: 1000 }).catch(() => ({ data: { data: [] } })),
-        apiClient.getOrders().catch(() => ({ data: [] })),
+        apiClient.getOrders().catch(() => ({ data: { data: [] } })),
       ]);
 
-      const users = usersRes?.data || [];
-      const products = productsRes?.data?.data || [];
-      const orders = ordersRes?.data || [];
+      // Handle both paginated ({ data: { data: [...], pagination: {...} } }) and flat ({ data: [...] }) responses
+      // Ensure all data sources are arrays to prevent runtime errors
+      const usersData = usersRes?.data?.data || usersRes?.data || [];
+      const users = Array.isArray(usersData) ? usersData : [];
+      const productsData = productsRes?.data?.data || productsRes?.data || [];
+      const products = Array.isArray(productsData) ? productsData : [];
+      // Orders API returns flat array { data: Order[] }, but handle paginated structure for future-proofing
+      const ordersData = (ordersRes?.data as any)?.data || ordersRes?.data || [];
+      const orders = Array.isArray(ordersData) ? ordersData : [];
 
       setMetrics({
         totalUsers: users.length,

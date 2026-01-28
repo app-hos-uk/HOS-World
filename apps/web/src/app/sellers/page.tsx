@@ -20,9 +20,12 @@ export default function SellersPage() {
       setLoading(true);
       // Get users with seller roles - using admin endpoint if available, or search by products
       const response = await apiClient.getUsers();
-      if (response?.data) {
+      // Handle paginated response: { data: { data: [...], pagination: {...} } }
+      const userData = response?.data?.data || response?.data;
+      const users = Array.isArray(userData) ? userData : [];
+      if (users.length > 0) {
         const sellerRoles = ['SELLER', 'B2C_SELLER', 'WHOLESALER'];
-        const sellerUsers = response.data.filter((user: any) => 
+        const sellerUsers = users.filter((user: any) => 
           sellerRoles.includes(user.role)
         );
         // For each seller, try to get their profile
@@ -42,6 +45,8 @@ export default function SellersPage() {
           })
         );
         setSellers(sellersWithProfiles);
+      } else {
+        setSellers([]); // Clear sellers when no users found to prevent stale data
       }
     } catch (err: any) {
       console.error('Error fetching sellers:', err);

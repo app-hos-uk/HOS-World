@@ -98,11 +98,11 @@ export default function AdminSettlementsPage() {
   const fetchSellers = useCallback(async () => {
     try {
       const response = await apiClient.getUsers();
-      if (response?.data) {
-        const users = Array.isArray(response.data) ? response.data : [];
-        const sellerRoles = ['SELLER', 'B2C_SELLER', 'WHOLESALER'];
-        setSellers(users.filter((u: any) => sellerRoles.includes(u.role)));
-      }
+      // Handle paginated response: { data: { data: [...], pagination: {...} } }
+      const userData = response?.data?.data || response?.data;
+      const users = Array.isArray(userData) ? userData : [];
+      const sellerRoles = ['SELLER', 'B2C_SELLER', 'WHOLESALER'];
+      setSellers(users.filter((u: any) => sellerRoles.includes(u.role)));
     } catch {
       setSellers([]);
     }

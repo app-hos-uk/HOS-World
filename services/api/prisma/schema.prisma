@@ -101,11 +101,15 @@ model User {
   anniversary DateTime? // Optional for gift suggestions
 
   // Team member specific fields
-  department   String?
-  employeeId   String?
-  managerId    String?
-  manager      User?   @relation("ManagerReports", fields: [managerId], references: [id], onDelete: SetNull)
-  directReports User[] @relation("ManagerReports")
+  department    String?
+  employeeId    String?
+  managerId     String?
+  manager       User?   @relation("ManagerReports", fields: [managerId], references: [id], onDelete: SetNull)
+  directReports User[]  @relation("ManagerReports")
+
+  // Influencer Relations
+  influencerProfile     Influencer?
+  influencerInvitations InfluencerInvitation[] @relation("InfluencerInvitedBy")
 
   @@map("users")
 }
@@ -212,6 +216,7 @@ enum UserRole {
   // After migration, update code to use B2C_SELLER only, then remove this value.
   SELLER
   ADMIN
+  INFLUENCER
   PROCUREMENT
   FULFILLMENT
   CATALOG
@@ -274,10 +279,10 @@ model Seller {
   vatNumber         String?
 
   // Bank details (encrypted)
-  bankName          String?
-  accountHolder     String?
-  accountNumberEnc  String? // Encrypted
-  sortCodeEnc       String? // Encrypted
+  bankName         String?
+  accountHolder    String?
+  accountNumberEnc String? // Encrypted
+  sortCodeEnc      String? // Encrypted
 
   // Warehouse/operations address
   warehouseAddressId String?
@@ -393,22 +398,23 @@ model Product {
   wishlistItems      WishlistItem[]
   discrepancies      Discrepancy[]
   averageRating      Float?
-  reviewCount        Int                 @default(0)
+  reviewCount        Int                     @default(0)
   submission         ProductSubmission?
   pricing            ProductPricing?
   duplicateProducts  DuplicateProduct[]
-  categoryRelation   Category?           @relation(fields: [categoryId], references: [id])
+  categoryRelation   Category?               @relation(fields: [categoryId], references: [id])
   tagsRelation       ProductTag[]
   attributes         ProductAttribute[]
   inventoryLocations InventoryLocation[]
   stockTransfers     StockTransfer[]
   stockMovements     StockMovement[]
   taxClassId         String?
-  taxClass           TaxClass?           @relation(fields: [taxClassId], references: [id], onDelete: SetNull)
+  taxClass           TaxClass?               @relation(fields: [taxClassId], references: [id], onDelete: SetNull)
   returnPolicies     ReturnPolicy[]
-  bundleItems        ProductBundleItem[] @relation("ProductBundles") // For bundled products
-  bundledIn          ProductBundleItem[] @relation("ProductBundledIn") // Products that are part of bundles
+  bundleItems        ProductBundleItem[]     @relation("ProductBundles") // For bundled products
+  bundledIn          ProductBundleItem[]     @relation("ProductBundledIn") // Products that are part of bundles
   volumePricing      VolumePricing[] // Quantity-based pricing tiers
+  influencerLinks    InfluencerProductLink[]
 
   @@unique([sellerId, slug])
   @@index([productType])
@@ -546,8 +552,8 @@ model Address {
   postalCode String
   country    String
   phone      String?
-  latitude   Float?   // For geo-based routing
-  longitude  Float?   // For geo-based routing
+  latitude   Float? // For geo-based routing
+  longitude  Float? // For geo-based routing
   isDefault  Boolean  @default(false)
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
@@ -564,34 +570,34 @@ model Address {
 
 // Order model
 model Order {
-  id                   String                @id @default(uuid())
-  userId               String
-  user                 User                  @relation(fields: [userId], references: [id])
-  sellerId             String
-  seller               Seller                @relation(fields: [sellerId], references: [id])
-  orderNumber          String                @unique
-  items                OrderItem[]
-  subtotal             Decimal               @db.Decimal(10, 2)
-  tax                  Decimal               @db.Decimal(10, 2)
-  total                Decimal               @db.Decimal(10, 2)
-  currency             String                @default("GBP")
-  status               OrderStatus           @default(PENDING)
-  shippingAddressId    String
-  shippingAddress      Address               @relation("ShippingAddress", fields: [shippingAddressId], references: [id])
-  billingAddressId     String
-  billingAddress       Address               @relation("BillingAddress", fields: [billingAddressId], references: [id])
-  paymentMethod        String?
-  paymentStatus        PaymentStatus         @default(PENDING)
-  trackingCode         String?
-  
+  id                String        @id @default(uuid())
+  userId            String
+  user              User          @relation(fields: [userId], references: [id])
+  sellerId          String?
+  seller            Seller?       @relation(fields: [sellerId], references: [id])
+  orderNumber       String        @unique
+  items             OrderItem[]
+  subtotal          Decimal       @db.Decimal(10, 2)
+  tax               Decimal       @db.Decimal(10, 2)
+  total             Decimal       @db.Decimal(10, 2)
+  currency          String        @default("GBP")
+  status            OrderStatus   @default(PENDING)
+  shippingAddressId String
+  shippingAddress   Address       @relation("ShippingAddress", fields: [shippingAddressId], references: [id])
+  billingAddressId  String
+  billingAddress    Address       @relation("BillingAddress", fields: [billingAddressId], references: [id])
+  paymentMethod     String?
+  paymentStatus     PaymentStatus @default(PENDING)
+  trackingCode      String?
+
   // Fulfillment routing
-  fulfillingWarehouseId  String?
-  fulfillingWarehouse    Warehouse?          @relation(fields: [fulfillingWarehouseId], references: [id])
-  fulfillmentCenterId    String?
-  fulfillmentCenter      FulfillmentCenter?  @relation(fields: [fulfillmentCenterId], references: [id])
-  estimatedDistance      Float?              // Distance in km from warehouse to customer
-  routingMethod          String?             // NEAREST, ZONE_BASED, MANUAL
-  
+  fulfillingWarehouseId String?
+  fulfillingWarehouse   Warehouse?         @relation(fields: [fulfillingWarehouseId], references: [id])
+  fulfillmentCenterId   String?
+  fulfillmentCenter     FulfillmentCenter? @relation(fields: [fulfillmentCenterId], references: [id])
+  estimatedDistance     Float? // Distance in km from warehouse to customer
+  routingMethod         String? // NEAREST, ZONE_BASED, MANUAL
+
   notes                OrderNote[]
   payments             Payment[]
   returnRequests       ReturnRequest[]
@@ -602,6 +608,7 @@ model Order {
   giftCardTransactions GiftCardTransaction[]
   couponUsages         CouponUsage[]
   stockReservations    StockReservation[]
+  referral             Referral?
   createdAt            DateTime              @default(now())
   updatedAt            DateTime              @updatedAt
 
@@ -963,20 +970,20 @@ model ProductSubmission {
 
 // Fulfillment Center model
 model FulfillmentCenter {
-  id         String   @id @default(uuid())
-  name       String
-  address    String
-  city       String
-  country    String
-  postalCode String?
-  latitude   Float?
-  longitude  Float?
+  id           String   @id @default(uuid())
+  name         String
+  address      String
+  city         String
+  country      String
+  postalCode   String?
+  latitude     Float?
+  longitude    Float?
   contactEmail String?
   contactPhone String?
-  capacity   Int?     // Storage capacity in cubic meters or units
-  isActive   Boolean  @default(true)
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
+  capacity     Int? // Storage capacity in cubic meters or units
+  isActive     Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
 
   // Relations
   shipments Shipment[]
@@ -1694,7 +1701,7 @@ model Category {
   parentId    String?
   parent      Category?   @relation("CategoryHierarchy", fields: [parentId], references: [id])
   children    Category[]  @relation("CategoryHierarchy")
-  level       Int // 0 = root, 1 = subcategory, 2 = product type
+  level       Int // 0 = Phantom (top-level), 1 = category, 2 = sub-category
   path        String // Full path: "/clothing/t-shirts/graphic-tees"
   description String?     @db.Text
   image       String?
@@ -1998,7 +2005,7 @@ model Warehouse {
   contactEmail  String?
   contactPhone  String?
   managerName   String?
-  capacity      Int?                // Storage capacity in cubic meters or units
+  capacity      Int? // Storage capacity in cubic meters or units
   warehouseType String?             @default("DISTRIBUTION") // DISTRIBUTION, RETURNS, COLD_STORAGE, etc.
   isActive      Boolean             @default(true)
   inventory     InventoryLocation[]
@@ -2230,24 +2237,24 @@ enum DeliveryStatus {
 
 // Integration Configuration model - Stores third-party API credentials and settings
 model IntegrationConfig {
-  id            String   @id @default(uuid())
-  category      String   // PAYMENT, SHIPPING, TAX, EMAIL, STORAGE, ANALYTICS, etc.
-  provider      String   // stripe, fedex, avalara, sendgrid, etc.
-  displayName   String   // User-friendly name
-  description   String?  @db.Text
-  isActive      Boolean  @default(false)
-  isTestMode    Boolean  @default(true)
-  credentials   String   @db.Text // Encrypted JSON containing API keys/secrets
-  settings      Json?    // Provider-specific non-sensitive settings
-  webhookUrl    String?  // Generated webhook URL for this integration
-  webhookSecret String?  // For webhook signature verification
+  id            String    @id @default(uuid())
+  category      String // PAYMENT, SHIPPING, TAX, EMAIL, STORAGE, ANALYTICS, etc.
+  provider      String // stripe, fedex, avalara, sendgrid, etc.
+  displayName   String // User-friendly name
+  description   String?   @db.Text
+  isActive      Boolean   @default(false)
+  isTestMode    Boolean   @default(true)
+  credentials   String    @db.Text // Encrypted JSON containing API keys/secrets
+  settings      Json? // Provider-specific non-sensitive settings
+  webhookUrl    String? // Generated webhook URL for this integration
+  webhookSecret String? // For webhook signature verification
   lastTestedAt  DateTime?
-  testStatus    String?  // SUCCESS, FAILED, NEVER_TESTED
-  testMessage   String?  @db.Text // Error message or success details
-  priority      Int      @default(0) // For ordering when multiple providers in same category
-  metadata      Json?    // Additional provider-specific metadata
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+  testStatus    String? // SUCCESS, FAILED, NEVER_TESTED
+  testMessage   String?   @db.Text // Error message or success details
+  priority      Int       @default(0) // For ordering when multiple providers in same category
+  metadata      Json? // Additional provider-specific metadata
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
 
   // Relations
   logs IntegrationLog[]
@@ -2264,19 +2271,19 @@ model IntegrationLog {
   id              String            @id @default(uuid())
   integrationId   String
   integration     IntegrationConfig @relation(fields: [integrationId], references: [id], onDelete: Cascade)
-  action          String            // API_CALL, WEBHOOK_RECEIVED, TEST_CONNECTION, ERROR, CONFIG_CHANGE
-  provider        String            // Denormalized for easier querying
-  endpoint        String?           // API endpoint called
-  method          String?           // HTTP method (GET, POST, PUT, DELETE)
-  statusCode      Int?              // HTTP response status code
-  duration        Int?              // Request duration in milliseconds
-  requestSummary  String?  @db.Text // Truncated/sanitized request (no secrets)
-  responseSummary String?  @db.Text // Truncated/sanitized response
-  errorMessage    String?  @db.Text // Error details if failed
-  metadata        Json?             // Additional context data
-  ipAddress       String?           // IP address of the caller (for config changes)
-  userId          String?           // User who triggered the action
-  createdAt       DateTime @default(now())
+  action          String // API_CALL, WEBHOOK_RECEIVED, TEST_CONNECTION, ERROR, CONFIG_CHANGE
+  provider        String // Denormalized for easier querying
+  endpoint        String? // API endpoint called
+  method          String? // HTTP method (GET, POST, PUT, DELETE)
+  statusCode      Int? // HTTP response status code
+  duration        Int? // Request duration in milliseconds
+  requestSummary  String?           @db.Text // Truncated/sanitized request (no secrets)
+  responseSummary String?           @db.Text // Truncated/sanitized response
+  errorMessage    String?           @db.Text // Error details if failed
+  metadata        Json? // Additional context data
+  ipAddress       String? // IP address of the caller (for config changes)
+  userId          String? // User who triggered the action
+  createdAt       DateTime          @default(now())
 
   @@index([integrationId])
   @@index([createdAt])
@@ -2287,3 +2294,306 @@ model IntegrationLog {
 
 // Integration Category enum reference (stored as String for flexibility)
 // Categories: PAYMENT, SHIPPING, TAX, EMAIL, SMS, STORAGE, SEARCH, ANALYTICS, MAPS, OAUTH
+
+// ============================================
+// INFLUENCER MODULE MODELS
+// ============================================
+
+// Influencer Invitation (invitation-only onboarding)
+model InfluencerInvitation {
+  id                 String           @id @default(uuid())
+  email              String
+  invitedBy          String
+  user               User             @relation("InfluencerInvitedBy", fields: [invitedBy], references: [id])
+  token              String           @unique
+  status             InvitationStatus @default(PENDING)
+  expiresAt          DateTime
+  acceptedAt         DateTime?
+  message            String?          @db.Text
+  baseCommissionRate Decimal?         @db.Decimal(5, 4) // Pre-configured commission
+  createdAt          DateTime         @default(now())
+  updatedAt          DateTime         @updatedAt
+
+  @@index([email])
+  @@index([token])
+  @@index([status])
+  @@map("influencer_invitations")
+}
+
+// Influencer Profile
+model Influencer {
+  id     String @id @default(uuid())
+  userId String @unique
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // Profile
+  displayName  String
+  slug         String  @unique
+  bio          String? @db.Text
+  profileImage String?
+  bannerImage  String?
+  socialLinks  Json? // { instagram, youtube, tiktok, twitter, website }
+
+  // Referral
+  referralCode   String @unique
+  cookieDuration Int    @default(30) // Days
+
+  // Flexible Commission Configuration
+  baseCommissionRate  Decimal @default(0.10) @db.Decimal(5, 4)
+  categoryCommissions Json? // { "categoryId": 0.15, "categoryId2": 0.12 }
+
+  // Status
+  status InfluencerStatus @default(ACTIVE)
+  tier   InfluencerTier   @default(BRONZE)
+
+  // Stats (denormalized for performance)
+  totalClicks      Int     @default(0)
+  totalConversions Int     @default(0)
+  totalSalesAmount Decimal @default(0) @db.Decimal(10, 2)
+  totalCommission  Decimal @default(0) @db.Decimal(10, 2)
+
+  // Relations
+  storefront   InfluencerStorefront?
+  referrals    Referral[]
+  commissions  InfluencerCommission[]
+  payouts      InfluencerPayout[]
+  campaigns    InfluencerCampaign[]
+  productLinks InfluencerProductLink[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([referralCode])
+  @@index([status])
+  @@map("influencers")
+}
+
+enum InfluencerStatus {
+  ACTIVE
+  SUSPENDED
+  INACTIVE
+}
+
+enum InfluencerTier {
+  BRONZE
+  SILVER
+  GOLD
+  PLATINUM
+}
+
+// Influencer Storefront (Full Custom)
+model InfluencerStorefront {
+  id           String     @id @default(uuid())
+  influencerId String     @unique
+  influencer   Influencer @relation(fields: [influencerId], references: [id], onDelete: Cascade)
+
+  // Theme Customization
+  primaryColor    String @default("#7C3AED")
+  secondaryColor  String @default("#F3E8FF")
+  backgroundColor String @default("#FFFFFF")
+  textColor       String @default("#1F2937")
+  fontFamily      String @default("Inter")
+
+  // Layout
+  layoutType      String  @default("grid") // grid, list, masonry
+  showBanner      Boolean @default(true)
+  showBio         Boolean @default(true)
+  showSocialLinks Boolean @default(true)
+
+  // Content Blocks (flexible sections)
+  contentBlocks Json? // Array of { type, order, data }
+  // Types: hero, featured_products, text, image, video, testimonial, cta
+
+  // Featured Products
+  featuredProductIds String[] @default([])
+
+  // Custom Domain (future)
+  customDomain String? @unique
+
+  // SEO
+  metaTitle       String?
+  metaDescription String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("influencer_storefronts")
+}
+
+// Influencer Product Link
+model InfluencerProductLink {
+  id           String     @id @default(uuid())
+  influencerId String
+  influencer   Influencer @relation(fields: [influencerId], references: [id], onDelete: Cascade)
+  productId    String
+  product      Product    @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  // Custom URL slug (optional)
+  customSlug String?
+
+  // Stats
+  clicks      Int @default(0)
+  conversions Int @default(0)
+
+  createdAt DateTime @default(now())
+
+  @@unique([influencerId, productId])
+  @@index([influencerId])
+  @@map("influencer_product_links")
+}
+
+// Influencer Campaign (with override rates)
+model InfluencerCampaign {
+  id           String     @id @default(uuid())
+  influencerId String
+  influencer   Influencer @relation(fields: [influencerId], references: [id], onDelete: Cascade)
+
+  name        String
+  description String?  @db.Text
+  startDate   DateTime
+  endDate     DateTime
+
+  // Commission Override (takes priority over base/category rates)
+  overrideCommissionRate Decimal? @db.Decimal(5, 4)
+
+  // Specific products (optional - if empty, applies to all)
+  productIds  String[] @default([])
+  categoryIds String[] @default([])
+
+  // Tracking
+  totalClicks      Int     @default(0)
+  totalConversions Int     @default(0)
+  totalSales       Decimal @default(0) @db.Decimal(10, 2)
+
+  status CampaignStatus @default(ACTIVE)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([influencerId])
+  @@index([status])
+  @@map("influencer_campaigns")
+}
+
+enum CampaignStatus {
+  DRAFT
+  ACTIVE
+  PAUSED
+  COMPLETED
+}
+
+// Referral Tracking
+model Referral {
+  id           String     @id @default(uuid())
+  influencerId String
+  influencer   Influencer @relation(fields: [influencerId], references: [id], onDelete: Cascade)
+
+  // Visitor tracking
+  visitorId String? // Browser fingerprint/cookie ID
+  userId    String? // If visitor registers
+
+  // Attribution
+  landingPage String?
+  productId   String? // If landed on specific product
+  campaignId  String? // If from specific campaign
+  utmParams   Json? // { source, medium, campaign, content }
+
+  // Conversion
+  orderId     String?   @unique
+  order       Order?    @relation(fields: [orderId], references: [id])
+  convertedAt DateTime?
+  orderTotal  Decimal?  @db.Decimal(10, 2)
+
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  // Commission relation
+  commission InfluencerCommission?
+
+  @@index([influencerId])
+  @@index([visitorId])
+  @@map("referrals")
+}
+
+// Influencer Commission
+model InfluencerCommission {
+  id           String     @id @default(uuid())
+  influencerId String
+  influencer   Influencer @relation(fields: [influencerId], references: [id], onDelete: Cascade)
+  referralId   String     @unique
+  referral     Referral   @relation(fields: [referralId], references: [id], onDelete: Cascade)
+  orderId      String
+
+  // Order Details
+  orderTotal Decimal @db.Decimal(10, 2)
+  currency   String  @default("GBP")
+
+  // Commission Calculation (stored at time of conversion)
+  rateSource  String // BASE, CATEGORY, CAMPAIGN
+  rateApplied Decimal @db.Decimal(5, 4)
+  amount      Decimal @db.Decimal(10, 2)
+
+  // Status
+  status CommissionStatus @default(PENDING)
+
+  // Payout reference (when paid)
+  payoutId String?
+  payout   InfluencerPayout? @relation(fields: [payoutId], references: [id])
+
+  // Notes (for manual adjustments)
+  notes String? @db.Text
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([influencerId])
+  @@index([status])
+  @@map("influencer_commissions")
+}
+
+enum CommissionStatus {
+  PENDING // Order placed
+  APPROVED // Order delivered
+  PAID // Manually marked as paid
+  CANCELLED // Order cancelled/returned
+  ADJUSTED // Manually adjusted
+}
+
+// Influencer Payout (Manual Tracking)
+model InfluencerPayout {
+  id           String     @id @default(uuid())
+  influencerId String
+  influencer   Influencer @relation(fields: [influencerId], references: [id], onDelete: Cascade)
+
+  // Period
+  periodStart DateTime
+  periodEnd   DateTime
+
+  // Amount
+  totalAmount Decimal @db.Decimal(10, 2)
+  currency    String  @default("GBP")
+
+  // Manual Payment Details
+  paymentMethod String? // BANK, PAYPAL, etc.
+  paymentRef    String? // External reference number
+  paidAt        DateTime?
+  paidBy        String? // Admin user ID who processed
+
+  status PayoutStatus @default(PENDING)
+  notes  String?      @db.Text
+
+  commissions InfluencerCommission[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([influencerId])
+  @@index([status])
+  @@map("influencer_payouts")
+}
+
+enum PayoutStatus {
+  PENDING
+  PAID
+  CANCELLED
+}

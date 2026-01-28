@@ -39,6 +39,7 @@ export class AdminProductsService {
     tradePrice?: number;
     rrp?: number;
     taxRate?: number;
+    taxClassId?: string;
     fandom?: string;
     images?: Array<{ url: string; alt?: string; order?: number }>;
   }) {
@@ -133,6 +134,7 @@ export class AdminProductsService {
         tradePrice: data.tradePrice,
         rrp: data.rrp,
         taxRate: data.taxRate || 0,
+        taxClassId: data.taxClassId || undefined,
         fandom: data.fandom,
         images: data.images && data.images.length > 0
           ? {
@@ -221,6 +223,7 @@ export class AdminProductsService {
       tradePrice?: number;
       rrp?: number;
       taxRate?: number;
+      taxClassId?: string;
       fandom?: string;
       images?: Array<{ url: string; alt?: string; order?: number }>;
     },
@@ -309,9 +312,19 @@ export class AdminProductsService {
       }
     }
 
-    // Prepare update data
+    // Prepare update data - only include fields that are actual Prisma Product model columns
+    // Exclude fields that need special handling as relations (tagIds, images, attributes)
+    // or legacy fields that shouldn't be passed directly (tags, category for non-string handling)
+    const {
+      tagIds: _tagIds,
+      tags: _tags,
+      images: _images,
+      attributes: _attributes,
+      ...scalarData
+    } = data;
+
     const updateData: any = {
-      ...data,
+      ...scalarData,
       slug,
     };
 

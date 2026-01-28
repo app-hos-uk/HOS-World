@@ -25,26 +25,26 @@ export class CategoriesService {
   constructor(private prisma: PrismaService) {}
 
   async createCategory(data: CreateCategoryDto) {
-    // Validate parent if provided
-    let parent: any = null;
+    // Validate Phantom (parent) if provided
+    let phantom: any = null;
     let level = 0;
     let path = '';
 
     if (data.parentId) {
-      parent = await this.prisma.category.findUnique({
+      phantom = await this.prisma.category.findUnique({
         where: { id: data.parentId },
       });
 
-      if (!parent) {
-        throw new NotFoundException('Parent category not found');
+      if (!phantom) {
+        throw new NotFoundException('Phantom not found');
       }
 
-      if (parent.level >= 2) {
-        throw new BadRequestException('Maximum category depth is 3 levels (0, 1, 2)');
+      if (phantom.level >= 2) {
+        throw new BadRequestException('Maximum category depth is 3 levels (Phantom, Category, Sub-category)');
       }
 
-      level = parent.level + 1;
-      path = parent.path ? `${parent.path}/${slugify(data.name)}` : `/${slugify(data.name)}`;
+      level = phantom.level + 1;
+      path = phantom.path ? `${phantom.path}/${slugify(data.name)}` : `/${slugify(data.name)}`;
     } else {
       path = `/${slugify(data.name)}`;
     }
@@ -111,8 +111,8 @@ export class CategoriesService {
   }
 
   async getCategoryTree() {
-    // Get all root categories (level 0)
-    const roots = await this.prisma.category.findMany({
+    // Get all Phantoms (level 0 - top-level categories)
+    const phantoms = await this.prisma.category.findMany({
       where: {
         isActive: true,
         level: 0,
@@ -138,7 +138,7 @@ export class CategoriesService {
       ],
     });
 
-    return roots;
+    return phantoms;
   }
 
   async findOne(id: string) {
@@ -185,38 +185,38 @@ export class CategoriesService {
       throw new NotFoundException('Category not found');
     }
 
-    // Handle parent change
+    // Handle Phantom (parent) change
     let level = category.level;
     let path = category.path;
 
     if (data.parentId !== undefined && data.parentId !== category.parentId) {
       if (data.parentId === null) {
-        // Moving to root
+        // Moving to Phantom (top level)
         level = 0;
         path = `/${slugify(data.name || category.name)}`;
       } else {
-        const newParent = await this.prisma.category.findUnique({
+        const newPhantom = await this.prisma.category.findUnique({
           where: { id: data.parentId },
         });
 
-        if (!newParent) {
-          throw new NotFoundException('Parent category not found');
+        if (!newPhantom) {
+          throw new NotFoundException('Phantom not found');
         }
 
-        if (newParent.level >= 2) {
-          throw new BadRequestException('Maximum category depth is 3 levels');
+        if (newPhantom.level >= 2) {
+          throw new BadRequestException('Maximum category depth is 3 levels (Phantom, Category, Sub-category)');
         }
 
-        level = newParent.level + 1;
-        path = newParent.path ? `${newParent.path}/${slugify(data.name || category.name)}` : `/${slugify(data.name || category.name)}`;
+        level = newPhantom.level + 1;
+        path = newPhantom.path ? `${newPhantom.path}/${slugify(data.name || category.name)}` : `/${slugify(data.name || category.name)}`;
       }
     } else if (data.name && data.name !== category.name) {
       // Update path if name changed
       if (category.parentId) {
-        const parent = await this.prisma.category.findUnique({
+        const phantom = await this.prisma.category.findUnique({
           where: { id: category.parentId },
         });
-        path = parent?.path ? `${parent.path}/${slugify(data.name)}` : `/${slugify(data.name)}`;
+        path = phantom?.path ? `${phantom.path}/${slugify(data.name)}` : `/${slugify(data.name)}`;
       } else {
         path = `/${slugify(data.name)}`;
       }
@@ -318,19 +318,19 @@ export class CategoriesService {
       return 0;
     }
 
-    const parent = await this.prisma.category.findUnique({
+    const phantom = await this.prisma.category.findUnique({
       where: { id: parentId },
     });
 
-    if (!parent) {
-      throw new NotFoundException('Parent category not found');
+    if (!phantom) {
+      throw new NotFoundException('Phantom not found');
     }
 
-    if (parent.level >= 2) {
-      throw new BadRequestException('Maximum category depth is 3 levels');
+    if (phantom.level >= 2) {
+      throw new BadRequestException('Maximum category depth is 3 levels (Phantom, Category, Sub-category)');
     }
 
-    return parent.level + 1;
+    return phantom.level + 1;
   }
 }
 

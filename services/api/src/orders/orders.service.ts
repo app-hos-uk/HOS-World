@@ -80,27 +80,39 @@ export class OrdersService {
       postalCode: shippingAddress.postalCode || undefined,
     };
 
-    // Group items by seller
+    // Group items by seller (use sellerId directly - it's the Seller.id, not userId)
+    // Platform-owned products have null sellerId, grouped under 'platform' key
     const itemsBySeller = new Map<string, typeof cart.items>();
     for (const item of cart.items) {
-      const sellerId = item.product.seller?.userId || item.product.sellerId || 'platform';
-      if (!itemsBySeller.has(sellerId)) {
-        itemsBySeller.set(sellerId, []);
+      // Use product.sellerId directly (Seller.id) - fallback to 'platform' for platform-owned products
+      const groupKey = item.product.sellerId || 'platform';
+      if (!itemsBySeller.has(groupKey)) {
+        itemsBySeller.set(groupKey, []);
       }
-      itemsBySeller.get(sellerId)!.push(item);
+      itemsBySeller.get(groupKey)!.push(item);
     }
 
-    // Create orders for each seller
+    // Create orders for each seller (or platform)
     const orders: Order[] = [];
 
-    for (const [sellerUserId, items] of itemsBySeller) {
-      const seller = await this.prisma.seller.findUnique({
-        where: { userId: sellerUserId },
-      });
-
-      if (!seller) {
-        continue;
+    for (const [sellerIdOrPlatform, items] of itemsBySeller) {
+      // For platform-owned products, seller is null
+      // For third-party seller products, look up by Seller.id (not userId)
+      let seller: { id: string } | null = null;
+      
+      if (sellerIdOrPlatform !== 'platform') {
+        seller = await this.prisma.seller.findUnique({
+          where: { id: sellerIdOrPlatform },
+          select: { id: true },
+        });
+        
+        // Skip if third-party seller not found (data integrity issue)
+        if (!seller) {
+          this.logger.warn(`Seller ${sellerIdOrPlatform} not found, skipping items`);
+          continue;
+        }
       }
+      // For platform products (sellerIdOrPlatform === 'platform'), seller remains null - this is expected
 
       // Calculate totals for this seller's items
       let subtotal = new Decimal(0);
@@ -217,10 +229,11 @@ export class OrdersService {
         }
 
         // Create order with fulfillment routing
+        // sellerId is null for platform-owned products
         const createdOrder = await tx.order.create({
           data: {
             userId,
-            sellerId: seller.id,
+            sellerId: seller?.id || null,
             orderNumber,
             subtotal,
             tax,
@@ -318,6 +331,15 @@ export class OrdersService {
       },
     });
 
+    // Validate that at least one order was created
+    // This can fail if all cart items reference third-party sellers that don't exist in the database
+    // (Platform-owned products with null sellerId are handled correctly above)
+    if (orders.length === 0) {
+      throw new BadRequestException(
+        'Unable to create order: cart items reference invalid sellers. Please contact support.',
+      );
+    }
+
     // IMPORTANT: Multi-seller limitation
     // When a cart contains items from multiple sellers, separate orders are created for each seller.
     // Currently, only the first order is returned to the frontend. This means:
@@ -330,7 +352,160 @@ export class OrdersService {
     // - Creating a parent "checkout session" that groups multiple orders
     // - Using a split payment flow (Stripe Connect, PayPal for Marketplaces)
     // - Showing all created orders on the payment/confirmation page
-    return orders[0];
+
+    // Only process referral for the first order (the one actually returned and paid for)
+    // Multi-seller orders create separate Order records, but only orders[0] is returned to frontend.
+    // Processing referrals for all orders would create commissions for unpaid/unseen orders.
+    const primaryOrder = orders[0];
+
+    if (createOrderDto.referralCode && primaryOrder) {
+      try {
+        await this.processReferralConversion(
+          primaryOrder.id,
+          userId,
+          createOrderDto.referralCode,
+          createOrderDto.visitorId,
+        );
+      } catch (error) {
+        // Log but don't fail order creation for referral issues
+        this.logger.warn(`Failed to process referral for order ${primaryOrder.id}: ${error.message}`);
+      }
+    }
+
+    return primaryOrder;
+  }
+
+  /**
+   * Process referral conversion - creates commission for influencer
+   */
+  private async processReferralConversion(
+    orderId: string,
+    userId: string,
+    referralCode: string,
+    visitorId?: string,
+  ): Promise<void> {
+    // Find influencer by referral code
+    const influencer = await this.prisma.influencer.findUnique({
+      where: { referralCode },
+      include: {
+        campaigns: {
+          where: {
+            status: 'ACTIVE',
+            startDate: { lte: new Date() },
+            endDate: { gte: new Date() },
+          },
+        },
+      },
+    });
+
+    if (!influencer || influencer.status !== 'ACTIVE') {
+      this.logger.debug(`Referral code ${referralCode} not found or influencer inactive`);
+      return;
+    }
+
+    // Get order details with items
+    const order = await this.prisma.order.findUnique({
+      where: { id: orderId },
+      include: {
+        items: {
+          include: {
+            product: {
+              select: { id: true, categoryId: true },
+            },
+          },
+        },
+      },
+    });
+
+    if (!order) {
+      return;
+    }
+
+    // Commission: Campaign override (single rate for whole order) > per-item weighted category/base rates.
+    // Prisma returns Decimal for @db.Decimal - use directly; category rates from JSON are numbers.
+    const baseRate: Decimal = influencer.baseCommissionRate;
+    const categoryRates = (influencer.categoryCommissions as Record<string, number>) || {};
+    let commissionAmount: Decimal;
+    let rateApplied: Decimal;
+    let rateSource: string;
+
+    // Campaign override: one rate for entire order
+    const campaign = influencer.campaigns?.[0];
+    if (campaign?.overrideCommissionRate != null) {
+      rateApplied = campaign.overrideCommissionRate;
+      rateSource = 'CAMPAIGN';
+      commissionAmount = order.total.mul(rateApplied);
+    } else if (Object.keys(categoryRates).length > 0 && order.items.length > 0) {
+      // Weighted rate by item value: each line uses its category rate (or base), then sum commission per item
+      let totalCommission = new Decimal(0);
+      let usedCategoryRate = false;
+      for (const item of order.items) {
+        const itemTotal = item.price.mul(item.quantity);
+        const categoryId = item.product?.categoryId;
+        const categoryRate = categoryId ? categoryRates[categoryId] : undefined;
+        const itemRate =
+          categoryRate !== undefined ? new Decimal(categoryRate) : baseRate;
+        if (categoryRate !== undefined) usedCategoryRate = true;
+        totalCommission = totalCommission.plus(itemTotal.mul(itemRate));
+      }
+      commissionAmount = totalCommission;
+      rateSource = usedCategoryRate ? 'CATEGORY' : 'BASE';
+      // Effective rate for display/storage: total commission / order total
+      rateApplied =
+        order.total.gt(0) ? commissionAmount.div(order.total) : baseRate;
+    } else {
+      rateApplied = baseRate;
+      rateSource = 'BASE';
+      commissionAmount = order.total.mul(baseRate);
+    }
+
+    const orderTotal = order.total;
+
+    // Create referral record
+    const expiresAt = new Date();
+    expiresAt.setDate(expiresAt.getDate() + influencer.cookieDuration);
+
+    const referral = await this.prisma.referral.create({
+      data: {
+        influencerId: influencer.id,
+        visitorId,
+        userId,
+        orderId,
+        orderTotal: order.total,
+        convertedAt: new Date(),
+        expiresAt,
+      },
+    });
+
+    // Create commission
+    await this.prisma.influencerCommission.create({
+      data: {
+        influencerId: influencer.id,
+        referralId: referral.id,
+        orderId,
+        orderTotal: order.total,
+        rateSource,
+        rateApplied,
+        amount: commissionAmount,
+        status: 'PENDING',
+        currency: order.currency,
+      },
+    });
+
+    // Update influencer stats using Decimal for precision
+    await this.prisma.influencer.update({
+      where: { id: influencer.id },
+      data: {
+        totalConversions: { increment: 1 },
+        totalSalesAmount: { increment: orderTotal },
+        totalCommission: { increment: commissionAmount },
+      },
+    });
+
+    // Convert to Number only for logging display
+    const ratePercent = rateApplied.mul(100).toNumber();
+    const amountDisplay = commissionAmount.toFixed(2);
+    this.logger.log(`Commission created for influencer ${influencer.id}: ${amountDisplay} (${rateSource} rate: ${ratePercent}%)`);
   }
 
   async findAll(userId: string, role: string): Promise<Order[]> {

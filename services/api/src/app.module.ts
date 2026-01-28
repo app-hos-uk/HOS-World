@@ -75,6 +75,14 @@ import { MonitoringInterceptor } from './monitoring/monitoring.interceptor';
 import { IntegrationsModule } from './integrations/integrations.module';
 import { GamificationModule } from './gamification/gamification.module';
 import { DigitalProductsModule } from './digital-products/digital-products.module';
+import { InfluencerInvitationsModule } from './influencer-invitations/influencer-invitations.module';
+import { InfluencersModule } from './influencers/influencers.module';
+import { InfluencerStorefrontsModule } from './influencer-storefronts/influencer-storefronts.module';
+import { ReferralsModule } from './referrals/referrals.module';
+import { InfluencerCommissionsModule } from './influencer-commissions/influencer-commissions.module';
+import { InfluencerPayoutsModule } from './influencer-payouts/influencer-payouts.module';
+import { InfluencerCampaignsModule } from './influencer-campaigns/influencer-campaigns.module';
+import { MeilisearchModule } from './meilisearch/meilisearch.module';
 
 @Module({
   imports: [
@@ -102,6 +110,7 @@ import { DigitalProductsModule } from './digital-products/digital-products.modul
     NotificationsModule,
     DashboardModule,
     SearchModule,
+    MeilisearchModule, // Enhanced search with Meilisearch
     PerformanceModule,
     NewsletterModule,
     GiftCardsModule,
@@ -152,6 +161,14 @@ import { DigitalProductsModule } from './digital-products/digital-products.modul
     IntegrationsModule,
     GamificationModule,
     DigitalProductsModule,
+    // Influencer Module
+    InfluencerInvitationsModule,
+    InfluencersModule,
+    InfluencerStorefrontsModule,
+    ReferralsModule,
+    InfluencerCommissionsModule,
+    InfluencerPayoutsModule,
+    InfluencerCampaignsModule,
   ],
   controllers: [AppController],
   providers: [

@@ -92,16 +92,18 @@ export default function AdminSellersPage() {
       setLoading(true);
       setError(null);
       const response = await apiClient.getUsers();
-      if (response?.data && Array.isArray(response.data)) {
-        const sellerRoles = ['SELLER', 'B2C_SELLER', 'WHOLESALER'];
-        const sellerUsers = response.data.filter((user: any) => 
-          sellerRoles.includes(user.role)
-        );
-        setSellers(sellerUsers);
-        calculateStats(sellerUsers);
-      } else {
-        setSellers([]);
-      }
+      
+      // Handle paginated response structure: { data: { data: [...], pagination: {...} } }
+      // or direct array structure: { data: [...] }
+      const userData = response?.data?.data || response?.data;
+      const users = Array.isArray(userData) ? userData : [];
+      
+      const sellerRoles = ['SELLER', 'B2C_SELLER', 'WHOLESALER'];
+      const sellerUsers = users.filter((user: any) => 
+        sellerRoles.includes(user.role)
+      );
+      setSellers(sellerUsers);
+      calculateStats(sellerUsers);
     } catch (err: any) {
       console.error('Error fetching sellers:', err);
       setError(err.message || 'Failed to load sellers');

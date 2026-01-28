@@ -1680,6 +1680,7 @@ export class ApiClient {
     tradePrice?: number;
     rrp?: number;
     taxRate?: number;
+    taxClassId?: string;
     fandom?: string;
     images?: Array<{ url: string; alt?: string; order?: number }>;
   }): Promise<ApiResponse<any>> {
@@ -1716,6 +1717,7 @@ export class ApiClient {
       tradePrice?: number;
       rrp?: number;
       taxRate?: number;
+      taxClassId?: string;
       fandom?: string;
       images?: Array<{ url: string; alt?: string; order?: number }>;
     },
@@ -3314,6 +3316,380 @@ export class ApiClient {
   async deactivateIntegration(id: string): Promise<ApiResponse<any>> {
     return this.request<ApiResponse<any>>(`/integrations/${encodeURIComponent(id)}/deactivate`, {
       method: 'PUT',
+    });
+  }
+
+  // ============================================
+  // INFLUENCER MODULE
+  // ============================================
+
+  // Influencer Invitations (Admin)
+  async createInfluencerInvitation(data: {
+    email: string;
+    message?: string;
+    baseCommissionRate?: number;
+  }): Promise<ApiResponse<any>> {
+    return this.request<ApiResponse<any>>('/admin/influencer-invitations', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async getInfluencerInvitations(options?: {
+    status?: string;
+    page?: number;
+    limit?: number;
+  }): Promise<ApiResponse<any>> {
+    const queryParams = new URLSearchParams();
+    if (options?.status) queryParams.append('status', options.status);
+    if (options?.page) queryParams.append('page', options.page.toString());
+    if (options?.limit) queryParams.append('limit', options.limit.toString());
+    const query = queryParams.toString();
+    return this.request<ApiResponse<any>>(`/admin/influencer-invitations${query ? `?${query}` : ''}`);
+  }
+
+  async cancelInfluencerInvitation(id: string): Promise<ApiResponse<any>> {
+    return this.request<ApiResponse<any>>(`/admin/influencer-invitations/${id}`, {
+      method: 'DELETE',
+    });
+  }
+
+  async resendInfluencerInvitation(id: string): Promise<ApiResponse<any>> {
+    return this.request<ApiResponse<any>>(`/admin/influencer-invitations/${id}/resend`, {
+      method: 'POST',
+    });
+  }
+
+  // Public invitation endpoints
+  async getInfluencerInvitationByToken(token: string): Promise<ApiResponse<any>> {
+    return this.request<ApiResponse<any>>(`/influencer-invitations/token/${token}`);
+  }
+
+  async acceptInfluencerInvitation(token: string, data: {
+    password: string;
+    firstName: string;
+    lastName: string;
+    displayName: string;
+  }): Promise<ApiResponse<any>> {
+    return this.request<ApiResponse<any>>(`/influencer-invitations/accept/${token}`, {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
+  // Influencer Self-Service
+  async getMyInfluencerProfile(): Promise<ApiResponse<any>> {
+    return this.request<ApiResponse<any>>('/influencers/me');
+  }
+
+  async updateMyInfluencerProfile(data: {
+    displayName?: string;
+    bio?: string;
+    profileImage?: string;
+    bannerImage?: string;
+    socialLinks?: Record<string, string>;
+  }): Promise<ApiResponse<any>> {
+    return this.request<ApiResponse<any>>('/influencers/me', {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async getMyInfluencerAnalytics(): Promise<ApiResponse<any>> {
+    return this.request<ApiResponse<any>>('/influencers/me/analytics');
+  }
+
+  async getMyProductLinks(options?: { page?: number; limit?: number }): Promise<ApiResponse<any>> {
+    const queryParams = new URLSearchParams();
+    if (options?.page) queryParams.append('page', options.page.toString());
+    if (options?.limit) queryParams.append('limit', options.limit.toString());
+    const query = queryParams.toString();
+    return this.request<ApiResponse<any>>(`/influencers/me/product-links${query ? `?${query}` : ''}`);
+  }
+
+  async createProductLink(productId: string, customSlug?: string): Promise<ApiResponse<any>> {
+    return this.request<ApiResponse<any>>('/influencers/me/product-links', {
+      method: 'POST',
+      body: JSON.stringify({ productId, customSlug }),
+    });
+  }
+
+  async deleteProductLink(id: string): Promise<ApiResponse<any>> {
+    return this.request<ApiResponse<any>>(`/influencers/me/product-links/${id}`, {
+      method: 'DELETE',
+    });
+  }
+
+  // Storefront
+  async getMyStorefront(): Promise<ApiResponse<any>> {
+    return this.request<ApiResponse<any>>('/influencers/me/storefront');
+  }
+
+  async updateMyStorefront(data: {
+    primaryColor?: string;
+    secondaryColor?: string;
+    backgroundColor?: string;
+    textColor?: string;
+    fontFamily?: string;
+    layoutType?: string;
+    showBanner?: boolean;
+    showBio?: boolean;
+    showSocialLinks?: boolean;
+    metaTitle?: string;
+    metaDescription?: string;
+  }): Promise<ApiResponse<any>> {
+    return this.request<ApiResponse<any>>('/influencers/me/storefront', {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async updateStorefrontContentBlocks(contentBlocks: any[]): Promise<ApiResponse<any>> {
+    return this.request<ApiResponse<any>>('/influencers/me/storefront/content-blocks', {
+      method: 'PUT',
+      body: JSON.stringify({ contentBlocks }),
+    });
+  }
+
+  async updateStorefrontFeaturedProducts(productIds: string[]): Promise<ApiResponse<any>> {
+    return this.request<ApiResponse<any>>('/influencers/me/storefront/featured-products', {
+      method: 'PUT',
+      body: JSON.stringify({ productIds }),
+    });
+  }
+
+  // Public influencer storefront
+  async getInfluencerStorefront(slug: string): Promise<ApiResponse<any>> {
+    return this.request<ApiResponse<any>>(`/i/${encodeURIComponent(slug)}`);
+  }
+
+  // Referrals
+  async trackReferral(data: {
+    referralCode: string;
+    visitorId?: string;
+    landingPage?: string;
+    productId?: string;
+    utmParams?: Record<string, string>;
+  }): Promise<ApiResponse<any>> {
+    return this.request<ApiResponse<any>>('/referrals/track', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async getMyReferrals(options?: {
+    page?: number;
+    limit?: number;
+    converted?: boolean;
+  }): Promise<ApiResponse<any>> {
+    const queryParams = new URLSearchParams();
+    if (options?.page) queryParams.append('page', options.page.toString());
+    if (options?.limit) queryParams.append('limit', options.limit.toString());
+    if (options?.converted !== undefined) queryParams.append('converted', options.converted.toString());
+    const query = queryParams.toString();
+    return this.request<ApiResponse<any>>(`/referrals/me${query ? `?${query}` : ''}`);
+  }
+
+  // Commissions
+  async getMyCommissions(options?: {
+    page?: number;
+    limit?: number;
+    status?: string;
+  }): Promise<ApiResponse<any>> {
+    const queryParams = new URLSearchParams();
+    if (options?.page) queryParams.append('page', options.page.toString());
+    if (options?.limit) queryParams.append('limit', options.limit.toString());
+    if (options?.status) queryParams.append('status', options.status);
+    const query = queryParams.toString();
+    return this.request<ApiResponse<any>>(`/influencers/me/commissions${query ? `?${query}` : ''}`);
+  }
+
+  async getMyEarnings(): Promise<ApiResponse<any>> {
+    return this.request<ApiResponse<any>>('/influencers/me/earnings');
+  }
+
+  // Payouts
+  async getMyPayouts(options?: { page?: number; limit?: number }): Promise<ApiResponse<any>> {
+    const queryParams = new URLSearchParams();
+    if (options?.page) queryParams.append('page', options.page.toString());
+    if (options?.limit) queryParams.append('limit', options.limit.toString());
+    const query = queryParams.toString();
+    return this.request<ApiResponse<any>>(`/influencers/me/payouts${query ? `?${query}` : ''}`);
+  }
+
+  // Campaigns
+  async getMyCampaigns(options?: {
+    page?: number;
+    limit?: number;
+    status?: string;
+  }): Promise<ApiResponse<any>> {
+    const queryParams = new URLSearchParams();
+    if (options?.page) queryParams.append('page', options.page.toString());
+    if (options?.limit) queryParams.append('limit', options.limit.toString());
+    if (options?.status) queryParams.append('status', options.status);
+    const query = queryParams.toString();
+    return this.request<ApiResponse<any>>(`/influencers/me/campaigns${query ? `?${query}` : ''}`);
+  }
+
+  // Admin Influencer Management
+  async getInfluencers(options?: {
+    status?: string;
+    tier?: string;
+    search?: string;
+    page?: number;
+    limit?: number;
+  }): Promise<ApiResponse<any>> {
+    const queryParams = new URLSearchParams();
+    if (options?.status) queryParams.append('status', options.status);
+    if (options?.tier) queryParams.append('tier', options.tier);
+    if (options?.search) queryParams.append('search', options.search);
+    if (options?.page) queryParams.append('page', options.page.toString());
+    if (options?.limit) queryParams.append('limit', options.limit.toString());
+    const query = queryParams.toString();
+    return this.request<ApiResponse<any>>(`/admin/influencers${query ? `?${query}` : ''}`);
+  }
+
+  async getInfluencer(id: string): Promise<ApiResponse<any>> {
+    return this.request<ApiResponse<any>>(`/admin/influencers/${id}`);
+  }
+
+  async updateInfluencer(id: string, data: any): Promise<ApiResponse<any>> {
+    return this.request<ApiResponse<any>>(`/admin/influencers/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async updateInfluencerCommission(id: string, data: {
+    baseCommissionRate?: number;
+    categoryCommissions?: Record<string, number>;
+    cookieDuration?: number;
+  }): Promise<ApiResponse<any>> {
+    return this.request<ApiResponse<any>>(`/admin/influencers/${id}/commission`, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    });
+  }
+
+  // Admin Commissions
+  async getAdminCommissions(options?: {
+    page?: number;
+    limit?: number;
+    status?: string;
+    influencerId?: string;
+  }): Promise<ApiResponse<any>> {
+    const queryParams = new URLSearchParams();
+    if (options?.page) queryParams.append('page', options.page.toString());
+    if (options?.limit) queryParams.append('limit', options.limit.toString());
+    if (options?.status) queryParams.append('status', options.status);
+    if (options?.influencerId) queryParams.append('influencerId', options.influencerId);
+    const query = queryParams.toString();
+    return this.request<ApiResponse<any>>(`/admin/influencer-commissions${query ? `?${query}` : ''}`);
+  }
+
+  async updateCommissionStatus(id: string, status: string, notes?: string): Promise<ApiResponse<any>> {
+    return this.request<ApiResponse<any>>(`/admin/influencer-commissions/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify({ status, notes }),
+    });
+  }
+
+  async approveCommission(id: string): Promise<ApiResponse<any>> {
+    return this.request<ApiResponse<any>>(`/admin/influencer-commissions/${id}/approve`, {
+      method: 'PUT',
+    });
+  }
+
+  // Admin Payouts
+  async getAdminPayouts(options?: {
+    page?: number;
+    limit?: number;
+    status?: string;
+    influencerId?: string;
+  }): Promise<ApiResponse<any>> {
+    const queryParams = new URLSearchParams();
+    if (options?.page) queryParams.append('page', options.page.toString());
+    if (options?.limit) queryParams.append('limit', options.limit.toString());
+    if (options?.status) queryParams.append('status', options.status);
+    if (options?.influencerId) queryParams.append('influencerId', options.influencerId);
+    const query = queryParams.toString();
+    return this.request<ApiResponse<any>>(`/admin/influencer-payouts${query ? `?${query}` : ''}`);
+  }
+
+  async createPayout(data: {
+    influencerId: string;
+    periodStart: string;
+    periodEnd: string;
+    notes?: string;
+  }): Promise<ApiResponse<any>> {
+    return this.request<ApiResponse<any>>('/admin/influencer-payouts', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async markPayoutPaid(id: string, data: {
+    paymentMethod?: string;
+    paymentRef?: string;
+  }): Promise<ApiResponse<any>> {
+    return this.request<ApiResponse<any>>(`/admin/influencer-payouts/${id}/mark-paid`, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async cancelPayout(id: string): Promise<ApiResponse<any>> {
+    return this.request<ApiResponse<any>>(`/admin/influencer-payouts/${id}/cancel`, {
+      method: 'PUT',
+    });
+  }
+
+  // Admin Campaigns
+  async getAdminCampaigns(options?: {
+    page?: number;
+    limit?: number;
+    status?: string;
+    influencerId?: string;
+  }): Promise<ApiResponse<any>> {
+    const queryParams = new URLSearchParams();
+    if (options?.page) queryParams.append('page', options.page.toString());
+    if (options?.limit) queryParams.append('limit', options.limit.toString());
+    if (options?.status) queryParams.append('status', options.status);
+    if (options?.influencerId) queryParams.append('influencerId', options.influencerId);
+    const query = queryParams.toString();
+    return this.request<ApiResponse<any>>(`/admin/influencer-campaigns${query ? `?${query}` : ''}`);
+  }
+
+  async getCampaign(id: string): Promise<ApiResponse<any>> {
+    return this.request<ApiResponse<any>>(`/admin/influencer-campaigns/${id}`);
+  }
+
+  async createCampaign(data: {
+    influencerId: string;
+    name: string;
+    description?: string;
+    startDate: string;
+    endDate: string;
+    overrideCommissionRate?: number;
+    productIds?: string[];
+    categoryIds?: string[];
+  }): Promise<ApiResponse<any>> {
+    return this.request<ApiResponse<any>>('/admin/influencer-campaigns', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async updateCampaign(id: string, data: any): Promise<ApiResponse<any>> {
+    return this.request<ApiResponse<any>>(`/admin/influencer-campaigns/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async deleteCampaign(id: string): Promise<ApiResponse<any>> {
+    return this.request<ApiResponse<any>>(`/admin/influencer-campaigns/${id}`, {
+      method: 'DELETE',
     });
   }
 }

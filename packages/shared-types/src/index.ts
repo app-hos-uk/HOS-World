@@ -75,6 +75,7 @@ export type UserRole =
   | 'B2C_SELLER'
   | 'SELLER' // Legacy - will be deprecated
   | 'ADMIN'
+  | 'INFLUENCER'
   | 'PROCUREMENT'
   | 'FULFILLMENT'
   | 'CATALOG'

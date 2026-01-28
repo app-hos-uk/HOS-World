@@ -164,7 +164,7 @@ export function CategorySelector({
       <div className="border border-gray-300 rounded-lg p-3 max-h-64 overflow-y-auto bg-white">
         {categories.length === 0 ? (
           <div className="text-sm text-gray-500 text-center py-4">
-            No categories available. Create categories first.
+            No Phantoms or categories available. Create a Phantom first in Admin → Categories.
           </div>
         ) : (
           <div className="space-y-1">{renderCategoryTree(categories)}</div>

@@ -136,16 +136,14 @@ export default function AdminProductsPage() {
   const fetchSellers = useCallback(async () => {
     try {
       const response = await apiClient.getUsers();
-      if (response?.data) {
-        const users = Array.isArray(response.data) ? response.data : [];
-        const sellerRoles = ['SELLER', 'B2C_SELLER', 'WHOLESALER'];
-        const sellerUsers = users.filter((user: any) => 
-          sellerRoles.includes(user.role)
-        );
-        setSellers(sellerUsers);
-      } else {
-        setSellers([]);
-      }
+      // Handle paginated response: { data: { data: [...], pagination: {...} } }
+      const userData = response?.data?.data || response?.data;
+      const users = Array.isArray(userData) ? userData : [];
+      const sellerRoles = ['SELLER', 'B2C_SELLER', 'WHOLESALER'];
+      const sellerUsers = users.filter((user: any) => 
+        sellerRoles.includes(user.role)
+      );
+      setSellers(sellerUsers);
     } catch (err: any) {
       console.error('Error fetching sellers:', err);
       setSellers([]);
@@ -409,7 +407,8 @@ export default function AdminProductsPage() {
         description: formData.description,
         price: parseFloat(formData.price),
         stock: parseInt(formData.stock, 10),
-        taxRate: formData.taxRate ? parseFloat(formData.taxRate) : undefined,
+        ...(formData.taxRate ? { taxRate: parseFloat(formData.taxRate) } : {}),
+        ...(formData.taxClassId ? { taxClassId: formData.taxClassId } : {}),
         status: publishNow ? 'ACTIVE' : 'DRAFT',
         categoryId: formData.categoryId || undefined,
         tagIds: formData.tagIds.length > 0 ? formData.tagIds : undefined,
@@ -437,7 +436,8 @@ export default function AdminProductsPage() {
         description: product.description,
         price: product.price,
         stock: 0, // Start with 0 stock
-        taxRate: product.taxRate,
+        ...(product.taxClassId ? { taxClassId: product.taxClassId } : {}),
+        ...(product.taxRate != null ? { taxRate: product.taxRate } : {}),
         isPlatformOwned: product.isPlatformOwned,
         sellerId: product.sellerId,
         status: 'DRAFT', // Always create as draft
