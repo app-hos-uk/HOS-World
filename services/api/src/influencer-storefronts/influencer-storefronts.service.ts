@@ -2,6 +2,7 @@ import {
   Injectable,
   NotFoundException,
   Logger,
+  ServiceUnavailableException,
 } from '@nestjs/common';
 import { PrismaService } from '../database/prisma.service';
 import { randomBytes } from 'crypto';
@@ -16,42 +17,52 @@ export class InfluencerStorefrontsService {
    * Ensure user has an Influencer profile and storefront; create if missing (e.g. "login only" user).
    */
   private async ensureInfluencerProfile(userId: string) {
-    let influencer = await this.prisma.influencer.findUnique({
-      where: { userId },
-      include: { storefront: true },
-    });
-    if (influencer) return influencer;
+    try {
+      let influencer = await this.prisma.influencer.findUnique({
+        where: { userId },
+        include: { storefront: true },
+      });
+      if (influencer) return influencer;
 
-    const user = await this.prisma.user.findUnique({
-      where: { id: userId },
-      select: { id: true, email: true, firstName: true, lastName: true, role: true },
-    });
-    if (!user || user.role !== 'INFLUENCER') {
-      throw new NotFoundException('Influencer profile not found');
+      const user = await this.prisma.user.findUnique({
+        where: { id: userId },
+        select: { id: true, email: true, firstName: true, lastName: true, role: true },
+      });
+      if (!user || user.role !== 'INFLUENCER') {
+        throw new NotFoundException('Influencer profile not found');
+      }
+      const displayName =
+        [user.firstName, user.lastName].filter(Boolean).join(' ') || user.email.split('@')[0];
+      const slug = await this.uniqueSlug(displayName);
+      const referralCode = await this.uniqueReferralCode(displayName);
+      influencer = await this.prisma.influencer.create({
+        data: {
+          userId: user.id,
+          displayName,
+          slug,
+          referralCode,
+          status: 'ACTIVE',
+        },
+        include: { storefront: true },
+      });
+      await this.prisma.influencerStorefront.create({
+        data: { influencerId: influencer.id },
+      });
+      const refreshed = await this.prisma.influencer.findUnique({
+        where: { id: influencer.id },
+        include: { storefront: true },
+      });
+      if (!refreshed?.storefront) throw new NotFoundException('Influencer profile not found');
+      return refreshed;
+    } catch (err: any) {
+      if (err?.code === 'P2021' || (err?.message && String(err.message).includes('does not exist'))) {
+        this.logger.warn('Influencer tables missing; run migrations.', err?.message);
+        throw new ServiceUnavailableException(
+          'Influencer features are not available yet. Database migration may be pending.',
+        );
+      }
+      throw err;
     }
-    const displayName =
-      [user.firstName, user.lastName].filter(Boolean).join(' ') || user.email.split('@')[0];
-    const slug = await this.uniqueSlug(displayName);
-    const referralCode = await this.uniqueReferralCode(displayName);
-    influencer = await this.prisma.influencer.create({
-      data: {
-        userId: user.id,
-        displayName,
-        slug,
-        referralCode,
-        status: 'ACTIVE',
-      },
-      include: { storefront: true },
-    });
-    await this.prisma.influencerStorefront.create({
-      data: { influencerId: influencer.id },
-    });
-    const refreshed = await this.prisma.influencer.findUnique({
-      where: { id: influencer.id },
-      include: { storefront: true },
-    });
-    if (!refreshed?.storefront) throw new NotFoundException('Influencer profile not found');
-    return refreshed;
   }
 
   private async uniqueReferralCode(prefix: string): Promise<string> {
@@ -85,37 +96,37 @@ export class InfluencerStorefrontsService {
     });
   }
 
+  /** Allowed storefront update fields (whitelist to avoid Prisma "Unknown arg" from extra body keys) */
+  private static STOREFRONT_UPDATE_KEYS = [
+    'primaryColor', 'secondaryColor', 'backgroundColor', 'textColor', 'fontFamily',
+    'layoutType', 'showBanner', 'showBio', 'showSocialLinks', 'metaTitle', 'metaDescription',
+  ] as const;
+
   /**
    * Update storefront settings
    */
-  async update(userId: string, dto: {
-    primaryColor?: string;
-    secondaryColor?: string;
-    backgroundColor?: string;
-    textColor?: string;
-    fontFamily?: string;
-    layoutType?: string;
-    showBanner?: boolean;
-    showBio?: boolean;
-    showSocialLinks?: boolean;
-    metaTitle?: string;
-    metaDescription?: string;
-  }) {
+  async update(userId: string, dto: Record<string, unknown>) {
+    const data: Record<string, unknown> = {};
+    for (const key of InfluencerStorefrontsService.STOREFRONT_UPDATE_KEYS) {
+      if (dto[key] !== undefined && dto[key] !== null) {
+        data[key] = dto[key];
+      }
+    }
+
     const influencer = await this.ensureInfluencerProfile(userId);
 
     if (!influencer.storefront) {
-      // Create storefront if it doesn't exist
       return this.prisma.influencerStorefront.create({
         data: {
           influencerId: influencer.id,
-          ...dto,
-        },
+          ...data,
+        } as any,
       });
     }
 
     return this.prisma.influencerStorefront.update({
       where: { id: influencer.storefront.id },
-      data: dto,
+      data: data as any,
     });
   }
 
