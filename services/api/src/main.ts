@@ -12,9 +12,15 @@ import { createBullBoard } from '@bull-board/api';
 import { ExpressAdapter } from '@bull-board/express';
 import { BullMQAdapter } from '@bull-board/api/bullMQAdapter';
 import { Queue } from 'bullmq';
+import IORedis from 'ioredis';
 
 // Initialize logger
 const logger = new Logger();
+
+// Bull board resources (kept at module scope so we can close them on shutdown)
+let bullServerAdapter: any = null;
+let bullJobsQueue: Queue | null = null;
+let bullRedisClient: IORedis.Redis | null = null;
 
 // Validate required environment variables
 function validateEnvironment() {
@@ -362,7 +368,9 @@ async function bootstrap() {
       serverAdapter.setBasePath('/api/admin/queues');
       // Connect to existing Redis via REDIS_URL
       const redisUrl = process.env.REDIS_URL || 'redis://localhost:6379';
-      const jobsQueue = new Queue('jobs', { connection: { connection: redisUrl } as any });
+      // Create a shared IORedis instance so we can close it on shutdown
+      bullRedisClient = new IORedis(redisUrl);
+      const jobsQueue = new Queue('jobs', { connection: bullRedisClient });
       const bullAdapter = new BullMQAdapter(jobsQueue);
       createBullBoard({
         queues: [bullAdapter],
@@ -370,6 +378,9 @@ async function bootstrap() {
       });
       // Mount router
       app.use('/api/admin/queues', serverAdapter.getRouter());
+      // Save references for graceful shutdown
+      bullServerAdapter = serverAdapter;
+      bullJobsQueue = jobsQueue;
       logger.info('✅ Bull Board mounted at /api/admin/queues');
     } catch (err: any) {
       logger.warn('Bull Board not available (missing packages or redis) - skipping dashboard');
@@ -403,6 +414,36 @@ async function bootstrap() {
     logger.info(`✅ API server is running on: http://0.0.0.0:${port}/api`, 'Bootstrap');
     logger.info(`✅ Health check available at: http://0.0.0.0:${port}/api/health`, 'Bootstrap');
     logger.info(`✅ Root endpoint available at: http://0.0.0.0:${port}/`, 'Bootstrap');
+    // Graceful shutdown for Bull Board resources
+    const shutdownBullBoard = async () => {
+      try {
+        if (bullJobsQueue) {
+          await bullJobsQueue.close();
+          logger.log('Bull queue closed');
+        }
+        if (bullRedisClient) {
+          await bullRedisClient.quit();
+          logger.log('Bull Redis client disconnected');
+        }
+        if (bullServerAdapter && typeof bullServerAdapter.close === 'function') {
+          try { bullServerAdapter.close(); } catch {}
+          logger.log('Bull Board server adapter closed');
+        }
+      } catch (err) {
+        logger.error('Error during Bull Board shutdown', err);
+      }
+    };
+
+    process.on('SIGINT', async () => {
+      logger.log('SIGINT received: shutting down');
+      await shutdownBullBoard();
+      process.exit(0);
+    });
+    process.on('SIGTERM', async () => {
+      logger.log('SIGTERM received: shutting down');
+      await shutdownBullBoard();
+      process.exit(0);
+    });
   } catch (error: any) {
     logger.error('═══════════════════════════════════════════════════════════', 'Bootstrap');
     logger.error('❌ CRITICAL ERROR: Failed to start API server', 'Bootstrap');
