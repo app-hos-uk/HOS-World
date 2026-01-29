@@ -18,6 +18,7 @@
     "type-check": "turbo run type-check"
   },
   "devDependencies": {
+    "baseline-browser-mapping": "^2.9.19",
     "prettier": "^3.1.1",
     "turbo": "^1.11.2",
     "typescript": "^5.3.3"
@@ -27,5 +28,3 @@
     "npm": ">=9.0.0"
   }
 }
-
-

@@ -41,7 +41,7 @@ export default function AcceptInfluencerInvitePage() {
     try {
       setLoading(true);
       const response = await apiClient.getInfluencerInvitationByToken(token);
-      setInvitation(response.data);
+      setInvitation(response.data ?? null);
     } catch (err: any) {
       console.error('Error fetching invitation:', err);
       setError('This invitation link is invalid or has expired.');

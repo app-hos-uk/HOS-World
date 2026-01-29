@@ -160,8 +160,18 @@ export default function ProductDetailPage() {
       toast.success('Review submitted successfully!');
       setShowReviewForm(false);
       setReviewForm({ rating: 5, comment: '', title: '' });
-      fetchReviews();
-      fetchProduct(); // Refresh product to update rating
+      // Refresh reviews
+      const reviewsResponse = await apiClient.getProductReviews(product.id);
+      if (reviewsResponse?.data && Array.isArray(reviewsResponse.data)) {
+        setReviews(reviewsResponse.data);
+      }
+      // Refresh product to update rating
+      const productResponse = isUuid(productIdOrSlug)
+        ? await apiClient.getProduct(productIdOrSlug)
+        : await apiClient.getProductBySlug(productIdOrSlug);
+      if (productResponse?.data) {
+        setProduct(productResponse.data);
+      }
     } catch (err: any) {
       toast.error(err.message || 'Failed to submit review');
     }

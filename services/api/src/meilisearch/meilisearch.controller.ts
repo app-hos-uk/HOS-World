@@ -218,10 +218,11 @@ export class MeilisearchController {
   @SwaggerApiResponse({ status: 200, description: 'Rebuild completed' })
   @SwaggerApiResponse({ status: 401, description: 'Unauthorized' })
   @SwaggerApiResponse({ status: 403, description: 'Forbidden - Admin only' })
-  async rebuildIndex(): Promise<ApiResponse<void>> {
+  async rebuildIndex(): Promise<ApiResponse<null>> {
     await this.meilisearchService.rebuildIndex();
 
     return {
+      data: null,
       message: 'Index rebuild completed successfully',
     };
   }
