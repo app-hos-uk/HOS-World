@@ -269,6 +269,16 @@ export interface ApiResponse<T> {
   data: T;
   message?: string;
   error?: string;
+  // Optional pagination metadata for endpoints that return paginated results.
+  // Some controllers returned `pagination` on ApiResponse in older codepaths;
+  // making this optional here avoids widespread type changes while keeping
+  // the shape explicit.
+  pagination?: {
+    page: number;
+    limit: number;
+    total: number;
+    totalPages: number;
+  };
 }
 
 export interface PaginatedResponse<T> {
