@@ -44,7 +44,7 @@ function AcceptInvitationForm() {
           setInvitationData(response.data);
           setFormData(prev => ({
             ...prev,
-            email: response.data.email,
+            email: response?.data?.email || '',
           }));
         } else {
           setError('Invalid or expired invitation token.');
