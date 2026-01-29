@@ -158,7 +158,9 @@ WORKDIR /app/services/api
 
 # Run from the API directory
 # Use 0.0.0.0 to listen on all interfaces (required for Railway)
-# Run migrations before starting (adds enum values, new tables, etc.)
-# Use simple shell form to avoid Railway parsing issues
-CMD npx prisma migrate deploy && node dist/main.js
+# Start the built application directly. Running migrations at container start
+# can cause the container to exit if the database is not available during
+# deployment; handle migrations separately to make the service start more reliably.
+# Use exec form to avoid shell parsing issues.
+CMD ["node", "dist/main.js"]
 
