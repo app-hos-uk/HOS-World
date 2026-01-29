@@ -57,9 +57,11 @@ export class MeilisearchService implements OnModuleInit, OnModuleDestroy {
       this.client = new MeiliSearch({
         host,
         apiKey: apiKey || undefined,
-        requestConfig: {
-          timeout: 10000,
-        },
+        // Avoid using non-standard `timeout` property on RequestInit since
+        // TypeScript types for the MeiliSearch client expect `requestConfig`
+        // to be compatible with `RequestInit`. Use default network timeouts
+        // and rely on waitForTask timeouts where appropriate.
+        requestConfig: {},
       });
 
       // Verify connection with health check

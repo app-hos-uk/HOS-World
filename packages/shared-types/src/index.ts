@@ -266,7 +266,7 @@ export interface Address {
 
 // API Response Types
 export interface ApiResponse<T> {
-  data: T;
+  data?: T;
   message?: string;
   error?: string;
   // Optional pagination metadata for endpoints that return paginated results.

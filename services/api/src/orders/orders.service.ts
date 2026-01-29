@@ -798,7 +798,8 @@ export class OrdersService {
         where: { id },
         data: {
           status: 'CANCELLED',
-          paymentStatus: order.paymentStatus === 'PAID' ? 'REFUNDED' : 'CANCELLED',
+          // If the order was paid, mark payment as REFUNDED. Otherwise keep existing paymentStatus.
+          paymentStatus: order.paymentStatus === 'PAID' ? 'REFUNDED' : order.paymentStatus,
         },
         include: {
           items: {
