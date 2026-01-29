@@ -105,6 +105,55 @@ export default function InfluencerDashboardPage() {
     }
   };
 
+  const shareToTwitter = async () => {
+    if (!analytics?.referralCode) return;
+    try {
+      const link = `${window.location.origin}?ref=${analytics.referralCode}`;
+      const text = encodeURIComponent('Check out the House of Spells Marketplace!');
+      window.open(`https://twitter.com/intent/tweet?url=${encodeURIComponent(link)}&text=${text}`, '_blank');
+
+      const token = localStorage.getItem('auth_token');
+      await fetch('/api/social-sharing/share', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: token ? `Bearer ${token}` : '',
+        },
+        body: JSON.stringify({
+          type: 'REFERRAL',
+          itemId: analytics.referralCode,
+          platform: 'twitter',
+        }),
+      });
+    } catch (err) {
+      console.error('Error recording twitter share:', err);
+    }
+  };
+
+  const shareToFacebook = async () => {
+    if (!analytics?.referralCode) return;
+    try {
+      const link = `${window.location.origin}?ref=${analytics.referralCode}`;
+      window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(link)}`, '_blank');
+
+      const token = localStorage.getItem('auth_token');
+      await fetch('/api/social-sharing/share', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: token ? `Bearer ${token}` : '',
+        },
+        body: JSON.stringify({
+          type: 'REFERRAL',
+          itemId: analytics.referralCode,
+          platform: 'facebook',
+        }),
+      });
+    } catch (err) {
+      console.error('Error recording facebook share:', err);
+    }
+  };
+
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('en-GB', {
       style: 'currency',
@@ -269,12 +318,26 @@ export default function InfluencerDashboardPage() {
                 <code className="text-sm">
                   {typeof window !== 'undefined' && `${window.location.origin}?ref=${analytics?.referralCode}`}
                 </code>
-                <button
-                  onClick={copyReferralLink}
-                  className="px-3 py-1 bg-white text-purple-600 rounded-md text-sm font-medium hover:bg-purple-50 transition-colors"
-                >
-                  {copied ? 'Copied!' : 'Copy'}
-                </button>
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={shareToTwitter}
+                    className="px-2 py-1 bg-white text-blue-500 rounded-md text-sm font-medium hover:bg-white/90"
+                  >
+                    Twitter
+                  </button>
+                  <button
+                    onClick={shareToFacebook}
+                    className="px-2 py-1 bg-white text-blue-700 rounded-md text-sm font-medium hover:bg-white/90"
+                  >
+                    Facebook
+                  </button>
+                  <button
+                    onClick={copyReferralLink}
+                    className="px-3 py-1 bg-white text-purple-600 rounded-md text-sm font-medium hover:bg-purple-50 transition-colors"
+                  >
+                    {copied ? 'Copied!' : 'Copy'}
+                  </button>
+                </div>
               </div>
             </div>
             <div className="hidden md:block">

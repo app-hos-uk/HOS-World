@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { apiClient } from '@/lib/api';
 import { useToast } from '@/hooks/useToast';
+import { SocialShare } from '@/components/SocialShare';
 
 interface ProductLink {
   id: string;
@@ -205,7 +206,13 @@ export default function InfluencerProductLinksPage() {
                     </span>
                   </div>
 
-                  <div className="flex gap-2">
+                  <div className="flex gap-2 items-center">
+                    <SocialShare
+                      type="PRODUCT"
+                      itemId={link.productId}
+                      itemName={link.product.name}
+                      itemImage={link.product.images?.[0]?.url || ''}
+                    />
                     <button
                       onClick={() => copyLink(link.referralUrl)}
                       className="flex-1 px-3 py-2 bg-purple-50 text-purple-600 rounded-lg hover:bg-purple-100 transition-colors text-sm font-medium"
