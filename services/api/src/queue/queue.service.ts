@@ -1,7 +1,6 @@
-import { Injectable, OnModuleInit, OnModuleDestroy, Logger, Inject, Optional, forwardRef } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
-import { ModuleRef } from '@nestjs/core';
-import { RedisService } from '../cache/redis.service';
+import { Injectable, OnModuleInit, OnModuleDestroy, Logger } from '@nestjs/common';
+import { Queue, Worker, QueueScheduler, Job } from 'bullmq';
+import IORedis from 'ioredis';
 
 export enum JobType {
   EMAIL_NOTIFICATION = 'email-notification',

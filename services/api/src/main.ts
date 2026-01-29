@@ -7,6 +7,11 @@ import helmet from 'helmet';
 import compression = require('compression');
 import { randomUUID } from 'crypto';
 import * as express from 'express';
+import * as Sentry from '@sentry/node';
+import { createBullBoard } from '@bull-board/api';
+import { ExpressAdapter } from '@bull-board/express';
+import { BullMQAdapter } from '@bull-board/api/bullMQAdapter';
+import { Queue } from 'bullmq';
 
 // Initialize logger
 const logger = new Logger();
@@ -105,6 +110,16 @@ async function bootstrap() {
     logger.debug('Creating NestFactory with AppModule...', 'Bootstrap');
     let app;
     try {
+      // Initialize Sentry if configured
+      if (process.env.SENTRY_DSN) {
+        Sentry.init({
+          dsn: process.env.SENTRY_DSN,
+          environment: process.env.NODE_ENV || 'production',
+          tracesSampleRate: parseFloat(process.env.SENTRY_TRACES_SAMPLE_RATE || '0.1'),
+        });
+        logger.info('✅ Sentry initialized', 'Bootstrap');
+      }
+
       app = await NestFactory.create(AppModule, {
         cors: true, // Enable CORS at NestJS level first
         logger: logger,
@@ -340,6 +355,25 @@ async function bootstrap() {
       },
     });
     logger.info('✅ Swagger documentation available at /api/docs', 'Bootstrap');
+
+    // Bull Board dashboard for monitoring queues (optional - requires @bull-board packages)
+    try {
+      const serverAdapter = new ExpressAdapter();
+      serverAdapter.setBasePath('/api/admin/queues');
+      // Connect to existing Redis via REDIS_URL
+      const redisUrl = process.env.REDIS_URL || 'redis://localhost:6379';
+      const jobsQueue = new Queue('jobs', { connection: { connection: redisUrl } as any });
+      const bullAdapter = new BullMQAdapter(jobsQueue);
+      createBullBoard({
+        queues: [bullAdapter],
+        serverAdapter,
+      });
+      // Mount router
+      app.use('/api/admin/queues', serverAdapter.getRouter());
+      logger.info('✅ Bull Board mounted at /api/admin/queues');
+    } catch (err: any) {
+      logger.warn('Bull Board not available (missing packages or redis) - skipping dashboard');
+    }
 
     // Global validation pipe
     app.useGlobalPipes(

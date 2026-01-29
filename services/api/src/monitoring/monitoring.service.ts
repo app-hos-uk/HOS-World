@@ -1,5 +1,6 @@
 import { Injectable, OnModuleInit, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import * as Sentry from '@sentry/node';
 
 /**
  * Monitoring Service
@@ -69,26 +70,16 @@ export class MonitoringService implements OnModuleInit {
     }
 
     try {
-      // Dynamic import to avoid requiring @sentry/node if not installed
-      // Users can install it when ready: pnpm add @sentry/node
-      const Sentry = require('@sentry/node');
-      
       Sentry.init({
         dsn: sentryDsn,
         environment: this.configService.get<string>('NODE_ENV') || 'production',
         tracesSampleRate: parseFloat(this.configService.get<string>('SENTRY_TRACES_SAMPLE_RATE') || '0.1'),
-        integrations: [
-          new Sentry.Integrations.Http({ tracing: true }),
-        ],
+        integrations: [new (Sentry as any).Integrations.Http({ tracing: true })],
       });
 
       this.logger.log('✅ Sentry error tracking enabled');
     } catch (error: any) {
-      if (error?.code === 'MODULE_NOT_FOUND') {
-        this.logger.warn('@sentry/node not installed - install with: pnpm add @sentry/node');
-      } else {
-        this.logger.error(`Failed to initialize Sentry: ${error?.message}`);
-      }
+      this.logger.error(`Failed to initialize Sentry: ${error?.message}`);
     }
   }
 
