@@ -125,7 +125,15 @@ export default function CheckoutPage() {
       }
     } catch (error: any) {
       console.error('Error loading checkout data:', error);
-      const errorMessage = error.message || 'Failed to load checkout data';
+      let errorMessage = error.message || 'Failed to load checkout data';
+      if (
+        errorMessage.includes('Internal server error') ||
+        errorMessage.includes('500') ||
+        errorMessage.includes('temporarily unavailable')
+      ) {
+        errorMessage =
+          'Checkout is temporarily unavailable. Please try again in a moment or contact support.';
+      }
       toast.error(errorMessage);
       // Only redirect if it's not a cart error (cart error already handled)
       if (!errorMessage.includes('cart')) {

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { apiClient } from '@/lib/api';
 
 interface Category {
@@ -19,24 +19,56 @@ interface CategorySelectorProps {
   label?: string;
   required?: boolean;
   placeholder?: string;
+  /** When true, refetch list when tab becomes visible (e.g. after creating fandoms in another tab). */
+  refetchOnVisible?: boolean;
 }
 
 export function CategorySelector({
   value,
   onChange,
-  label = 'Category',
+  label = 'Fandom',
   required = false,
-  placeholder = 'Select a category',
+  placeholder = 'Select a fandom',
+  refetchOnVisible = true,
 }: CategorySelectorProps) {
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [selectedCategory, setSelectedCategory] = useState<Category | null>(null);
   const [expandedLevels, setExpandedLevels] = useState<Set<number>>(new Set([0]));
 
+  const loadCategories = useCallback(async (isRefetch = false) => {
+    try {
+      if (!isRefetch) setLoading(true);
+      else setRefreshing(true);
+      setError(null);
+      const response = await apiClient.getCategoryTree();
+      const data = response?.data;
+      setCategories(Array.isArray(data) ? data : []);
+    } catch (err: any) {
+      setError(err.message || 'Failed to load fandoms');
+    } finally {
+      setLoading(false);
+      setRefreshing(false);
+    }
+  }, []);
+
   useEffect(() => {
     loadCategories();
-  }, []);
+  }, [loadCategories]);
+
+  // Refetch when user returns to this tab (e.g. after creating fandoms in Admin → Fandoms)
+  useEffect(() => {
+    if (!refetchOnVisible || typeof document === 'undefined') return;
+    const onVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        loadCategories(true);
+      }
+    };
+    document.addEventListener('visibilitychange', onVisibilityChange);
+    return () => document.removeEventListener('visibilitychange', onVisibilityChange);
+  }, [refetchOnVisible, loadCategories]);
 
   useEffect(() => {
     if (value && categories.length > 0) {
@@ -56,21 +88,6 @@ export function CategorySelector({
       setSelectedCategory(null);
     }
   }, [value, categories]);
-
-  const loadCategories = async () => {
-    try {
-      setLoading(true);
-      setError(null);
-      const response = await apiClient.getCategoryTree();
-      if (response?.data) {
-        setCategories(response.data);
-      }
-    } catch (err: any) {
-      setError(err.message || 'Failed to load categories');
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const toggleLevel = (level: number) => {
     const newExpanded = new Set(expandedLevels);
@@ -134,7 +151,7 @@ export function CategorySelector({
             {required && <span className="text-red-500 ml-1">*</span>}
           </label>
         )}
-        <div className="text-sm text-gray-500">Loading categories...</div>
+        <div className="text-sm text-gray-500">Loading fandoms...</div>
       </div>
     );
   }
@@ -155,16 +172,26 @@ export function CategorySelector({
 
   return (
     <div className="space-y-2">
-      {label && (
-        <label className="block text-sm font-medium text-gray-700">
-          {label}
-          {required && <span className="text-red-500 ml-1">*</span>}
-        </label>
-      )}
-      <div className="border border-gray-300 rounded-lg p-3 max-h-64 overflow-y-auto bg-white">
+      <div className="flex items-center justify-between gap-2">
+        {label && (
+          <label className="block text-sm font-medium text-gray-700">
+            {label}
+            {required && <span className="text-red-500 ml-1">*</span>}
+          </label>
+        )}
+        <button
+          type="button"
+          onClick={() => loadCategories(true)}
+          disabled={refreshing}
+          className="text-xs text-purple-600 hover:text-purple-800 disabled:opacity-50"
+        >
+          {refreshing ? 'Refreshing…' : 'Refresh list'}
+        </button>
+      </div>
+      <div className="border border-gray-300 rounded-lg p-3 min-h-[120px] max-h-64 overflow-y-auto bg-white">
         {categories.length === 0 ? (
           <div className="text-sm text-gray-500 text-center py-4">
-            No Phantoms or categories available. Create a Phantom first in Admin → Categories.
+            No categories available. Create categories in Admin → Fandoms.
           </div>
         ) : (
           <div className="space-y-1">{renderCategoryTree(categories)}</div>

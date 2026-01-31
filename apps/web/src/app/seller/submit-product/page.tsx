@@ -240,7 +240,7 @@ export default function SubmitProductPage() {
       if (response?.data) {
         setSuccess(true);
         setTimeout(() => {
-          router.push('/seller/dashboard');
+          router.push('/seller/products');
         }, 2000);
       } else {
         throw new Error('Failed to create submission');
@@ -275,7 +275,7 @@ export default function SubmitProductPage() {
             {success && (
               <div className="mb-6 p-4 bg-green-100 border border-green-400 text-green-700 rounded-lg">
                 <p className="font-semibold">Product submitted successfully!</p>
-                <p className="text-sm mt-1">Redirecting to dashboard...</p>
+                <p className="text-sm mt-1">Redirecting to My Products…</p>
               </div>
             )}
 
@@ -531,23 +531,23 @@ export default function SubmitProductPage() {
               {/* Categorization */}
               <div className="bg-white border border-gray-200 rounded-lg p-6 sm:p-8">
                 <h2 className="text-xl font-semibold mb-4 sm:mb-6">Categorization</h2>
-                <div className="space-y-4 sm:space-y-6">
+                <div className="space-y-4 sm:space-y-6 min-h-[200px]">
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div>
-                      <FandomSelector
-                        value={formData.fandom}
-                        onChange={(fandomSlug) => setFormData({ ...formData, fandom: fandomSlug || '' })}
-                        label="Fandom"
-                        placeholder="Select a fandom"
-                      />
-                    </div>
-
-                    <div>
+                    <div className="min-h-[140px]">
                       <CategorySelector
                         value={formData.categoryId}
-                        onChange={(categoryId) => setFormData({ ...formData, categoryId: categoryId || '' })}
-                        label="Category"
-                        placeholder="Select a category"
+                        onChange={(categoryId) => setFormData((prev) => ({ ...prev, categoryId: categoryId || '' }))}
+                        label="Fandom (category)"
+                        placeholder="Select a fandom"
+                        refetchOnVisible={true}
+                      />
+                    </div>
+                    <div className="min-h-[140px]">
+                      <FandomSelector
+                        value={formData.fandom}
+                        onChange={(fandomSlug) => setFormData((prev) => ({ ...prev, fandom: fandomSlug || '' }))}
+                        label="Fandom (theme, optional)"
+                        placeholder="Select a fandom"
                       />
                     </div>
                   </div>

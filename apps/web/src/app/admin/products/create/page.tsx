@@ -9,7 +9,6 @@ import { CategorySelector } from '@/components/taxonomy/CategorySelector';
 import { TagSelector } from '@/components/taxonomy/TagSelector';
 import { AttributeEditor } from '@/components/taxonomy/AttributeEditor';
 import { FandomSelector } from '@/components/taxonomy/FandomSelector';
-import { getPublicApiBaseUrl } from '@/lib/apiBaseUrl';
 import { useRouter } from 'next/navigation';
 
 /**
@@ -21,6 +20,17 @@ import { useRouter } from 'next/navigation';
  * 
  * Access: CATALOG, ADMIN roles
  */
+interface ProductVariationOptionForm {
+  value: string;
+  price?: number | string;
+  stock?: number | string;
+  imageUrl?: string;
+}
+interface ProductVariationForm {
+  name: string;
+  options: ProductVariationOptionForm[];
+}
+
 // Factory function to create fresh form data with new array instances each time
 const getInitialFormData = () => ({
   name: '',
@@ -35,6 +45,8 @@ const getInitialFormData = () => ({
   tagIds: [] as string[],
   attributes: [] as any[],
   fandom: '',
+  productType: 'SIMPLE' as 'SIMPLE' | 'VARIANT',
+  variations: [] as { name: string; options: ProductVariationOptionForm[] }[],
 });
 
 export default function ProductCreationPage() {
@@ -46,6 +58,8 @@ export default function ProductCreationPage() {
   const [images, setImages] = useState<Array<{ url: string; alt?: string; order?: number; size?: number; width?: number; height?: number; format?: string; uploadedAt?: Date }>>([]);
   const [uploadingImages, setUploadingImages] = useState(false);
   const [lastCreatedProduct, setLastCreatedProduct] = useState<string | null>(null);
+  const [currentVariation, setCurrentVariation] = useState<ProductVariationForm>({ name: '', options: [{ value: '' }] });
+  const [uploadingVariationImage, setUploadingVariationImage] = useState<string | null>(null);
 
   useEffect(() => {
     fetchSellers();
@@ -81,7 +95,21 @@ export default function ProductCreationPage() {
     try {
       setLoading(true);
       
-      // Create product as DRAFT (no price/stock - those are managed separately)
+      const productType = formData.productType || 'SIMPLE';
+      const variationsPayload =
+        productType === 'VARIANT' && formData.variations.length > 0
+          ? formData.variations.map((v) => ({
+              name: v.name,
+              options: v.options.map((o) => ({
+                value: o.value,
+                ...(o.price != null && o.price !== '' ? { price: Number(o.price) } : {}),
+                ...(o.stock != null && o.stock !== '' ? { stock: Number(o.stock) } : {}),
+                ...(o.imageUrl ? { imageUrl: o.imageUrl } : {}),
+              })),
+            }))
+          : undefined;
+
+      // Create product as DRAFT (no price/stock - those are managed separately for SIMPLE)
       const response = await apiClient.createAdminProduct({
         name: formData.name,
         description: formData.description,
@@ -99,6 +127,8 @@ export default function ProductCreationPage() {
         attributes: formData.attributes.length > 0 ? formData.attributes : undefined,
         images: images.length > 0 ? images.map(img => ({ url: img.url, alt: img.alt, order: img.order })) : undefined,
         fandom: formData.fandom || undefined,
+        productType,
+        variations: variationsPayload,
       });
       
       // Store created product name for success message
@@ -108,7 +138,8 @@ export default function ProductCreationPage() {
       // Reset form for adding another product (call function to get fresh object with new array instances)
       setFormData(getInitialFormData());
       setImages([]);
-      
+      setCurrentVariation({ name: '', options: [{ value: '' }] });
+
       toast.success(`"${createdProductName}" created successfully! Form reset for next product.`);
     } catch (err: any) {
       toast.error(err.message || 'Failed to create product');
@@ -193,6 +224,42 @@ export default function ProductCreationPage() {
 
   const updateImageAlt = (idx: number, alt: string) => {
     setImages((prev) => prev.map((img, i) => (i === idx ? { ...img, alt } : img)));
+  };
+
+  const addVariationOption = () => {
+    setCurrentVariation((prev) => ({ ...prev, options: [...prev.options, { value: '' }] }));
+  };
+
+  const updateVariationOption = (optIdx: number, field: keyof ProductVariationOptionForm, val: string | number | undefined) => {
+    setCurrentVariation((prev) => ({
+      ...prev,
+      options: prev.options.map((opt, i) => (i === optIdx ? { ...opt, [field]: val } : opt)),
+    }));
+  };
+
+  const removeVariationOption = (optIdx: number) => {
+    setCurrentVariation((prev) => ({
+      ...prev,
+      options: prev.options.filter((_, i) => i !== optIdx),
+    }));
+  };
+
+  const addVariation = () => {
+    const name = currentVariation.name.trim();
+    const opts = currentVariation.options.filter((o) => o.value.trim());
+    if (!name || opts.length === 0) {
+      toast.error('Variation name and at least one option value are required');
+      return;
+    }
+    setFormData((prev) => ({
+      ...prev,
+      variations: [...prev.variations, { name, options: opts }],
+    }));
+    setCurrentVariation({ name: '', options: [{ value: '' }] });
+  };
+
+  const removeVariation = (varIdx: number) => {
+    setFormData((prev) => ({ ...prev, variations: prev.variations.filter((_, i) => i !== varIdx) }));
   };
 
   return (
@@ -377,6 +444,161 @@ export default function ProductCreationPage() {
                     />
                   )}
                 </div>
+              </div>
+
+              <div className="border-t border-gray-200 pt-4 mt-4">
+                <h3 className="text-sm font-semibold text-gray-700 mb-2">Product type</h3>
+                <div className="flex gap-4 mb-2">
+                  <label className="flex items-center gap-2">
+                    <input
+                      type="radio"
+                      name="productType"
+                      checked={formData.productType === 'SIMPLE'}
+                      onChange={() => setFormData((prev) => ({ ...prev, productType: 'SIMPLE' }))}
+                      className="rounded border-gray-300 text-purple-600 focus:ring-purple-500"
+                    />
+                    <span className="text-sm text-gray-700">Simple</span>
+                  </label>
+                  <label className="flex items-center gap-2">
+                    <input
+                      type="radio"
+                      name="productType"
+                      checked={formData.productType === 'VARIANT'}
+                      onChange={() => setFormData((prev) => ({ ...prev, productType: 'VARIANT' }))}
+                      className="rounded border-gray-300 text-purple-600 focus:ring-purple-500"
+                    />
+                    <span className="text-sm text-gray-700">Variant (e.g. Size, Color)</span>
+                  </label>
+                </div>
+
+                {formData.productType === 'VARIANT' && (
+                  <div className="mt-4 p-4 border border-gray-200 rounded-lg bg-gray-50 space-y-4">
+                    <h4 className="text-sm font-medium text-gray-800">Product Variations</h4>
+                    <p className="text-xs text-gray-600">
+                      Add variation dimensions (e.g. Size, Color). For each dimension, add option values shown to customers. You can set optional price, stock, and image per option.
+                    </p>
+
+                    {formData.variations.length > 0 && (
+                      <div className="space-y-3">
+                        <p className="text-xs font-medium text-gray-700">Added variations</p>
+                        {formData.variations.map((v, varIdx) => (
+                          <div key={varIdx} className="flex items-center justify-between p-3 bg-white border border-gray-200 rounded">
+                            <span className="font-medium text-gray-800">{v.name}</span>
+                            <span className="text-xs text-gray-500">
+                              {v.options.map((o) => o.value).join(', ')}
+                            </span>
+                            <button
+                              type="button"
+                              onClick={() => removeVariation(varIdx)}
+                              className="text-red-600 hover:text-red-800 text-sm"
+                            >
+                              Remove
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+
+                    <div className="p-3 bg-white border border-gray-200 rounded space-y-3">
+                      <p className="text-xs font-medium text-gray-700">Add a variation</p>
+                      <div>
+                        <label className="block text-xs text-gray-600 mb-1">Variation name (e.g. Size, Color)</label>
+                        <input
+                          type="text"
+                          value={currentVariation.name}
+                          onChange={(e) => setCurrentVariation((prev) => ({ ...prev, name: e.target.value }))}
+                          className="w-full px-3 py-2 border border-gray-300 rounded text-sm"
+                          placeholder="Size"
+                        />
+                      </div>
+                      <div>
+                        <div className="flex items-center justify-between mb-1">
+                          <label className="block text-xs text-gray-600">
+                            Option values — the label shown to customers (e.g. S, M, L or Red, Blue)
+                          </label>
+                          <button
+                            type="button"
+                            onClick={addVariationOption}
+                            className="text-xs text-purple-600 hover:text-purple-800"
+                          >
+                            + Add option
+                          </button>
+                        </div>
+                        <div className="space-y-2">
+                          {currentVariation.options.map((opt, optIdx) => (
+                            <div key={optIdx} className="flex flex-wrap items-center gap-2 p-2 border border-gray-100 rounded bg-gray-50">
+                              <input
+                                type="text"
+                                value={opt.value}
+                                onChange={(e) => updateVariationOption(optIdx, 'value', e.target.value)}
+                                className="w-24 px-2 py-1 border border-gray-300 rounded text-sm"
+                                placeholder="Value"
+                              />
+                              <input
+                                type="number"
+                                value={opt.price ?? ''}
+                                onChange={(e) => updateVariationOption(optIdx, 'price', e.target.value ? Number(e.target.value) : undefined)}
+                                className="w-20 px-2 py-1 border border-gray-300 rounded text-sm"
+                                placeholder="Price"
+                                min={0}
+                                step={0.01}
+                              />
+                              <input
+                                type="number"
+                                value={opt.stock ?? ''}
+                                onChange={(e) => updateVariationOption(optIdx, 'stock', e.target.value ? Number(e.target.value) : undefined)}
+                                className="w-16 px-2 py-1 border border-gray-300 rounded text-sm"
+                                placeholder="Stock"
+                                min={0}
+                              />
+                              <label className="inline-flex items-center gap-1 text-xs text-purple-600 cursor-pointer">
+                                <input
+                                  type="file"
+                                  accept="image/*"
+                                  className="hidden"
+                                  disabled={!!uploadingVariationImage}
+                                  onChange={(e) => {
+                                    const key = `new-${optIdx}`;
+                                    if (uploadingVariationImage) return;
+                                    const files = e.target.files;
+                                    if (!files?.length) return;
+                                    setUploadingVariationImage(key);
+                                    apiClient.uploadMultipleFiles([files[0]], 'products').then((res) => {
+                                      const url = res?.data?.urls?.[0];
+                                      if (url) updateVariationOption(optIdx, 'imageUrl', url);
+                                    }).catch((err: any) => toast.error(err.message || 'Upload failed')).finally(() => setUploadingVariationImage(null));
+                                    e.target.value = '';
+                                  }}
+                                />
+                                {opt.imageUrl ? '✓ Image' : (uploadingVariationImage === `new-${optIdx}` ? 'Uploading…' : 'Image')}
+                              </label>
+                              {opt.imageUrl && (
+                                <span className="inline-flex items-center gap-1">
+                                  <img src={opt.imageUrl} alt="" className="w-8 h-8 object-cover rounded" />
+                                  <button type="button" onClick={() => updateVariationOption(optIdx, 'imageUrl', undefined)} className="text-red-600 text-xs">Clear</button>
+                                </span>
+                              )}
+                              <button
+                                type="button"
+                                onClick={() => removeVariationOption(optIdx)}
+                                className="text-red-600 hover:text-red-800 text-xs"
+                              >
+                                Remove
+                              </button>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={addVariation}
+                        className="px-3 py-2 bg-purple-600 text-white rounded text-sm hover:bg-purple-700"
+                      >
+                        Add variation
+                      </button>
+                    </div>
+                  </div>
+                )}
               </div>
 
               <div className="border-t border-gray-200 pt-4 mt-4">

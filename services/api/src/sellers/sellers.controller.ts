@@ -67,6 +67,25 @@ export class SellersController {
 
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('WHOLESALER', 'B2C_SELLER', 'SELLER', 'ADMIN')
+  @Get('me/products')
+  @ApiBearerAuth('JWT-auth')
+  @ApiOperation({
+    summary: 'Get my products (all statuses)',
+    description: 'Returns all products for the authenticated seller (DRAFT, ACTIVE, INACTIVE, etc.). Use this for seller dashboard "My Products" list.',
+  })
+  @SwaggerApiResponse({ status: 200, description: 'Products retrieved successfully' })
+  @SwaggerApiResponse({ status: 401, description: 'Unauthorized' })
+  @SwaggerApiResponse({ status: 403, description: 'Forbidden - Seller role required' })
+  async getMyProducts(@Request() req: any): Promise<ApiResponse<any[]>> {
+    const products = await this.sellersService.findMyProducts(req.user.id);
+    return {
+      data: products,
+      message: 'Products retrieved successfully',
+    };
+  }
+
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('WHOLESALER', 'B2C_SELLER', 'SELLER', 'ADMIN')
   @Put('me')
   @ApiBearerAuth('JWT-auth')
   @ApiOperation({

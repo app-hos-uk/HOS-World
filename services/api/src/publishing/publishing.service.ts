@@ -48,6 +48,13 @@ export class PublishingService {
     const priceMatch = financeNotes.match(/Final: \$([\d.]+)/);
     const finalPrice = priceMatch ? parseFloat(priceMatch[1]) : productData.price;
 
+    // Use catalog images, or fall back to submission productData.images (may be { url }[] or string[])
+    const imageUrls: string[] = Array.isArray(catalogEntry.images) && catalogEntry.images.length > 0
+      ? catalogEntry.images
+      : (Array.isArray(productData.images)
+          ? productData.images.map((img: string | { url: string }) => typeof img === 'string' ? img : img?.url).filter(Boolean)
+          : []);
+
     // Create product from submission
     const product = await this.productsService.create(submission.seller.userId, {
       name: catalogEntry.title,
@@ -66,7 +73,7 @@ export class PublishingService {
       categoryId: productData.categoryId, // New taxonomy category ID
       tags: productData.tags || [],
       status: 'ACTIVE' as any, // Status is handled separately
-      images: catalogEntry.images.map((url, index) => ({
+      images: imageUrls.map((url, index) => ({
         url,
         alt: catalogEntry.title,
         order: index,

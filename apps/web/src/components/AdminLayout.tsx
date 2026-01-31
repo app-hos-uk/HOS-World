@@ -97,7 +97,7 @@ const menuItems: MenuItem[] = [
       { title: 'Create Product', href: '/admin/products/create', icon: '➕' },
       { title: 'Price Management', href: '/admin/products/pricing', icon: '💰' },
       { title: 'Product Reviews', href: '/admin/reviews', icon: '⭐' },
-      { title: 'Categories', href: '/admin/categories', icon: '📁' },
+      { title: 'Fandoms', href: '/admin/categories', icon: '📁' },
       { title: 'Attributes', href: '/admin/attributes', icon: '🔧' },
       { title: 'Tags', href: '/admin/tags', icon: '🏷️' },
     ],

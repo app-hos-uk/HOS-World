@@ -43,6 +43,11 @@ export class AdminProductsService {
     taxClassId?: string;
     fandom?: string;
     images?: Array<{ url: string; alt?: string; order?: number }>;
+    productType?: 'SIMPLE' | 'VARIANT' | 'BUNDLED';
+    variations?: Array<{
+      name: string;
+      options: Array<string | { value: string; price?: number; stock?: number; imageUrl?: string }>;
+    }>;
   }) {
     // Validate: if sellerId is provided, seller must exist
     if (data.sellerId) {
@@ -114,6 +119,18 @@ export class AdminProductsService {
       counter++;
     }
 
+    const productType = data.productType || 'SIMPLE';
+    const variationsPayload = data.variations && data.variations.length > 0
+      ? data.variations.map((v) => ({
+          name: v.name,
+          options: Array.isArray(v.options)
+            ? v.options.map((opt) =>
+                typeof opt === 'string' ? { value: opt } : { value: opt.value, price: opt.price, stock: opt.stock, imageUrl: opt.imageUrl },
+              )
+            : [],
+        }))
+      : undefined;
+
     // Create product
     const product = await this.prisma.product.create({
       data: {
@@ -124,6 +141,7 @@ export class AdminProductsService {
         price: data.price,
         currency: data.currency || 'GBP',
         stock: data.stock || 0,
+        productType,
         category: data.category, // Keep for backward compatibility
         tags: data.tags || [], // Keep for backward compatibility
         categoryId: data.categoryId, // New taxonomy field
@@ -147,6 +165,15 @@ export class AdminProductsService {
               })),
             }
           : undefined,
+        variations:
+          variationsPayload && variationsPayload.length > 0
+            ? {
+                create: variationsPayload.map((v) => ({
+                  name: v.name,
+                  options: v.options as object,
+                })),
+              }
+            : undefined,
         // New taxonomy relations
         tagsRelation: data.tagIds && data.tagIds.length > 0
           ? {
@@ -175,6 +202,7 @@ export class AdminProductsService {
           },
         },
         images: true,
+        variations: true,
         categoryRelation: true,
         tagsRelation: {
           include: {
@@ -229,6 +257,11 @@ export class AdminProductsService {
       taxClassId?: string;
       fandom?: string;
       images?: Array<{ url: string; alt?: string; order?: number }>;
+      productType?: 'SIMPLE' | 'VARIANT' | 'BUNDLED';
+      variations?: Array<{
+        name: string;
+        options: Array<string | { value: string; price?: number; stock?: number; imageUrl?: string }>;
+      }>;
     },
   ) {
     const product = await this.prisma.product.findUnique({
@@ -361,6 +394,32 @@ export class AdminProductsService {
       }
     }
 
+    // Handle variations update
+    if (data.variations !== undefined) {
+      await this.prisma.productVariation.deleteMany({
+        where: { productId },
+      });
+      if (data.variations.length > 0) {
+        const variationsPayload = data.variations.map((v) => ({
+          name: v.name,
+          options: Array.isArray(v.options)
+            ? v.options.map((opt) =>
+                typeof opt === 'string'
+                  ? { value: opt }
+                  : { value: opt.value, price: opt.price, stock: opt.stock, imageUrl: opt.imageUrl },
+              )
+            : [],
+        }));
+        await this.prisma.productVariation.createMany({
+          data: variationsPayload.map((v) => ({
+            productId,
+            name: v.name,
+            options: v.options as object,
+          })),
+        });
+      }
+    }
+
     // Handle attributes update
     if (data.attributes !== undefined) {
       // Delete existing attributes
@@ -394,6 +453,7 @@ export class AdminProductsService {
           },
         },
         images: true,
+        variations: true,
         categoryRelation: true,
         tagsRelation: {
           include: {

@@ -476,7 +476,7 @@ export default function ProductDetailPage() {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-8">
           {product.category && (
             <div className="bg-gray-50 rounded-lg p-4">
-              <h3 className="font-semibold mb-2">Category</h3>
+              <h3 className="font-semibold mb-2">Fandom</h3>
               <p className="text-gray-600">{product.category}</p>
             </div>
           )}

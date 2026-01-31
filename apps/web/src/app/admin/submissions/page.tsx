@@ -10,6 +10,12 @@ import {
   PieChart, Pie, Cell, Tooltip, ResponsiveContainer
 } from 'recharts';
 
+/** Submission images can be URL strings or objects with url (from seller submit form). */
+function getImageUrl(img: string | { url: string; alt?: string; order?: number } | undefined): string | undefined {
+  if (img == null) return undefined;
+  return typeof img === 'string' ? img : img?.url;
+}
+
 interface Submission {
   id: string;
   status: string;
@@ -19,7 +25,7 @@ interface Submission {
     price?: number;
     currency?: string;
     sku?: string;
-    images?: string[];
+    images?: (string | { url: string; alt?: string; order?: number })[];
   };
   catalogEntry?: {
     title?: string;
@@ -471,13 +477,19 @@ export default function AdminSubmissionsPage() {
                         <tr key={submission.id} className="hover:bg-gray-50">
                           <td className="px-4 py-3">
                             <div className="flex items-center gap-3">
-                              {submission.productData?.images?.[0] && (
-                                <img
-                                  src={submission.productData.images[0]}
-                                  alt=""
-                                  className="h-10 w-10 rounded object-cover"
-                                />
-                              )}
+                              {(() => {
+                                const thumbUrl = getImageUrl(submission.productData?.images?.[0]);
+                                return thumbUrl ? (
+                                  <img
+                                    src={thumbUrl}
+                                    alt=""
+                                    className="h-10 w-10 rounded object-cover bg-gray-100"
+                                    onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+                                  />
+                                ) : (
+                                  <div className="h-10 w-10 rounded bg-gray-200 flex items-center justify-center text-gray-400 text-xs">No img</div>
+                                );
+                              })()}
                               <div>
                                 <p className="text-sm font-medium text-gray-900">
                                   {submission.productData?.name || submission.catalogEntry?.title || 'Untitled'}
@@ -635,9 +647,18 @@ export default function AdminSubmissionsPage() {
                       <div>
                         <h3 className="font-semibold mb-2">Images</h3>
                         <div className="flex gap-2 flex-wrap">
-                          {selectedSubmission.productData.images.map((img, idx) => (
-                            <img key={idx} src={img} alt={`Product ${idx + 1}`} className="h-24 w-24 rounded object-cover" />
-                          ))}
+                          {selectedSubmission.productData.images.map((img, idx) => {
+                            const url = getImageUrl(img);
+                            return url ? (
+                              <img
+                                key={idx}
+                                src={url}
+                                alt={`Product ${idx + 1}`}
+                                className="h-24 w-24 rounded object-cover bg-gray-100"
+                                onError={(e) => { (e.target as HTMLImageElement).src = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="96" height="96" viewBox="0 0 96 96"%3E%3Crect fill="%23e5e7eb" width="96" height="96"/%3E%3Ctext x="50%25" y="50%25" dominant-baseline="middle" text-anchor="middle" fill="%239ca3af" font-size="12"%3ENo image%3C/text%3E%3C/svg%3E'; }}
+                              />
+                            ) : null;
+                          })}
                         </div>
                       </div>
                     )}

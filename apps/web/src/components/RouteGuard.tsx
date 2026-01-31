@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect } from 'react';
-import { useRouter, usePathname } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import type { UserRole } from '@hos-marketplace/shared-types';
 
@@ -20,7 +20,6 @@ export function RouteGuard({
 }: RouteGuardProps) {
   const { user, loading, isAuthenticated, effectiveRole } = useAuth();
   const router = useRouter();
-  const pathname = usePathname();
 
   useEffect(() => {
     if (loading) return; // Wait for auth check to complete
@@ -64,7 +63,9 @@ export function RouteGuard({
         router.push(defaultRedirect);
       }
     }
-  }, [user, loading, isAuthenticated, allowedRoles, router, redirectTo, showAccessDenied, pathname, effectiveRole]);
+  // Intentionally omit pathname: only re-run redirect when auth state changes, not on client-side nav.
+  // This avoids random "access denied" when cycling sidebar (no race with pathname updates).
+  }, [user, loading, isAuthenticated, allowedRoles, router, redirectTo, showAccessDenied, effectiveRole]);
 
   // Show loading state while checking authentication
   if (loading) {

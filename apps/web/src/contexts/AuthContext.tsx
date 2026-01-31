@@ -1,7 +1,7 @@
 'use client';
 
 import React, { createContext, useContext, useEffect, useState, useCallback } from 'react';
-import { useRouter, usePathname } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 import { apiClient } from '@/lib/api';
 import type { User, UserRole } from '@hos-marketplace/shared-types';
 
@@ -21,37 +21,27 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
+const VALID_USER_ROLES: UserRole[] = [
+  'CUSTOMER', 'WHOLESALER', 'B2C_SELLER', 'SELLER', 'ADMIN', 'INFLUENCER',
+  'PROCUREMENT', 'FULFILLMENT', 'CATALOG', 'MARKETING', 'FINANCE', 'CMS_EDITOR',
+];
+
+function isValidUserRole(value: string): value is UserRole {
+  return VALID_USER_ROLES.includes(value as UserRole);
+}
+
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const [impersonatedRole, setImpersonatedRole] = useState<UserRole | null>(null);
   const router = useRouter();
-  const pathname = usePathname();
 
-  // Load impersonated role from localStorage on mount
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      const stored = localStorage.getItem('admin_impersonated_role');
-      if (stored) {
-        try {
-          const role = stored as UserRole;
-          // Only set if we don't have a user yet, or if user is admin
-          // If user is loaded and not admin, we'll clear it in the next effect
-          if (!user || user.role === 'ADMIN') {
-            setImpersonatedRole(role);
-          }
-        } catch (e) {
-          // Invalid role stored, clear it
-          localStorage.removeItem('admin_impersonated_role');
-        }
-      }
-    }
-  }, []); // Run once on mount
-
-  // Clear impersonated role if user is not admin
+  // Clear impersonated role if user is not admin (e.g. after login as non-admin)
   useEffect(() => {
     if (user && user.role !== 'ADMIN' && impersonatedRole) {
-      localStorage.removeItem('admin_impersonated_role');
+      if (typeof window !== 'undefined') {
+        localStorage.removeItem('admin_impersonated_role');
+      }
       setImpersonatedRole(null);
     }
   }, [user, impersonatedRole]);
@@ -62,6 +52,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       
       if (!token) {
         setUser(null);
+        setImpersonatedRole(null);
         setLoading(false);
         return;
       }
@@ -75,13 +66,31 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           role: response.data.role?.toUpperCase() as UserRole,
         };
         setUser(normalizedUser);
+        // Only restore impersonated role from localStorage for ADMIN users.
+        // This prevents wholesalers/sellers from inheriting a stale admin_impersonated_role
+        // (e.g. from a previous admin session) which caused random "access denied" on sidebar nav.
+        if (normalizedUser.role === 'ADMIN' && typeof window !== 'undefined') {
+          const stored = localStorage.getItem('admin_impersonated_role');
+          if (stored && isValidUserRole(stored)) {
+            setImpersonatedRole(stored as UserRole);
+          } else if (stored) {
+            localStorage.removeItem('admin_impersonated_role');
+          }
+        } else {
+          if (typeof window !== 'undefined') {
+            localStorage.removeItem('admin_impersonated_role');
+          }
+          setImpersonatedRole(null);
+        }
       } else {
         setUser(null);
+        setImpersonatedRole(null);
         localStorage.removeItem('auth_token');
       }
     } catch (error: any) {
       console.error('Failed to fetch user:', error);
       setUser(null);
+      setImpersonatedRole(null);
       localStorage.removeItem('auth_token');
     } finally {
       setLoading(false);

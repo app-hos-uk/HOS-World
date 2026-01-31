@@ -717,7 +717,7 @@ export default function AdminAttributesPage() {
                       <CategorySelector
                         value={formData.categoryId}
                         onChange={(categoryId) => setFormData({ ...formData, categoryId: categoryId || '' })}
-                        label="Category"
+                        label="Fandom"
                         required={true}
                         placeholder="Select a category"
                       />

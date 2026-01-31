@@ -11,7 +11,7 @@ export default function FandomsPage() {
         <p className="text-base sm:text-lg text-gray-600 mb-6 sm:mb-8">
           Explore products from your favorite fandoms
         </p>
-        <FandomCollection />
+        <FandomCollection showAllPage={true} />
       </main>
       <Footer />
     </div>

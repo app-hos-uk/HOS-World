@@ -13,6 +13,34 @@ import { slugify } from '@hos-marketplace/utils';
 export class SellersService {
   constructor(private prisma: PrismaService) {}
 
+  async findMyProducts(userId: string) {
+    const seller = await this.prisma.seller.findUnique({
+      where: { userId },
+    });
+    if (!seller) {
+      throw new NotFoundException('Seller profile not found');
+    }
+    const products = await this.prisma.product.findMany({
+      where: { sellerId: seller.id },
+      orderBy: { createdAt: 'desc' },
+      include: {
+        images: { orderBy: { order: 'asc' }, take: 1 },
+      },
+    });
+    return products.map((p) => ({
+      id: p.id,
+      name: p.name,
+      slug: p.slug,
+      status: p.status,
+      price: Number(p.price),
+      stock: p.stock,
+      images: p.images?.map((i) => i.url) ?? [],
+      createdAt: p.createdAt.toISOString(),
+      category: p.category ?? undefined,
+      fandom: p.fandom ?? undefined,
+    }));
+  }
+
   async findOne(userId: string) {
     const seller = await this.prisma.seller.findUnique({
       where: { userId },

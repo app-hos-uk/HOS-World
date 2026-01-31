@@ -17,15 +17,30 @@ export class SentryExceptionFilter implements ExceptionFilter {
     }
 
     const response = ctx.getResponse();
-    const status =
+    let status =
       exception instanceof HttpException
         ? exception.getStatus()
         : HttpStatus.INTERNAL_SERVER_ERROR;
 
-    const message =
+    let message: { message: string } =
       exception instanceof HttpException
-        ? (exception.getResponse() as any)
+        ? (typeof (exception.getResponse() as any) === 'object'
+            ? (exception.getResponse() as any)
+            : { message: (exception.getResponse() as any)?.message || (exception.getResponse() as any) })
         : { message: (exception as any)?.message || 'Internal server error' };
+
+    // If Prisma/DB reports missing column (e.g. migration not run), return 503 with clearer message
+    const msg = (message?.message || '').toString();
+    if (
+      status === HttpStatus.INTERNAL_SERVER_ERROR &&
+      ((msg.includes('column') && msg.includes('does not exist')) || msg.includes('Unknown column'))
+    ) {
+      status = HttpStatus.SERVICE_UNAVAILABLE;
+      message = {
+        message:
+          'Service temporarily unavailable. A database update may be required. Please try again later or contact support.',
+      };
+    }
 
     response.status(status).json({
       ...message,

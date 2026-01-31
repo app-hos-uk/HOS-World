@@ -115,7 +115,7 @@ export default function HomePage() {
               Discover magical items from your favorite worlds
             </p>
           </div>
-          <FandomCollection />
+          <FandomCollection limit={6} />
         </section>
 
         {/* Recently Viewed section */}

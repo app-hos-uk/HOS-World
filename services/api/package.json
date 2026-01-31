@@ -24,6 +24,7 @@
     "type-check": "tsc --noEmit",
     "db:migrate": "prisma migrate dev",
     "db:migrate:deploy": "prisma migrate deploy",
+    "db:fix-migration-history": "prisma db execute --file scripts/fix-migration-history.sql",
     "db:push": "prisma db push",
     "db:generate": "prisma generate",
     "db:studio": "prisma studio",

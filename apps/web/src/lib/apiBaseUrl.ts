@@ -50,6 +50,7 @@ export function getPublicApiBaseUrl(): string {
       : 'http://localhost:3001/api';
 
   const normalized = normalizeApiBaseUrl(envUrl || fallback);
-  return normalized;
+  // If env was set but invalid (e.g. whitespace), normalized can be ''; avoid broken API base
+  return normalized || fallback;
 }
 

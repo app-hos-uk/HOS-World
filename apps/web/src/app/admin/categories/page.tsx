@@ -96,7 +96,7 @@ export default function AdminCategoriesPage() {
       }
     } catch (err: any) {
       console.error('Error fetching categories:', err);
-      setError(err.message || 'Failed to load categories');
+      setError(err.message || 'Failed to load fandoms');
       setCategories([]);
     } finally {
       setLoading(false);
@@ -149,7 +149,7 @@ export default function AdminCategoriesPage() {
         if (phantom) {
           level = phantom.level + 1;
           if (level > 2) {
-            toast.error('Maximum category depth is 3 levels (Phantom → Category → Sub-category)');
+            toast.error('Maximum fandom depth is 3 levels (Phantom → Fandom → Sub-fandom)');
             return;
           }
         }
@@ -164,11 +164,11 @@ export default function AdminCategoriesPage() {
         order: formData.order,
         isActive: formData.isActive,
       });
-      toast.success(formData.parentId ? 'Category created successfully' : 'Phantom created successfully');
+      toast.success(formData.parentId ? 'Fandom created successfully' : 'Phantom created successfully');
       resetForm();
       fetchCategories();
     } catch (err: any) {
-      toast.error(err.message || 'Failed to create category');
+      toast.error(err.message || 'Failed to create fandom');
     }
   };
 
@@ -184,22 +184,22 @@ export default function AdminCategoriesPage() {
         order: formData.order,
         isActive: formData.isActive,
       });
-      toast.success('Category updated successfully');
+      toast.success('Fandom updated successfully');
       resetForm();
       fetchCategories();
     } catch (err: any) {
-      toast.error(err.message || 'Failed to update category');
+      toast.error(err.message || 'Failed to update fandom');
     }
   };
 
   const handleDeleteCategory = async (id: string, name: string) => {
     const category = findCategory(categories, id);
     if (category?.children && category.children.length > 0) {
-      toast.error('Cannot delete category with subcategories. Delete children first.');
+      toast.error('Cannot delete fandom with sub-fandoms. Delete children first.');
       return;
     }
     if ((category?.productCount || 0) > 0) {
-      if (!confirm(`This category has ${category?.productCount} products. Are you sure you want to delete it?`)) {
+      if (!confirm(`This fandom has ${category?.productCount} products. Are you sure you want to delete it?`)) {
         return;
       }
     } else if (!confirm(`Delete "${name}"? This action cannot be undone.`)) {
@@ -207,10 +207,10 @@ export default function AdminCategoriesPage() {
     }
     try {
       await apiClient.deleteCategory(id);
-      toast.success('Category deleted successfully');
+      toast.success('Fandom deleted successfully');
       fetchCategories();
     } catch (err: any) {
-      toast.error(err.message || 'Failed to delete category');
+      toast.error(err.message || 'Failed to delete fandom');
     }
   };
 
@@ -225,10 +225,10 @@ export default function AdminCategoriesPage() {
         order: category.order + 1,
         isActive: false, // Start as inactive
       });
-      toast.success('Category duplicated successfully');
+      toast.success('Fandom duplicated successfully');
       fetchCategories();
     } catch (err: any) {
-      toast.error(err.message || 'Failed to duplicate category');
+      toast.error(err.message || 'Failed to duplicate fandom');
     }
   };
 
@@ -237,10 +237,10 @@ export default function AdminCategoriesPage() {
       await apiClient.updateCategory(category.id, {
         isActive: !category.isActive,
       });
-      toast.success(`Category ${category.isActive ? 'deactivated' : 'activated'}`);
+      toast.success(`Fandom ${category.isActive ? 'deactivated' : 'activated'}`);
       fetchCategories();
     } catch (err: any) {
-      toast.error(err.message || 'Failed to update category');
+      toast.error(err.message || 'Failed to update fandom');
     }
   };
 
@@ -259,7 +259,7 @@ export default function AdminCategoriesPage() {
       await apiClient.updateCategory(siblings[newIndex].id, { order: siblings[index].order });
       fetchCategories();
     } catch (err: any) {
-      toast.error(err.message || 'Failed to reorder category');
+      toast.error(err.message || 'Failed to reorder fandom');
     }
   };
 
@@ -586,8 +586,8 @@ export default function AdminCategoriesPage() {
           {/* Header */}
           <div className="flex justify-between items-center">
             <div>
-              <h1 className="text-2xl font-bold text-gray-900">Product Categories</h1>
-              <p className="text-gray-600 mt-1">Phantom → Category → Sub-category hierarchy</p>
+              <h1 className="text-2xl font-bold text-gray-900">Fandoms</h1>
+              <p className="text-gray-600 mt-1">Phantom → Fandom → Sub-fandom hierarchy</p>
             </div>
             <button
               onClick={() => {
@@ -599,9 +599,9 @@ export default function AdminCategoriesPage() {
                 });
               }}
               className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 flex items-center gap-2"
-              title="Create a new Phantom (top-level) or category under a Phantom"
+              title="Create a new Phantom (top-level) or fandom under a Phantom"
             >
-              <span>+</span> Create Phantom / Add Category
+              <span>+</span> Create Phantom / Add Fandom
             </button>
           </div>
 
@@ -629,7 +629,7 @@ export default function AdminCategoriesPage() {
                 <p className="text-2xl font-bold text-orange-600">{stats.totalProducts}</p>
               </div>
               <div className="bg-white rounded-lg shadow p-4">
-                <p className="text-sm text-gray-600">Avg/Category</p>
+                <p className="text-sm text-gray-600">Avg/Fandom</p>
                 <p className="text-2xl font-bold text-indigo-600">{stats.avgProductsPerCategory}</p>
               </div>
               <div className="bg-white rounded-lg shadow p-4">
@@ -654,7 +654,7 @@ export default function AdminCategoriesPage() {
               <div className="flex-1 min-w-[200px]">
                 <input
                   type="text"
-                  placeholder="Search categories..."
+                  placeholder="Search fandoms..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
@@ -700,19 +700,19 @@ export default function AdminCategoriesPage() {
           {showCreateForm && (
             <div className="bg-white rounded-lg shadow p-6">
               <h2 className="text-lg font-semibold mb-4">
-                {editingCategory ? 'Edit Category' : (formData.parentId ? 'Create New Category' : 'Create New Phantom')}
+                {editingCategory ? 'Edit Fandom' : (formData.parentId ? 'Create New Fandom' : 'Create New Phantom')}
               </h2>
               <form onSubmit={editingCategory ? handleUpdateCategory : handleCreateCategory} className="space-y-4">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Category Name *</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Fandom Name *</label>
                     <input
                       type="text"
                       required
                       value={formData.name}
                       onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
-                      placeholder="Category name"
+                      placeholder="Fandom name"
                     />
                   </div>
                   <div>
@@ -742,7 +742,7 @@ export default function AdminCategoriesPage() {
                     onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
                     rows={2}
-                    placeholder="Category description"
+                    placeholder="Fandom description"
                   />
                 </div>
 
@@ -832,7 +832,7 @@ export default function AdminCategoriesPage() {
                     type="submit"
                     className="px-6 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700"
                   >
-                    {editingCategory ? 'Update Category' : (formData.parentId ? 'Create Category' : 'Create Phantom')}
+                    {editingCategory ? 'Update Fandom' : (formData.parentId ? 'Create Fandom' : 'Create Phantom')}
                   </button>
                   <button
                     type="button"
@@ -850,13 +850,13 @@ export default function AdminCategoriesPage() {
           <div className="bg-white rounded-lg shadow">
             <div className="p-4 border-b border-gray-200">
               <h2 className="text-lg font-semibold">
-                {viewMode === 'tree' ? 'Category Tree' : 'All Categories'} ({getAllCategoriesFlat(filteredCategories).length})
+                {viewMode === 'tree' ? 'Fandom Tree' : 'All Fandoms'} ({getAllCategoriesFlat(filteredCategories).length})
               </h2>
             </div>
             <div className="p-4">
               {filteredCategories.length === 0 ? (
                 <div className="text-center py-8 text-gray-500">
-                  {searchTerm ? 'No categories match your search.' : 'No Phantoms or categories found. Create your first Phantom to get started.'}
+                  {searchTerm ? 'No fandoms match your search.' : 'No Phantoms or fandoms found. Create your first Phantom to get started.'}
                 </div>
               ) : viewMode === 'tree' ? (
                 <div className="space-y-2">{renderCategoryTree(filteredCategories)}</div>

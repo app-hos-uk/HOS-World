@@ -1,9 +1,19 @@
 # Migration Fix Guide
 
 ## Problem
-The migration `20251206133014_add_global_features` failed because the shadow database doesn't have the `users` table. This happens when the shadow database is out of sync with your actual database.
+The migration `20251206133014_add_global_features` failed because the shadow database doesn't have the `users` table. This happens when the shadow database is out of sync with your actual database. It can leave a **failed** row in `_prisma_migrations` (`finished_at` NULL), which blocks `prisma migrate deploy`.
 
-## Solutions
+## Fix migration history (failed record)
+
+If `prisma migrate deploy` fails due to this migration being in a failed state or checksum mismatch, see **[MIGRATION_HISTORY_FIX.md](./MIGRATION_HISTORY_FIX.md)**. Short version:
+
+```bash
+cd services/api
+pnpm prisma db execute --file scripts/fix-migration-history.sql
+pnpm db:migrate:deploy
+```
+
+## Other options
 
 ### Option 1: Use `prisma db push` (Recommended for Development)
 This syncs your schema directly to the database without using migrations. Use this if you're in development and don't need migration history.

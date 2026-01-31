@@ -39,9 +39,8 @@ export function FandomSelector({
       setLoading(true);
       setError(null);
       const response = await apiClient.getFandoms();
-      if (response?.data) {
-        setFandoms(response.data);
-      }
+      const list = response?.data;
+      setFandoms(Array.isArray(list) ? list : []);
     } catch (err: any) {
       setError(err.message || 'Failed to load fandoms');
     } finally {
@@ -80,7 +79,7 @@ export function FandomSelector({
   }
 
   return (
-    <div className="space-y-2">
+    <div className="space-y-2 min-h-[52px]">
       {label && (
         <label className="block text-sm font-medium text-gray-700">
           {label}
@@ -90,8 +89,9 @@ export function FandomSelector({
       <select
         value={value || ''}
         onChange={(e) => onChange(e.target.value || null)}
-        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent bg-white"
         required={required}
+        aria-label={label || 'Fandom'}
       >
         <option value="">{placeholder}</option>
         {fandoms.map((fandom) => (
@@ -100,6 +100,9 @@ export function FandomSelector({
           </option>
         ))}
       </select>
+      {fandoms.length === 0 && (
+        <p className="text-xs text-gray-500">No fandoms available. Create fandoms in Admin → Fandoms.</p>
+      )}
     </div>
   );
 }

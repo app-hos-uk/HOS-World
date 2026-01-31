@@ -27,7 +27,7 @@ const pathLabels: Record<string, string> = {
   'seller-applications': 'Seller Applications',
   submissions: 'Submissions',
   catalog: 'Catalog',
-  categories: 'Categories',
+  categories: 'Fandoms',
   tags: 'Tags',
   attributes: 'Attributes',
   settings: 'Settings',

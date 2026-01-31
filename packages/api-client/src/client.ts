@@ -1319,26 +1319,12 @@ export class ApiClient {
   }
 
   async getSellerProducts(): Promise<ApiResponse<any[]>> {
-    // Get seller profile first to get seller database ID
-    const profileResponse = await this.getSellerProfile();
-    if (!profileResponse?.data?.id) {
-      return { data: [], message: 'Seller profile not found' };
-    }
-    // The seller object has an 'id' field which is the seller's database ID
-    // The products service expects sellerId to be the userId, which it then converts to seller database ID
-    // So we need to use the userId from the seller's user relation
-    const userId = profileResponse.data.user?.id || profileResponse.data.userId;
-    if (!userId) {
-      return { data: [], message: 'User ID not found in seller profile' };
-    }
-    // Use products endpoint with sellerId filter (expects userId)
-    const url = `/products?sellerId=${userId}`;
-    const response = await this.request<ApiResponse<any>>(url, {
+    // Use dedicated endpoint that returns all seller products (any status: DRAFT, ACTIVE, etc.)
+    const response = await this.request<ApiResponse<any[]>>('/sellers/me/products', {
       method: 'GET',
     });
-    // Extract products from paginated response
-    const products = response.data?.data || response.data || [];
-    return { data: Array.isArray(products) ? products : [], message: 'Products retrieved successfully' };
+    const products = response?.data;
+    return { data: Array.isArray(products) ? products : [], message: response?.message || 'Products retrieved successfully' };
   }
 
   async getSellerOrders(status?: string): Promise<ApiResponse<any[]>> {
@@ -1698,6 +1684,11 @@ export class ApiClient {
     taxClassId?: string;
     fandom?: string;
     images?: Array<{ url: string; alt?: string; order?: number }>;
+    productType?: 'SIMPLE' | 'VARIANT' | 'BUNDLED';
+    variations?: Array<{
+      name: string;
+      options: Array<string | { value: string; price?: number; stock?: number; imageUrl?: string }>;
+    }>;
   }): Promise<ApiResponse<any>> {
     return this.request<ApiResponse<any>>('/admin/products', {
       method: 'POST',
@@ -1736,6 +1727,11 @@ export class ApiClient {
       taxClassId?: string;
       fandom?: string;
       images?: Array<{ url: string; alt?: string; order?: number }>;
+      productType?: 'SIMPLE' | 'VARIANT' | 'BUNDLED';
+      variations?: Array<{
+        name: string;
+        options: Array<string | { value: string; price?: number; stock?: number; imageUrl?: string }>;
+      }>;
     },
   ): Promise<ApiResponse<any>> {
     return this.request<ApiResponse<any>>(`/admin/products/${id}`, {

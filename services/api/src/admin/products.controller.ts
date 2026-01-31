@@ -80,6 +80,7 @@ export class AdminProductsController {
     body: {
       name: string;
       description: string;
+      shortDescription?: string;
       price: number;
       currency?: string;
       stock?: number;
@@ -107,6 +108,11 @@ export class AdminProductsController {
       taxClassId?: string;
       fandom?: string;
       images?: Array<{ url: string; alt?: string; order?: number }>;
+      productType?: 'SIMPLE' | 'VARIANT' | 'BUNDLED';
+      variations?: Array<{
+        name: string;
+        options: Array<string | { value: string; price?: number; stock?: number; imageUrl?: string }>;
+      }>;
     },
   ): Promise<ApiResponse<any>> {
     const product = await this.productsService.createProduct(body);
@@ -162,6 +168,7 @@ export class AdminProductsController {
     body: {
       name?: string;
       description?: string;
+      shortDescription?: string;
       price?: number;
       stock?: number;
       category?: string; // Keep for backward compatibility
@@ -187,6 +194,11 @@ export class AdminProductsController {
       taxClassId?: string;
       fandom?: string;
       images?: Array<{ url: string; alt?: string; order?: number }>;
+      productType?: 'SIMPLE' | 'VARIANT' | 'BUNDLED';
+      variations?: Array<{
+        name: string;
+        options: Array<string | { value: string; price?: number; stock?: number; imageUrl?: string }>;
+      }>;
     },
   ): Promise<ApiResponse<any>> {
     const product = await this.productsService.updateProduct(id, body);

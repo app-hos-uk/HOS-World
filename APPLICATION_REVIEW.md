@@ -119,3 +119,36 @@ The application is **suitable for enterprise use**: security, scalability, obser
 - **Status:** Production-ready monorepo with a strong API (NestJS, Prisma, 95+ models, 60+ modules), aligned Next.js web app, shared packages, and Railway deployment with 2 replicas.
 - **Enterprise readiness:** Security, RBAC, validation, rate limiting, Sentry, request ID, health/ready/live, graceful shutdown, BullMQ, Redis, and JSON logging are implemented and aligned.
 - **Rating:** **4.75 / 5** — enterprise-grade; small improvements (SENTRY_DSN in prod, E2E/load in CI, doc update) will make it even stronger.
+
+---
+
+## 6. Bugs and Gaps (Code Review – Jan 2026)
+
+A full pass over the web app and shared libs was done to find bugs and gaps. Below: **fixed** (addressed in this review), **open** (recommended follow-ups), and **notes** (non-blocking).
+
+### 6.1 Fixed in This Review
+
+| Item | Location | Fix |
+|------|----------|-----|
+| **Influencer routes unprotected** | `/influencer/*` (dashboard, earnings, profile, product-links, storefront) | Added `apps/web/src/app/influencer/layout.tsx` with `<RouteGuard allowedRoles={['INFLUENCER', 'ADMIN']} showAccessDenied={true}>` so all influencer pages are protected. |
+| **Returns page unprotected** | `/returns` | Wrapped page in `<RouteGuard allowedRoles={['CUSTOMER', 'ADMIN']} showAccessDenied={true}>`. |
+| **API base URL empty when env invalid** | `lib/apiBaseUrl.ts` | If `NEXT_PUBLIC_API_URL` is set to whitespace, `normalizeApiBaseUrl` returned `''`. Now `getPublicApiBaseUrl()` returns `normalized \|\| fallback` so the app always has a valid base URL. |
+
+### 6.2 Gaps and Recommendations (Open)
+
+| Item | Severity | Notes |
+|------|----------|--------|
+| **Checkout / Cart without RouteGuard** | Low | `/checkout` and `/cart` do not use RouteGuard. Cart/checkout APIs require auth, so 401 triggers redirect. Adding RouteGuard for CUSTOMER on checkout would avoid a brief flash of checkout UI before redirect. Cart can stay as-is if guest “empty cart” is desired. |
+| **Payment page by orderId** | Low | `/payment?orderId=...` loads order by ID. Backend must enforce that the order belongs to the current user (or allow payment-link flow). Frontend does not re-check ownership; rely on API. |
+| **Leaderboard** | Low | `/leaderboard` has no RouteGuard. It uses `getLeaderboard()` and `getGamificationProfile()`. If these are public, no change; if they require auth, add RouteGuard. |
+| **Track order** | Low | `/track-order` uses `getOrders()` (auth required) to find order by number. Unauthenticated users get 401 and redirect. No RouteGuard; optional to add for CUSTOMER for consistency. |
+| **Error handling** | Low | Many `catch (err: any)` blocks use `err.message` or toast; some `.catch(() => ({ data: [] }))` swallow errors. Consider centralizing user-facing error messages and logging. |
+| **Type safety** | Low | Several `(v: any)` or `as any` in tables/forms (e.g. admin submissions, checkout). Gradual typing of DTOs and response shapes would reduce risk. |
+| **RouteGuard effect deps** | Low | `allowedRoles` is often an inline array; effect runs every render. Idempotent; for perf, parents could memoize `allowedRoles`. |
+
+### 6.3 Non-Blocking Notes
+
+- **Orders list** (`/orders`) and **customer dashboard** use RouteGuard; **downloads**, **wishlist**, **quests** use RouteGuard. No other customer routes missing guard.
+- **Admin / seller / wholesaler / catalog / finance / fulfillment / procurement / marketing / cms** areas use RouteGuard per page or layout.
+- **AuthContext**: Impersonated role is restored only for ADMIN after `fetchUser`; stored role is validated with `isValidUserRole()`; no `pathname` in RouteGuard effect (avoids random “access denied” on sidebar nav).
+- **api-client** validates `baseUrl` at request time and throws if empty; combined with apiBaseUrl fallback, config is robust.
