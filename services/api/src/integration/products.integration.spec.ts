@@ -5,6 +5,19 @@ import { ProductsModule } from '../products/products.module';
 import { DatabaseModule } from '../database/database.module';
 import { AuthService } from '../auth/auth.service';
 import { AuthModule } from '../auth/auth.module';
+import { RegisterRole, CommunicationMethod } from '../auth/dto/register.dto';
+
+function isDbConnectionError(e: any): boolean {
+  const msg = e?.message ?? '';
+  return (
+    msg.includes('denied access') ||
+    msg.includes('connect') ||
+    msg.includes('DATABASE_URL') ||
+    msg.includes('reach') ||
+    msg.includes('5432') ||
+    e?.code === 'P1001'
+  );
+}
 
 describe('Products Integration Tests', () => {
   let productsService: ProductsService;
@@ -15,7 +28,6 @@ describe('Products Integration Tests', () => {
   let productId: string;
 
   beforeAll(async () => {
-    // Skip tests if database is not available
     if (process.env.SKIP_INTEGRATION_TESTS === 'true') {
       return;
     }
@@ -26,8 +38,7 @@ describe('Products Integration Tests', () => {
         imports: [DatabaseModule, AuthModule, ProductsModule],
       }).compile();
     } catch (error: any) {
-      // Skip tests if database connection fails
-      if (error?.message?.includes('denied access') || error?.message?.includes('connect') || error?.message?.includes('DATABASE_URL')) {
+      if (isDbConnectionError(error)) {
         console.warn('⚠️ Skipping integration tests: Database not available');
         return;
       }
@@ -36,49 +47,53 @@ describe('Products Integration Tests', () => {
 
     try {
       productsService = moduleFixture.get<ProductsService>(ProductsService);
-    } catch (error: any) {
-      // Service retrieval failed
-    }
-
-    try {
       prismaService = moduleFixture.get<PrismaService>(PrismaService);
-    } catch (error: any) {
-      // Service retrieval failed
-    }
-
-    try {
       authService = moduleFixture.get<AuthService>(AuthService);
     } catch (error: any) {
       // Service retrieval failed
     }
 
-    // Skip if services are not available (database connection failed)
     if (!authService || !prismaService) {
       console.warn('⚠️ Skipping integration tests: Services not available');
       return;
     }
+
+    try {
+      await prismaService.$connect();
+    } catch (error: any) {
+      if (isDbConnectionError(error)) {
+        console.warn('⚠️ Skipping integration tests: Database not available');
+        productsService = undefined as any;
+        prismaService = undefined as any;
+        authService = undefined as any;
+        return;
+      }
+      throw error;
+    }
     
-    // Create a seller
     try {
       const sellerResult = await authService.register({
-      email: `seller-integration-${Date.now()}@example.com`,
-      password: 'Test123!@#',
-      firstName: 'Seller',
-      lastName: 'Integration',
-      role: 'seller',
-      storeName: `Test Store ${Date.now()}`,
-    });
-
-    sellerUserId = sellerResult.user.id;
-
+        email: `seller-integration-${Date.now()}@example.com`,
+        password: 'Test123!@#',
+        firstName: 'Seller',
+        lastName: 'Integration',
+        role: RegisterRole.SELLER,
+        storeName: `Test Store ${Date.now()}`,
+        country: 'GB',
+        preferredCommunicationMethod: CommunicationMethod.EMAIL,
+        gdprConsent: true,
+      });
+      sellerUserId = sellerResult.user.id;
       const seller = await prismaService.seller.findUnique({
         where: { userId: sellerUserId },
       });
       sellerId = seller?.id || '';
     } catch (error: any) {
-      // Skip tests if database operations fail
-      if (error?.message?.includes('denied access') || error?.message?.includes('connect')) {
+      if (isDbConnectionError(error)) {
         console.warn('⚠️ Skipping integration tests: Database operation failed');
+        productsService = undefined as any;
+        prismaService = undefined as any;
+        authService = undefined as any;
         return;
       }
       throw error;
@@ -165,21 +180,24 @@ describe('Products Integration Tests', () => {
       expect(dbProduct?.name).toBe('Updated Integration Product');
     });
 
-    it('should delete product', async () => {
-      if (!productsService || !prismaService || !productId) {
-        console.warn('⚠️ Skipping test: Services not initialized');
-        return;
-      }
-      await productsService.delete(sellerUserId, productId);
+    it(
+      'should delete product',
+      async () => {
+        if (!productsService || !prismaService || !productId) {
+          console.warn('⚠️ Skipping test: Services not initialized');
+          return;
+        }
+        await productsService.delete(sellerUserId, productId);
 
-      // Verify deleted
-      const dbProduct = await prismaService.product.findUnique({
-        where: { id: productId },
-      });
-      expect(dbProduct).toBeNull();
+        const dbProduct = await prismaService.product.findUnique({
+          where: { id: productId },
+        });
+        expect(dbProduct).toBeNull();
 
-      productId = ''; // Reset for cleanup
-    });
+        productId = ''; // Reset for cleanup
+      },
+      15000,
+    );
   });
 });
 

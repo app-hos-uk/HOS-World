@@ -2,6 +2,7 @@ import { NestFactory } from '@nestjs/core';
 import { ValidationPipe, VersioningType } from '@nestjs/common';
 import { AppModule } from './app.module';
 import { Logger } from './common/logger/logger.service';
+import { SentryExceptionFilter } from './common/filters/sentry-exception.filter';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import helmet from 'helmet';
 import compression = require('compression');
@@ -20,7 +21,7 @@ const logger = new Logger();
 // Bull board resources (kept at module scope so we can close them on shutdown)
 let bullServerAdapter: any = null;
 let bullJobsQueue: Queue | null = null;
-let bullRedisClient: IORedis.Redis | null = null;
+let bullRedisClient: InstanceType<typeof IORedis> | null = null;
 
 // Validate required environment variables
 function validateEnvironment() {
@@ -150,21 +151,19 @@ async function bootstrap() {
       app.use(compression());
       logger.info('✅ Response compression enabled', 'Bootstrap');
 
-      // Add request ID tracking middleware
+      // Request ID middleware: propagate or generate X-Request-ID, set Sentry context
       app.use((req: any, res: any, next: any) => {
-        const requestId = randomUUID();
-        req['requestId'] = requestId;
+        const requestId =
+          (req.headers['x-request-id'] as string)?.trim() || randomUUID();
+        req.requestId = requestId;
         res.setHeader('X-Request-ID', requestId);
-        // Add request ID to logger context
-        req['logger'] = {
-          log: (message: string) => logger.log(message, `[${requestId}]`),
-          error: (message: string) => logger.error(message, `[${requestId}]`),
-          warn: (message: string) => logger.warn(message, `[${requestId}]`),
-          debug: (message: string) => logger.debug(message, `[${requestId}]`),
-        };
+        if (typeof Sentry?.setTag === 'function') {
+          Sentry.setTag('request_id', requestId);
+          Sentry.configureScope((scope) => scope.setTag('request_id', requestId));
+        }
         next();
       });
-      logger.info('✅ Request ID tracking enabled', 'Bootstrap');
+      logger.info('✅ Request ID middleware and Sentry context enabled', 'Bootstrap');
       
       // Note: PrismaService verification is done in DatabaseModule.onModuleInit()
       // We don't need to check it here as it may not be ready yet during app creation
@@ -311,9 +310,8 @@ async function bootstrap() {
       next();
     });
 
-    // API versioning disabled - using /api prefix only
-    // To re-enable versioning in the future, add @Version('1') to controllers
-    // and uncomment the following:
+    // API versioning: disabled – routes use /api prefix only (aligned with frontend).
+    // Re-enable when you need a second API version (e.g. v2): uncomment below and add @Version('1') to controllers.
     // app.enableVersioning({
     //   type: VersioningType.URI,
     //   defaultVersion: '1',
@@ -373,7 +371,7 @@ async function bootstrap() {
       const jobsQueue = new Queue('jobs', { connection: bullRedisClient });
       const bullAdapter = new BullMQAdapter(jobsQueue);
       createBullBoard({
-        queues: [bullAdapter],
+        queues: [bullAdapter as any],
         serverAdapter,
       });
       // Mount router
@@ -398,6 +396,10 @@ async function bootstrap() {
       }),
     );
 
+    // Global Sentry exception filter (capture all HTTP exceptions to Sentry)
+    app.useGlobalFilters(new SentryExceptionFilter());
+    logger.info('✅ Sentry exception filter registered', 'Bootstrap');
+
     // Add request size limits (NestJS handles JSON parsing, but we can set limits via the underlying Express instance)
     const expressApp = app.getHttpAdapter().getInstance();
     expressApp.use(express.json({ limit: '10mb' }));
@@ -414,7 +416,9 @@ async function bootstrap() {
     logger.info(`✅ API server is running on: http://0.0.0.0:${port}/api`, 'Bootstrap');
     logger.info(`✅ Health check available at: http://0.0.0.0:${port}/api/health`, 'Bootstrap');
     logger.info(`✅ Root endpoint available at: http://0.0.0.0:${port}/`, 'Bootstrap');
-    // Graceful shutdown for Bull Board resources
+    logger.info('✅ Liveness at /api/health/live, readiness at /api/health/ready', 'Bootstrap');
+
+    // Graceful shutdown: close Nest app (HTTP, Prisma, etc.) then Bull Board resources
     const shutdownBullBoard = async () => {
       try {
         if (bullJobsQueue) {
@@ -434,16 +438,22 @@ async function bootstrap() {
       }
     };
 
-    process.on('SIGINT', async () => {
-      logger.log('SIGINT received: shutting down');
+    const gracefulShutdown = async (signal: string) => {
+      logger.log(`${signal} received: shutting down gracefully`);
+      try {
+        if (app) {
+          await app.close();
+          logger.log('Nest application closed');
+        }
+      } catch (err) {
+        logger.error('Error closing Nest application', err);
+      }
       await shutdownBullBoard();
       process.exit(0);
-    });
-    process.on('SIGTERM', async () => {
-      logger.log('SIGTERM received: shutting down');
-      await shutdownBullBoard();
-      process.exit(0);
-    });
+    };
+
+    process.on('SIGINT', () => gracefulShutdown('SIGINT'));
+    process.on('SIGTERM', () => gracefulShutdown('SIGTERM'));
   } catch (error: any) {
     logger.error('═══════════════════════════════════════════════════════════', 'Bootstrap');
     logger.error('❌ CRITICAL ERROR: Failed to start API server', 'Bootstrap');

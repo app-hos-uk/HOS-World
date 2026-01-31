@@ -221,7 +221,7 @@ export class AuthService {
           userId: user.id,
           storeName: registerDto.storeName!,
           slug,
-          country: registerDto.country,
+          country: registerDto.country ?? (user as { country?: string }).country ?? 'GB',
           timezone: 'UTC',
           sellerType: sellerType || registerDto.sellerType || 'B2C_SELLER',
           logisticsOption: registerDto.logisticsOption || 'HOS_LOGISTICS',

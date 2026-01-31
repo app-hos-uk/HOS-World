@@ -1,5 +1,5 @@
 import { Injectable, OnModuleInit, OnModuleDestroy, Logger } from '@nestjs/common';
-import { Queue, Worker, QueueScheduler, Job } from 'bullmq';
+import { Queue, Worker, Job } from 'bullmq';
 import IORedis from 'ioredis';
 
 export enum JobType {
@@ -23,17 +23,15 @@ export interface JobOptions {
 @Injectable()
 export class QueueService implements OnModuleInit, OnModuleDestroy {
   private readonly logger = new Logger(QueueService.name);
-  private connection: IORedis.Redis;
+  private connection: InstanceType<typeof IORedis>;
   private queue: Queue;
   private worker: Worker;
-  private scheduler: QueueScheduler;
   private processors: Map<JobType, (job: Job) => Promise<any>> = new Map();
 
   constructor() {
     const redisUrl = process.env.REDIS_URL || 'redis://localhost:6379';
     this.connection = new IORedis(redisUrl);
     this.queue = new Queue('jobs', { connection: this.connection });
-    this.scheduler = new QueueScheduler('jobs', { connection: this.connection });
   }
 
   async onModuleInit() {
@@ -58,13 +56,12 @@ export class QueueService implements OnModuleInit, OnModuleDestroy {
       this.logger.error(`Job failed: ${job?.id} (${job?.name}) - ${err.message}`);
     });
 
-    this.logger.log('BullMQ worker & scheduler initialized');
+    this.logger.log('BullMQ worker initialized');
   }
 
   async onModuleDestroy() {
     try {
       await this.worker?.close();
-      await this.scheduler?.close();
       await this.queue?.close();
       await this.connection?.quit();
     } catch (e) {

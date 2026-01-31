@@ -743,10 +743,9 @@ export class ProductsService {
       throw new ForbiddenException('You do not have permission to delete this product');
     }
 
-    // Delete from Elasticsearch and cache before deleting from DB
-    await this.elasticsearchHook.onProductDeleted(productId).catch((error) => {
+    // Delete from Elasticsearch and cache (fire-and-forget so DB delete is not blocked by ES/cache unavailability)
+    this.elasticsearchHook.onProductDeleted(productId).catch((error) => {
       console.error('Failed to delete product from Elasticsearch:', error);
-      // Continue with DB deletion even if Elasticsearch fails
     });
 
     await this.prisma.product.delete({

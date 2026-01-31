@@ -310,7 +310,7 @@ describe('OrdersService - Phase 1 Tests', () => {
         orderNumber: 'ORD-12345',
         total: 199.98,
         status: 'PENDING',
-        paymentStatus: 'PENDING',
+        paymentStatus: 'PAID',
         currency: 'USD',
         shippingAddress: {
           id: 'address-id',
@@ -336,7 +336,6 @@ describe('OrdersService - Phase 1 Tests', () => {
         },
         items: [],
         seller: { id: 'seller-id', userId: 'seller-user-id' },
-        paymentStatus: 'PAID',
       };
 
       mockPrismaService.order.findUnique.mockResolvedValue(mockOrder);

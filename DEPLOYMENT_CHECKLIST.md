@@ -1,5 +1,45 @@
 # Deployment Checklist - Global Features Migration
 
+## 📋 Production Checklist (Ops)
+
+Use this before and after deploying to production.
+
+### Required environment variables (Railway / host)
+
+| Variable | Required | Notes |
+|----------|----------|--------|
+| `DATABASE_URL` | Yes | PostgreSQL connection string |
+| `JWT_SECRET` | Yes | Min 32 characters |
+| `JWT_REFRESH_SECRET` | Yes | Min 32 characters |
+| `REDIS_URL` | Yes* | Redis for cache/queue (e.g. `redis://...`) |
+| `NODE_ENV` | Yes | Set to `production` |
+| `SENTRY_DSN` | Recommended | Enables error and performance tracking in Sentry |
+| `SENTRY_TRACES_SAMPLE_RATE` | Optional | Default `0.1`; 0–1 |
+| `FRONTEND_URL` | Yes | Allowed CORS origin (e.g. `https://your-app.up.railway.app`) |
+
+\* Required for queue/cache; app can run with fallbacks if Redis is unavailable.
+
+### Health endpoints
+
+| Endpoint | Purpose |
+|----------|--------|
+| `GET /api/health` | Full health (DB, Redis, Elasticsearch) |
+| `GET /api/health/live` | Liveness (process alive) – for orchestrator restarts |
+| `GET /api/health/ready` | Readiness (DB/Redis ready) – for load balancer; returns 503 when not ready |
+
+### Deployment config
+
+- **Replicas:** `railway.json` has `numReplicas: 2` for horizontal scaling.
+- **Restart:** `restartPolicyType: "ON_FAILURE"`, `restartPolicyMaxRetries: 10`.
+
+### Post-deploy checks
+
+1. Call `GET /api/health` – status should be `ok` or `degraded` (not `error`).
+2. Call `GET /api/health/ready` – should return 200 when DB/Redis are up.
+3. In Sentry: create a project, set `SENTRY_DSN` in Railway, trigger a test error and confirm it appears.
+
+---
+
 ## ✅ Pre-Deployment Verification
 
 All setup is complete:

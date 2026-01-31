@@ -12,11 +12,14 @@ export class Logger implements NestLoggerService {
   private readonly logLevel: LogLevel;
   private readonly isDevelopment: boolean;
   private readonly suppressNestRouteLogs: boolean;
+  private readonly jsonFormat: boolean;
 
   constructor() {
     this.isDevelopment = process.env.NODE_ENV !== 'production';
     const envLogLevel = process.env.LOG_LEVEL?.toUpperCase() || 'INFO';
     this.logLevel = LogLevel[envLogLevel as keyof typeof LogLevel] ?? LogLevel.INFO;
+    this.jsonFormat =
+      process.env.LOG_FORMAT === 'json' || process.env.NODE_ENV === 'production';
     // In production, Nest can emit hundreds of "Mapped { ... } route" lines on startup (RouterExplorer),
     // which can trigger Railway's log rate limiting. Default to suppressing those unless explicitly disabled.
     this.suppressNestRouteLogs =
@@ -36,6 +39,15 @@ export class Logger implements NestLoggerService {
 
   private formatMessage(level: string, message: string, context?: string): string {
     const timestamp = new Date().toISOString();
+    if (this.jsonFormat) {
+      const payload: Record<string, unknown> = {
+        timestamp,
+        level,
+        message,
+      };
+      if (context) payload.context = context;
+      return JSON.stringify(payload);
+    }
     const contextStr = context ? `[${context}]` : '';
     return `${timestamp} ${level} ${contextStr} ${message}`;
   }
@@ -65,9 +77,18 @@ export class Logger implements NestLoggerService {
 
   error(message: string, trace?: string, context?: string) {
     if (this.shouldLog(LogLevel.ERROR)) {
-      console.error(this.formatMessage('ERROR', message, context));
-      if (trace) {
-        console.error('Trace:', trace);
+      if (this.jsonFormat && trace) {
+        const payload: Record<string, unknown> = {
+          timestamp: new Date().toISOString(),
+          level: 'ERROR',
+          message,
+          ...(context && { context }),
+          trace,
+        };
+        console.error(JSON.stringify(payload));
+      } else {
+        console.error(this.formatMessage('ERROR', message, context));
+        if (trace) console.error('Trace:', trace);
       }
     }
   }

@@ -3,6 +3,7 @@ import { TaxController } from './tax.controller';
 import { TaxService } from './tax.service';
 import { TaxFactoryService } from './tax-factory.service';
 import { DatabaseModule } from '../database/database.module';
+import { IntegrationsModule } from '../integrations/integrations.module';
 
 /**
  * TaxModule - Tax calculation and compliance
@@ -16,7 +17,7 @@ import { DatabaseModule } from '../database/database.module';
  * with credentials loaded from the encrypted IntegrationConfig table.
  */
 @Module({
-  imports: [DatabaseModule],
+  imports: [DatabaseModule, IntegrationsModule],
   controllers: [TaxController],
   providers: [
     TaxService,

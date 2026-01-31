@@ -1,324 +1,202 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { ConfigService } from '@nestjs/config';
 import { QueueService, JobType } from './queue.service';
-import { RedisService } from '../cache/redis.service';
-import { NotificationsService } from '../notifications/notifications.service';
-import { SearchService } from '../search/search.service';
-import { PrismaService } from '../database/prisma.service';
 
-// Mock BullMQ - use manual mocks to avoid module resolution issues
+const mockConnection = {
+  quit: jest.fn().mockResolvedValue(undefined),
+};
+
 const mockQueue = {
   add: jest.fn(),
   getJob: jest.fn(),
-  close: jest.fn(),
-  getWaitingCount: jest.fn().mockResolvedValue(0),
-  getActiveCount: jest.fn().mockResolvedValue(0),
-  getCompletedCount: jest.fn().mockResolvedValue(0),
-  getFailedCount: jest.fn().mockResolvedValue(0),
-  getDelayedCount: jest.fn().mockResolvedValue(0),
+  getJobCounts: jest.fn(),
+  close: jest.fn().mockResolvedValue(undefined),
 };
 
 const mockWorker = {
   on: jest.fn(),
-  close: jest.fn(),
+  close: jest.fn().mockResolvedValue(undefined),
 };
 
-jest.mock('bullmq', () => {
-  const mockQueueConstructor = jest.fn().mockImplementation(() => mockQueue);
-  const mockWorkerConstructor = jest.fn().mockImplementation(() => mockWorker);
-  return {
-    Queue: mockQueueConstructor,
-    Worker: mockWorkerConstructor,
-  };
-});
+jest.mock('ioredis', () => ({
+  __esModule: true,
+  default: jest.fn().mockImplementation(() => mockConnection),
+}));
 
-// Import after mocks are set up
-import { Queue } from 'bullmq';
+jest.mock('bullmq', () => ({
+  Queue: jest.fn().mockImplementation(() => mockQueue),
+  Worker: jest.fn().mockImplementation(() => mockWorker),
+}));
 
 describe('QueueService', () => {
   let service: QueueService;
-  let configService: ConfigService;
-  let redisService: RedisService;
-  let notificationsService: NotificationsService;
-  let searchService: SearchService;
-  let prismaService: PrismaService;
-
-  const mockConfigService = {
-    get: jest.fn((key: string) => {
-      if (key === 'REDIS_URL') return 'redis://localhost:6379';
-      return undefined;
-    }),
-  };
-
-  const mockRedisService = {
-    getClient: jest.fn().mockReturnValue({}),
-    set: jest.fn(),
-    get: jest.fn(),
-  };
-
-  const mockNotificationsService = {
-    sendSellerInvitation: jest.fn(),
-    sendOrderConfirmation: jest.fn(),
-    sendOrderShipped: jest.fn(),
-    sendOrderDelivered: jest.fn(),
-  };
-
-  const mockSearchService = {
-    deleteProduct: jest.fn(),
-    indexProduct: jest.fn(),
-  };
-
-  const mockPrismaService = {
-    product: {
-      findUnique: jest.fn(),
-    },
-  };
 
   beforeEach(async () => {
+    jest.clearAllMocks();
     const module: TestingModule = await Test.createTestingModule({
-      providers: [
-        QueueService,
-        {
-          provide: ConfigService,
-          useValue: mockConfigService,
-        },
-        {
-          provide: RedisService,
-          useValue: mockRedisService,
-        },
-        {
-          provide: NotificationsService,
-          useValue: mockNotificationsService,
-        },
-        {
-          provide: SearchService,
-          useValue: mockSearchService,
-        },
-        {
-          provide: PrismaService,
-          useValue: mockPrismaService,
-        },
-      ],
+      providers: [QueueService],
     }).compile();
 
     service = module.get<QueueService>(QueueService);
-    configService = module.get<ConfigService>(ConfigService);
-    redisService = module.get<RedisService>(RedisService);
-    notificationsService = module.get<NotificationsService>(NotificationsService);
-    searchService = module.get<SearchService>(SearchService);
-    prismaService = module.get<PrismaService>(PrismaService);
-
-    jest.clearAllMocks();
   });
 
   describe('onModuleInit', () => {
-    it('should initialize queues and workers', async () => {
+    it('should initialize worker', async () => {
       await service.onModuleInit();
-      
-      // Verify queues are initialized
-      expect(Queue).toHaveBeenCalled();
-    });
-
-    it('should handle initialization errors gracefully', async () => {
-      // Mock Queue to throw error
-      const { Queue } = require('bullmq');
-      (Queue as jest.Mock).mockImplementationOnce(() => {
-        throw new Error('Connection failed');
-      });
-
-      await expect(service.onModuleInit()).resolves.not.toThrow();
+      const { Worker } = require('bullmq');
+      expect(Worker).toHaveBeenCalledWith(
+        'jobs',
+        expect.any(Function),
+        expect.objectContaining({ connection: expect.anything(), concurrency: 5 }),
+      );
     });
   });
 
   describe('addJob', () => {
     it('should add a job to the queue successfully', async () => {
-      const mockJob = {
-        id: 'job-123',
-      };
-      const mockQueue = {
-        add: jest.fn().mockResolvedValue(mockJob),
-      };
-      
-      // Access private queues map through reflection or make it testable
-      (service as any).queues.set(JobType.EMAIL_NOTIFICATION, mockQueue);
+      const payload = { to: 'test@example.com', subject: 'Test', template: 'welcome', data: {} };
+      mockQueue.add.mockResolvedValue({ id: 'job-123' });
 
-      const jobId = await service.addJob(JobType.EMAIL_NOTIFICATION, {
-        to: 'test@example.com',
-        subject: 'Test',
-        html: '<p>Test</p>',
-      });
+      const jobId = await service.addJob(JobType.EMAIL_NOTIFICATION, payload, {});
 
-      expect(mockQueue.add).toHaveBeenCalled();
+      expect(mockQueue.add).toHaveBeenCalledWith(
+        JobType.EMAIL_NOTIFICATION,
+        payload,
+        expect.objectContaining({
+          attempts: 3,
+          removeOnComplete: { age: 604800 },
+          removeOnFail: { age: 604800 },
+        }),
+      );
       expect(jobId).toBe('job-123');
     });
 
-    it('should fallback to Redis storage if queue fails', async () => {
-      const mockQueue = {
-        add: jest.fn().mockRejectedValue(new Error('Queue error')),
-      };
-      
-      (service as any).queues.set(JobType.EMAIL_NOTIFICATION, mockQueue);
+    it('should pass options to add', async () => {
+      mockQueue.add.mockResolvedValue({ id: 'job-456' });
 
-      const jobId = await service.addJob(JobType.EMAIL_NOTIFICATION, {
-        to: 'test@example.com',
-        subject: 'Test',
-        html: '<p>Test</p>',
+      await service.addJob(JobType.PRODUCT_INDEXING, { productId: 'p1', action: 'create' }, {
+        delay: 1000,
+        attempts: 5,
+        priority: 1,
       });
 
-      expect(mockRedisService.set).toHaveBeenCalled();
-      expect(jobId).toContain('job-');
+      expect(mockQueue.add).toHaveBeenCalledWith(
+        JobType.PRODUCT_INDEXING,
+        { productId: 'p1', action: 'create' },
+        expect.objectContaining({
+          delay: 1000,
+          attempts: 5,
+          priority: 1,
+        }),
+      );
     });
   });
 
-  describe('getJobStatus', () => {
-    it('should get job status from queue', async () => {
+  describe('getJob', () => {
+    it('should return job info when job exists', async () => {
       const mockJob = {
         id: 'job-123',
-        getState: jest.fn().mockResolvedValue('completed'),
-        progress: 100,
-        data: { test: 'data' },
-        returnvalue: { result: 'success' },
+        name: JobType.EMAIL_NOTIFICATION,
+        data: { to: 'test@example.com' },
+        attemptsMade: 0,
+        timestamp: 12345,
+        processedOn: 12346,
+        finishedOn: 12347,
         failedReason: null,
-        timestamp: Date.now(),
-        processedOn: Date.now(),
-        finishedOn: Date.now(),
+        returnvalue: { ok: true },
       };
-      
-      const mockQueue = {
-        getJob: jest.fn().mockResolvedValue(mockJob),
-      };
-      
-      (service as any).queues.set(JobType.EMAIL_NOTIFICATION, mockQueue);
+      mockQueue.getJob.mockResolvedValue(mockJob);
 
-      const status = await service.getJobStatus('job-123', JobType.EMAIL_NOTIFICATION);
+      const result = await service.getJob('job-123');
 
-      expect(status).toHaveProperty('id', 'job-123');
-      expect(status).toHaveProperty('status', 'completed');
-      expect(status).toHaveProperty('progress', 100);
+      expect(mockQueue.getJob).toHaveBeenCalledWith('job-123');
+      expect(result).toEqual({
+        id: 'job-123',
+        name: JobType.EMAIL_NOTIFICATION,
+        data: { to: 'test@example.com' },
+        attemptsMade: 0,
+        timestamp: 12345,
+        processedOn: 12346,
+        finishedOn: 12347,
+        failedReason: null,
+        returnvalue: { ok: true },
+      });
     });
 
-    it('should check Redis fallback if job not found in queue', async () => {
-      const mockQueue = {
-        getJob: jest.fn().mockResolvedValue(null),
-      };
-      
-      const mockJobData = JSON.stringify({
-        type: JobType.EMAIL_NOTIFICATION,
-        payload: { test: 'data' },
-      });
-      
-      (service as any).queues.set(JobType.EMAIL_NOTIFICATION, mockQueue);
-      mockRedisService.get.mockResolvedValue(mockJobData);
+    it('should return null when job not found', async () => {
+      mockQueue.getJob.mockResolvedValue(null);
 
-      const status = await service.getJobStatus('job-123', JobType.EMAIL_NOTIFICATION);
+      const result = await service.getJob('missing');
 
-      expect(mockRedisService.get).toHaveBeenCalledWith('job:job-123');
-      expect(status).toHaveProperty('status', 'pending');
+      expect(result).toBeNull();
     });
   });
 
   describe('getQueueStats', () => {
-    it('should get queue statistics', async () => {
-      const mockQueue = {
-        getWaitingCount: jest.fn().mockResolvedValue(5),
-        getActiveCount: jest.fn().mockResolvedValue(2),
-        getCompletedCount: jest.fn().mockResolvedValue(100),
-        getFailedCount: jest.fn().mockResolvedValue(3),
-        getDelayedCount: jest.fn().mockResolvedValue(1),
-      };
-      
-      (service as any).queues.set(JobType.EMAIL_NOTIFICATION, mockQueue);
+    it('should return queue counts', async () => {
+      mockQueue.getJobCounts.mockResolvedValue({
+        waiting: 5,
+        active: 2,
+        completed: 100,
+        failed: 3,
+        delayed: 1,
+        paused: 0,
+      });
 
-      const stats = await service.getQueueStats(JobType.EMAIL_NOTIFICATION);
+      const stats = await service.getQueueStats();
 
-      expect(stats).toHaveProperty('waiting', 5);
-      expect(stats).toHaveProperty('active', 2);
-      expect(stats).toHaveProperty('completed', 100);
-      expect(stats).toHaveProperty('failed', 3);
-      expect(stats).toHaveProperty('delayed', 1);
-      expect(stats).toHaveProperty('total', 111);
-    });
-  });
-
-  describe('retryJob', () => {
-    it('should retry a failed job', async () => {
-      const mockJob = {
-        id: 'job-123',
-        retry: jest.fn().mockResolvedValue(undefined),
-      };
-      
-      const mockQueue = {
-        getJob: jest.fn().mockResolvedValue(mockJob),
-      };
-      
-      (service as any).queues.set(JobType.EMAIL_NOTIFICATION, mockQueue);
-
-      await service.retryJob('job-123', JobType.EMAIL_NOTIFICATION);
-
-      expect(mockJob.retry).toHaveBeenCalled();
-    });
-
-    it('should throw error if job not found', async () => {
-      const mockQueue = {
-        getJob: jest.fn().mockResolvedValue(null),
-      };
-      
-      (service as any).queues.set(JobType.EMAIL_NOTIFICATION, mockQueue);
-
-      await expect(
-        service.retryJob('job-123', JobType.EMAIL_NOTIFICATION),
-      ).rejects.toThrow('Job not found');
-    });
-  });
-
-  describe('removeJob', () => {
-    it('should remove a job from queue', async () => {
-      const mockJob = {
-        id: 'job-123',
-        remove: jest.fn().mockResolvedValue(undefined),
-      };
-      
-      const mockQueue = {
-        getJob: jest.fn().mockResolvedValue(mockJob),
-      };
-      
-      (service as any).queues.set(JobType.EMAIL_NOTIFICATION, mockQueue);
-
-      await service.removeJob('job-123', JobType.EMAIL_NOTIFICATION);
-
-      expect(mockJob.remove).toHaveBeenCalled();
-    });
-
-    it('should handle job not found gracefully', async () => {
-      const mockQueue = {
-        getJob: jest.fn().mockResolvedValue(null),
-      };
-      
-      (service as any).queues.set(JobType.EMAIL_NOTIFICATION, mockQueue);
-
-      await expect(
-        service.removeJob('job-123', JobType.EMAIL_NOTIFICATION),
-      ).resolves.not.toThrow();
+      expect(mockQueue.getJobCounts).toHaveBeenCalledWith(
+        'waiting',
+        'active',
+        'completed',
+        'failed',
+        'delayed',
+        'paused',
+      );
+      expect(stats).toEqual({
+        waiting: 5,
+        active: 2,
+        completed: 100,
+        failed: 3,
+        delayed: 1,
+        paused: 0,
+      });
     });
   });
 
   describe('onModuleDestroy', () => {
-    it('should close all workers and queues', async () => {
-      const mockWorker = {
-        close: jest.fn().mockResolvedValue(undefined),
-      };
-      
-      const mockQueue = {
-        close: jest.fn().mockResolvedValue(undefined),
-      };
-      
-      (service as any).workers.set(JobType.EMAIL_NOTIFICATION, mockWorker);
-      (service as any).queues.set(JobType.EMAIL_NOTIFICATION, mockQueue);
-
+    it('should close worker, queue and connection', async () => {
+      await service.onModuleInit();
       await service.onModuleDestroy();
 
       expect(mockWorker.close).toHaveBeenCalled();
       expect(mockQueue.close).toHaveBeenCalled();
+      expect(mockConnection.quit).toHaveBeenCalled();
+    });
+  });
+
+  describe('convenience methods', () => {
+    it('queueEmail should call addJob with email payload', async () => {
+      mockQueue.add.mockResolvedValue({ id: 'email-1' });
+
+      await service.queueEmail('u@example.com', 'Hi', 'welcome', { name: 'User' });
+
+      expect(mockQueue.add).toHaveBeenCalledWith(
+        JobType.EMAIL_NOTIFICATION,
+        { to: 'u@example.com', subject: 'Hi', template: 'welcome', data: { name: 'User' } },
+        expect.any(Object),
+      );
+    });
+
+    it('queueProductIndex should call addJob with product payload', async () => {
+      mockQueue.add.mockResolvedValue({ id: 'idx-1' });
+
+      await service.queueProductIndex('product-id', 'update');
+
+      expect(mockQueue.add).toHaveBeenCalledWith(
+        JobType.PRODUCT_INDEXING,
+        { productId: 'product-id', action: 'update' },
+        expect.any(Object),
+      );
     });
   });
 });

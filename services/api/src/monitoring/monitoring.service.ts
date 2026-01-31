@@ -70,6 +70,16 @@ export class MonitoringService implements OnModuleInit {
     }
 
     try {
+      // Avoid re-initializing Sentry if it's already been initialized in bootstrap.
+      const existingClient = (Sentry as any).getCurrentHub && (Sentry as any).getCurrentHub().getClient
+        ? (Sentry as any).getCurrentHub().getClient()
+        : null;
+
+      if (existingClient) {
+        this.logger.log('Sentry already initialized by bootstrap; skipping re-initialization');
+        return;
+      }
+
       Sentry.init({
         dsn: sentryDsn,
         environment: this.configService.get<string>('NODE_ENV') || 'production',
@@ -77,7 +87,7 @@ export class MonitoringService implements OnModuleInit {
         integrations: [new (Sentry as any).Integrations.Http({ tracing: true })],
       });
 
-      this.logger.log('✅ Sentry error tracking enabled');
+      this.logger.log('✅ Sentry error tracking enabled (initialized by MonitoringService)');
     } catch (error: any) {
       this.logger.error(`Failed to initialize Sentry: ${error?.message}`);
     }

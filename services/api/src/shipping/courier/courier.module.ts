@@ -1,4 +1,5 @@
 import { Module, OnModuleInit } from '@nestjs/common';
+import { ConfigModule } from '@nestjs/config';
 import { CourierService } from './courier.service';
 import { CourierController } from './courier.controller';
 import { CourierFactoryService } from './courier-factory.service';
@@ -21,7 +22,7 @@ import { DHLLegacyProvider } from './providers/legacy/dhl-legacy.provider';
  * For new code, use CourierFactoryService which supports dynamic credential management.
  */
 @Module({
-  imports: [DatabaseModule],
+  imports: [ConfigModule, DatabaseModule],
   controllers: [CourierController],
   providers: [
     CourierService,

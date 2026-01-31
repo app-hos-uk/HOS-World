@@ -2,6 +2,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { NotFoundException, BadRequestException } from '@nestjs/common';
 import { FinanceService } from './finance.service';
 import { PrismaService } from '../database/prisma.service';
+import { NotificationsService } from '../notifications/notifications.service';
 import { SetPricingDto, ApprovePricingDto } from './dto/set-pricing.dto';
 
 describe('FinanceService', () => {
@@ -16,6 +17,12 @@ describe('FinanceService', () => {
     },
   };
 
+  const mockNotificationsService = {
+    sendSellerInvitation: jest.fn(),
+    sendOrderConfirmation: jest.fn(),
+    sendNotificationToRole: jest.fn().mockResolvedValue(undefined),
+  };
+
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
@@ -23,6 +30,10 @@ describe('FinanceService', () => {
         {
           provide: PrismaService,
           useValue: mockPrismaService,
+        },
+        {
+          provide: NotificationsService,
+          useValue: mockNotificationsService,
         },
       ],
     }).compile();

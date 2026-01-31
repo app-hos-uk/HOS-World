@@ -20,6 +20,7 @@ describe('CartService - Phase 1 Tests', () => {
       create: jest.fn(),
       update: jest.fn(),
       delete: jest.fn(),
+      deleteMany: jest.fn(),
       findMany: jest.fn(),
     },
     product: {
@@ -324,7 +325,7 @@ describe('CartService - Phase 1 Tests', () => {
       };
 
       mockPrismaService.cart.findUnique.mockResolvedValue(mockCart);
-      mockPrismaService.cartItem.deleteMany = jest.fn().mockResolvedValue({ count: 2 });
+      mockPrismaService.cartItem.deleteMany.mockResolvedValue({ count: 2 });
       mockPrismaService.cart.update.mockResolvedValue(mockCart);
       mockPrismaService.cart.update.mockResolvedValue({
         ...mockCart,

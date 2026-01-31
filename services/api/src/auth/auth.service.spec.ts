@@ -5,7 +5,7 @@ import { ConfigService } from '@nestjs/config';
 import { AuthService } from './auth.service';
 import { PrismaService } from '../database/prisma.service';
 import { GeolocationService } from '../geolocation/geolocation.service';
-import { RegisterDto } from './dto/register.dto';
+import { RegisterDto, RegisterRole } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
 import * as bcrypt from 'bcrypt';
 
@@ -100,7 +100,10 @@ describe('AuthService', () => {
       password: 'Test123!',
       firstName: 'Test',
       lastName: 'User',
-      role: 'customer',
+      role: RegisterRole.CUSTOMER,
+      country: 'GB',
+      preferredCommunicationMethod: 'EMAIL' as any,
+      gdprConsent: true,
     };
 
     it('should register a new user successfully', async () => {
@@ -194,40 +197,46 @@ describe('AuthService', () => {
   });
 
   describe('getLinkedAccounts', () => {
-    it('should return empty array when OAuthAccount model not available', async () => {
+    it('should return linked accounts from prisma', async () => {
       const userId = 'user-id';
-      
-      // Current implementation returns empty array when model doesn't exist
+      mockPrismaService.oAuthAccount.findMany.mockResolvedValue([]);
+
       const result = await service.getLinkedAccounts(userId);
-      
+
+      expect(mockPrismaService.oAuthAccount.findMany).toHaveBeenCalledWith({
+        where: { userId },
+        select: {
+          id: true,
+          provider: true,
+          providerId: true,
+          createdAt: true,
+        },
+      });
       expect(result).toEqual([]);
     });
   });
 
   describe('unlinkOAuthAccount', () => {
-    it('should throw BadRequestException when OAuthAccount model not available', async () => {
+    it('should reject when findUnique throws (e.g. model not available)', async () => {
       const userId = 'user-id';
       const provider = 'google';
-      
-      // Current implementation throws BadRequestException when model doesn't exist
+
       mockPrismaService.user.findUnique.mockRejectedValue(
-        new Error('Unknown arg `oAuthAccounts` in include')
+        new Error('Unknown arg `oAuthAccounts` in include'),
       );
 
       await expect(service.unlinkOAuthAccount(userId, provider)).rejects.toThrow(
-        BadRequestException,
+        'Unknown arg `oAuthAccounts` in include',
       );
     });
 
     it('should throw ConflictException when user not found', async () => {
       const userId = 'user-id';
       const provider = 'google';
-      
+
       mockPrismaService.user.findUnique.mockResolvedValue(null);
 
-      await expect(service.unlinkOAuthAccount(userId, provider)).rejects.toThrow(
-        BadRequestException,
-      );
+      await expect(service.unlinkOAuthAccount(userId, provider)).rejects.toThrow(ConflictException);
     });
   });
 });

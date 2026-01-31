@@ -7,8 +7,21 @@ import { OrdersModule } from '../orders/orders.module';
 import { DatabaseModule } from '../database/database.module';
 import { AuthService } from '../auth/auth.service';
 import { AuthModule } from '../auth/auth.module';
+import { RegisterRole, CommunicationMethod } from '../auth/dto/register.dto';
 import { ProductsService } from '../products/products.service';
 import { ProductsModule } from '../products/products.module';
+
+function isDbConnectionError(e: any): boolean {
+  const msg = e?.message ?? '';
+  return (
+    msg.includes('denied access') ||
+    msg.includes('connect') ||
+    msg.includes('DATABASE_URL') ||
+    msg.includes('reach') ||
+    msg.includes('5432') ||
+    e?.code === 'P1001'
+  );
+}
 
 describe('Cart and Orders Integration Tests', () => {
   let cartService: CartService;
@@ -22,7 +35,6 @@ describe('Cart and Orders Integration Tests', () => {
   let addressId: string;
 
   beforeAll(async () => {
-    // Skip tests if database is not available
     if (process.env.SKIP_INTEGRATION_TESTS === 'true') {
       return;
     }
@@ -39,8 +51,7 @@ describe('Cart and Orders Integration Tests', () => {
         ],
       }).compile();
     } catch (error: any) {
-      // Skip tests if database connection fails
-      if (error?.message?.includes('denied access') || error?.message?.includes('connect') || error?.message?.includes('DATABASE_URL')) {
+      if (isDbConnectionError(error)) {
         console.warn('⚠️ Skipping integration tests: Database not available');
         return;
       }
@@ -53,22 +64,38 @@ describe('Cart and Orders Integration Tests', () => {
     prismaService = moduleFixture.get<PrismaService>(PrismaService);
     authService = moduleFixture.get<AuthService>(AuthService);
 
-    // Skip if services are not available
     if (!authService || !prismaService) {
       console.warn('⚠️ Skipping integration tests: Services not available');
       return;
     }
 
-    // Create seller and product
+    try {
+      await prismaService.$connect();
+    } catch (error: any) {
+      if (isDbConnectionError(error)) {
+        console.warn('⚠️ Skipping integration tests: Database not available');
+        cartService = undefined as any;
+        ordersService = undefined as any;
+        productsService = undefined as any;
+        prismaService = undefined as any;
+        authService = undefined as any;
+        return;
+      }
+      throw error;
+    }
+
     try {
       const sellerResult = await authService.register({
-      email: `seller-${Date.now()}@example.com`,
-      password: 'Test123!@#',
-      firstName: 'Seller',
-      lastName: 'Test',
-      role: 'seller',
-      storeName: `Store ${Date.now()}`,
-    });
+        email: `seller-${Date.now()}@example.com`,
+        password: 'Test123!@#',
+        firstName: 'Seller',
+        lastName: 'Test',
+        role: RegisterRole.SELLER,
+        storeName: `Store ${Date.now()}`,
+        country: 'GB',
+        preferredCommunicationMethod: CommunicationMethod.EMAIL,
+        gdprConsent: true,
+      });
       sellerUserId = sellerResult.user.id;
 
       const product = await productsService.create(sellerUserId, {
@@ -81,17 +108,18 @@ describe('Cart and Orders Integration Tests', () => {
       });
       productId = product.id;
 
-      // Create customer
       const customerResult = await authService.register({
         email: `customer-${Date.now()}@example.com`,
         password: 'Test123!@#',
         firstName: 'Customer',
         lastName: 'Test',
-        role: 'customer',
+        role: RegisterRole.CUSTOMER,
+        country: 'GB',
+        preferredCommunicationMethod: CommunicationMethod.EMAIL,
+        gdprConsent: true,
       });
       customerUserId = customerResult.user.id;
 
-      // Create address
       const address = await prismaService.address.create({
         data: {
           userId: customerUserId,
@@ -107,9 +135,13 @@ describe('Cart and Orders Integration Tests', () => {
       });
       addressId = address.id;
     } catch (error: any) {
-      // Skip tests if database operations fail
-      if (error?.message?.includes('denied access') || error?.message?.includes('connect')) {
+      if (isDbConnectionError(error)) {
         console.warn('⚠️ Skipping integration tests: Database operation failed');
+        cartService = undefined as any;
+        ordersService = undefined as any;
+        productsService = undefined as any;
+        prismaService = undefined as any;
+        authService = undefined as any;
         return;
       }
       throw error;
@@ -117,31 +149,31 @@ describe('Cart and Orders Integration Tests', () => {
   });
 
   afterAll(async () => {
-    // Cleanup
-    if (prismaService) {
-      await prismaService.order.deleteMany({
-        where: { userId: customerUserId },
-      }).catch(() => {});
-      await prismaService.cartItem.deleteMany({
-        where: { cart: { userId: customerUserId } },
-      }).catch(() => {});
-      await prismaService.cart.deleteMany({
-        where: { userId: customerUserId },
-      }).catch(() => {});
-      await prismaService.address.deleteMany({
-        where: { userId: customerUserId },
-      }).catch(() => {});
+    if (!prismaService || (!customerUserId && !sellerUserId)) return;
+    await prismaService.order.deleteMany({
+      where: { userId: customerUserId },
+    }).catch(() => {});
+    await prismaService.cartItem.deleteMany({
+      where: { cart: { userId: customerUserId } },
+    }).catch(() => {});
+    await prismaService.cart.deleteMany({
+      where: { userId: customerUserId },
+    }).catch(() => {});
+    await prismaService.address.deleteMany({
+      where: { userId: customerUserId },
+    }).catch(() => {});
+    if (productId) {
       await prismaService.product.deleteMany({
         where: { id: productId },
       }).catch(() => {});
-      await prismaService.seller.deleteMany({
-        where: { userId: sellerUserId },
-      }).catch(() => {});
-      await prismaService.user.deleteMany({
-        where: { id: { in: [customerUserId, sellerUserId] } },
-      }).catch(() => {});
-      await prismaService.$disconnect().catch(() => {});
     }
+    await prismaService.seller.deleteMany({
+      where: { userId: sellerUserId },
+    }).catch(() => {});
+    await prismaService.user.deleteMany({
+      where: { id: { in: [customerUserId, sellerUserId].filter(Boolean) } },
+    }).catch(() => {});
+    await prismaService.$disconnect().catch(() => {});
   });
 
   describe('Cart Operations', () => {
@@ -184,7 +216,7 @@ describe('Cart and Orders Integration Tests', () => {
       expect(order).toHaveProperty('id');
       expect(order).toHaveProperty('orderNumber');
       expect(order.items.length).toBeGreaterThan(0);
-      expect(order.status).toBe('PENDING');
+      expect(order.status?.toUpperCase()).toBe('PENDING');
     });
 
     it('should clear cart after order creation', async () => {

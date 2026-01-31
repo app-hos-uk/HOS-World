@@ -4,16 +4,19 @@ import * as Sentry from '@sentry/node';
 @Catch()
 export class SentryExceptionFilter implements ExceptionFilter {
   catch(exception: unknown, host: ArgumentsHost) {
+    const ctx = host.switchToHttp();
+    const request = ctx.getRequest();
+    const requestId = request?.requestId || request?.headers?.['x-request-id'];
     try {
+      if (requestId && typeof Sentry?.setTag === 'function') {
+        Sentry.setTag('request_id', requestId);
+      }
       Sentry.captureException(exception);
     } catch (e) {
       // ignore Sentry errors
     }
 
-    const ctx = host.switchToHttp();
     const response = ctx.getResponse();
-    const request = ctx.getRequest();
-
     const status =
       exception instanceof HttpException
         ? exception.getStatus()

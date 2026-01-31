@@ -125,7 +125,7 @@ describe('StorageService', () => {
       }));
 
       // Re-initialize service to pick up new config
-      const newService = new StorageService(mockConfigService);
+      const newService = new StorageService(mockConfigService as any);
 
       const result = await newService.uploadFile(mockFile, 'test-folder');
 
@@ -140,7 +140,7 @@ describe('StorageService', () => {
         return undefined;
       });
 
-      const newService = new StorageService(mockConfigService);
+      const newService = new StorageService(mockConfigService as any);
 
       await expect(newService.uploadFile(mockFile)).rejects.toThrow(
         BadRequestException,
@@ -164,7 +164,7 @@ describe('StorageService', () => {
         }),
       }));
 
-      const newService = new StorageService(mockConfigService);
+      const newService = new StorageService(mockConfigService as any);
 
       const result = await newService.uploadFile(mockFile, 'test-folder');
 
@@ -188,7 +188,7 @@ describe('StorageService', () => {
         public_id: 'test',
       });
 
-      const newService = new StorageService(mockConfigService);
+      const newService = new StorageService(mockConfigService as any);
 
       const result = await newService.uploadFile(mockFile, 'test-folder');
 
@@ -234,7 +234,7 @@ describe('StorageService', () => {
       });
 
       // Re-initialize to get S3 client
-      const newService = new StorageService(mockConfigService);
+      const newService = new StorageService(mockConfigService as any);
       (newService as any).s3Client = {
         send: mockSend,
       };
@@ -255,7 +255,7 @@ describe('StorageService', () => {
         return undefined;
       });
 
-      const newService = new StorageService(mockConfigService);
+      const newService = new StorageService(mockConfigService as any);
       (newService as any).minioClient = {
         send: mockSend,
       };

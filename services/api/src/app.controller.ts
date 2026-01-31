@@ -1,4 +1,5 @@
-import { Controller, Get, Optional, Inject } from '@nestjs/common';
+import { Controller, Get, Optional, Inject, Res } from '@nestjs/common';
+import { Response } from 'express';
 import { ApiTags, ApiOperation, ApiResponse as SwaggerApiResponse } from '@nestjs/swagger';
 import { AppService } from './app.service';
 import { Public } from './common/decorators/public.decorator';
@@ -24,6 +25,26 @@ export class AppController {
   @SwaggerApiResponse({ status: 200, description: 'API information retrieved successfully' })
   getHello(): string {
     return this.appService.getHello();
+  }
+
+  @Public()
+  @Get('health/live')
+  @ApiOperation({ summary: 'Liveness probe', description: 'Minimal check that the process is alive. Use for Kubernetes/orchestrator restarts.' })
+  @SwaggerApiResponse({ status: 200, description: 'Process is alive' })
+  liveness() {
+    return { status: 'ok', timestamp: new Date().toISOString() };
+  }
+
+  @Public()
+  @Get('health/ready')
+  @ApiOperation({ summary: 'Readiness probe', description: 'Checks DB, Redis (and optionally ES). Use for load balancer / traffic routing.' })
+  @SwaggerApiResponse({ status: 200, description: 'Service is ready to accept traffic' })
+  @SwaggerApiResponse({ status: 503, description: 'Service not ready' })
+  async readiness(@Res({ passthrough: true }) res: Response) {
+    const result = await this.healthCheck();
+    const ready = result.status === 'ok' || result.status === 'degraded';
+    if (!ready) res.status(503);
+    return result;
   }
 
   @Public()
