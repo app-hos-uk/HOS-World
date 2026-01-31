@@ -5,6 +5,7 @@ import { RouteGuard } from '@/components/RouteGuard';
 import { DashboardLayout } from '@/components/DashboardLayout';
 import { apiClient } from '@/lib/api';
 import { useToast } from '@/hooks/useToast';
+import Image from 'next/image';
 
 interface Theme {
   id: string;
@@ -154,10 +155,12 @@ export default function SellerThemesPage() {
             <h2 className="text-xl font-semibold mb-4">Current Theme</h2>
             <div className="flex items-center gap-4">
               {currentTheme.theme.previewImages && currentTheme.theme.previewImages.length > 0 && (
-                <img
+                <Image
                   src={currentTheme.theme.previewImages[0]}
                   alt={currentTheme.theme.name}
-                  className="w-24 h-24 object-cover rounded-lg border border-gray-200"
+                  width={96}
+                  height={96}
+                  className="object-cover rounded-lg border border-gray-200"
                 />
               )}
               <div className="flex-1">
@@ -207,10 +210,12 @@ export default function SellerThemesPage() {
                     {/* Preview */}
                     <div className="aspect-video bg-gray-100 relative">
                       {theme.previewImages && theme.previewImages.length > 0 ? (
-                        <img
+                        <Image
                           src={theme.previewImages[0]}
                           alt={theme.name}
-                          className="w-full h-full object-cover"
+                          fill
+                          className="object-cover"
+                          sizes="(max-width: 768px) 100vw, 33vw"
                         />
                       ) : (
                         <div className="w-full h-full flex items-center justify-center text-gray-400">

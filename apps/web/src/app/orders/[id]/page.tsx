@@ -238,9 +238,11 @@ export default function OrderDetailPage() {
                         <div className="flex gap-4">
                           {imageUrl ? (
                             <Link href={`/products/${item.productId}`}>
-                              <img
+                              <Image
                                 src={imageUrl}
                                 alt={item.product?.name || 'Product'}
+                                width={96}
+                                height={96}
                                 className="w-20 h-20 sm:w-24 sm:h-24 rounded-lg object-cover hover:opacity-80 transition-opacity"
                               />
                             </Link>

@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { useTheme } from '@hos-marketplace/theme-system';
 import { apiClient } from '@/lib/api';
 
@@ -81,9 +82,9 @@ export function FandomCollection({ limit, showAllPage = false }: FandomCollectio
               style={{ backgroundColor: theme.colors.surface }}
               prefetch={true}
             >
-              <div className="aspect-square bg-gray-200 flex items-center justify-center overflow-hidden">
+              <div className="relative aspect-square bg-gray-200 flex items-center justify-center overflow-hidden">
                 {fandom.image ? (
-                  <img src={fandom.image} alt="" className="w-full h-full object-cover" />
+                  <Image src={fandom.image} alt="" fill className="object-cover" sizes="(max-width: 768px) 50vw, 16vw" />
                 ) : null}
               </div>
               <div className="p-2 sm:p-3">

@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState, useMemo, useCallback } from 'react';
+import Image from 'next/image';
 import { RouteGuard } from '@/components/RouteGuard';
 import { AdminLayout } from '@/components/AdminLayout';
 import { apiClient } from '@/lib/api';
@@ -480,11 +481,12 @@ export default function AdminSubmissionsPage() {
                               {(() => {
                                 const thumbUrl = getImageUrl(submission.productData?.images?.[0]);
                                 return thumbUrl ? (
-                                  <img
+                                  <Image
                                     src={thumbUrl}
                                     alt=""
-                                    className="h-10 w-10 rounded object-cover bg-gray-100"
-                                    onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+                                    width={40}
+                                    height={40}
+                                    className="rounded object-cover bg-gray-100"
                                   />
                                 ) : (
                                   <div className="h-10 w-10 rounded bg-gray-200 flex items-center justify-center text-gray-400 text-xs">No img</div>
@@ -650,12 +652,13 @@ export default function AdminSubmissionsPage() {
                           {selectedSubmission.productData.images.map((img, idx) => {
                             const url = getImageUrl(img);
                             return url ? (
-                              <img
+                              <Image
                                 key={idx}
                                 src={url}
                                 alt={`Product ${idx + 1}`}
-                                className="h-24 w-24 rounded object-cover bg-gray-100"
-                                onError={(e) => { (e.target as HTMLImageElement).src = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="96" height="96" viewBox="0 0 96 96"%3E%3Crect fill="%23e5e7eb" width="96" height="96"/%3E%3Ctext x="50%25" y="50%25" dominant-baseline="middle" text-anchor="middle" fill="%239ca3af" font-size="12"%3ENo image%3C/text%3E%3C/svg%3E'; }}
+                                width={96}
+                                height={96}
+                                className="rounded object-cover bg-gray-100"
                               />
                             ) : null;
                           })}

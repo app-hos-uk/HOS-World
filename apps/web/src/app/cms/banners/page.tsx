@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import Image from 'next/image';
 import { RouteGuard } from '@/components/RouteGuard';
 import { CMSLayout } from '@/components/CMSLayout';
 import { apiClient } from '@/lib/api';
@@ -275,15 +276,14 @@ export default function CMSBannersPage() {
                       key={banner.id}
                       className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow"
                     >
-                      <div className="mb-3">
+                      <div className="relative mb-3 h-32">
                         {banner.image && (
-                          <img
+                          <Image
                             src={banner.image}
                             alt={banner.title}
-                            className="w-full h-32 object-cover rounded"
-                            onError={(e) => {
-                              (e.target as HTMLImageElement).src = '/placeholder-banner.svg';
-                            }}
+                            fill
+                            className="object-cover rounded"
+                            sizes="(max-width: 768px) 100vw, 33vw"
                           />
                         )}
                       </div>

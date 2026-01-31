@@ -7,6 +7,7 @@ import { DashboardLayout } from '@/components/DashboardLayout';
 import { CategorySelector } from '@/components/taxonomy/CategorySelector';
 import { FandomSelector } from '@/components/taxonomy/FandomSelector';
 import { apiClient } from '@/lib/api';
+import Image from 'next/image';
 
 interface ImageUpload {
   url: string;
@@ -628,14 +629,12 @@ export default function SubmitProductPage() {
                           key={index}
                           className="flex items-start gap-4 p-3 border border-gray-200 rounded-lg"
                         >
-                          <img
+                          <Image
                             src={image.url}
                             alt={image.alt || 'Product image'}
-                            className="w-20 h-20 object-cover rounded"
-                            onError={(e) => {
-                              (e.target as HTMLImageElement).src =
-                                'https://via.placeholder.com/100x100?text=Image+Error';
-                            }}
+                            width={80}
+                            height={80}
+                            className="object-cover rounded"
                           />
                           <div className="flex-1">
                             <input

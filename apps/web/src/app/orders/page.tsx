@@ -264,10 +264,12 @@ export default function OrdersPage() {
                         return (
                           <div key={item.id || index} className="flex-shrink-0">
                             {imageUrl ? (
-                              <img
+                              <Image
                                 src={imageUrl}
                                 alt={item.product?.name || 'Product'}
-                                className="w-16 h-16 rounded-lg object-cover"
+                                width={64}
+                                height={64}
+                                className="rounded-lg object-cover"
                               />
                             ) : (
                               <div className="w-16 h-16 rounded-lg bg-gray-200 flex items-center justify-center">
@@ -394,10 +396,12 @@ export default function OrdersPage() {
                       return (
                         <div key={item.id || index} className="p-4 flex items-center gap-4">
                           {imageUrl ? (
-                            <img
+                            <Image
                               src={imageUrl}
                               alt={item.product?.name || 'Product'}
-                              className="w-16 h-16 rounded-lg object-cover"
+                              width={64}
+                              height={64}
+                              className="rounded-lg object-cover"
                             />
                           ) : (
                             <div className="w-16 h-16 rounded-lg bg-gray-200 flex items-center justify-center">

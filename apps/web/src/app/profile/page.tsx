@@ -9,6 +9,7 @@ import { apiClient } from '@/lib/api';
 import { useToast } from '@/hooks/useToast';
 import { useCurrency } from '@/contexts/CurrencyContext';
 import Link from 'next/link';
+import Image from 'next/image';
 
 interface GamificationStats {
   points: number;
@@ -344,12 +345,14 @@ export default function ProfilePage() {
           {/* Profile Header */}
           <div className="bg-gradient-to-r from-purple-600 to-indigo-600 rounded-lg p-6 sm:p-8 mb-6 text-white">
             <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 sm:gap-6">
-              <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-full bg-white bg-opacity-20 flex items-center justify-center text-4xl sm:text-5xl">
+              <div className="relative w-20 h-20 sm:w-24 sm:h-24 rounded-full bg-white bg-opacity-20 flex items-center justify-center text-4xl sm:text-5xl overflow-hidden">
                 {profile?.avatar ? (
-                  <img
+                  <Image
                     src={profile.avatar}
                     alt={profile.firstName || 'User'}
-                    className="w-full h-full rounded-full object-cover"
+                    width={96}
+                    height={96}
+                    className="rounded-full object-cover"
                   />
                 ) : (
                   <span>{profile?.firstName?.[0] || profile?.email?.[0] || 'U'}</span>
@@ -469,10 +472,12 @@ export default function ProfilePage() {
                     <h3 className="text-lg font-semibold mb-3">Your Character</h3>
                     <div className="flex items-center gap-4">
                       {stats.character.avatar && (
-                        <img
+                        <Image
                           src={stats.character.avatar}
                           alt={stats.character.name}
-                          className="w-16 h-16 rounded-full object-cover"
+                          width={64}
+                          height={64}
+                          className="rounded-full object-cover"
                         />
                       )}
                       <div>

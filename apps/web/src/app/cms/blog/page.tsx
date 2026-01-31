@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { RouteGuard } from '@/components/RouteGuard';
 import { CMSLayout } from '@/components/CMSLayout';
+import Image from 'next/image';
 import { apiClient } from '@/lib/api';
 import { useToast } from '@/hooks/useToast';
 
@@ -214,13 +215,12 @@ export default function CMSBlogPage() {
                     >
                       <div className="flex items-start gap-4">
                         {post.coverImage && (
-                          <img
+                          <Image
                             src={post.coverImage}
                             alt={post.title}
-                            className="w-32 h-32 object-cover rounded"
-                            onError={(e) => {
-                              (e.target as HTMLImageElement).src = '/placeholder-banner.svg';
-                            }}
+                            width={128}
+                            height={128}
+                            className="object-cover rounded"
                           />
                         )}
                         <div className="flex-1">

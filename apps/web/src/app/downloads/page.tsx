@@ -7,6 +7,7 @@ import { Footer } from '@/components/Footer';
 import { apiClient } from '@/lib/api';
 import { useToast } from '@/hooks/useToast';
 import { useCurrency } from '@/contexts/CurrencyContext';
+import Image from 'next/image';
 import Link from 'next/link';
 
 interface DigitalProduct {
@@ -309,10 +310,12 @@ export default function DownloadsPage() {
                       {/* Thumbnail */}
                       <div className="flex-shrink-0">
                         {product.thumbnailUrl ? (
-                          <img
+                          <Image
                             src={product.thumbnailUrl}
                             alt={product.name}
-                            className="w-24 h-24 rounded-lg object-cover"
+                            width={96}
+                            height={96}
+                            className="rounded-lg object-cover"
                           />
                         ) : (
                           <div className="w-24 h-24 rounded-lg bg-purple-100 flex items-center justify-center">

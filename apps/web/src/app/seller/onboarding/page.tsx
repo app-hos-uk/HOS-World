@@ -7,6 +7,7 @@ import { Header } from '@/components/Header';
 import { Footer } from '@/components/Footer';
 import { apiClient } from '@/lib/api';
 import { useToast } from '@/hooks/useToast';
+import Image from 'next/image';
 
 type OnboardingStep = 'store-info' | 'location' | 'theme' | 'payment' | 'complete';
 
@@ -464,12 +465,14 @@ function ThemeSelector({
               : 'border-gray-200 hover:border-gray-300'
           }`}
         >
-          <div className="aspect-video bg-gray-100 rounded mb-3 flex items-center justify-center">
+          <div className="relative aspect-video bg-gray-100 rounded mb-3 flex items-center justify-center overflow-hidden">
             {theme.previewImages && theme.previewImages.length > 0 ? (
-              <img
+              <Image
                 src={theme.previewImages[0]}
                 alt={theme.name}
-                className="w-full h-full object-cover rounded"
+                fill
+                className="object-cover rounded"
+                sizes="(max-width: 768px) 100vw, 33vw"
               />
             ) : (
               <span className="text-4xl">🎨</span>

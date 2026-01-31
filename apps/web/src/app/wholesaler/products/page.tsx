@@ -5,6 +5,7 @@ import { RouteGuard } from '@/components/RouteGuard';
 import { DashboardLayout } from '@/components/DashboardLayout';
 import { apiClient } from '@/lib/api';
 import Link from 'next/link';
+import Image from 'next/image';
 
 export default function WholesalerProductsPage() {
   const [products, setProducts] = useState<any[]>([]);
@@ -115,10 +116,12 @@ export default function WholesalerProductsPage() {
                         <td className="px-6 py-4 whitespace-nowrap">
                           <div className="flex items-center">
                             {product.images && product.images[0] && (
-                              <img
-                                className="h-10 w-10 rounded-lg object-cover mr-3"
-                                src={product.images[0]}
+                              <Image
+                                className="rounded-lg object-cover mr-3"
+                                src={typeof product.images[0] === 'string' ? product.images[0] : product.images[0].url}
                                 alt={product.name}
+                                width={40}
+                                height={40}
                               />
                             )}
                             <div>

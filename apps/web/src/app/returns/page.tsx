@@ -8,6 +8,7 @@ import { apiClient } from '@/lib/api';
 import { useToast } from '@/hooks/useToast';
 import { useCurrency } from '@/contexts/CurrencyContext';
 import Link from 'next/link';
+import Image from 'next/image';
 
 interface Order {
   id: string;
@@ -293,10 +294,12 @@ export default function ReturnsPage() {
                   <div className="space-y-3 mb-4">
                     {order.items.map((item) => (
                       <div key={item.id} className="flex items-center gap-4 p-3 bg-gray-50 rounded-lg">
-                        <img
+                        <Image
                           src={item.product.images[0]?.url || '/placeholder-image.jpg'}
                           alt={item.product.name}
-                          className="w-16 h-16 object-cover rounded-md"
+                          width={64}
+                          height={64}
+                          className="object-cover rounded-md"
                         />
                         <div className="flex-grow">
                           <p className="font-medium text-gray-900">{item.product.name}</p>
@@ -431,10 +434,12 @@ export default function ReturnsPage() {
                           }}
                           className="rounded border-gray-300 text-purple-600 focus:ring-purple-500"
                         />
-                        <img
+                        <Image
                           src={item.product.images[0]?.url || '/placeholder-image.jpg'}
                           alt={item.product.name}
-                          className="w-12 h-12 object-cover rounded-md"
+                          width={48}
+                          height={48}
+                          className="object-cover rounded-md"
                         />
                         <div className="flex-grow">
                           <p className="font-medium text-gray-900">{item.product.name}</p>

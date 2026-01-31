@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { RouteGuard } from '@/components/RouteGuard';
 import { DashboardLayout } from '@/components/DashboardLayout';
 import { apiClient } from '@/lib/api';
+import Image from 'next/image';
 
 export default function ProcurementSubmissionsPage() {
   const router = useRouter();
@@ -368,12 +369,15 @@ export default function ProcurementSubmissionsPage() {
                             <p className="text-sm font-medium text-gray-500 mb-2">Images</p>
                             <div className="grid grid-cols-3 gap-2">
                               {selectedSubmission.productData.images.map((img: any, idx: number) => (
-                                <img
-                                  key={idx}
-                                  src={img.url}
-                                  alt={img.alt || `Product image ${idx + 1}`}
-                                  className="w-full h-24 object-cover rounded"
-                                />
+                                <div key={idx} className="relative w-full h-24">
+                                  <Image
+                                    src={img.url}
+                                    alt={img.alt || `Product image ${idx + 1}`}
+                                    fill
+                                    className="object-cover rounded"
+                                    sizes="33vw"
+                                  />
+                                </div>
                               ))}
                             </div>
                           </div>

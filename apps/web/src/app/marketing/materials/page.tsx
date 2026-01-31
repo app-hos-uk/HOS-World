@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { RouteGuard } from '@/components/RouteGuard';
 import { DashboardLayout } from '@/components/DashboardLayout';
+import Image from 'next/image';
 import { apiClient } from '@/lib/api';
 
 export default function MarketingMaterialsPage() {
@@ -203,12 +204,14 @@ export default function MarketingMaterialsPage() {
                     key={material.id}
                     className="bg-white border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow"
                   >
-                    <div className="aspect-video bg-gray-100 rounded mb-3 overflow-hidden">
+                    <div className="relative aspect-video bg-gray-100 rounded mb-3 overflow-hidden">
                       {material.url ? (
-                        <img
+                        <Image
                           src={material.url}
                           alt={material.type}
-                          className="w-full h-full object-cover"
+                          fill
+                          className="object-cover"
+                          sizes="(max-width: 768px) 100vw, 33vw"
                         />
                       ) : (
                         <div className="w-full h-full flex items-center justify-center text-gray-400">
@@ -290,14 +293,13 @@ export default function MarketingMaterialsPage() {
                         placeholder="https://example.com/image.jpg"
                       />
                       {materialUrl && (
-                        <div className="mt-2">
-                          <img
+                        <div className="relative mt-2 h-32 w-full max-w-md">
+                          <Image
                             src={materialUrl}
                             alt="Preview"
-                            className="max-w-full h-32 object-contain border rounded"
-                            onError={(e) => {
-                              (e.target as HTMLImageElement).style.display = 'none';
-                            }}
+                            fill
+                            className="object-contain border rounded"
+                            sizes="(max-width: 768px) 100vw, 28rem"
                           />
                         </div>
                       )}

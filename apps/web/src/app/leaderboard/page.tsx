@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { Header } from '@/components/Header';
 import { Footer } from '@/components/Footer';
 import { apiClient } from '@/lib/api';
+import Image from 'next/image';
 import Link from 'next/link';
 
 interface LeaderboardEntry {
@@ -245,7 +246,7 @@ export default function LeaderboardPage() {
                     <div className={`relative mb-4 ${entry.isCurrentUser ? 'ring-4 ring-purple-400 rounded-full' : ''}`}>
                       <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-gradient-to-br from-purple-400 to-purple-600 flex items-center justify-center text-white text-2xl font-bold">
                         {entry.avatar ? (
-                          <img src={entry.avatar} alt={entry.username} className="w-full h-full rounded-full object-cover" />
+                          <Image src={entry.avatar} alt={entry.username ?? ''} width={80} height={80} className="rounded-full object-cover w-full h-full" />
                         ) : (
                           entry.username?.charAt(0).toUpperCase()
                         )}
@@ -288,7 +289,7 @@ export default function LeaderboardPage() {
                       <div className="flex items-center gap-3 flex-1 min-w-0">
                         <div className="w-10 h-10 rounded-full bg-gradient-to-br from-purple-400 to-purple-600 flex items-center justify-center text-white font-bold flex-shrink-0">
                           {entry.avatar ? (
-                            <img src={entry.avatar} alt={entry.username} className="w-full h-full rounded-full object-cover" />
+                            <Image src={entry.avatar} alt={entry.username ?? ''} width={40} height={40} className="rounded-full object-cover" />
                           ) : (
                             entry.username?.charAt(0).toUpperCase()
                           )}

@@ -7,6 +7,7 @@ import { Header } from '@/components/Header';
 import { Footer } from '@/components/Footer';
 import { apiClient } from '@/lib/api';
 import { useToast } from '@/hooks/useToast';
+import Image from 'next/image';
 import Link from 'next/link';
 
 interface Collection {
@@ -305,11 +306,15 @@ export default function CollectionDetailPage() {
                 <div key={product.id} className="bg-gray-50 rounded-lg p-4 hover:shadow-lg transition-shadow">
                   <Link href={`/products/${product.id}`}>
                     {product.images && product.images.length > 0 ? (
-                      <img
-                        src={product.images[0]}
-                        alt={product.name}
-                        className="w-full h-48 object-cover rounded-lg mb-3"
-                      />
+                      <div className="relative w-full h-48 mb-3 rounded-lg overflow-hidden">
+                        <Image
+                          src={product.images[0]}
+                          alt={product.name}
+                          fill
+                          className="object-cover"
+                          sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
+                        />
+                      </div>
                     ) : (
                       <div className="w-full h-48 bg-gray-200 rounded-lg mb-3 flex items-center justify-center">
                         <span className="text-gray-400">No Image</span>

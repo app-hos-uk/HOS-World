@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
+import Image from 'next/image';
 import { apiClient } from '@/lib/api';
 import { useToast } from '@/hooks/useToast';
 import { SocialShare } from '@/components/SocialShare';
@@ -168,12 +169,14 @@ export default function InfluencerProductLinksPage() {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {links.map((link) => (
               <div key={link.id} className="bg-white rounded-xl shadow-sm overflow-hidden">
-                <div className="aspect-w-16 aspect-h-9 bg-gray-100">
+                <div className="relative h-48 bg-gray-100">
                   {link.product.images?.[0] ? (
-                    <img
+                    <Image
                       src={link.product.images[0].url}
                       alt={link.product.name}
-                      className="w-full h-48 object-cover"
+                      fill
+                      className="object-cover"
+                      sizes="(max-width: 768px) 100vw, 50vw"
                     />
                   ) : (
                     <div className="w-full h-48 flex items-center justify-center bg-gray-100">
@@ -289,10 +292,12 @@ export default function InfluencerProductLinksPage() {
                           className="sr-only"
                         />
                         {product.images?.[0] ? (
-                          <img
+                          <Image
                             src={product.images[0].url}
                             alt={product.name}
-                            className="w-12 h-12 object-cover rounded"
+                            width={48}
+                            height={48}
+                            className="object-cover rounded"
                           />
                         ) : (
                           <div className="w-12 h-12 bg-gray-200 rounded flex items-center justify-center">

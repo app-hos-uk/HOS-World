@@ -146,7 +146,7 @@ export default function AcceptInfluencerInvitePage() {
           </div>
           <h1 className="text-2xl font-bold text-gray-900">Join as an Influencer</h1>
           <p className="text-gray-600 mt-2">
-            You've been invited to join our influencer program
+            You&apos;ve been invited to join our influencer program
           </p>
         </div>
 
@@ -162,7 +162,7 @@ export default function AcceptInfluencerInvitePage() {
           )}
           {invitation.message && (
             <p className="text-sm text-purple-700 mt-2 italic">
-              "{invitation.message}"
+              &ldquo;{invitation.message}&rdquo;
             </p>
           )}
         </div>

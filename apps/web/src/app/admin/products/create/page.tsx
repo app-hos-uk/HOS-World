@@ -9,6 +9,7 @@ import { CategorySelector } from '@/components/taxonomy/CategorySelector';
 import { TagSelector } from '@/components/taxonomy/TagSelector';
 import { AttributeEditor } from '@/components/taxonomy/AttributeEditor';
 import { FandomSelector } from '@/components/taxonomy/FandomSelector';
+import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 
 /**
@@ -574,7 +575,7 @@ export default function ProductCreationPage() {
                               </label>
                               {opt.imageUrl && (
                                 <span className="inline-flex items-center gap-1">
-                                  <img src={opt.imageUrl} alt="" className="w-8 h-8 object-cover rounded" />
+                                  <Image src={opt.imageUrl} alt="" width={32} height={32} className="object-cover rounded" />
                                   <button type="button" onClick={() => updateVariationOption(optIdx, 'imageUrl', undefined)} className="text-red-600 text-xs">Clear</button>
                                 </span>
                               )}
@@ -626,7 +627,7 @@ export default function ProductCreationPage() {
                     <div className="mt-4 space-y-3">
                       {images.map((img, idx) => (
                         <div key={idx} className="flex items-start gap-3 p-3 border border-gray-200 rounded-lg bg-white">
-                          <img src={img.url} alt={img.alt || 'Product image'} className="w-20 h-20 object-cover rounded" />
+                          <Image src={img.url} alt={img.alt || 'Product image'} width={80} height={80} className="object-cover rounded" />
                           <div className="flex-1">
                             <input
                               type="text"

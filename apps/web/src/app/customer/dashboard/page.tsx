@@ -8,6 +8,7 @@ import { apiClient } from '@/lib/api';
 import { useToast } from '@/hooks/useToast';
 import { useAuth } from '@/contexts/AuthContext';
 import { useCurrency } from '@/contexts/CurrencyContext';
+import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar, PieChart, Pie, Cell } from 'recharts';
@@ -352,10 +353,12 @@ export default function CustomerDashboardPage() {
                       <div className="flex items-center gap-4">
                         <div className="w-16 h-16 rounded-full bg-white/20 flex items-center justify-center text-2xl">
                           {profileStats.character?.avatar ? (
-                            <img
+                            <Image
                               src={profileStats.character.avatar}
                               alt={profileStats.character.name}
-                              className="w-14 h-14 rounded-full object-cover"
+                              width={56}
+                              height={56}
+                              className="rounded-full object-cover"
                             />
                           ) : (
                             user?.firstName?.[0] || '👤'
@@ -436,12 +439,14 @@ export default function CustomerDashboardPage() {
                             href={`/products/${product.id}`}
                             className="group"
                           >
-                            <div className="aspect-square rounded-lg overflow-hidden bg-gray-100 mb-2">
+                            <div className="relative aspect-square rounded-lg overflow-hidden bg-gray-100 mb-2">
                               {imageUrl ? (
-                                <img
+                                <Image
                                   src={imageUrl}
                                   alt={product.name}
-                                  className="w-full h-full object-cover group-hover:scale-105 transition-transform"
+                                  fill
+                                  className="object-cover group-hover:scale-105 transition-transform"
+                                  sizes="(max-width: 768px) 50vw, 25vw"
                                 />
                               ) : (
                                 <div className="w-full h-full flex items-center justify-center text-gray-400 text-xs">
@@ -632,7 +637,7 @@ export default function CustomerDashboardPage() {
               {/* Summary Cards */}
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 <div className="bg-gradient-to-br from-purple-500 to-indigo-600 rounded-xl p-6 text-white">
-                  <p className="text-purple-200 text-sm mb-1">This Year's Spending</p>
+                  <p className="text-purple-200 text-sm mb-1">This Year&apos;s Spending</p>
                   <p className="text-3xl font-bold">{formatPrice(spendingAnalytics.yearlyTotal)}</p>
                 </div>
                 <div className="bg-gradient-to-br from-green-500 to-emerald-600 rounded-xl p-6 text-white">

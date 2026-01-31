@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { apiClient } from '@/lib/api';
+import Image from 'next/image';
 import { getPublicApiBaseUrl } from '@/lib/apiBaseUrl';
 
 interface Message {
@@ -155,10 +156,12 @@ export function AIChatInterface({ characterId, character, onClose }: AIChatInter
       <div className="flex items-center justify-between p-4 border-b border-gray-200">
         <div className="flex items-center gap-3">
           {characterInfo?.avatar ? (
-            <img
+            <Image
               src={characterInfo.avatar}
               alt={characterInfo.name}
-              className="w-10 h-10 rounded-full"
+              width={40}
+              height={40}
+              className="rounded-full object-cover"
             />
           ) : (
             <div className="w-10 h-10 rounded-full bg-purple-100 flex items-center justify-center">

@@ -6,6 +6,7 @@ import { DashboardLayout } from '@/components/DashboardLayout';
 import { apiClient } from '@/lib/api';
 import { useToast } from '@/hooks/useToast';
 import Link from 'next/link';
+import Image from 'next/image';
 
 interface OrderItem {
   id: string;
@@ -448,10 +449,12 @@ export default function SellerOrdersPage() {
                       selectedOrder.items.map((item, index) => (
                         <div key={item.id || index} className="p-4 flex items-center gap-4">
                           {item.product?.images?.[0] && (
-                            <img 
-                              src={item.product.images[0]} 
-                              alt={item.product.name || item.productName} 
-                              className="w-16 h-16 object-cover rounded"
+                            <Image
+                              src={item.product.images[0]}
+                              alt={item.product?.name || item.productName || 'Product'}
+                              width={64}
+                              height={64}
+                              className="object-cover rounded"
                             />
                           )}
                           <div className="flex-1">

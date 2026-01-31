@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
+import Image from 'next/image';
 import { apiClient } from '@/lib/api';
 import type {
   PublicInfluencerInfo,
@@ -132,7 +133,7 @@ export default function InfluencerStorefrontPage() {
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
           </svg>
           <h1 className="text-2xl font-bold text-gray-900 mb-2">Storefront Not Found</h1>
-          <p className="text-gray-600 mb-4">The influencer storefront you're looking for doesn't exist.</p>
+          <p className="text-gray-600 mb-4">The influencer storefront you&apos;re looking for doesn&apos;t exist.</p>
           <Link
             href="/"
             className="inline-flex items-center gap-2 text-purple-600 hover:text-purple-700 font-medium"
@@ -174,17 +175,19 @@ export default function InfluencerStorefrontPage() {
           <div className="flex flex-col md:flex-row items-start md:items-end gap-6">
             {/* Profile Image */}
             <div 
-              className="w-32 h-32 rounded-full border-4 overflow-hidden flex-shrink-0"
+              className="relative w-32 h-32 rounded-full border-4 overflow-hidden flex-shrink-0"
               style={{ 
                 borderColor: storefront?.backgroundColor || '#FFFFFF',
                 backgroundColor: storefront?.secondaryColor || '#F3E8FF',
               }}
             >
               {influencer.profileImage ? (
-                <img
+                <Image
                   src={influencer.profileImage}
                   alt={influencer.displayName}
-                  className="w-full h-full object-cover"
+                  fill
+                  className="object-cover"
+                  sizes="200px"
                 />
               ) : (
                 <div className="w-full h-full flex items-center justify-center text-4xl font-bold" 
@@ -250,12 +253,14 @@ export default function InfluencerStorefrontPage() {
                   className="group rounded-xl overflow-hidden shadow-sm hover:shadow-lg transition-shadow"
                   style={{ backgroundColor: storefront?.secondaryColor || '#F3E8FF' }}
                 >
-                  <div className="aspect-square overflow-hidden">
+                  <div className="relative aspect-square overflow-hidden">
                     {product.images?.[0] ? (
-                      <img
+                      <Image
                         src={product.images[0].url}
                         alt={product.name}
-                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                        fill
+                        className="object-cover group-hover:scale-105 transition-transform duration-300"
+                        sizes="(max-width: 768px) 50vw, 25vw"
                       />
                     ) : (
                       <div className="w-full h-full flex items-center justify-center bg-gray-200">

@@ -5,6 +5,7 @@ import { RouteGuard } from '@/components/RouteGuard';
 import { DashboardLayout } from '@/components/DashboardLayout';
 import { apiClient } from '@/lib/api';
 import { useToast } from '@/hooks/useToast';
+import Image from 'next/image';
 
 interface SellerProfile {
   id: string;
@@ -239,7 +240,7 @@ export default function SellerProfilePage() {
           <div className="bg-gradient-to-r from-purple-600 to-indigo-600 rounded-lg p-6 text-white">
             <div className="flex items-center gap-4">
               {profile?.logo ? (
-                <img src={profile.logo} alt={profile.storeName} className="w-16 h-16 rounded-full object-cover bg-white" />
+                <Image src={profile.logo} alt={profile.storeName ?? ''} width={64} height={64} className="rounded-full object-cover bg-white" />
               ) : (
                 <div className="w-16 h-16 rounded-full bg-white bg-opacity-20 flex items-center justify-center text-2xl">
                   🏪

@@ -503,7 +503,7 @@ export default function InfluencerDashboardPage() {
           ) : (
             <div className="text-center py-4">
               <span className="text-2xl">🎉</span>
-              <p className="text-gray-600 mt-2">Congratulations! You've reached the highest tier!</p>
+              <p className="text-gray-600 mt-2">Congratulations! You&apos;ve reached the highest tier!</p>
             </div>
           )}
         </div>

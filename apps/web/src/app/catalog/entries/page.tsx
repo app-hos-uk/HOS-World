@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { RouteGuard } from '@/components/RouteGuard';
 import { DashboardLayout } from '@/components/DashboardLayout';
+import Image from 'next/image';
 import { apiClient } from '@/lib/api';
 
 export default function CatalogEntriesPage() {
@@ -320,11 +321,13 @@ export default function CatalogEntriesPage() {
                       {images.length > 0 && (
                         <div className="grid grid-cols-3 gap-2">
                           {images.map((url, index) => (
-                            <div key={index} className="relative">
-                              <img
+                            <div key={index} className="relative h-24">
+                              <Image
                                 src={url}
                                 alt={`Product ${index + 1}`}
-                                className="w-full h-24 object-cover rounded"
+                                fill
+                                className="object-cover rounded"
+                                sizes="33vw"
                               />
                               <button
                                 onClick={() => removeImage(index)}

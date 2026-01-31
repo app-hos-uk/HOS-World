@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import Image from 'next/image';
 import { RouteGuard } from '@/components/RouteGuard';
 import { DashboardLayout } from '@/components/DashboardLayout';
 import { apiClient } from '@/lib/api';
@@ -190,12 +191,14 @@ export default function MarketingDashboardPage() {
                         href={`/marketing/materials?tab=library&material=${material.id}`}
                         className="block border rounded-lg overflow-hidden hover:shadow-md transition-shadow"
                       >
-                        <div className="aspect-video bg-gray-100">
+                        <div className="relative aspect-video bg-gray-100">
                           {material.url ? (
-                            <img
+                            <Image
                               src={material.url}
                               alt={material.type}
-                              className="w-full h-full object-cover"
+                              fill
+                              className="object-cover"
+                              sizes="(max-width: 768px) 100vw, 33vw"
                             />
                           ) : (
                             <div className="w-full h-full flex items-center justify-center text-gray-400">

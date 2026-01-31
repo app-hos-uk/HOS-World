@@ -7,6 +7,7 @@ import { Footer } from '@/components/Footer';
 import { apiClient } from '@/lib/api';
 import { useCurrency } from '@/contexts/CurrencyContext';
 import Link from 'next/link';
+import Image from 'next/image';
 
 interface TrackingEvent {
   date: string;
@@ -349,10 +350,12 @@ function TrackOrderContent() {
                   return (
                     <div key={item.id || index} className="py-4 flex items-center gap-4">
                       {imageUrl ? (
-                        <img
+                        <Image
                           src={imageUrl}
                           alt={item.product?.name || 'Product'}
-                          className="w-16 h-16 rounded-lg object-cover"
+                          width={64}
+                          height={64}
+                          className="rounded-lg object-cover"
                         />
                       ) : (
                         <div className="w-16 h-16 rounded-lg bg-gray-200 flex items-center justify-center">

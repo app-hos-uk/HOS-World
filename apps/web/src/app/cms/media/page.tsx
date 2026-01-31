@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { RouteGuard } from '@/components/RouteGuard';
 import { CMSLayout } from '@/components/CMSLayout';
+import Image from 'next/image';
 import { apiClient } from '@/lib/api';
 
 export default function CMSMediaPage() {
@@ -109,12 +110,14 @@ export default function CMSMediaPage() {
                   key={item.id}
                   className="bg-white rounded-lg shadow overflow-hidden hover:shadow-lg transition-shadow"
                 >
-                  <div className="aspect-video bg-gray-100">
+                  <div className="relative aspect-video bg-gray-100">
                     {item.url ? (
-                      <img
+                      <Image
                         src={item.url}
                         alt={item.name || 'Media'}
-                        className="w-full h-full object-cover"
+                        fill
+                        className="object-cover"
+                        sizes="(max-width: 768px) 100vw, 33vw"
                       />
                     ) : (
                       <div className="w-full h-full flex items-center justify-center text-gray-400">

@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState, useMemo, useCallback } from 'react';
+import Image from 'next/image';
 import { RouteGuard } from '@/components/RouteGuard';
 import { AdminLayout } from '@/components/AdminLayout';
 import { CategorySelector } from '@/components/taxonomy/CategorySelector';
@@ -1201,10 +1202,12 @@ export default function AdminAttributesPage() {
                       {usageProducts.map((product) => (
                         <div key={product.id} className="p-3 bg-gray-50 rounded flex items-center gap-3">
                           {product.images?.[0] && (
-                            <img 
+                            <Image
                               src={typeof product.images[0] === 'string' ? product.images[0] : product.images[0].url}
                               alt={product.name}
-                              className="w-10 h-10 object-cover rounded"
+                              width={40}
+                              height={40}
+                              className="object-cover rounded"
                             />
                           )}
                           <div>

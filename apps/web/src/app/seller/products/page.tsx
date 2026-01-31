@@ -6,6 +6,7 @@ import { DashboardLayout } from '@/components/DashboardLayout';
 import { apiClient } from '@/lib/api';
 import { useToast } from '@/hooks/useToast';
 import Link from 'next/link';
+import Image from 'next/image';
 
 interface Product {
   id: string;
@@ -343,10 +344,12 @@ export default function SellerProductsPage() {
                           <td className="px-6 py-4 whitespace-nowrap">
                             <div className="flex items-center">
                               {product.images && product.images[0] ? (
-                                <img
-                                  className="h-12 w-12 rounded-lg object-cover mr-3"
+                                <Image
+                                  className="rounded-lg object-cover mr-3"
                                   src={product.images[0]}
                                   alt={product.name}
+                                  width={48}
+                                  height={48}
                                 />
                               ) : (
                                 <div className="h-12 w-12 rounded-lg bg-gray-200 mr-3 flex items-center justify-center">

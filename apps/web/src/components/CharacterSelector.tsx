@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import Image from 'next/image';
 import { apiClient } from '@/lib/api';
 
 interface Character {
@@ -94,12 +95,14 @@ export function CharacterSelector({ onSelect, onSkip }: CharacterSelectorProps) 
                 : 'border-gray-200 hover:border-purple-300'
             }`}
           >
-            <div className="aspect-square bg-gray-200 rounded-lg mb-2 flex items-center justify-center">
+            <div className="relative aspect-square bg-gray-200 rounded-lg mb-2 flex items-center justify-center overflow-hidden">
               {character.avatar ? (
-                <img
+                <Image
                   src={character.avatar}
                   alt={character.name}
-                  className="w-full h-full object-cover rounded-lg"
+                  fill
+                  className="object-cover rounded-lg"
+                  sizes="(max-width: 768px) 50vw, 33vw"
                 />
               ) : (
                 <span className="text-4xl">🧙</span>

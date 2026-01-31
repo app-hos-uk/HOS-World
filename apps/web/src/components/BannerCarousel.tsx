@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 
 /**
  * Banner Interface for Carousel
@@ -59,10 +60,12 @@ export function BannerCarousel({
             prefetch={false}
           >
             <div className="relative w-48 h-24 sm:w-64 sm:h-32 md:w-80 md:h-40">
-              <img
+              <Image
                 src={banner.image}
                 alt={banner.title}
-                className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-110"
+                fill
+                sizes="(max-width: 640px) 192px 96px, (max-width: 768px) 256px 128px, 320px 160px"
+                className="object-cover transition-transform duration-300 group-hover:scale-110"
               />
               {/* Purple gradient overlay */}
               <div className="absolute inset-0 bg-gradient-to-t from-purple-900/90 via-purple-800/60 to-transparent" />

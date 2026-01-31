@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState, useMemo, useCallback } from 'react';
+import Image from 'next/image';
 import { RouteGuard } from '@/components/RouteGuard';
 import { AdminLayout } from '@/components/AdminLayout';
 import { apiClient } from '@/lib/api';
@@ -469,9 +470,9 @@ export default function AdminThemesPage() {
                 <div className="bg-white rounded-lg shadow p-6">
                   <h3 className="text-lg font-semibold mb-4">Most Popular Theme</h3>
                   <div className="flex items-center gap-4">
-                    <div className="w-24 h-16 bg-gray-100 rounded-lg overflow-hidden">
+                    <div className="relative w-24 h-16 bg-gray-100 rounded-lg overflow-hidden">
                       {stats.mostUsed.previewImages?.[0] ? (
-                        <img src={stats.mostUsed.previewImages[0]} alt="" className="w-full h-full object-cover" />
+                        <Image src={stats.mostUsed.previewImages[0]} alt="" fill className="object-cover" sizes="96px" />
                       ) : (
                         <div className="w-full h-full flex items-center justify-center text-2xl">🎨</div>
                       )}
@@ -600,7 +601,7 @@ export default function AdminThemesPage() {
                   {/* Preview Image */}
                   <div className="aspect-video bg-gray-100 relative">
                     {theme.previewImages && theme.previewImages.length > 0 ? (
-                      <img src={theme.previewImages[0]} alt={theme.name} className="w-full h-full object-cover" />
+                      <Image src={theme.previewImages[0]} alt={theme.name} fill className="object-cover" sizes="(max-width: 768px) 100vw, 50vw" />
                     ) : (
                       <div className="w-full h-full flex items-center justify-center text-gray-400">
                         <div className="text-center">
@@ -833,7 +834,9 @@ export default function AdminThemesPage() {
                     {selectedTheme.previewImages && selectedTheme.previewImages.length > 0 ? (
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         {selectedTheme.previewImages.map((img, idx) => (
-                          <img key={idx} src={img} alt={`Preview ${idx + 1}`} className="w-full rounded-lg border border-gray-200" />
+                          <div key={idx} className="relative w-full aspect-video rounded-lg border border-gray-200 overflow-hidden">
+                            <Image src={img} alt={`Preview ${idx + 1}`} fill className="object-contain" sizes="(max-width: 768px) 100vw, 50vw" />
+                          </div>
                         ))}
                       </div>
                     ) : (
