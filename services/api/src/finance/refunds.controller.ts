@@ -75,12 +75,32 @@ export class RefundsController {
     summary: 'Get all refunds (Admin only)',
     description: 'Retrieves all refunds with filtering options. Admin access required.',
   })
-  @ApiQuery({ name: 'customerId', required: false, type: String, description: 'Filter by customer ID' })
+  @ApiQuery({
+    name: 'customerId',
+    required: false,
+    type: String,
+    description: 'Filter by customer ID',
+  })
   @ApiQuery({ name: 'orderId', required: false, type: String, description: 'Filter by order ID' })
   @ApiQuery({ name: 'returnId', required: false, type: String, description: 'Filter by return ID' })
-  @ApiQuery({ name: 'status', required: false, type: String, description: 'Filter by refund status' })
-  @ApiQuery({ name: 'startDate', required: false, type: String, description: 'Start date (ISO format)' })
-  @ApiQuery({ name: 'endDate', required: false, type: String, description: 'End date (ISO format)' })
+  @ApiQuery({
+    name: 'status',
+    required: false,
+    type: String,
+    description: 'Filter by refund status',
+  })
+  @ApiQuery({
+    name: 'startDate',
+    required: false,
+    type: String,
+    description: 'Start date (ISO format)',
+  })
+  @ApiQuery({
+    name: 'endDate',
+    required: false,
+    type: String,
+    description: 'End date (ISO format)',
+  })
   @ApiQuery({ name: 'page', required: false, type: String, description: 'Page number' })
   @ApiQuery({ name: 'limit', required: false, type: String, description: 'Items per page' })
   @SwaggerApiResponse({ status: 200, description: 'Refunds retrieved successfully' })
@@ -146,4 +166,3 @@ export class RefundsController {
     };
   }
 }
-

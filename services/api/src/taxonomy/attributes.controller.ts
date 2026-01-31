@@ -41,11 +41,27 @@ export class AttributesController {
   @Get()
   @ApiOperation({
     summary: 'Get all attributes',
-    description: 'Retrieves all attributes with optional filtering. Public endpoint, no authentication required.',
+    description:
+      'Retrieves all attributes with optional filtering. Public endpoint, no authentication required.',
   })
-  @ApiQuery({ name: 'categoryId', required: false, type: String, description: 'Filter by category ID' })
-  @ApiQuery({ name: 'isGlobal', required: false, type: String, description: 'Filter by global status (true/false)' })
-  @ApiQuery({ name: 'type', required: false, type: String, description: 'Filter by attribute type' })
+  @ApiQuery({
+    name: 'categoryId',
+    required: false,
+    type: String,
+    description: 'Filter by category ID',
+  })
+  @ApiQuery({
+    name: 'isGlobal',
+    required: false,
+    type: String,
+    description: 'Filter by global status (true/false)',
+  })
+  @ApiQuery({
+    name: 'type',
+    required: false,
+    type: String,
+    description: 'Filter by attribute type',
+  })
   @SwaggerApiResponse({ status: 200, description: 'Attributes retrieved successfully' })
   async findAll(
     @Query('categoryId') categoryId?: string,
@@ -82,7 +98,8 @@ export class AttributesController {
   @Get('category/:categoryId')
   @ApiOperation({
     summary: 'Get attributes for category',
-    description: 'Retrieves all attributes for a specific category. Public endpoint, no authentication required.',
+    description:
+      'Retrieves all attributes for a specific category. Public endpoint, no authentication required.',
   })
   @ApiParam({ name: 'categoryId', description: 'Category UUID', type: String })
   @SwaggerApiResponse({ status: 200, description: 'Category attributes retrieved successfully' })
@@ -101,7 +118,8 @@ export class AttributesController {
   @Get(':id')
   @ApiOperation({
     summary: 'Get attribute by ID',
-    description: 'Retrieves a specific attribute by ID. Public endpoint, no authentication required.',
+    description:
+      'Retrieves a specific attribute by ID. Public endpoint, no authentication required.',
   })
   @ApiParam({ name: 'id', description: 'Attribute UUID', type: String })
   @SwaggerApiResponse({ status: 200, description: 'Attribute retrieved successfully' })
@@ -118,7 +136,8 @@ export class AttributesController {
   @Get(':id/values')
   @ApiOperation({
     summary: 'Get attribute values',
-    description: 'Retrieves all values for a specific attribute. Public endpoint, no authentication required.',
+    description:
+      'Retrieves all values for a specific attribute. Public endpoint, no authentication required.',
   })
   @ApiParam({ name: 'id', description: 'Attribute UUID', type: String })
   @SwaggerApiResponse({ status: 200, description: 'Attribute values retrieved successfully' })
@@ -314,4 +333,3 @@ export class AttributesController {
     };
   }
 }
-

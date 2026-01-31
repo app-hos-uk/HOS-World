@@ -1,5 +1,11 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { ConflictException, UnauthorizedException, BadRequestException, NotFoundException, NotImplementedException } from '@nestjs/common';
+import {
+  ConflictException,
+  UnauthorizedException,
+  BadRequestException,
+  NotFoundException,
+  NotImplementedException,
+} from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 import { AuthService } from './auth.service';
@@ -121,7 +127,10 @@ describe('AuthService', () => {
       mockPrismaService.user.findUnique.mockResolvedValue(null);
       mockPrismaService.user.create.mockResolvedValue(mockUser);
       mockJwtService.sign.mockReturnValue('access-token');
-      mockGeolocationService.detectCountryFromIP.mockResolvedValue({ country: 'United Kingdom', countryCode: 'GB' });
+      mockGeolocationService.detectCountryFromIP.mockResolvedValue({
+        country: 'United Kingdom',
+        countryCode: 'GB',
+      });
 
       const result = await service.register(registerDto, '127.0.0.1');
 
@@ -137,9 +146,7 @@ describe('AuthService', () => {
     it('should throw ConflictException if user already exists', async () => {
       mockPrismaService.user.findUnique.mockResolvedValue({ id: 'existing-user' });
 
-      await expect(service.register(registerDto, '127.0.0.1')).rejects.toThrow(
-        ConflictException,
-      );
+      await expect(service.register(registerDto, '127.0.0.1')).rejects.toThrow(ConflictException);
     });
   });
 
@@ -175,9 +182,7 @@ describe('AuthService', () => {
     it('should throw UnauthorizedException if user not found', async () => {
       mockPrismaService.user.findUnique.mockResolvedValue(null);
 
-      await expect(service.login(loginDto)).rejects.toThrow(
-        UnauthorizedException,
-      );
+      await expect(service.login(loginDto)).rejects.toThrow(UnauthorizedException);
     });
 
     it('should throw UnauthorizedException if password is incorrect', async () => {
@@ -190,9 +195,7 @@ describe('AuthService', () => {
       mockPrismaService.user.findUnique.mockResolvedValue(mockUser);
       (bcrypt.compare as jest.Mock).mockResolvedValue(false);
 
-      await expect(service.login(loginDto)).rejects.toThrow(
-        UnauthorizedException,
-      );
+      await expect(service.login(loginDto)).rejects.toThrow(UnauthorizedException);
     });
   });
 

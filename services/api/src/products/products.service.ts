@@ -67,7 +67,7 @@ export class ProductsService {
 
     // Validate attributes if provided
     if (createProductDto.attributes && createProductDto.attributes.length > 0) {
-      const attributeIds = [...new Set(createProductDto.attributes.map(a => a.attributeId))];
+      const attributeIds = [...new Set(createProductDto.attributes.map((a) => a.attributeId))];
       const attributes = await this.prisma.attribute.findMany({
         where: { id: { in: attributeIds } },
         include: { values: true },
@@ -78,13 +78,15 @@ export class ProductsService {
 
       // Validate attribute values for SELECT type
       for (const attrDto of createProductDto.attributes) {
-        const attribute = attributes.find(a => a.id === attrDto.attributeId);
+        const attribute = attributes.find((a) => a.id === attrDto.attributeId);
         if (!attribute) continue;
 
         if (attribute.type === 'SELECT' && attrDto.attributeValueId) {
-          const valueExists = attribute.values.some(v => v.id === attrDto.attributeValueId);
+          const valueExists = attribute.values.some((v) => v.id === attrDto.attributeValueId);
           if (!valueExists) {
-            throw new BadRequestException(`Attribute value not found for attribute ${attribute.name}`);
+            throw new BadRequestException(
+              `Attribute value not found for attribute ${attribute.name}`,
+            );
           }
         }
       }
@@ -113,14 +115,17 @@ export class ProductsService {
         status: (createProductDto.status as ProductStatus) || ProductStatus.DRAFT,
         productType: createProductDto.productType || 'SIMPLE',
         parentProductId: createProductDto.parentProductId, // For variant products
-        images: createProductDto.images && createProductDto.images.length > 0 ? {
-          create: createProductDto.images.map((img, index) => ({
-            url: img.url,
-            alt: img.alt,
-            order: img.order ?? index,
-            type: (img.type as ImageType) || ImageType.IMAGE,
-          })),
-        } : undefined,
+        images:
+          createProductDto.images && createProductDto.images.length > 0
+            ? {
+                create: createProductDto.images.map((img, index) => ({
+                  url: img.url,
+                  alt: img.alt,
+                  order: img.order ?? index,
+                  type: (img.type as ImageType) || ImageType.IMAGE,
+                })),
+              }
+            : undefined,
         variations: createProductDto.variations
           ? {
               create: createProductDto.variations.map((variation) => ({
@@ -130,23 +135,25 @@ export class ProductsService {
             }
           : undefined,
         // New taxonomy relations
-        tagsRelation: createProductDto.tagIds && createProductDto.tagIds.length > 0
-          ? {
-              create: createProductDto.tagIds.map(tagId => ({ tagId })),
-            }
-          : undefined,
-        attributes: createProductDto.attributes && createProductDto.attributes.length > 0
-          ? {
-              create: createProductDto.attributes.map(attr => ({
-                attributeId: attr.attributeId,
-                attributeValueId: attr.attributeValueId,
-                textValue: attr.value || attr.textValue,
-                numberValue: attr.numberValue,
-                booleanValue: attr.booleanValue,
-                dateValue: attr.dateValue ? new Date(attr.dateValue) : undefined,
-              })),
-            }
-          : undefined,
+        tagsRelation:
+          createProductDto.tagIds && createProductDto.tagIds.length > 0
+            ? {
+                create: createProductDto.tagIds.map((tagId) => ({ tagId })),
+              }
+            : undefined,
+        attributes:
+          createProductDto.attributes && createProductDto.attributes.length > 0
+            ? {
+                create: createProductDto.attributes.map((attr) => ({
+                  attributeId: attr.attributeId,
+                  attributeValueId: attr.attributeValueId,
+                  textValue: attr.value || attr.textValue,
+                  numberValue: attr.numberValue,
+                  booleanValue: attr.booleanValue,
+                  dateValue: attr.dateValue ? new Date(attr.dateValue) : undefined,
+                })),
+              }
+            : undefined,
       },
       include: {
         images: true,
@@ -186,7 +193,7 @@ export class ProductsService {
     });
 
     const mappedProduct = this.mapToProductType(product);
-    
+
     // Sync with Elasticsearch and cache (fire and forget - don't block response)
     this.elasticsearchHook.onProductCreated(product).catch((error) => {
       console.error('Failed to sync product to Elasticsearch:', error);
@@ -236,7 +243,7 @@ export class ProductsService {
     if (searchDto.attributeFilters && searchDto.attributeFilters.length > 0) {
       where.attributes = {
         some: {
-          OR: searchDto.attributeFilters.map(filter => {
+          OR: searchDto.attributeFilters.map((filter) => {
             const condition: any = { attributeId: filter.attributeId };
             if (filter.value) {
               condition.OR = [
@@ -362,7 +369,11 @@ export class ProductsService {
     };
   }
 
-  async findOne(id: string, includeSeller: boolean = false, includeBundles: boolean = false): Promise<Product> {
+  async findOne(
+    id: string,
+    includeSeller: boolean = false,
+    includeBundles: boolean = false,
+  ): Promise<Product> {
     const product = await this.prisma.product.findUnique({
       where: { id },
       include: {
@@ -394,33 +405,37 @@ export class ProductsService {
             attributeValue: true,
           },
         },
-        ...(includeBundles ? {
-          bundleItems: {
-            include: {
-              product: {
-                select: {
-                  id: true,
-                  name: true,
-                  price: true,
-                  images: {
-                    take: 1,
-                    orderBy: { order: 'asc' },
+        ...(includeBundles
+          ? {
+              bundleItems: {
+                include: {
+                  product: {
+                    select: {
+                      id: true,
+                      name: true,
+                      price: true,
+                      images: {
+                        take: 1,
+                        orderBy: { order: 'asc' },
+                      },
+                    },
                   },
                 },
+                orderBy: { order: 'asc' },
               },
-            },
-            orderBy: { order: 'asc' },
-          },
-        } : {}),
-        ...(includeSeller ? {
-          seller: {
-            select: {
-              id: true,
-              storeName: true,
-              slug: true,
-            },
-          },
-        } : {}),
+            }
+          : {}),
+        ...(includeSeller
+          ? {
+              seller: {
+                select: {
+                  id: true,
+                  storeName: true,
+                  slug: true,
+                },
+              },
+            }
+          : {}),
       },
     });
 
@@ -431,7 +446,11 @@ export class ProductsService {
     return this.mapToProductType(product, includeSeller, includeBundles);
   }
 
-  async findBySlug(sellerSlug: string, productSlug: string, includeSeller: boolean = false): Promise<Product> {
+  async findBySlug(
+    sellerSlug: string,
+    productSlug: string,
+    includeSeller: boolean = false,
+  ): Promise<Product> {
     const seller = await this.prisma.seller.findUnique({
       where: { slug: sellerSlug },
     });
@@ -476,15 +495,17 @@ export class ProductsService {
             attributeValue: true,
           },
         },
-        ...(includeSeller ? {
-          seller: {
-            select: {
-              id: true,
-              storeName: true,
-              slug: true,
-            },
-          },
-        } : {}),
+        ...(includeSeller
+          ? {
+              seller: {
+                select: {
+                  id: true,
+                  storeName: true,
+                  slug: true,
+                },
+              },
+            }
+          : {}),
       },
     });
 
@@ -527,15 +548,17 @@ export class ProductsService {
             attributeValue: true,
           },
         },
-        ...(includeSeller ? {
-          seller: {
-            select: {
-              id: true,
-              storeName: true,
-              slug: true,
-            },
-          },
-        } : {}),
+        ...(includeSeller
+          ? {
+              seller: {
+                select: {
+                  id: true,
+                  storeName: true,
+                  slug: true,
+                },
+              },
+            }
+          : {}),
       },
     });
 
@@ -593,7 +616,7 @@ export class ProductsService {
 
     // Validate attributes if provided
     if (updateProductDto.attributes && updateProductDto.attributes.length > 0) {
-      const attributeIds = [...new Set(updateProductDto.attributes.map(a => a.attributeId))];
+      const attributeIds = [...new Set(updateProductDto.attributes.map((a) => a.attributeId))];
       const attributes = await this.prisma.attribute.findMany({
         where: { id: { in: attributeIds } },
         include: { values: true },
@@ -604,13 +627,15 @@ export class ProductsService {
 
       // Validate attribute values for SELECT type
       for (const attrDto of updateProductDto.attributes) {
-        const attribute = attributes.find(a => a.id === attrDto.attributeId);
+        const attribute = attributes.find((a) => a.id === attrDto.attributeId);
         if (!attribute) continue;
 
         if (attribute.type === 'SELECT' && attrDto.attributeValueId) {
-          const valueExists = attribute.values.some(v => v.id === attrDto.attributeValueId);
+          const valueExists = attribute.values.some((v) => v.id === attrDto.attributeValueId);
           if (!valueExists) {
-            throw new BadRequestException(`Attribute value not found for attribute ${attribute.name}`);
+            throw new BadRequestException(
+              `Attribute value not found for attribute ${attribute.name}`,
+            );
           }
         }
       }
@@ -645,7 +670,7 @@ export class ProductsService {
       // Create new tags
       if (updateProductDto.tagIds.length > 0) {
         updateData.tagsRelation = {
-          create: updateProductDto.tagIds.map(tagId => ({ tagId })),
+          create: updateProductDto.tagIds.map((tagId) => ({ tagId })),
         };
       }
     }
@@ -659,7 +684,7 @@ export class ProductsService {
       // Create new attributes
       if (updateProductDto.attributes.length > 0) {
         updateData.attributes = {
-          create: updateProductDto.attributes.map(attr => ({
+          create: updateProductDto.attributes.map((attr) => ({
             attributeId: attr.attributeId,
             attributeValueId: attr.attributeValueId,
             textValue: attr.textValue,
@@ -715,7 +740,7 @@ export class ProductsService {
     });
 
     const mappedProduct = this.mapToProductType(updated);
-    
+
     // Sync with Elasticsearch and cache (fire and forget - don't block response)
     this.elasticsearchHook.onProductUpdated(updated).catch((error) => {
       console.error('Failed to sync product update to Elasticsearch:', error);
@@ -753,7 +778,11 @@ export class ProductsService {
     });
   }
 
-  private mapToProductType(product: any, includeSeller: boolean = false, includeBundles: boolean = false): Product {
+  private mapToProductType(
+    product: any,
+    includeSeller: boolean = false,
+    includeBundles: boolean = false,
+  ): Product {
     const mapped: any = {
       id: product.id,
       name: product.name,
@@ -770,18 +799,20 @@ export class ProductsService {
       stock: product.stock,
       productType: product.productType || 'SIMPLE',
       parentProductId: product.parentProductId || undefined,
-      images: product.images?.map((img: any) => ({
-        id: img.id,
-        url: img.url,
-        alt: img.alt || undefined,
-        order: img.order,
-        type: img.type as ImageType,
-      })) || [],
-      variations: product.variations?.map((v: any) => ({
-        id: v.id,
-        name: v.name,
-        options: Array.isArray(v.options) ? v.options : [],
-      })) || [],
+      images:
+        product.images?.map((img: any) => ({
+          id: img.id,
+          url: img.url,
+          alt: img.alt || undefined,
+          order: img.order,
+          type: img.type as ImageType,
+        })) || [],
+      variations:
+        product.variations?.map((v: any) => ({
+          id: v.id,
+          name: v.name,
+          options: Array.isArray(v.options) ? v.options : [],
+        })) || [],
       fandom: product.fandom || undefined,
       category: product.category || undefined, // Backward compatibility
       tags: product.tags || [], // Backward compatibility
@@ -799,11 +830,13 @@ export class ProductsService {
         slug: product.categoryRelation.slug,
         path: product.categoryRelation.path,
         level: product.categoryRelation.level,
-        parent: product.categoryRelation.parent ? {
-          id: product.categoryRelation.parent.id,
-          name: product.categoryRelation.parent.name,
-          slug: product.categoryRelation.parent.slug,
-        } : undefined,
+        parent: product.categoryRelation.parent
+          ? {
+              id: product.categoryRelation.parent.id,
+              name: product.categoryRelation.parent.name,
+              slug: product.categoryRelation.parent.slug,
+            }
+          : undefined,
       };
     }
 
@@ -901,14 +934,11 @@ export class ProductsService {
     }
 
     // Verify all products exist and belong to the same seller (or are platform-owned)
-    const productIds = createBundleDto.items.map(item => item.productId);
+    const productIds = createBundleDto.items.map((item) => item.productId);
     const products = await this.prisma.product.findMany({
       where: {
         id: { in: productIds },
-        OR: [
-          { sellerId: seller.id },
-          { isPlatformOwned: true },
-        ],
+        OR: [{ sellerId: seller.id }, { isPlatformOwned: true }],
       },
     });
 
@@ -931,7 +961,7 @@ export class ProductsService {
     }
 
     // Calculate bundle stock (minimum of all items)
-    const bundleStock = createBundleDto.stock || Math.min(...products.map(p => p.stock || 0));
+    const bundleStock = createBundleDto.stock || Math.min(...products.map((p) => p.stock || 0));
 
     // Create bundle product
     const bundle = await this.prisma.product.create({

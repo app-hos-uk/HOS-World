@@ -77,6 +77,7 @@ export default function MapPickerClient({
       // Default to London, UK if no coordinates provided
       setCurrentPosition([51.5074, -0.1278]);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Update position when props change

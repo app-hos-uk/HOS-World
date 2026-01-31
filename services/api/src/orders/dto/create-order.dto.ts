@@ -19,5 +19,3 @@ export class CreateOrderDto {
   @IsString()
   visitorId?: string;
 }
-
-

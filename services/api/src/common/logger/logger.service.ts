@@ -18,8 +18,7 @@ export class Logger implements NestLoggerService {
     this.isDevelopment = process.env.NODE_ENV !== 'production';
     const envLogLevel = process.env.LOG_LEVEL?.toUpperCase() || 'INFO';
     this.logLevel = LogLevel[envLogLevel as keyof typeof LogLevel] ?? LogLevel.INFO;
-    this.jsonFormat =
-      process.env.LOG_FORMAT === 'json' || process.env.NODE_ENV === 'production';
+    this.jsonFormat = process.env.LOG_FORMAT === 'json' || process.env.NODE_ENV === 'production';
     // In production, Nest can emit hundreds of "Mapped { ... } route" lines on startup (RouterExplorer),
     // which can trigger Railway's log rate limiting. Default to suppressing those unless explicitly disabled.
     this.suppressNestRouteLogs =

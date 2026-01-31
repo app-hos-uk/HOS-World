@@ -103,9 +103,7 @@ export class IntegrationsController {
   @ApiParam({ name: 'provider', description: 'Provider identifier', type: String })
   @SwaggerApiResponse({ status: 200, description: 'Provider metadata retrieved' })
   @SwaggerApiResponse({ status: 404, description: 'Provider not found' })
-  async getProviderMetadata(
-    @Param('provider') provider: string,
-  ): Promise<ApiResponse<any>> {
+  async getProviderMetadata(@Param('provider') provider: string): Promise<ApiResponse<any>> {
     const metadata = this.integrationsService.getProviderMetadata(provider);
     if (!metadata) {
       return {
@@ -200,9 +198,7 @@ export class IntegrationsController {
   @ApiParam({ name: 'id', description: 'Integration UUID', type: String })
   @SwaggerApiResponse({ status: 200, description: 'Integration deleted successfully' })
   @SwaggerApiResponse({ status: 404, description: 'Integration not found' })
-  async delete(
-    @Param('id', ParseUUIDPipe) id: string,
-  ): Promise<ApiResponse<null>> {
+  async delete(@Param('id', ParseUUIDPipe) id: string): Promise<ApiResponse<null>> {
     await this.integrationsService.delete(id);
     return {
       data: null,
@@ -213,7 +209,8 @@ export class IntegrationsController {
   @Post(':id/test')
   @ApiOperation({
     summary: 'Test integration connection',
-    description: 'Tests the connection to the third-party service using stored or provided credentials.',
+    description:
+      'Tests the connection to the third-party service using stored or provided credentials.',
   })
   @ApiParam({ name: 'id', description: 'Integration UUID', type: String })
   @SwaggerApiResponse({ status: 200, description: 'Connection test completed' })

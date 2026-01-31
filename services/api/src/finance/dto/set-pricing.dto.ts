@@ -1,12 +1,4 @@
-import {
-  IsNumber,
-  IsNotEmpty,
-  IsOptional,
-  IsEnum,
-  IsString,
-  Min,
-  Max,
-} from 'class-validator';
+import { IsNumber, IsNotEmpty, IsOptional, IsEnum, IsString, Min, Max } from 'class-validator';
 import { VisibilityLevel } from '@prisma/client';
 
 export class SetPricingDto {
@@ -31,4 +23,3 @@ export class ApprovePricingDto {
   @IsString()
   notes?: string;
 }
-

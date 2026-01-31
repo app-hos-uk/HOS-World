@@ -49,20 +49,20 @@ function createStorage() {
   if (useCloudStorage) {
     return memoryStorage();
   }
-  
+
   // For local storage, use disk storage
   const uploadBasePath = process.env.UPLOAD_BASE_PATH || '/data/uploads';
-  
+
   return diskStorage({
     destination: (req, file, cb) => {
       const folder = (req.body?.folder as string) || 'uploads';
       const safeFolder = folder.replace(/[^a-zA-Z0-9_-]/g, '').substring(0, 50) || 'uploads';
       const destPath = join(uploadBasePath, safeFolder);
-      
+
       if (!existsSync(destPath)) {
         mkdirSync(destPath, { recursive: true });
       }
-      
+
       cb(null, destPath);
     },
     filename: (req, file, cb) => {
@@ -84,10 +84,12 @@ export class UploadsController {
 
   @Post('single')
   @UseGuards(JwtAuthGuard)
-  @UseInterceptors(FileInterceptor('file', { 
-    storage: createStorage(),
-    limits: { fileSize: 250 * 1024 } // 250KB limit for product images
-  }))
+  @UseInterceptors(
+    FileInterceptor('file', {
+      storage: createStorage(),
+      limits: { fileSize: 250 * 1024 }, // 250KB limit for product images
+    }),
+  )
   @ApiBearerAuth('JWT-auth')
   @ApiOperation({
     summary: 'Upload single file',
@@ -118,7 +120,7 @@ export class UploadsController {
     @Body('folder') folder?: string,
   ): Promise<ApiResponse<{ url: string }>> {
     const targetFolder = folder || 'products';
-    
+
     // Use StorageService for cloud providers (Cloudinary, S3, MinIO)
     if (useCloudStorage) {
       const result = await this.storageService.uploadFile(file, targetFolder);
@@ -127,7 +129,7 @@ export class UploadsController {
         message: 'File uploaded successfully',
       };
     }
-    
+
     // Fallback to local disk storage
     const result = await this.uploadsService.uploadFile(file, targetFolder);
     return {
@@ -138,14 +140,17 @@ export class UploadsController {
 
   @Post('multiple')
   @UseGuards(JwtAuthGuard)
-  @UseInterceptors(FilesInterceptor('files', 4, { 
-    storage: createStorage(),
-    limits: { fileSize: 250 * 1024 } // 250KB limit, max 4 files for product images
-  }))
+  @UseInterceptors(
+    FilesInterceptor('files', 4, {
+      storage: createStorage(),
+      limits: { fileSize: 250 * 1024 }, // 250KB limit, max 4 files for product images
+    }),
+  )
   @ApiBearerAuth('JWT-auth')
   @ApiOperation({
     summary: 'Upload multiple files',
-    description: 'Uploads multiple files (up to 4). Supports images up to 250KB each for product images.',
+    description:
+      'Uploads multiple files (up to 4). Supports images up to 250KB each for product images.',
   })
   @ApiConsumes('multipart/form-data')
   @ApiBody({
@@ -175,7 +180,7 @@ export class UploadsController {
     @Body('folder') folder?: string,
   ): Promise<ApiResponse<{ urls: string[] }>> {
     const targetFolder = folder || 'products';
-    
+
     // Use StorageService for cloud providers (Cloudinary, S3, MinIO)
     if (useCloudStorage) {
       const results = await this.storageService.uploadMultipleFiles(files, targetFolder);
@@ -184,7 +189,7 @@ export class UploadsController {
         message: 'Files uploaded successfully',
       };
     }
-    
+
     // Fallback to local disk storage
     const results = await this.uploadsService.uploadMultipleFiles(files, targetFolder);
     return {
@@ -210,11 +215,11 @@ export class UploadsController {
   ): Promise<void> {
     try {
       const filePath = this.uploadsService.getFileForServing(folder, filename);
-      
+
       // Set caching headers (1 year for images)
       res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
       res.setHeader('Content-Type', this.getContentType(filename));
-      
+
       res.sendFile(filePath);
     } catch (error) {
       if (error instanceof NotFoundException) {
@@ -229,15 +234,27 @@ export class UploadsController {
   @ApiBearerAuth('JWT-auth')
   @ApiOperation({
     summary: 'Get Cloudinary upload signature',
-    description: 'Returns Cloudinary upload signature for direct frontend uploads. Allows frontend to upload directly to Cloudinary without going through backend.',
+    description:
+      'Returns Cloudinary upload signature for direct frontend uploads. Allows frontend to upload directly to Cloudinary without going through backend.',
   })
-  @ApiQuery({ name: 'folder', required: false, type: String, description: 'Upload folder (default: uploads)' })
+  @ApiQuery({
+    name: 'folder',
+    required: false,
+    type: String,
+    description: 'Upload folder (default: uploads)',
+  })
   @SwaggerApiResponse({ status: 200, description: 'Upload signature retrieved successfully' })
   @SwaggerApiResponse({ status: 400, description: 'Cloudinary not configured' })
   @SwaggerApiResponse({ status: 401, description: 'Unauthorized' })
-  async getCloudinarySignature(
-    @Query('folder') folder?: string,
-  ): Promise<ApiResponse<{ signature: string; timestamp: number; apiKey: string; cloudName: string; folder: string }>> {
+  async getCloudinarySignature(@Query('folder') folder?: string): Promise<
+    ApiResponse<{
+      signature: string;
+      timestamp: number;
+      apiKey: string;
+      cloudName: string;
+      folder: string;
+    }>
+  > {
     const signature = await this.storageService.getCloudinaryUploadSignature(folder || 'uploads');
     return {
       data: signature,
@@ -282,4 +299,3 @@ export class UploadsController {
     return contentTypes[ext] || 'application/octet-stream';
   }
 }
-

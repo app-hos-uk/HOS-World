@@ -33,7 +33,8 @@ export class FandomsController {
   @Get(':slug')
   @ApiOperation({
     summary: 'Get fandom by slug',
-    description: 'Retrieves a specific fandom by slug. Public endpoint, no authentication required.',
+    description:
+      'Retrieves a specific fandom by slug. Public endpoint, no authentication required.',
   })
   @ApiParam({ name: 'slug', description: 'Fandom slug', type: String })
   @SwaggerApiResponse({ status: 200, description: 'Fandom retrieved successfully' })
@@ -46,4 +47,3 @@ export class FandomsController {
     };
   }
 }
-

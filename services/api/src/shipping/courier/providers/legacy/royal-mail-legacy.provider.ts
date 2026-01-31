@@ -4,10 +4,10 @@ import { CourierProvider, TrackingInfo } from '../../courier.service';
 
 /**
  * Legacy Royal Mail Provider
- * 
+ *
  * This provider uses environment variables for configuration and implements
  * the legacy CourierProvider interface for backward compatibility.
- * 
+ *
  * For new integrations, use the new RoyalMailProvider with CourierFactoryService.
  */
 @Injectable()
@@ -23,19 +23,21 @@ export class RoyalMailLegacyProvider implements CourierProvider {
     from: any,
     to: any,
   ): Promise<number> {
-    this.logger.debug(`Calculating Royal Mail rate: ${weight}kg from ${from.postalCode} to ${to.postalCode}`);
+    this.logger.debug(
+      `Calculating Royal Mail rate: ${weight}kg from ${from.postalCode} to ${to.postalCode}`,
+    );
 
     // Simplified rate calculation based on weight bands
-    let baseRate = 3.50; // Base rate in GBP
+    let baseRate = 3.5; // Base rate in GBP
 
     // Weight-based pricing
-    if (weight > 2) baseRate += (weight - 2) * 0.50;
+    if (weight > 2) baseRate += (weight - 2) * 0.5;
     if (weight > 10) baseRate += (weight - 10) * 0.75;
-    if (weight > 20) baseRate += (weight - 20) * 1.00;
+    if (weight > 20) baseRate += (weight - 20) * 1.0;
 
     // Size-based pricing
     const volume = (dimensions.length * dimensions.width * dimensions.height) / 1000;
-    if (volume > 1) baseRate += (volume - 1) * 0.30;
+    if (volume > 1) baseRate += (volume - 1) * 0.3;
 
     // International vs domestic
     if (from.country !== to.country) {

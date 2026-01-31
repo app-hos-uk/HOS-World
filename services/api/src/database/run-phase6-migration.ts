@@ -79,4 +79,3 @@ runMigration()
     console.error('\n❌ Migration script failed:', error);
     process.exit(1);
   });
-

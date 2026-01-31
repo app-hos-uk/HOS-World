@@ -133,7 +133,7 @@ export class SocialSharingService {
 
   async generateShareUrl(type: string, itemId: string): Promise<string> {
     const baseUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
-    
+
     switch (type) {
       case 'PRODUCT':
         return `${baseUrl}/products/${itemId}`;
@@ -148,4 +148,3 @@ export class SocialSharingService {
     }
   }
 }
-

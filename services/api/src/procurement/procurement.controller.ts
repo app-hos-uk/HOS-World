@@ -19,7 +19,11 @@ import {
   ApiQuery,
 } from '@nestjs/swagger';
 import { ProcurementService } from './procurement.service';
-import { ApproveSubmissionDto, RejectSubmissionDto, SelectQuantityDto } from './dto/approve-submission.dto';
+import {
+  ApproveSubmissionDto,
+  RejectSubmissionDto,
+  SelectQuantityDto,
+} from './dto/approve-submission.dto';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../common/guards/roles.guard';
 import { Roles } from '../common/decorators/roles.decorator';
@@ -37,15 +41,19 @@ export class ProcurementController {
   @Get('submissions')
   @ApiOperation({
     summary: 'Get all product submissions',
-    description: 'Retrieves all product submissions with optional status filtering. Procurement/Admin access required.',
+    description:
+      'Retrieves all product submissions with optional status filtering. Procurement/Admin access required.',
   })
-  @ApiQuery({ name: 'status', required: false, type: String, description: 'Filter by submission status' })
+  @ApiQuery({
+    name: 'status',
+    required: false,
+    type: String,
+    description: 'Filter by submission status',
+  })
   @SwaggerApiResponse({ status: 200, description: 'Submissions retrieved successfully' })
   @SwaggerApiResponse({ status: 401, description: 'Unauthorized' })
   @SwaggerApiResponse({ status: 403, description: 'Forbidden - Procurement/Admin access required' })
-  async findAll(
-    @Query('status') status?: ProductSubmissionStatus,
-  ): Promise<ApiResponse<any[]>> {
+  async findAll(@Query('status') status?: ProductSubmissionStatus): Promise<ApiResponse<any[]>> {
     const submissions = await this.procurementService.findAll(status);
     return {
       data: submissions,
@@ -56,16 +64,15 @@ export class ProcurementController {
   @Get('submissions/:id')
   @ApiOperation({
     summary: 'Get submission by ID',
-    description: 'Retrieves a specific product submission by ID. Procurement/Admin access required.',
+    description:
+      'Retrieves a specific product submission by ID. Procurement/Admin access required.',
   })
   @ApiParam({ name: 'id', description: 'Submission UUID', type: String })
   @SwaggerApiResponse({ status: 200, description: 'Submission retrieved successfully' })
   @SwaggerApiResponse({ status: 401, description: 'Unauthorized' })
   @SwaggerApiResponse({ status: 403, description: 'Forbidden - Procurement/Admin access required' })
   @SwaggerApiResponse({ status: 404, description: 'Submission not found' })
-  async findOne(
-    @Param('id', ParseUUIDPipe) id: string,
-  ): Promise<ApiResponse<any>> {
+  async findOne(@Param('id', ParseUUIDPipe) id: string): Promise<ApiResponse<any>> {
     const submission = await this.procurementService.findOne(id);
     return {
       data: submission,
@@ -76,7 +83,8 @@ export class ProcurementController {
   @Post('submissions/:id/approve')
   @ApiOperation({
     summary: 'Approve product submission',
-    description: 'Approves a product submission for procurement. Procurement/Admin access required.',
+    description:
+      'Approves a product submission for procurement. Procurement/Admin access required.',
   })
   @ApiParam({ name: 'id', description: 'Submission UUID', type: String })
   @ApiBody({ type: ApproveSubmissionDto })
@@ -124,7 +132,8 @@ export class ProcurementController {
   @Post('submissions/:id/select-quantity')
   @ApiOperation({
     summary: 'Select quantity for submission',
-    description: 'Selects the quantity to procure for a product submission. Procurement/Admin access required.',
+    description:
+      'Selects the quantity to procure for a product submission. Procurement/Admin access required.',
   })
   @ApiParam({ name: 'id', description: 'Submission UUID', type: String })
   @ApiBody({ type: SelectQuantityDto })
@@ -152,7 +161,8 @@ export class ProcurementController {
   @Get('duplicates')
   @ApiOperation({
     summary: 'Get duplicate alerts',
-    description: 'Retrieves alerts for potential duplicate product submissions. Procurement/Admin access required.',
+    description:
+      'Retrieves alerts for potential duplicate product submissions. Procurement/Admin access required.',
   })
   @SwaggerApiResponse({ status: 200, description: 'Duplicate alerts retrieved successfully' })
   @SwaggerApiResponse({ status: 401, description: 'Unauthorized' })
@@ -168,7 +178,8 @@ export class ProcurementController {
   @Get('dashboard/stats')
   @ApiOperation({
     summary: 'Get procurement dashboard statistics',
-    description: 'Retrieves dashboard statistics for procurement operations. Procurement/Admin access required.',
+    description:
+      'Retrieves dashboard statistics for procurement operations. Procurement/Admin access required.',
   })
   @SwaggerApiResponse({ status: 200, description: 'Dashboard statistics retrieved successfully' })
   @SwaggerApiResponse({ status: 401, description: 'Unauthorized' })
@@ -181,4 +192,3 @@ export class ProcurementController {
     };
   }
 }
-

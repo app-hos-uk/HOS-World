@@ -98,9 +98,7 @@ describe('RefundsService', () => {
     it('should throw NotFoundException if return request not found', async () => {
       mockPrismaService.returnRequest.findUnique.mockResolvedValue(null);
 
-      await expect(service.processRefund(refundData)).rejects.toThrow(
-        NotFoundException,
-      );
+      await expect(service.processRefund(refundData)).rejects.toThrow(NotFoundException);
     });
 
     it('should throw BadRequestException if return not approved', async () => {
@@ -112,18 +110,14 @@ describe('RefundsService', () => {
 
       mockPrismaService.returnRequest.findUnique.mockResolvedValue(mockReturnRequest);
 
-      await expect(service.processRefund(refundData)).rejects.toThrow(
-        BadRequestException,
-      );
+      await expect(service.processRefund(refundData)).rejects.toThrow(BadRequestException);
     });
   });
 
   describe('getRefunds', () => {
     it('should return refunds with filters', async () => {
       const mockRefunds = {
-        transactions: [
-          { id: 'tx-1', type: 'REFUND', amount: 100 },
-        ],
+        transactions: [{ id: 'tx-1', type: 'REFUND', amount: 100 }],
         pagination: { total: 1 },
       };
 

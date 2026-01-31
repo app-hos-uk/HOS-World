@@ -116,7 +116,8 @@ export class InfluencerCampaignsController {
   @ApiOperation({ summary: 'Create campaign' })
   @SwaggerApiResponse({ status: 201, description: 'Campaign created successfully' })
   async create(
-    @Body() body: {
+    @Body()
+    body: {
       influencerId: string;
       name: string;
       description?: string;
@@ -152,7 +153,8 @@ export class InfluencerCampaignsController {
   @SwaggerApiResponse({ status: 200, description: 'Campaign updated successfully' })
   async update(
     @Param('id', ParseUUIDPipe) id: string,
-    @Body() body: {
+    @Body()
+    body: {
       name?: string;
       description?: string;
       startDate?: string;

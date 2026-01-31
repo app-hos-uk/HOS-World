@@ -54,7 +54,7 @@ export class ReportsService {
     const totalTransactions = transactions.length;
 
     // Group by period if specified
-    let groupedData: any = {};
+    const groupedData: any = {};
     if (filters?.period) {
       transactions.forEach((tx) => {
         const date = new Date(tx.createdAt);
@@ -87,11 +87,7 @@ export class ReportsService {
     };
   }
 
-  async getSellerPerformance(filters?: {
-    startDate?: Date;
-    endDate?: Date;
-    sellerId?: string;
-  }) {
+  async getSellerPerformance(filters?: { startDate?: Date; endDate?: Date; sellerId?: string }) {
     const where: any = {
       type: 'PAYMENT',
       status: 'COMPLETED',
@@ -165,11 +161,7 @@ export class ReportsService {
     return performance;
   }
 
-  async getCustomerSpending(filters?: {
-    startDate?: Date;
-    endDate?: Date;
-    customerId?: string;
-  }) {
+  async getCustomerSpending(filters?: { startDate?: Date; endDate?: Date; customerId?: string }) {
     const where: any = {
       type: 'PAYMENT',
       status: 'COMPLETED',
@@ -245,11 +237,7 @@ export class ReportsService {
     return spending;
   }
 
-  async getPlatformFees(filters?: {
-    startDate?: Date;
-    endDate?: Date;
-    sellerId?: string;
-  }) {
+  async getPlatformFees(filters?: { startDate?: Date; endDate?: Date; sellerId?: string }) {
     const where: any = {
       type: 'FEE',
       status: 'COMPLETED',
@@ -314,4 +302,3 @@ export class ReportsService {
     return Math.ceil(((d.getTime() - yearStart.getTime()) / 86400000 + 1) / 7);
   }
 }
-

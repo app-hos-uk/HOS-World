@@ -1,9 +1,4 @@
-import {
-  Injectable,
-  NotFoundException,
-  BadRequestException,
-  Logger,
-} from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException, Logger } from '@nestjs/common';
 import { PrismaService } from '../database/prisma.service';
 import { Decimal } from '@prisma/client/runtime/library';
 
@@ -109,7 +104,10 @@ export class InfluencerCommissionsService {
   /**
    * Get commissions for influencer
    */
-  async findByInfluencer(userId: string, options?: { page?: number; limit?: number; status?: string }) {
+  async findByInfluencer(
+    userId: string,
+    options?: { page?: number; limit?: number; status?: string },
+  ) {
     const influencer = await this.prisma.influencer.findUnique({
       where: { userId },
     });
@@ -160,10 +158,18 @@ export class InfluencerCommissionsService {
       where: { influencerId: influencer.id },
     });
 
-    const pending = commissions.filter(c => c.status === 'PENDING').reduce((sum, c) => sum + Number(c.amount), 0);
-    const approved = commissions.filter(c => c.status === 'APPROVED').reduce((sum, c) => sum + Number(c.amount), 0);
-    const paid = commissions.filter(c => c.status === 'PAID').reduce((sum, c) => sum + Number(c.amount), 0);
-    const cancelled = commissions.filter(c => c.status === 'CANCELLED').reduce((sum, c) => sum + Number(c.amount), 0);
+    const pending = commissions
+      .filter((c) => c.status === 'PENDING')
+      .reduce((sum, c) => sum + Number(c.amount), 0);
+    const approved = commissions
+      .filter((c) => c.status === 'APPROVED')
+      .reduce((sum, c) => sum + Number(c.amount), 0);
+    const paid = commissions
+      .filter((c) => c.status === 'PAID')
+      .reduce((sum, c) => sum + Number(c.amount), 0);
+    const cancelled = commissions
+      .filter((c) => c.status === 'CANCELLED')
+      .reduce((sum, c) => sum + Number(c.amount), 0);
 
     return {
       pending,
@@ -178,7 +184,12 @@ export class InfluencerCommissionsService {
   /**
    * List all commissions (admin)
    */
-  async findAll(options?: { page?: number; limit?: number; status?: string; influencerId?: string }) {
+  async findAll(options?: {
+    page?: number;
+    limit?: number;
+    status?: string;
+    influencerId?: string;
+  }) {
     const { page = 1, limit = 20, status, influencerId } = options || {};
 
     const where: any = {};

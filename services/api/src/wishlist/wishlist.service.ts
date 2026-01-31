@@ -6,7 +6,12 @@ import { ProductStatus, ImageType } from '@prisma/client';
 // Valid product status values for the shared types Product interface
 type ValidProductStatus = 'draft' | 'active' | 'inactive' | 'out_of_stock';
 
-const VALID_PRODUCT_STATUSES: Set<string> = new Set(['draft', 'active', 'inactive', 'out_of_stock']);
+const VALID_PRODUCT_STATUSES: Set<string> = new Set([
+  'draft',
+  'active',
+  'inactive',
+  'out_of_stock',
+]);
 
 /**
  * Normalize and validate a product status from Prisma enum to shared types literal.
@@ -15,14 +20,14 @@ const VALID_PRODUCT_STATUSES: Set<string> = new Set(['draft', 'active', 'inactiv
  */
 function normalizeProductStatus(status: string | null | undefined): ValidProductStatus {
   if (!status) return 'draft';
-  
+
   const normalized = status.toLowerCase();
-  
+
   // Only return if it's a known valid status
   if (VALID_PRODUCT_STATUSES.has(normalized)) {
     return normalized as ValidProductStatus;
   }
-  
+
   // For any unknown status (ARCHIVED, DISCONTINUED, etc.), default to 'inactive'
   // as it's the safest semantic match for non-active products
   return 'inactive';
@@ -88,7 +93,11 @@ export class WishlistService {
     });
   }
 
-  async getWishlist(userId: string, page: number = 1, limit: number = 20): Promise<{
+  async getWishlist(
+    userId: string,
+    page: number = 1,
+    limit: number = 20,
+  ): Promise<{
     products: Product[];
     pagination: {
       page: number;
@@ -168,13 +177,14 @@ export class WishlistService {
       currency: product.currency,
       taxRate: Number(product.taxRate),
       stock: product.stock,
-      images: product.images?.map((img: any) => ({
-        id: img.id,
-        url: img.url,
-        alt: img.alt || undefined,
-        order: img.order,
-        type: img.type as ImageType,
-      })) || [],
+      images:
+        product.images?.map((img: any) => ({
+          id: img.id,
+          url: img.url,
+          alt: img.alt || undefined,
+          order: img.order,
+          type: img.type as ImageType,
+        })) || [],
       variations: undefined,
       fandom: product.fandom || undefined,
       category: product.category || undefined,
@@ -185,5 +195,3 @@ export class WishlistService {
     };
   }
 }
-
-

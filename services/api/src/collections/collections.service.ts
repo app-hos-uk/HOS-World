@@ -7,12 +7,9 @@ export class CollectionsService {
 
   async findAll(userId: string, includePublic: boolean = false) {
     const where: any = {};
-    
+
     if (includePublic) {
-      where.OR = [
-        { userId },
-        { isPublic: true },
-      ];
+      where.OR = [{ userId }, { isPublic: true }];
     } else {
       where.userId = userId;
     }
@@ -64,7 +61,7 @@ export class CollectionsService {
     }
 
     const items = Array.isArray(collection.items) ? (collection.items as any[]) : [];
-    
+
     return {
       ...collection,
       itemCount: items.length,
@@ -93,7 +90,11 @@ export class CollectionsService {
     });
   }
 
-  async update(id: string, userId: string, data: { name?: string; description?: string; isPublic?: boolean }) {
+  async update(
+    id: string,
+    userId: string,
+    data: { name?: string; description?: string; isPublic?: boolean },
+  ) {
     const collection = await this.prisma.collection.findUnique({
       where: { id },
     });
@@ -156,7 +157,7 @@ export class CollectionsService {
     }
 
     const items = Array.isArray(collection.items) ? (collection.items as any[]) : [];
-    
+
     // Check if product already exists
     if (items.some((item: any) => item.productId === productId)) {
       throw new ForbiddenException('Product already in collection');

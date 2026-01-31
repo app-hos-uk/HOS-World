@@ -24,7 +24,7 @@ async function fixAdmin() {
     console.log('🔧 Fixing admin user...');
     console.log(`   Email: ${email}`);
     console.log(`   Password: ${password}\n`);
-    
+
     // Delete existing user (if exists)
     const deleted = await prisma.user.deleteMany({
       where: { email },
@@ -58,7 +58,9 @@ async function fixAdmin() {
     console.log('   Email:', email);
     console.log('   Password:', password);
     console.log('\n🧪 Test login with:');
-    console.log(`   curl -X POST https://hos-marketplaceapi-production.up.railway.app/api/auth/login \\`);
+    console.log(
+      `   curl -X POST https://hos-marketplaceapi-production.up.railway.app/api/auth/login \\`,
+    );
     console.log(`     -H "Content-Type: application/json" \\`);
     console.log(`     -d '{"email": "${email}", "password": "${password}"}'`);
   } catch (error) {
@@ -81,4 +83,3 @@ fixAdmin()
     console.error('\n❌ Fix failed:', error);
     process.exit(1);
   });
-

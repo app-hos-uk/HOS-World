@@ -38,17 +38,11 @@ describe('Cart and Orders Integration Tests', () => {
     if (process.env.SKIP_INTEGRATION_TESTS === 'true') {
       return;
     }
-    
+
     let moduleFixture: TestingModule;
     try {
       moduleFixture = await Test.createTestingModule({
-        imports: [
-          DatabaseModule,
-          AuthModule,
-          ProductsModule,
-          CartModule,
-          OrdersModule,
-        ],
+        imports: [DatabaseModule, AuthModule, ProductsModule, CartModule, OrdersModule],
       }).compile();
     } catch (error: any) {
       if (isDbConnectionError(error)) {
@@ -150,29 +144,43 @@ describe('Cart and Orders Integration Tests', () => {
 
   afterAll(async () => {
     if (!prismaService || (!customerUserId && !sellerUserId)) return;
-    await prismaService.order.deleteMany({
-      where: { userId: customerUserId },
-    }).catch(() => {});
-    await prismaService.cartItem.deleteMany({
-      where: { cart: { userId: customerUserId } },
-    }).catch(() => {});
-    await prismaService.cart.deleteMany({
-      where: { userId: customerUserId },
-    }).catch(() => {});
-    await prismaService.address.deleteMany({
-      where: { userId: customerUserId },
-    }).catch(() => {});
+    await prismaService.order
+      .deleteMany({
+        where: { userId: customerUserId },
+      })
+      .catch(() => {});
+    await prismaService.cartItem
+      .deleteMany({
+        where: { cart: { userId: customerUserId } },
+      })
+      .catch(() => {});
+    await prismaService.cart
+      .deleteMany({
+        where: { userId: customerUserId },
+      })
+      .catch(() => {});
+    await prismaService.address
+      .deleteMany({
+        where: { userId: customerUserId },
+      })
+      .catch(() => {});
     if (productId) {
-      await prismaService.product.deleteMany({
-        where: { id: productId },
-      }).catch(() => {});
+      await prismaService.product
+        .deleteMany({
+          where: { id: productId },
+        })
+        .catch(() => {});
     }
-    await prismaService.seller.deleteMany({
-      where: { userId: sellerUserId },
-    }).catch(() => {});
-    await prismaService.user.deleteMany({
-      where: { id: { in: [customerUserId, sellerUserId].filter(Boolean) } },
-    }).catch(() => {});
+    await prismaService.seller
+      .deleteMany({
+        where: { userId: sellerUserId },
+      })
+      .catch(() => {});
+    await prismaService.user
+      .deleteMany({
+        where: { id: { in: [customerUserId, sellerUserId].filter(Boolean) } },
+      })
+      .catch(() => {});
     await prismaService.$disconnect().catch(() => {});
   });
 
@@ -229,5 +237,3 @@ describe('Cart and Orders Integration Tests', () => {
     });
   });
 });
-
-

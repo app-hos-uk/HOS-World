@@ -1,14 +1,4 @@
-import {
-  Controller,
-  Get,
-  Post,
-  Put,
-  Delete,
-  Body,
-  Param,
-  Query,
-  UseGuards,
-} from '@nestjs/common';
+import { Controller, Get, Post, Put, Delete, Body, Param, Query, UseGuards } from '@nestjs/common';
 import {
   ApiTags,
   ApiOperation,
@@ -43,9 +33,7 @@ export class TaxController {
     description: 'Creates a new tax zone. Requires ADMIN role.',
   })
   @SwaggerApiResponse({ status: 201, description: 'Tax zone created successfully' })
-  async createTaxZone(
-    @Body() createDto: CreateTaxZoneDto,
-  ): Promise<ApiResponse<any>> {
+  async createTaxZone(@Body() createDto: CreateTaxZoneDto): Promise<ApiResponse<any>> {
     const zone = await this.taxService.createTaxZone(createDto);
     return {
       data: zone,
@@ -66,9 +54,7 @@ export class TaxController {
   async findAllTaxZones(
     @Query('includeInactive') includeInactive?: string,
   ): Promise<ApiResponse<any[]>> {
-    const zones = await this.taxService.findAllTaxZones(
-      includeInactive === 'true',
-    );
+    const zones = await this.taxService.findAllTaxZones(includeInactive === 'true');
     return {
       data: zones,
       message: 'Tax zones retrieved successfully',
@@ -85,9 +71,7 @@ export class TaxController {
   })
   @ApiParam({ name: 'id', description: 'Tax zone UUID', type: String })
   @SwaggerApiResponse({ status: 200, description: 'Tax zone retrieved successfully' })
-  async findTaxZoneById(
-    @Param('id') id: string,
-  ): Promise<ApiResponse<any>> {
+  async findTaxZoneById(@Param('id') id: string): Promise<ApiResponse<any>> {
     const zone = await this.taxService.findTaxZoneById(id);
     return {
       data: zone,
@@ -145,9 +129,7 @@ export class TaxController {
     description: 'Creates a new tax class. Requires ADMIN role.',
   })
   @SwaggerApiResponse({ status: 201, description: 'Tax class created successfully' })
-  async createTaxClass(
-    @Body() createDto: CreateTaxClassDto,
-  ): Promise<ApiResponse<any>> {
+  async createTaxClass(@Body() createDto: CreateTaxClassDto): Promise<ApiResponse<any>> {
     const taxClass = await this.taxService.createTaxClass(createDto);
     return {
       data: taxClass,
@@ -182,9 +164,7 @@ export class TaxController {
   })
   @ApiParam({ name: 'id', description: 'Tax class UUID', type: String })
   @SwaggerApiResponse({ status: 200, description: 'Tax class retrieved successfully' })
-  async findTaxClassById(
-    @Param('id') id: string,
-  ): Promise<ApiResponse<any>> {
+  async findTaxClassById(@Param('id') id: string): Promise<ApiResponse<any>> {
     const taxClass = await this.taxService.findTaxClassById(id);
     return {
       data: taxClass,
@@ -241,8 +221,18 @@ export class TaxController {
     summary: 'Get tax rates',
     description: 'Retrieves tax rates with optional filters.',
   })
-  @ApiQuery({ name: 'taxZoneId', required: false, type: String, description: 'Filter by tax zone ID' })
-  @ApiQuery({ name: 'taxClassId', required: false, type: String, description: 'Filter by tax class ID' })
+  @ApiQuery({
+    name: 'taxZoneId',
+    required: false,
+    type: String,
+    description: 'Filter by tax zone ID',
+  })
+  @ApiQuery({
+    name: 'taxClassId',
+    required: false,
+    type: String,
+    description: 'Filter by tax class ID',
+  })
   @SwaggerApiResponse({ status: 200, description: 'Tax rates retrieved successfully' })
   async findAllTaxRates(
     @Query('taxZoneId') taxZoneId?: string,
@@ -282,9 +272,7 @@ export class TaxController {
     description: 'Creates a new tax rate for a zone and class combination.',
   })
   @SwaggerApiResponse({ status: 201, description: 'Tax rate created successfully' })
-  async createTaxRate(
-    @Body() createDto: CreateTaxRateDto,
-  ): Promise<ApiResponse<any>> {
+  async createTaxRate(@Body() createDto: CreateTaxRateDto): Promise<ApiResponse<any>> {
     const rate = await this.taxService.createTaxRate(createDto);
     return {
       data: rate,
@@ -341,7 +329,8 @@ export class TaxController {
   })
   @SwaggerApiResponse({ status: 200, description: 'Tax calculated successfully' })
   async calculateTax(
-    @Body() body: {
+    @Body()
+    body: {
       amount: number;
       taxClassId: string;
       location: {
@@ -352,11 +341,7 @@ export class TaxController {
       };
     },
   ): Promise<ApiResponse<any>> {
-    const result = await this.taxService.calculateTax(
-      body.amount,
-      body.taxClassId,
-      body.location,
-    );
+    const result = await this.taxService.calculateTax(body.amount, body.taxClassId, body.location);
     return {
       data: result,
       message: 'Tax calculated successfully',

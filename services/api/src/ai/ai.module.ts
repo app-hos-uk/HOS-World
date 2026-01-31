@@ -12,4 +12,3 @@ import { ConfigModule } from '@nestjs/config';
   exports: [GeminiService, AIChatService, PersonalizationService],
 })
 export class AIModule {}
-

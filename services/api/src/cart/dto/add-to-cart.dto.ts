@@ -12,5 +12,3 @@ export class AddToCartDto {
   @IsObject()
   variationOptions?: Record<string, string>;
 }
-
-

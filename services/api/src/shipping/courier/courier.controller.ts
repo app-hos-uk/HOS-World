@@ -1,13 +1,4 @@
-import {
-  Controller,
-  Post,
-  Get,
-  Body,
-  Param,
-  Query,
-  UseGuards,
-  Request,
-} from '@nestjs/common';
+import { Controller, Post, Get, Body, Param, Query, UseGuards, Request } from '@nestjs/common';
 import {
   ApiTags,
   ApiOperation,
@@ -141,7 +132,7 @@ export class CourierController {
   @Public()
   @ApiOperation({
     summary: 'Track shipment',
-    description: 'Tracks a shipment using the courier provider\'s tracking system.',
+    description: "Tracks a shipment using the courier provider's tracking system.",
   })
   @ApiParam({ name: 'provider', description: 'Courier provider name', type: String })
   @ApiParam({ name: 'trackingNumber', description: 'Tracking number', type: String })
@@ -161,7 +152,7 @@ export class CourierController {
   @Roles('ADMIN', 'SELLER', 'B2C_SELLER', 'CUSTOMER')
   @ApiOperation({
     summary: 'Validate address',
-    description: 'Validates an address using the courier provider\'s address validation service.',
+    description: "Validates an address using the courier provider's address validation service.",
   })
   @ApiParam({ name: 'provider', description: 'Courier provider name', type: String })
   @ApiBody({

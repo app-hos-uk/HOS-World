@@ -17,40 +17,40 @@ import {
 
 /**
  * DHL Express API Integration
- * 
+ *
  * Implements DHL Express MyDHL API
  * Documentation: https://developer.dhl.com/api-reference/dhl-express-mydhl-api
- * 
+ *
  * Required credentials:
  * - apiKey: DHL API Key
  * - accountNumber: DHL account number
  * - siteId (optional): DHL site ID for legacy XML API
  * - password (optional): DHL password for legacy XML API
- * 
+ *
  * NOTE: This class is NOT a NestJS provider. It is instantiated manually by
  * CourierFactoryService with credentials loaded from the IntegrationConfig table.
  */
 export class DHLProvider extends BaseCourierProvider implements ICourierProvider {
   readonly providerId = 'dhl';
   readonly providerName = 'DHL Express';
-  
+
   private readonly logger = new Logger(DHLProvider.name);
 
   // DHL Express service codes
   private static readonly SERVICES: Record<string, { name: string; days: number }> = {
-    'P': { name: 'DHL Express Worldwide', days: 3 },
-    'U': { name: 'DHL Express Worldwide (ECX)', days: 3 },
-    'K': { name: 'DHL Express 9:00', days: 1 },
-    'E': { name: 'DHL Express 10:30', days: 1 },
-    'N': { name: 'DHL Express 12:00', days: 1 },
-    'Y': { name: 'DHL Express 12:00 (DOX)', days: 1 },
-    'T': { name: 'DHL Express 12:00 (DOC)', days: 1 },
-    'D': { name: 'DHL Express Worldwide (DOC)', days: 3 },
-    'X': { name: 'DHL Express Envelope', days: 3 },
-    'W': { name: 'DHL Economy Select', days: 5 },
-    'H': { name: 'DHL Economy Select (DOC)', days: 5 },
-    'C': { name: 'DHL Medical Express', days: 1 },
-    'B': { name: 'DHL Medical Express (DOC)', days: 1 },
+    P: { name: 'DHL Express Worldwide', days: 3 },
+    U: { name: 'DHL Express Worldwide (ECX)', days: 3 },
+    K: { name: 'DHL Express 9:00', days: 1 },
+    E: { name: 'DHL Express 10:30', days: 1 },
+    N: { name: 'DHL Express 12:00', days: 1 },
+    Y: { name: 'DHL Express 12:00 (DOX)', days: 1 },
+    T: { name: 'DHL Express 12:00 (DOC)', days: 1 },
+    D: { name: 'DHL Express Worldwide (DOC)', days: 3 },
+    X: { name: 'DHL Express Envelope', days: 3 },
+    W: { name: 'DHL Economy Select', days: 5 },
+    H: { name: 'DHL Economy Select (DOC)', days: 5 },
+    C: { name: 'DHL Medical Express', days: 1 },
+    B: { name: 'DHL Medical Express (DOC)', days: 1 },
   };
 
   constructor(credentials: Record<string, any>, isTestMode: boolean = true) {
@@ -58,10 +58,7 @@ export class DHLProvider extends BaseCourierProvider implements ICourierProvider
   }
 
   isConfigured(): boolean {
-    return !!(
-      this.credentials.apiKey &&
-      this.credentials.accountNumber
-    );
+    return !!(this.credentials.apiKey && this.credentials.accountNumber);
   }
 
   protected getBaseUrl(): string {
@@ -76,25 +73,21 @@ export class DHLProvider extends BaseCourierProvider implements ICourierProvider
 
   /**
    * Make authenticated API request
-   * 
+   *
    * Authentication modes:
    * 1. Modern MyDHL API: Uses DHL-API-Key header only (preferred)
    * 2. Legacy XML API: Uses Basic Auth with siteId:password
-   * 
+   *
    * We use DHL-API-Key for the modern REST API. Basic Auth is only added
    * when legacy credentials (siteId + password) are explicitly provided.
    */
-  private async apiRequest(
-    endpoint: string,
-    method: string = 'GET',
-    body?: any,
-  ): Promise<any> {
+  private async apiRequest(endpoint: string, method: string = 'GET', body?: any): Promise<any> {
     const url = `${this.getBaseUrl()}${endpoint}`;
 
     // Build headers - modern API uses DHL-API-Key header
     const headers: Record<string, string> = {
       'Content-Type': 'application/json',
-      'Accept': 'application/json',
+      Accept: 'application/json',
       'DHL-API-Key': this.credentials.apiKey,
     };
 
@@ -102,7 +95,7 @@ export class DHLProvider extends BaseCourierProvider implements ICourierProvider
     // Do NOT mix accountNumber/apiKey as Basic Auth - that's invalid
     if (this.credentials.siteId && this.credentials.password) {
       headers['Authorization'] = `Basic ${Buffer.from(
-        `${this.credentials.siteId}:${this.credentials.password}`
+        `${this.credentials.siteId}:${this.credentials.password}`,
       ).toString('base64')}`;
     }
 
@@ -138,7 +131,7 @@ export class DHLProvider extends BaseCourierProvider implements ICourierProvider
 
   async testConnection(): Promise<TestConnectionResult> {
     const startTime = Date.now();
-    
+
     try {
       if (!this.isConfigured()) {
         return {
@@ -209,11 +202,14 @@ export class DHLProvider extends BaseCourierProvider implements ICourierProvider
           serviceName: product.productName || serviceInfo.name,
           rate: parseFloat(totalPrice.price),
           currency: totalPrice.priceCurrency,
-          estimatedDays: product.deliveryCapabilities?.estimatedDeliveryDateAndTime 
-            ? this.calculateDays(new Date(), new Date(product.deliveryCapabilities.estimatedDeliveryDateAndTime))
+          estimatedDays: product.deliveryCapabilities?.estimatedDeliveryDateAndTime
+            ? this.calculateDays(
+                new Date(),
+                new Date(product.deliveryCapabilities.estimatedDeliveryDateAndTime),
+              )
             : serviceInfo.days,
-          estimatedDeliveryDate: product.deliveryCapabilities?.estimatedDeliveryDateAndTime 
-            ? new Date(product.deliveryCapabilities.estimatedDeliveryDateAndTime) 
+          estimatedDeliveryDate: product.deliveryCapabilities?.estimatedDeliveryDateAndTime
+            ? new Date(product.deliveryCapabilities.estimatedDeliveryDateAndTime)
             : undefined,
           trackingIncluded: true,
         });
@@ -228,7 +224,7 @@ export class DHLProvider extends BaseCourierProvider implements ICourierProvider
 
   private buildRatePayload(request: RateRequest): any {
     const totalWeight = request.packages.reduce((sum, pkg) => sum + pkg.weight, 0);
-    
+
     return {
       customerDetails: {
         shipperDetails: {
@@ -279,7 +275,7 @@ export class DHLProvider extends BaseCourierProvider implements ICourierProvider
   private validateAndGetPhone(phone: string | undefined, party: 'shipper' | 'receiver'): string {
     if (!phone?.trim()) {
       throw new Error(
-        `Phone number is required for ${party}. DHL Express requires valid contact phone numbers for all shipments.`
+        `Phone number is required for ${party}. DHL Express requires valid contact phone numbers for all shipments.`,
       );
     }
 
@@ -287,7 +283,7 @@ export class DHLProvider extends BaseCourierProvider implements ICourierProvider
     const cleanPhone = phone.replace(/\s+/g, '');
     if (!/^\+?[\d\-()]+$/.test(cleanPhone)) {
       throw new Error(
-        `Invalid phone number format for ${party}: "${phone}". Please use international format (e.g., +44 20 1234 5678).`
+        `Invalid phone number format for ${party}: "${phone}". Please use international format (e.g., +44 20 1234 5678).`,
       );
     }
 
@@ -296,7 +292,7 @@ export class DHLProvider extends BaseCourierProvider implements ICourierProvider
 
   async createShipment(request: ShipmentRequest): Promise<ShipmentResponse> {
     const payload = this.buildShipmentPayload(request);
-    
+
     try {
       const response = await this.apiRequest('/shipments', 'POST', payload);
 
@@ -319,8 +315,8 @@ export class DHLProvider extends BaseCourierProvider implements ICourierProvider
         currency: response.shipmentCharges?.[0]?.priceCurrency || 'GBP',
         serviceCode: request.serviceCode,
         serviceName: DHLProvider.SERVICES[request.serviceCode]?.name || request.serviceCode,
-        estimatedDeliveryDate: response.estimatedDeliveryDate?.estimatedDeliveryDate 
-          ? new Date(response.estimatedDeliveryDate.estimatedDeliveryDate) 
+        estimatedDeliveryDate: response.estimatedDeliveryDate?.estimatedDeliveryDate
+          ? new Date(response.estimatedDeliveryDate.estimatedDeliveryDate)
           : undefined,
       };
     } catch (error: any) {
@@ -384,9 +380,7 @@ export class DHLProvider extends BaseCourierProvider implements ICourierProvider
             width: pkg.width,
             height: pkg.height,
           },
-          customerReferences: [
-            { value: request.reference1 || request.orderId },
-          ],
+          customerReferences: [{ value: request.reference1 || request.orderId }],
         })),
         isCustomsDeclarable: isInternational,
         declaredValue: request.insurance?.amount || 0,
@@ -405,9 +399,7 @@ export class DHLProvider extends BaseCourierProvider implements ICourierProvider
           },
         ],
       },
-      customerReferences: [
-        { value: request.orderId, typeCode: 'CU' },
-      ],
+      customerReferences: [{ value: request.orderId, typeCode: 'CU' }],
     };
 
     // Add customs declaration for international shipments
@@ -446,7 +438,7 @@ export class DHLProvider extends BaseCourierProvider implements ICourierProvider
       const response = await fetch(`${this.getTrackingUrl()}?trackingNumber=${trackingNumber}`, {
         headers: {
           'DHL-API-Key': this.credentials.apiKey,
-          'Accept': 'application/json',
+          Accept: 'application/json',
         },
       });
 
@@ -479,12 +471,11 @@ export class DHLProvider extends BaseCourierProvider implements ICourierProvider
         trackingNumber,
         status: this.mapTrackingStatus(status?.statusCode),
         statusDescription: status?.description || 'In transit',
-        estimatedDeliveryDate: shipment.estimatedTimeOfDelivery 
-          ? new Date(shipment.estimatedTimeOfDelivery) 
+        estimatedDeliveryDate: shipment.estimatedTimeOfDelivery
+          ? new Date(shipment.estimatedTimeOfDelivery)
           : undefined,
-        actualDeliveryDate: status?.statusCode === 'delivered' 
-          ? new Date(events[0]?.timestamp) 
-          : undefined,
+        actualDeliveryDate:
+          status?.statusCode === 'delivered' ? new Date(events[0]?.timestamp) : undefined,
         signedBy: shipment.details?.proofOfDelivery?.signedBy,
         events,
       };
@@ -496,15 +487,28 @@ export class DHLProvider extends BaseCourierProvider implements ICourierProvider
 
   private mapTrackingStatus(statusCode: string): TrackingStatus {
     const normalizedStatus = (statusCode || '').toLowerCase();
-    
+
     if (normalizedStatus.includes('delivered')) return 'DELIVERED';
-    if (normalizedStatus.includes('out-for-delivery') || normalizedStatus.includes('with delivery courier')) return 'OUT_FOR_DELIVERY';
-    if (normalizedStatus.includes('exception') || normalizedStatus.includes('clearance')) return 'EXCEPTION';
-    if (normalizedStatus.includes('failure') || normalizedStatus.includes('unsuccessful')) return 'FAILED_ATTEMPT';
+    if (
+      normalizedStatus.includes('out-for-delivery') ||
+      normalizedStatus.includes('with delivery courier')
+    )
+      return 'OUT_FOR_DELIVERY';
+    if (normalizedStatus.includes('exception') || normalizedStatus.includes('clearance'))
+      return 'EXCEPTION';
+    if (normalizedStatus.includes('failure') || normalizedStatus.includes('unsuccessful'))
+      return 'FAILED_ATTEMPT';
     if (normalizedStatus.includes('return')) return 'RETURN_TO_SENDER';
-    if (normalizedStatus.includes('transit') || normalizedStatus.includes('processed') || normalizedStatus.includes('arrived') || normalizedStatus.includes('departed')) return 'IN_TRANSIT';
-    if (normalizedStatus.includes('picked') || normalizedStatus.includes('shipment information')) return 'PRE_TRANSIT';
-    
+    if (
+      normalizedStatus.includes('transit') ||
+      normalizedStatus.includes('processed') ||
+      normalizedStatus.includes('arrived') ||
+      normalizedStatus.includes('departed')
+    )
+      return 'IN_TRANSIT';
+    if (normalizedStatus.includes('picked') || normalizedStatus.includes('shipment information'))
+      return 'PRE_TRANSIT';
+
     return 'IN_TRANSIT';
   }
 
@@ -640,7 +644,10 @@ export class DHLProvider extends BaseCourierProvider implements ICourierProvider
     }
   }
 
-  async getAvailableServices(from: Address, to: Address): Promise<Array<{ code: string; name: string; description?: string }>> {
+  async getAvailableServices(
+    from: Address,
+    to: Address,
+  ): Promise<Array<{ code: string; name: string; description?: string }>> {
     return [
       { code: 'P', name: 'DHL Express Worldwide', description: '1-3 business days' },
       { code: 'K', name: 'DHL Express 9:00', description: 'Next business day by 9am' },

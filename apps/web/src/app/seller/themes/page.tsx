@@ -54,6 +54,7 @@ export default function SellerThemesPage() {
   useEffect(() => {
     fetchThemes();
     fetchCurrentTheme();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const fetchThemes = async () => {

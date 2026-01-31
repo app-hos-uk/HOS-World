@@ -5,10 +5,7 @@ import {
   ConflictException,
 } from '@nestjs/common';
 import { PrismaService } from '../database/prisma.service';
-import {
-  AssignCustomDomainDto,
-  CreateSubDomainDto,
-} from './dto/assign-domain.dto';
+import { AssignCustomDomainDto, CreateSubDomainDto } from './dto/assign-domain.dto';
 
 @Injectable()
 export class DomainsService {
@@ -56,10 +53,7 @@ export class DomainsService {
     return seller;
   }
 
-  async assignCustomDomain(
-    sellerId: string,
-    assignDto: AssignCustomDomainDto,
-  ) {
+  async assignCustomDomain(sellerId: string, assignDto: AssignCustomDomainDto) {
     const seller = await this.prisma.seller.findUnique({
       where: { id: sellerId },
     });
@@ -105,7 +99,7 @@ export class DomainsService {
 
     // Generate DNS configuration documentation
     const dnsConfig = await this.getDNSConfiguration(sellerId);
-    
+
     // Return updated seller with DNS configuration
     return {
       ...updated,
@@ -288,4 +282,3 @@ export class DomainsService {
     return subDomainRegex.test(subDomain) && subDomain.length >= 3 && subDomain.length <= 63;
   }
 }
-

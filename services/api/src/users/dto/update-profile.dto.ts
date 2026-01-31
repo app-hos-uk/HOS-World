@@ -62,5 +62,3 @@ export class ChangePasswordDto {
   @IsString()
   newPassword: string;
 }
-
-

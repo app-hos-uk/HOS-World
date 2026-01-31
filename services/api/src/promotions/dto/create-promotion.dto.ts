@@ -1,4 +1,14 @@
-import { IsString, IsEnum, IsOptional, IsBoolean, IsInt, IsNumber, IsDateString, IsObject, ValidateNested } from 'class-validator';
+import {
+  IsString,
+  IsEnum,
+  IsOptional,
+  IsBoolean,
+  IsInt,
+  IsNumber,
+  IsDateString,
+  IsObject,
+  ValidateNested,
+} from 'class-validator';
 import { Type } from 'class-transformer';
 import { PromotionType, PromotionStatus } from '@prisma/client';
 

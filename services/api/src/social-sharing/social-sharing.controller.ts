@@ -41,10 +41,7 @@ export class SocialSharingController {
   @SwaggerApiResponse({ status: 201, description: 'Item shared successfully' })
   @SwaggerApiResponse({ status: 400, description: 'Invalid request data' })
   @SwaggerApiResponse({ status: 401, description: 'Unauthorized' })
-  async shareItem(
-    @Request() req: any,
-    @Body() dto: ShareItemDto,
-  ): Promise<ApiResponse<any>> {
+  async shareItem(@Request() req: any, @Body() dto: ShareItemDto): Promise<ApiResponse<any>> {
     const sharedItem = await this.socialSharingService.shareItem(req.user.id, dto);
     return {
       data: sharedItem,
@@ -56,10 +53,16 @@ export class SocialSharingController {
   @Get('shared')
   @ApiOperation({
     summary: 'Get shared items',
-    description: 'Retrieves shared items. Can filter by user ID. Public endpoint, no authentication required.',
+    description:
+      'Retrieves shared items. Can filter by user ID. Public endpoint, no authentication required.',
   })
   @ApiQuery({ name: 'userId', required: false, type: String, description: 'Filter by user ID' })
-  @ApiQuery({ name: 'limit', required: false, type: Number, description: 'Items per page (default: 20)' })
+  @ApiQuery({
+    name: 'limit',
+    required: false,
+    type: Number,
+    description: 'Items per page (default: 20)',
+  })
   @SwaggerApiResponse({ status: 200, description: 'Shared items retrieved successfully' })
   async getSharedItems(
     @Query('userId') userId?: string,
@@ -96,7 +99,12 @@ export class SocialSharingController {
     summary: 'Generate share URL',
     description: 'Generates a shareable URL for a product, collection, or other item.',
   })
-  @ApiQuery({ name: 'type', required: true, type: String, description: 'Item type (product, collection, etc.)' })
+  @ApiQuery({
+    name: 'type',
+    required: true,
+    type: String,
+    description: 'Item type (product, collection, etc.)',
+  })
   @ApiQuery({ name: 'itemId', required: true, type: String, description: 'Item ID' })
   @SwaggerApiResponse({ status: 200, description: 'Share URL generated successfully' })
   @SwaggerApiResponse({ status: 400, description: 'Invalid type or item ID' })
@@ -112,4 +120,3 @@ export class SocialSharingController {
     };
   }
 }
-

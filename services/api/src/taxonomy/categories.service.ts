@@ -40,7 +40,9 @@ export class CategoriesService {
       }
 
       if (phantom.level >= 2) {
-        throw new BadRequestException('Maximum category depth is 3 levels (Phantom, Category, Sub-category)');
+        throw new BadRequestException(
+          'Maximum category depth is 3 levels (Phantom, Category, Sub-category)',
+        );
       }
 
       level = phantom.level + 1;
@@ -102,11 +104,7 @@ export class CategoriesService {
           },
         },
       },
-      orderBy: [
-        { level: 'asc' },
-        { order: 'asc' },
-        { name: 'asc' },
-      ],
+      orderBy: [{ level: 'asc' }, { order: 'asc' }, { name: 'asc' }],
     });
   }
 
@@ -132,10 +130,7 @@ export class CategoriesService {
           },
         },
       },
-      orderBy: [
-        { order: 'asc' },
-        { name: 'asc' },
-      ],
+      orderBy: [{ order: 'asc' }, { name: 'asc' }],
     });
 
     return phantoms;
@@ -204,11 +199,15 @@ export class CategoriesService {
         }
 
         if (newPhantom.level >= 2) {
-          throw new BadRequestException('Maximum category depth is 3 levels (Phantom, Category, Sub-category)');
+          throw new BadRequestException(
+            'Maximum category depth is 3 levels (Phantom, Category, Sub-category)',
+          );
         }
 
         level = newPhantom.level + 1;
-        path = newPhantom.path ? `${newPhantom.path}/${slugify(data.name || category.name)}` : `/${slugify(data.name || category.name)}`;
+        path = newPhantom.path
+          ? `${newPhantom.path}/${slugify(data.name || category.name)}`
+          : `/${slugify(data.name || category.name)}`;
       }
     } else if (data.name && data.name !== category.name) {
       // Update path if name changed
@@ -228,12 +227,14 @@ export class CategoriesService {
       const baseSlug = slugify(data.name);
       slug = baseSlug;
       let counter = 1;
-      while (await this.prisma.category.findFirst({
-        where: {
-          slug,
-          id: { not: id },
-        },
-      })) {
+      while (
+        await this.prisma.category.findFirst({
+          where: {
+            slug,
+            id: { not: id },
+          },
+        })
+      ) {
         slug = `${baseSlug}-${counter}`;
         counter++;
       }
@@ -282,11 +283,15 @@ export class CategoriesService {
     }
 
     if (category.children.length > 0) {
-      throw new BadRequestException('Cannot delete category with subcategories. Delete or move subcategories first.');
+      throw new BadRequestException(
+        'Cannot delete category with subcategories. Delete or move subcategories first.',
+      );
     }
 
     if (category._count.products > 0) {
-      throw new BadRequestException('Cannot delete category with products. Reassign products first.');
+      throw new BadRequestException(
+        'Cannot delete category with products. Reassign products first.',
+      );
     }
 
     return this.prisma.category.delete({
@@ -327,10 +332,11 @@ export class CategoriesService {
     }
 
     if (phantom.level >= 2) {
-      throw new BadRequestException('Maximum category depth is 3 levels (Phantom, Category, Sub-category)');
+      throw new BadRequestException(
+        'Maximum category depth is 3 levels (Phantom, Category, Sub-category)',
+      );
     }
 
     return phantom.level + 1;
   }
 }
-

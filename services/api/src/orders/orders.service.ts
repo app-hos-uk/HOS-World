@@ -16,7 +16,10 @@ import { CreateOrderDto } from './dto/create-order.dto';
 import { UpdateOrderDto } from './dto/update-order.dto';
 import { AddOrderNoteDto } from './dto/add-order-note.dto';
 import type { Order, OrderStatus, PaymentStatus } from '@hos-marketplace/shared-types';
-import { OrderStatus as PrismaOrderStatus, PaymentStatus as PrismaPaymentStatus } from '@prisma/client';
+import {
+  OrderStatus as PrismaOrderStatus,
+  PaymentStatus as PrismaPaymentStatus,
+} from '@prisma/client';
 import { Decimal } from '@prisma/client/runtime/library';
 
 @Injectable()
@@ -99,13 +102,13 @@ export class OrdersService {
       // For platform-owned products, seller is null
       // For third-party seller products, look up by Seller.id (not userId)
       let seller: { id: string } | null = null;
-      
+
       if (sellerIdOrPlatform !== 'platform') {
         seller = await this.prisma.seller.findUnique({
           where: { id: sellerIdOrPlatform },
           select: { id: true },
         });
-        
+
         // Skip if third-party seller not found (data integrity issue)
         if (!seller) {
           this.logger.warn(`Seller ${sellerIdOrPlatform} not found, skipping items`);
@@ -120,9 +123,7 @@ export class OrdersService {
 
       for (const item of items) {
         if (item.product.stock < item.quantity) {
-          throw new BadRequestException(
-            `Insufficient stock for product: ${item.product.name}`,
-          );
+          throw new BadRequestException(`Insufficient stock for product: ${item.product.name}`);
         }
 
         const itemTotal = new Decimal(item.price).mul(item.quantity);
@@ -192,9 +193,7 @@ export class OrdersService {
             estimatedDistance = routingResult.distance;
             routingMethod = routingResult.routingMethod;
 
-            this.logger.log(
-              `Order ${orderNumber}: ${routingResult.message}`,
-            );
+            this.logger.log(`Order ${orderNumber}: ${routingResult.message}`);
           } else {
             this.logger.warn(
               `Order ${orderNumber}: Could not determine customer coordinates for routing`,
@@ -346,7 +345,7 @@ export class OrdersService {
     // 1. The customer only sees and pays for the first order
     // 2. Other orders remain in PENDING status without payment
     // 3. The customer's order history may be incomplete
-    // 
+    //
     // TODO: To properly support multi-seller orders, consider:
     // - Returning an array of order IDs and handling multiple payments
     // - Creating a parent "checkout session" that groups multiple orders
@@ -368,7 +367,9 @@ export class OrdersService {
         );
       } catch (error) {
         // Log but don't fail order creation for referral issues
-        this.logger.warn(`Failed to process referral for order ${primaryOrder.id}: ${error.message}`);
+        this.logger.warn(
+          `Failed to process referral for order ${primaryOrder.id}: ${error.message}`,
+        );
       }
     }
 
@@ -443,16 +444,14 @@ export class OrdersService {
         const itemTotal = item.price.mul(item.quantity);
         const categoryId = item.product?.categoryId;
         const categoryRate = categoryId ? categoryRates[categoryId] : undefined;
-        const itemRate =
-          categoryRate !== undefined ? new Decimal(categoryRate) : baseRate;
+        const itemRate = categoryRate !== undefined ? new Decimal(categoryRate) : baseRate;
         if (categoryRate !== undefined) usedCategoryRate = true;
         totalCommission = totalCommission.plus(itemTotal.mul(itemRate));
       }
       commissionAmount = totalCommission;
       rateSource = usedCategoryRate ? 'CATEGORY' : 'BASE';
       // Effective rate for display/storage: total commission / order total
-      rateApplied =
-        order.total.gt(0) ? commissionAmount.div(order.total) : baseRate;
+      rateApplied = order.total.gt(0) ? commissionAmount.div(order.total) : baseRate;
     } else {
       rateApplied = baseRate;
       rateSource = 'BASE';
@@ -505,7 +504,9 @@ export class OrdersService {
     // Convert to Number only for logging display
     const ratePercent = rateApplied.mul(100).toNumber();
     const amountDisplay = commissionAmount.toFixed(2);
-    this.logger.log(`Commission created for influencer ${influencer.id}: ${amountDisplay} (${rateSource} rate: ${ratePercent}%)`);
+    this.logger.log(
+      `Commission created for influencer ${influencer.id}: ${amountDisplay} (${rateSource} rate: ${ratePercent}%)`,
+    );
   }
 
   async findAll(userId: string, role: string): Promise<Order[]> {
@@ -696,8 +697,7 @@ export class OrdersService {
     const canAddNote =
       order.userId === userId || // Customer can add notes
       (role === 'SELLER' &&
-        (await this.prisma.seller.findUnique({ where: { userId } }))?.id ===
-          order.sellerId) || // Seller can add notes to their orders
+        (await this.prisma.seller.findUnique({ where: { userId } }))?.id === order.sellerId) || // Seller can add notes to their orders
       role === 'ADMIN'; // Admin can add notes
 
     if (!canAddNote) {
@@ -773,7 +773,10 @@ export class OrdersService {
       );
     }
 
-    if ((role === 'SELLER' || role === 'ADMIN') && !adminSellerCancellableStatuses.includes(currentStatus)) {
+    if (
+      (role === 'SELLER' || role === 'ADMIN') &&
+      !adminSellerCancellableStatuses.includes(currentStatus)
+    ) {
       throw new BadRequestException(
         `Orders can only be cancelled when PENDING, CONFIRMED, or PROCESSING. Current status: ${currentStatus}`,
       );
@@ -915,10 +918,7 @@ export class OrdersService {
 
       if (existingCartItem) {
         // Update quantity of existing cart item
-        const newQuantity = Math.min(
-          existingCartItem.quantity + quantityToAdd,
-          product.stock,
-        );
+        const newQuantity = Math.min(existingCartItem.quantity + quantityToAdd, product.stock);
         await this.prisma.cartItem.update({
           where: { id: existingCartItem.id },
           data: { quantity: newQuantity },
@@ -947,10 +947,7 @@ export class OrdersService {
         where: { cartId: cart.id },
       });
 
-      const subtotal = cartItems.reduce(
-        (sum, item) => sum + Number(item.price) * item.quantity,
-        0,
-      );
+      const subtotal = cartItems.reduce((sum, item) => sum + Number(item.price) * item.quantity, 0);
 
       await this.prisma.cart.update({
         where: { id: cart.id },
@@ -959,11 +956,15 @@ export class OrdersService {
           total: subtotal,
         },
       });
-      
-      this.logger.warn(`CartService not available, using fallback cart calculation without tax for user ${userId}`);
+
+      this.logger.warn(
+        `CartService not available, using fallback cart calculation without tax for user ${userId}`,
+      );
     }
 
-    this.logger.log(`Reorder from order ${order.orderNumber}: ${itemsAdded} items added, ${itemsUpdated} items updated in cart for user ${userId}`);
+    this.logger.log(
+      `Reorder from order ${order.orderNumber}: ${itemsAdded} items added, ${itemsUpdated} items updated in cart for user ${userId}`,
+    );
 
     return { itemsAdded, itemsUpdated };
   }
@@ -985,11 +986,12 @@ export class OrdersService {
           slug: item.product.slug,
           price: Number(item.product.price),
           currency: item.product.currency,
-          images: item.product.images?.map((img: any) => ({
-            id: img.id,
-            url: img.url,
-            order: img.order,
-          })) || [],
+          images:
+            item.product.images?.map((img: any) => ({
+              id: img.id,
+              url: img.url,
+              order: img.order,
+            })) || [],
         } as any,
         quantity: item.quantity,
         price: Number(item.price),
@@ -1029,13 +1031,14 @@ export class OrdersService {
       paymentMethod: order.paymentMethod || undefined,
       paymentStatus: order.paymentStatus.toLowerCase() as PaymentStatus,
       trackingCode: order.trackingCode || undefined,
-      notes: order.notes?.map((note: any) => ({
-        id: note.id,
-        content: note.content,
-        internal: note.internal,
-        createdAt: note.createdAt,
-        createdBy: note.createdBy,
-      })) || [],
+      notes:
+        order.notes?.map((note: any) => ({
+          id: note.id,
+          content: note.content,
+          internal: note.internal,
+          createdAt: note.createdAt,
+          createdBy: note.createdBy,
+        })) || [],
       createdAt: order.createdAt,
       updatedAt: order.updatedAt,
     };

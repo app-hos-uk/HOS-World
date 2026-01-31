@@ -11,7 +11,7 @@ export class JwtAuthGuard extends AuthGuard('jwt') {
 
   canActivate(context: ExecutionContext) {
     const request = context.switchToHttp().getRequest();
-    
+
     // Always allow OPTIONS requests (CORS preflight)
     if (request.method === 'OPTIONS') {
       return true;
@@ -36,5 +36,3 @@ export class JwtAuthGuard extends AuthGuard('jwt') {
     return user;
   }
 }
-
-

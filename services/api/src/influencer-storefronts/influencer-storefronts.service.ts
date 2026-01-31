@@ -1,9 +1,4 @@
-import {
-  Injectable,
-  NotFoundException,
-  Logger,
-  ServiceUnavailableException,
-} from '@nestjs/common';
+import { Injectable, NotFoundException, Logger, ServiceUnavailableException } from '@nestjs/common';
 import { PrismaService } from '../database/prisma.service';
 import { randomBytes } from 'crypto';
 
@@ -18,7 +13,18 @@ export class InfluencerStorefrontsService {
    */
   private async ensureInfluencerProfile(userId: string) {
     // #region agent log
-    fetch('http://127.0.0.1:7244/ingest/25f24f4e-a9b4-48c0-a492-7ec1e970ba34',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'influencer-storefronts.service.ts:ensureInfluencerProfile:entry',message:'ensureInfluencerProfile entry',data:{userId},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'H1,H2,H5'})}).catch(()=>{});
+    fetch('http://127.0.0.1:7244/ingest/25f24f4e-a9b4-48c0-a492-7ec1e970ba34', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        location: 'influencer-storefronts.service.ts:ensureInfluencerProfile:entry',
+        message: 'ensureInfluencerProfile entry',
+        data: { userId },
+        timestamp: Date.now(),
+        sessionId: 'debug-session',
+        hypothesisId: 'H1,H2,H5',
+      }),
+    }).catch(() => {});
     // #endregion
     try {
       let influencer = await this.prisma.influencer.findUnique({
@@ -26,7 +32,18 @@ export class InfluencerStorefrontsService {
         include: { storefront: true },
       });
       // #region agent log
-      fetch('http://127.0.0.1:7244/ingest/25f24f4e-a9b4-48c0-a492-7ec1e970ba34',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'influencer-storefronts.service.ts:ensureInfluencerProfile:afterFindUnique',message:'after findUnique',data:{hasInfluencer:!!influencer},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'H1'})}).catch(()=>{});
+      fetch('http://127.0.0.1:7244/ingest/25f24f4e-a9b4-48c0-a492-7ec1e970ba34', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          location: 'influencer-storefronts.service.ts:ensureInfluencerProfile:afterFindUnique',
+          message: 'after findUnique',
+          data: { hasInfluencer: !!influencer },
+          timestamp: Date.now(),
+          sessionId: 'debug-session',
+          hypothesisId: 'H1',
+        }),
+      }).catch(() => {});
       // #endregion
       if (influencer) return influencer;
 
@@ -62,10 +79,27 @@ export class InfluencerStorefrontsService {
       return refreshed;
     } catch (err: any) {
       // #region agent log
-      fetch('http://127.0.0.1:7244/ingest/25f24f4e-a9b4-48c0-a492-7ec1e970ba34',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'influencer-storefronts.service.ts:ensureInfluencerProfile:catch',message:'ensureInfluencerProfile error',data:{code:err?.code,name:err?.name,message:err?.message},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'H1,H5'})}).catch(()=>{});
+      fetch('http://127.0.0.1:7244/ingest/25f24f4e-a9b4-48c0-a492-7ec1e970ba34', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          location: 'influencer-storefronts.service.ts:ensureInfluencerProfile:catch',
+          message: 'ensureInfluencerProfile error',
+          data: { code: err?.code, name: err?.name, message: err?.message },
+          timestamp: Date.now(),
+          sessionId: 'debug-session',
+          hypothesisId: 'H1,H5',
+        }),
+      }).catch(() => {});
       // #endregion
-      this.logger.error(`[DEBUG] ensureInfluencerProfile error: ${err?.code ?? 'n/a'} ${err?.name ?? 'Error'} ${err?.message ?? err}`, err?.stack);
-      if (err?.code === 'P2021' || (err?.message && String(err.message).includes('does not exist'))) {
+      this.logger.error(
+        `[DEBUG] ensureInfluencerProfile error: ${err?.code ?? 'n/a'} ${err?.name ?? 'Error'} ${err?.message ?? err}`,
+        err?.stack,
+      );
+      if (
+        err?.code === 'P2021' ||
+        (err?.message && String(err.message).includes('does not exist'))
+      ) {
         this.logger.warn('Influencer tables missing; run migrations.', err?.message);
         throw new ServiceUnavailableException(
           'Influencer features are not available yet. Database migration may be pending.',
@@ -79,14 +113,20 @@ export class InfluencerStorefrontsService {
     const base = (prefix.toUpperCase().replace(/[^A-Z0-9]/g, '') || 'INF').slice(0, 6);
     for (let i = 0; i < 20; i++) {
       const code = base + randomBytes(2).toString('hex').toUpperCase();
-      const ex = await this.prisma.influencer.findUnique({ where: { referralCode: code } }).catch(() => null);
+      const ex = await this.prisma.influencer
+        .findUnique({ where: { referralCode: code } })
+        .catch(() => null);
       if (!ex) return code;
     }
     return randomBytes(4).toString('hex').toUpperCase();
   }
 
   private async uniqueSlug(displayName: string): Promise<string> {
-    let slug = displayName.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '') || 'influencer';
+    const slug =
+      displayName
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, '-')
+        .replace(/(^-|-$)/g, '') || 'influencer';
     for (let i = 0; i < 20; i++) {
       const s = i === 0 ? slug : `${slug}-${i}`;
       const ex = await this.prisma.influencer.findUnique({ where: { slug: s } }).catch(() => null);
@@ -100,11 +140,33 @@ export class InfluencerStorefrontsService {
    */
   async findByUserId(userId: string) {
     // #region agent log
-    fetch('http://127.0.0.1:7244/ingest/25f24f4e-a9b4-48c0-a492-7ec1e970ba34',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'influencer-storefronts.service.ts:findByUserId:entry',message:'findByUserId storefront entry',data:{userId},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'H2'})}).catch(()=>{});
+    fetch('http://127.0.0.1:7244/ingest/25f24f4e-a9b4-48c0-a492-7ec1e970ba34', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        location: 'influencer-storefronts.service.ts:findByUserId:entry',
+        message: 'findByUserId storefront entry',
+        data: { userId },
+        timestamp: Date.now(),
+        sessionId: 'debug-session',
+        hypothesisId: 'H2',
+      }),
+    }).catch(() => {});
     // #endregion
     const influencer = await this.ensureInfluencerProfile(userId);
     // #region agent log
-    fetch('http://127.0.0.1:7244/ingest/25f24f4e-a9b4-48c0-a492-7ec1e970ba34',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'influencer-storefronts.service.ts:findByUserId:afterEnsure',message:'after ensureInfluencerProfile',data:{hasStorefront:!!influencer.storefront},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'H2'})}).catch(()=>{});
+    fetch('http://127.0.0.1:7244/ingest/25f24f4e-a9b4-48c0-a492-7ec1e970ba34', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        location: 'influencer-storefronts.service.ts:findByUserId:afterEnsure',
+        message: 'after ensureInfluencerProfile',
+        data: { hasStorefront: !!influencer.storefront },
+        timestamp: Date.now(),
+        sessionId: 'debug-session',
+        hypothesisId: 'H2',
+      }),
+    }).catch(() => {});
     // #endregion
     if (influencer.storefront) return influencer.storefront;
     return this.prisma.influencerStorefront.create({
@@ -114,8 +176,17 @@ export class InfluencerStorefrontsService {
 
   /** Allowed storefront update fields (whitelist to avoid Prisma "Unknown arg" from extra body keys) */
   private static STOREFRONT_UPDATE_KEYS = [
-    'primaryColor', 'secondaryColor', 'backgroundColor', 'textColor', 'fontFamily',
-    'layoutType', 'showBanner', 'showBio', 'showSocialLinks', 'metaTitle', 'metaDescription',
+    'primaryColor',
+    'secondaryColor',
+    'backgroundColor',
+    'textColor',
+    'fontFamily',
+    'layoutType',
+    'showBanner',
+    'showBio',
+    'showSocialLinks',
+    'metaTitle',
+    'metaDescription',
   ] as const;
 
   /**
@@ -179,7 +250,7 @@ export class InfluencerStorefrontsService {
       select: { id: true },
     });
 
-    const validIds = products.map(p => p.id);
+    const validIds = products.map((p) => p.id);
 
     if (!influencer.storefront) {
       return this.prisma.influencerStorefront.create({

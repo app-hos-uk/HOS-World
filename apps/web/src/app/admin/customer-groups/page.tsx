@@ -59,6 +59,7 @@ export default function AdminCustomerGroupsPage() {
 
   useEffect(() => {
     fetchGroups();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [includeInactive]);
 
   const fetchGroups = async () => {

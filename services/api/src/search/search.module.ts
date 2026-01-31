@@ -14,7 +14,7 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
         const username = configService.get('ELASTICSEARCH_USERNAME');
         const password = configService.get('ELASTICSEARCH_PASSWORD');
         const sniffOnStart = configService.get('ELASTICSEARCH_SNIFF_ON_START') === 'true';
-        
+
         const config: any = {
           node,
           maxRetries: 10,
@@ -24,7 +24,7 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
           // Keep it opt-in via env var.
           sniffOnStart,
         };
-        
+
         // Add authentication if credentials are provided
         if (username && password) {
           config.auth = {
@@ -32,7 +32,7 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
             password,
           };
         }
-        
+
         return config;
       },
       inject: [ConfigService],
@@ -43,4 +43,3 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
   exports: [SearchService],
 })
 export class SearchModule {}
-

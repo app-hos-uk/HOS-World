@@ -38,18 +38,21 @@ export default function CheckoutPage() {
 
   useEffect(() => {
     loadCheckoutData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
     if (shippingAddressId && cart?.items?.length > 0) {
       calculateShipping();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [shippingAddressId, cart]);
 
   useEffect(() => {
     if (cart && shippingCost > 0) {
       calculateTax();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [cart, shippingCost]);
 
   const loadCheckoutData = async () => {

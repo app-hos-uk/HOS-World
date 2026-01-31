@@ -1,9 +1,4 @@
-import {
-  Injectable,
-  NotFoundException,
-  BadRequestException,
-  Logger,
-} from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException, Logger } from '@nestjs/common';
 import { PrismaService } from '../database/prisma.service';
 import { CreateTaxZoneDto } from './dto/create-tax-zone.dto';
 import { CreateTaxClassDto } from './dto/create-tax-class.dto';
@@ -27,7 +22,11 @@ export class TaxService {
     let postalCodes: string[] = [];
     let isActive = true;
 
-    if (createDto.countries && Array.isArray(createDto.countries) && createDto.countries.length > 0) {
+    if (
+      createDto.countries &&
+      Array.isArray(createDto.countries) &&
+      createDto.countries.length > 0
+    ) {
       // DTO format with countries array
       const primaryCountry = createDto.countries[0];
       country = primaryCountry?.country;
@@ -214,7 +213,8 @@ export class TaxService {
       await this.findTaxClassById(createDto.taxClassId);
     }
 
-    const taxClassId = createDto.taxClassId && createDto.taxClassId.trim() !== '' ? createDto.taxClassId : null;
+    const taxClassId =
+      createDto.taxClassId && createDto.taxClassId.trim() !== '' ? createDto.taxClassId : null;
 
     // Check if rate already exists for this zone/class combination
     const existing = await this.prisma.taxRate.findFirst({
@@ -225,9 +225,7 @@ export class TaxService {
     });
 
     if (existing) {
-      throw new BadRequestException(
-        'Tax rate already exists for this zone and class combination',
-      );
+      throw new BadRequestException('Tax rate already exists for this zone and class combination');
     }
 
     return this.prisma.taxRate.create({
@@ -405,9 +403,13 @@ export class TaxService {
     await this.findTaxZoneById(id);
 
     const updateData: any = { ...updateDto };
-    
+
     // Handle both DTO format (countries array) and simple format (individual fields)
-    if (updateDto.countries && Array.isArray(updateDto.countries) && updateDto.countries.length > 0) {
+    if (
+      updateDto.countries &&
+      Array.isArray(updateDto.countries) &&
+      updateDto.countries.length > 0
+    ) {
       const primaryCountry = updateDto.countries[0];
       const postalCodes = updateDto.countries
         .map((c: any) => c.postalCode)
@@ -484,9 +486,7 @@ export class TaxService {
     });
 
     if (rates.length > 0) {
-      throw new BadRequestException(
-        'Cannot delete tax zone with active tax rates',
-      );
+      throw new BadRequestException('Cannot delete tax zone with active tax rates');
     }
 
     return this.prisma.taxZone.delete({
@@ -506,9 +506,7 @@ export class TaxService {
     });
 
     if (rates.length > 0) {
-      throw new BadRequestException(
-        'Cannot delete tax class with active tax rates',
-      );
+      throw new BadRequestException('Cannot delete tax class with active tax rates');
     }
 
     return this.prisma.taxClass.delete({

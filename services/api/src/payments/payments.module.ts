@@ -12,5 +12,3 @@ import { PaymentProviderModule } from './payment-provider.module';
   exports: [PaymentsService, PaymentProviderModule],
 })
 export class PaymentsModule {}
-
-

@@ -39,6 +39,7 @@ export default function ProcurementDashboardPage() {
     };
 
     fetchDashboardData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const pendingCount = dashboardData?.totalPending || 0;

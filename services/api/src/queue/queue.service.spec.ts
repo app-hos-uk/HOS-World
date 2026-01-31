@@ -73,11 +73,15 @@ describe('QueueService', () => {
     it('should pass options to add', async () => {
       mockQueue.add.mockResolvedValue({ id: 'job-456' });
 
-      await service.addJob(JobType.PRODUCT_INDEXING, { productId: 'p1', action: 'create' }, {
-        delay: 1000,
-        attempts: 5,
-        priority: 1,
-      });
+      await service.addJob(
+        JobType.PRODUCT_INDEXING,
+        { productId: 'p1', action: 'create' },
+        {
+          delay: 1000,
+          attempts: 5,
+          priority: 1,
+        },
+      );
 
       expect(mockQueue.add).toHaveBeenCalledWith(
         JobType.PRODUCT_INDEXING,

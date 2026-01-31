@@ -35,7 +35,8 @@ export class PaymentsController {
   @ApiBearerAuth('JWT-auth')
   @ApiOperation({
     summary: 'Create payment intent',
-    description: 'Creates a Stripe payment intent for an order. Returns client secret for frontend confirmation.',
+    description:
+      'Creates a Stripe payment intent for an order. Returns client secret for frontend confirmation.',
   })
   @ApiBody({ type: CreatePaymentDto })
   @SwaggerApiResponse({ status: 201, description: 'Payment intent created successfully' })
@@ -46,10 +47,7 @@ export class PaymentsController {
     @Request() req: any,
     @Body() createPaymentDto: CreatePaymentDto,
   ): Promise<ApiResponse<any>> {
-    const result = await this.paymentsService.createPaymentIntent(
-      req.user.id,
-      createPaymentDto,
-    );
+    const result = await this.paymentsService.createPaymentIntent(req.user.id, createPaymentDto);
     return {
       data: result,
       message: 'Payment intent created successfully',
@@ -62,7 +60,8 @@ export class PaymentsController {
   @ApiBearerAuth('JWT-auth')
   @ApiOperation({
     summary: 'Confirm payment',
-    description: 'Confirms a payment intent and marks the order as paid. Called after successful payment on frontend.',
+    description:
+      'Confirms a payment intent and marks the order as paid. Called after successful payment on frontend.',
   })
   @ApiBody({
     description: 'Payment confirmation data',
@@ -110,7 +109,8 @@ export class PaymentsController {
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
     summary: 'Payment webhook handler',
-    description: 'Handles payment provider webhook events. Public endpoint for payment providers to call.',
+    description:
+      'Handles payment provider webhook events. Public endpoint for payment providers to call.',
   })
   @ApiHeader({
     name: 'stripe-signature',
@@ -144,5 +144,3 @@ export class PaymentsController {
     };
   }
 }
-
-

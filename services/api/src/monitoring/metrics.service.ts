@@ -4,7 +4,7 @@ import { Logger } from '@nestjs/common';
 
 /**
  * Metrics Service
- * 
+ *
  * Provides Prometheus-compatible metrics endpoint.
  * Collects application metrics for monitoring and alerting.
  */
@@ -29,16 +29,16 @@ export class MetricsService implements OnModuleInit {
     // HTTP metrics
     this.createCounter('http_requests_total', 'Total number of HTTP requests');
     this.createCounter('http_errors_total', 'Total number of HTTP errors');
-    
+
     // Database metrics
     this.createCounter('db_queries_total', 'Total number of database queries');
     this.createCounter('db_errors_total', 'Total number of database errors');
     this.createHistogram('db_query_duration_seconds', 'Database query duration');
-    
+
     // Cache metrics
     this.createCounter('cache_hits_total', 'Total number of cache hits');
     this.createCounter('cache_misses_total', 'Total number of cache misses');
-    
+
     // Queue metrics
     this.createCounter('queue_jobs_total', 'Total number of queue jobs');
     this.createCounter('queue_jobs_failed_total', 'Total number of failed queue jobs');
@@ -122,19 +122,19 @@ export class MetricsService implements OnModuleInit {
    */
   getPrometheusMetrics(): string {
     const lines: string[] = [];
-    
+
     // Counters
     for (const [name, value] of this.counters.entries()) {
       lines.push(`# TYPE ${name} counter`);
       lines.push(`${name} ${value}`);
     }
-    
+
     // Gauges
     for (const [name, value] of this.metrics.entries()) {
       lines.push(`# TYPE ${name} gauge`);
       lines.push(`${name} ${value}`);
     }
-    
+
     // Histograms
     for (const [name, values] of this.histograms.entries()) {
       const stats = this.getHistogramStats(name);
@@ -150,7 +150,7 @@ export class MetricsService implements OnModuleInit {
         lines.push(`${name}_p99 ${stats.p99}`);
       }
     }
-    
+
     // System metrics
     const memUsage = process.memoryUsage();
     lines.push('# TYPE nodejs_memory_heap_used_bytes gauge');
@@ -159,7 +159,7 @@ export class MetricsService implements OnModuleInit {
     lines.push(`nodejs_memory_heap_total_bytes ${memUsage.heapTotal}`);
     lines.push('# TYPE nodejs_memory_rss_bytes gauge');
     lines.push(`nodejs_memory_rss_bytes ${memUsage.rss}`);
-    
+
     return lines.join('\n') + '\n';
   }
 

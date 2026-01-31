@@ -18,7 +18,11 @@ export class GeolocationController {
 
   @Public()
   @Get('detect')
-  @ApiOperation({ summary: 'Detect country from IP', description: 'Detects the country and currency based on the client IP address. Public endpoint.' })
+  @ApiOperation({
+    summary: 'Detect country from IP',
+    description:
+      'Detects the country and currency based on the client IP address. Public endpoint.',
+  })
   @SwaggerApiResponse({ status: 200, description: 'Country detected successfully' })
   async detectCountry(@Ip() ip: string): Promise<ApiResponse<any>> {
     const countryInfo = await this.geolocationService.detectCountryFromIP(ip);
@@ -31,7 +35,11 @@ export class GeolocationController {
   @UseGuards(JwtAuthGuard)
   @Post('confirm')
   @ApiBearerAuth('JWT-auth')
-  @ApiOperation({ summary: 'Confirm country selection', description: 'Confirms and saves the user\'s country and currency preference. Requires authentication.' })
+  @ApiOperation({
+    summary: 'Confirm country selection',
+    description:
+      "Confirms and saves the user's country and currency preference. Requires authentication.",
+  })
   @ApiBody({
     schema: {
       type: 'object',
@@ -69,4 +77,3 @@ export class GeolocationController {
     };
   }
 }
-

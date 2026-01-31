@@ -53,10 +53,7 @@ export class SettlementsController {
     @Request() req: any,
     @Body() createDto: CreateSettlementDto,
   ): Promise<ApiResponse<any>> {
-    const settlement = await this.settlementsService.createSettlement(
-      req.user.id,
-      createDto,
-    );
+    const settlement = await this.settlementsService.createSettlement(req.user.id, createDto);
     return {
       data: settlement,
       message: 'Settlement created successfully',
@@ -66,10 +63,16 @@ export class SettlementsController {
   @Get()
   @ApiOperation({
     summary: 'Get all settlements',
-    description: 'Retrieves all settlements. Sellers can only view their own settlements, admins/finance can view all.',
+    description:
+      'Retrieves all settlements. Sellers can only view their own settlements, admins/finance can view all.',
   })
   @ApiQuery({ name: 'sellerId', required: false, type: String, description: 'Filter by seller ID' })
-  @ApiQuery({ name: 'status', required: false, type: String, description: 'Filter by settlement status' })
+  @ApiQuery({
+    name: 'status',
+    required: false,
+    type: String,
+    description: 'Filter by settlement status',
+  })
   @SwaggerApiResponse({ status: 200, description: 'Settlements retrieved successfully' })
   @SwaggerApiResponse({ status: 401, description: 'Unauthorized' })
   async findAll(
@@ -79,8 +82,13 @@ export class SettlementsController {
   ): Promise<ApiResponse<any[]>> {
     // Sellers can only see their own settlements
     let filterSellerId = sellerId;
-    if (req.user.role === 'WHOLESALER' || req.user.role === 'B2C_SELLER' || req.user.role === 'SELLER') {
-      filterSellerId = await this.settlementsService.getSellerIdByUserId(req.user.id) || undefined;
+    if (
+      req.user.role === 'WHOLESALER' ||
+      req.user.role === 'B2C_SELLER' ||
+      req.user.role === 'SELLER'
+    ) {
+      filterSellerId =
+        (await this.settlementsService.getSellerIdByUserId(req.user.id)) || undefined;
     }
 
     const settlements = await this.settlementsService.findAll(filterSellerId, status);
@@ -93,16 +101,15 @@ export class SettlementsController {
   @Get(':id')
   @ApiOperation({
     summary: 'Get settlement by ID',
-    description: 'Retrieves a specific settlement by ID. Sellers can only view their own settlements.',
+    description:
+      'Retrieves a specific settlement by ID. Sellers can only view their own settlements.',
   })
   @ApiParam({ name: 'id', description: 'Settlement UUID', type: String })
   @SwaggerApiResponse({ status: 200, description: 'Settlement retrieved successfully' })
   @SwaggerApiResponse({ status: 401, description: 'Unauthorized' })
   @SwaggerApiResponse({ status: 403, description: 'Forbidden - Cannot access this settlement' })
   @SwaggerApiResponse({ status: 404, description: 'Settlement not found' })
-  async findOne(
-    @Param('id', ParseUUIDPipe) id: string,
-  ): Promise<ApiResponse<any>> {
+  async findOne(@Param('id', ParseUUIDPipe) id: string): Promise<ApiResponse<any>> {
     const settlement = await this.settlementsService.findOne(id);
     return {
       data: settlement,
@@ -140,7 +147,12 @@ export class SettlementsController {
     description: 'Calculates settlement amount for a seller within a date range.',
   })
   @ApiParam({ name: 'sellerId', description: 'Seller UUID', type: String })
-  @ApiQuery({ name: 'startDate', required: true, type: String, description: 'Start date (ISO format)' })
+  @ApiQuery({
+    name: 'startDate',
+    required: true,
+    type: String,
+    description: 'Start date (ISO format)',
+  })
   @ApiQuery({ name: 'endDate', required: true, type: String, description: 'End date (ISO format)' })
   @SwaggerApiResponse({ status: 200, description: 'Settlement calculated successfully' })
   @SwaggerApiResponse({ status: 400, description: 'Invalid date range' })
@@ -171,7 +183,8 @@ export class SettlementsController {
   @Post('automation/weekly')
   @ApiOperation({
     summary: 'Trigger weekly settlement creation (Admin/Finance only)',
-    description: 'Manually triggers the weekly settlement creation for all active sellers. Creates settlements for the previous week.',
+    description:
+      'Manually triggers the weekly settlement creation for all active sellers. Creates settlements for the previous week.',
   })
   @SwaggerApiResponse({ status: 201, description: 'Weekly settlements created' })
   @SwaggerApiResponse({ status: 401, description: 'Unauthorized' })
@@ -205,7 +218,8 @@ export class SettlementsController {
   @Get('automation/reminders')
   @ApiOperation({
     summary: 'Check pending settlement reminders (Admin/Finance only)',
-    description: 'Checks for settlements that have been pending for more than 7 days and need attention.',
+    description:
+      'Checks for settlements that have been pending for more than 7 days and need attention.',
   })
   @SwaggerApiResponse({ status: 200, description: 'Reminders checked' })
   @SwaggerApiResponse({ status: 401, description: 'Unauthorized' })
@@ -235,4 +249,3 @@ export class SettlementsController {
     };
   }
 }
-

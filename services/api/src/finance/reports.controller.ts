@@ -1,9 +1,4 @@
-import {
-  Controller,
-  Get,
-  Query,
-  UseGuards,
-} from '@nestjs/common';
+import { Controller, Get, Query, UseGuards } from '@nestjs/common';
 import {
   ApiTags,
   ApiOperation,
@@ -28,12 +23,29 @@ export class ReportsController {
   @Get('revenue')
   @ApiOperation({
     summary: 'Get revenue report (Admin only)',
-    description: 'Retrieves revenue report with optional filtering and period grouping. Admin access required.',
+    description:
+      'Retrieves revenue report with optional filtering and period grouping. Admin access required.',
   })
-  @ApiQuery({ name: 'startDate', required: false, type: String, description: 'Start date (ISO format)' })
-  @ApiQuery({ name: 'endDate', required: false, type: String, description: 'End date (ISO format)' })
+  @ApiQuery({
+    name: 'startDate',
+    required: false,
+    type: String,
+    description: 'Start date (ISO format)',
+  })
+  @ApiQuery({
+    name: 'endDate',
+    required: false,
+    type: String,
+    description: 'End date (ISO format)',
+  })
   @ApiQuery({ name: 'sellerId', required: false, type: String, description: 'Filter by seller ID' })
-  @ApiQuery({ name: 'period', required: false, type: String, enum: ['daily', 'weekly', 'monthly', 'yearly'], description: 'Grouping period' })
+  @ApiQuery({
+    name: 'period',
+    required: false,
+    type: String,
+    enum: ['daily', 'weekly', 'monthly', 'yearly'],
+    description: 'Grouping period',
+  })
   @SwaggerApiResponse({ status: 200, description: 'Revenue report retrieved successfully' })
   @SwaggerApiResponse({ status: 401, description: 'Unauthorized' })
   @SwaggerApiResponse({ status: 403, description: 'Forbidden - Admin access required' })
@@ -60,10 +72,23 @@ export class ReportsController {
     summary: 'Get seller performance report (Admin only)',
     description: 'Retrieves seller performance metrics report. Admin access required.',
   })
-  @ApiQuery({ name: 'startDate', required: false, type: String, description: 'Start date (ISO format)' })
-  @ApiQuery({ name: 'endDate', required: false, type: String, description: 'End date (ISO format)' })
+  @ApiQuery({
+    name: 'startDate',
+    required: false,
+    type: String,
+    description: 'Start date (ISO format)',
+  })
+  @ApiQuery({
+    name: 'endDate',
+    required: false,
+    type: String,
+    description: 'End date (ISO format)',
+  })
   @ApiQuery({ name: 'sellerId', required: false, type: String, description: 'Filter by seller ID' })
-  @SwaggerApiResponse({ status: 200, description: 'Seller performance report retrieved successfully' })
+  @SwaggerApiResponse({
+    status: 200,
+    description: 'Seller performance report retrieved successfully',
+  })
   @SwaggerApiResponse({ status: 401, description: 'Unauthorized' })
   @SwaggerApiResponse({ status: 403, description: 'Forbidden - Admin access required' })
   async getSellerPerformance(
@@ -87,10 +112,28 @@ export class ReportsController {
     summary: 'Get customer spending report (Admin only)',
     description: 'Retrieves customer spending analysis report. Admin access required.',
   })
-  @ApiQuery({ name: 'startDate', required: false, type: String, description: 'Start date (ISO format)' })
-  @ApiQuery({ name: 'endDate', required: false, type: String, description: 'End date (ISO format)' })
-  @ApiQuery({ name: 'customerId', required: false, type: String, description: 'Filter by customer ID' })
-  @SwaggerApiResponse({ status: 200, description: 'Customer spending report retrieved successfully' })
+  @ApiQuery({
+    name: 'startDate',
+    required: false,
+    type: String,
+    description: 'Start date (ISO format)',
+  })
+  @ApiQuery({
+    name: 'endDate',
+    required: false,
+    type: String,
+    description: 'End date (ISO format)',
+  })
+  @ApiQuery({
+    name: 'customerId',
+    required: false,
+    type: String,
+    description: 'Filter by customer ID',
+  })
+  @SwaggerApiResponse({
+    status: 200,
+    description: 'Customer spending report retrieved successfully',
+  })
   @SwaggerApiResponse({ status: 401, description: 'Unauthorized' })
   @SwaggerApiResponse({ status: 403, description: 'Forbidden - Admin access required' })
   async getCustomerSpending(
@@ -114,8 +157,18 @@ export class ReportsController {
     summary: 'Get platform fees report (Admin only)',
     description: 'Retrieves platform fees report. Admin access required.',
   })
-  @ApiQuery({ name: 'startDate', required: false, type: String, description: 'Start date (ISO format)' })
-  @ApiQuery({ name: 'endDate', required: false, type: String, description: 'End date (ISO format)' })
+  @ApiQuery({
+    name: 'startDate',
+    required: false,
+    type: String,
+    description: 'Start date (ISO format)',
+  })
+  @ApiQuery({
+    name: 'endDate',
+    required: false,
+    type: String,
+    description: 'End date (ISO format)',
+  })
   @ApiQuery({ name: 'sellerId', required: false, type: String, description: 'Filter by seller ID' })
   @SwaggerApiResponse({ status: 200, description: 'Platform fees report retrieved successfully' })
   @SwaggerApiResponse({ status: 401, description: 'Unauthorized' })
@@ -136,4 +189,3 @@ export class ReportsController {
     };
   }
 }
-

@@ -103,9 +103,7 @@ describe('CartService - Phase 1 Tests', () => {
     it('should throw NotFoundException if product not found', async () => {
       mockPrismaService.product.findUnique.mockResolvedValue(null);
 
-      await expect(service.addItem(userId, addToCartDto)).rejects.toThrow(
-        NotFoundException,
-      );
+      await expect(service.addItem(userId, addToCartDto)).rejects.toThrow(NotFoundException);
     });
 
     it('should throw BadRequestException if product out of stock', async () => {
@@ -118,9 +116,7 @@ describe('CartService - Phase 1 Tests', () => {
 
       mockPrismaService.product.findUnique.mockResolvedValue(mockProduct);
 
-      await expect(service.addItem(userId, addToCartDto)).rejects.toThrow(
-        BadRequestException,
-      );
+      await expect(service.addItem(userId, addToCartDto)).rejects.toThrow(BadRequestException);
     });
   });
 
@@ -339,4 +335,3 @@ describe('CartService - Phase 1 Tests', () => {
     });
   });
 });
-

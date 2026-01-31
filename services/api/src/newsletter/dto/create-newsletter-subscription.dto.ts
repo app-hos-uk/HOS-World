@@ -12,4 +12,3 @@ export class CreateNewsletterSubscriptionDto {
   @IsObject()
   tags?: Record<string, string>; // For segmentation
 }
-

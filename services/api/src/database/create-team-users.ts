@@ -101,7 +101,7 @@ async function createTeamUsers() {
   console.log('\n✅ Team role users created/updated successfully!');
   console.log('\n📋 Test Users List:');
   console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-  
+
   const allUsers = await prisma.user.findMany({
     where: {
       email: {
@@ -136,4 +136,3 @@ createTeamUsers()
     await prisma.$disconnect();
     process.exit(1);
   });
-

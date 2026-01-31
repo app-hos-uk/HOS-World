@@ -9,10 +9,7 @@ export class UsersService {
   constructor(private prisma: PrismaService) {}
 
   // Hard-protected admin accounts that must never be deleted via self-service endpoints.
-  private readonly protectedAdminEmails = new Set([
-    'app@houseofspells.co.uk',
-    'mail@jsabu.com',
-  ]);
+  private readonly protectedAdminEmails = new Set(['app@houseofspells.co.uk', 'mail@jsabu.com']);
 
   async getProfile(userId: string): Promise<User> {
     const user = await this.prisma.user.findUnique({
@@ -60,12 +57,12 @@ export class UsersService {
     }
     if (updateProfileDto.themePreference !== undefined) {
       updateData.themePreference = updateProfileDto.themePreference;
-      
+
       // Update customer profile if exists
       const customer = await this.prisma.customer.findUnique({
         where: { userId },
       });
-      
+
       if (customer) {
         await this.prisma.customer.update({
           where: { userId },
@@ -86,12 +83,12 @@ export class UsersService {
     }
     if (updateProfileDto.currencyPreference !== undefined) {
       updateData.currencyPreference = updateProfileDto.currencyPreference;
-      
+
       // Update customer profile if exists
       const customer = await this.prisma.customer.findUnique({
         where: { userId },
       });
-      
+
       if (customer) {
         await this.prisma.customer.update({
           where: { userId },
@@ -105,7 +102,9 @@ export class UsersService {
       updateData.birthday = updateProfileDto.birthday ? new Date(updateProfileDto.birthday) : null;
     }
     if (updateProfileDto.anniversary !== undefined) {
-      updateData.anniversary = updateProfileDto.anniversary ? new Date(updateProfileDto.anniversary) : null;
+      updateData.anniversary = updateProfileDto.anniversary
+        ? new Date(updateProfileDto.anniversary)
+        : null;
     }
 
     const updated = await this.prisma.user.update({
@@ -232,7 +231,7 @@ export class UsersService {
     const pointsNeeded = pointsForNextLevel - (user.gamificationPoints || 0);
     const progressPercentage = Math.min(
       100,
-      (pointsProgress / (pointsForNextLevel - pointsForCurrentLevel)) * 100
+      (pointsProgress / (pointsForNextLevel - pointsForCurrentLevel)) * 100,
     );
 
     return {

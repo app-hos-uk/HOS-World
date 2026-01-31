@@ -30,4 +30,3 @@ export class UpdateSubmissionDto {
   @IsObject()
   productData?: any; // For updating raw product data
 }
-

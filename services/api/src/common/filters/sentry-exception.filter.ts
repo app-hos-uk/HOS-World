@@ -18,15 +18,16 @@ export class SentryExceptionFilter implements ExceptionFilter {
 
     const response = ctx.getResponse();
     let status =
-      exception instanceof HttpException
-        ? exception.getStatus()
-        : HttpStatus.INTERNAL_SERVER_ERROR;
+      exception instanceof HttpException ? exception.getStatus() : HttpStatus.INTERNAL_SERVER_ERROR;
 
     let message: { message: string } =
       exception instanceof HttpException
-        ? (typeof (exception.getResponse() as any) === 'object'
-            ? (exception.getResponse() as any)
-            : { message: (exception.getResponse() as any)?.message || (exception.getResponse() as any) })
+        ? typeof (exception.getResponse() as any) === 'object'
+          ? (exception.getResponse() as any)
+          : {
+              message:
+                (exception.getResponse() as any)?.message || (exception.getResponse() as any),
+            }
         : { message: (exception as any)?.message || 'Internal server error' };
 
     // If Prisma/DB reports missing column (e.g. migration not run), return 503 with clearer message
@@ -49,4 +50,3 @@ export class SentryExceptionFilter implements ExceptionFilter {
     });
   }
 }
-

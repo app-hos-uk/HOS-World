@@ -34,7 +34,8 @@ export class NewsletterController {
   @Post('subscribe')
   @ApiOperation({
     summary: 'Subscribe to newsletter',
-    description: 'Subscribes an email address to the newsletter. Public endpoint, no authentication required.',
+    description:
+      'Subscribes an email address to the newsletter. Public endpoint, no authentication required.',
   })
   @ApiBody({ type: CreateNewsletterSubscriptionDto })
   @SwaggerApiResponse({ status: 201, description: 'Successfully subscribed to newsletter' })
@@ -55,7 +56,8 @@ export class NewsletterController {
   @Post('unsubscribe')
   @ApiOperation({
     summary: 'Unsubscribe from newsletter',
-    description: 'Unsubscribes an email address from the newsletter. Public endpoint, no authentication required.',
+    description:
+      'Unsubscribes an email address from the newsletter. Public endpoint, no authentication required.',
   })
   @ApiBody({
     description: 'Unsubscribe data',
@@ -81,7 +83,8 @@ export class NewsletterController {
   @Get('status')
   @ApiOperation({
     summary: 'Get subscription status',
-    description: 'Checks the subscription status for an email address. Public endpoint, no authentication required.',
+    description:
+      'Checks the subscription status for an email address. Public endpoint, no authentication required.',
   })
   @ApiQuery({ name: 'email', required: true, type: String, description: 'Email address to check' })
   @SwaggerApiResponse({ status: 200, description: 'Subscription status retrieved successfully' })
@@ -101,9 +104,24 @@ export class NewsletterController {
     summary: 'Get all newsletter subscriptions (Admin only)',
     description: 'Retrieves all newsletter subscriptions with pagination. Admin access required.',
   })
-  @ApiQuery({ name: 'status', required: false, type: String, description: 'Filter by subscription status' })
-  @ApiQuery({ name: 'page', required: false, type: Number, description: 'Page number (default: 1)' })
-  @ApiQuery({ name: 'limit', required: false, type: Number, description: 'Items per page (default: 50)' })
+  @ApiQuery({
+    name: 'status',
+    required: false,
+    type: String,
+    description: 'Filter by subscription status',
+  })
+  @ApiQuery({
+    name: 'page',
+    required: false,
+    type: Number,
+    description: 'Page number (default: 1)',
+  })
+  @ApiQuery({
+    name: 'limit',
+    required: false,
+    type: Number,
+    description: 'Items per page (default: 50)',
+  })
   @SwaggerApiResponse({ status: 200, description: 'Subscriptions retrieved successfully' })
   @SwaggerApiResponse({ status: 401, description: 'Unauthorized' })
   @SwaggerApiResponse({ status: 403, description: 'Forbidden - Admin access required' })
@@ -119,4 +137,3 @@ export class NewsletterController {
     };
   }
 }
-

@@ -12,7 +12,15 @@ import {
   ParseUUIDPipe,
 } from '@nestjs/common';
 import { isUuid } from '../common/utils/uuid';
-import { ApiTags, ApiOperation, ApiResponse as SwaggerApiResponse, ApiBearerAuth, ApiParam, ApiQuery, ApiBody } from '@nestjs/swagger';
+import {
+  ApiTags,
+  ApiOperation,
+  ApiResponse as SwaggerApiResponse,
+  ApiBearerAuth,
+  ApiParam,
+  ApiQuery,
+  ApiBody,
+} from '@nestjs/swagger';
 import { ProductsService } from './products.service';
 import { ProductsBulkService } from './products-bulk.service';
 import { CreateProductDto } from './dto/create-product.dto';
@@ -34,9 +42,14 @@ export class ProductsController {
 
   @Public()
   @Get()
-  @ApiOperation({ summary: 'Get all products', description: 'Retrieve a paginated list of products with optional filters' })
+  @ApiOperation({
+    summary: 'Get all products',
+    description: 'Retrieve a paginated list of products with optional filters',
+  })
   @SwaggerApiResponse({ status: 200, description: 'Products retrieved successfully' })
-  async findAll(@Query() searchDto: SearchProductsDto): Promise<ApiResponse<PaginatedResponse<Product>>> {
+  async findAll(
+    @Query() searchDto: SearchProductsDto,
+  ): Promise<ApiResponse<PaginatedResponse<Product>>> {
     const result = await this.productsService.findAll(searchDto);
     return {
       data: result,
@@ -46,7 +59,10 @@ export class ProductsController {
 
   @Public()
   @Get(':id')
-  @ApiOperation({ summary: 'Get product by ID or slug', description: 'Retrieve a single product by UUID or slug' })
+  @ApiOperation({
+    summary: 'Get product by ID or slug',
+    description: 'Retrieve a single product by UUID or slug',
+  })
   @ApiParam({ name: 'id', description: 'Product UUID or slug', type: String })
   @SwaggerApiResponse({ status: 200, description: 'Product retrieved successfully' })
   @SwaggerApiResponse({ status: 404, description: 'Product not found' })
@@ -62,7 +78,10 @@ export class ProductsController {
 
   @Public()
   @Get('slug/:slug')
-  @ApiOperation({ summary: 'Get product by slug', description: 'Retrieve a single product by its slug' })
+  @ApiOperation({
+    summary: 'Get product by slug',
+    description: 'Retrieve a single product by its slug',
+  })
   @ApiParam({ name: 'slug', description: 'Product slug', type: String })
   @SwaggerApiResponse({ status: 200, description: 'Product retrieved successfully' })
   @SwaggerApiResponse({ status: 404, description: 'Product not found' })
@@ -78,7 +97,10 @@ export class ProductsController {
   @Roles('SELLER')
   @Post()
   @ApiBearerAuth('JWT-auth')
-  @ApiOperation({ summary: 'Create a new product', description: 'Create a new product (Seller only)' })
+  @ApiOperation({
+    summary: 'Create a new product',
+    description: 'Create a new product (Seller only)',
+  })
   @SwaggerApiResponse({ status: 201, description: 'Product created successfully' })
   @SwaggerApiResponse({ status: 401, description: 'Unauthorized' })
   @SwaggerApiResponse({ status: 403, description: 'Forbidden - Seller role required' })
@@ -97,7 +119,10 @@ export class ProductsController {
   @Roles('SELLER')
   @Put(':id')
   @ApiBearerAuth('JWT-auth')
-  @ApiOperation({ summary: 'Update product', description: 'Update an existing product (Seller only)' })
+  @ApiOperation({
+    summary: 'Update product',
+    description: 'Update an existing product (Seller only)',
+  })
   @ApiParam({ name: 'id', description: 'Product UUID', type: String })
   @ApiBody({ type: UpdateProductDto })
   @SwaggerApiResponse({ status: 200, description: 'Product updated successfully' })
@@ -141,7 +166,10 @@ export class ProductsController {
   @Roles('SELLER')
   @Get('export/csv')
   @ApiBearerAuth('JWT-auth')
-  @ApiOperation({ summary: 'Export products to CSV', description: 'Export all seller products to CSV format (Seller only)' })
+  @ApiOperation({
+    summary: 'Export products to CSV',
+    description: 'Export all seller products to CSV format (Seller only)',
+  })
   @SwaggerApiResponse({ status: 200, description: 'Products exported successfully' })
   @SwaggerApiResponse({ status: 401, description: 'Unauthorized' })
   @SwaggerApiResponse({ status: 403, description: 'Forbidden - Seller role required' })
@@ -157,7 +185,10 @@ export class ProductsController {
   @Roles('SELLER')
   @Post('import')
   @ApiBearerAuth('JWT-auth')
-  @ApiOperation({ summary: 'Import products', description: 'Import products from JSON array (Seller only)' })
+  @ApiOperation({
+    summary: 'Import products',
+    description: 'Import products from JSON array (Seller only)',
+  })
   @ApiBody({
     schema: {
       type: 'object',

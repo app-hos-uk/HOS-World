@@ -9,4 +9,3 @@ export class FandomQuizDto {
   @IsString({ each: true })
   interests: string[];
 }
-

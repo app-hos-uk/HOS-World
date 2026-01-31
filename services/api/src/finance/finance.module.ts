@@ -21,20 +21,7 @@ import { NotificationsModule } from '../notifications/notifications.module';
     RefundsController,
     ReportsController,
   ],
-  providers: [
-    FinanceService,
-    TransactionsService,
-    PayoutsService,
-    RefundsService,
-    ReportsService,
-  ],
-  exports: [
-    FinanceService,
-    TransactionsService,
-    PayoutsService,
-    RefundsService,
-    ReportsService,
-  ],
+  providers: [FinanceService, TransactionsService, PayoutsService, RefundsService, ReportsService],
+  exports: [FinanceService, TransactionsService, PayoutsService, RefundsService, ReportsService],
 })
 export class FinanceModule {}
-

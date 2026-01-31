@@ -118,12 +118,14 @@ export class TagsService {
       const baseSlug = slugify(data.name);
       slug = baseSlug;
       let counter = 1;
-      while (await this.prisma.tag.findFirst({
-        where: {
-          slug,
-          id: { not: id },
-        },
-      })) {
+      while (
+        await this.prisma.tag.findFirst({
+          where: {
+            slug,
+            id: { not: id },
+          },
+        })
+      ) {
         slug = `${baseSlug}-${counter}`;
         counter++;
       }
@@ -176,10 +178,7 @@ export class TagsService {
     return this.prisma.tag.findMany({
       where: {
         isActive: true,
-        OR: [
-          { name: { contains: query, mode: 'insensitive' } },
-          { synonyms: { has: query } },
-        ],
+        OR: [{ name: { contains: query, mode: 'insensitive' } }, { synonyms: { has: query } }],
       },
       take: 20,
       orderBy: {
@@ -205,4 +204,3 @@ export class TagsService {
     });
   }
 }
-

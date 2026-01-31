@@ -110,6 +110,7 @@ export default function AdminSellersPage() {
     } finally {
       setLoading(false);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const fetchInvitations = useCallback(async () => {

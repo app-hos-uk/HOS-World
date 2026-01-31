@@ -9,5 +9,3 @@ export class AddOrderNoteDto {
   @IsBoolean()
   internal?: boolean;
 }
-
-

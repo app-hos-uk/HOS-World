@@ -130,7 +130,10 @@ export class InfluencerInvitationsService {
   /**
    * Accept invitation and create influencer profile
    */
-  async accept(token: string, userData: { password: string; firstName: string; lastName: string; displayName: string }) {
+  async accept(
+    token: string,
+    userData: { password: string; firstName: string; lastName: string; displayName: string },
+  ) {
     const invitation = await this.prisma.influencerInvitation.findUnique({
       where: { token },
     });
@@ -163,7 +166,7 @@ export class InfluencerInvitationsService {
         // Create new user
         const bcrypt = await import('bcrypt');
         const hashedPassword = await bcrypt.hash(userData.password, 10);
-        
+
         user = await tx.user.create({
           data: {
             email: invitation.email,
@@ -303,8 +306,15 @@ export class InfluencerInvitationsService {
 
   // Helper methods
   private async generateUniqueReferralCode(displayName: string): Promise<string> {
-    const base = displayName.toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 6);
-    let code = base + Math.floor(Math.random() * 100).toString().padStart(2, '0');
+    const base = displayName
+      .toUpperCase()
+      .replace(/[^A-Z0-9]/g, '')
+      .slice(0, 6);
+    let code =
+      base +
+      Math.floor(Math.random() * 100)
+        .toString()
+        .padStart(2, '0');
     let attempts = 0;
 
     while (attempts < 10) {
@@ -312,7 +322,11 @@ export class InfluencerInvitationsService {
         where: { referralCode: code },
       });
       if (!existing) return code;
-      code = base + Math.floor(Math.random() * 1000).toString().padStart(3, '0');
+      code =
+        base +
+        Math.floor(Math.random() * 1000)
+          .toString()
+          .padStart(3, '0');
       attempts++;
     }
 
@@ -321,7 +335,10 @@ export class InfluencerInvitationsService {
   }
 
   private async generateUniqueSlug(displayName: string): Promise<string> {
-    let slug = displayName.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+    const slug = displayName
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/(^-|-$)/g, '');
     let attempts = 0;
 
     while (attempts < 10) {

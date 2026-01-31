@@ -22,7 +22,11 @@ import {
 } from '@nestjs/swagger';
 import { InfluencersService } from './influencers.service';
 import { InfluencerStorefrontsService } from '../influencer-storefronts/influencer-storefronts.service';
-import { UpdateInfluencerDto, UpdateInfluencerCommissionDto, CreateProductLinkDto } from './dto/update-influencer.dto';
+import {
+  UpdateInfluencerDto,
+  UpdateInfluencerCommissionDto,
+  CreateProductLinkDto,
+} from './dto/update-influencer.dto';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../common/guards/roles.guard';
 import { Roles } from '../common/decorators/roles.decorator';
@@ -47,7 +51,7 @@ export class InfluencersController {
   @ApiBearerAuth('JWT-auth')
   @ApiOperation({
     summary: 'Get my influencer profile',
-    description: 'Get the authenticated influencer\'s profile. Requires INFLUENCER role.',
+    description: "Get the authenticated influencer's profile. Requires INFLUENCER role.",
   })
   @SwaggerApiResponse({ status: 200, description: 'Profile retrieved successfully' })
   async getMyProfile(@Request() req: any): Promise<ApiResponse<any>> {
@@ -64,7 +68,7 @@ export class InfluencersController {
   @ApiBearerAuth('JWT-auth')
   @ApiOperation({
     summary: 'Update my influencer profile',
-    description: 'Update the authenticated influencer\'s profile.',
+    description: "Update the authenticated influencer's profile.",
   })
   @ApiBody({ type: UpdateInfluencerDto })
   @SwaggerApiResponse({ status: 200, description: 'Profile updated successfully' })
@@ -273,7 +277,8 @@ export class InfluencersController {
   @Get('i/:slug')
   @ApiOperation({
     summary: 'Get public storefront by slug',
-    description: 'Get public influencer profile, storefront and featured products. Matches frontend GetInfluencerStorefrontResponse.',
+    description:
+      'Get public influencer profile, storefront and featured products. Matches frontend GetInfluencerStorefrontResponse.',
   })
   @ApiParam({ name: 'slug', description: 'Influencer slug' })
   @SwaggerApiResponse({ status: 200, description: 'Storefront retrieved successfully' })

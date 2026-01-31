@@ -1,9 +1,4 @@
-import {
-  Injectable,
-  NotFoundException,
-  BadRequestException,
-  Logger,
-} from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException, Logger } from '@nestjs/common';
 import { PrismaService } from '../database/prisma.service';
 
 @Injectable()
@@ -53,7 +48,12 @@ export class InfluencerPayoutsService {
   /**
    * List all payouts (admin)
    */
-  async findAll(options?: { page?: number; limit?: number; status?: string; influencerId?: string }) {
+  async findAll(options?: {
+    page?: number;
+    limit?: number;
+    status?: string;
+    influencerId?: string;
+  }) {
     const { page = 1, limit = 20, status, influencerId } = options || {};
 
     const where: any = {};
@@ -139,7 +139,7 @@ export class InfluencerPayoutsService {
 
       // Link commissions to payout
       await tx.influencerCommission.updateMany({
-        where: { id: { in: commissions.map(c => c.id) } },
+        where: { id: { in: commissions.map((c) => c.id) } },
         data: { payoutId: newPayout.id },
       });
 
@@ -152,7 +152,11 @@ export class InfluencerPayoutsService {
   /**
    * Mark payout as paid (admin)
    */
-  async markPaid(id: string, paidBy: string, data: { paymentMethod?: string; paymentRef?: string }) {
+  async markPaid(
+    id: string,
+    paidBy: string,
+    data: { paymentMethod?: string; paymentRef?: string },
+  ) {
     const payout = await this.prisma.influencerPayout.findUnique({
       where: { id },
       include: { commissions: true },

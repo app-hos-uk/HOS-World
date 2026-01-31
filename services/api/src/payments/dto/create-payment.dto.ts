@@ -18,5 +18,3 @@ export class CreatePaymentDto {
   @IsString()
   currency?: string;
 }
-
-

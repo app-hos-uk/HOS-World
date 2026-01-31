@@ -31,7 +31,7 @@ describe('Authentication Integration Tests', () => {
     if (process.env.SKIP_INTEGRATION_TESTS === 'true') {
       return;
     }
-    
+
     let moduleFixture: TestingModule;
     try {
       moduleFixture = await Test.createTestingModule({
@@ -77,9 +77,11 @@ describe('Authentication Integration Tests', () => {
     // Cleanup
     if (prismaService) {
       if (createdUserId) {
-        await prismaService.user.delete({
-          where: { id: createdUserId },
-        }).catch(() => {});
+        await prismaService.user
+          .delete({
+            where: { id: createdUserId },
+          })
+          .catch(() => {});
       }
       await prismaService.$disconnect().catch(() => {});
     }
@@ -95,7 +97,7 @@ describe('Authentication Integration Tests', () => {
         return;
       }
       const email = `integration-test-${Date.now()}@example.com`;
-      
+
       try {
         const result = await authService.register({
           email,
@@ -143,7 +145,7 @@ describe('Authentication Integration Tests', () => {
       }
       const email = `password-test-${Date.now()}@example.com`;
       const password = 'TestPassword123!';
-      
+
       try {
         const result = await authService.register({
           email,
@@ -163,15 +165,17 @@ describe('Authentication Integration Tests', () => {
 
         expect(user?.password).not.toBe(password);
         expect(user?.password).not.toContain(password);
-        
+
         // Verify password can be compared
         const isValid = await bcrypt.compare(password, user?.password || '');
         expect(isValid).toBe(true);
 
         // Cleanup
-        await prismaService.user.delete({
-          where: { id: result.user.id },
-        }).catch(() => {});
+        await prismaService.user
+          .delete({
+            where: { id: result.user.id },
+          })
+          .catch(() => {});
       } catch (error: any) {
         if (isDbConnectionError(error)) {
           console.warn('⚠️ Skipping test: Database operation failed');
@@ -219,9 +223,11 @@ describe('Authentication Integration Tests', () => {
 
     afterAll(async () => {
       if (prismaService && testUserId) {
-        await prismaService.user.delete({
-          where: { id: testUserId },
-        }).catch(() => {});
+        await prismaService.user
+          .delete({
+            where: { id: testUserId },
+          })
+          .catch(() => {});
       }
     });
 
@@ -291,5 +297,3 @@ describe('Authentication Integration Tests', () => {
     });
   });
 });
-
-

@@ -192,10 +192,10 @@ export interface TestConnectionResult {
 export interface ICourierProvider {
   /** Provider identifier (e.g., 'fedex', 'royal_mail') */
   readonly providerId: string;
-  
+
   /** Human-readable provider name */
   readonly providerName: string;
-  
+
   /** Whether this provider is currently configured and ready to use */
   isConfigured(): boolean;
 
@@ -242,7 +242,10 @@ export interface ICourierProvider {
   /**
    * Get list of available services for a lane
    */
-  getAvailableServices?(from: Address, to: Address): Promise<Array<{ code: string; name: string; description?: string }>>;
+  getAvailableServices?(
+    from: Address,
+    to: Address,
+  ): Promise<Array<{ code: string; name: string; description?: string }>>;
 }
 
 /**
@@ -251,7 +254,7 @@ export interface ICourierProvider {
 export abstract class BaseCourierProvider implements ICourierProvider {
   abstract readonly providerId: string;
   abstract readonly providerName: string;
-  
+
   protected credentials: Record<string, any> = {};
   protected isTestMode: boolean = true;
 

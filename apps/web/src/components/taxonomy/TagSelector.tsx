@@ -44,6 +44,7 @@ export function TagSelector({
 
   useEffect(() => {
     loadTags();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [filterCategory]);
 
   useEffect(() => {

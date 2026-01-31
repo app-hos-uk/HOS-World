@@ -54,13 +54,9 @@ export class ReturnsService {
     if (createReturnDto.items && createReturnDto.items.length > 0) {
       // Validate each item
       for (const returnItem of createReturnDto.items) {
-        const orderItem = order.items.find(
-          (item) => item.id === returnItem.orderItemId,
-        );
+        const orderItem = order.items.find((item) => item.id === returnItem.orderItemId);
         if (!orderItem) {
-          throw new BadRequestException(
-            `Order item ${returnItem.orderItemId} not found in order`,
-          );
+          throw new BadRequestException(`Order item ${returnItem.orderItemId} not found in order`);
         }
         if (returnItem.quantity > orderItem.quantity) {
           throw new BadRequestException(
@@ -81,9 +77,7 @@ export class ReturnsService {
         });
 
         if (existingReturnItem) {
-          throw new BadRequestException(
-            `Item ${returnItem.orderItemId} is already being returned`,
-          );
+          throw new BadRequestException(`Item ${returnItem.orderItemId} is already being returned`);
         }
       }
     } else {
@@ -267,5 +261,3 @@ export class ReturnsService {
     };
   }
 }
-
-

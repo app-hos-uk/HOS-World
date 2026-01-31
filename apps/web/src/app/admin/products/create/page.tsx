@@ -287,7 +287,7 @@ export default function ProductCreationPage() {
                   <span className="text-green-600 text-xl">✓</span>
                   <div>
                     <p className="font-medium text-green-800">
-                      Product "{lastCreatedProduct}" created successfully!
+                      Product &ldquo;{lastCreatedProduct}&rdquo; created successfully!
                     </p>
                     <p className="text-sm text-green-600">
                       Form has been reset. You can add another product or view all products.

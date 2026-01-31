@@ -12,4 +12,3 @@ export class AppleAuthGuard extends AuthGuard('apple') {
     }
   }
 }
-

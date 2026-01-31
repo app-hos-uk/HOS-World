@@ -39,6 +39,7 @@ export default function AdminSellerApplicationsPage() {
 
   useEffect(() => {
     fetchInvitations();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [statusFilter]);
 
   const fetchInvitations = async () => {
@@ -215,7 +216,7 @@ export default function AdminSellerApplicationsPage() {
                 <div className="px-6 py-12 text-center text-gray-500">
                   <span className="text-5xl block mb-4">📧</span>
                   <p className="text-lg">No invitations found</p>
-                  <p className="text-sm mt-2">Click "Invite Seller" to send a new invitation</p>
+                  <p className="text-sm mt-2">Click &ldquo;Invite Seller&rdquo; to send a new invitation</p>
                 </div>
               ) : (
                 <div className="overflow-x-auto">

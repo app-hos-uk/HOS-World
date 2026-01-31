@@ -62,6 +62,7 @@ export default function ReturnsPage() {
 
   useEffect(() => {
     fetchData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const fetchData = async () => {
@@ -460,7 +461,7 @@ export default function ReturnsPage() {
                     <option value="DEFECTIVE">Defective or damaged item</option>
                     <option value="WRONG_ITEM">Wrong item received</option>
                     <option value="NOT_AS_DESCRIBED">Not as described</option>
-                    <option value="SIZE_ISSUE">Size doesn't fit</option>
+                    <option value="SIZE_ISSUE">Size doesn&apos;t fit</option>
                     <option value="CHANGED_MIND">Changed my mind</option>
                     <option value="OTHER">Other</option>
                   </select>

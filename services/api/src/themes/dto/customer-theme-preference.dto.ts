@@ -12,5 +12,3 @@ export class UpdateCustomerThemePreferenceDto {
   @IsOptional()
   themePreference?: CustomerThemeMode;
 }
-
-

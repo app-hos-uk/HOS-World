@@ -6,7 +6,6 @@ import { slugify } from '@hos-marketplace/utils';
 export class KnowledgeBaseService {
   constructor(private prisma: PrismaService) {}
 
-
   async createArticle(data: {
     title: string;
     content: string;
@@ -138,11 +137,14 @@ export class KnowledgeBaseService {
     };
   }
 
-  async searchArticles(query: string, filters?: {
-    category?: string;
-    tags?: string[];
-    limit?: number;
-  }) {
+  async searchArticles(
+    query: string,
+    filters?: {
+      category?: string;
+      tags?: string[];
+      limit?: number;
+    },
+  ) {
     const where: any = {
       isPublished: true,
       OR: [
@@ -240,4 +242,3 @@ export class KnowledgeBaseService {
     });
   }
 }
-

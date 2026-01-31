@@ -44,5 +44,3 @@ export class UpdateThemeDto {
   @IsBoolean()
   isActive?: boolean;
 }
-
-

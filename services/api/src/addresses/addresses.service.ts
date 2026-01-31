@@ -66,10 +66,7 @@ export class AddressesService {
   async findAll(userId: string): Promise<Address[]> {
     const addresses = await this.prisma.address.findMany({
       where: { userId },
-      orderBy: [
-        { isDefault: 'desc' },
-        { createdAt: 'desc' },
-      ],
+      orderBy: [{ isDefault: 'desc' }, { createdAt: 'desc' }],
     });
 
     return addresses.map((addr) => this.mapToAddressType(addr));
@@ -148,7 +145,9 @@ export class AddressesService {
           );
         }
       } catch (error) {
-        this.logger.warn(`Failed to geocode updated address ${id} for user ${userId}: ${error.message}`);
+        this.logger.warn(
+          `Failed to geocode updated address ${id} for user ${userId}: ${error.message}`,
+        );
         // Continue without geocoding
       }
     }
@@ -236,5 +235,3 @@ export class AddressesService {
     };
   }
 }
-
-

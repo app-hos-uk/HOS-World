@@ -38,14 +38,13 @@ export class PromotionsController {
   @ApiBearerAuth('JWT-auth')
   @ApiOperation({
     summary: 'Create a new promotion',
-    description: 'Creates a new promotion with specified conditions and actions. Requires ADMIN or MARKETING role.',
+    description:
+      'Creates a new promotion with specified conditions and actions. Requires ADMIN or MARKETING role.',
   })
   @SwaggerApiResponse({ status: 201, description: 'Promotion created successfully' })
   @SwaggerApiResponse({ status: 400, description: 'Invalid promotion data' })
   @SwaggerApiResponse({ status: 401, description: 'Unauthorized' })
-  async create(
-    @Body() createDto: CreatePromotionDto,
-  ): Promise<ApiResponse<any>> {
+  async create(@Body() createDto: CreatePromotionDto): Promise<ApiResponse<any>> {
     const promotion = await this.promotionsService.create(createDto);
     return {
       data: promotion,
@@ -61,9 +60,7 @@ export class PromotionsController {
   })
   @ApiQuery({ name: 'sellerId', required: false, description: 'Filter by seller ID' })
   @SwaggerApiResponse({ status: 200, description: 'Promotions retrieved successfully' })
-  async findAll(
-    @Query('sellerId') sellerId?: string,
-  ): Promise<ApiResponse<any[]>> {
+  async findAll(@Query('sellerId') sellerId?: string): Promise<ApiResponse<any[]>> {
     const promotions = await this.promotionsService.findAll(sellerId);
     return {
       data: promotions,
@@ -139,9 +136,7 @@ export class PromotionsController {
   })
   @SwaggerApiResponse({ status: 201, description: 'Coupon created successfully' })
   @SwaggerApiResponse({ status: 400, description: 'Invalid coupon data' })
-  async createCoupon(
-    @Body() createDto: CreateCouponDto,
-  ): Promise<ApiResponse<any>> {
+  async createCoupon(@Body() createDto: CreateCouponDto): Promise<ApiResponse<any>> {
     const coupon = await this.promotionsService.createCoupon(createDto);
     return {
       data: coupon,
@@ -179,7 +174,7 @@ export class PromotionsController {
   @ApiBearerAuth('JWT-auth')
   @ApiOperation({
     summary: 'Apply coupon to cart',
-    description: 'Applies a coupon code to the user\'s cart.',
+    description: "Applies a coupon code to the user's cart.",
   })
   @SwaggerApiResponse({ status: 200, description: 'Coupon applied successfully' })
   @SwaggerApiResponse({ status: 400, description: 'Invalid or expired coupon' })
@@ -203,17 +198,14 @@ export class PromotionsController {
   @ApiBearerAuth('JWT-auth')
   @ApiOperation({
     summary: 'Remove coupon from cart',
-    description: 'Removes the applied coupon from the user\'s cart.',
+    description: "Removes the applied coupon from the user's cart.",
   })
   @SwaggerApiResponse({ status: 200, description: 'Coupon removed successfully' })
   async removeCoupon(
     @Request() req: any,
     @Body() body: { cartId: string },
   ): Promise<ApiResponse<any>> {
-    await this.promotionsService.removeCouponFromCart(
-      body.cartId,
-      req.user.id,
-    );
+    await this.promotionsService.removeCouponFromCart(body.cartId, req.user.id);
     return {
       data: null,
       message: 'Coupon removed successfully',

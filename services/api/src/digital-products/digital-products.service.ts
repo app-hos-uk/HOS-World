@@ -74,7 +74,7 @@ export class DigitalProductsService {
 
         // Check if product is digital (has 'digital' in tags)
         const isDigital = this.isDigitalProduct(item.product.tags || []);
-        
+
         if (!isDigital) continue;
 
         // Get download count from activity logs
@@ -125,11 +125,11 @@ export class DigitalProductsService {
     if (parts.length < 2) {
       throw new NotFoundException('Invalid digital product ID');
     }
-    
+
     // The ID format is orderId-productId, both are UUIDs
     const orderId = parts.slice(0, 5).join('-');
     const productId = parts.slice(5).join('-');
-    
+
     if (!orderId || !productId) {
       throw new NotFoundException('Invalid digital product ID');
     }
@@ -248,10 +248,8 @@ export class DigitalProductsService {
    */
   private isDigitalProduct(tags: string[]): boolean {
     const digitalKeywords = ['digital', 'ebook', 'pdf', 'download', 'virtual', 'printable'];
-    return tags.some(tag => 
-      digitalKeywords.some(keyword => 
-        tag.toLowerCase().includes(keyword)
-      )
+    return tags.some((tag) =>
+      digitalKeywords.some((keyword) => tag.toLowerCase().includes(keyword)),
     );
   }
 }

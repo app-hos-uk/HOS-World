@@ -36,10 +36,21 @@ export class TagsController {
   @Get()
   @ApiOperation({
     summary: 'Get all tags',
-    description: 'Retrieves all tags with optional filtering. Public endpoint, no authentication required.',
+    description:
+      'Retrieves all tags with optional filtering. Public endpoint, no authentication required.',
   })
-  @ApiQuery({ name: 'category', required: false, type: String, description: 'Filter by tag category' })
-  @ApiQuery({ name: 'isActive', required: false, type: String, description: 'Filter by active status (true/false)' })
+  @ApiQuery({
+    name: 'category',
+    required: false,
+    type: String,
+    description: 'Filter by tag category',
+  })
+  @ApiQuery({
+    name: 'isActive',
+    required: false,
+    type: String,
+    description: 'Filter by active status (true/false)',
+  })
   @ApiQuery({ name: 'search', required: false, type: String, description: 'Search tags by name' })
   @SwaggerApiResponse({ status: 200, description: 'Tags retrieved successfully' })
   async findAll(
@@ -78,7 +89,8 @@ export class TagsController {
   @Get('category/:category')
   @ApiOperation({
     summary: 'Get tags by category',
-    description: 'Retrieves all tags for a specific category. Public endpoint, no authentication required.',
+    description:
+      'Retrieves all tags for a specific category. Public endpoint, no authentication required.',
   })
   @ApiParam({ name: 'category', description: 'Tag category', type: String })
   @SwaggerApiResponse({ status: 200, description: 'Tags retrieved successfully' })
@@ -197,4 +209,3 @@ export class TagsController {
     };
   }
 }
-

@@ -14,7 +14,7 @@ import { TaxJarProvider } from './providers/taxjar.provider';
 
 /**
  * TaxFactory - Dynamically loads and manages tax service providers
- * 
+ *
  * Responsibilities:
  * - Load provider configurations from IntegrationConfig
  * - Instantiate and cache provider instances
@@ -25,7 +25,10 @@ import { TaxJarProvider } from './providers/taxjar.provider';
 export class TaxFactoryService implements OnModuleInit {
   private readonly logger = new Logger(TaxFactoryService.name);
   private providers: Map<string, ITaxProvider> = new Map();
-  private providerConfigs: Map<string, { isActive: boolean; isTestMode: boolean; priority: number }> = new Map();
+  private providerConfigs: Map<
+    string,
+    { isActive: boolean; isTestMode: boolean; priority: number }
+  > = new Map();
   private activeProvider: ITaxProvider | null = null;
 
   constructor(
@@ -75,14 +78,20 @@ export class TaxFactoryService implements OnModuleInit {
               this.activeProvider = provider;
             }
 
-            this.logger.log(`Loaded tax provider: ${integration.provider} (${integration.isTestMode ? 'test' : 'production'})`);
+            this.logger.log(
+              `Loaded tax provider: ${integration.provider} (${integration.isTestMode ? 'test' : 'production'})`,
+            );
           }
         } catch (error: any) {
-          this.logger.error(`Failed to load tax provider ${integration.provider}: ${error.message}`);
+          this.logger.error(
+            `Failed to load tax provider ${integration.provider}: ${error.message}`,
+          );
         }
       }
 
-      this.logger.log(`Loaded ${this.providers.size} tax providers, active: ${this.activeProvider?.providerId || 'none'}`);
+      this.logger.log(
+        `Loaded ${this.providers.size} tax providers, active: ${this.activeProvider?.providerId || 'none'}`,
+      );
     } catch (error: any) {
       this.logger.error(`Failed to load tax providers: ${error.message}`);
     }
@@ -163,7 +172,7 @@ export class TaxFactoryService implements OnModuleInit {
     if (this.activeProvider) {
       try {
         const result = await this.activeProvider.calculateTax(request);
-        
+
         // Log the API call
         await this.logApiCall(
           this.activeProvider.providerId,
@@ -174,8 +183,10 @@ export class TaxFactoryService implements OnModuleInit {
 
         return result;
       } catch (error: any) {
-        this.logger.error(`Tax calculation failed with ${this.activeProvider.providerId}: ${error.message}`);
-        
+        this.logger.error(
+          `Tax calculation failed with ${this.activeProvider.providerId}: ${error.message}`,
+        );
+
         await this.logApiCall(
           this.activeProvider.providerId,
           'CALCULATE_TAX',
@@ -223,22 +234,17 @@ export class TaxFactoryService implements OnModuleInit {
 
     try {
       const result = await this.activeProvider.commitTransaction(transactionId);
-      
-      await this.logApiCall(
-        this.activeProvider.providerId,
-        'COMMIT_TRANSACTION',
-        transactionId,
-        { success: result.success },
-      );
+
+      await this.logApiCall(this.activeProvider.providerId, 'COMMIT_TRANSACTION', transactionId, {
+        success: result.success,
+      });
 
       return result;
     } catch (error: any) {
-      await this.logApiCall(
-        this.activeProvider.providerId,
-        'COMMIT_TRANSACTION',
-        transactionId,
-        { success: false, error: error.message },
-      );
+      await this.logApiCall(this.activeProvider.providerId, 'COMMIT_TRANSACTION', transactionId, {
+        success: false,
+        error: error.message,
+      });
 
       return { success: false, message: error.message };
     }
@@ -254,22 +260,17 @@ export class TaxFactoryService implements OnModuleInit {
 
     try {
       const result = await this.activeProvider.voidTransaction(transactionId);
-      
-      await this.logApiCall(
-        this.activeProvider.providerId,
-        'VOID_TRANSACTION',
-        transactionId,
-        { success: result.success },
-      );
+
+      await this.logApiCall(this.activeProvider.providerId, 'VOID_TRANSACTION', transactionId, {
+        success: result.success,
+      });
 
       return result;
     } catch (error: any) {
-      await this.logApiCall(
-        this.activeProvider.providerId,
-        'VOID_TRANSACTION',
-        transactionId,
-        { success: false, error: error.message },
-      );
+      await this.logApiCall(this.activeProvider.providerId, 'VOID_TRANSACTION', transactionId, {
+        success: false,
+        error: error.message,
+      });
 
       return { success: false, message: error.message };
     }
@@ -349,7 +350,9 @@ export class TaxFactoryService implements OnModuleInit {
   /**
    * Get nexus locations from the active provider
    */
-  async getNexusLocations(): Promise<Array<{ country: string; region: string; hasNexus: boolean }>> {
+  async getNexusLocations(): Promise<
+    Array<{ country: string; region: string; hasNexus: boolean }>
+  > {
     if (!this.activeProvider?.getNexusLocations) {
       return [];
     }

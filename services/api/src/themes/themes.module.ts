@@ -13,4 +13,3 @@ import { DatabaseModule } from '../database/database.module';
   exports: [ThemesService],
 })
 export class ThemesModule {}
-

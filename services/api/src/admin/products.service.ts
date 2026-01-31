@@ -86,7 +86,7 @@ export class AdminProductsService {
 
     // Validate attributes if provided
     if (data.attributes && data.attributes.length > 0) {
-      const attributeIds = [...new Set(data.attributes.map(a => a.attributeId))];
+      const attributeIds = [...new Set(data.attributes.map((a) => a.attributeId))];
       const attributes = await this.prisma.attribute.findMany({
         where: { id: { in: attributeIds } },
         include: { values: true },
@@ -97,13 +97,15 @@ export class AdminProductsService {
 
       // Validate attribute values for SELECT type
       for (const attrDto of data.attributes) {
-        const attribute = attributes.find(a => a.id === attrDto.attributeId);
+        const attribute = attributes.find((a) => a.id === attrDto.attributeId);
         if (!attribute) continue;
 
         if (attribute.type === 'SELECT' && attrDto.attributeValueId) {
-          const valueExists = attribute.values.some(v => v.id === attrDto.attributeValueId);
+          const valueExists = attribute.values.some((v) => v.id === attrDto.attributeValueId);
           if (!valueExists) {
-            throw new BadRequestException(`Attribute value not found for attribute ${attribute.name}`);
+            throw new BadRequestException(
+              `Attribute value not found for attribute ${attribute.name}`,
+            );
           }
         }
       }
@@ -120,16 +122,24 @@ export class AdminProductsService {
     }
 
     const productType = data.productType || 'SIMPLE';
-    const variationsPayload = data.variations && data.variations.length > 0
-      ? data.variations.map((v) => ({
-          name: v.name,
-          options: Array.isArray(v.options)
-            ? v.options.map((opt) =>
-                typeof opt === 'string' ? { value: opt } : { value: opt.value, price: opt.price, stock: opt.stock, imageUrl: opt.imageUrl },
-              )
-            : [],
-        }))
-      : undefined;
+    const variationsPayload =
+      data.variations && data.variations.length > 0
+        ? data.variations.map((v) => ({
+            name: v.name,
+            options: Array.isArray(v.options)
+              ? v.options.map((opt) =>
+                  typeof opt === 'string'
+                    ? { value: opt }
+                    : {
+                        value: opt.value,
+                        price: opt.price,
+                        stock: opt.stock,
+                        imageUrl: opt.imageUrl,
+                      },
+                )
+              : [],
+          }))
+        : undefined;
 
     // Create product
     const product = await this.prisma.product.create({
@@ -156,15 +166,16 @@ export class AdminProductsService {
         taxRate: data.taxRate || 0,
         taxClassId: data.taxClassId || undefined,
         fandom: data.fandom,
-        images: data.images && data.images.length > 0
-          ? {
-              create: data.images.map((img, idx) => ({
-                url: img.url,
-                alt: img.alt,
-                order: img.order ?? idx,
-              })),
-            }
-          : undefined,
+        images:
+          data.images && data.images.length > 0
+            ? {
+                create: data.images.map((img, idx) => ({
+                  url: img.url,
+                  alt: img.alt,
+                  order: img.order ?? idx,
+                })),
+              }
+            : undefined,
         variations:
           variationsPayload && variationsPayload.length > 0
             ? {
@@ -175,23 +186,25 @@ export class AdminProductsService {
               }
             : undefined,
         // New taxonomy relations
-        tagsRelation: data.tagIds && data.tagIds.length > 0
-          ? {
-              create: data.tagIds.map(tagId => ({ tagId })),
-            }
-          : undefined,
-        attributes: data.attributes && data.attributes.length > 0
-          ? {
-              create: data.attributes.map(attr => ({
-                attributeId: attr.attributeId,
-                attributeValueId: attr.attributeValueId,
-                textValue: attr.textValue,
-                numberValue: attr.numberValue,
-                booleanValue: attr.booleanValue,
-                dateValue: attr.dateValue ? new Date(attr.dateValue) : undefined,
-              })),
-            }
-          : undefined,
+        tagsRelation:
+          data.tagIds && data.tagIds.length > 0
+            ? {
+                create: data.tagIds.map((tagId) => ({ tagId })),
+              }
+            : undefined,
+        attributes:
+          data.attributes && data.attributes.length > 0
+            ? {
+                create: data.attributes.map((attr) => ({
+                  attributeId: attr.attributeId,
+                  attributeValueId: attr.attributeValueId,
+                  textValue: attr.textValue,
+                  numberValue: attr.numberValue,
+                  booleanValue: attr.booleanValue,
+                  dateValue: attr.dateValue ? new Date(attr.dateValue) : undefined,
+                })),
+              }
+            : undefined,
       },
       include: {
         seller: {
@@ -260,7 +273,9 @@ export class AdminProductsService {
       productType?: 'SIMPLE' | 'VARIANT' | 'BUNDLED';
       variations?: Array<{
         name: string;
-        options: Array<string | { value: string; price?: number; stock?: number; imageUrl?: string }>;
+        options: Array<
+          string | { value: string; price?: number; stock?: number; imageUrl?: string }
+        >;
       }>;
     },
   ) {
@@ -308,7 +323,7 @@ export class AdminProductsService {
 
     // Validate attributes if provided
     if (data.attributes && data.attributes.length > 0) {
-      const attributeIds = [...new Set(data.attributes.map(a => a.attributeId))];
+      const attributeIds = [...new Set(data.attributes.map((a) => a.attributeId))];
       const attributes = await this.prisma.attribute.findMany({
         where: { id: { in: attributeIds } },
         include: { values: true },
@@ -319,13 +334,15 @@ export class AdminProductsService {
 
       // Validate attribute values for SELECT type
       for (const attrDto of data.attributes) {
-        const attribute = attributes.find(a => a.id === attrDto.attributeId);
+        const attribute = attributes.find((a) => a.id === attrDto.attributeId);
         if (!attribute) continue;
 
         if (attribute.type === 'SELECT' && attrDto.attributeValueId) {
-          const valueExists = attribute.values.some(v => v.id === attrDto.attributeValueId);
+          const valueExists = attribute.values.some((v) => v.id === attrDto.attributeValueId);
           if (!valueExists) {
-            throw new BadRequestException(`Attribute value not found for attribute ${attribute.name}`);
+            throw new BadRequestException(
+              `Attribute value not found for attribute ${attribute.name}`,
+            );
           }
         }
       }
@@ -389,7 +406,7 @@ export class AdminProductsService {
       // Create new tags
       if (data.tagIds.length > 0) {
         updateData.tagsRelation = {
-          create: data.tagIds.map(tagId => ({ tagId })),
+          create: data.tagIds.map((tagId) => ({ tagId })),
         };
       }
     }
@@ -406,7 +423,12 @@ export class AdminProductsService {
             ? v.options.map((opt) =>
                 typeof opt === 'string'
                   ? { value: opt }
-                  : { value: opt.value, price: opt.price, stock: opt.stock, imageUrl: opt.imageUrl },
+                  : {
+                      value: opt.value,
+                      price: opt.price,
+                      stock: opt.stock,
+                      imageUrl: opt.imageUrl,
+                    },
               )
             : [],
         }));
@@ -429,7 +451,7 @@ export class AdminProductsService {
       // Create new attributes
       if (data.attributes.length > 0) {
         updateData.attributes = {
-          create: data.attributes.map(attr => ({
+          create: data.attributes.map((attr) => ({
             attributeId: attr.attributeId,
             attributeValueId: attr.attributeValueId,
             textValue: attr.textValue,
@@ -577,6 +599,4 @@ export class AdminProductsService {
 
     return { message: 'Product deleted successfully' };
   }
-
 }
-

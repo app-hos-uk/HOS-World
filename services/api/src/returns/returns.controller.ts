@@ -37,7 +37,8 @@ export class ReturnsController {
   @HttpCode(HttpStatus.CREATED)
   @ApiOperation({
     summary: 'Create return request',
-    description: 'Creates a new return request for an order. Customers can return items within the return window.',
+    description:
+      'Creates a new return request for an order. Customers can return items within the return window.',
   })
   @ApiBody({ type: CreateReturnDto })
   @SwaggerApiResponse({ status: 201, description: 'Return request created successfully' })
@@ -58,7 +59,8 @@ export class ReturnsController {
   @Get()
   @ApiOperation({
     summary: 'Get all return requests',
-    description: 'Retrieves all return requests. Customers see their own returns, sellers see returns for their products, admins see all.',
+    description:
+      'Retrieves all return requests. Customers see their own returns, sellers see returns for their products, admins see all.',
   })
   @SwaggerApiResponse({ status: 200, description: 'Return requests retrieved successfully' })
   @SwaggerApiResponse({ status: 401, description: 'Unauthorized' })
@@ -73,7 +75,8 @@ export class ReturnsController {
   @Get(':id')
   @ApiOperation({
     summary: 'Get return request by ID',
-    description: 'Retrieves a specific return request by ID. Users can only access their own returns unless they are seller/admin.',
+    description:
+      'Retrieves a specific return request by ID. Users can only access their own returns unless they are seller/admin.',
   })
   @ApiParam({ name: 'id', description: 'Return request UUID', type: String })
   @SwaggerApiResponse({ status: 200, description: 'Return request retrieved successfully' })
@@ -96,7 +99,8 @@ export class ReturnsController {
   @Put(':id/status')
   @ApiOperation({
     summary: 'Update return request status (Seller/Admin only)',
-    description: 'Updates the status of a return request. Sellers and admins can approve, reject, or process returns.',
+    description:
+      'Updates the status of a return request. Sellers and admins can approve, reject, or process returns.',
   })
   @ApiParam({ name: 'id', description: 'Return request UUID', type: String })
   @ApiBody({
@@ -104,7 +108,10 @@ export class ReturnsController {
     schema: {
       type: 'object',
       properties: {
-        status: { type: 'string', enum: ['PENDING', 'APPROVED', 'REJECTED', 'PROCESSING', 'COMPLETED', 'REFUNDED'] },
+        status: {
+          type: 'string',
+          enum: ['PENDING', 'APPROVED', 'REJECTED', 'PROCESSING', 'COMPLETED', 'REFUNDED'],
+        },
         refundAmount: { type: 'number', description: 'Refund amount (optional)' },
         refundMethod: { type: 'string', description: 'Refund method (optional)' },
       },
@@ -130,5 +137,3 @@ export class ReturnsController {
     };
   }
 }
-
-

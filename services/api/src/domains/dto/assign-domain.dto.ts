@@ -15,4 +15,3 @@ export class CreateSubDomainDto {
   @IsNotEmpty()
   subDomain: string;
 }
-

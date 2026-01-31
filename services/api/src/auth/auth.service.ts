@@ -26,27 +26,27 @@ export class AuthService {
   private readonly countryCodeMap: Record<string, string> = {
     'United Kingdom': 'GB',
     'United States': 'US',
-    'USA': 'US',
-    'Canada': 'CA',
-    'Australia': 'AU',
-    'Germany': 'DE',
-    'France': 'FR',
-    'Italy': 'IT',
-    'Spain': 'ES',
-    'Netherlands': 'NL',
-    'Belgium': 'BE',
-    'Austria': 'AT',
-    'Portugal': 'PT',
-    'Ireland': 'IE',
-    'Greece': 'GR',
-    'Finland': 'FI',
+    USA: 'US',
+    Canada: 'CA',
+    Australia: 'AU',
+    Germany: 'DE',
+    France: 'FR',
+    Italy: 'IT',
+    Spain: 'ES',
+    Netherlands: 'NL',
+    Belgium: 'BE',
+    Austria: 'AT',
+    Portugal: 'PT',
+    Ireland: 'IE',
+    Greece: 'GR',
+    Finland: 'FI',
     'United Arab Emirates': 'AE',
-    'UAE': 'AE',
+    UAE: 'AE',
     'Saudi Arabia': 'SA',
-    'Kuwait': 'KW',
-    'Qatar': 'QA',
-    'Bahrain': 'BH',
-    'Oman': 'OM',
+    Kuwait: 'KW',
+    Qatar: 'QA',
+    Bahrain: 'BH',
+    Oman: 'OM',
   };
 
   constructor(
@@ -121,7 +121,7 @@ export class AuthService {
     // Determine user role and seller type
     let userRole: string;
     let sellerType: 'WHOLESALER' | 'B2C_SELLER' | undefined;
-    
+
     if (registerDto.role === 'wholesaler') {
       userRole = 'WHOLESALER';
       sellerType = 'WHOLESALER';
@@ -427,11 +427,35 @@ export class AuthService {
 
   async login(loginDto: LoginDto): Promise<AuthResponse> {
     // #region agent log
-    fetch('http://127.0.0.1:7242/ingest/8743deaa-734d-4185-9f60-b0828f74ef5b',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'auth.service.ts:428',message:'Login entry',data:{email:loginDto.email,hasEmail:!!loginDto.email},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'D'})}).catch(()=>{});
+    fetch('http://127.0.0.1:7242/ingest/8743deaa-734d-4185-9f60-b0828f74ef5b', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        location: 'auth.service.ts:428',
+        message: 'Login entry',
+        data: { email: loginDto.email, hasEmail: !!loginDto.email },
+        timestamp: Date.now(),
+        sessionId: 'debug-session',
+        runId: 'run1',
+        hypothesisId: 'D',
+      }),
+    }).catch(() => {});
     // #endregion
     try {
       // #region agent log
-      fetch('http://127.0.0.1:7242/ingest/8743deaa-734d-4185-9f60-b0828f74ef5b',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'auth.service.ts:430',message:'Before user query',data:{email:loginDto.email},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'C'})}).catch(()=>{});
+      fetch('http://127.0.0.1:7242/ingest/8743deaa-734d-4185-9f60-b0828f74ef5b', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          location: 'auth.service.ts:430',
+          message: 'Before user query',
+          data: { email: loginDto.email },
+          timestamp: Date.now(),
+          sessionId: 'debug-session',
+          runId: 'run1',
+          hypothesisId: 'C',
+        }),
+      }).catch(() => {});
       // #endregion
       const user = await this.prisma.user.findUnique({
         where: { email: loginDto.email },
@@ -448,12 +472,36 @@ export class AuthService {
         },
       });
       // #region agent log
-      fetch('http://127.0.0.1:7242/ingest/8743deaa-734d-4185-9f60-b0828f74ef5b',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'auth.service.ts:442',message:'After user query',data:{userFound:!!user,hasPassword:!!user?.password},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'C'})}).catch(()=>{});
+      fetch('http://127.0.0.1:7242/ingest/8743deaa-734d-4185-9f60-b0828f74ef5b', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          location: 'auth.service.ts:442',
+          message: 'After user query',
+          data: { userFound: !!user, hasPassword: !!user?.password },
+          timestamp: Date.now(),
+          sessionId: 'debug-session',
+          runId: 'run1',
+          hypothesisId: 'C',
+        }),
+      }).catch(() => {});
       // #endregion
 
       if (!user) {
         // #region agent log
-        fetch('http://127.0.0.1:7242/ingest/8743deaa-734d-4185-9f60-b0828f74ef5b',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'auth.service.ts:444',message:'User not found',data:{email:loginDto.email},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'D'})}).catch(()=>{});
+        fetch('http://127.0.0.1:7242/ingest/8743deaa-734d-4185-9f60-b0828f74ef5b', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            location: 'auth.service.ts:444',
+            message: 'User not found',
+            data: { email: loginDto.email },
+            timestamp: Date.now(),
+            sessionId: 'debug-session',
+            runId: 'run1',
+            hypothesisId: 'D',
+          }),
+        }).catch(() => {});
         // #endregion
         throw new UnauthorizedException('Invalid credentials');
       }
@@ -461,20 +509,68 @@ export class AuthService {
       // Verify password
       if (!user.password) {
         // #region agent log
-        fetch('http://127.0.0.1:7242/ingest/8743deaa-734d-4185-9f60-b0828f74ef5b',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'auth.service.ts:449',message:'No password (OAuth user)',data:{email:loginDto.email},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'D'})}).catch(()=>{});
+        fetch('http://127.0.0.1:7242/ingest/8743deaa-734d-4185-9f60-b0828f74ef5b', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            location: 'auth.service.ts:449',
+            message: 'No password (OAuth user)',
+            data: { email: loginDto.email },
+            timestamp: Date.now(),
+            sessionId: 'debug-session',
+            runId: 'run1',
+            hypothesisId: 'D',
+          }),
+        }).catch(() => {});
         // #endregion
         throw new UnauthorizedException('Invalid credentials. This account uses OAuth login.');
       }
       // #region agent log
-      fetch('http://127.0.0.1:7242/ingest/8743deaa-734d-4185-9f60-b0828f74ef5b',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'auth.service.ts:452',message:'Before password compare',data:{email:loginDto.email},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'D'})}).catch(()=>{});
+      fetch('http://127.0.0.1:7242/ingest/8743deaa-734d-4185-9f60-b0828f74ef5b', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          location: 'auth.service.ts:452',
+          message: 'Before password compare',
+          data: { email: loginDto.email },
+          timestamp: Date.now(),
+          sessionId: 'debug-session',
+          runId: 'run1',
+          hypothesisId: 'D',
+        }),
+      }).catch(() => {});
       // #endregion
       const isPasswordValid = await bcrypt.compare(loginDto.password, user.password);
       // #region agent log
-      fetch('http://127.0.0.1:7242/ingest/8743deaa-734d-4185-9f60-b0828f74ef5b',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'auth.service.ts:453',message:'After password compare',data:{isValid:isPasswordValid},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'D'})}).catch(()=>{});
+      fetch('http://127.0.0.1:7242/ingest/8743deaa-734d-4185-9f60-b0828f74ef5b', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          location: 'auth.service.ts:453',
+          message: 'After password compare',
+          data: { isValid: isPasswordValid },
+          timestamp: Date.now(),
+          sessionId: 'debug-session',
+          runId: 'run1',
+          hypothesisId: 'D',
+        }),
+      }).catch(() => {});
       // #endregion
       if (!isPasswordValid) {
         // #region agent log
-        fetch('http://127.0.0.1:7242/ingest/8743deaa-734d-4185-9f60-b0828f74ef5b',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'auth.service.ts:454',message:'Invalid password',data:{email:loginDto.email},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'D'})}).catch(()=>{});
+        fetch('http://127.0.0.1:7242/ingest/8743deaa-734d-4185-9f60-b0828f74ef5b', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            location: 'auth.service.ts:454',
+            message: 'Invalid password',
+            data: { email: loginDto.email },
+            timestamp: Date.now(),
+            sessionId: 'debug-session',
+            runId: 'run1',
+            hypothesisId: 'D',
+          }),
+        }).catch(() => {});
         // #endregion
         throw new UnauthorizedException('Invalid credentials');
       }
@@ -484,15 +580,51 @@ export class AuthService {
 
       // Generate tokens
       // #region agent log
-      fetch('http://127.0.0.1:7242/ingest/8743deaa-734d-4185-9f60-b0828f74ef5b',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'auth.service.ts:461',message:'Before generateTokens',data:{userId:userWithoutPassword.id},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'E'})}).catch(()=>{});
+      fetch('http://127.0.0.1:7242/ingest/8743deaa-734d-4185-9f60-b0828f74ef5b', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          location: 'auth.service.ts:461',
+          message: 'Before generateTokens',
+          data: { userId: userWithoutPassword.id },
+          timestamp: Date.now(),
+          sessionId: 'debug-session',
+          runId: 'run1',
+          hypothesisId: 'E',
+        }),
+      }).catch(() => {});
       // #endregion
       const tokens = await this.generateTokens(userWithoutPassword);
       // #region agent log
-      fetch('http://127.0.0.1:7242/ingest/8743deaa-734d-4185-9f60-b0828f74ef5b',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'auth.service.ts:462',message:'After generateTokens',data:{hasAccessToken:!!tokens.accessToken,hasRefreshToken:!!tokens.refreshToken},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'E'})}).catch(()=>{});
+      fetch('http://127.0.0.1:7242/ingest/8743deaa-734d-4185-9f60-b0828f74ef5b', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          location: 'auth.service.ts:462',
+          message: 'After generateTokens',
+          data: { hasAccessToken: !!tokens.accessToken, hasRefreshToken: !!tokens.refreshToken },
+          timestamp: Date.now(),
+          sessionId: 'debug-session',
+          runId: 'run1',
+          hypothesisId: 'E',
+        }),
+      }).catch(() => {});
       // #endregion
 
       // #region agent log
-      fetch('http://127.0.0.1:7242/ingest/8743deaa-734d-4185-9f60-b0828f74ef5b',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'auth.service.ts:463',message:'Login success',data:{userId:userWithoutPassword.id,email:userWithoutPassword.email},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'D'})}).catch(()=>{});
+      fetch('http://127.0.0.1:7242/ingest/8743deaa-734d-4185-9f60-b0828f74ef5b', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          location: 'auth.service.ts:463',
+          message: 'Login success',
+          data: { userId: userWithoutPassword.id, email: userWithoutPassword.email },
+          timestamp: Date.now(),
+          sessionId: 'debug-session',
+          runId: 'run1',
+          hypothesisId: 'D',
+        }),
+      }).catch(() => {});
       // #endregion
       return {
         user: userWithoutPassword as User,
@@ -501,7 +633,23 @@ export class AuthService {
       };
     } catch (error: any) {
       // #region agent log
-      fetch('http://127.0.0.1:7242/ingest/8743deaa-734d-4185-9f60-b0828f74ef5b',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'auth.service.ts:468',message:'Login error',data:{errorMessage:error?.message,errorName:error?.name,errorStack:error?.stack?.substring(0,200)},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'C'})}).catch(()=>{});
+      fetch('http://127.0.0.1:7242/ingest/8743deaa-734d-4185-9f60-b0828f74ef5b', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          location: 'auth.service.ts:468',
+          message: 'Login error',
+          data: {
+            errorMessage: error?.message,
+            errorName: error?.name,
+            errorStack: error?.stack?.substring(0, 200),
+          },
+          timestamp: Date.now(),
+          sessionId: 'debug-session',
+          runId: 'run1',
+          hypothesisId: 'C',
+        }),
+      }).catch(() => {});
       // #endregion
       throw error;
     }
@@ -521,7 +669,19 @@ export class AuthService {
 
   async generateTokens(user: any): Promise<{ accessToken: string; refreshToken: string }> {
     // #region agent log
-    fetch('http://127.0.0.1:7242/ingest/8743deaa-734d-4185-9f60-b0828f74ef5b',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'auth.service.ts:522',message:'generateTokens entry',data:{userId:user?.id,hasUser:!!user},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'E'})}).catch(()=>{});
+    fetch('http://127.0.0.1:7242/ingest/8743deaa-734d-4185-9f60-b0828f74ef5b', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        location: 'auth.service.ts:522',
+        message: 'generateTokens entry',
+        data: { userId: user?.id, hasUser: !!user },
+        timestamp: Date.now(),
+        sessionId: 'debug-session',
+        runId: 'run1',
+        hypothesisId: 'E',
+      }),
+    }).catch(() => {});
     // #endregion
     try {
       const payload = {
@@ -531,7 +691,19 @@ export class AuthService {
         permissionRoleId: user.permissionRoleId,
       };
       // #region agent log
-      fetch('http://127.0.0.1:7242/ingest/8743deaa-734d-4185-9f60-b0828f74ef5b',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'auth.service.ts:528',message:'Before JWT sign',data:{hasUserId:!!payload.sub,hasEmail:!!payload.email},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'E'})}).catch(()=>{});
+      fetch('http://127.0.0.1:7242/ingest/8743deaa-734d-4185-9f60-b0828f74ef5b', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          location: 'auth.service.ts:528',
+          message: 'Before JWT sign',
+          data: { hasUserId: !!payload.sub, hasEmail: !!payload.email },
+          timestamp: Date.now(),
+          sessionId: 'debug-session',
+          runId: 'run1',
+          hypothesisId: 'E',
+        }),
+      }).catch(() => {});
       // #endregion
 
       // Shorten access token TTL to 15 minutes for better security
@@ -540,7 +712,19 @@ export class AuthService {
         expiresIn: accessTokenTTL,
       });
       // #region agent log
-      fetch('http://127.0.0.1:7242/ingest/8743deaa-734d-4185-9f60-b0828f74ef5b',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'auth.service.ts:533',message:'After access token sign',data:{hasAccessToken:!!accessToken},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'E'})}).catch(()=>{});
+      fetch('http://127.0.0.1:7242/ingest/8743deaa-734d-4185-9f60-b0828f74ef5b', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          location: 'auth.service.ts:533',
+          message: 'After access token sign',
+          data: { hasAccessToken: !!accessToken },
+          timestamp: Date.now(),
+          sessionId: 'debug-session',
+          runId: 'run1',
+          hypothesisId: 'E',
+        }),
+      }).catch(() => {});
       // #endregion
 
       // Generate refresh token
@@ -549,21 +733,57 @@ export class AuthService {
         expiresIn: refreshTokenTTL,
       });
       // #region agent log
-      fetch('http://127.0.0.1:7242/ingest/8743deaa-734d-4185-9f60-b0828f74ef5b',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'auth.service.ts:550',message:'After refresh token sign',data:{hasRefreshToken:!!refreshToken},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'E'})}).catch(()=>{});
+      fetch('http://127.0.0.1:7242/ingest/8743deaa-734d-4185-9f60-b0828f74ef5b', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          location: 'auth.service.ts:550',
+          message: 'After refresh token sign',
+          data: { hasRefreshToken: !!refreshToken },
+          timestamp: Date.now(),
+          sessionId: 'debug-session',
+          runId: 'run1',
+          hypothesisId: 'E',
+        }),
+      }).catch(() => {});
       // #endregion
 
       // Hash and store refresh token in DB
       // #region agent log
-      fetch('http://127.0.0.1:7242/ingest/8743deaa-734d-4185-9f60-b0828f74ef5b',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'auth.service.ts:556',message:'Before token storage',data:{refreshTokenAvailable:this.refreshTokenAvailable},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'E'})}).catch(()=>{});
+      fetch('http://127.0.0.1:7242/ingest/8743deaa-734d-4185-9f60-b0828f74ef5b', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          location: 'auth.service.ts:556',
+          message: 'Before token storage',
+          data: { refreshTokenAvailable: this.refreshTokenAvailable },
+          timestamp: Date.now(),
+          sessionId: 'debug-session',
+          runId: 'run1',
+          hypothesisId: 'E',
+        }),
+      }).catch(() => {});
       // #endregion
       const tokenHash = await bcrypt.hash(refreshToken, 10);
       const expiresAt = new Date();
       expiresAt.setDate(expiresAt.getDate() + 30); // 30 days
-      
+
       // Defensive check: ensure RefreshToken model exists
       if (!this.refreshTokenAvailable) {
         // #region agent log
-        fetch('http://127.0.0.1:7242/ingest/8743deaa-734d-4185-9f60-b0828f74ef5b',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'auth.service.ts:562',message:'RefreshToken model not available',data:{},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'E'})}).catch(()=>{});
+        fetch('http://127.0.0.1:7242/ingest/8743deaa-734d-4185-9f60-b0828f74ef5b', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            location: 'auth.service.ts:562',
+            message: 'RefreshToken model not available',
+            data: {},
+            timestamp: Date.now(),
+            sessionId: 'debug-session',
+            runId: 'run1',
+            hypothesisId: 'E',
+          }),
+        }).catch(() => {});
         // #endregion
         console.warn('[AUTH] ⚠️ RefreshToken model not available - skipping token storage');
         console.warn('[AUTH] Token will be generated but not stored in database');
@@ -574,11 +794,23 @@ export class AuthService {
           refreshToken,
         };
       }
-      
+
       const refreshTokenModel = (this.prisma as any).refreshToken;
       if (!refreshTokenModel) {
         // #region agent log
-        fetch('http://127.0.0.1:7242/ingest/8743deaa-734d-4185-9f60-b0828f74ef5b',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'auth.service.ts:571',message:'RefreshToken model not found',data:{},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'E'})}).catch(()=>{});
+        fetch('http://127.0.0.1:7242/ingest/8743deaa-734d-4185-9f60-b0828f74ef5b', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            location: 'auth.service.ts:571',
+            message: 'RefreshToken model not found',
+            data: {},
+            timestamp: Date.now(),
+            sessionId: 'debug-session',
+            runId: 'run1',
+            hypothesisId: 'E',
+          }),
+        }).catch(() => {});
         // #endregion
         console.warn('[AUTH] ⚠️ RefreshToken model not found - skipping storage');
         return {
@@ -586,9 +818,21 @@ export class AuthService {
           refreshToken,
         };
       }
-      
+
       // #region agent log
-      fetch('http://127.0.0.1:7242/ingest/8743deaa-734d-4185-9f60-b0828f74ef5b',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'auth.service.ts:578',message:'Before refreshTokenModel.create',data:{userId:user.id},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'E'})}).catch(()=>{});
+      fetch('http://127.0.0.1:7242/ingest/8743deaa-734d-4185-9f60-b0828f74ef5b', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          location: 'auth.service.ts:578',
+          message: 'Before refreshTokenModel.create',
+          data: { userId: user.id },
+          timestamp: Date.now(),
+          sessionId: 'debug-session',
+          runId: 'run1',
+          hypothesisId: 'E',
+        }),
+      }).catch(() => {});
       // #endregion
       await refreshTokenModel.create({
         data: {
@@ -598,11 +842,35 @@ export class AuthService {
         },
       });
       // #region agent log
-      fetch('http://127.0.0.1:7242/ingest/8743deaa-734d-4185-9f60-b0828f74ef5b',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'auth.service.ts:585',message:'After refreshTokenModel.create',data:{},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'E'})}).catch(()=>{});
+      fetch('http://127.0.0.1:7242/ingest/8743deaa-734d-4185-9f60-b0828f74ef5b', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          location: 'auth.service.ts:585',
+          message: 'After refreshTokenModel.create',
+          data: {},
+          timestamp: Date.now(),
+          sessionId: 'debug-session',
+          runId: 'run1',
+          hypothesisId: 'E',
+        }),
+      }).catch(() => {});
       // #endregion
 
       // #region agent log
-      fetch('http://127.0.0.1:7242/ingest/8743deaa-734d-4185-9f60-b0828f74ef5b',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'auth.service.ts:589',message:'generateTokens success',data:{hasAccessToken:!!accessToken,hasRefreshToken:!!refreshToken},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'E'})}).catch(()=>{});
+      fetch('http://127.0.0.1:7242/ingest/8743deaa-734d-4185-9f60-b0828f74ef5b', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          location: 'auth.service.ts:589',
+          message: 'generateTokens success',
+          data: { hasAccessToken: !!accessToken, hasRefreshToken: !!refreshToken },
+          timestamp: Date.now(),
+          sessionId: 'debug-session',
+          runId: 'run1',
+          hypothesisId: 'E',
+        }),
+      }).catch(() => {});
       // #endregion
       return {
         accessToken,
@@ -610,7 +878,23 @@ export class AuthService {
       };
     } catch (error: any) {
       // #region agent log
-      fetch('http://127.0.0.1:7242/ingest/8743deaa-734d-4185-9f60-b0828f74ef5b',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'auth.service.ts:595',message:'generateTokens error',data:{errorMessage:error?.message,errorName:error?.name,errorStack:error?.stack?.substring(0,200)},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'E'})}).catch(()=>{});
+      fetch('http://127.0.0.1:7242/ingest/8743deaa-734d-4185-9f60-b0828f74ef5b', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          location: 'auth.service.ts:595',
+          message: 'generateTokens error',
+          data: {
+            errorMessage: error?.message,
+            errorName: error?.name,
+            errorStack: error?.stack?.substring(0, 200),
+          },
+          timestamp: Date.now(),
+          sessionId: 'debug-session',
+          runId: 'run1',
+          hypothesisId: 'E',
+        }),
+      }).catch(() => {});
       // #endregion
       throw error;
     }
@@ -647,14 +931,20 @@ export class AuthService {
 
     // Find and verify refresh token in DB
     if (!this.refreshTokenAvailable) {
-      console.warn('[AUTH] ⚠️ RefreshToken model not available - refresh token functionality disabled');
-      throw new UnauthorizedException('Token refresh is currently unavailable. Please log in again.');
+      console.warn(
+        '[AUTH] ⚠️ RefreshToken model not available - refresh token functionality disabled',
+      );
+      throw new UnauthorizedException(
+        'Token refresh is currently unavailable. Please log in again.',
+      );
     }
-    
+
     const refreshTokenModel = (this.prisma as any).refreshToken;
     if (!refreshTokenModel) {
       console.warn('[AUTH] ⚠️ RefreshToken model not found during refresh');
-      throw new UnauthorizedException('Token refresh is currently unavailable. Please log in again.');
+      throw new UnauthorizedException(
+        'Token refresh is currently unavailable. Please log in again.',
+      );
     }
     const refreshTokens = await refreshTokenModel.findMany({
       where: {
@@ -679,10 +969,15 @@ export class AuthService {
               data: { revokedAt: new Date() },
             });
           } catch (updateError: any) {
-            console.error('[AUTH] ❌ CRITICAL: Failed to revoke old refresh token:', updateError?.message);
+            console.error(
+              '[AUTH] ❌ CRITICAL: Failed to revoke old refresh token:',
+              updateError?.message,
+            );
             console.error('[AUTH] Token rotation aborted - old token remains valid');
             // Fail the refresh to prevent token replay attacks
-            throw new UnauthorizedException('Token refresh failed - unable to revoke previous token. Please log in again.');
+            throw new UnauthorizedException(
+              'Token refresh failed - unable to revoke previous token. Please log in again.',
+            );
           }
         }
         break;
@@ -732,7 +1027,7 @@ export class AuthService {
       console.warn('[AUTH] ⚠️ RefreshToken model not available, skipping cleanup');
       return;
     }
-    
+
     const refreshTokenModel = (this.prisma as any).refreshToken;
     if (!refreshTokenModel) {
       console.warn('[AUTH] ⚠️ RefreshToken model not found, skipping cleanup');
@@ -745,7 +1040,11 @@ export class AuthService {
     });
   }
 
-  async selectCharacter(userId: string, characterId: string, favoriteFandoms?: string[]): Promise<void> {
+  async selectCharacter(
+    userId: string,
+    characterId: string,
+    favoriteFandoms?: string[],
+  ): Promise<void> {
     const character = await this.prisma.character.findUnique({
       where: { id: characterId },
     });
@@ -763,7 +1062,10 @@ export class AuthService {
     });
   }
 
-  async completeFandomQuiz(userId: string, quizData: { favoriteFandoms: string[]; interests: string[] }): Promise<any> {
+  async completeFandomQuiz(
+    userId: string,
+    quizData: { favoriteFandoms: string[]; interests: string[] },
+  ): Promise<any> {
     const user = await this.prisma.user.findUnique({
       where: { id: userId },
     });
@@ -809,11 +1111,7 @@ export class AuthService {
   async validateOrCreateOAuthUser(oauthData: any): Promise<any> {
     // Import OAuth service dynamically to avoid circular dependency
     const { AuthOAuthService } = await import('./auth.service.oauth');
-    const oauthService = new AuthOAuthService(
-      this.prisma,
-      this.jwtService,
-      this.configService,
-    );
+    const oauthService = new AuthOAuthService(this.prisma, this.jwtService, this.configService);
     return oauthService.validateOrCreateOAuthUser(oauthData);
   }
 
@@ -850,13 +1148,13 @@ export class AuthService {
 
     // Prevent unlinking if it's the only authentication method
     if (!hasPassword && oauthCount === 1) {
-      throw new ConflictException('Cannot unlink the only authentication method. Please set a password first.');
+      throw new ConflictException(
+        'Cannot unlink the only authentication method. Please set a password first.',
+      );
     }
 
     // Find the specific OAuth account to unlink
-    const accountToUnlink = oauthAccounts.find(
-      (account) => account.provider === provider,
-    );
+    const accountToUnlink = oauthAccounts.find((account) => account.provider === provider);
 
     if (!accountToUnlink) {
       throw new ConflictException(`No ${provider} account linked to this user`);

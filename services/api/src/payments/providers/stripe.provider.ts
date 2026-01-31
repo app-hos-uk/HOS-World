@@ -33,9 +33,7 @@ export class StripeProvider implements PaymentProvider {
     return this.stripe !== null;
   }
 
-  async createPaymentIntent(
-    params: CreatePaymentIntentParams,
-  ): Promise<PaymentIntentResult> {
+  async createPaymentIntent(params: CreatePaymentIntentParams): Promise<PaymentIntentResult> {
     if (!this.stripe) {
       throw new Error('Stripe provider is not available');
     }
@@ -67,17 +65,13 @@ export class StripeProvider implements PaymentProvider {
     }
   }
 
-  async confirmPayment(
-    params: ConfirmPaymentParams,
-  ): Promise<PaymentResult> {
+  async confirmPayment(params: ConfirmPaymentParams): Promise<PaymentResult> {
     if (!this.stripe) {
       throw new Error('Stripe provider is not available');
     }
 
     try {
-      const paymentIntent = await this.stripe.paymentIntents.retrieve(
-        params.paymentIntentId,
-      );
+      const paymentIntent = await this.stripe.paymentIntents.retrieve(params.paymentIntentId);
 
       if (paymentIntent.status === 'succeeded') {
         return {
@@ -123,7 +117,12 @@ export class StripeProvider implements PaymentProvider {
         success: refund.status === 'succeeded',
         refundId: refund.id,
         amount: refund.amount / 100,
-        status: refund.status === 'succeeded' ? 'succeeded' : refund.status === 'pending' ? 'pending' : 'failed',
+        status:
+          refund.status === 'succeeded'
+            ? 'succeeded'
+            : refund.status === 'pending'
+              ? 'pending'
+              : 'failed',
         metadata: refund.metadata,
       };
     } catch (error: any) {
@@ -144,9 +143,7 @@ export class StripeProvider implements PaymentProvider {
     }
 
     try {
-      const paymentIntent = await this.stripe.paymentIntents.retrieve(
-        paymentId,
-      );
+      const paymentIntent = await this.stripe.paymentIntents.retrieve(paymentId);
       return this.mapStripeStatus(paymentIntent.status);
     } catch (error: any) {
       this.logger.error('Failed to get Stripe payment status:', error);

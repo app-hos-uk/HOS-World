@@ -16,22 +16,22 @@ import {
 
 /**
  * Avalara AvaTax API Integration
- * 
+ *
  * Implements Avalara AvaTax REST API v2
  * Documentation: https://developer.avalara.com/api-reference/avatax/rest/v2/
- * 
+ *
  * Required credentials:
  * - accountId: Avalara account ID
  * - licenseKey: Avalara license key
  * - companyCode: Company code in AvaTax
- * 
+ *
  * NOTE: This class is NOT a NestJS provider. It is instantiated manually by
  * TaxFactoryService with credentials loaded from the IntegrationConfig table.
  */
 export class AvalaraProvider extends BaseTaxProvider implements ITaxProvider {
   readonly providerId = 'avalara';
   readonly providerName = 'Avalara AvaTax';
-  
+
   private readonly logger = new Logger(AvalaraProvider.name);
 
   constructor(credentials: Record<string, any>, isTestMode: boolean = true) {
@@ -55,21 +55,17 @@ export class AvalaraProvider extends BaseTaxProvider implements ITaxProvider {
   /**
    * Make authenticated API request
    */
-  private async apiRequest(
-    endpoint: string,
-    method: string = 'GET',
-    body?: any,
-  ): Promise<any> {
+  private async apiRequest(endpoint: string, method: string = 'GET', body?: any): Promise<any> {
     const auth = Buffer.from(
-      `${this.credentials.accountId}:${this.credentials.licenseKey}`
+      `${this.credentials.accountId}:${this.credentials.licenseKey}`,
     ).toString('base64');
 
     const response = await fetch(`${this.getBaseUrl()}${endpoint}`, {
       method,
       headers: {
-        'Authorization': `Basic ${auth}`,
+        Authorization: `Basic ${auth}`,
         'Content-Type': 'application/json',
-        'Accept': 'application/json',
+        Accept: 'application/json',
         'X-Avalara-Client': 'HOS-Marketplace;1.0;REST;v2',
       },
       body: body ? JSON.stringify(body) : undefined,
@@ -88,7 +84,7 @@ export class AvalaraProvider extends BaseTaxProvider implements ITaxProvider {
 
   async testConnection(): Promise<TestConnectionResult> {
     const startTime = Date.now();
-    
+
     try {
       if (!this.isConfigured()) {
         return {
@@ -131,11 +127,7 @@ export class AvalaraProvider extends BaseTaxProvider implements ITaxProvider {
     const payload = this.buildTransactionPayload(request);
 
     try {
-      const response = await this.apiRequest(
-        `/transactions/create`,
-        'POST',
-        payload,
-      );
+      const response = await this.apiRequest(`/transactions/create`, 'POST', payload);
 
       return this.parseTransactionResponse(response);
     } catch (error: any) {
@@ -169,19 +161,25 @@ export class AvalaraProvider extends BaseTaxProvider implements ITaxProvider {
         ref1: item.id,
       })),
       exemptionNo: request.exemptionNumber,
-      discount: request.discount ? {
-        type: request.discount.type === 'PERCENTAGE' ? 'Percentage' : 'Amount',
-        amount: request.discount.amount,
-      } : undefined,
+      discount: request.discount
+        ? {
+            type: request.discount.type === 'PERCENTAGE' ? 'Percentage' : 'Amount',
+            amount: request.discount.amount,
+          }
+        : undefined,
     };
   }
 
   private mapTransactionType(type: string): string {
     switch (type) {
-      case 'SALE': return 'SalesInvoice';
-      case 'RETURN': return 'ReturnInvoice';
-      case 'ESTIMATE': return 'SalesOrder';
-      default: return 'SalesOrder';
+      case 'SALE':
+        return 'SalesInvoice';
+      case 'RETURN':
+        return 'ReturnInvoice';
+      case 'ESTIMATE':
+        return 'SalesOrder';
+      default:
+        return 'SalesOrder';
     }
   }
 
@@ -246,24 +244,37 @@ export class AvalaraProvider extends BaseTaxProvider implements ITaxProvider {
 
   private mapJurisdictionType(type: string): 'COUNTRY' | 'STATE' | 'COUNTY' | 'CITY' | 'DISTRICT' {
     switch (type?.toUpperCase()) {
-      case 'COUNTRY': return 'COUNTRY';
-      case 'STATE': return 'STATE';
-      case 'COUNTY': return 'COUNTY';
-      case 'CITY': return 'CITY';
-      case 'SPECIAL': return 'DISTRICT';
-      default: return 'STATE';
+      case 'COUNTRY':
+        return 'COUNTRY';
+      case 'STATE':
+        return 'STATE';
+      case 'COUNTY':
+        return 'COUNTY';
+      case 'CITY':
+        return 'CITY';
+      case 'SPECIAL':
+        return 'DISTRICT';
+      default:
+        return 'STATE';
     }
   }
 
   private mapStatus(status: string): 'TEMPORARY' | 'SAVED' | 'COMMITTED' | 'CANCELLED' {
     switch (status?.toLowerCase()) {
-      case 'temporary': return 'TEMPORARY';
-      case 'saved': return 'SAVED';
-      case 'committed': return 'COMMITTED';
-      case 'cancelled': return 'CANCELLED';
-      case 'adjusted': return 'COMMITTED';
-      case 'posted': return 'COMMITTED';
-      default: return 'SAVED';
+      case 'temporary':
+        return 'TEMPORARY';
+      case 'saved':
+        return 'SAVED';
+      case 'committed':
+        return 'COMMITTED';
+      case 'cancelled':
+        return 'CANCELLED';
+      case 'adjusted':
+        return 'COMMITTED';
+      case 'posted':
+        return 'COMMITTED';
+      default:
+        return 'SAVED';
     }
   }
 
@@ -340,31 +351,29 @@ export class AvalaraProvider extends BaseTaxProvider implements ITaxProvider {
 
   async validateAddress(address: TaxAddress): Promise<AddressValidationResult> {
     try {
-      const response = await this.apiRequest(
-        `/addresses/resolve`,
-        'POST',
-        {
-          line1: address.street1,
-          line2: address.street2,
-          city: address.city,
-          region: address.state,
-          postalCode: address.postalCode,
-          country: address.country,
-        },
-      );
+      const response = await this.apiRequest(`/addresses/resolve`, 'POST', {
+        line1: address.street1,
+        line2: address.street2,
+        city: address.city,
+        region: address.state,
+        postalCode: address.postalCode,
+        country: address.country,
+      });
 
       const validatedAddress = response.validatedAddresses?.[0];
-      
+
       return {
         isValid: response.coordinates !== null,
-        normalizedAddress: validatedAddress ? {
-          street1: validatedAddress.line1,
-          street2: validatedAddress.line2,
-          city: validatedAddress.city,
-          state: validatedAddress.region,
-          postalCode: validatedAddress.postalCode,
-          country: validatedAddress.country,
-        } : address,
+        normalizedAddress: validatedAddress
+          ? {
+              street1: validatedAddress.line1,
+              street2: validatedAddress.line2,
+              city: validatedAddress.city,
+              state: validatedAddress.region,
+              postalCode: validatedAddress.postalCode,
+              country: validatedAddress.country,
+            }
+          : address,
         taxJurisdictions: response.taxAuthorities?.map((auth: any) => ({
           code: auth.jurisdictionCode,
           name: auth.jurisdictionName,
@@ -421,11 +430,11 @@ export class AvalaraProvider extends BaseTaxProvider implements ITaxProvider {
     }
   }
 
-  async getNexusLocations(): Promise<Array<{ country: string; region: string; hasNexus: boolean }>> {
+  async getNexusLocations(): Promise<
+    Array<{ country: string; region: string; hasNexus: boolean }>
+  > {
     try {
-      const response = await this.apiRequest(
-        `/companies/${this.credentials.companyCode}/nexus`,
-      );
+      const response = await this.apiRequest(`/companies/${this.credentials.companyCode}/nexus`);
 
       return (response.value || []).map((nexus: any) => ({
         country: nexus.country,

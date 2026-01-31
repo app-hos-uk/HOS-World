@@ -35,42 +35,42 @@ export enum IntegrationProvider {
   STRIPE = 'stripe',
   PAYPAL = 'paypal',
   KLARNA = 'klarna',
-  
+
   // Shipping
   ROYAL_MAIL = 'royal_mail',
   FEDEX = 'fedex',
   DHL = 'dhl',
   UPS = 'ups',
-  
+
   // Tax
   AVALARA = 'avalara',
   TAXJAR = 'taxjar',
-  
+
   // Email
   SENDGRID = 'sendgrid',
   MAILGUN = 'mailgun',
   SES = 'ses',
-  
+
   // SMS
   TWILIO = 'twilio',
   VONAGE = 'vonage',
-  
+
   // Storage
   S3 = 's3',
   CLOUDINARY = 'cloudinary',
-  
+
   // Search
   ELASTICSEARCH = 'elasticsearch',
   ALGOLIA = 'algolia',
-  
+
   // Analytics
   GOOGLE_ANALYTICS = 'google_analytics',
   SEGMENT = 'segment',
-  
+
   // Maps
   GOOGLE_MAPS = 'google_maps',
   MAPBOX = 'mapbox',
-  
+
   // OAuth
   GOOGLE = 'google',
   FACEBOOK = 'facebook',

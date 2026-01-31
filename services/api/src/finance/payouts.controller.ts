@@ -46,7 +46,11 @@ export class PayoutsController {
         amount: { type: 'number', description: 'Payout amount' },
         currency: { type: 'string', description: 'Currency code (optional)' },
         paymentMethod: { type: 'string', description: 'Payment method (optional)' },
-        scheduledDate: { type: 'string', format: 'date-time', description: 'Scheduled date (ISO format, optional)' },
+        scheduledDate: {
+          type: 'string',
+          format: 'date-time',
+          description: 'Scheduled date (ISO format, optional)',
+        },
         description: { type: 'string', description: 'Payout description (optional)' },
       },
     },
@@ -88,9 +92,7 @@ export class PayoutsController {
   @SwaggerApiResponse({ status: 401, description: 'Unauthorized' })
   @SwaggerApiResponse({ status: 403, description: 'Forbidden - Admin access required' })
   @SwaggerApiResponse({ status: 404, description: 'Payout not found' })
-  async processPayout(
-    @Param('id', ParseUUIDPipe) id: string,
-  ): Promise<ApiResponse<any>> {
+  async processPayout(@Param('id', ParseUUIDPipe) id: string): Promise<ApiResponse<any>> {
     const payout = await this.payoutsService.processPayout(id);
     return {
       data: payout,
@@ -104,9 +106,24 @@ export class PayoutsController {
     description: 'Retrieves all payouts with filtering options. Admin access required.',
   })
   @ApiQuery({ name: 'sellerId', required: false, type: String, description: 'Filter by seller ID' })
-  @ApiQuery({ name: 'status', required: false, type: String, description: 'Filter by payout status' })
-  @ApiQuery({ name: 'startDate', required: false, type: String, description: 'Start date (ISO format)' })
-  @ApiQuery({ name: 'endDate', required: false, type: String, description: 'End date (ISO format)' })
+  @ApiQuery({
+    name: 'status',
+    required: false,
+    type: String,
+    description: 'Filter by payout status',
+  })
+  @ApiQuery({
+    name: 'startDate',
+    required: false,
+    type: String,
+    description: 'Start date (ISO format)',
+  })
+  @ApiQuery({
+    name: 'endDate',
+    required: false,
+    type: String,
+    description: 'End date (ISO format)',
+  })
   @ApiQuery({ name: 'page', required: false, type: String, description: 'Page number' })
   @ApiQuery({ name: 'limit', required: false, type: String, description: 'Items per page' })
   @SwaggerApiResponse({ status: 200, description: 'Payouts retrieved successfully' })
@@ -140,9 +157,24 @@ export class PayoutsController {
     description: 'Retrieves payout history for a specific seller. Admin access required.',
   })
   @ApiParam({ name: 'sellerId', description: 'Seller UUID', type: String })
-  @ApiQuery({ name: 'status', required: false, type: String, description: 'Filter by payout status' })
-  @ApiQuery({ name: 'startDate', required: false, type: String, description: 'Start date (ISO format)' })
-  @ApiQuery({ name: 'endDate', required: false, type: String, description: 'End date (ISO format)' })
+  @ApiQuery({
+    name: 'status',
+    required: false,
+    type: String,
+    description: 'Filter by payout status',
+  })
+  @ApiQuery({
+    name: 'startDate',
+    required: false,
+    type: String,
+    description: 'Start date (ISO format)',
+  })
+  @ApiQuery({
+    name: 'endDate',
+    required: false,
+    type: String,
+    description: 'End date (ISO format)',
+  })
   @ApiQuery({ name: 'page', required: false, type: String, description: 'Page number' })
   @ApiQuery({ name: 'limit', required: false, type: String, description: 'Items per page' })
   @SwaggerApiResponse({ status: 200, description: 'Seller payout history retrieved successfully' })
@@ -170,4 +202,3 @@ export class PayoutsController {
     };
   }
 }
-

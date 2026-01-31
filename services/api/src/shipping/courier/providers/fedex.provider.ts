@@ -15,41 +15,41 @@ import {
 
 /**
  * FedEx API Integration
- * 
+ *
  * Implements FedEx Web Services REST API
  * Documentation: https://developer.fedex.com/
- * 
+ *
  * Required credentials:
  * - apiKey: FedEx API Key
  * - secretKey: FedEx Secret Key
  * - accountNumber: FedEx account number
  * - meterNumber (optional): FedEx meter number
- * 
+ *
  * NOTE: This class is NOT a NestJS provider. It is instantiated manually by
  * CourierFactoryService with credentials loaded from the IntegrationConfig table.
  */
 export class FedExProvider extends BaseCourierProvider implements ICourierProvider {
   readonly providerId = 'fedex';
   readonly providerName = 'FedEx';
-  
+
   private readonly logger = new Logger(FedExProvider.name);
   private accessToken: string | null = null;
   private tokenExpiry: Date | null = null;
 
   // FedEx service types
   private static readonly SERVICES: Record<string, { name: string; days: number }> = {
-    'FEDEX_GROUND': { name: 'FedEx Ground', days: 5 },
-    'FEDEX_HOME_DELIVERY': { name: 'FedEx Home Delivery', days: 5 },
-    'FEDEX_EXPRESS_SAVER': { name: 'FedEx Express Saver', days: 3 },
-    'FEDEX_2_DAY': { name: 'FedEx 2Day', days: 2 },
-    'FEDEX_2_DAY_AM': { name: 'FedEx 2Day A.M.', days: 2 },
-    'STANDARD_OVERNIGHT': { name: 'FedEx Standard Overnight', days: 1 },
-    'PRIORITY_OVERNIGHT': { name: 'FedEx Priority Overnight', days: 1 },
-    'FIRST_OVERNIGHT': { name: 'FedEx First Overnight', days: 1 },
-    'INTERNATIONAL_ECONOMY': { name: 'FedEx International Economy', days: 5 },
-    'INTERNATIONAL_PRIORITY': { name: 'FedEx International Priority', days: 3 },
-    'INTERNATIONAL_FIRST': { name: 'FedEx International First', days: 2 },
-    'EUROPE_FIRST_INTERNATIONAL_PRIORITY': { name: 'FedEx Europe First', days: 1 },
+    FEDEX_GROUND: { name: 'FedEx Ground', days: 5 },
+    FEDEX_HOME_DELIVERY: { name: 'FedEx Home Delivery', days: 5 },
+    FEDEX_EXPRESS_SAVER: { name: 'FedEx Express Saver', days: 3 },
+    FEDEX_2_DAY: { name: 'FedEx 2Day', days: 2 },
+    FEDEX_2_DAY_AM: { name: 'FedEx 2Day A.M.', days: 2 },
+    STANDARD_OVERNIGHT: { name: 'FedEx Standard Overnight', days: 1 },
+    PRIORITY_OVERNIGHT: { name: 'FedEx Priority Overnight', days: 1 },
+    FIRST_OVERNIGHT: { name: 'FedEx First Overnight', days: 1 },
+    INTERNATIONAL_ECONOMY: { name: 'FedEx International Economy', days: 5 },
+    INTERNATIONAL_PRIORITY: { name: 'FedEx International Priority', days: 3 },
+    INTERNATIONAL_FIRST: { name: 'FedEx International First', days: 2 },
+    EUROPE_FIRST_INTERNATIONAL_PRIORITY: { name: 'FedEx Europe First', days: 1 },
   };
 
   constructor(credentials: Record<string, any>, isTestMode: boolean = true) {
@@ -65,9 +65,7 @@ export class FedExProvider extends BaseCourierProvider implements ICourierProvid
   }
 
   protected getBaseUrl(): string {
-    return this.isTestMode
-      ? 'https://apis-sandbox.fedex.com'
-      : 'https://apis.fedex.com';
+    return this.isTestMode ? 'https://apis-sandbox.fedex.com' : 'https://apis.fedex.com';
   }
 
   /**
@@ -112,17 +110,13 @@ export class FedExProvider extends BaseCourierProvider implements ICourierProvid
   /**
    * Make authenticated API request
    */
-  private async apiRequest(
-    endpoint: string,
-    method: string = 'POST',
-    body?: any,
-  ): Promise<any> {
+  private async apiRequest(endpoint: string, method: string = 'POST', body?: any): Promise<any> {
     const token = await this.getAccessToken();
 
     const response = await fetch(`${this.getBaseUrl()}${endpoint}`, {
       method,
       headers: {
-        'Authorization': `Bearer ${token}`,
+        Authorization: `Bearer ${token}`,
         'Content-Type': 'application/json',
         'X-locale': 'en_US',
       },
@@ -155,7 +149,7 @@ export class FedExProvider extends BaseCourierProvider implements ICourierProvid
 
   async testConnection(): Promise<TestConnectionResult> {
     const startTime = Date.now();
-    
+
     try {
       if (!this.isConfigured()) {
         return {
@@ -236,8 +230,8 @@ export class FedExProvider extends BaseCourierProvider implements ICourierProvid
           rate: parseFloat(totalNetCharge),
           currency: ratedShipment?.currency || 'USD',
           estimatedDays: serviceInfo.days,
-          estimatedDeliveryDate: rateReply.commit?.dateDetail?.dayFormat 
-            ? new Date(rateReply.commit.dateDetail.dayFormat) 
+          estimatedDeliveryDate: rateReply.commit?.dateDetail?.dayFormat
+            ? new Date(rateReply.commit.dateDetail.dayFormat)
             : undefined,
           guaranteedDelivery: rateReply.commit?.commitGuarantee || false,
           trackingIncluded: true,
@@ -258,7 +252,7 @@ export class FedExProvider extends BaseCourierProvider implements ICourierProvid
   private validateAndGetPhone(phone: string | undefined, party: 'shipper' | 'recipient'): string {
     if (!phone?.trim()) {
       throw new Error(
-        `Phone number is required for ${party}. FedEx requires valid contact phone numbers for all shipments.`
+        `Phone number is required for ${party}. FedEx requires valid contact phone numbers for all shipments.`,
       );
     }
 
@@ -266,7 +260,7 @@ export class FedExProvider extends BaseCourierProvider implements ICourierProvid
     const cleanPhone = phone.replace(/\s+/g, '');
     if (!/^\+?[\d\-()]+$/.test(cleanPhone)) {
       throw new Error(
-        `Invalid phone number format for ${party}: "${phone}". Please use a valid phone format (e.g., +1 555-123-4567).`
+        `Invalid phone number format for ${party}: "${phone}". Please use a valid phone format (e.g., +1 555-123-4567).`,
       );
     }
 
@@ -389,12 +383,14 @@ export class FedExProvider extends BaseCourierProvider implements ICourierProvid
           url: piece.packageDocuments?.[0]?.url,
           packageIndex: index,
         })),
-        rate: shipmentResponse.completedShipmentDetail?.shipmentRating?.shipmentRateDetails?.[0]?.totalNetCharge || 0,
+        rate:
+          shipmentResponse.completedShipmentDetail?.shipmentRating?.shipmentRateDetails?.[0]
+            ?.totalNetCharge || 0,
         currency: 'USD',
         serviceCode: request.serviceCode,
         serviceName: FedExProvider.SERVICES[request.serviceCode]?.name || request.serviceCode,
-        estimatedDeliveryDate: shipmentResponse.completedShipmentDetail?.deliveryDate 
-          ? new Date(shipmentResponse.completedShipmentDetail.deliveryDate) 
+        estimatedDeliveryDate: shipmentResponse.completedShipmentDetail?.deliveryDate
+          ? new Date(shipmentResponse.completedShipmentDetail.deliveryDate)
           : undefined,
       };
     } catch (error: any) {
@@ -438,7 +434,9 @@ export class FedExProvider extends BaseCourierProvider implements ICourierProvid
       }));
 
       // Cache the actual delivery entry to avoid double find
-      const actualDeliveryEntry = trackResult.dateAndTimes?.find((d: any) => d.type === 'ACTUAL_DELIVERY');
+      const actualDeliveryEntry = trackResult.dateAndTimes?.find(
+        (d: any) => d.type === 'ACTUAL_DELIVERY',
+      );
       const actualDeliveryDateTime = actualDeliveryEntry?.dateTime;
 
       return {
@@ -447,8 +445,8 @@ export class FedExProvider extends BaseCourierProvider implements ICourierProvid
         trackingNumber,
         status: this.mapTrackingStatus(latestStatus?.statusByLocale || latestStatus?.code),
         statusDescription: latestStatus?.description || 'In transit',
-        estimatedDeliveryDate: trackResult.estimatedDeliveryTimeWindow?.window?.begins 
-          ? new Date(trackResult.estimatedDeliveryTimeWindow.window.begins) 
+        estimatedDeliveryDate: trackResult.estimatedDeliveryTimeWindow?.window?.begins
+          ? new Date(trackResult.estimatedDeliveryTimeWindow.window.begins)
           : undefined,
         actualDeliveryDate: actualDeliveryDateTime ? new Date(actualDeliveryDateTime) : undefined,
         signedBy: trackResult.deliveryDetails?.receivedByName,
@@ -462,16 +460,25 @@ export class FedExProvider extends BaseCourierProvider implements ICourierProvid
 
   private mapTrackingStatus(status: string): TrackingStatus {
     const normalizedStatus = (status || '').toUpperCase();
-    
+
     if (normalizedStatus.includes('DELIVERED')) return 'DELIVERED';
-    if (normalizedStatus.includes('OUT FOR DELIVERY') || normalizedStatus.includes('ON VEHICLE')) return 'OUT_FOR_DELIVERY';
-    if (normalizedStatus.includes('EXCEPTION') || normalizedStatus.includes('DELAY')) return 'EXCEPTION';
+    if (normalizedStatus.includes('OUT FOR DELIVERY') || normalizedStatus.includes('ON VEHICLE'))
+      return 'OUT_FOR_DELIVERY';
+    if (normalizedStatus.includes('EXCEPTION') || normalizedStatus.includes('DELAY'))
+      return 'EXCEPTION';
     if (normalizedStatus.includes('ATTEMPT')) return 'FAILED_ATTEMPT';
-    if (normalizedStatus.includes('RETURN') || normalizedStatus.includes('RTS')) return 'RETURN_TO_SENDER';
+    if (normalizedStatus.includes('RETURN') || normalizedStatus.includes('RTS'))
+      return 'RETURN_TO_SENDER';
     if (normalizedStatus.includes('CANCEL')) return 'CANCELLED';
-    if (normalizedStatus.includes('PICKED UP') || normalizedStatus.includes('INITIATED')) return 'PRE_TRANSIT';
-    if (normalizedStatus.includes('IN TRANSIT') || normalizedStatus.includes('DEPARTED') || normalizedStatus.includes('ARRIVED')) return 'IN_TRANSIT';
-    
+    if (normalizedStatus.includes('PICKED UP') || normalizedStatus.includes('INITIATED'))
+      return 'PRE_TRANSIT';
+    if (
+      normalizedStatus.includes('IN TRANSIT') ||
+      normalizedStatus.includes('DEPARTED') ||
+      normalizedStatus.includes('ARRIVED')
+    )
+      return 'IN_TRANSIT';
+
     return 'IN_TRANSIT';
   }
 
@@ -529,13 +536,15 @@ export class FedExProvider extends BaseCourierProvider implements ICourierProvid
 
       return {
         isValid: classification !== 'UNKNOWN',
-        normalizedAddress: resolvedAddress ? {
-          ...address,
-          street1: resolvedAddress.value || address.street1,
-          city: result.city || address.city,
-          state: result.stateOrProvinceCode || address.state,
-          postalCode: result.postalCode || address.postalCode,
-        } : address,
+        normalizedAddress: resolvedAddress
+          ? {
+              ...address,
+              street1: resolvedAddress.value || address.street1,
+              city: result.city || address.city,
+              state: result.stateOrProvinceCode || address.state,
+              postalCode: result.postalCode || address.postalCode,
+            }
+          : address,
         isResidential: classification === 'RESIDENTIAL',
       };
     } catch (error: any) {
@@ -547,25 +556,60 @@ export class FedExProvider extends BaseCourierProvider implements ICourierProvid
     }
   }
 
-  async getAvailableServices(from: Address, to: Address): Promise<Array<{ code: string; name: string; description?: string }>> {
+  async getAvailableServices(
+    from: Address,
+    to: Address,
+  ): Promise<Array<{ code: string; name: string; description?: string }>> {
     const isDomestic = from.country === to.country && from.country === 'US';
-    
+
     if (isDomestic) {
       return [
         { code: 'FEDEX_GROUND', name: 'FedEx Ground', description: '1-5 business days' },
-        { code: 'FEDEX_HOME_DELIVERY', name: 'FedEx Home Delivery', description: '1-5 business days (residential)' },
-        { code: 'FEDEX_EXPRESS_SAVER', name: 'FedEx Express Saver', description: '3 business days' },
+        {
+          code: 'FEDEX_HOME_DELIVERY',
+          name: 'FedEx Home Delivery',
+          description: '1-5 business days (residential)',
+        },
+        {
+          code: 'FEDEX_EXPRESS_SAVER',
+          name: 'FedEx Express Saver',
+          description: '3 business days',
+        },
         { code: 'FEDEX_2_DAY', name: 'FedEx 2Day', description: '2 business days' },
-        { code: 'STANDARD_OVERNIGHT', name: 'FedEx Standard Overnight', description: 'Next business day by 3pm' },
-        { code: 'PRIORITY_OVERNIGHT', name: 'FedEx Priority Overnight', description: 'Next business day by 10:30am' },
-        { code: 'FIRST_OVERNIGHT', name: 'FedEx First Overnight', description: 'Next business day by 8am' },
+        {
+          code: 'STANDARD_OVERNIGHT',
+          name: 'FedEx Standard Overnight',
+          description: 'Next business day by 3pm',
+        },
+        {
+          code: 'PRIORITY_OVERNIGHT',
+          name: 'FedEx Priority Overnight',
+          description: 'Next business day by 10:30am',
+        },
+        {
+          code: 'FIRST_OVERNIGHT',
+          name: 'FedEx First Overnight',
+          description: 'Next business day by 8am',
+        },
       ];
     }
 
     return [
-      { code: 'INTERNATIONAL_ECONOMY', name: 'FedEx International Economy', description: '5 business days' },
-      { code: 'INTERNATIONAL_PRIORITY', name: 'FedEx International Priority', description: '1-3 business days' },
-      { code: 'INTERNATIONAL_FIRST', name: 'FedEx International First', description: 'Next business day' },
+      {
+        code: 'INTERNATIONAL_ECONOMY',
+        name: 'FedEx International Economy',
+        description: '5 business days',
+      },
+      {
+        code: 'INTERNATIONAL_PRIORITY',
+        name: 'FedEx International Priority',
+        description: '1-3 business days',
+      },
+      {
+        code: 'INTERNATIONAL_FIRST',
+        name: 'FedEx International First',
+        description: 'Next business day',
+      },
     ];
   }
 }

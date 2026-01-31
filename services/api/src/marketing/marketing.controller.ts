@@ -10,7 +10,7 @@ import {
   UseGuards,
   Request,
   ParseUUIDPipe,
-  } from '@nestjs/common';
+} from '@nestjs/common';
 import {
   ApiTags,
   ApiOperation,
@@ -37,7 +37,11 @@ export class MarketingController {
   constructor(private readonly marketingService: MarketingService) {}
 
   @Get('pending')
-  @ApiOperation({ summary: 'Get pending marketing submissions', description: 'Retrieves all product submissions pending marketing review. Marketing/Admin access required.' })
+  @ApiOperation({
+    summary: 'Get pending marketing submissions',
+    description:
+      'Retrieves all product submissions pending marketing review. Marketing/Admin access required.',
+  })
   @SwaggerApiResponse({ status: 200, description: 'Pending submissions retrieved successfully' })
   @SwaggerApiResponse({ status: 401, description: 'Unauthorized' })
   @SwaggerApiResponse({ status: 403, description: 'Forbidden - Marketing/Admin access required' })
@@ -50,9 +54,23 @@ export class MarketingController {
   }
 
   @Get('materials')
-  @ApiOperation({ summary: 'Get all marketing materials', description: 'Retrieves all marketing materials with optional filtering. Marketing/Admin access required.' })
-  @ApiQuery({ name: 'submissionId', required: false, type: String, description: 'Filter by submission ID' })
-  @ApiQuery({ name: 'type', required: false, enum: MaterialType, description: 'Filter by material type' })
+  @ApiOperation({
+    summary: 'Get all marketing materials',
+    description:
+      'Retrieves all marketing materials with optional filtering. Marketing/Admin access required.',
+  })
+  @ApiQuery({
+    name: 'submissionId',
+    required: false,
+    type: String,
+    description: 'Filter by submission ID',
+  })
+  @ApiQuery({
+    name: 'type',
+    required: false,
+    enum: MaterialType,
+    description: 'Filter by material type',
+  })
   @SwaggerApiResponse({ status: 200, description: 'Marketing materials retrieved successfully' })
   @SwaggerApiResponse({ status: 401, description: 'Unauthorized' })
   @SwaggerApiResponse({ status: 403, description: 'Forbidden - Marketing/Admin access required' })
@@ -68,15 +86,16 @@ export class MarketingController {
   }
 
   @Get('materials/:id')
-  @ApiOperation({ summary: 'Get marketing material by ID', description: 'Retrieves a specific marketing material by ID. Marketing/Admin access required.' })
+  @ApiOperation({
+    summary: 'Get marketing material by ID',
+    description: 'Retrieves a specific marketing material by ID. Marketing/Admin access required.',
+  })
   @ApiParam({ name: 'id', description: 'Material UUID', type: String })
   @SwaggerApiResponse({ status: 200, description: 'Marketing material retrieved successfully' })
   @SwaggerApiResponse({ status: 401, description: 'Unauthorized' })
   @SwaggerApiResponse({ status: 403, description: 'Forbidden - Marketing/Admin access required' })
   @SwaggerApiResponse({ status: 404, description: 'Material not found' })
-  async findOneMaterial(
-    @Param('id', ParseUUIDPipe) id: string,
-  ): Promise<ApiResponse<any>> {
+  async findOneMaterial(@Param('id', ParseUUIDPipe) id: string): Promise<ApiResponse<any>> {
     const material = await this.marketingService.findOneMaterial(id);
     return {
       data: material,
@@ -85,7 +104,10 @@ export class MarketingController {
   }
 
   @Post('materials')
-  @ApiOperation({ summary: 'Create marketing material', description: 'Creates a new marketing material. Marketing/Admin access required.' })
+  @ApiOperation({
+    summary: 'Create marketing material',
+    description: 'Creates a new marketing material. Marketing/Admin access required.',
+  })
   @ApiBody({ type: CreateMaterialDto })
   @SwaggerApiResponse({ status: 201, description: 'Marketing material created successfully' })
   @SwaggerApiResponse({ status: 400, description: 'Invalid request data' })
@@ -95,10 +117,7 @@ export class MarketingController {
     @Request() req: any,
     @Body() createDto: CreateMaterialDto,
   ): Promise<ApiResponse<any>> {
-    const material = await this.marketingService.createMaterial(
-      req.user.id,
-      createDto,
-    );
+    const material = await this.marketingService.createMaterial(req.user.id, createDto);
     return {
       data: material,
       message: 'Marketing material created successfully',
@@ -106,7 +125,10 @@ export class MarketingController {
   }
 
   @Put('materials/:id')
-  @ApiOperation({ summary: 'Update marketing material', description: 'Updates an existing marketing material. Marketing/Admin access required.' })
+  @ApiOperation({
+    summary: 'Update marketing material',
+    description: 'Updates an existing marketing material. Marketing/Admin access required.',
+  })
   @ApiParam({ name: 'id', description: 'Material UUID', type: String })
   @ApiBody({ type: UpdateMaterialDto })
   @SwaggerApiResponse({ status: 200, description: 'Marketing material updated successfully' })
@@ -126,7 +148,10 @@ export class MarketingController {
   }
 
   @Delete('materials/:id')
-  @ApiOperation({ summary: 'Delete marketing material', description: 'Deletes a marketing material. Marketing/Admin access required.' })
+  @ApiOperation({
+    summary: 'Delete marketing material',
+    description: 'Deletes a marketing material. Marketing/Admin access required.',
+  })
   @ApiParam({ name: 'id', description: 'Material UUID', type: String })
   @SwaggerApiResponse({ status: 200, description: 'Marketing material deleted successfully' })
   @SwaggerApiResponse({ status: 401, description: 'Unauthorized' })
@@ -143,7 +168,11 @@ export class MarketingController {
   }
 
   @Post('submissions/:submissionId/complete')
-  @ApiOperation({ summary: 'Mark submission as complete', description: 'Marks a product submission as marketing complete. Marketing/Admin access required.' })
+  @ApiOperation({
+    summary: 'Mark submission as complete',
+    description:
+      'Marks a product submission as marketing complete. Marketing/Admin access required.',
+  })
   @ApiParam({ name: 'submissionId', description: 'Submission UUID', type: String })
   @SwaggerApiResponse({ status: 200, description: 'Submission marked as complete' })
   @SwaggerApiResponse({ status: 401, description: 'Unauthorized' })
@@ -160,7 +189,11 @@ export class MarketingController {
   }
 
   @Get('dashboard/stats')
-  @ApiOperation({ summary: 'Get marketing dashboard statistics', description: 'Retrieves dashboard statistics for marketing operations. Marketing/Admin access required.' })
+  @ApiOperation({
+    summary: 'Get marketing dashboard statistics',
+    description:
+      'Retrieves dashboard statistics for marketing operations. Marketing/Admin access required.',
+  })
   @SwaggerApiResponse({ status: 200, description: 'Dashboard statistics retrieved successfully' })
   @SwaggerApiResponse({ status: 401, description: 'Unauthorized' })
   @SwaggerApiResponse({ status: 403, description: 'Forbidden - Marketing/Admin access required' })
@@ -172,4 +205,3 @@ export class MarketingController {
     };
   }
 }
-

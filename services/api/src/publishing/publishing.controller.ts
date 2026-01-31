@@ -33,9 +33,13 @@ export class PublishingController {
   @Get('ready')
   @ApiOperation({
     summary: 'Get ready to publish submissions (Admin only)',
-    description: 'Retrieves all product submissions that are ready to be published. Admin access required.',
+    description:
+      'Retrieves all product submissions that are ready to be published. Admin access required.',
   })
-  @SwaggerApiResponse({ status: 200, description: 'Ready to publish submissions retrieved successfully' })
+  @SwaggerApiResponse({
+    status: 200,
+    description: 'Ready to publish submissions retrieved successfully',
+  })
   @SwaggerApiResponse({ status: 401, description: 'Unauthorized' })
   @SwaggerApiResponse({ status: 403, description: 'Forbidden - Admin access required' })
   async getReadyToPublish(): Promise<ApiResponse<any[]>> {
@@ -110,14 +114,10 @@ export class PublishingController {
     @Request() req: any,
     @Body() body: { submissionIds: string[] },
   ): Promise<ApiResponse<any>> {
-    const result = await this.publishingService.bulkPublish(
-      body.submissionIds,
-      req.user.id,
-    );
+    const result = await this.publishingService.bulkPublish(body.submissionIds, req.user.id);
     return {
       data: result,
       message: `Bulk publish completed: ${result.succeeded} succeeded, ${result.failed} failed`,
     };
   }
 }
-

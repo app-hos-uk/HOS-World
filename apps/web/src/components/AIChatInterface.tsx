@@ -37,6 +37,7 @@ export function AIChatInterface({ characterId, character, onClose }: AIChatInter
       loadCharacter();
     }
     loadChatHistory();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [characterId]);
 
   useEffect(() => {

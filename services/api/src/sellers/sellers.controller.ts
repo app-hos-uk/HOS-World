@@ -52,7 +52,7 @@ export class SellersController {
   @ApiBearerAuth('JWT-auth')
   @ApiOperation({
     summary: 'Get my seller profile',
-    description: 'Retrieves the authenticated seller\'s profile. Requires seller role.',
+    description: "Retrieves the authenticated seller's profile. Requires seller role.",
   })
   @SwaggerApiResponse({ status: 200, description: 'Seller profile retrieved successfully' })
   @SwaggerApiResponse({ status: 401, description: 'Unauthorized' })
@@ -71,7 +71,8 @@ export class SellersController {
   @ApiBearerAuth('JWT-auth')
   @ApiOperation({
     summary: 'Get my products (all statuses)',
-    description: 'Returns all products for the authenticated seller (DRAFT, ACTIVE, INACTIVE, etc.). Use this for seller dashboard "My Products" list.',
+    description:
+      'Returns all products for the authenticated seller (DRAFT, ACTIVE, INACTIVE, etc.). Use this for seller dashboard "My Products" list.',
   })
   @SwaggerApiResponse({ status: 200, description: 'Products retrieved successfully' })
   @SwaggerApiResponse({ status: 401, description: 'Unauthorized' })
@@ -90,7 +91,7 @@ export class SellersController {
   @ApiBearerAuth('JWT-auth')
   @ApiOperation({
     summary: 'Update my seller profile',
-    description: 'Updates the authenticated seller\'s profile. Requires seller role.',
+    description: "Updates the authenticated seller's profile. Requires seller role.",
   })
   @ApiBody({ type: UpdateSellerDto })
   @SwaggerApiResponse({ status: 200, description: 'Seller profile updated successfully' })
@@ -157,4 +158,3 @@ export class SellersController {
     };
   }
 }
-

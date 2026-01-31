@@ -1,9 +1,5 @@
 import { Controller, Post } from '@nestjs/common';
-import {
-  ApiTags,
-  ApiOperation,
-  ApiResponse as SwaggerApiResponse,
-} from '@nestjs/swagger';
+import { ApiTags, ApiOperation, ApiResponse as SwaggerApiResponse } from '@nestjs/swagger';
 import { Public } from '../common/decorators/public.decorator';
 import { PrismaService } from '../database/prisma.service';
 import { UserRole } from '@prisma/client';
@@ -63,14 +59,18 @@ export class CreateTeamUsersController {
 
   @Public()
   @Post('create-team-users')
-  @ApiOperation({ summary: 'Create team users', description: 'Creates or updates team users (Admin, Procurement, Fulfillment, Catalog, Marketing, Finance, CMS Editor) with default password. Public endpoint for development/testing.' })
+  @ApiOperation({
+    summary: 'Create team users',
+    description:
+      'Creates or updates team users (Admin, Procurement, Fulfillment, Catalog, Marketing, Finance, CMS Editor) with default password. Public endpoint for development/testing.',
+  })
   @SwaggerApiResponse({ status: 201, description: 'Team users created/updated successfully' })
   async createTeamUsers(): Promise<ApiResponse<any>> {
     // Generate password hash for "Test123!"
     const password = 'Test123!';
     const saltRounds = 10;
     const passwordHash = await bcrypt.hash(password, saltRounds);
-    
+
     const results = [];
 
     for (const userData of teamUsers) {
@@ -119,14 +119,18 @@ export class CreateTeamUsersController {
 
   @Public()
   @Post('create-business-users')
-  @ApiOperation({ summary: 'Create business users', description: 'Creates or updates business users (Seller, B2C Seller, Wholesaler, Customer) with default password. Public endpoint for development/testing.' })
+  @ApiOperation({
+    summary: 'Create business users',
+    description:
+      'Creates or updates business users (Seller, B2C Seller, Wholesaler, Customer) with default password. Public endpoint for development/testing.',
+  })
   @SwaggerApiResponse({ status: 201, description: 'Business users created/updated successfully' })
   async createBusinessUsers(): Promise<ApiResponse<any>> {
     // Generate password hash for "Test123!"
     const password = 'Test123!';
     const saltRounds = 10;
     const passwordHash = await bcrypt.hash(password, saltRounds);
-    
+
     const businessUsers = [
       {
         email: 'seller@hos.test',
@@ -179,13 +183,22 @@ export class CreateTeamUsersController {
           });
 
           // Create or update seller profile if needed
-          if (userData.role === UserRole.SELLER || userData.role === UserRole.B2C_SELLER || userData.role === UserRole.WHOLESALER) {
+          if (
+            userData.role === UserRole.SELLER ||
+            userData.role === UserRole.B2C_SELLER ||
+            userData.role === UserRole.WHOLESALER
+          ) {
             if (existingUser.sellerProfile) {
               await this.prisma.seller.update({
                 where: { userId: existingUser.id },
                 data: {
                   storeName: userData.storeName,
-                  sellerType: userData.role === UserRole.WHOLESALER ? 'WHOLESALER' : userData.role === UserRole.B2C_SELLER ? 'B2C_SELLER' : 'B2C_SELLER',
+                  sellerType:
+                    userData.role === UserRole.WHOLESALER
+                      ? 'WHOLESALER'
+                      : userData.role === UserRole.B2C_SELLER
+                        ? 'B2C_SELLER'
+                        : 'B2C_SELLER',
                 },
               });
             } else {
@@ -198,7 +211,12 @@ export class CreateTeamUsersController {
                   slug,
                   country: 'US',
                   timezone: 'UTC',
-                  sellerType: userData.role === UserRole.WHOLESALER ? 'WHOLESALER' : userData.role === UserRole.B2C_SELLER ? 'B2C_SELLER' : 'B2C_SELLER',
+                  sellerType:
+                    userData.role === UserRole.WHOLESALER
+                      ? 'WHOLESALER'
+                      : userData.role === UserRole.B2C_SELLER
+                        ? 'B2C_SELLER'
+                        : 'B2C_SELLER',
                   logisticsOption: 'HOS_LOGISTICS',
                 },
               });
@@ -219,7 +237,11 @@ export class CreateTeamUsersController {
           });
 
           // Create seller profile if needed
-          if (userData.role === UserRole.SELLER || userData.role === UserRole.B2C_SELLER || userData.role === UserRole.WHOLESALER) {
+          if (
+            userData.role === UserRole.SELLER ||
+            userData.role === UserRole.B2C_SELLER ||
+            userData.role === UserRole.WHOLESALER
+          ) {
             const slug = userData.storeName!.toLowerCase().replace(/\s+/g, '-');
             await this.prisma.seller.create({
               data: {
@@ -228,7 +250,12 @@ export class CreateTeamUsersController {
                 slug,
                 country: 'US',
                 timezone: 'UTC',
-                sellerType: userData.role === UserRole.WHOLESALER ? 'WHOLESALER' : userData.role === UserRole.B2C_SELLER ? 'B2C_SELLER' : 'B2C_SELLER',
+                sellerType:
+                  userData.role === UserRole.WHOLESALER
+                    ? 'WHOLESALER'
+                    : userData.role === UserRole.B2C_SELLER
+                      ? 'B2C_SELLER'
+                      : 'B2C_SELLER',
                 logisticsOption: 'HOS_LOGISTICS',
               },
             });
@@ -262,7 +289,11 @@ export class CreateTeamUsersController {
 
   @Public()
   @Post('create-influencer-test-user')
-  @ApiOperation({ summary: 'Create influencer test user', description: 'Creates or updates influencer@hos.test with password Test!123 and influencer profile. Public endpoint for development/testing.' })
+  @ApiOperation({
+    summary: 'Create influencer test user',
+    description:
+      'Creates or updates influencer@hos.test with password Test!123 and influencer profile. Public endpoint for development/testing.',
+  })
   @SwaggerApiResponse({ status: 201, description: 'Influencer test user created/updated' })
   async createInfluencerTestUser(): Promise<ApiResponse<any>> {
     const email = 'influencer@hos.test';
@@ -281,11 +312,18 @@ export class CreateTeamUsersController {
     if (existingUser) {
       await this.prisma.user.update({
         where: { id: existingUser.id },
-        data: { password: passwordHash, role: UserRole.INFLUENCER, firstName: 'Test', lastName: 'Influencer' },
+        data: {
+          password: passwordHash,
+          role: UserRole.INFLUENCER,
+          firstName: 'Test',
+          lastName: 'Influencer',
+        },
       });
       let hasProfile = false;
       try {
-        hasProfile = !!(await this.prisma.influencer.findUnique({ where: { userId: existingUser.id } }));
+        hasProfile = !!(await this.prisma.influencer.findUnique({
+          where: { userId: existingUser.id },
+        }));
       } catch {
         // Influencer table may not exist yet
       }
@@ -368,7 +406,11 @@ export class CreateTeamUsersController {
   }
 
   private async uniqueInfluencerSlug(displayName: string): Promise<string> {
-    let slug = displayName.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '') || 'influencer';
+    const slug =
+      displayName
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, '-')
+        .replace(/(^-|-$)/g, '') || 'influencer';
     for (let i = 0; i < 20; i++) {
       const s = i === 0 ? slug : `${slug}-${i}`;
       const ex = await this.prisma.influencer.findUnique({ where: { slug: s } });
@@ -377,4 +419,3 @@ export class CreateTeamUsersController {
     return `${slug}-${randomBytes(3).toString('hex')}`;
   }
 }
-

@@ -52,7 +52,8 @@ export class ReviewsController {
   @ApiBearerAuth('JWT-auth')
   @ApiOperation({
     summary: 'Create product review',
-    description: 'Creates a new review for a product. User must have purchased the product to review it.',
+    description:
+      'Creates a new review for a product. User must have purchased the product to review it.',
   })
   @ApiParam({ name: 'productId', description: 'Product UUID or slug', type: String })
   @ApiBody({ type: CreateReviewDto })
@@ -77,11 +78,22 @@ export class ReviewsController {
   @Get('products/:productId')
   @ApiOperation({
     summary: 'Get product reviews',
-    description: 'Retrieves all reviews for a specific product. Public endpoint, no authentication required.',
+    description:
+      'Retrieves all reviews for a specific product. Public endpoint, no authentication required.',
   })
   @ApiParam({ name: 'productId', description: 'Product UUID or slug', type: String })
-  @ApiQuery({ name: 'page', required: false, type: Number, description: 'Page number (default: 1)' })
-  @ApiQuery({ name: 'limit', required: false, type: Number, description: 'Items per page (default: 10)' })
+  @ApiQuery({
+    name: 'page',
+    required: false,
+    type: Number,
+    description: 'Page number (default: 1)',
+  })
+  @ApiQuery({
+    name: 'limit',
+    required: false,
+    type: Number,
+    description: 'Items per page (default: 10)',
+  })
   @SwaggerApiResponse({ status: 200, description: 'Reviews retrieved successfully' })
   @SwaggerApiResponse({ status: 404, description: 'Product not found' })
   async findAll(
@@ -147,7 +159,8 @@ export class ReviewsController {
   @ApiBearerAuth('JWT-auth')
   @ApiOperation({
     summary: 'Delete review',
-    description: 'Deletes a review. Users can delete their own reviews, admins can delete any review.',
+    description:
+      'Deletes a review. Users can delete their own reviews, admins can delete any review.',
   })
   @ApiParam({ name: 'id', description: 'Review UUID', type: String })
   @SwaggerApiResponse({ status: 200, description: 'Review deleted successfully' })
@@ -170,7 +183,8 @@ export class ReviewsController {
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
     summary: 'Mark review as helpful',
-    description: 'Marks a review as helpful or not helpful. Public endpoint, no authentication required.',
+    description:
+      'Marks a review as helpful or not helpful. Public endpoint, no authentication required.',
   })
   @ApiParam({ name: 'id', description: 'Review UUID', type: String })
   @ApiBody({ type: ReviewHelpfulDto })
@@ -187,4 +201,3 @@ export class ReviewsController {
     };
   }
 }
-

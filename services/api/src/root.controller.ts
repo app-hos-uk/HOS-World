@@ -1,19 +1,16 @@
 import { Controller, Get, Version } from '@nestjs/common';
-import {
-  ApiTags,
-  ApiOperation,
-  ApiResponse as SwaggerApiResponse,
-} from '@nestjs/swagger';
+import { ApiTags, ApiOperation, ApiResponse as SwaggerApiResponse } from '@nestjs/swagger';
 import { Public } from './common/decorators/public.decorator';
 
 @ApiTags('root')
 @Controller()
 export class RootController {
   @Public()
-    @Get()
+  @Get()
   @ApiOperation({
     summary: 'Get API root information',
-    description: 'Returns basic API information and available endpoints. Public endpoint, no authentication required.',
+    description:
+      'Returns basic API information and available endpoints. Public endpoint, no authentication required.',
   })
   @SwaggerApiResponse({ status: 200, description: 'API information retrieved successfully' })
   getRoot() {
@@ -31,4 +28,3 @@ export class RootController {
     };
   }
 }
-

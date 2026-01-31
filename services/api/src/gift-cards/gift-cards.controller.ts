@@ -35,16 +35,14 @@ export class GiftCardsController {
   @ApiBearerAuth('JWT-auth')
   @ApiOperation({
     summary: 'Create gift card',
-    description: 'Creates a new gift card. Users can purchase gift cards for themselves or as gifts.',
+    description:
+      'Creates a new gift card. Users can purchase gift cards for themselves or as gifts.',
   })
   @ApiBody({ type: CreateGiftCardDto })
   @SwaggerApiResponse({ status: 201, description: 'Gift card created successfully' })
   @SwaggerApiResponse({ status: 400, description: 'Invalid request data' })
   @SwaggerApiResponse({ status: 401, description: 'Unauthorized' })
-  async create(
-    @Request() req: any,
-    @Body() dto: CreateGiftCardDto,
-  ): Promise<ApiResponse<any>> {
+  async create(@Request() req: any, @Body() dto: CreateGiftCardDto): Promise<ApiResponse<any>> {
     const giftCard = await this.giftCardsService.create(req.user.id, dto);
     return {
       data: giftCard,
@@ -56,7 +54,8 @@ export class GiftCardsController {
   @Get('validate/:code')
   @ApiOperation({
     summary: 'Validate gift card',
-    description: 'Validates a gift card code and returns its balance and status. Public endpoint, no authentication required.',
+    description:
+      'Validates a gift card code and returns its balance and status. Public endpoint, no authentication required.',
   })
   @ApiParam({ name: 'code', description: 'Gift card code', type: String })
   @SwaggerApiResponse({ status: 200, description: 'Gift card validated successfully' })
@@ -74,17 +73,15 @@ export class GiftCardsController {
   @ApiBearerAuth('JWT-auth')
   @ApiOperation({
     summary: 'Redeem gift card',
-    description: 'Redeems a gift card and adds its value to the user\'s account balance or applies it to an order.',
+    description:
+      "Redeems a gift card and adds its value to the user's account balance or applies it to an order.",
   })
   @ApiBody({ type: RedeemGiftCardDto })
   @SwaggerApiResponse({ status: 200, description: 'Gift card redeemed successfully' })
   @SwaggerApiResponse({ status: 400, description: 'Invalid gift card or already redeemed' })
   @SwaggerApiResponse({ status: 401, description: 'Unauthorized' })
   @SwaggerApiResponse({ status: 404, description: 'Gift card not found' })
-  async redeem(
-    @Request() req: any,
-    @Body() dto: RedeemGiftCardDto,
-  ): Promise<ApiResponse<any>> {
+  async redeem(@Request() req: any, @Body() dto: RedeemGiftCardDto): Promise<ApiResponse<any>> {
     const giftCard = await this.giftCardsService.redeem(req.user.id, dto);
     return {
       data: giftCard,
@@ -137,7 +134,8 @@ export class GiftCardsController {
   @ApiBearerAuth('JWT-auth')
   @ApiOperation({
     summary: 'Refund gift card',
-    description: 'Refunds a gift card amount back to the card after an order cancellation or return.',
+    description:
+      'Refunds a gift card amount back to the card after an order cancellation or return.',
   })
   @ApiParam({ name: 'id', description: 'Gift card UUID', type: String })
   @ApiBody({
@@ -166,4 +164,3 @@ export class GiftCardsController {
     };
   }
 }
-

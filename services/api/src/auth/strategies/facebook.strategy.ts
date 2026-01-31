@@ -13,7 +13,8 @@ export class FacebookStrategy extends PassportStrategy(Strategy, 'facebook') {
     super({
       clientID: configService.get<string>('FACEBOOK_APP_ID'),
       clientSecret: configService.get<string>('FACEBOOK_APP_SECRET'),
-      callbackURL: configService.get<string>('FACEBOOK_CALLBACK_URL') || '/api/auth/facebook/callback',
+      callbackURL:
+        configService.get<string>('FACEBOOK_CALLBACK_URL') || '/api/auth/facebook/callback',
       scope: ['email', 'public_profile'],
       profileFields: ['emails', 'name', 'picture.type(large)'],
     });
@@ -42,4 +43,3 @@ export class FacebookStrategy extends PassportStrategy(Strategy, 'facebook') {
     done(null, result);
   }
 }
-

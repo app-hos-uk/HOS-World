@@ -4,13 +4,13 @@ import { SettlementsService } from './settlements.service';
 
 /**
  * Settlement Scheduler Service
- * 
+ *
  * Provides automated settlement processing capabilities.
  * Can be triggered by:
  * 1. Manual API call (admin-only endpoint)
  * 2. External cron job calling the API endpoint
  * 3. NestJS @Cron decorator (if @nestjs/schedule is installed)
- * 
+ *
  * To enable NestJS built-in scheduling:
  * 1. Install: npm install @nestjs/schedule
  * 2. Add ScheduleModule.forRoot() to AppModule
@@ -29,7 +29,7 @@ export class SettlementSchedulerService {
   /**
    * Create settlements for all active sellers for the previous week
    * Run weekly on Monday at midnight
-   * 
+   *
    * If using @nestjs/schedule, uncomment:
    * @Cron('0 0 * * 1') // Every Monday at midnight
    */
@@ -61,7 +61,9 @@ export class SettlementSchedulerService {
       const periodStart = new Date(periodEnd);
       periodStart.setDate(periodStart.getDate() - 7);
 
-      this.logger.log(`Settlement period: ${periodStart.toISOString()} to ${periodEnd.toISOString()}`);
+      this.logger.log(
+        `Settlement period: ${periodStart.toISOString()} to ${periodEnd.toISOString()}`,
+      );
 
       // Get sellers who have completed orders in the settlement period
       // We don't filter by verified status because:
@@ -130,15 +132,21 @@ export class SettlementSchedulerService {
           });
 
           results.created++;
-          this.logger.log(`Created settlement for ${seller.storeName}: ${calculation.totalOrders} orders, £${calculation.netAmount.toFixed(2)}`);
+          this.logger.log(
+            `Created settlement for ${seller.storeName}: ${calculation.totalOrders} orders, £${calculation.netAmount.toFixed(2)}`,
+          );
         } catch (error: any) {
           results.failed++;
           results.errors.push(`${seller.storeName}: ${error.message}`);
-          this.logger.error(`Failed to create settlement for ${seller.storeName}: ${error.message}`);
+          this.logger.error(
+            `Failed to create settlement for ${seller.storeName}: ${error.message}`,
+          );
         }
       }
 
-      this.logger.log(`Settlement creation complete: ${results.created} created, ${results.failed} failed`);
+      this.logger.log(
+        `Settlement creation complete: ${results.created} created, ${results.failed} failed`,
+      );
       return results;
     } finally {
       this.isProcessing = false;
@@ -148,7 +156,7 @@ export class SettlementSchedulerService {
   /**
    * Clean up expired stock reservations
    * Run every hour
-   * 
+   *
    * If using @nestjs/schedule, uncomment:
    * @Cron('0 * * * *') // Every hour
    */
@@ -204,7 +212,7 @@ export class SettlementSchedulerService {
   /**
    * Send settlement reminders for pending settlements older than 7 days
    * Run daily at 9 AM
-   * 
+   *
    * If using @nestjs/schedule, uncomment:
    * @Cron('0 9 * * *') // Every day at 9 AM
    */

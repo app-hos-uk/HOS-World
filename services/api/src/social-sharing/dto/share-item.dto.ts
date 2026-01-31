@@ -19,4 +19,3 @@ export class ShareItemDto {
   @IsString()
   platform?: string; // 'facebook', 'twitter', 'copy_link', etc.
 }
-

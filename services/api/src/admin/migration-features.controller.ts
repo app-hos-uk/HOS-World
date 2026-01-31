@@ -1,11 +1,4 @@
-import {
-  Controller,
-  Post,
-  Get,
-  UseGuards,
-  Logger,
-  ForbiddenException,
-} from '@nestjs/common';
+import { Controller, Post, Get, UseGuards, Logger, ForbiddenException } from '@nestjs/common';
 import {
   ApiTags,
   ApiOperation,
@@ -37,19 +30,30 @@ export class MigrationFeaturesController {
   private checkMigrationsEnabled(): void {
     const enabled = this.configService.get<string>('ENABLE_ADMIN_MIGRATIONS') === 'true';
     if (!enabled) {
-      this.logger.warn('Admin migration endpoint called but ENABLE_ADMIN_MIGRATIONS is not set to "true"');
-      throw new ForbiddenException('Admin migrations are disabled in production. Set ENABLE_ADMIN_MIGRATIONS=true to enable.');
+      this.logger.warn(
+        'Admin migration endpoint called but ENABLE_ADMIN_MIGRATIONS is not set to "true"',
+      );
+      throw new ForbiddenException(
+        'Admin migrations are disabled in production. Set ENABLE_ADMIN_MIGRATIONS=true to enable.',
+      );
     }
   }
 
   @Post('run-sql')
-  @ApiOperation({ summary: 'Run features migration', description: 'Runs comprehensive features migration SQL. Requires ENABLE_ADMIN_MIGRATIONS=true. Admin access required.' })
+  @ApiOperation({
+    summary: 'Run features migration',
+    description:
+      'Runs comprehensive features migration SQL. Requires ENABLE_ADMIN_MIGRATIONS=true. Admin access required.',
+  })
   @SwaggerApiResponse({ status: 200, description: 'Migration completed' })
   @SwaggerApiResponse({ status: 401, description: 'Unauthorized' })
-  @SwaggerApiResponse({ status: 403, description: 'Forbidden - Admin access required or migrations disabled' })
+  @SwaggerApiResponse({
+    status: 403,
+    description: 'Forbidden - Admin access required or migrations disabled',
+  })
   async runSQLMigration(): Promise<ApiResponse<any>> {
     this.checkMigrationsEnabled();
-    
+
     try {
       this.logger.log('🔄 Running comprehensive features migration...');
 
@@ -77,7 +81,9 @@ export class MigrationFeaturesController {
       const statements = this.splitSQLStatements(sqlContent);
       this.logger.log(`📊 Split SQL into ${statements.length} statements`);
       if (statements.length <= 5) {
-        this.logger.warn(`⚠️ Only ${statements.length} statements found - this seems too few. First statement preview: ${statements[0]?.substring(0, 200)}...`);
+        this.logger.warn(
+          `⚠️ Only ${statements.length} statements found - this seems too few. First statement preview: ${statements[0]?.substring(0, 200)}...`,
+        );
       }
 
       const results: any[] = [];
@@ -112,9 +118,10 @@ export class MigrationFeaturesController {
       return {
         data: {
           success: errors === 0,
-          message: errors === 0
-            ? 'Migration completed successfully'
-            : `Migration completed with ${errors} errors`,
+          message:
+            errors === 0
+              ? 'Migration completed successfully'
+              : `Migration completed with ${errors} errors`,
           summary: {
             totalStatements: statements.length,
             successful,
@@ -123,9 +130,10 @@ export class MigrationFeaturesController {
           verification,
           details: results,
         },
-        message: errors === 0
-          ? 'Migration completed successfully'
-          : `Migration completed with ${errors} errors`,
+        message:
+          errors === 0
+            ? 'Migration completed successfully'
+            : `Migration completed with ${errors} errors`,
       };
     } catch (error: any) {
       this.logger.error('❌ Migration failed:', error.message);
@@ -138,7 +146,10 @@ export class MigrationFeaturesController {
   }
 
   @Get('verify')
-  @ApiOperation({ summary: 'Verify features migration', description: 'Verifies that features migration was successful. Admin access required.' })
+  @ApiOperation({
+    summary: 'Verify features migration',
+    description: 'Verifies that features migration was successful. Admin access required.',
+  })
   @SwaggerApiResponse({ status: 200, description: 'Migration verification completed' })
   @SwaggerApiResponse({ status: 401, description: 'Unauthorized' })
   @SwaggerApiResponse({ status: 403, description: 'Forbidden - Admin access required' })
@@ -224,7 +235,7 @@ export class MigrationFeaturesController {
     for (let i = 0; i < lines.length; i++) {
       const originalLine = lines[i];
       const line = originalLine.trim();
-      
+
       // Skip comment lines
       if (line.startsWith('--')) {
         continue;
@@ -247,12 +258,12 @@ export class MigrationFeaturesController {
       // If in DO block, accumulate all lines
       if (inDoBlock) {
         currentStatement += originalLine + '\n';
-        
+
         // Check for END statement (must match the dollar quote tag)
         // Pattern: END followed by whitespace, then the dollar quote tag, optional semicolon
         const escapedTag = dollarQuoteTag.replace(/\$/g, '\\$');
         const endPattern = new RegExp(`^END\\s+${escapedTag}\\s*;?\\s*$`, 'i');
-        
+
         if (endPattern.test(line)) {
           // Found END, close the DO block
           const trimmed = currentStatement.trim();
@@ -295,4 +306,3 @@ export class MigrationFeaturesController {
     return filtered;
   }
 }
-

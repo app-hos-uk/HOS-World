@@ -1,14 +1,4 @@
-import {
-  Controller,
-  Get,
-  Post,
-  Put,
-  Delete,
-  Body,
-  Param,
-  Query,
-  UseGuards,
-} from '@nestjs/common';
+import { Controller, Get, Post, Put, Delete, Body, Param, Query, UseGuards } from '@nestjs/common';
 import {
   ApiTags,
   ApiOperation,
@@ -51,9 +41,7 @@ export class InventoryController {
   })
   @SwaggerApiResponse({ status: 201, description: 'Warehouse created successfully' })
   @SwaggerApiResponse({ status: 400, description: 'Invalid warehouse data' })
-  async createWarehouse(
-    @Body() createDto: CreateWarehouseDto,
-  ): Promise<ApiResponse<any>> {
+  async createWarehouse(@Body() createDto: CreateWarehouseDto): Promise<ApiResponse<any>> {
     const warehouse = await this.inventoryService.createWarehouse(createDto);
     return {
       data: warehouse,
@@ -67,16 +55,15 @@ export class InventoryController {
   @ApiBearerAuth('JWT-auth')
   @ApiOperation({
     summary: 'Get all warehouses',
-    description: 'Retrieves all warehouses. Requires ADMIN, SELLER, B2C_SELLER, or FULFILLMENT role.',
+    description:
+      'Retrieves all warehouses. Requires ADMIN, SELLER, B2C_SELLER, or FULFILLMENT role.',
   })
   @ApiQuery({ name: 'includeInactive', required: false, type: Boolean })
   @SwaggerApiResponse({ status: 200, description: 'Warehouses retrieved successfully' })
   async findAllWarehouses(
     @Query('includeInactive') includeInactive?: string,
   ): Promise<ApiResponse<any[]>> {
-    const warehouses = await this.inventoryService.findAllWarehouses(
-      includeInactive === 'true',
-    );
+    const warehouses = await this.inventoryService.findAllWarehouses(includeInactive === 'true');
     return {
       data: warehouses,
       message: 'Warehouses retrieved successfully',
@@ -94,9 +81,7 @@ export class InventoryController {
   @ApiParam({ name: 'id', description: 'Warehouse UUID', type: String })
   @SwaggerApiResponse({ status: 200, description: 'Warehouse retrieved successfully' })
   @SwaggerApiResponse({ status: 404, description: 'Warehouse not found' })
-  async findWarehouseById(
-    @Param('id') id: string,
-  ): Promise<ApiResponse<any>> {
+  async findWarehouseById(@Param('id') id: string): Promise<ApiResponse<any>> {
     const warehouse = await this.inventoryService.findWarehouseById(id);
     return {
       data: warehouse,
@@ -112,7 +97,10 @@ export class InventoryController {
     summary: 'Create or update inventory location',
     description: 'Creates or updates inventory for a product in a warehouse.',
   })
-  @SwaggerApiResponse({ status: 201, description: 'Inventory location created/updated successfully' })
+  @SwaggerApiResponse({
+    status: 201,
+    description: 'Inventory location created/updated successfully',
+  })
   async upsertInventoryLocation(
     @Body() createDto: CreateInventoryLocationDto,
   ): Promise<ApiResponse<any>> {
@@ -133,9 +121,7 @@ export class InventoryController {
   })
   @ApiParam({ name: 'productId', description: 'Product UUID', type: String })
   @SwaggerApiResponse({ status: 200, description: 'Product inventory retrieved successfully' })
-  async getProductInventory(
-    @Param('productId') productId: string,
-  ): Promise<ApiResponse<any>> {
+  async getProductInventory(@Param('productId') productId: string): Promise<ApiResponse<any>> {
     const inventory = await this.inventoryService.getProductInventory(productId);
     return {
       data: inventory,
@@ -152,9 +138,7 @@ export class InventoryController {
   })
   @SwaggerApiResponse({ status: 201, description: 'Stock reserved successfully' })
   @SwaggerApiResponse({ status: 400, description: 'Insufficient stock' })
-  async reserveStock(
-    @Body() reserveDto: ReserveStockDto,
-  ): Promise<ApiResponse<any>> {
+  async reserveStock(@Body() reserveDto: ReserveStockDto): Promise<ApiResponse<any>> {
     const reservation = await this.inventoryService.reserveStock(reserveDto);
     return {
       data: reservation,
@@ -176,10 +160,7 @@ export class InventoryController {
     @Param('id') id: string,
     @Body() body: { orderId: string },
   ): Promise<ApiResponse<any>> {
-    const reservation = await this.inventoryService.confirmReservation(
-      id,
-      body.orderId,
-    );
+    const reservation = await this.inventoryService.confirmReservation(id, body.orderId);
     return {
       data: reservation,
       message: 'Reservation confirmed successfully',
@@ -195,9 +176,7 @@ export class InventoryController {
   })
   @ApiParam({ name: 'id', description: 'Reservation UUID', type: String })
   @SwaggerApiResponse({ status: 200, description: 'Reservation cancelled successfully' })
-  async cancelReservation(
-    @Param('id') id: string,
-  ): Promise<ApiResponse<any>> {
+  async cancelReservation(@Param('id') id: string): Promise<ApiResponse<any>> {
     const reservation = await this.inventoryService.cancelReservation(id);
     return {
       data: reservation,
@@ -215,9 +194,7 @@ export class InventoryController {
   })
   @ApiQuery({ name: 'warehouseId', required: false, type: String })
   @SwaggerApiResponse({ status: 200, description: 'Low stock alerts retrieved successfully' })
-  async getLowStockAlerts(
-    @Query('warehouseId') warehouseId?: string,
-  ): Promise<ApiResponse<any[]>> {
+  async getLowStockAlerts(@Query('warehouseId') warehouseId?: string): Promise<ApiResponse<any[]>> {
     const alerts = await this.inventoryService.getLowStockAlerts(warehouseId);
     return {
       data: alerts,
@@ -236,13 +213,9 @@ export class InventoryController {
   @SwaggerApiResponse({ status: 200, description: 'Stock allocated successfully' })
   @SwaggerApiResponse({ status: 400, description: 'Insufficient stock' })
   async allocateStockForOrder(
-    @Body() body: {
-      orderItems: Array<{ productId: string; quantity: number }>;
-    },
+    @Body() body: { orderItems: Array<{ productId: string; quantity: number }> },
   ): Promise<ApiResponse<any[]>> {
-    const allocations = await this.inventoryService.allocateStockForOrder(
-      body.orderItems,
-    );
+    const allocations = await this.inventoryService.allocateStockForOrder(body.orderItems);
     return {
       data: allocations,
       message: 'Stock allocated successfully',
@@ -260,7 +233,8 @@ export class InventoryController {
   @SwaggerApiResponse({ status: 200, description: 'Stock allocated successfully' })
   @SwaggerApiResponse({ status: 400, description: 'Insufficient stock' })
   async allocateStockForOrderWithLocation(
-    @Body() body: {
+    @Body()
+    body: {
       orderItems: Array<{ productId: string; quantity: number }>;
       shippingAddress: {
         country: string;
@@ -295,10 +269,7 @@ export class InventoryController {
     @Body() createDto: CreateStockTransferDto,
     @Request() req: any,
   ): Promise<ApiResponse<any>> {
-    const transfer = await this.inventoryService.transferStock(
-      createDto,
-      req.user.id,
-    );
+    const transfer = await this.inventoryService.transferStock(createDto, req.user.id);
     return {
       data: transfer,
       message: 'Stock transfer created successfully',
@@ -357,10 +328,7 @@ export class InventoryController {
     @Param('id') id: string,
     @Request() req: any,
   ): Promise<ApiResponse<any>> {
-    const transfer = await this.inventoryService.completeStockTransfer(
-      id,
-      req.user.id,
-    );
+    const transfer = await this.inventoryService.completeStockTransfer(id, req.user.id);
     return {
       data: transfer,
       message: 'Stock transfer completed successfully',
@@ -381,10 +349,7 @@ export class InventoryController {
     @Body() createDto: CreateStockMovementDto,
     @Request() req: any,
   ): Promise<ApiResponse<any>> {
-    const movement = await this.inventoryService.recordStockMovement(
-      createDto,
-      req.user.id,
-    );
+    const movement = await this.inventoryService.recordStockMovement(createDto, req.user.id);
     return {
       data: movement,
       message: 'Stock movement recorded successfully',
@@ -447,12 +412,14 @@ export class InventoryController {
   @ApiBearerAuth('JWT-auth')
   @ApiOperation({
     summary: 'Find nearest warehouse with stock',
-    description: 'Finds the nearest warehouse that has sufficient stock for the requested products.',
+    description:
+      'Finds the nearest warehouse that has sufficient stock for the requested products.',
   })
   @SwaggerApiResponse({ status: 200, description: 'Nearest warehouse found' })
   @SwaggerApiResponse({ status: 404, description: 'No warehouse with sufficient stock found' })
   async findNearestWarehouse(
-    @Body() body: {
+    @Body()
+    body: {
       latitude: number;
       longitude: number;
       productQuantities: Array<{ productId: string; quantity: number }>;
@@ -480,10 +447,7 @@ export class InventoryController {
   @SwaggerApiResponse({ status: 200, description: 'Nearest fulfillment center found' })
   @SwaggerApiResponse({ status: 404, description: 'No fulfillment center found' })
   async findNearestFulfillmentCenter(
-    @Body() body: {
-      latitude: number;
-      longitude: number;
-    },
+    @Body() body: { latitude: number; longitude: number },
   ): Promise<ApiResponse<any>> {
     const result = await this.warehouseRoutingService.findNearestFulfillmentCenter(
       body.latitude,
@@ -501,19 +465,19 @@ export class InventoryController {
   @ApiBearerAuth('JWT-auth')
   @ApiOperation({
     summary: 'Find optimal fulfillment source',
-    description: 'Finds the optimal warehouse or fulfillment center for an order based on shipping address.',
+    description:
+      'Finds the optimal warehouse or fulfillment center for an order based on shipping address.',
   })
   @SwaggerApiResponse({ status: 200, description: 'Optimal fulfillment source found' })
   async findOptimalFulfillmentSource(
-    @Body() body: {
+    @Body()
+    body: {
       shippingAddressId: string;
       productQuantities: Array<{ productId: string; quantity: number }>;
     },
   ): Promise<ApiResponse<any>> {
     // Get coordinates for the shipping address
-    const coords = await this.geocodingService.getCoordinatesForAddress(
-      body.shippingAddressId,
-    );
+    const coords = await this.geocodingService.getCoordinatesForAddress(body.shippingAddressId);
 
     if (!coords) {
       return {
@@ -550,7 +514,8 @@ export class InventoryController {
   })
   @SwaggerApiResponse({ status: 200, description: 'Warehouses retrieved successfully' })
   async getWarehousesByDistance(
-    @Body() body: {
+    @Body()
+    body: {
       latitude: number;
       longitude: number;
       productQuantities: Array<{ productId: string; quantity: number }>;
@@ -578,9 +543,7 @@ export class InventoryController {
   @ApiParam({ name: 'addressId', description: 'Address UUID', type: String })
   @SwaggerApiResponse({ status: 200, description: 'Address geocoded successfully' })
   @SwaggerApiResponse({ status: 404, description: 'Address not found' })
-  async geocodeAddress(
-    @Param('addressId') addressId: string,
-  ): Promise<ApiResponse<any>> {
+  async geocodeAddress(@Param('addressId') addressId: string): Promise<ApiResponse<any>> {
     const result = await this.geocodingService.geocodeAndSaveAddress(addressId);
     return {
       data: result,
@@ -664,9 +627,7 @@ export class InventoryController {
   @ApiParam({ name: 'id', description: 'Warehouse UUID', type: String })
   @SwaggerApiResponse({ status: 200, description: 'Warehouse deleted successfully' })
   @SwaggerApiResponse({ status: 404, description: 'Warehouse not found' })
-  async deleteWarehouse(
-    @Param('id') id: string,
-  ): Promise<ApiResponse<any>> {
+  async deleteWarehouse(@Param('id') id: string): Promise<ApiResponse<any>> {
     await this.inventoryService.deleteWarehouse(id);
     return {
       data: null,

@@ -97,12 +97,7 @@ export class InfluencerPayoutsController {
   @ApiOperation({ summary: 'Create payout record' })
   @SwaggerApiResponse({ status: 201, description: 'Payout created successfully' })
   async create(
-    @Body() body: {
-      influencerId: string;
-      periodStart: string;
-      periodEnd: string;
-      notes?: string;
-    },
+    @Body() body: { influencerId: string; periodStart: string; periodEnd: string; notes?: string },
   ): Promise<ApiResponse<any>> {
     const payout = await this.payoutsService.create({
       influencerId: body.influencerId,

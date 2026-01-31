@@ -6,4 +6,3 @@ import { PerformanceService } from './performance.service';
   exports: [PerformanceService],
 })
 export class PerformanceModule {}
-

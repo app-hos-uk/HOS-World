@@ -148,7 +148,8 @@ export function CurrencyProvider({ children }: { children: React.ReactNode }) {
       const formatted = safeAmount.toFixed(2);
       return `${symbol}${formatted}`;
     },
-    [currency, convertPrice, rates]
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [currency, convertPrice]
   );
 
   return (

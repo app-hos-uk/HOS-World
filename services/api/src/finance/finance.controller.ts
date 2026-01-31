@@ -35,9 +35,13 @@ export class FinanceController {
   @Get('pending')
   @ApiOperation({
     summary: 'Get pending finance approvals',
-    description: 'Retrieves all product submissions pending finance approval. Finance/Admin access required.',
+    description:
+      'Retrieves all product submissions pending finance approval. Finance/Admin access required.',
   })
-  @SwaggerApiResponse({ status: 200, description: 'Pending finance approvals retrieved successfully' })
+  @SwaggerApiResponse({
+    status: 200,
+    description: 'Pending finance approvals retrieved successfully',
+  })
   @SwaggerApiResponse({ status: 401, description: 'Unauthorized' })
   @SwaggerApiResponse({ status: 403, description: 'Forbidden - Finance/Admin access required' })
   async findPending(): Promise<ApiResponse<any[]>> {
@@ -65,11 +69,7 @@ export class FinanceController {
     @Param('submissionId', ParseUUIDPipe) submissionId: string,
     @Body() setPricingDto: SetPricingDto,
   ): Promise<ApiResponse<any>> {
-    const pricing = await this.financeService.setPricing(
-      submissionId,
-      req.user.id,
-      setPricingDto,
-    );
+    const pricing = await this.financeService.setPricing(submissionId, req.user.id, setPricingDto);
     return {
       data: pricing,
       message: 'Pricing set successfully',
@@ -79,7 +79,8 @@ export class FinanceController {
   @Post('approve/:submissionId')
   @ApiOperation({
     summary: 'Approve submission for publishing',
-    description: 'Approves a product submission for publishing after pricing is set. Finance/Admin access required.',
+    description:
+      'Approves a product submission for publishing after pricing is set. Finance/Admin access required.',
   })
   @ApiParam({ name: 'submissionId', description: 'Submission UUID', type: String })
   @ApiBody({ type: ApprovePricingDto })
@@ -93,11 +94,7 @@ export class FinanceController {
     @Param('submissionId', ParseUUIDPipe) submissionId: string,
     @Body() approveDto: ApprovePricingDto,
   ): Promise<ApiResponse<any>> {
-    const submission = await this.financeService.approve(
-      submissionId,
-      req.user.id,
-      approveDto,
-    );
+    const submission = await this.financeService.approve(submissionId, req.user.id, approveDto);
     return {
       data: submission,
       message: 'Submission approved for publishing',
@@ -129,11 +126,7 @@ export class FinanceController {
     @Param('submissionId', ParseUUIDPipe) submissionId: string,
     @Body() body: { reason: string },
   ): Promise<ApiResponse<any>> {
-    const submission = await this.financeService.reject(
-      submissionId,
-      req.user.id,
-      body.reason,
-    );
+    const submission = await this.financeService.reject(submissionId, req.user.id, body.reason);
     return {
       data: submission,
       message: 'Submission rejected',
@@ -143,7 +136,8 @@ export class FinanceController {
   @Get('pricing-history/:submissionId')
   @ApiOperation({
     summary: 'Get pricing history',
-    description: 'Retrieves pricing history for a product submission. Finance/Admin access required.',
+    description:
+      'Retrieves pricing history for a product submission. Finance/Admin access required.',
   })
   @ApiParam({ name: 'submissionId', description: 'Submission UUID', type: String })
   @SwaggerApiResponse({ status: 200, description: 'Pricing history retrieved successfully' })
@@ -163,7 +157,8 @@ export class FinanceController {
   @Get('dashboard/stats')
   @ApiOperation({
     summary: 'Get finance dashboard statistics',
-    description: 'Retrieves dashboard statistics for finance operations. Finance/Admin access required.',
+    description:
+      'Retrieves dashboard statistics for finance operations. Finance/Admin access required.',
   })
   @SwaggerApiResponse({ status: 200, description: 'Dashboard statistics retrieved successfully' })
   @SwaggerApiResponse({ status: 401, description: 'Unauthorized' })
@@ -176,4 +171,3 @@ export class FinanceController {
     };
   }
 }
-

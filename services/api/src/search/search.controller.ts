@@ -29,20 +29,67 @@ export class SearchController {
   @Get()
   @ApiOperation({
     summary: 'Search products',
-    description: 'Searches products using Elasticsearch with advanced filtering options including attribute-based faceted search. Public endpoint, no authentication required.',
+    description:
+      'Searches products using Elasticsearch with advanced filtering options including attribute-based faceted search. Public endpoint, no authentication required.',
   })
   @ApiQuery({ name: 'q', required: false, type: String, description: 'Search query string' })
-  @ApiQuery({ name: 'category', required: false, type: String, description: 'Filter by category (legacy)' })
-  @ApiQuery({ name: 'categoryId', required: false, type: String, description: 'Filter by category ID' })
+  @ApiQuery({
+    name: 'category',
+    required: false,
+    type: String,
+    description: 'Filter by category (legacy)',
+  })
+  @ApiQuery({
+    name: 'categoryId',
+    required: false,
+    type: String,
+    description: 'Filter by category ID',
+  })
   @ApiQuery({ name: 'fandom', required: false, type: String, description: 'Filter by fandom' })
   @ApiQuery({ name: 'sellerId', required: false, type: String, description: 'Filter by seller ID' })
-  @ApiQuery({ name: 'minPrice', required: false, type: Number, description: 'Minimum price filter' })
-  @ApiQuery({ name: 'maxPrice', required: false, type: Number, description: 'Maximum price filter' })
-  @ApiQuery({ name: 'minRating', required: false, type: Number, description: 'Minimum rating filter' })
-  @ApiQuery({ name: 'inStock', required: false, type: String, description: 'Filter by stock availability (true/false)' })
-  @ApiQuery({ name: 'attributes', required: false, type: String, description: 'JSON array of attribute filters: [{"attributeId":"id","values":["val1","val2"]}] or for NUMBER: [{"attributeId":"id","minValue":10,"maxValue":100}]' })
-  @ApiQuery({ name: 'page', required: false, type: Number, description: 'Page number (default: 1)' })
-  @ApiQuery({ name: 'limit', required: false, type: Number, description: 'Items per page (default: 20, max: 100)' })
+  @ApiQuery({
+    name: 'minPrice',
+    required: false,
+    type: Number,
+    description: 'Minimum price filter',
+  })
+  @ApiQuery({
+    name: 'maxPrice',
+    required: false,
+    type: Number,
+    description: 'Maximum price filter',
+  })
+  @ApiQuery({
+    name: 'minRating',
+    required: false,
+    type: Number,
+    description: 'Minimum rating filter',
+  })
+  @ApiQuery({
+    name: 'inStock',
+    required: false,
+    type: String,
+    description: 'Filter by stock availability (true/false)',
+  })
+  @ApiQuery({
+    name: 'attributes',
+    required: false,
+    type: String,
+    description:
+      'JSON array of attribute filters: [{"attributeId":"id","values":["val1","val2"]}] or for NUMBER: [{"attributeId":"id","minValue":10,"maxValue":100}]',
+  })
+  @ApiQuery({
+    name: 'page',
+    required: false,
+    type: Number,
+    description: 'Page number (default: 1)',
+  })
+  @ApiQuery({
+    name: 'limit',
+    required: false,
+    type: Number,
+    description: 'Items per page (default: 20, max: 100)',
+  })
   @SwaggerApiResponse({ status: 200, description: 'Search completed successfully' })
   async search(
     @Query('q') query: string = '',
@@ -133,10 +180,21 @@ export class SearchController {
   @Get('suggestions')
   @ApiOperation({
     summary: 'Get search suggestions',
-    description: 'Returns search suggestions/autocomplete results based on the query prefix. Public endpoint, no authentication required.',
+    description:
+      'Returns search suggestions/autocomplete results based on the query prefix. Public endpoint, no authentication required.',
   })
-  @ApiQuery({ name: 'q', required: true, type: String, description: 'Search prefix (minimum 2 characters)' })
-  @ApiQuery({ name: 'limit', required: false, type: Number, description: 'Maximum number of suggestions (default: 10)' })
+  @ApiQuery({
+    name: 'q',
+    required: true,
+    type: String,
+    description: 'Search prefix (minimum 2 characters)',
+  })
+  @ApiQuery({
+    name: 'limit',
+    required: false,
+    type: Number,
+    description: 'Maximum number of suggestions (default: 10)',
+  })
   @SwaggerApiResponse({ status: 200, description: 'Suggestions retrieved successfully' })
   async getSuggestions(
     @Query('q') prefix: string,
@@ -157,4 +215,3 @@ export class SearchController {
     };
   }
 }
-

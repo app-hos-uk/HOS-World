@@ -62,7 +62,8 @@ export class GamificationService {
       return {
         rank: index + 1,
         userId: user.id,
-        userName: `${user.firstName || ''} ${user.lastName || ''}`.trim() || user.email.split('@')[0],
+        userName:
+          `${user.firstName || ''} ${user.lastName || ''}`.trim() || user.email.split('@')[0],
         avatar: user.avatar || undefined,
         points,
         level,
@@ -73,16 +74,16 @@ export class GamificationService {
     // Find current user's rank if provided
     let userRank: number | undefined;
     if (userId) {
-      const userEntry = entries.find(e => e.userId === userId);
+      const userEntry = entries.find((e) => e.userId === userId);
       userRank = userEntry?.rank;
-      
+
       // If user not in top entries, calculate their rank
       if (!userRank) {
         const userPoints = await this.prisma.user.findUnique({
           where: { id: userId },
           select: { loyaltyPoints: true },
         });
-        
+
         if (userPoints) {
           const higherRanked = await this.prisma.user.count({
             where: {

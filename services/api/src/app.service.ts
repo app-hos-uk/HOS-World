@@ -6,5 +6,3 @@ export class AppService {
     return 'House of Spells Marketplace API';
   }
 }
-
-

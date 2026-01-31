@@ -1,4 +1,12 @@
-import { IsString, IsNotEmpty, IsOptional, IsBoolean, IsNumber, IsEmail, IsInt } from 'class-validator';
+import {
+  IsString,
+  IsNotEmpty,
+  IsOptional,
+  IsBoolean,
+  IsNumber,
+  IsEmail,
+  IsInt,
+} from 'class-validator';
 
 export class CreateFulfillmentCenterDto {
   @IsString()
@@ -91,4 +99,3 @@ export class UpdateFulfillmentCenterDto {
   @IsBoolean()
   isActive?: boolean;
 }
-

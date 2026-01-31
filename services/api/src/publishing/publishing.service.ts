@@ -1,8 +1,4 @@
-import {
-  Injectable,
-  NotFoundException,
-  BadRequestException,
-} from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../database/prisma.service';
 import { ProductsService } from '../products/products.service';
 import { NotificationsService } from '../notifications/notifications.service';
@@ -31,9 +27,7 @@ export class PublishingService {
     }
 
     if (submission.status !== 'FINANCE_APPROVED') {
-      throw new BadRequestException(
-        'Product can only be published after finance approval',
-      );
+      throw new BadRequestException('Product can only be published after finance approval');
     }
 
     if (!submission.catalogEntry) {
@@ -49,11 +43,14 @@ export class PublishingService {
     const finalPrice = priceMatch ? parseFloat(priceMatch[1]) : productData.price;
 
     // Use catalog images, or fall back to submission productData.images (may be { url }[] or string[])
-    const imageUrls: string[] = Array.isArray(catalogEntry.images) && catalogEntry.images.length > 0
-      ? catalogEntry.images
-      : (Array.isArray(productData.images)
-          ? productData.images.map((img: string | { url: string }) => typeof img === 'string' ? img : img?.url).filter(Boolean)
-          : []);
+    const imageUrls: string[] =
+      Array.isArray(catalogEntry.images) && catalogEntry.images.length > 0
+        ? catalogEntry.images
+        : Array.isArray(productData.images)
+          ? productData.images
+              .map((img: string | { url: string }) => (typeof img === 'string' ? img : img?.url))
+              .filter(Boolean)
+          : [];
 
     // Create product from submission
     const product = await this.productsService.create(submission.seller.userId, {
@@ -109,7 +106,7 @@ export class PublishingService {
     });
 
     // TODO: Publish to seller domains if applicable
-    
+
     // Send notification to seller
     if (submission.seller?.userId) {
       await this.notificationsService.sendNotificationToUser(
@@ -209,4 +206,3 @@ export class PublishingService {
     return submissions;
   }
 }
-

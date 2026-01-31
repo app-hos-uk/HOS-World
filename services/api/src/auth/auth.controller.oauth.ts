@@ -36,7 +36,7 @@ export class AuthOAuthController {
   async googleAuthCallback(@Request() req: any, @Res() res: Response) {
     const { token, refreshToken } = req.user;
     const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
-    
+
     // Redirect to frontend with tokens
     res.redirect(
       `${frontendUrl}/auth/callback?token=${token}&refreshToken=${refreshToken}&provider=google`,
@@ -57,7 +57,7 @@ export class AuthOAuthController {
   async facebookAuthCallback(@Request() req: any, @Res() res: Response) {
     const { token, refreshToken } = req.user;
     const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
-    
+
     res.redirect(
       `${frontendUrl}/auth/callback?token=${token}&refreshToken=${refreshToken}&provider=facebook`,
     );
@@ -77,7 +77,7 @@ export class AuthOAuthController {
   async appleAuthCallback(@Request() req: any, @Res() res: Response) {
     const { token, refreshToken } = req.user;
     const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
-    
+
     res.redirect(
       `${frontendUrl}/auth/callback?token=${token}&refreshToken=${refreshToken}&provider=apple`,
     );
@@ -108,4 +108,3 @@ export class AuthOAuthController {
     };
   }
 }
-

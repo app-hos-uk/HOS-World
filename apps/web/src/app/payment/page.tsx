@@ -26,6 +26,7 @@ function PaymentContent() {
       setError('Order ID is required');
       setLoading(false);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [orderId]);
 
   const fetchOrder = async () => {
@@ -192,6 +193,7 @@ function PaymentForm({ order }: { order: any }) {
 
   useEffect(() => {
     loadPaymentProviders();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const loadPaymentProviders = async () => {

@@ -74,7 +74,7 @@ export class FulfillmentService {
     // Build update data object with only defined values
     // This prevents undefined values from setting fields to null
     const updateData: Record<string, any> = {};
-    
+
     if (updateDto.name !== undefined) updateData.name = updateDto.name;
     if (updateDto.address !== undefined) updateData.address = updateDto.address;
     if (updateDto.city !== undefined) updateData.city = updateDto.city;
@@ -106,9 +106,7 @@ export class FulfillmentService {
     }
 
     if (center.shipments.length > 0) {
-      throw new BadRequestException(
-        'Cannot delete fulfillment center with existing shipments',
-      );
+      throw new BadRequestException('Cannot delete fulfillment center with existing shipments');
     }
 
     await this.prisma.fulfillmentCenter.delete({
@@ -291,9 +289,7 @@ export class FulfillmentService {
     }
 
     if (shipment.status === 'VERIFIED' || shipment.status === 'REJECTED') {
-      throw new BadRequestException(
-        `Shipment cannot be verified in status: ${shipment.status}`,
-      );
+      throw new BadRequestException(`Shipment cannot be verified in status: ${shipment.status}`);
     }
 
     const updateData: any = {
@@ -439,14 +435,7 @@ export class FulfillmentService {
       where.fulfillmentCenterId = fulfillmentCenterId;
     }
 
-    const [
-      totalShipments,
-      pending,
-      inTransit,
-      received,
-      verified,
-      rejected,
-    ] = await Promise.all([
+    const [totalShipments, pending, inTransit, received, verified, rejected] = await Promise.all([
       this.prisma.shipment.count({ where }),
       this.prisma.shipment.count({ where: { ...where, status: 'PENDING' } }),
       this.prisma.shipment.count({ where: { ...where, status: 'IN_TRANSIT' } }),
@@ -465,4 +454,3 @@ export class FulfillmentService {
     };
   }
 }
-

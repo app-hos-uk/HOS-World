@@ -1,9 +1,4 @@
-import {
-  Injectable,
-  NestInterceptor,
-  ExecutionContext,
-  CallHandler,
-} from '@nestjs/common';
+import { Injectable, NestInterceptor, ExecutionContext, CallHandler } from '@nestjs/common';
 import { Observable } from 'rxjs';
 import { tap } from 'rxjs/operators';
 import { ActivityService } from '../../activity/activity.service';
@@ -149,4 +144,3 @@ export class ActivityInterceptor implements NestInterceptor {
     return response;
   }
 }
-

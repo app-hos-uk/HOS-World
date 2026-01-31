@@ -53,4 +53,3 @@ export class FandomsService {
     return fandom;
   }
 }
-

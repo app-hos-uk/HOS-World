@@ -44,6 +44,7 @@ export default function QuestsPage() {
 
   useEffect(() => {
     fetchQuests();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const fetchQuests = async () => {

@@ -8,4 +8,3 @@ import { FandomsService } from './fandoms.service';
   exports: [FandomsService],
 })
 export class FandomsModule {}
-

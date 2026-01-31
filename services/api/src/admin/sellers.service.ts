@@ -188,4 +188,3 @@ export class AdminSellersService {
     return invitation;
   }
 }
-

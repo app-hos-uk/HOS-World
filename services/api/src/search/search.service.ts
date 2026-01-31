@@ -23,46 +23,54 @@ export class SearchService implements OnModuleInit {
   async onModuleInit() {
     // Don't block startup - initialize Elasticsearch in background
     // Return immediately so NestJS doesn't wait
-    Promise.resolve().then(async () => {
-      // Only initialize Elasticsearch if configured
-      const elasticsearchNode = this.configService.get<string>('ELASTICSEARCH_NODE');
-      if (!this.isElasticsearchConfigured(elasticsearchNode)) {
-        this.logger.warn('Elasticsearch not configured - search features will be disabled');
-        return;
-      }
-
-      try {
-        // Verify connectivity first. If we can't ping quickly, treat as disabled to avoid log spam.
-        const canConnect = await this.canPingElasticsearch();
-        if (!canConnect) {
-          this.logger.warn(
-            'Elasticsearch is configured but unreachable (ping failed) - search features will be disabled',
-            'SearchService',
-          );
+    Promise.resolve()
+      .then(async () => {
+        // Only initialize Elasticsearch if configured
+        const elasticsearchNode = this.configService.get<string>('ELASTICSEARCH_NODE');
+        if (!this.isElasticsearchConfigured(elasticsearchNode)) {
+          this.logger.warn('Elasticsearch not configured - search features will be disabled');
           return;
         }
 
-        // Set a timeout for Elasticsearch connection
-        await Promise.race([
-          this.createIndex(),
-          new Promise((_, reject) => 
-            setTimeout(() => reject(new Error('Elasticsearch connection timeout')), 5000)
-          ),
-        ]);
-        
-        // Optionally sync existing products on startup
-        if (this.configService.get('SYNC_PRODUCTS_ON_STARTUP') === 'true') {
-          await this.syncAllProducts();
+        try {
+          // Verify connectivity first. If we can't ping quickly, treat as disabled to avoid log spam.
+          const canConnect = await this.canPingElasticsearch();
+          if (!canConnect) {
+            this.logger.warn(
+              'Elasticsearch is configured but unreachable (ping failed) - search features will be disabled',
+              'SearchService',
+            );
+            return;
+          }
+
+          // Set a timeout for Elasticsearch connection
+          await Promise.race([
+            this.createIndex(),
+            new Promise((_, reject) =>
+              setTimeout(() => reject(new Error('Elasticsearch connection timeout')), 5000),
+            ),
+          ]);
+
+          // Optionally sync existing products on startup
+          if (this.configService.get('SYNC_PRODUCTS_ON_STARTUP') === 'true') {
+            await this.syncAllProducts();
+          }
+        } catch (error) {
+          this.logger.warn(
+            `Elasticsearch initialization failed, search features will be disabled: ${error?.message || 'Unknown error'}`,
+            'SearchService',
+          );
+          this.logger.debug(error?.stack, 'SearchService');
+          // Don't throw - allow app to start without Elasticsearch
         }
-      } catch (error) {
-        this.logger.warn(`Elasticsearch initialization failed, search features will be disabled: ${error?.message || 'Unknown error'}`, 'SearchService');
+      })
+      .catch((error: any) => {
+        this.logger.error(
+          `Elasticsearch initialization error: ${error?.message || 'Unknown error'}`,
+          'SearchService',
+        );
         this.logger.debug(error?.stack, 'SearchService');
-        // Don't throw - allow app to start without Elasticsearch
-      }
-    }).catch((error: any) => {
-      this.logger.error(`Elasticsearch initialization error: ${error?.message || 'Unknown error'}`, 'SearchService');
-      this.logger.debug(error?.stack, 'SearchService');
-    });
+      });
     // Return immediately - don't wait for Elasticsearch
   }
 
@@ -429,10 +437,7 @@ export class SearchService implements OnModuleInit {
       },
       from,
       size: limit,
-      sort: [
-        { _score: { order: 'desc' } },
-        { createdAt: { order: 'desc' } },
-      ],
+      sort: [{ _score: { order: 'desc' } }, { createdAt: { order: 'desc' } }],
       aggs: {
         categories: {
           terms: { field: 'category', size: 20 },
@@ -499,7 +504,7 @@ export class SearchService implements OnModuleInit {
       }));
 
       const totalHits = resultAny.hits?.total || resultAny.body?.hits?.total;
-      const total = typeof totalHits === 'object' ? (totalHits.value || totalHits) : totalHits;
+      const total = typeof totalHits === 'object' ? totalHits.value || totalHits : totalHits;
 
       return {
         hits,
@@ -580,9 +585,7 @@ export class SearchService implements OnModuleInit {
       const resultAny = result as any;
       const suggestData = resultAny.suggest || resultAny.body?.suggest;
       const suggestions =
-        suggestData?.product_suggest?.[0]?.options?.map(
-          (option: any) => option.text,
-        ) || [];
+        suggestData?.product_suggest?.[0]?.options?.map((option: any) => option.text) || [];
 
       return suggestions;
     } catch (error) {
@@ -591,4 +594,3 @@ export class SearchService implements OnModuleInit {
     }
   }
 }
-

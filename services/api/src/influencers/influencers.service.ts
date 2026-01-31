@@ -7,7 +7,11 @@ import {
 } from '@nestjs/common';
 import { PrismaService } from '../database/prisma.service';
 import { InfluencerStorefrontsService } from '../influencer-storefronts/influencer-storefronts.service';
-import { UpdateInfluencerDto, UpdateInfluencerCommissionDto, CreateProductLinkDto } from './dto/update-influencer.dto';
+import {
+  UpdateInfluencerDto,
+  UpdateInfluencerCommissionDto,
+  CreateProductLinkDto,
+} from './dto/update-influencer.dto';
 
 @Injectable()
 export class InfluencersService {
@@ -27,7 +31,18 @@ export class InfluencersService {
    */
   async findByUserId(userId: string) {
     // #region agent log
-    fetch('http://127.0.0.1:7244/ingest/25f24f4e-a9b4-48c0-a492-7ec1e970ba34',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'influencers.service.ts:findByUserId:entry',message:'findByUserId entry',data:{userId},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'H2,H4'})}).catch(()=>{});
+    fetch('http://127.0.0.1:7244/ingest/25f24f4e-a9b4-48c0-a492-7ec1e970ba34', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        location: 'influencers.service.ts:findByUserId:entry',
+        message: 'findByUserId entry',
+        data: { userId },
+        timestamp: Date.now(),
+        sessionId: 'debug-session',
+        hypothesisId: 'H2,H4',
+      }),
+    }).catch(() => {});
     // #endregion
     try {
       let influencer = await this.prisma.influencer.findUnique({
@@ -40,12 +55,34 @@ export class InfluencersService {
         },
       });
       // #region agent log
-      fetch('http://127.0.0.1:7244/ingest/25f24f4e-a9b4-48c0-a492-7ec1e970ba34',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'influencers.service.ts:findByUserId:afterFindUnique',message:'after first findUnique',data:{hasInfluencer:!!influencer},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'H1,H2,H4'})}).catch(()=>{});
+      fetch('http://127.0.0.1:7244/ingest/25f24f4e-a9b4-48c0-a492-7ec1e970ba34', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          location: 'influencers.service.ts:findByUserId:afterFindUnique',
+          message: 'after first findUnique',
+          data: { hasInfluencer: !!influencer },
+          timestamp: Date.now(),
+          sessionId: 'debug-session',
+          hypothesisId: 'H1,H2,H4',
+        }),
+      }).catch(() => {});
       // #endregion
 
       if (!influencer) {
         // #region agent log
-        fetch('http://127.0.0.1:7244/ingest/25f24f4e-a9b4-48c0-a492-7ec1e970ba34',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'influencers.service.ts:findByUserId:callStorefronts',message:'calling storefrontsService.findByUserId',data:{userId},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'H2'})}).catch(()=>{});
+        fetch('http://127.0.0.1:7244/ingest/25f24f4e-a9b4-48c0-a492-7ec1e970ba34', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            location: 'influencers.service.ts:findByUserId:callStorefronts',
+            message: 'calling storefrontsService.findByUserId',
+            data: { userId },
+            timestamp: Date.now(),
+            sessionId: 'debug-session',
+            hypothesisId: 'H2',
+          }),
+        }).catch(() => {});
         // #endregion
         await this.storefrontsService.findByUserId(userId);
         influencer = await this.prisma.influencer.findUnique({
@@ -63,14 +100,39 @@ export class InfluencersService {
         throw new NotFoundException('Influencer profile not found');
       }
       // #region agent log
-      fetch('http://127.0.0.1:7244/ingest/25f24f4e-a9b4-48c0-a492-7ec1e970ba34',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'influencers.service.ts:findByUserId:return',message:'findByUserId returning',data:{hasInfluencer:true},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'H3'})}).catch(()=>{});
+      fetch('http://127.0.0.1:7244/ingest/25f24f4e-a9b4-48c0-a492-7ec1e970ba34', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          location: 'influencers.service.ts:findByUserId:return',
+          message: 'findByUserId returning',
+          data: { hasInfluencer: true },
+          timestamp: Date.now(),
+          sessionId: 'debug-session',
+          hypothesisId: 'H3',
+        }),
+      }).catch(() => {});
       // #endregion
       return influencer;
     } catch (err: any) {
       // #region agent log
-      fetch('http://127.0.0.1:7244/ingest/25f24f4e-a9b4-48c0-a492-7ec1e970ba34',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'influencers.service.ts:findByUserId:catch',message:'findByUserId error',data:{code:err?.code,name:err?.name,message:err?.message},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'H1,H2,H4,H5'})}).catch(()=>{});
+      fetch('http://127.0.0.1:7244/ingest/25f24f4e-a9b4-48c0-a492-7ec1e970ba34', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          location: 'influencers.service.ts:findByUserId:catch',
+          message: 'findByUserId error',
+          data: { code: err?.code, name: err?.name, message: err?.message },
+          timestamp: Date.now(),
+          sessionId: 'debug-session',
+          hypothesisId: 'H1,H2,H4,H5',
+        }),
+      }).catch(() => {});
       // #endregion
-      this.logger.error(`[DEBUG] GET /influencers/me error: ${err?.code ?? 'n/a'} ${err?.name ?? 'Error'} ${err?.message ?? err}`, err?.stack);
+      this.logger.error(
+        `[DEBUG] GET /influencers/me error: ${err?.code ?? 'n/a'} ${err?.name ?? 'Error'} ${err?.message ?? err}`,
+        err?.stack,
+      );
       throw err;
     }
   }
@@ -147,21 +209,21 @@ export class InfluencersService {
     }
 
     const pendingCommission = commissions
-      .filter(c => c.status === 'PENDING')
+      .filter((c) => c.status === 'PENDING')
       .reduce((sum, c) => sum + Number(c.amount), 0);
     const approvedCommission = commissions
-      .filter(c => c.status === 'APPROVED')
+      .filter((c) => c.status === 'APPROVED')
       .reduce((sum, c) => sum + Number(c.amount), 0);
     const paidCommission = commissions
-      .filter(c => c.status === 'PAID')
+      .filter((c) => c.status === 'PAID')
       .reduce((sum, c) => sum + Number(c.amount), 0);
 
     const thirtyDaysAgo = new Date();
     thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-    const recentReferrals = referrals.filter(r => r.createdAt >= thirtyDaysAgo);
+    const recentReferrals = referrals.filter((r) => r.createdAt >= thirtyDaysAgo);
     const clicksByDay: Record<string, number> = {};
     const conversionsByDay: Record<string, number> = {};
-    recentReferrals.forEach(r => {
+    recentReferrals.forEach((r) => {
       const dateKey = r.createdAt.toISOString().split('T')[0];
       clicksByDay[dateKey] = (clicksByDay[dateKey] || 0) + 1;
       if (r.convertedAt) {
@@ -173,9 +235,10 @@ export class InfluencersService {
     return {
       totalClicks: influencer.totalClicks,
       totalConversions: influencer.totalConversions,
-      conversionRate: influencer.totalClicks > 0
-        ? (influencer.totalConversions / influencer.totalClicks * 100).toFixed(2)
-        : 0,
+      conversionRate:
+        influencer.totalClicks > 0
+          ? ((influencer.totalConversions / influencer.totalClicks) * 100).toFixed(2)
+          : 0,
       totalSalesAmount: Number(influencer.totalSalesAmount),
       totalCommission: Number(influencer.totalCommission),
       pendingCommission,
@@ -226,7 +289,7 @@ export class InfluencersService {
     ]);
 
     return {
-      data: links.map(link => ({
+      data: links.map((link) => ({
         ...link,
         referralUrl: `/products/${link.product.slug}?ref=${influencer.referralCode}`,
       })),
@@ -336,7 +399,13 @@ export class InfluencersService {
   /**
    * List all influencers (admin)
    */
-  async findAll(options?: { status?: string; tier?: string; page?: number; limit?: number; search?: string }) {
+  async findAll(options?: {
+    status?: string;
+    tier?: string;
+    page?: number;
+    limit?: number;
+    search?: string;
+  }) {
     const { status, tier, page = 1, limit = 20, search } = options || {};
 
     const where: any = {};

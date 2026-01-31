@@ -17,7 +17,14 @@ export class TicketsService {
     sellerId?: string;
     orderId?: string;
     subject: string;
-    category: 'ORDER_INQUIRY' | 'PRODUCT_QUESTION' | 'RETURN_REQUEST' | 'PAYMENT_ISSUE' | 'TECHNICAL_SUPPORT' | 'SELLER_SUPPORT' | 'OTHER';
+    category:
+      | 'ORDER_INQUIRY'
+      | 'PRODUCT_QUESTION'
+      | 'RETURN_REQUEST'
+      | 'PAYMENT_ISSUE'
+      | 'TECHNICAL_SUPPORT'
+      | 'SELLER_SUPPORT'
+      | 'OTHER';
     priority?: 'LOW' | 'MEDIUM' | 'HIGH' | 'URGENT';
     initialMessage: string;
   }) {
@@ -330,7 +337,7 @@ export class TicketsService {
     }
 
     // Update ticket status if needed
-    let statusUpdate: any = {};
+    const statusUpdate: any = {};
     if (ticket.status === 'OPEN' && data.userId) {
       // If user is replying, set to IN_PROGRESS
       statusUpdate.status = 'IN_PROGRESS';
@@ -447,4 +454,3 @@ export class TicketsService {
     });
   }
 }
-

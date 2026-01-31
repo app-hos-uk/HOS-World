@@ -45,14 +45,19 @@ export class ProductsBulkService {
       tags: product.tags.join(', '),
       status: product.status,
       images: product.images.map((img) => img.url).join(' | '),
-      variations: JSON.stringify(product.variations.map((v) => ({
-        name: v.name,
-        options: v.options,
-      }))),
+      variations: JSON.stringify(
+        product.variations.map((v) => ({
+          name: v.name,
+          options: v.options,
+        })),
+      ),
     }));
   }
 
-  async importProducts(sellerId: string, products: any[]): Promise<{
+  async importProducts(
+    sellerId: string,
+    products: any[],
+  ): Promise<{
     success: number;
     failed: number;
     errors: string[];
@@ -86,16 +91,14 @@ export class ProductsBulkService {
           fandom: productData.fandom,
           category: productData.category,
           tags: productData.tags ? productData.tags.split(',').map((t: string) => t.trim()) : [],
-          status: ((productData.status as ProductStatus) || ProductStatus.DRAFT),
+          status: (productData.status as ProductStatus) || ProductStatus.DRAFT,
           images: productData.images
             ? productData.images.split('|').map((url: string, index: number) => ({
                 url: url.trim(),
                 order: index,
               }))
             : [],
-          variations: productData.variations
-            ? JSON.parse(productData.variations)
-            : undefined,
+          variations: productData.variations ? JSON.parse(productData.variations) : undefined,
         });
         success++;
       } catch (error: any) {
@@ -107,5 +110,3 @@ export class ProductsBulkService {
     return { success, failed, errors };
   }
 }
-
-

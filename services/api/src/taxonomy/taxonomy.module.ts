@@ -14,4 +14,3 @@ import { DatabaseModule } from '../database/database.module';
   exports: [CategoriesService, AttributesService, TagsService],
 })
 export class TaxonomyModule {}
-

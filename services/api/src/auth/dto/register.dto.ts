@@ -73,5 +73,3 @@ export class RegisterDto {
   @IsOptional()
   dataProcessingConsent?: Record<string, boolean>; // Granular consent
 }
-
-

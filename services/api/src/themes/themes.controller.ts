@@ -157,7 +157,7 @@ export class ThemesController {
   @ApiBearerAuth('JWT-auth')
   @ApiOperation({
     summary: 'Get my seller theme',
-    description: 'Retrieves the authenticated seller\'s theme. Seller access required.',
+    description: "Retrieves the authenticated seller's theme. Seller access required.",
   })
   @SwaggerApiResponse({ status: 200, description: 'Seller theme retrieved successfully' })
   @SwaggerApiResponse({ status: 401, description: 'Unauthorized' })
@@ -174,7 +174,8 @@ export class ThemesController {
   @Get('seller/:sellerId')
   @ApiOperation({
     summary: 'Get seller theme',
-    description: 'Retrieves a seller\'s theme by seller ID. Public endpoint, no authentication required.',
+    description:
+      "Retrieves a seller's theme by seller ID. Public endpoint, no authentication required.",
   })
   @ApiParam({ name: 'sellerId', description: 'Seller ID', type: String })
   @SwaggerApiResponse({ status: 200, description: 'Seller theme retrieved successfully' })
@@ -193,7 +194,7 @@ export class ThemesController {
   @ApiBearerAuth('JWT-auth')
   @ApiOperation({
     summary: 'Update my seller theme',
-    description: 'Updates the authenticated seller\'s theme. Seller access required.',
+    description: "Updates the authenticated seller's theme. Seller access required.",
   })
   @ApiBody({ type: UpdateSellerThemeDto })
   @SwaggerApiResponse({ status: 200, description: 'Seller theme updated successfully' })
@@ -217,7 +218,8 @@ export class ThemesController {
   @ApiBearerAuth('JWT-auth')
   @ApiOperation({
     summary: 'Get customer theme preference',
-    description: 'Retrieves the authenticated customer\'s theme preference (light/dark/accessibility).',
+    description:
+      "Retrieves the authenticated customer's theme preference (light/dark/accessibility).",
   })
   @SwaggerApiResponse({ status: 200, description: 'Theme preference retrieved successfully' })
   @SwaggerApiResponse({ status: 401, description: 'Unauthorized' })
@@ -234,7 +236,8 @@ export class ThemesController {
   @ApiBearerAuth('JWT-auth')
   @ApiOperation({
     summary: 'Update customer theme preference',
-    description: 'Updates the authenticated customer\'s theme preference (light/dark/accessibility).',
+    description:
+      "Updates the authenticated customer's theme preference (light/dark/accessibility).",
   })
   @ApiBody({ type: UpdateCustomerThemePreferenceDto })
   @SwaggerApiResponse({ status: 200, description: 'Theme preference updated successfully' })
@@ -256,7 +259,8 @@ export class ThemesController {
   @Get('templates/list')
   @ApiOperation({
     summary: 'Get theme templates',
-    description: 'Retrieves all available theme templates. Public endpoint, no authentication required.',
+    description:
+      'Retrieves all available theme templates. Public endpoint, no authentication required.',
   })
   @SwaggerApiResponse({ status: 200, description: 'Theme templates retrieved successfully' })
   async getTemplates(): Promise<ApiResponse<any[]>> {
@@ -273,7 +277,8 @@ export class ThemesController {
   @ApiBearerAuth('JWT-auth')
   @ApiOperation({
     summary: 'Apply theme template (Seller only)',
-    description: 'Creates a new theme from a template for the authenticated seller. Seller access required.',
+    description:
+      'Creates a new theme from a template for the authenticated seller. Seller access required.',
   })
   @ApiParam({ name: 'templateId', description: 'Template UUID', type: String })
   @ApiBody({
@@ -338,11 +343,7 @@ export class ThemesController {
     @UploadedFile() file: Express.Multer.File,
     @Body() metadata?: { name?: string; description?: string },
   ): Promise<ApiResponse<any>> {
-    const theme = await this.themeUploadService.uploadTheme(
-      file,
-      req.user.id,
-      metadata,
-    );
+    const theme = await this.themeUploadService.uploadTheme(file, req.user.id, metadata);
     return {
       data: theme,
       message: 'Theme uploaded successfully',

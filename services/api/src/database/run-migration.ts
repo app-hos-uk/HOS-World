@@ -11,12 +11,12 @@ async function runMigration() {
     const sql = readFileSync(migrationPath, 'utf-8');
 
     console.log('🔄 Executing migration SQL...');
-    
+
     // Split SQL by semicolons and execute each statement
     const statements = sql
       .split(';')
-      .map(s => s.trim())
-      .filter(s => s.length > 0 && !s.startsWith('--'));
+      .map((s) => s.trim())
+      .filter((s) => s.length > 0 && !s.startsWith('--'));
 
     for (const statement of statements) {
       if (statement.trim()) {
@@ -44,4 +44,3 @@ async function runMigration() {
 }
 
 runMigration();
-

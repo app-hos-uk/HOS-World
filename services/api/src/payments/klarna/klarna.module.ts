@@ -11,4 +11,3 @@ import { CurrencyModule } from '../../currency/currency.module';
   exports: [KlarnaService],
 })
 export class KlarnaModule {}
-

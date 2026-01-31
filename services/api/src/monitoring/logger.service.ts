@@ -3,7 +3,7 @@ import { ConfigService } from '@nestjs/config';
 
 /**
  * Enhanced Logger Service
- * 
+ *
  * Provides structured logging with correlation IDs and log levels.
  * Supports JSON logging for production environments.
  */
@@ -88,7 +88,12 @@ export class LoggerService implements NestLoggerService {
   /**
    * Log with structured data
    */
-  logWithData(level: 'info' | 'warn' | 'error' | 'debug', message: string, data: Record<string, any>, context?: string) {
+  logWithData(
+    level: 'info' | 'warn' | 'error' | 'debug',
+    message: string,
+    data: Record<string, any>,
+    context?: string,
+  ) {
     const logEntry = {
       timestamp: new Date().toISOString(),
       level,

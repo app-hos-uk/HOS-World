@@ -18,7 +18,7 @@ export class UploadsService {
   constructor(private configService: ConfigService) {
     // Railway Volume path (configurable via env, defaults to /data/uploads)
     this.uploadBasePath = this.configService.get<string>('UPLOAD_BASE_PATH') || '/data/uploads';
-    
+
     // API base URL for constructing absolute URLs
     // Priority: API_URL env var > construct from PORT > fallback to production URL
     const apiUrl = this.configService.get<string>('API_URL');
@@ -26,10 +26,10 @@ export class UploadsService {
       this.apiBaseUrl = apiUrl.endsWith('/api') ? apiUrl : `${apiUrl}/api`;
     } else {
       const port = this.configService.get<string>('PORT') || '3001';
-      const host = process.env.RAILWAY_PUBLIC_DOMAIN || 
-                   process.env.RAILWAY_ENVIRONMENT_NAME ? 
-                   `https://hos-marketplaceapi-production.up.railway.app` : 
-                   `http://localhost:${port}`;
+      const host =
+        process.env.RAILWAY_PUBLIC_DOMAIN || process.env.RAILWAY_ENVIRONMENT_NAME
+          ? `https://hos-marketplaceapi-production.up.railway.app`
+          : `http://localhost:${port}`;
       this.apiBaseUrl = `${host}/api`;
     }
   }
@@ -103,7 +103,7 @@ export class UploadsService {
     const safeFolder = this.sanitizeFolder(folder);
     // Use the filename that multer generated (already UUID-based)
     const savedFilename = file.filename;
-    
+
     if (!savedFilename) {
       throw new BadRequestException('File was not saved properly');
     }
@@ -140,11 +140,11 @@ export class UploadsService {
     const safeFolder = this.sanitizeFolder(folder);
     const safeFilename = filename.replace(/[^a-zA-Z0-9._-]/g, ''); // Basic sanitization
     const filePath = join(this.uploadBasePath, safeFolder, safeFilename);
-    
+
     if (!existsSync(filePath)) {
       throw new NotFoundException('File not found');
     }
-    
+
     return filePath;
   }
 
@@ -172,5 +172,3 @@ export class UploadsService {
     }
   }
 }
-
-

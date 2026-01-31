@@ -1,10 +1,4 @@
-import {
-  Controller,
-  Get,
-  Query,
-  UseGuards,
-  Request,
-} from '@nestjs/common';
+import { Controller, Get, Query, UseGuards, Request } from '@nestjs/common';
 import {
   ApiTags,
   ApiOperation,
@@ -26,11 +20,27 @@ export class GamificationController {
   @Get('leaderboard')
   @ApiOperation({
     summary: 'Get gamification leaderboard',
-    description: 'Retrieves the leaderboard rankings. Public endpoint with optional authentication for user rank.',
+    description:
+      'Retrieves the leaderboard rankings. Public endpoint with optional authentication for user rank.',
   })
-  @ApiQuery({ name: 'timeframe', required: false, enum: ['daily', 'weekly', 'monthly', 'yearly', 'all-time'], description: 'Time period for rankings' })
-  @ApiQuery({ name: 'category', required: false, enum: ['points', 'engagement', 'purchases'], description: 'Category to rank by' })
-  @ApiQuery({ name: 'limit', required: false, type: Number, description: 'Number of entries to return (max 100)' })
+  @ApiQuery({
+    name: 'timeframe',
+    required: false,
+    enum: ['daily', 'weekly', 'monthly', 'yearly', 'all-time'],
+    description: 'Time period for rankings',
+  })
+  @ApiQuery({
+    name: 'category',
+    required: false,
+    enum: ['points', 'engagement', 'purchases'],
+    description: 'Category to rank by',
+  })
+  @ApiQuery({
+    name: 'limit',
+    required: false,
+    type: Number,
+    description: 'Number of entries to return (max 100)',
+  })
   @SwaggerApiResponse({ status: 200, description: 'Leaderboard retrieved successfully' })
   async getLeaderboard(
     @Query('timeframe') timeframe?: string,
@@ -59,7 +69,8 @@ export class GamificationController {
   @UseGuards(JwtAuthGuard)
   @ApiOperation({
     summary: 'Get user gamification profile',
-    description: 'Retrieves the authenticated user\'s gamification stats including points, level, and rank.',
+    description:
+      "Retrieves the authenticated user's gamification stats including points, level, and rank.",
   })
   @SwaggerApiResponse({ status: 200, description: 'Gamification profile retrieved successfully' })
   @SwaggerApiResponse({ status: 401, description: 'Unauthorized' })

@@ -172,7 +172,10 @@ export class WhatsAppService {
     if (conversation.ticketId) {
       // Add message to existing ticket
       // This would be handled by the tickets service
-    } else if (messageContent.toLowerCase().includes('support') || messageContent.toLowerCase().includes('help')) {
+    } else if (
+      messageContent.toLowerCase().includes('support') ||
+      messageContent.toLowerCase().includes('help')
+    ) {
       // Auto-create ticket for support requests
       // This would be handled by the tickets service
     }
@@ -262,10 +265,13 @@ export class WhatsAppService {
     };
   }
 
-  async getConversationMessages(conversationId: string, filters?: {
-    page?: number;
-    limit?: number;
-  }) {
+  async getConversationMessages(
+    conversationId: string,
+    filters?: {
+      page?: number;
+      limit?: number;
+    },
+  ) {
     const page = filters?.page || 1;
     const limit = filters?.limit || 50;
     const skip = (page - 1) * limit;
@@ -312,10 +318,7 @@ export class WhatsAppService {
     });
   }
 
-  async getTemplates(filters?: {
-    category?: string;
-    isActive?: boolean;
-  }) {
+  async getTemplates(filters?: { category?: string; isActive?: boolean }) {
     const where: any = {};
 
     if (filters?.category) {
@@ -364,4 +367,3 @@ export class WhatsAppService {
     });
   }
 }
-

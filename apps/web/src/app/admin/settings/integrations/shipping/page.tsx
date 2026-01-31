@@ -79,6 +79,7 @@ export default function ShippingIntegrationsPage() {
 
   useEffect(() => {
     fetchIntegrations();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const fetchIntegrations = async () => {

@@ -70,4 +70,3 @@ seedAdmin()
     console.error('❌ Admin seeding failed:', error);
     process.exit(1);
   });
-

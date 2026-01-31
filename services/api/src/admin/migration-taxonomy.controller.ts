@@ -1,11 +1,4 @@
-import {
-  Controller,
-  Post,
-  Get,
-  UseGuards,
-  Logger,
-  ForbiddenException,
-} from '@nestjs/common';
+import { Controller, Post, Get, UseGuards, Logger, ForbiddenException } from '@nestjs/common';
 import {
   ApiTags,
   ApiOperation,
@@ -37,29 +30,35 @@ export class MigrationTaxonomyController {
   private checkMigrationsEnabled(): void {
     const enabled = this.configService.get<string>('ENABLE_ADMIN_MIGRATIONS') === 'true';
     if (!enabled) {
-      this.logger.warn('Admin migration endpoint called but ENABLE_ADMIN_MIGRATIONS is not set to "true"');
-      throw new ForbiddenException('Admin migrations are disabled in production. Set ENABLE_ADMIN_MIGRATIONS=true to enable.');
+      this.logger.warn(
+        'Admin migration endpoint called but ENABLE_ADMIN_MIGRATIONS is not set to "true"',
+      );
+      throw new ForbiddenException(
+        'Admin migrations are disabled in production. Set ENABLE_ADMIN_MIGRATIONS=true to enable.',
+      );
     }
   }
 
   @Post('run-sql')
-  @ApiOperation({ summary: 'Run taxonomy migration', description: 'Runs taxonomy system migration SQL. Requires ENABLE_ADMIN_MIGRATIONS=true. Admin access required.' })
+  @ApiOperation({
+    summary: 'Run taxonomy migration',
+    description:
+      'Runs taxonomy system migration SQL. Requires ENABLE_ADMIN_MIGRATIONS=true. Admin access required.',
+  })
   @SwaggerApiResponse({ status: 200, description: 'Migration completed' })
   @SwaggerApiResponse({ status: 401, description: 'Unauthorized' })
-  @SwaggerApiResponse({ status: 403, description: 'Forbidden - Admin access required or migrations disabled' })
+  @SwaggerApiResponse({
+    status: 403,
+    description: 'Forbidden - Admin access required or migrations disabled',
+  })
   async runSQLMigration(): Promise<ApiResponse<any>> {
     this.checkMigrationsEnabled();
-    
+
     try {
       this.logger.log('🔄 Running taxonomy system migration...');
 
       // Read SQL file
-      const sqlPath = path.join(
-        process.cwd(),
-        'prisma',
-        'migrations',
-        'add_taxonomy_system.sql',
-      );
+      const sqlPath = path.join(process.cwd(), 'prisma', 'migrations', 'add_taxonomy_system.sql');
 
       let sqlContent: string;
       try {
@@ -134,7 +133,10 @@ export class MigrationTaxonomyController {
   }
 
   @Get('verify')
-  @ApiOperation({ summary: 'Verify taxonomy migration', description: 'Verifies that taxonomy migration was successful. Admin access required.' })
+  @ApiOperation({
+    summary: 'Verify taxonomy migration',
+    description: 'Verifies that taxonomy migration was successful. Admin access required.',
+  })
   @SwaggerApiResponse({ status: 200, description: 'Migration verification completed' })
   @SwaggerApiResponse({ status: 401, description: 'Unauthorized' })
   @SwaggerApiResponse({ status: 403, description: 'Forbidden - Admin access required' })
@@ -304,4 +306,3 @@ export class MigrationTaxonomyController {
     return inString;
   }
 }
-

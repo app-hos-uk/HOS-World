@@ -35,7 +35,8 @@ export class AdminSellersController {
   @Post('invite')
   @ApiOperation({
     summary: 'Invite seller (Admin only)',
-    description: 'Sends an invitation email to a new seller. The seller will receive an email with an invitation link.',
+    description:
+      'Sends an invitation email to a new seller. The seller will receive an email with an invitation link.',
   })
   @ApiBody({
     description: 'Seller invitation data',
@@ -72,15 +73,14 @@ export class AdminSellersController {
   @Get('invitations')
   @ApiOperation({
     summary: 'Get seller invitations (Admin only)',
-    description: 'Retrieves all seller invitations. Can filter by status (PENDING, ACCEPTED, EXPIRED, CANCELLED).',
+    description:
+      'Retrieves all seller invitations. Can filter by status (PENDING, ACCEPTED, EXPIRED, CANCELLED).',
   })
   @SwaggerApiResponse({ status: 200, description: 'Invitations retrieved successfully' })
   @SwaggerApiResponse({ status: 401, description: 'Unauthorized' })
   @SwaggerApiResponse({ status: 403, description: 'Forbidden - Admin access required' })
   async getInvitations(@Body() body?: { status?: string }): Promise<ApiResponse<any[]>> {
-    const invitations = await this.sellersService.getInvitations(
-      body?.status as any,
-    );
+    const invitations = await this.sellersService.getInvitations(body?.status as any);
     return {
       data: invitations,
       message: 'Invitations retrieved successfully',
@@ -90,7 +90,8 @@ export class AdminSellersController {
   @Put('invitations/:id/resend')
   @ApiOperation({
     summary: 'Resend seller invitation (Admin only)',
-    description: 'Resends an invitation email to a seller. Useful if the original email was not received.',
+    description:
+      'Resends an invitation email to a seller. Useful if the original email was not received.',
   })
   @ApiParam({ name: 'id', description: 'Invitation UUID', type: String })
   @SwaggerApiResponse({ status: 200, description: 'Invitation resent successfully' })
@@ -108,7 +109,8 @@ export class AdminSellersController {
   @Delete('invitations/:id')
   @ApiOperation({
     summary: 'Cancel seller invitation (Admin only)',
-    description: 'Cancels a pending seller invitation. The invitation link will no longer be valid.',
+    description:
+      'Cancels a pending seller invitation. The invitation link will no longer be valid.',
   })
   @ApiParam({ name: 'id', description: 'Invitation UUID', type: String })
   @SwaggerApiResponse({ status: 200, description: 'Invitation cancelled successfully' })
@@ -123,4 +125,3 @@ export class AdminSellersController {
     };
   }
 }
-

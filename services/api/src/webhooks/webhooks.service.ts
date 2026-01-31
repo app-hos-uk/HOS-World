@@ -1,9 +1,4 @@
-import {
-  Injectable,
-  NotFoundException,
-  BadRequestException,
-  Logger,
-} from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException, Logger } from '@nestjs/common';
 import { PrismaService } from '../database/prisma.service';
 import { CreateWebhookDto } from './dto/create-webhook.dto';
 import { ConfigService } from '@nestjs/config';
@@ -30,9 +25,7 @@ export class WebhooksService {
     }
 
     // Generate secret if not provided
-    const secret =
-      createDto.secret ||
-      crypto.randomBytes(32).toString('hex');
+    const secret = createDto.secret || crypto.randomBytes(32).toString('hex');
 
     return this.prisma.webhook.create({
       data: {
@@ -124,11 +117,7 @@ export class WebhooksService {
   /**
    * Publish event to all subscribed webhooks
    */
-  async publishEvent(
-    event: string,
-    payload: any,
-    sellerId?: string,
-  ) {
+  async publishEvent(event: string, payload: any, sellerId?: string) {
     // Find all active webhooks subscribed to this event
     const webhooks = await this.prisma.webhook.findMany({
       where: {
@@ -154,9 +143,7 @@ export class WebhooksService {
         await this.deliverWebhook(webhook, event, payload);
         delivered++;
       } catch (error) {
-        this.logger.error(
-          `Failed to deliver webhook ${webhook.id}: ${error.message}`,
-        );
+        this.logger.error(`Failed to deliver webhook ${webhook.id}: ${error.message}`);
         failed++;
       }
     }
@@ -167,11 +154,7 @@ export class WebhooksService {
   /**
    * Deliver webhook to a specific URL
    */
-  private async deliverWebhook(
-    webhook: any,
-    event: string,
-    payload: any,
-  ) {
+  private async deliverWebhook(webhook: any, event: string, payload: any) {
     // Create delivery record
     const delivery = await this.prisma.webhookDelivery.create({
       data: {
@@ -185,10 +168,7 @@ export class WebhooksService {
 
     try {
       // Generate signature
-      const signature = this.generateSignature(
-        JSON.stringify(payload),
-        webhook.secret || '',
-      );
+      const signature = this.generateSignature(JSON.stringify(payload), webhook.secret || '');
 
       // Make HTTP request
       const response = await fetch(webhook.url, {
@@ -246,10 +226,7 @@ export class WebhooksService {
    * Generate HMAC signature for webhook payload
    */
   private generateSignature(payload: string, secret: string): string {
-    return crypto
-      .createHmac('sha256', secret)
-      .update(payload)
-      .digest('hex');
+    return crypto.createHmac('sha256', secret).update(payload).digest('hex');
   }
 
   /**
@@ -276,11 +253,7 @@ export class WebhooksService {
     }
 
     try {
-      await this.deliverWebhook(
-        delivery.webhook,
-        delivery.event,
-        delivery.payload as any,
-      );
+      await this.deliverWebhook(delivery.webhook, delivery.event, delivery.payload as any);
       return { success: true };
     } catch (error) {
       return { success: false, error: error.message };

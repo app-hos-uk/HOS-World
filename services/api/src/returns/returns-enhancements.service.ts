@@ -15,10 +15,7 @@ export class ReturnsEnhancementsService {
   /**
    * Create return authorization
    */
-  async createReturnAuthorization(
-    returnRequestId: string,
-    notes?: string,
-  ): Promise<any> {
+  async createReturnAuthorization(returnRequestId: string, notes?: string): Promise<any> {
     const returnRequest = await this.prisma.returnRequest.findUnique({
       where: { id: returnRequestId },
       include: { order: true },
@@ -34,7 +31,7 @@ export class ReturnsEnhancementsService {
 
     // Update return request with authorization
     const returnNumber = this.generateReturnNumber();
-    
+
     const updated = await this.prisma.returnRequest.update({
       where: { id: returnRequestId },
       data: {
@@ -146,7 +143,7 @@ export class ReturnsEnhancementsService {
    */
   async getReturnAnalytics(sellerId?: string, startDate?: Date, endDate?: Date): Promise<any> {
     const where: any = {};
-    
+
     if (sellerId) {
       where.order = { sellerId };
     }
@@ -189,8 +186,7 @@ export class ReturnsEnhancementsService {
     // Calculate average
     const returnsWithRefund = returns.filter((r) => r.refundAmount);
     if (returnsWithRefund.length > 0) {
-      analytics.averageRefundAmount =
-        analytics.totalRefundAmount / returnsWithRefund.length;
+      analytics.averageRefundAmount = analytics.totalRefundAmount / returnsWithRefund.length;
     }
 
     // Count by reason
@@ -202,4 +198,3 @@ export class ReturnsEnhancementsService {
     return analytics;
   }
 }
-

@@ -8,4 +8,3 @@ import { SocialSharingService } from './social-sharing.service';
   exports: [SocialSharingService],
 })
 export class SocialSharingModule {}
-

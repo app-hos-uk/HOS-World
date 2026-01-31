@@ -1,4 +1,12 @@
-import { IsOptional, IsString, IsEnum, IsBoolean, IsUrl, IsEmail, ValidateNested } from 'class-validator';
+import {
+  IsOptional,
+  IsString,
+  IsEnum,
+  IsBoolean,
+  IsUrl,
+  IsEmail,
+  ValidateNested,
+} from 'class-validator';
 import { Type } from 'class-transformer';
 import { SellerType, LogisticsOption } from '@prisma/client';
 
@@ -122,4 +130,3 @@ export class UpdateSellerDto {
   @Type(() => WarehouseAddressDto)
   warehouseAddress?: WarehouseAddressDto;
 }
-

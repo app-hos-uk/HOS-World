@@ -206,9 +206,7 @@ export class SubmissionsService {
       submission.status !== 'UNDER_REVIEW' &&
       submission.status !== 'PROCUREMENT_REJECTED'
     ) {
-      throw new BadRequestException(
-        'Submission cannot be updated in its current status',
-      );
+      throw new BadRequestException('Submission cannot be updated in its current status');
     }
 
     // Prepare update data
@@ -280,9 +278,7 @@ export class SubmissionsService {
 
     // Only allow deletion if status is SUBMITTED or REJECTED
     if (submission.status !== 'SUBMITTED' && submission.status !== 'REJECTED') {
-      throw new BadRequestException(
-        'Submission cannot be deleted in its current status',
-      );
+      throw new BadRequestException('Submission cannot be deleted in its current status');
     }
 
     await this.prisma.productSubmission.delete({
@@ -342,4 +338,3 @@ export class SubmissionsService {
     };
   }
 }
-

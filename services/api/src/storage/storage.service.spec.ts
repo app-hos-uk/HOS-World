@@ -92,9 +92,7 @@ describe('StorageService', () => {
 
   describe('uploadFile', () => {
     it('should throw BadRequestException if no file provided', async () => {
-      await expect(service.uploadFile(null as any)).rejects.toThrow(
-        BadRequestException,
-      );
+      await expect(service.uploadFile(null as any)).rejects.toThrow(BadRequestException);
     });
 
     it('should upload file to local storage by default', async () => {
@@ -142,9 +140,7 @@ describe('StorageService', () => {
 
       const newService = new StorageService(mockConfigService as any);
 
-      await expect(newService.uploadFile(mockFile)).rejects.toThrow(
-        BadRequestException,
-      );
+      await expect(newService.uploadFile(mockFile)).rejects.toThrow(BadRequestException);
     });
 
     it('should upload file to MinIO when provider is MinIO', async () => {
@@ -174,7 +170,7 @@ describe('StorageService', () => {
 
     it('should upload file to Cloudinary when provider is Cloudinary', async () => {
       const cloudinary = require('cloudinary').v2;
-      
+
       mockConfigService.get.mockImplementation((key: string) => {
         if (key === 'STORAGE_PROVIDER') return 'cloudinary';
         if (key === 'CLOUDINARY_CLOUD_NAME') return 'test-cloud';
@@ -214,9 +210,7 @@ describe('StorageService', () => {
       const cloudinary = require('cloudinary').v2;
       cloudinary.uploader.destroy.mockResolvedValue({ result: 'ok' });
 
-      await service.deleteFile(
-        'https://res.cloudinary.com/test-cloud/image/upload/test.jpg',
-      );
+      await service.deleteFile('https://res.cloudinary.com/test-cloud/image/upload/test.jpg');
 
       expect(cloudinary.uploader.destroy).toHaveBeenCalled();
     });
@@ -239,16 +233,14 @@ describe('StorageService', () => {
         send: mockSend,
       };
 
-      await newService.deleteFile(
-        'https://test-bucket.s3.us-east-1.amazonaws.com/test.jpg',
-      );
+      await newService.deleteFile('https://test-bucket.s3.us-east-1.amazonaws.com/test.jpg');
 
       expect(mockSend).toHaveBeenCalled();
     });
 
     it('should delete file from MinIO', async () => {
       const mockSend = jest.fn().mockResolvedValue({});
-      
+
       mockConfigService.get.mockImplementation((key: string) => {
         if (key === 'MINIO_BUCKET') return 'minio-bucket';
         if (key === 'MINIO_ENDPOINT') return 'http://localhost:9000';
@@ -270,9 +262,7 @@ describe('StorageService', () => {
       cloudinary.uploader.destroy.mockRejectedValue(new Error('Delete failed'));
 
       await expect(
-        service.deleteFile(
-          'https://res.cloudinary.com/test-cloud/image/upload/test.jpg',
-        ),
+        service.deleteFile('https://res.cloudinary.com/test-cloud/image/upload/test.jpg'),
       ).resolves.not.toThrow();
     });
   });

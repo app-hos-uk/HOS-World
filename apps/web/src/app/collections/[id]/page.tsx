@@ -54,6 +54,7 @@ export default function CollectionDetailPage() {
     if (collectionId) {
       fetchCollection();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [collectionId]);
 
   const fetchCollection = async () => {

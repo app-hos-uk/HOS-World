@@ -1,14 +1,4 @@
-import {
-  Controller,
-  Get,
-  Post,
-  Put,
-  Delete,
-  Body,
-  Param,
-  Query,
-  UseGuards,
-} from '@nestjs/common';
+import { Controller, Get, Post, Put, Delete, Body, Param, Query, UseGuards } from '@nestjs/common';
 import {
   ApiTags,
   ApiOperation,
@@ -30,9 +20,7 @@ import type { ApiResponse } from '@hos-marketplace/shared-types';
 @Roles('ADMIN', 'SELLER', 'B2C_SELLER')
 @ApiBearerAuth('JWT-auth')
 export class ReturnPoliciesController {
-  constructor(
-    private readonly returnPoliciesService: ReturnPoliciesService,
-  ) {}
+  constructor(private readonly returnPoliciesService: ReturnPoliciesService) {}
 
   @Post()
   @ApiOperation({
@@ -41,9 +29,7 @@ export class ReturnPoliciesController {
   })
   @SwaggerApiResponse({ status: 201, description: 'Return policy created successfully' })
   @SwaggerApiResponse({ status: 400, description: 'Invalid return policy data' })
-  async create(
-    @Body() createDto: CreateReturnPolicyDto,
-  ): Promise<ApiResponse<any>> {
+  async create(@Body() createDto: CreateReturnPolicyDto): Promise<ApiResponse<any>> {
     const policy = await this.returnPoliciesService.create(createDto);
     return {
       data: policy,
@@ -65,11 +51,7 @@ export class ReturnPoliciesController {
     @Query('productId') productId?: string,
     @Query('categoryId') categoryId?: string,
   ): Promise<ApiResponse<any[]>> {
-    const policies = await this.returnPoliciesService.findAll(
-      sellerId,
-      productId,
-      categoryId,
-    );
+    const policies = await this.returnPoliciesService.findAll(sellerId, productId, categoryId);
     return {
       data: policies,
       message: 'Return policies retrieved successfully',
@@ -100,7 +82,10 @@ export class ReturnPoliciesController {
   @ApiParam({ name: 'productId', description: 'Product UUID', type: String })
   @ApiQuery({ name: 'sellerId', required: false, type: String })
   @ApiQuery({ name: 'categoryId', required: false, type: String })
-  @SwaggerApiResponse({ status: 200, description: 'Applicable return policy retrieved successfully' })
+  @SwaggerApiResponse({
+    status: 200,
+    description: 'Applicable return policy retrieved successfully',
+  })
   async getApplicablePolicy(
     @Param('productId') productId: string,
     @Query('sellerId') sellerId?: string,
@@ -129,10 +114,7 @@ export class ReturnPoliciesController {
     @Param('orderId') orderId: string,
     @Query('productId') productId?: string,
   ): Promise<ApiResponse<any>> {
-    const eligibility = await this.returnPoliciesService.checkReturnEligibility(
-      orderId,
-      productId,
-    );
+    const eligibility = await this.returnPoliciesService.checkReturnEligibility(orderId, productId);
     return {
       data: eligibility,
       message: 'Return eligibility checked successfully',

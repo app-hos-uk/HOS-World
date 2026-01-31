@@ -8,4 +8,3 @@ import { GiftCardsService } from './gift-cards.service';
   exports: [GiftCardsService],
 })
 export class GiftCardsModule {}
-

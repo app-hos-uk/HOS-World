@@ -1,14 +1,4 @@
-import {
-  Controller,
-  Get,
-  Post,
-  Put,
-  Body,
-  Param,
-  Query,
-  UseGuards,
-  Request,
-} from '@nestjs/common';
+import { Controller, Get, Post, Put, Body, Param, Query, UseGuards, Request } from '@nestjs/common';
 import {
   ApiTags,
   ApiOperation,
@@ -61,9 +51,7 @@ export class ShippingController {
   })
   @ApiQuery({ name: 'sellerId', required: false, description: 'Filter by seller ID' })
   @SwaggerApiResponse({ status: 200, description: 'Shipping methods retrieved successfully' })
-  async findAllShippingMethods(
-    @Query('sellerId') sellerId?: string,
-  ): Promise<ApiResponse<any[]>> {
+  async findAllShippingMethods(@Query('sellerId') sellerId?: string): Promise<ApiResponse<any[]>> {
     const methods = await this.shippingService.findAllShippingMethods(sellerId);
     return {
       data: methods,
@@ -80,9 +68,7 @@ export class ShippingController {
   @ApiParam({ name: 'id', description: 'Shipping method UUID', type: String })
   @SwaggerApiResponse({ status: 200, description: 'Shipping method retrieved successfully' })
   @SwaggerApiResponse({ status: 404, description: 'Shipping method not found' })
-  async findShippingMethodById(
-    @Param('id') id: string,
-  ): Promise<ApiResponse<any>> {
+  async findShippingMethodById(@Param('id') id: string): Promise<ApiResponse<any>> {
     const method = await this.shippingService.findShippingMethodById(id);
     return {
       data: method,
@@ -118,13 +104,12 @@ export class ShippingController {
   @ApiBearerAuth('JWT-auth')
   @ApiOperation({
     summary: 'Create shipping rule',
-    description: 'Creates a new shipping rule for a shipping method. Requires ADMIN, SELLER, or B2C_SELLER role.',
+    description:
+      'Creates a new shipping rule for a shipping method. Requires ADMIN, SELLER, or B2C_SELLER role.',
   })
   @SwaggerApiResponse({ status: 201, description: 'Shipping rule created successfully' })
   @SwaggerApiResponse({ status: 400, description: 'Invalid shipping rule data' })
-  async createShippingRule(
-    @Body() createDto: CreateShippingRuleDto,
-  ): Promise<ApiResponse<any>> {
+  async createShippingRule(@Body() createDto: CreateShippingRuleDto): Promise<ApiResponse<any>> {
     const rule = await this.shippingService.createShippingRule(createDto);
     return {
       data: rule,
@@ -158,11 +143,13 @@ export class ShippingController {
   @Public()
   @ApiOperation({
     summary: 'Calculate shipping rate',
-    description: 'Calculates shipping rates for given cart value, weight, and destination. Public endpoint.',
+    description:
+      'Calculates shipping rates for given cart value, weight, and destination. Public endpoint.',
   })
   @SwaggerApiResponse({ status: 200, description: 'Shipping rates calculated successfully' })
   async calculateShippingRate(
-    @Body() body: {
+    @Body()
+    body: {
       cartValue: number;
       weight: number;
       destination: {
@@ -190,11 +177,13 @@ export class ShippingController {
   @Public()
   @ApiOperation({
     summary: 'Get shipping options for checkout',
-    description: 'Returns available shipping options for cart items and destination. Public endpoint.',
+    description:
+      'Returns available shipping options for cart items and destination. Public endpoint.',
   })
   @SwaggerApiResponse({ status: 200, description: 'Shipping options retrieved successfully' })
   async getShippingOptions(
-    @Body() body: {
+    @Body()
+    body: {
       cartItems: Array<{
         productId: string;
         quantity: number;

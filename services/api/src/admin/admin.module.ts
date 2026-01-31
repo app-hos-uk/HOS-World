@@ -33,4 +33,3 @@ import { ProductsModule } from '../products/products.module';
   exports: [AdminService, AdminSellersService, AdminProductsService],
 })
 export class AdminModule {}
-

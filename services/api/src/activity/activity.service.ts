@@ -137,14 +137,17 @@ export class ActivityService {
     };
   }
 
-  async getSellerLogs(sellerId: string, filters?: {
-    action?: string;
-    entityType?: string;
-    startDate?: Date;
-    endDate?: Date;
-    page?: number;
-    limit?: number;
-  }) {
+  async getSellerLogs(
+    sellerId: string,
+    filters?: {
+      action?: string;
+      entityType?: string;
+      startDate?: Date;
+      endDate?: Date;
+      page?: number;
+      limit?: number;
+    },
+  ) {
     return this.getLogs({
       ...filters,
       sellerId,
@@ -210,4 +213,3 @@ export class ActivityService {
     });
   }
 }
-

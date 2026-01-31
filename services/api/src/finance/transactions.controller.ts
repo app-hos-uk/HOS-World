@@ -92,17 +92,48 @@ export class TransactionsController {
   @Get()
   @ApiOperation({
     summary: 'Get all transactions (Admin only)',
-    description: 'Retrieves all financial transactions with filtering options. Admin access required.',
+    description:
+      'Retrieves all financial transactions with filtering options. Admin access required.',
   })
   @ApiQuery({ name: 'sellerId', required: false, type: String, description: 'Filter by seller ID' })
-  @ApiQuery({ name: 'customerId', required: false, type: String, description: 'Filter by customer ID' })
+  @ApiQuery({
+    name: 'customerId',
+    required: false,
+    type: String,
+    description: 'Filter by customer ID',
+  })
   @ApiQuery({ name: 'orderId', required: false, type: String, description: 'Filter by order ID' })
-  @ApiQuery({ name: 'settlementId', required: false, type: String, description: 'Filter by settlement ID' })
+  @ApiQuery({
+    name: 'settlementId',
+    required: false,
+    type: String,
+    description: 'Filter by settlement ID',
+  })
   @ApiQuery({ name: 'returnId', required: false, type: String, description: 'Filter by return ID' })
-  @ApiQuery({ name: 'type', required: false, type: String, description: 'Filter by transaction type' })
-  @ApiQuery({ name: 'status', required: false, type: String, description: 'Filter by transaction status' })
-  @ApiQuery({ name: 'startDate', required: false, type: String, description: 'Start date (ISO format)' })
-  @ApiQuery({ name: 'endDate', required: false, type: String, description: 'End date (ISO format)' })
+  @ApiQuery({
+    name: 'type',
+    required: false,
+    type: String,
+    description: 'Filter by transaction type',
+  })
+  @ApiQuery({
+    name: 'status',
+    required: false,
+    type: String,
+    description: 'Filter by transaction status',
+  })
+  @ApiQuery({
+    name: 'startDate',
+    required: false,
+    type: String,
+    description: 'Start date (ISO format)',
+  })
+  @ApiQuery({
+    name: 'endDate',
+    required: false,
+    type: String,
+    description: 'End date (ISO format)',
+  })
   @ApiQuery({ name: 'page', required: false, type: String, description: 'Page number' })
   @ApiQuery({ name: 'limit', required: false, type: String, description: 'Items per page' })
   @SwaggerApiResponse({ status: 200, description: 'Transactions retrieved successfully' })
@@ -150,9 +181,7 @@ export class TransactionsController {
   @SwaggerApiResponse({ status: 401, description: 'Unauthorized' })
   @SwaggerApiResponse({ status: 403, description: 'Forbidden - Admin access required' })
   @SwaggerApiResponse({ status: 404, description: 'Transaction not found' })
-  async getTransactionById(
-    @Param('id', ParseUUIDPipe) id: string,
-  ): Promise<ApiResponse<any>> {
+  async getTransactionById(@Param('id', ParseUUIDPipe) id: string): Promise<ApiResponse<any>> {
     const transaction = await this.transactionsService.getTransactionById(id);
     return {
       data: transaction,
@@ -187,10 +216,7 @@ export class TransactionsController {
     @Param('id', ParseUUIDPipe) id: string,
     @Body() body: { status: 'PENDING' | 'COMPLETED' | 'FAILED' | 'CANCELLED' },
   ): Promise<ApiResponse<any>> {
-    const transaction = await this.transactionsService.updateTransactionStatus(
-      id,
-      body.status,
-    );
+    const transaction = await this.transactionsService.updateTransactionStatus(id, body.status);
     return {
       data: transaction,
       message: 'Transaction status updated successfully',
@@ -203,11 +229,36 @@ export class TransactionsController {
     description: 'Exports financial transactions as a downloadable file. Admin access required.',
   })
   @ApiQuery({ name: 'sellerId', required: false, type: String, description: 'Filter by seller ID' })
-  @ApiQuery({ name: 'customerId', required: false, type: String, description: 'Filter by customer ID' })
-  @ApiQuery({ name: 'type', required: false, type: String, description: 'Filter by transaction type' })
-  @ApiQuery({ name: 'status', required: false, type: String, description: 'Filter by transaction status' })
-  @ApiQuery({ name: 'startDate', required: false, type: String, description: 'Start date (ISO format)' })
-  @ApiQuery({ name: 'endDate', required: false, type: String, description: 'End date (ISO format)' })
+  @ApiQuery({
+    name: 'customerId',
+    required: false,
+    type: String,
+    description: 'Filter by customer ID',
+  })
+  @ApiQuery({
+    name: 'type',
+    required: false,
+    type: String,
+    description: 'Filter by transaction type',
+  })
+  @ApiQuery({
+    name: 'status',
+    required: false,
+    type: String,
+    description: 'Filter by transaction status',
+  })
+  @ApiQuery({
+    name: 'startDate',
+    required: false,
+    type: String,
+    description: 'Start date (ISO format)',
+  })
+  @ApiQuery({
+    name: 'endDate',
+    required: false,
+    type: String,
+    description: 'End date (ISO format)',
+  })
   @SwaggerApiResponse({ status: 200, description: 'Transactions exported successfully' })
   @SwaggerApiResponse({ status: 401, description: 'Unauthorized' })
   @SwaggerApiResponse({ status: 403, description: 'Forbidden - Admin access required' })
@@ -233,4 +284,3 @@ export class TransactionsController {
     };
   }
 }
-

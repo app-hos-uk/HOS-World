@@ -102,7 +102,11 @@ export class ReviewsService {
     return this.mapToReviewType(review);
   }
 
-  async findAll(productId: string, page: number = 1, limit: number = 10): Promise<{
+  async findAll(
+    productId: string,
+    page: number = 1,
+    limit: number = 10,
+  ): Promise<{
     reviews: Review[];
     pagination: {
       page: number;
@@ -121,11 +125,7 @@ export class ReviewsService {
         },
         skip,
         take: limit,
-        orderBy: [
-          { verified: 'desc' },
-          { helpful: 'desc' },
-          { createdAt: 'desc' },
-        ],
+        orderBy: [{ verified: 'desc' }, { helpful: 'desc' }, { createdAt: 'desc' }],
         include: {
           user: {
             select: {
@@ -330,5 +330,3 @@ export class ReviewsService {
     };
   }
 }
-
-

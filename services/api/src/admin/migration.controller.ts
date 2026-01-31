@@ -32,19 +32,30 @@ export class MigrationController {
   private checkMigrationsEnabled(): void {
     const enabled = this.configService.get<string>('ENABLE_ADMIN_MIGRATIONS') === 'true';
     if (!enabled) {
-      this.logger.warn('Admin migration endpoint called but ENABLE_ADMIN_MIGRATIONS is not set to "true"');
-      throw new ForbiddenException('Admin migrations are disabled in production. Set ENABLE_ADMIN_MIGRATIONS=true to enable.');
+      this.logger.warn(
+        'Admin migration endpoint called but ENABLE_ADMIN_MIGRATIONS is not set to "true"',
+      );
+      throw new ForbiddenException(
+        'Admin migrations are disabled in production. Set ENABLE_ADMIN_MIGRATIONS=true to enable.',
+      );
     }
   }
 
   @Post('run-global-features')
-  @ApiOperation({ summary: 'Run global features migration', description: 'Runs the global features migration SQL. Requires ENABLE_ADMIN_MIGRATIONS=true. Admin access required.' })
+  @ApiOperation({
+    summary: 'Run global features migration',
+    description:
+      'Runs the global features migration SQL. Requires ENABLE_ADMIN_MIGRATIONS=true. Admin access required.',
+  })
   @SwaggerApiResponse({ status: 200, description: 'Migration completed' })
   @SwaggerApiResponse({ status: 401, description: 'Unauthorized' })
-  @SwaggerApiResponse({ status: 403, description: 'Forbidden - Admin access required or migrations disabled' })
+  @SwaggerApiResponse({
+    status: 403,
+    description: 'Forbidden - Admin access required or migrations disabled',
+  })
   async runGlobalFeaturesMigration() {
     this.checkMigrationsEnabled();
-    
+
     try {
       this.logger.log('🔄 Starting global features migration...');
 
@@ -74,7 +85,7 @@ export class MigrationController {
 
       if (!foundPath || !sql) {
         this.logger.error('❌ Migration SQL file not found. Tried paths:');
-        possiblePaths.forEach(p => this.logger.error(`   - ${p}`));
+        possiblePaths.forEach((p) => this.logger.error(`   - ${p}`));
         throw new Error('Migration SQL file not found');
       }
 
@@ -101,11 +112,11 @@ export class MigrationController {
             // Ignore errors for IF NOT EXISTS statements
             const errorMessage = error.message || '';
             const errorCode = error.code || '';
-            
+
             // Log all errors for debugging
             this.logger.warn(`SQL Statement error: ${errorMessage.substring(0, 200)}`);
             this.logger.warn(`Statement: ${statement.substring(0, 200)}...`);
-            
+
             if (
               errorMessage.includes('already exists') ||
               errorMessage.includes('duplicate') ||
@@ -118,10 +129,7 @@ export class MigrationController {
                 statement: statement.substring(0, 100) + '...',
                 status: 'skipped (already exists)',
               });
-            } else if (
-              errorMessage.includes('does not exist') &&
-              errorMessage.includes('DROP')
-            ) {
+            } else if (errorMessage.includes('does not exist') && errorMessage.includes('DROP')) {
               // DROP IF EXISTS errors are okay
               successCount++;
               results.push({
@@ -176,13 +184,20 @@ export class MigrationController {
   }
 
   @Post('run-sql-direct')
-  @ApiOperation({ summary: 'Run SQL migration directly', description: 'Runs embedded SQL migration directly. Requires ENABLE_ADMIN_MIGRATIONS=true. Admin access required.' })
+  @ApiOperation({
+    summary: 'Run SQL migration directly',
+    description:
+      'Runs embedded SQL migration directly. Requires ENABLE_ADMIN_MIGRATIONS=true. Admin access required.',
+  })
   @SwaggerApiResponse({ status: 200, description: 'Migration completed' })
   @SwaggerApiResponse({ status: 401, description: 'Unauthorized' })
-  @SwaggerApiResponse({ status: 403, description: 'Forbidden - Admin access required or migrations disabled' })
+  @SwaggerApiResponse({
+    status: 403,
+    description: 'Forbidden - Admin access required or migrations disabled',
+  })
   async runSQLDirect() {
     this.checkMigrationsEnabled();
-    
+
     try {
       this.logger.log('🔄 Running SQL migration directly (embedded SQL)...');
 
@@ -199,11 +214,11 @@ export class MigrationController {
         `ALTER TABLE "users" ADD COLUMN IF NOT EXISTS "gdprConsentDate" TIMESTAMP`,
         `ALTER TABLE "users" ADD COLUMN IF NOT EXISTS "dataProcessingConsent" JSONB`,
         `ALTER TABLE "users" ADD COLUMN IF NOT EXISTS "countryDetectedAt" TIMESTAMP`,
-        
+
         // Add columns to customers table
         `ALTER TABLE "customers" ADD COLUMN IF NOT EXISTS "country" TEXT`,
         `ALTER TABLE "customers" ADD COLUMN IF NOT EXISTS "currencyPreference" TEXT DEFAULT 'GBP'`,
-        
+
         // Create CurrencyExchangeRate table
         `CREATE TABLE IF NOT EXISTS "currency_exchange_rates" (
           "id" TEXT NOT NULL PRIMARY KEY,
@@ -214,7 +229,7 @@ export class MigrationController {
           "expiresAt" TIMESTAMP NOT NULL,
           CONSTRAINT "currency_exchange_rates_baseCurrency_targetCurrency_key" UNIQUE ("baseCurrency", "targetCurrency")
         )`,
-        
+
         // Create GDPRConsentLog table
         `CREATE TABLE IF NOT EXISTS "gdpr_consent_logs" (
           "id" TEXT NOT NULL PRIMARY KEY,
@@ -227,7 +242,7 @@ export class MigrationController {
           "userAgent" TEXT,
           CONSTRAINT "gdpr_consent_logs_userId_fkey" FOREIGN KEY ("userId") REFERENCES "users"("id") ON DELETE CASCADE ON UPDATE CASCADE
         )`,
-        
+
         // Create indexes (only after tables exist)
         `CREATE INDEX IF NOT EXISTS "currency_exchange_rates_baseCurrency_idx" ON "currency_exchange_rates"("baseCurrency")`,
         `CREATE INDEX IF NOT EXISTS "currency_exchange_rates_targetCurrency_idx" ON "currency_exchange_rates"("targetCurrency")`,
@@ -236,16 +251,16 @@ export class MigrationController {
         `CREATE INDEX IF NOT EXISTS "gdpr_consent_logs_consentType_idx" ON "gdpr_consent_logs"("consentType")`,
         `CREATE INDEX IF NOT EXISTS "users_country_idx" ON "users"("country")`,
         `CREATE INDEX IF NOT EXISTS "users_currencyPreference_idx" ON "users"("currencyPreference")`,
-        
+
         // Update default currency
         `ALTER TABLE "products" ALTER COLUMN "currency" SET DEFAULT 'GBP'`,
         `ALTER TABLE "carts" ALTER COLUMN "currency" SET DEFAULT 'GBP'`,
         `ALTER TABLE "orders" ALTER COLUMN "currency" SET DEFAULT 'GBP'`,
         `ALTER TABLE "payments" ALTER COLUMN "currency" SET DEFAULT 'GBP'`,
-        
+
         // Backfill currency preference
         `UPDATE "users" SET "currencyPreference" = 'GBP' WHERE "currencyPreference" IS NULL`,
-        
+
         // Initialize default exchange rates
         `INSERT INTO "currency_exchange_rates" ("id", "baseCurrency", "targetCurrency", "rate", "cachedAt", "expiresAt")
          VALUES 
@@ -257,7 +272,7 @@ export class MigrationController {
       ];
 
       // Use pre-defined statements array (already properly split)
-      const statements = sqlStatements.map(s => s.trim()).filter(s => s.length > 0);
+      const statements = sqlStatements.map((s) => s.trim()).filter((s) => s.length > 0);
 
       const results = [];
       let successCount = 0;
@@ -275,10 +290,10 @@ export class MigrationController {
           } catch (error: any) {
             const errorMessage = error.message || '';
             const errorCode = error.code || '';
-            
+
             this.logger.warn(`SQL Statement: ${statement.substring(0, 100)}...`);
             this.logger.warn(`Error: ${errorMessage.substring(0, 200)}`);
-            
+
             if (
               errorMessage.includes('already exists') ||
               errorMessage.includes('duplicate') ||
@@ -315,10 +330,14 @@ export class MigrationController {
         WHERE table_name = 'currency_exchange_rates';
       `;
 
-      const hasCurrencyPreference = (usersColumns as any[]).some((c: any) => c.column_name === 'currencyPreference');
+      const hasCurrencyPreference = (usersColumns as any[]).some(
+        (c: any) => c.column_name === 'currencyPreference',
+      );
       const hasCurrencyTable = (currencyTable as any[]).length > 0;
 
-      this.logger.log(`✅ Direct SQL migration completed: ${successCount} successful, ${errorCount} errors`);
+      this.logger.log(
+        `✅ Direct SQL migration completed: ${successCount} successful, ${errorCount} errors`,
+      );
 
       return {
         success: true,
@@ -346,7 +365,11 @@ export class MigrationController {
   }
 
   @Post('verify')
-  @ApiOperation({ summary: 'Verify migration', description: 'Verifies that migration was successful by checking for new columns and tables. Admin access required.' })
+  @ApiOperation({
+    summary: 'Verify migration',
+    description:
+      'Verifies that migration was successful by checking for new columns and tables. Admin access required.',
+  })
   @SwaggerApiResponse({ status: 200, description: 'Migration verification completed' })
   @SwaggerApiResponse({ status: 401, description: 'Unauthorized' })
   @SwaggerApiResponse({ status: 403, description: 'Forbidden - Admin access required' })
@@ -381,9 +404,7 @@ export class MigrationController {
         usersColumns: (usersColumns as any[]).map((c) => c.column_name),
         newTables: (newTables as any[]).map((t) => t.table_name),
         migrationsTableExists: hasMigrationsTable,
-        allColumnsPresent:
-          (usersColumns as any[]).length >= 3 &&
-          (newTables as any[]).length >= 2,
+        allColumnsPresent: (usersColumns as any[]).length >= 3 && (newTables as any[]).length >= 2,
       };
     } catch (error: any) {
       return {
@@ -393,4 +414,3 @@ export class MigrationController {
     }
   }
 }
-

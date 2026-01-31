@@ -1,9 +1,4 @@
-import {
-  Injectable,
-  NotFoundException,
-  BadRequestException,
-  Logger,
-} from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException, Logger } from '@nestjs/common';
 import { PrismaService } from '../database/prisma.service';
 import { CreateShippingMethodDto } from './dto/create-shipping-method.dto';
 import { CreateShippingRuleDto } from './dto/create-shipping-rule.dto';
@@ -71,14 +66,16 @@ export class ShippingService {
       },
       orderBy: { createdAt: 'desc' },
     });
-    
+
     // Convert Prisma Decimal types to numbers for ShippingRuleWithDetails
     return methods.map((method) => ({
       ...method,
       rules: (method.rules || []).map((rule: any) => ({
         ...rule,
         rate: Number(rule.rate),
-        freeShippingThreshold: rule.freeShippingThreshold ? Number(rule.freeShippingThreshold) : null,
+        freeShippingThreshold: rule.freeShippingThreshold
+          ? Number(rule.freeShippingThreshold)
+          : null,
         conditions: rule.conditions as ShippingRuleConditions,
       })) as ShippingRuleWithDetails[],
     })) as ShippingMethodWithRules[];
@@ -113,7 +110,9 @@ export class ShippingService {
       rules: (method.rules || []).map((rule: any) => ({
         ...rule,
         rate: Number(rule.rate),
-        freeShippingThreshold: rule.freeShippingThreshold ? Number(rule.freeShippingThreshold) : null,
+        freeShippingThreshold: rule.freeShippingThreshold
+          ? Number(rule.freeShippingThreshold)
+          : null,
         conditions: rule.conditions as ShippingRuleConditions,
       })) as ShippingRuleWithDetails[],
     } as ShippingMethodWithRules;
@@ -165,17 +164,14 @@ export class ShippingService {
       const rulesWithDetails: ShippingRuleWithDetails[] = (method.rules || []).map((rule: any) => ({
         ...rule,
         rate: Number(rule.rate),
-        freeShippingThreshold: rule.freeShippingThreshold ? Number(rule.freeShippingThreshold) : null,
+        freeShippingThreshold: rule.freeShippingThreshold
+          ? Number(rule.freeShippingThreshold)
+          : null,
         conditions: rule.conditions as ShippingRuleConditions,
       }));
-      
+
       // Find matching rule
-      const matchingRule = this.findMatchingRule(
-        rulesWithDetails,
-        cartValue,
-        weight,
-        destination,
-      );
+      const matchingRule = this.findMatchingRule(rulesWithDetails, cartValue, weight, destination);
 
       if (matchingRule) {
         let shippingRate = new Decimal(0);
@@ -188,12 +184,7 @@ export class ShippingService {
           shippingRate = new Decimal(0);
         } else {
           // Calculate rate based on method type
-          shippingRate = this.calculateRateByType(
-            method.type,
-            matchingRule,
-            cartValue,
-            weight,
-          );
+          shippingRate = this.calculateRateByType(method.type, matchingRule, cartValue, weight);
         }
 
         availableOptions.push({
@@ -237,16 +228,10 @@ export class ShippingService {
 
       // Check weight range
       if (conditions.weightRange) {
-        if (
-          conditions.weightRange.min !== undefined &&
-          weight < conditions.weightRange.min
-        ) {
+        if (conditions.weightRange.min !== undefined && weight < conditions.weightRange.min) {
           continue;
         }
-        if (
-          conditions.weightRange.max !== undefined &&
-          weight > conditions.weightRange.max
-        ) {
+        if (conditions.weightRange.max !== undefined && weight > conditions.weightRange.max) {
           continue;
         }
       }
@@ -273,20 +258,12 @@ export class ShippingService {
       }
 
       // Check state
-      if (
-        conditions.state &&
-        destination.state &&
-        conditions.state !== destination.state
-      ) {
+      if (conditions.state && destination.state && conditions.state !== destination.state) {
         continue;
       }
 
       // Check city
-      if (
-        conditions.city &&
-        destination.city &&
-        conditions.city !== destination.city
-      ) {
+      if (conditions.city && destination.city && conditions.city !== destination.city) {
         continue;
       }
 
@@ -368,12 +345,7 @@ export class ShippingService {
       }
     }
 
-    return this.calculateShippingRate(
-      totalWeight,
-      cartValue,
-      destination,
-      sellerId,
-    );
+    return this.calculateShippingRate(totalWeight, cartValue, destination, sellerId);
   }
 
   /**

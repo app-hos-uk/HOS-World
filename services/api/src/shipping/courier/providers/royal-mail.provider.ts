@@ -15,23 +15,23 @@ import {
 
 /**
  * Royal Mail API Integration
- * 
+ *
  * Implements Royal Mail Shipping API v3 and Tracking API
  * Documentation: https://developer.royalmail.net/
- * 
+ *
  * Required credentials:
  * - clientId: OAuth2 client ID
  * - clientSecret: OAuth2 client secret
  * - accountNumber: Royal Mail account number
  * - postingLocation (optional): Default posting location
- * 
+ *
  * NOTE: This class is NOT a NestJS provider. It is instantiated manually by
  * CourierFactoryService with credentials loaded from the IntegrationConfig table.
  */
 export class RoyalMailProvider extends BaseCourierProvider implements ICourierProvider {
   readonly providerId = 'royal_mail';
   readonly providerName = 'Royal Mail';
-  
+
   private readonly logger = new Logger(RoyalMailProvider.name);
   private accessToken: string | null = null;
   private tokenExpiry: Date | null = null;
@@ -39,19 +39,19 @@ export class RoyalMailProvider extends BaseCourierProvider implements ICourierPr
   // Royal Mail service codes
   private static readonly SERVICES = {
     // Domestic UK
-    'FIRST_CLASS': { name: 'Royal Mail 1st Class', days: 1 },
-    'SECOND_CLASS': { name: 'Royal Mail 2nd Class', days: 3 },
-    'SPECIAL_DELIVERY_9': { name: 'Special Delivery Guaranteed by 9am', days: 1 },
-    'SPECIAL_DELIVERY_1': { name: 'Special Delivery Guaranteed by 1pm', days: 1 },
-    'TRACKED_24': { name: 'Royal Mail Tracked 24', days: 1 },
-    'TRACKED_48': { name: 'Royal Mail Tracked 48', days: 2 },
-    'SIGNED_FOR_1ST': { name: 'Royal Mail Signed For 1st Class', days: 1 },
-    'SIGNED_FOR_2ND': { name: 'Royal Mail Signed For 2nd Class', days: 3 },
+    FIRST_CLASS: { name: 'Royal Mail 1st Class', days: 1 },
+    SECOND_CLASS: { name: 'Royal Mail 2nd Class', days: 3 },
+    SPECIAL_DELIVERY_9: { name: 'Special Delivery Guaranteed by 9am', days: 1 },
+    SPECIAL_DELIVERY_1: { name: 'Special Delivery Guaranteed by 1pm', days: 1 },
+    TRACKED_24: { name: 'Royal Mail Tracked 24', days: 1 },
+    TRACKED_48: { name: 'Royal Mail Tracked 48', days: 2 },
+    SIGNED_FOR_1ST: { name: 'Royal Mail Signed For 1st Class', days: 1 },
+    SIGNED_FOR_2ND: { name: 'Royal Mail Signed For 2nd Class', days: 3 },
     // International
-    'INTL_STANDARD': { name: 'International Standard', days: 7 },
-    'INTL_TRACKED': { name: 'International Tracked', days: 7 },
-    'INTL_SIGNED': { name: 'International Signed', days: 7 },
-    'INTL_TRACKED_SIGNED': { name: 'International Tracked & Signed', days: 7 },
+    INTL_STANDARD: { name: 'International Standard', days: 7 },
+    INTL_TRACKED: { name: 'International Tracked', days: 7 },
+    INTL_SIGNED: { name: 'International Signed', days: 7 },
+    INTL_TRACKED_SIGNED: { name: 'International Tracked & Signed', days: 7 },
   };
 
   constructor(credentials: Record<string, any>, isTestMode: boolean = true) {
@@ -68,7 +68,7 @@ export class RoyalMailProvider extends BaseCourierProvider implements ICourierPr
 
   protected getBaseUrl(): string {
     return this.isTestMode
-      ? 'https://api.royalmail.net/shipping/v3'  // Sandbox
+      ? 'https://api.royalmail.net/shipping/v3' // Sandbox
       : 'https://api.royalmail.net/shipping/v3'; // Production (same URL, different credentials)
   }
 
@@ -94,8 +94,8 @@ export class RoyalMailProvider extends BaseCourierProvider implements ICourierPr
         method: 'POST',
         headers: {
           'Content-Type': 'application/x-www-form-urlencoded',
-          'Authorization': `Basic ${Buffer.from(
-            `${this.credentials.clientId}:${this.credentials.clientSecret}`
+          Authorization: `Basic ${Buffer.from(
+            `${this.credentials.clientId}:${this.credentials.clientSecret}`,
           ).toString('base64')}`,
         },
         body: new URLSearchParams({
@@ -124,19 +124,15 @@ export class RoyalMailProvider extends BaseCourierProvider implements ICourierPr
   /**
    * Make authenticated API request
    */
-  private async apiRequest(
-    url: string,
-    method: string = 'GET',
-    body?: any,
-  ): Promise<any> {
+  private async apiRequest(url: string, method: string = 'GET', body?: any): Promise<any> {
     const token = await this.getAccessToken();
 
     const response = await fetch(url, {
       method,
       headers: {
-        'Authorization': `Bearer ${token}`,
+        Authorization: `Bearer ${token}`,
         'Content-Type': 'application/json',
-        'Accept': 'application/json',
+        Accept: 'application/json',
         'X-IBM-Client-Id': this.credentials.clientId,
         'X-IBM-Client-Secret': this.credentials.clientSecret,
       },
@@ -154,7 +150,7 @@ export class RoyalMailProvider extends BaseCourierProvider implements ICourierPr
 
   async testConnection(): Promise<TestConnectionResult> {
     const startTime = Date.now();
-    
+
     try {
       if (!this.isConfigured()) {
         return {
@@ -187,10 +183,10 @@ export class RoyalMailProvider extends BaseCourierProvider implements ICourierPr
   async getRates(request: RateRequest): Promise<RateResponse[]> {
     // Royal Mail doesn't have a rates API - rates are based on weight/size bands
     // We calculate rates based on Royal Mail's published pricing
-    
+
     const isDomestic = request.from.country === 'GB' && request.to.country === 'GB';
     const totalWeight = request.packages.reduce((sum, pkg) => sum + pkg.weight, 0);
-    
+
     const rates: RateResponse[] = [];
 
     if (isDomestic) {
@@ -219,8 +215,9 @@ export class RoyalMailProvider extends BaseCourierProvider implements ICourierPr
   }
 
   private calculateDomesticRate(serviceCode: string, weightKg: number): RateResponse {
-    const service = RoyalMailProvider.SERVICES[serviceCode as keyof typeof RoyalMailProvider.SERVICES];
-    
+    const service =
+      RoyalMailProvider.SERVICES[serviceCode as keyof typeof RoyalMailProvider.SERVICES];
+
     // Simplified rate calculation based on weight bands (actual rates vary)
     let rate = 0;
     if (weightKg <= 0.1) {
@@ -239,7 +236,7 @@ export class RoyalMailProvider extends BaseCourierProvider implements ICourierPr
 
     // Add tracking fee if applicable
     if (serviceCode.includes('TRACKED')) {
-      rate += 1.00;
+      rate += 1.0;
     }
 
     return {
@@ -260,12 +257,13 @@ export class RoyalMailProvider extends BaseCourierProvider implements ICourierPr
     weightKg: number,
     destCountry: string,
   ): RateResponse {
-    const service = RoyalMailProvider.SERVICES[serviceCode as keyof typeof RoyalMailProvider.SERVICES];
-    
+    const service =
+      RoyalMailProvider.SERVICES[serviceCode as keyof typeof RoyalMailProvider.SERVICES];
+
     // Zone-based international rates (simplified)
     const europeCountries = ['DE', 'FR', 'ES', 'IT', 'NL', 'BE', 'AT', 'IE', 'PT'];
     const isEurope = europeCountries.includes(destCountry);
-    
+
     let rate = 0;
     if (weightKg <= 0.1) {
       rate = isEurope ? 3.75 : 4.95;
@@ -304,20 +302,20 @@ export class RoyalMailProvider extends BaseCourierProvider implements ICourierPr
 
   async createShipment(request: ShipmentRequest): Promise<ShipmentResponse> {
     const payload = this.buildShipmentPayload(request);
-    
+
     try {
-      const response = await this.apiRequest(
-        `${this.getBaseUrl()}/shipments`,
-        'POST',
-        payload,
-      );
+      const response = await this.apiRequest(`${this.getBaseUrl()}/shipments`, 'POST', payload);
 
       // Parse label from response
-      const labels = response.labelData ? [{
-        format: 'PDF' as const,
-        data: response.labelData,
-        packageIndex: 0,
-      }] : [];
+      const labels = response.labelData
+        ? [
+            {
+              format: 'PDF' as const,
+              data: response.labelData,
+              packageIndex: 0,
+            },
+          ]
+        : [];
 
       return {
         providerId: this.providerId,
@@ -329,8 +327,12 @@ export class RoyalMailProvider extends BaseCourierProvider implements ICourierPr
         rate: response.totalCharge || 0,
         currency: 'GBP',
         serviceCode: request.serviceCode,
-        serviceName: RoyalMailProvider.SERVICES[request.serviceCode as keyof typeof RoyalMailProvider.SERVICES]?.name || request.serviceCode,
-        estimatedDeliveryDate: response.estimatedDelivery ? new Date(response.estimatedDelivery) : undefined,
+        serviceName:
+          RoyalMailProvider.SERVICES[request.serviceCode as keyof typeof RoyalMailProvider.SERVICES]
+            ?.name || request.serviceCode,
+        estimatedDeliveryDate: response.estimatedDelivery
+          ? new Date(response.estimatedDelivery)
+          : undefined,
       };
     } catch (error: any) {
       this.logger.error(`Royal Mail create shipment failed: ${error.message}`);
@@ -345,7 +347,7 @@ export class RoyalMailProvider extends BaseCourierProvider implements ICourierPr
   private validateAndGetPhone(phone: string | undefined, party: 'sender' | 'recipient'): string {
     if (!phone?.trim()) {
       throw new Error(
-        `Phone number is required for ${party}. Royal Mail requires valid contact phone numbers for all shipments.`
+        `Phone number is required for ${party}. Royal Mail requires valid contact phone numbers for all shipments.`,
       );
     }
 
@@ -353,7 +355,7 @@ export class RoyalMailProvider extends BaseCourierProvider implements ICourierPr
     const cleanPhone = phone.replace(/\s+/g, '');
     if (!/^\+?[\d\-()]+$/.test(cleanPhone)) {
       throw new Error(
-        `Invalid phone number format for ${party}: "${phone}". Please use a valid phone format (e.g., +44 20 1234 5678).`
+        `Invalid phone number format for ${party}: "${phone}". Please use a valid phone format (e.g., +44 20 1234 5678).`,
       );
     }
 
@@ -418,10 +420,14 @@ export class RoyalMailProvider extends BaseCourierProvider implements ICourierPr
       }));
 
       const latestEvent = events.length > 0 ? events[0] : undefined;
-      
+
       // Safely determine actual delivery date - only if we have a valid timestamp
       let actualDeliveryDate: Date | undefined;
-      if (response.signedForByName && latestEvent?.timestamp instanceof Date && !isNaN(latestEvent.timestamp.getTime())) {
+      if (
+        response.signedForByName &&
+        latestEvent?.timestamp instanceof Date &&
+        !isNaN(latestEvent.timestamp.getTime())
+      ) {
         actualDeliveryDate = latestEvent.timestamp;
       }
 
@@ -431,7 +437,9 @@ export class RoyalMailProvider extends BaseCourierProvider implements ICourierPr
         trackingNumber,
         status: latestEvent?.status ?? 'UNKNOWN',
         statusDescription: latestEvent?.statusDescription ?? 'No tracking information available',
-        estimatedDeliveryDate: response.estimatedDeliveryDate ? new Date(response.estimatedDeliveryDate) : undefined,
+        estimatedDeliveryDate: response.estimatedDeliveryDate
+          ? new Date(response.estimatedDeliveryDate)
+          : undefined,
         actualDeliveryDate,
         signedBy: response.signedForByName,
         events,
@@ -444,13 +452,13 @@ export class RoyalMailProvider extends BaseCourierProvider implements ICourierPr
 
   private mapTrackingStatus(eventCode: string): TrackingStatus {
     const statusMap: Record<string, TrackingStatus> = {
-      'EVNAC': 'PRE_TRANSIT',      // Accepted
-      'EVNPD': 'IN_TRANSIT',        // Processing at depot
-      'EVNDS': 'IN_TRANSIT',        // Dispatched
-      'EVNOD': 'OUT_FOR_DELIVERY',  // Out for delivery
-      'EVNDL': 'DELIVERED',         // Delivered
-      'EVNFA': 'FAILED_ATTEMPT',    // Failed attempt
-      'EVNRT': 'RETURN_TO_SENDER',  // Return to sender
+      EVNAC: 'PRE_TRANSIT', // Accepted
+      EVNPD: 'IN_TRANSIT', // Processing at depot
+      EVNDS: 'IN_TRANSIT', // Dispatched
+      EVNOD: 'OUT_FOR_DELIVERY', // Out for delivery
+      EVNDL: 'DELIVERED', // Delivered
+      EVNFA: 'FAILED_ATTEMPT', // Failed attempt
+      EVNRT: 'RETURN_TO_SENDER', // Return to sender
     };
 
     return statusMap[eventCode] || 'IN_TRANSIT';
@@ -458,10 +466,7 @@ export class RoyalMailProvider extends BaseCourierProvider implements ICourierPr
 
   async cancelShipment(shipmentId: string): Promise<{ success: boolean; message: string }> {
     try {
-      await this.apiRequest(
-        `${this.getBaseUrl()}/shipments/${shipmentId}`,
-        'DELETE',
-      );
+      await this.apiRequest(`${this.getBaseUrl()}/shipments/${shipmentId}`, 'DELETE');
 
       return {
         success: true,
@@ -478,7 +483,7 @@ export class RoyalMailProvider extends BaseCourierProvider implements ICourierPr
   async validateAddress(address: Address): Promise<AddressValidationResult> {
     // Royal Mail uses PAF (Postcode Address File) for UK address validation
     // For now, we do basic validation
-    
+
     if (address.country !== 'GB') {
       return {
         isValid: true, // Can't validate non-UK addresses
@@ -511,25 +516,52 @@ export class RoyalMailProvider extends BaseCourierProvider implements ICourierPr
     };
   }
 
-  async getAvailableServices(from: Address, to: Address): Promise<Array<{ code: string; name: string; description?: string }>> {
+  async getAvailableServices(
+    from: Address,
+    to: Address,
+  ): Promise<Array<{ code: string; name: string; description?: string }>> {
     const isDomestic = from.country === 'GB' && to.country === 'GB';
-    
+
     if (isDomestic) {
       return [
         { code: 'FIRST_CLASS', name: 'Royal Mail 1st Class', description: 'Next working day aim' },
         { code: 'SECOND_CLASS', name: 'Royal Mail 2nd Class', description: '2-3 working days' },
-        { code: 'TRACKED_24', name: 'Royal Mail Tracked 24', description: 'Next day with tracking' },
-        { code: 'TRACKED_48', name: 'Royal Mail Tracked 48', description: '2-3 days with tracking' },
-        { code: 'SPECIAL_DELIVERY_1', name: 'Special Delivery Guaranteed by 1pm', description: 'Guaranteed by 1pm next day' },
-        { code: 'SPECIAL_DELIVERY_9', name: 'Special Delivery Guaranteed by 9am', description: 'Guaranteed by 9am next day' },
+        {
+          code: 'TRACKED_24',
+          name: 'Royal Mail Tracked 24',
+          description: 'Next day with tracking',
+        },
+        {
+          code: 'TRACKED_48',
+          name: 'Royal Mail Tracked 48',
+          description: '2-3 days with tracking',
+        },
+        {
+          code: 'SPECIAL_DELIVERY_1',
+          name: 'Special Delivery Guaranteed by 1pm',
+          description: 'Guaranteed by 1pm next day',
+        },
+        {
+          code: 'SPECIAL_DELIVERY_9',
+          name: 'Special Delivery Guaranteed by 9am',
+          description: 'Guaranteed by 9am next day',
+        },
       ];
     }
 
     return [
-      { code: 'INTL_STANDARD', name: 'International Standard', description: 'Economy international' },
+      {
+        code: 'INTL_STANDARD',
+        name: 'International Standard',
+        description: 'Economy international',
+      },
       { code: 'INTL_TRACKED', name: 'International Tracked', description: 'Tracked international' },
       { code: 'INTL_SIGNED', name: 'International Signed', description: 'Signature on delivery' },
-      { code: 'INTL_TRACKED_SIGNED', name: 'International Tracked & Signed', description: 'Full tracking and signature' },
+      {
+        code: 'INTL_TRACKED_SIGNED',
+        name: 'International Tracked & Signed',
+        description: 'Full tracking and signature',
+      },
     ];
   }
 }

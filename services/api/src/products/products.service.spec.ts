@@ -92,9 +92,7 @@ describe('ProductsService - Phase 1 Tests', () => {
     it('should throw NotFoundException if seller not found', async () => {
       mockPrismaService.seller.findUnique.mockResolvedValue(null);
 
-      await expect(service.create(sellerId, createProductDto)).rejects.toThrow(
-        NotFoundException,
-      );
+      await expect(service.create(sellerId, createProductDto)).rejects.toThrow(NotFoundException);
     });
   });
 
@@ -135,9 +133,7 @@ describe('ProductsService - Phase 1 Tests', () => {
     it('should throw NotFoundException if product not found', async () => {
       mockPrismaService.product.findUnique.mockResolvedValue(null);
 
-      await expect(service.findOne(productId)).rejects.toThrow(
-        NotFoundException,
-      );
+      await expect(service.findOne(productId)).rejects.toThrow(NotFoundException);
     });
   });
 
@@ -173,7 +169,10 @@ describe('ProductsService - Phase 1 Tests', () => {
       };
 
       mockPrismaService.product.findUnique.mockResolvedValue(mockProduct);
-      mockPrismaService.seller.findUnique.mockResolvedValue({ id: 'seller-db-id', userId: sellerId });
+      mockPrismaService.seller.findUnique.mockResolvedValue({
+        id: 'seller-db-id',
+        userId: sellerId,
+      });
       mockPrismaService.product.update.mockResolvedValue(updatedProduct);
 
       const result = await service.update(sellerId, productId, updateDto);
@@ -204,7 +203,10 @@ describe('ProductsService - Phase 1 Tests', () => {
       };
 
       mockPrismaService.product.findUnique.mockResolvedValue(mockProduct);
-      mockPrismaService.seller.findUnique.mockResolvedValue({ id: 'seller-db-id', userId: sellerId });
+      mockPrismaService.seller.findUnique.mockResolvedValue({
+        id: 'seller-db-id',
+        userId: sellerId,
+      });
 
       await expect(service.update(sellerId, productId, updateDto)).rejects.toThrow(
         ForbiddenException,
@@ -226,7 +228,10 @@ describe('ProductsService - Phase 1 Tests', () => {
       };
 
       mockPrismaService.product.findUnique.mockResolvedValue(mockProduct);
-      mockPrismaService.seller.findUnique.mockResolvedValue({ id: 'seller-db-id', userId: sellerId });
+      mockPrismaService.seller.findUnique.mockResolvedValue({
+        id: 'seller-db-id',
+        userId: sellerId,
+      });
       mockPrismaService.product.delete.mockResolvedValue(mockProduct);
 
       await service.delete(sellerId, productId);
@@ -239,11 +244,7 @@ describe('ProductsService - Phase 1 Tests', () => {
     it('should throw NotFoundException if product not found', async () => {
       mockPrismaService.product.findUnique.mockResolvedValue(null);
 
-      await expect(service.delete(sellerId, productId)).rejects.toThrow(
-        NotFoundException,
-      );
+      await expect(service.delete(sellerId, productId)).rejects.toThrow(NotFoundException);
     });
   });
 });
-
-

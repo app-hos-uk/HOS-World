@@ -29,7 +29,11 @@ export class AppController {
 
   @Public()
   @Get('health/live')
-  @ApiOperation({ summary: 'Liveness probe', description: 'Minimal check that the process is alive. Use for Kubernetes/orchestrator restarts.' })
+  @ApiOperation({
+    summary: 'Liveness probe',
+    description:
+      'Minimal check that the process is alive. Use for Kubernetes/orchestrator restarts.',
+  })
   @SwaggerApiResponse({ status: 200, description: 'Process is alive' })
   liveness() {
     return { status: 'ok', timestamp: new Date().toISOString() };
@@ -37,7 +41,10 @@ export class AppController {
 
   @Public()
   @Get('health/ready')
-  @ApiOperation({ summary: 'Readiness probe', description: 'Checks DB, Redis (and optionally ES). Use for load balancer / traffic routing.' })
+  @ApiOperation({
+    summary: 'Readiness probe',
+    description: 'Checks DB, Redis (and optionally ES). Use for load balancer / traffic routing.',
+  })
   @SwaggerApiResponse({ status: 200, description: 'Service is ready to accept traffic' })
   @SwaggerApiResponse({ status: 503, description: 'Service not ready' })
   async readiness(@Res({ passthrough: true }) res: Response) {
@@ -49,7 +56,10 @@ export class AppController {
 
   @Public()
   @Get('health')
-  @ApiOperation({ summary: 'Health check endpoint', description: 'Returns the health status of the API and all dependencies' })
+  @ApiOperation({
+    summary: 'Health check endpoint',
+    description: 'Returns the health status of the API and all dependencies',
+  })
   @SwaggerApiResponse({
     status: 200,
     description: 'Health check completed',
@@ -139,5 +149,3 @@ export class AppController {
     };
   }
 }
-
-

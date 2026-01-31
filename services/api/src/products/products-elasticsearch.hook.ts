@@ -19,10 +19,10 @@ export class ProductsElasticsearchHook {
   async onProductCreated(product: any): Promise<void> {
     // Index in Elasticsearch
     await this.searchService.indexProduct(product);
-    
+
     // Cache product
     await this.cacheService.setProduct(product.id, product);
-    
+
     // Invalidate product list caches
     await this.cacheService.delPattern('products:*');
   }
@@ -33,10 +33,10 @@ export class ProductsElasticsearchHook {
   async onProductUpdated(product: any): Promise<void> {
     // Update in Elasticsearch
     await this.searchService.updateProduct(product);
-    
+
     // Update cache
     await this.cacheService.setProduct(product.id, product);
-    
+
     // Invalidate product list caches
     await this.cacheService.delPattern('products:*');
   }
@@ -47,9 +47,8 @@ export class ProductsElasticsearchHook {
   async onProductDeleted(productId: string): Promise<void> {
     // Delete from Elasticsearch
     await this.searchService.deleteProduct(productId);
-    
+
     // Delete from cache
     await this.cacheService.invalidateProduct(productId);
   }
 }
-

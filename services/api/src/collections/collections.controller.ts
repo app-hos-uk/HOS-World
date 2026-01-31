@@ -34,9 +34,15 @@ export class CollectionsController {
   @Get()
   @ApiOperation({
     summary: 'Get user collections',
-    description: 'Retrieves all collections for the authenticated user. Optionally includes public collections.',
+    description:
+      'Retrieves all collections for the authenticated user. Optionally includes public collections.',
   })
-  @ApiQuery({ name: 'includePublic', required: false, type: Boolean, description: 'Include public collections from other users' })
+  @ApiQuery({
+    name: 'includePublic',
+    required: false,
+    type: Boolean,
+    description: 'Include public collections from other users',
+  })
   @SwaggerApiResponse({ status: 200, description: 'Collections retrieved successfully' })
   @SwaggerApiResponse({ status: 401, description: 'Unauthorized' })
   async findAll(
@@ -56,7 +62,8 @@ export class CollectionsController {
   @Get(':id')
   @ApiOperation({
     summary: 'Get collection by ID',
-    description: 'Retrieves a specific collection. Can access own collections or public collections.',
+    description:
+      'Retrieves a specific collection. Can access own collections or public collections.',
   })
   @ApiParam({ name: 'id', description: 'Collection ID', type: String })
   @SwaggerApiResponse({ status: 200, description: 'Collection retrieved successfully' })
@@ -165,7 +172,10 @@ export class CollectionsController {
   @ApiParam({ name: 'productId', description: 'Product ID', type: String })
   @SwaggerApiResponse({ status: 200, description: 'Product added to collection successfully' })
   @SwaggerApiResponse({ status: 401, description: 'Unauthorized' })
-  @SwaggerApiResponse({ status: 403, description: 'Forbidden - Not the owner or product already in collection' })
+  @SwaggerApiResponse({
+    status: 403,
+    description: 'Forbidden - Not the owner or product already in collection',
+  })
   @SwaggerApiResponse({ status: 404, description: 'Collection or product not found' })
   async addProduct(
     @Request() req: any,

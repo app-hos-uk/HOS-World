@@ -33,7 +33,10 @@ export class WhatsAppController {
   @Roles('ADMIN')
   @Post('send')
   @ApiBearerAuth('JWT-auth')
-  @ApiOperation({ summary: 'Send WhatsApp message (Admin only)', description: 'Sends a WhatsApp message to a phone number. Admin access required.' })
+  @ApiOperation({
+    summary: 'Send WhatsApp message (Admin only)',
+    description: 'Sends a WhatsApp message to a phone number. Admin access required.',
+  })
   @ApiBody({
     schema: {
       type: 'object',
@@ -71,7 +74,10 @@ export class WhatsAppController {
 
   @Public()
   @Post('webhook')
-  @ApiOperation({ summary: 'Handle WhatsApp webhook', description: 'Receives webhook events from WhatsApp API' })
+  @ApiOperation({
+    summary: 'Handle WhatsApp webhook',
+    description: 'Receives webhook events from WhatsApp API',
+  })
   @ApiBody({ description: 'Webhook payload from WhatsApp' })
   @SwaggerApiResponse({ status: 200, description: 'Webhook processed successfully' })
   async handleWebhook(@Body() body: any): Promise<ApiResponse<any>> {
@@ -86,11 +92,19 @@ export class WhatsAppController {
   @Roles('ADMIN')
   @Get('conversations')
   @ApiBearerAuth('JWT-auth')
-  @ApiOperation({ summary: 'Get conversations (Admin only)', description: 'Retrieves WhatsApp conversations with filtering options. Admin access required.' })
+  @ApiOperation({
+    summary: 'Get conversations (Admin only)',
+    description: 'Retrieves WhatsApp conversations with filtering options. Admin access required.',
+  })
   @ApiQuery({ name: 'userId', required: false, type: String, description: 'Filter by user ID' })
   @ApiQuery({ name: 'sellerId', required: false, type: String, description: 'Filter by seller ID' })
   @ApiQuery({ name: 'ticketId', required: false, type: String, description: 'Filter by ticket ID' })
-  @ApiQuery({ name: 'status', required: false, type: String, description: 'Filter by conversation status' })
+  @ApiQuery({
+    name: 'status',
+    required: false,
+    type: String,
+    description: 'Filter by conversation status',
+  })
   @ApiQuery({ name: 'page', required: false, type: String, description: 'Page number' })
   @ApiQuery({ name: 'limit', required: false, type: String, description: 'Items per page' })
   @SwaggerApiResponse({ status: 200, description: 'Conversations retrieved successfully' })
@@ -122,7 +136,10 @@ export class WhatsAppController {
   @Roles('ADMIN')
   @Get('conversations/:id/messages')
   @ApiBearerAuth('JWT-auth')
-  @ApiOperation({ summary: 'Get conversation messages (Admin only)', description: 'Retrieves messages for a specific conversation. Admin access required.' })
+  @ApiOperation({
+    summary: 'Get conversation messages (Admin only)',
+    description: 'Retrieves messages for a specific conversation. Admin access required.',
+  })
   @ApiParam({ name: 'id', description: 'Conversation UUID', type: String })
   @ApiQuery({ name: 'page', required: false, type: String, description: 'Page number' })
   @ApiQuery({ name: 'limit', required: false, type: String, description: 'Items per page' })
@@ -149,7 +166,10 @@ export class WhatsAppController {
   @Roles('ADMIN')
   @Post('templates')
   @ApiBearerAuth('JWT-auth')
-  @ApiOperation({ summary: 'Create WhatsApp template (Admin only)', description: 'Creates a new WhatsApp message template. Admin access required.' })
+  @ApiOperation({
+    summary: 'Create WhatsApp template (Admin only)',
+    description: 'Creates a new WhatsApp message template. Admin access required.',
+  })
   @ApiBody({
     schema: {
       type: 'object',
@@ -158,7 +178,11 @@ export class WhatsAppController {
         name: { type: 'string', description: 'Template name' },
         category: { type: 'string', description: 'Template category' },
         content: { type: 'string', description: 'Template content' },
-        variables: { type: 'array', items: { type: 'string' }, description: 'Optional variable names' },
+        variables: {
+          type: 'array',
+          items: { type: 'string' },
+          description: 'Optional variable names',
+        },
         approvedBy: { type: 'string', description: 'Approver name (optional)' },
       },
     },
@@ -188,9 +212,17 @@ export class WhatsAppController {
   @Roles('ADMIN')
   @Get('templates')
   @ApiBearerAuth('JWT-auth')
-  @ApiOperation({ summary: 'Get WhatsApp templates (Admin only)', description: 'Retrieves WhatsApp message templates. Admin access required.' })
+  @ApiOperation({
+    summary: 'Get WhatsApp templates (Admin only)',
+    description: 'Retrieves WhatsApp message templates. Admin access required.',
+  })
   @ApiQuery({ name: 'category', required: false, type: String, description: 'Filter by category' })
-  @ApiQuery({ name: 'isActive', required: false, type: String, description: 'Filter by active status (true/false)' })
+  @ApiQuery({
+    name: 'isActive',
+    required: false,
+    type: String,
+    description: 'Filter by active status (true/false)',
+  })
   @SwaggerApiResponse({ status: 200, description: 'Templates retrieved successfully' })
   @SwaggerApiResponse({ status: 401, description: 'Unauthorized' })
   @SwaggerApiResponse({ status: 403, description: 'Forbidden - Admin access required' })
@@ -212,7 +244,10 @@ export class WhatsAppController {
   @Roles('ADMIN')
   @Post('send-template')
   @ApiBearerAuth('JWT-auth')
-  @ApiOperation({ summary: 'Send template message (Admin only)', description: 'Sends a WhatsApp message using a template. Admin access required.' })
+  @ApiOperation({
+    summary: 'Send template message (Admin only)',
+    description: 'Sends a WhatsApp message using a template. Admin access required.',
+  })
   @ApiBody({
     schema: {
       type: 'object',
@@ -220,7 +255,11 @@ export class WhatsAppController {
       properties: {
         to: { type: 'string', description: 'Phone number (E.164 format)' },
         templateName: { type: 'string', description: 'Template name' },
-        variables: { type: 'object', additionalProperties: { type: 'string' }, description: 'Template variables' },
+        variables: {
+          type: 'object',
+          additionalProperties: { type: 'string' },
+          description: 'Template variables',
+        },
       },
     },
   })
@@ -243,4 +282,3 @@ export class WhatsAppController {
     };
   }
 }
-

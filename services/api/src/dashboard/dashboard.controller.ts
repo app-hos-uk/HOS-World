@@ -1,10 +1,4 @@
-import {
-  Controller,
-  Get,
-  Query,
-  UseGuards,
-  Request,
-  } from '@nestjs/common';
+import { Controller, Get, Query, UseGuards, Request } from '@nestjs/common';
 import {
   ApiTags,
   ApiOperation,
@@ -29,10 +23,21 @@ export class DashboardController {
   @Roles('SELLER', 'B2C_SELLER', 'WHOLESALER', 'ADMIN')
   @ApiOperation({
     summary: 'Get dashboard statistics',
-    description: 'Retrieves dashboard statistics based on user role. Supports date range filtering.',
+    description:
+      'Retrieves dashboard statistics based on user role. Supports date range filtering.',
   })
-  @ApiQuery({ name: 'startDate', required: false, type: String, description: 'Start date (ISO format)' })
-  @ApiQuery({ name: 'endDate', required: false, type: String, description: 'End date (ISO format)' })
+  @ApiQuery({
+    name: 'startDate',
+    required: false,
+    type: String,
+    description: 'Start date (ISO format)',
+  })
+  @ApiQuery({
+    name: 'endDate',
+    required: false,
+    type: String,
+    description: 'End date (ISO format)',
+  })
   @SwaggerApiResponse({ status: 200, description: 'Dashboard statistics retrieved successfully' })
   @SwaggerApiResponse({ status: 401, description: 'Unauthorized' })
   @SwaggerApiResponse({ status: 403, description: 'Forbidden - Insufficient permissions' })
@@ -79,7 +84,8 @@ export class DashboardController {
   @Roles('PROCUREMENT', 'ADMIN')
   @ApiOperation({
     summary: 'Get procurement dashboard (Procurement/Admin only)',
-    description: 'Retrieves procurement dashboard statistics. Procurement or Admin access required.',
+    description:
+      'Retrieves procurement dashboard statistics. Procurement or Admin access required.',
   })
   @SwaggerApiResponse({ status: 200, description: 'Procurement dashboard retrieved successfully' })
   @SwaggerApiResponse({ status: 401, description: 'Unauthorized' })
@@ -96,7 +102,8 @@ export class DashboardController {
   @Roles('FULFILLMENT', 'ADMIN')
   @ApiOperation({
     summary: 'Get fulfillment dashboard (Fulfillment/Admin only)',
-    description: 'Retrieves fulfillment dashboard statistics. Fulfillment or Admin access required.',
+    description:
+      'Retrieves fulfillment dashboard statistics. Fulfillment or Admin access required.',
   })
   @SwaggerApiResponse({ status: 200, description: 'Fulfillment dashboard retrieved successfully' })
   @SwaggerApiResponse({ status: 401, description: 'Unauthorized' })
@@ -177,5 +184,3 @@ export class DashboardController {
     };
   }
 }
-
-

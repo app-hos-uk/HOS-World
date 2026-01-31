@@ -18,7 +18,11 @@ interface DashboardStats {
 export class DashboardService {
   constructor(private prisma: PrismaService) {}
 
-  async getSellerDashboard(sellerId: string, startDate?: Date, endDate?: Date): Promise<DashboardStats> {
+  async getSellerDashboard(
+    sellerId: string,
+    startDate?: Date,
+    endDate?: Date,
+  ): Promise<DashboardStats> {
     const seller = await this.prisma.seller.findUnique({
       where: { userId: sellerId },
     });
@@ -65,15 +69,13 @@ export class DashboardService {
     const topProducts = this.calculateTopProducts(orders);
 
     // Recent orders (last 10)
-    const recentOrders = orders
-      .slice(0, 10)
-      .map((order) => ({
-        id: order.id,
-        orderNumber: order.orderNumber,
-        total: Number(order.total),
-        status: order.status,
-        createdAt: order.createdAt,
-      }));
+    const recentOrders = orders.slice(0, 10).map((order) => ({
+      id: order.id,
+      orderNumber: order.orderNumber,
+      total: Number(order.total),
+      status: order.status,
+      createdAt: order.createdAt,
+    }));
 
     const submissions = await this.prisma.productSubmission.findMany({
       where: { sellerId: seller.id },
@@ -197,12 +199,15 @@ export class DashboardService {
 
     // Calculate bulk order statistics
     const totalUnitsSold = orders.reduce((sum, order) => {
-      return sum + order.items.reduce((itemSum, item) => {
-        if (item.product.sellerId === seller.id) {
-          return itemSum + item.quantity;
-        }
-        return itemSum;
-      }, 0);
+      return (
+        sum +
+        order.items.reduce((itemSum, item) => {
+          if (item.product.sellerId === seller.id) {
+            return itemSum + item.quantity;
+          }
+          return itemSum;
+        }, 0)
+      );
     }, 0);
 
     const averageOrderQuantity = totalOrders > 0 ? totalUnitsSold / totalOrders : 0;
@@ -357,10 +362,11 @@ export class DashboardService {
     });
 
     const pendingVerification = shipments.filter((s) => s.status === 'PENDING').length;
-    const verifiedToday = shipments.filter((s) => 
-      s.status === 'VERIFIED' && 
-      s.receivedAt && 
-      new Date(s.receivedAt).toDateString() === new Date().toDateString()
+    const verifiedToday = shipments.filter(
+      (s) =>
+        s.status === 'VERIFIED' &&
+        s.receivedAt &&
+        new Date(s.receivedAt).toDateString() === new Date().toDateString(),
     ).length;
     const rejectedCount = shipments.filter((s) => s.status === 'REJECTED').length;
 
@@ -583,7 +589,7 @@ export class DashboardService {
         },
       },
     });
-    
+
     // Calculate pending payouts from Settlement records with PENDING or PROCESSING status
     const payoutsPendingResult = await this.prisma.settlement.aggregate({
       _sum: {
@@ -659,5 +665,3 @@ export class DashboardService {
     };
   }
 }
-
-

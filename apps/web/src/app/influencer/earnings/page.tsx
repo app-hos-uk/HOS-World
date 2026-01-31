@@ -32,6 +32,7 @@ export default function InfluencerEarningsPage() {
 
   useEffect(() => {
     fetchData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [statusFilter]);
 
   const fetchData = async () => {

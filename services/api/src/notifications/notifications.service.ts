@@ -81,7 +81,7 @@ export class NotificationsService {
   ): Promise<void> {
     const sellerTypeName = data.sellerType === 'WHOLESALER' ? 'Wholesaler' : 'B2C Seller';
     const subject = `You've been invited to join House of Spells as a ${sellerTypeName}`;
-    
+
     const html = `
       <!DOCTYPE html>
       <html>
@@ -217,14 +217,18 @@ export class NotificationsService {
   }
 
   private generateOrderConfirmationEmail(order: any): string {
-    const itemsHtml = order.items.map((item: any) => `
+    const itemsHtml = order.items
+      .map(
+        (item: any) => `
       <tr>
         <td>${item.product.name}</td>
         <td>${item.quantity}</td>
         <td>£${item.price.toFixed(2)}</td>
         <td>£${(item.price * item.quantity).toFixed(2)}</td>
       </tr>
-    `).join('');
+    `,
+      )
+      .join('');
 
     return `
       <!DOCTYPE html>
@@ -389,7 +393,10 @@ export class NotificationsService {
 
       // Send emails
       for (const user of users) {
-        await this.sendEmail(user.email, subject, `
+        await this.sendEmail(
+          user.email,
+          subject,
+          `
           <!DOCTYPE html>
           <html>
           <head>
@@ -415,7 +422,8 @@ export class NotificationsService {
             </div>
           </body>
           </html>
-        `);
+        `,
+        );
       }
 
       this.logger.log(`✅ Sent ${notifications.length} notifications to ${role} team`);
@@ -458,7 +466,10 @@ export class NotificationsService {
         },
       });
 
-      await this.sendEmail(user.email, subject, `
+      await this.sendEmail(
+        user.email,
+        subject,
+        `
         <!DOCTYPE html>
         <html>
         <head>
@@ -484,7 +495,8 @@ export class NotificationsService {
           </div>
         </body>
         </html>
-      `);
+      `,
+      );
 
       this.logger.log(`✅ Sent notification to user ${userId}`);
     } catch (error: any) {
@@ -492,5 +504,3 @@ export class NotificationsService {
     }
   }
 }
-
-

@@ -1,8 +1,4 @@
-import {
-  Injectable,
-  NotFoundException,
-  BadRequestException,
-} from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../database/prisma.service';
 import { NotificationsService } from '../notifications/notifications.service';
 import { CreateMaterialDto, UpdateMaterialDto } from './dto/create-material.dto';
@@ -244,11 +240,7 @@ export class MarketingService {
   }
 
   async getDashboardStats() {
-    const [
-      pending,
-      completed,
-      totalMaterials,
-    ] = await Promise.all([
+    const [pending, completed, totalMaterials] = await Promise.all([
       this.prisma.productSubmission.count({
         where: {
           status: 'CATALOG_COMPLETED',
@@ -269,4 +261,3 @@ export class MarketingService {
     };
   }
 }
-

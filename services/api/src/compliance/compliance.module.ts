@@ -8,4 +8,3 @@ import { ComplianceController } from './compliance.controller';
   exports: [ComplianceService],
 })
 export class ComplianceModule {}
-

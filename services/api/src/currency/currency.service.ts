@@ -61,7 +61,7 @@ export class CurrencyService {
     // Fetch from API
     try {
       const rate = await this.fetchRateFromAPI(targetCurrency);
-      
+
       // Update database
       const expiresAt = new Date(Date.now() + this.cacheDuration * 1000);
       await this.prisma.currencyExchangeRate.upsert({
@@ -130,11 +130,7 @@ export class CurrencyService {
   /**
    * Convert amount between any two currencies
    */
-  async convertBetween(
-    amount: number,
-    fromCurrency: string,
-    toCurrency: string,
-  ): Promise<number> {
+  async convertBetween(amount: number, fromCurrency: string, toCurrency: string): Promise<number> {
     if (fromCurrency === toCurrency) {
       return amount;
     }
@@ -228,4 +224,3 @@ export class CurrencyService {
     this.logger.log('Exchange rates updated');
   }
 }
-

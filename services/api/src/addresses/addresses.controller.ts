@@ -145,7 +145,10 @@ export class AddressesController {
   @ApiParam({ name: 'id', description: 'Address UUID', type: String })
   @SwaggerApiResponse({ status: 200, description: 'Default address updated successfully' })
   @SwaggerApiResponse({ status: 401, description: 'Unauthorized' })
-  @SwaggerApiResponse({ status: 403, description: 'Forbidden - Cannot set this address as default' })
+  @SwaggerApiResponse({
+    status: 403,
+    description: 'Forbidden - Cannot set this address as default',
+  })
   @SwaggerApiResponse({ status: 404, description: 'Address not found' })
   async setDefault(
     @Request() req: any,
@@ -158,5 +161,3 @@ export class AddressesController {
     };
   }
 }
-
-

@@ -10,7 +10,7 @@ import {
   ParseUUIDPipe,
   HttpCode,
   HttpStatus,
-  } from '@nestjs/common';
+} from '@nestjs/common';
 import {
   ApiTags,
   ApiOperation,
@@ -37,7 +37,10 @@ export class OrdersController {
 
   @Post()
   @HttpCode(HttpStatus.CREATED)
-  @ApiOperation({ summary: 'Create a new order', description: 'Creates a new order from the user\'s cart' })
+  @ApiOperation({
+    summary: 'Create a new order',
+    description: "Creates a new order from the user's cart",
+  })
   @ApiBody({ type: CreateOrderDto })
   @SwaggerApiResponse({ status: 201, description: 'Order created successfully' })
   @SwaggerApiResponse({ status: 400, description: 'Invalid request data' })
@@ -54,7 +57,11 @@ export class OrdersController {
   }
 
   @Get()
-  @ApiOperation({ summary: 'Get all orders', description: 'Retrieves all orders for the authenticated user. Returns different orders based on user role (customer sees their orders, seller sees their orders, admin sees all orders)' })
+  @ApiOperation({
+    summary: 'Get all orders',
+    description:
+      'Retrieves all orders for the authenticated user. Returns different orders based on user role (customer sees their orders, seller sees their orders, admin sees all orders)',
+  })
   @SwaggerApiResponse({ status: 200, description: 'Orders retrieved successfully' })
   @SwaggerApiResponse({ status: 401, description: 'Unauthorized' })
   async findAll(@Request() req: any): Promise<ApiResponse<Order[]>> {
@@ -66,7 +73,11 @@ export class OrdersController {
   }
 
   @Get(':id')
-  @ApiOperation({ summary: 'Get order by ID', description: 'Retrieves a specific order by ID. Users can only access their own orders unless they are admin or seller' })
+  @ApiOperation({
+    summary: 'Get order by ID',
+    description:
+      'Retrieves a specific order by ID. Users can only access their own orders unless they are admin or seller',
+  })
   @ApiParam({ name: 'id', description: 'Order UUID', type: String })
   @SwaggerApiResponse({ status: 200, description: 'Order retrieved successfully' })
   @SwaggerApiResponse({ status: 401, description: 'Unauthorized' })
@@ -86,7 +97,10 @@ export class OrdersController {
   @Put(':id')
   @UseGuards(RolesGuard)
   @Roles('SELLER', 'ADMIN')
-  @ApiOperation({ summary: 'Update order', description: 'Updates an order. Only sellers and admins can update orders' })
+  @ApiOperation({
+    summary: 'Update order',
+    description: 'Updates an order. Only sellers and admins can update orders',
+  })
   @ApiParam({ name: 'id', description: 'Order UUID', type: String })
   @ApiBody({ type: UpdateOrderDto })
   @SwaggerApiResponse({ status: 200, description: 'Order updated successfully' })
@@ -107,7 +121,10 @@ export class OrdersController {
 
   @Post(':id/notes')
   @HttpCode(HttpStatus.CREATED)
-  @ApiOperation({ summary: 'Add note to order', description: 'Adds a note to an order. Notes can be added by customers, sellers, or admins' })
+  @ApiOperation({
+    summary: 'Add note to order',
+    description: 'Adds a note to an order. Notes can be added by customers, sellers, or admins',
+  })
   @ApiParam({ name: 'id', description: 'Order UUID', type: String })
   @ApiBody({ type: AddOrderNoteDto })
   @SwaggerApiResponse({ status: 201, description: 'Note added successfully' })
@@ -127,7 +144,11 @@ export class OrdersController {
 
   @Post(':id/cancel')
   @HttpCode(HttpStatus.OK)
-  @ApiOperation({ summary: 'Cancel order', description: 'Cancels an order. Customers can only cancel orders that are PENDING or CONFIRMED. Stock is restored on cancellation.' })
+  @ApiOperation({
+    summary: 'Cancel order',
+    description:
+      'Cancels an order. Customers can only cancel orders that are PENDING or CONFIRMED. Stock is restored on cancellation.',
+  })
   @ApiParam({ name: 'id', description: 'Order UUID', type: String })
   @SwaggerApiResponse({ status: 200, description: 'Order cancelled successfully' })
   @SwaggerApiResponse({ status: 400, description: 'Order cannot be cancelled in current status' })
@@ -147,7 +168,11 @@ export class OrdersController {
 
   @Post(':id/reorder')
   @HttpCode(HttpStatus.CREATED)
-  @ApiOperation({ summary: 'Reorder items', description: 'Adds all items from a previous order back to the cart. Only available for completed or delivered orders.' })
+  @ApiOperation({
+    summary: 'Reorder items',
+    description:
+      'Adds all items from a previous order back to the cart. Only available for completed or delivered orders.',
+  })
   @ApiParam({ name: 'id', description: 'Order UUID', type: String })
   @SwaggerApiResponse({ status: 201, description: 'Items added to cart successfully' })
   @SwaggerApiResponse({ status: 400, description: 'Order not eligible for reorder' })
@@ -167,7 +192,8 @@ export class OrdersController {
     if (result.itemsUpdated > 0) {
       parts.push(`${result.itemsUpdated} existing item(s) updated`);
     }
-    const message = parts.length > 0 ? parts.join(', ') + ' in cart' : 'No items were added to cart';
+    const message =
+      parts.length > 0 ? parts.join(', ') + ' in cart' : 'No items were added to cart';
     return {
       data: result,
       message,

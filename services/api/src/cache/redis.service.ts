@@ -12,7 +12,7 @@ export class RedisService implements OnModuleInit, OnModuleDestroy {
 
   async onModuleInit() {
     const redisUrl = this.configService.get('REDIS_URL') || 'redis://localhost:6379';
-    
+
     // Don't block startup - connect in background
     // Return immediately so NestJS doesn't wait
     (async () => {
@@ -46,12 +46,18 @@ export class RedisService implements OnModuleInit, OnModuleDestroy {
 
         await this.client.connect();
       } catch (error: any) {
-        this.logger.warn(`Redis connection failed, using fallback: ${error?.message || 'Unknown error'}`, 'RedisService');
+        this.logger.warn(
+          `Redis connection failed, using fallback: ${error?.message || 'Unknown error'}`,
+          'RedisService',
+        );
         this.logger.debug(error?.stack, 'RedisService');
         this.isConnected = false;
       }
     })().catch((error: any) => {
-      this.logger.error(`Redis initialization error: ${error?.message || 'Unknown error'}`, 'RedisService');
+      this.logger.error(
+        `Redis initialization error: ${error?.message || 'Unknown error'}`,
+        'RedisService',
+      );
       this.logger.debug(error?.stack, 'RedisService');
       this.isConnected = false;
     });
@@ -84,7 +90,7 @@ export class RedisService implements OnModuleInit, OnModuleDestroy {
    */
   async set(key: string, value: string, ttl?: number): Promise<void> {
     if (!this.isConnected) return;
-    
+
     try {
       if (ttl) {
         await this.client.setEx(key, ttl, value);
@@ -101,7 +107,7 @@ export class RedisService implements OnModuleInit, OnModuleDestroy {
    */
   async get(key: string): Promise<string | null> {
     if (!this.isConnected) return null;
-    
+
     try {
       return await this.client.get(key);
     } catch (error) {
@@ -115,7 +121,7 @@ export class RedisService implements OnModuleInit, OnModuleDestroy {
    */
   async del(key: string): Promise<void> {
     if (!this.isConnected) return;
-    
+
     try {
       await this.client.del(key);
     } catch (error) {
@@ -128,7 +134,7 @@ export class RedisService implements OnModuleInit, OnModuleDestroy {
    */
   async delPattern(pattern: string): Promise<void> {
     if (!this.isConnected) return;
-    
+
     try {
       const keys = await this.client.keys(pattern);
       if (keys.length > 0) {
@@ -144,7 +150,7 @@ export class RedisService implements OnModuleInit, OnModuleDestroy {
    */
   async hSet(key: string, field: string, value: string): Promise<void> {
     if (!this.isConnected) return;
-    
+
     try {
       await this.client.hSet(key, field, value);
     } catch (error) {
@@ -157,7 +163,7 @@ export class RedisService implements OnModuleInit, OnModuleDestroy {
    */
   async hGet(key: string, field: string): Promise<string | null> {
     if (!this.isConnected) return null;
-    
+
     try {
       return await this.client.hGet(key, field);
     } catch (error) {
@@ -171,7 +177,7 @@ export class RedisService implements OnModuleInit, OnModuleDestroy {
    */
   async incr(key: string): Promise<number> {
     if (!this.isConnected) return 0;
-    
+
     try {
       return await this.client.incr(key);
     } catch (error) {
@@ -185,7 +191,7 @@ export class RedisService implements OnModuleInit, OnModuleDestroy {
    */
   async incrEx(key: string, ttl: number): Promise<number> {
     if (!this.isConnected) return 0;
-    
+
     try {
       const count = await this.client.incr(key);
       if (count === 1) {
@@ -204,7 +210,7 @@ export class RedisService implements OnModuleInit, OnModuleDestroy {
    */
   async expire(key: string, ttl: number): Promise<void> {
     if (!this.isConnected) return;
-    
+
     try {
       await this.client.expire(key, ttl);
     } catch (error) {
@@ -222,7 +228,7 @@ export class RedisService implements OnModuleInit, OnModuleDestroy {
    */
   async zadd(key: string, score: number, member: string): Promise<number> {
     if (!this.isConnected) return 0;
-    
+
     try {
       return await this.client.zAdd(key, { score, value: member });
     } catch (error) {
@@ -238,7 +244,7 @@ export class RedisService implements OnModuleInit, OnModuleDestroy {
    */
   async zrem(key: string, member: string): Promise<number> {
     if (!this.isConnected) return 0;
-    
+
     try {
       return await this.client.zRem(key, member);
     } catch (error) {
@@ -249,11 +255,11 @@ export class RedisService implements OnModuleInit, OnModuleDestroy {
 
   /**
    * Get members from sorted set by score range
-   * 
+   *
    * NOTE: Uses zRange with BY: 'SCORE' instead of zRangeByScore.
    * zRangeByScore has a known bug in node-redis v4.x where LIMIT options
    * can return empty arrays. zRange with BY: 'SCORE' is the recommended approach.
-   * 
+   *
    * @param key - The sorted set key
    * @param minScore - Minimum score (inclusive)
    * @param maxScore - Maximum score (inclusive)
@@ -268,7 +274,7 @@ export class RedisService implements OnModuleInit, OnModuleDestroy {
     count?: number,
   ): Promise<string[]> {
     if (!this.isConnected) return [];
-    
+
     try {
       // Use zRange with BY: 'SCORE' - this is the recommended approach in node-redis v4
       // zRangeByScore has known issues with LIMIT options in some versions
@@ -278,11 +284,11 @@ export class RedisService implements OnModuleInit, OnModuleDestroy {
       } = {
         BY: 'SCORE',
       };
-      
+
       if (offset !== undefined && count !== undefined) {
         options.LIMIT = { offset, count };
       }
-      
+
       return await this.client.zRange(key, minScore, maxScore, options);
     } catch (error) {
       this.logger.error(`Failed to zrangebyscore from Redis sorted set ${key}:`, error);
@@ -296,7 +302,7 @@ export class RedisService implements OnModuleInit, OnModuleDestroy {
    */
   async zcard(key: string): Promise<number> {
     if (!this.isConnected) return 0;
-    
+
     try {
       return await this.client.zCard(key);
     } catch (error) {
@@ -310,7 +316,7 @@ export class RedisService implements OnModuleInit, OnModuleDestroy {
   /**
    * Set a key only if it doesn't exist (SETNX) with optional TTL
    * Used for distributed locking across multiple server instances.
-   * 
+   *
    * @param key - The key to set
    * @param value - The value to set
    * @param ttlSeconds - Optional TTL in seconds (prevents deadlocks)
@@ -318,19 +324,19 @@ export class RedisService implements OnModuleInit, OnModuleDestroy {
    */
   async setNX(key: string, value: string, ttlSeconds?: number): Promise<boolean> {
     if (!this.isConnected) return false;
-    
+
     try {
       // Use SET with NX (only set if not exists) and optionally EX (expire) flags
       // This is atomic and race-condition safe
       // Build options object conditionally to avoid passing undefined values
       const options: { NX: true; EX?: number } = { NX: true };
-      
+
       if (ttlSeconds !== undefined && ttlSeconds > 0) {
         options.EX = ttlSeconds;
       }
-      
+
       const result = await this.client.set(key, value, options);
-      
+
       // Redis returns 'OK' if set, null if key already existed
       return result === 'OK';
     } catch (error) {
@@ -339,4 +345,3 @@ export class RedisService implements OnModuleInit, OnModuleDestroy {
     }
   }
 }
-

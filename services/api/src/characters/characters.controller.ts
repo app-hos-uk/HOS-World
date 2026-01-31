@@ -19,7 +19,8 @@ export class CharactersController {
   @Get()
   @ApiOperation({
     summary: 'Get all characters',
-    description: 'Retrieves all characters. Can filter by fandom ID. Public endpoint, no authentication required.',
+    description:
+      'Retrieves all characters. Can filter by fandom ID. Public endpoint, no authentication required.',
   })
   @ApiQuery({ name: 'fandomId', required: false, type: String, description: 'Filter by fandom ID' })
   @SwaggerApiResponse({ status: 200, description: 'Characters retrieved successfully' })
@@ -35,7 +36,8 @@ export class CharactersController {
   @Get('fandom/:fandomSlug')
   @ApiOperation({
     summary: 'Get characters by fandom slug',
-    description: 'Retrieves all characters for a specific fandom by slug. Public endpoint, no authentication required.',
+    description:
+      'Retrieves all characters for a specific fandom by slug. Public endpoint, no authentication required.',
   })
   @ApiParam({ name: 'fandomSlug', description: 'Fandom slug', type: String })
   @SwaggerApiResponse({ status: 200, description: 'Characters retrieved successfully' })
@@ -52,7 +54,8 @@ export class CharactersController {
   @Get(':id')
   @ApiOperation({
     summary: 'Get character by ID',
-    description: 'Retrieves a specific character by ID. Public endpoint, no authentication required.',
+    description:
+      'Retrieves a specific character by ID. Public endpoint, no authentication required.',
   })
   @ApiParam({ name: 'id', description: 'Character ID', type: String })
   @SwaggerApiResponse({ status: 200, description: 'Character retrieved successfully' })
@@ -65,4 +68,3 @@ export class CharactersController {
     };
   }
 }
-

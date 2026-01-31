@@ -46,6 +46,7 @@ export default function AdminStockTransfersPage() {
   useEffect(() => {
     fetchTransfers();
     fetchWarehouses();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {

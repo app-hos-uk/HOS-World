@@ -48,7 +48,8 @@ export class CategoriesController {
   @Get('tree')
   @ApiOperation({
     summary: 'Get category tree',
-    description: 'Retrieves categories in a hierarchical tree structure. Public endpoint, no authentication required.',
+    description:
+      'Retrieves categories in a hierarchical tree structure. Public endpoint, no authentication required.',
   })
   @SwaggerApiResponse({ status: 200, description: 'Category tree retrieved successfully' })
   async getCategoryTree(): Promise<ApiResponse<any[]>> {
@@ -63,7 +64,8 @@ export class CategoriesController {
   @Get(':id')
   @ApiOperation({
     summary: 'Get category by ID',
-    description: 'Retrieves a specific category by ID. Public endpoint, no authentication required.',
+    description:
+      'Retrieves a specific category by ID. Public endpoint, no authentication required.',
   })
   @ApiParam({ name: 'id', description: 'Category UUID', type: String })
   @SwaggerApiResponse({ status: 200, description: 'Category retrieved successfully' })
@@ -170,4 +172,3 @@ export class CategoriesController {
     };
   }
 }
-

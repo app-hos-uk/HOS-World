@@ -109,7 +109,8 @@ export class AnalyticsService {
         current: { revenue: totalRevenue, orders: totalOrders },
         previous: { revenue: previousRevenue, orders: previousOrders },
         growth: {
-          revenue: previousRevenue > 0 ? ((totalRevenue - previousRevenue) / previousRevenue) * 100 : 0,
+          revenue:
+            previousRevenue > 0 ? ((totalRevenue - previousRevenue) / previousRevenue) * 100 : 0,
           orders: previousOrders > 0 ? ((totalOrders - previousOrders) / previousOrders) * 100 : 0,
         },
       };
@@ -174,7 +175,10 @@ export class AnalyticsService {
     }).length;
 
     // Group orders by customer
-    const customerOrderMap = new Map<string, { total: number; orders: number; firstOrder: Date; lastOrder: Date }>();
+    const customerOrderMap = new Map<
+      string,
+      { total: number; orders: number; firstOrder: Date; lastOrder: Date }
+    >();
     customersWithOrders.forEach((order) => {
       if (!order.userId) return;
       const existing = customerOrderMap.get(order.userId) || {
@@ -194,8 +198,9 @@ export class AnalyticsService {
       customerOrderMap.set(order.userId, existing);
     });
 
-    const returningCustomers = Array.from(customerOrderMap.values()).filter((c) => c.orders > 1)
-      .length;
+    const returningCustomers = Array.from(customerOrderMap.values()).filter(
+      (c) => c.orders > 1,
+    ).length;
 
     // Calculate retention rate (customers with 2+ orders / total customers with orders)
     const customersWithAnyOrders = customerOrderMap.size;
@@ -204,7 +209,8 @@ export class AnalyticsService {
 
     // Calculate average LTV
     const ltvValues = Array.from(customerOrderMap.values()).map((c) => c.total);
-    const averageLTV = ltvValues.length > 0 ? ltvValues.reduce((a, b) => a + b, 0) / ltvValues.length : 0;
+    const averageLTV =
+      ltvValues.length > 0 ? ltvValues.reduce((a, b) => a + b, 0) / ltvValues.length : 0;
 
     // Calculate average order frequency (orders per customer)
     const totalOrdersCount = customersWithOrders.length;
@@ -236,7 +242,10 @@ export class AnalyticsService {
   /**
    * Get product performance metrics
    */
-  async getProductPerformance(filters: AnalyticsFilters, limit: number = 20): Promise<ProductPerformance[]> {
+  async getProductPerformance(
+    filters: AnalyticsFilters,
+    limit: number = 20,
+  ): Promise<ProductPerformance[]> {
     const { startDate, endDate, sellerId } = filters;
 
     const orderWhere: any = {
@@ -354,9 +363,10 @@ export class AnalyticsService {
       if (endDate) dateFilter.createdAt.lte = endDate;
     }
 
-    const periodDays = startDate && endDate
-      ? Math.ceil((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24))
-      : 365;
+    const periodDays =
+      startDate && endDate
+        ? Math.ceil((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24))
+        : 365;
 
     const orders = await this.prisma.order.findMany({
       where: dateFilter,
@@ -377,7 +387,8 @@ export class AnalyticsService {
     });
 
     const averageInventory = totalValue;
-    const turnoverRate = averageInventory > 0 ? (totalSales / averageInventory) * (365 / periodDays) : 0;
+    const turnoverRate =
+      averageInventory > 0 ? (totalSales / averageInventory) * (365 / periodDays) : 0;
 
     // Calculate average days in stock (simplified)
     const averageDaysInStock = turnoverRate > 0 ? 365 / turnoverRate : 365;
@@ -416,7 +427,8 @@ export class AnalyticsService {
     const previousOrders = await this.getOrdersInRange(previousStart, previousEnd);
     const previousRevenue = previousOrders.reduce((sum, o) => sum + Number(o.total), 0);
 
-    const growth = previousRevenue > 0 ? ((currentRevenue - previousRevenue) / previousRevenue) * 100 : 0;
+    const growth =
+      previousRevenue > 0 ? ((currentRevenue - previousRevenue) / previousRevenue) * 100 : 0;
 
     return {
       current: currentRevenue,
@@ -505,7 +517,8 @@ export class AnalyticsService {
         period,
         revenue: Math.round(data.revenue * 100) / 100,
         orders: data.orderCount,
-        averageOrderValue: data.orderCount > 0 ? Math.round((data.revenue / data.orderCount) * 100) / 100 : 0,
+        averageOrderValue:
+          data.orderCount > 0 ? Math.round((data.revenue / data.orderCount) * 100) / 100 : 0,
       }))
       .sort((a, b) => a.period.localeCompare(b.period));
   }

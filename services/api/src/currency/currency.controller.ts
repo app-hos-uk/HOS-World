@@ -20,7 +20,8 @@ export class CurrencyController {
   @Get('rates')
   @ApiOperation({
     summary: 'Get exchange rates',
-    description: 'Retrieves all currency exchange rates. Public endpoint, no authentication required.',
+    description:
+      'Retrieves all currency exchange rates. Public endpoint, no authentication required.',
   })
   @SwaggerApiResponse({ status: 200, description: 'Exchange rates retrieved successfully' })
   async getRates(): Promise<ApiResponse<Record<string, number>>> {
@@ -35,11 +36,22 @@ export class CurrencyController {
   @Get('convert')
   @ApiOperation({
     summary: 'Convert currency',
-    description: 'Converts an amount from one currency to another. Public endpoint, no authentication required.',
+    description:
+      'Converts an amount from one currency to another. Public endpoint, no authentication required.',
   })
   @ApiQuery({ name: 'amount', required: true, type: String, description: 'Amount to convert' })
-  @ApiQuery({ name: 'from', required: true, type: String, description: 'Source currency code (e.g., USD)' })
-  @ApiQuery({ name: 'to', required: true, type: String, description: 'Target currency code (e.g., GBP)' })
+  @ApiQuery({
+    name: 'from',
+    required: true,
+    type: String,
+    description: 'Source currency code (e.g., USD)',
+  })
+  @ApiQuery({
+    name: 'to',
+    required: true,
+    type: String,
+    description: 'Target currency code (e.g., GBP)',
+  })
   @SwaggerApiResponse({ status: 200, description: 'Currency converted successfully' })
   @SwaggerApiResponse({ status: 400, description: 'Invalid currency codes or amount' })
   async convert(
@@ -66,7 +78,7 @@ export class CurrencyController {
   @ApiBearerAuth('JWT-auth')
   @ApiOperation({
     summary: 'Get user currency preference',
-    description: 'Retrieves the authenticated user\'s preferred currency.',
+    description: "Retrieves the authenticated user's preferred currency.",
   })
   @SwaggerApiResponse({ status: 200, description: 'User currency retrieved successfully' })
   @SwaggerApiResponse({ status: 401, description: 'Unauthorized' })
@@ -78,4 +90,3 @@ export class CurrencyController {
     };
   }
 }
-

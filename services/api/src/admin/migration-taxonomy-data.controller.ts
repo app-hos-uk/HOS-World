@@ -1,11 +1,4 @@
-import {
-  Controller,
-  Post,
-  Get,
-  UseGuards,
-  Logger,
-  ForbiddenException,
-} from '@nestjs/common';
+import { Controller, Post, Get, UseGuards, Logger, ForbiddenException } from '@nestjs/common';
 import {
   ApiTags,
   ApiOperation,
@@ -36,19 +29,30 @@ export class MigrationTaxonomyDataController {
   private checkMigrationsEnabled(): void {
     const enabled = this.configService.get<string>('ENABLE_ADMIN_MIGRATIONS') === 'true';
     if (!enabled) {
-      this.logger.warn('Admin migration endpoint called but ENABLE_ADMIN_MIGRATIONS is not set to "true"');
-      throw new ForbiddenException('Admin migrations are disabled in production. Set ENABLE_ADMIN_MIGRATIONS=true to enable.');
+      this.logger.warn(
+        'Admin migration endpoint called but ENABLE_ADMIN_MIGRATIONS is not set to "true"',
+      );
+      throw new ForbiddenException(
+        'Admin migrations are disabled in production. Set ENABLE_ADMIN_MIGRATIONS=true to enable.',
+      );
     }
   }
 
   @Post('migrate')
-  @ApiOperation({ summary: 'Migrate taxonomy data', description: 'Migrates existing category strings and tag arrays to new taxonomy system. Requires ENABLE_ADMIN_MIGRATIONS=true. Admin access required.' })
+  @ApiOperation({
+    summary: 'Migrate taxonomy data',
+    description:
+      'Migrates existing category strings and tag arrays to new taxonomy system. Requires ENABLE_ADMIN_MIGRATIONS=true. Admin access required.',
+  })
   @SwaggerApiResponse({ status: 200, description: 'Data migration completed' })
   @SwaggerApiResponse({ status: 401, description: 'Unauthorized' })
-  @SwaggerApiResponse({ status: 403, description: 'Forbidden - Admin access required or migrations disabled' })
+  @SwaggerApiResponse({
+    status: 403,
+    description: 'Forbidden - Admin access required or migrations disabled',
+  })
   async migrateData(): Promise<ApiResponse<any>> {
     this.checkMigrationsEnabled();
-    
+
     try {
       this.logger.log('🔄 Starting taxonomy data migration...');
 
@@ -221,7 +225,7 @@ export class MigrationTaxonomyDataController {
 
             // Create new product tags
             await this.prisma.productTag.createMany({
-              data: tagIds.map(tagId => ({
+              data: tagIds.map((tagId) => ({
                 productId: product.id,
                 tagId: tagId,
               })),
@@ -268,7 +272,10 @@ export class MigrationTaxonomyDataController {
   }
 
   @Get('status')
-  @ApiOperation({ summary: 'Get taxonomy migration status', description: 'Retrieves the status of taxonomy data migration. Admin access required.' })
+  @ApiOperation({
+    summary: 'Get taxonomy migration status',
+    description: 'Retrieves the status of taxonomy data migration. Admin access required.',
+  })
   @SwaggerApiResponse({ status: 200, description: 'Migration status retrieved successfully' })
   @SwaggerApiResponse({ status: 401, description: 'Unauthorized' })
   @SwaggerApiResponse({ status: 403, description: 'Forbidden - Admin access required' })
@@ -332,4 +339,3 @@ export class MigrationTaxonomyDataController {
     }
   }
 }
-

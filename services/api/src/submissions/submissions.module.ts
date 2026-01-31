@@ -12,4 +12,3 @@ import { DuplicatesModule } from '../duplicates/duplicates.module';
   exports: [SubmissionsService],
 })
 export class SubmissionsModule {}
-

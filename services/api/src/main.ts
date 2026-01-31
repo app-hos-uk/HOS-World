@@ -70,26 +70,40 @@ async function bootstrap() {
   logger.info(`Working directory: ${process.cwd()}`, 'Bootstrap');
   logger.info(`dist/main.js exists: ${require('fs').existsSync('./dist/main.js')}`, 'Bootstrap');
   logger.info('═══════════════════════════════════════════════════════════', 'Bootstrap');
-  
+
+  // CORS allowed origins - defined early so OPTIONS handler and enableCors both use it
+  let allowedOrigins: string[] = [
+    process.env.FRONTEND_URL,
+    'https://hos-marketplaceweb-production.up.railway.app',
+    'http://localhost:3000',
+    'http://localhost:3001',
+  ].filter(Boolean) as string[];
+  if (!allowedOrigins.length) {
+    allowedOrigins = ['https://hos-marketplaceweb-production.up.railway.app'];
+  }
+
   try {
     logger.info('🚀 Starting API server...', 'Bootstrap');
-    
+
     // Pre-flight check: Verify Prisma client can be imported and has RefreshToken
     logger.debug('🔍 PRE-FLIGHT CHECK: Verifying Prisma Client', 'Bootstrap');
     try {
       const { PrismaClient } = require('@prisma/client');
       const testClient = new PrismaClient();
-      
+
       const hasRefreshToken = typeof testClient.refreshToken !== 'undefined';
       const hasUser = typeof testClient.user !== 'undefined';
       const hasProduct = typeof testClient.product !== 'undefined';
-      
+
       logger.debug(`user model: ${hasUser ? 'YES ✅' : 'NO ❌'}`, 'Bootstrap');
       logger.debug(`product model: ${hasProduct ? 'YES ✅' : 'NO ❌'}`, 'Bootstrap');
       logger.debug(`refreshToken model: ${hasRefreshToken ? 'YES ✅' : 'NO ❌'}`, 'Bootstrap');
-      
+
       if (!hasUser || !hasProduct) {
-        logger.error('CRITICAL: Basic Prisma models missing! Prisma client generation failed.', 'Bootstrap');
+        logger.error(
+          'CRITICAL: Basic Prisma models missing! Prisma client generation failed.',
+          'Bootstrap',
+        );
         const available = Object.keys(testClient)
           .filter((k) => !k.startsWith('$') && !k.startsWith('_'))
           .slice(0, 20)
@@ -98,7 +112,7 @@ async function bootstrap() {
         await testClient.$disconnect();
         throw new Error('Prisma client missing basic models - generation failed');
       }
-      
+
       if (!hasRefreshToken) {
         logger.warn('RefreshToken model missing from PrismaClient!', 'Bootstrap');
         logger.warn('This may cause issues when auth methods are called.', 'Bootstrap');
@@ -133,18 +147,60 @@ async function bootstrap() {
       });
       logger.info('✅ AppModule initialized successfully', 'Bootstrap');
 
+      // CORS first: handle OPTIONS preflight before any other middleware so browser gets CORS headers
+      logger.info(`🌐 CORS allowed origins: ${allowedOrigins.join(', ')}`, 'Bootstrap');
+
+      // Check if origin is allowed - returns the origin if allowed, null if not
+      const isOriginAllowed = (origin: string | undefined): string | null => {
+        // No origin (e.g. server-to-server, mobile apps, curl) - allow
+        if (!origin) return '*';
+        // Check exact match or prefix match (for subdomains)
+        const allowed = allowedOrigins.some((a) => a && (origin === a || origin.startsWith(a)));
+        return allowed ? origin : null;
+      };
+
+      app.use((req: any, res: any, next: any) => {
+        if (req.method === 'OPTIONS') {
+          const origin = req.headers.origin as string | undefined;
+          const allowedOrigin = isOriginAllowed(origin);
+
+          if (allowedOrigin) {
+            // Origin is allowed - set CORS headers and respond 204
+            res.setHeader('Access-Control-Allow-Origin', allowedOrigin);
+            res.setHeader(
+              'Access-Control-Allow-Methods',
+              'GET, POST, PUT, DELETE, PATCH, OPTIONS, HEAD',
+            );
+            res.setHeader(
+              'Access-Control-Allow-Headers',
+              'Content-Type, Authorization, X-Requested-With, Accept, Origin, X-API-Key, Access-Control-Request-Method, Access-Control-Request-Headers',
+            );
+            res.setHeader('Access-Control-Allow-Credentials', 'true');
+            res.setHeader('Access-Control-Max-Age', '86400');
+            return res.status(204).end();
+          } else {
+            // Origin is NOT allowed - reject with 403 (no CORS headers)
+            logger.warn(`CORS blocked: ${origin}`, 'CORS');
+            return res.status(403).json({ error: 'Origin not allowed', origin });
+          }
+        }
+        next();
+      });
+
       // Add security headers (helmet)
-      app.use(helmet({
-        contentSecurityPolicy: {
-          directives: {
-            defaultSrc: ["'self'"],
-            styleSrc: ["'self'", "'unsafe-inline'"],
-            scriptSrc: ["'self'"],
-            imgSrc: ["'self'", 'data:', 'https:'],
+      app.use(
+        helmet({
+          contentSecurityPolicy: {
+            directives: {
+              defaultSrc: ["'self'"],
+              styleSrc: ["'self'", "'unsafe-inline'"],
+              scriptSrc: ["'self'"],
+              imgSrc: ["'self'", 'data:', 'https:'],
+            },
           },
-        },
-        crossOriginEmbedderPolicy: false, // Allow embedding for API docs
-      }));
+          crossOriginEmbedderPolicy: false, // Allow embedding for API docs
+        }),
+      );
       logger.info('✅ Security headers configured', 'Bootstrap');
 
       // Add response compression
@@ -153,8 +209,7 @@ async function bootstrap() {
 
       // Request ID middleware: propagate or generate X-Request-ID, set Sentry context
       app.use((req: any, res: any, next: any) => {
-        const requestId =
-          (req.headers['x-request-id'] as string)?.trim() || randomUUID();
+        const requestId = (req.headers['x-request-id'] as string)?.trim() || randomUUID();
         req.requestId = requestId;
         res.setHeader('X-Request-ID', requestId);
         if (typeof Sentry?.setTag === 'function') {
@@ -164,7 +219,7 @@ async function bootstrap() {
         next();
       });
       logger.info('✅ Request ID middleware and Sentry context enabled', 'Bootstrap');
-      
+
       // Note: PrismaService verification is done in DatabaseModule.onModuleInit()
       // We don't need to check it here as it may not be ready yet during app creation
     } catch (moduleError: any) {
@@ -173,46 +228,7 @@ async function bootstrap() {
       throw moduleError; // Re-throw to be caught by outer try-catch
     }
 
-    // Define allowed origins - MUST be before any middleware
-    const allowedOrigins = [
-      process.env.FRONTEND_URL,
-      'https://hos-marketplaceweb-production.up.railway.app',
-      'http://localhost:3000',
-      'http://localhost:3001',
-    ].filter(Boolean) as string[]; // Remove undefined values
-
-    logger.info(`🌐 CORS allowed origins: ${allowedOrigins.join(', ')}`, 'Bootstrap');
-
-    // CRITICAL: Handle OPTIONS requests FIRST - before any other middleware
-    // This ensures preflight requests are handled even if the app has errors
-    app.use((req: any, res: any, next: any) => {
-      // Handle preflight OPTIONS requests immediately
-      if (req.method === 'OPTIONS') {
-        const origin = req.headers.origin;
-        
-        // Check if origin is allowed
-        const isAllowed = !origin || allowedOrigins.some(allowed => {
-          if (!allowed) return false;
-          return origin === allowed || origin.startsWith(allowed);
-        });
-        
-        if (isAllowed || !origin) {
-          logger.debug(`CORS Preflight: Allowing ${origin || 'no-origin'} for ${req.path}`, 'CORS');
-          res.header('Access-Control-Allow-Origin', origin || '*');
-          res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, PATCH, OPTIONS, HEAD');
-          res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With, Accept, Origin, X-API-Key, Access-Control-Request-Method, Access-Control-Request-Headers');
-          res.header('Access-Control-Allow-Credentials', 'true');
-          res.header('Access-Control-Max-Age', '86400');
-          return res.status(204).send();
-        } else {
-          logger.warn(`CORS Preflight blocked: ${origin}`, 'CORS');
-          return res.status(403).json({ error: 'CORS not allowed' });
-        }
-      }
-      next();
-    });
-
-    // Enhanced CORS configuration for all other requests
+    // Enhanced CORS configuration for non-OPTIONS requests
     app.enableCors({
       origin: (origin, callback) => {
         // Allow requests with no origin (like mobile apps or curl requests)
@@ -220,7 +236,7 @@ async function bootstrap() {
           logger.debug('CORS: Allowing request with no origin', 'CORS');
           return callback(null, true);
         }
-        
+
         // Check if origin is in allowed list - use exact match for security
         const isAllowed = allowedOrigins.some((allowed) => {
           if (!allowed) return false;
@@ -243,7 +259,7 @@ async function bootstrap() {
           }
           return false;
         });
-        
+
         if (isAllowed) {
           logger.debug(`CORS: Allowing origin: ${origin}`, 'CORS');
           callback(null, true);
@@ -274,11 +290,13 @@ async function bootstrap() {
     // Add CORS headers to all responses (safety net)
     app.use((req: any, res: any, next: any) => {
       const origin = req.headers.origin;
-      const isAllowed = !origin || allowedOrigins.some(allowed => {
-        if (!allowed) return false;
-        return origin === allowed || origin.startsWith(allowed);
-      });
-      
+      const isAllowed =
+        !origin ||
+        allowedOrigins.some((allowed) => {
+          if (!allowed) return false;
+          return origin === allowed || origin.startsWith(allowed);
+        });
+
       if (isAllowed || !origin) {
         res.header('Access-Control-Allow-Origin', origin || '*');
         res.header('Access-Control-Allow-Credentials', 'true');
@@ -408,10 +426,10 @@ async function bootstrap() {
 
     const port = process.env.PORT || 3001;
     logger.info(`📡 About to listen on port: ${port}`, 'Bootstrap');
-    
+
     // Use app.listen() to ensure all routes are properly registered
     await app.listen(port, '0.0.0.0');
-    
+
     logger.info(`✅ Server is listening on port ${port}`, 'Bootstrap');
     logger.info(`✅ API server is running on: http://0.0.0.0:${port}/api`, 'Bootstrap');
     logger.info(`✅ Health check available at: http://0.0.0.0:${port}/api/health`, 'Bootstrap');
@@ -430,7 +448,9 @@ async function bootstrap() {
           logger.log('Bull Redis client disconnected');
         }
         if (bullServerAdapter && typeof bullServerAdapter.close === 'function') {
-          try { bullServerAdapter.close(); } catch {}
+          try {
+            bullServerAdapter.close();
+          } catch {}
           logger.log('Bull Board server adapter closed');
         }
       } catch (err) {
@@ -463,7 +483,10 @@ async function bootstrap() {
     logger.error(`Error stack: ${error?.stack || 'No stack trace available'}`, 'Bootstrap');
     logger.error(`NODE_ENV: ${process.env.NODE_ENV}`, 'Bootstrap');
     logger.error(`PORT: ${process.env.PORT}`, 'Bootstrap');
-    logger.error(`DATABASE_URL: ${process.env.DATABASE_URL ? '***set***' : '***missing***'}`, 'Bootstrap');
+    logger.error(
+      `DATABASE_URL: ${process.env.DATABASE_URL ? '***set***' : '***missing***'}`,
+      'Bootstrap',
+    );
     logger.error(`Working directory: ${process.cwd()}`, 'Bootstrap');
     logger.error('═══════════════════════════════════════════════════════════', 'Bootstrap');
     // Give Railway time to capture logs before exiting
@@ -512,5 +535,3 @@ bootstrap().catch((error) => {
   logger.error('═══════════════════════════════════════════════════════════', 'Bootstrap');
   setTimeout(() => process.exit(1), 5000);
 });
-
-

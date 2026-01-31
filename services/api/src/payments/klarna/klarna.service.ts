@@ -28,9 +28,7 @@ export class KlarnaService {
     private currencyService: CurrencyService,
   ) {
     const isTest = this.configService.get('NODE_ENV') !== 'production';
-    this.baseUrl = isTest
-      ? 'https://api.playground.klarna.com'
-      : 'https://api.klarna.com';
+    this.baseUrl = isTest ? 'https://api.playground.klarna.com' : 'https://api.klarna.com';
     this.username = this.configService.get('KLARNA_USERNAME') || '';
     this.password = this.configService.get('KLARNA_PASSWORD') || '';
   }
@@ -114,9 +112,7 @@ export class KlarnaService {
           order_amount: orderAmountGBP, // Amount in GBP
           order_lines: order.items.map((item) => {
             // Convert item prices to GBP if needed
-            const itemPriceGBP = order.currency === this.BASE_CURRENCY
-              ? Number(item.price)
-              : null; // Will need conversion - simplified for now
+            const itemPriceGBP = order.currency === this.BASE_CURRENCY ? Number(item.price) : null; // Will need conversion - simplified for now
             return {
               name: item.product?.name || 'Product',
               quantity: item.quantity,
@@ -254,4 +250,3 @@ export class KlarnaService {
     return { received: true };
   }
 }
-

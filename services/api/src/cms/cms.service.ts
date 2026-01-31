@@ -12,13 +12,10 @@ export class CMSService {
     this.strapiToken = this.configService.get<string>('STRAPI_API_TOKEN') || null;
   }
 
-  private async strapiRequest<T>(
-    endpoint: string,
-    options: RequestInit = {}
-  ): Promise<T> {
+  private async strapiRequest<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
     const headers: Record<string, string> = {
       'Content-Type': 'application/json',
-      ...(options.headers as Record<string, string> || {}),
+      ...((options.headers as Record<string, string>) || {}),
     };
 
     if (this.strapiToken) {
@@ -33,10 +30,7 @@ export class CMSService {
 
       if (!response.ok) {
         const errorText = await response.text();
-        throw new HttpException(
-          `Strapi API error: ${errorText}`,
-          response.status
-        );
+        throw new HttpException(`Strapi API error: ${errorText}`, response.status);
       }
 
       return await response.json();
@@ -46,7 +40,7 @@ export class CMSService {
       }
       throw new HttpException(
         `Failed to connect to Strapi: ${error.message}`,
-        HttpStatus.SERVICE_UNAVAILABLE
+        HttpStatus.SERVICE_UNAVAILABLE,
       );
     }
   }
@@ -62,7 +56,7 @@ export class CMSService {
     } catch (error: any) {
       throw new HttpException(
         error.message || 'Failed to fetch pages',
-        error.status || HttpStatus.INTERNAL_SERVER_ERROR
+        error.status || HttpStatus.INTERNAL_SERVER_ERROR,
       );
     }
   }
@@ -77,7 +71,7 @@ export class CMSService {
     } catch (error: any) {
       throw new HttpException(
         error.message || 'Failed to fetch page',
-        error.status || HttpStatus.INTERNAL_SERVER_ERROR
+        error.status || HttpStatus.INTERNAL_SERVER_ERROR,
       );
     }
   }
@@ -113,19 +107,22 @@ export class CMSService {
     } catch (error: any) {
       throw new HttpException(
         error.message || 'Failed to create page',
-        error.status || HttpStatus.INTERNAL_SERVER_ERROR
+        error.status || HttpStatus.INTERNAL_SERVER_ERROR,
       );
     }
   }
 
-  async updatePage(id: string, pageData: {
-    title?: string;
-    slug?: string;
-    content?: string;
-    metaTitle?: string;
-    metaDescription?: string;
-    keywords?: string;
-  }): Promise<ApiResponse<any>> {
+  async updatePage(
+    id: string,
+    pageData: {
+      title?: string;
+      slug?: string;
+      content?: string;
+      metaTitle?: string;
+      metaDescription?: string;
+      keywords?: string;
+    },
+  ): Promise<ApiResponse<any>> {
     try {
       const data = await this.strapiRequest<any>(`/pages/${id}`, {
         method: 'PUT',
@@ -151,7 +148,7 @@ export class CMSService {
     } catch (error: any) {
       throw new HttpException(
         error.message || 'Failed to update page',
-        error.status || HttpStatus.INTERNAL_SERVER_ERROR
+        error.status || HttpStatus.INTERNAL_SERVER_ERROR,
       );
     }
   }
@@ -168,7 +165,7 @@ export class CMSService {
     } catch (error: any) {
       throw new HttpException(
         error.message || 'Failed to delete page',
-        error.status || HttpStatus.INTERNAL_SERVER_ERROR
+        error.status || HttpStatus.INTERNAL_SERVER_ERROR,
       );
     }
   }
@@ -185,7 +182,7 @@ export class CMSService {
     } catch (error: any) {
       throw new HttpException(
         error.message || 'Failed to fetch banners',
-        error.status || HttpStatus.INTERNAL_SERVER_ERROR
+        error.status || HttpStatus.INTERNAL_SERVER_ERROR,
       );
     }
   }
@@ -200,7 +197,7 @@ export class CMSService {
     } catch (error: any) {
       throw new HttpException(
         error.message || 'Failed to fetch banner',
-        error.status || HttpStatus.INTERNAL_SERVER_ERROR
+        error.status || HttpStatus.INTERNAL_SERVER_ERROR,
       );
     }
   }
@@ -234,19 +231,22 @@ export class CMSService {
     } catch (error: any) {
       throw new HttpException(
         error.message || 'Failed to create banner',
-        error.status || HttpStatus.INTERNAL_SERVER_ERROR
+        error.status || HttpStatus.INTERNAL_SERVER_ERROR,
       );
     }
   }
 
-  async updateBanner(id: string, bannerData: {
-    title?: string;
-    type?: 'hero' | 'promotional' | 'sidebar';
-    image?: string;
-    link?: string;
-    content?: string;
-    active?: boolean;
-  }): Promise<ApiResponse<any>> {
+  async updateBanner(
+    id: string,
+    bannerData: {
+      title?: string;
+      type?: 'hero' | 'promotional' | 'sidebar';
+      image?: string;
+      link?: string;
+      content?: string;
+      active?: boolean;
+    },
+  ): Promise<ApiResponse<any>> {
     try {
       const data = await this.strapiRequest<any>(`/banners/${id}`, {
         method: 'PUT',
@@ -268,7 +268,7 @@ export class CMSService {
     } catch (error: any) {
       throw new HttpException(
         error.message || 'Failed to update banner',
-        error.status || HttpStatus.INTERNAL_SERVER_ERROR
+        error.status || HttpStatus.INTERNAL_SERVER_ERROR,
       );
     }
   }
@@ -285,7 +285,7 @@ export class CMSService {
     } catch (error: any) {
       throw new HttpException(
         error.message || 'Failed to delete banner',
-        error.status || HttpStatus.INTERNAL_SERVER_ERROR
+        error.status || HttpStatus.INTERNAL_SERVER_ERROR,
       );
     }
   }
@@ -302,7 +302,7 @@ export class CMSService {
     } catch (error: any) {
       throw new HttpException(
         error.message || 'Failed to fetch blog posts',
-        error.status || HttpStatus.INTERNAL_SERVER_ERROR
+        error.status || HttpStatus.INTERNAL_SERVER_ERROR,
       );
     }
   }
@@ -317,7 +317,7 @@ export class CMSService {
     } catch (error: any) {
       throw new HttpException(
         error.message || 'Failed to fetch blog post',
-        error.status || HttpStatus.INTERNAL_SERVER_ERROR
+        error.status || HttpStatus.INTERNAL_SERVER_ERROR,
       );
     }
   }
@@ -351,20 +351,23 @@ export class CMSService {
     } catch (error: any) {
       throw new HttpException(
         error.message || 'Failed to create blog post',
-        error.status || HttpStatus.INTERNAL_SERVER_ERROR
+        error.status || HttpStatus.INTERNAL_SERVER_ERROR,
       );
     }
   }
 
-  async updateBlogPost(id: string, postData: {
-    title?: string;
-    slug?: string;
-    excerpt?: string;
-    content?: string;
-    coverImage?: string;
-    author?: string;
-    publishedAt?: string;
-  }): Promise<ApiResponse<any>> {
+  async updateBlogPost(
+    id: string,
+    postData: {
+      title?: string;
+      slug?: string;
+      excerpt?: string;
+      content?: string;
+      coverImage?: string;
+      author?: string;
+      publishedAt?: string;
+    },
+  ): Promise<ApiResponse<any>> {
     try {
       const data = await this.strapiRequest<any>(`/blog-posts/${id}`, {
         method: 'PUT',
@@ -387,7 +390,7 @@ export class CMSService {
     } catch (error: any) {
       throw new HttpException(
         error.message || 'Failed to update blog post',
-        error.status || HttpStatus.INTERNAL_SERVER_ERROR
+        error.status || HttpStatus.INTERNAL_SERVER_ERROR,
       );
     }
   }
@@ -404,7 +407,7 @@ export class CMSService {
     } catch (error: any) {
       throw new HttpException(
         error.message || 'Failed to delete blog post',
-        error.status || HttpStatus.INTERNAL_SERVER_ERROR
+        error.status || HttpStatus.INTERNAL_SERVER_ERROR,
       );
     }
   }
@@ -426,12 +429,8 @@ export class CMSService {
     } catch (error: any) {
       throw new HttpException(
         error.message || 'Failed to publish blog post',
-        error.status || HttpStatus.INTERNAL_SERVER_ERROR
+        error.status || HttpStatus.INTERNAL_SERVER_ERROR,
       );
     }
   }
 }
-
-
-
-

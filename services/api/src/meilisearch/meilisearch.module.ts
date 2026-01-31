@@ -6,10 +6,7 @@ import { DatabaseModule } from '../database/database.module';
 
 @Global()
 @Module({
-  imports: [
-    ConfigModule,
-    DatabaseModule,
-  ],
+  imports: [ConfigModule, DatabaseModule],
   controllers: [MeilisearchController],
   providers: [MeilisearchService],
   exports: [MeilisearchService],

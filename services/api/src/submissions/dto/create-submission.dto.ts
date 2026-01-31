@@ -111,4 +111,3 @@ export class CreateSubmissionDto {
   @IsNumber()
   quantity?: number; // For wholesalers - quantity to submit
 }
-

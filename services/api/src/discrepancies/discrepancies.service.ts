@@ -236,11 +236,7 @@ export class DiscrepanciesService {
     return discrepancy;
   }
 
-  async resolveDiscrepancy(
-    id: string,
-    resolvedBy: string,
-    resolution: string,
-  ) {
+  async resolveDiscrepancy(id: string, resolvedBy: string, resolution: string) {
     const discrepancy = await this.prisma.discrepancy.findUnique({
       where: { id },
     });
@@ -273,15 +269,18 @@ export class DiscrepanciesService {
     });
   }
 
-  async getSellerDiscrepancies(sellerId: string, filters?: {
-    type?: string;
-    severity?: string;
-    status?: string;
-    startDate?: Date;
-    endDate?: Date;
-    page?: number;
-    limit?: number;
-  }) {
+  async getSellerDiscrepancies(
+    sellerId: string,
+    filters?: {
+      type?: string;
+      severity?: string;
+      status?: string;
+      startDate?: Date;
+      endDate?: Date;
+      page?: number;
+      limit?: number;
+    },
+  ) {
     return this.getDiscrepancies({
       ...filters,
       sellerId,
@@ -343,4 +342,3 @@ export class DiscrepanciesService {
     return null;
   }
 }
-

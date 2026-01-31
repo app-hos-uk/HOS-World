@@ -32,6 +32,7 @@ export default function AdminSalesReportsPage() {
 
   useEffect(() => {
     fetchData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [dateRange, period, compareWithPrevious]);
 
   const fetchData = async () => {

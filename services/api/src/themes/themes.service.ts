@@ -158,9 +158,7 @@ export class ThemesService {
     }
 
     return {
-      theme: seller.themeSettings.theme
-        ? this.mapToThemeType(seller.themeSettings.theme)
-        : null,
+      theme: seller.themeSettings.theme ? this.mapToThemeType(seller.themeSettings.theme) : null,
       customSettings: {
         customLogoUrl: seller.themeSettings.customLogoUrl,
         customFaviconUrl: seller.themeSettings.customFaviconUrl,
@@ -169,10 +167,7 @@ export class ThemesService {
     };
   }
 
-  async updateSellerTheme(
-    sellerId: string,
-    updateDto: UpdateSellerThemeDto,
-  ): Promise<any> {
+  async updateSellerTheme(sellerId: string, updateDto: UpdateSellerThemeDto): Promise<any> {
     const seller = await this.prisma.seller.findUnique({
       where: { userId: sellerId },
     });
@@ -217,8 +212,7 @@ export class ThemesService {
         data: {
           themeId: updateDto.themeId || themeSettings.themeId,
           customLogoUrl: updateDto.customLogoUrl ?? themeSettings.customLogoUrl,
-          customFaviconUrl:
-            updateDto.customFaviconUrl ?? themeSettings.customFaviconUrl,
+          customFaviconUrl: updateDto.customFaviconUrl ?? themeSettings.customFaviconUrl,
           customColors: updateDto.customColors
             ? (updateDto.customColors as any)
             : themeSettings.customColors,

@@ -1,12 +1,4 @@
-import {
-  Controller,
-  Get,
-  Put,
-  Param,
-  Body,
-  UseGuards,
-  Request,
-} from '@nestjs/common';
+import { Controller, Get, Put, Param, Body, UseGuards, Request } from '@nestjs/common';
 import {
   ApiTags,
   ApiOperation,
@@ -45,10 +37,7 @@ export class InfluencerStorefrontsController {
   @ApiBearerAuth('JWT-auth')
   @ApiOperation({ summary: 'Update my storefront settings' })
   @SwaggerApiResponse({ status: 200, description: 'Storefront updated successfully' })
-  async updateMyStorefront(
-    @Request() req: any,
-    @Body() dto: any,
-  ): Promise<ApiResponse<any>> {
+  async updateMyStorefront(@Request() req: any, @Body() dto: any): Promise<ApiResponse<any>> {
     const storefront = await this.storefrontsService.update(req.user.id, dto);
     return {
       data: storefront,
@@ -66,7 +55,10 @@ export class InfluencerStorefrontsController {
     @Request() req: any,
     @Body() body: { contentBlocks: any[] },
   ): Promise<ApiResponse<any>> {
-    const storefront = await this.storefrontsService.updateContentBlocks(req.user.id, body.contentBlocks);
+    const storefront = await this.storefrontsService.updateContentBlocks(
+      req.user.id,
+      body.contentBlocks,
+    );
     return {
       data: storefront,
       message: 'Content blocks updated successfully',
@@ -83,7 +75,10 @@ export class InfluencerStorefrontsController {
     @Request() req: any,
     @Body() body: { productIds: string[] },
   ): Promise<ApiResponse<any>> {
-    const storefront = await this.storefrontsService.updateFeaturedProducts(req.user.id, body.productIds);
+    const storefront = await this.storefrontsService.updateFeaturedProducts(
+      req.user.id,
+      body.productIds,
+    );
     return {
       data: storefront,
       message: 'Featured products updated successfully',

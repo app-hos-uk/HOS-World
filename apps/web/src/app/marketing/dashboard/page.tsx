@@ -38,6 +38,7 @@ export default function MarketingDashboardPage() {
     };
 
     fetchDashboardData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const pendingProducts = dashboardData?.pendingProducts || 0;

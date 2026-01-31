@@ -38,7 +38,8 @@ export class AdminProductsController {
   @Post()
   @ApiOperation({
     summary: 'Create product (Admin only)',
-    description: 'Creates a new product. Admin can create platform-owned products or assign to sellers.',
+    description:
+      'Creates a new product. Admin can create platform-owned products or assign to sellers.',
   })
   @ApiBody({
     description: 'Product creation data',
@@ -111,7 +112,9 @@ export class AdminProductsController {
       productType?: 'SIMPLE' | 'VARIANT' | 'BUNDLED';
       variations?: Array<{
         name: string;
-        options: Array<string | { value: string; price?: number; stock?: number; imageUrl?: string }>;
+        options: Array<
+          string | { value: string; price?: number; stock?: number; imageUrl?: string }
+        >;
       }>;
     },
   ): Promise<ApiResponse<any>> {
@@ -197,7 +200,9 @@ export class AdminProductsController {
       productType?: 'SIMPLE' | 'VARIANT' | 'BUNDLED';
       variations?: Array<{
         name: string;
-        options: Array<string | { value: string; price?: number; stock?: number; imageUrl?: string }>;
+        options: Array<
+          string | { value: string; price?: number; stock?: number; imageUrl?: string }
+        >;
       }>;
     },
   ): Promise<ApiResponse<any>> {
@@ -211,14 +216,40 @@ export class AdminProductsController {
   @Get()
   @ApiOperation({
     summary: 'Get all products (Admin only)',
-    description: 'Retrieves a paginated list of all products with filtering options. Admin access required.',
+    description:
+      'Retrieves a paginated list of all products with filtering options. Admin access required.',
   })
-  @ApiQuery({ name: 'sellerId', required: false, type: String, description: 'Filter by seller ID (use "null" for platform-owned)' })
-  @ApiQuery({ name: 'status', required: false, type: String, description: 'Filter by product status' })
+  @ApiQuery({
+    name: 'sellerId',
+    required: false,
+    type: String,
+    description: 'Filter by seller ID (use "null" for platform-owned)',
+  })
+  @ApiQuery({
+    name: 'status',
+    required: false,
+    type: String,
+    description: 'Filter by product status',
+  })
   @ApiQuery({ name: 'category', required: false, type: String, description: 'Filter by category' })
-  @ApiQuery({ name: 'search', required: false, type: String, description: 'Search by product name or description' })
-  @ApiQuery({ name: 'page', required: false, type: Number, description: 'Page number (default: 1)' })
-  @ApiQuery({ name: 'limit', required: false, type: Number, description: 'Items per page (default: 20, max: 100)' })
+  @ApiQuery({
+    name: 'search',
+    required: false,
+    type: String,
+    description: 'Search by product name or description',
+  })
+  @ApiQuery({
+    name: 'page',
+    required: false,
+    type: Number,
+    description: 'Page number (default: 1)',
+  })
+  @ApiQuery({
+    name: 'limit',
+    required: false,
+    type: Number,
+    description: 'Items per page (default: 20, max: 100)',
+  })
   @SwaggerApiResponse({ status: 200, description: 'Products retrieved successfully' })
   @SwaggerApiResponse({ status: 401, description: 'Unauthorized' })
   @SwaggerApiResponse({ status: 403, description: 'Forbidden - Admin access required' })
@@ -247,14 +278,17 @@ export class AdminProductsController {
   @Delete(':id')
   @ApiOperation({
     summary: 'Delete product (Admin only)',
-    description: 'Deletes a product. Admin can delete any product regardless of seller. Admin access required.',
+    description:
+      'Deletes a product. Admin can delete any product regardless of seller. Admin access required.',
   })
   @ApiParam({ name: 'id', description: 'Product UUID', type: String })
   @SwaggerApiResponse({ status: 200, description: 'Product deleted successfully' })
   @SwaggerApiResponse({ status: 401, description: 'Unauthorized' })
   @SwaggerApiResponse({ status: 403, description: 'Forbidden - Admin access required' })
   @SwaggerApiResponse({ status: 404, description: 'Product not found' })
-  async deleteProduct(@Param('id', ParseUUIDPipe) id: string): Promise<ApiResponse<{ message: string }>> {
+  async deleteProduct(
+    @Param('id', ParseUUIDPipe) id: string,
+  ): Promise<ApiResponse<{ message: string }>> {
     const result = await this.productsService.deleteProduct(id);
     return {
       data: result,
@@ -262,4 +296,3 @@ export class AdminProductsController {
     };
   }
 }
-

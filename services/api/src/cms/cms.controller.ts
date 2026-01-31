@@ -1,14 +1,4 @@
-import {
-  Controller,
-  Get,
-  Post,
-  Put,
-  Delete,
-  Param,
-  Body,
-  Query,
-  UseGuards,
-} from '@nestjs/common';
+import { Controller, Get, Post, Put, Delete, Param, Body, Query, UseGuards } from '@nestjs/common';
 import {
   ApiTags,
   ApiOperation,
@@ -34,7 +24,10 @@ export class CMSController {
 
   // Pages
   @Get('pages')
-  @ApiOperation({ summary: 'Get all pages', description: 'Retrieves all CMS pages. CMS Editor/Admin access required.' })
+  @ApiOperation({
+    summary: 'Get all pages',
+    description: 'Retrieves all CMS pages. CMS Editor/Admin access required.',
+  })
   @SwaggerApiResponse({ status: 200, description: 'Pages retrieved successfully' })
   @SwaggerApiResponse({ status: 401, description: 'Unauthorized' })
   @SwaggerApiResponse({ status: 403, description: 'Forbidden - CMS Editor/Admin access required' })
@@ -43,7 +36,10 @@ export class CMSController {
   }
 
   @Get('pages/:id')
-  @ApiOperation({ summary: 'Get page by ID', description: 'Retrieves a specific CMS page by ID. CMS Editor/Admin access required.' })
+  @ApiOperation({
+    summary: 'Get page by ID',
+    description: 'Retrieves a specific CMS page by ID. CMS Editor/Admin access required.',
+  })
   @ApiParam({ name: 'id', description: 'Page ID', type: String })
   @SwaggerApiResponse({ status: 200, description: 'Page retrieved successfully' })
   @SwaggerApiResponse({ status: 401, description: 'Unauthorized' })
@@ -54,7 +50,10 @@ export class CMSController {
   }
 
   @Post('pages')
-  @ApiOperation({ summary: 'Create page', description: 'Creates a new CMS page. CMS Editor/Admin access required.' })
+  @ApiOperation({
+    summary: 'Create page',
+    description: 'Creates a new CMS page. CMS Editor/Admin access required.',
+  })
   @ApiBody({
     schema: {
       type: 'object',
@@ -88,7 +87,10 @@ export class CMSController {
   }
 
   @Put('pages/:id')
-  @ApiOperation({ summary: 'Update page', description: 'Updates an existing CMS page. CMS Editor/Admin access required.' })
+  @ApiOperation({
+    summary: 'Update page',
+    description: 'Updates an existing CMS page. CMS Editor/Admin access required.',
+  })
   @ApiParam({ name: 'id', description: 'Page ID', type: String })
   @ApiBody({
     schema: {
@@ -123,7 +125,10 @@ export class CMSController {
   }
 
   @Delete('pages/:id')
-  @ApiOperation({ summary: 'Delete page', description: 'Deletes a CMS page. CMS Editor/Admin access required.' })
+  @ApiOperation({
+    summary: 'Delete page',
+    description: 'Deletes a CMS page. CMS Editor/Admin access required.',
+  })
   @ApiParam({ name: 'id', description: 'Page ID', type: String })
   @SwaggerApiResponse({ status: 200, description: 'Page deleted successfully' })
   @SwaggerApiResponse({ status: 401, description: 'Unauthorized' })
@@ -135,8 +140,17 @@ export class CMSController {
 
   // Banners
   @Get('banners')
-  @ApiOperation({ summary: 'Get all banners', description: 'Retrieves all CMS banners with optional type filtering. CMS Editor/Admin access required.' })
-  @ApiQuery({ name: 'type', required: false, enum: ['hero', 'promotional', 'sidebar'], description: 'Filter by banner type' })
+  @ApiOperation({
+    summary: 'Get all banners',
+    description:
+      'Retrieves all CMS banners with optional type filtering. CMS Editor/Admin access required.',
+  })
+  @ApiQuery({
+    name: 'type',
+    required: false,
+    enum: ['hero', 'promotional', 'sidebar'],
+    description: 'Filter by banner type',
+  })
   @SwaggerApiResponse({ status: 200, description: 'Banners retrieved successfully' })
   @SwaggerApiResponse({ status: 401, description: 'Unauthorized' })
   @SwaggerApiResponse({ status: 403, description: 'Forbidden - CMS Editor/Admin access required' })
@@ -147,7 +161,10 @@ export class CMSController {
   }
 
   @Get('banners/:id')
-  @ApiOperation({ summary: 'Get banner by ID', description: 'Retrieves a specific CMS banner by ID. CMS Editor/Admin access required.' })
+  @ApiOperation({
+    summary: 'Get banner by ID',
+    description: 'Retrieves a specific CMS banner by ID. CMS Editor/Admin access required.',
+  })
   @ApiParam({ name: 'id', description: 'Banner ID', type: String })
   @SwaggerApiResponse({ status: 200, description: 'Banner retrieved successfully' })
   @SwaggerApiResponse({ status: 401, description: 'Unauthorized' })
@@ -158,14 +175,21 @@ export class CMSController {
   }
 
   @Post('banners')
-  @ApiOperation({ summary: 'Create banner', description: 'Creates a new CMS banner. CMS Editor/Admin access required.' })
+  @ApiOperation({
+    summary: 'Create banner',
+    description: 'Creates a new CMS banner. CMS Editor/Admin access required.',
+  })
   @ApiBody({
     schema: {
       type: 'object',
       required: ['title', 'type', 'image'],
       properties: {
         title: { type: 'string', description: 'Banner title' },
-        type: { type: 'string', enum: ['hero', 'promotional', 'sidebar'], description: 'Banner type' },
+        type: {
+          type: 'string',
+          enum: ['hero', 'promotional', 'sidebar'],
+          description: 'Banner type',
+        },
         image: { type: 'string', description: 'Banner image URL' },
         link: { type: 'string', description: 'Banner link URL (optional)' },
         content: { type: 'string', description: 'Banner content (optional)' },
@@ -192,14 +216,21 @@ export class CMSController {
   }
 
   @Put('banners/:id')
-  @ApiOperation({ summary: 'Update banner', description: 'Updates an existing CMS banner. CMS Editor/Admin access required.' })
+  @ApiOperation({
+    summary: 'Update banner',
+    description: 'Updates an existing CMS banner. CMS Editor/Admin access required.',
+  })
   @ApiParam({ name: 'id', description: 'Banner ID', type: String })
   @ApiBody({
     schema: {
       type: 'object',
       properties: {
         title: { type: 'string', description: 'Banner title (optional)' },
-        type: { type: 'string', enum: ['hero', 'promotional', 'sidebar'], description: 'Banner type (optional)' },
+        type: {
+          type: 'string',
+          enum: ['hero', 'promotional', 'sidebar'],
+          description: 'Banner type (optional)',
+        },
         image: { type: 'string', description: 'Banner image URL (optional)' },
         link: { type: 'string', description: 'Banner link URL (optional)' },
         content: { type: 'string', description: 'Banner content (optional)' },
@@ -227,7 +258,10 @@ export class CMSController {
   }
 
   @Delete('banners/:id')
-  @ApiOperation({ summary: 'Delete banner', description: 'Deletes a CMS banner. CMS Editor/Admin access required.' })
+  @ApiOperation({
+    summary: 'Delete banner',
+    description: 'Deletes a CMS banner. CMS Editor/Admin access required.',
+  })
   @ApiParam({ name: 'id', description: 'Banner ID', type: String })
   @SwaggerApiResponse({ status: 200, description: 'Banner deleted successfully' })
   @SwaggerApiResponse({ status: 401, description: 'Unauthorized' })
@@ -239,8 +273,16 @@ export class CMSController {
 
   // Blog Posts
   @Get('blog')
-  @ApiOperation({ summary: 'Get blog posts', description: 'Retrieves all blog posts with optional limit. CMS Editor/Admin access required.' })
-  @ApiQuery({ name: 'limit', required: false, type: Number, description: 'Maximum number of posts to retrieve' })
+  @ApiOperation({
+    summary: 'Get blog posts',
+    description: 'Retrieves all blog posts with optional limit. CMS Editor/Admin access required.',
+  })
+  @ApiQuery({
+    name: 'limit',
+    required: false,
+    type: Number,
+    description: 'Maximum number of posts to retrieve',
+  })
   @SwaggerApiResponse({ status: 200, description: 'Blog posts retrieved successfully' })
   @SwaggerApiResponse({ status: 401, description: 'Unauthorized' })
   @SwaggerApiResponse({ status: 403, description: 'Forbidden - CMS Editor/Admin access required' })
@@ -249,7 +291,10 @@ export class CMSController {
   }
 
   @Get('blog/:id')
-  @ApiOperation({ summary: 'Get blog post by ID', description: 'Retrieves a specific blog post by ID. CMS Editor/Admin access required.' })
+  @ApiOperation({
+    summary: 'Get blog post by ID',
+    description: 'Retrieves a specific blog post by ID. CMS Editor/Admin access required.',
+  })
   @ApiParam({ name: 'id', description: 'Blog post ID', type: String })
   @SwaggerApiResponse({ status: 200, description: 'Blog post retrieved successfully' })
   @SwaggerApiResponse({ status: 401, description: 'Unauthorized' })
@@ -260,7 +305,10 @@ export class CMSController {
   }
 
   @Post('blog')
-  @ApiOperation({ summary: 'Create blog post', description: 'Creates a new blog post. CMS Editor/Admin access required.' })
+  @ApiOperation({
+    summary: 'Create blog post',
+    description: 'Creates a new blog post. CMS Editor/Admin access required.',
+  })
   @ApiBody({
     schema: {
       type: 'object',
@@ -294,7 +342,10 @@ export class CMSController {
   }
 
   @Put('blog/:id')
-  @ApiOperation({ summary: 'Update blog post', description: 'Updates an existing blog post. CMS Editor/Admin access required.' })
+  @ApiOperation({
+    summary: 'Update blog post',
+    description: 'Updates an existing blog post. CMS Editor/Admin access required.',
+  })
   @ApiParam({ name: 'id', description: 'Blog post ID', type: String })
   @ApiBody({
     schema: {
@@ -306,7 +357,11 @@ export class CMSController {
         content: { type: 'string', description: 'Blog post content (optional)' },
         coverImage: { type: 'string', description: 'Cover image URL (optional)' },
         author: { type: 'string', description: 'Author name (optional)' },
-        publishedAt: { type: 'string', format: 'date-time', description: 'Publication date (optional)' },
+        publishedAt: {
+          type: 'string',
+          format: 'date-time',
+          description: 'Publication date (optional)',
+        },
       },
     },
   })
@@ -331,7 +386,10 @@ export class CMSController {
   }
 
   @Delete('blog/:id')
-  @ApiOperation({ summary: 'Delete blog post', description: 'Deletes a blog post. CMS Editor/Admin access required.' })
+  @ApiOperation({
+    summary: 'Delete blog post',
+    description: 'Deletes a blog post. CMS Editor/Admin access required.',
+  })
   @ApiParam({ name: 'id', description: 'Blog post ID', type: String })
   @SwaggerApiResponse({ status: 200, description: 'Blog post deleted successfully' })
   @SwaggerApiResponse({ status: 401, description: 'Unauthorized' })
@@ -342,7 +400,10 @@ export class CMSController {
   }
 
   @Post('blog/:id/publish')
-  @ApiOperation({ summary: 'Publish blog post', description: 'Publishes a blog post. CMS Editor/Admin access required.' })
+  @ApiOperation({
+    summary: 'Publish blog post',
+    description: 'Publishes a blog post. CMS Editor/Admin access required.',
+  })
   @ApiParam({ name: 'id', description: 'Blog post ID', type: String })
   @SwaggerApiResponse({ status: 200, description: 'Blog post published successfully' })
   @SwaggerApiResponse({ status: 401, description: 'Unauthorized' })
@@ -352,7 +413,3 @@ export class CMSController {
     return this.cmsService.publishBlogPost(id);
   }
 }
-
-
-
-

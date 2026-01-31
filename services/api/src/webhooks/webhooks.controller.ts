@@ -67,9 +67,7 @@ export class WebhooksController {
     description: 'Retrieves all webhooks for the authenticated user or seller.',
   })
   @SwaggerApiResponse({ status: 200, description: 'Webhooks retrieved successfully' })
-  async findAll(
-    @Request() req: any,
-  ): Promise<ApiResponse<any[]>> {
+  async findAll(@Request() req: any): Promise<ApiResponse<any[]>> {
     let sellerId: string | undefined;
     if (req.user.role === 'SELLER' || req.user.role === 'B2C_SELLER') {
       const seller = await this.webhooksService['prisma'].seller.findUnique({
@@ -145,9 +143,7 @@ export class WebhooksController {
   })
   @ApiParam({ name: 'id', description: 'Delivery UUID', type: String })
   @SwaggerApiResponse({ status: 200, description: 'Webhook delivery retried' })
-  async retryDelivery(
-    @Param('id') id: string,
-  ): Promise<ApiResponse<any>> {
+  async retryDelivery(@Param('id') id: string): Promise<ApiResponse<any>> {
     const result = await this.webhooksService.retryDelivery(id);
     return {
       data: result,

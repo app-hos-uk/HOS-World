@@ -36,7 +36,8 @@ export class TicketsController {
   @ApiBearerAuth('JWT-auth')
   @ApiOperation({
     summary: 'Create support ticket',
-    description: 'Creates a new support ticket. Users can create tickets for orders, products, returns, or general support.',
+    description:
+      'Creates a new support ticket. Users can create tickets for orders, products, returns, or general support.',
   })
   @ApiBody({
     schema: {
@@ -49,7 +50,15 @@ export class TicketsController {
         subject: { type: 'string' },
         category: {
           type: 'string',
-          enum: ['ORDER_INQUIRY', 'PRODUCT_QUESTION', 'RETURN_REQUEST', 'PAYMENT_ISSUE', 'TECHNICAL_SUPPORT', 'SELLER_SUPPORT', 'OTHER'],
+          enum: [
+            'ORDER_INQUIRY',
+            'PRODUCT_QUESTION',
+            'RETURN_REQUEST',
+            'PAYMENT_ISSUE',
+            'TECHNICAL_SUPPORT',
+            'SELLER_SUPPORT',
+            'OTHER',
+          ],
         },
         priority: { type: 'string', enum: ['LOW', 'MEDIUM', 'HIGH', 'URGENT'] },
         initialMessage: { type: 'string' },
@@ -66,7 +75,14 @@ export class TicketsController {
       sellerId?: string;
       orderId?: string;
       subject: string;
-      category: 'ORDER_INQUIRY' | 'PRODUCT_QUESTION' | 'RETURN_REQUEST' | 'PAYMENT_ISSUE' | 'TECHNICAL_SUPPORT' | 'SELLER_SUPPORT' | 'OTHER';
+      category:
+        | 'ORDER_INQUIRY'
+        | 'PRODUCT_QUESTION'
+        | 'RETURN_REQUEST'
+        | 'PAYMENT_ISSUE'
+        | 'TECHNICAL_SUPPORT'
+        | 'SELLER_SUPPORT'
+        | 'OTHER';
       priority?: 'LOW' | 'MEDIUM' | 'HIGH' | 'URGENT';
       initialMessage: string;
     },
@@ -96,9 +112,24 @@ export class TicketsController {
   @ApiQuery({ name: 'category', required: false, type: String, description: 'Filter by category' })
   @ApiQuery({ name: 'priority', required: false, type: String, description: 'Filter by priority' })
   @ApiQuery({ name: 'status', required: false, type: String, description: 'Filter by status' })
-  @ApiQuery({ name: 'assignedTo', required: false, type: String, description: 'Filter by assigned user ID' })
-  @ApiQuery({ name: 'startDate', required: false, type: String, description: 'Start date (ISO format)' })
-  @ApiQuery({ name: 'endDate', required: false, type: String, description: 'End date (ISO format)' })
+  @ApiQuery({
+    name: 'assignedTo',
+    required: false,
+    type: String,
+    description: 'Filter by assigned user ID',
+  })
+  @ApiQuery({
+    name: 'startDate',
+    required: false,
+    type: String,
+    description: 'Start date (ISO format)',
+  })
+  @ApiQuery({
+    name: 'endDate',
+    required: false,
+    type: String,
+    description: 'End date (ISO format)',
+  })
   @ApiQuery({ name: 'page', required: false, type: String, description: 'Page number' })
   @ApiQuery({ name: 'limit', required: false, type: String, description: 'Items per page' })
   @SwaggerApiResponse({ status: 200, description: 'Tickets retrieved successfully' })
@@ -141,16 +172,15 @@ export class TicketsController {
   @ApiBearerAuth('JWT-auth')
   @ApiOperation({
     summary: 'Get ticket by ID',
-    description: 'Retrieves a specific ticket by ID. Users can only view their own tickets unless they are admin.',
+    description:
+      'Retrieves a specific ticket by ID. Users can only view their own tickets unless they are admin.',
   })
   @ApiParam({ name: 'id', description: 'Ticket UUID', type: String })
   @SwaggerApiResponse({ status: 200, description: 'Ticket retrieved successfully' })
   @SwaggerApiResponse({ status: 401, description: 'Unauthorized' })
   @SwaggerApiResponse({ status: 403, description: 'Forbidden - Cannot access this ticket' })
   @SwaggerApiResponse({ status: 404, description: 'Ticket not found' })
-  async getTicketById(
-    @Param('id', ParseUUIDPipe) id: string,
-  ): Promise<ApiResponse<any>> {
+  async getTicketById(@Param('id', ParseUUIDPipe) id: string): Promise<ApiResponse<any>> {
     const ticket = await this.ticketsService.getTicketById(id);
     return {
       data: ticket,
@@ -305,7 +335,10 @@ export class TicketsController {
   @SwaggerApiResponse({ status: 404, description: 'Ticket not found' })
   async updateTicketStatus(
     @Param('id', ParseUUIDPipe) id: string,
-    @Body() body: { status: 'OPEN' | 'ASSIGNED' | 'IN_PROGRESS' | 'WAITING_CUSTOMER' | 'RESOLVED' | 'CLOSED' },
+    @Body()
+    body: {
+      status: 'OPEN' | 'ASSIGNED' | 'IN_PROGRESS' | 'WAITING_CUSTOMER' | 'RESOLVED' | 'CLOSED';
+    },
   ): Promise<ApiResponse<any>> {
     const ticket = await this.ticketsService.updateTicketStatus(id, body.status);
     return {
@@ -314,4 +347,3 @@ export class TicketsController {
     };
   }
 }
-

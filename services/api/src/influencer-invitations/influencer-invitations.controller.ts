@@ -64,9 +64,14 @@ export class InfluencerInvitationsController {
   @ApiBearerAuth('JWT-auth')
   @ApiOperation({
     summary: 'List all influencer invitations',
-    description: 'Get paginated list of all influencer invitations. Admin/Marketing access required.',
+    description:
+      'Get paginated list of all influencer invitations. Admin/Marketing access required.',
   })
-  @ApiQuery({ name: 'status', required: false, enum: ['PENDING', 'ACCEPTED', 'EXPIRED', 'CANCELLED'] })
+  @ApiQuery({
+    name: 'status',
+    required: false,
+    enum: ['PENDING', 'ACCEPTED', 'EXPIRED', 'CANCELLED'],
+  })
   @ApiQuery({ name: 'page', required: false, type: Number })
   @ApiQuery({ name: 'limit', required: false, type: Number })
   @SwaggerApiResponse({ status: 200, description: 'Invitations retrieved successfully' })

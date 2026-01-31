@@ -43,10 +43,10 @@ export class BundleController {
     @Body() createDto: CreateBundleDto,
   ): Promise<ApiResponse<any>> {
     const sellerId = req.user.role === 'ADMIN' ? createDto.sellerId : req.user.id;
-    
+
     // Create bundle product
     const bundle = await this.productsService.createBundle(sellerId, createDto);
-    
+
     return {
       data: bundle,
       message: 'Bundle product created successfully',
@@ -61,11 +61,9 @@ export class BundleController {
   })
   @ApiParam({ name: 'id', description: 'Bundle product UUID', type: String })
   @SwaggerApiResponse({ status: 200, description: 'Bundle product retrieved successfully' })
-  async getBundle(
-    @Param('id') id: string,
-  ): Promise<ApiResponse<any>> {
+  async getBundle(@Param('id') id: string): Promise<ApiResponse<any>> {
     const bundle = await this.productsService.findOne(id, undefined, true); // Include bundle items
-    
+
     return {
       data: bundle,
       message: 'Bundle product retrieved successfully',

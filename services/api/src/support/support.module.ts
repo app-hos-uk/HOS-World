@@ -15,4 +15,3 @@ import { AIModule } from '../ai/ai.module';
   exports: [TicketsService, ChatbotService, KnowledgeBaseService],
 })
 export class SupportModule {}
-

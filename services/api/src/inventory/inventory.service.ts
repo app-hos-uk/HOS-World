@@ -1,9 +1,4 @@
-import {
-  Injectable,
-  NotFoundException,
-  BadRequestException,
-  Logger,
-} from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException, Logger } from '@nestjs/common';
 import { PrismaService } from '../database/prisma.service';
 import { CreateWarehouseDto } from './dto/create-warehouse.dto';
 import { CreateInventoryLocationDto } from './dto/create-inventory-location.dto';
@@ -172,10 +167,7 @@ export class InventoryService {
 
     for (const location of locations) {
       totalQuantity += location.quantity;
-      const reserved = location.stockReservations.reduce(
-        (sum, res) => sum + res.quantity,
-        0,
-      );
+      const reserved = location.stockReservations.reduce((sum, res) => sum + res.quantity, 0);
       totalReserved += reserved;
       totalAvailable += location.quantity - reserved;
     }
@@ -214,10 +206,7 @@ export class InventoryService {
     }
 
     // Calculate available stock (quantity - reserved)
-    const reserved = location.stockReservations.reduce(
-      (sum, res) => sum + res.quantity,
-      0,
-    );
+    const reserved = location.stockReservations.reduce((sum, res) => sum + res.quantity, 0);
     const available = location.quantity - reserved;
 
     if (available < reserveDto.quantity) {
@@ -416,9 +405,7 @@ export class InventoryService {
   /**
    * Allocate stock for order (auto-select warehouse)
    */
-  async allocateStockForOrder(
-    orderItems: Array<{ productId: string; quantity: number }>,
-  ) {
+  async allocateStockForOrder(orderItems: Array<{ productId: string; quantity: number }>) {
     const allocations: any[] = [];
 
     for (const item of orderItems) {
@@ -447,10 +434,7 @@ export class InventoryService {
       for (const location of locations) {
         if (remainingQuantity <= 0) break;
 
-        const reserved = location.stockReservations.reduce(
-          (sum, res) => sum + res.quantity,
-          0,
-        );
+        const reserved = location.stockReservations.reduce((sum, res) => sum + res.quantity, 0);
         const available = location.quantity - reserved;
 
         if (available > 0) {
@@ -574,7 +558,9 @@ export class InventoryService {
     }
 
     if (transfer.status !== 'PENDING' && transfer.status !== 'IN_TRANSIT') {
-      throw new BadRequestException(`Transfer cannot be completed. Current status: ${transfer.status}`);
+      throw new BadRequestException(
+        `Transfer cannot be completed. Current status: ${transfer.status}`,
+      );
     }
 
     // Use transaction to ensure atomicity
@@ -963,26 +949,17 @@ export class InventoryService {
         }
 
         // State match
-        if (
-          shippingAddress.state &&
-          location.warehouse.state === shippingAddress.state
-        ) {
+        if (shippingAddress.state && location.warehouse.state === shippingAddress.state) {
           priority += 100;
         }
 
         // City match
-        if (
-          shippingAddress.city &&
-          location.warehouse.city === shippingAddress.city
-        ) {
+        if (shippingAddress.city && location.warehouse.city === shippingAddress.city) {
           priority += 10;
         }
 
         // Prefer warehouses with more stock
-        const reserved = location.stockReservations.reduce(
-          (sum, res) => sum + res.quantity,
-          0,
-        );
+        const reserved = location.stockReservations.reduce((sum, res) => sum + res.quantity, 0);
         const available = location.quantity - reserved;
         priority += Math.min(available, 100); // Cap at 100 to not override location priority
 
@@ -1040,11 +1017,13 @@ export class InventoryService {
       this.prisma.warehouse.count(),
       this.prisma.warehouse.count({ where: { isActive: true } }),
       this.prisma.inventoryLocation.count(),
-      this.prisma.inventoryLocation.count({
-        where: {
-          quantity: { lte: this.prisma.inventoryLocation.fields.lowStockThreshold },
-        },
-      }).catch(() => 0), // Fallback if the complex query fails
+      this.prisma.inventoryLocation
+        .count({
+          where: {
+            quantity: { lte: this.prisma.inventoryLocation.fields.lowStockThreshold },
+          },
+        })
+        .catch(() => 0), // Fallback if the complex query fails
       this.prisma.inventoryLocation.aggregate({
         _sum: { quantity: true },
       }),
@@ -1061,7 +1040,7 @@ export class InventoryService {
       const locations = await this.prisma.inventoryLocation.findMany({
         select: { quantity: true, lowStockThreshold: true },
       });
-      lowStockCount = locations.filter(l => l.quantity <= l.lowStockThreshold).length;
+      lowStockCount = locations.filter((l) => l.quantity <= l.lowStockThreshold).length;
     }
 
     return {
@@ -1071,19 +1050,15 @@ export class InventoryService {
       lowStockItems: lowStockCount,
       totalQuantity: totalQuantity._sum.quantity || 0,
       totalProducts: totalLocations,
-      totalValue: Array.isArray(totalValue) && totalValue[0] 
-        ? Number(totalValue[0].total_value) || 0 
-        : 0,
+      totalValue:
+        Array.isArray(totalValue) && totalValue[0] ? Number(totalValue[0].total_value) || 0 : 0,
     };
   }
 
   /**
    * Get inventory locations with filters
    */
-  async getInventoryLocations(filters: {
-    warehouseId?: string;
-    productId?: string;
-  }) {
+  async getInventoryLocations(filters: { warehouseId?: string; productId?: string }) {
     const where: any = {};
     if (filters.warehouseId) where.warehouseId = filters.warehouseId;
     if (filters.productId) where.productId = filters.productId;
@@ -1129,7 +1104,7 @@ export class InventoryService {
     // Build update data object with only defined values
     // This prevents undefined values from setting fields to null
     const updateData: Record<string, any> = {};
-    
+
     if (updateDto.name !== undefined) updateData.name = updateDto.name;
     if (updateDto.address !== undefined) updateData.address = updateDto.address;
     if (updateDto.city !== undefined) updateData.city = updateDto.city;

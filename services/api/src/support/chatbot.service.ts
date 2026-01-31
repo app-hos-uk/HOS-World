@@ -21,8 +21,9 @@ export class ChatbotService {
     };
   }) {
     // Build context for the AI
-    let contextPrompt = 'You are a helpful customer support assistant for an e-commerce marketplace. ';
-    
+    let contextPrompt =
+      'You are a helpful customer support assistant for an e-commerce marketplace. ';
+
     if (data.userId) {
       const user = await this.prisma.user.findUnique({
         where: { id: data.userId },
@@ -108,9 +109,7 @@ export class ChatbotService {
     reason?: string;
   }) {
     // Create a support ticket from the chatbot conversation
-    const ticketsService = new (await import('./tickets.service')).TicketsService(
-      this.prisma,
-    );
+    const ticketsService = new (await import('./tickets.service')).TicketsService(this.prisma);
 
     const ticket = await ticketsService.createTicket({
       userId: data.userId,
@@ -124,7 +123,8 @@ export class ChatbotService {
     return {
       ticketId: ticket.id,
       ticketNumber: ticket.ticketNumber,
-      message: 'Your conversation has been escalated to a human agent. A support ticket has been created.',
+      message:
+        'Your conversation has been escalated to a human agent. A support ticket has been created.',
     };
   }
 
@@ -169,4 +169,3 @@ export class ChatbotService {
     return [];
   }
 }
-

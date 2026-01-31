@@ -1,12 +1,12 @@
 /**
  * SELLER Role to B2C_SELLER Migration Script
- * 
+ *
  * This script migrates users with the legacy SELLER role to B2C_SELLER.
  * The SELLER role was marked for deprecation in favor of B2C_SELLER which
  * better distinguishes from WHOLESALER sellers.
- * 
+ *
  * IMPORTANT: Run this script BEFORE removing SELLER from the UserRole enum.
- * 
+ *
  * Usage:
  * 1. Take a database backup before running
  * 2. Run: npx ts-node src/database/migrate-seller-role.ts
@@ -72,9 +72,9 @@ async function main() {
 
   // Step 3: Migrate users
   console.log('\nStep 3: Migrating users...');
-  
+
   const dryRun = process.argv.includes('--dry-run');
-  
+
   if (dryRun) {
     console.log('\n[DRY RUN MODE] No changes will be made.');
     console.log(`Would update ${sellerCount} users from SELLER to B2C_SELLER`);

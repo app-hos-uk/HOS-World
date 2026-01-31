@@ -153,14 +153,10 @@ export class IntegrationsService {
    */
   async findAll(category?: string): Promise<IntegrationResponseDto[]> {
     const where = category ? { category } : {};
-    
+
     const integrations = await this.prisma.integrationConfig.findMany({
       where,
-      orderBy: [
-        { category: 'asc' },
-        { priority: 'desc' },
-        { displayName: 'asc' },
-      ],
+      orderBy: [{ category: 'asc' }, { priority: 'desc' }, { displayName: 'asc' }],
     });
 
     return integrations.map((i) => this.toResponseDto(i));
@@ -184,10 +180,7 @@ export class IntegrationsService {
   /**
    * Get integration by category and provider
    */
-  async findByProvider(
-    category: string,
-    provider: string,
-  ): Promise<IntegrationResponseDto | null> {
+  async findByProvider(category: string, provider: string): Promise<IntegrationResponseDto | null> {
     const integration = await this.prisma.integrationConfig.findUnique({
       where: {
         category_provider: { category, provider },
@@ -535,7 +528,7 @@ export class IntegrationsService {
   ): Promise<TestConnectionResultDto> {
     // Provider-specific test implementations
     // These will be replaced with actual API calls in later phases
-    
+
     switch (provider) {
       case 'royal_mail':
         return this.testRoyalMailConnection(credentials, isTestMode);
@@ -560,7 +553,7 @@ export class IntegrationsService {
   }
 
   // Placeholder test methods - will be implemented with real API calls later
-  
+
   private async testRoyalMailConnection(
     credentials: Record<string, any>,
     isTestMode: boolean,

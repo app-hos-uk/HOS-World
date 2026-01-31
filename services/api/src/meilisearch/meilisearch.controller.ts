@@ -34,19 +34,59 @@ export class MeilisearchController {
     summary: 'Search products with Meilisearch',
     description: 'Fast, typo-tolerant product search with faceted filtering. Public endpoint.',
   })
-  @ApiQuery({ name: 'q', required: false, type: String, description: 'Search query (supports typos)' })
-  @ApiQuery({ name: 'category', required: false, type: String, description: 'Filter by category name' })
-  @ApiQuery({ name: 'categoryId', required: false, type: String, description: 'Filter by category ID' })
+  @ApiQuery({
+    name: 'q',
+    required: false,
+    type: String,
+    description: 'Search query (supports typos)',
+  })
+  @ApiQuery({
+    name: 'category',
+    required: false,
+    type: String,
+    description: 'Filter by category name',
+  })
+  @ApiQuery({
+    name: 'categoryId',
+    required: false,
+    type: String,
+    description: 'Filter by category ID',
+  })
   @ApiQuery({ name: 'fandom', required: false, type: String, description: 'Filter by fandom' })
   @ApiQuery({ name: 'sellerId', required: false, type: String, description: 'Filter by seller ID' })
   @ApiQuery({ name: 'minPrice', required: false, type: Number, description: 'Minimum price' })
   @ApiQuery({ name: 'maxPrice', required: false, type: Number, description: 'Maximum price' })
-  @ApiQuery({ name: 'minRating', required: false, type: Number, description: 'Minimum rating (0-5)' })
-  @ApiQuery({ name: 'inStock', required: false, type: String, description: 'Only show in-stock items (true/false)' })
+  @ApiQuery({
+    name: 'minRating',
+    required: false,
+    type: Number,
+    description: 'Minimum rating (0-5)',
+  })
+  @ApiQuery({
+    name: 'inStock',
+    required: false,
+    type: String,
+    description: 'Only show in-stock items (true/false)',
+  })
   @ApiQuery({ name: 'tags', required: false, type: String, description: 'Comma-separated tags' })
-  @ApiQuery({ name: 'sort', required: false, type: String, description: 'Sort: price_asc, price_desc, newest, rating, popular, name_asc, name_desc' })
-  @ApiQuery({ name: 'page', required: false, type: Number, description: 'Page number (default: 1)' })
-  @ApiQuery({ name: 'limit', required: false, type: Number, description: 'Items per page (default: 20, max: 100)' })
+  @ApiQuery({
+    name: 'sort',
+    required: false,
+    type: String,
+    description: 'Sort: price_asc, price_desc, newest, rating, popular, name_asc, name_desc',
+  })
+  @ApiQuery({
+    name: 'page',
+    required: false,
+    type: Number,
+    description: 'Page number (default: 1)',
+  })
+  @ApiQuery({
+    name: 'limit',
+    required: false,
+    type: Number,
+    description: 'Items per page (default: 20, max: 100)',
+  })
   @SwaggerApiResponse({ status: 200, description: 'Search results returned successfully' })
   async search(
     @Query('q') query: string = '',
@@ -77,7 +117,11 @@ export class MeilisearchController {
     if (maxPrice) filters.maxPrice = parseFloat(maxPrice);
     if (minRating) filters.minRating = parseFloat(minRating);
     if (inStock === 'true') filters.inStock = true;
-    if (tags) filters.tags = tags.split(',').map((t) => t.trim()).filter(Boolean);
+    if (tags)
+      filters.tags = tags
+        .split(',')
+        .map((t) => t.trim())
+        .filter(Boolean);
 
     const result = await this.meilisearchService.search(query, filters);
 
@@ -103,7 +147,12 @@ export class MeilisearchController {
     description: 'Optimized for as-you-type search with minimal response payload.',
   })
   @ApiQuery({ name: 'q', required: true, type: String, description: 'Search query' })
-  @ApiQuery({ name: 'limit', required: false, type: Number, description: 'Max results (default: 5)' })
+  @ApiQuery({
+    name: 'limit',
+    required: false,
+    type: Number,
+    description: 'Max results (default: 5)',
+  })
   @SwaggerApiResponse({ status: 200, description: 'Instant search results' })
   async instantSearch(
     @Query('q') query: string,
@@ -148,7 +197,12 @@ export class MeilisearchController {
     description: 'Returns product name suggestions based on query prefix.',
   })
   @ApiQuery({ name: 'q', required: true, type: String, description: 'Search prefix (min 2 chars)' })
-  @ApiQuery({ name: 'limit', required: false, type: Number, description: 'Max suggestions (default: 10)' })
+  @ApiQuery({
+    name: 'limit',
+    required: false,
+    type: Number,
+    description: 'Max suggestions (default: 10)',
+  })
   @SwaggerApiResponse({ status: 200, description: 'Suggestions returned successfully' })
   async getSuggestions(
     @Query('q') prefix: string,

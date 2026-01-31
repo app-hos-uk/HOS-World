@@ -1,8 +1,4 @@
-import {
-  Injectable,
-  NotFoundException,
-  BadRequestException,
-} from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../database/prisma.service';
 import { NotificationsService } from '../notifications/notifications.service';
 import { SetPricingDto, ApprovePricingDto } from './dto/set-pricing.dto';
@@ -47,11 +43,7 @@ export class FinanceService {
     return submissions;
   }
 
-  async setPricing(
-    submissionId: string,
-    userId: string,
-    setPricingDto: SetPricingDto,
-  ) {
+  async setPricing(submissionId: string, userId: string, setPricingDto: SetPricingDto) {
     const submission = await this.prisma.productSubmission.findUnique({
       where: { id: submissionId },
     });
@@ -61,9 +53,7 @@ export class FinanceService {
     }
 
     if (submission.status !== 'MARKETING_COMPLETED') {
-      throw new BadRequestException(
-        'Pricing can only be set for marketing-completed submissions',
-      );
+      throw new BadRequestException('Pricing can only be set for marketing-completed submissions');
     }
 
     const productData = submission.productData as any;
@@ -104,9 +94,7 @@ export class FinanceService {
     }
 
     if (submission.status !== 'FINANCE_PENDING') {
-      throw new BadRequestException(
-        `Cannot approve submission in status: ${submission.status}`,
-      );
+      throw new BadRequestException(`Cannot approve submission in status: ${submission.status}`);
     }
 
     const updated = await this.prisma.productSubmission.update({
@@ -153,9 +141,7 @@ export class FinanceService {
     }
 
     if (submission.status !== 'FINANCE_PENDING') {
-      throw new BadRequestException(
-        `Cannot reject submission in status: ${submission.status}`,
-      );
+      throw new BadRequestException(`Cannot reject submission in status: ${submission.status}`);
     }
 
     const updated = await this.prisma.productSubmission.update({
@@ -218,12 +204,7 @@ export class FinanceService {
   }
 
   async getDashboardStats() {
-    const [
-      pending,
-      approved,
-      rejected,
-      total,
-    ] = await Promise.all([
+    const [pending, approved, rejected, total] = await Promise.all([
       this.prisma.productSubmission.count({
         where: { status: 'FINANCE_PENDING' },
       }),
@@ -250,4 +231,3 @@ export class FinanceService {
     };
   }
 }
-

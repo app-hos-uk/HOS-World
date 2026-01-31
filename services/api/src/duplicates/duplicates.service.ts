@@ -61,11 +61,7 @@ export class DuplicatesService {
       }
 
       // Check barcode match (exact match = 100% similarity)
-      if (
-        productData.barcode &&
-        product.barcode &&
-        productData.barcode === product.barcode
-      ) {
+      if (productData.barcode && product.barcode && productData.barcode === product.barcode) {
         similarityScore = 100;
         reasons.push('Exact barcode match');
         duplicates.push({
@@ -250,4 +246,3 @@ export class DuplicatesService {
     return duplicates;
   }
 }
-

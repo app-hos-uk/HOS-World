@@ -82,4 +82,3 @@ export class UpdateProductDto {
   @IsOptional()
   status?: string;
 }
-

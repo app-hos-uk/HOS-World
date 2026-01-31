@@ -64,10 +64,7 @@ export class PromotionsService {
       where: {
         status: PromotionStatus.ACTIVE,
         startDate: { lte: now },
-        OR: [
-          { endDate: null },
-          { endDate: { gte: now } },
-        ],
+        OR: [{ endDate: null }, { endDate: { gte: now } }],
         ...(sellerId ? { sellerId } : { sellerId: null }), // Platform-wide or seller-specific
       },
       orderBy: { priority: 'desc' },
@@ -236,14 +233,10 @@ export class PromotionsService {
     const conditions = promotion.conditions as PromotionConditions;
     if (conditions.cartValue) {
       if (conditions.cartValue.min && cartValue < conditions.cartValue.min) {
-        throw new BadRequestException(
-          `Minimum cart value of ${conditions.cartValue.min} required`,
-        );
+        throw new BadRequestException(`Minimum cart value of ${conditions.cartValue.min} required`);
       }
       if (conditions.cartValue.max && cartValue > conditions.cartValue.max) {
-        throw new BadRequestException(
-          `Maximum cart value of ${conditions.cartValue.max} exceeded`,
-        );
+        throw new BadRequestException(`Maximum cart value of ${conditions.cartValue.max} exceeded`);
       }
     }
 
@@ -298,11 +291,7 @@ export class PromotionsService {
     // Apply coupon if provided
     if (couponCode) {
       try {
-        const couponResult = await this.validateCoupon(
-          couponCode,
-          userId,
-          cartSubtotal,
-        );
+        const couponResult = await this.validateCoupon(couponCode, userId, cartSubtotal);
         const discount = this.calculateDiscount(
           couponResult.promotion as PromotionWithDetails,
           cartSubtotal,
@@ -327,7 +316,9 @@ export class PromotionsService {
       }
 
       // Check if promotion applies
-      if (this.promotionApplies(promotion as PromotionWithDetails, cartItems, cartSubtotal, userId)) {
+      if (
+        this.promotionApplies(promotion as PromotionWithDetails, cartItems, cartSubtotal, userId)
+      ) {
         const discount = this.calculateDiscount(promotion as PromotionWithDetails, cartSubtotal);
         if (discount.gt(0)) {
           totalDiscount = totalDiscount.add(discount);
@@ -381,10 +372,7 @@ export class PromotionsService {
 
     // Check minimum quantity
     if (conditions.minQuantity) {
-      const totalQuantity = cartItems.reduce(
-        (sum, item) => sum + item.quantity,
-        0,
-      );
+      const totalQuantity = cartItems.reduce((sum, item) => sum + item.quantity, 0);
       if (totalQuantity < conditions.minQuantity) {
         return false;
       }
@@ -414,9 +402,7 @@ export class PromotionsService {
     // Check if coupon will be exhausted
     const newUsageCount = coupon.usageCount + 1;
     const newStatus =
-      coupon.usageLimit && newUsageCount >= coupon.usageLimit
-        ? 'EXHAUSTED'
-        : coupon.status;
+      coupon.usageLimit && newUsageCount >= coupon.usageLimit ? 'EXHAUSTED' : coupon.status;
 
     // Update coupon usage count and status
     await this.prisma.coupon.update({
@@ -458,7 +444,7 @@ export class PromotionsService {
     }
 
     if (cart.userId !== userId) {
-      throw new ForbiddenException('Cannot modify another user\'s cart');
+      throw new ForbiddenException("Cannot modify another user's cart");
     }
 
     const cartSubtotal = cart.items.reduce(
@@ -492,7 +478,7 @@ export class PromotionsService {
     }
 
     if (cart.userId !== userId) {
-      throw new ForbiddenException('Cannot modify another user\'s cart');
+      throw new ForbiddenException("Cannot modify another user's cart");
     }
 
     return this.prisma.cart.update({

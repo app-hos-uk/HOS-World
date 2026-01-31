@@ -157,12 +157,14 @@ export class AttributesService {
       const baseSlug = slugify(data.name);
       slug = baseSlug;
       let counter = 1;
-      while (await this.prisma.attribute.findFirst({
-        where: {
-          slug,
-          id: { not: id },
-        },
-      })) {
+      while (
+        await this.prisma.attribute.findFirst({
+          where: {
+            slug,
+            id: { not: id },
+          },
+        })
+      ) {
         slug = `${baseSlug}-${counter}`;
         counter++;
       }
@@ -224,7 +226,9 @@ export class AttributesService {
     }
 
     if (attribute.type !== 'SELECT') {
-      throw new BadRequestException('Attribute values are only available for SELECT type attributes');
+      throw new BadRequestException(
+        'Attribute values are only available for SELECT type attributes',
+      );
     }
 
     return this.prisma.attributeValue.findMany({
@@ -251,12 +255,14 @@ export class AttributesService {
     let slug = baseSlug;
     let counter = 1;
 
-    while (await this.prisma.attributeValue.findFirst({
-      where: {
-        attributeId,
-        slug,
-      },
-    })) {
+    while (
+      await this.prisma.attributeValue.findFirst({
+        where: {
+          attributeId,
+          slug,
+        },
+      })
+    ) {
       slug = `${baseSlug}-${counter}`;
       counter++;
     }
@@ -285,13 +291,15 @@ export class AttributesService {
       const baseSlug = slugify(data.value);
       slug = baseSlug;
       let counter = 1;
-      while (await this.prisma.attributeValue.findFirst({
-        where: {
-          attributeId: attributeValue.attributeId,
-          slug,
-          id: { not: id },
-        },
-      })) {
+      while (
+        await this.prisma.attributeValue.findFirst({
+          where: {
+            attributeId: attributeValue.attributeId,
+            slug,
+            id: { not: id },
+          },
+        })
+      ) {
         slug = `${baseSlug}-${counter}`;
         counter++;
       }
@@ -365,4 +373,3 @@ export class AttributesService {
     };
   }
 }
-

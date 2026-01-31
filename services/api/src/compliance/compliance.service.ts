@@ -15,7 +15,7 @@ export class ComplianceService {
   // Country-specific compliance requirements
   private readonly countryRequirements: Record<string, CountryRequirements> = {
     GB: {
-      vatRate: 0.20, // 20% VAT
+      vatRate: 0.2, // 20% VAT
       requiresAgeVerification: false,
       dataRetentionDays: 2555, // 7 years for financial records
       requiresCookieConsent: true,
@@ -36,7 +36,7 @@ export class ComplianceService {
       paymentMethods: ['stripe', 'klarna'],
     },
     FR: {
-      vatRate: 0.20, // 20% VAT
+      vatRate: 0.2, // 20% VAT
       requiresAgeVerification: false,
       dataRetentionDays: 1825, // 5 years
       requiresCookieConsent: true,
@@ -98,4 +98,3 @@ export class ComplianceService {
     return requirements.paymentMethods || ['stripe'];
   }
 }
-

@@ -41,6 +41,7 @@ export default function AdminProductAnalyticsPage() {
 
   useEffect(() => {
     fetchData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [dateRange, limit]);
 
   const fetchData = async () => {

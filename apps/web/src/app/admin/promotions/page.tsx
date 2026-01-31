@@ -29,6 +29,7 @@ export default function AdminPromotionsPage() {
 
   useEffect(() => {
     fetchPromotions();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const fetchPromotions = async () => {

@@ -1,12 +1,4 @@
-import {
-  Controller,
-  Get,
-  Post,
-  Body,
-  Query,
-  UseGuards,
-  Request,
-} from '@nestjs/common';
+import { Controller, Get, Post, Body, Query, UseGuards, Request } from '@nestjs/common';
 import {
   ApiTags,
   ApiOperation,
@@ -34,7 +26,8 @@ export class ReferralsController {
   })
   @SwaggerApiResponse({ status: 201, description: 'Referral tracked successfully' })
   async track(
-    @Body() body: {
+    @Body()
+    body: {
       referralCode: string;
       visitorId?: string;
       landingPage?: string;

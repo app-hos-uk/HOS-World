@@ -25,4 +25,3 @@ import { RedisService } from './redis.service';
   exports: [CacheService, RedisService],
 })
 export class CacheModule {}
-

@@ -23,11 +23,27 @@ export class AdminUsersController {
   @Get('users')
   @ApiOperation({
     summary: 'Get all users (Admin only)',
-    description: 'Retrieves a paginated list of all users. Supports search and role filtering. Admin access required.',
+    description:
+      'Retrieves a paginated list of all users. Supports search and role filtering. Admin access required.',
   })
-  @ApiQuery({ name: 'page', required: false, type: Number, description: 'Page number (default: 1)' })
-  @ApiQuery({ name: 'limit', required: false, type: Number, description: 'Items per page (default: 20, max: 100)' })
-  @ApiQuery({ name: 'search', required: false, type: String, description: 'Search by email, first name, or last name' })
+  @ApiQuery({
+    name: 'page',
+    required: false,
+    type: Number,
+    description: 'Page number (default: 1)',
+  })
+  @ApiQuery({
+    name: 'limit',
+    required: false,
+    type: Number,
+    description: 'Items per page (default: 20, max: 100)',
+  })
+  @ApiQuery({
+    name: 'search',
+    required: false,
+    type: String,
+    description: 'Search by email, first name, or last name',
+  })
   @ApiQuery({ name: 'role', required: false, type: String, description: 'Filter by user role' })
   @SwaggerApiResponse({ status: 200, description: 'Users retrieved successfully' })
   @SwaggerApiResponse({ status: 401, description: 'Unauthorized' })
@@ -89,4 +105,3 @@ export class AdminUsersController {
     };
   }
 }
-

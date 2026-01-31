@@ -29,6 +29,7 @@ export default function ProcurementSubmissionsPage() {
 
   useEffect(() => {
     fetchSubmissions();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [statusFilter]);
 
   const fetchSubmissions = async () => {

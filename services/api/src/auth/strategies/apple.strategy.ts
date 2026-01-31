@@ -30,7 +30,7 @@ export class AppleStrategy extends PassportStrategy(Strategy, 'apple') {
     // Apple sends user info in idToken JWT
     // Decode and extract user information
     const decoded = this.decodeIdToken(idToken);
-    
+
     const user = {
       provider: 'apple',
       providerId: decoded.sub,
@@ -59,4 +59,3 @@ export class AppleStrategy extends PassportStrategy(Strategy, 'apple') {
     return JSON.parse(jsonPayload);
   }
 }
-

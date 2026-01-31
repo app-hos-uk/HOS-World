@@ -12,7 +12,7 @@ async function seedAdmin() {
 
   try {
     console.log('🔄 Creating super admin user...');
-    
+
     // Check if admin already exists
     const existingAdmin = await prisma.user.findUnique({
       where: { email: adminEmail },
@@ -29,7 +29,7 @@ async function seedAdmin() {
       } else {
         console.log(`✅ Admin user already exists: ${adminEmail}`);
       }
-      
+
       // Update password
       const bcrypt = require('bcrypt');
       const saltRounds = 10;
@@ -86,4 +86,3 @@ seedAdmin()
     console.error('❌ Admin seeding failed:', error);
     process.exit(1);
   });
-

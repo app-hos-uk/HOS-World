@@ -67,18 +67,22 @@ export class FulfillmentController {
   @ApiBearerAuth('JWT-auth')
   @ApiOperation({
     summary: 'Get all fulfillment centers',
-    description: 'Retrieves all fulfillment centers with optional filtering. Admin/Fulfillment/Procurement access required.',
+    description:
+      'Retrieves all fulfillment centers with optional filtering. Admin/Fulfillment/Procurement access required.',
   })
-  @ApiQuery({ name: 'activeOnly', required: false, type: String, description: 'Filter by active status (true/false)' })
+  @ApiQuery({
+    name: 'activeOnly',
+    required: false,
+    type: String,
+    description: 'Filter by active status (true/false)',
+  })
   @SwaggerApiResponse({ status: 200, description: 'Fulfillment centers retrieved successfully' })
   @SwaggerApiResponse({ status: 401, description: 'Unauthorized' })
   @SwaggerApiResponse({ status: 403, description: 'Forbidden - Insufficient permissions' })
   async findAllFulfillmentCenters(
     @Query('activeOnly') activeOnly?: string,
   ): Promise<ApiResponse<any[]>> {
-    const centers = await this.fulfillmentService.findAllFulfillmentCenters(
-      activeOnly === 'true',
-    );
+    const centers = await this.fulfillmentService.findAllFulfillmentCenters(activeOnly === 'true');
     return {
       data: centers,
       message: 'Fulfillment centers retrieved successfully',
@@ -91,7 +95,8 @@ export class FulfillmentController {
   @ApiBearerAuth('JWT-auth')
   @ApiOperation({
     summary: 'Get fulfillment center by ID',
-    description: 'Retrieves a specific fulfillment center by ID. Admin/Fulfillment/Procurement access required.',
+    description:
+      'Retrieves a specific fulfillment center by ID. Admin/Fulfillment/Procurement access required.',
   })
   @ApiParam({ name: 'id', description: 'Fulfillment center UUID', type: String })
   @SwaggerApiResponse({ status: 200, description: 'Fulfillment center retrieved successfully' })
@@ -171,9 +176,7 @@ export class FulfillmentController {
   @SwaggerApiResponse({ status: 400, description: 'Invalid request data' })
   @SwaggerApiResponse({ status: 401, description: 'Unauthorized' })
   @SwaggerApiResponse({ status: 403, description: 'Forbidden - Procurement/Admin access required' })
-  async createShipment(
-    @Body() createDto: CreateShipmentDto,
-  ): Promise<ApiResponse<any>> {
+  async createShipment(@Body() createDto: CreateShipmentDto): Promise<ApiResponse<any>> {
     const shipment = await this.fulfillmentService.createShipment(createDto);
     return {
       data: shipment,
@@ -187,10 +190,21 @@ export class FulfillmentController {
   @ApiBearerAuth('JWT-auth')
   @ApiOperation({
     summary: 'Get all shipments',
-    description: 'Retrieves all shipments with optional filtering. Fulfillment/Admin/Procurement access required.',
+    description:
+      'Retrieves all shipments with optional filtering. Fulfillment/Admin/Procurement access required.',
   })
-  @ApiQuery({ name: 'status', required: false, type: String, description: 'Filter by shipment status' })
-  @ApiQuery({ name: 'fulfillmentCenterId', required: false, type: String, description: 'Filter by fulfillment center ID' })
+  @ApiQuery({
+    name: 'status',
+    required: false,
+    type: String,
+    description: 'Filter by shipment status',
+  })
+  @ApiQuery({
+    name: 'fulfillmentCenterId',
+    required: false,
+    type: String,
+    description: 'Filter by fulfillment center ID',
+  })
   @SwaggerApiResponse({ status: 200, description: 'Shipments retrieved successfully' })
   @SwaggerApiResponse({ status: 401, description: 'Unauthorized' })
   @SwaggerApiResponse({ status: 403, description: 'Forbidden - Insufficient permissions' })
@@ -198,10 +212,7 @@ export class FulfillmentController {
     @Query('status') status?: ShipmentStatus,
     @Query('fulfillmentCenterId') fulfillmentCenterId?: string,
   ): Promise<ApiResponse<any[]>> {
-    const shipments = await this.fulfillmentService.findAllShipments(
-      status,
-      fulfillmentCenterId,
-    );
+    const shipments = await this.fulfillmentService.findAllShipments(status, fulfillmentCenterId);
     return {
       data: shipments,
       message: 'Shipments retrieved successfully',
@@ -214,16 +225,15 @@ export class FulfillmentController {
   @ApiBearerAuth('JWT-auth')
   @ApiOperation({
     summary: 'Get shipment by ID',
-    description: 'Retrieves a specific shipment by ID. Fulfillment/Admin/Procurement access required.',
+    description:
+      'Retrieves a specific shipment by ID. Fulfillment/Admin/Procurement access required.',
   })
   @ApiParam({ name: 'id', description: 'Shipment UUID', type: String })
   @SwaggerApiResponse({ status: 200, description: 'Shipment retrieved successfully' })
   @SwaggerApiResponse({ status: 401, description: 'Unauthorized' })
   @SwaggerApiResponse({ status: 403, description: 'Forbidden - Insufficient permissions' })
   @SwaggerApiResponse({ status: 404, description: 'Shipment not found' })
-  async findOneShipment(
-    @Param('id', ParseUUIDPipe) id: string,
-  ): Promise<ApiResponse<any>> {
+  async findOneShipment(@Param('id', ParseUUIDPipe) id: string): Promise<ApiResponse<any>> {
     const shipment = await this.fulfillmentService.findOneShipment(id);
     return {
       data: shipment,
@@ -251,11 +261,7 @@ export class FulfillmentController {
     @Body() verifyDto: VerifyShipmentDto,
     @Request() req: any,
   ): Promise<ApiResponse<any>> {
-    const shipment = await this.fulfillmentService.verifyShipment(
-      id,
-      req.user.id,
-      verifyDto,
-    );
+    const shipment = await this.fulfillmentService.verifyShipment(id, req.user.id, verifyDto);
     return {
       data: shipment,
       message: 'Shipment verification updated successfully',
@@ -268,9 +274,15 @@ export class FulfillmentController {
   @ApiBearerAuth('JWT-auth')
   @ApiOperation({
     summary: 'Get fulfillment dashboard statistics',
-    description: 'Retrieves dashboard statistics for fulfillment operations. Fulfillment/Admin access required.',
+    description:
+      'Retrieves dashboard statistics for fulfillment operations. Fulfillment/Admin access required.',
   })
-  @ApiQuery({ name: 'fulfillmentCenterId', required: false, type: String, description: 'Filter by fulfillment center ID' })
+  @ApiQuery({
+    name: 'fulfillmentCenterId',
+    required: false,
+    type: String,
+    description: 'Filter by fulfillment center ID',
+  })
   @SwaggerApiResponse({ status: 200, description: 'Dashboard statistics retrieved successfully' })
   @SwaggerApiResponse({ status: 401, description: 'Unauthorized' })
   @SwaggerApiResponse({ status: 403, description: 'Forbidden - Fulfillment/Admin access required' })
@@ -284,4 +296,3 @@ export class FulfillmentController {
     };
   }
 }
-

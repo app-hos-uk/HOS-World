@@ -4,10 +4,10 @@ import { CourierProvider, TrackingInfo } from '../../courier.service';
 
 /**
  * Legacy DHL Provider
- * 
+ *
  * This provider uses environment variables for configuration and implements
  * the legacy CourierProvider interface for backward compatibility.
- * 
+ *
  * For new integrations, use the new DHLProvider with CourierFactoryService.
  */
 @Injectable()
@@ -23,27 +23,29 @@ export class DHLLegacyProvider implements CourierProvider {
     from: any,
     to: any,
   ): Promise<number> {
-    this.logger.debug(`Calculating DHL rate: ${weight}kg from ${from.postalCode} to ${to.postalCode}`);
+    this.logger.debug(
+      `Calculating DHL rate: ${weight}kg from ${from.postalCode} to ${to.postalCode}`,
+    );
 
     // DHL Express rates (simplified)
-    let baseRate = 15.00; // Base rate in GBP
+    let baseRate = 15.0; // Base rate in GBP
 
     // Weight-based pricing
     const dimWeight = (dimensions.length * dimensions.width * dimensions.height) / 5000;
     const billableWeight = Math.max(weight, dimWeight);
 
     if (billableWeight <= 0.5) {
-      baseRate = 15.00;
+      baseRate = 15.0;
     } else if (billableWeight <= 1) {
-      baseRate = 22.00;
+      baseRate = 22.0;
     } else if (billableWeight <= 2) {
-      baseRate = 28.00;
+      baseRate = 28.0;
     } else if (billableWeight <= 5) {
-      baseRate = 35.00 + (billableWeight - 2) * 4.50;
+      baseRate = 35.0 + (billableWeight - 2) * 4.5;
     } else if (billableWeight <= 10) {
-      baseRate = 48.50 + (billableWeight - 5) * 4.00;
+      baseRate = 48.5 + (billableWeight - 5) * 4.0;
     } else {
-      baseRate = 68.50 + (billableWeight - 10) * 3.50;
+      baseRate = 68.5 + (billableWeight - 10) * 3.5;
     }
 
     // International surcharge based on zone

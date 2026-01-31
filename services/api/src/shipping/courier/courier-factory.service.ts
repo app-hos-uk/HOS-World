@@ -17,7 +17,7 @@ import { DHLProvider } from './providers/dhl.provider';
 
 /**
  * CourierFactory - Dynamically loads and manages courier providers
- * 
+ *
  * Responsibilities:
  * - Load provider configurations from IntegrationConfig
  * - Instantiate and cache provider instances
@@ -28,7 +28,10 @@ import { DHLProvider } from './providers/dhl.provider';
 export class CourierFactoryService implements OnModuleInit {
   private readonly logger = new Logger(CourierFactoryService.name);
   private providers: Map<string, ICourierProvider> = new Map();
-  private providerConfigs: Map<string, { isActive: boolean; isTestMode: boolean; priority: number }> = new Map();
+  private providerConfigs: Map<
+    string,
+    { isActive: boolean; isTestMode: boolean; priority: number }
+  > = new Map();
 
   constructor(
     private prisma: PrismaService,
@@ -70,7 +73,9 @@ export class CourierFactoryService implements OnModuleInit {
               isTestMode: integration.isTestMode,
               priority: integration.priority,
             });
-            this.logger.log(`Loaded shipping provider: ${integration.provider} (${integration.isTestMode ? 'test' : 'production'})`);
+            this.logger.log(
+              `Loaded shipping provider: ${integration.provider} (${integration.isTestMode ? 'test' : 'production'})`,
+            );
           }
         } catch (error: any) {
           this.logger.error(`Failed to load provider ${integration.provider}: ${error.message}`);
@@ -229,10 +234,7 @@ export class CourierFactoryService implements OnModuleInit {
   /**
    * Track a shipment - auto-detects provider if not specified
    */
-  async trackShipment(
-    trackingNumber: string,
-    providerName?: string,
-  ): Promise<TrackingResponse> {
+  async trackShipment(trackingNumber: string, providerName?: string): Promise<TrackingResponse> {
     if (providerName) {
       const provider = this.getProvider(providerName);
       if (!provider) {
@@ -277,10 +279,7 @@ export class CourierFactoryService implements OnModuleInit {
   /**
    * Validate an address using a specific provider
    */
-  async validateAddress(
-    address: Address,
-    providerName?: string,
-  ): Promise<AddressValidationResult> {
+  async validateAddress(address: Address, providerName?: string): Promise<AddressValidationResult> {
     // If provider specified, use it
     if (providerName) {
       const provider = this.getProvider(providerName);
@@ -383,7 +382,7 @@ export class CourierFactoryService implements OnModuleInit {
 
     for (const [name, provider] of this.providers) {
       const config = this.providerConfigs.get(name);
-      
+
       // Count shipments from logs
       const shipmentCount = await this.prisma.integrationLog.count({
         where: {

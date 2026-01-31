@@ -20,7 +20,12 @@ import { Decimal } from '@prisma/client/runtime/library';
 // Valid product status values for the shared types Product interface
 type ValidProductStatus = 'draft' | 'active' | 'inactive' | 'out_of_stock';
 
-const VALID_PRODUCT_STATUSES: Set<string> = new Set(['draft', 'active', 'inactive', 'out_of_stock']);
+const VALID_PRODUCT_STATUSES: Set<string> = new Set([
+  'draft',
+  'active',
+  'inactive',
+  'out_of_stock',
+]);
 
 /**
  * Normalize and validate a product status from Prisma enum to shared types literal.
@@ -29,14 +34,14 @@ const VALID_PRODUCT_STATUSES: Set<string> = new Set(['draft', 'active', 'inactiv
  */
 function normalizeProductStatus(status: string | null | undefined): ValidProductStatus {
   if (!status) return 'draft';
-  
+
   const normalized = status.toLowerCase();
-  
+
   // Only return if it's a known valid status
   if (VALID_PRODUCT_STATUSES.has(normalized)) {
     return normalized as ValidProductStatus;
   }
-  
+
   // For any unknown status (ARCHIVED, DISCONTINUED, etc.), default to 'inactive'
   // as it's the safest semantic match for non-active products
   return 'inactive';
@@ -163,9 +168,7 @@ export class CartService {
       const newKeys = Object.keys(newVariations).sort().join(',');
       if (itemKeys !== newKeys) return false;
 
-      return Object.keys(itemVariations).every(
-        (key) => itemVariations[key] === newVariations[key],
-      );
+      return Object.keys(itemVariations).every((key) => itemVariations[key] === newVariations[key]);
     });
 
     if (existingItem) {
@@ -362,12 +365,7 @@ export class CartService {
       let itemTax = new Decimal(0);
 
       // Use TaxService if available and product has taxClassId and user location is known
-      if (
-        this.taxService &&
-        item.product.taxClassId &&
-        userLocation &&
-        userLocation.country
-      ) {
+      if (this.taxService && item.product.taxClassId && userLocation && userLocation.country) {
         try {
           const taxCalculation = await this.taxService.calculateTax(
             Number(itemTotal),
@@ -393,7 +391,7 @@ export class CartService {
 
     // Apply promotions and discounts
     let discount = new Decimal(0);
-    let shipping = new Decimal(0);
+    const shipping = new Decimal(0);
     const cartSubtotal = Number(subtotal);
 
     if (this.promotionsService && cart.userId) {
@@ -492,13 +490,14 @@ export class CartService {
       currency: product.currency,
       taxRate: Number(product.taxRate),
       stock: product.stock,
-      images: product.images?.map((img: any) => ({
-        id: img.id,
-        url: img.url,
-        alt: img.alt || undefined,
-        order: img.order,
-        type: img.type as ImageType,
-      })) || [],
+      images:
+        product.images?.map((img: any) => ({
+          id: img.id,
+          url: img.url,
+          alt: img.alt || undefined,
+          order: img.order,
+          type: img.type as ImageType,
+        })) || [],
       variations: undefined,
       fandom: product.fandom || undefined,
       category: product.category || undefined,

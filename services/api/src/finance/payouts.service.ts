@@ -83,17 +83,19 @@ export class PayoutsService {
     });
   }
 
-  async getSellerPayoutHistory(sellerId: string, filters?: {
-    status?: string;
-    startDate?: Date;
-    endDate?: Date;
-    page?: number;
-    limit?: number;
-  }) {
+  async getSellerPayoutHistory(
+    sellerId: string,
+    filters?: {
+      status?: string;
+      startDate?: Date;
+      endDate?: Date;
+      page?: number;
+      limit?: number;
+    },
+  ) {
     return this.getPayouts({
       ...filters,
       sellerId,
     });
   }
 }
-

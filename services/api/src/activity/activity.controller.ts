@@ -1,12 +1,4 @@
-import {
-  Controller,
-  Get,
-  Query,
-  UseGuards,
-  Request,
-  ParseUUIDPipe,
-  Param,
-} from '@nestjs/common';
+import { Controller, Get, Query, UseGuards, Request, ParseUUIDPipe, Param } from '@nestjs/common';
 import {
   ApiTags,
   ApiOperation,
@@ -38,10 +30,25 @@ export class ActivityController {
   @ApiQuery({ name: 'userId', required: false, type: String, description: 'Filter by user ID' })
   @ApiQuery({ name: 'sellerId', required: false, type: String, description: 'Filter by seller ID' })
   @ApiQuery({ name: 'action', required: false, type: String, description: 'Filter by action type' })
-  @ApiQuery({ name: 'entityType', required: false, type: String, description: 'Filter by entity type' })
+  @ApiQuery({
+    name: 'entityType',
+    required: false,
+    type: String,
+    description: 'Filter by entity type',
+  })
   @ApiQuery({ name: 'entityId', required: false, type: String, description: 'Filter by entity ID' })
-  @ApiQuery({ name: 'startDate', required: false, type: String, description: 'Start date (ISO format)' })
-  @ApiQuery({ name: 'endDate', required: false, type: String, description: 'End date (ISO format)' })
+  @ApiQuery({
+    name: 'startDate',
+    required: false,
+    type: String,
+    description: 'Start date (ISO format)',
+  })
+  @ApiQuery({
+    name: 'endDate',
+    required: false,
+    type: String,
+    description: 'End date (ISO format)',
+  })
   @ApiQuery({ name: 'page', required: false, type: String, description: 'Page number' })
   @ApiQuery({ name: 'limit', required: false, type: String, description: 'Items per page' })
   @SwaggerApiResponse({ status: 200, description: 'Activity logs retrieved successfully' })
@@ -81,18 +88,34 @@ export class ActivityController {
   @ApiBearerAuth('JWT-auth')
   @ApiOperation({
     summary: 'Get seller activity logs',
-    description: 'Retrieves activity logs for a specific seller. Sellers can only view their own logs, admins can view any seller\'s logs.',
+    description:
+      "Retrieves activity logs for a specific seller. Sellers can only view their own logs, admins can view any seller's logs.",
   })
   @ApiParam({ name: 'sellerId', description: 'Seller UUID', type: String })
   @ApiQuery({ name: 'action', required: false, type: String, description: 'Filter by action type' })
-  @ApiQuery({ name: 'entityType', required: false, type: String, description: 'Filter by entity type' })
-  @ApiQuery({ name: 'startDate', required: false, type: String, description: 'Start date (ISO format)' })
-  @ApiQuery({ name: 'endDate', required: false, type: String, description: 'End date (ISO format)' })
+  @ApiQuery({
+    name: 'entityType',
+    required: false,
+    type: String,
+    description: 'Filter by entity type',
+  })
+  @ApiQuery({
+    name: 'startDate',
+    required: false,
+    type: String,
+    description: 'Start date (ISO format)',
+  })
+  @ApiQuery({
+    name: 'endDate',
+    required: false,
+    type: String,
+    description: 'End date (ISO format)',
+  })
   @ApiQuery({ name: 'page', required: false, type: String, description: 'Page number' })
   @ApiQuery({ name: 'limit', required: false, type: String, description: 'Items per page' })
   @SwaggerApiResponse({ status: 200, description: 'Seller activity logs retrieved successfully' })
   @SwaggerApiResponse({ status: 401, description: 'Unauthorized' })
-  @SwaggerApiResponse({ status: 403, description: 'Forbidden - Cannot access this seller\'s logs' })
+  @SwaggerApiResponse({ status: 403, description: "Forbidden - Cannot access this seller's logs" })
   @SwaggerApiResponse({ status: 404, description: 'Seller not found' })
   async getSellerLogs(
     @Param('sellerId', ParseUUIDPipe) sellerId: string,
@@ -140,9 +163,24 @@ export class ActivityController {
   @ApiQuery({ name: 'userId', required: false, type: String, description: 'Filter by user ID' })
   @ApiQuery({ name: 'sellerId', required: false, type: String, description: 'Filter by seller ID' })
   @ApiQuery({ name: 'action', required: false, type: String, description: 'Filter by action type' })
-  @ApiQuery({ name: 'entityType', required: false, type: String, description: 'Filter by entity type' })
-  @ApiQuery({ name: 'startDate', required: false, type: String, description: 'Start date (ISO format)' })
-  @ApiQuery({ name: 'endDate', required: false, type: String, description: 'End date (ISO format)' })
+  @ApiQuery({
+    name: 'entityType',
+    required: false,
+    type: String,
+    description: 'Filter by entity type',
+  })
+  @ApiQuery({
+    name: 'startDate',
+    required: false,
+    type: String,
+    description: 'Start date (ISO format)',
+  })
+  @ApiQuery({
+    name: 'endDate',
+    required: false,
+    type: String,
+    description: 'End date (ISO format)',
+  })
   @SwaggerApiResponse({ status: 200, description: 'Activity logs exported successfully' })
   @SwaggerApiResponse({ status: 401, description: 'Unauthorized' })
   @SwaggerApiResponse({ status: 403, description: 'Forbidden - Admin access required' })
@@ -168,4 +206,3 @@ export class ActivityController {
     };
   }
 }
-

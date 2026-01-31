@@ -20,7 +20,10 @@ import {
   ApiQuery,
 } from '@nestjs/swagger';
 import { LogisticsService } from './logistics.service';
-import { CreateLogisticsPartnerDto, UpdateLogisticsPartnerDto } from './dto/create-logistics-partner.dto';
+import {
+  CreateLogisticsPartnerDto,
+  UpdateLogisticsPartnerDto,
+} from './dto/create-logistics-partner.dto';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../common/guards/roles.guard';
 import { Roles } from '../common/decorators/roles.decorator';
@@ -44,9 +47,7 @@ export class LogisticsController {
   @SwaggerApiResponse({ status: 400, description: 'Invalid request data' })
   @SwaggerApiResponse({ status: 401, description: 'Unauthorized' })
   @SwaggerApiResponse({ status: 403, description: 'Forbidden - Admin access required' })
-  async createPartner(
-    @Body() createDto: CreateLogisticsPartnerDto,
-  ): Promise<ApiResponse<any>> {
+  async createPartner(@Body() createDto: CreateLogisticsPartnerDto): Promise<ApiResponse<any>> {
     const partner = await this.logisticsService.createPartner(createDto);
     return {
       data: partner,
@@ -59,16 +60,17 @@ export class LogisticsController {
     summary: 'Get all logistics partners (Admin only)',
     description: 'Retrieves all logistics partners with optional filtering. Admin access required.',
   })
-  @ApiQuery({ name: 'activeOnly', required: false, type: String, description: 'Filter by active status (true/false)' })
+  @ApiQuery({
+    name: 'activeOnly',
+    required: false,
+    type: String,
+    description: 'Filter by active status (true/false)',
+  })
   @SwaggerApiResponse({ status: 200, description: 'Logistics partners retrieved successfully' })
   @SwaggerApiResponse({ status: 401, description: 'Unauthorized' })
   @SwaggerApiResponse({ status: 403, description: 'Forbidden - Admin access required' })
-  async findAllPartners(
-    @Query('activeOnly') activeOnly?: string,
-  ): Promise<ApiResponse<any[]>> {
-    const partners = await this.logisticsService.findAllPartners(
-      activeOnly === 'true',
-    );
+  async findAllPartners(@Query('activeOnly') activeOnly?: string): Promise<ApiResponse<any[]>> {
+    const partners = await this.logisticsService.findAllPartners(activeOnly === 'true');
     return {
       data: partners,
       message: 'Logistics partners retrieved successfully',
@@ -85,9 +87,7 @@ export class LogisticsController {
   @SwaggerApiResponse({ status: 401, description: 'Unauthorized' })
   @SwaggerApiResponse({ status: 403, description: 'Forbidden - Admin access required' })
   @SwaggerApiResponse({ status: 404, description: 'Partner not found' })
-  async findOnePartner(
-    @Param('id', ParseUUIDPipe) id: string,
-  ): Promise<ApiResponse<any>> {
+  async findOnePartner(@Param('id', ParseUUIDPipe) id: string): Promise<ApiResponse<any>> {
     const partner = await this.logisticsService.findOnePartner(id);
     return {
       data: partner,
@@ -154,16 +154,10 @@ export class LogisticsController {
     @Param('shipmentId', ParseUUIDPipe) shipmentId: string,
     @Param('partnerId', ParseUUIDPipe) partnerId: string,
   ): Promise<ApiResponse<any>> {
-    const shipment = await this.logisticsService.assignPartnerToShipment(
-      shipmentId,
-      partnerId,
-    );
+    const shipment = await this.logisticsService.assignPartnerToShipment(shipmentId, partnerId);
     return {
       data: shipment,
       message: 'Partner assigned to shipment successfully',
     };
   }
 }
-
-
-

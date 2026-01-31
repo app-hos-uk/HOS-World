@@ -41,9 +41,7 @@ export class KlarnaProvider implements PaymentProvider {
     return !!(this.klarnaUsername && this.klarnaPassword);
   }
 
-  async createPaymentIntent(
-    params: CreatePaymentIntentParams,
-  ): Promise<PaymentIntentResult> {
+  async createPaymentIntent(params: CreatePaymentIntentParams): Promise<PaymentIntentResult> {
     if (!this.isAvailable()) {
       throw new Error('Klarna provider is not available');
     }
@@ -62,9 +60,7 @@ export class KlarnaProvider implements PaymentProvider {
     };
   }
 
-  async confirmPayment(
-    params: ConfirmPaymentParams,
-  ): Promise<PaymentResult> {
+  async confirmPayment(params: ConfirmPaymentParams): Promise<PaymentResult> {
     if (!this.isAvailable()) {
       throw new Error('Klarna provider is not available');
     }

@@ -4,10 +4,10 @@ import { CourierProvider, TrackingInfo } from '../../courier.service';
 
 /**
  * Legacy FedEx Provider
- * 
+ *
  * This provider uses environment variables for configuration and implements
  * the legacy CourierProvider interface for backward compatibility.
- * 
+ *
  * For new integrations, use the new FedExProvider with CourierFactoryService.
  */
 @Injectable()
@@ -23,23 +23,25 @@ export class FedExLegacyProvider implements CourierProvider {
     from: any,
     to: any,
   ): Promise<number> {
-    this.logger.debug(`Calculating FedEx rate: ${weight}kg from ${from.postalCode} to ${to.postalCode}`);
+    this.logger.debug(
+      `Calculating FedEx rate: ${weight}kg from ${from.postalCode} to ${to.postalCode}`,
+    );
 
     // Base rates for FedEx services
-    let baseRate = 8.50; // Base rate in USD
+    let baseRate = 8.5; // Base rate in USD
 
     // Weight-based pricing (FedEx uses dimensional weight)
     const dimWeight = (dimensions.length * dimensions.width * dimensions.height) / 5000;
     const billableWeight = Math.max(weight, dimWeight);
 
     if (billableWeight <= 1) {
-      baseRate = 8.50;
+      baseRate = 8.5;
     } else if (billableWeight <= 5) {
-      baseRate = 12.50 + (billableWeight - 1) * 1.50;
+      baseRate = 12.5 + (billableWeight - 1) * 1.5;
     } else if (billableWeight <= 10) {
-      baseRate = 18.50 + (billableWeight - 5) * 1.25;
+      baseRate = 18.5 + (billableWeight - 5) * 1.25;
     } else if (billableWeight <= 25) {
-      baseRate = 24.75 + (billableWeight - 10) * 1.00;
+      baseRate = 24.75 + (billableWeight - 10) * 1.0;
     } else {
       baseRate = 39.75 + (billableWeight - 25) * 0.85;
     }

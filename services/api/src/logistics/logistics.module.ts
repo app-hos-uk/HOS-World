@@ -10,5 +10,3 @@ import { DatabaseModule } from '../database/database.module';
   exports: [LogisticsService],
 })
 export class LogisticsModule {}
-
-

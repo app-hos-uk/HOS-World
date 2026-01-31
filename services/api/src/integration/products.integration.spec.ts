@@ -31,7 +31,7 @@ describe('Products Integration Tests', () => {
     if (process.env.SKIP_INTEGRATION_TESTS === 'true') {
       return;
     }
-    
+
     let moduleFixture: TestingModule;
     try {
       moduleFixture = await Test.createTestingModule({
@@ -70,7 +70,7 @@ describe('Products Integration Tests', () => {
       }
       throw error;
     }
-    
+
     try {
       const sellerResult = await authService.register({
         email: `seller-integration-${Date.now()}@example.com`,
@@ -104,19 +104,25 @@ describe('Products Integration Tests', () => {
     // Cleanup
     if (prismaService) {
       if (productId) {
-        await prismaService.product.delete({
-          where: { id: productId },
-        }).catch(() => {});
+        await prismaService.product
+          .delete({
+            where: { id: productId },
+          })
+          .catch(() => {});
       }
       if (sellerId) {
-        await prismaService.seller.delete({
-          where: { id: sellerId },
-        }).catch(() => {});
+        await prismaService.seller
+          .delete({
+            where: { id: sellerId },
+          })
+          .catch(() => {});
       }
       if (sellerUserId) {
-        await prismaService.user.delete({
-          where: { id: sellerUserId },
-        }).catch(() => {});
+        await prismaService.user
+          .delete({
+            where: { id: sellerUserId },
+          })
+          .catch(() => {});
       }
       await prismaService.$disconnect().catch(() => {});
     }
@@ -180,25 +186,19 @@ describe('Products Integration Tests', () => {
       expect(dbProduct?.name).toBe('Updated Integration Product');
     });
 
-    it(
-      'should delete product',
-      async () => {
-        if (!productsService || !prismaService || !productId) {
-          console.warn('⚠️ Skipping test: Services not initialized');
-          return;
-        }
-        await productsService.delete(sellerUserId, productId);
+    it('should delete product', async () => {
+      if (!productsService || !prismaService || !productId) {
+        console.warn('⚠️ Skipping test: Services not initialized');
+        return;
+      }
+      await productsService.delete(sellerUserId, productId);
 
-        const dbProduct = await prismaService.product.findUnique({
-          where: { id: productId },
-        });
-        expect(dbProduct).toBeNull();
+      const dbProduct = await prismaService.product.findUnique({
+        where: { id: productId },
+      });
+      expect(dbProduct).toBeNull();
 
-        productId = ''; // Reset for cleanup
-      },
-      15000,
-    );
+      productId = ''; // Reset for cleanup
+    }, 15000);
   });
 });
-
-

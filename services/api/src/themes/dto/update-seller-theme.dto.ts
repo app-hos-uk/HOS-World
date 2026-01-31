@@ -17,5 +17,3 @@ export class UpdateSellerThemeDto {
   @IsObject()
   customColors?: Record<string, string>;
 }
-
-

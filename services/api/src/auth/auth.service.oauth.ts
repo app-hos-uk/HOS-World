@@ -29,8 +29,10 @@ export class AuthOAuthService {
    */
   async validateOrCreateOAuthUser(oauthData: OAuthUserData): Promise<AuthResponse> {
     // OAuthAccount model not in schema - feature disabled
-    throw new NotImplementedException('OAuth authentication is not available. OAuthAccount model is not in the database schema.');
-    
+    throw new NotImplementedException(
+      'OAuth authentication is not available. OAuthAccount model is not in the database schema.',
+    );
+
     // Check if OAuth account already exists
     /* const existingOAuth = await this.prisma.oAuthAccount.findUnique({
       where: {
@@ -120,14 +122,18 @@ export class AuthOAuthService {
    * Unlink OAuth account from user
    */
   async unlinkOAuthAccount(userId: string, provider: string): Promise<void> {
-    throw new NotImplementedException('OAuth authentication is not available. OAuthAccount model is not in the database schema.');
+    throw new NotImplementedException(
+      'OAuth authentication is not available. OAuthAccount model is not in the database schema.',
+    );
   }
 
   /**
    * Get linked OAuth accounts for user
    */
   async getLinkedAccounts(userId: string) {
-    throw new NotImplementedException('OAuth authentication is not available. OAuthAccount model is not in the database schema.');
+    throw new NotImplementedException(
+      'OAuth authentication is not available. OAuthAccount model is not in the database schema.',
+    );
   }
 
   private async generateTokens(user: any): Promise<{ accessToken: string; refreshToken: string }> {
@@ -163,4 +169,3 @@ export class AuthOAuthService {
     };
   }
 }
-

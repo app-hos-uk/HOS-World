@@ -95,7 +95,7 @@ describe('TicketsService', () => {
       const callArgs = mockPrismaService.supportTicket.create.mock.calls[0][0];
       const slaDueAt = callArgs.data.slaDueAt;
       const hoursFromNow = (slaDueAt.getTime() - new Date().getTime()) / (1000 * 60 * 60);
-      
+
       expect(hoursFromNow).toBeCloseTo(24, 0); // URGENT = 24 hours
     });
   });
@@ -157,9 +157,7 @@ describe('TicketsService', () => {
     it('should throw NotFoundException if ticket not found', async () => {
       mockPrismaService.supportTicket.findUnique.mockResolvedValue(null);
 
-      await expect(service.getTicketById('non-existent')).rejects.toThrow(
-        NotFoundException,
-      );
+      await expect(service.getTicketById('non-existent')).rejects.toThrow(NotFoundException);
     });
   });
 
@@ -187,9 +185,7 @@ describe('TicketsService', () => {
     it('should throw NotFoundException if ticket not found', async () => {
       mockPrismaService.supportTicket.findUnique.mockResolvedValue(null);
 
-      await expect(service.updateTicket('non-existent', {})).rejects.toThrow(
-        NotFoundException,
-      );
+      await expect(service.updateTicket('non-existent', {})).rejects.toThrow(NotFoundException);
     });
   });
 

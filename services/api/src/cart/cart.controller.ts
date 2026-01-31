@@ -11,7 +11,7 @@ import {
   ParseUUIDPipe,
   HttpCode,
   HttpStatus,
-  } from '@nestjs/common';
+} from '@nestjs/common';
 import {
   ApiTags,
   ApiOperation,
@@ -34,7 +34,10 @@ export class CartController {
   constructor(private readonly cartService: CartService) {}
 
   @Get()
-  @ApiOperation({ summary: 'Get user cart', description: 'Retrieves the authenticated user\'s shopping cart with all items' })
+  @ApiOperation({
+    summary: 'Get user cart',
+    description: "Retrieves the authenticated user's shopping cart with all items",
+  })
   @SwaggerApiResponse({ status: 200, description: 'Cart retrieved successfully' })
   @SwaggerApiResponse({ status: 401, description: 'Unauthorized' })
   async getCart(@Request() req: any): Promise<ApiResponse<Cart>> {
@@ -47,7 +50,10 @@ export class CartController {
 
   @Post('items')
   @HttpCode(HttpStatus.CREATED)
-  @ApiOperation({ summary: 'Add item to cart', description: 'Adds a product to the user\'s shopping cart. Supports product variations' })
+  @ApiOperation({
+    summary: 'Add item to cart',
+    description: "Adds a product to the user's shopping cart. Supports product variations",
+  })
   @ApiBody({ type: AddToCartDto })
   @SwaggerApiResponse({ status: 201, description: 'Item added to cart successfully' })
   @SwaggerApiResponse({ status: 400, description: 'Invalid request data or product not available' })
@@ -65,7 +71,10 @@ export class CartController {
   }
 
   @Patch('items/:id')
-  @ApiOperation({ summary: 'Update cart item', description: 'Updates the quantity or other properties of a cart item' })
+  @ApiOperation({
+    summary: 'Update cart item',
+    description: 'Updates the quantity or other properties of a cart item',
+  })
   @ApiParam({ name: 'id', description: 'Cart item UUID', type: String })
   @ApiBody({ type: UpdateCartItemDto })
   @SwaggerApiResponse({ status: 200, description: 'Cart item updated successfully' })
@@ -85,7 +94,10 @@ export class CartController {
 
   @Delete('items/:id')
   @HttpCode(HttpStatus.OK)
-  @ApiOperation({ summary: 'Remove item from cart', description: 'Removes a specific item from the user\'s shopping cart' })
+  @ApiOperation({
+    summary: 'Remove item from cart',
+    description: "Removes a specific item from the user's shopping cart",
+  })
   @ApiParam({ name: 'id', description: 'Cart item UUID', type: String })
   @SwaggerApiResponse({ status: 200, description: 'Item removed from cart successfully' })
   @SwaggerApiResponse({ status: 401, description: 'Unauthorized' })
@@ -103,7 +115,10 @@ export class CartController {
 
   @Delete('clear')
   @HttpCode(HttpStatus.OK)
-  @ApiOperation({ summary: 'Clear cart', description: 'Removes all items from the user\'s shopping cart' })
+  @ApiOperation({
+    summary: 'Clear cart',
+    description: "Removes all items from the user's shopping cart",
+  })
   @SwaggerApiResponse({ status: 200, description: 'Cart cleared successfully' })
   @SwaggerApiResponse({ status: 401, description: 'Unauthorized' })
   async clearCart(@Request() req: any): Promise<ApiResponse<Cart>> {

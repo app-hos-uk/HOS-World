@@ -22,7 +22,10 @@ export class UpdateInfluencerDto {
   @IsString()
   bannerImage?: string;
 
-  @ApiPropertyOptional({ description: 'Social media links', example: { instagram: 'username', youtube: 'channel' } })
+  @ApiPropertyOptional({
+    description: 'Social media links',
+    example: { instagram: 'username', youtube: 'channel' },
+  })
   @IsOptional()
   @IsObject()
   socialLinks?: Record<string, string>;
@@ -36,7 +39,10 @@ export class UpdateInfluencerCommissionDto {
   @Max(1)
   baseCommissionRate?: number;
 
-  @ApiPropertyOptional({ description: 'Category-specific commission rates', example: { 'cat-uuid-1': 0.15 } })
+  @ApiPropertyOptional({
+    description: 'Category-specific commission rates',
+    example: { 'cat-uuid-1': 0.15 },
+  })
   @IsOptional()
   @IsObject()
   categoryCommissions?: Record<string, number>;

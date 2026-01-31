@@ -52,7 +52,7 @@ describe('TransactionsService', () => {
   describe('createTransaction', () => {
     const transactionData = {
       type: 'PAYMENT' as const,
-      amount: 100.50,
+      amount: 100.5,
       currency: 'USD',
       sellerId: 'seller-1',
       description: 'Test transaction',
@@ -82,9 +82,7 @@ describe('TransactionsService', () => {
     it('should throw NotFoundException if seller not found', async () => {
       mockPrismaService.seller.findUnique.mockResolvedValue(null);
 
-      await expect(service.createTransaction(transactionData)).rejects.toThrow(
-        NotFoundException,
-      );
+      await expect(service.createTransaction(transactionData)).rejects.toThrow(NotFoundException);
     });
 
     it('should validate customer if provided', async () => {
@@ -158,9 +156,7 @@ describe('TransactionsService', () => {
     it('should throw NotFoundException if transaction not found', async () => {
       mockPrismaService.transaction.findUnique.mockResolvedValue(null);
 
-      await expect(service.getTransactionById('non-existent')).rejects.toThrow(
-        NotFoundException,
-      );
+      await expect(service.getTransactionById('non-existent')).rejects.toThrow(NotFoundException);
     });
   });
 });

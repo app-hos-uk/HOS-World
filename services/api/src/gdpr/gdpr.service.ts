@@ -227,4 +227,3 @@ export class GDPRService {
     this.logger.log(`User data anonymized for user ${userId}`);
   }
 }
-

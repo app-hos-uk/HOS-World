@@ -12,6 +12,3 @@ import { CurrencyModule } from '../currency/currency.module';
   exports: [SettlementsService, SettlementSchedulerService],
 })
 export class SettlementsModule {}
-
-
-

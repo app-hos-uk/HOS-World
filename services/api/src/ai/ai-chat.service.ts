@@ -10,11 +10,7 @@ export class AIChatService {
     private geminiService: GeminiService,
   ) {}
 
-  async sendMessage(
-    userId: string,
-    characterId: string,
-    dto: SendChatMessageDto,
-  ): Promise<any> {
+  async sendMessage(userId: string, characterId: string, dto: SendChatMessageDto): Promise<any> {
     // Get character and user
     const [character, user] = await Promise.all([
       this.prisma.character.findUnique({
@@ -122,7 +118,7 @@ export class AIChatService {
 
   private buildSystemPrompt(character: any, user: any): string {
     const personality = JSON.parse(character.personality || '{}');
-    
+
     return `You are ${character.name} from ${character.fandom.name}.
 Your personality traits: ${JSON.stringify(personality)}
 You work at House of Spells Marketplace, helping fans discover magical products.
@@ -141,7 +137,7 @@ Guidelines:
   private async extractProductRecommendations(message: string): Promise<any[]> {
     // Extract product mentions or keywords from AI response
     const keywords = message.match(/wand|robe|potion|book|crystal|spell/i);
-    
+
     if (keywords) {
       // Search for products matching keywords
       return this.prisma.product.findMany({
@@ -165,4 +161,3 @@ Guidelines:
     return [];
   }
 }
-

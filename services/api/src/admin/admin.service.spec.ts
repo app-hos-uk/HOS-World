@@ -126,9 +126,7 @@ describe('AdminService', () => {
     it('should throw BadRequestException if user already exists', async () => {
       mockPrismaService.user.findUnique.mockResolvedValue({ id: 'existing-user' });
 
-      await expect(service.createUser(createUserData)).rejects.toThrow(
-        BadRequestException,
-      );
+      await expect(service.createUser(createUserData)).rejects.toThrow(BadRequestException);
     });
 
     it('should throw BadRequestException if seller role without storeName', async () => {
@@ -140,9 +138,7 @@ describe('AdminService', () => {
 
       mockPrismaService.user.findUnique.mockResolvedValue(null);
 
-      await expect(service.createUser(sellerData)).rejects.toThrow(
-        BadRequestException,
-      );
+      await expect(service.createUser(sellerData)).rejects.toThrow(BadRequestException);
     });
   });
 
@@ -169,9 +165,7 @@ describe('AdminService', () => {
     it('should throw NotFoundException if user not found', async () => {
       mockPrismaService.user.findUnique.mockResolvedValue(null);
 
-      await expect(service.getUserById('non-existent')).rejects.toThrow(
-        NotFoundException,
-      );
+      await expect(service.getUserById('non-existent')).rejects.toThrow(NotFoundException);
     });
   });
 
@@ -203,9 +197,7 @@ describe('AdminService', () => {
     it('should throw NotFoundException if user not found', async () => {
       mockPrismaService.user.findUnique.mockResolvedValue(null);
 
-      await expect(service.updateUser('non-existent', {})).rejects.toThrow(
-        NotFoundException,
-      );
+      await expect(service.updateUser('non-existent', {})).rejects.toThrow(NotFoundException);
     });
   });
 
@@ -230,9 +222,7 @@ describe('AdminService', () => {
     it('should throw NotFoundException if user not found', async () => {
       mockPrismaService.user.findUnique.mockResolvedValue(null);
 
-      await expect(service.deleteUser('non-existent')).rejects.toThrow(
-        NotFoundException,
-      );
+      await expect(service.deleteUser('non-existent')).rejects.toThrow(NotFoundException);
     });
   });
 

@@ -1,8 +1,4 @@
-import {
-  Injectable,
-  NotFoundException,
-  Logger,
-} from '@nestjs/common';
+import { Injectable, NotFoundException, Logger } from '@nestjs/common';
 import { PrismaService } from '../database/prisma.service';
 
 @Injectable()
@@ -65,7 +61,10 @@ export class ReferralsService {
   /**
    * Get referrals for an influencer
    */
-  async findByInfluencer(userId: string, options?: { page?: number; limit?: number; converted?: boolean }) {
+  async findByInfluencer(
+    userId: string,
+    options?: { page?: number; limit?: number; converted?: boolean },
+  ) {
     const influencer = await this.prisma.influencer.findUnique({
       where: { userId },
     });
@@ -112,7 +111,7 @@ export class ReferralsService {
    */
   async findActiveByVisitorId(visitorId: string) {
     const now = new Date();
-    
+
     return this.prisma.referral.findFirst({
       where: {
         visitorId,

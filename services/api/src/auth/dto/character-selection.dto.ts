@@ -9,4 +9,3 @@ export class CharacterSelectionDto {
   @IsString({ each: true })
   favoriteFandoms?: string[];
 }
-

@@ -8,7 +8,7 @@ import {
   Param,
   UseGuards,
   ParseUUIDPipe,
-  } from '@nestjs/common';
+} from '@nestjs/common';
 import {
   ApiTags,
   ApiOperation,
@@ -35,7 +35,10 @@ export class AdminController {
   constructor(private readonly adminService: AdminService) {}
 
   @Get('dashboard')
-  @ApiOperation({ summary: 'Get admin dashboard', description: 'Retrieves admin dashboard statistics. Admin access required.' })
+  @ApiOperation({
+    summary: 'Get admin dashboard',
+    description: 'Retrieves admin dashboard statistics. Admin access required.',
+  })
   @SwaggerApiResponse({ status: 200, description: 'Dashboard data retrieved successfully' })
   @SwaggerApiResponse({ status: 401, description: 'Unauthorized' })
   @SwaggerApiResponse({ status: 403, description: 'Forbidden - Admin access required' })
@@ -48,7 +51,10 @@ export class AdminController {
   }
 
   @Get('users')
-  @ApiOperation({ summary: 'Get all users', description: 'Retrieves all users in the system. Admin access required.' })
+  @ApiOperation({
+    summary: 'Get all users',
+    description: 'Retrieves all users in the system. Admin access required.',
+  })
   @SwaggerApiResponse({ status: 200, description: 'Users retrieved successfully' })
   @SwaggerApiResponse({ status: 401, description: 'Unauthorized' })
   @SwaggerApiResponse({ status: 403, description: 'Forbidden - Admin access required' })
@@ -63,12 +69,18 @@ export class AdminController {
   @Post('users')
   @UseGuards(PermissionsGuard)
   @Permissions('users.create')
-  @ApiOperation({ summary: 'Create admin user', description: 'Creates a new user with admin privileges. Requires users.create permission.' })
+  @ApiOperation({
+    summary: 'Create admin user',
+    description: 'Creates a new user with admin privileges. Requires users.create permission.',
+  })
   @ApiBody({ type: CreateAdminUserDto })
   @SwaggerApiResponse({ status: 201, description: 'User created successfully' })
   @SwaggerApiResponse({ status: 400, description: 'Invalid user data' })
   @SwaggerApiResponse({ status: 401, description: 'Unauthorized' })
-  @SwaggerApiResponse({ status: 403, description: 'Forbidden - Admin access and users.create permission required' })
+  @SwaggerApiResponse({
+    status: 403,
+    description: 'Forbidden - Admin access and users.create permission required',
+  })
   async createUser(@Body() dto: CreateAdminUserDto): Promise<ApiResponse<any>> {
     const user = await this.adminService.createUser(dto);
     return {
@@ -78,7 +90,10 @@ export class AdminController {
   }
 
   @Get('users/:id')
-  @ApiOperation({ summary: 'Get user by ID', description: 'Retrieves a specific user by ID. Admin access required.' })
+  @ApiOperation({
+    summary: 'Get user by ID',
+    description: 'Retrieves a specific user by ID. Admin access required.',
+  })
   @ApiParam({ name: 'id', description: 'User UUID', type: String })
   @SwaggerApiResponse({ status: 200, description: 'User retrieved successfully' })
   @SwaggerApiResponse({ status: 401, description: 'Unauthorized' })
@@ -93,7 +108,10 @@ export class AdminController {
   }
 
   @Put('users/:id')
-  @ApiOperation({ summary: 'Update user', description: 'Updates user information. Admin access required.' })
+  @ApiOperation({
+    summary: 'Update user',
+    description: 'Updates user information. Admin access required.',
+  })
   @ApiParam({ name: 'id', description: 'User UUID', type: String })
   @ApiBody({
     schema: {
@@ -113,7 +131,8 @@ export class AdminController {
   @SwaggerApiResponse({ status: 404, description: 'User not found' })
   async updateUser(
     @Param('id', ParseUUIDPipe) id: string,
-    @Body() updateData: {
+    @Body()
+    updateData: {
       firstName?: string;
       lastName?: string;
       email?: string;
@@ -129,13 +148,18 @@ export class AdminController {
   }
 
   @Delete('users/:id')
-  @ApiOperation({ summary: 'Delete user', description: 'Deletes a user from the system. Admin access required.' })
+  @ApiOperation({
+    summary: 'Delete user',
+    description: 'Deletes a user from the system. Admin access required.',
+  })
   @ApiParam({ name: 'id', description: 'User UUID', type: String })
   @SwaggerApiResponse({ status: 200, description: 'User deleted successfully' })
   @SwaggerApiResponse({ status: 401, description: 'Unauthorized' })
   @SwaggerApiResponse({ status: 403, description: 'Forbidden - Admin access required' })
   @SwaggerApiResponse({ status: 404, description: 'User not found' })
-  async deleteUser(@Param('id', ParseUUIDPipe) id: string): Promise<ApiResponse<{ message: string }>> {
+  async deleteUser(
+    @Param('id', ParseUUIDPipe) id: string,
+  ): Promise<ApiResponse<{ message: string }>> {
     await this.adminService.deleteUser(id);
     return {
       data: { message: 'User deleted successfully' },
@@ -144,7 +168,10 @@ export class AdminController {
   }
 
   @Post('users/:id/reset-password')
-  @ApiOperation({ summary: 'Reset user password', description: 'Resets a user\'s password. Admin access required.' })
+  @ApiOperation({
+    summary: 'Reset user password',
+    description: "Resets a user's password. Admin access required.",
+  })
   @ApiParam({ name: 'id', description: 'User UUID', type: String })
   @ApiBody({
     schema: {
@@ -172,7 +199,10 @@ export class AdminController {
   }
 
   @Get('settings')
-  @ApiOperation({ summary: 'Get system settings', description: 'Retrieves system-wide settings. Admin access required.' })
+  @ApiOperation({
+    summary: 'Get system settings',
+    description: 'Retrieves system-wide settings. Admin access required.',
+  })
   @SwaggerApiResponse({ status: 200, description: 'Settings retrieved successfully' })
   @SwaggerApiResponse({ status: 401, description: 'Unauthorized' })
   @SwaggerApiResponse({ status: 403, description: 'Forbidden - Admin access required' })
@@ -185,7 +215,10 @@ export class AdminController {
   }
 
   @Put('settings')
-  @ApiOperation({ summary: 'Update system settings', description: 'Updates system-wide settings. Admin access required.' })
+  @ApiOperation({
+    summary: 'Update system settings',
+    description: 'Updates system-wide settings. Admin access required.',
+  })
   @ApiBody({ description: 'Settings object' })
   @SwaggerApiResponse({ status: 200, description: 'Settings updated successfully' })
   @SwaggerApiResponse({ status: 400, description: 'Invalid settings data' })
@@ -204,10 +237,17 @@ export class AdminController {
   @Get('permissions/catalog')
   @UseGuards(PermissionsGuard)
   @Permissions('system.permissions')
-  @ApiOperation({ summary: 'Get permission catalog', description: 'Retrieves the complete permission catalog. Requires system.permissions permission.' })
+  @ApiOperation({
+    summary: 'Get permission catalog',
+    description:
+      'Retrieves the complete permission catalog. Requires system.permissions permission.',
+  })
   @SwaggerApiResponse({ status: 200, description: 'Permission catalog retrieved successfully' })
   @SwaggerApiResponse({ status: 401, description: 'Unauthorized' })
-  @SwaggerApiResponse({ status: 403, description: 'Forbidden - Admin access and system.permissions permission required' })
+  @SwaggerApiResponse({
+    status: 403,
+    description: 'Forbidden - Admin access and system.permissions permission required',
+  })
   async getPermissionCatalog(): Promise<ApiResponse<any>> {
     const catalog = await this.adminService.getPermissionCatalog();
     return { data: catalog, message: 'Permission catalog retrieved successfully' };
@@ -216,11 +256,18 @@ export class AdminController {
   @Get('permissions/:role')
   @UseGuards(PermissionsGuard)
   @Permissions('system.permissions')
-  @ApiOperation({ summary: 'Get role permissions', description: 'Retrieves permissions for a specific role. Requires system.permissions permission.' })
+  @ApiOperation({
+    summary: 'Get role permissions',
+    description:
+      'Retrieves permissions for a specific role. Requires system.permissions permission.',
+  })
   @ApiParam({ name: 'role', description: 'Role name', type: String })
   @SwaggerApiResponse({ status: 200, description: 'Permissions retrieved successfully' })
   @SwaggerApiResponse({ status: 401, description: 'Unauthorized' })
-  @SwaggerApiResponse({ status: 403, description: 'Forbidden - Admin access and system.permissions permission required' })
+  @SwaggerApiResponse({
+    status: 403,
+    description: 'Forbidden - Admin access and system.permissions permission required',
+  })
   async getRolePermissions(@Param('role') role: string): Promise<ApiResponse<string[]>> {
     const permissions = await this.adminService.getRolePermissions(role);
     return {
@@ -232,21 +279,31 @@ export class AdminController {
   @Put('permissions/:role')
   @UseGuards(PermissionsGuard)
   @Permissions('system.permissions')
-  @ApiOperation({ summary: 'Update role permissions', description: 'Updates permissions for a specific role. Requires system.permissions permission.' })
+  @ApiOperation({
+    summary: 'Update role permissions',
+    description: 'Updates permissions for a specific role. Requires system.permissions permission.',
+  })
   @ApiParam({ name: 'role', description: 'Role name', type: String })
   @ApiBody({
     schema: {
       type: 'object',
       required: ['permissions'],
       properties: {
-        permissions: { type: 'array', items: { type: 'string' }, description: 'Array of permission strings' },
+        permissions: {
+          type: 'array',
+          items: { type: 'string' },
+          description: 'Array of permission strings',
+        },
       },
     },
   })
   @SwaggerApiResponse({ status: 200, description: 'Permissions updated successfully' })
   @SwaggerApiResponse({ status: 400, description: 'Invalid permissions data' })
   @SwaggerApiResponse({ status: 401, description: 'Unauthorized' })
-  @SwaggerApiResponse({ status: 403, description: 'Forbidden - Admin access and system.permissions permission required' })
+  @SwaggerApiResponse({
+    status: 403,
+    description: 'Forbidden - Admin access and system.permissions permission required',
+  })
   async updateRolePermissions(
     @Param('role') role: string,
     @Body() body: { permissions: string[] },
@@ -261,10 +318,16 @@ export class AdminController {
   @Get('roles')
   @UseGuards(PermissionsGuard)
   @Permissions('system.permissions')
-  @ApiOperation({ summary: 'List all roles', description: 'Retrieves all available roles. Requires system.permissions permission.' })
+  @ApiOperation({
+    summary: 'List all roles',
+    description: 'Retrieves all available roles. Requires system.permissions permission.',
+  })
   @SwaggerApiResponse({ status: 200, description: 'Roles retrieved successfully' })
   @SwaggerApiResponse({ status: 401, description: 'Unauthorized' })
-  @SwaggerApiResponse({ status: 403, description: 'Forbidden - Admin access and system.permissions permission required' })
+  @SwaggerApiResponse({
+    status: 403,
+    description: 'Forbidden - Admin access and system.permissions permission required',
+  })
   async listRoles(): Promise<ApiResponse<string[]>> {
     const roles = await this.adminService.listPermissionRoles();
     return { data: roles, message: 'Roles retrieved successfully' };
@@ -273,7 +336,10 @@ export class AdminController {
   @Post('roles')
   @UseGuards(PermissionsGuard)
   @Permissions('system.permissions')
-  @ApiOperation({ summary: 'Create role', description: 'Creates a new role. Requires system.permissions permission.' })
+  @ApiOperation({
+    summary: 'Create role',
+    description: 'Creates a new role. Requires system.permissions permission.',
+  })
   @ApiBody({
     schema: {
       type: 'object',
@@ -286,14 +352,20 @@ export class AdminController {
   @SwaggerApiResponse({ status: 201, description: 'Role created successfully' })
   @SwaggerApiResponse({ status: 400, description: 'Invalid role data' })
   @SwaggerApiResponse({ status: 401, description: 'Unauthorized' })
-  @SwaggerApiResponse({ status: 403, description: 'Forbidden - Admin access and system.permissions permission required' })
+  @SwaggerApiResponse({
+    status: 403,
+    description: 'Forbidden - Admin access and system.permissions permission required',
+  })
   async createRole(@Body() body: { name: string }): Promise<ApiResponse<any>> {
     const created = await this.adminService.createPermissionRole(body.name);
     return { data: created, message: 'Role created successfully' };
   }
 
   @Get('sellers')
-  @ApiOperation({ summary: 'Get all sellers', description: 'Retrieves all sellers in the system. Admin access required.' })
+  @ApiOperation({
+    summary: 'Get all sellers',
+    description: 'Retrieves all sellers in the system. Admin access required.',
+  })
   @SwaggerApiResponse({ status: 200, description: 'Sellers retrieved successfully' })
   @SwaggerApiResponse({ status: 401, description: 'Unauthorized' })
   @SwaggerApiResponse({ status: 403, description: 'Forbidden - Admin access required' })
@@ -305,4 +377,3 @@ export class AdminController {
     };
   }
 }
-

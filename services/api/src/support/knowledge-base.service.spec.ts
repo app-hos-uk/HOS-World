@@ -109,9 +109,7 @@ describe('KnowledgeBaseService', () => {
     it('should throw NotFoundException if article not found', async () => {
       mockPrismaService.knowledgeBaseArticle.findUnique.mockResolvedValue(null);
 
-      await expect(service.updateArticle('non-existent', {})).rejects.toThrow(
-        NotFoundException,
-      );
+      await expect(service.updateArticle('non-existent', {})).rejects.toThrow(NotFoundException);
     });
   });
 
@@ -150,9 +148,7 @@ describe('KnowledgeBaseService', () => {
 
   describe('searchArticles', () => {
     it('should search published articles', async () => {
-      const mockArticles = [
-        { id: 'article-1', title: 'Test Article', views: 10 },
-      ];
+      const mockArticles = [{ id: 'article-1', title: 'Test Article', views: 10 }];
 
       mockPrismaService.knowledgeBaseArticle.findMany.mockResolvedValue(mockArticles);
 
@@ -199,9 +195,7 @@ describe('KnowledgeBaseService', () => {
     it('should throw NotFoundException if article not found', async () => {
       mockPrismaService.knowledgeBaseArticle.findUnique.mockResolvedValue(null);
 
-      await expect(service.getArticleById('non-existent')).rejects.toThrow(
-        NotFoundException,
-      );
+      await expect(service.getArticleById('non-existent')).rejects.toThrow(NotFoundException);
     });
   });
 
@@ -236,9 +230,7 @@ describe('KnowledgeBaseService', () => {
 
       mockPrismaService.knowledgeBaseArticle.findUnique.mockResolvedValue(mockArticle);
 
-      await expect(service.getArticleBySlug('test-article')).rejects.toThrow(
-        NotFoundException,
-      );
+      await expect(service.getArticleBySlug('test-article')).rejects.toThrow(NotFoundException);
     });
   });
 
@@ -264,9 +256,7 @@ describe('KnowledgeBaseService', () => {
     it('should throw NotFoundException if article not found', async () => {
       mockPrismaService.knowledgeBaseArticle.findUnique.mockResolvedValue(null);
 
-      await expect(service.markArticleHelpful('non-existent')).rejects.toThrow(
-        NotFoundException,
-      );
+      await expect(service.markArticleHelpful('non-existent')).rejects.toThrow(NotFoundException);
     });
   });
 });

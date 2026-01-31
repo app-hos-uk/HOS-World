@@ -1,9 +1,4 @@
-import {
-  Injectable,
-  NestInterceptor,
-  ExecutionContext,
-  CallHandler,
-} from '@nestjs/common';
+import { Injectable, NestInterceptor, ExecutionContext, CallHandler } from '@nestjs/common';
 import { Observable, of } from 'rxjs';
 import { tap } from 'rxjs/operators';
 import { CacheService } from '../cache.service';
@@ -19,10 +14,7 @@ export class CacheInterceptor implements NestInterceptor {
     private reflector: Reflector,
   ) {}
 
-  async intercept(
-    context: ExecutionContext,
-    next: CallHandler,
-  ): Promise<Observable<any>> {
+  async intercept(context: ExecutionContext, next: CallHandler): Promise<Observable<any>> {
     const request = context.switchToHttp().getRequest();
     const cacheKey = this.generateCacheKey(request);
     const ttl = this.reflector.get<number>(CACHE_TTL_KEY, context.getHandler());
@@ -47,14 +39,9 @@ export class CacheInterceptor implements NestInterceptor {
 
   private generateCacheKey(request: any): string {
     const { method, url, query, params, user } = request;
-    
+
     // Create cache key from request details
-    const keyParts = [
-      method.toLowerCase(),
-      url,
-      JSON.stringify(query),
-      JSON.stringify(params),
-    ];
+    const keyParts = [method.toLowerCase(), url, JSON.stringify(query), JSON.stringify(params)];
 
     // Include user ID if authenticated
     if (user?.id) {
@@ -64,4 +51,3 @@ export class CacheInterceptor implements NestInterceptor {
     return `cache:${keyParts.join(':')}`;
   }
 }
-

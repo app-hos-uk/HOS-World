@@ -49,7 +49,9 @@ export class MeilisearchService implements OnModuleInit, OnModuleDestroy {
     const apiKey = this.configService.get<string>('MEILISEARCH_API_KEY');
 
     if (!host) {
-      this.logger.warn('Meilisearch not configured (MEILISEARCH_HOST missing) - search features will use fallback');
+      this.logger.warn(
+        'Meilisearch not configured (MEILISEARCH_HOST missing) - search features will use fallback',
+      );
       return;
     }
 
@@ -85,7 +87,9 @@ export class MeilisearchService implements OnModuleInit, OnModuleDestroy {
         });
       }
     } catch (error: any) {
-      this.logger.warn(`Meilisearch initialization failed: ${error.message} - using fallback search`);
+      this.logger.warn(
+        `Meilisearch initialization failed: ${error.message} - using fallback search`,
+      );
       this.isConfigured = false;
     }
   }
@@ -140,23 +144,16 @@ export class MeilisearchService implements OnModuleInit, OnModuleDestroy {
       ],
 
       // Sortable attributes
-      sortableAttributes: [
-        'price',
-        'createdAt',
-        'averageRating',
-        'reviewCount',
-        'stock',
-        'name',
-      ],
+      sortableAttributes: ['price', 'createdAt', 'averageRating', 'reviewCount', 'stock', 'name'],
 
       // Ranking rules - order matters!
       rankingRules: [
-        'words',        // Documents with more matching words rank higher
-        'typo',         // Documents with fewer typos rank higher
-        'proximity',    // Documents with closer words rank higher
-        'attribute',    // Documents with matches in more important attributes rank higher
-        'sort',         // Sort order if specified
-        'exactness',    // Documents with more exact matches rank higher
+        'words', // Documents with more matching words rank higher
+        'typo', // Documents with fewer typos rank higher
+        'proximity', // Documents with closer words rank higher
+        'attribute', // Documents with matches in more important attributes rank higher
+        'sort', // Sort order if specified
+        'exactness', // Documents with more exact matches rank higher
       ],
 
       // Distinct attribute to avoid duplicates
@@ -166,8 +163,8 @@ export class MeilisearchService implements OnModuleInit, OnModuleDestroy {
       typoTolerance: {
         enabled: true,
         minWordSizeForTypos: {
-          oneTypo: 4,   // Allow 1 typo for words >= 4 chars
-          twoTypos: 8,  // Allow 2 typos for words >= 8 chars
+          oneTypo: 4, // Allow 1 typo for words >= 4 chars
+          twoTypos: 8, // Allow 2 typos for words >= 8 chars
         },
         disableOnWords: [],
         disableOnAttributes: ['id', 'sku', 'barcode'],
@@ -209,18 +206,37 @@ export class MeilisearchService implements OnModuleInit, OnModuleDestroy {
 
       // Synonyms for better search matching
       synonyms: {
-        'tshirt': ['t-shirt', 'tee', 'shirt'],
-        'hoodie': ['hoody', 'sweatshirt'],
-        'mug': ['cup'],
-        'poster': ['print', 'artwork'],
-        'figure': ['figurine', 'statue', 'collectible'],
-        'plush': ['plushie', 'soft toy', 'stuffed toy'],
+        tshirt: ['t-shirt', 'tee', 'shirt'],
+        hoodie: ['hoody', 'sweatshirt'],
+        mug: ['cup'],
+        poster: ['print', 'artwork'],
+        figure: ['figurine', 'statue', 'collectible'],
+        plush: ['plushie', 'soft toy', 'stuffed toy'],
       },
 
       // Stop words to ignore
       stopWords: [
-        'the', 'a', 'an', 'and', 'or', 'but', 'in', 'on', 'at', 'to', 'for',
-        'of', 'with', 'by', 'from', 'as', 'is', 'was', 'are', 'were', 'been',
+        'the',
+        'a',
+        'an',
+        'and',
+        'or',
+        'but',
+        'in',
+        'on',
+        'at',
+        'to',
+        'for',
+        'of',
+        'with',
+        'by',
+        'from',
+        'as',
+        'is',
+        'was',
+        'are',
+        'were',
+        'been',
       ],
     };
 
@@ -305,10 +321,11 @@ export class MeilisearchService implements OnModuleInit, OnModuleDestroy {
       averageRating: product.averageRating || 0,
       reviewCount: product.reviewCount || 0,
       tags: product.tags || [],
-      images: product.images?.slice(0, 3).map((img: any) => ({
-        url: img.url,
-        alt: img.alt,
-      })) || [],
+      images:
+        product.images?.slice(0, 3).map((img: any) => ({
+          url: img.url,
+          alt: img.alt,
+        })) || [],
       isActive: product.status === 'ACTIVE',
       isPlatformOwned: product.isPlatformOwned || false,
       createdAt: product.createdAt ? new Date(product.createdAt).getTime() : Date.now(),
@@ -371,7 +388,7 @@ export class MeilisearchService implements OnModuleInit, OnModuleDestroy {
       filterConditions.push(`stock > 0`);
     }
     if (filters.tags && filters.tags.length > 0) {
-      const tagFilters = filters.tags.map(tag => `tags = "${tag}"`).join(' OR ');
+      const tagFilters = filters.tags.map((tag) => `tags = "${tag}"`).join(' OR ');
       filterConditions.push(`(${tagFilters})`);
     }
 
@@ -391,14 +408,14 @@ export class MeilisearchService implements OnModuleInit, OnModuleDestroy {
     // Add sorting
     if (filters.sort) {
       const sortMappings: Record<string, string> = {
-        'price_asc': 'price:asc',
-        'price_desc': 'price:desc',
-        'newest': 'createdAt:desc',
-        'oldest': 'createdAt:asc',
-        'rating': 'averageRating:desc',
-        'popular': 'reviewCount:desc',
-        'name_asc': 'name:asc',
-        'name_desc': 'name:desc',
+        price_asc: 'price:asc',
+        price_desc: 'price:desc',
+        newest: 'createdAt:desc',
+        oldest: 'createdAt:asc',
+        rating: 'averageRating:desc',
+        popular: 'reviewCount:desc',
+        name_asc: 'name:asc',
+        name_desc: 'name:desc',
       };
       if (sortMappings[filters.sort]) {
         searchParams.sort = [sortMappings[filters.sort]];
@@ -465,7 +482,7 @@ export class MeilisearchService implements OnModuleInit, OnModuleDestroy {
     }
 
     this.logger.log('Starting full product sync to Meilisearch...');
-    
+
     let indexed = 0;
     let failed = 0;
     let skip = 0;
@@ -501,7 +518,7 @@ export class MeilisearchService implements OnModuleInit, OnModuleDestroy {
         if (products.length === 0) break;
 
         const documents = products.map((p) => this.transformProductToDocument(p));
-        
+
         try {
           const task = await this.productsIndex!.addDocuments(documents, { primaryKey: 'id' });
           await this.client!.waitForTask(task.taskUid, { timeOutMs: 60000 });
@@ -611,13 +628,13 @@ export class MeilisearchService implements OnModuleInit, OnModuleDestroy {
       // Create new index
       const task = await this.client.createIndex(this.indexName, { primaryKey: 'id' });
       await this.client.waitForTask(task.taskUid);
-      
+
       this.productsIndex = this.client.index(this.indexName);
       await this.configureIndex();
-      
+
       // Re-sync all products
       await this.syncAllProducts();
-      
+
       this.logger.log('Index rebuild complete');
     } catch (error: any) {
       this.logger.error(`Index rebuild failed: ${error.message}`);

@@ -89,6 +89,7 @@ export default function TaxIntegrationsPage() {
 
   useEffect(() => {
     fetchIntegrations();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const fetchIntegrations = async () => {

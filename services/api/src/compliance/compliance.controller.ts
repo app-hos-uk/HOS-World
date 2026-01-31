@@ -17,9 +17,15 @@ export class ComplianceController {
 
   @Public()
   @Get('requirements/:country')
-  @ApiOperation({ summary: 'Get compliance requirements', description: 'Retrieves compliance requirements for a specific country. Public endpoint.' })
+  @ApiOperation({
+    summary: 'Get compliance requirements',
+    description: 'Retrieves compliance requirements for a specific country. Public endpoint.',
+  })
   @ApiParam({ name: 'country', description: 'ISO country code', type: String })
-  @SwaggerApiResponse({ status: 200, description: 'Compliance requirements retrieved successfully' })
+  @SwaggerApiResponse({
+    status: 200,
+    description: 'Compliance requirements retrieved successfully',
+  })
   async getRequirements(@Param('country') country: string): Promise<ApiResponse<any>> {
     const requirements = this.complianceService.getRequirements(country.toUpperCase());
     return {
@@ -30,7 +36,10 @@ export class ComplianceController {
 
   @Public()
   @Get('tax-rates/:country')
-  @ApiOperation({ summary: 'Get tax rate', description: 'Retrieves the tax rate for a specific country. Public endpoint.' })
+  @ApiOperation({
+    summary: 'Get tax rate',
+    description: 'Retrieves the tax rate for a specific country. Public endpoint.',
+  })
   @ApiParam({ name: 'country', description: 'ISO country code', type: String })
   @SwaggerApiResponse({ status: 200, description: 'Tax rate retrieved successfully' })
   async getTaxRates(@Param('country') country: string): Promise<ApiResponse<{ rate: number }>> {
@@ -43,7 +52,11 @@ export class ComplianceController {
 
   @Public()
   @Post('verify-age')
-  @ApiOperation({ summary: 'Verify age', description: 'Verifies if a user meets the minimum age requirement for a specific country. Public endpoint.' })
+  @ApiOperation({
+    summary: 'Verify age',
+    description:
+      'Verifies if a user meets the minimum age requirement for a specific country. Public endpoint.',
+  })
   @ApiBody({
     schema: {
       type: 'object',
@@ -72,4 +85,3 @@ export class ComplianceController {
     };
   }
 }
-

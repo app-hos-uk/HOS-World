@@ -43,6 +43,7 @@ function ProductsContent() {
     // Reset to page 1 when search query changes (added or removed)
     // This ensures users start at page 1 when switching between search and browse
     setPage(1);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchQuery]); // Use the extracted query value instead of the entire searchParams object
 
   useEffect(() => {

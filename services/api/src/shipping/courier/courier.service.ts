@@ -4,8 +4,16 @@ import { PrismaService } from '../../database/prisma.service';
 
 export interface CourierProvider {
   name: string;
-  calculateRate(weight: number, dimensions: { length: number; width: number; height: number }, from: any, to: any): Promise<number>;
-  createLabel(orderId: string, shipment: any): Promise<{ trackingNumber: string; labelUrl: string }>;
+  calculateRate(
+    weight: number,
+    dimensions: { length: number; width: number; height: number },
+    from: any,
+    to: any,
+  ): Promise<number>;
+  createLabel(
+    orderId: string,
+    shipment: any,
+  ): Promise<{ trackingNumber: string; labelUrl: string }>;
   trackShipment(trackingNumber: string): Promise<any>;
   validateAddress(address: any): Promise<boolean>;
 }
@@ -107,7 +115,11 @@ export class CourierService {
       );
 
       // Estimate delivery days (default 3-5 days, can be provider-specific)
-      const estimatedDays = this.estimateDeliveryDays(providerName, request.from.country, request.to.country);
+      const estimatedDays = this.estimateDeliveryDays(
+        providerName,
+        request.from.country,
+        request.to.country,
+      );
 
       return {
         provider: providerName,
@@ -125,7 +137,10 @@ export class CourierService {
   /**
    * Create shipping label
    */
-  async createLabel(providerName: string, request: ShippingLabelRequest): Promise<{
+  async createLabel(
+    providerName: string,
+    request: ShippingLabelRequest,
+  ): Promise<{
     trackingNumber: string;
     labelUrl: string;
   }> {
@@ -190,7 +205,35 @@ export class CourierService {
 
     // International shipping
     // EU countries
-    const euCountries = ['AT', 'BE', 'BG', 'HR', 'CY', 'CZ', 'DK', 'EE', 'FI', 'FR', 'DE', 'GR', 'HU', 'IE', 'IT', 'LV', 'LT', 'LU', 'MT', 'NL', 'PL', 'PT', 'RO', 'SK', 'SI', 'ES', 'SE'];
+    const euCountries = [
+      'AT',
+      'BE',
+      'BG',
+      'HR',
+      'CY',
+      'CZ',
+      'DK',
+      'EE',
+      'FI',
+      'FR',
+      'DE',
+      'GR',
+      'HU',
+      'IE',
+      'IT',
+      'LV',
+      'LT',
+      'LU',
+      'MT',
+      'NL',
+      'PL',
+      'PT',
+      'RO',
+      'SK',
+      'SI',
+      'ES',
+      'SE',
+    ];
     if (euCountries.includes(toCountry)) {
       return 3; // 3 days for EU
     }

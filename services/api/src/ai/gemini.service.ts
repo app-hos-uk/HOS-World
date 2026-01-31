@@ -12,7 +12,7 @@ export class GeminiService {
 
   constructor(private configService: ConfigService) {
     this.apiKey = this.configService.get<string>('GEMINI_API_KEY') || '';
-    
+
     if (!this.apiKey) {
       this.logger.warn('GEMINI_API_KEY not configured. AI features will use fallback responses.');
     }
@@ -133,7 +133,7 @@ Return only a JSON array of 5 product category keywords, like: ["Wand", "Robe", 
 
       const data = await response.json();
       const text = data.candidates?.[0]?.content?.parts?.[0]?.text || '';
-      
+
       // Parse JSON from response
       const jsonMatch = text.match(/\[.*\]/);
       if (jsonMatch) {
@@ -263,4 +263,3 @@ Make it exciting, engaging, and fandom-focused. Keep it concise (2-3 sentences).
     return "Hello! I'm here to help you discover amazing fandom products. What are you looking for today?";
   }
 }
-

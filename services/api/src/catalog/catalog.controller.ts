@@ -20,10 +20,7 @@ import {
   ApiQuery,
 } from '@nestjs/swagger';
 import { CatalogService } from './catalog.service';
-import {
-  CreateCatalogEntryDto,
-  UpdateCatalogEntryDto,
-} from './dto/create-catalog-entry.dto';
+import { CreateCatalogEntryDto, UpdateCatalogEntryDto } from './dto/create-catalog-entry.dto';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../common/guards/roles.guard';
 import { Roles } from '../common/decorators/roles.decorator';
@@ -40,9 +37,13 @@ export class CatalogController {
   @Get('pending')
   @ApiOperation({
     summary: 'Get pending catalog entries',
-    description: 'Retrieves all pending catalog entries awaiting processing. Catalog/Admin access required.',
+    description:
+      'Retrieves all pending catalog entries awaiting processing. Catalog/Admin access required.',
   })
-  @SwaggerApiResponse({ status: 200, description: 'Pending catalog entries retrieved successfully' })
+  @SwaggerApiResponse({
+    status: 200,
+    description: 'Pending catalog entries retrieved successfully',
+  })
   @SwaggerApiResponse({ status: 401, description: 'Unauthorized' })
   @SwaggerApiResponse({ status: 403, description: 'Forbidden - Catalog/Admin access required' })
   async findPending(): Promise<ApiResponse<any[]>> {
@@ -56,15 +57,20 @@ export class CatalogController {
   @Get('entries')
   @ApiOperation({
     summary: 'Get all catalog entries',
-    description: 'Retrieves all catalog entries with optional status filtering. Catalog/Admin access required.',
+    description:
+      'Retrieves all catalog entries with optional status filtering. Catalog/Admin access required.',
   })
-  @ApiQuery({ name: 'status', required: false, type: String, enum: ['pending', 'completed'], description: 'Filter by status' })
+  @ApiQuery({
+    name: 'status',
+    required: false,
+    type: String,
+    enum: ['pending', 'completed'],
+    description: 'Filter by status',
+  })
   @SwaggerApiResponse({ status: 200, description: 'Catalog entries retrieved successfully' })
   @SwaggerApiResponse({ status: 401, description: 'Unauthorized' })
   @SwaggerApiResponse({ status: 403, description: 'Forbidden - Catalog/Admin access required' })
-  async findAll(
-    @Query('status') status?: 'pending' | 'completed',
-  ): Promise<ApiResponse<any[]>> {
+  async findAll(@Query('status') status?: 'pending' | 'completed'): Promise<ApiResponse<any[]>> {
     const entries = await this.catalogService.findAll(status);
     return {
       data: entries,
@@ -75,7 +81,8 @@ export class CatalogController {
   @Get('entries/:submissionId')
   @ApiOperation({
     summary: 'Get catalog entry by submission ID',
-    description: 'Retrieves a specific catalog entry by submission ID. Catalog/Admin access required.',
+    description:
+      'Retrieves a specific catalog entry by submission ID. Catalog/Admin access required.',
   })
   @ApiParam({ name: 'submissionId', description: 'Submission UUID', type: String })
   @SwaggerApiResponse({ status: 200, description: 'Catalog entry retrieved successfully' })
@@ -109,11 +116,7 @@ export class CatalogController {
     @Param('submissionId', ParseUUIDPipe) submissionId: string,
     @Body() createDto: CreateCatalogEntryDto,
   ): Promise<ApiResponse<any>> {
-    const entry = await this.catalogService.create(
-      submissionId,
-      req.user.id,
-      createDto,
-    );
+    const entry = await this.catalogService.create(submissionId, req.user.id, createDto);
     return {
       data: entry,
       message: 'Catalog entry created successfully',
@@ -137,11 +140,7 @@ export class CatalogController {
     @Param('submissionId', ParseUUIDPipe) submissionId: string,
     @Body() updateDto: UpdateCatalogEntryDto,
   ): Promise<ApiResponse<any>> {
-    const entry = await this.catalogService.update(
-      submissionId,
-      req.user.id,
-      updateDto,
-    );
+    const entry = await this.catalogService.update(submissionId, req.user.id, updateDto);
     return {
       data: entry,
       message: 'Catalog entry updated successfully',
@@ -172,7 +171,8 @@ export class CatalogController {
   @Get('dashboard/stats')
   @ApiOperation({
     summary: 'Get catalog dashboard statistics',
-    description: 'Retrieves dashboard statistics for catalog operations. Catalog/Admin access required.',
+    description:
+      'Retrieves dashboard statistics for catalog operations. Catalog/Admin access required.',
   })
   @SwaggerApiResponse({ status: 200, description: 'Dashboard statistics retrieved successfully' })
   @SwaggerApiResponse({ status: 401, description: 'Unauthorized' })
@@ -185,4 +185,3 @@ export class CatalogController {
     };
   }
 }
-

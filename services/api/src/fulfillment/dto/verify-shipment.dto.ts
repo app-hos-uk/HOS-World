@@ -28,4 +28,3 @@ export class CreateShipmentDto {
   @IsString()
   trackingNumber?: string;
 }
-

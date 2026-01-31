@@ -5,7 +5,11 @@ import {
   BadRequestException,
 } from '@nestjs/common';
 import { PrismaService } from '../database/prisma.service';
-import { ApproveSubmissionDto, RejectSubmissionDto, SelectQuantityDto } from './dto/approve-submission.dto';
+import {
+  ApproveSubmissionDto,
+  RejectSubmissionDto,
+  SelectQuantityDto,
+} from './dto/approve-submission.dto';
 import { ProductSubmissionStatus } from '@prisma/client';
 import { DuplicatesService } from '../duplicates/duplicates.service';
 import { NotificationsService } from '../notifications/notifications.service';
@@ -119,9 +123,7 @@ export class ProcurementService {
     }
 
     if (submission.status !== 'SUBMITTED' && submission.status !== 'UNDER_REVIEW') {
-      throw new BadRequestException(
-        `Cannot approve submission in status: ${submission.status}`,
-      );
+      throw new BadRequestException(`Cannot approve submission in status: ${submission.status}`);
     }
 
     // Check for duplicates before approving
@@ -184,9 +186,7 @@ export class ProcurementService {
     }
 
     if (submission.status !== 'SUBMITTED' && submission.status !== 'UNDER_REVIEW') {
-      throw new BadRequestException(
-        `Cannot reject submission in status: ${submission.status}`,
-      );
+      throw new BadRequestException(`Cannot reject submission in status: ${submission.status}`);
     }
 
     const updated = await this.prisma.productSubmission.update({
@@ -262,31 +262,27 @@ export class ProcurementService {
   }
 
   async getDashboardStats() {
-    const [
-      totalSubmissions,
-      pendingReview,
-      approved,
-      rejected,
-      withDuplicates,
-    ] = await Promise.all([
-      this.prisma.productSubmission.count(),
-      this.prisma.productSubmission.count({
-        where: { status: { in: ['SUBMITTED', 'UNDER_REVIEW'] } },
-      }),
-      this.prisma.productSubmission.count({
-        where: { status: 'PROCUREMENT_APPROVED' },
-      }),
-      this.prisma.productSubmission.count({
-        where: { status: 'PROCUREMENT_REJECTED' },
-      }),
-      this.prisma.duplicateProduct.count({
-        where: {
-          submission: {
-            status: { in: ['SUBMITTED', 'UNDER_REVIEW'] },
+    const [totalSubmissions, pendingReview, approved, rejected, withDuplicates] = await Promise.all(
+      [
+        this.prisma.productSubmission.count(),
+        this.prisma.productSubmission.count({
+          where: { status: { in: ['SUBMITTED', 'UNDER_REVIEW'] } },
+        }),
+        this.prisma.productSubmission.count({
+          where: { status: 'PROCUREMENT_APPROVED' },
+        }),
+        this.prisma.productSubmission.count({
+          where: { status: 'PROCUREMENT_REJECTED' },
+        }),
+        this.prisma.duplicateProduct.count({
+          where: {
+            submission: {
+              status: { in: ['SUBMITTED', 'UNDER_REVIEW'] },
+            },
           },
-        },
-      }),
-    ]);
+        }),
+      ],
+    );
 
     return {
       totalSubmissions,
@@ -297,4 +293,3 @@ export class ProcurementService {
     };
   }
 }
-

@@ -112,7 +112,14 @@ export class QueueService implements OnModuleInit, OnModuleDestroy {
   }
 
   async getQueueStats() {
-    return await this.queue.getJobCounts('waiting', 'active', 'completed', 'failed', 'delayed', 'paused');
+    return await this.queue.getJobCounts(
+      'waiting',
+      'active',
+      'completed',
+      'failed',
+      'delayed',
+      'paused',
+    );
   }
 
   // Convenience methods
@@ -132,4 +139,3 @@ export class QueueService implements OnModuleInit, OnModuleDestroy {
     return this.addJob(JobType.IMAGE_PROCESSING, { imageUrl, transformations });
   }
 }
-

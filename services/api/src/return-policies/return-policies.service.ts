@@ -1,9 +1,4 @@
-import {
-  Injectable,
-  NotFoundException,
-  BadRequestException,
-  Logger,
-} from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException, Logger } from '@nestjs/common';
 import { PrismaService } from '../database/prisma.service';
 import { CreateReturnPolicyDto } from './dto/create-return-policy.dto';
 import { Decimal } from '@prisma/client/runtime/library';
@@ -19,11 +14,9 @@ export class ReturnPoliciesService {
    */
   async create(createDto: CreateReturnPolicyDto) {
     // Validate that only one of productId, categoryId, or sellerId is set (or none for platform-wide)
-    const scopeCount = [
-      createDto.productId,
-      createDto.categoryId,
-      createDto.sellerId,
-    ].filter(Boolean).length;
+    const scopeCount = [createDto.productId, createDto.categoryId, createDto.sellerId].filter(
+      Boolean,
+    ).length;
 
     if (scopeCount > 1) {
       throw new BadRequestException(
@@ -43,9 +36,7 @@ export class ReturnPoliciesService {
         requiresApproval: createDto.requiresApproval ?? false,
         requiresInspection: createDto.requiresInspection ?? false,
         refundMethod: createDto.refundMethod,
-        restockingFee: createDto.restockingFee
-          ? new Decimal(createDto.restockingFee)
-          : null,
+        restockingFee: createDto.restockingFee ? new Decimal(createDto.restockingFee) : null,
         priority: createDto.priority || 0,
         isActive: createDto.isActive ?? true,
       },
@@ -155,11 +146,7 @@ export class ReturnPoliciesService {
   /**
    * Get applicable return policy for a product/order
    */
-  async getApplicablePolicy(
-    productId: string,
-    sellerId?: string,
-    categoryId?: string,
-  ) {
+  async getApplicablePolicy(productId: string, sellerId?: string, categoryId?: string) {
     // Find policies in priority order:
     // 1. Product-specific
     // 2. Category-specific
@@ -176,10 +163,7 @@ export class ReturnPoliciesService {
           { sellerId: null, productId: null, categoryId: null }, // Platform-wide
         ],
       },
-      orderBy: [
-        { priority: 'desc' },
-        { createdAt: 'desc' },
-      ],
+      orderBy: [{ priority: 'desc' }, { createdAt: 'desc' }],
     });
 
     // Return the first matching policy (highest priority)

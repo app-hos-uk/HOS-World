@@ -7,16 +7,13 @@ import { DatabaseModule } from '../database/database.module';
 
 /**
  * IntegrationsModule - Manages third-party integration configurations
- * 
+ *
  * This module is marked as @Global so that IntegrationsService and EncryptionService
  * can be injected into other modules (e.g., shipping, tax) without explicit imports.
  */
 @Global()
 @Module({
-  imports: [
-    DatabaseModule,
-    ConfigModule,
-  ],
+  imports: [DatabaseModule, ConfigModule],
   controllers: [IntegrationsController],
   providers: [IntegrationsService, EncryptionService],
   exports: [IntegrationsService, EncryptionService],

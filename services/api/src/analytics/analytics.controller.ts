@@ -25,7 +25,7 @@ import { Roles } from '../common/decorators/roles.decorator';
 import type { ApiResponse } from '@hos-marketplace/shared-types';
 // @ts-ignore - exceljs types may not be available
 import * as ExcelJS from 'exceljs';
-// @ts-ignore - pdfkit types may not be available  
+// @ts-ignore - pdfkit types may not be available
 import PDFDocument from 'pdfkit';
 
 @ApiTags('analytics')
@@ -41,11 +41,31 @@ export class AnalyticsController {
     summary: 'Get sales trends',
     description: 'Retrieves sales trends with growth calculations and period comparisons.',
   })
-  @ApiQuery({ name: 'startDate', required: false, type: String, description: 'Start date (ISO format)' })
-  @ApiQuery({ name: 'endDate', required: false, type: String, description: 'End date (ISO format)' })
+  @ApiQuery({
+    name: 'startDate',
+    required: false,
+    type: String,
+    description: 'Start date (ISO format)',
+  })
+  @ApiQuery({
+    name: 'endDate',
+    required: false,
+    type: String,
+    description: 'End date (ISO format)',
+  })
   @ApiQuery({ name: 'sellerId', required: false, type: String, description: 'Filter by seller ID' })
-  @ApiQuery({ name: 'period', required: false, enum: ['daily', 'weekly', 'monthly', 'yearly'], description: 'Grouping period' })
-  @ApiQuery({ name: 'compareWithPrevious', required: false, type: Boolean, description: 'Compare with previous period' })
+  @ApiQuery({
+    name: 'period',
+    required: false,
+    enum: ['daily', 'weekly', 'monthly', 'yearly'],
+    description: 'Grouping period',
+  })
+  @ApiQuery({
+    name: 'compareWithPrevious',
+    required: false,
+    type: Boolean,
+    description: 'Compare with previous period',
+  })
   @SwaggerApiResponse({ status: 200, description: 'Sales trends retrieved successfully' })
   async getSalesTrends(
     @Request() req: any,
@@ -77,8 +97,18 @@ export class AnalyticsController {
     summary: 'Get customer metrics',
     description: 'Retrieves customer analytics including retention rate and lifetime value.',
   })
-  @ApiQuery({ name: 'startDate', required: false, type: String, description: 'Start date (ISO format)' })
-  @ApiQuery({ name: 'endDate', required: false, type: String, description: 'End date (ISO format)' })
+  @ApiQuery({
+    name: 'startDate',
+    required: false,
+    type: String,
+    description: 'Start date (ISO format)',
+  })
+  @ApiQuery({
+    name: 'endDate',
+    required: false,
+    type: String,
+    description: 'End date (ISO format)',
+  })
   @SwaggerApiResponse({ status: 200, description: 'Customer metrics retrieved successfully' })
   async getCustomerMetrics(
     @Query('startDate') startDate?: string,
@@ -102,10 +132,25 @@ export class AnalyticsController {
     summary: 'Get product performance',
     description: 'Retrieves product performance metrics including revenue and conversion rates.',
   })
-  @ApiQuery({ name: 'startDate', required: false, type: String, description: 'Start date (ISO format)' })
-  @ApiQuery({ name: 'endDate', required: false, type: String, description: 'End date (ISO format)' })
+  @ApiQuery({
+    name: 'startDate',
+    required: false,
+    type: String,
+    description: 'Start date (ISO format)',
+  })
+  @ApiQuery({
+    name: 'endDate',
+    required: false,
+    type: String,
+    description: 'End date (ISO format)',
+  })
   @ApiQuery({ name: 'sellerId', required: false, type: String, description: 'Filter by seller ID' })
-  @ApiQuery({ name: 'limit', required: false, type: Number, description: 'Limit results (default: 20)' })
+  @ApiQuery({
+    name: 'limit',
+    required: false,
+    type: Number,
+    description: 'Limit results (default: 20)',
+  })
   @SwaggerApiResponse({ status: 200, description: 'Product performance retrieved successfully' })
   async getProductPerformance(
     @Request() req: any,
@@ -133,9 +178,24 @@ export class AnalyticsController {
     summary: 'Get inventory metrics',
     description: 'Retrieves inventory metrics including turnover rates and stock levels.',
   })
-  @ApiQuery({ name: 'warehouseId', required: false, type: String, description: 'Filter by warehouse ID' })
-  @ApiQuery({ name: 'startDate', required: false, type: String, description: 'Start date for turnover calculation (ISO format)' })
-  @ApiQuery({ name: 'endDate', required: false, type: String, description: 'End date for turnover calculation (ISO format)' })
+  @ApiQuery({
+    name: 'warehouseId',
+    required: false,
+    type: String,
+    description: 'Filter by warehouse ID',
+  })
+  @ApiQuery({
+    name: 'startDate',
+    required: false,
+    type: String,
+    description: 'Start date for turnover calculation (ISO format)',
+  })
+  @ApiQuery({
+    name: 'endDate',
+    required: false,
+    type: String,
+    description: 'End date for turnover calculation (ISO format)',
+  })
   @SwaggerApiResponse({ status: 200, description: 'Inventory metrics retrieved successfully' })
   async getInventoryMetrics(
     @Query('warehouseId') warehouseId?: string,
@@ -159,11 +219,22 @@ export class AnalyticsController {
   @Get('revenue/growth')
   @ApiOperation({
     summary: 'Get revenue growth',
-    description: 'Retrieves revenue growth rate comparing current period with previous period (MoM or YoY).',
+    description:
+      'Retrieves revenue growth rate comparing current period with previous period (MoM or YoY).',
   })
-  @ApiQuery({ name: 'startDate', required: true, type: String, description: 'Start date (ISO format)' })
+  @ApiQuery({
+    name: 'startDate',
+    required: true,
+    type: String,
+    description: 'Start date (ISO format)',
+  })
   @ApiQuery({ name: 'endDate', required: true, type: String, description: 'End date (ISO format)' })
-  @ApiQuery({ name: 'comparisonType', required: false, enum: ['month', 'year'], description: 'Comparison type (default: month)' })
+  @ApiQuery({
+    name: 'comparisonType',
+    required: false,
+    enum: ['month', 'year'],
+    description: 'Comparison type (default: month)',
+  })
   @SwaggerApiResponse({ status: 200, description: 'Revenue growth retrieved successfully' })
   async getRevenueGrowth(
     @Query('startDate') startDate: string,
@@ -187,9 +258,24 @@ export class AnalyticsController {
     summary: 'Export analytics data',
     description: 'Exports analytics data in CSV, Excel, or PDF format.',
   })
-  @ApiQuery({ name: 'reportType', required: true, enum: ['sales', 'customers', 'products', 'inventory'], description: 'Type of report' })
-  @ApiQuery({ name: 'startDate', required: false, type: String, description: 'Start date (ISO format)' })
-  @ApiQuery({ name: 'endDate', required: false, type: String, description: 'End date (ISO format)' })
+  @ApiQuery({
+    name: 'reportType',
+    required: true,
+    enum: ['sales', 'customers', 'products', 'inventory'],
+    description: 'Type of report',
+  })
+  @ApiQuery({
+    name: 'startDate',
+    required: false,
+    type: String,
+    description: 'Start date (ISO format)',
+  })
+  @ApiQuery({
+    name: 'endDate',
+    required: false,
+    type: String,
+    description: 'End date (ISO format)',
+  })
   @SwaggerApiResponse({ status: 200, description: 'Export file generated successfully' })
   async exportAnalytics(
     @Request() req: any,

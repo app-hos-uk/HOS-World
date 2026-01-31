@@ -2,7 +2,12 @@ import { Injectable, BadRequestException, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import * as fs from 'fs/promises';
 import { v2 as cloudinary } from 'cloudinary';
-import { S3Client, PutObjectCommand, DeleteObjectCommand, GetObjectCommand } from '@aws-sdk/client-s3';
+import {
+  S3Client,
+  PutObjectCommand,
+  DeleteObjectCommand,
+  GetObjectCommand,
+} from '@aws-sdk/client-s3';
 import { Upload } from '@aws-sdk/lib-storage';
 
 export enum StorageProvider {
@@ -28,13 +33,13 @@ export class StorageService {
 
   constructor(private configService: ConfigService) {
     this.provider = (this.configService.get('STORAGE_PROVIDER') || 'local') as StorageProvider;
-    
+
     // Initialize Cloudinary if configured
     if (this.provider === StorageProvider.CLOUDINARY) {
       const cloudName = this.configService.get<string>('CLOUDINARY_CLOUD_NAME');
       const apiKey = this.configService.get<string>('CLOUDINARY_API_KEY');
       const apiSecret = this.configService.get<string>('CLOUDINARY_API_SECRET');
-      
+
       if (cloudName && apiKey && apiSecret) {
         cloudinary.config({
           cloud_name: cloudName,
@@ -302,7 +307,13 @@ export class StorageService {
   async getCloudinaryUploadSignature(
     folder: string = 'uploads',
     options?: { timestamp?: number; eager?: string },
-  ): Promise<{ signature: string; timestamp: number; apiKey: string; cloudName: string; folder: string }> {
+  ): Promise<{
+    signature: string;
+    timestamp: number;
+    apiKey: string;
+    cloudName: string;
+    folder: string;
+  }> {
     if (this.provider !== StorageProvider.CLOUDINARY) {
       throw new BadRequestException('Cloudinary is not configured as the storage provider');
     }
@@ -331,10 +342,7 @@ export class StorageService {
       .map((key) => `${key}=${params[key]}`)
       .join('&');
 
-    const signature = cloudinary.utils.api_sign_request(
-      { ...params, timestamp },
-      apiSecret,
-    );
+    const signature = cloudinary.utils.api_sign_request({ ...params, timestamp }, apiSecret);
 
     return {
       signature,
@@ -418,7 +426,7 @@ export class StorageService {
       // URL format: http://endpoint/bucket/key
       let key = url;
       const endpoint = this.configService.get<string>('MINIO_ENDPOINT') || 'http://localhost:9000';
-      
+
       if (url.includes(endpoint)) {
         const parts = url.replace(endpoint, '').split('/').filter(Boolean);
         const bucketIndex = parts.findIndex((part) => part === bucket);
@@ -481,22 +489,22 @@ export class StorageService {
       // Extract file path from URL
       // URLs can be: /uploads/file.jpg, ./uploads/file.jpg, or full paths
       let filePath = url;
-      
+
       // Remove protocol and domain if present
       if (url.startsWith('http://') || url.startsWith('https://')) {
         const urlObj = new URL(url);
         filePath = urlObj.pathname;
       }
-      
+
       // Remove leading slash or ./ if present
       filePath = filePath.replace(/^\.?\//, '');
-      
+
       // Ensure we're within uploads directory for security
       if (!filePath.startsWith('uploads/') && !filePath.startsWith('public/')) {
         this.logger.warn(`Attempted to delete file outside uploads directory: ${filePath}`);
         return;
       }
-      
+
       // Try to delete the file
       await fs.unlink(filePath);
       this.logger.log(`Local file deleted: ${filePath}`);
@@ -511,4 +519,3 @@ export class StorageService {
     }
   }
 }
-

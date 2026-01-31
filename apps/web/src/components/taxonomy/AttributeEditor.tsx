@@ -49,6 +49,7 @@ export function AttributeEditor({
 
   useEffect(() => {
     loadAttributes();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [categoryId]);
 
   useEffect(() => {

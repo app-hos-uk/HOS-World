@@ -125,10 +125,10 @@ export interface TestConnectionResult {
 export interface ITaxProvider {
   /** Provider identifier (e.g., 'avalara', 'taxjar') */
   readonly providerId: string;
-  
+
   /** Human-readable provider name */
   readonly providerName: string;
-  
+
   /** Whether this provider is currently configured and ready to use */
   isConfigured(): boolean;
 
@@ -177,7 +177,9 @@ export interface ITaxProvider {
   /**
    * Create an exemption certificate
    */
-  createExemptionCertificate?(certificate: Omit<ExemptionCertificate, 'id' | 'status'>): Promise<ExemptionCertificate>;
+  createExemptionCertificate?(
+    certificate: Omit<ExemptionCertificate, 'id' | 'status'>,
+  ): Promise<ExemptionCertificate>;
 
   /**
    * Get tax codes/categories for product classification
@@ -196,7 +198,7 @@ export interface ITaxProvider {
 export abstract class BaseTaxProvider implements ITaxProvider {
   abstract readonly providerId: string;
   abstract readonly providerName: string;
-  
+
   protected credentials: Record<string, any> = {};
   protected isTestMode: boolean = true;
 

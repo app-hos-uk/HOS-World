@@ -18,10 +18,7 @@ import {
   ApiBody,
 } from '@nestjs/swagger';
 import { DomainsService } from './domains.service';
-import {
-  AssignCustomDomainDto,
-  CreateSubDomainDto,
-} from './dto/assign-domain.dto';
+import { AssignCustomDomainDto, CreateSubDomainDto } from './dto/assign-domain.dto';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../common/guards/roles.guard';
 import { Roles } from '../common/decorators/roles.decorator';
@@ -38,7 +35,8 @@ export class DomainsController {
   @ApiBearerAuth('JWT-auth')
   @ApiOperation({
     summary: 'Get seller domains',
-    description: 'Retrieves all domains (custom and subdomains) for a specific seller. Seller/Admin access required.',
+    description:
+      'Retrieves all domains (custom and subdomains) for a specific seller. Seller/Admin access required.',
   })
   @ApiParam({ name: 'sellerId', description: 'Seller UUID', type: String })
   @SwaggerApiResponse({ status: 200, description: 'Seller domains retrieved successfully' })
@@ -61,7 +59,8 @@ export class DomainsController {
   @ApiBearerAuth('JWT-auth')
   @ApiOperation({
     summary: 'Get my domains',
-    description: 'Retrieves all domains for the authenticated seller. Seller/Admin access required.',
+    description:
+      'Retrieves all domains for the authenticated seller. Seller/Admin access required.',
   })
   @SwaggerApiResponse({ status: 200, description: 'Domains retrieved successfully' })
   @SwaggerApiResponse({ status: 401, description: 'Unauthorized' })
@@ -197,7 +196,8 @@ export class DomainsController {
   @ApiBearerAuth('JWT-auth')
   @ApiOperation({
     summary: 'Get DNS configuration',
-    description: 'Retrieves DNS configuration for a seller\'s custom domain. Seller/Admin access required.',
+    description:
+      "Retrieves DNS configuration for a seller's custom domain. Seller/Admin access required.",
   })
   @ApiParam({ name: 'sellerId', description: 'Seller UUID', type: String })
   @SwaggerApiResponse({ status: 200, description: 'DNS configuration retrieved successfully' })
@@ -214,4 +214,3 @@ export class DomainsController {
     };
   }
 }
-

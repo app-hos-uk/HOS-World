@@ -4,10 +4,10 @@ import * as Sentry from '@sentry/node';
 
 /**
  * Monitoring Service
- * 
+ *
  * Provides application performance monitoring (APM) capabilities.
  * Currently supports basic health checks and metrics collection.
- * 
+ *
  * Future enhancements:
  * - Sentry integration for error tracking
  * - New Relic / Datadog APM integration
@@ -28,7 +28,7 @@ export class MonitoringService implements OnModuleInit {
 
   onModuleInit() {
     this.logger.log('Monitoring service initialized');
-    
+
     // Initialize APM if configured
     const apmProvider = this.configService.get<string>('APM_PROVIDER');
     if (apmProvider) {
@@ -71,9 +71,10 @@ export class MonitoringService implements OnModuleInit {
 
     try {
       // Avoid re-initializing Sentry if it's already been initialized in bootstrap.
-      const existingClient = (Sentry as any).getCurrentHub && (Sentry as any).getCurrentHub().getClient
-        ? (Sentry as any).getCurrentHub().getClient()
-        : null;
+      const existingClient =
+        (Sentry as any).getCurrentHub && (Sentry as any).getCurrentHub().getClient
+          ? (Sentry as any).getCurrentHub().getClient()
+          : null;
 
       if (existingClient) {
         this.logger.log('Sentry already initialized by bootstrap; skipping re-initialization');
@@ -83,7 +84,9 @@ export class MonitoringService implements OnModuleInit {
       Sentry.init({
         dsn: sentryDsn,
         environment: this.configService.get<string>('NODE_ENV') || 'production',
-        tracesSampleRate: parseFloat(this.configService.get<string>('SENTRY_TRACES_SAMPLE_RATE') || '0.1'),
+        tracesSampleRate: parseFloat(
+          this.configService.get<string>('SENTRY_TRACES_SAMPLE_RATE') || '0.1',
+        ),
         integrations: [new (Sentry as any).Integrations.Http({ tracing: true })],
       });
 
@@ -126,7 +129,7 @@ export class MonitoringService implements OnModuleInit {
     this.requestCount++;
     this.responseTimeSum += responseTime;
     this.responseTimeCount++;
-    
+
     if (!success) {
       this.errorCount++;
     }
@@ -137,12 +140,9 @@ export class MonitoringService implements OnModuleInit {
    */
   getMetrics() {
     const uptime = Date.now() - this.startTime.getTime();
-    const avgResponseTime = this.responseTimeCount > 0
-      ? this.responseTimeSum / this.responseTimeCount
-      : 0;
-    const errorRate = this.requestCount > 0
-      ? (this.errorCount / this.requestCount) * 100
-      : 0;
+    const avgResponseTime =
+      this.responseTimeCount > 0 ? this.responseTimeSum / this.responseTimeCount : 0;
+    const errorRate = this.requestCount > 0 ? (this.errorCount / this.requestCount) * 100 : 0;
 
     return {
       uptime: Math.floor(uptime / 1000), // seconds
@@ -154,9 +154,8 @@ export class MonitoringService implements OnModuleInit {
       },
       performance: {
         avgResponseTime: parseFloat(avgResponseTime.toFixed(2)),
-        requestsPerSecond: this.requestCount > 0
-          ? parseFloat((this.requestCount / (uptime / 1000)).toFixed(2))
-          : 0,
+        requestsPerSecond:
+          this.requestCount > 0 ? parseFloat((this.requestCount / (uptime / 1000)).toFixed(2)) : 0,
       },
       memory: process.memoryUsage(),
       timestamp: new Date().toISOString(),
@@ -180,7 +179,7 @@ export class MonitoringService implements OnModuleInit {
   captureException(error: Error, context?: Record<string, any>) {
     this.errorCount++;
     this.logger.error(`Exception captured: ${error.message}`, error.stack);
-    
+
     // Send to Sentry if configured
     try {
       const Sentry = require('@sentry/node');
@@ -201,7 +200,7 @@ export class MonitoringService implements OnModuleInit {
    */
   captureMessage(message: string, level: 'info' | 'warning' | 'error' = 'info') {
     this.logger[level](message);
-    
+
     // Send to Sentry if configured
     try {
       const Sentry = require('@sentry/node');

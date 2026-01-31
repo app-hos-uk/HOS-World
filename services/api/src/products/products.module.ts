@@ -13,7 +13,12 @@ import { DatabaseModule } from '../database/database.module';
 @Module({
   imports: [forwardRef(() => SearchModule), forwardRef(() => CacheModule), DatabaseModule],
   controllers: [ProductsController, VolumePricingController, BundleController],
-  providers: [ProductsService, ProductsBulkService, ProductsElasticsearchHook, VolumePricingService],
+  providers: [
+    ProductsService,
+    ProductsBulkService,
+    ProductsElasticsearchHook,
+    VolumePricingService,
+  ],
   exports: [ProductsService, ProductsBulkService, ProductsElasticsearchHook, VolumePricingService],
 })
 export class ProductsModule {}

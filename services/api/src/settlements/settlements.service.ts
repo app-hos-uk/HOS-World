@@ -1,8 +1,4 @@
-import {
-  Injectable,
-  NotFoundException,
-  BadRequestException,
-} from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../database/prisma.service';
 import { CreateSettlementDto, ProcessSettlementDto } from './dto/create-settlement.dto';
 import { SettlementStatus } from '@prisma/client';
@@ -18,11 +14,7 @@ export class SettlementsService {
     private currencyService: CurrencyService,
   ) {}
 
-  async calculateSettlement(
-    sellerId: string,
-    periodStart: Date,
-    periodEnd: Date,
-  ) {
+  async calculateSettlement(sellerId: string, periodStart: Date, periodEnd: Date) {
     const seller = await this.prisma.seller.findUnique({
       where: { id: sellerId },
     });
@@ -51,7 +43,7 @@ export class SettlementsService {
 
     let totalSales = new Decimal(0);
     let platformFees = new Decimal(0);
-    const platformFeeRate = new Decimal(0.10); // 10% platform fee (configurable)
+    const platformFeeRate = new Decimal(0.1); // 10% platform fee (configurable)
 
     for (const order of orders) {
       // Convert order total to GBP if it's in a different currency
@@ -95,10 +87,7 @@ export class SettlementsService {
     };
   }
 
-  async createSettlement(
-    userId: string,
-    createDto: CreateSettlementDto,
-  ) {
+  async createSettlement(userId: string, createDto: CreateSettlementDto) {
     const seller = await this.prisma.seller.findUnique({
       where: { id: createDto.sellerId },
     });
@@ -154,7 +143,7 @@ export class SettlementsService {
         );
       }
 
-      const orderFee = new Decimal(orderAmountGBP).mul(new Decimal(0.10));
+      const orderFee = new Decimal(orderAmountGBP).mul(new Decimal(0.1));
       await this.prisma.orderSettlement.create({
         data: {
           settlementId: settlement.id,
@@ -258,9 +247,7 @@ export class SettlementsService {
     }
 
     if (settlement.status !== 'PENDING') {
-      throw new BadRequestException(
-        `Cannot process settlement in status: ${settlement.status}`,
-      );
+      throw new BadRequestException(`Cannot process settlement in status: ${settlement.status}`);
     }
 
     return this.prisma.settlement.update({
@@ -283,4 +270,3 @@ export class SettlementsService {
     });
   }
 }
-

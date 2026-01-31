@@ -15,5 +15,3 @@ export class UpdateReviewDto {
   @IsString()
   comment?: string;
 }
-
-

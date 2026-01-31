@@ -19,7 +19,7 @@ async function verifyAdmin() {
   try {
     console.log('🔍 Checking super admin user status...');
     console.log(`   Email: ${adminEmail}\n`);
-    
+
     // Check if admin exists
     const existingAdmin = await prisma.user.findUnique({
       where: { email: adminEmail },
@@ -43,7 +43,7 @@ async function verifyAdmin() {
       console.log(`   Name: ${existingAdmin.firstName} ${existingAdmin.lastName}`);
       console.log(`   Created: ${existingAdmin.createdAt}`);
       console.log(`   Updated: ${existingAdmin.updatedAt}`);
-      
+
       if (existingAdmin.role === UserRole.ADMIN) {
         console.log('\n✅ Status: User has ADMIN role - Ready to use!');
       } else {
@@ -83,4 +83,3 @@ verifyAdmin()
     console.error('\n❌ Verification failed:', error);
     process.exit(1);
   });
-

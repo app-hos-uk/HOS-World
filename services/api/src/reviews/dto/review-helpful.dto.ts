@@ -4,5 +4,3 @@ export class ReviewHelpfulDto {
   @IsBoolean()
   helpful: boolean;
 }
-
-

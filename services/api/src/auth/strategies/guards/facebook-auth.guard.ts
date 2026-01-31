@@ -12,4 +12,3 @@ export class FacebookAuthGuard extends AuthGuard('facebook') {
     }
   }
 }
-

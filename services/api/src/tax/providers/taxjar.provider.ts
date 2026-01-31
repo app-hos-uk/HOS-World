@@ -15,20 +15,20 @@ import {
 
 /**
  * TaxJar API Integration
- * 
+ *
  * Implements TaxJar REST API
  * Documentation: https://developers.taxjar.com/api/reference/
- * 
+ *
  * Required credentials:
  * - apiToken: TaxJar API token
- * 
+ *
  * NOTE: This class is NOT a NestJS provider. It is instantiated manually by
  * TaxFactoryService with credentials loaded from the IntegrationConfig table.
  */
 export class TaxJarProvider extends BaseTaxProvider implements ITaxProvider {
   readonly providerId = 'taxjar';
   readonly providerName = 'TaxJar';
-  
+
   private readonly logger = new Logger(TaxJarProvider.name);
 
   constructor(credentials: Record<string, any>, isTestMode: boolean = true) {
@@ -40,25 +40,19 @@ export class TaxJarProvider extends BaseTaxProvider implements ITaxProvider {
   }
 
   protected getBaseUrl(): string {
-    return this.isTestMode
-      ? 'https://api.sandbox.taxjar.com/v2'
-      : 'https://api.taxjar.com/v2';
+    return this.isTestMode ? 'https://api.sandbox.taxjar.com/v2' : 'https://api.taxjar.com/v2';
   }
 
   /**
    * Make authenticated API request
    */
-  private async apiRequest(
-    endpoint: string,
-    method: string = 'GET',
-    body?: any,
-  ): Promise<any> {
+  private async apiRequest(endpoint: string, method: string = 'GET', body?: any): Promise<any> {
     const response = await fetch(`${this.getBaseUrl()}${endpoint}`, {
       method,
       headers: {
-        'Authorization': `Bearer ${this.credentials.apiToken}`,
+        Authorization: `Bearer ${this.credentials.apiToken}`,
         'Content-Type': 'application/json',
-        'Accept': 'application/json',
+        Accept: 'application/json',
       },
       body: body ? JSON.stringify(body) : undefined,
     });
@@ -76,7 +70,7 @@ export class TaxJarProvider extends BaseTaxProvider implements ITaxProvider {
 
   async testConnection(): Promise<TestConnectionResult> {
     const startTime = Date.now();
-    
+
     try {
       if (!this.isConfigured()) {
         return {
@@ -155,21 +149,20 @@ export class TaxJarProvider extends BaseTaxProvider implements ITaxProvider {
     };
   }
 
-  private parseTaxResponse(
-    request: TaxCalculationRequest,
-    response: any,
-  ): TaxCalculationResponse {
+  private parseTaxResponse(request: TaxCalculationRequest, response: any): TaxCalculationResponse {
     const jurisdictions = response.breakdown?.jurisdictions || {};
-    
+
     // Parse line items
-    const lineItems: TaxLineItemResult[] = (response.breakdown?.line_items || []).map((line: any) => ({
-      lineItemId: line.id,
-      taxableAmount: line.taxable_amount,
-      taxAmount: line.tax_collectable,
-      taxRate: line.combined_tax_rate || 0,
-      exemptAmount: 0,
-      details: this.extractJurisdictionDetails(line),
-    }));
+    const lineItems: TaxLineItemResult[] = (response.breakdown?.line_items || []).map(
+      (line: any) => ({
+        lineItemId: line.id,
+        taxableAmount: line.taxable_amount,
+        taxAmount: line.tax_collectable,
+        taxRate: line.combined_tax_rate || 0,
+        exemptAmount: 0,
+        details: this.extractJurisdictionDetails(line),
+      }),
+    );
 
     // If no line item breakdown, create from request
     if (lineItems.length === 0) {
@@ -177,7 +170,7 @@ export class TaxJarProvider extends BaseTaxProvider implements ITaxProvider {
         lineItems.push({
           lineItemId: item.id,
           taxableAmount: item.amount,
-          taxAmount: this.roundTax((item.amount * (response.rate || 0))),
+          taxAmount: this.roundTax(item.amount * (response.rate || 0)),
           taxRate: response.rate || 0,
           exemptAmount: 0,
           details: [],
@@ -187,7 +180,7 @@ export class TaxJarProvider extends BaseTaxProvider implements ITaxProvider {
 
     // Build summary
     const summary: TaxSummary[] = [];
-    
+
     if (response.breakdown) {
       if (response.breakdown.state_tax_collectable > 0) {
         summary.push({
@@ -227,9 +220,10 @@ export class TaxJarProvider extends BaseTaxProvider implements ITaxProvider {
       }
     }
 
-    const totalAmount = request.lineItems.reduce((sum, item) => sum + item.amount, 0) + 
-                        (request.shippingAmount || 0) + 
-                        (response.amount_to_collect || 0);
+    const totalAmount =
+      request.lineItems.reduce((sum, item) => sum + item.amount, 0) +
+      (request.shippingAmount || 0) +
+      (response.amount_to_collect || 0);
 
     return {
       transactionId: request.transactionId,
@@ -295,7 +289,8 @@ export class TaxJarProvider extends BaseTaxProvider implements ITaxProvider {
     // The calculation from /taxes is not stored - you need to create a transaction
     return {
       success: true,
-      message: 'TaxJar transactions are committed via createOrder. Use refundTransaction for returns.',
+      message:
+        'TaxJar transactions are committed via createOrder. Use refundTransaction for returns.',
     };
   }
 
@@ -375,14 +370,16 @@ export class TaxJarProvider extends BaseTaxProvider implements ITaxProvider {
 
       return {
         isValid: !!validatedAddress,
-        normalizedAddress: validatedAddress ? {
-          street1: validatedAddress.street || address.street1,
-          street2: address.street2,
-          city: validatedAddress.city || address.city,
-          state: validatedAddress.state || address.state,
-          postalCode: validatedAddress.zip || address.postalCode,
-          country: validatedAddress.country || address.country,
-        } : address,
+        normalizedAddress: validatedAddress
+          ? {
+              street1: validatedAddress.street || address.street1,
+              street2: address.street2,
+              city: validatedAddress.city || address.city,
+              state: validatedAddress.state || address.state,
+              postalCode: validatedAddress.zip || address.postalCode,
+              country: validatedAddress.country || address.country,
+            }
+          : address,
       };
     } catch (error: any) {
       this.logger.warn(`TaxJar address validation failed: ${error.message}`);
@@ -408,7 +405,9 @@ export class TaxJarProvider extends BaseTaxProvider implements ITaxProvider {
     }
   }
 
-  async getNexusLocations(): Promise<Array<{ country: string; region: string; hasNexus: boolean }>> {
+  async getNexusLocations(): Promise<
+    Array<{ country: string; region: string; hasNexus: boolean }>
+  > {
     try {
       const response = await this.apiRequest('/nexus/regions');
 

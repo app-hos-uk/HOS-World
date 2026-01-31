@@ -10,43 +10,89 @@ import { RoleSwitcher } from '@/components/RoleSwitcher';
 import { CurrencySelector } from '@/components/CurrencySelector';
 import type { UserRole } from '@hos-marketplace/shared-types';
 
+// Role-specific quick links for the header (non-customer roles)
+const ROLE_QUICK_LINKS: Record<string, Array<{ title: string; href: string; icon: string }>> = {
+  ADMIN: [
+    { title: 'Users', href: '/admin/users', icon: '👥' },
+    { title: 'Orders', href: '/admin/orders', icon: '📦' },
+    { title: 'Products', href: '/admin/products', icon: '🛍️' },
+  ],
+  SELLER: [
+    { title: 'My Products', href: '/seller/products', icon: '📦' },
+    { title: 'Orders', href: '/seller/orders', icon: '🛒' },
+    { title: 'Submit Product', href: '/seller/submit-product', icon: '➕' },
+  ],
+  B2C_SELLER: [
+    { title: 'My Products', href: '/seller/products', icon: '📦' },
+    { title: 'Orders', href: '/seller/orders', icon: '🛒' },
+    { title: 'Submit Product', href: '/seller/submit-product', icon: '➕' },
+  ],
+  WHOLESALER: [
+    { title: 'Bulk Products', href: '/wholesaler/products', icon: '📦' },
+    { title: 'Bulk Orders', href: '/wholesaler/orders', icon: '🛒' },
+    { title: 'Submit Product', href: '/seller/submit-product', icon: '➕' },
+  ],
+  INFLUENCER: [
+    { title: 'Earnings', href: '/influencer/earnings', icon: '💰' },
+    { title: 'Product Links', href: '/influencer/product-links', icon: '🔗' },
+    { title: 'Storefront', href: '/influencer/storefront', icon: '🛍️' },
+  ],
+  PROCUREMENT: [
+    { title: 'Submissions', href: '/procurement/submissions', icon: '📝' },
+  ],
+  FULFILLMENT: [
+    { title: 'Shipments', href: '/fulfillment/shipments', icon: '🚚' },
+  ],
+  CATALOG: [
+    { title: 'Entries', href: '/catalog/entries', icon: '📚' },
+  ],
+  MARKETING: [
+    { title: 'Materials', href: '/marketing/materials', icon: '📢' },
+  ],
+  FINANCE: [
+    { title: 'Pricing', href: '/finance/pricing', icon: '💰' },
+  ],
+  CMS_EDITOR: [
+    { title: 'Pages', href: '/cms/pages', icon: '📄' },
+    { title: 'Blog', href: '/cms/blog', icon: '✍️' },
+    { title: 'Banners', href: '/cms/banners', icon: '🖼️' },
+  ],
+};
+
 export function Header() {
   const theme = useTheme();
   const pathname = usePathname();
-  const { user, isAuthenticated, logout, hasRole, impersonatedRole, effectiveRole, switchRole } = useAuth();
+  const { user, isAuthenticated, logout, impersonatedRole, effectiveRole, switchRole } = useAuth();
   const { cartItemCount } = useCart();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
-  // Check if we're on a dashboard page - be more specific to avoid hiding menus on non-dashboard pages
-  const isDashboardPage = pathname?.includes('/dashboard') || 
-    pathname === '/admin/dashboard' ||
-    pathname === '/seller/dashboard' ||
-    pathname === '/wholesaler/dashboard' ||
-    pathname === '/customer/dashboard' ||
-    pathname === '/procurement/dashboard' ||
-    pathname === '/fulfillment/dashboard' ||
-    pathname === '/catalog/dashboard' ||
-    pathname === '/marketing/dashboard' ||
-    pathname === '/finance/dashboard' ||
-    pathname?.startsWith('/admin/') && pathname !== '/admin' ||
-    pathname?.startsWith('/seller/') && pathname !== '/seller' ||
+  // Determine current role (impersonated or actual)
+  const currentRole = effectiveRole || user?.role;
+
+  // Check if user is a customer (or not logged in - they can browse as a guest)
+  const isCustomerRole = !isAuthenticated || currentRole === 'CUSTOMER';
+
+  // Check if we're on a dashboard page
+  const isDashboardPage = pathname?.includes('/dashboard') ||
+    (pathname?.startsWith('/admin/') && pathname !== '/admin') ||
+    (pathname?.startsWith('/seller/') && pathname !== '/seller') ||
     pathname?.startsWith('/wholesaler/') ||
+    pathname?.startsWith('/influencer/') ||
     pathname?.startsWith('/customer/') ||
     pathname?.startsWith('/procurement/') ||
     pathname?.startsWith('/fulfillment/') ||
     pathname?.startsWith('/catalog/') ||
     pathname?.startsWith('/marketing/') ||
-    pathname?.startsWith('/finance/');
+    pathname?.startsWith('/finance/') ||
+    pathname?.startsWith('/cms/');
 
   const toggleMobileMenu = () => {
     setIsMobileMenuOpen(!isMobileMenuOpen);
   };
 
-  // Get dashboard link based on effective role (impersonated if set)
+  // Get dashboard link based on effective role
   const getDashboardLink = (): string => {
     if (!user) return '/';
-    
-    const currentRole = effectiveRole || user.role;
     
     const roleDashboardMap: Record<UserRole, string> = {
       CUSTOMER: '/customer/dashboard',
@@ -63,7 +109,7 @@ export function Header() {
       CMS_EDITOR: '/cms/dashboard',
     } as Record<UserRole, string>;
 
-    return roleDashboardMap[currentRole] || '/';
+    return roleDashboardMap[currentRole as UserRole] || '/';
   };
 
   const ROLE_LABELS: Record<UserRole, string> = {
@@ -87,11 +133,13 @@ export function Header() {
 
   const handleBackToAdmin = () => {
     switchRole(null);
-    // Navigate to admin dashboard
     if (typeof window !== 'undefined') {
       window.location.href = '/admin/dashboard';
     }
   };
+
+  // Get quick links for current role
+  const quickLinks = currentRole && ROLE_QUICK_LINKS[currentRole] ? ROLE_QUICK_LINKS[currentRole] : [];
 
   return (
     <header 
@@ -110,8 +158,8 @@ export function Header() {
           
           {/* Desktop Navigation */}
           <nav className="hidden md:flex items-center space-x-4 lg:space-x-6">
-            {/* Hide Products/Fandoms/Cart on dashboard pages */}
-            {!isDashboardPage && (
+            {/* Storefront navigation: only for guests or CUSTOMER role, and not on dashboard pages */}
+            {isCustomerRole && !isDashboardPage && (
               <>
                 <Link 
                   href="/products" 
@@ -125,14 +173,22 @@ export function Header() {
                 >
                   Fandoms
                 </Link>
-                {isAuthenticated && (
-                  <Link 
-                    href="/wishlist" 
-                    className="text-sm lg:text-base text-purple-700 hover:text-amber-600 font-medium font-secondary transition-colors duration-300"
-                    title="Wishlist"
-                  >
-                    ❤️ Wishlist
-                  </Link>
+                {isAuthenticated && currentRole === 'CUSTOMER' && (
+                  <>
+                    <Link 
+                      href="/wishlist" 
+                      className="text-sm lg:text-base text-purple-700 hover:text-amber-600 font-medium font-secondary transition-colors duration-300"
+                      title="Wishlist"
+                    >
+                      ❤️ Wishlist
+                    </Link>
+                    <Link 
+                      href="/orders" 
+                      className="text-sm lg:text-base text-purple-700 hover:text-amber-600 font-medium font-secondary transition-colors duration-300"
+                    >
+                      My Orders
+                    </Link>
+                  </>
                 )}
                 <Link 
                   href="/cart" 
@@ -145,23 +201,48 @@ export function Header() {
                     </span>
                   )}
                 </Link>
-                <CurrencySelector />
+                {/* Currency selector: only for logged-in CUSTOMER */}
+                {isAuthenticated && currentRole === 'CUSTOMER' && (
+                  <CurrencySelector />
+                )}
               </>
             )}
+
+            {/* Role-specific quick links for non-customer roles */}
+            {isAuthenticated && !isCustomerRole && !isDashboardPage && quickLinks.length > 0 && (
+              <>
+                {quickLinks.slice(0, 3).map((link) => (
+                  <Link
+                    key={link.href}
+                    href={link.href}
+                    className="text-sm lg:text-base text-purple-700 hover:text-amber-600 font-medium font-secondary transition-colors duration-300 flex items-center gap-1"
+                  >
+                    <span>{link.icon}</span>
+                    <span>{link.title}</span>
+                  </Link>
+                ))}
+              </>
+            )}
+
             {isAuthenticated && user ? (
               <>
                 {/* Dashboard link for authenticated users */}
                 <Link
                   href={getDashboardLink()}
-                  className="text-sm lg:text-base text-purple-700 hover:text-amber-600 font-medium font-secondary transition-colors duration-300"
+                  className="text-sm lg:text-base text-purple-700 hover:text-amber-600 font-medium font-secondary transition-colors duration-300 flex items-center gap-1"
                 >
-                  Dashboard
+                  <span>📊</span>
+                  <span>Dashboard</span>
                 </Link>
+                {/* Role badge */}
+                <span className="px-2 py-1 text-xs font-semibold bg-purple-100 text-purple-700 rounded-full">
+                  {ROLE_LABELS[currentRole as UserRole] || currentRole}
+                </span>
                 {/* Role Switcher - Show on all dashboards when admin is logged in */}
                 {user.role === 'ADMIN' && isDashboardPage && (
                   <RoleSwitcher />
                 )}
-                {/* Back to Admin button when impersonating - Only show if RoleSwitcher is not visible */}
+                {/* Back to Admin button when impersonating */}
                 {impersonatedRole && user.role === 'ADMIN' && !isDashboardPage && (
                   <button
                     onClick={handleBackToAdmin}
@@ -174,9 +255,6 @@ export function Header() {
                     Back to Admin
                   </button>
                 )}
-                <span className="text-sm lg:text-base text-purple-700 font-medium">
-                  {user.email}
-                </span>
                 <button
                   onClick={handleLogout}
                   className="px-3 lg:px-4 py-1.5 lg:py-2 text-sm lg:text-base bg-gradient-to-r from-red-600 to-red-700 hover:from-red-500 hover:to-red-600 text-white font-semibold rounded-lg transition-all duration-300 font-primary"
@@ -217,8 +295,8 @@ export function Header() {
         {isMobileMenuOpen && (
           <nav className="md:hidden pb-4 border-t border-purple-200 mt-2 pt-4">
             <div className="flex flex-col space-y-3">
-              {/* Hide Products/Fandoms/Cart on dashboard pages */}
-              {!isDashboardPage && (
+              {/* Storefront navigation for guests or CUSTOMER */}
+              {isCustomerRole && !isDashboardPage && (
                 <>
                   <Link 
                     href="/products" 
@@ -234,14 +312,23 @@ export function Header() {
                   >
                     Fandoms
                   </Link>
-                  {isAuthenticated && (
-                    <Link 
-                      href="/wishlist" 
-                      onClick={() => setIsMobileMenuOpen(false)}
-                      className="text-base text-purple-700 hover:text-amber-600 font-medium font-secondary transition-colors duration-300 py-2 px-2 rounded-lg hover:bg-purple-50"
-                    >
-                      ❤️ Wishlist
-                    </Link>
+                  {isAuthenticated && currentRole === 'CUSTOMER' && (
+                    <>
+                      <Link 
+                        href="/wishlist" 
+                        onClick={() => setIsMobileMenuOpen(false)}
+                        className="text-base text-purple-700 hover:text-amber-600 font-medium font-secondary transition-colors duration-300 py-2 px-2 rounded-lg hover:bg-purple-50"
+                      >
+                        ❤️ Wishlist
+                      </Link>
+                      <Link 
+                        href="/orders" 
+                        onClick={() => setIsMobileMenuOpen(false)}
+                        className="text-base text-purple-700 hover:text-amber-600 font-medium font-secondary transition-colors duration-300 py-2 px-2 rounded-lg hover:bg-purple-50"
+                      >
+                        My Orders
+                      </Link>
+                    </>
                   )}
                   <Link 
                     href="/cart" 
@@ -255,27 +342,58 @@ export function Header() {
                       </span>
                     )}
                   </Link>
-                  <div className="px-2 py-2">
-                    <CurrencySelector />
-                  </div>
+                  {/* Currency selector only for logged-in CUSTOMER */}
+                  {isAuthenticated && currentRole === 'CUSTOMER' && (
+                    <div className="px-2 py-2">
+                      <CurrencySelector />
+                    </div>
+                  )}
                 </>
-            )}
+              )}
+
+              {/* Role-specific quick links for non-customer roles */}
+              {isAuthenticated && !isCustomerRole && !isDashboardPage && quickLinks.length > 0 && (
+                <>
+                  <div className="px-2 py-1 text-xs font-semibold text-gray-500 uppercase tracking-wide">
+                    Quick Links
+                  </div>
+                  {quickLinks.map((link) => (
+                    <Link
+                      key={link.href}
+                      href={link.href}
+                      onClick={() => setIsMobileMenuOpen(false)}
+                      className="text-base text-purple-700 hover:text-amber-600 font-medium font-secondary transition-colors duration-300 py-2 px-2 rounded-lg hover:bg-purple-50 flex items-center gap-2"
+                    >
+                      <span>{link.icon}</span>
+                      <span>{link.title}</span>
+                    </Link>
+                  ))}
+                </>
+              )}
+
               {isAuthenticated && user ? (
                 <>
                   <Link
                     href={getDashboardLink()}
                     onClick={() => setIsMobileMenuOpen(false)}
-                    className="text-base text-purple-700 hover:text-amber-600 font-medium font-secondary transition-colors duration-300 py-2 px-2 rounded-lg hover:bg-purple-50"
+                    className="text-base text-purple-700 hover:text-amber-600 font-medium font-secondary transition-colors duration-300 py-2 px-2 rounded-lg hover:bg-purple-50 flex items-center gap-2"
                   >
-                    Dashboard
+                    <span>📊</span>
+                    <span>Dashboard</span>
                   </Link>
+                  {/* Role badge */}
+                  <div className="px-2 py-2">
+                    <span className="px-3 py-1 text-sm font-semibold bg-purple-100 text-purple-700 rounded-full">
+                      {ROLE_LABELS[currentRole as UserRole] || currentRole}
+                    </span>
+                  </div>
                   {/* Role Switcher for mobile */}
                   {user.role === 'ADMIN' && isDashboardPage && (
                     <div className="px-2">
                       <RoleSwitcher />
                     </div>
                   )}
-                  {/* Back to Admin button when impersonating - Only show if RoleSwitcher is not visible */}
+                  {/* Back to Admin button when impersonating */}
                   {impersonatedRole && user.role === 'ADMIN' && !isDashboardPage && (
                     <button
                       onClick={() => {
@@ -290,7 +408,7 @@ export function Header() {
                       Back to Admin
                     </button>
                   )}
-                  <div className="px-4 py-2 text-base text-purple-700 font-medium">
+                  <div className="px-4 py-2 text-sm text-gray-600">
                     {user.email}
                   </div>
                   <button
@@ -319,5 +437,3 @@ export function Header() {
     </header>
   );
 }
-
-

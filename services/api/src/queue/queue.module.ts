@@ -8,11 +8,15 @@ import { SearchModule } from '../search/search.module';
 import { StorageModule } from '../storage/storage.module';
 
 @Module({
-  imports: [DatabaseModule, CacheModule, ConfigModule, NotificationsModule, SearchModule, StorageModule],
+  imports: [
+    DatabaseModule,
+    CacheModule,
+    ConfigModule,
+    NotificationsModule,
+    SearchModule,
+    StorageModule,
+  ],
   providers: [QueueService],
   exports: [QueueService],
 })
 export class QueueModule {}
-
-
-

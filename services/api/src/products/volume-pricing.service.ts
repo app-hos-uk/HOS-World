@@ -1,9 +1,4 @@
-import {
-  Injectable,
-  NotFoundException,
-  BadRequestException,
-  Logger,
-} from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException, Logger } from '@nestjs/common';
 import { PrismaService } from '../database/prisma.service';
 import { CreateVolumePricingDto } from './dto/create-volume-pricing.dto';
 import { Decimal } from '@prisma/client/runtime/library';
@@ -108,10 +103,7 @@ export class VolumePricingService {
         productId,
         isActive: true,
       },
-      orderBy: [
-        { priority: 'desc' },
-        { minQuantity: 'asc' },
-      ],
+      orderBy: [{ priority: 'desc' }, { minQuantity: 'asc' }],
       include: {
         product: {
           select: {
@@ -127,7 +119,10 @@ export class VolumePricingService {
   /**
    * Calculate price with volume pricing
    */
-  async calculatePrice(productId: string, quantity: number): Promise<{
+  async calculatePrice(
+    productId: string,
+    quantity: number,
+  ): Promise<{
     originalPrice: number;
     finalPrice: number;
     discount: number;
@@ -152,10 +147,7 @@ export class VolumePricingService {
         productId,
         isActive: true,
         minQuantity: { lte: quantity },
-        OR: [
-          { maxQuantity: null },
-          { maxQuantity: { gte: quantity } },
-        ],
+        OR: [{ maxQuantity: null }, { maxQuantity: { gte: quantity } }],
       },
       orderBy: [
         { priority: 'desc' },
@@ -228,8 +220,10 @@ export class VolumePricingService {
     if (updateDto.minQuantity !== undefined) updateData.minQuantity = updateDto.minQuantity;
     if (updateDto.maxQuantity !== undefined) updateData.maxQuantity = updateDto.maxQuantity || null;
     if (updateDto.discountType !== undefined) updateData.discountType = updateDto.discountType;
-    if (updateDto.discountValue !== undefined) updateData.discountValue = new Decimal(updateDto.discountValue);
-    if (updateDto.price !== undefined) updateData.price = updateDto.price ? new Decimal(updateDto.price) : null;
+    if (updateDto.discountValue !== undefined)
+      updateData.discountValue = new Decimal(updateDto.discountValue);
+    if (updateDto.price !== undefined)
+      updateData.price = updateDto.price ? new Decimal(updateDto.price) : null;
     if (updateDto.priority !== undefined) updateData.priority = updateDto.priority;
     if (updateDto.isActive !== undefined) updateData.isActive = updateDto.isActive;
 

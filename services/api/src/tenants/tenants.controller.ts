@@ -39,7 +39,10 @@ export class TenantsController {
   @ApiOperation({ summary: 'Create a new tenant' })
   @ApiBody({ type: CreateTenantDto })
   @SwaggerApiResponse({ status: 201, description: 'Tenant created successfully' })
-  @SwaggerApiResponse({ status: 400, description: 'Invalid request or domain/subdomain already in use' })
+  @SwaggerApiResponse({
+    status: 400,
+    description: 'Invalid request or domain/subdomain already in use',
+  })
   @SwaggerApiResponse({ status: 401, description: 'Unauthorized' })
   async create(@Body() createDto: CreateTenantDto): Promise<ApiResponse<any>> {
     const tenant = await this.tenantsService.create(createDto);

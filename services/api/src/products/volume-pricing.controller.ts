@@ -59,9 +59,7 @@ export class VolumePricingController {
   })
   @ApiParam({ name: 'productId', description: 'Product UUID', type: String })
   @SwaggerApiResponse({ status: 200, description: 'Volume pricing tiers retrieved successfully' })
-  async getVolumePricing(
-    @Param('productId') productId: string,
-  ): Promise<ApiResponse<any[]>> {
+  async getVolumePricing(@Param('productId') productId: string): Promise<ApiResponse<any[]>> {
     const tiers = await this.volumePricingService.getVolumePricingByProduct(productId);
     return {
       data: tiers,
@@ -73,7 +71,8 @@ export class VolumePricingController {
   @Roles('ADMIN', 'SELLER', 'B2C_SELLER', 'CUSTOMER', 'WHOLESALER')
   @ApiOperation({
     summary: 'Calculate price with volume pricing',
-    description: 'Calculates the price for a product based on quantity, applying volume pricing discounts.',
+    description:
+      'Calculates the price for a product based on quantity, applying volume pricing discounts.',
   })
   @ApiParam({ name: 'productId', description: 'Product UUID', type: String })
   @SwaggerApiResponse({ status: 200, description: 'Price calculated successfully' })
@@ -113,9 +112,7 @@ export class VolumePricingController {
   })
   @ApiParam({ name: 'id', description: 'Volume pricing tier UUID', type: String })
   @SwaggerApiResponse({ status: 200, description: 'Volume pricing tier deleted successfully' })
-  async deleteVolumePricing(
-    @Param('id') id: string,
-  ): Promise<ApiResponse<void>> {
+  async deleteVolumePricing(@Param('id') id: string): Promise<ApiResponse<void>> {
     await this.volumePricingService.deleteVolumePricing(id);
     return {
       data: null,

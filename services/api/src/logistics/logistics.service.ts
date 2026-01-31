@@ -1,10 +1,9 @@
-import {
-  Injectable,
-  NotFoundException,
-  BadRequestException,
-} from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../database/prisma.service';
-import { CreateLogisticsPartnerDto, UpdateLogisticsPartnerDto } from './dto/create-logistics-partner.dto';
+import {
+  CreateLogisticsPartnerDto,
+  UpdateLogisticsPartnerDto,
+} from './dto/create-logistics-partner.dto';
 
 @Injectable()
 export class LogisticsService {
@@ -85,9 +84,7 @@ export class LogisticsService {
     }
 
     if (partner.shipments.length > 0) {
-      throw new BadRequestException(
-        'Cannot delete logistics partner with active shipments',
-      );
+      throw new BadRequestException('Cannot delete logistics partner with active shipments');
     }
 
     return this.prisma.logisticsPartner.delete({
@@ -128,6 +125,3 @@ export class LogisticsService {
     });
   }
 }
-
-
-

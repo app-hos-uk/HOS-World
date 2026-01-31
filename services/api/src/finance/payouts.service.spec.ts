@@ -89,9 +89,7 @@ describe('PayoutsService', () => {
     it('should throw NotFoundException if seller not found', async () => {
       mockPrismaService.seller.findUnique.mockResolvedValue(null);
 
-      await expect(service.schedulePayout(payoutData)).rejects.toThrow(
-        NotFoundException,
-      );
+      await expect(service.schedulePayout(payoutData)).rejects.toThrow(NotFoundException);
     });
   });
 
@@ -123,9 +121,7 @@ describe('PayoutsService', () => {
     it('should throw NotFoundException if transaction not found', async () => {
       mockPrismaService.transaction.findUnique.mockResolvedValue(null);
 
-      await expect(service.processPayout('non-existent')).rejects.toThrow(
-        NotFoundException,
-      );
+      await expect(service.processPayout('non-existent')).rejects.toThrow(NotFoundException);
     });
 
     it('should throw BadRequestException if transaction is not a payout', async () => {
@@ -137,9 +133,7 @@ describe('PayoutsService', () => {
 
       mockPrismaService.transaction.findUnique.mockResolvedValue(mockTransaction);
 
-      await expect(service.processPayout('transaction-1')).rejects.toThrow(
-        BadRequestException,
-      );
+      await expect(service.processPayout('transaction-1')).rejects.toThrow(BadRequestException);
     });
 
     it('should throw BadRequestException if payout already processed', async () => {
@@ -151,9 +145,7 @@ describe('PayoutsService', () => {
 
       mockPrismaService.transaction.findUnique.mockResolvedValue(mockTransaction);
 
-      await expect(service.processPayout('transaction-1')).rejects.toThrow(
-        BadRequestException,
-      );
+      await expect(service.processPayout('transaction-1')).rejects.toThrow(BadRequestException);
     });
   });
 

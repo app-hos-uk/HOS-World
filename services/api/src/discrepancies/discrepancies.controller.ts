@@ -89,11 +89,26 @@ export class DiscrepanciesController {
     description: 'Retrieves all discrepancies with filtering options. Admin access required.',
   })
   @ApiQuery({ name: 'sellerId', required: false, type: String, description: 'Filter by seller ID' })
-  @ApiQuery({ name: 'type', required: false, type: String, description: 'Filter by discrepancy type' })
+  @ApiQuery({
+    name: 'type',
+    required: false,
+    type: String,
+    description: 'Filter by discrepancy type',
+  })
   @ApiQuery({ name: 'severity', required: false, type: String, description: 'Filter by severity' })
   @ApiQuery({ name: 'status', required: false, type: String, description: 'Filter by status' })
-  @ApiQuery({ name: 'startDate', required: false, type: String, description: 'Start date (ISO format)' })
-  @ApiQuery({ name: 'endDate', required: false, type: String, description: 'End date (ISO format)' })
+  @ApiQuery({
+    name: 'startDate',
+    required: false,
+    type: String,
+    description: 'Start date (ISO format)',
+  })
+  @ApiQuery({
+    name: 'endDate',
+    required: false,
+    type: String,
+    description: 'End date (ISO format)',
+  })
   @ApiQuery({ name: 'page', required: false, type: String, description: 'Page number' })
   @ApiQuery({ name: 'limit', required: false, type: String, description: 'Items per page' })
   @SwaggerApiResponse({ status: 200, description: 'Discrepancies retrieved successfully' })
@@ -135,9 +150,7 @@ export class DiscrepanciesController {
   @SwaggerApiResponse({ status: 401, description: 'Unauthorized' })
   @SwaggerApiResponse({ status: 403, description: 'Forbidden - Admin access required' })
   @SwaggerApiResponse({ status: 404, description: 'Discrepancy not found' })
-  async getDiscrepancyById(
-    @Param('id', ParseUUIDPipe) id: string,
-  ): Promise<ApiResponse<any>> {
+  async getDiscrepancyById(@Param('id', ParseUUIDPipe) id: string): Promise<ApiResponse<any>> {
     const discrepancy = await this.discrepanciesService.getDiscrepancyById(id);
     return {
       data: discrepancy,
@@ -184,14 +197,30 @@ export class DiscrepanciesController {
   @Get('seller/:sellerId')
   @ApiOperation({
     summary: 'Get seller discrepancies (Admin only)',
-    description: 'Retrieves all discrepancies for a specific seller with filtering options. Admin access required.',
+    description:
+      'Retrieves all discrepancies for a specific seller with filtering options. Admin access required.',
   })
   @ApiParam({ name: 'sellerId', description: 'Seller UUID', type: String })
-  @ApiQuery({ name: 'type', required: false, type: String, description: 'Filter by discrepancy type' })
+  @ApiQuery({
+    name: 'type',
+    required: false,
+    type: String,
+    description: 'Filter by discrepancy type',
+  })
   @ApiQuery({ name: 'severity', required: false, type: String, description: 'Filter by severity' })
   @ApiQuery({ name: 'status', required: false, type: String, description: 'Filter by status' })
-  @ApiQuery({ name: 'startDate', required: false, type: String, description: 'Start date (ISO format)' })
-  @ApiQuery({ name: 'endDate', required: false, type: String, description: 'End date (ISO format)' })
+  @ApiQuery({
+    name: 'startDate',
+    required: false,
+    type: String,
+    description: 'Start date (ISO format)',
+  })
+  @ApiQuery({
+    name: 'endDate',
+    required: false,
+    type: String,
+    description: 'End date (ISO format)',
+  })
   @ApiQuery({ name: 'page', required: false, type: String, description: 'Page number' })
   @ApiQuery({ name: 'limit', required: false, type: String, description: 'Items per page' })
   @SwaggerApiResponse({ status: 200, description: 'Seller discrepancies retrieved successfully' })
@@ -223,4 +252,3 @@ export class DiscrepanciesController {
     };
   }
 }
-

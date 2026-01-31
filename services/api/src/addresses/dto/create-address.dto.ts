@@ -56,5 +56,3 @@ export class CreateAddressDto {
   @Type(() => Number)
   longitude?: number;
 }
-
-

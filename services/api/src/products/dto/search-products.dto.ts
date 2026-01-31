@@ -1,4 +1,13 @@
-import { IsOptional, IsString, IsNumber, IsBoolean, IsEnum, IsArray, Min, Max } from 'class-validator';
+import {
+  IsOptional,
+  IsString,
+  IsNumber,
+  IsBoolean,
+  IsEnum,
+  IsArray,
+  Min,
+  Max,
+} from 'class-validator';
 import { Type } from 'class-transformer';
 
 export enum SortBy {
@@ -78,5 +87,3 @@ export class SearchProductsDto {
   @Max(100)
   limit?: number;
 }
-
-

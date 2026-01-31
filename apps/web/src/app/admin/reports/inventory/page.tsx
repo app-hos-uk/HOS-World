@@ -31,6 +31,7 @@ export default function AdminInventoryAnalyticsPage() {
 
   useEffect(() => {
     fetchData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [dateRange, warehouseId]);
 
   const fetchData = async () => {

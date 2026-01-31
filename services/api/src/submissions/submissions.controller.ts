@@ -51,10 +51,7 @@ export class SubmissionsController {
     @Request() req: any,
     @Body() createSubmissionDto: CreateSubmissionDto,
   ): Promise<ApiResponse<any>> {
-    const submission = await this.submissionsService.create(
-      req.user.id,
-      createSubmissionDto,
-    );
+    const submission = await this.submissionsService.create(req.user.id, createSubmissionDto);
     return {
       data: submission,
       message: 'Product submission created successfully',
@@ -87,10 +84,7 @@ export class SubmissionsController {
     @Request() req: any,
     @Body() body: { submissions: CreateSubmissionDto[] },
   ): Promise<ApiResponse<any>> {
-    const result = await this.submissionsService.bulkCreate(
-      req.user.id,
-      body.submissions,
-    );
+    const result = await this.submissionsService.bulkCreate(req.user.id, body.submissions);
     return {
       data: result,
       message: `${result.count} product submissions created successfully`,
@@ -100,9 +94,15 @@ export class SubmissionsController {
   @Get()
   @ApiOperation({
     summary: 'Get all product submissions',
-    description: 'Retrieves all product submissions for the authenticated seller with optional status filtering.',
+    description:
+      'Retrieves all product submissions for the authenticated seller with optional status filtering.',
   })
-  @ApiQuery({ name: 'status', required: false, type: String, description: 'Filter by submission status' })
+  @ApiQuery({
+    name: 'status',
+    required: false,
+    type: String,
+    description: 'Filter by submission status',
+  })
   @SwaggerApiResponse({ status: 200, description: 'Submissions retrieved successfully' })
   @SwaggerApiResponse({ status: 401, description: 'Unauthorized' })
   @SwaggerApiResponse({ status: 403, description: 'Forbidden - Seller access required' })
@@ -120,7 +120,8 @@ export class SubmissionsController {
   @Get(':id')
   @ApiOperation({
     summary: 'Get submission by ID',
-    description: 'Retrieves a specific product submission by ID. Sellers can only view their own submissions.',
+    description:
+      'Retrieves a specific product submission by ID. Sellers can only view their own submissions.',
   })
   @ApiParam({ name: 'id', description: 'Submission UUID', type: String })
   @SwaggerApiResponse({ status: 200, description: 'Submission retrieved successfully' })
@@ -141,7 +142,8 @@ export class SubmissionsController {
   @Put(':id')
   @ApiOperation({
     summary: 'Update product submission',
-    description: 'Updates an existing product submission. Sellers can only update their own submissions.',
+    description:
+      'Updates an existing product submission. Sellers can only update their own submissions.',
   })
   @ApiParam({ name: 'id', description: 'Submission UUID', type: String })
   @ApiBody({ type: UpdateSubmissionDto })
@@ -155,11 +157,7 @@ export class SubmissionsController {
     @Param('id', ParseUUIDPipe) id: string,
     @Body() updateSubmissionDto: UpdateSubmissionDto,
   ): Promise<ApiResponse<any>> {
-    const submission = await this.submissionsService.update(
-      id,
-      req.user.id,
-      updateSubmissionDto,
-    );
+    const submission = await this.submissionsService.update(id, req.user.id, updateSubmissionDto);
     return {
       data: submission,
       message: 'Submission updated successfully',
@@ -187,4 +185,3 @@ export class SubmissionsController {
     };
   }
 }
-

@@ -31,7 +31,7 @@ export class EncryptionService implements OnModuleInit {
     if (!keyHex) {
       this.logger.warn(
         'INTEGRATION_ENCRYPTION_KEY not set. Generating a temporary key for development. ' +
-        'Set this environment variable in production!',
+          'Set this environment variable in production!',
       );
       // Generate a deterministic key for development (NOT secure for production)
       const devKey = crypto
@@ -43,9 +43,7 @@ export class EncryptionService implements OnModuleInit {
     }
 
     if (keyHex.length !== 64) {
-      throw new Error(
-        'INTEGRATION_ENCRYPTION_KEY must be a 64-character hex string (32 bytes)',
-      );
+      throw new Error('INTEGRATION_ENCRYPTION_KEY must be a 64-character hex string (32 bytes)');
     }
 
     try {
@@ -89,10 +87,7 @@ export class EncryptionService implements OnModuleInit {
       });
 
       // Encrypt
-      const encrypted = Buffer.concat([
-        cipher.update(plaintext, 'utf8'),
-        cipher.final(),
-      ]);
+      const encrypted = Buffer.concat([cipher.update(plaintext, 'utf8'), cipher.final()]);
 
       // Get auth tag
       const authTag = cipher.getAuthTag();
@@ -131,18 +126,10 @@ export class EncryptionService implements OnModuleInit {
         this.saltLength + this.ivLength,
         this.saltLength + this.ivLength + this.authTagLength,
       );
-      const ciphertext = combined.subarray(
-        this.saltLength + this.ivLength + this.authTagLength,
-      );
+      const ciphertext = combined.subarray(this.saltLength + this.ivLength + this.authTagLength);
 
       // Derive the same key using PBKDF2
-      const derivedKey = crypto.pbkdf2Sync(
-        this.encryptionKey,
-        salt,
-        100000,
-        32,
-        'sha256',
-      );
+      const derivedKey = crypto.pbkdf2Sync(this.encryptionKey, salt, 100000, 32, 'sha256');
 
       // Create decipher
       const decipher = crypto.createDecipheriv(this.algorithm, derivedKey, iv, {
@@ -151,15 +138,14 @@ export class EncryptionService implements OnModuleInit {
       decipher.setAuthTag(authTag);
 
       // Decrypt
-      const decrypted = Buffer.concat([
-        decipher.update(ciphertext),
-        decipher.final(),
-      ]);
+      const decrypted = Buffer.concat([decipher.update(ciphertext), decipher.final()]);
 
       return decrypted.toString('utf8');
     } catch (error: any) {
       this.logger.error(`Decryption failed: ${error.message}`);
-      throw new Error('Failed to decrypt data. The data may be corrupted or the key may have changed.');
+      throw new Error(
+        'Failed to decrypt data. The data may be corrupted or the key may have changed.',
+      );
     }
   }
 
@@ -202,16 +188,33 @@ export class EncryptionService implements OnModuleInit {
   maskCredentials(credentials: Record<string, any>): Record<string, any> {
     const masked: Record<string, any> = {};
     const sensitiveFields = [
-      'apiKey', 'api_key', 'apiSecret', 'api_secret',
-      'secretKey', 'secret_key', 'password', 'secret',
-      'token', 'accessToken', 'access_token',
-      'refreshToken', 'refresh_token', 'privateKey',
-      'private_key', 'clientSecret', 'client_secret',
-      'licenseKey', 'license_key', 'webhookSecret',
+      'apiKey',
+      'api_key',
+      'apiSecret',
+      'api_secret',
+      'secretKey',
+      'secret_key',
+      'password',
+      'secret',
+      'token',
+      'accessToken',
+      'access_token',
+      'refreshToken',
+      'refresh_token',
+      'privateKey',
+      'private_key',
+      'clientSecret',
+      'client_secret',
+      'licenseKey',
+      'license_key',
+      'webhookSecret',
     ];
 
     for (const [key, value] of Object.entries(credentials)) {
-      if (typeof value === 'string' && sensitiveFields.some(f => key.toLowerCase().includes(f.toLowerCase()))) {
+      if (
+        typeof value === 'string' &&
+        sensitiveFields.some((f) => key.toLowerCase().includes(f.toLowerCase()))
+      ) {
         masked[key] = this.maskSecret(value);
       } else if (typeof value === 'object' && value !== null) {
         masked[key] = this.maskCredentials(value);

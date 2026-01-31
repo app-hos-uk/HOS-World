@@ -8,7 +8,7 @@ import {
   Request,
   HttpCode,
   HttpStatus,
-  } from '@nestjs/common';
+} from '@nestjs/common';
 import {
   ApiTags,
   ApiOperation,
@@ -29,7 +29,10 @@ export class UsersController {
   constructor(private readonly usersService: UsersService) {}
 
   @Get('profile')
-  @ApiOperation({ summary: 'Get user profile', description: 'Retrieves the authenticated user\'s profile information' })
+  @ApiOperation({
+    summary: 'Get user profile',
+    description: "Retrieves the authenticated user's profile information",
+  })
   @SwaggerApiResponse({ status: 200, description: 'Profile retrieved successfully' })
   @SwaggerApiResponse({ status: 401, description: 'Unauthorized' })
   async getProfile(@Request() req: any): Promise<ApiResponse<User>> {
@@ -41,7 +44,11 @@ export class UsersController {
   }
 
   @Get('profile/gamification')
-  @ApiOperation({ summary: 'Get gamification stats', description: 'Retrieves the user\'s gamification statistics including points, level, and achievements' })
+  @ApiOperation({
+    summary: 'Get gamification stats',
+    description:
+      "Retrieves the user's gamification statistics including points, level, and achievements",
+  })
   @SwaggerApiResponse({ status: 200, description: 'Gamification stats retrieved successfully' })
   @SwaggerApiResponse({ status: 401, description: 'Unauthorized' })
   async getGamificationStats(@Request() req: any): Promise<ApiResponse<any>> {
@@ -53,7 +60,10 @@ export class UsersController {
   }
 
   @Get('profile/badges')
-  @ApiOperation({ summary: 'Get user badges', description: 'Retrieves all badges earned by the user' })
+  @ApiOperation({
+    summary: 'Get user badges',
+    description: 'Retrieves all badges earned by the user',
+  })
   @SwaggerApiResponse({ status: 200, description: 'Badges retrieved successfully' })
   @SwaggerApiResponse({ status: 401, description: 'Unauthorized' })
   async getBadges(@Request() req: any): Promise<ApiResponse<any[]>> {
@@ -65,7 +75,10 @@ export class UsersController {
   }
 
   @Get('profile/collections')
-  @ApiOperation({ summary: 'Get user collections', description: 'Retrieves all product collections created by the user' })
+  @ApiOperation({
+    summary: 'Get user collections',
+    description: 'Retrieves all product collections created by the user',
+  })
   @SwaggerApiResponse({ status: 200, description: 'Collections retrieved successfully' })
   @SwaggerApiResponse({ status: 401, description: 'Unauthorized' })
   async getCollections(@Request() req: any): Promise<ApiResponse<any[]>> {
@@ -77,7 +90,10 @@ export class UsersController {
   }
 
   @Put('profile')
-  @ApiOperation({ summary: 'Update user profile', description: 'Updates the authenticated user\'s profile information' })
+  @ApiOperation({
+    summary: 'Update user profile',
+    description: "Updates the authenticated user's profile information",
+  })
   @ApiBody({ type: UpdateProfileDto })
   @SwaggerApiResponse({ status: 200, description: 'Profile updated successfully' })
   @SwaggerApiResponse({ status: 400, description: 'Invalid request data' })
@@ -95,7 +111,11 @@ export class UsersController {
 
   @Put('password')
   @HttpCode(HttpStatus.OK)
-  @ApiOperation({ summary: 'Change password', description: 'Changes the authenticated user\'s password. Requires current password for verification' })
+  @ApiOperation({
+    summary: 'Change password',
+    description:
+      "Changes the authenticated user's password. Requires current password for verification",
+  })
   @ApiBody({ type: ChangePasswordDto })
   @SwaggerApiResponse({ status: 200, description: 'Password changed successfully' })
   @SwaggerApiResponse({ status: 400, description: 'Invalid current password or weak new password' })
@@ -113,7 +133,11 @@ export class UsersController {
 
   @Delete('account')
   @HttpCode(HttpStatus.OK)
-  @ApiOperation({ summary: 'Delete account', description: 'Permanently deletes the authenticated user\'s account. This action cannot be undone' })
+  @ApiOperation({
+    summary: 'Delete account',
+    description:
+      "Permanently deletes the authenticated user's account. This action cannot be undone",
+  })
   @SwaggerApiResponse({ status: 200, description: 'Account deleted successfully' })
   @SwaggerApiResponse({ status: 401, description: 'Unauthorized' })
   async deleteAccount(@Request() req: any): Promise<ApiResponse<{ message: string }>> {

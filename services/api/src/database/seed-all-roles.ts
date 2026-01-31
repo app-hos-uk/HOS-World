@@ -201,7 +201,9 @@ async function seedAllRoles() {
   console.log('\n📋 Test Users Created:');
   console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
   mockUsers.forEach((user) => {
-    console.log(`  Email: ${user.email.padEnd(30)} | Password: ${defaultPassword} | Role: ${user.role}`);
+    console.log(
+      `  Email: ${user.email.padEnd(30)} | Password: ${defaultPassword} | Role: ${user.role}`,
+    );
   });
   console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
 }
@@ -217,4 +219,3 @@ seedAllRoles()
     await prisma.$disconnect();
     process.exit(1);
   });
-

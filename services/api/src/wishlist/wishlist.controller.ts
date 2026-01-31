@@ -45,7 +45,7 @@ export class WishlistController {
   @HttpCode(HttpStatus.CREATED)
   @ApiOperation({
     summary: 'Add product to wishlist',
-    description: 'Adds a product to the authenticated user\'s wishlist.',
+    description: "Adds a product to the authenticated user's wishlist.",
   })
   @ApiParam({ name: 'productId', description: 'Product UUID or slug', type: String })
   @SwaggerApiResponse({ status: 201, description: 'Product added to wishlist successfully' })
@@ -67,7 +67,7 @@ export class WishlistController {
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
     summary: 'Remove product from wishlist',
-    description: 'Removes a product from the authenticated user\'s wishlist.',
+    description: "Removes a product from the authenticated user's wishlist.",
   })
   @ApiParam({ name: 'productId', description: 'Product UUID or slug', type: String })
   @SwaggerApiResponse({ status: 200, description: 'Product removed from wishlist successfully' })
@@ -88,10 +88,20 @@ export class WishlistController {
   @Get()
   @ApiOperation({
     summary: 'Get wishlist',
-    description: 'Retrieves the authenticated user\'s wishlist with pagination.',
+    description: "Retrieves the authenticated user's wishlist with pagination.",
   })
-  @ApiQuery({ name: 'page', required: false, type: Number, description: 'Page number (default: 1)' })
-  @ApiQuery({ name: 'limit', required: false, type: Number, description: 'Items per page (default: 20)' })
+  @ApiQuery({
+    name: 'page',
+    required: false,
+    type: Number,
+    description: 'Page number (default: 1)',
+  })
+  @ApiQuery({
+    name: 'limit',
+    required: false,
+    type: Number,
+    description: 'Items per page (default: 20)',
+  })
   @SwaggerApiResponse({ status: 200, description: 'Wishlist retrieved successfully' })
   @SwaggerApiResponse({ status: 401, description: 'Unauthorized' })
   async getWishlist(
@@ -112,7 +122,8 @@ export class WishlistController {
   @Get('products/:productId/check')
   @ApiOperation({
     summary: 'Check if product is in wishlist',
-    description: 'Checks if a product is in the user\'s wishlist. Public endpoint, returns false if not authenticated.',
+    description:
+      "Checks if a product is in the user's wishlist. Public endpoint, returns false if not authenticated.",
   })
   @ApiParam({ name: 'productId', description: 'Product UUID or slug', type: String })
   @SwaggerApiResponse({ status: 200, description: 'Wishlist status retrieved' })
@@ -135,4 +146,3 @@ export class WishlistController {
     };
   }
 }
-

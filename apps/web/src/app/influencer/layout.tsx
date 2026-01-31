@@ -1,6 +1,15 @@
 'use client';
 
 import { RouteGuard } from '@/components/RouteGuard';
+import { DashboardLayout } from '@/components/DashboardLayout';
+
+const menuItems = [
+  { title: 'Dashboard', href: '/influencer/dashboard', icon: '📊' },
+  { title: 'Earnings', href: '/influencer/earnings', icon: '💰' },
+  { title: 'Product Links', href: '/influencer/product-links', icon: '🔗' },
+  { title: 'Profile', href: '/influencer/profile', icon: '👤' },
+  { title: 'Storefront', href: '/influencer/storefront', icon: '🛍️' },
+];
 
 export default function InfluencerLayout({
   children,
@@ -9,7 +18,9 @@ export default function InfluencerLayout({
 }) {
   return (
     <RouteGuard allowedRoles={['INFLUENCER', 'ADMIN']} showAccessDenied={true}>
-      {children}
+      <DashboardLayout role="INFLUENCER" menuItems={menuItems} title="Influencer">
+        {children}
+      </DashboardLayout>
     </RouteGuard>
   );
 }

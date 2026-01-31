@@ -10,5 +10,3 @@ import { DatabaseModule } from '../database/database.module';
   exports: [DashboardService],
 })
 export class DashboardModule {}
-
-

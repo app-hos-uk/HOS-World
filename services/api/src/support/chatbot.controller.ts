@@ -1,12 +1,4 @@
-import {
-  Controller,
-  Post,
-  Get,
-  Body,
-  Param,
-  UseGuards,
-  Request,
-} from '@nestjs/common';
+import { Controller, Post, Get, Body, Param, UseGuards, Request } from '@nestjs/common';
 import {
   ApiTags,
   ApiOperation,
@@ -29,7 +21,8 @@ export class ChatbotController {
   @Post('message')
   @ApiOperation({
     summary: 'Send chatbot message',
-    description: 'Sends a message to the chatbot and receives a response. Public endpoint, no authentication required.',
+    description:
+      'Sends a message to the chatbot and receives a response. Public endpoint, no authentication required.',
   })
   @ApiBody({
     schema: {
@@ -143,4 +136,3 @@ export class ChatbotController {
     };
   }
 }
-

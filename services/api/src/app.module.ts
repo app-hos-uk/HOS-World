@@ -88,7 +88,10 @@ import { MeilisearchModule } from './meilisearch/meilisearch.module';
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
-      envFilePath: process.env.NODE_ENV === 'test' || process.env.IGNORE_ENV_FILE === 'true' ? undefined : '.env',
+      envFilePath:
+        process.env.NODE_ENV === 'test' || process.env.IGNORE_ENV_FILE === 'true'
+          ? undefined
+          : '.env',
       ignoreEnvFile: process.env.NODE_ENV === 'test' || process.env.IGNORE_ENV_FILE === 'true',
     }),
     LoggerModule,

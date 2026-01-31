@@ -35,6 +35,7 @@ export default function AcceptInfluencerInvitePage() {
     if (token) {
       fetchInvitation();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [token]);
 
   const fetchInvitation = async () => {

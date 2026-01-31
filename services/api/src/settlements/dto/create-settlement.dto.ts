@@ -28,6 +28,3 @@ export class ProcessSettlementDto {
   @IsString()
   notes?: string;
 }
-
-
-

@@ -1,13 +1,4 @@
-import {
-  Controller,
-  Get,
-  Post,
-  Delete,
-  Body,
-  UseGuards,
-  Request,
-  Headers,
-} from '@nestjs/common';
+import { Controller, Get, Post, Delete, Body, UseGuards, Request, Headers } from '@nestjs/common';
 import {
   ApiTags,
   ApiOperation,
@@ -27,7 +18,11 @@ export class GDPRController {
   constructor(private readonly gdprService: GDPRService) {}
 
   @Post('consent')
-  @ApiOperation({ summary: 'Update GDPR consent', description: 'Updates the user\'s GDPR consent preferences for marketing, analytics, and essential cookies.' })
+  @ApiOperation({
+    summary: 'Update GDPR consent',
+    description:
+      "Updates the user's GDPR consent preferences for marketing, analytics, and essential cookies.",
+  })
   @ApiBody({
     schema: {
       type: 'object',
@@ -56,7 +51,10 @@ export class GDPRController {
   }
 
   @Get('consent')
-  @ApiOperation({ summary: 'Get GDPR consent', description: 'Retrieves the user\'s current GDPR consent preferences.' })
+  @ApiOperation({
+    summary: 'Get GDPR consent',
+    description: "Retrieves the user's current GDPR consent preferences.",
+  })
   @SwaggerApiResponse({ status: 200, description: 'Consent retrieved successfully' })
   @SwaggerApiResponse({ status: 401, description: 'Unauthorized' })
   async getConsent(@Request() req: any): Promise<ApiResponse<any>> {
@@ -68,7 +66,10 @@ export class GDPRController {
   }
 
   @Get('export')
-  @ApiOperation({ summary: 'Export user data', description: 'Exports all user data in compliance with GDPR right to data portability.' })
+  @ApiOperation({
+    summary: 'Export user data',
+    description: 'Exports all user data in compliance with GDPR right to data portability.',
+  })
   @SwaggerApiResponse({ status: 200, description: 'User data exported successfully' })
   @SwaggerApiResponse({ status: 401, description: 'Unauthorized' })
   async exportData(@Request() req: any): Promise<ApiResponse<any>> {
@@ -80,7 +81,10 @@ export class GDPRController {
   }
 
   @Delete('data')
-  @ApiOperation({ summary: 'Delete user data', description: 'Deletes all user data in compliance with GDPR right to be forgotten.' })
+  @ApiOperation({
+    summary: 'Delete user data',
+    description: 'Deletes all user data in compliance with GDPR right to be forgotten.',
+  })
   @SwaggerApiResponse({ status: 200, description: 'User data deleted successfully' })
   @SwaggerApiResponse({ status: 401, description: 'Unauthorized' })
   async deleteData(@Request() req: any): Promise<ApiResponse<{ message: string }>> {
@@ -92,7 +96,10 @@ export class GDPRController {
   }
 
   @Get('consent-history')
-  @ApiOperation({ summary: 'Get consent history', description: 'Retrieves the history of all consent changes for the user.' })
+  @ApiOperation({
+    summary: 'Get consent history',
+    description: 'Retrieves the history of all consent changes for the user.',
+  })
   @SwaggerApiResponse({ status: 200, description: 'Consent history retrieved successfully' })
   @SwaggerApiResponse({ status: 401, description: 'Unauthorized' })
   async getConsentHistory(@Request() req: any): Promise<ApiResponse<any[]>> {
@@ -103,4 +110,3 @@ export class GDPRController {
     };
   }
 }
-

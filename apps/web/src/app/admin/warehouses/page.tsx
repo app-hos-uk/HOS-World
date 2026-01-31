@@ -58,6 +58,7 @@ export default function AdminWarehousesPage() {
 
   useEffect(() => {
     fetchWarehouses();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const fetchWarehouses = async () => {

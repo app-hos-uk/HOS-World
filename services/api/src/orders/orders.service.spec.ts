@@ -164,7 +164,10 @@ describe('OrdersService - Phase 1 Tests', () => {
 
       mockPrismaService.cart.findUnique.mockResolvedValue(mockCart);
       mockPrismaService.address.findFirst.mockResolvedValue(mockAddress);
-      mockPrismaService.seller.findUnique.mockResolvedValue({ id: 'seller-id', userId: 'seller-user-id' });
+      mockPrismaService.seller.findUnique.mockResolvedValue({
+        id: 'seller-id',
+        userId: 'seller-user-id',
+      });
       mockPrismaService.product.findUnique.mockResolvedValue({ id: 'product-id', stock: 100 });
       mockPrismaService.order.create.mockResolvedValue(mockOrder);
       mockPrismaService.cartItem.deleteMany.mockResolvedValue({ count: 1 });
@@ -188,9 +191,7 @@ describe('OrdersService - Phase 1 Tests', () => {
 
       mockPrismaService.cart.findUnique.mockResolvedValue(mockCart);
 
-      await expect(service.create(userId, createOrderDto)).rejects.toThrow(
-        BadRequestException,
-      );
+      await expect(service.create(userId, createOrderDto)).rejects.toThrow(BadRequestException);
     });
 
     it('should throw NotFoundException if address not found', async () => {
@@ -203,9 +204,7 @@ describe('OrdersService - Phase 1 Tests', () => {
       mockPrismaService.cart.findUnique.mockResolvedValue(mockCart);
       mockPrismaService.address.findFirst.mockResolvedValue(null);
 
-      await expect(service.create(userId, createOrderDto)).rejects.toThrow(
-        NotFoundException,
-      );
+      await expect(service.create(userId, createOrderDto)).rejects.toThrow(NotFoundException);
     });
   });
 
@@ -348,9 +347,7 @@ describe('OrdersService - Phase 1 Tests', () => {
     it('should throw NotFoundException if order not found', async () => {
       mockPrismaService.order.findUnique.mockResolvedValue(null);
 
-      await expect(service.findOne(orderId, userId, 'CUSTOMER')).rejects.toThrow(
-        NotFoundException,
-      );
+      await expect(service.findOne(orderId, userId, 'CUSTOMER')).rejects.toThrow(NotFoundException);
     });
 
     it('should throw ForbiddenException if user does not own order', async () => {
@@ -459,5 +456,3 @@ describe('OrdersService - Phase 1 Tests', () => {
     });
   });
 });
-
-

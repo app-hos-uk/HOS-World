@@ -192,7 +192,12 @@ export class SellersService {
     });
   }
 
-  async updateDomain(userId: string, customDomain?: string, subDomain?: string, domainPackagePurchased?: boolean) {
+  async updateDomain(
+    userId: string,
+    customDomain?: string,
+    subDomain?: string,
+    domainPackagePurchased?: boolean,
+  ) {
     const seller = await this.prisma.seller.findUnique({
       where: { userId },
     });
@@ -210,6 +215,4 @@ export class SellersService {
       },
     });
   }
-
 }
-

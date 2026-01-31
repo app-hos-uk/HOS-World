@@ -1,14 +1,4 @@
-import {
-  Controller,
-  Get,
-  Post,
-  Put,
-  Body,
-  Param,
-  Query,
-  UseGuards,
-  Request,
-} from '@nestjs/common';
+import { Controller, Get, Post, Put, Body, Param, Query, UseGuards, Request } from '@nestjs/common';
 import {
   ApiTags,
   ApiOperation,
@@ -34,11 +24,22 @@ export class KnowledgeBaseController {
   @Get('articles')
   @ApiOperation({
     summary: 'Get knowledge base articles',
-    description: 'Retrieves knowledge base articles with filtering options. Public endpoint, no authentication required.',
+    description:
+      'Retrieves knowledge base articles with filtering options. Public endpoint, no authentication required.',
   })
   @ApiQuery({ name: 'category', required: false, type: String, description: 'Filter by category' })
-  @ApiQuery({ name: 'tags', required: false, type: String, description: 'Filter by tags (comma-separated)' })
-  @ApiQuery({ name: 'isPublished', required: false, type: String, description: 'Filter by published status (true/false)' })
+  @ApiQuery({
+    name: 'tags',
+    required: false,
+    type: String,
+    description: 'Filter by tags (comma-separated)',
+  })
+  @ApiQuery({
+    name: 'isPublished',
+    required: false,
+    type: String,
+    description: 'Filter by published status (true/false)',
+  })
   @ApiQuery({ name: 'search', required: false, type: String, description: 'Search query' })
   @ApiQuery({ name: 'page', required: false, type: String, description: 'Page number' })
   @ApiQuery({ name: 'limit', required: false, type: String, description: 'Items per page' })
@@ -69,11 +70,17 @@ export class KnowledgeBaseController {
   @Get('search')
   @ApiOperation({
     summary: 'Search knowledge base articles',
-    description: 'Searches knowledge base articles by query. Public endpoint, no authentication required.',
+    description:
+      'Searches knowledge base articles by query. Public endpoint, no authentication required.',
   })
   @ApiQuery({ name: 'q', required: true, type: String, description: 'Search query' })
   @ApiQuery({ name: 'category', required: false, type: String, description: 'Filter by category' })
-  @ApiQuery({ name: 'tags', required: false, type: String, description: 'Filter by tags (comma-separated)' })
+  @ApiQuery({
+    name: 'tags',
+    required: false,
+    type: String,
+    description: 'Filter by tags (comma-separated)',
+  })
   @ApiQuery({ name: 'limit', required: false, type: String, description: 'Maximum results' })
   @SwaggerApiResponse({ status: 200, description: 'Search completed successfully' })
   async searchArticles(
@@ -97,7 +104,8 @@ export class KnowledgeBaseController {
   @Get('articles/:id')
   @ApiOperation({
     summary: 'Get article by ID',
-    description: 'Retrieves a specific knowledge base article by ID. Public endpoint, no authentication required.',
+    description:
+      'Retrieves a specific knowledge base article by ID. Public endpoint, no authentication required.',
   })
   @ApiParam({ name: 'id', description: 'Article ID', type: String })
   @SwaggerApiResponse({ status: 200, description: 'Article retrieved successfully' })
@@ -114,7 +122,8 @@ export class KnowledgeBaseController {
   @Get('articles/slug/:slug')
   @ApiOperation({
     summary: 'Get article by slug',
-    description: 'Retrieves a specific knowledge base article by slug. Public endpoint, no authentication required.',
+    description:
+      'Retrieves a specific knowledge base article by slug. Public endpoint, no authentication required.',
   })
   @ApiParam({ name: 'slug', description: 'Article slug', type: String })
   @SwaggerApiResponse({ status: 200, description: 'Article retrieved successfully' })
@@ -131,7 +140,8 @@ export class KnowledgeBaseController {
   @Post('articles/:id/helpful')
   @ApiOperation({
     summary: 'Mark article as helpful',
-    description: 'Marks a knowledge base article as helpful. Public endpoint, no authentication required.',
+    description:
+      'Marks a knowledge base article as helpful. Public endpoint, no authentication required.',
   })
   @ApiParam({ name: 'id', description: 'Article ID', type: String })
   @SwaggerApiResponse({ status: 200, description: 'Article marked as helpful' })
@@ -234,4 +244,3 @@ export class KnowledgeBaseController {
     };
   }
 }
-

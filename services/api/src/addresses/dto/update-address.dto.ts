@@ -56,5 +56,3 @@ export class UpdateAddressDto {
   @Type(() => Number)
   longitude?: number;
 }
-
-

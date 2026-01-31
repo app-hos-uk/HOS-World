@@ -1,7 +1,4 @@
-import {
-  Injectable,
-  BadRequestException,
-} from '@nestjs/common';
+import { Injectable, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../database/prisma.service';
 import { StorageService } from '../storage/storage.service';
 import * as AdmZip from 'adm-zip';
@@ -56,11 +53,7 @@ export class ThemeUploadService {
     const extractedAssets = await this.extractAssets(zip, entries);
 
     // Upload theme package to storage
-    const storageResult = await this.storageService.uploadFile(
-      file,
-      'themes',
-      { optimize: false },
-    );
+    const storageResult = await this.storageService.uploadFile(file, 'themes', { optimize: false });
 
     // Create theme record
     const theme = await this.prisma.theme.create({
@@ -95,9 +88,7 @@ export class ThemeUploadService {
       throw new BadRequestException('Theme package must contain theme.json or package.json');
     }
 
-    const configContent = themeJson
-      ? zip.readAsText(themeJson)
-      : zip.readAsText(packageJson!);
+    const configContent = themeJson ? zip.readAsText(themeJson) : zip.readAsText(packageJson!);
 
     let themeConfig: any;
     try {
@@ -135,10 +126,7 @@ export class ThemeUploadService {
     };
   }
 
-  private async extractAssets(
-    zip: AdmZip,
-    entries: AdmZip.IZipEntry[],
-  ): Promise<any> {
+  private async extractAssets(zip: AdmZip, entries: AdmZip.IZipEntry[]): Promise<any> {
     const assets: any = {
       css: [],
       js: [],
@@ -163,9 +151,7 @@ export class ThemeUploadService {
     // Extract image files
     entries
       .filter((e) =>
-        ['.png', '.jpg', '.jpeg', '.gif', '.webp', '.svg'].some((ext) =>
-          e.entryName.endsWith(ext),
-        ),
+        ['.png', '.jpg', '.jpeg', '.gif', '.webp', '.svg'].some((ext) => e.entryName.endsWith(ext)),
       )
       .forEach((entry) => {
         assets.images.push(entry.entryName);
@@ -174,9 +160,7 @@ export class ThemeUploadService {
     // Extract font files
     entries
       .filter((e) =>
-        ['.woff', '.woff2', '.ttf', '.otf', '.eot'].some((ext) =>
-          e.entryName.endsWith(ext),
-        ),
+        ['.woff', '.woff2', '.ttf', '.otf', '.eot'].some((ext) => e.entryName.endsWith(ext)),
       )
       .forEach((entry) => {
         assets.fonts.push(entry.entryName);
@@ -195,7 +179,11 @@ export class ThemeUploadService {
     }
 
     // If preview images already exist, return them
-    if (theme.previewImages && Array.isArray(theme.previewImages) && theme.previewImages.length > 0) {
+    if (
+      theme.previewImages &&
+      Array.isArray(theme.previewImages) &&
+      theme.previewImages.length > 0
+    ) {
       return theme.previewImages as string[];
     }
 
@@ -209,16 +197,16 @@ export class ThemeUploadService {
 
     try {
       const previewImages: string[] = [];
-      
+
       // If theme has assets, try to generate previews
       const assets = theme.assets as any;
-      
+
       if (assets && (assets.images || assets.css || assets.js)) {
         // Extract first few images from theme assets as previews
         if (assets.images && Array.isArray(assets.images) && assets.images.length > 0) {
           // Use first 3 images as previews
           const imageAssets = assets.images.slice(0, 3);
-          
+
           for (const imagePath of imageAssets) {
             try {
               // If storageUrl exists, try to construct preview URL
@@ -229,7 +217,7 @@ export class ThemeUploadService {
                 // 2. Resize/optimize it for preview
                 // 3. Upload the preview version
                 // 4. Return the preview URL
-                
+
                 // Construct preview URL (assuming images are in the theme package)
                 const previewUrl = `${theme.storageUrl}/${imagePath}`;
                 previewImages.push(previewUrl);
@@ -240,7 +228,7 @@ export class ThemeUploadService {
             }
           }
         }
-        
+
         // If no images found, create a placeholder preview
         if (previewImages.length === 0) {
           // Generate a placeholder preview image
@@ -257,7 +245,7 @@ export class ThemeUploadService {
           previewImages.push(placeholderUrl);
         }
       }
-      
+
       // Update theme with preview images
       if (previewImages.length > 0) {
         await this.prisma.theme.update({
@@ -267,7 +255,7 @@ export class ThemeUploadService {
           },
         });
       }
-      
+
       return previewImages;
     } catch (error: any) {
       // If preview generation fails, return empty array or existing previews
@@ -275,7 +263,7 @@ export class ThemeUploadService {
       return theme.previewImages ? (theme.previewImages as string[]) : [];
     }
   }
-  
+
   private async createPlaceholderPreview(theme: any): Promise<string | null> {
     try {
       // Create a simple placeholder image
@@ -283,7 +271,7 @@ export class ThemeUploadService {
       // 1. Use canvas to create an image with theme name
       // 2. Use a screenshot service
       // 3. Use a template preview generator
-      
+
       // For now, return null (no placeholder generated)
       // In production, implement actual preview generation:
       // const canvas = createCanvas(800, 600);
@@ -293,7 +281,7 @@ export class ThemeUploadService {
       // const file = { buffer, originalname: `preview-${theme.id}.png`, mimetype: 'image/png' };
       // const result = await this.storageService.uploadFile(file, 'themes/previews');
       // return result.url;
-      
+
       return null;
     } catch (error) {
       console.error('Failed to create placeholder preview:', error);
@@ -301,4 +289,3 @@ export class ThemeUploadService {
     }
   }
 }
-

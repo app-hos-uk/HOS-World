@@ -70,6 +70,7 @@ export default function AdminTaxZonesPage() {
   useEffect(() => {
     fetchTaxZones();
     fetchTaxClasses();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const fetchTaxZones = async () => {

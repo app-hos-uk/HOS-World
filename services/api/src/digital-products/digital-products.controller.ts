@@ -1,11 +1,4 @@
-import {
-  Controller,
-  Get,
-  Post,
-  Param,
-  UseGuards,
-  Request,
-} from '@nestjs/common';
+import { Controller, Get, Post, Param, UseGuards, Request } from '@nestjs/common';
 import {
   ApiTags,
   ApiOperation,
@@ -63,7 +56,8 @@ export class DigitalProductsController {
   @Post(':id/download')
   @ApiOperation({
     summary: 'Download digital product',
-    description: 'Generates a secure download URL for the digital product. Increments download counter.',
+    description:
+      'Generates a secure download URL for the digital product. Increments download counter.',
   })
   @ApiParam({ name: 'id', description: 'Digital product ID', type: String })
   @SwaggerApiResponse({ status: 200, description: 'Download URL generated successfully' })

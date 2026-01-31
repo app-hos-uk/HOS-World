@@ -6,15 +6,9 @@ import { ShippingModule } from '../shipping/shipping.module';
 import { TaxModule } from '../tax/tax.module';
 
 @Module({
-  imports: [
-    forwardRef(() => PromotionsModule),
-    forwardRef(() => ShippingModule),
-    TaxModule,
-  ],
+  imports: [forwardRef(() => PromotionsModule), forwardRef(() => ShippingModule), TaxModule],
   controllers: [CartController],
   providers: [CartService],
   exports: [CartService],
 })
 export class CartModule {}
-
-

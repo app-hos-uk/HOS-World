@@ -1,11 +1,4 @@
-import {
-  Controller,
-  Post,
-  Body,
-  Param,
-  Headers,
-  UseGuards,
-} from '@nestjs/common';
+import { Controller, Post, Body, Param, Headers, UseGuards } from '@nestjs/common';
 import {
   ApiTags,
   ApiOperation,
@@ -81,10 +74,7 @@ export class KlarnaController {
   async confirmPayment(
     @Body() body: { authorizationToken: string; orderId: string },
   ): Promise<ApiResponse<any>> {
-    const result = await this.klarnaService.confirmPayment(
-      body.authorizationToken,
-      body.orderId,
-    );
+    const result = await this.klarnaService.confirmPayment(body.authorizationToken, body.orderId);
     return {
       data: result,
       message: 'Payment confirmed successfully',
@@ -104,7 +94,10 @@ export class KlarnaController {
     schema: {
       type: 'object',
       properties: {
-        amount: { type: 'number', description: 'Amount to capture (optional, defaults to full amount)' },
+        amount: {
+          type: 'number',
+          description: 'Amount to capture (optional, defaults to full amount)',
+        },
       },
     },
   })
@@ -191,4 +184,3 @@ export class KlarnaController {
     };
   }
 }
-

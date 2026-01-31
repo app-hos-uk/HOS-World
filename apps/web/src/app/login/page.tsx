@@ -58,6 +58,7 @@ export default function LoginPage() {
     if (isMounted && !isLogin && !detectedCountry && !detectingCountry) {
       detectCountry();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isMounted, isLogin]);
 
   const detectCountry = async () => {

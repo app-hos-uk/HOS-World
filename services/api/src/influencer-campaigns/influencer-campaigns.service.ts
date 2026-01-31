@@ -1,8 +1,4 @@
-import {
-  Injectable,
-  NotFoundException,
-  Logger,
-} from '@nestjs/common';
+import { Injectable, NotFoundException, Logger } from '@nestjs/common';
 import { PrismaService } from '../database/prisma.service';
 
 @Injectable()
@@ -14,7 +10,10 @@ export class InfluencerCampaignsService {
   /**
    * Get campaigns for influencer
    */
-  async findByInfluencer(userId: string, options?: { page?: number; limit?: number; status?: string }) {
+  async findByInfluencer(
+    userId: string,
+    options?: { page?: number; limit?: number; status?: string },
+  ) {
     const influencer = await this.prisma.influencer.findUnique({
       where: { userId },
     });
@@ -52,7 +51,12 @@ export class InfluencerCampaignsService {
   /**
    * List all campaigns (admin)
    */
-  async findAll(options?: { page?: number; limit?: number; status?: string; influencerId?: string }) {
+  async findAll(options?: {
+    page?: number;
+    limit?: number;
+    status?: string;
+    influencerId?: string;
+  }) {
     const { page = 1, limit = 20, status, influencerId } = options || {};
 
     const where: any = {};
@@ -149,16 +153,19 @@ export class InfluencerCampaignsService {
   /**
    * Update campaign (admin)
    */
-  async update(id: string, data: {
-    name?: string;
-    description?: string;
-    startDate?: Date;
-    endDate?: Date;
-    overrideCommissionRate?: number;
-    productIds?: string[];
-    categoryIds?: string[];
-    status?: string;
-  }) {
+  async update(
+    id: string,
+    data: {
+      name?: string;
+      description?: string;
+      startDate?: Date;
+      endDate?: Date;
+      overrideCommissionRate?: number;
+      productIds?: string[];
+      categoryIds?: string[];
+      status?: string;
+    },
+  ) {
     const campaign = await this.prisma.influencerCampaign.findUnique({
       where: { id },
     });

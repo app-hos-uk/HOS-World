@@ -10,5 +10,3 @@ import { InventoryModule } from '../inventory/inventory.module';
   exports: [AddressesService],
 })
 export class AddressesModule {}
-
-

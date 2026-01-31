@@ -87,7 +87,7 @@ export class TenantContextService {
     // Resolve from user's default tenant or first tenant membership
     if (this.request.user?.id) {
       let user;
-      
+
       if (this.request.user.defaultTenantId) {
         user = await this.prisma.user.findUnique({
           where: { id: this.request.user.id },

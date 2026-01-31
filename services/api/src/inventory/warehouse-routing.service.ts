@@ -38,12 +38,7 @@ export class WarehouseRoutingService {
    * Calculate distance between two points using Haversine formula
    * Returns distance in kilometers
    */
-  calculateDistance(
-    lat1: number,
-    lon1: number,
-    lat2: number,
-    lon2: number,
-  ): number {
+  calculateDistance(lat1: number, lon1: number, lat2: number, lon2: number): number {
     const R = 6371; // Earth's radius in km
     const dLat = this.toRad(lat2 - lat1);
     const dLon = this.toRad(lon2 - lon1);
@@ -93,19 +88,14 @@ export class WarehouseRoutingService {
     // Filter warehouses that have sufficient stock for ALL products
     const eligibleWarehouses = warehouses.filter((warehouse) => {
       return productQuantities.every(({ productId, quantity }) => {
-        const inventoryItem = warehouse.inventory.find(
-          (inv) => inv.productId === productId,
-        );
-        const available =
-          (inventoryItem?.quantity || 0) - (inventoryItem?.reserved || 0);
+        const inventoryItem = warehouse.inventory.find((inv) => inv.productId === productId);
+        const available = (inventoryItem?.quantity || 0) - (inventoryItem?.reserved || 0);
         return available >= quantity;
       });
     });
 
     if (eligibleWarehouses.length === 0) {
-      this.logger.warn(
-        'No warehouses with sufficient stock found for all products',
-      );
+      this.logger.warn('No warehouses with sufficient stock found for all products');
       // Return nearest warehouse anyway (for reference)
       const warehousesWithDistance = warehouses.map((warehouse) => ({
         warehouseId: warehouse.id,
@@ -139,11 +129,11 @@ export class WarehouseRoutingService {
 
     // Sort by distance and return nearest
     warehousesWithDistance.sort((a, b) => a.distance - b.distance);
-    
+
     this.logger.log(
       `Found nearest warehouse: ${warehousesWithDistance[0].warehouseName} at ${warehousesWithDistance[0].distance.toFixed(2)} km`,
     );
-    
+
     return warehousesWithDistance[0];
   }
 
@@ -179,11 +169,11 @@ export class WarehouseRoutingService {
     }));
 
     centersWithDistance.sort((a, b) => a.distance - b.distance);
-    
+
     this.logger.log(
       `Found nearest fulfillment center: ${centersWithDistance[0].centerName} at ${centersWithDistance[0].distance.toFixed(2)} km`,
     );
-    
+
     return centersWithDistance[0];
   }
 
@@ -225,10 +215,7 @@ export class WarehouseRoutingService {
     }
 
     // Fall back to nearest fulfillment center
-    const nearestCenter = await this.findNearestFulfillmentCenter(
-      customerLat,
-      customerLon,
-    );
+    const nearestCenter = await this.findNearestFulfillmentCenter(customerLat, customerLon);
 
     if (nearestCenter) {
       return {
@@ -275,11 +262,8 @@ export class WarehouseRoutingService {
 
     const warehousesWithDistance = warehouses.map((warehouse) => {
       const hasFullStock = productQuantities.every(({ productId, quantity }) => {
-        const inventoryItem = warehouse.inventory.find(
-          (inv) => inv.productId === productId,
-        );
-        const available =
-          (inventoryItem?.quantity || 0) - (inventoryItem?.reserved || 0);
+        const inventoryItem = warehouse.inventory.find((inv) => inv.productId === productId);
+        const available = (inventoryItem?.quantity || 0) - (inventoryItem?.reserved || 0);
         return available >= quantity;
       });
 

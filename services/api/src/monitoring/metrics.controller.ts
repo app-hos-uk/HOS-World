@@ -1,9 +1,5 @@
 import { Controller, Get, Header } from '@nestjs/common';
-import {
-  ApiTags,
-  ApiOperation,
-  ApiResponse as SwaggerApiResponse,
-} from '@nestjs/swagger';
+import { ApiTags, ApiOperation, ApiResponse as SwaggerApiResponse } from '@nestjs/swagger';
 import { MetricsService } from './metrics.service';
 import { MonitoringService } from './monitoring.service';
 import { Public } from '../common/decorators/public.decorator';
@@ -20,7 +16,8 @@ export class MetricsController {
   @Get('prometheus')
   @ApiOperation({
     summary: 'Get Prometheus metrics',
-    description: 'Returns metrics in Prometheus format for scraping. Public endpoint for monitoring systems.',
+    description:
+      'Returns metrics in Prometheus format for scraping. Public endpoint for monitoring systems.',
   })
   @SwaggerApiResponse({ status: 200, description: 'Metrics in Prometheus format' })
   @Header('Content-Type', 'text/plain; version=0.0.4')

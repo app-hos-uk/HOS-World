@@ -8,8 +8,15 @@ import {
   HttpCode,
   HttpStatus,
   Query,
-  } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse as SwaggerApiResponse, ApiBearerAuth, ApiBody, ApiQuery } from '@nestjs/swagger';
+} from '@nestjs/common';
+import {
+  ApiTags,
+  ApiOperation,
+  ApiResponse as SwaggerApiResponse,
+  ApiBearerAuth,
+  ApiBody,
+  ApiQuery,
+} from '@nestjs/swagger';
 import { AuthService } from './auth.service';
 import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
@@ -32,7 +39,10 @@ export class AuthController {
 
   @Public()
   @Get('invitation')
-  @ApiOperation({ summary: 'Validate invitation token', description: 'Validates a seller invitation token and returns invitation details' })
+  @ApiOperation({
+    summary: 'Validate invitation token',
+    description: 'Validates a seller invitation token and returns invitation details',
+  })
   @ApiQuery({ name: 'token', required: true, type: String, description: 'Invitation token' })
   @SwaggerApiResponse({ status: 200, description: 'Invitation is valid' })
   @SwaggerApiResponse({ status: 400, description: 'Invalid or expired token' })
@@ -51,7 +61,10 @@ export class AuthController {
   @Public()
   @Post('accept-invitation')
   @HttpCode(HttpStatus.CREATED)
-  @ApiOperation({ summary: 'Accept seller invitation', description: 'Accepts a seller invitation and creates a new account' })
+  @ApiOperation({
+    summary: 'Accept seller invitation',
+    description: 'Accepts a seller invitation and creates a new account',
+  })
   @ApiBody({
     schema: {
       type: 'object',
@@ -62,7 +75,10 @@ export class AuthController {
       },
     },
   })
-  @SwaggerApiResponse({ status: 201, description: 'Invitation accepted and account created successfully' })
+  @SwaggerApiResponse({
+    status: 201,
+    description: 'Invitation accepted and account created successfully',
+  })
   @SwaggerApiResponse({ status: 400, description: 'Invalid token or registration data' })
   async acceptInvitation(
     @Body() body: { token: string; registerDto: RegisterDto },
@@ -75,11 +91,7 @@ export class AuthController {
       req.ip ||
       req.connection.remoteAddress;
 
-    const result = await this.authService.acceptInvitation(
-      body.token,
-      body.registerDto,
-      ipAddress,
-    );
+    const result = await this.authService.acceptInvitation(body.token, body.registerDto, ipAddress);
     return {
       data: result,
       message: 'Invitation accepted and account created successfully',
@@ -89,7 +101,10 @@ export class AuthController {
   @Public()
   @Post('register')
   @HttpCode(HttpStatus.CREATED)
-  @ApiOperation({ summary: 'Register a new user', description: 'Create a new user account with email and password' })
+  @ApiOperation({
+    summary: 'Register a new user',
+    description: 'Create a new user account with email and password',
+  })
   @ApiBody({ type: RegisterDto })
   @SwaggerApiResponse({ status: 201, description: 'User registered successfully' })
   @SwaggerApiResponse({ status: 400, description: 'Invalid input data' })
@@ -121,12 +136,36 @@ export class AuthController {
   @SwaggerApiResponse({ status: 401, description: 'Invalid credentials' })
   async login(@Body() loginDto: LoginDto): Promise<ApiResponse<AuthResponse>> {
     // #region agent log
-    fetch('http://127.0.0.1:7242/ingest/8743deaa-734d-4185-9f60-b0828f74ef5b',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'auth.controller.ts:122',message:'Login controller entry',data:{email:loginDto.email},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'E'})}).catch(()=>{});
+    fetch('http://127.0.0.1:7242/ingest/8743deaa-734d-4185-9f60-b0828f74ef5b', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        location: 'auth.controller.ts:122',
+        message: 'Login controller entry',
+        data: { email: loginDto.email },
+        timestamp: Date.now(),
+        sessionId: 'debug-session',
+        runId: 'run1',
+        hypothesisId: 'E',
+      }),
+    }).catch(() => {});
     // #endregion
     try {
       const result = await this.authService.login(loginDto);
       // #region agent log
-      fetch('http://127.0.0.1:7242/ingest/8743deaa-734d-4185-9f60-b0828f74ef5b',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'auth.controller.ts:124',message:'Login controller success',data:{hasToken:!!result.token,hasUser:!!result.user},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'E'})}).catch(()=>{});
+      fetch('http://127.0.0.1:7242/ingest/8743deaa-734d-4185-9f60-b0828f74ef5b', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          location: 'auth.controller.ts:124',
+          message: 'Login controller success',
+          data: { hasToken: !!result.token, hasUser: !!result.user },
+          timestamp: Date.now(),
+          sessionId: 'debug-session',
+          runId: 'run1',
+          hypothesisId: 'E',
+        }),
+      }).catch(() => {});
       // #endregion
       return {
         data: result,
@@ -134,7 +173,23 @@ export class AuthController {
       };
     } catch (error: any) {
       // #region agent log
-      fetch('http://127.0.0.1:7242/ingest/8743deaa-734d-4185-9f60-b0828f74ef5b',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'auth.controller.ts:128',message:'Login controller error',data:{errorMessage:error?.message,errorName:error?.name,errorStatus:error?.status},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'E'})}).catch(()=>{});
+      fetch('http://127.0.0.1:7242/ingest/8743deaa-734d-4185-9f60-b0828f74ef5b', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          location: 'auth.controller.ts:128',
+          message: 'Login controller error',
+          data: {
+            errorMessage: error?.message,
+            errorName: error?.name,
+            errorStatus: error?.status,
+          },
+          timestamp: Date.now(),
+          sessionId: 'debug-session',
+          runId: 'run1',
+          hypothesisId: 'E',
+        }),
+      }).catch(() => {});
       // #endregion
       throw error;
     }
@@ -143,7 +198,10 @@ export class AuthController {
   @Public()
   @Post('refresh')
   @HttpCode(HttpStatus.OK)
-  @ApiOperation({ summary: 'Refresh access token', description: 'Refresh an access token using a refresh token' })
+  @ApiOperation({
+    summary: 'Refresh access token',
+    description: 'Refresh an access token using a refresh token',
+  })
   @ApiBody({
     schema: {
       type: 'object',
@@ -167,7 +225,10 @@ export class AuthController {
   @HttpCode(HttpStatus.OK)
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth('JWT-auth')
-  @ApiOperation({ summary: 'Logout user', description: 'Logout user and revoke all refresh tokens' })
+  @ApiOperation({
+    summary: 'Logout user',
+    description: 'Logout user and revoke all refresh tokens',
+  })
   @SwaggerApiResponse({ status: 200, description: 'Logout successful' })
   @SwaggerApiResponse({ status: 401, description: 'Unauthorized' })
   async logout(@Request() req: any): Promise<ApiResponse<{ message: string }>> {
@@ -182,7 +243,10 @@ export class AuthController {
   @UseGuards(JwtAuthGuard)
   @Get('me')
   @ApiBearerAuth('JWT-auth')
-  @ApiOperation({ summary: 'Get current user profile', description: 'Retrieve the authenticated user profile' })
+  @ApiOperation({
+    summary: 'Get current user profile',
+    description: 'Retrieve the authenticated user profile',
+  })
   @SwaggerApiResponse({ status: 200, description: 'User profile retrieved successfully' })
   @SwaggerApiResponse({ status: 401, description: 'Unauthorized' })
   async getProfile(@CurrentUser() user: any): Promise<ApiResponse<User>> {
@@ -196,7 +260,10 @@ export class AuthController {
   @Post('select-character')
   @HttpCode(HttpStatus.OK)
   @ApiBearerAuth('JWT-auth')
-  @ApiOperation({ summary: 'Select character', description: 'Select a character and favorite fandoms for the user' })
+  @ApiOperation({
+    summary: 'Select character',
+    description: 'Select a character and favorite fandoms for the user',
+  })
   @ApiBody({ type: CharacterSelectionDto })
   @SwaggerApiResponse({ status: 200, description: 'Character selected successfully' })
   @SwaggerApiResponse({ status: 400, description: 'Invalid character or fandoms' })
@@ -216,7 +283,10 @@ export class AuthController {
   @Post('fandom-quiz')
   @HttpCode(HttpStatus.OK)
   @ApiBearerAuth('JWT-auth')
-  @ApiOperation({ summary: 'Complete fandom quiz', description: 'Complete the fandom quiz for personalized recommendations' })
+  @ApiOperation({
+    summary: 'Complete fandom quiz',
+    description: 'Complete the fandom quiz for personalized recommendations',
+  })
   @ApiBody({ type: FandomQuizDto })
   @SwaggerApiResponse({ status: 200, description: 'Fandom quiz completed successfully' })
   @SwaggerApiResponse({ status: 400, description: 'Invalid quiz data' })

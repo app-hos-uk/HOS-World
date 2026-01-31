@@ -12,4 +12,3 @@ export class RedeemGiftCardDto {
   @IsString()
   orderId?: string;
 }
-

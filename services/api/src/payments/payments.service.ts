@@ -64,7 +64,8 @@ export class PaymentsService {
     }
 
     // Use provided amount if available (e.g., after gift card redemption), otherwise use order total
-    const paymentAmount = createPaymentDto.amount !== undefined ? createPaymentDto.amount : Number(order.total);
+    const paymentAmount =
+      createPaymentDto.amount !== undefined ? createPaymentDto.amount : Number(order.total);
     const paymentCurrency = createPaymentDto.currency || order.currency;
 
     // Convert payment amount to GBP for payment processing
@@ -82,7 +83,7 @@ export class PaymentsService {
     // Determine payment provider (default to 'stripe' or first available)
     const paymentMethod = createPaymentDto.paymentMethod || 'stripe';
     const availableProviders = this.paymentProviderService.getAvailableProviders();
-    
+
     if (availableProviders.length === 0) {
       throw new BadRequestException('No payment providers are available');
     }
@@ -266,7 +267,8 @@ export class PaymentsService {
       throw new BadRequestException('Invalid webhook signature');
     }
 
-    const event = typeof payload === 'string' ? JSON.parse(payload) : JSON.parse(payload.toString());
+    const event =
+      typeof payload === 'string' ? JSON.parse(payload) : JSON.parse(payload.toString());
     this.logger.log(`Received ${providerName} webhook: ${event.type || 'unknown'}`);
 
     const result = await provider.processWebhook(event);
@@ -341,5 +343,3 @@ export class PaymentsService {
     return this.paymentProviderService.getAvailableProviders();
   }
 }
-
-

@@ -1,10 +1,4 @@
-import {
-  Controller,
-  Get,
-  Param,
-  UseGuards,
-  ParseUUIDPipe,
-} from '@nestjs/common';
+import { Controller, Get, Param, UseGuards, ParseUUIDPipe } from '@nestjs/common';
 import {
   ApiTags,
   ApiOperation,
@@ -30,7 +24,8 @@ export class DuplicatesController {
   @ApiBearerAuth('JWT-auth')
   @ApiOperation({
     summary: 'Get duplicate alerts (Procurement/Admin only)',
-    description: 'Retrieves alerts for potential duplicate product submissions. Procurement or Admin access required.',
+    description:
+      'Retrieves alerts for potential duplicate product submissions. Procurement or Admin access required.',
   })
   @SwaggerApiResponse({ status: 200, description: 'Duplicate alerts retrieved successfully' })
   @SwaggerApiResponse({ status: 401, description: 'Unauthorized' })
@@ -49,7 +44,8 @@ export class DuplicatesController {
   @ApiBearerAuth('JWT-auth')
   @ApiOperation({
     summary: 'Get duplicates for submission',
-    description: 'Retrieves potential duplicate submissions for a specific submission. Seller/Procurement/Admin access required.',
+    description:
+      'Retrieves potential duplicate submissions for a specific submission. Seller/Procurement/Admin access required.',
   })
   @ApiParam({ name: 'submissionId', description: 'Submission UUID', type: String })
   @SwaggerApiResponse({ status: 200, description: 'Duplicates retrieved successfully' })
@@ -59,9 +55,7 @@ export class DuplicatesController {
   async getDuplicatesForSubmission(
     @Param('submissionId', ParseUUIDPipe) submissionId: string,
   ): Promise<ApiResponse<any[]>> {
-    const duplicates = await this.duplicatesService.getDuplicatesForSubmission(
-      submissionId,
-    );
+    const duplicates = await this.duplicatesService.getDuplicatesForSubmission(submissionId);
     return {
       data: duplicates,
       message: 'Duplicates retrieved successfully',
@@ -74,7 +68,8 @@ export class DuplicatesController {
   @ApiBearerAuth('JWT-auth')
   @ApiOperation({
     summary: 'Detect duplicates for submission (Procurement/Admin only)',
-    description: 'Runs duplicate detection algorithm for a specific submission. Procurement or Admin access required.',
+    description:
+      'Runs duplicate detection algorithm for a specific submission. Procurement or Admin access required.',
   })
   @ApiParam({ name: 'submissionId', description: 'Submission UUID', type: String })
   @SwaggerApiResponse({ status: 200, description: 'Duplicate detection completed' })
@@ -91,4 +86,3 @@ export class DuplicatesController {
     };
   }
 }
-

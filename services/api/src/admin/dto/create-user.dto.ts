@@ -46,7 +46,9 @@ export class CreateAdminUserDto {
   // Wholesaler specific
   @IsOptional()
   @IsString()
-  @IsIn(['RETAIL', 'DISTRIBUTOR', 'RESELLER'], { message: 'Business type must be RETAIL, DISTRIBUTOR, or RESELLER' })
+  @IsIn(['RETAIL', 'DISTRIBUTOR', 'RESELLER'], {
+    message: 'Business type must be RETAIL, DISTRIBUTOR, or RESELLER',
+  })
   businessType?: string;
 
   // Team member specific
@@ -58,5 +60,3 @@ export class CreateAdminUserDto {
   @IsString()
   employeeId?: string;
 }
-
-

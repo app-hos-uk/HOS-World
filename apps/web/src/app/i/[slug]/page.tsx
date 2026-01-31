@@ -25,6 +25,7 @@ export default function InfluencerStorefrontPage() {
       fetchStorefront();
       trackVisit();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [slug]);
 
   const fetchStorefront = async () => {

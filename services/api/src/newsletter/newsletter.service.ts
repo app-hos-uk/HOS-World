@@ -1,4 +1,9 @@
-import { Injectable, ConflictException, NotFoundException, NotImplementedException } from '@nestjs/common';
+import {
+  Injectable,
+  ConflictException,
+  NotFoundException,
+  NotImplementedException,
+} from '@nestjs/common';
 import { PrismaService } from '../database/prisma.service';
 import { CreateNewsletterSubscriptionDto } from './dto/create-newsletter-subscription.dto';
 
@@ -7,13 +12,12 @@ export class NewsletterService {
   constructor(private prisma: PrismaService) {}
 
   private throwNotImplemented(): never {
-    throw new NotImplementedException('Newsletter feature is not available. NewsletterSubscription model is not in the database schema.');
+    throw new NotImplementedException(
+      'Newsletter feature is not available. NewsletterSubscription model is not in the database schema.',
+    );
   }
 
-  async subscribe(
-    dto: CreateNewsletterSubscriptionDto,
-    userId?: string,
-  ): Promise<any> {
+  async subscribe(dto: CreateNewsletterSubscriptionDto, userId?: string): Promise<any> {
     this.throwNotImplemented();
     /* // Check if already subscribed
     const existing = await this.prisma.newsletterSubscription.findUnique({
@@ -125,4 +129,3 @@ export class NewsletterService {
     */ // End commented code
   }
 }
-

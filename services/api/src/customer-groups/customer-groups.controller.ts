@@ -31,9 +31,7 @@ import type { ApiResponse } from '@hos-marketplace/shared-types';
 @Roles('ADMIN', 'MARKETING')
 @ApiBearerAuth('JWT-auth')
 export class CustomerGroupsController {
-  constructor(
-    private readonly customerGroupsService: CustomerGroupsService,
-  ) {}
+  constructor(private readonly customerGroupsService: CustomerGroupsService) {}
 
   @Post()
   @ApiOperation({
@@ -42,9 +40,7 @@ export class CustomerGroupsController {
   })
   @SwaggerApiResponse({ status: 201, description: 'Customer group created successfully' })
   @SwaggerApiResponse({ status: 400, description: 'Invalid customer group data' })
-  async create(
-    @Body() createDto: CreateCustomerGroupDto,
-  ): Promise<ApiResponse<any>> {
+  async create(@Body() createDto: CreateCustomerGroupDto): Promise<ApiResponse<any>> {
     const group = await this.customerGroupsService.create(createDto);
     return {
       data: group,
@@ -59,12 +55,8 @@ export class CustomerGroupsController {
   })
   @ApiQuery({ name: 'includeInactive', required: false, type: Boolean })
   @SwaggerApiResponse({ status: 200, description: 'Customer groups retrieved successfully' })
-  async findAll(
-    @Query('includeInactive') includeInactive?: string,
-  ): Promise<ApiResponse<any[]>> {
-    const groups = await this.customerGroupsService.findAll(
-      includeInactive === 'true',
-    );
+  async findAll(@Query('includeInactive') includeInactive?: string): Promise<ApiResponse<any[]>> {
+    const groups = await this.customerGroupsService.findAll(includeInactive === 'true');
     return {
       data: groups,
       message: 'Customer groups retrieved successfully',
@@ -131,9 +123,7 @@ export class CustomerGroupsController {
   })
   @ApiParam({ name: 'userId', description: 'User UUID', type: String })
   @SwaggerApiResponse({ status: 200, description: 'Customer removed from group successfully' })
-  async removeCustomer(
-    @Param('userId') userId: string,
-  ): Promise<ApiResponse<any>> {
+  async removeCustomer(@Param('userId') userId: string): Promise<ApiResponse<any>> {
     const user = await this.customerGroupsService.removeCustomerFromGroup(userId);
     return {
       data: user,

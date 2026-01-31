@@ -10,10 +10,7 @@ export class AdminService {
 
   // Hard-protected admin accounts that must never be modified/deleted by other users.
   // These are emergency/owner accounts for platform recovery.
-  private readonly protectedAdminEmails = new Set([
-    'app@houseofspells.co.uk',
-    'mail@jsabu.com',
-  ]);
+  private readonly protectedAdminEmails = new Set(['app@houseofspells.co.uk', 'mail@jsabu.com']);
 
   async getAllUsers() {
     return this.prisma.user.findMany({
@@ -152,7 +149,11 @@ export class AdminService {
 
     if (isSellerRole) {
       const storeName = data.storeName!;
-      const baseSlug = storeName.toLowerCase().trim().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
+      const baseSlug = storeName
+        .toLowerCase()
+        .trim()
+        .replace(/\s+/g, '-')
+        .replace(/[^a-z0-9-]/g, '');
       // If baseSlug is empty after sanitization, use a fallback prefix
       const slugPrefix = baseSlug || `seller-${user.id.slice(0, 8)}`;
       let slug = slugPrefix;
@@ -182,8 +183,7 @@ export class AdminService {
     // Create influencer profile + storefront when role is INFLUENCER
     if (data.role === UserRole.INFLUENCER) {
       const displayName =
-        [data.firstName, data.lastName].filter(Boolean).join(' ') ||
-        data.email.split('@')[0];
+        [data.firstName, data.lastName].filter(Boolean).join(' ') || data.email.split('@')[0];
       const referralCode = await this.generateUniqueReferralCode(displayName);
       const slug = await this.generateUniqueInfluencerSlug(displayName);
       const influencer = await this.prisma.influencer.create({
@@ -204,12 +204,19 @@ export class AdminService {
   }
 
   private async generateUniqueReferralCode(prefix: string): Promise<string> {
-    const base = prefix.toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 6) || 'INF';
+    const base =
+      prefix
+        .toUpperCase()
+        .replace(/[^A-Z0-9]/g, '')
+        .slice(0, 6) || 'INF';
     let attempts = 0;
     while (attempts < 15) {
-      const suffix = attempts < 10
-        ? Math.floor(Math.random() * 100).toString().padStart(2, '0')
-        : randomBytes(2).toString('hex').toUpperCase();
+      const suffix =
+        attempts < 10
+          ? Math.floor(Math.random() * 100)
+              .toString()
+              .padStart(2, '0')
+          : randomBytes(2).toString('hex').toUpperCase();
       const code = base + suffix;
       const existing = await this.prisma.influencer.findUnique({
         where: { referralCode: code },
@@ -221,7 +228,11 @@ export class AdminService {
   }
 
   private async generateUniqueInfluencerSlug(displayName: string): Promise<string> {
-    let slug = displayName.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '') || 'influencer';
+    const slug =
+      displayName
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, '-')
+        .replace(/(^-|-$)/g, '') || 'influencer';
     let attempts = 0;
     while (attempts < 15) {
       const candidate = attempts === 0 ? slug : `${slug}-${attempts}`;
@@ -291,7 +302,12 @@ export class AdminService {
     const all = [...this.permissionCatalog];
     return {
       ADMIN: all,
-      PROCUREMENT: ['submissions.review', 'submissions.approve', 'submissions.reject', 'products.view'],
+      PROCUREMENT: [
+        'submissions.review',
+        'submissions.approve',
+        'submissions.reject',
+        'products.view',
+      ],
       FULFILLMENT: ['shipments.verify', 'orders.view', 'orders.manage'],
       CATALOG: ['catalog.create', 'products.view', 'products.edit'],
       MARKETING: ['marketing.create', 'products.view'],
@@ -411,13 +427,16 @@ export class AdminService {
     return user;
   }
 
-  async updateUser(userId: string, updateData: {
-    firstName?: string;
-    lastName?: string;
-    email?: string;
-    role?: string;
-    avatar?: string;
-  }) {
+  async updateUser(
+    userId: string,
+    updateData: {
+      firstName?: string;
+      lastName?: string;
+      email?: string;
+      role?: string;
+      avatar?: string;
+    },
+  ) {
     // Check if user exists
     const user = await this.prisma.user.findUnique({
       where: { id: userId },
@@ -456,7 +475,7 @@ export class AdminService {
       const validRoles = Object.values(UserRole) as string[];
       if (!validRoles.includes(roleString)) {
         throw new BadRequestException(
-          `Invalid role: ${updatePayload.role}. Valid roles are: ${validRoles.join(', ')}`
+          `Invalid role: ${updatePayload.role}. Valid roles are: ${validRoles.join(', ')}`,
         );
       }
       updatePayload.role = roleString as UserRole;
@@ -516,7 +535,9 @@ export class AdminService {
 
     // Prevent other admins from resetting protected admin passwords via admin panel.
     if (this.protectedAdminEmails.has(user.email)) {
-      throw new BadRequestException('Cannot reset password for a protected admin user via admin panel');
+      throw new BadRequestException(
+        'Cannot reset password for a protected admin user via admin panel',
+      );
     }
 
     const hashedPassword = await bcrypt.hash(newPassword, 10);
@@ -536,7 +557,7 @@ export class AdminService {
       // Check if we have a system settings record (using ActivityLog or a dedicated approach)
       // For now, we'll use environment variables with database override capability
       // In production, you could create a SystemSettings model
-      
+
       const defaultSettings = {
         platformName: process.env.PLATFORM_NAME || 'House of Spells Marketplace',
         platformUrl: process.env.PLATFORM_URL || process.env.FRONTEND_URL || '',
@@ -550,13 +571,13 @@ export class AdminService {
         enableStripe: process.env.STRIPE_SECRET_KEY ? true : false,
         enableKlarna: process.env.KLARNA_USERNAME ? true : false,
       };
-      
+
       // Try to get custom settings from a metadata field or dedicated storage
       // For now, return defaults. In production, you could:
       // 1. Create a SystemSettings model
       // 2. Use a JSON file
       // 3. Use Redis for settings cache
-      
+
       return defaultSettings;
     } catch (error) {
       // Fallback to environment variables only
@@ -577,11 +598,11 @@ export class AdminService {
     // 1. Create a SystemSettings model and store in database
     // 2. Or use a JSON file with proper locking
     // 3. Or use Redis for settings cache
-    
+
     try {
       // Validate settings
       const validSettings: any = {};
-      
+
       if (settings.platformName !== undefined) {
         validSettings.platformName = String(settings.platformName);
       }
@@ -609,7 +630,7 @@ export class AdminService {
       if (settings.maxUploadSize !== undefined) {
         validSettings.maxUploadSize = parseInt(settings.maxUploadSize, 10);
       }
-      
+
       // Log the settings update (for audit trail)
       // In production, store in SystemSettings table
       // For now, we'll create an activity log entry
@@ -621,7 +642,7 @@ export class AdminService {
           metadata: validSettings as any,
         },
       });
-      
+
       return {
         message: 'Settings updated successfully',
         settings: validSettings,
@@ -712,4 +733,3 @@ export class AdminService {
     };
   }
 }
-

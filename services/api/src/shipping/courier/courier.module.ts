@@ -10,7 +10,7 @@ import { DHLLegacyProvider } from './providers/legacy/dhl-legacy.provider';
 
 /**
  * CourierModule - Shipping carrier integration
- * 
+ *
  * Two approaches are available:
  * 1. Legacy: CourierService with manually registered providers (backward compatible)
  *    - Uses RoyalMailLegacyProvider, FedExLegacyProvider, DHLLegacyProvider
@@ -18,7 +18,7 @@ import { DHLLegacyProvider } from './providers/legacy/dhl-legacy.provider';
  * 2. New: CourierFactoryService which loads providers from IntegrationConfig database
  *    - Uses RoyalMailProvider, FedExProvider, DHLProvider with real API integration
  *    - Credentials stored encrypted in database
- * 
+ *
  * For new code, use CourierFactoryService which supports dynamic credential management.
  */
 @Module({
