@@ -1670,6 +1670,7 @@ export class ApiClient {
   async createAdminProduct(data: {
     name: string;
     description: string;
+    shortDescription?: string;
     price: number;
     currency?: string;
     stock?: number;
@@ -1709,6 +1710,7 @@ export class ApiClient {
     data: {
       name?: string;
       description?: string;
+      shortDescription?: string;
       price?: number;
       stock?: number;
       category?: string;

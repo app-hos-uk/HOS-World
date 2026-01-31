@@ -367,6 +367,7 @@ model Product {
   isPlatformOwned Boolean       @default(false)
   name            String
   description     String        @db.Text
+  shortDescription String?     @db.Text
   slug            String
   sku             String?
   barcode         String?

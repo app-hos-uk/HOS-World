@@ -405,6 +405,7 @@ export default function AdminProductsPage() {
       await apiClient.updateAdminProduct(editingProduct.id, {
         name: formData.name,
         description: formData.description,
+        shortDescription: formData.shortDescription || undefined,
         price: parseFloat(formData.price),
         stock: parseInt(formData.stock, 10),
         ...(formData.taxRate ? { taxRate: parseFloat(formData.taxRate) } : {}),
@@ -586,7 +587,7 @@ export default function AdminProductsPage() {
     { key: 'price', header: 'Price', format: (v: number, r: Product) => `${r.currency || 'GBP'} ${Number(v || 0).toFixed(2)}` },
     { key: 'stock', header: 'Stock' },
     { key: 'status', header: 'Status' },
-    { key: 'category', header: 'Category', format: (v: any) => v?.name || '' },
+    { key: 'category', header: 'Fandom', format: (v: any) => v?.name || '' },
   ];
 
   const getStockBadge = (stock: number) => {
@@ -700,7 +701,7 @@ export default function AdminProductsPage() {
                 onChange={(e) => setCategoryFilter(e.target.value)}
                 className="px-4 py-2 border border-gray-300 rounded-lg"
               >
-                <option value="ALL">All Categories</option>
+                <option value="ALL">All Fandoms</option>
                 {categories.map(cat => (
                   <option key={cat.id} value={cat.id}>{'  '.repeat(cat.level || 0)}{cat.name}</option>
                 ))}
@@ -937,7 +938,7 @@ export default function AdminProductsPage() {
 
                     {/* Taxonomy */}
                     <div className="border-t pt-4">
-                      <CategorySelector value={formData.categoryId} onChange={(categoryId) => setFormData(prev => ({ ...prev, categoryId: categoryId || '' }))} label="Category" />
+                      <CategorySelector value={formData.categoryId} onChange={(categoryId) => setFormData(prev => ({ ...prev, categoryId: categoryId || '' }))} label="Fandom" />
                       <div className="mt-4">
                         <TagSelector value={formData.tagIds} onChange={(tagIds) => setFormData(prev => ({ ...prev, tagIds }))} label="Tags" />
                       </div>

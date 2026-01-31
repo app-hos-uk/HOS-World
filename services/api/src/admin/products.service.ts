@@ -15,6 +15,7 @@ export class AdminProductsService {
   async createProduct(data: {
     name: string;
     description: string;
+    shortDescription?: string;
     price: number;
     currency?: string;
     stock?: number;
@@ -118,6 +119,7 @@ export class AdminProductsService {
       data: {
         name: data.name,
         description: data.description,
+        shortDescription: data.shortDescription,
         slug,
         price: data.price,
         currency: data.currency || 'GBP',
@@ -201,6 +203,7 @@ export class AdminProductsService {
     data: {
       name?: string;
       description?: string;
+      shortDescription?: string;
       price?: number;
       stock?: number;
       category?: string; // Keep for backward compatibility

@@ -25,6 +25,7 @@ import { useRouter } from 'next/navigation';
 const getInitialFormData = () => ({
   name: '',
   description: '',
+  shortDescription: '',
   sku: '',
   barcode: '',
   ean: '',
@@ -84,6 +85,7 @@ export default function ProductCreationPage() {
       const response = await apiClient.createAdminProduct({
         name: formData.name,
         description: formData.description,
+        shortDescription: formData.shortDescription?.trim() || undefined,
         sku: formData.sku || undefined,
         barcode: formData.barcode || undefined,
         ean: formData.ean || undefined,
@@ -267,6 +269,16 @@ export default function ProductCreationPage() {
                   placeholder="Product description"
                 />
               </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Short Description</label>
+                <input
+                  type="text"
+                  value={formData.shortDescription}
+                  onChange={(e) => setFormData((prev) => ({ ...prev, shortDescription: e.target.value }))}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
+                  placeholder="Brief summary for listings and search"
+                />
+              </div>
               <div className="grid grid-cols-3 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">SKU</label>
@@ -345,8 +357,8 @@ export default function ProductCreationPage() {
                   <CategorySelector
                     value={formData.categoryId}
                     onChange={(categoryId) => setFormData((prev) => ({ ...prev, categoryId: categoryId || '' }))}
-                    label="Category"
-                    placeholder="Select a category"
+                    label="Fandom"
+                    placeholder="Select a fandom"
                   />
                   
                   <TagSelector
