@@ -30,7 +30,8 @@ export class QueueService implements OnModuleInit, OnModuleDestroy {
 
   constructor() {
     const redisUrl = process.env.REDIS_URL || 'redis://localhost:6379';
-    this.connection = new IORedis(redisUrl);
+    // BullMQ requires maxRetriesPerRequest: null when using blocking commands (Worker)
+    this.connection = new IORedis(redisUrl, { maxRetriesPerRequest: null });
     this.queue = new Queue('jobs', { connection: this.connection });
   }
 
