@@ -115,6 +115,6 @@ WORKDIR /app/services/api
 # Run from the API directory
 # Use 0.0.0.0 to listen on all interfaces (required for Railway)
 # Run database migrations before starting the server
-# Use shell form to avoid Railway parsing issues
-CMD npx prisma migrate deploy && node dist/main.js
+# JSON form so the node process receives OS signals (e.g. SIGTERM) for graceful shutdown
+CMD ["/bin/sh", "-c", "npx prisma migrate deploy && exec node dist/main.js"]
 
