@@ -142,7 +142,7 @@ async function bootstrap() {
       }
 
       app = await NestFactory.create(AppModule, {
-        cors: true, // Enable CORS at NestJS level first
+        cors: false, // We handle CORS explicitly below so OPTIONS preflight gets correct origin (not * with credentials)
         logger: logger,
       });
       logger.info('✅ AppModule initialized successfully', 'Bootstrap');
@@ -150,11 +150,10 @@ async function bootstrap() {
       // CORS first: handle OPTIONS preflight before any other middleware so browser gets CORS headers
       logger.info(`🌐 CORS allowed origins: ${allowedOrigins.join(', ')}`, 'Bootstrap');
 
-      // Check if origin is allowed - returns the origin if allowed, null if not
+      // Check if origin is allowed - returns the origin to echo (or '*' when no origin), null if not allowed.
+      // CORS spec: when Access-Control-Allow-Credentials is true, Access-Control-Allow-Origin must NOT be '*'.
       const isOriginAllowed = (origin: string | undefined): string | null => {
-        // No origin (e.g. server-to-server, mobile apps, curl) - allow
-        if (!origin) return '*';
-        // Check exact match or prefix match (for subdomains)
+        if (!origin) return '*'; // No origin (e.g. server-to-server, curl) - allow with *
         const allowed = allowedOrigins.some((a) => a && (origin === a || origin.startsWith(a)));
         return allowed ? origin : null;
       };
@@ -164,7 +163,7 @@ async function bootstrap() {
           const origin = req.headers.origin as string | undefined;
           const allowedOrigin = isOriginAllowed(origin);
 
-          if (allowedOrigin) {
+          if (allowedOrigin !== null) {
             // Origin is allowed - set CORS headers and respond 204
             res.setHeader('Access-Control-Allow-Origin', allowedOrigin);
             res.setHeader(
@@ -175,7 +174,10 @@ async function bootstrap() {
               'Access-Control-Allow-Headers',
               'Content-Type, Authorization, X-Requested-With, Accept, Origin, X-API-Key, Access-Control-Request-Method, Access-Control-Request-Headers',
             );
-            res.setHeader('Access-Control-Allow-Credentials', 'true');
+            // Only set credentials when origin is specific; wildcard + credentials is invalid per CORS spec
+            if (allowedOrigin !== '*') {
+              res.setHeader('Access-Control-Allow-Credentials', 'true');
+            }
             res.setHeader('Access-Control-Max-Age', '86400');
             return res.status(204).end();
           } else {
@@ -298,8 +300,12 @@ async function bootstrap() {
         });
 
       if (isAllowed || !origin) {
-        res.header('Access-Control-Allow-Origin', origin || '*');
-        res.header('Access-Control-Allow-Credentials', 'true');
+        const allowOrigin = origin || '*';
+        res.header('Access-Control-Allow-Origin', allowOrigin);
+        // CORS spec: credentials must not be true when Allow-Origin is *
+        if (allowOrigin !== '*') {
+          res.header('Access-Control-Allow-Credentials', 'true');
+        }
       }
       next();
     });
