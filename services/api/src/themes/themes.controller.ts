@@ -152,7 +152,7 @@ export class ThemesController {
 
   // Seller Theme Customization
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles('SELLER')
+  @Roles('SELLER', 'B2C_SELLER', 'WHOLESALER')
   @Get('seller/my-theme')
   @ApiBearerAuth('JWT-auth')
   @ApiOperation({
@@ -189,7 +189,7 @@ export class ThemesController {
   }
 
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles('SELLER')
+  @Roles('SELLER', 'B2C_SELLER', 'WHOLESALER')
   @Put('seller/my-theme')
   @ApiBearerAuth('JWT-auth')
   @ApiOperation({
@@ -272,7 +272,7 @@ export class ThemesController {
   }
 
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles('SELLER')
+  @Roles('SELLER', 'B2C_SELLER', 'WHOLESALER')
   @Post('templates/:templateId/apply')
   @ApiBearerAuth('JWT-auth')
   @ApiOperation({

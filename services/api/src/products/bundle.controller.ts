@@ -32,7 +32,7 @@ export class BundleController {
   constructor(private readonly productsService: ProductsService) {}
 
   @Post()
-  @Roles('ADMIN', 'SELLER', 'B2C_SELLER')
+  @Roles('ADMIN', 'SELLER', 'B2C_SELLER', 'WHOLESALER')
   @ApiOperation({
     summary: 'Create bundle product',
     description: 'Creates a new bundled product containing multiple products.',

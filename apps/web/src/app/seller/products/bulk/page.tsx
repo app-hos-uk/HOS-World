@@ -146,7 +146,7 @@ export default function SellerBulkProductsPage() {
   };
 
   return (
-    <RouteGuard allowedRoles={['SELLER', 'B2C_SELLER', 'ADMIN']} showAccessDenied={true}>
+    <RouteGuard allowedRoles={['SELLER', 'B2C_SELLER', 'WHOLESALER', 'ADMIN']} showAccessDenied={true}>
       <DashboardLayout role="SELLER" menuItems={menuItems} title="Seller">
         <div className="mb-6">
           <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold">Bulk Product Import/Export</h1>

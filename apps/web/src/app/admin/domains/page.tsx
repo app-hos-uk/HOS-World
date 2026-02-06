@@ -89,7 +89,7 @@ export default function AdminDomainsPage() {
   const fetchSellers = useCallback(async () => {
     try {
       setLoading(true);
-      const response = await apiClient.getAdminSellers?.();
+      const response = await apiClient.getAdminSellers();
       if (response?.data) {
         const sellerList = Array.isArray(response.data) ? response.data : [];
         setSellers(sellerList);
@@ -213,7 +213,7 @@ export default function AdminDomainsPage() {
     try {
       setActionLoading(true);
       await toast.promise(
-        apiClient.assignSubDomain?.(selectedSeller.id, { subDomain: subDomainForm.subDomain }),
+        apiClient.assignSubDomain(selectedSeller.id, { subDomain: subDomainForm.subDomain }),
         {
           loading: 'Assigning subdomain...',
           success: 'Subdomain assigned successfully',
@@ -239,7 +239,7 @@ export default function AdminDomainsPage() {
     try {
       setActionLoading(true);
       await toast.promise(
-        apiClient.assignCustomDomain?.(selectedSeller.id, {
+        apiClient.assignCustomDomain(selectedSeller.id, {
           customDomain: customDomainForm.customDomain,
           domainPackagePurchased: customDomainForm.domainPackagePurchased,
         }),
@@ -267,8 +267,8 @@ export default function AdminDomainsPage() {
     try {
       await toast.promise(
         type === 'subdomain'
-          ? apiClient.removeSubDomain?.(seller.id)
-          : apiClient.removeCustomDomain?.(seller.id),
+          ? apiClient.removeSubDomain(seller.id)
+          : apiClient.removeCustomDomain(seller.id),
         {
           loading: `Removing ${type}...`,
           success: `${type === 'subdomain' ? 'Subdomain' : 'Custom domain'} removed successfully`,
@@ -311,7 +311,7 @@ export default function AdminDomainsPage() {
       setActionLoading(true);
       for (const seller of sellersWithoutDomain) {
         const subdomain = seller.slug.toLowerCase().replace(/[^a-z0-9]/g, '-').substring(0, 50);
-        await apiClient.assignSubDomain?.(seller.id, { subDomain: subdomain });
+        await apiClient.assignSubDomain(seller.id, { subDomain: subdomain });
       }
       toast.success(`Generated subdomains for ${sellersWithoutDomain.length} sellers`);
       setSelectedSellers(new Set());
@@ -607,8 +607,23 @@ export default function AdminDomainsPage() {
                         <td className="px-4 py-3">
                           {seller.subDomain ? (
                             <div>
-                              <p className="text-sm font-medium text-gray-900">{seller.subDomain}.houseofspells.com</p>
+                              <a
+                                href={`/sellers/${seller.slug}`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-sm font-medium text-blue-700 hover:text-blue-900 hover:underline"
+                              >
+                                {seller.subDomain}.houseofspells.com
+                              </a>
                               <div className="flex gap-2 mt-1">
+                                <a
+                                  href={`/sellers/${seller.slug}`}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="text-xs text-blue-600 hover:text-blue-800"
+                                >
+                                  Visit Store
+                                </a>
                                 <button
                                   onClick={() => {
                                     setSelectedSeller(seller);
@@ -869,14 +884,19 @@ export default function AdminDomainsPage() {
                       {selectedSeller.subDomain ? (
                         <div>
                           <p className="font-mono text-blue-800">{selectedSeller.subDomain}.houseofspells.com</p>
-                          <a
-                            href={`https://${selectedSeller.subDomain}.houseofspells.com`}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="text-sm text-blue-600 hover:underline mt-1 inline-block"
-                          >
-                            Open in new tab →
-                          </a>
+                          <div className="flex flex-col gap-1 mt-2">
+                            <a
+                              href={`/sellers/${selectedSeller.slug}`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-sm text-blue-600 hover:underline inline-block"
+                            >
+                              Visit Store Page →
+                            </a>
+                            <p className="text-xs text-gray-500">
+                              Subdomain URL: {selectedSeller.subDomain}.houseofspells.com (requires wildcard DNS)
+                            </p>
+                          </div>
                         </div>
                       ) : (
                         <p className="text-gray-500">No subdomain configured</p>

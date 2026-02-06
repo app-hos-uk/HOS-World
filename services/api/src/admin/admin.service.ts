@@ -664,7 +664,15 @@ export class AdminService {
             email: true,
             firstName: true,
             lastName: true,
+            phone: true,
             role: true,
+            avatar: true,
+            createdAt: true,
+          },
+        },
+        _count: {
+          select: {
+            products: true,
           },
         },
       },
@@ -673,7 +681,76 @@ export class AdminService {
       },
     });
 
-    return sellers;
+    // Fetch warehouse addresses if warehouseAddressId exists
+    const sellersWithAddresses = await Promise.all(
+      sellers.map(async (seller) => {
+        let warehouseAddress = null;
+        if (seller.warehouseAddressId) {
+          try {
+            warehouseAddress = await this.prisma.address.findUnique({
+              where: { id: seller.warehouseAddressId },
+              select: {
+                street: true,
+                city: true,
+                state: true,
+                postalCode: true,
+                country: true,
+                phone: true,
+              },
+            });
+          } catch {
+            // Address not found or error - ignore
+          }
+        }
+        return {
+          ...seller,
+          warehouseAddress,
+          totalProducts: seller._count?.products || 0,
+        };
+      })
+    );
+
+    return sellersWithAddresses;
+  }
+
+  async suspendSeller(sellerId: string) {
+    const seller = await this.prisma.seller.findUnique({
+      where: { id: sellerId },
+      include: { user: true },
+    });
+
+    if (!seller) {
+      throw new NotFoundException('Seller not found');
+    }
+
+    // Protect admin accounts
+    if (this.protectedAdminEmails.has(seller.user.email)) {
+      throw new BadRequestException('Cannot suspend a protected admin user');
+    }
+
+    // Toggle seller verified status (Seller model uses 'verified' field, not 'isActive')
+    const newStatus = seller.verified === false ? true : false;
+
+    const updated = await this.prisma.seller.update({
+      where: { id: sellerId },
+      data: { verified: newStatus },
+      include: {
+        user: {
+          select: {
+            id: true,
+            email: true,
+            firstName: true,
+            lastName: true,
+            role: true,
+          },
+        },
+      },
+    });
+
+    return {
+      ...updated,
+      message: newStatus ? 'Seller activated successfully' : 'Seller suspended successfully',
+    };
   }
 
   async getDashboardStats() {
@@ -683,6 +760,7 @@ export class AdminService {
       totalSubmissions,
       totalSellers,
       totalCustomers,
+      totalUsers,
       submissionsByStatus,
       ordersByStatus,
     ] = await Promise.all([
@@ -691,6 +769,7 @@ export class AdminService {
       this.prisma.productSubmission.count(),
       this.prisma.user.count({ where: { role: { in: ['SELLER', 'B2C_SELLER', 'WHOLESALER'] } } }),
       this.prisma.user.count({ where: { role: 'CUSTOMER' } }),
+      this.prisma.user.count(),
       this.prisma.productSubmission.groupBy({
         by: ['status'],
         _count: true,
@@ -720,6 +799,7 @@ export class AdminService {
         totalSubmissions,
         totalSellers,
         totalCustomers,
+        totalUsers,
       },
       submissionsByStatus: submissionsByStatus.map((s) => ({
         status: s.status,

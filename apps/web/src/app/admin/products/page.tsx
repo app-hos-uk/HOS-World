@@ -1,6 +1,7 @@
 'use client';
 
-import { useEffect, useState, useMemo, useCallback } from 'react';
+import { useEffect, useState, useMemo, useCallback, Suspense } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { RouteGuard } from '@/components/RouteGuard';
 import { AdminLayout } from '@/components/AdminLayout';
 import { apiClient } from '@/lib/api';
@@ -45,6 +46,8 @@ interface Product {
   metaDescription?: string;
   isFeatured?: boolean;
   isHidden?: boolean;
+  productType?: 'SIMPLE' | 'VARIANT' | 'BUNDLED';
+  variations?: Array<{ id?: string; name: string; options: any[] }>;
   createdAt: string;
   updatedAt?: string;
 }
@@ -60,7 +63,8 @@ interface Stats {
   avgPrice: number;
 }
 
-export default function AdminProductsPage() {
+function AdminProductsContent() {
+  const searchParams = useSearchParams();
   const toast = useToast();
   const { formatPrice } = useCurrency();
   const [products, setProducts] = useState<Product[]>([]);
@@ -72,6 +76,9 @@ export default function AdminProductsPage() {
   const [categories, setCategories] = useState<any[]>([]);
   const [publishNow, setPublishNow] = useState(true);
   const [selectedProducts, setSelectedProducts] = useState<Set<string>>(new Set());
+  
+  // Read seller filter from URL query param
+  const sellerFilterFromUrl = searchParams.get('seller') || '';
   
   // Filters
   const [searchTerm, setSearchTerm] = useState('');
@@ -105,6 +112,7 @@ export default function AdminProductsPage() {
     // Visibility
     isFeatured: false,
     isHidden: false,
+    variations: [] as Array<{ name: string; options: Array<string | { value: string; price?: number; stock?: number; imageUrl?: string }> }>,
   });
   const [images, setImages] = useState<Array<{ url: string; alt?: string; order?: number; size?: number; width?: number; height?: number; format?: string; uploadedAt?: Date; isPrimary?: boolean }>>([]);
   const [uploadingImages, setUploadingImages] = useState(false);
@@ -114,12 +122,17 @@ export default function AdminProductsPage() {
   const [productToDelete, setProductToDelete] = useState<Product | null>(null);
   const [showBulkModal, setShowBulkModal] = useState(false);
   const [bulkAction, setBulkAction] = useState<'publish' | 'unpublish' | 'inactive' | 'delete'>('publish');
+  const [updatingProduct, setUpdatingProduct] = useState(false);
 
   const fetchProducts = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
-      const response = await apiClient.getAdminProducts({ page, limit: 100 });
+      const response = await apiClient.getAdminProducts({ 
+        page, 
+        limit: 100,
+        sellerId: sellerFilterFromUrl || undefined,
+      });
       const list = response?.data?.products || response?.data?.data || response?.data || [];
       const productList = Array.isArray(list) ? list : [];
       setProducts(productList);
@@ -131,7 +144,7 @@ export default function AdminProductsPage() {
     } finally {
       setLoading(false);
     }
-  }, [page]);
+  }, [page, sellerFilterFromUrl]);
 
   const fetchSellers = useCallback(async () => {
     try {
@@ -356,6 +369,41 @@ export default function AdminProductsPage() {
     });
   };
 
+  const updateVariationOption = (varIdx: number, optIdx: number, field: 'value' | 'price' | 'stock', value: string) => {
+    setFormData((prev) => {
+      const vars = [...prev.variations];
+      const opts = [...(vars[varIdx]?.options || [])];
+      const current = opts[optIdx];
+      const base: { value: string; price?: number; stock?: number } = typeof current === 'object' && current && typeof (current as any).value === 'string'
+        ? { value: (current as any).value, price: (current as any).price, stock: (current as any).stock }
+        : { value: String(current ?? '') };
+      if (field === 'value') base.value = value;
+      else if (field === 'price') base.price = value ? parseFloat(value) : undefined;
+      else if (field === 'stock') base.stock = value ? parseInt(value, 10) : undefined;
+      opts[optIdx] = base.value ? (base.price != null || base.stock != null ? base : base.value) : base.value;
+      vars[varIdx] = { ...vars[varIdx], name: vars[varIdx].name, options: opts };
+      return { ...prev, variations: vars };
+    });
+  };
+
+  const removeVariationOption = (varIdx: number, optIdx: number) => {
+    setFormData((prev) => ({
+      ...prev,
+      variations: prev.variations.map((v, i) => i === varIdx ? { ...v, options: v.options.filter((_, j) => j !== optIdx) } : v),
+    }));
+  };
+
+  const addVariationOption = (varIdx: number) => {
+    setFormData((prev) => ({
+      ...prev,
+      variations: prev.variations.map((v, i) => i === varIdx ? { ...v, options: [...(v.options || []), ''] } : v),
+    }));
+  };
+
+  const addVariationDimension = () => {
+    setFormData((prev) => ({ ...prev, variations: [...prev.variations, { name: '', options: [''] }] }));
+  };
+
   const handleEdit = (product: Product) => {
     setEditingProduct(product);
     setFormData({
@@ -370,6 +418,10 @@ export default function AdminProductsPage() {
       sellerId: product.sellerId || '',
       categoryId: product.categoryId || product.categoryRelation?.categoryId || '',
       tagIds: product.tagsRelation?.map((t: any) => t.tagId) || product.tags?.map((t: any) => t.id) || [],
+      variations: (product.variations || []).map((v: any) => ({
+        name: v.name,
+        options: Array.isArray(v.options) ? v.options : [],
+      })),
       attributes: product.attributes?.map((attr: any) => ({
         attributeId: attr.attributeId,
         attributeValueId: attr.attributeValueId,
@@ -399,9 +451,10 @@ export default function AdminProductsPage() {
 
   const handleUpdateProduct = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!editingProduct) return;
+    if (!editingProduct || updatingProduct) return;
 
     try {
+      setUpdatingProduct(true);
       await apiClient.updateAdminProduct(editingProduct.id, {
         name: formData.name,
         description: formData.description,
@@ -413,6 +466,7 @@ export default function AdminProductsPage() {
         status: publishNow ? 'ACTIVE' : 'DRAFT',
         categoryId: formData.categoryId || undefined,
         tagIds: formData.tagIds.length > 0 ? formData.tagIds : undefined,
+        variations: formData.variations.length > 0 ? formData.variations : undefined,
         attributes: formData.attributes.length > 0 ? formData.attributes : undefined,
         images: images.length > 0 ? images.map(img => ({ 
           url: img.url, 
@@ -427,6 +481,8 @@ export default function AdminProductsPage() {
       fetchProducts();
     } catch (err: any) {
       toast.error(err.message || 'Failed to update product');
+    } finally {
+      setUpdatingProduct(false);
     }
   };
 
@@ -454,40 +510,16 @@ export default function AdminProductsPage() {
     }
   };
 
-  const handleApprove = async (product: Product) => {
-    try {
-      await apiClient.updateAdminProduct(product.id, { status: 'ACTIVE' });
-      toast.success('Product approved and published');
-      fetchProducts();
-    } catch (err: any) {
-      toast.error(err.message || 'Failed to approve product');
-    }
-  };
-
-  const handleDeactivate = async (product: Product) => {
-    try {
-      await apiClient.updateAdminProduct(product.id, { status: 'DRAFT' });
-      toast.success('Product deactivated (moved to Draft)');
-      fetchProducts();
-    } catch (err: any) {
-      toast.error(err.message || 'Failed to deactivate product');
-    }
-  };
-
-  const handleSetInactive = async (product: Product) => {
-    try {
-      await apiClient.updateAdminProduct(product.id, { status: 'INACTIVE' });
-      toast.success('Product set to Inactive');
-      fetchProducts();
-    } catch (err: any) {
-      toast.error(err.message || 'Failed to set product inactive');
-    }
-  };
-
   const handleStatusChange = async (product: Product, newStatus: 'ACTIVE' | 'INACTIVE' | 'DRAFT' | 'OUT_OF_STOCK') => {
     try {
       await apiClient.updateAdminProduct(product.id, { status: newStatus });
-      toast.success(`Product status changed to ${newStatus}`);
+      const labels: Record<string, string> = {
+        ACTIVE: 'Published',
+        DRAFT: 'Moved to Draft',
+        INACTIVE: 'Set Inactive',
+        OUT_OF_STOCK: 'Marked Out of Stock',
+      };
+      toast.success(`Product ${labels[newStatus] || newStatus}`);
       fetchProducts();
     } catch (err: any) {
       toast.error(err.message || 'Failed to change product status');
@@ -628,6 +660,28 @@ export default function AdminProductsPage() {
               </Link>
             </div>
           </div>
+
+          {/* Seller Filter Indicator */}
+          {sellerFilterFromUrl && (
+            <div className="bg-purple-50 border border-purple-200 rounded-lg p-4 flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <span className="text-purple-700 font-medium">Filtered by Seller:</span>
+                <span className="text-purple-600">
+                  {(() => {
+                    const seller = sellers.find(s => (s as any).sellerId === sellerFilterFromUrl || s.id === sellerFilterFromUrl);
+                    return seller?.email || seller?.storeName || sellerFilterFromUrl.substring(0, 8) + '...';
+                  })()}
+                </span>
+                <span className="text-xs text-purple-500">({filteredProducts.length} product{filteredProducts.length !== 1 ? 's' : ''})</span>
+              </div>
+              <Link
+                href="/admin/products"
+                className="text-purple-600 hover:text-purple-800 text-sm font-medium underline"
+              >
+                Clear Filter
+              </Link>
+            </div>
+          )}
 
           {/* Stats Cards */}
           {stats && (
@@ -858,27 +912,14 @@ export default function AdminProductsPage() {
                             <button onClick={() => handleDuplicateProduct(product)} className="px-2 py-1 text-sm text-gray-600 hover:bg-gray-50 rounded" title="Duplicate">
                               📋
                             </button>
-                            {/* Status-based actions */}
-                            {product.status === 'DRAFT' && (
-                              <button onClick={() => handleApprove(product)} className="px-2 py-1 text-sm text-green-600 hover:bg-green-50 rounded" title="Publish product">
-                                Publish
-                              </button>
-                            )}
-                            {product.status === 'ACTIVE' && (
-                              <button onClick={() => handleDeactivate(product)} className="px-2 py-1 text-sm text-yellow-600 hover:bg-yellow-50 rounded" title="Move to Draft">
-                                Deactivate
-                              </button>
-                            )}
-                            {product.status === 'INACTIVE' && (
-                              <button onClick={() => handleApprove(product)} className="px-2 py-1 text-sm text-green-600 hover:bg-green-50 rounded" title="Reactivate product">
-                                Reactivate
-                              </button>
-                            )}
-                            {/* Status dropdown for quick status change */}
                             <select
                               value={product.status}
                               onChange={(e) => handleStatusChange(product, e.target.value as 'ACTIVE' | 'INACTIVE' | 'DRAFT' | 'OUT_OF_STOCK')}
-                              className="px-1 py-1 text-xs border border-gray-300 rounded bg-white text-gray-600 cursor-pointer"
+                              className={`px-2 py-1 text-xs border rounded cursor-pointer font-medium ${
+                                product.status === 'ACTIVE' ? 'border-green-300 text-green-700 bg-green-50' :
+                                product.status === 'DRAFT' ? 'border-yellow-300 text-yellow-700 bg-yellow-50' :
+                                'border-gray-300 text-gray-700 bg-gray-50'
+                              }`}
                               title="Change status"
                             >
                               <option value="ACTIVE">Active</option>
@@ -919,10 +960,16 @@ export default function AdminProductsPage() {
                       <div className="grid grid-cols-2 gap-4">
                         <div>
                           <label className="block text-sm font-medium text-gray-700 mb-1">Price *</label>
+                          {editingProduct?.productType === 'VARIANT' && formData.variations.length > 0 && (
+                            <p className="text-xs text-amber-600 mb-1">For variable products, set price per variation option in the Variations section below (or when creating). Base price here is fallback.</p>
+                          )}
                           <input type="number" step="0.01" required value={formData.price} onChange={(e) => setFormData(prev => ({ ...prev, price: e.target.value }))} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500" />
                         </div>
                         <div>
                           <label className="block text-sm font-medium text-gray-700 mb-1">Stock *</label>
+                          {editingProduct?.productType === 'VARIANT' && formData.variations.length > 0 && (
+                            <p className="text-xs text-amber-600 mb-1">For variable products, set stock per variation option in the Variations section below.</p>
+                          )}
                           <input type="number" required value={formData.stock} onChange={(e) => setFormData(prev => ({ ...prev, stock: e.target.value }))} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500" />
                         </div>
                       </div>
@@ -933,8 +980,51 @@ export default function AdminProductsPage() {
                     </div>
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">Short Description</label>
-                      <input type="text" value={formData.shortDescription} onChange={(e) => setFormData(prev => ({ ...prev, shortDescription: e.target.value }))} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500" />
+                      <input type="text" value={formData.shortDescription} onChange={(e) => setFormData(prev => ({ ...prev, shortDescription: e.target.value }))} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500" placeholder="Brief summary for listing/customer view" />
                     </div>
+
+                    {/* Variations (editable) */}
+                    {formData.variations.length === 0 && (
+                      <div className="border-t pt-4">
+                        <p className="text-sm text-gray-600 mb-2">No variations. Add dimensions (e.g. Size, Color) with options and optional price/stock per option.</p>
+                        <button type="button" onClick={addVariationDimension} className="text-sm text-purple-600 hover:text-purple-800 font-medium">+ Add variation dimension</button>
+                      </div>
+                    )}
+                    {formData.variations.length > 0 && (
+                      <div className="border-t pt-4">
+                        <h3 className="text-sm font-semibold text-gray-700 mb-2">Variations (price/stock per option)</h3>
+                        <p className="text-xs text-gray-500 mb-3">Set optional price and stock per option. Base price/stock above are fallback for simple products.</p>
+                        <div className="space-y-4">
+                          {formData.variations.map((variation, varIdx) => (
+                            <div key={varIdx} className="bg-gray-50 rounded-lg p-4 border border-gray-200">
+                              <div className="flex items-center justify-between mb-2">
+                                <label className="block text-sm font-medium text-gray-700">Dimension name</label>
+                                <button type="button" onClick={() => setFormData(prev => ({ ...prev, variations: prev.variations.filter((_, i) => i !== varIdx) }))} className="text-red-600 hover:text-red-800 text-xs">Remove dimension</button>
+                              </div>
+                              <input type="text" value={variation.name} onChange={(e) => setFormData(prev => ({ ...prev, variations: prev.variations.map((v, i) => i === varIdx ? { ...v, name: e.target.value } : v) }))} className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm mb-3" placeholder="e.g. Size, Color" />
+                              <p className="text-xs font-medium text-gray-600 mb-2">Options (value, optional price, optional stock)</p>
+                              <div className="space-y-2">
+                                {(variation.options || []).map((opt: any, optIdx: number) => {
+                                  const val = typeof opt === 'object' && opt?.value != null ? opt.value : String(opt ?? '');
+                                  const price = typeof opt === 'object' && opt?.price != null ? String(opt.price) : '';
+                                  const stock = typeof opt === 'object' && opt?.stock != null ? String(opt.stock) : '';
+                                  return (
+                                    <div key={optIdx} className="flex flex-wrap items-center gap-2">
+                                      <input type="text" value={val} onChange={(e) => updateVariationOption(varIdx, optIdx, 'value', e.target.value)} className="w-28 px-2 py-1.5 border border-gray-300 rounded text-sm" placeholder="Value" />
+                                      <input type="number" step="0.01" value={price} onChange={(e) => updateVariationOption(varIdx, optIdx, 'price', e.target.value)} className="w-20 px-2 py-1.5 border border-gray-300 rounded text-sm" placeholder="Price" />
+                                      <input type="number" value={stock} onChange={(e) => updateVariationOption(varIdx, optIdx, 'stock', e.target.value)} className="w-16 px-2 py-1.5 border border-gray-300 rounded text-sm" placeholder="Stock" />
+                                      <button type="button" onClick={() => removeVariationOption(varIdx, optIdx)} className="text-red-600 hover:text-red-800 text-sm">×</button>
+                                    </div>
+                                  );
+                                })}
+                                <button type="button" onClick={() => addVariationOption(varIdx)} className="text-sm text-purple-600 hover:text-purple-800">+ Add option</button>
+                              </div>
+                            </div>
+                          ))}
+                          <button type="button" onClick={addVariationDimension} className="text-sm text-purple-600 hover:text-purple-800 font-medium">+ Add variation dimension</button>
+                        </div>
+                      </div>
+                    )}
 
                     {/* Taxonomy */}
                     <div className="border-t pt-4">
@@ -982,8 +1072,8 @@ export default function AdminProductsPage() {
                     </div>
 
                     <div className="flex gap-3 pt-4">
-                      <button type="submit" className="flex-1 px-6 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 font-medium">
-                        Update Product
+                      <button type="submit" disabled={updatingProduct} className="flex-1 px-6 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 font-medium disabled:opacity-50 disabled:cursor-not-allowed">
+                        {updatingProduct ? 'Updating...' : 'Update Product'}
                       </button>
                       <button type="button" onClick={() => { setShowEditModal(false); setEditingProduct(null); }} className="px-6 py-2 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400 font-medium">
                         Cancel
@@ -1053,5 +1143,21 @@ export default function AdminProductsPage() {
         </div>
       </AdminLayout>
     </RouteGuard>
+  );
+}
+
+export default function AdminProductsPage() {
+  return (
+    <Suspense fallback={
+      <RouteGuard allowedRoles={['ADMIN']}>
+        <AdminLayout>
+          <div className="flex items-center justify-center h-64">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600"></div>
+          </div>
+        </AdminLayout>
+      </RouteGuard>
+    }>
+      <AdminProductsContent />
+    </Suspense>
   );
 }

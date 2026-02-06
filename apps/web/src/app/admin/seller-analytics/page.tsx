@@ -87,11 +87,29 @@ export default function AdminSellerAnalyticsPage() {
 
       // Fetch sellers from admin endpoint
       const sellersResponse = await apiClient.getAdminSellers();
-      const sellers = Array.isArray(sellersResponse?.data) ? sellersResponse.data : [];
+      const rawSellers = Array.isArray(sellersResponse?.data) ? sellersResponse.data : [];
+
+      // Map seller profile data to the format expected by analytics
+      const mappedSellers = rawSellers.map((seller: any) => ({
+        id: seller.user?.id || seller.userId || seller.id,
+        sellerId: seller.id,
+        email: seller.user?.email || '',
+        firstName: seller.user?.firstName || '',
+        lastName: seller.user?.lastName || '',
+        role: seller.user?.role || seller.sellerType || 'SELLER',
+        storeName: seller.storeName || '',
+        storeDescription: seller.storeDescription || '',
+        isVerified: seller.verified !== false,
+        createdAt: seller.createdAt || seller.user?.createdAt || new Date().toISOString(),
+        _count: seller._count || {
+          products: seller.totalProducts || 0,
+          orders: 0,
+        },
+      }));
 
       // Calculate analytics from seller data
       const sellerRoles = ['SELLER', 'B2C_SELLER', 'WHOLESALER'];
-      const allSellers = sellers.filter((s: any) => sellerRoles.includes(s.role));
+      const allSellers = mappedSellers.filter((s: any) => sellerRoles.includes(s.role));
       
       // Filter sellers created within the time range for metrics
       const sellersInRange = allSellers.filter((s: any) => {

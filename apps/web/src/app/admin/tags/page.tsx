@@ -63,6 +63,7 @@ export default function AdminTagsPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [showInactive, setShowInactive] = useState(false);
   const [sortBy, setSortBy] = useState<'name' | 'category' | 'usage'>('name');
+  const [savingTag, setSavingTag] = useState(false);
   
   const [formData, setFormData] = useState({
     name: '',
@@ -132,7 +133,9 @@ export default function AdminTagsPage() {
 
   const handleCreateTag = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (savingTag) return;
     try {
+      setSavingTag(true);
       const synonyms = formData.synonyms
         .split(',')
         .map((s) => s.trim())
@@ -149,13 +152,16 @@ export default function AdminTagsPage() {
       fetchTags();
     } catch (err: any) {
       toast.error(err.message || 'Failed to create tag');
+    } finally {
+      setSavingTag(false);
     }
   };
 
   const handleUpdateTag = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!editingTag) return;
+    if (!editingTag || savingTag) return;
     try {
+      setSavingTag(true);
       const synonyms = formData.synonyms
         .split(',')
         .map((s) => s.trim())
@@ -172,6 +178,8 @@ export default function AdminTagsPage() {
       fetchTags();
     } catch (err: any) {
       toast.error(err.message || 'Failed to update tag');
+    } finally {
+      setSavingTag(false);
     }
   };
 
@@ -676,9 +684,10 @@ export default function AdminTagsPage() {
                 <div className="flex gap-2 pt-4">
                   <button
                     type="submit"
-                    className="px-6 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700"
+                    disabled={savingTag}
+                    className="px-6 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
-                    {editingTag ? 'Update Tag' : 'Create Tag'}
+                    {savingTag ? 'Saving...' : (editingTag ? 'Update Tag' : 'Create Tag')}
                   </button>
                   <button
                     type="button"

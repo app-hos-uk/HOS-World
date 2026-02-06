@@ -95,6 +95,7 @@ export default function AdminAttributesPage() {
   const [typeFilter, setTypeFilter] = useState<string>('ALL');
   const [scopeFilter, setScopeFilter] = useState<'ALL' | 'GLOBAL' | 'CATEGORY'>('ALL');
   const [sortBy, setSortBy] = useState<'name' | 'type' | 'usage'>('name');
+  const [savingAttribute, setSavingAttribute] = useState(false);
   
   const [formData, setFormData] = useState({
     name: '',
@@ -253,7 +254,7 @@ export default function AdminAttributesPage() {
 
   const handleCreateAttribute = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+    if (savingAttribute) return;
     // Validate category is selected for category-specific attributes
     if (!formData.isGlobal && !formData.categoryId) {
       toast.error('Please select a category for category-specific attributes');
@@ -261,6 +262,7 @@ export default function AdminAttributesPage() {
     }
     
     try {
+      setSavingAttribute(true);
       const data: any = {
         name: formData.name,
         type: formData.type,
@@ -293,12 +295,14 @@ export default function AdminAttributesPage() {
       fetchAttributes();
     } catch (err: any) {
       toast.error(err.message || 'Failed to create attribute');
+    } finally {
+      setSavingAttribute(false);
     }
   };
 
   const handleUpdateAttribute = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!editingAttribute) return;
+    if (!editingAttribute || savingAttribute) return;
     
     // Validate category is selected for category-specific attributes
     if (!formData.isGlobal && !formData.categoryId) {
@@ -307,6 +311,7 @@ export default function AdminAttributesPage() {
     }
     
     try {
+      setSavingAttribute(true);
       const data: any = {
         name: formData.name,
         type: formData.type,
@@ -339,6 +344,8 @@ export default function AdminAttributesPage() {
       fetchAttributes();
     } catch (err: any) {
       toast.error(err.message || 'Failed to update attribute');
+    } finally {
+      setSavingAttribute(false);
     }
   };
 
@@ -860,9 +867,10 @@ export default function AdminAttributesPage() {
                 <div className="flex gap-2 pt-4">
                   <button
                     type="submit"
-                    className="px-6 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700"
+                    disabled={savingAttribute}
+                    className="px-6 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
-                    {editingAttribute ? 'Update Attribute' : 'Create Attribute'}
+                    {savingAttribute ? 'Saving...' : (editingAttribute ? 'Update Attribute' : 'Create Attribute')}
                   </button>
                   <button
                     type="button"

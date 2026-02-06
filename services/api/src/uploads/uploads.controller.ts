@@ -264,7 +264,7 @@ export class UploadsController {
 
   @Delete(':url')
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles('SELLER', 'ADMIN')
+  @Roles('SELLER', 'B2C_SELLER', 'WHOLESALER', 'ADMIN')
   @ApiBearerAuth('JWT-auth')
   @ApiOperation({
     summary: 'Delete uploaded file (Seller/Admin only)',

@@ -621,6 +621,7 @@ export class DashboardService {
       totalSubmissions,
       totalSellers,
       totalCustomers,
+      totalUsers,
       submissionsByStatus,
       ordersByStatus,
     ] = await Promise.all([
@@ -629,6 +630,7 @@ export class DashboardService {
       this.prisma.productSubmission.count(),
       this.prisma.seller.count(),
       this.prisma.customer.count(),
+      this.prisma.user.count(),
       this.prisma.productSubmission.groupBy({
         by: ['status'],
         _count: true,
@@ -658,6 +660,7 @@ export class DashboardService {
         totalSubmissions,
         totalSellers,
         totalCustomers,
+        totalUsers,
       },
       submissionsByStatus,
       ordersByStatus,

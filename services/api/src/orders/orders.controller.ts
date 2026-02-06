@@ -96,7 +96,7 @@ export class OrdersController {
 
   @Put(':id')
   @UseGuards(RolesGuard)
-  @Roles('SELLER', 'ADMIN')
+  @Roles('SELLER', 'B2C_SELLER', 'WHOLESALER', 'ADMIN')
   @ApiOperation({
     summary: 'Update order',
     description: 'Updates an order. Only sellers and admins can update orders',

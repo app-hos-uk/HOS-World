@@ -22,13 +22,32 @@ export class ProductsService {
   ) {}
 
   async create(sellerId: string, createProductDto: CreateProductDto): Promise<Product> {
-    // Verify seller exists
-    const seller = await this.prisma.seller.findUnique({
+    // Check if user is admin - they may not have a seller profile
+    const user = await this.prisma.user.findUnique({
+      where: { id: sellerId },
+      select: { role: true },
+    });
+
+    let seller = await this.prisma.seller.findUnique({
       where: { userId: sellerId },
     });
 
+    if (!seller && user?.role === 'ADMIN') {
+      // Auto-create a seller profile for admin users so they can create products
+      seller = await this.prisma.seller.create({
+        data: {
+          userId: sellerId,
+          storeName: 'House of Spells',
+          slug: `admin-store-${sellerId.substring(0, 8)}`,
+          sellerType: 'B2C_SELLER',
+          country: 'United Kingdom',
+          verified: true,
+        },
+      });
+    }
+
     if (!seller) {
-      throw new NotFoundException('Seller not found');
+      throw new NotFoundException('Seller profile not found. Please set up your seller profile first.');
     }
 
     // Generate slug
@@ -98,6 +117,7 @@ export class ProductsService {
         sellerId: seller.id,
         name: createProductDto.name,
         description: createProductDto.description,
+        shortDescription: createProductDto.shortDescription,
         slug,
         sku: createProductDto.sku,
         barcode: createProductDto.barcode,
@@ -105,7 +125,7 @@ export class ProductsService {
         price: createProductDto.price,
         tradePrice: createProductDto.tradePrice,
         rrp: createProductDto.rrp,
-        currency: createProductDto.currency || 'USD',
+        currency: createProductDto.currency || 'GBP',
         taxRate: createProductDto.taxRate || 0,
         stock: createProductDto.stock,
         fandom: createProductDto.fandom,
@@ -645,6 +665,7 @@ export class ProductsService {
     const updateData: any = {
       name: updateProductDto.name,
       description: updateProductDto.description,
+      shortDescription: updateProductDto.shortDescription,
       sku: updateProductDto.sku,
       barcode: updateProductDto.barcode,
       ean: updateProductDto.ean,
@@ -787,6 +808,7 @@ export class ProductsService {
       id: product.id,
       name: product.name,
       description: product.description,
+      shortDescription: product.shortDescription ?? undefined,
       slug: product.slug,
       sku: product.sku || undefined,
       barcode: product.barcode || undefined,

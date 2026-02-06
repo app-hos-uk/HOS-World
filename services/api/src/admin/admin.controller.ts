@@ -376,4 +376,24 @@ export class AdminController {
       message: 'Sellers retrieved successfully',
     };
   }
+
+  @Put('sellers/:id/suspend')
+  @ApiOperation({
+    summary: 'Toggle seller suspend/activate',
+    description: 'Suspends or activates a seller. Admin access required.',
+  })
+  @ApiParam({ name: 'id', description: 'Seller UUID', type: String })
+  @SwaggerApiResponse({ status: 200, description: 'Seller status updated successfully' })
+  @SwaggerApiResponse({ status: 401, description: 'Unauthorized' })
+  @SwaggerApiResponse({ status: 403, description: 'Forbidden - Admin access required' })
+  @SwaggerApiResponse({ status: 404, description: 'Seller not found' })
+  async suspendSeller(
+    @Param('id', ParseUUIDPipe) id: string,
+  ): Promise<ApiResponse<any>> {
+    const result = await this.adminService.suspendSeller(id);
+    return {
+      data: result,
+      message: result.message || 'Seller status updated successfully',
+    };
+  }
 }

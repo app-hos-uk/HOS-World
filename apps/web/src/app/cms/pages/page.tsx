@@ -13,6 +13,7 @@ export default function CMSPagesPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showCreateForm, setShowCreateForm] = useState(false);
+  const [creatingPage, setCreatingPage] = useState(false);
   const [formData, setFormData] = useState({
     title: '',
     slug: '',
@@ -47,7 +48,9 @@ export default function CMSPagesPage() {
 
   const handleCreatePage = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (creatingPage) return;
     try {
+      setCreatingPage(true);
       await apiClient.createCMSPage(formData);
       toast.success('Page created successfully');
       setShowCreateForm(false);
@@ -62,6 +65,8 @@ export default function CMSPagesPage() {
       loadPages();
     } catch (err: any) {
       toast.error(err.message || 'Failed to create page');
+    } finally {
+      setCreatingPage(false);
     }
   };
 
@@ -169,9 +174,10 @@ export default function CMSPagesPage() {
                 <div className="flex gap-2">
                   <button
                     type="submit"
-                    className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700"
+                    disabled={creatingPage}
+                    className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
-                    Create Page
+                    {creatingPage ? 'Creating...' : 'Create Page'}
                   </button>
                   <button
                     type="button"

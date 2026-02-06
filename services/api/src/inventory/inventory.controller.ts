@@ -33,7 +33,7 @@ export class InventoryController {
 
   @Post('warehouses')
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles('ADMIN', 'SELLER', 'B2C_SELLER')
+  @Roles('ADMIN', 'SELLER', 'B2C_SELLER', 'WHOLESALER')
   @ApiBearerAuth('JWT-auth')
   @ApiOperation({
     summary: 'Create warehouse',
@@ -51,7 +51,7 @@ export class InventoryController {
 
   @Get('warehouses')
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles('ADMIN', 'SELLER', 'B2C_SELLER', 'FULFILLMENT')
+  @Roles('ADMIN', 'SELLER', 'B2C_SELLER', 'WHOLESALER', 'FULFILLMENT')
   @ApiBearerAuth('JWT-auth')
   @ApiOperation({
     summary: 'Get all warehouses',
@@ -72,7 +72,7 @@ export class InventoryController {
 
   @Get('warehouses/:id')
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles('ADMIN', 'SELLER', 'B2C_SELLER', 'FULFILLMENT')
+  @Roles('ADMIN', 'SELLER', 'B2C_SELLER', 'WHOLESALER', 'FULFILLMENT')
   @ApiBearerAuth('JWT-auth')
   @ApiOperation({
     summary: 'Get warehouse by ID',
@@ -91,7 +91,7 @@ export class InventoryController {
 
   @Post('locations')
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles('ADMIN', 'SELLER', 'B2C_SELLER', 'FULFILLMENT')
+  @Roles('ADMIN', 'SELLER', 'B2C_SELLER', 'WHOLESALER', 'FULFILLMENT')
   @ApiBearerAuth('JWT-auth')
   @ApiOperation({
     summary: 'Create or update inventory location',
@@ -113,7 +113,7 @@ export class InventoryController {
 
   @Get('products/:productId')
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles('ADMIN', 'SELLER', 'B2C_SELLER', 'FULFILLMENT')
+  @Roles('ADMIN', 'SELLER', 'B2C_SELLER', 'WHOLESALER', 'FULFILLMENT')
   @ApiBearerAuth('JWT-auth')
   @ApiOperation({
     summary: 'Get product inventory',
@@ -186,7 +186,7 @@ export class InventoryController {
 
   @Get('alerts/low-stock')
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles('ADMIN', 'SELLER', 'B2C_SELLER', 'FULFILLMENT')
+  @Roles('ADMIN', 'SELLER', 'B2C_SELLER', 'WHOLESALER', 'FULFILLMENT')
   @ApiBearerAuth('JWT-auth')
   @ApiOperation({
     summary: 'Get low stock alerts',
@@ -257,7 +257,7 @@ export class InventoryController {
   // Stock Transfers
   @Post('transfers')
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles('ADMIN', 'FULFILLMENT', 'SELLER', 'B2C_SELLER')
+  @Roles('ADMIN', 'FULFILLMENT', 'SELLER', 'B2C_SELLER', 'WHOLESALER')
   @ApiBearerAuth('JWT-auth')
   @ApiOperation({
     summary: 'Create stock transfer',
@@ -278,7 +278,7 @@ export class InventoryController {
 
   @Get('transfers')
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles('ADMIN', 'FULFILLMENT', 'SELLER', 'B2C_SELLER')
+  @Roles('ADMIN', 'FULFILLMENT', 'SELLER', 'B2C_SELLER', 'WHOLESALER')
   @ApiBearerAuth('JWT-auth')
   @ApiOperation({
     summary: 'Get stock transfers',
@@ -338,7 +338,7 @@ export class InventoryController {
   // Stock Movements
   @Post('movements')
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles('ADMIN', 'FULFILLMENT', 'SELLER', 'B2C_SELLER')
+  @Roles('ADMIN', 'FULFILLMENT', 'SELLER', 'B2C_SELLER', 'WHOLESALER')
   @ApiBearerAuth('JWT-auth')
   @ApiOperation({
     summary: 'Record stock movement',
@@ -358,7 +358,7 @@ export class InventoryController {
 
   @Get('movements')
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles('ADMIN', 'FULFILLMENT', 'SELLER', 'B2C_SELLER')
+  @Roles('ADMIN', 'FULFILLMENT', 'SELLER', 'B2C_SELLER', 'WHOLESALER')
   @ApiBearerAuth('JWT-auth')
   @ApiOperation({
     summary: 'Get stock movement history',
@@ -408,7 +408,7 @@ export class InventoryController {
   // Warehouse Routing Endpoints
   @Post('routing/nearest-warehouse')
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles('ADMIN', 'FULFILLMENT', 'SELLER', 'B2C_SELLER')
+  @Roles('ADMIN', 'FULFILLMENT', 'SELLER', 'B2C_SELLER', 'WHOLESALER')
   @ApiBearerAuth('JWT-auth')
   @ApiOperation({
     summary: 'Find nearest warehouse with stock',
@@ -461,7 +461,7 @@ export class InventoryController {
 
   @Post('routing/optimal-source')
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles('ADMIN', 'FULFILLMENT', 'SELLER', 'B2C_SELLER')
+  @Roles('ADMIN', 'FULFILLMENT', 'SELLER', 'B2C_SELLER', 'WHOLESALER')
   @ApiBearerAuth('JWT-auth')
   @ApiOperation({
     summary: 'Find optimal fulfillment source',
@@ -534,7 +534,7 @@ export class InventoryController {
 
   @Post('geocode/:addressId')
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles('ADMIN', 'FULFILLMENT', 'SELLER', 'B2C_SELLER')
+  @Roles('ADMIN', 'FULFILLMENT', 'SELLER', 'B2C_SELLER', 'WHOLESALER')
   @ApiBearerAuth('JWT-auth')
   @ApiOperation({
     summary: 'Geocode an address',
@@ -570,7 +570,7 @@ export class InventoryController {
 
   @Get('locations')
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles('ADMIN', 'FULFILLMENT', 'SELLER', 'B2C_SELLER')
+  @Roles('ADMIN', 'FULFILLMENT', 'SELLER', 'B2C_SELLER', 'WHOLESALER')
   @ApiBearerAuth('JWT-auth')
   @ApiOperation({
     summary: 'Get inventory locations',

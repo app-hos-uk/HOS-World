@@ -1,8 +1,9 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { RouteGuard } from '@/components/RouteGuard';
 import { DashboardLayout } from '@/components/DashboardLayout';
+import { useAuth } from '@/contexts/AuthContext';
 import { apiClient } from '@/lib/api';
 import { useToast } from '@/hooks/useToast';
 import Image from 'next/image';
@@ -30,6 +31,7 @@ interface SellerTheme {
 
 export default function SellerThemesPage() {
   const toast = useToast();
+  const { user, effectiveRole } = useAuth();
   const [themes, setThemes] = useState<Theme[]>([]);
   const [currentTheme, setCurrentTheme] = useState<SellerTheme | null>(null);
   const [loading, setLoading] = useState(true);
@@ -43,14 +45,29 @@ export default function SellerThemesPage() {
     customFaviconUrl: '',
   });
 
-  const menuItems = [
-    { title: 'Dashboard', href: '/seller/dashboard', icon: '📊' },
-    { title: 'Submit Product', href: '/seller/submit-product', icon: '➕' },
-    { title: 'My Products', href: '/seller/products', icon: '📦' },
-    { title: 'Orders', href: '/seller/orders', icon: '🛒' },
-    { title: 'Submissions', href: '/seller/submissions', icon: '📝' },
-    { title: 'Theme Selection', href: '/seller/themes', icon: '🎨' },
-  ];
+  const currentRole = effectiveRole || user?.role;
+  const isWholesaler = currentRole === 'WHOLESALER';
+  const menuItems = useMemo(
+    () =>
+      isWholesaler
+        ? [
+            { title: 'Dashboard', href: '/wholesaler/dashboard', icon: '📊' },
+            { title: 'Submit Product', href: '/seller/submit-product', icon: '➕' },
+            { title: 'My Products', href: '/wholesaler/products', icon: '📦' },
+            { title: 'Bulk Orders', href: '/wholesaler/orders', icon: '🛒' },
+            { title: 'Submissions', href: '/wholesaler/submissions', icon: '📝' },
+            { title: 'Theme Selection', href: '/seller/themes', icon: '🎨' },
+          ]
+        : [
+            { title: 'Dashboard', href: '/seller/dashboard', icon: '📊' },
+            { title: 'Submit Product', href: '/seller/submit-product', icon: '➕' },
+            { title: 'My Products', href: '/seller/products', icon: '📦' },
+            { title: 'Orders', href: '/seller/orders', icon: '🛒' },
+            { title: 'Submissions', href: '/seller/submissions', icon: '📝' },
+            { title: 'Theme Selection', href: '/seller/themes', icon: '🎨' },
+          ],
+    [isWholesaler]
+  );
 
   useEffect(() => {
     fetchThemes();
@@ -143,7 +160,11 @@ export default function SellerThemesPage() {
 
   return (
     <RouteGuard allowedRoles={['SELLER', 'B2C_SELLER', 'WHOLESALER', 'ADMIN']} showAccessDenied={true}>
-      <DashboardLayout role="SELLER" menuItems={menuItems} title="Seller">
+      <DashboardLayout
+        role={isWholesaler ? 'WHOLESALER' : 'SELLER'}
+        menuItems={menuItems}
+        title={isWholesaler ? 'Wholesaler' : 'Seller'}
+      >
         <div className="mb-6">
           <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold">Theme Selection</h1>
           <p className="text-gray-600 mt-2">Choose and customize your store theme</p>

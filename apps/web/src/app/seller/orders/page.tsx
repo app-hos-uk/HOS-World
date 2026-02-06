@@ -202,7 +202,7 @@ export default function SellerOrdersPage() {
   };
 
   return (
-    <RouteGuard allowedRoles={['B2C_SELLER', 'SELLER', 'ADMIN']} showAccessDenied={true}>
+    <RouteGuard allowedRoles={['B2C_SELLER', 'SELLER', 'WHOLESALER', 'ADMIN']} showAccessDenied={true}>
       <DashboardLayout role="SELLER" menuItems={menuItems} title="Seller">
         <div className="space-y-6">
           {/* Header */}

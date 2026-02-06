@@ -4,9 +4,11 @@ import { useEffect, useState } from 'react';
 import { RouteGuard } from '@/components/RouteGuard';
 import { DashboardLayout } from '@/components/DashboardLayout';
 import { apiClient } from '@/lib/api';
+import { useCurrency } from '@/contexts/CurrencyContext';
 import Link from 'next/link';
 
 export default function WholesalerOrdersPage() {
+  const { formatPrice } = useCurrency();
   const [orders, setOrders] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -124,7 +126,7 @@ export default function WholesalerOrdersPage() {
                           {order.user?.firstName} {order.user?.lastName}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                          ${parseFloat(order.total || 0).toFixed(2)}
+                          {formatPrice(parseFloat(order.total || 0))}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                           {order.items?.reduce((sum: number, item: any) => sum + (item.quantity || 0), 0) || 0}

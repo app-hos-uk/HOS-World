@@ -13,6 +13,7 @@ export default function CMSBlogPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showCreateForm, setShowCreateForm] = useState(false);
+  const [creatingPost, setCreatingPost] = useState(false);
   const [formData, setFormData] = useState({
     title: '',
     slug: '',
@@ -47,7 +48,9 @@ export default function CMSBlogPage() {
 
   const handleCreatePost = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (creatingPost) return;
     try {
+      setCreatingPost(true);
       await apiClient.createCMSBlogPost(formData);
       toast.success('Blog post created successfully');
       setShowCreateForm(false);
@@ -62,6 +65,8 @@ export default function CMSBlogPage() {
       loadBlogPosts();
     } catch (err: any) {
       toast.error(err.message || 'Failed to create blog post');
+    } finally {
+      setCreatingPost(false);
     }
   };
 
@@ -170,9 +175,10 @@ export default function CMSBlogPage() {
                 <div className="flex gap-2">
                   <button
                     type="submit"
-                    className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700"
+                    disabled={creatingPost}
+                    className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
-                    Create Post
+                    {creatingPost ? 'Creating...' : 'Create Post'}
                   </button>
                   <button
                     type="button"

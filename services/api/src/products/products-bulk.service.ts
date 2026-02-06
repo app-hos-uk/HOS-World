@@ -85,7 +85,7 @@ export class ProductsBulkService {
           price: Number(productData.price) || 0,
           tradePrice: productData.tradePrice ? Number(productData.tradePrice) : undefined,
           rrp: productData.rrp ? Number(productData.rrp) : undefined,
-          currency: productData.currency || 'USD',
+          currency: productData.currency || 'GBP',
           taxRate: productData.taxRate ? Number(productData.taxRate) : 0,
           stock: Number(productData.stock) || 0,
           fandom: productData.fandom,

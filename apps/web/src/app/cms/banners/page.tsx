@@ -14,6 +14,7 @@ export default function CMSBannersPage() {
   const [error, setError] = useState<string | null>(null);
   const [filterType, setFilterType] = useState<'all' | 'hero' | 'promotional' | 'sidebar'>('all');
   const [showCreateForm, setShowCreateForm] = useState(false);
+  const [creatingBanner, setCreatingBanner] = useState(false);
   const [formData, setFormData] = useState({
     title: '',
     type: 'hero' as 'hero' | 'promotional' | 'sidebar',
@@ -49,7 +50,9 @@ export default function CMSBannersPage() {
 
   const handleCreateBanner = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (creatingBanner) return;
     try {
+      setCreatingBanner(true);
       await apiClient.createCMSBanner(formData);
       toast.success('Banner created successfully');
       setShowCreateForm(false);
@@ -64,6 +67,8 @@ export default function CMSBannersPage() {
       loadBanners();
     } catch (err: any) {
       toast.error(err.message || 'Failed to create banner');
+    } finally {
+      setCreatingBanner(false);
     }
   };
 
@@ -229,9 +234,10 @@ export default function CMSBannersPage() {
                 <div className="flex gap-2">
                   <button
                     type="submit"
-                    className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700"
+                    disabled={creatingBanner}
+                    className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
-                    Create Banner
+                    {creatingBanner ? 'Creating...' : 'Create Banner'}
                   </button>
                   <button
                     type="button"

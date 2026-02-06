@@ -551,6 +551,7 @@ export class AdminProductsService {
           images: {
             take: 1,
           },
+          variations: true,
           _count: {
             select: {
               orderItems: true,

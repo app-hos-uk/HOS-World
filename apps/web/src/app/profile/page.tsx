@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { RouteGuard } from '@/components/RouteGuard';
 import { Header } from '@/components/Header';
 import { Footer } from '@/components/Footer';
@@ -57,13 +58,18 @@ interface Collection {
 
 export default function ProfilePage() {
   const toast = useToast();
+  const searchParams = useSearchParams();
   const { currency, setCurrency } = useCurrency();
   const [profile, setProfile] = useState<any>(null);
   const [stats, setStats] = useState<GamificationStats | null>(null);
   const [badges, setBadges] = useState<Badge[]>([]);
   const [collections, setCollections] = useState<Collection[]>([]);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<'overview' | 'badges' | 'collections' | 'settings' | 'addresses'>('overview');
+  const tabParam = searchParams.get('tab');
+  const actionParam = searchParams.get('action');
+  const [activeTab, setActiveTab] = useState<'overview' | 'badges' | 'collections' | 'settings' | 'addresses'>(
+    tabParam === 'addresses' ? 'addresses' : tabParam === 'settings' ? 'settings' : tabParam === 'badges' ? 'badges' : tabParam === 'collections' ? 'collections' : 'overview'
+  );
   
   // Settings form state
   const [editing, setEditing] = useState(false);
@@ -89,6 +95,7 @@ export default function ProfilePage() {
   const [addresses, setAddresses] = useState<any[]>([]);
   const [showAddressForm, setShowAddressForm] = useState(false);
   const [editingAddress, setEditingAddress] = useState<any>(null);
+  const [savingAddress, setSavingAddress] = useState(false);
   const [addressForm, setAddressForm] = useState({
     label: 'HOME' as 'HOME' | 'WORK' | 'OTHER',
     firstName: '',
@@ -112,9 +119,13 @@ export default function ProfilePage() {
   useEffect(() => {
     if (activeTab === 'addresses') {
       fetchAddresses();
+      // Auto-open address form when coming from checkout with action=add
+      if (actionParam === 'add') {
+        setShowAddressForm(true);
+      }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [activeTab]);
+  }, [activeTab, actionParam]);
 
   const fetchProfileData = async () => {
     try {
@@ -272,7 +283,9 @@ export default function ProfilePage() {
 
   const handleSaveAddress = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (savingAddress) return; // Prevent double-click
     try {
+      setSavingAddress(true);
       if (editingAddress) {
         await apiClient.updateAddress(editingAddress.id, addressForm);
         toast.success('Address updated successfully!');
@@ -299,6 +312,8 @@ export default function ProfilePage() {
       fetchAddresses();
     } catch (err: any) {
       toast.error(err.message || 'Failed to save address');
+    } finally {
+      setSavingAddress(false);
     }
   };
 
@@ -838,9 +853,10 @@ export default function ProfilePage() {
                       <div className="flex gap-3">
                         <button
                           type="submit"
-                          className="px-6 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
+                          disabled={savingAddress}
+                          className="px-6 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                         >
-                          {editingAddress ? 'Update' : 'Add'} Address
+                          {savingAddress ? 'Saving...' : (editingAddress ? 'Update' : 'Add')} Address
                         </button>
                         <button
                           type="button"

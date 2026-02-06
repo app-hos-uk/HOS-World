@@ -26,7 +26,7 @@ import type { ApiResponse } from '@hos-marketplace/shared-types';
 @ApiTags('products')
 @Controller('products')
 @UseGuards(JwtAuthGuard, RolesGuard)
-@Roles('ADMIN', 'SELLER', 'B2C_SELLER')
+@Roles('ADMIN', 'SELLER', 'B2C_SELLER', 'WHOLESALER')
 @ApiBearerAuth('JWT-auth')
 export class VolumePricingController {
   constructor(private readonly volumePricingService: VolumePricingService) {}

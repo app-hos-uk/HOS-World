@@ -95,7 +95,7 @@ export class ReturnsController {
   }
 
   @UseGuards(RolesGuard)
-  @Roles('SELLER', 'ADMIN')
+  @Roles('SELLER', 'B2C_SELLER', 'WHOLESALER', 'ADMIN')
   @Put(':id/status')
   @ApiOperation({
     summary: 'Update return request status (Seller/Admin only)',

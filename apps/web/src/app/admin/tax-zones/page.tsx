@@ -624,10 +624,10 @@ export default function AdminTaxZonesPage() {
                           <input
                             type="number"
                             required
-                            step="0.01"
+                            step="any"
                             min="0"
                             max="100"
-                            value={rateFormData.rate * 100}
+                            value={Math.round(rateFormData.rate * 10000) / 100}
                             onChange={(e) => {
                               const percentage = parseFloat(e.target.value) || 0;
                               setRateFormData({ ...rateFormData, rate: percentage / 100 });

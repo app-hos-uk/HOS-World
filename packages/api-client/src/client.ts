@@ -1318,6 +1318,18 @@ export class ApiClient {
     });
   }
 
+  async getSellerBySlug(slug: string): Promise<ApiResponse<any>> {
+    return this.request<ApiResponse<any>>(`/sellers/slug/${slug}`, {
+      method: 'GET',
+    });
+  }
+
+  async getPublicSellers(): Promise<ApiResponse<any[]>> {
+    return this.request<ApiResponse<any[]>>('/sellers/directory', {
+      method: 'GET',
+    });
+  }
+
   async getSellerProducts(): Promise<ApiResponse<any[]>> {
     // Use dedicated endpoint that returns all seller products (any status: DRAFT, ACTIVE, etc.)
     const response = await this.request<ApiResponse<any[]>>('/sellers/me/products', {

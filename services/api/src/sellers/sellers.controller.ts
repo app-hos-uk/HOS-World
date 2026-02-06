@@ -30,6 +30,21 @@ export class SellersController {
   constructor(private readonly sellersService: SellersService) {}
 
   @Public()
+  @Get('directory')
+  @ApiOperation({
+    summary: 'List all sellers (public)',
+    description: 'Returns a public listing of all active sellers. No authentication required.',
+  })
+  @SwaggerApiResponse({ status: 200, description: 'Sellers listed successfully' })
+  async listPublicSellers(): Promise<ApiResponse<any[]>> {
+    const sellers = await this.sellersService.findAllPublic();
+    return {
+      data: sellers,
+      message: 'Sellers listed successfully',
+    };
+  }
+
+  @Public()
   @Get('slug/:slug')
   @ApiOperation({
     summary: 'Get seller by slug',

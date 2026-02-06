@@ -24,7 +24,7 @@ export class ShippingController {
 
   @Post('methods')
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles('ADMIN', 'SELLER', 'B2C_SELLER')
+  @Roles('ADMIN', 'SELLER', 'B2C_SELLER', 'WHOLESALER')
   @ApiBearerAuth('JWT-auth')
   @ApiOperation({
     summary: 'Create shipping method',
@@ -78,7 +78,7 @@ export class ShippingController {
 
   @Put('methods/:id')
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles('ADMIN', 'SELLER', 'B2C_SELLER')
+  @Roles('ADMIN', 'SELLER', 'B2C_SELLER', 'WHOLESALER')
   @ApiBearerAuth('JWT-auth')
   @ApiOperation({
     summary: 'Update shipping method',
@@ -100,7 +100,7 @@ export class ShippingController {
 
   @Post('rules')
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles('ADMIN', 'SELLER', 'B2C_SELLER')
+  @Roles('ADMIN', 'SELLER', 'B2C_SELLER', 'WHOLESALER')
   @ApiBearerAuth('JWT-auth')
   @ApiOperation({
     summary: 'Create shipping rule',
@@ -119,7 +119,7 @@ export class ShippingController {
 
   @Put('rules/:id')
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles('ADMIN', 'SELLER', 'B2C_SELLER')
+  @Roles('ADMIN', 'SELLER', 'B2C_SELLER', 'WHOLESALER')
   @ApiBearerAuth('JWT-auth')
   @ApiOperation({
     summary: 'Update shipping rule',

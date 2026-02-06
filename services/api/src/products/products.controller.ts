@@ -94,7 +94,7 @@ export class ProductsController {
   }
 
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles('SELLER')
+  @Roles('SELLER', 'B2C_SELLER', 'WHOLESALER')
   @Post()
   @ApiBearerAuth('JWT-auth')
   @ApiOperation({
@@ -116,7 +116,7 @@ export class ProductsController {
   }
 
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles('SELLER')
+  @Roles('SELLER', 'B2C_SELLER', 'WHOLESALER')
   @Put(':id')
   @ApiBearerAuth('JWT-auth')
   @ApiOperation({
@@ -142,7 +142,7 @@ export class ProductsController {
   }
 
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles('SELLER')
+  @Roles('SELLER', 'B2C_SELLER', 'WHOLESALER')
   @Delete(':id')
   @ApiBearerAuth('JWT-auth')
   @ApiOperation({ summary: 'Delete product', description: 'Delete a product (Seller only)' })
@@ -163,7 +163,7 @@ export class ProductsController {
   }
 
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles('SELLER')
+  @Roles('SELLER', 'B2C_SELLER', 'WHOLESALER')
   @Get('export/csv')
   @ApiBearerAuth('JWT-auth')
   @ApiOperation({
@@ -182,7 +182,7 @@ export class ProductsController {
   }
 
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles('SELLER')
+  @Roles('SELLER', 'B2C_SELLER', 'WHOLESALER')
   @Post('import')
   @ApiBearerAuth('JWT-auth')
   @ApiOperation({

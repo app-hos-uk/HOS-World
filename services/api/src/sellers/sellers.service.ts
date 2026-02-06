@@ -76,8 +76,41 @@ export class SellersService {
     };
   }
 
+  async findAllPublic() {
+    const sellers = await this.prisma.seller.findMany({
+      select: {
+        id: true,
+        userId: true,
+        storeName: true,
+        slug: true,
+        description: true,
+        logo: true,
+        country: true,
+        city: true,
+        region: true,
+        rating: true,
+        totalSales: true,
+        sellerType: true,
+        verified: true,
+        createdAt: true,
+        user: {
+          select: {
+            avatar: true,
+          },
+        },
+        _count: {
+          select: { products: true },
+        },
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+
+    return sellers;
+  }
+
   async findBySlug(slug: string) {
-    const seller = await this.prisma.seller.findUnique({
+    // First try exact slug match
+    let seller = await this.prisma.seller.findUnique({
       where: { slug },
       include: {
         user: {
@@ -90,14 +123,45 @@ export class SellersService {
             avatar: true,
           },
         },
+        _count: {
+          select: { products: true },
+        },
       },
     });
+
+    // Fallback: try matching by subDomain field (subdomain may differ from slug
+    // due to DNS-safe character stripping, e.g. slug "my_store" → subDomain "my-store")
+    if (!seller) {
+      seller = await this.prisma.seller.findFirst({
+        where: { subDomain: slug },
+        include: {
+          user: {
+            select: {
+              id: true,
+              email: true,
+              firstName: true,
+              lastName: true,
+              role: true,
+              avatar: true,
+            },
+          },
+          _count: {
+            select: { products: true },
+          },
+        },
+      });
+    }
 
     if (!seller) {
       throw new NotFoundException('Seller not found');
     }
 
-    return seller;
+    // Return public-safe seller data (strip sensitive bank fields)
+    return {
+      ...seller,
+      accountNumberEnc: undefined,
+      sortCodeEnc: undefined,
+    };
   }
 
   async update(userId: string, updateSellerDto: UpdateSellerDto) {

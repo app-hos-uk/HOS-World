@@ -38,7 +38,7 @@ export class CourierController {
   }
 
   @Post('rate/:provider')
-  @Roles('ADMIN', 'SELLER', 'B2C_SELLER', 'CUSTOMER')
+  @Roles('ADMIN', 'SELLER', 'B2C_SELLER', 'WHOLESALER', 'CUSTOMER')
   @ApiOperation({
     summary: 'Calculate shipping rate',
     description: 'Calculates shipping rate using a specific courier provider.',
@@ -91,7 +91,7 @@ export class CourierController {
   }
 
   @Post('label/:provider')
-  @Roles('ADMIN', 'SELLER', 'B2C_SELLER')
+  @Roles('ADMIN', 'SELLER', 'B2C_SELLER', 'WHOLESALER')
   @ApiOperation({
     summary: 'Create shipping label',
     description: 'Creates a shipping label using a specific courier provider.',
@@ -149,7 +149,7 @@ export class CourierController {
   }
 
   @Post('validate-address/:provider')
-  @Roles('ADMIN', 'SELLER', 'B2C_SELLER', 'CUSTOMER')
+  @Roles('ADMIN', 'SELLER', 'B2C_SELLER', 'WHOLESALER', 'CUSTOMER')
   @ApiOperation({
     summary: 'Validate address',
     description: "Validates an address using the courier provider's address validation service.",

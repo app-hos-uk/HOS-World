@@ -5,11 +5,13 @@ import { useSearchParams } from 'next/navigation';
 import { Header } from '@/components/Header';
 import { Footer } from '@/components/Footer';
 import { apiClient } from '@/lib/api';
+import { useCurrency } from '@/contexts/CurrencyContext';
 import Link from 'next/link';
 import Image from 'next/image';
 
 function ProductsContent() {
   const searchParams = useSearchParams();
+  const { formatPrice } = useCurrency();
   const [products, setProducts] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
@@ -134,7 +136,7 @@ function ProductsContent() {
                       <p className="text-sm text-gray-600 mt-1 line-clamp-2">{product.description}</p>
                       <div className="mt-2 flex items-center justify-between">
                         <span className="text-lg font-bold text-purple-900">
-                          £{Number(product.price).toFixed(2)}
+                          {formatPrice(Number(product.price))}
                         </span>
                         {product.fandom && (
                           <span className="text-xs text-gray-500">{product.fandom}</span>

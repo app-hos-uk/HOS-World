@@ -28,7 +28,7 @@ import type { ApiResponse } from '@hos-marketplace/shared-types';
 @ApiTags('webhooks')
 @Controller('webhooks')
 @UseGuards(JwtAuthGuard, RolesGuard)
-@Roles('ADMIN', 'SELLER', 'B2C_SELLER')
+@Roles('ADMIN', 'SELLER', 'B2C_SELLER', 'WHOLESALER')
 @ApiBearerAuth('JWT-auth')
 export class WebhooksController {
   constructor(private readonly webhooksService: WebhooksService) {}

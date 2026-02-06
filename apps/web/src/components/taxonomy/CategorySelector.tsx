@@ -191,7 +191,7 @@ export function CategorySelector({
       <div className="border border-gray-300 rounded-lg p-3 min-h-[120px] max-h-64 overflow-y-auto bg-white">
         {categories.length === 0 ? (
           <div className="text-sm text-gray-500 text-center py-4">
-            No categories available. Create categories in Admin → Fandoms.
+            No fandoms available. Create fandoms in Admin → Fandoms.
           </div>
         ) : (
           <div className="space-y-1">{renderCategoryTree(categories)}</div>

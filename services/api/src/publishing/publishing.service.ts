@@ -62,7 +62,7 @@ export class PublishingService {
       price: finalPrice,
       tradePrice: productData.tradePrice,
       rrp: productData.rrp,
-      currency: productData.currency || 'USD',
+      currency: productData.currency || 'GBP',
       taxRate: productData.taxRate || 0,
       stock: submission.selectedQuantity || productData.stock || 0,
       fandom: productData.fandom,

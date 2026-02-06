@@ -32,7 +32,7 @@ interface CartContextType {
   cartItemCount: number;
   loading: boolean;
   refreshCart: () => Promise<void>;
-  addToCart: (productId: string, quantity?: number) => Promise<void>;
+  addToCart: (productId: string, quantity?: number, variationOptions?: Record<string, string>) => Promise<void>;
   removeFromCart: (itemId: string) => Promise<void>;
   updateCartItem: (itemId: string, quantity: number) => Promise<void>;
 }
@@ -75,9 +75,9 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     await fetchCart();
   }, [fetchCart]);
 
-  const addToCart = useCallback(async (productId: string, quantity: number = 1) => {
+  const addToCart = useCallback(async (productId: string, quantity: number = 1, variationOptions?: Record<string, string>) => {
     try {
-      await apiClient.addToCart(productId, quantity);
+      await apiClient.addToCart(productId, quantity, variationOptions);
       // Refresh cart after adding
       await fetchCart();
     } catch (error) {

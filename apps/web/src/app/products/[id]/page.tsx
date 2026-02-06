@@ -35,7 +35,10 @@ export default function ProductDetailPage() {
   const [addingToCart, setAddingToCart] = useState(false);
   const [showAIChat, setShowAIChat] = useState(false);
   const [showReviewForm, setShowReviewForm] = useState(false);
+  const [submittingReview, setSubmittingReview] = useState(false);
   const [reviewForm, setReviewForm] = useState({ rating: 5, comment: '', title: '' });
+  /** Selected variation per dimension (e.g. { Size: 'M', Color: 'Red' }) for add-to-cart */
+  const [selectedVariations, setSelectedVariations] = useState<Record<string, string>>({});
 
   // Resolve product by UUID or slug, then load reviews/wishlist using product.id
   useEffect(() => {
@@ -134,9 +137,22 @@ export default function ProductDetailPage() {
       return;
     }
 
+    const hasVariations = product.variations && product.variations.length > 0;
+    if (hasVariations) {
+      const missing = (product.variations as any[]).find((v: any) => !selectedVariations[v.name]);
+      if (missing) {
+        toast.error(`Please select ${missing.name}`);
+        return;
+      }
+    }
+
     try {
       setAddingToCart(true);
-      await addToCartContext(product.id, quantity);
+      await addToCartContext(
+        product.id,
+        quantity,
+        hasVariations && Object.keys(selectedVariations).length > 0 ? selectedVariations : undefined
+      );
       toast.success('Product added to cart!');
     } catch (err: any) {
       toast.error(err.message || 'Failed to add to cart');
@@ -151,8 +167,10 @@ export default function ProductDetailPage() {
       if (!isAuthenticated) toast.error('Please login to submit a review');
       return;
     }
+    if (submittingReview) return;
 
     try {
+      setSubmittingReview(true);
       await apiClient.createReview(product.id, {
         rating: reviewForm.rating,
         comment: reviewForm.comment,
@@ -175,6 +193,8 @@ export default function ProductDetailPage() {
       }
     } catch (err: any) {
       toast.error(err.message || 'Failed to submit review');
+    } finally {
+      setSubmittingReview(false);
     }
   };
 
@@ -271,8 +291,8 @@ export default function ProductDetailPage() {
               <span className="text-gray-600">({product.reviewCount || reviews.length} reviews)</span>
             </div>
 
-            {product.description && (
-              <p className="text-gray-600 mb-4">{product.description}</p>
+            {product.shortDescription && (
+              <p className="text-gray-600 mb-4">{product.shortDescription}</p>
             )}
 
             <div className="mb-6">
@@ -285,6 +305,39 @@ export default function ProductDetailPage() {
                 </p>
               )}
             </div>
+
+            {/* Variation selectors (e.g. Size, Color) */}
+            {product.variations && product.variations.length > 0 && (
+              <div className="mb-6 space-y-4">
+                {product.variations.map((variation: any, varIdx: number) => (
+                  <div key={varIdx}>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">{variation.name} *</label>
+                    <div className="flex flex-wrap gap-2">
+                      {(variation.options || []).map((opt: any, optIdx: number) => {
+                        const value = typeof opt === 'object' && opt?.value != null ? opt.value : String(opt);
+                        const optionPrice = typeof opt === 'object' && opt?.price != null ? opt.price : null;
+                        const isSelected = selectedVariations[variation.name] === value;
+                        return (
+                          <button
+                            key={optIdx}
+                            type="button"
+                            onClick={() => setSelectedVariations((prev) => ({ ...prev, [variation.name]: value }))}
+                            className={`px-4 py-2 border rounded-lg text-sm font-medium transition-colors ${
+                              isSelected
+                                ? 'border-purple-600 bg-purple-50 text-purple-800 ring-2 ring-purple-600'
+                                : 'border-gray-300 hover:bg-gray-50'
+                            }`}
+                          >
+                            {value}
+                            {optionPrice != null && <span className="ml-1 text-purple-600">({formatPrice(optionPrice, product.currency || 'GBP')})</span>}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
 
             {/* Quantity Selector */}
             <div className="mb-6">
@@ -310,7 +363,13 @@ export default function ProductDetailPage() {
             <div className="flex gap-3 mb-6">
               <button
                 onClick={handleAddToCart}
-                disabled={addingToCart || (product.stock !== undefined && product.stock === 0)}
+                disabled={
+                  addingToCart ||
+                  (product.stock !== undefined && product.stock === 0) ||
+                  (product.variations?.length
+                    ? !(product.variations as any[]).every((v: any) => selectedVariations[v.name])
+                    : false)
+                }
                 className="flex-1 px-6 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {addingToCart ? 'Adding...' : 'Add to Cart'}
@@ -421,9 +480,10 @@ export default function ProductDetailPage() {
                 <div className="flex gap-3">
                   <button
                     type="submit"
-                    className="px-6 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
+                    disabled={submittingReview}
+                    className="px-6 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                   >
-                    Submit Review
+                    {submittingReview ? 'Submitting...' : 'Submit Review'}
                   </button>
                   <button
                     type="button"
@@ -472,6 +532,16 @@ export default function ProductDetailPage() {
             </div>
           )}
         </div>
+
+        {/* Full Product Description (long description, below reviews) */}
+        {product.description && (
+          <div className="mt-12 border-t pt-8">
+            <h2 className="text-2xl font-bold mb-4">Product Details</h2>
+            <div className="prose prose-gray max-w-none text-gray-700 whitespace-pre-wrap">
+              {product.description}
+            </div>
+          </div>
+        )}
 
         {/* Additional Product Information */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-8">

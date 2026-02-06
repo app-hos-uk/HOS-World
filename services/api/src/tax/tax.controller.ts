@@ -43,7 +43,7 @@ export class TaxController {
 
   @Get('zones')
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles('ADMIN', 'SELLER', 'B2C_SELLER')
+  @Roles('ADMIN', 'SELLER', 'B2C_SELLER', 'WHOLESALER')
   @ApiBearerAuth('JWT-auth')
   @ApiOperation({
     summary: 'Get all tax zones',
@@ -63,7 +63,7 @@ export class TaxController {
 
   @Get('zones/:id')
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles('ADMIN', 'SELLER', 'B2C_SELLER')
+  @Roles('ADMIN', 'SELLER', 'B2C_SELLER', 'WHOLESALER')
   @ApiBearerAuth('JWT-auth')
   @ApiOperation({
     summary: 'Get tax zone by ID',
@@ -139,7 +139,7 @@ export class TaxController {
 
   @Get('classes')
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles('ADMIN', 'SELLER', 'B2C_SELLER')
+  @Roles('ADMIN', 'SELLER', 'B2C_SELLER', 'WHOLESALER')
   @ApiBearerAuth('JWT-auth')
   @ApiOperation({
     summary: 'Get all tax classes',
@@ -156,7 +156,7 @@ export class TaxController {
 
   @Get('classes/:id')
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles('ADMIN', 'SELLER', 'B2C_SELLER')
+  @Roles('ADMIN', 'SELLER', 'B2C_SELLER', 'WHOLESALER')
   @ApiBearerAuth('JWT-auth')
   @ApiOperation({
     summary: 'Get tax class by ID',
@@ -215,7 +215,7 @@ export class TaxController {
 
   @Get('rates')
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles('ADMIN', 'SELLER', 'B2C_SELLER')
+  @Roles('ADMIN', 'SELLER', 'B2C_SELLER', 'WHOLESALER')
   @ApiBearerAuth('JWT-auth')
   @ApiOperation({
     summary: 'Get tax rates',
@@ -247,7 +247,7 @@ export class TaxController {
 
   @Get('rates/:id')
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles('ADMIN', 'SELLER', 'B2C_SELLER')
+  @Roles('ADMIN', 'SELLER', 'B2C_SELLER', 'WHOLESALER')
   @ApiBearerAuth('JWT-auth')
   @ApiOperation({
     summary: 'Get tax rate by ID',

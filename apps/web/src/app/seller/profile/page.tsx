@@ -1,8 +1,9 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { RouteGuard } from '@/components/RouteGuard';
 import { DashboardLayout } from '@/components/DashboardLayout';
+import { useAuth } from '@/contexts/AuthContext';
 import { apiClient } from '@/lib/api';
 import { useToast } from '@/hooks/useToast';
 import Image from 'next/image';
@@ -44,6 +45,7 @@ interface SellerProfile {
 
 export default function SellerProfilePage() {
   const toast = useToast();
+  const { user, effectiveRole } = useAuth();
   const [profile, setProfile] = useState<SellerProfile | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -84,14 +86,29 @@ export default function SellerProfilePage() {
     country: '',
   });
 
-  const menuItems = [
-    { title: 'Dashboard', href: '/seller/dashboard', icon: '📊' },
-    { title: 'Profile', href: '/seller/profile', icon: '👤' },
-    { title: 'Submit Product', href: '/seller/submit-product', icon: '➕' },
-    { title: 'My Products', href: '/seller/products', icon: '📦' },
-    { title: 'Orders', href: '/seller/orders', icon: '🛒' },
-    { title: 'Submissions', href: '/seller/submissions', icon: '📝' },
-  ];
+  const currentRole = effectiveRole || user?.role;
+  const isWholesaler = currentRole === 'WHOLESALER';
+  const menuItems = useMemo(
+    () =>
+      isWholesaler
+        ? [
+            { title: 'Dashboard', href: '/wholesaler/dashboard', icon: '📊' },
+            { title: 'Profile', href: '/seller/profile', icon: '👤' },
+            { title: 'Submit Product', href: '/seller/submit-product', icon: '➕' },
+            { title: 'My Products', href: '/wholesaler/products', icon: '📦' },
+            { title: 'Bulk Orders', href: '/wholesaler/orders', icon: '🛒' },
+            { title: 'Submissions', href: '/wholesaler/submissions', icon: '📝' },
+          ]
+        : [
+            { title: 'Dashboard', href: '/seller/dashboard', icon: '📊' },
+            { title: 'Profile', href: '/seller/profile', icon: '👤' },
+            { title: 'Submit Product', href: '/seller/submit-product', icon: '➕' },
+            { title: 'My Products', href: '/seller/products', icon: '📦' },
+            { title: 'Orders', href: '/seller/orders', icon: '🛒' },
+            { title: 'Submissions', href: '/seller/submissions', icon: '📝' },
+          ],
+    [isWholesaler]
+  );
 
   useEffect(() => {
     fetchProfile();
@@ -204,7 +221,11 @@ export default function SellerProfilePage() {
   if (loading) {
     return (
       <RouteGuard allowedRoles={['B2C_SELLER', 'SELLER', 'WHOLESALER', 'ADMIN']} showAccessDenied={true}>
-        <DashboardLayout role="SELLER" menuItems={menuItems} title="Seller">
+        <DashboardLayout
+          role={isWholesaler ? 'WHOLESALER' : 'SELLER'}
+          menuItems={menuItems}
+          title={isWholesaler ? 'Wholesaler' : 'Seller'}
+        >
           <div className="flex items-center justify-center py-12">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600"></div>
           </div>
@@ -215,7 +236,11 @@ export default function SellerProfilePage() {
 
   return (
     <RouteGuard allowedRoles={['B2C_SELLER', 'SELLER', 'WHOLESALER', 'ADMIN']} showAccessDenied={true}>
-      <DashboardLayout role="SELLER" menuItems={menuItems} title="Seller">
+      <DashboardLayout
+        role={isWholesaler ? 'WHOLESALER' : 'SELLER'}
+        menuItems={menuItems}
+        title={isWholesaler ? 'Wholesaler' : 'Seller'}
+      >
         <div className="space-y-6">
           {/* Header */}
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">

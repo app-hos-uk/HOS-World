@@ -17,7 +17,7 @@ import type { ApiResponse } from '@hos-marketplace/shared-types';
 @ApiTags('return-policies')
 @Controller('return-policies')
 @UseGuards(JwtAuthGuard, RolesGuard)
-@Roles('ADMIN', 'SELLER', 'B2C_SELLER')
+@Roles('ADMIN', 'SELLER', 'B2C_SELLER', 'WHOLESALER')
 @ApiBearerAuth('JWT-auth')
 export class ReturnPoliciesController {
   constructor(private readonly returnPoliciesService: ReturnPoliciesService) {}

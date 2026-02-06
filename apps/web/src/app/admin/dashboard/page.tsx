@@ -30,6 +30,7 @@ interface DashboardStats {
   totalSubmissions: number;
   totalSellers: number;
   totalCustomers: number;
+  totalUsers?: number;
   totalRevenue?: number;
   todayRevenue?: number;
   weeklyRevenue?: number;
@@ -197,8 +198,8 @@ export default function AdminDashboardPage() {
                 iconBgColor="bg-amber-50"
               />
               <StatCard
-                label="Total Customers"
-                value={stats.totalCustomers}
+                label="Total Users"
+                value={stats.totalUsers || (stats.totalCustomers + stats.totalSellers)}
                 icon={<span className="text-lg">👥</span>}
                 iconBgColor="bg-indigo-50"
               />

@@ -73,6 +73,7 @@ export default function AdminMarketingPage() {
   const [materials, setMaterials] = useState<MarketingMaterial[]>([]);
   const [loading, setLoading] = useState(true);
   const [typeFilter, setTypeFilter] = useState<string>('ALL');
+  const [materialActionLoading, setMaterialActionLoading] = useState(false);
   
   // Refs to track current values for use in async handlers
   // This prevents stale closures when user switches tabs during async operations
@@ -153,8 +154,10 @@ export default function AdminMarketingPage() {
       toast.error('Please fill in all required fields');
       return;
     }
+    if (materialActionLoading) return;
 
     try {
+      setMaterialActionLoading(true);
       await apiClient.createMarketingMaterial(materialForm);
       toast.success('Marketing material added successfully');
       setShowAddModal(false);
@@ -165,13 +168,16 @@ export default function AdminMarketingPage() {
       fetchStats();
     } catch (err: any) {
       toast.error(err.message || 'Failed to add material');
+    } finally {
+      setMaterialActionLoading(false);
     }
   };
 
   const handleUpdateMaterial = async () => {
-    if (!selectedMaterial) return;
+    if (!selectedMaterial || materialActionLoading) return;
 
     try {
+      setMaterialActionLoading(true);
       await apiClient.updateMarketingMaterial(selectedMaterial.id, {
         type: materialForm.type,
         url: materialForm.url,
@@ -184,6 +190,8 @@ export default function AdminMarketingPage() {
       fetchStats();
     } catch (err: any) {
       toast.error(err.message || 'Failed to update material');
+    } finally {
+      setMaterialActionLoading(false);
     }
   };
 
@@ -557,10 +565,10 @@ export default function AdminMarketingPage() {
                     </button>
                     <button
                       onClick={handleAddMaterial}
-                      disabled={!materialForm.url}
-                      className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 disabled:opacity-50"
+                      disabled={materialActionLoading || !materialForm.url}
+                      className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed"
                     >
-                      Add Material
+                      {materialActionLoading ? 'Adding...' : 'Add Material'}
                     </button>
                   </div>
                 </div>
@@ -613,10 +621,10 @@ export default function AdminMarketingPage() {
                     </button>
                     <button
                       onClick={handleUpdateMaterial}
-                      disabled={!materialForm.url}
-                      className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 disabled:opacity-50"
+                      disabled={materialActionLoading || !materialForm.url}
+                      className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed"
                     >
-                      Save Changes
+                      {materialActionLoading ? 'Saving...' : 'Save Changes'}
                     </button>
                   </div>
                 </div>

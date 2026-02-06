@@ -92,7 +92,7 @@ export default function SellerProductsPage() {
         name: data.name || 'Untitled',
         status: 'PENDING', // so they show under Pending filter and as "Pending review"
         price: Number(data.price) || 0,
-        stock: Number(data.stock) ?? 0,
+        stock: Number(data.stock) || 0,
         images: data.images?.map((i: any) => i?.url).filter(Boolean) || [],
         createdAt: s.createdAt || new Date().toISOString(),
         category: data.category,
@@ -188,7 +188,7 @@ export default function SellerProductsPage() {
   };
 
   return (
-    <RouteGuard allowedRoles={['B2C_SELLER', 'SELLER', 'ADMIN']} showAccessDenied={true}>
+    <RouteGuard allowedRoles={['B2C_SELLER', 'SELLER', 'WHOLESALER', 'ADMIN']} showAccessDenied={true}>
       <DashboardLayout role="SELLER" menuItems={menuItems} title="Seller">
         <div className="space-y-6">
           {/* Header */}

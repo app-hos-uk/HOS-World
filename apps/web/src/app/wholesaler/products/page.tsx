@@ -4,10 +4,12 @@ import { useEffect, useState } from 'react';
 import { RouteGuard } from '@/components/RouteGuard';
 import { DashboardLayout } from '@/components/DashboardLayout';
 import { apiClient } from '@/lib/api';
+import { useCurrency } from '@/contexts/CurrencyContext';
 import Link from 'next/link';
 import Image from 'next/image';
 
 export default function WholesalerProductsPage() {
+  const { formatPrice } = useCurrency();
   const [products, setProducts] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -144,7 +146,7 @@ export default function WholesalerProductsPage() {
                           </span>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                          ${parseFloat(product.price || 0).toFixed(2)}
+                          {formatPrice(parseFloat(product.price || 0))}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                           {product.quantity || product.stock || 0}

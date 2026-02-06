@@ -4,22 +4,24 @@ import { useEffect, useState } from 'react';
 import { RouteGuard } from '@/components/RouteGuard';
 import { DashboardLayout } from '@/components/DashboardLayout';
 import { apiClient } from '@/lib/api';
+import { useCurrency } from '@/contexts/CurrencyContext';
 import Link from 'next/link';
 
+interface SellerDashboardData {
+  totalSales: number;
+  totalOrders: number;
+  totalProducts: number;
+  averageOrderValue: number;
+  submissions?: any[];
+  submissionsByStatus?: Array<{ status: string; _count: number }>;
+  recentOrders?: any[];
+}
+
 export default function SellerDashboardPage() {
+  const { formatPrice } = useCurrency();
   const [dashboardData, setDashboardData] = useState<SellerDashboardData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-
-  interface SellerDashboardData {
-    totalSales: number;
-    totalOrders: number;
-    totalProducts: number;
-    averageOrderValue: number;
-    submissions?: any[];
-    submissionsByStatus?: Array<{ status: string; _count: number }>;
-    recentOrders?: any[];
-  }
 
   const menuItems = [
     { title: 'Dashboard', href: '/seller/dashboard', icon: '📊' },
@@ -76,7 +78,7 @@ export default function SellerDashboardPage() {
   )?._count || 0;
 
   return (
-    <RouteGuard allowedRoles={['B2C_SELLER', 'SELLER', 'ADMIN']} showAccessDenied={true}>
+    <RouteGuard allowedRoles={['B2C_SELLER', 'SELLER', 'WHOLESALER', 'ADMIN']} showAccessDenied={true}>
       <DashboardLayout role="SELLER" menuItems={menuItems} title="Seller">
         <div className="mb-6">
           <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold">Seller Dashboard</h1>
@@ -254,7 +256,7 @@ export default function SellerDashboardPage() {
                               Order #{order.orderNumber || order.id.slice(0, 8)}
                             </p>
                             <p className="text-sm text-gray-500 mt-1">
-                              ${parseFloat(order.total || 0).toFixed(2)}
+                              {formatPrice(parseFloat(order.total || 0))}
                             </p>
                             <p className="text-xs text-gray-400 mt-1">
                               {new Date(order.createdAt).toLocaleString()}

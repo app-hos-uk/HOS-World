@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { Header } from '@/components/Header';
 import { Footer } from '@/components/Footer';
 import { apiClient } from '@/lib/api';
+import Image from 'next/image';
 import Link from 'next/link';
 
 export default function SellersPage() {
@@ -18,39 +19,33 @@ export default function SellersPage() {
   const fetchSellers = async () => {
     try {
       setLoading(true);
-      // Get users with seller roles - using admin endpoint if available, or search by products
-      const response = await apiClient.getUsers();
-      const raw = response?.data as { data?: unknown[] } | unknown[] | undefined;
-      const userData = Array.isArray(raw) ? raw : (raw as { data?: unknown[] })?.data ?? [];
-      const users = Array.isArray(userData) ? userData : [];
-      if (users.length > 0) {
-        const sellerRoles = ['SELLER', 'B2C_SELLER', 'WHOLESALER'];
-        const sellerUsers = users.filter((user: any) => 
-          sellerRoles.includes(user.role)
-        );
-        // For each seller, try to get their profile
-        const sellersWithProfiles = await Promise.all(
-          sellerUsers.map(async (user: any) => {
-            try {
-              // Try to get seller profile by slug or userId
-              const products = await apiClient.getProducts({ sellerId: user.id, limit: 1 });
-              const productData = products?.data as any;
-              return {
-                ...user,
-                hasProducts: (productData?.items || productData?.data || []).length > 0,
-              };
-            } catch {
-              return { ...user, hasProducts: false };
-            }
-          })
-        );
-        setSellers(sellersWithProfiles);
+      // Use the public sellers directory endpoint (no auth required)
+      const response = await apiClient.getPublicSellers();
+      const raw = response?.data;
+      const sellerData = Array.isArray(raw) ? raw : [];
+
+      if (sellerData.length > 0) {
+        // Map seller profiles to display data
+        const mapped = sellerData.map((seller: any) => ({
+          id: seller.id,
+          slug: seller.slug,
+          storeName: seller.storeName || 'Unnamed Store',
+          description: seller.description || '',
+          logo: seller.logo || seller.user?.avatar || '',
+          country: seller.country || '',
+          city: seller.city || '',
+          verified: seller.verified,
+          rating: seller.rating,
+          totalProducts: seller._count?.products || 0,
+          sellerType: seller.sellerType || '',
+          createdAt: seller.createdAt || '',
+        }));
+        setSellers(mapped);
       } else {
-        setSellers([]); // Clear sellers when no users found to prevent stale data
+        setSellers([]);
       }
     } catch (err: any) {
       console.error('Error fetching sellers:', err);
-      // Fallback: show empty state
       setSellers([]);
     } finally {
       setLoading(false);
@@ -67,7 +62,9 @@ export default function SellersPage() {
         </p>
 
         {loading ? (
-          <div className="text-center text-gray-500 py-12">Loading sellers...</div>
+          <div className="flex items-center justify-center py-12">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600"></div>
+          </div>
         ) : sellers.length === 0 ? (
           <div className="text-center text-gray-500 py-12">No sellers found</div>
         ) : (
@@ -75,21 +72,41 @@ export default function SellersPage() {
             {sellers.map((seller) => (
               <Link
                 key={seller.id}
-                href={`/sellers/${seller.id}`}
+                href={`/sellers/${seller.slug}`}
                 className="group bg-white border rounded-lg p-6 hover:shadow-lg transition-shadow"
               >
                 <div className="text-center">
-                  <div className="w-20 h-20 mx-auto mb-4 bg-purple-100 rounded-full flex items-center justify-center">
-                    <span className="text-2xl">🏪</span>
-                  </div>
+                  {seller.logo ? (
+                    <div className="w-20 h-20 mx-auto mb-4 rounded-full overflow-hidden">
+                      <Image src={seller.logo} alt={seller.storeName} width={80} height={80} className="object-cover w-full h-full" />
+                    </div>
+                  ) : (
+                    <div className="w-20 h-20 mx-auto mb-4 bg-purple-100 rounded-full flex items-center justify-center">
+                      <span className="text-2xl">🏪</span>
+                    </div>
+                  )}
                   <h3 className="font-semibold text-gray-900 group-hover:text-purple-600 transition-colors">
-                    {seller.firstName} {seller.lastName}
+                    {seller.storeName}
                   </h3>
-                  <p className="text-sm text-gray-600 mt-1">{seller.email}</p>
-                  {seller.hasProducts && (
-                    <span className="inline-block mt-2 text-xs text-green-600 bg-green-50 px-2 py-1 rounded">
-                      Has Products
-                    </span>
+                  {seller.country && (
+                    <p className="text-sm text-gray-500 mt-1">
+                      {[seller.city, seller.country].filter(Boolean).join(', ')}
+                    </p>
+                  )}
+                  <div className="flex items-center justify-center gap-2 mt-2">
+                    {seller.verified && (
+                      <span className="text-xs text-green-600 bg-green-50 px-2 py-0.5 rounded-full">Verified</span>
+                    )}
+                    {seller.totalProducts > 0 && (
+                      <span className="text-xs text-purple-600 bg-purple-50 px-2 py-0.5 rounded-full">
+                        {seller.totalProducts} product{seller.totalProducts !== 1 ? 's' : ''}
+                      </span>
+                    )}
+                  </div>
+                  {seller.rating != null && seller.rating > 0 && (
+                    <div className="mt-2 text-sm text-gray-500">
+                      <span className="text-yellow-400">★</span> {seller.rating.toFixed(1)}
+                    </div>
                   )}
                 </div>
               </Link>
@@ -101,6 +118,4 @@ export default function SellersPage() {
     </div>
   );
 }
-
-
 

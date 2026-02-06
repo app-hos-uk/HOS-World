@@ -13,6 +13,7 @@ export default function AdminPromotionsPage() {
   const { formatPrice } = useCurrency();
   const [promotions, setPromotions] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [creatingPromotion, setCreatingPromotion] = useState(false);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [formData, setFormData] = useState({
     name: '',
@@ -52,8 +53,48 @@ export default function AdminPromotionsPage() {
 
   const handleCreatePromotion = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (creatingPromotion) return;
+
+    // Validate dates
+    const now = new Date();
+    now.setHours(0, 0, 0, 0);
+    if (formData.startDate && new Date(formData.startDate) < now) {
+      toast.error('Start date cannot be in the past');
+      return;
+    }
+    if (formData.endDate && new Date(formData.endDate) < now) {
+      toast.error('End date cannot be in the past');
+      return;
+    }
+    if (formData.startDate && formData.endDate && new Date(formData.endDate) <= new Date(formData.startDate)) {
+      toast.error('End date must be after start date');
+      return;
+    }
+
     try {
-      await apiClient.post<ApiResponse<any>>('/promotions', formData);
+      setCreatingPromotion(true);
+      // Map frontend form to backend DTO format
+      const promotionPayload: any = {
+        name: formData.name,
+        description: formData.description || undefined,
+        type: formData.type === 'PERCENTAGE' ? 'PERCENTAGE_DISCOUNT' : formData.type === 'FIXED' ? 'FIXED_DISCOUNT' : 'FREE_SHIPPING',
+        status: formData.status || 'ACTIVE',
+        startDate: formData.startDate ? new Date(formData.startDate).toISOString() : new Date().toISOString(),
+        endDate: formData.endDate ? new Date(formData.endDate).toISOString() : undefined,
+        isStackable: formData.isStackable,
+        usageLimit: formData.usageLimit || undefined,
+        conditions: {
+          cartValue: formData.minPurchaseAmount > 0 ? { min: formData.minPurchaseAmount } : undefined,
+        },
+        actions: {
+          type: formData.type === 'PERCENTAGE' ? 'PERCENTAGE_DISCOUNT' : formData.type === 'FIXED' ? 'FIXED_DISCOUNT' : 'FREE_SHIPPING',
+          ...(formData.type === 'PERCENTAGE' ? { percentage: formData.value } : {}),
+          ...(formData.type === 'FIXED' ? { fixedAmount: formData.value } : {}),
+          ...(formData.type === 'FREE_SHIPPING' ? { freeShipping: true } : {}),
+        },
+      };
+
+      await apiClient.post<ApiResponse<any>>('/promotions', promotionPayload);
       toast.success('Promotion created successfully!');
       setShowCreateModal(false);
       setFormData({
@@ -71,6 +112,8 @@ export default function AdminPromotionsPage() {
       fetchPromotions();
     } catch (err: any) {
       toast.error(err.message || 'Failed to create promotion');
+    } finally {
+      setCreatingPromotion(false);
     }
   };
 
@@ -218,11 +261,13 @@ export default function AdminPromotionsPage() {
                   </div>
                   <div className="grid grid-cols-2 gap-4">
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Start Date</label>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Start Date *</label>
                       <input
                         type="date"
                         value={formData.startDate}
                         onChange={(e) => setFormData({ ...formData, startDate: e.target.value })}
+                        min={new Date().toISOString().split('T')[0]}
+                        required
                         className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
                       />
                     </div>
@@ -232,6 +277,7 @@ export default function AdminPromotionsPage() {
                         type="date"
                         value={formData.endDate}
                         onChange={(e) => setFormData({ ...formData, endDate: e.target.value })}
+                        min={formData.startDate || new Date().toISOString().split('T')[0]}
                         className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
                       />
                     </div>
@@ -250,9 +296,10 @@ export default function AdminPromotionsPage() {
                   <div className="flex gap-3 pt-4">
                     <button
                       type="submit"
-                      className="flex-1 px-6 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
+                      disabled={creatingPromotion}
+                      className="flex-1 px-6 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                     >
-                      Create Promotion
+                      {creatingPromotion ? 'Creating...' : 'Create Promotion'}
                     </button>
                     <button
                       type="button"

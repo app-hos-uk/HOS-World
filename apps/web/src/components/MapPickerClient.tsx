@@ -33,21 +33,25 @@ function LocationMarker({ onLocationChange, initialLat, initialLng }: {
     initialLat !== undefined && initialLng !== undefined ? [initialLat, initialLng] : null
   );
 
+  const ZOOM_LEVEL_ADDRESS = 16; // Zoom in to street level when showing/selecting an address
+
   const map = useMapEvents({
     click(e) {
       const { lat, lng } = e.latlng;
       setPosition([lat, lng]);
       onLocationChange(lat, lng);
+      // Zoom in to the selected location so the user sees the pin clearly
+      map.setView([lat, lng], ZOOM_LEVEL_ADDRESS);
     },
   });
 
-  // Update position when initial values change
+  // Update position and zoom when initial values change (e.g. editing an address with coordinates)
   // Use explicit undefined checks to handle 0 as a valid coordinate (equator/prime meridian)
   useEffect(() => {
     if (initialLat !== undefined && initialLng !== undefined) {
       const newPosition: [number, number] = [initialLat, initialLng];
       setPosition(newPosition);
-      map.setView(newPosition, map.getZoom());
+      map.setView(newPosition, ZOOM_LEVEL_ADDRESS);
     }
   }, [initialLat, initialLng, map]);
 
@@ -104,11 +108,14 @@ export default function MapPickerClient({
     );
   }
 
+  const hasCoordinates = latitude !== undefined && longitude !== undefined;
+  const initialZoom = hasCoordinates ? 16 : 6;
+
   return (
     <div className={`rounded-lg overflow-hidden border border-gray-300 ${className}`} style={{ height }}>
       <MapContainer
         center={currentPosition}
-        zoom={latitude !== undefined && longitude !== undefined ? 15 : 6}
+        zoom={initialZoom}
         style={{ height: '100%', width: '100%' }}
         scrollWheelZoom={true}
       >
@@ -123,7 +130,7 @@ export default function MapPickerClient({
         />
       </MapContainer>
       <div className="bg-white px-4 py-2 border-t border-gray-300 text-sm text-gray-600">
-        <p className="font-medium mb-1">📍 Click on the map to set your location</p>
+        <p className="font-medium mb-1">📍 Click on the map to set your location (map will zoom in to your selection)</p>
         {latitude !== undefined && longitude !== undefined && (
           <p className="text-xs">
             Coordinates: {latitude.toFixed(6)}, {longitude.toFixed(6)}

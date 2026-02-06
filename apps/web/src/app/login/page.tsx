@@ -394,8 +394,19 @@ export default function LoginPage() {
       <div className="max-w-md w-full space-y-6 sm:space-y-8">
         {/* Logo/Brand */}
         <div className="text-center">
-          <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-purple-600 mb-1 sm:mb-2">House of Spells</h1>
+          <a href="/" className="inline-block">
+            <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-purple-600 mb-1 sm:mb-2 hover:text-purple-700 transition-colors">House of Spells</h1>
+          </a>
           <p className="text-sm sm:text-base text-gray-600">Welcome to the magical marketplace</p>
+          <a
+            href="/"
+            className="inline-flex items-center gap-1 mt-2 text-sm text-purple-600 hover:text-purple-700 hover:underline transition-colors"
+          >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+            </svg>
+            Back to Homepage
+          </a>
         </div>
 
         {/* Character Selector */}

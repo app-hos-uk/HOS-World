@@ -66,6 +66,7 @@ export default function AdminCategoriesPage() {
   const [showInactive, setShowInactive] = useState(true);
   const [stats, setStats] = useState<Stats | null>(null);
   const [viewMode, setViewMode] = useState<'tree' | 'grid'>('tree');
+  const [savingCategory, setSavingCategory] = useState(false);
   
   const [formData, setFormData] = useState({
     name: '',
@@ -142,7 +143,9 @@ export default function AdminCategoriesPage() {
 
   const handleCreateCategory = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (savingCategory) return;
     try {
+      setSavingCategory(true);
       let level = 0;
       if (formData.parentId) {
         const phantom = findCategory(categories, formData.parentId);
@@ -169,13 +172,16 @@ export default function AdminCategoriesPage() {
       fetchCategories();
     } catch (err: any) {
       toast.error(err.message || 'Failed to create fandom');
+    } finally {
+      setSavingCategory(false);
     }
   };
 
   const handleUpdateCategory = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!editingCategory) return;
+    if (!editingCategory || savingCategory) return;
     try {
+      setSavingCategory(true);
       await apiClient.updateCategory(editingCategory.id, {
         name: formData.name,
         description: formData.description || undefined,
@@ -189,6 +195,8 @@ export default function AdminCategoriesPage() {
       fetchCategories();
     } catch (err: any) {
       toast.error(err.message || 'Failed to update fandom');
+    } finally {
+      setSavingCategory(false);
     }
   };
 
@@ -830,9 +838,10 @@ export default function AdminCategoriesPage() {
                 <div className="flex gap-2 pt-4">
                   <button
                     type="submit"
-                    className="px-6 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700"
+                    disabled={savingCategory}
+                    className="px-6 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
-                    {editingCategory ? 'Update Fandom' : (formData.parentId ? 'Create Fandom' : 'Create Phantom')}
+                    {savingCategory ? 'Saving...' : (editingCategory ? 'Update Fandom' : (formData.parentId ? 'Create Fandom' : 'Create Phantom'))}
                   </button>
                   <button
                     type="button"

@@ -188,7 +188,7 @@ export default function AdminOrdersPage() {
   const exportColumns = [
     { key: 'orderNumber', header: 'Order #', format: (v: string, o: Order) => o.orderNumber || o.id.slice(0, 8) },
     { key: 'user', header: 'Customer', format: (v: any, o: Order) => o.user?.email || o.customer?.email || 'N/A' },
-    { key: 'total', header: 'Total', format: (v: number) => `£${Number(v || 0).toFixed(2)}` },
+    { key: 'total', header: 'Total', format: (v: number, o: Order) => `${o.currency || 'GBP'} ${Number(v || 0).toFixed(2)}` },
     { key: 'status', header: 'Status' },
     { key: 'paymentStatus', header: 'Payment Status' },
     { key: 'createdAt', header: 'Date', format: (v: string) => new Date(v).toLocaleDateString() },

@@ -59,6 +59,7 @@ export default function AdminSupportPage() {
   const [replyContent, setReplyContent] = useState('');
   const [sendingReply, setSendingReply] = useState(false);
   const [showCreateModal, setShowCreateModal] = useState(false);
+  const [creatingTicket, setCreatingTicket] = useState(false);
   const [newTicket, setNewTicket] = useState({
     subject: '',
     description: '',
@@ -231,7 +232,9 @@ export default function AdminSupportPage() {
   };
 
   const handleCreateTicket = async () => {
+    if (creatingTicket) return;
     try {
+      setCreatingTicket(true);
       await apiClient.createSupportTicket(newTicket);
       toast.success('Ticket created successfully');
       setShowCreateModal(false);
@@ -240,6 +243,8 @@ export default function AdminSupportPage() {
       fetchStats(); // Refresh stats after creating new ticket
     } catch (err: any) {
       toast.error(err.message || 'Failed to create ticket');
+    } finally {
+      setCreatingTicket(false);
     }
   };
 
@@ -660,10 +665,10 @@ export default function AdminSupportPage() {
                     </button>
                     <button
                       onClick={handleCreateTicket}
-                      disabled={!newTicket.subject.trim()}
-                      className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 disabled:opacity-50"
+                      disabled={creatingTicket || !newTicket.subject.trim()}
+                      className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed"
                     >
-                      Create Ticket
+                      {creatingTicket ? 'Creating...' : 'Create Ticket'}
                     </button>
                   </div>
                 </div>

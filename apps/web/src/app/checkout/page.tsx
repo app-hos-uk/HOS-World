@@ -343,13 +343,17 @@ export default function CheckoutPage() {
               <h2 className="text-lg font-semibold mb-4">Shipping Address</h2>
               {addresses.length === 0 ? (
                 <div className="text-center py-4">
-                  <p className="text-gray-600 mb-4">No addresses found</p>
+                  <p className="text-gray-600 mb-4">No addresses found. Please add a shipping address to continue.</p>
                   <Link
-                    href="/profile?tab=addresses"
-                    className="text-purple-700 hover:text-purple-600"
+                    href="/profile?tab=addresses&action=add"
+                    className="inline-flex items-center gap-2 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
                   >
-                    Add Address
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                    </svg>
+                    Add New Address
                   </Link>
+                  <p className="text-xs text-gray-500 mt-2">You will be redirected to your profile to add an address, then return here to complete checkout.</p>
                 </div>
               ) : (
                 <div className="space-y-3">

@@ -33,6 +33,17 @@ interface Seller {
   totalRevenue?: number;
   rating?: number;
   onboardingComplete?: boolean;
+  // Address fields
+  warehouseAddress?: {
+    street?: string;
+    city?: string;
+    state?: string;
+    postalCode?: string;
+    country?: string;
+    phone?: string;
+  };
+  city?: string;
+  country?: string;
 }
 
 interface Invitation {
@@ -92,18 +103,45 @@ export default function AdminSellersPage() {
     try {
       setLoading(true);
       setError(null);
-      const response = await apiClient.getUsers();
+      const response = await apiClient.getAdminSellers();
       
-      const raw = response?.data as { data?: unknown[] } | unknown[] | undefined;
-      const userData = Array.isArray(raw) ? raw : (raw as { data?: unknown[] })?.data ?? [];
-      const users = Array.isArray(userData) ? userData : [];
+      const raw = response?.data;
+      const sellerData = Array.isArray(raw) ? raw : [];
       
-      const sellerRoles = ['SELLER', 'B2C_SELLER', 'WHOLESALER'];
-      const sellerUsers = users.filter((user: any) => 
-        sellerRoles.includes(user.role)
-      );
-      setSellers(sellerUsers as any);
-      calculateStats(sellerUsers as any);
+      // Map seller profile data to the Seller interface expected by the UI
+      const mappedSellers = sellerData.map((seller: any) => ({
+        id: seller.user?.id || seller.userId || seller.id,
+        sellerId: seller.id, // The actual seller profile ID (for suspend/activate)
+        email: seller.user?.email || '',
+        firstName: seller.user?.firstName || '',
+        lastName: seller.user?.lastName || '',
+        phone: seller.user?.phone || seller.warehouseAddress?.phone || '',
+        role: seller.user?.role || seller.sellerType || 'SELLER',
+        storeName: seller.storeName || '',
+        storeDescription: seller.storeDescription || '',
+        avatar: seller.user?.avatar || '',
+        isActive: seller.verified !== false,
+        companyName: seller.companyName || '',
+        vatNumber: seller.vatNumber || '',
+        customDomain: seller.customDomain || '',
+        subDomain: seller.subDomain || '',
+        country: seller.country || seller.warehouseAddress?.country || '',
+        city: seller.city || seller.warehouseAddress?.city || '',
+        warehouseAddress: seller.warehouseAddress ? {
+          street: seller.warehouseAddress.street || '',
+          city: seller.warehouseAddress.city || '',
+          state: seller.warehouseAddress.state || '',
+          postalCode: seller.warehouseAddress.postalCode || '',
+          country: seller.warehouseAddress.country || '',
+          phone: seller.warehouseAddress.phone || '',
+        } : undefined,
+        totalProducts: seller.totalProducts || seller._count?.products || 0,
+        createdAt: seller.createdAt || seller.user?.createdAt || '',
+        updatedAt: seller.updatedAt || '',
+      }));
+      
+      setSellers(mappedSellers);
+      calculateStats(mappedSellers);
     } catch (err: any) {
       console.error('Error fetching sellers:', err);
       setError(err.message || 'Failed to load sellers');
@@ -263,8 +301,17 @@ export default function AdminSellersPage() {
   };
 
   const handleToggleStatus = async (seller: Seller) => {
-    // TODO: Implement seller status toggle when backend supports it
-    toast.error('Seller status toggle is not yet supported by the API');
+    const sellerId = (seller as any).sellerId || seller.id;
+    try {
+      setActionLoading(true);
+      await apiClient.put(`/admin/sellers/${sellerId}/suspend`, {});
+      toast.success(seller.isActive !== false ? 'Seller suspended successfully' : 'Seller activated successfully');
+      fetchSellers();
+    } catch (err: any) {
+      toast.error(err.message || 'Failed to update seller status');
+    } finally {
+      setActionLoading(false);
+    }
   };
 
   const getRoleBadge = (role: string) => {
@@ -288,13 +335,23 @@ export default function AdminSellersPage() {
   const exportColumns = [
     { key: 'storeName', header: 'Store Name' },
     { key: 'email', header: 'Email' },
+    { key: 'phone', header: 'Phone' },
     { key: 'firstName', header: 'First Name' },
     { key: 'lastName', header: 'Last Name' },
+    { key: 'companyName', header: 'Company Name' },
+    { key: 'warehouseAddress', header: 'Address Street', format: (v: any, s: Seller) => (v?.street || '').trim() },
+    { key: 'warehouseAddress', header: 'Address City', format: (v: any, s: Seller) => (v?.city || s.city || '').trim() },
+    { key: 'warehouseAddress', header: 'Address State', format: (v: any) => (v?.state || '').trim() },
+    { key: 'warehouseAddress', header: 'Address Postal Code', format: (v: any) => (v?.postalCode || '').trim() },
+    { key: 'warehouseAddress', header: 'Address Country', format: (v: any, s: Seller) => (v?.country || s.country || '').trim() },
+    { key: 'warehouseAddress', header: 'Address Phone', format: (v: any) => (v?.phone || '').trim() },
     { key: 'role', header: 'Type' },
     { key: 'isActive', header: 'Status', format: (v: boolean) => v !== false ? 'Active' : 'Inactive' },
     { key: 'totalProducts', header: 'Products', format: (v: number) => String(v || 0) },
     { key: 'totalOrders', header: 'Orders', format: (v: number) => String(v || 0) },
     { key: 'totalRevenue', header: 'Revenue', format: (v: number, s: Seller) => formatPrice(v || 0) },
+    { key: 'customDomain', header: 'Custom Domain' },
+    { key: 'subDomain', header: 'Subdomain' },
     { key: 'createdAt', header: 'Joined', format: (v: string) => new Date(v).toLocaleDateString() },
   ];
 
@@ -858,7 +915,7 @@ export default function AdminSellersPage() {
                     {/* Actions */}
                     <div className="flex flex-wrap gap-2 pt-4 border-t">
                       <a
-                        href={`/admin/products?seller=${selectedSeller.id}`}
+                        href={`/admin/products?seller=${(selectedSeller as any).sellerId || selectedSeller.id}`}
                         className="px-4 py-2 bg-purple-100 text-purple-700 rounded-lg hover:bg-purple-200"
                       >
                         View Products

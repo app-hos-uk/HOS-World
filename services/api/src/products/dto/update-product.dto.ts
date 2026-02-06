@@ -9,6 +9,9 @@ export class UpdateProductDto {
   description?: string;
 
   @IsOptional()
+  shortDescription?: string;
+
+  @IsOptional()
   sku?: string;
 
   @IsOptional()

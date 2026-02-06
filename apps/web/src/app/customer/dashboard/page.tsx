@@ -665,9 +665,9 @@ export default function CustomerDashboardPage() {
                       <BarChart data={spendingAnalytics.monthlySpending}>
                         <CartesianGrid strokeDasharray="3 3" stroke="#E5E7EB" />
                         <XAxis dataKey="month" tick={{ fontSize: 12 }} />
-                        <YAxis tick={{ fontSize: 12 }} tickFormatter={(value) => `£${value}`} />
+                        <YAxis tick={{ fontSize: 12 }} tickFormatter={(value) => formatPrice(value)} />
                         <Tooltip
-                          formatter={(value: number) => [`£${value.toFixed(2)}`, 'Spent']}
+                          formatter={(value: number) => [formatPrice(value), 'Spent']}
                           contentStyle={{ borderRadius: '8px', border: '1px solid #E5E7EB' }}
                         />
                         <Bar dataKey="amount" fill="#8B5CF6" radius={[4, 4, 0, 0]} />

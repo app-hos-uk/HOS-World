@@ -45,6 +45,10 @@ export class CreateSubmissionDto {
 
   @IsOptional()
   @IsString()
+  shortDescription?: string;
+
+  @IsOptional()
+  @IsString()
   sku?: string;
 
   @IsOptional()

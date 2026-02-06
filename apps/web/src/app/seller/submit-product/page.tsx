@@ -1,9 +1,10 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { RouteGuard } from '@/components/RouteGuard';
 import { DashboardLayout } from '@/components/DashboardLayout';
+import { useAuth } from '@/contexts/AuthContext';
 import { CategorySelector } from '@/components/taxonomy/CategorySelector';
 import { FandomSelector } from '@/components/taxonomy/FandomSelector';
 import { apiClient } from '@/lib/api';
@@ -27,6 +28,7 @@ interface Variation {
 
 export default function SubmitProductPage() {
   const router = useRouter();
+  const { user, effectiveRole } = useAuth();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState(false);
@@ -41,7 +43,7 @@ export default function SubmitProductPage() {
     price: '',
     tradePrice: '',
     rrp: '',
-    currency: 'USD',
+    currency: 'GBP',
     taxRate: '0',
     stock: '',
     quantity: '',
@@ -254,17 +256,35 @@ export default function SubmitProductPage() {
     }
   };
 
-  const menuItems = [
-    { title: 'Dashboard', href: '/seller/dashboard', icon: '📊' },
-    { title: 'Submit Product', href: '/seller/submit-product', icon: '➕' },
-    { title: 'My Products', href: '/seller/products', icon: '📦' },
-    { title: 'Orders', href: '/seller/orders', icon: '🛒' },
-    { title: 'Submissions', href: '/seller/submissions', icon: '📝' },
-  ];
+  const currentRole = effectiveRole || user?.role;
+  const isWholesaler = currentRole === 'WHOLESALER';
+  const menuItems = useMemo(
+    () =>
+      isWholesaler
+        ? [
+            { title: 'Dashboard', href: '/wholesaler/dashboard', icon: '📊' },
+            { title: 'Submit Product', href: '/seller/submit-product', icon: '➕' },
+            { title: 'My Products', href: '/wholesaler/products', icon: '📦' },
+            { title: 'Bulk Orders', href: '/wholesaler/orders', icon: '🛒' },
+            { title: 'Submissions', href: '/wholesaler/submissions', icon: '📝' },
+          ]
+        : [
+            { title: 'Dashboard', href: '/seller/dashboard', icon: '📊' },
+            { title: 'Submit Product', href: '/seller/submit-product', icon: '➕' },
+            { title: 'My Products', href: '/seller/products', icon: '📦' },
+            { title: 'Orders', href: '/seller/orders', icon: '🛒' },
+            { title: 'Submissions', href: '/seller/submissions', icon: '📝' },
+          ],
+    [isWholesaler]
+  );
 
   return (
     <RouteGuard allowedRoles={['SELLER', 'B2C_SELLER', 'WHOLESALER', 'ADMIN']} showAccessDenied={true}>
-      <DashboardLayout role="SELLER" menuItems={menuItems} title="Seller">
+      <DashboardLayout
+        role={isWholesaler ? 'WHOLESALER' : 'SELLER'}
+        menuItems={menuItems}
+        title={isWholesaler ? 'Wholesaler' : 'Seller'}
+      >
         <div className="max-w-4xl mx-auto">
           <div className="mb-6">
             <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold">
