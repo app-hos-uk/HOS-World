@@ -68,7 +68,7 @@ export default function InfluencerDetailPage() {
     try {
       setLoading(true);
       // Use the generic get method which returns the full API response
-      const response = await api.get<{ data: Influencer; message?: string }>(`/admin/influencers/${influencerId}`);
+      const response = await api.get(`/admin/influencers/${influencerId}`);
       if (response?.data) {
         setInfluencer(response.data);
       } else if (response && typeof response === 'object' && 'id' in response) {
@@ -105,7 +105,7 @@ export default function InfluencerDetailPage() {
     if (!influencer) return;
     try {
       setActionLoading(true);
-      await api.put<{ data: Influencer; message?: string }>(`/admin/influencers/${influencer.id}`, { status: newStatus });
+      await api.put(`/admin/influencers/${influencer.id}`, { status: newStatus });
       toast.success(`Influencer status updated to ${newStatus}`);
       fetchInfluencer();
     } catch (err: any) {
@@ -119,7 +119,7 @@ export default function InfluencerDetailPage() {
     if (!influencer) return;
     try {
       setActionLoading(true);
-      await api.put<{ data: Influencer; message?: string }>(`/admin/influencers/${influencer.id}`, { tier: newTier });
+      await api.put(`/admin/influencers/${influencer.id}`, { tier: newTier });
       toast.success(`Influencer tier updated to ${newTier}`);
       fetchInfluencer();
     } catch (err: any) {
