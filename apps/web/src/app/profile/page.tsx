@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { Suspense, useEffect, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { RouteGuard } from '@/components/RouteGuard';
 import { Header } from '@/components/Header';
@@ -56,7 +56,7 @@ interface Collection {
   createdAt: string;
 }
 
-export default function ProfilePage() {
+function ProfilePageContent() {
   const toast = useToast();
   const searchParams = useSearchParams();
   const { currency, setCurrency } = useCurrency();
@@ -1263,3 +1263,10 @@ export default function ProfilePage() {
   );
 }
 
+export default function ProfilePage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen flex items-center justify-center"><div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600" /></div>}>
+      <ProfilePageContent />
+    </Suspense>
+  );
+}
