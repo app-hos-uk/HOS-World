@@ -1,0 +1,220 @@
+// Content & Engagement Service Prisma Schema
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../node_modules/.prisma/content-client"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ──────────────────────────────────────────────
+// Promotions & Coupons
+// ──────────────────────────────────────────────
+
+model Promotion {
+  id              String    @id @default(uuid())
+  name            String
+  description     String?
+  type            String    @default("PERCENTAGE")
+  value           Decimal   @db.Decimal(12, 2)
+  code            String?   @unique
+  startDate       DateTime?
+  endDate         DateTime?
+  minOrderAmount  Decimal?  @db.Decimal(12, 2)
+  maxUses         Int?
+  currentUses     Int       @default(0)
+  isActive        Boolean   @default(true)
+  sellerId        String?
+  productIds      String[]  @default([])
+  categoryIds     String[]  @default([])
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  coupons Coupon[]
+
+  @@map("promotions")
+}
+
+model Coupon {
+  id          String    @id @default(uuid())
+  code        String    @unique
+  promotionId String?
+  type        String    @default("PERCENTAGE")
+  value       Decimal   @db.Decimal(12, 2)
+  maxUses     Int?
+  currentUses Int       @default(0)
+  expiresAt   DateTime?
+  isActive    Boolean   @default(true)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  promotion Promotion? @relation(fields: [promotionId], references: [id])
+  usages    CouponUsage[]
+
+  @@map("coupons")
+}
+
+model CouponUsage {
+  id       String   @id @default(uuid())
+  couponId String
+  userId   String
+  orderId  String?
+  usedAt   DateTime @default(now())
+
+  coupon Coupon @relation(fields: [couponId], references: [id])
+
+  @@map("coupon_usages")
+}
+
+// ──────────────────────────────────────────────
+// Gamification
+// ──────────────────────────────────────────────
+
+model Badge {
+  id          String   @id @default(uuid())
+  name        String
+  slug        String   @unique
+  description String?
+  icon        String?
+  category    String?
+  points      Int      @default(0)
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  userBadges UserBadge[]
+
+  @@map("badges")
+}
+
+model UserBadge {
+  id       String   @id @default(uuid())
+  userId   String
+  badgeId  String
+  earnedAt DateTime @default(now())
+
+  badge Badge @relation(fields: [badgeId], references: [id])
+
+  @@unique([userId, badgeId])
+  @@map("user_badges")
+}
+
+model Quest {
+  id          String    @id @default(uuid())
+  name        String
+  slug        String    @unique
+  description String?
+  type        String    @default("ONE_TIME")
+  requirements Json?
+  rewards     Json?
+  points      Int       @default(0)
+  isActive    Boolean   @default(true)
+  startDate   DateTime?
+  endDate     DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  userQuests UserQuest[]
+
+  @@map("quests")
+}
+
+model UserQuest {
+  id          String    @id @default(uuid())
+  userId      String
+  questId     String
+  status      String    @default("IN_PROGRESS")
+  progress    Json?
+  completedAt DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  quest Quest @relation(fields: [questId], references: [id])
+
+  @@unique([userId, questId])
+  @@map("user_quests")
+}
+
+// ──────────────────────────────────────────────
+// Social & Collections
+// ──────────────────────────────────────────────
+
+model Collection {
+  id          String   @id @default(uuid())
+  userId      String
+  name        String
+  description String?
+  isPublic    Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("collections")
+}
+
+model SharedItem {
+  id           String   @id @default(uuid())
+  userId       String
+  productId    String?
+  collectionId String?
+  platform     String
+  shareUrl     String?
+  clicks       Int      @default(0)
+  createdAt    DateTime @default(now())
+
+  @@map("shared_items")
+}
+
+// ──────────────────────────────────────────────
+// Fandoms & Characters
+// ──────────────────────────────────────────────
+
+model Fandom {
+  id          String   @id @default(uuid())
+  name        String   @unique
+  slug        String   @unique
+  description String?
+  coverImage  String?
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  characters Character[]
+
+  @@map("fandoms")
+}
+
+model Character {
+  id          String   @id @default(uuid())
+  fandomId    String
+  name        String
+  slug        String   @unique
+  description String?
+  image       String?
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  fandom Fandom @relation(fields: [fandomId], references: [id])
+
+  @@map("characters")
+}
+
+// ──────────────────────────────────────────────
+// Marketing Materials
+// ──────────────────────────────────────────────
+
+model MarketingMaterial {
+  id        String   @id @default(uuid())
+  title     String
+  type      String
+  content   String?
+  imageUrl  String?
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("marketing_materials")
+}

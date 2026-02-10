@@ -11,6 +11,7 @@ services:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
+      - ./infrastructure/database/init-schemas.sh:/docker-entrypoint-initdb.d/10-init-schemas.sh:ro
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-hos_user}"]
       interval: 10s
@@ -111,6 +112,12 @@ services:
       PRODUCT_SERVICE_URL: http://product:3007
       ORDER_SERVICE_URL: http://order:3008
       PAYMENT_SERVICE_URL: http://payment:3009
+      # Phase 3 microservice URLs
+      INVENTORY_SERVICE_URL: http://inventory:3010
+      SELLER_SERVICE_URL: http://seller:3011
+      INFLUENCER_SERVICE_URL: http://influencer:3012
+      CONTENT_SERVICE_URL: http://content:3013
+      ADMIN_SERVICE_URL: http://admin:3014
     healthcheck:
       test: ["CMD-SHELL", "curl -f http://localhost:4000/health/live || exit 1"]
       interval: 10s
@@ -135,6 +142,16 @@ services:
       order:
         condition: service_healthy
       payment:
+        condition: service_healthy
+      inventory:
+        condition: service_healthy
+      seller:
+        condition: service_healthy
+      influencer:
+        condition: service_healthy
+      content:
+        condition: service_healthy
+      admin:
         condition: service_healthy
 
   # ─── Notification Microservice (Phase 1) ──────────────────────────────────
@@ -332,6 +349,138 @@ services:
       KLARNA_API_SECRET: ${KLARNA_API_SECRET:-}
     healthcheck:
       test: ["CMD-SHELL", "curl -f http://localhost:3009/health/live || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  # ─── Inventory/Shipping Microservice (Phase 3) ────────────────────────
+  # Warehouses, inventory, shipping, fulfillment, logistics.
+  inventory:
+    build:
+      context: .
+      dockerfile: services/inventory/Dockerfile
+    ports:
+      - "3010:3010"
+    environment:
+      NODE_ENV: development
+      INVENTORY_PORT: 3010
+      DATABASE_URL: postgresql://${POSTGRES_USER:-hos_user}:${POSTGRES_PASSWORD:-hos_password}@postgres:5432/${POSTGRES_DB:-hos_marketplace}
+      REDIS_URL: redis://redis:6379
+      JWT_SECRET: ${JWT_SECRET:-dev-secret-change-in-production}
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:3010/health/live || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  # ─── Seller/Marketplace Microservice (Phase 3) ──────────────────────
+  # Sellers, submissions, reviews, themes.
+  seller:
+    build:
+      context: .
+      dockerfile: services/seller/Dockerfile
+    ports:
+      - "3011:3011"
+    environment:
+      NODE_ENV: development
+      SELLER_PORT: 3011
+      DATABASE_URL: postgresql://${POSTGRES_USER:-hos_user}:${POSTGRES_PASSWORD:-hos_password}@postgres:5432/${POSTGRES_DB:-hos_marketplace}
+      REDIS_URL: redis://redis:6379
+      JWT_SECRET: ${JWT_SECRET:-dev-secret-change-in-production}
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:3011/health/live || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  # ─── Influencer Microservice (Phase 3) ──────────────────────────────
+  # Influencer storefronts, campaigns, commissions, referrals.
+  influencer:
+    build:
+      context: .
+      dockerfile: services/influencer/Dockerfile
+    ports:
+      - "3012:3012"
+    environment:
+      NODE_ENV: development
+      INFLUENCER_PORT: 3012
+      DATABASE_URL: postgresql://${POSTGRES_USER:-hos_user}:${POSTGRES_PASSWORD:-hos_password}@postgres:5432/${POSTGRES_DB:-hos_marketplace}
+      REDIS_URL: redis://redis:6379
+      JWT_SECRET: ${JWT_SECRET:-dev-secret-change-in-production}
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:3012/health/live || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  # ─── Content/Engagement Microservice (Phase 3) ──────────────────────
+  # CMS, promotions, gamification, fandoms, social sharing.
+  content:
+    build:
+      context: .
+      dockerfile: services/content/Dockerfile
+    ports:
+      - "3013:3013"
+    environment:
+      NODE_ENV: development
+      CONTENT_PORT: 3013
+      DATABASE_URL: postgresql://${POSTGRES_USER:-hos_user}:${POSTGRES_PASSWORD:-hos_password}@postgres:5432/${POSTGRES_DB:-hos_marketplace}
+      REDIS_URL: redis://redis:6379
+      JWT_SECRET: ${JWT_SECRET:-dev-secret-change-in-production}
+      STRAPI_URL: ${STRAPI_URL:-http://cms:1337/api}
+      STRAPI_API_TOKEN: ${STRAPI_API_TOKEN:-}
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:3013/health/live || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  # ─── Admin/Analytics Microservice (Phase 3) ─────────────────────────
+  # Activity logs, analytics, support, GDPR, webhooks, integrations.
+  admin:
+    build:
+      context: .
+      dockerfile: services/admin/Dockerfile
+    ports:
+      - "3014:3014"
+    environment:
+      NODE_ENV: development
+      ADMIN_PORT: 3014
+      DATABASE_URL: postgresql://${POSTGRES_USER:-hos_user}:${POSTGRES_PASSWORD:-hos_password}@postgres:5432/${POSTGRES_DB:-hos_marketplace}
+      REDIS_URL: redis://redis:6379
+      JWT_SECRET: ${JWT_SECRET:-dev-secret-change-in-production}
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:3014/health/live || exit 1"]
       interval: 10s
       timeout: 5s
       retries: 5
