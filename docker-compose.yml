@@ -103,16 +103,38 @@ services:
       GATEWAY_PORT: 4000
       JWT_SECRET: ${JWT_SECRET:-dev-secret-change-in-production}
       MONOLITH_API_URL: http://api:3001
-      # Uncomment as microservices are extracted:
-      # AUTH_SERVICE_URL: http://auth:3002
+      # Microservice URLs – uncomment to route traffic away from the monolith
+      AUTH_SERVICE_URL: http://auth:3005
       NOTIFICATION_SERVICE_URL: http://notification:3003
-      # SEARCH_SERVICE_URL: http://search:3004
+      SEARCH_SERVICE_URL: http://search:3004
+      USER_SERVICE_URL: http://user:3006
+      PRODUCT_SERVICE_URL: http://product:3007
+      ORDER_SERVICE_URL: http://order:3008
+      PAYMENT_SERVICE_URL: http://payment:3009
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:4000/health/live || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
     depends_on:
       api:
         condition: service_started
       redis:
         condition: service_healthy
       notification:
+        condition: service_healthy
+      search:
+        condition: service_healthy
+      auth:
+        condition: service_healthy
+      user:
+        condition: service_healthy
+      product:
+        condition: service_healthy
+      order:
+        condition: service_healthy
+      payment:
         condition: service_healthy
 
   # ─── Notification Microservice (Phase 1) ──────────────────────────────────
@@ -140,6 +162,176 @@ services:
       TWILIO_WHATSAPP_NUMBER: ${TWILIO_WHATSAPP_NUMBER:-}
     healthcheck:
       test: ["CMD-SHELL", "curl -f http://localhost:3003/health/live || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  # ─── Search Microservice (Phase 1) ─────────────────────────────────────
+  # Elasticsearch + Meilisearch indexing and search endpoints.
+  search:
+    build:
+      context: .
+      dockerfile: services/search/Dockerfile
+    ports:
+      - "3004:3004"
+    environment:
+      NODE_ENV: development
+      SEARCH_PORT: 3004
+      DATABASE_URL: postgresql://${POSTGRES_USER:-hos_user}:${POSTGRES_PASSWORD:-hos_password}@postgres:5432/${POSTGRES_DB:-hos_marketplace}
+      REDIS_URL: redis://redis:6379
+      JWT_SECRET: ${JWT_SECRET:-dev-secret-change-in-production}
+      ELASTICSEARCH_NODE: ${ELASTICSEARCH_NODE:-}
+      MEILISEARCH_HOST: ${MEILISEARCH_HOST:-}
+      MEILISEARCH_KEY: ${MEILISEARCH_KEY:-}
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:3004/health/live || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  # ─── Auth Microservice (Phase 1) ──────────────────────────────────────
+  # Handles login, registration, JWT, OAuth, refresh tokens.
+  auth:
+    build:
+      context: .
+      dockerfile: services/auth/Dockerfile
+    ports:
+      - "3005:3005"
+    environment:
+      NODE_ENV: development
+      AUTH_PORT: 3005
+      DATABASE_URL: postgresql://${POSTGRES_USER:-hos_user}:${POSTGRES_PASSWORD:-hos_password}@postgres:5432/${POSTGRES_DB:-hos_marketplace}
+      REDIS_URL: redis://redis:6379
+      JWT_SECRET: ${JWT_SECRET:-dev-secret-change-in-production}
+      JWT_EXPIRATION: ${JWT_EXPIRATION:-15m}
+      JWT_REFRESH_EXPIRATION: ${JWT_REFRESH_EXPIRATION:-7d}
+      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-}
+      GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET:-}
+      APPLE_CLIENT_ID: ${APPLE_CLIENT_ID:-}
+      APPLE_CLIENT_SECRET: ${APPLE_CLIENT_SECRET:-}
+      FRONTEND_URL: ${FRONTEND_URL:-http://localhost:3000}
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:3005/health/live || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  # ─── User Microservice (Phase 2) ──────────────────────────────────────
+  # User profiles, addresses, customer groups, gamification.
+  user:
+    build:
+      context: .
+      dockerfile: services/user/Dockerfile
+    ports:
+      - "3006:3006"
+    environment:
+      NODE_ENV: development
+      USER_PORT: 3006
+      DATABASE_URL: postgresql://${POSTGRES_USER:-hos_user}:${POSTGRES_PASSWORD:-hos_password}@postgres:5432/${POSTGRES_DB:-hos_marketplace}
+      REDIS_URL: redis://redis:6379
+      JWT_SECRET: ${JWT_SECRET:-dev-secret-change-in-production}
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:3006/health/live || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  # ─── Product Catalog Microservice (Phase 2) ───────────────────────────
+  # Products, collections, taxonomy, characters, fandoms, digital products.
+  product:
+    build:
+      context: .
+      dockerfile: services/product/Dockerfile
+    ports:
+      - "3007:3007"
+    environment:
+      NODE_ENV: development
+      PRODUCT_PORT: 3007
+      DATABASE_URL: postgresql://${POSTGRES_USER:-hos_user}:${POSTGRES_PASSWORD:-hos_password}@postgres:5432/${POSTGRES_DB:-hos_marketplace}
+      REDIS_URL: redis://redis:6379
+      JWT_SECRET: ${JWT_SECRET:-dev-secret-change-in-production}
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:3007/health/live || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  # ─── Order Microservice (Phase 2) ─────────────────────────────────────
+  # Orders, cart, returns, gift cards.
+  order:
+    build:
+      context: .
+      dockerfile: services/order/Dockerfile
+    ports:
+      - "3008:3008"
+    environment:
+      NODE_ENV: development
+      ORDER_PORT: 3008
+      DATABASE_URL: postgresql://${POSTGRES_USER:-hos_user}:${POSTGRES_PASSWORD:-hos_password}@postgres:5432/${POSTGRES_DB:-hos_marketplace}
+      REDIS_URL: redis://redis:6379
+      JWT_SECRET: ${JWT_SECRET:-dev-secret-change-in-production}
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:3008/health/live || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  # ─── Payment Microservice (Phase 2) ───────────────────────────────────
+  # Payments (Stripe, Klarna), finance, settlements, currency.
+  payment:
+    build:
+      context: .
+      dockerfile: services/payment/Dockerfile
+    ports:
+      - "3009:3009"
+    environment:
+      NODE_ENV: development
+      PAYMENT_PORT: 3009
+      DATABASE_URL: postgresql://${POSTGRES_USER:-hos_user}:${POSTGRES_PASSWORD:-hos_password}@postgres:5432/${POSTGRES_DB:-hos_marketplace}
+      REDIS_URL: redis://redis:6379
+      JWT_SECRET: ${JWT_SECRET:-dev-secret-change-in-production}
+      STRIPE_SECRET_KEY: ${STRIPE_SECRET_KEY:-}
+      STRIPE_WEBHOOK_SECRET: ${STRIPE_WEBHOOK_SECRET:-}
+      KLARNA_API_KEY: ${KLARNA_API_KEY:-}
+      KLARNA_API_SECRET: ${KLARNA_API_SECRET:-}
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:3009/health/live || exit 1"]
       interval: 10s
       timeout: 5s
       retries: 5

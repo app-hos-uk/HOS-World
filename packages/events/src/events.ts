@@ -141,9 +141,11 @@ export interface OrderCreatedPayload {
   orderId: string;
   orderNumber: string;
   userId: string;
+  userEmail: string;
   sellerId: string;
   items: Array<{
     productId: string;
+    productName?: string;
     quantity: number;
     price: number;
   }>;

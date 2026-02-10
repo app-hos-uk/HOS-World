@@ -97,7 +97,21 @@ export class NotificationService {
       data.total,
     );
 
-    await this.emailService.sendEmail(data.userEmail, subject, html);
+    let emailSent = false;
+
+    if (data.userEmail && data.userEmail.trim().length > 0) {
+      emailSent = await this.emailService.sendEmail(
+        data.userEmail,
+        subject,
+        html,
+      );
+    } else {
+      this.logger.warn(
+        `No email address provided for order confirmation ${data.orderNumber} – skipping email`,
+      );
+    }
+
+    const status = emailSent ? 'SENT' : 'PENDING';
 
     await this.prisma.notification.create({
       data: {
@@ -105,15 +119,15 @@ export class NotificationService {
         type: 'ORDER_CONFIRMATION',
         subject,
         content: `Your order ${data.orderNumber} has been confirmed.`,
-        email: data.userEmail,
-        status: 'SENT',
-        sentAt: new Date(),
+        email: data.userEmail || null,
+        status,
+        sentAt: emailSent ? new Date() : null,
         metadata: { orderId: data.orderId } as any,
       },
     });
 
     this.logger.log(
-      `Order confirmation sent for ${data.orderNumber} to ${data.userEmail}`,
+      `Order confirmation for ${data.orderNumber}: email ${emailSent ? 'sent to ' + data.userEmail : 'not sent (status: ' + status + ')'}`,
     );
   }
 

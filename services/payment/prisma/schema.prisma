@@ -1,0 +1,78 @@
+// Payment Microservice Database Schema
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../node_modules/.prisma/payment-client"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Transaction {
+  id                String   @id @default(uuid())
+  orderId           String?
+  userId            String
+  sellerId          String?
+  type              String   @default("PAYMENT")
+  status            String   @default("PENDING")
+  amount            Decimal
+  currency          String   @default("GBP")
+  paymentMethod     String?
+  paymentProvider   String?
+  providerTransactionId String?
+  metadata          Json?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  @@index([orderId])
+  @@index([userId])
+  @@index([sellerId])
+  @@index([status])
+  @@map("transactions")
+}
+
+model Settlement {
+  id          String   @id @default(uuid())
+  sellerId    String
+  amount      Decimal
+  currency    String   @default("GBP")
+  status      String   @default("PENDING")
+  periodStart DateTime
+  periodEnd   DateTime
+  paidAt      DateTime?
+  metadata    Json?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([sellerId])
+  @@index([status])
+  @@map("settlements")
+}
+
+model Currency {
+  id          String   @id @default(uuid())
+  code        String   @unique
+  name        String
+  symbol      String
+  exchangeRate Decimal @default(1)
+  isActive    Boolean  @default(true)
+  updatedAt   DateTime @updatedAt
+
+  @@map("currencies")
+}
+
+model PayoutAccount {
+  id          String   @id @default(uuid())
+  sellerId    String
+  provider    String   @default("stripe")
+  accountId   String
+  isActive    Boolean  @default(true)
+  metadata    Json?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([sellerId])
+  @@map("payout_accounts")
+}

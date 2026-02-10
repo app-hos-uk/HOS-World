@@ -27,9 +27,8 @@ import { getServiceConfigs } from '../config/services.config';
         }
         return {
           secret,
-          signOptions: {
-            expiresIn: configService.get<string>('JWT_EXPIRES_IN') || '7d',
-          },
+          // Gateway only verifies tokens; it never signs them.
+          // Token issuance is handled by the Auth Service.
         };
       },
       inject: [ConfigService],

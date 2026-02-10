@@ -46,13 +46,20 @@ export class EventHandlersController {
     );
 
     try {
+      const userEmail = event.payload.userEmail;
+      if (!userEmail) {
+        this.logger.warn(
+          `Order created event for ${event.payload.orderNumber} is missing userEmail – skipping email notification`,
+        );
+      }
+
       await this.notificationService.sendOrderConfirmation({
         orderId: event.payload.orderId,
         orderNumber: event.payload.orderNumber,
         userId: event.payload.userId,
-        userEmail: '', // Will be resolved from user lookup or event enrichment
+        userEmail: userEmail || '',
         items: event.payload.items.map((item) => ({
-          name: item.productId, // In production, this would be enriched by the caller
+          name: item.productName || item.productId,
           quantity: item.quantity,
           price: item.price,
         })),
