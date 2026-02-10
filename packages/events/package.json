@@ -1,0 +1,27 @@
+{
+  "name": "@hos-marketplace/events",
+  "version": "1.0.0",
+  "description": "Domain event contracts and EventBus module for HOS Marketplace microservices",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "clean": "rm -rf dist",
+    "type-check": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@nestjs/common": "^10.3.0",
+    "@nestjs/core": "^10.3.0",
+    "@nestjs/microservices": "^10.3.0",
+    "ioredis": "^5.3.2",
+    "rxjs": "^7.8.1"
+  },
+  "devDependencies": {
+    "@types/node": "^20.10.6",
+    "typescript": "^5.3.3"
+  },
+  "files": [
+    "dist"
+  ]
+}

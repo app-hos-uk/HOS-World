@@ -85,10 +85,33 @@ services:
     volumes:
       - cms_data:/srv/app
 
+  # ─── API Gateway (Microservices Phase 0) ─────────────────────────────────
+  # The gateway sits in front of the monolith API and validates JWTs centrally.
+  # During migration, all requests are proxied to the monolith.
+  # As microservices are extracted, set their URL env vars to route traffic.
+  #
+  # To start using the gateway, point your frontend to http://localhost:4000/api
+  # instead of http://localhost:3001/api.
+  gateway:
+    build:
+      context: .
+      dockerfile: services/gateway/Dockerfile
+    ports:
+      - "4000:4000"
+    environment:
+      NODE_ENV: development
+      GATEWAY_PORT: 4000
+      JWT_SECRET: ${JWT_SECRET:-dev-secret-change-in-production}
+      MONOLITH_API_URL: http://api:3001
+      # Uncomment as microservices are extracted:
+      # AUTH_SERVICE_URL: http://auth:3002
+      # NOTIFICATION_SERVICE_URL: http://notification:3003
+      # SEARCH_SERVICE_URL: http://search:3004
+    depends_on:
+      - api
+      - redis
+
 volumes:
   postgres_data:
   redis_data:
   cms_data:
-
-
-
