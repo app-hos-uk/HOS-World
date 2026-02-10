@@ -44,10 +44,12 @@ export class GatewayAuthGuard implements CanActivate {
       return true;
     }
 
-    // Extract user context from gateway-injected headers
-    const userId = request.headers['x-user-id'];
-    const userEmail = request.headers['x-user-email'];
-    const userRole = request.headers['x-user-role'];
+    // Extract user context from gateway-injected headers.
+    // Express headers can be string | string[] | undefined, so we
+    // normalise to the first value to guarantee a string.
+    const userId = this.headerToString(request.headers['x-user-id']);
+    const userEmail = this.headerToString(request.headers['x-user-email']);
+    const userRole = this.headerToString(request.headers['x-user-role']);
 
     if (!userId || !userEmail || !userRole) {
       throw new UnauthorizedException(
@@ -60,15 +62,27 @@ export class GatewayAuthGuard implements CanActivate {
       id: userId,
       email: userEmail,
       role: userRole,
-      tenantId: request.headers['x-tenant-id'] || undefined,
-      permissionRoleId: request.headers['x-user-permission-role-id'] || undefined,
-      sellerId: request.headers['x-user-seller-id'] || undefined,
-      firstName: request.headers['x-user-first-name'] || undefined,
-      lastName: request.headers['x-user-last-name'] || undefined,
+      tenantId: this.headerToString(request.headers['x-tenant-id']) || undefined,
+      permissionRoleId: this.headerToString(request.headers['x-user-permission-role-id']) || undefined,
+      sellerId: this.headerToString(request.headers['x-user-seller-id']) || undefined,
+      firstName: this.headerToString(request.headers['x-user-first-name']) || undefined,
+      lastName: this.headerToString(request.headers['x-user-last-name']) || undefined,
     };
 
     request.user = authUser;
 
     return true;
+  }
+
+  /**
+   * Normalise an Express header value to a plain string.
+   * Headers can be string | string[] | undefined when a client
+   * sends duplicate header names. We always take the first value.
+   */
+  private headerToString(
+    value: string | string[] | undefined,
+  ): string | undefined {
+    if (value === undefined) return undefined;
+    return Array.isArray(value) ? value[0] : value;
   }
 }

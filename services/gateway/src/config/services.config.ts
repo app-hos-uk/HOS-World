@@ -19,6 +19,15 @@ export interface ServiceConfig {
   enabled: boolean;
 }
 
+/**
+ * Check whether a service URL env var is set to a non-empty value.
+ * An empty string or undefined means the service is disabled and
+ * its routes fall through to the monolith.
+ */
+function isServiceEnabled(envVar: string | undefined): boolean {
+  return !!envVar && envVar.trim().length > 0;
+}
+
 export function getServiceConfigs(): ServiceConfig[] {
   // Default: everything goes to the monolith
   const monolithUrl =
@@ -30,19 +39,19 @@ export function getServiceConfigs(): ServiceConfig[] {
       name: 'auth-service',
       url: process.env.AUTH_SERVICE_URL || monolithUrl,
       prefixes: ['/api/auth'],
-      enabled: process.env.AUTH_SERVICE_URL !== undefined,
+      enabled: isServiceEnabled(process.env.AUTH_SERVICE_URL),
     },
     {
       name: 'notification-service',
       url: process.env.NOTIFICATION_SERVICE_URL || monolithUrl,
       prefixes: ['/api/notifications', '/api/whatsapp', '/api/newsletter'],
-      enabled: process.env.NOTIFICATION_SERVICE_URL !== undefined,
+      enabled: isServiceEnabled(process.env.NOTIFICATION_SERVICE_URL),
     },
     {
       name: 'search-service',
       url: process.env.SEARCH_SERVICE_URL || monolithUrl,
       prefixes: ['/api/search', '/api/meilisearch'],
-      enabled: process.env.SEARCH_SERVICE_URL !== undefined,
+      enabled: isServiceEnabled(process.env.SEARCH_SERVICE_URL),
     },
 
     // ─── Phase 2 Services ──────────────────────────────────────────────────
@@ -50,7 +59,7 @@ export function getServiceConfigs(): ServiceConfig[] {
       name: 'user-service',
       url: process.env.USER_SERVICE_URL || monolithUrl,
       prefixes: ['/api/users', '/api/addresses', '/api/customer-groups'],
-      enabled: process.env.USER_SERVICE_URL !== undefined,
+      enabled: isServiceEnabled(process.env.USER_SERVICE_URL),
     },
     {
       name: 'product-service',
@@ -64,7 +73,7 @@ export function getServiceConfigs(): ServiceConfig[] {
         '/api/digital-products',
         '/api/duplicates',
       ],
-      enabled: process.env.PRODUCT_SERVICE_URL !== undefined,
+      enabled: isServiceEnabled(process.env.PRODUCT_SERVICE_URL),
     },
     {
       name: 'order-service',
@@ -76,7 +85,7 @@ export function getServiceConfigs(): ServiceConfig[] {
         '/api/return-policies',
         '/api/gift-cards',
       ],
-      enabled: process.env.ORDER_SERVICE_URL !== undefined,
+      enabled: isServiceEnabled(process.env.ORDER_SERVICE_URL),
     },
     {
       name: 'payment-service',
@@ -88,7 +97,7 @@ export function getServiceConfigs(): ServiceConfig[] {
         '/api/settlements',
         '/api/currency',
       ],
-      enabled: process.env.PAYMENT_SERVICE_URL !== undefined,
+      enabled: isServiceEnabled(process.env.PAYMENT_SERVICE_URL),
     },
 
     // ─── Phase 3 Services ──────────────────────────────────────────────────
@@ -102,7 +111,7 @@ export function getServiceConfigs(): ServiceConfig[] {
         '/api/logistics',
         '/api/fulfillment',
       ],
-      enabled: process.env.INVENTORY_SERVICE_URL !== undefined,
+      enabled: isServiceEnabled(process.env.INVENTORY_SERVICE_URL),
     },
     {
       name: 'seller-service',
@@ -114,7 +123,7 @@ export function getServiceConfigs(): ServiceConfig[] {
         '/api/domains',
         '/api/reviews',
       ],
-      enabled: process.env.SELLER_SERVICE_URL !== undefined,
+      enabled: isServiceEnabled(process.env.SELLER_SERVICE_URL),
     },
     {
       name: 'influencer-service',
@@ -128,7 +137,7 @@ export function getServiceConfigs(): ServiceConfig[] {
         '/api/influencer-invitations',
         '/api/referrals',
       ],
-      enabled: process.env.INFLUENCER_SERVICE_URL !== undefined,
+      enabled: isServiceEnabled(process.env.INFLUENCER_SERVICE_URL),
     },
     {
       name: 'content-service',
@@ -144,7 +153,7 @@ export function getServiceConfigs(): ServiceConfig[] {
         '/api/badges',
         '/api/quests',
       ],
-      enabled: process.env.CONTENT_SERVICE_URL !== undefined,
+      enabled: isServiceEnabled(process.env.CONTENT_SERVICE_URL),
     },
     {
       name: 'admin-service',
@@ -163,7 +172,7 @@ export function getServiceConfigs(): ServiceConfig[] {
         '/api/webhooks',
         '/api/integrations',
       ],
-      enabled: process.env.ADMIN_SERVICE_URL !== undefined,
+      enabled: isServiceEnabled(process.env.ADMIN_SERVICE_URL),
     },
 
     // ─── Monolith Fallback (catches everything not matched above) ──────────

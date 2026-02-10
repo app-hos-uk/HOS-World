@@ -33,17 +33,8 @@ export class BasePrismaService
   }
 
   async onModuleInit() {
-    this.connectWithRetry()
-      .then(() => {
-        this.logger.log('Database connected successfully');
-      })
-      .catch((error: any) => {
-        this.logger.error(
-          `Database connection failed after retries: ${error?.message || 'Unknown error'}`,
-        );
-        // Don't throw -- allow app to start and retry later.
-        // This helps with deployments where DB might not be ready immediately.
-      });
+    await this.connectWithRetry();
+    this.logger.log('Database connected successfully');
   }
 
   /**

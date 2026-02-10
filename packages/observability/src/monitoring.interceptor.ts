@@ -36,7 +36,9 @@ export class MonitoringInterceptor implements NestInterceptor {
       request.headers['x-correlation-id'] ||
       request.headers['x-request-id'] ||
       randomUUID();
-    this.loggerService.setCorrelationId(correlationId);
+
+    // Create a request-scoped logger instead of mutating the singleton
+    const reqLogger = this.loggerService.withCorrelationId(correlationId);
 
     // Ensure correlation ID is in the response headers
     const response = context.switchToHttp().getResponse();
@@ -48,7 +50,7 @@ export class MonitoringInterceptor implements NestInterceptor {
       tap(() => {
         const responseTime = Date.now() - startTime;
         this.monitoringService.trackRequest(responseTime, true);
-        this.loggerService.debug(
+        reqLogger.debug(
           `${method} ${url} - ${responseTime}ms`,
           'MonitoringInterceptor',
         );
@@ -61,7 +63,7 @@ export class MonitoringInterceptor implements NestInterceptor {
           url,
           correlationId,
         });
-        this.loggerService.error(
+        reqLogger.error(
           `${method} ${url} - ${responseTime}ms - Error: ${error.message}`,
           error.stack,
           'MonitoringInterceptor',

@@ -26,29 +26,26 @@ async function bootstrap() {
   app.use((req: any, res: any, next: any) => {
     if (req.method === 'OPTIONS') {
       const origin = req.headers.origin as string | undefined;
-      const isAllowed =
-        !origin || allowedOrigins.some((a) => origin === a || origin.startsWith(a));
 
-      if (isAllowed) {
-        const allowOrigin = origin || '*';
-        res.setHeader('Access-Control-Allow-Origin', allowOrigin);
-        res.setHeader(
-          'Access-Control-Allow-Methods',
-          'GET, POST, PUT, DELETE, PATCH, OPTIONS, HEAD',
-        );
-        res.setHeader(
-          'Access-Control-Allow-Headers',
-          'Content-Type, Authorization, X-Requested-With, Accept, Origin, X-API-Key, X-Correlation-ID',
-        );
-        if (allowOrigin !== '*') {
-          res.setHeader('Access-Control-Allow-Credentials', 'true');
-        }
-        res.setHeader('Access-Control-Max-Age', '86400');
-        return res.status(204).end();
-      } else {
-        logger.warn(`CORS blocked: ${origin}`);
-        return res.status(403).json({ error: 'Origin not allowed', origin });
+      // Preflight MUST include an Origin header and it must match our allow-list.
+      // A missing Origin on a preflight is not a legitimate browser request.
+      if (!origin || !allowedOrigins.some((a) => origin === a)) {
+        logger.warn(`CORS preflight blocked: ${origin || '(no origin)'}`);
+        return res.status(403).json({ error: 'Origin not allowed', origin: origin || null });
       }
+
+      res.setHeader('Access-Control-Allow-Origin', origin);
+      res.setHeader(
+        'Access-Control-Allow-Methods',
+        'GET, POST, PUT, DELETE, PATCH, OPTIONS, HEAD',
+      );
+      res.setHeader(
+        'Access-Control-Allow-Headers',
+        'Content-Type, Authorization, X-Requested-With, Accept, Origin, X-API-Key, X-Correlation-ID',
+      );
+      res.setHeader('Access-Control-Allow-Credentials', 'true');
+      res.setHeader('Access-Control-Max-Age', '86400');
+      return res.status(204).end();
     }
     next();
   });
@@ -56,7 +53,9 @@ async function bootstrap() {
   // CORS for non-OPTIONS requests
   app.enableCors({
     origin: (origin, callback) => {
-      if (!origin) return callback(null, true);
+      // No Origin header = same-origin or non-browser client.
+      // Allow the request but don't set any Access-Control-Allow-Origin header.
+      if (!origin) return callback(null, false);
       const isAllowed = allowedOrigins.some((allowed) => {
         if (!allowed) return false;
         if (origin === allowed) return true;

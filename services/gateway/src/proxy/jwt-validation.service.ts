@@ -24,10 +24,28 @@ export class JwtValidationService {
     try {
       const payload = this.jwtService.verify(token);
 
+      const id = payload.sub || payload.id;
+      const email = payload.email;
+      const role = payload.role;
+
+      // Ensure the three required fields are present and are strings.
+      // A valid JWT that lacks these fields should be treated as invalid
+      // to prevent injecting "undefined" into downstream headers.
+      if (
+        typeof id !== 'string' || !id ||
+        typeof email !== 'string' || !email ||
+        typeof role !== 'string' || !role
+      ) {
+        this.logger.warn(
+          'JWT payload missing required fields (id/sub, email, role). Treating token as invalid.',
+        );
+        return null;
+      }
+
       return {
-        id: payload.sub || payload.id,
-        email: payload.email,
-        role: payload.role,
+        id,
+        email,
+        role,
         permissionRoleId: payload.permissionRoleId,
         tenantId: payload.tenantId,
         sellerId: payload.sellerId,
