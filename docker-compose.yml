@@ -105,11 +105,50 @@ services:
       MONOLITH_API_URL: http://api:3001
       # Uncomment as microservices are extracted:
       # AUTH_SERVICE_URL: http://auth:3002
-      # NOTIFICATION_SERVICE_URL: http://notification:3003
+      NOTIFICATION_SERVICE_URL: http://notification:3003
       # SEARCH_SERVICE_URL: http://search:3004
     depends_on:
-      - api
-      - redis
+      api:
+        condition: service_started
+      redis:
+        condition: service_healthy
+      notification:
+        condition: service_healthy
+
+  # ─── Notification Microservice (Phase 1) ──────────────────────────────────
+  # Handles email, WhatsApp, newsletter, and in-app notifications.
+  # Listens to domain events via Redis and exposes REST endpoints.
+  notification:
+    build:
+      context: .
+      dockerfile: services/notification/Dockerfile
+    ports:
+      - "3003:3003"
+    environment:
+      NODE_ENV: development
+      NOTIFICATION_PORT: 3003
+      DATABASE_URL: postgresql://${POSTGRES_USER:-hos_user}:${POSTGRES_PASSWORD:-hos_password}@postgres:5432/${POSTGRES_DB:-hos_marketplace}
+      REDIS_URL: redis://redis:6379
+      JWT_SECRET: ${JWT_SECRET:-dev-secret-change-in-production}
+      SMTP_HOST: ${SMTP_HOST:-}
+      SMTP_PORT: ${SMTP_PORT:-587}
+      SMTP_USER: ${SMTP_USER:-}
+      SMTP_PASS: ${SMTP_PASS:-}
+      SMTP_FROM: ${SMTP_FROM:-noreply@hos-marketplace.com}
+      TWILIO_ACCOUNT_SID: ${TWILIO_ACCOUNT_SID:-}
+      TWILIO_AUTH_TOKEN: ${TWILIO_AUTH_TOKEN:-}
+      TWILIO_WHATSAPP_NUMBER: ${TWILIO_WHATSAPP_NUMBER:-}
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:3003/health/live || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
 
 volumes:
   postgres_data:
