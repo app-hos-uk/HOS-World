@@ -1,5 +1,6 @@
 import { Controller, Get, Logger } from '@nestjs/common';
 import { getServiceConfigs } from '../config/services.config';
+import { CircuitBreakerService } from '../proxy/circuit-breaker.service';
 
 /**
  * Health Controller
@@ -11,6 +12,8 @@ import { getServiceConfigs } from '../config/services.config';
 export class HealthController {
   private readonly logger = new Logger(HealthController.name);
   private readonly startTime = Date.now();
+
+  constructor(private readonly circuitBreaker: CircuitBreakerService) {}
 
   @Get()
   health() {
@@ -42,6 +45,15 @@ export class HealthController {
         enabled: svc.enabled,
         prefixes: svc.prefixes,
       })),
+      timestamp: new Date().toISOString(),
+    };
+  }
+
+  /** Circuit breaker state per service (for observability dashboards) */
+  @Get('circuits')
+  circuits() {
+    return {
+      circuits: this.circuitBreaker.getAllStates(),
       timestamp: new Date().toISOString(),
     };
   }

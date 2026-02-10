@@ -2,6 +2,7 @@ import { Injectable, NestMiddleware, Logger } from '@nestjs/common';
 import { Request, Response, NextFunction } from 'express';
 import { createProxyMiddleware, Options } from 'http-proxy-middleware';
 import { JwtValidationService } from './jwt-validation.service';
+import { CircuitBreakerService } from './circuit-breaker.service';
 import { getServiceConfigs, ServiceConfig } from '../config/services.config';
 
 /**
@@ -22,27 +23,49 @@ export class ProxyMiddleware implements NestMiddleware {
   private readonly proxyCache = new Map<string, ReturnType<typeof createProxyMiddleware>>();
   private readonly services: ServiceConfig[];
 
-  constructor(private readonly jwtValidation: JwtValidationService) {
+  constructor(
+    private readonly jwtValidation: JwtValidationService,
+    private readonly circuitBreaker: CircuitBreakerService,
+  ) {
     this.services = getServiceConfigs();
   }
 
   use(req: Request, res: Response, next: NextFunction) {
-    // 1. Find the target service for this request
-    const service = this.findService(req.path);
-    if (!service) {
-      // No matching service -- pass through to NestJS controllers (health, etc.)
+    // Gateway-owned health endpoints must not be proxied
+    if (req.path.startsWith('/api/health')) {
       return next();
     }
 
-    // 2. Validate JWT and inject user context headers for downstream services
+    // 1. Find the target service for this request
+    const service = this.findService(req.path);
+    if (!service) {
+      // No matching service -- pass through to NestJS controllers
+      return next();
+    }
+
+    // 2. Circuit breaker: if circuit is open, respond 503 without calling downstream
+    if (!this.circuitBreaker.allowRequest(service.name)) {
+      this.logger.warn(`[${service.name}] Circuit open, returning 503`);
+      res.writeHead(503, { 'Content-Type': 'application/json' });
+      res.end(
+        JSON.stringify({
+          statusCode: 503,
+          message: `Service ${service.name} is temporarily unavailable`,
+          timestamp: new Date().toISOString(),
+        }),
+      );
+      return;
+    }
+
+    // 3. Validate JWT and inject user context headers for downstream services
     this.injectAuthHeaders(req);
 
-    // 3. Add correlation ID
+    // 4. Add correlation ID
     if (!req.headers['x-correlation-id'] && !req.headers['x-request-id']) {
       req.headers['x-correlation-id'] = this.generateId();
     }
 
-    // 4. Get or create proxy for this service
+    // 5. Get or create proxy for this service
     const proxy = this.getOrCreateProxy(service);
     return proxy(req, res, next);
   }
@@ -117,6 +140,7 @@ export class ProxyMiddleware implements NestMiddleware {
       return this.proxyCache.get(service.name)!;
     }
 
+    const serviceName = service.name;
     const proxyOptions: Options = {
       target: service.url,
       changeOrigin: true,
@@ -127,19 +151,28 @@ export class ProxyMiddleware implements NestMiddleware {
       on: {
         proxyReq: (proxyReq, req: any) => {
           this.logger.debug(
-            `[${service.name}] ${req.method} ${req.url} -> ${service.url}${req.url}`,
+            `[${serviceName}] ${req.method} ${req.url} -> ${service.url}${req.url}`,
           );
         },
+        proxyRes: (proxyRes) => {
+          const status = proxyRes.statusCode ?? 0;
+          if (status >= 500) {
+            this.circuitBreaker.recordFailure(serviceName);
+          } else {
+            this.circuitBreaker.recordSuccess(serviceName);
+          }
+        },
         error: (err, req: any, res: any) => {
+          this.circuitBreaker.recordFailure(serviceName);
           this.logger.error(
-            `[${service.name}] Proxy error for ${req?.method} ${req?.url}: ${err.message}`,
+            `[${serviceName}] Proxy error for ${req?.method} ${req?.url}: ${err.message}`,
           );
           if (res && !res.headersSent) {
             res.writeHead(502, { 'Content-Type': 'application/json' });
             res.end(
               JSON.stringify({
                 statusCode: 502,
-                message: `Service ${service.name} is unavailable`,
+                message: `Service ${serviceName} is unavailable`,
                 timestamp: new Date().toISOString(),
               }),
             );

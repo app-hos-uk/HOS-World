@@ -18,7 +18,7 @@ COPY packages/database-common/package.json ./packages/database-common/
 # Install dependencies
 RUN pnpm install --no-frozen-lockfile
 
-# Copy source code
+# Copy source code (services/gateway includes src/, config, etc.)
 COPY packages ./packages
 COPY services/gateway ./services/gateway
 

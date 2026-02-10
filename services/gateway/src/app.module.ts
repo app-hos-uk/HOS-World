@@ -1,5 +1,5 @@
 import { Module } from '@nestjs/common';
-import { ConfigModule } from '@nestjs/config';
+import { ConfigModule, ConfigService } from '@nestjs/config';
 import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
 import { APP_GUARD } from '@nestjs/core';
 import { ProxyModule } from './proxy/proxy.module';
@@ -30,24 +30,32 @@ import { HealthModule } from './health/health.module';
         process.env.NODE_ENV === 'test' || process.env.IGNORE_ENV_FILE === 'true',
     }),
 
-    // Rate limiting (global)
-    ThrottlerModule.forRoot([
-      {
-        name: 'short',
-        ttl: 1000,  // 1 second window
-        limit: 20,  // 20 requests per second
+    // Rate limiting (global). Override via env: THROTTLE_TTL_SHORT, THROTTLE_LIMIT_SHORT, etc.
+    ThrottlerModule.forRootAsync({
+      imports: [ConfigModule],
+      inject: [ConfigService],
+      useFactory: (config: ConfigService) => {
+        const num = (key: string, fallback: number) =>
+          parseInt(config.get(key) ?? '', 10) || fallback;
+        return [
+          {
+            name: 'short',
+            ttl: num('THROTTLE_TTL_SHORT', 1000),
+            limit: num('THROTTLE_LIMIT_SHORT', 20),
+          },
+          {
+            name: 'medium',
+            ttl: num('THROTTLE_TTL_MEDIUM', 10000),
+            limit: num('THROTTLE_LIMIT_MEDIUM', 100),
+          },
+          {
+            name: 'long',
+            ttl: num('THROTTLE_TTL_LONG', 60000),
+            limit: num('THROTTLE_LIMIT_LONG', 300),
+          },
+        ];
       },
-      {
-        name: 'medium',
-        ttl: 10000, // 10 second window
-        limit: 100, // 100 requests per 10 seconds
-      },
-      {
-        name: 'long',
-        ttl: 60000, // 1 minute window
-        limit: 300, // 300 requests per minute
-      },
-    ]),
+    }),
 
     HealthModule,
     ProxyModule,

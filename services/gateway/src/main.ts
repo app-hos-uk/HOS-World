@@ -114,6 +114,9 @@ async function bootstrap() {
   // ─── Compression ─────────────────────────────────────────────────────────
   app.use(compression());
 
+  // Global prefix for consistency with other microservices (health at /api/health/live)
+  app.setGlobalPrefix('api');
+
   // ─── Root Endpoint ───────────────────────────────────────────────────────
   app.use('/', (req: any, res: any, next: any) => {
     if (req.path === '/' && req.method === 'GET') {
@@ -123,8 +126,10 @@ async function bootstrap() {
         status: 'running',
         timestamp: new Date().toISOString(),
         endpoints: {
-          health: '/health',
-          services: '/health/services',
+          health: '/api/health',
+          healthLive: '/api/health/live',
+          services: '/api/health/services',
+          circuits: '/api/health/circuits',
           api: '/api',
         },
       });
@@ -136,8 +141,8 @@ async function bootstrap() {
   await app.listen(port, '0.0.0.0');
 
   logger.log(`API Gateway running on http://0.0.0.0:${port}`);
-  logger.log(`Health check: http://0.0.0.0:${port}/health`);
-  logger.log(`Service registry: http://0.0.0.0:${port}/health/services`);
+  logger.log(`Health check: http://0.0.0.0:${port}/api/health/live`);
+  logger.log(`Service registry: http://0.0.0.0:${port}/api/health/services`);
 }
 
 bootstrap().catch((error) => {

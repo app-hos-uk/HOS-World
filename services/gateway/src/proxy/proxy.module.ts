@@ -3,6 +3,7 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { JwtModule } from '@nestjs/jwt';
 import { ProxyMiddleware } from './proxy.middleware';
 import { JwtValidationService } from './jwt-validation.service';
+import { CircuitBreakerService } from './circuit-breaker.service';
 import { getServiceConfigs } from '../config/services.config';
 
 /**
@@ -13,6 +14,7 @@ import { getServiceConfigs } from '../config/services.config';
  * the request to the appropriate downstream service.
  */
 @Module({
+  exports: [CircuitBreakerService],
   imports: [
     ConfigModule,
     JwtModule.registerAsync({
@@ -34,7 +36,7 @@ import { getServiceConfigs } from '../config/services.config';
       inject: [ConfigService],
     }),
   ],
-  providers: [JwtValidationService, ProxyMiddleware],
+  providers: [JwtValidationService, CircuitBreakerService, ProxyMiddleware],
 })
 export class ProxyModule implements NestModule {
   private readonly logger = new Logger(ProxyModule.name);
