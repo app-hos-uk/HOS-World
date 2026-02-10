@@ -3,13 +3,15 @@
 // Will be split to its own database in Phase 4
 
 generator client {
-  provider = "prisma-client-js"
-  output   = "../node_modules/.prisma/inventory-client"
+  provider        = "prisma-client-js"
+  output          = "../node_modules/.prisma/inventory-client"
+  previewFeatures = ["multiSchema"]
 }
 
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
+  schemas  = ["inventory_service"]
 }
 
 // ──────────────────────────────────────────────
@@ -41,6 +43,7 @@ model Warehouse {
   transfersTo   StockTransfer[]     @relation("TransfersTo")
 
   @@map("warehouses")
+  @@schema("inventory_service")
 }
 
 model InventoryLocation {
@@ -59,6 +62,7 @@ model InventoryLocation {
 
   @@unique([warehouseId, productId])
   @@map("inventory_locations")
+  @@schema("inventory_service")
 }
 
 model StockReservation {
@@ -75,6 +79,7 @@ model StockReservation {
   inventoryLocation InventoryLocation @relation(fields: [inventoryLocationId], references: [id])
 
   @@map("stock_reservations")
+  @@schema("inventory_service")
 }
 
 model StockTransfer {
@@ -95,6 +100,7 @@ model StockTransfer {
   toWarehouse   Warehouse @relation("TransfersTo", fields: [toWarehouseId], references: [id])
 
   @@map("stock_transfers")
+  @@schema("inventory_service")
 }
 
 model StockMovement {
@@ -112,6 +118,7 @@ model StockMovement {
   inventoryLocation InventoryLocation @relation(fields: [inventoryLocationId], references: [id])
 
   @@map("stock_movements")
+  @@schema("inventory_service")
 }
 
 // ──────────────────────────────────────────────
@@ -131,6 +138,7 @@ model ShippingMethod {
   rules ShippingRule[]
 
   @@map("shipping_methods")
+  @@schema("inventory_service")
 }
 
 model ShippingRule {
@@ -149,6 +157,7 @@ model ShippingRule {
   shippingMethod ShippingMethod @relation(fields: [shippingMethodId], references: [id])
 
   @@map("shipping_rules")
+  @@schema("inventory_service")
 }
 
 // ──────────────────────────────────────────────
@@ -174,6 +183,7 @@ model FulfillmentCenter {
   shipments Shipment[]
 
   @@map("fulfillment_centers")
+  @@schema("inventory_service")
 }
 
 model Shipment {
@@ -193,6 +203,7 @@ model Shipment {
   logisticsPartner  LogisticsPartner?  @relation(fields: [logisticsPartnerId], references: [id])
 
   @@map("shipments")
+  @@schema("inventory_service")
 }
 
 model LogisticsPartner {
@@ -212,6 +223,7 @@ model LogisticsPartner {
   shipments Shipment[]
 
   @@map("logistics_partners")
+  @@schema("inventory_service")
 }
 
 // ──────────────────────────────────────────────
@@ -229,6 +241,7 @@ model TaxZone {
   rates TaxRate[]
 
   @@map("tax_zones")
+  @@schema("inventory_service")
 }
 
 model TaxClass {
@@ -240,6 +253,7 @@ model TaxClass {
   rates TaxRate[]
 
   @@map("tax_classes")
+  @@schema("inventory_service")
 }
 
 model TaxRate {
@@ -257,4 +271,5 @@ model TaxRate {
   taxClass TaxClass @relation(fields: [classId], references: [id])
 
   @@map("tax_rates")
+  @@schema("inventory_service")
 }

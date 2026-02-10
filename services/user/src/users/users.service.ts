@@ -1,13 +1,18 @@
-import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException, Logger } from '@nestjs/common';
 import * as bcrypt from 'bcrypt';
+import { EventBusService, USER_EVENTS } from '@hos-marketplace/events';
 import { UserPrismaService } from '../database/prisma.service';
 import { UpdateProfileDto, ChangePasswordDto } from './dto/update-profile.dto';
 
 @Injectable()
 export class UsersService {
+  private readonly logger = new Logger(UsersService.name);
   private readonly protectedAdminEmails = new Set(['app@houseofspells.co.uk', 'mail@jsabu.com']);
 
-  constructor(private prisma: UserPrismaService) {}
+  constructor(
+    private prisma: UserPrismaService,
+    private eventBus: EventBusService,
+  ) {}
 
   async getProfile(userId: string) {
     const user = await this.prisma.user.findUnique({
@@ -37,7 +42,7 @@ export class UsersService {
     if (dto.birthday !== undefined) updateData.birthday = dto.birthday ? new Date(dto.birthday) : null;
     if (dto.anniversary !== undefined) updateData.anniversary = dto.anniversary ? new Date(dto.anniversary) : null;
 
-    return this.prisma.user.update({
+    const updated = await this.prisma.user.update({
       where: { id: userId },
       data: updateData,
       select: {
@@ -47,6 +52,18 @@ export class UsersService {
         whatsappNumber: true, preferredCommunicationMethod: true, currencyPreference: true,
       },
     });
+
+    // Emit user.user.updated event
+    try {
+      this.eventBus.emit(USER_EVENTS.UPDATED, {
+        userId,
+        changes: updateData,
+      });
+    } catch (e: any) {
+      this.logger.warn(`Failed to emit user.updated event: ${e?.message}`);
+    }
+
+    return updated;
   }
 
   async changePassword(userId: string, dto: ChangePasswordDto): Promise<void> {

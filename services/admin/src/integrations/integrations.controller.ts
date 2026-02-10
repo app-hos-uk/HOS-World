@@ -1,11 +1,11 @@
 import { Controller, Get, Post, Put, Delete, Body, Param, UseGuards } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
-import { GatewayAuthGuard, Roles } from '@hos-marketplace/auth-common';
+import { GatewayAuthGuard, RolesGuard, Roles } from '@hos-marketplace/auth-common';
 import { IntegrationsService } from './integrations.service';
 
 @ApiTags('integrations')
 @Controller('integrations')
-@UseGuards(GatewayAuthGuard)
+@UseGuards(GatewayAuthGuard, RolesGuard)
 @Roles('ADMIN')
 export class IntegrationsController {
   constructor(private readonly integrationsService: IntegrationsService) {}

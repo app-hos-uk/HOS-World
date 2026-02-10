@@ -5,13 +5,15 @@
 // shares the same PostgreSQL database as the monolith.
 
 generator client {
-  provider = "prisma-client-js"
-  output   = "../node_modules/.prisma/search-client"
+  provider        = "prisma-client-js"
+  output          = "../node_modules/.prisma/search-client"
+  previewFeatures = ["multiSchema"]
 }
 
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
+  schemas  = ["search_service", "product_service"]
 }
 
 // ─── Product (read-only for indexing) ─────────────────────────────────────────
@@ -45,6 +47,7 @@ model Product {
   @@index([categoryId])
   @@index([status])
   @@map("products")
+  @@schema("product_service")
 }
 
 model ProductImage {
@@ -58,6 +61,7 @@ model ProductImage {
 
   @@index([productId])
   @@map("product_images")
+  @@schema("product_service")
 }
 
 model ProductAttribute {
@@ -76,6 +80,7 @@ model ProductAttribute {
   @@index([productId])
   @@index([attributeId])
   @@map("product_attributes")
+  @@schema("product_service")
 }
 
 model Attribute {
@@ -88,6 +93,7 @@ model Attribute {
   createdAt         DateTime           @default(now())
 
   @@map("attributes")
+  @@schema("product_service")
 }
 
 model AttributeValue {
@@ -101,6 +107,7 @@ model AttributeValue {
 
   @@index([attributeId])
   @@map("attribute_values")
+  @@schema("product_service")
 }
 
 model Seller {
@@ -111,6 +118,7 @@ model Seller {
   products  Product[]
 
   @@map("sellers")
+  @@schema("product_service")
 }
 
 enum ProductStatus {
@@ -120,6 +128,8 @@ enum ProductStatus {
   INACTIVE
   ARCHIVED
   REJECTED
+
+  @@schema("product_service")
 }
 
 enum AttributeType {
@@ -130,4 +140,6 @@ enum AttributeType {
   MULTI_SELECT
   COLOR
   DATE
+
+  @@schema("product_service")
 }

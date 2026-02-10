@@ -13,7 +13,7 @@ import { ReferralsModule } from './referrals/referrals.module';
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),
     ObservabilityModule.register({ serviceName: 'influencer-service' }),
-    EventBusModule.register({ name: 'influencer-service', url: process.env.REDIS_URL || 'redis://localhost:6379' }),
+    EventBusModule.register({ serviceName: 'influencer-service', redisUrl: process.env.REDIS_URL || 'redis://localhost:6379' }),
     DatabaseModule,
     HealthModule,
     InfluencersModule,

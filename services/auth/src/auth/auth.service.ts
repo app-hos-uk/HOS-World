@@ -9,6 +9,7 @@ import {
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 import * as bcrypt from 'bcrypt';
+import { EventBusService, AUTH_EVENTS } from '@hos-marketplace/events';
 import { AuthPrismaService } from '../database/prisma.service';
 import { GeolocationService } from '../geolocation/geolocation.service';
 import { RegisterDto } from './dto/register.dto';
@@ -32,6 +33,7 @@ export class AuthService {
     private jwtService: JwtService,
     private configService: ConfigService,
     private geolocationService: GeolocationService,
+    private eventBus: EventBusService,
   ) {}
 
   private getCountryCode(country: string | undefined): string {
@@ -172,6 +174,19 @@ export class AuthService {
 
     const tokens = await this.generateTokens(user);
 
+    // Emit auth.user.registered event
+    try {
+      this.eventBus.emit(AUTH_EVENTS.USER_REGISTERED, {
+        userId: user.id,
+        email: user.email,
+        role: user.role,
+        firstName: user.firstName,
+        lastName: user.lastName,
+      });
+    } catch (e: any) {
+      this.logger.warn(`Failed to emit user.registered event: ${e?.message}`);
+    }
+
     return { user, token: tokens.accessToken, refreshToken: tokens.refreshToken };
   }
 
@@ -195,6 +210,16 @@ export class AuthService {
 
     const { password, ...userWithoutPassword } = user;
     const tokens = await this.generateTokens(userWithoutPassword);
+
+    // Emit auth.user.logged_in event
+    try {
+      this.eventBus.emit(AUTH_EVENTS.USER_LOGGED_IN, {
+        userId: userWithoutPassword.id,
+        email: userWithoutPassword.email,
+      });
+    } catch (e: any) {
+      this.logger.warn(`Failed to emit user.logged_in event: ${e?.message}`);
+    }
 
     return { user: userWithoutPassword, token: tokens.accessToken, refreshToken: tokens.refreshToken };
   }
@@ -222,10 +247,11 @@ export class AuthService {
     const refreshTokenTTL = this.configService.get<string>('JWT_REFRESH_EXPIRES_IN') || '30d';
     const refreshToken = this.jwtService.sign(payload, { expiresIn: refreshTokenTTL });
 
-    // Store refresh token in DB
+    // Store refresh token in DB with expiry matching the JWT TTL
     const tokenHash = await bcrypt.hash(refreshToken, 10);
     const expiresAt = new Date();
-    expiresAt.setDate(expiresAt.getDate() + 30);
+    const ttlMs = this.parseTTLtoMs(refreshTokenTTL);
+    expiresAt.setTime(expiresAt.getTime() + ttlMs);
 
     try {
       await this.prisma.refreshToken.create({
@@ -364,5 +390,25 @@ export class AuthService {
 
     await this.prisma.oAuthAccount.delete({ where: { id: accountToUnlink.id } });
     this.logger.log(`OAuth account unlinked: ${provider} for user ${userId}`);
+  }
+
+  /**
+   * Parse a TTL string like '30d', '7d', '24h', '15m' into milliseconds.
+   * Falls back to 30 days if the format is unrecognised.
+   */
+  private parseTTLtoMs(ttl: string): number {
+    const match = ttl.match(/^(\d+)\s*(d|h|m|s)$/i);
+    if (!match) return 30 * 24 * 60 * 60 * 1000; // default 30 days
+
+    const value = parseInt(match[1], 10);
+    const unit = match[2].toLowerCase();
+
+    switch (unit) {
+      case 'd': return value * 24 * 60 * 60 * 1000;
+      case 'h': return value * 60 * 60 * 1000;
+      case 'm': return value * 60 * 1000;
+      case 's': return value * 1000;
+      default:  return 30 * 24 * 60 * 60 * 1000;
+    }
   }
 }

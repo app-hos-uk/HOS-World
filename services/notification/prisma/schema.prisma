@@ -9,13 +9,15 @@
 // As the migration progresses, this service will move to its own database.
 
 generator client {
-  provider = "prisma-client-js"
-  output   = "../node_modules/.prisma/notification-client"
+  provider        = "prisma-client-js"
+  output          = "../node_modules/.prisma/notification-client"
+  previewFeatures = ["multiSchema"]
 }
 
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
+  schemas  = ["notification_service"]
 }
 
 // ─── Notification (owned by this service) ─────────────────────────────────────
@@ -34,6 +36,7 @@ model Notification {
   createdAt DateTime           @default(now())
 
   @@map("notifications")
+  @@schema("notification_service")
 }
 
 enum NotificationType {
@@ -47,6 +50,8 @@ enum NotificationType {
   RETURN_APPROVED
   REVIEW_REMINDER
   WISHLIST_SALE
+
+  @@schema("notification_service")
 }
 
 enum NotificationStatus {
@@ -54,6 +59,8 @@ enum NotificationStatus {
   SENT
   FAILED
   BOUNCED
+
+  @@schema("notification_service")
 }
 
 // ─── WhatsApp (owned by this service) ─────────────────────────────────────────
@@ -75,6 +82,7 @@ model WhatsAppConversation {
   @@index([sellerId])
   @@index([ticketId])
   @@index([status])
+  @@schema("notification_service")
 }
 
 model WhatsAppMessage {
@@ -96,6 +104,7 @@ model WhatsAppMessage {
   @@index([direction])
   @@index([status])
   @@index([createdAt])
+  @@schema("notification_service")
 }
 
 model WhatsAppTemplate {
@@ -111,17 +120,22 @@ model WhatsAppTemplate {
 
   @@index([category])
   @@index([isActive])
+  @@schema("notification_service")
 }
 
 enum ConversationStatus {
   ACTIVE
   ARCHIVED
   BLOCKED
+
+  @@schema("notification_service")
 }
 
 enum MessageDirection {
   INBOUND
   OUTBOUND
+
+  @@schema("notification_service")
 }
 
 enum MessageStatus {
@@ -129,4 +143,6 @@ enum MessageStatus {
   DELIVERED
   READ
   FAILED
+
+  @@schema("notification_service")
 }

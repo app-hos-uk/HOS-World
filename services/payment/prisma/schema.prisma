@@ -1,13 +1,15 @@
 // Payment Microservice Database Schema
 
 generator client {
-  provider = "prisma-client-js"
-  output   = "../node_modules/.prisma/payment-client"
+  provider        = "prisma-client-js"
+  output          = "../node_modules/.prisma/payment-client"
+  previewFeatures = ["multiSchema"]
 }
 
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
+  schemas  = ["payment_service"]
 }
 
 model Transaction {
@@ -31,6 +33,7 @@ model Transaction {
   @@index([sellerId])
   @@index([status])
   @@map("transactions")
+  @@schema("payment_service")
 }
 
 model Settlement {
@@ -49,6 +52,7 @@ model Settlement {
   @@index([sellerId])
   @@index([status])
   @@map("settlements")
+  @@schema("payment_service")
 }
 
 model Currency {
@@ -61,6 +65,7 @@ model Currency {
   updatedAt   DateTime @updatedAt
 
   @@map("currencies")
+  @@schema("payment_service")
 }
 
 model PayoutAccount {
@@ -75,4 +80,5 @@ model PayoutAccount {
 
   @@index([sellerId])
   @@map("payout_accounts")
+  @@schema("payment_service")
 }

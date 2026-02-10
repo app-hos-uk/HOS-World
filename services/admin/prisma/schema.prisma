@@ -1,13 +1,15 @@
 // Admin & Analytics Service Prisma Schema
 
 generator client {
-  provider = "prisma-client-js"
-  output   = "../node_modules/.prisma/admin-client"
+  provider        = "prisma-client-js"
+  output          = "../node_modules/.prisma/admin-client"
+  previewFeatures = ["multiSchema"]
 }
 
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
+  schemas  = ["admin_service"]
 }
 
 model ActivityLog {
@@ -25,6 +27,7 @@ model ActivityLog {
   @@index([action])
   @@index([createdAt])
   @@map("activity_logs")
+  @@schema("admin_service")
 }
 
 model GDPRConsentLog {
@@ -36,6 +39,7 @@ model GDPRConsentLog {
   createdAt   DateTime @default(now())
 
   @@map("gdpr_consent_logs")
+  @@schema("admin_service")
 }
 
 model SupportTicket {
@@ -54,6 +58,7 @@ model SupportTicket {
   messages TicketMessage[]
 
   @@map("support_tickets")
+  @@schema("admin_service")
 }
 
 model TicketMessage {
@@ -67,6 +72,7 @@ model TicketMessage {
   ticket SupportTicket @relation(fields: [ticketId], references: [id])
 
   @@map("ticket_messages")
+  @@schema("admin_service")
 }
 
 model KnowledgeBaseArticle {
@@ -83,6 +89,7 @@ model KnowledgeBaseArticle {
   updatedAt   DateTime @updatedAt
 
   @@map("knowledge_base_articles")
+  @@schema("admin_service")
 }
 
 model Webhook {
@@ -98,6 +105,7 @@ model Webhook {
   deliveries WebhookDelivery[]
 
   @@map("webhooks")
+  @@schema("admin_service")
 }
 
 model WebhookDelivery {
@@ -115,6 +123,7 @@ model WebhookDelivery {
   webhook Webhook @relation(fields: [webhookId], references: [id])
 
   @@map("webhook_deliveries")
+  @@schema("admin_service")
 }
 
 model IntegrationConfig {
@@ -132,6 +141,7 @@ model IntegrationConfig {
   logs IntegrationLog[]
 
   @@map("integration_configs")
+  @@schema("admin_service")
 }
 
 model IntegrationLog {
@@ -146,6 +156,7 @@ model IntegrationLog {
   integration IntegrationConfig @relation(fields: [integrationId], references: [id])
 
   @@map("integration_logs")
+  @@schema("admin_service")
 }
 
 model AIChat {
@@ -157,4 +168,5 @@ model AIChat {
   updatedAt DateTime @updatedAt
 
   @@map("ai_chats")
+  @@schema("admin_service")
 }

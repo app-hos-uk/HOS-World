@@ -1,5 +1,7 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
+import { ObservabilityModule } from '@hos-marketplace/observability';
+import { EventBusModule } from '@hos-marketplace/events';
 import { DatabaseModule } from './database/database.module';
 import { EmailModule } from './email/email.module';
 import { NotificationModule } from './notification/notification.module';
@@ -35,6 +37,8 @@ import { HealthModule } from './health/health.module';
       ignoreEnvFile:
         process.env.NODE_ENV === 'test' || process.env.IGNORE_ENV_FILE === 'true',
     }),
+    ObservabilityModule.register({ serviceName: 'notification-service' }),
+    EventBusModule.register({ serviceName: 'notification-service', redisUrl: process.env.REDIS_URL }),
 
     // Core
     DatabaseModule,

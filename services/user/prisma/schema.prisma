@@ -1,13 +1,15 @@
 // User Microservice Database Schema
 
 generator client {
-  provider = "prisma-client-js"
-  output   = "../node_modules/.prisma/user-client"
+  provider        = "prisma-client-js"
+  output          = "../node_modules/.prisma/user-client"
+  previewFeatures = ["multiSchema"]
 }
 
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
+  schemas  = ["user_service"]
 }
 
 model User {
@@ -43,6 +45,7 @@ model User {
   collections                  Collection[]
 
   @@map("users")
+  @@schema("user_service")
 }
 
 model Customer {
@@ -54,6 +57,7 @@ model Customer {
   themePreference    String?
 
   @@map("customers")
+  @@schema("user_service")
 }
 
 model Address {
@@ -77,6 +81,7 @@ model Address {
 
   @@index([userId])
   @@map("addresses")
+  @@schema("user_service")
 }
 
 model CustomerGroup {
@@ -90,6 +95,7 @@ model CustomerGroup {
   updatedAt   DateTime @updatedAt
 
   @@map("customer_groups")
+  @@schema("user_service")
 }
 
 model Badge {
@@ -104,6 +110,7 @@ model Badge {
   createdAt   DateTime    @default(now())
 
   @@map("badges")
+  @@schema("user_service")
 }
 
 model UserBadge {
@@ -117,6 +124,7 @@ model UserBadge {
 
   @@unique([userId, badgeId])
   @@map("user_badges")
+  @@schema("user_service")
 }
 
 model UserQuest {
@@ -130,6 +138,7 @@ model UserQuest {
   updatedAt DateTime @updatedAt
 
   @@map("user_quests")
+  @@schema("user_service")
 }
 
 model Collection {
@@ -144,4 +153,5 @@ model Collection {
   updatedAt   DateTime @updatedAt
 
   @@map("collections")
+  @@schema("user_service")
 }

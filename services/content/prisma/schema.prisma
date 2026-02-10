@@ -1,13 +1,15 @@
 // Content & Engagement Service Prisma Schema
 
 generator client {
-  provider = "prisma-client-js"
-  output   = "../node_modules/.prisma/content-client"
+  provider        = "prisma-client-js"
+  output          = "../node_modules/.prisma/content-client"
+  previewFeatures = ["multiSchema"]
 }
 
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
+  schemas  = ["content_service"]
 }
 
 // ──────────────────────────────────────────────
@@ -36,6 +38,7 @@ model Promotion {
   coupons Coupon[]
 
   @@map("promotions")
+  @@schema("content_service")
 }
 
 model Coupon {
@@ -55,6 +58,7 @@ model Coupon {
   usages    CouponUsage[]
 
   @@map("coupons")
+  @@schema("content_service")
 }
 
 model CouponUsage {
@@ -67,6 +71,7 @@ model CouponUsage {
   coupon Coupon @relation(fields: [couponId], references: [id])
 
   @@map("coupon_usages")
+  @@schema("content_service")
 }
 
 // ──────────────────────────────────────────────
@@ -88,6 +93,7 @@ model Badge {
   userBadges UserBadge[]
 
   @@map("badges")
+  @@schema("content_service")
 }
 
 model UserBadge {
@@ -100,6 +106,7 @@ model UserBadge {
 
   @@unique([userId, badgeId])
   @@map("user_badges")
+  @@schema("content_service")
 }
 
 model Quest {
@@ -120,6 +127,7 @@ model Quest {
   userQuests UserQuest[]
 
   @@map("quests")
+  @@schema("content_service")
 }
 
 model UserQuest {
@@ -136,6 +144,7 @@ model UserQuest {
 
   @@unique([userId, questId])
   @@map("user_quests")
+  @@schema("content_service")
 }
 
 // ──────────────────────────────────────────────
@@ -152,6 +161,7 @@ model Collection {
   updatedAt   DateTime @updatedAt
 
   @@map("collections")
+  @@schema("content_service")
 }
 
 model SharedItem {
@@ -165,6 +175,7 @@ model SharedItem {
   createdAt    DateTime @default(now())
 
   @@map("shared_items")
+  @@schema("content_service")
 }
 
 // ──────────────────────────────────────────────
@@ -184,6 +195,7 @@ model Fandom {
   characters Character[]
 
   @@map("fandoms")
+  @@schema("content_service")
 }
 
 model Character {
@@ -200,6 +212,7 @@ model Character {
   fandom Fandom @relation(fields: [fandomId], references: [id])
 
   @@map("characters")
+  @@schema("content_service")
 }
 
 // ──────────────────────────────────────────────
@@ -217,4 +230,5 @@ model MarketingMaterial {
   updatedAt DateTime @updatedAt
 
   @@map("marketing_materials")
+  @@schema("content_service")
 }

@@ -1,13 +1,15 @@
 // Product Catalog Microservice Database Schema
 
 generator client {
-  provider = "prisma-client-js"
-  output   = "../node_modules/.prisma/product-client"
+  provider        = "prisma-client-js"
+  output          = "../node_modules/.prisma/product-client"
+  previewFeatures = ["multiSchema"]
 }
 
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
+  schemas  = ["product_service"]
 }
 
 model Product {
@@ -48,6 +50,7 @@ model Product {
   @@index([status])
   @@index([slug])
   @@map("products")
+  @@schema("product_service")
 }
 
 model ProductImage {
@@ -61,6 +64,7 @@ model ProductImage {
 
   @@index([productId])
   @@map("product_images")
+  @@schema("product_service")
 }
 
 model ProductVariation {
@@ -77,6 +81,7 @@ model ProductVariation {
 
   @@index([productId])
   @@map("product_variations")
+  @@schema("product_service")
 }
 
 model ProductAttribute {
@@ -95,6 +100,7 @@ model ProductAttribute {
   @@index([productId])
   @@index([attributeId])
   @@map("product_attributes")
+  @@schema("product_service")
 }
 
 model Attribute {
@@ -107,6 +113,7 @@ model Attribute {
   createdAt         DateTime           @default(now())
 
   @@map("attributes")
+  @@schema("product_service")
 }
 
 model AttributeValue {
@@ -120,6 +127,7 @@ model AttributeValue {
 
   @@index([attributeId])
   @@map("attribute_values")
+  @@schema("product_service")
 }
 
 model ProductBundleItem {
@@ -131,6 +139,7 @@ model ProductBundleItem {
 
   @@index([productId])
   @@map("product_bundle_items")
+  @@schema("product_service")
 }
 
 model VolumePricing {
@@ -143,6 +152,7 @@ model VolumePricing {
 
   @@index([productId])
   @@map("volume_pricings")
+  @@schema("product_service")
 }
 
 model Seller {
@@ -153,6 +163,7 @@ model Seller {
   products  Product[]
 
   @@map("sellers")
+  @@schema("product_service")
 }
 
 model Category {
@@ -170,6 +181,7 @@ model Category {
 
   @@index([parentId])
   @@map("categories")
+  @@schema("product_service")
 }
 
 model Tag {
@@ -179,6 +191,7 @@ model Tag {
   createdAt DateTime @default(now())
 
   @@map("tags")
+  @@schema("product_service")
 }
 
 model Fandom {
@@ -192,6 +205,7 @@ model Fandom {
   updatedAt   DateTime @updatedAt
 
   @@map("fandoms")
+  @@schema("product_service")
 }
 
 model Character {
@@ -202,4 +216,5 @@ model Character {
   createdAt DateTime @default(now())
 
   @@map("characters")
+  @@schema("product_service")
 }

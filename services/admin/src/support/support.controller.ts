@@ -1,6 +1,6 @@
 import { Controller, Get, Post, Put, Body, Param, Query, UseGuards } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
-import { GatewayAuthGuard, Roles, CurrentUser, AuthUser } from '@hos-marketplace/auth-common';
+import { GatewayAuthGuard, RolesGuard, Roles, CurrentUser, AuthUser } from '@hos-marketplace/auth-common';
 import { SupportService } from './support.service';
 
 @ApiTags('support')
@@ -29,7 +29,7 @@ export class SupportController {
   }
 
   @Put('tickets/:id/status')
-  @UseGuards(GatewayAuthGuard)
+  @UseGuards(GatewayAuthGuard, RolesGuard)
   @Roles('ADMIN')
   updateStatus(@Param('id') id: string, @Body() body: { status: string; assignedTo?: string }) {
     return this.supportService.updateStatus(id, body.status, body.assignedTo);

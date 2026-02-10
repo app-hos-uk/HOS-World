@@ -1,13 +1,15 @@
 // Influencer Service Prisma Schema
 
 generator client {
-  provider = "prisma-client-js"
-  output   = "../node_modules/.prisma/influencer-client"
+  provider        = "prisma-client-js"
+  output          = "../node_modules/.prisma/influencer-client"
+  previewFeatures = ["multiSchema"]
 }
 
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
+  schemas  = ["influencer_service"]
 }
 
 model Influencer {
@@ -33,6 +35,7 @@ model Influencer {
   referrals    Referral[]
 
   @@map("influencers")
+  @@schema("influencer_service")
 }
 
 model InfluencerStorefront {
@@ -51,6 +54,7 @@ model InfluencerStorefront {
   influencer Influencer @relation(fields: [influencerId], references: [id])
 
   @@map("influencer_storefronts")
+  @@schema("influencer_service")
 }
 
 model InfluencerProductLink {
@@ -68,6 +72,7 @@ model InfluencerProductLink {
   influencer Influencer @relation(fields: [influencerId], references: [id])
 
   @@map("influencer_product_links")
+  @@schema("influencer_service")
 }
 
 model InfluencerCampaign {
@@ -85,6 +90,7 @@ model InfluencerCampaign {
   influencer Influencer @relation(fields: [influencerId], references: [id])
 
   @@map("influencer_campaigns")
+  @@schema("influencer_service")
 }
 
 model Referral {
@@ -101,6 +107,7 @@ model Referral {
   influencer Influencer @relation(fields: [influencerId], references: [id])
 
   @@map("referrals")
+  @@schema("influencer_service")
 }
 
 model InfluencerCommission {
@@ -117,6 +124,7 @@ model InfluencerCommission {
   influencer Influencer @relation(fields: [influencerId], references: [id])
 
   @@map("influencer_commissions")
+  @@schema("influencer_service")
 }
 
 model InfluencerPayout {
@@ -133,6 +141,7 @@ model InfluencerPayout {
   influencer Influencer @relation(fields: [influencerId], references: [id])
 
   @@map("influencer_payouts")
+  @@schema("influencer_service")
 }
 
 model InfluencerInvitation {
@@ -146,4 +155,5 @@ model InfluencerInvitation {
   updatedAt   DateTime  @updatedAt
 
   @@map("influencer_invitations")
+  @@schema("influencer_service")
 }

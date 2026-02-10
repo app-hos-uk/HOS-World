@@ -1,6 +1,6 @@
 import { Controller, Get, Post, Body, Param, Req, UseGuards } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
-import { GatewayAuthGuard, CurrentUser, AuthUser, Roles } from '@hos-marketplace/auth-common';
+import { GatewayAuthGuard, RolesGuard, CurrentUser, AuthUser, Roles } from '@hos-marketplace/auth-common';
 import { GdprService } from './gdpr.service';
 
 @ApiTags('gdpr')
@@ -23,7 +23,7 @@ export class GdprController {
   exportMyData(@CurrentUser() user: AuthUser) { return this.gdprService.exportUserData(user.id); }
 
   @Get('export/:userId')
-  @UseGuards(GatewayAuthGuard)
+  @UseGuards(GatewayAuthGuard, RolesGuard)
   @Roles('ADMIN')
   exportUserData(@Param('userId') userId: string) { return this.gdprService.exportUserData(userId); }
 }

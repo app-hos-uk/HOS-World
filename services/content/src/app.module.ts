@@ -13,7 +13,7 @@ import { FandomsModule } from './fandoms/fandoms.module';
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),
     ObservabilityModule.register({ serviceName: 'content-service' }),
-    EventBusModule.register({ name: 'content-service', url: process.env.REDIS_URL || 'redis://localhost:6379' }),
+    EventBusModule.register({ serviceName: 'content-service', redisUrl: process.env.REDIS_URL || 'redis://localhost:6379' }),
     DatabaseModule,
     HealthModule,
     CmsModule,

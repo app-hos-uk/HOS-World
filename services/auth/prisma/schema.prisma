@@ -5,13 +5,15 @@
 // shares the same PostgreSQL database as the monolith.
 
 generator client {
-  provider = "prisma-client-js"
-  output   = "../node_modules/.prisma/auth-client"
+  provider        = "prisma-client-js"
+  output          = "../node_modules/.prisma/auth-client"
+  previewFeatures = ["multiSchema"]
 }
 
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
+  schemas  = ["auth_service", "public"]
 }
 
 // ─── User (core auth fields) ──────────────────────────────────────────────────
@@ -60,6 +62,7 @@ model User {
   customerGroupId String?
 
   @@map("users")
+  @@schema("auth_service")
 }
 
 model RefreshToken {
@@ -74,6 +77,7 @@ model RefreshToken {
   @@index([userId])
   @@index([expiresAt])
   @@map("refresh_tokens")
+  @@schema("auth_service")
 }
 
 model OAuthAccount {
@@ -88,6 +92,7 @@ model OAuthAccount {
   @@unique([provider, providerId])
   @@index([userId])
   @@map("oauth_accounts")
+  @@schema("auth_service")
 }
 
 model GDPRConsentLog {
@@ -103,6 +108,7 @@ model GDPRConsentLog {
 
   @@index([userId])
   @@map("gdpr_consent_logs")
+  @@schema("auth_service")
 }
 
 // ─── Multi-Tenancy ────────────────────────────────────────────────────────────
@@ -118,6 +124,7 @@ model Tenant {
   updatedAt DateTime     @updatedAt
 
   @@map("tenants")
+  @@schema("auth_service")
 }
 
 model TenantUser {
@@ -133,6 +140,7 @@ model TenantUser {
 
   @@unique([tenantId, userId])
   @@map("tenant_users")
+  @@schema("auth_service")
 }
 
 // ─── RBAC ─────────────────────────────────────────────────────────────────────
@@ -147,32 +155,39 @@ model PermissionRole {
   updatedAt   DateTime @updatedAt
 
   @@map("permission_roles")
+  @@schema("auth_service")
 }
 
 // ─── Profile creation (write access during registration) ──────────────────────
 
 model Customer {
-  id                 String  @id @default(uuid())
-  userId             String  @unique
-  user               User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id                 String   @id @default(uuid())
+  userId             String   @unique
+  user               User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   country            String?
-  currencyPreference String  @default("GBP")
+  currencyPreference String   @default("GBP")
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
 
   @@map("customers")
+  @@schema("auth_service")
 }
 
 model Seller {
-  id              String  @id @default(uuid())
-  userId          String  @unique
-  user            User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id              String   @id @default(uuid())
+  userId          String   @unique
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   storeName       String
-  slug            String  @unique
-  country         String?
-  timezone        String?
-  sellerType      String  @default("B2C_SELLER")
-  logisticsOption String  @default("HOS_LOGISTICS")
+  slug            String   @unique
+  country         String   @default("GB")
+  timezone        String   @default("UTC")
+  sellerType      String   @default("B2C_SELLER")
+  logisticsOption String   @default("HOS_LOGISTICS")
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
 
   @@map("sellers")
+  @@schema("auth_service")
 }
 
 model SellerInvitation {
@@ -188,6 +203,7 @@ model SellerInvitation {
   updatedAt  DateTime @updatedAt
 
   @@map("seller_invitations")
+  @@schema("auth_service")
 }
 
 // ─── Gamification (read/write during registration) ────────────────────────────
@@ -201,6 +217,7 @@ model Character {
   createdAt DateTime @default(now())
 
   @@map("characters")
+  @@schema("auth_service")
 }
 
 model Badge {
@@ -212,6 +229,7 @@ model Badge {
   createdAt   DateTime    @default(now())
 
   @@map("badges")
+  @@schema("auth_service")
 }
 
 model UserBadge {
@@ -224,6 +242,7 @@ model UserBadge {
 
   @@unique([userId, badgeId])
   @@map("user_badges")
+  @@schema("auth_service")
 }
 
 enum UserRole {
@@ -239,4 +258,6 @@ enum UserRole {
   MARKETING
   FINANCE
   CMS_EDITOR
+
+  @@schema("auth_service")
 }

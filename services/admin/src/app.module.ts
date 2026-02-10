@@ -15,7 +15,7 @@ import { IntegrationsModule } from './integrations/integrations.module';
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),
     ObservabilityModule.register({ serviceName: 'admin-service' }),
-    EventBusModule.register({ name: 'admin-service', url: process.env.REDIS_URL || 'redis://localhost:6379' }),
+    EventBusModule.register({ serviceName: 'admin-service', redisUrl: process.env.REDIS_URL || 'redis://localhost:6379' }),
     DatabaseModule,
     HealthModule,
     ActivityModule,

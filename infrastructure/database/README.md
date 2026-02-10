@@ -6,58 +6,95 @@ Phase 4 introduces per-service PostgreSQL schemas to enforce data ownership
 boundaries between microservices. All services still share a single PostgreSQL
 instance (same database), but each service's tables live in a dedicated schema.
 
-## Migration Strategy
+## Current State
 
-### Step 1: Create Schemas
-Run `schema-decomposition.sql` against your PostgreSQL database:
+| Service      | Schema               | Port | Prisma multiSchema | Cross-Schema Views |
+|--------------|---------------------|------|--------------------|--------------------|
+| Monolith API | public              | 3001 | No                 | N/A                |
+| Auth         | auth_service        | 3005 | Yes                | -                  |
+| User         | user_service        | 3006 | Yes                | -                  |
+| Product      | product_service     | 3007 | Yes                | -                  |
+| Order        | order_service       | 3008 | Yes                | v_users, v_sellers |
+| Payment      | payment_service     | 3009 | Yes                | v_orders           |
+| Notification | notification_service| 3003 | Yes                | v_users            |
+| Search       | search_service + product_service (read) | 3004 | Yes | - |
+| Inventory    | inventory_service   | 3010 | Yes                | -                  |
+| Seller       | seller_service      | 3011 | Yes                | -                  |
+| Influencer   | influencer_service  | 3012 | Yes                | v_products         |
+| Content      | content_service     | 3013 | Yes                | -                  |
+| Admin        | admin_service       | 3014 | Yes                | v_users            |
 
-```bash
-psql $DATABASE_URL -f infrastructure/database/schema-decomposition.sql
+## How It Works
+
+### Prisma multiSchema
+
+Each microservice's `prisma/schema.prisma` uses the `multiSchema` preview feature:
+
+```prisma
+generator client {
+  provider        = "prisma-client-js"
+  output          = "../node_modules/.prisma/<service>-client"
+  previewFeatures = ["multiSchema"]
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+  schemas  = ["<service>_service"]
+}
+
+model MyModel {
+  id String @id @default(uuid())
+  // ...
+  @@map("my_table")
+  @@schema("<service>_service")
+}
 ```
 
-### Step 2: Update Service DATABASE_URL
-Append `?schema=<service_schema>` to each service's `DATABASE_URL`:
+### DATABASE_URL
+
+Each service's `DATABASE_URL` in docker-compose.yml includes `?schema=<service>_service`:
 
 ```
-# Example for auth-service:
-DATABASE_URL=postgresql://user:pass@host:5432/hos_marketplace?schema=auth_service
+DATABASE_URL=postgresql://user:pass@postgres:5432/hos_marketplace?schema=auth_service
 ```
 
-### Step 3: Migrate Tables Gradually
-For each service, update the Prisma schema to use the new schema and run:
+### Cross-Schema Views
 
-```bash
-cd services/<service>
-npx prisma migrate dev --name move-to-own-schema
-```
+When a service needs to read data owned by another service, a read-only SQL view
+is created in the consuming service's schema. Views are defined in `init-schemas.sh`:
 
-### Step 4: Cross-Schema Views (Optional)
-If a service needs to read data from another service's schema, create a
-read-only SQL view. See examples in `schema-decomposition.sql`.
+- `order_service.v_users` -- user email/name from auth_service
+- `order_service.v_sellers` -- seller info from seller_service
+- `notification_service.v_users` -- user email for sending notifications
+- `admin_service.v_users` -- user info for activity/support dashboards
+- `payment_service.v_orders` -- order info for payment reconciliation
+- `influencer_service.v_products` -- product info for influencer links
 
-## Schema Mapping
+### Cross-Service Writes
 
-| Service     | Schema             | Port | Tables                                          |
-|-------------|-------------------|------|------------------------------------------------|
-| Auth        | auth_service      | 3005 | users, refresh_tokens, oauth_accounts, ...      |
-| User        | user_service      | 3006 | customers, addresses, customer_groups, ...      |
-| Product     | product_service   | 3007 | products, categories, attributes, tags, ...     |
-| Order       | order_service     | 3008 | orders, carts, returns, gift_cards, ...         |
-| Payment     | payment_service   | 3009 | payments, transactions, settlements, ...        |
-| Notification| notification_service | 3003 | notifications, whatsapp_*, ...               |
-| Search      | search_service    | 3004 | (mostly Elasticsearch/Meilisearch)              |
-| Inventory   | inventory_service | 3010 | warehouses, inventory, shipping, fulfillment, ...|
-| Seller      | seller_service    | 3011 | sellers, submissions, reviews, themes, ...      |
-| Influencer  | influencer_service| 3012 | influencers, storefronts, campaigns, ...         |
-| Content     | content_service   | 3013 | promotions, badges, quests, fandoms, ...        |
-| Admin       | admin_service     | 3014 | activity_logs, support_tickets, webhooks, ...   |
+Cross-service writes are **forbidden**. Use the Redis event bus instead:
+- Order service emits `order.order.created` -- notification service reacts
+- Product service emits `product.product.updated` -- search service re-indexes
+- Auth service emits `auth.user.registered` -- user service creates profile
 
-## Important Notes
+## Files
 
-- **This is a gradual migration.** Services continue to work against the
-  `public` schema until explicitly migrated.
-- **Cross-service writes are forbidden.** Use events (Redis) for inter-service
-  communication.
-- **Cross-service reads** should go through the API Gateway or event-driven
-  data replication, not direct database queries.
-- **Phase 5** will introduce per-service database users for security hardening.
+| File | Purpose |
+|------|---------|
+| `init-schemas.sh` | Mounted into PostgreSQL container; creates schemas, grants, views |
+| `schema-decomposition.sql` | Reference document with schema mapping |
+| `README.md` | This file |
+
+## Migration Steps (already completed)
+
+1. Added `previewFeatures = ["multiSchema"]` and `schemas = [...]` to all 12 service Prisma schemas
+2. Added `@@schema("<service>_service")` to every model and enum in each service
+3. Updated `DATABASE_URL` in docker-compose.yml with `?schema=<service>_service`
+4. Updated `init-schemas.sh` with schema creation, grants, default privileges, and cross-schema views
+
+## Next Steps (Phase 5)
+
+- Create per-service PostgreSQL users with restricted schema access
+- Move high-traffic schemas to separate database instances
+- Replace remaining cross-schema SQL views with event-driven data replication

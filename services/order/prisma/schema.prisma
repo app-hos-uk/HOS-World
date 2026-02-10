@@ -1,13 +1,15 @@
 // Order Microservice Database Schema
 
 generator client {
-  provider = "prisma-client-js"
-  output   = "../node_modules/.prisma/order-client"
+  provider        = "prisma-client-js"
+  output          = "../node_modules/.prisma/order-client"
+  previewFeatures = ["multiSchema"]
 }
 
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
+  schemas  = ["order_service"]
 }
 
 model Order {
@@ -35,6 +37,7 @@ model Order {
   @@index([status])
   @@index([orderNumber])
   @@map("orders")
+  @@schema("order_service")
 }
 
 model OrderItem {
@@ -54,6 +57,7 @@ model OrderItem {
   @@index([orderId])
   @@index([productId])
   @@map("order_items")
+  @@schema("order_service")
 }
 
 model Cart {
@@ -65,6 +69,7 @@ model Cart {
   updatedAt DateTime   @updatedAt
 
   @@map("carts")
+  @@schema("order_service")
 }
 
 model CartItem {
@@ -79,6 +84,7 @@ model CartItem {
 
   @@index([cartId])
   @@map("cart_items")
+  @@schema("order_service")
 }
 
 model ReturnRequest {
@@ -98,6 +104,7 @@ model ReturnRequest {
   @@index([userId])
   @@index([status])
   @@map("return_requests")
+  @@schema("order_service")
 }
 
 model ReturnPolicy {
@@ -111,6 +118,7 @@ model ReturnPolicy {
   updatedAt   DateTime @updatedAt
 
   @@map("return_policies")
+  @@schema("order_service")
 }
 
 model GiftCard {
@@ -127,4 +135,5 @@ model GiftCard {
 
   @@index([code])
   @@map("gift_cards")
+  @@schema("order_service")
 }

@@ -1,11 +1,11 @@
 import { Controller, Get, Post, Put, Delete, Body, Param, Query, UseGuards } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
-import { GatewayAuthGuard, Roles } from '@hos-marketplace/auth-common';
+import { GatewayAuthGuard, RolesGuard, Roles } from '@hos-marketplace/auth-common';
 import { WebhooksService } from './webhooks.service';
 
 @ApiTags('webhooks')
 @Controller('webhooks')
-@UseGuards(GatewayAuthGuard)
+@UseGuards(GatewayAuthGuard, RolesGuard)
 @Roles('ADMIN', 'SELLER')
 export class WebhooksController {
   constructor(private readonly webhooksService: WebhooksService) {}

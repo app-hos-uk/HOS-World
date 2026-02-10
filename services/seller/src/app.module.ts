@@ -13,8 +13,8 @@ import { ReviewsModule } from './reviews/reviews.module';
     ConfigModule.forRoot({ isGlobal: true }),
     ObservabilityModule.register({ serviceName: 'seller-service' }),
     EventBusModule.register({
-      name: 'seller-service',
-      url: process.env.REDIS_URL || 'redis://localhost:6379',
+      serviceName: 'seller-service',
+      redisUrl: process.env.REDIS_URL || 'redis://localhost:6379',
     }),
     DatabaseModule,
     HealthModule,

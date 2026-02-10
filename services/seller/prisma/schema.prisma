@@ -1,13 +1,15 @@
 // Seller/Marketplace Service Prisma Schema
 
 generator client {
-  provider = "prisma-client-js"
-  output   = "../node_modules/.prisma/seller-client"
+  provider        = "prisma-client-js"
+  output          = "../node_modules/.prisma/seller-client"
+  previewFeatures = ["multiSchema"]
 }
 
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
+  schemas  = ["seller_service"]
 }
 
 model Seller {
@@ -45,6 +47,7 @@ model Seller {
   reviews        ProductReview[]
 
   @@map("sellers")
+  @@schema("seller_service")
 }
 
 model ProductSubmission {
@@ -63,6 +66,7 @@ model ProductSubmission {
   seller Seller @relation(fields: [sellerId], references: [id])
 
   @@map("product_submissions")
+  @@schema("seller_service")
 }
 
 model SellerInvitation {
@@ -80,6 +84,7 @@ model SellerInvitation {
   seller Seller? @relation(fields: [sellerId], references: [id])
 
   @@map("seller_invitations")
+  @@schema("seller_service")
 }
 
 model ProductReview {
@@ -99,6 +104,7 @@ model ProductReview {
   seller Seller? @relation(fields: [sellerId], references: [id])
 
   @@map("product_reviews")
+  @@schema("seller_service")
 }
 
 model Theme {
@@ -119,6 +125,7 @@ model Theme {
   settings SellerThemeSettings[]
 
   @@map("themes")
+  @@schema("seller_service")
 }
 
 model SellerThemeSettings {
@@ -134,4 +141,5 @@ model SellerThemeSettings {
 
   @@unique([sellerId, themeId])
   @@map("seller_theme_settings")
+  @@schema("seller_service")
 }

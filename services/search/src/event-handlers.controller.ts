@@ -1,5 +1,13 @@
 import { Controller, Logger } from '@nestjs/common';
 import { EventPattern, Payload } from '@nestjs/microservices';
+import {
+  PRODUCT_EVENTS,
+  DomainEvent,
+  ProductCreatedPayload,
+  ProductUpdatedPayload,
+  ProductDeletedPayload,
+  ProductPriceChangedPayload,
+} from '@hos-marketplace/events';
 import { ElasticSearchService } from './elasticsearch/search.service';
 import { MeilisearchService } from './meilisearch/meilisearch.service';
 import { SearchPrismaService } from './database/prisma.service';
@@ -20,12 +28,12 @@ export class EventHandlersController {
     private readonly prisma: SearchPrismaService,
   ) {}
 
-  @EventPattern('product.created')
-  async handleProductCreated(@Payload() data: any) {
-    this.logger.log(`Product created event received: ${data?.productId || data?.id}`);
+  @EventPattern(PRODUCT_EVENTS.CREATED)
+  async handleProductCreated(@Payload() event: DomainEvent<ProductCreatedPayload>) {
+    const productId = event?.payload?.productId;
+    this.logger.log(`Product created event received: ${productId}`);
 
     try {
-      const productId = data?.productId || data?.id;
       if (!productId) return;
 
       const product = await this.prisma.product.findUnique({
@@ -43,16 +51,16 @@ export class EventHandlersController {
         this.meilisearch.indexProduct(product),
       ]);
     } catch (error: any) {
-      this.logger.error(`Failed to handle product.created: ${error?.message}`);
+      this.logger.error(`Failed to handle product.product.created: ${error?.message}`);
     }
   }
 
-  @EventPattern('product.updated')
-  async handleProductUpdated(@Payload() data: any) {
-    this.logger.log(`Product updated event received: ${data?.productId || data?.id}`);
+  @EventPattern(PRODUCT_EVENTS.UPDATED)
+  async handleProductUpdated(@Payload() event: DomainEvent<ProductUpdatedPayload>) {
+    const productId = event?.payload?.productId;
+    this.logger.log(`Product updated event received: ${productId}`);
 
     try {
-      const productId = data?.productId || data?.id;
       if (!productId) return;
 
       const product = await this.prisma.product.findUnique({
@@ -70,16 +78,16 @@ export class EventHandlersController {
         this.meilisearch.indexProduct(product),
       ]);
     } catch (error: any) {
-      this.logger.error(`Failed to handle product.updated: ${error?.message}`);
+      this.logger.error(`Failed to handle product.product.updated: ${error?.message}`);
     }
   }
 
-  @EventPattern('product.deleted')
-  async handleProductDeleted(@Payload() data: any) {
-    this.logger.log(`Product deleted event received: ${data?.productId || data?.id}`);
+  @EventPattern(PRODUCT_EVENTS.DELETED)
+  async handleProductDeleted(@Payload() event: DomainEvent<ProductDeletedPayload>) {
+    const productId = event?.payload?.productId;
+    this.logger.log(`Product deleted event received: ${productId}`);
 
     try {
-      const productId = data?.productId || data?.id;
       if (!productId) return;
 
       await Promise.allSettled([
@@ -87,13 +95,13 @@ export class EventHandlersController {
         this.meilisearch.deleteProduct(productId),
       ]);
     } catch (error: any) {
-      this.logger.error(`Failed to handle product.deleted: ${error?.message}`);
+      this.logger.error(`Failed to handle product.product.deleted: ${error?.message}`);
     }
   }
 
-  @EventPattern('product.price_changed')
-  async handleProductPriceChanged(@Payload() data: any) {
+  @EventPattern(PRODUCT_EVENTS.PRICE_CHANGED)
+  async handleProductPriceChanged(@Payload() event: DomainEvent<ProductPriceChangedPayload>) {
     // Re-index the product when price changes
-    await this.handleProductUpdated(data);
+    await this.handleProductUpdated(event as any);
   }
 }

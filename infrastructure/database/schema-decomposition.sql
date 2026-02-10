@@ -1,141 +1,105 @@
 -- ──────────────────────────────────────────────────────────────────────────────
--- Phase 4: Database Schema Decomposition
+-- Phase 4: Database Schema Decomposition (REFERENCE DOCUMENT)
 -- ──────────────────────────────────────────────────────────────────────────────
 --
--- This script creates per-service PostgreSQL schemas for the HOS Marketplace
--- microservices. Each service gets its own schema within the same database.
+-- This file documents the per-service PostgreSQL schema layout for HOS Marketplace.
+-- The actual schema creation is handled by init-schemas.sh (mounted into the
+-- PostgreSQL container's docker-entrypoint-initdb.d/).
 --
--- Strategy:
---   1. Create a dedicated schema for each microservice.
---   2. Move relevant tables from the 'public' schema to the service schema.
---   3. Update each microservice's DATABASE_URL to include ?schema=<service_schema>
---   4. Create cross-schema views where services need to read from other schemas.
+-- Architecture:
+--   - Single PostgreSQL database, 12 service schemas + public (monolith).
+--   - Each microservice's Prisma schema uses @@schema("service_name") to target
+--     its own PostgreSQL schema via the multiSchema preview feature.
+--   - Cross-service reads use SQL views (created in init-schemas.sh).
+--   - Cross-service writes are forbidden; use Redis events instead.
 --
--- Run order:
---   Step 1: Create schemas (this file)
---   Step 2: Update service Prisma schemas to use the service schema
---   Step 3: Migrate tables progressively using Prisma migrate
---
--- IMPORTANT: This is a GRADUAL migration. All services initially share the
--- 'public' schema. Tables are moved one service at a time.
+-- Migration path:
+--   Step 1 (DONE): Prisma schemas annotated with @@schema + multiSchema enabled
+--   Step 2 (DONE): docker-compose DATABASE_URLs include ?schema=<service_schema>
+--   Step 3 (DONE): init-schemas.sh creates schemas, grants, default privileges,
+--                   and cross-schema read views
+--   Step 4 (FUTURE): Move to separate database instances per service
 -- ──────────────────────────────────────────────────────────────────────────────
 
--- ─── Create Service Schemas ──────────────────────────────────────────────────
 
-CREATE SCHEMA IF NOT EXISTS auth_service;
-COMMENT ON SCHEMA auth_service IS 'Auth Service: users, refresh_tokens, oauth_accounts, permission_roles';
+-- ─── Schema → Service → Tables Mapping ──────────────────────────────────────
 
-CREATE SCHEMA IF NOT EXISTS user_service;
-COMMENT ON SCHEMA user_service IS 'User Service: customers, addresses, customer_groups, wishlist';
+-- auth_service (port 3005):
+--   users, permission_roles, refresh_tokens, oauth_accounts,
+--   gdpr_consent_logs, tenants, tenant_users,
+--   customers (registration only), sellers (registration only),
+--   seller_invitations, characters, badges, user_badges
 
-CREATE SCHEMA IF NOT EXISTS product_service;
-COMMENT ON SCHEMA product_service IS 'Product Service: products, categories, attributes, tags, collections';
+-- user_service (port 3006):
+--   users (profile view), customers, addresses, customer_groups,
+--   badges, user_badges, user_quests, collections
 
-CREATE SCHEMA IF NOT EXISTS order_service;
-COMMENT ON SCHEMA order_service IS 'Order Service: orders, order_items, carts, returns, gift_cards';
+-- product_service (port 3007):
+--   products, product_images, product_variations, product_bundle_items,
+--   volume_pricings, product_attributes, attributes, attribute_values,
+--   sellers (read-only ref), categories, tags, fandoms, characters
 
-CREATE SCHEMA IF NOT EXISTS payment_service;
-COMMENT ON SCHEMA payment_service IS 'Payment Service: payments, transactions, settlements, currency';
+-- order_service (port 3008):
+--   orders, order_items, carts, cart_items,
+--   return_requests, return_policies, gift_cards
 
-CREATE SCHEMA IF NOT EXISTS notification_service;
-COMMENT ON SCHEMA notification_service IS 'Notification Service: notifications, whatsapp_*, newsletter';
+-- payment_service (port 3009):
+--   transactions, settlements, currencies, payout_accounts
 
-CREATE SCHEMA IF NOT EXISTS search_service;
-COMMENT ON SCHEMA search_service IS 'Search Service: search indexes, catalog entries';
-
-CREATE SCHEMA IF NOT EXISTS inventory_service;
-COMMENT ON SCHEMA inventory_service IS 'Inventory Service: warehouses, inventory_locations, stock_*, shipping, fulfillment, logistics, tax';
-
-CREATE SCHEMA IF NOT EXISTS seller_service;
-COMMENT ON SCHEMA seller_service IS 'Seller Service: sellers, product_submissions, seller_invitations, reviews, themes';
-
-CREATE SCHEMA IF NOT EXISTS influencer_service;
-COMMENT ON SCHEMA influencer_service IS 'Influencer Service: influencers, storefronts, campaigns, commissions, payouts, referrals';
-
-CREATE SCHEMA IF NOT EXISTS content_service;
-COMMENT ON SCHEMA content_service IS 'Content Service: promotions, coupons, badges, quests, collections, shared_items, fandoms, characters, marketing';
-
-CREATE SCHEMA IF NOT EXISTS admin_service;
-COMMENT ON SCHEMA admin_service IS 'Admin Service: activity_logs, gdpr, support_tickets, webhooks, integrations, ai_chats';
-
-
--- ─── Table-to-Schema Mapping ─────────────────────────────────────────────────
--- This mapping documents which tables belong to which service schema.
--- The actual table moves happen via ALTER TABLE ... SET SCHEMA or Prisma migrate.
---
--- auth_service:
---   users, permission_roles, refresh_tokens, oauth_accounts, tenants, tenant_users, stores, configs
---
--- user_service:
---   customers, addresses, customer_groups, wishlist_items
---
--- product_service:
---   products, product_images, product_variations, product_bundle_items, volume_pricings,
---   categories, attributes, attribute_values, product_attributes, tags, product_tags,
---   collections, catalog_entries, duplicate_products, product_pricings
---
--- order_service:
---   orders, order_items, order_notes, carts, cart_items,
---   return_policies, return_requests, return_items, gift_cards, gift_card_transactions
---
--- payment_service:
---   payments, transactions, settlements, order_settlements,
---   currency_exchange_rates, discrepancies
---
--- notification_service:
+-- notification_service (port 3003):
 --   notifications, whatsapp_conversations, whatsapp_messages, whatsapp_templates
---
--- search_service:
---   (uses Elasticsearch/Meilisearch; minimal PG tables)
---
--- inventory_service:
---   warehouses, inventory_locations, stock_reservations, stock_transfers, stock_movements,
---   shipping_methods, shipping_rules, fulfillment_centers, shipments, logistics_partners,
---   tax_zones, tax_classes, tax_rates
---
--- seller_service:
+
+-- search_service (port 3004):
+--   (reads from product_service schema via Prisma multiSchema)
+
+-- inventory_service (port 3010):
+--   warehouses, inventory_locations, stock_reservations, stock_transfers,
+--   stock_movements, shipping_methods, shipping_rules, fulfillment_centers,
+--   shipments, logistics_partners, tax_zones, tax_classes, tax_rates
+
+-- seller_service (port 3011):
 --   sellers, product_submissions, seller_invitations, product_reviews,
 --   themes, seller_theme_settings
---
--- influencer_service:
+
+-- influencer_service (port 3012):
 --   influencers, influencer_storefronts, influencer_product_links,
---   influencer_campaigns, referrals, influencer_commissions, influencer_payouts,
---   influencer_invitations
---
--- content_service:
---   promotions, coupons, coupon_usages, badges, user_badges, quests, user_quests,
---   collections (user), shared_items, fandoms, characters, marketing_materials
---
--- admin_service:
+--   influencer_campaigns, referrals, influencer_commissions,
+--   influencer_payouts, influencer_invitations
+
+-- content_service (port 3013):
+--   promotions, coupons, coupon_usages, badges, user_badges,
+--   quests, user_quests, collections, shared_items, fandoms,
+--   characters, marketing_materials
+
+-- admin_service (port 3014):
 --   activity_logs, gdpr_consent_logs, support_tickets, ticket_messages,
 --   knowledge_base_articles, webhooks, webhook_deliveries,
 --   integration_configs, integration_logs, ai_chats
 
 
--- ─── Cross-Schema Read Views ─────────────────────────────────────────────────
--- These views allow services to read data from other schemas without direct access.
--- They are read-only projections used for queries like "get user email for order".
+-- ─── Cross-Schema Read Views ────────────────────────────────────────────────
+-- Created by init-schemas.sh. These allow read-only access to data
+-- owned by other services without direct schema coupling.
 
--- Example: Order service needs to read user email for order confirmation
--- CREATE VIEW order_service.user_emails AS
---   SELECT id, email, "firstName", "lastName" FROM auth_service.users;
-
--- Example: Notification service needs user email for sending emails
--- CREATE VIEW notification_service.user_emails AS
---   SELECT id, email, "firstName", "lastName" FROM auth_service.users;
-
--- NOTE: Implement cross-schema views only as needed, when services actually
--- require data from other schemas. Start with the simplest possible setup
--- and add views as cross-service queries are identified.
+-- order_service.v_users      → reads auth_service.users (id, email, name, role)
+-- order_service.v_sellers    → reads seller_service.sellers (id, userId, storeName, slug)
+-- notification_service.v_users → reads auth_service.users
+-- admin_service.v_users      → reads auth_service.users
+-- payment_service.v_orders   → reads order_service.orders (id, orderNumber, userId, total)
+-- influencer_service.v_products → reads product_service.products (id, name, slug, price)
 
 
--- ─── Grant Permissions ───────────────────────────────────────────────────────
--- Each service's database user should only have access to its own schema.
--- During Phase 4, we use a single database user with access to all schemas.
--- In Phase 5 (production hardening), create per-service database users.
-
--- Example (to be applied in Phase 5):
--- CREATE USER auth_svc_user WITH PASSWORD 'xxx';
--- GRANT USAGE ON SCHEMA auth_service TO auth_svc_user;
--- GRANT ALL ON ALL TABLES IN SCHEMA auth_service TO auth_svc_user;
--- GRANT SELECT ON ALL TABLES IN SCHEMA public TO auth_svc_user; -- read-only fallback
+-- ─── Future: Per-Service Database Users (Phase 5) ───────────────────────────
+-- In production, each service should have its own database user with access
+-- restricted to its own schema + read-only views in other schemas.
+--
+-- CREATE USER auth_svc WITH PASSWORD 'xxx';
+-- GRANT USAGE ON SCHEMA auth_service TO auth_svc;
+-- GRANT ALL ON ALL TABLES IN SCHEMA auth_service TO auth_svc;
+-- GRANT SELECT ON order_service.v_users TO auth_svc;  -- if needed
+--
+-- CREATE USER order_svc WITH PASSWORD 'xxx';
+-- GRANT USAGE ON SCHEMA order_service TO order_svc;
+-- GRANT ALL ON ALL TABLES IN SCHEMA order_service TO order_svc;
+-- GRANT SELECT ON order_service.v_users TO order_svc;
+-- GRANT SELECT ON order_service.v_sellers TO order_svc;
