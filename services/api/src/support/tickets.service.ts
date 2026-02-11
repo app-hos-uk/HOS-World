@@ -26,7 +26,8 @@ export class TicketsService {
       | 'SELLER_SUPPORT'
       | 'OTHER';
     priority?: 'LOW' | 'MEDIUM' | 'HIGH' | 'URGENT';
-    initialMessage: string;
+    initialMessage?: string;
+    description?: string; // Frontend may send description instead of initialMessage
   }) {
     const ticketNumber = await this.generateTicketNumber();
 
@@ -35,25 +36,42 @@ export class TicketsService {
     const slaDueAt = new Date();
     slaDueAt.setHours(slaDueAt.getHours() + slaHours);
 
-    const ticket = await this.prisma.supportTicket.create({
-      data: {
-        ticketNumber,
-        userId: data.userId,
-        sellerId: data.sellerId,
-        orderId: data.orderId,
-        subject: data.subject,
-        category: data.category,
-        priority: data.priority || 'MEDIUM',
-        status: 'OPEN',
-        slaDueAt,
-        messages: {
-          create: {
-            userId: data.userId,
-            content: data.initialMessage,
-            isInternal: false,
-          },
+    // Resolve the message content — accept initialMessage OR description
+    const messageContent = data.initialMessage || data.description || '';
+    if (!messageContent.trim()) {
+      throw new BadRequestException('Ticket message content is required (initialMessage or description)');
+    }
+
+    // Normalize category: map legacy/invalid values to a valid TicketCategory enum value
+    const validCategories = [
+      'ORDER_INQUIRY', 'PRODUCT_QUESTION', 'RETURN_REQUEST',
+      'PAYMENT_ISSUE', 'TECHNICAL_SUPPORT', 'SELLER_SUPPORT', 'OTHER',
+    ];
+    const category = validCategories.includes(data.category) ? data.category : 'OTHER';
+
+    // Build the create data — only include optional relation fields when they have a value
+    // Prisma rejects explicit `undefined` for relation scalar fields
+    const createData: any = {
+      ticketNumber,
+      subject: data.subject,
+      category,
+      priority: data.priority || 'MEDIUM',
+      status: 'OPEN',
+      slaDueAt,
+      messages: {
+        create: {
+          content: messageContent,
+          isInternal: false,
+          ...(data.userId ? { userId: data.userId } : {}),
         },
       },
+    };
+    if (data.userId) createData.userId = data.userId;
+    if (data.sellerId) createData.sellerId = data.sellerId;
+    if (data.orderId) createData.orderId = data.orderId;
+
+    const ticket = await this.prisma.supportTicket.create({
+      data: createData,
       include: {
         user: {
           select: {

@@ -61,7 +61,8 @@ export class TicketsController {
           ],
         },
         priority: { type: 'string', enum: ['LOW', 'MEDIUM', 'HIGH', 'URGENT'] },
-        initialMessage: { type: 'string' },
+        initialMessage: { type: 'string', description: 'Initial message (alias: description)' },
+        description: { type: 'string', description: 'Alias for initialMessage' },
       },
     },
   })
@@ -75,21 +76,16 @@ export class TicketsController {
       sellerId?: string;
       orderId?: string;
       subject: string;
-      category:
-        | 'ORDER_INQUIRY'
-        | 'PRODUCT_QUESTION'
-        | 'RETURN_REQUEST'
-        | 'PAYMENT_ISSUE'
-        | 'TECHNICAL_SUPPORT'
-        | 'SELLER_SUPPORT'
-        | 'OTHER';
+      category: string;
       priority?: 'LOW' | 'MEDIUM' | 'HIGH' | 'URGENT';
-      initialMessage: string;
+      initialMessage?: string;
+      description?: string;
     },
     @Request() req: any,
   ): Promise<ApiResponse<any>> {
     const ticket = await this.ticketsService.createTicket({
       ...body,
+      category: body.category as any,
       userId: body.userId || req.user?.id,
     });
     return {
