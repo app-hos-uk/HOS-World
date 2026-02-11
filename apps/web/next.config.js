@@ -8,13 +8,11 @@ const nextConfig = {
     '@hos-marketplace/utils',
   ],
   images: {
-    domains: ['localhost'],
-    remotePatterns: [
-      {
-        protocol: 'https',
-        hostname: '**',
-      },
-    ],
+    // Disable server-side image optimization for all images.
+    // Product images come from arbitrary external sources (OneDrive, placehold.co,
+    // etc.) that return 403/400 when fetched server-side by the Next.js optimizer.
+    // Images are still lazy-loaded and responsive; they just skip the resize proxy.
+    unoptimized: true,
   },
   // ESLint configuration
   // Temporarily ignore ESLint during builds to allow deployment
