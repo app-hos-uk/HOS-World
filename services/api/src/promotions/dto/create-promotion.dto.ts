@@ -7,12 +7,24 @@ import {
   IsNumber,
   IsDateString,
   IsObject,
+  IsArray,
   ValidateNested,
+  IsIn,
 } from 'class-validator';
 import { Type } from 'class-transformer';
 import { PromotionType, PromotionStatus } from '@prisma/client';
 
 export class PromotionConditionDto {
+  @IsOptional()
+  @IsString()
+  @IsIn(['MIN_ORDER_AMOUNT', 'MIN_QUANTITY', 'NONE'])
+  requirementType?: 'MIN_ORDER_AMOUNT' | 'MIN_QUANTITY' | 'NONE';
+
+  @IsOptional()
+  @IsString()
+  @IsIn(['ALL', 'SPECIFIC_PRODUCTS', 'SPECIFIC_CATEGORIES'])
+  eligibilityType?: 'ALL' | 'SPECIFIC_PRODUCTS' | 'SPECIFIC_CATEGORIES';
+
   @IsOptional()
   @IsObject()
   cartValue?: {
@@ -21,12 +33,19 @@ export class PromotionConditionDto {
   };
 
   @IsOptional()
-  @IsObject()
+  @IsArray()
+  @IsString({ each: true })
   productIds?: string[];
 
   @IsOptional()
-  @IsObject()
+  @IsArray()
+  @IsString({ each: true })
   categoryIds?: string[];
+
+  @IsOptional()
+  @IsArray()
+  @IsString({ each: true })
+  collectionIds?: string[];
 
   @IsOptional()
   @IsString()
@@ -103,6 +122,10 @@ export class CreatePromotionDto {
   @IsOptional()
   @IsInt()
   usageLimit?: number;
+
+  @IsOptional()
+  @IsInt()
+  userUsageLimit?: number;
 
   @IsOptional()
   @IsString()

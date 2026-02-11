@@ -4,12 +4,15 @@ import { PromotionType, PromotionStatus } from '@prisma/client';
  * Promotion condition structure
  */
 export interface PromotionConditions {
+  requirementType?: 'MIN_ORDER_AMOUNT' | 'MIN_QUANTITY' | 'NONE';
+  eligibilityType?: 'ALL' | 'SPECIFIC_PRODUCTS' | 'SPECIFIC_CATEGORIES';
   cartValue?: {
     min?: number;
     max?: number;
   };
   productIds?: string[];
   categoryIds?: string[];
+  collectionIds?: string[];
   customerGroupId?: string;
   minQuantity?: number;
 }
@@ -41,6 +44,8 @@ export interface PromotionWithDetails {
   actions: PromotionActions;
   isStackable: boolean;
   usageLimit?: number | null;
+  usageCount: number;
+  userUsageLimit?: number | null;
   sellerId?: string | null;
   createdAt: Date;
   updatedAt: Date;

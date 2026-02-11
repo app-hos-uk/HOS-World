@@ -15,6 +15,8 @@ import {
 
 interface Seller {
   id: string;
+  /** Seller profile (Seller table) id – use this for View Products so Product.sellerId filter works */
+  sellerId?: string;
   email: string;
   firstName?: string;
   lastName?: string;
@@ -623,7 +625,7 @@ export default function AdminSellersPage() {
                                     )}
                                   </div>
                                   <div className="ml-3">
-                                    <p className="text-sm font-medium text-gray-900">{seller.storeName || 'No Store Name'}</p>
+                                    <p className="text-sm font-medium text-gray-900">{seller.storeName || seller.email || 'No Store Name'}</p>
                                     <p className="text-xs text-gray-500">{seller.email}</p>
                                   </div>
                                 </div>
@@ -846,7 +848,7 @@ export default function AdminSellersPage() {
                         </div>
                       )}
                       <div>
-                        <h3 className="text-xl font-semibold">{selectedSeller.storeName || 'No Store Name'}</h3>
+                        <h3 className="text-xl font-semibold">{selectedSeller.storeName || selectedSeller.email || 'No Store Name'}</h3>
                         <p className="text-gray-500">{selectedSeller.email}</p>
                         <div className="flex items-center gap-2 mt-2">
                           {getRoleBadge(selectedSeller.role)}
@@ -915,7 +917,7 @@ export default function AdminSellersPage() {
                     {/* Actions */}
                     <div className="flex flex-wrap gap-2 pt-4 border-t">
                       <a
-                        href={`/admin/products?seller=${(selectedSeller as any).sellerId || selectedSeller.id}`}
+                        href={`/admin/products?seller=${selectedSeller.sellerId ?? selectedSeller.id}`}
                         className="px-4 py-2 bg-purple-100 text-purple-700 rounded-lg hover:bg-purple-200"
                       >
                         View Products

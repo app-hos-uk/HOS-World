@@ -63,8 +63,8 @@ export default function AdminSupportPage() {
   const [newTicket, setNewTicket] = useState({
     subject: '',
     description: '',
-    priority: 'MEDIUM',
-    category: 'GENERAL',
+    priority: 'MEDIUM' as 'LOW' | 'MEDIUM' | 'HIGH' | 'URGENT',
+    category: 'OTHER' as 'ORDER_INQUIRY' | 'PRODUCT_QUESTION' | 'RETURN_REQUEST' | 'PAYMENT_ISSUE' | 'TECHNICAL_SUPPORT' | 'SELLER_SUPPORT' | 'OTHER',
   });
 
   // Stats
@@ -233,12 +233,21 @@ export default function AdminSupportPage() {
 
   const handleCreateTicket = async () => {
     if (creatingTicket) return;
+    if (!newTicket.subject.trim() || !newTicket.description.trim()) {
+      toast.error('Subject and description are required');
+      return;
+    }
     try {
       setCreatingTicket(true);
-      await apiClient.createSupportTicket(newTicket);
+      await apiClient.createSupportTicket({
+        subject: newTicket.subject.trim(),
+        category: newTicket.category,
+        priority: newTicket.priority,
+        initialMessage: newTicket.description.trim(),
+      });
       toast.success('Ticket created successfully');
       setShowCreateModal(false);
-      setNewTicket({ subject: '', description: '', priority: 'MEDIUM', category: 'GENERAL' });
+      setNewTicket({ subject: '', description: '', priority: 'MEDIUM', category: 'OTHER' });
       fetchTickets(filter);
       fetchStats(); // Refresh stats after creating new ticket
     } catch (err: any) {
@@ -643,16 +652,16 @@ export default function AdminSupportPage() {
                       <label className="block text-sm font-medium text-gray-700 mb-1">Category</label>
                       <select
                         value={newTicket.category}
-                        onChange={(e) => setNewTicket({ ...newTicket, category: e.target.value })}
+                        onChange={(e) => setNewTicket({ ...newTicket, category: e.target.value as typeof newTicket.category })}
                         className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
                       >
-                        <option value="GENERAL">General</option>
-                        <option value="ORDER">Order Issue</option>
-                        <option value="PRODUCT">Product Issue</option>
-                        <option value="PAYMENT">Payment Issue</option>
-                        <option value="SHIPPING">Shipping Issue</option>
-                        <option value="REFUND">Refund Request</option>
-                        <option value="ACCOUNT">Account Issue</option>
+                        <option value="OTHER">General / Other</option>
+                        <option value="ORDER_INQUIRY">Order Inquiry</option>
+                        <option value="PRODUCT_QUESTION">Product Question</option>
+                        <option value="PAYMENT_ISSUE">Payment Issue</option>
+                        <option value="RETURN_REQUEST">Return / Refund Request</option>
+                        <option value="TECHNICAL_SUPPORT">Technical Support</option>
+                        <option value="SELLER_SUPPORT">Seller Support</option>
                       </select>
                     </div>
                   </div>
@@ -665,7 +674,7 @@ export default function AdminSupportPage() {
                     </button>
                     <button
                       onClick={handleCreateTicket}
-                      disabled={creatingTicket || !newTicket.subject.trim()}
+                      disabled={creatingTicket || !newTicket.subject.trim() || !newTicket.description.trim()}
                       className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                       {creatingTicket ? 'Creating...' : 'Create Ticket'}

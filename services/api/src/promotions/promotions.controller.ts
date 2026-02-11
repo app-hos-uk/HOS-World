@@ -55,13 +55,23 @@ export class PromotionsController {
   @Get()
   @Public()
   @ApiOperation({
-    summary: 'Get all active promotions',
-    description: 'Retrieves all active promotions. Public endpoint.',
+    summary: 'Get promotions',
+    description:
+      'Retrieves promotions. Pass activeOnly=false to include DRAFT and expired promotions (for admin pages).',
   })
   @ApiQuery({ name: 'sellerId', required: false, description: 'Filter by seller ID' })
+  @ApiQuery({
+    name: 'activeOnly',
+    required: false,
+    description: 'When false, returns all promotions regardless of status/date',
+  })
   @SwaggerApiResponse({ status: 200, description: 'Promotions retrieved successfully' })
-  async findAll(@Query('sellerId') sellerId?: string): Promise<ApiResponse<any[]>> {
-    const promotions = await this.promotionsService.findAll(sellerId);
+  async findAll(
+    @Query('sellerId') sellerId?: string,
+    @Query('activeOnly') activeOnly?: string,
+  ): Promise<ApiResponse<any[]>> {
+    const onlyActive = activeOnly !== 'false';
+    const promotions = await this.promotionsService.findAll(sellerId, onlyActive);
     return {
       data: promotions,
       message: 'Promotions retrieved successfully',

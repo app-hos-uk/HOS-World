@@ -50,23 +50,30 @@ export class PromotionsService {
         actions: createDto.actions as any,
         isStackable: createDto.isStackable || false,
         usageLimit: createDto.usageLimit,
+        userUsageLimit: createDto.userUsageLimit,
         sellerId: createDto.sellerId,
       },
     });
   }
 
   /**
-   * Get all active promotions
+   * Get promotions. When activeOnly is true (default), only returns currently
+   * active promotions that have started and not expired. When false, returns all.
    */
-  async findAll(sellerId?: string) {
+  async findAll(sellerId?: string, activeOnly = true) {
     const now = new Date();
+    const where: any = activeOnly
+      ? {
+          status: PromotionStatus.ACTIVE,
+          startDate: { lte: now },
+          OR: [{ endDate: null }, { endDate: { gte: now } }],
+          ...(sellerId ? { sellerId } : { sellerId: null }), // Platform-wide or seller-specific
+        }
+      : {
+          ...(sellerId ? { sellerId } : {}),
+        };
     return this.prisma.promotion.findMany({
-      where: {
-        status: PromotionStatus.ACTIVE,
-        startDate: { lte: now },
-        OR: [{ endDate: null }, { endDate: { gte: now } }],
-        ...(sellerId ? { sellerId } : { sellerId: null }), // Platform-wide or seller-specific
-      },
+      where,
       orderBy: { priority: 'desc' },
       include: {
         coupons: {
@@ -108,12 +115,22 @@ export class PromotionsService {
   async update(id: string, updateDto: Partial<CreatePromotionDto>) {
     const promotion = await this.findOne(id);
 
-    const updateData: any = { ...updateDto };
+    const updateData: any = {
+      name: updateDto.name,
+      description: updateDto.description,
+      type: updateDto.type,
+      status: updateDto.status,
+      priority: updateDto.priority,
+      isStackable: updateDto.isStackable,
+      usageLimit: updateDto.usageLimit,
+      userUsageLimit: updateDto.userUsageLimit,
+      sellerId: updateDto.sellerId,
+    };
     if (updateDto.startDate) {
       updateData.startDate = new Date(updateDto.startDate);
     }
-    if (updateDto.endDate) {
-      updateData.endDate = new Date(updateDto.endDate);
+    if (updateDto.endDate !== undefined) {
+      updateData.endDate = updateDto.endDate ? new Date(updateDto.endDate) : null;
     }
     if (updateDto.conditions) {
       updateData.conditions = updateDto.conditions as any;
@@ -121,6 +138,10 @@ export class PromotionsService {
     if (updateDto.actions) {
       updateData.actions = updateDto.actions as any;
     }
+    // Remove undefined keys so Prisma doesn't try to set them
+    Object.keys(updateData).forEach((key) => {
+      if (updateData[key] === undefined) delete updateData[key];
+    });
 
     return this.prisma.promotion.update({
       where: { id },

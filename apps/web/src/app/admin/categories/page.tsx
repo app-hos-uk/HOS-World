@@ -28,7 +28,7 @@ interface Category {
 
 interface Stats {
   totalCategories: number;
-  rootCategories: number; // Phantoms (level 0)
+  rootCategories: number; // Fandoms (level 0)
   activeCategories: number;
   inactiveCategories: number;
   totalProducts: number;
@@ -89,9 +89,9 @@ export default function AdminCategoriesPage() {
       if (response?.data && Array.isArray(response.data)) {
         setCategories(response.data);
         calculateStats(response.data);
-        // Expand all Phantoms (top-level) by default
-        const phantomIds = new Set(response.data.map((c: Category) => c.id));
-        setExpandedIds(phantomIds);
+        // Expand all Fandoms (top-level) by default
+        const rootIds = new Set(response.data.map((c: Category) => c.id));
+        setExpandedIds(rootIds);
       } else {
         setCategories([]);
       }
@@ -148,11 +148,11 @@ export default function AdminCategoriesPage() {
       setSavingCategory(true);
       let level = 0;
       if (formData.parentId) {
-        const phantom = findCategory(categories, formData.parentId);
-        if (phantom) {
-          level = phantom.level + 1;
+        const parentCat = findCategory(categories, formData.parentId);
+        if (parentCat) {
+          level = parentCat.level + 1;
           if (level > 2) {
-            toast.error('Maximum fandom depth is 3 levels (Phantom → Fandom → Sub-fandom)');
+            toast.error('Maximum fandom depth is 3 levels (Fandom → Fandom → Sub-fandom)');
             return;
           }
         }
@@ -167,7 +167,7 @@ export default function AdminCategoriesPage() {
         order: formData.order,
         isActive: formData.isActive,
       });
-      toast.success(formData.parentId ? 'Fandom created successfully' : 'Phantom created successfully');
+      toast.success(formData.parentId ? 'Fandom created successfully' : 'Fandom created successfully');
       resetForm();
       fetchCategories();
     } catch (err: any) {
@@ -253,8 +253,8 @@ export default function AdminCategoriesPage() {
   };
 
   const handleMoveCategory = async (categoryId: string, direction: 'up' | 'down') => {
-    const phantom = findParentCategory(categories, categoryId);
-    const siblings = phantom ? phantom.children || [] : categories;
+    const parentCat = findParentCategory(categories, categoryId);
+    const siblings = parentCat ? parentCat.children || [] : categories;
     const index = siblings.findIndex(c => c.id === categoryId);
     if (index === -1) return;
 
@@ -282,9 +282,9 @@ export default function AdminCategoriesPage() {
     return null;
   };
 
-  const findParentCategory = (cats: Category[], id: string, phantom: Category | null = null): Category | null => {
+  const findParentCategory = (cats: Category[], id: string, parent: Category | null = null): Category | null => {
     for (const cat of cats) {
-      if (cat.id === id) return phantom;
+      if (cat.id === id) return parent;
       if (cat.children) {
         const found = findParentCategory(cat.children, id, cat);
         if (found !== null) return found;
@@ -595,7 +595,7 @@ export default function AdminCategoriesPage() {
           <div className="flex justify-between items-center">
             <div>
               <h1 className="text-2xl font-bold text-gray-900">Fandoms</h1>
-              <p className="text-gray-600 mt-1">Phantom → Fandom → Sub-fandom hierarchy</p>
+              <p className="text-gray-600 mt-1">Fandom → Fandom → Sub-fandom hierarchy</p>
             </div>
             <button
               onClick={() => {
@@ -607,9 +607,9 @@ export default function AdminCategoriesPage() {
                 });
               }}
               className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 flex items-center gap-2"
-              title="Create a new Phantom (top-level) or fandom under a Phantom"
+              title="Create a new Fandom (top-level) or fandom under a Fandom"
             >
-              <span>+</span> Create Phantom / Add Fandom
+              <span>+</span> Create Fandom / Add Fandom
             </button>
           </div>
 
@@ -621,7 +621,7 @@ export default function AdminCategoriesPage() {
                 <p className="text-2xl font-bold text-purple-600">{stats.totalCategories}</p>
               </div>
               <div className="bg-white rounded-lg shadow p-4">
-                <p className="text-sm text-gray-600">Phantom</p>
+                <p className="text-sm text-gray-600">Fandom</p>
                 <p className="text-2xl font-bold text-blue-600">{stats.rootCategories}</p>
               </div>
               <div className="bg-white rounded-lg shadow p-4">
@@ -708,7 +708,7 @@ export default function AdminCategoriesPage() {
           {showCreateForm && (
             <div className="bg-white rounded-lg shadow p-6">
               <h2 className="text-lg font-semibold mb-4">
-                {editingCategory ? 'Edit Fandom' : (formData.parentId ? 'Create New Fandom' : 'Create New Phantom')}
+                {editingCategory ? 'Edit Fandom' : (formData.parentId ? 'Create New Fandom' : 'Create New Fandom')}
               </h2>
               <form onSubmit={editingCategory ? handleUpdateCategory : handleCreateCategory} className="space-y-4">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -724,13 +724,13 @@ export default function AdminCategoriesPage() {
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Phantom</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Fandom</label>
                     <select
                       value={formData.parentId}
                       onChange={(e) => setFormData({ ...formData, parentId: e.target.value })}
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
                     >
-                      <option value="">None (Create as Phantom)</option>
+                      <option value="">None (Create as Fandom)</option>
                       {getAllCategoriesFlat(categories)
                         .filter((cat) => !editingCategory || cat.id !== editingCategory.id)
                         .filter((cat) => cat.level < 2)
@@ -841,7 +841,7 @@ export default function AdminCategoriesPage() {
                     disabled={savingCategory}
                     className="px-6 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
-                    {savingCategory ? 'Saving...' : (editingCategory ? 'Update Fandom' : (formData.parentId ? 'Create Fandom' : 'Create Phantom'))}
+                    {savingCategory ? 'Saving...' : (editingCategory ? 'Update Fandom' : (formData.parentId ? 'Create Fandom' : 'Create Fandom'))}
                   </button>
                   <button
                     type="button"
@@ -865,7 +865,7 @@ export default function AdminCategoriesPage() {
             <div className="p-4">
               {filteredCategories.length === 0 ? (
                 <div className="text-center py-8 text-gray-500">
-                  {searchTerm ? 'No fandoms match your search.' : 'No Phantoms or fandoms found. Create your first Phantom to get started.'}
+                  {searchTerm ? 'No fandoms match your search.' : 'No fandoms found. Create your first Fandom to get started.'}
                 </div>
               ) : viewMode === 'tree' ? (
                 <div className="space-y-2">{renderCategoryTree(filteredCategories)}</div>

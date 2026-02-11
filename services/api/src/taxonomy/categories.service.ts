@@ -25,28 +25,28 @@ export class CategoriesService {
   constructor(private prisma: PrismaService) {}
 
   async createCategory(data: CreateCategoryDto) {
-    // Validate Phantom (parent) if provided
-    let phantom: any = null;
+    // Validate Fandom (parent) if provided
+    let parentCategory: any = null;
     let level = 0;
     let path = '';
 
     if (data.parentId) {
-      phantom = await this.prisma.category.findUnique({
+      parentCategory = await this.prisma.category.findUnique({
         where: { id: data.parentId },
       });
 
-      if (!phantom) {
-        throw new NotFoundException('Phantom not found');
+      if (!parentCategory) {
+        throw new NotFoundException('Fandom not found');
       }
 
-      if (phantom.level >= 2) {
+      if (parentCategory.level >= 2) {
         throw new BadRequestException(
-          'Maximum category depth is 3 levels (Phantom, Category, Sub-category)',
+          'Maximum category depth is 3 levels (Fandom, Category, Sub-category)',
         );
       }
 
-      level = phantom.level + 1;
-      path = phantom.path ? `${phantom.path}/${slugify(data.name)}` : `/${slugify(data.name)}`;
+      level = parentCategory.level + 1;
+      path = parentCategory.path ? `${parentCategory.path}/${slugify(data.name)}` : `/${slugify(data.name)}`;
     } else {
       path = `/${slugify(data.name)}`;
     }
@@ -109,8 +109,8 @@ export class CategoriesService {
   }
 
   async getCategoryTree() {
-    // Get all Phantoms (level 0 - top-level categories)
-    const phantoms = await this.prisma.category.findMany({
+    // Get all Fandoms (level 0 - top-level categories)
+    const rootCategories = await this.prisma.category.findMany({
       where: {
         isActive: true,
         level: 0,
@@ -133,7 +133,7 @@ export class CategoriesService {
       orderBy: [{ order: 'asc' }, { name: 'asc' }],
     });
 
-    return phantoms;
+    return rootCategories;
   }
 
   async findOne(id: string) {
@@ -180,42 +180,42 @@ export class CategoriesService {
       throw new NotFoundException('Category not found');
     }
 
-    // Handle Phantom (parent) change
+    // Handle Fandom (parent) change
     let level = category.level;
     let path = category.path;
 
     if (data.parentId !== undefined && data.parentId !== category.parentId) {
       if (data.parentId === null) {
-        // Moving to Phantom (top level)
+        // Moving to Fandom (top level)
         level = 0;
         path = `/${slugify(data.name || category.name)}`;
       } else {
-        const newPhantom = await this.prisma.category.findUnique({
+        const newParentCategory = await this.prisma.category.findUnique({
           where: { id: data.parentId },
         });
 
-        if (!newPhantom) {
-          throw new NotFoundException('Phantom not found');
+        if (!newParentCategory) {
+          throw new NotFoundException('Fandom not found');
         }
 
-        if (newPhantom.level >= 2) {
+        if (newParentCategory.level >= 2) {
           throw new BadRequestException(
-            'Maximum category depth is 3 levels (Phantom, Category, Sub-category)',
+            'Maximum category depth is 3 levels (Fandom, Category, Sub-category)',
           );
         }
 
-        level = newPhantom.level + 1;
-        path = newPhantom.path
-          ? `${newPhantom.path}/${slugify(data.name || category.name)}`
+        level = newParentCategory.level + 1;
+        path = newParentCategory.path
+          ? `${newParentCategory.path}/${slugify(data.name || category.name)}`
           : `/${slugify(data.name || category.name)}`;
       }
     } else if (data.name && data.name !== category.name) {
       // Update path if name changed
       if (category.parentId) {
-        const phantom = await this.prisma.category.findUnique({
+        const parentCategory = await this.prisma.category.findUnique({
           where: { id: category.parentId },
         });
-        path = phantom?.path ? `${phantom.path}/${slugify(data.name)}` : `/${slugify(data.name)}`;
+        path = parentCategory?.path ? `${parentCategory.path}/${slugify(data.name)}` : `/${slugify(data.name)}`;
       } else {
         path = `/${slugify(data.name)}`;
       }
@@ -323,20 +323,20 @@ export class CategoriesService {
       return 0;
     }
 
-    const phantom = await this.prisma.category.findUnique({
+    const parentCategory = await this.prisma.category.findUnique({
       where: { id: parentId },
     });
 
-    if (!phantom) {
-      throw new NotFoundException('Phantom not found');
+    if (!parentCategory) {
+      throw new NotFoundException('Fandom not found');
     }
 
-    if (phantom.level >= 2) {
+    if (parentCategory.level >= 2) {
       throw new BadRequestException(
-        'Maximum category depth is 3 levels (Phantom, Category, Sub-category)',
+        'Maximum category depth is 3 levels (Fandom, Category, Sub-category)',
       );
     }
 
-    return phantom.level + 1;
+    return parentCategory.level + 1;
   }
 }

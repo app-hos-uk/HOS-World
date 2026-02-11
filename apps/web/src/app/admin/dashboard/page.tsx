@@ -64,25 +64,40 @@ export default function AdminDashboardPage() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    const fetchDashboardData = async () => {
+    let isMounted = true;
+    const fetchDashboardData = async (showLoading = true) => {
       try {
-        setLoading(true);
-        setError(null);
+        if (showLoading) {
+          setLoading(true);
+          setError(null);
+        }
         const response = await apiClient.getAdminDashboardData();
+        if (!isMounted) return;
         if (response?.data) {
           setDashboardData(response.data);
-        } else {
+        } else if (showLoading) {
           setError('Failed to load dashboard data');
         }
       } catch (err: any) {
+        if (!isMounted) return;
         console.error('Error fetching admin dashboard:', err);
-        setError(err.message || 'Failed to load dashboard data');
+        if (showLoading) setError(err.message || 'Failed to load dashboard data');
       } finally {
-        setLoading(false);
+        if (isMounted && showLoading) setLoading(false);
       }
     };
 
-    fetchDashboardData();
+    fetchDashboardData(true);
+
+    // Refetch when user returns to this tab (e.g. after adding users elsewhere) so stats stay up to date
+    const onVisibilityChange = () => {
+      if (document.visibilityState === 'visible') fetchDashboardData(false);
+    };
+    document.addEventListener('visibilitychange', onVisibilityChange);
+    return () => {
+      isMounted = false;
+      document.removeEventListener('visibilitychange', onVisibilityChange);
+    };
   }, []);
 
   const stats = dashboardData?.statistics || {

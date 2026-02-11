@@ -72,12 +72,17 @@ async function bootstrap() {
   logger.info('═══════════════════════════════════════════════════════════', 'Bootstrap');
 
   // CORS allowed origins - defined early so OPTIONS handler and enableCors both use it
+  // Normalize: trim and remove trailing slash so "https://example.com" and "https://example.com/" both match
+  const normalizeOrigin = (o: string) => (o || '').trim().replace(/\/+$/, '') || null;
   let allowedOrigins: string[] = [
     process.env.FRONTEND_URL,
     'https://hos-marketplaceweb-production.up.railway.app',
     'http://localhost:3000',
     'http://localhost:3001',
-  ].filter(Boolean) as string[];
+  ]
+    .filter(Boolean)
+    .map((o) => normalizeOrigin(o as string))
+    .filter(Boolean) as string[];
   if (!allowedOrigins.length) {
     allowedOrigins = ['https://hos-marketplaceweb-production.up.railway.app'];
   }
@@ -150,17 +155,31 @@ async function bootstrap() {
       // CORS first: handle OPTIONS preflight before any other middleware so browser gets CORS headers
       logger.info(`🌐 CORS allowed origins: ${allowedOrigins.join(', ')}`, 'Bootstrap');
 
+      // Reconstruct origin when behind a proxy that strips Origin (e.g. Railway)
+      const getRequestOrigin = (req: any): string | undefined => {
+        const origin = (req.headers?.origin as string)?.trim();
+        if (origin) return origin;
+        const proto = (req.headers?.['x-forwarded-proto'] as string)?.split(',')[0]?.trim();
+        const host = (req.headers?.['x-forwarded-host'] as string)?.split(',')[0]?.trim();
+        if (proto && host) return `${proto}://${host}`;
+        return undefined;
+      };
+
       // Check if origin is allowed - returns the origin to echo (or '*' when no origin), null if not allowed.
       // CORS spec: when Access-Control-Allow-Credentials is true, Access-Control-Allow-Origin must NOT be '*'.
       const isOriginAllowed = (origin: string | undefined): string | null => {
         if (!origin) return '*'; // No origin (e.g. server-to-server, curl) - allow with *
-        const allowed = allowedOrigins.some((a) => a && (origin === a || origin.startsWith(a)));
-        return allowed ? origin : null;
+        const normalized = normalizeOrigin(origin);
+        if (!normalized) return '*';
+        const allowed = allowedOrigins.some(
+          (a) => a && (normalized === a || normalized.startsWith(a + '/')),
+        );
+        return allowed ? origin : null; // Echo back the exact origin the browser sent
       };
 
       app.use((req: any, res: any, next: any) => {
         if (req.method === 'OPTIONS') {
-          const origin = req.headers.origin as string | undefined;
+          const origin = getRequestOrigin(req);
           const allowedOrigin = isOriginAllowed(origin);
 
           if (allowedOrigin !== null) {
@@ -181,7 +200,8 @@ async function bootstrap() {
             res.setHeader('Access-Control-Max-Age', '86400');
             return res.status(204).end();
           } else {
-            // Origin is NOT allowed - reject with 403 (no CORS headers)
+            // Origin is NOT allowed - still send CORS header so browser can see the 403
+            if (origin) res.setHeader('Access-Control-Allow-Origin', origin);
             logger.warn(`CORS blocked: ${origin}`, 'CORS');
             return res.status(403).json({ error: 'Origin not allowed', origin });
           }
@@ -230,7 +250,7 @@ async function bootstrap() {
       throw moduleError; // Re-throw to be caught by outer try-catch
     }
 
-    // Enhanced CORS configuration for non-OPTIONS requests
+    // Enhanced CORS configuration for non-OPTIONS requests (must use same logic as OPTIONS handler)
     app.enableCors({
       origin: (origin, callback) => {
         // Allow requests with no origin (like mobile apps or curl requests)
@@ -239,28 +259,12 @@ async function bootstrap() {
           return callback(null, true);
         }
 
-        // Check if origin is in allowed list - use exact match for security
-        const isAllowed = allowedOrigins.some((allowed) => {
-          if (!allowed) return false;
-          // Exact match
-          if (origin === allowed) return true;
-          // For subdomains, check if origin is a subdomain of allowed
-          // e.g., https://admin.hos-marketplace.com matches https://hos-marketplace.com
-          try {
-            const originUrl = new URL(origin);
-            const allowedUrl = new URL(allowed);
-            // Same protocol and base domain
-            if (
-              originUrl.protocol === allowedUrl.protocol &&
-              originUrl.hostname.endsWith('.' + allowedUrl.hostname)
-            ) {
-              return true;
-            }
-          } catch {
-            // Invalid URL, skip
-          }
-          return false;
-        });
+        // Same normalized + startsWith logic as OPTIONS handler so OPTIONS and actual request agree
+        const normalized = normalizeOrigin(origin);
+        if (!normalized) return callback(null, true);
+        const isAllowed = allowedOrigins.some(
+          (a) => a && (normalized === a || normalized.startsWith(a + '/')),
+        );
 
         if (isAllowed) {
           logger.debug(`CORS: Allowing origin: ${origin}`, 'CORS');
@@ -289,21 +293,13 @@ async function bootstrap() {
       maxAge: 86400, // 24 hours
     });
 
-    // Add CORS headers to all responses (safety net)
+    // Add CORS headers to all responses (safety net - so error responses still get CORS headers)
     app.use((req: any, res: any, next: any) => {
-      const origin = req.headers.origin;
-      const isAllowed =
-        !origin ||
-        allowedOrigins.some((allowed) => {
-          if (!allowed) return false;
-          return origin === allowed || origin.startsWith(allowed);
-        });
-
-      if (isAllowed || !origin) {
-        const allowOrigin = origin || '*';
-        res.header('Access-Control-Allow-Origin', allowOrigin);
-        // CORS spec: credentials must not be true when Allow-Origin is *
-        if (allowOrigin !== '*') {
+      const origin = getRequestOrigin(req);
+      const allowedOrigin = isOriginAllowed(origin);
+      if (allowedOrigin !== null) {
+        res.header('Access-Control-Allow-Origin', allowedOrigin);
+        if (allowedOrigin !== '*') {
           res.header('Access-Control-Allow-Credentials', 'true');
         }
       }

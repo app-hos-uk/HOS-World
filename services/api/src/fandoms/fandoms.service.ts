@@ -5,18 +5,24 @@ import { PrismaService } from '../database/prisma.service';
 export class FandomsService {
   constructor(private prisma: PrismaService) {}
 
+  /**
+   * Returns fandoms for the public list (Navigation → Fandoms).
+   * Uses level-0 Categories so the list matches what Admin creates in Admin → Fandoms.
+   * Products are linked to Categories; the Fandom table is legacy/characters.
+   */
   async findAll() {
-    return this.prisma.fandom.findMany({
-      where: { isActive: true },
-      orderBy: { name: 'asc' },
-      include: {
-        _count: {
-          select: {
-            characters: true,
-          },
-        },
-      },
+    const categories = await this.prisma.category.findMany({
+      where: { level: 0, isActive: true },
+      orderBy: [{ order: 'asc' }, { name: 'asc' }],
+      select: { id: true, name: true, slug: true, image: true, description: true },
     });
+    return categories.map((c) => ({
+      id: c.id,
+      name: c.name,
+      slug: c.slug,
+      image: c.image ?? undefined,
+      description: c.description ?? undefined,
+    }));
   }
 
   async findOne(id: string) {

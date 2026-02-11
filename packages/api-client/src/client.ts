@@ -2430,8 +2430,13 @@ export class ApiClient {
   }
 
   // Promotions & Coupons
-  async getPromotions(): Promise<ApiResponse<any[]>> {
-    return this.request<ApiResponse<any[]>>('/promotions');
+  async getPromotions(options?: { activeOnly?: boolean }): Promise<ApiResponse<any[]>> {
+    const params = new URLSearchParams();
+    if (options?.activeOnly === false) {
+      params.append('activeOnly', 'false');
+    }
+    const query = params.toString();
+    return this.request<ApiResponse<any[]>>(`/promotions${query ? `?${query}` : ''}`);
   }
 
   async getPromotion(id: string): Promise<ApiResponse<any>> {

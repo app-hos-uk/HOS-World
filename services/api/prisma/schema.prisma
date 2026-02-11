@@ -1715,7 +1715,7 @@ model Category {
   parentId    String?
   parent      Category?   @relation("CategoryHierarchy", fields: [parentId], references: [id])
   children    Category[]  @relation("CategoryHierarchy")
-  level       Int // 0 = Phantom (top-level), 1 = category, 2 = sub-category
+  level       Int // 0 = Fandom (top-level), 1 = category, 2 = sub-category
   path        String // Full path: "/clothing/t-shirts/graphic-tees"
   description String?     @db.Text
   image       String?
@@ -1858,6 +1858,7 @@ model Promotion {
   isStackable Boolean         @default(false)
   usageLimit  Int? // Total usage limit
   usageCount  Int             @default(0)
+  userUsageLimit Int? // Per-customer usage limit (e.g. 1 = one use per customer)
   sellerId    String? // If null, platform-wide promotion
   seller      Seller?         @relation(fields: [sellerId], references: [id], onDelete: Cascade)
   coupons     Coupon[]

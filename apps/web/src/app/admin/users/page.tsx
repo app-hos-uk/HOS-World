@@ -564,8 +564,9 @@ export default function AdminUsersPage() {
               </button>
               <button
                 onClick={() => {
-                  setShowNewThisMonth(!showNewThisMonth);
-                  if (!showNewThisMonth) {
+                  const next = !showNewThisMonth;
+                  setShowNewThisMonth(next);
+                  if (next) {
                     setRoleFilter('ALL');
                     setStatusFilter('ALL');
                   }

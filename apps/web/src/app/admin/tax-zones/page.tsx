@@ -65,6 +65,8 @@ export default function AdminTaxZonesPage() {
     isInclusive: false,
     isActive: true,
   });
+  /** Percentage as user types it (e.g. "20" or "20.25"). Keeps input as 20, not 0.2. */
+  const [ratePercentInput, setRatePercentInput] = useState('');
   const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
@@ -131,9 +133,16 @@ export default function AdminTaxZonesPage() {
 
   const handleRateSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    const percent = parseFloat(ratePercentInput) || 0;
+    if (percent < 0 || percent > 100) {
+      toast.error('Tax rate must be between 0 and 100');
+      return;
+    }
+    // Convert percentage to decimal: 20 → 0.2, 5 → 0.05, 18.2 → 0.182
+    const rateDecimal = Math.round(percent * 10000) / 1000000;
     try {
       setSubmitting(true);
-      await apiClient.createTaxRate(rateFormData);
+      await apiClient.createTaxRate({ ...rateFormData, rate: rateDecimal });
       toast.success('Tax rate created successfully!');
       setShowRateModal(false);
       resetRateForm();
@@ -228,6 +237,7 @@ export default function AdminTaxZonesPage() {
       isInclusive: false,
       isActive: true,
     });
+    setRatePercentInput('');
   };
 
   const openRateModal = (zone: TaxZone) => {
@@ -239,6 +249,7 @@ export default function AdminTaxZonesPage() {
       isInclusive: false,
       isActive: true,
     });
+    setRatePercentInput('');
     setShowRateModal(true);
   };
 
@@ -624,19 +635,35 @@ export default function AdminTaxZonesPage() {
                           <input
                             type="number"
                             required
-                            step="any"
+                            step="0.01"
                             min="0"
                             max="100"
-                            value={Math.round(rateFormData.rate * 10000) / 100}
+                            value={ratePercentInput}
                             onChange={(e) => {
-                              const percentage = parseFloat(e.target.value) || 0;
-                              setRateFormData({ ...rateFormData, rate: percentage / 100 });
+                              const raw = e.target.value;
+                              if (raw === '') {
+                                setRatePercentInput('');
+                                return;
+                              }
+                              const num = parseFloat(raw);
+                              if (Number.isNaN(num) || num < 0 || num > 100) return;
+                              // Allow typing e.g. 20, 5, 18.2 (max 2 decimal places)
+                              const parts = raw.split('.');
+                              if (parts.length === 2 && parts[1].length > 2) return;
+                              setRatePercentInput(raw);
+                            }}
+                            onBlur={() => {
+                              if (ratePercentInput === '') return;
+                              const num = parseFloat(ratePercentInput);
+                              if (!Number.isNaN(num) && num >= 0 && num <= 100) {
+                                setRatePercentInput((Math.round(num * 100) / 100).toFixed(2));
+                              }
                             }}
                             className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
-                            placeholder="20"
+                            placeholder="e.g. 20, 5, 18.2"
                           />
                           <p className="mt-1 text-sm text-gray-500">
-                            Enter as percentage (e.g., 20 for 20%). Stored as decimal (0.20).
+                            20 = 20%, 5 = 5%, 18.2 = 18.20%. Up to 2 decimal places.
                           </p>
                         </div>
 

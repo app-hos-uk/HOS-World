@@ -67,9 +67,13 @@ export function getServiceConfigs(): ServiceConfig[] {
       prefixes: [
         '/api/products',
         '/api/collections',
-        '/api/taxonomy',
+        // NOTE: /api/taxonomy is intentionally NOT here. Seller product creation and Admin
+        // use getCategoryTree() (GET /api/taxonomy/categories/tree). The product microservice
+        // only exposes GET taxonomy/categories (no /tree), so taxonomy stays on monolith.
+        // NOTE: /api/fandoms is intentionally NOT here. Public Navigation → Fandoms list
+        // uses level-0 Categories (same as Admin → Fandoms); monolith FandomsService.findAll()
+        // returns those. Product service returns from Fandom table (often empty).
         '/api/characters',
-        '/api/fandoms',
         '/api/digital-products',
         '/api/duplicates',
       ],
@@ -79,8 +83,11 @@ export function getServiceConfigs(): ServiceConfig[] {
       name: 'order-service',
       url: process.env.ORDER_SERVICE_URL || monolithUrl,
       prefixes: [
-        '/api/orders',
-        '/api/cart',
+        // NOTE: /api/orders and /api/cart are intentionally NOT here. Customer checkout
+        // (cart → order creation) is implemented in the monolith with full cart-to-order
+        // logic, address validation, and stock checks. The order microservice has a
+        // simplified create() that does not accept shippingAddressId/billingAddressId
+        // or build orders from cart, and would return 500. Keep checkout on monolith.
         '/api/returns',
         '/api/return-policies',
         '/api/gift-cards',
@@ -159,7 +166,9 @@ export function getServiceConfigs(): ServiceConfig[] {
       name: 'admin-service',
       url: process.env.ADMIN_SERVICE_URL || monolithUrl,
       prefixes: [
-        '/api/admin',
+        // NOTE: /api/admin is intentionally NOT here. The admin microservice does not
+        // implement user/seller management (e.g. GET /admin/sellers). Those routes
+        // must hit the monolith so created sellers are visible and store names display.
         '/api/analytics',
         '/api/dashboard',
         '/api/monitoring',

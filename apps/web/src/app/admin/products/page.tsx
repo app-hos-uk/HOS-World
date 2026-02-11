@@ -148,15 +148,18 @@ function AdminProductsContent() {
 
   const fetchSellers = useCallback(async () => {
     try {
-      const response = await apiClient.getUsers();
-      const raw = response?.data as { data?: unknown[] } | unknown[] | undefined;
-      const userData = Array.isArray(raw) ? raw : (raw as { data?: unknown[] })?.data ?? [];
-      const users = Array.isArray(userData) ? userData : [];
-      const sellerRoles = ['SELLER', 'B2C_SELLER', 'WHOLESALER'];
-      const sellerUsers = users.filter((user: any) => 
-        sellerRoles.includes(user.role)
-      );
-      setSellers(sellerUsers);
+      const response = await apiClient.getAdminSellers();
+      const raw = response?.data;
+      const list = Array.isArray(raw) ? raw : [];
+      const mapped = list.map((s: any) => ({
+        id: s.id,
+        sellerId: s.id,
+        storeName: s.storeName || '',
+        email: s.user?.email || '',
+        firstName: s.user?.firstName,
+        lastName: s.user?.lastName,
+      }));
+      setSellers(mapped);
     } catch (err: any) {
       console.error('Error fetching sellers:', err);
       setSellers([]);
@@ -669,7 +672,7 @@ function AdminProductsContent() {
                 <span className="text-purple-600">
                   {(() => {
                     const seller = sellers.find(s => (s as any).sellerId === sellerFilterFromUrl || s.id === sellerFilterFromUrl);
-                    return seller?.email || seller?.storeName || sellerFilterFromUrl.substring(0, 8) + '...';
+                    return seller?.storeName || seller?.email || sellerFilterFromUrl.substring(0, 8) + '...';
                   })()}
                 </span>
                 <span className="text-xs text-purple-500">({filteredProducts.length} product{filteredProducts.length !== 1 ? 's' : ''})</span>
