@@ -63,7 +63,7 @@ export class PublishingService {
       tradePrice: productData.tradePrice,
       rrp: productData.rrp,
       currency: productData.currency || 'GBP',
-      taxRate: productData.taxRate || 0,
+      taxRate: productData.taxRate > 1 ? productData.taxRate / 100 : productData.taxRate || 0,
       stock: submission.selectedQuantity || productData.stock || 0,
       fandom: productData.fandom,
       category: productData.category, // Legacy field - kept for backward compatibility
