@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { RouteGuard } from '@/components/RouteGuard';
 import { DashboardLayout } from '@/components/DashboardLayout';
 import Image from 'next/image';
@@ -8,7 +9,12 @@ import { apiClient } from '@/lib/api';
 import { useToast } from '@/hooks/useToast';
 
 export default function CatalogEntriesPage() {
+  const searchParams = useSearchParams();
+  const statusFilter = searchParams.get('status') as 'pending' | 'completed' | null;
+
   const [pendingSubmissions, setPendingSubmissions] = useState<any[]>([]);
+  const [completedEntries, setCompletedEntries] = useState<any[]>([]);
+  const [activeTab, setActiveTab] = useState<'pending' | 'completed'>(statusFilter === 'completed' ? 'completed' : 'pending');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [selectedSubmission, setSelectedSubmission] = useState<any | null>(null);
@@ -25,20 +31,34 @@ export default function CatalogEntriesPage() {
   const toast = useToast();
 
   useEffect(() => {
-    fetchPending();
+    fetchData();
   }, []);
 
-  const fetchPending = async () => {
+  useEffect(() => {
+    if (statusFilter === 'completed') {
+      setActiveTab('completed');
+    } else if (statusFilter === 'pending') {
+      setActiveTab('pending');
+    }
+  }, [statusFilter]);
+
+  const fetchData = async () => {
     try {
       setLoading(true);
       setError(null);
-      const response = await apiClient.getCatalogPending();
-      if (response?.data) {
-        setPendingSubmissions(response.data);
+      const [pendingRes, completedRes] = await Promise.all([
+        apiClient.getCatalogPending(),
+        apiClient.getCatalogEntries('completed'),
+      ]);
+      if (pendingRes?.data) {
+        setPendingSubmissions(pendingRes.data);
+      }
+      if (completedRes?.data) {
+        setCompletedEntries(completedRes.data);
       }
     } catch (err: any) {
-      console.error('Error fetching pending submissions:', err);
-      setError(err.message || 'Failed to load pending submissions');
+      console.error('Error fetching catalog data:', err);
+      setError(err.message || 'Failed to load catalog data');
     } finally {
       setLoading(false);
     }
@@ -106,7 +126,7 @@ export default function CatalogEntriesPage() {
       setKeywords([]);
       setImages([]);
       toast.success('Catalog entry created successfully');
-      await fetchPending();
+      await fetchData();
     } catch (err: any) {
       console.error('Error creating catalog entry:', err);
       toast.error(err.message || 'Failed to create catalog entry');
@@ -128,6 +148,30 @@ export default function CatalogEntriesPage() {
           <p className="text-gray-600 mt-2">Create marketplace-ready product listings</p>
         </div>
 
+          {/* Tabs */}
+          <div className="flex gap-1 mb-6 bg-gray-100 rounded-lg p-1 w-fit">
+            <button
+              onClick={() => setActiveTab('pending')}
+              className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+                activeTab === 'pending'
+                  ? 'bg-white text-purple-700 shadow-sm'
+                  : 'text-gray-600 hover:text-gray-900'
+              }`}
+            >
+              Pending ({pendingSubmissions.length})
+            </button>
+            <button
+              onClick={() => setActiveTab('completed')}
+              className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+                activeTab === 'completed'
+                  ? 'bg-white text-green-700 shadow-sm'
+                  : 'text-gray-600 hover:text-gray-900'
+              }`}
+            >
+              Completed ({completedEntries.length})
+            </button>
+          </div>
+
           {error && (
             <div className="mb-6 p-4 bg-red-100 border border-red-400 text-red-700 rounded-lg">
               <p className="font-semibold">Error</p>
@@ -141,13 +185,14 @@ export default function CatalogEntriesPage() {
             </div>
           )}
 
-          {!loading && pendingSubmissions.length === 0 && (
+          {/* Pending Submissions Tab */}
+          {!loading && activeTab === 'pending' && pendingSubmissions.length === 0 && (
             <div className="bg-white border border-gray-200 rounded-lg p-8 text-center">
               <p className="text-gray-500 text-lg">No pending submissions for catalog creation</p>
             </div>
           )}
 
-          {!loading && pendingSubmissions.length > 0 && (
+          {!loading && activeTab === 'pending' && pendingSubmissions.length > 0 && (
             <div className="space-y-4">
               {pendingSubmissions.map((submission) => {
                 const productData = submission.productData || {};
@@ -189,6 +234,59 @@ export default function CatalogEntriesPage() {
                         >
                           Create Entry
                         </button>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+
+          {/* Completed Entries Tab */}
+          {!loading && activeTab === 'completed' && completedEntries.length === 0 && (
+            <div className="bg-white border border-gray-200 rounded-lg p-8 text-center">
+              <p className="text-gray-500 text-lg">No completed catalog entries yet</p>
+            </div>
+          )}
+
+          {!loading && activeTab === 'completed' && completedEntries.length > 0 && (
+            <div className="space-y-4">
+              {completedEntries.map((entry) => {
+                const submission = entry.submission || {};
+                const productData = submission.productData || {};
+                return (
+                  <div
+                    key={entry.id}
+                    className="bg-white border border-gray-200 rounded-lg p-6 hover:shadow-md transition-shadow"
+                  >
+                    <div className="flex flex-col sm:flex-row justify-between gap-4">
+                      <div className="flex-1">
+                        <h3 className="text-lg font-semibold text-gray-900">
+                          {entry.title || productData.name || 'Untitled Product'}
+                        </h3>
+                        <p className="text-sm text-gray-500 mt-1">
+                          Seller: {submission.seller?.storeName || 'Unknown'}
+                        </p>
+                        <p className="text-sm text-gray-600 mt-2 line-clamp-2">
+                          {entry.description || productData.description || 'No description'}
+                        </p>
+                        <div className="flex flex-wrap gap-4 mt-4 text-sm text-gray-600">
+                          {entry.keywords && entry.keywords.length > 0 && (
+                            <span>
+                              <strong>Keywords:</strong> {entry.keywords.join(', ')}
+                            </span>
+                          )}
+                          {entry.completedAt && (
+                            <span>
+                              <strong>Completed:</strong> {new Date(entry.completedAt).toLocaleDateString()}
+                            </span>
+                          )}
+                        </div>
+                        <div className="mt-2">
+                          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                            {submission.status || 'COMPLETED'}
+                          </span>
+                        </div>
                       </div>
                     </div>
                   </div>

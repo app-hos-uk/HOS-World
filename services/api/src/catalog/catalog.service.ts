@@ -169,6 +169,7 @@ export class CatalogService {
   }
 
   async findOne(submissionId: string) {
+    // First try to find an existing catalog entry
     const catalogEntry = await this.prisma.catalogEntry.findUnique({
       where: { submissionId },
       include: {
@@ -181,17 +182,43 @@ export class CatalogService {
                 slug: true,
               },
             },
-            // productData: true, // Field may not exist in schema - adjust based on actual schema
           },
         },
       },
     });
 
-    if (!catalogEntry) {
-      throw new NotFoundException('Catalog entry not found');
+    if (catalogEntry) {
+      return catalogEntry;
     }
 
-    return catalogEntry;
+    // If no catalog entry exists yet, return the submission data directly
+    // This supports the "Create Entry" flow where the catalog team needs
+    // to view submission details before creating the entry
+    const submission = await this.prisma.productSubmission.findUnique({
+      where: { id: submissionId },
+      include: {
+        seller: {
+          select: {
+            id: true,
+            storeName: true,
+            slug: true,
+          },
+        },
+        shipment: {
+          select: {
+            id: true,
+            status: true,
+            receivedAt: true,
+          },
+        },
+      },
+    });
+
+    if (!submission) {
+      throw new NotFoundException('Submission not found');
+    }
+
+    return submission;
   }
 
   async findAll(status?: 'pending' | 'completed') {

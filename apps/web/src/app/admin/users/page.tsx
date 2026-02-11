@@ -151,19 +151,7 @@ export default function AdminUsersPage() {
     try {
       setLoading(true);
       setError(null);
-      // #region agent log
-      console.log('[DEBUG] fetchUsers: Starting API call');
-      // #endregion
       const response = await apiClient.getUsers();
-      // #region agent log
-      console.log('[DEBUG] fetchUsers: Response received', { 
-        hasData: !!response?.data,
-        dataType: typeof response?.data,
-        isArray: Array.isArray(response?.data),
-        hasNestedData: !!(response?.data as any)?.data,
-        responseKeys: response?.data ? Object.keys(response.data) : []
-      });
-      // #endregion
       
       // Handle both paginated response { data: { data: users, pagination } } 
       // and flat array response { data: users }
@@ -177,17 +165,10 @@ export default function AdminUsersPage() {
         }
       }
       
-      // #region agent log
-      console.log('[DEBUG] fetchUsers: Parsed users', { count: userList.length });
-      // #endregion
-      
       // Always update both users and stats
       setUsers(userList);
       setStats(calculateUserStats(userList));
     } catch (err: any) {
-      // #region agent log
-      console.log('[DEBUG] fetchUsers: Error', { message: err?.message });
-      // #endregion
       console.error('Error fetching users:', err);
       setError(err.message || 'Failed to load users');
       setUsers([]);
@@ -346,18 +327,6 @@ export default function AdminUsersPage() {
         return;
       }
 
-      // #region agent log
-      console.log('[DEBUG] handleCreateUser: Sending request', { 
-        email: createForm.email, 
-        role: createForm.role, 
-        hasPassword: !!createForm.password,
-        passwordLength: createForm.password.length,
-        hasStoreName: !!createForm.storeName,
-        firstName: createForm.firstName,
-        lastName: createForm.lastName
-      });
-      // #endregion
-
       const payload: any = {
         email: createForm.email,
         password: createForm.password,
@@ -378,15 +347,7 @@ export default function AdminUsersPage() {
         employeeId: createForm.employeeId || undefined,
       };
 
-      // #region agent log
-      console.log('[DEBUG] handleCreateUser: Payload', payload);
-      // #endregion
-
       const response = await apiClient.createUser(payload);
-
-      // #region agent log
-      console.log('[DEBUG] handleCreateUser: Response', { success: true, data: response?.data });
-      // #endregion
 
       toast.success('User created successfully');
       setShowCreateModal(false);
@@ -408,9 +369,6 @@ export default function AdminUsersPage() {
       });
       await fetchUsers();
     } catch (err: any) {
-      // #region agent log
-      console.log('[DEBUG] handleCreateUser: Error', { message: err?.message, status: err?.status, response: err?.response });
-      // #endregion
       console.error('Error creating user:', err);
       toast.error(err.message || 'Failed to create user');
     } finally {

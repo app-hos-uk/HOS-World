@@ -682,8 +682,16 @@ export class ApiClient {
     });
   }
 
+  async getCatalogEntries(status?: 'pending' | 'completed'): Promise<ApiResponse<any[]>> {
+    let url = '/catalog/entries';
+    if (status) url += `?status=${status}`;
+    return this.request<ApiResponse<any[]>>(url, {
+      method: 'GET',
+    });
+  }
+
   async getCatalogSubmission(submissionId: string): Promise<ApiResponse<any>> {
-    return this.request<ApiResponse<any>>(`/catalog/submissions/${submissionId}`, {
+    return this.request<ApiResponse<any>>(`/catalog/entries/${submissionId}`, {
       method: 'GET',
     });
   }
