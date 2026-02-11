@@ -5,26 +5,24 @@ import {
   ParseIntPipe,
   DefaultValuePipe,
 } from '@nestjs/common';
-import {
-  ApiTags,
-  ApiOperation,
-  ApiResponse as SwaggerApiResponse,
-  ApiQuery,
-} from '@nestjs/swagger';
-import { ElasticSearchService } from './search.service';
+import { ApiTags, ApiOperation, ApiResponse as SwaggerApiResponse, ApiQuery } from '@nestjs/swagger';
+import { MeilisearchService, SearchFilters } from './meilisearch.service';
 import { Public } from '@hos-marketplace/auth-common';
 
+/**
+ * Primary search API at /api/search (Meilisearch-backed).
+ * Keeps the same contract as the previous Elasticsearch endpoint for compatibility.
+ */
 @ApiTags('search')
 @Controller('search')
 export class SearchController {
-  constructor(private readonly searchService: ElasticSearchService) {}
+  constructor(private readonly meilisearchService: MeilisearchService) {}
 
   @Public()
   @Get()
   @ApiOperation({
     summary: 'Search products',
-    description:
-      'Searches products using Elasticsearch with advanced filtering options including attribute-based faceted search.',
+    description: 'Searches products using Meilisearch with typo tolerance and faceted filtering.',
   })
   @ApiQuery({ name: 'q', required: false, type: String })
   @ApiQuery({ name: 'category', required: false, type: String })
@@ -49,15 +47,14 @@ export class SearchController {
     @Query('maxPrice') maxPrice?: string,
     @Query('minRating') minRating?: string,
     @Query('inStock') inStock?: string,
-    @Query('attributes') attributes?: string,
+    @Query('attributes') _attributes?: string,
     @Query('page', new DefaultValuePipe(1), ParseIntPipe) page: number = 1,
     @Query('limit', new DefaultValuePipe(20), ParseIntPipe) limit: number = 20,
   ) {
-    const filters: any = {
+    const filters: SearchFilters = {
       page,
       limit: Math.min(limit, 100),
     };
-
     if (category) filters.category = category;
     if (categoryId) filters.categoryId = categoryId;
     if (fandom) filters.fandom = fandom;
@@ -67,28 +64,7 @@ export class SearchController {
     if (minRating) filters.minRating = parseFloat(minRating);
     if (inStock === 'true') filters.inStock = true;
 
-    if (attributes) {
-      try {
-        const parsedAttributes = JSON.parse(attributes);
-        if (Array.isArray(parsedAttributes)) {
-          filters.attributes = parsedAttributes.map((attr: any) => {
-            const attrFilter: any = { attributeId: attr.attributeId };
-            if (attr.values && Array.isArray(attr.values)) attrFilter.values = attr.values;
-            if (attr.minValue !== undefined) attrFilter.minValue = parseFloat(attr.minValue);
-            if (attr.maxValue !== undefined) attrFilter.maxValue = parseFloat(attr.maxValue);
-            if (attr.booleanValue !== undefined) {
-              attrFilter.booleanValue = attr.booleanValue === true || attr.booleanValue === 'true';
-            }
-            if (attr.textValue) attrFilter.textValue = attr.textValue;
-            return attrFilter;
-          });
-        }
-      } catch {
-        // Invalid JSON - ignore attribute filters
-      }
-    }
-
-    const result = await this.searchService.search(query, filters);
+    const result = await this.meilisearchService.search(query, filters);
 
     return {
       data: {
@@ -97,7 +73,7 @@ export class SearchController {
         page,
         limit,
         totalPages: Math.ceil(result.total / limit),
-        aggregations: result.aggregations,
+        aggregations: result.facetDistribution ?? {},
       },
       message: 'Search completed successfully',
     };
@@ -116,8 +92,7 @@ export class SearchController {
     if (!prefix || prefix.trim().length < 2) {
       return { data: [], message: 'Suggestions retrieved successfully' };
     }
-
-    const suggestions = await this.searchService.getSuggestions(prefix, limit);
+    const suggestions = await this.meilisearchService.getSuggestions(prefix, limit);
     return { data: suggestions, message: 'Suggestions retrieved successfully' };
   }
 }

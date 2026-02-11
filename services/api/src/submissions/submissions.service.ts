@@ -314,6 +314,72 @@ export class SubmissionsService {
     return { message: 'Submission deleted successfully' };
   }
 
+  async resubmit(id: string, userId: string, updateData?: { productData?: any; notes?: string }) {
+    const submission = await this.prisma.productSubmission.findUnique({
+      where: { id },
+    });
+
+    if (!submission) {
+      throw new NotFoundException('Submission not found');
+    }
+
+    // Check permissions
+    const seller = await this.prisma.seller.findUnique({
+      where: { userId },
+    });
+
+    if (!seller || submission.sellerId !== seller.id) {
+      throw new ForbiddenException('You do not have permission to resubmit this submission');
+    }
+
+    // Only allow resubmission if rejected
+    if (
+      submission.status !== 'PROCUREMENT_REJECTED' &&
+      submission.status !== 'REJECTED'
+    ) {
+      throw new BadRequestException(
+        'Only rejected submissions can be resubmitted',
+      );
+    }
+
+    const data: any = {
+      status: 'SUBMITTED' as ProductSubmissionStatus,
+      procurementNotes: null,
+      catalogNotes: null,
+      marketingNotes: null,
+      financeNotes: null,
+      procurementApprovedAt: null,
+      catalogCompletedAt: null,
+      marketingCompletedAt: null,
+      financeApprovedAt: null,
+    };
+
+    // Allow updating product data on resubmission
+    if (updateData?.productData) {
+      data.productData = updateData.productData;
+    }
+
+    const updated = await this.prisma.productSubmission.update({
+      where: { id },
+      data,
+      include: {
+        seller: {
+          select: {
+            id: true,
+            storeName: true,
+            slug: true,
+            sellerType: true,
+          },
+        },
+      },
+    });
+
+    // Re-run duplicate detection on resubmission
+    await this.duplicatesService.detectDuplicates(updated.id);
+
+    return updated;
+  }
+
   async bulkCreate(userId: string, submissions: CreateSubmissionDto[]) {
     const seller = await this.prisma.seller.findUnique({
       where: { userId },

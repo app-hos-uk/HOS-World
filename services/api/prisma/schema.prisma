@@ -877,6 +877,15 @@ enum NotificationType {
   RETURN_APPROVED
   REVIEW_REMINDER
   WISHLIST_SALE
+  // Submission workflow notifications
+  SUBMISSION_APPROVED
+  SUBMISSION_REJECTED
+  SUBMISSION_RESUBMITTED
+  CATALOG_COMPLETED
+  MARKETING_COMPLETED
+  FINANCE_APPROVED
+  FINANCE_REJECTED
+  PRODUCT_PUBLISHED
 }
 
 enum NotificationStatus {
@@ -959,6 +968,7 @@ model ProductSubmission {
   createdAt             DateTime                @default(now())
   updatedAt             DateTime                @updatedAt
   crossSellerGroupId    String?                 // Set by duplicate grouping (cron or on-demand) for reporting
+  pricingData           Json?                   // Structured pricing data set by finance (basePrice, hosMargin, finalPrice, visibilityLevel)
 
   // Relations
   product            Product?            @relation(fields: [productId], references: [id])
@@ -1114,7 +1124,7 @@ model Settlement {
   totalOrders   Int
   platformFee   Decimal          @db.Decimal(10, 2)
   netAmount     Decimal          @db.Decimal(10, 2)
-  currency      String           @default("USD")
+  currency      String           @default("GBP")
   status        SettlementStatus @default(PENDING)
   paymentMethod String?
   paidAt        DateTime?

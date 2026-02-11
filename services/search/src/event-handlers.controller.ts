@@ -8,7 +8,6 @@ import {
   ProductDeletedPayload,
   ProductPriceChangedPayload,
 } from '@hos-marketplace/events';
-import { ElasticSearchService } from './elasticsearch/search.service';
 import { MeilisearchService } from './meilisearch/meilisearch.service';
 import { SearchPrismaService } from './database/prisma.service';
 
@@ -16,14 +15,13 @@ import { SearchPrismaService } from './database/prisma.service';
  * Event Handlers for Search Service
  *
  * Listens for product domain events from the event bus and
- * keeps both Elasticsearch and Meilisearch indexes in sync.
+ * keeps the Meilisearch index in sync.
  */
 @Controller()
 export class EventHandlersController {
   private readonly logger = new Logger(EventHandlersController.name);
 
   constructor(
-    private readonly elasticSearch: ElasticSearchService,
     private readonly meilisearch: MeilisearchService,
     private readonly prisma: SearchPrismaService,
   ) {}
@@ -46,10 +44,7 @@ export class EventHandlersController {
 
       if (!product) return;
 
-      await Promise.allSettled([
-        this.elasticSearch.indexProduct(product),
-        this.meilisearch.indexProduct(product),
-      ]);
+      await this.meilisearch.indexProduct(product);
     } catch (error: any) {
       this.logger.error(`Failed to handle product.product.created: ${error?.message}`);
     }
@@ -73,10 +68,7 @@ export class EventHandlersController {
 
       if (!product) return;
 
-      await Promise.allSettled([
-        this.elasticSearch.updateProduct(product),
-        this.meilisearch.indexProduct(product),
-      ]);
+      await this.meilisearch.indexProduct(product);
     } catch (error: any) {
       this.logger.error(`Failed to handle product.product.updated: ${error?.message}`);
     }
@@ -90,10 +82,7 @@ export class EventHandlersController {
     try {
       if (!productId) return;
 
-      await Promise.allSettled([
-        this.elasticSearch.deleteProduct(productId),
-        this.meilisearch.deleteProduct(productId),
-      ]);
+      await this.meilisearch.deleteProduct(productId);
     } catch (error: any) {
       this.logger.error(`Failed to handle product.product.deleted: ${error?.message}`);
     }

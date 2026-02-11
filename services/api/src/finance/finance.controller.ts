@@ -2,6 +2,7 @@ import {
   Controller,
   Get,
   Post,
+  Put,
   Param,
   Body,
   Query,
@@ -73,6 +74,30 @@ export class FinanceController {
     return {
       data: pricing,
       message: 'Pricing set successfully',
+    };
+  }
+
+  @Put('pricing/:submissionId')
+  @ApiOperation({
+    summary: 'Update pricing for submission',
+    description: 'Updates pricing for a finance-pending submission. Finance/Admin access required.',
+  })
+  @ApiParam({ name: 'submissionId', description: 'Submission UUID', type: String })
+  @ApiBody({ type: SetPricingDto })
+  @SwaggerApiResponse({ status: 200, description: 'Pricing updated successfully' })
+  @SwaggerApiResponse({ status: 400, description: 'Invalid request data or wrong status' })
+  @SwaggerApiResponse({ status: 401, description: 'Unauthorized' })
+  @SwaggerApiResponse({ status: 403, description: 'Forbidden - Finance/Admin access required' })
+  @SwaggerApiResponse({ status: 404, description: 'Submission not found' })
+  async updatePricing(
+    @Request() req: any,
+    @Param('submissionId', ParseUUIDPipe) submissionId: string,
+    @Body() setPricingDto: SetPricingDto,
+  ): Promise<ApiResponse<any>> {
+    const pricing = await this.financeService.updatePricing(submissionId, req.user.id, setPricingDto);
+    return {
+      data: pricing,
+      message: 'Pricing updated successfully',
     };
   }
 

@@ -32,7 +32,7 @@ async function bootstrap() {
   if (process.env.NODE_ENV !== 'production') {
     const config = new DocumentBuilder()
       .setTitle('HOS Search Service')
-      .setDescription('Search microservice API — Elasticsearch and Meilisearch product search')
+      .setDescription('Search microservice API — Meilisearch product search')
       .setVersion('1.0.0')
       .addBearerAuth(
         { type: 'http', scheme: 'bearer', bearerFormat: 'JWT' },

@@ -1,5 +1,5 @@
 import { Injectable, NotFoundException, BadRequestException, Logger } from '@nestjs/common';
-import * as bcrypt from 'bcrypt';
+import * as bcrypt from 'bcryptjs';
 import { EventBusService, USER_EVENTS } from '@hos-marketplace/events';
 import { UserPrismaService } from '../database/prisma.service';
 import { UpdateProfileDto, ChangePasswordDto } from './dto/update-profile.dto';

@@ -166,7 +166,7 @@ export class ProcurementService {
     if (updated.seller?.userId) {
       await this.notificationsService.sendNotificationToUser(
         updated.seller.userId,
-        'ORDER_CONFIRMATION', // Using existing type as placeholder
+        'SUBMISSION_APPROVED',
         'Product Submission Approved',
         `Your product submission has been approved by Procurement and is moving to the next stage.`,
         { submissionId: id },
@@ -211,7 +211,7 @@ export class ProcurementService {
     if (updated.seller?.userId) {
       await this.notificationsService.sendNotificationToUser(
         updated.seller.userId,
-        'ORDER_CANCELLED', // Using existing type as placeholder
+        'SUBMISSION_REJECTED',
         'Product Submission Rejected',
         `Your product submission has been rejected by Procurement. Reason: ${rejectDto.reason}${rejectDto.notes ? `\n\nNotes: ${rejectDto.notes}` : ''}`,
         { submissionId: id },
@@ -241,6 +241,50 @@ export class ProcurementService {
         procurementNotes: selectQuantityDto.notes
           ? `${submission.procurementNotes || ''}\n\nQuantity selected: ${selectQuantityDto.quantity}. ${selectQuantityDto.notes}`
           : `${submission.procurementNotes || ''}\n\nQuantity selected: ${selectQuantityDto.quantity}`,
+      },
+      include: {
+        seller: {
+          select: {
+            id: true,
+            userId: true,
+            storeName: true,
+            slug: true,
+          },
+        },
+      },
+    });
+
+    return updated;
+  }
+
+  async updateQuantity(id: string, userId: string, selectQuantityDto: SelectQuantityDto) {
+    const submission = await this.prisma.productSubmission.findUnique({
+      where: { id },
+    });
+
+    if (!submission) {
+      throw new NotFoundException('Submission not found');
+    }
+
+    // Allow quantity update at any stage before publishing
+    const nonEditableStatuses: ProductSubmissionStatus[] = ['PUBLISHED', 'REJECTED', 'PROCUREMENT_REJECTED'];
+    if (nonEditableStatuses.includes(submission.status)) {
+      throw new BadRequestException(
+        `Cannot update quantity for submission in status: ${submission.status}`,
+      );
+    }
+
+    if (selectQuantityDto.quantity <= 0) {
+      throw new BadRequestException('Quantity must be greater than 0');
+    }
+
+    const updated = await this.prisma.productSubmission.update({
+      where: { id },
+      data: {
+        selectedQuantity: selectQuantityDto.quantity,
+        procurementNotes: selectQuantityDto.notes
+          ? `${submission.procurementNotes || ''}\n\nQuantity updated to: ${selectQuantityDto.quantity}. ${selectQuantityDto.notes}`
+          : `${submission.procurementNotes || ''}\n\nQuantity updated to: ${selectQuantityDto.quantity}`,
       },
       include: {
         seller: {

@@ -5,6 +5,7 @@ import { RouteGuard } from '@/components/RouteGuard';
 import { DashboardLayout } from '@/components/DashboardLayout';
 import Image from 'next/image';
 import { apiClient } from '@/lib/api';
+import { useToast } from '@/hooks/useToast';
 
 export default function MarketingMaterialsPage() {
   const [pendingSubmissions, setPendingSubmissions] = useState<any[]>([]);
@@ -19,6 +20,7 @@ export default function MarketingMaterialsPage() {
   // Form state
   const [materialType, setMaterialType] = useState<string>('BANNER');
   const [materialUrl, setMaterialUrl] = useState('');
+  const toast = useToast();
 
   useEffect(() => {
     if (activeTab === 'pending') {
@@ -69,7 +71,7 @@ export default function MarketingMaterialsPage() {
 
   const handleSubmit = async () => {
     if (!selectedSubmission || !materialUrl.trim()) {
-      setError('Material URL is required');
+      toast.error('Material URL is required');
       return;
     }
 
@@ -83,6 +85,7 @@ export default function MarketingMaterialsPage() {
       setShowModal(false);
       setSelectedSubmission(null);
       setMaterialUrl('');
+      toast.success('Marketing material created successfully');
       if (activeTab === 'pending') {
         await fetchPending();
       } else {
@@ -90,7 +93,7 @@ export default function MarketingMaterialsPage() {
       }
     } catch (err: any) {
       console.error('Error creating material:', err);
-      setError(err.message || 'Failed to create marketing material');
+      toast.error(err.message || 'Failed to create marketing material');
     } finally {
       setActionLoading(false);
     }

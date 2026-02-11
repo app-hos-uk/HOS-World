@@ -109,9 +109,6 @@ checks.push(checkEnvVar('CLOUDINARY_CLOUD_NAME', false));
 checks.push(checkEnvVar('CLOUDINARY_API_KEY', false));
 checks.push(checkEnvVar('CLOUDINARY_API_SECRET', false));
 
-// Elasticsearch (optional)
-checks.push(checkEnvVar('ELASTICSEARCH_NODE', false));
-
 function printReport() {
   console.log('🔍 Environment Variables Verification\n');
   console.log('═'.repeat(60));

@@ -30,6 +30,27 @@ services:
       timeout: 5s
       retries: 5
 
+  # ─── Meilisearch (optional) ───────────────────────────────────────────────
+  # Search engine used by the search microservice (and monolith API). Not a NestJS
+  # service — it's the official Meilisearch server. The search service connects to
+  # MEILISEARCH_HOST; if unset, search falls back to Prisma (no typo tolerance).
+  meilisearch:
+    image: getmeili/meilisearch:v1.11
+    ports:
+      - "7700:7700"
+    environment:
+      MEILI_MASTER_KEY: ${MEILISEARCH_MASTER_KEY:-dev-master-key-change-in-production}
+      MEILI_ENV: development
+    volumes:
+      - meilisearch_data:/meili_data
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:7700/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    profiles:
+      - search-engines
+
   api:
     build:
       context: .
@@ -44,7 +65,7 @@ services:
       FRONTEND_URL: http://localhost:3000
       JWT_SECRET: ${JWT_SECRET:-dev-secret-change-in-production}
     healthcheck:
-      test: ["CMD-SHELL", "node -e \"require('http').get('http://localhost:3001/api', r => { process.exit(r.statusCode < 500 ? 0 : 1) }).on('error', () => process.exit(1))\""]
+      test: ["CMD-SHELL", "curl -f http://localhost:3001/api/health/live || exit 1"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -94,6 +115,8 @@ services:
 
   # ─── API Gateway (Microservices Phase 0) ─────────────────────────────────
   # The gateway sits in front of the monolith API and validates JWTs centrally.
+  # Source: services/gateway/src/; Dockerfile copies it via context . and
+  # COPY services/gateway ./services/gateway.
   # During migration, all requests are proxied to the monolith.
   # As microservices are extracted, set their URL env vars to route traffic.
   #
@@ -110,7 +133,7 @@ services:
       GATEWAY_PORT: 4000
       JWT_SECRET: ${JWT_SECRET:-dev-secret-change-in-production}
       MONOLITH_API_URL: http://api:3001
-      # Microservice URLs – uncomment to route traffic away from the monolith
+      # Microservice URLs – set to route traffic; if unset, gateway proxies to monolith
       AUTH_SERVICE_URL: http://auth:3005
       NOTIFICATION_SERVICE_URL: http://notification:3003
       SEARCH_SERVICE_URL: http://search:3004
@@ -118,46 +141,23 @@ services:
       PRODUCT_SERVICE_URL: http://product:3007
       ORDER_SERVICE_URL: http://order:3008
       PAYMENT_SERVICE_URL: http://payment:3009
-      # Phase 3 microservice URLs
       INVENTORY_SERVICE_URL: http://inventory:3010
       SELLER_SERVICE_URL: http://seller:3011
       INFLUENCER_SERVICE_URL: http://influencer:3012
       CONTENT_SERVICE_URL: http://content:3013
       ADMIN_SERVICE_URL: http://admin:3014
     healthcheck:
-      test: ["CMD-SHELL", "curl -f http://localhost:4000/health/live || exit 1"]
+      test: ["CMD-SHELL", "curl -f http://localhost:4000/api/health/live || exit 1"]
       interval: 10s
       timeout: 5s
       retries: 5
       start_period: 30s
+    # Gateway only requires api (monolith) and redis; microservices are optional.
+    # Run: docker compose up postgres redis api gateway
     depends_on:
       api:
         condition: service_healthy
       redis:
-        condition: service_healthy
-      notification:
-        condition: service_healthy
-      search:
-        condition: service_healthy
-      auth:
-        condition: service_healthy
-      user:
-        condition: service_healthy
-      product:
-        condition: service_healthy
-      order:
-        condition: service_healthy
-      payment:
-        condition: service_healthy
-      inventory:
-        condition: service_healthy
-      seller:
-        condition: service_healthy
-      influencer:
-        condition: service_healthy
-      content:
-        condition: service_healthy
-      admin:
         condition: service_healthy
 
   # ─── Notification Microservice (Phase 1) ──────────────────────────────────
@@ -196,7 +196,7 @@ services:
         condition: service_healthy
 
   # ─── Search Microservice (Phase 1) ─────────────────────────────────────
-  # Elasticsearch + Meilisearch indexing and search endpoints.
+  # Meilisearch indexing and search endpoints (/api/search, /api/meilisearch).
   search:
     build:
       context: .
@@ -209,9 +209,9 @@ services:
       DATABASE_URL: postgresql://${POSTGRES_USER:-hos_user}:${POSTGRES_PASSWORD:-hos_password}@postgres:5432/${POSTGRES_DB:-hos_marketplace}?schema=search_service,product_service
       REDIS_URL: redis://redis:6379
       JWT_SECRET: ${JWT_SECRET:-dev-secret-change-in-production}
-      ELASTICSEARCH_NODE: ${ELASTICSEARCH_NODE:-}
+      # Optional: set MEILISEARCH_HOST=http://meilisearch:7700 when using --profile search-engines
       MEILISEARCH_HOST: ${MEILISEARCH_HOST:-}
-      MEILISEARCH_KEY: ${MEILISEARCH_KEY:-}
+      MEILISEARCH_API_KEY: ${MEILISEARCH_API_KEY:-}
     healthcheck:
       test: ["CMD-SHELL", "curl -f http://localhost:3004/api/health/live || exit 1"]
       interval: 10s
@@ -501,3 +501,4 @@ volumes:
   postgres_data:
   redis_data:
   cms_data:
+  meilisearch_data:

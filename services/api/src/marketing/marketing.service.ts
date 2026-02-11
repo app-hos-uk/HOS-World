@@ -50,9 +50,9 @@ export class MarketingService {
       throw new NotFoundException('Submission not found');
     }
 
-    if (submission.status !== 'CATALOG_COMPLETED') {
+    if (submission.status !== 'CATALOG_COMPLETED' && submission.status !== 'MARKETING_COMPLETED') {
       throw new BadRequestException(
-        'Marketing materials can only be added to catalog-completed submissions',
+        'Marketing materials can only be added to catalog-completed or marketing-completed submissions',
       );
     }
 
@@ -185,6 +185,43 @@ export class MarketingService {
     return { message: 'Marketing material deleted successfully' };
   }
 
+  async reopenMarketing(submissionId: string) {
+    const submission = await this.prisma.productSubmission.findUnique({
+      where: { id: submissionId },
+    });
+
+    if (!submission) {
+      throw new NotFoundException('Submission not found');
+    }
+
+    if (submission.status !== 'MARKETING_COMPLETED') {
+      throw new BadRequestException(
+        'Only marketing-completed submissions can be reopened',
+      );
+    }
+
+    const updated = await this.prisma.productSubmission.update({
+      where: { id: submissionId },
+      data: {
+        status: 'CATALOG_COMPLETED',
+        marketingCompletedAt: null,
+        marketingNotes: `${submission.marketingNotes || ''}\n\nReopened for additional materials at ${new Date().toISOString()}`.trim(),
+      },
+      include: {
+        seller: {
+          select: {
+            id: true,
+            storeName: true,
+            slug: true,
+          },
+        },
+        marketingMaterials: true,
+      },
+    });
+
+    return updated;
+  }
+
   async markComplete(submissionId: string) {
     const submission = await this.prisma.productSubmission.findUnique({
       where: { id: submissionId },
@@ -230,7 +267,7 @@ export class MarketingService {
     // Send notification to finance team
     await this.notificationsService.sendNotificationToRole(
       'FINANCE',
-      'ORDER_CONFIRMATION', // Using existing type as placeholder
+      'MARKETING_COMPLETED',
       'Marketing Materials Completed',
       `Marketing materials have been completed for submission from ${updated.seller?.storeName || 'Unknown Seller'}. The product is ready for finance review.`,
       { submissionId },

@@ -22,4 +22,9 @@ export class ApprovePricingDto {
   @IsOptional()
   @IsString()
   notes?: string;
+
+  @IsOptional()
+  @IsNumber()
+  @Min(1)
+  selectedQuantity?: number; // Override/adjust quantity at finance approval
 }

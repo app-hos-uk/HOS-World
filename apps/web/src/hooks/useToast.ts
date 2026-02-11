@@ -12,6 +12,24 @@ export const useToast = () => {
         duration: 5000,
       });
     },
+    info: (message: string) => {
+      toast(message, {
+        duration: 4000,
+        icon: 'ℹ️',
+        style: {
+          border: '1px solid #6366f1',
+        },
+      });
+    },
+    warning: (message: string) => {
+      toast(message, {
+        duration: 5000,
+        icon: '⚠️',
+        style: {
+          border: '1px solid #f59e0b',
+        },
+      });
+    },
     loading: (message: string) => {
       return toast.loading(message);
     },
@@ -40,4 +58,3 @@ export const useToast = () => {
     },
   };
 };
-

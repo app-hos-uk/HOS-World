@@ -39,6 +39,8 @@ RUN pnpm build
 # Production image
 FROM node:18-slim
 
+# Install curl for healthchecks
+RUN apt-get update && apt-get install -y --no-install-recommends curl && rm -rf /var/lib/apt/lists/*
 RUN npm install -g pnpm
 
 WORKDIR /app
@@ -54,10 +56,11 @@ COPY --from=base /app/packages/utils/package.json ./packages/utils/
 COPY --from=base /app/packages/events/package.json ./packages/events/
 COPY --from=base /app/packages/database-common/package.json ./packages/database-common/
 
-RUN pnpm install --no-frozen-lockfile --prod
-
+# Copy built packages first so workspace:* resolves, then install prod deps
 COPY --from=base /app/packages ./packages
 COPY --from=base /app/services/gateway/dist ./services/gateway/dist
+
+RUN pnpm install --no-frozen-lockfile --prod
 
 EXPOSE 4000
 

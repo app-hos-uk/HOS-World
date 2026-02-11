@@ -3,7 +3,6 @@ import { ConfigModule } from '@nestjs/config';
 import { ObservabilityModule } from '@hos-marketplace/observability';
 import { EventBusModule } from '@hos-marketplace/events';
 import { DatabaseModule } from './database/database.module';
-import { ElasticSearchModule } from './elasticsearch/search.module';
 import { MeilisearchModule } from './meilisearch/meilisearch.module';
 import { EventHandlersController } from './event-handlers.controller';
 import { HealthModule } from './health/health.module';
@@ -12,15 +11,14 @@ import { HealthModule } from './health/health.module';
  * Search Microservice - App Module
  *
  * This microservice handles all search-related concerns:
- * - Elasticsearch product search with advanced filtering
- * - Meilisearch product search with typo tolerance
+ * - Meilisearch product search (primary) with typo tolerance and faceted filtering
  * - Event-driven index synchronization
  *
  * It connects to the same PostgreSQL database as the monolith during
  * the migration period for fallback search and product data access.
  *
  * It also connects to Redis as a microservice transport to listen
- * for product domain events and keep indexes in sync.
+ * for product domain events and keep the Meilisearch index in sync.
  */
 @Module({
   imports: [
@@ -39,8 +37,7 @@ import { HealthModule } from './health/health.module';
     // Core
     DatabaseModule,
 
-    // Feature modules
-    ElasticSearchModule,
+    // Feature modules (Meilisearch only)
     MeilisearchModule,
 
     // Infra

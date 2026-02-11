@@ -15,7 +15,7 @@ import { LogisticsModule } from './logistics/logistics.module';
     ObservabilityModule.register({ serviceName: 'inventory-service' }),
     EventBusModule.register({
       serviceName: 'inventory-service',
-      redisUrl: process.env.REDIS_URL || 'redis://localhost:6379',
+      redisUrl: process.env.REDIS_URL,
     }),
     DatabaseModule,
     HealthModule,

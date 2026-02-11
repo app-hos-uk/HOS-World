@@ -14,7 +14,7 @@ export class FinanceService {
   async findPending() {
     const submissions = await this.prisma.productSubmission.findMany({
       where: {
-        status: 'MARKETING_COMPLETED',
+        status: { in: ['MARKETING_COMPLETED', 'FINANCE_PENDING'] },
       },
       include: {
         seller: {
@@ -52,35 +52,91 @@ export class FinanceService {
       throw new NotFoundException('Submission not found');
     }
 
-    if (submission.status !== 'MARKETING_COMPLETED') {
-      throw new BadRequestException('Pricing can only be set for marketing-completed submissions');
+    if (submission.status !== 'MARKETING_COMPLETED' && submission.status !== 'FINANCE_PENDING') {
+      throw new BadRequestException(
+        'Pricing can only be set for marketing-completed or finance-pending submissions',
+      );
     }
 
     const productData = submission.productData as any;
     const basePrice = setPricingDto.basePrice || productData.price;
 
     // Calculate final price with HOS margin
-    const finalPrice = basePrice * (1 + setPricingDto.hosMargin);
+    const finalPrice = parseFloat((basePrice * (1 + setPricingDto.hosMargin)).toFixed(2));
+    const visibilityLevel = setPricingDto.visibilityLevel || 'STANDARD';
 
-    // Update submission status to finance pending
+    // Store structured pricing data (replaces fragile regex extraction)
+    const pricingData = {
+      basePrice,
+      hosMargin: setPricingDto.hosMargin,
+      finalPrice,
+      visibilityLevel,
+      setBy: userId,
+      setAt: new Date().toISOString(),
+    };
+
+    // Update submission status to finance pending with structured pricing
     await this.prisma.productSubmission.update({
       where: { id: submissionId },
       data: {
         status: 'FINANCE_PENDING',
-        financeNotes: `Pricing set: Base: $${basePrice}, Margin: ${(setPricingDto.hosMargin * 100).toFixed(2)}%, Final: $${finalPrice.toFixed(2)}`,
+        pricingData: pricingData as any,
+        financeNotes: `Pricing set: Base: £${basePrice.toFixed(2)}, Margin: ${(setPricingDto.hosMargin * 100).toFixed(2)}%, Final: £${finalPrice.toFixed(2)}, Visibility: ${visibilityLevel}`,
       },
     });
-
-    // Store pricing information (will be used when product is created)
-    // For now, we'll store it in the submission's financeNotes
-    // The actual ProductPricing will be created when the product is published
 
     return {
       submissionId,
       basePrice,
       hosMargin: setPricingDto.hosMargin,
       finalPrice,
-      visibilityLevel: setPricingDto.visibilityLevel || 'STANDARD',
+      visibilityLevel,
+    };
+  }
+
+  async updatePricing(submissionId: string, userId: string, setPricingDto: SetPricingDto) {
+    const submission = await this.prisma.productSubmission.findUnique({
+      where: { id: submissionId },
+    });
+
+    if (!submission) {
+      throw new NotFoundException('Submission not found');
+    }
+
+    if (submission.status !== 'FINANCE_PENDING') {
+      throw new BadRequestException(
+        'Pricing can only be updated for finance-pending submissions',
+      );
+    }
+
+    const productData = submission.productData as any;
+    const basePrice = setPricingDto.basePrice || productData.price;
+    const finalPrice = parseFloat((basePrice * (1 + setPricingDto.hosMargin)).toFixed(2));
+    const visibilityLevel = setPricingDto.visibilityLevel || 'STANDARD';
+
+    const pricingData = {
+      basePrice,
+      hosMargin: setPricingDto.hosMargin,
+      finalPrice,
+      visibilityLevel,
+      setBy: userId,
+      setAt: new Date().toISOString(),
+    };
+
+    await this.prisma.productSubmission.update({
+      where: { id: submissionId },
+      data: {
+        pricingData: pricingData as any,
+        financeNotes: `${submission.financeNotes || ''}\n\nPricing updated: Base: £${basePrice.toFixed(2)}, Margin: ${(setPricingDto.hosMargin * 100).toFixed(2)}%, Final: £${finalPrice.toFixed(2)}, Visibility: ${visibilityLevel}`,
+      },
+    });
+
+    return {
+      submissionId,
+      basePrice,
+      hosMargin: setPricingDto.hosMargin,
+      finalPrice,
+      visibilityLevel,
     };
   }
 
@@ -97,15 +153,27 @@ export class FinanceService {
       throw new BadRequestException(`Cannot approve submission in status: ${submission.status}`);
     }
 
+    // Ensure pricing has been set
+    if (!submission.pricingData) {
+      throw new BadRequestException('Pricing must be set before approving');
+    }
+
+    // Allow quantity override at finance stage
+    const updateData: any = {
+      status: 'FINANCE_APPROVED',
+      financeApprovedAt: new Date(),
+      financeNotes: approveDto.notes
+        ? `${submission.financeNotes || ''}\n\nApproved: ${approveDto.notes}`
+        : submission.financeNotes,
+    };
+
+    if (approveDto.selectedQuantity !== undefined && approveDto.selectedQuantity > 0) {
+      updateData.selectedQuantity = approveDto.selectedQuantity;
+    }
+
     const updated = await this.prisma.productSubmission.update({
       where: { id: submissionId },
-      data: {
-        status: 'FINANCE_APPROVED',
-        financeApprovedAt: new Date(),
-        financeNotes: approveDto.notes
-          ? `${submission.financeNotes || ''}\n\nApproved: ${approveDto.notes}`
-          : submission.financeNotes,
-      },
+      data: updateData,
       include: {
         seller: {
           select: {
@@ -122,7 +190,7 @@ export class FinanceService {
     // Send notification to HOS Admin for publishing
     await this.notificationsService.sendNotificationToRole(
       'ADMIN',
-      'ORDER_CONFIRMATION', // Using existing type as placeholder
+      'FINANCE_APPROVED',
       'Product Ready for Publishing',
       `A product submission from ${updated.seller?.storeName || 'Unknown Seller'} has completed all review stages and is ready for publishing.`,
       { submissionId },
@@ -148,7 +216,7 @@ export class FinanceService {
       where: { id: submissionId },
       data: {
         status: 'REJECTED',
-        financeNotes: `Rejected: ${reason}`,
+        financeNotes: `${submission.financeNotes || ''}\n\nRejected: ${reason}`,
       },
       include: {
         seller: {
@@ -166,7 +234,7 @@ export class FinanceService {
     if (updated.seller?.userId) {
       await this.notificationsService.sendNotificationToUser(
         updated.seller.userId,
-        'ORDER_CANCELLED', // Using existing type as placeholder
+        'FINANCE_REJECTED',
         'Product Submission Rejected',
         `Your product submission has been rejected by Finance. Reason: ${reason}`,
         { submissionId },
@@ -183,6 +251,8 @@ export class FinanceService {
         id: true,
         financeNotes: true,
         financeApprovedAt: true,
+        pricingData: true,
+        selectedQuantity: true,
         product: {
           include: {
             pricing: true,
@@ -199,6 +269,8 @@ export class FinanceService {
       submissionId: submission.id,
       financeNotes: submission.financeNotes,
       approvedAt: submission.financeApprovedAt,
+      pricingData: submission.pricingData,
+      selectedQuantity: submission.selectedQuantity,
       productPricing: submission.product?.pricing,
     };
   }
@@ -206,7 +278,7 @@ export class FinanceService {
   async getDashboardStats() {
     const [pending, approved, rejected, total] = await Promise.all([
       this.prisma.productSubmission.count({
-        where: { status: 'FINANCE_PENDING' },
+        where: { status: { in: ['MARKETING_COMPLETED', 'FINANCE_PENDING'] } },
       }),
       this.prisma.productSubmission.count({
         where: { status: 'FINANCE_APPROVED' },
@@ -217,7 +289,7 @@ export class FinanceService {
       this.prisma.productSubmission.count({
         where: {
           status: {
-            in: ['FINANCE_PENDING', 'FINANCE_APPROVED'],
+            in: ['MARKETING_COMPLETED', 'FINANCE_PENDING', 'FINANCE_APPROVED'],
           },
         },
       }),

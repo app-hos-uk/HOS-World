@@ -42,6 +42,7 @@ RUN pnpm build
 # Production image
 FROM node:18-slim
 
+# Install curl for healthchecks (auth uses bcryptjs, no native build needed)
 RUN apt-get update && apt-get install -y --no-install-recommends curl && rm -rf /var/lib/apt/lists/*
 RUN npm install -g pnpm
 

@@ -547,6 +547,16 @@ export class ApiClient {
     });
   }
 
+  async resubmitSubmission(
+    id: string,
+    data?: { productData?: any; notes?: string }
+  ): Promise<ApiResponse<any>> {
+    return this.request<ApiResponse<any>>(`/submissions/${id}/resubmit`, {
+      method: 'POST',
+      body: JSON.stringify(data || {}),
+    });
+  }
+
   // Procurement
   async getProcurementSubmissions(status?: string): Promise<ApiResponse<any[]>> {
     const url = status ? `/procurement/submissions?status=${status}` : '/procurement/submissions';
@@ -577,6 +587,26 @@ export class ApiClient {
   ): Promise<ApiResponse<any>> {
     return this.request<ApiResponse<any>>(`/procurement/submissions/${id}/reject`, {
       method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async selectProcurementQuantity(
+    id: string,
+    data: { quantity: number; notes?: string }
+  ): Promise<ApiResponse<any>> {
+    return this.request<ApiResponse<any>>(`/procurement/submissions/${id}/select-quantity`, {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async updateProcurementQuantity(
+    id: string,
+    data: { quantity: number; notes?: string }
+  ): Promise<ApiResponse<any>> {
+    return this.request<ApiResponse<any>>(`/procurement/submissions/${id}/quantity`, {
+      method: 'PUT',
       body: JSON.stringify(data),
     });
   }
@@ -725,6 +755,12 @@ export class ApiClient {
     });
   }
 
+  async reopenMarketing(submissionId: string): Promise<ApiResponse<any>> {
+    return this.request<ApiResponse<any>>(`/marketing/submissions/${submissionId}/reopen`, {
+      method: 'POST',
+    });
+  }
+
   async getMarketingDashboardStats(): Promise<ApiResponse<any>> {
     return this.request<ApiResponse<any>>('/marketing/dashboard/stats', {
       method: 'GET',
@@ -741,9 +777,9 @@ export class ApiClient {
   async setFinancePricing(
     submissionId: string,
     data: {
-      margin: number;
+      basePrice: number;
+      hosMargin: number;
       visibilityLevel?: string;
-      notes?: string;
     }
   ): Promise<ApiResponse<any>> {
     return this.request<ApiResponse<any>>(`/finance/pricing/${submissionId}`, {
@@ -752,9 +788,23 @@ export class ApiClient {
     });
   }
 
+  async updateFinancePricing(
+    submissionId: string,
+    data: {
+      basePrice: number;
+      hosMargin: number;
+      visibilityLevel?: string;
+    }
+  ): Promise<ApiResponse<any>> {
+    return this.request<ApiResponse<any>>(`/finance/pricing/${submissionId}`, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    });
+  }
+
   async approveFinancePricing(
     submissionId: string,
-    data: { notes?: string }
+    data: { notes?: string; selectedQuantity?: number }
   ): Promise<ApiResponse<any>> {
     return this.request<ApiResponse<any>>(`/finance/approve/${submissionId}`, {
       method: 'POST',
@@ -769,6 +819,12 @@ export class ApiClient {
     return this.request<ApiResponse<any>>(`/finance/reject/${submissionId}`, {
       method: 'POST',
       body: JSON.stringify(data),
+    });
+  }
+
+  async getFinancePricingHistory(submissionId: string): Promise<ApiResponse<any>> {
+    return this.request<ApiResponse<any>>(`/finance/pricing-history/${submissionId}`, {
+      method: 'GET',
     });
   }
 

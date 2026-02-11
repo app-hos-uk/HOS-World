@@ -4,6 +4,13 @@ import { ProductsService } from '../products/products.service';
 import { NotificationsService } from '../notifications/notifications.service';
 import { ProductSubmissionStatus, ProductStatus, ImageType } from '@prisma/client';
 
+interface PricingData {
+  basePrice: number;
+  hosMargin: number;
+  finalPrice: number;
+  visibilityLevel: string;
+}
+
 @Injectable()
 export class PublishingService {
   constructor(
@@ -37,10 +44,25 @@ export class PublishingService {
     const productData = submission.productData as any;
     const catalogEntry = submission.catalogEntry;
 
-    // Extract pricing from finance notes or use product data
-    const financeNotes = submission.financeNotes || '';
-    const priceMatch = financeNotes.match(/Final: \$([\d.]+)/);
-    const finalPrice = priceMatch ? parseFloat(priceMatch[1]) : productData.price;
+    // Use structured pricingData (set by finance service), fall back to legacy regex for old submissions
+    const pricingData = submission.pricingData as PricingData | null;
+    let finalPrice: number;
+    let hosMargin: number;
+    let visibilityLevel: string;
+
+    if (pricingData && pricingData.finalPrice) {
+      finalPrice = pricingData.finalPrice;
+      hosMargin = pricingData.hosMargin;
+      visibilityLevel = pricingData.visibilityLevel || 'STANDARD';
+    } else {
+      // Legacy fallback: extract from finance notes (for submissions created before pricingData field)
+      const financeNotes = submission.financeNotes || '';
+      const priceMatch = financeNotes.match(/Final: [£$]([\d.]+)/);
+      finalPrice = priceMatch ? parseFloat(priceMatch[1]) : productData.price;
+      const marginMatch = financeNotes.match(/Margin: ([\d.]+)%/);
+      hosMargin = marginMatch ? parseFloat(marginMatch[1]) / 100 : 0.15;
+      visibilityLevel = 'STANDARD';
+    }
 
     // Use catalog images, or fall back to submission productData.images (may be { url }[] or string[])
     const imageUrls: string[] =
@@ -90,28 +112,23 @@ export class PublishingService {
     });
 
     // Create ProductPricing record
-    const marginMatch = financeNotes.match(/Margin: ([\d.]+)%/);
-    const hosMargin = marginMatch ? parseFloat(marginMatch[1]) / 100 : 0.15;
-
     await this.prisma.productPricing.create({
       data: {
         productId: product.id,
-        basePrice: productData.price,
+        basePrice: pricingData?.basePrice ?? productData.price,
         hosMargin: hosMargin,
         finalPrice: finalPrice,
-        visibilityLevel: 'STANDARD', // Can be updated later
+        visibilityLevel: visibilityLevel as any,
         approvedBy: userId,
         approvedAt: new Date(),
       },
     });
 
-    // TODO: Publish to seller domains if applicable
-
     // Send notification to seller
     if (submission.seller?.userId) {
       await this.notificationsService.sendNotificationToUser(
         submission.seller.userId,
-        'ORDER_CONFIRMATION', // Using existing type as placeholder
+        'PRODUCT_PUBLISHED',
         'Product Published Successfully',
         `Your product submission "${product.name}" has been published and is now live on the marketplace.`,
         { productId: product.id, submissionId },

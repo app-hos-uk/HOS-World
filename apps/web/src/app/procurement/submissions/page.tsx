@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { RouteGuard } from '@/components/RouteGuard';
 import { DashboardLayout } from '@/components/DashboardLayout';
 import { apiClient } from '@/lib/api';
+import { useToast } from '@/hooks/useToast';
 import Image from 'next/image';
 
 type DuplicateGroup = {
@@ -40,6 +41,7 @@ export default function ProcurementSubmissionsPage() {
   const [duplicateGroupsLoading, setDuplicateGroupsLoading] = useState(false);
   const [showDuplicateGroups, setShowDuplicateGroups] = useState(false);
   const [rejectOthersLoading, setRejectOthersLoading] = useState<string | null>(null); // groupId when loading
+  const toast = useToast();
 
   // Form state for approve/reject
   const [quantity, setQuantity] = useState<string>('');
@@ -122,11 +124,12 @@ export default function ProcurementSubmissionsPage() {
       setSelectedSubmission(null);
       setQuantity('');
       setNotes('');
+      toast.success('Submission approved successfully');
       await fetchSubmissions();
       if (showDuplicateGroups) await fetchDuplicateGroups();
     } catch (err: any) {
       console.error('Error approving submission:', err);
-      setError(err.message || 'Failed to approve submission');
+      toast.error(err.message || 'Failed to approve submission');
     } finally {
       setActionLoading(false);
     }
@@ -134,7 +137,7 @@ export default function ProcurementSubmissionsPage() {
 
   const handleReject = async () => {
     if (!selectedSubmission || !rejectReason.trim()) {
-      setError('Rejection reason is required');
+      toast.error('Rejection reason is required');
       return;
     }
 
@@ -146,11 +149,12 @@ export default function ProcurementSubmissionsPage() {
       setShowModal(false);
       setSelectedSubmission(null);
       setRejectReason('');
+      toast.success('Submission rejected');
       await fetchSubmissions();
       if (showDuplicateGroups) await fetchDuplicateGroups();
     } catch (err: any) {
       console.error('Error rejecting submission:', err);
-      setError(err.message || 'Failed to reject submission');
+      toast.error(err.message || 'Failed to reject submission');
     } finally {
       setActionLoading(false);
     }
@@ -297,11 +301,12 @@ export default function ProcurementSubmissionsPage() {
                                         try {
                                           setRejectOthersLoading(group.groupId);
                                           await apiClient.rejectOthersInGroup(group.groupId, sub.id);
+                                          toast.success('Others rejected — this submission kept');
                                           await fetchDuplicateGroups();
                                           await fetchSubmissions();
                                         } catch (err: any) {
                                           console.error('Reject others failed:', err);
-                                          alert(err?.message || 'Failed to reject others');
+                                          toast.error(err?.message || 'Failed to reject others');
                                         } finally {
                                           setRejectOthersLoading(null);
                                         }
@@ -399,7 +404,7 @@ export default function ProcurementSubmissionsPage() {
                           )}
                           {productData.price && (
                             <span>
-                              <strong>Price:</strong> {productData.currency || 'USD'}{' '}
+                              <strong>Price:</strong> {productData.currency || 'GBP'}{' '}
                               {parseFloat(productData.price).toFixed(2)}
                             </span>
                           )}
@@ -533,7 +538,7 @@ export default function ProcurementSubmissionsPage() {
                           <div>
                             <p className="text-sm font-medium text-gray-500">Price</p>
                             <p className="text-gray-900">
-                              {selectedSubmission.productData.currency || 'USD'}{' '}
+                              {selectedSubmission.productData.currency || 'GBP'}{' '}
                               {parseFloat(selectedSubmission.productData.price).toFixed(2)}
                             </p>
                           </div>

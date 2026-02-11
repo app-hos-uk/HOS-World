@@ -70,33 +70,12 @@ psql -v ON_ERROR_STOP=1 --username "$POSTGRES_USER" --dbname "$POSTGRES_DB" <<-E
   ALTER DEFAULT PRIVILEGES IN SCHEMA content_service      GRANT ALL ON SEQUENCES TO "${POSTGRES_USER}";
   ALTER DEFAULT PRIVILEGES IN SCHEMA admin_service        GRANT ALL ON SEQUENCES TO "${POSTGRES_USER}";
 
-  -- ─── Cross-Schema Read Views (Step 4) ────────────────────────────────────
-  -- These read-only views allow services to query data owned by other services
-  -- without direct schema access. This replaces cross-service JOINs.
-
-  -- Order, Notification, Admin services need user email/name for display
-  CREATE OR REPLACE VIEW order_service.v_users AS
-    SELECT id, email, "firstName", "lastName", role FROM auth_service.users;
-
-  CREATE OR REPLACE VIEW notification_service.v_users AS
-    SELECT id, email, "firstName", "lastName", role FROM auth_service.users;
-
-  CREATE OR REPLACE VIEW admin_service.v_users AS
-    SELECT id, email, "firstName", "lastName", role FROM auth_service.users;
-
-  -- Order, Notification services need seller info
-  CREATE OR REPLACE VIEW order_service.v_sellers AS
-    SELECT id, "userId", "storeName", slug FROM seller_service.sellers;
-
-  -- Search service reads from product_service (handled by Prisma multiSchema)
-  -- Payment service needs order number for reconciliation
-  CREATE OR REPLACE VIEW payment_service.v_orders AS
-    SELECT id, "orderNumber", "userId", "sellerId", total, currency, status FROM order_service.orders;
-
-  -- Influencer service needs product info for links
-  CREATE OR REPLACE VIEW influencer_service.v_products AS
-    SELECT id, name, slug, price, currency, "sellerId", status FROM product_service.products;
+  -- Cross-schema views are NOT created here. The tables (auth_service.users,
+  -- seller_service.sellers, order_service.orders, product_service.products)
+  -- are created by Prisma migrations when microservices start, which happens
+  -- after this init script runs. Run create-cross-schema-views.sql once after
+  -- the first successful bring-up with migrations (see infrastructure/database/README.md).
 
 EOSQL
 
-echo "Per-service database schemas, permissions, and cross-schema views created successfully."
+echo "Per-service database schemas and permissions created successfully."

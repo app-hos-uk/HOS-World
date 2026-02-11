@@ -2,6 +2,7 @@ import {
   Controller,
   Get,
   Post,
+  Put,
   Param,
   Body,
   Query,
@@ -155,6 +156,35 @@ export class ProcurementController {
     return {
       data: submission,
       message: 'Quantity selected successfully',
+    };
+  }
+
+  @Put('submissions/:id/quantity')
+  @ApiOperation({
+    summary: 'Update quantity for submission',
+    description:
+      'Updates the selected quantity for a product submission at any stage before publishing. Procurement/Admin access required.',
+  })
+  @ApiParam({ name: 'id', description: 'Submission UUID', type: String })
+  @ApiBody({ type: SelectQuantityDto })
+  @SwaggerApiResponse({ status: 200, description: 'Quantity updated successfully' })
+  @SwaggerApiResponse({ status: 400, description: 'Invalid request data' })
+  @SwaggerApiResponse({ status: 401, description: 'Unauthorized' })
+  @SwaggerApiResponse({ status: 403, description: 'Forbidden - Procurement/Admin access required' })
+  @SwaggerApiResponse({ status: 404, description: 'Submission not found' })
+  async updateQuantity(
+    @Request() req: any,
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() selectQuantityDto: SelectQuantityDto,
+  ): Promise<ApiResponse<any>> {
+    const submission = await this.procurementService.updateQuantity(
+      id,
+      req.user.id,
+      selectQuantityDto,
+    );
+    return {
+      data: submission,
+      message: 'Quantity updated successfully',
     };
   }
 

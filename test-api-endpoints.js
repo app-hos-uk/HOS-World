@@ -38,13 +38,13 @@ async function testEndpoint(name, method, endpoint, body = null, requiresAuth = 
     const response = await fetch(url, options);
     const status = response.status;
     
-    if (status === 200 || status === 201 || status === 404) {
-      // 404 is expected for endpoints that don't exist yet
+    if (status === 200 || status === 201 || status === 404 || status === 401) {
+      // 404 = not implemented, 401 = auth required (endpoint exists and is protected)
       results.passed.push({ 
         name, 
         endpoint, 
         status,
-        note: status === 404 ? 'Endpoint not implemented (expected)' : 'OK'
+        note: status === 404 ? 'Endpoint not implemented (expected)' : status === 401 ? 'Auth required (expected)' : 'OK'
       });
     } else {
       results.failed.push({ 
@@ -112,7 +112,12 @@ async function runTests() {
   console.log('\n' + '='.repeat(60));
   console.log(`Total: ${results.passed.length + results.failed.length + results.skipped.length} endpoints tested`);
   console.log('='.repeat(60));
+
+  process.exit(results.failed.length > 0 ? 1 : 0);
 }
 
 // Run tests
-runTests().catch(console.error);
+runTests().catch((err) => {
+  console.error(err);
+  process.exit(1);
+});

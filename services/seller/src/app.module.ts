@@ -14,7 +14,7 @@ import { ReviewsModule } from './reviews/reviews.module';
     ObservabilityModule.register({ serviceName: 'seller-service' }),
     EventBusModule.register({
       serviceName: 'seller-service',
-      redisUrl: process.env.REDIS_URL || 'redis://localhost:6379',
+      redisUrl: process.env.REDIS_URL,
     }),
     DatabaseModule,
     HealthModule,

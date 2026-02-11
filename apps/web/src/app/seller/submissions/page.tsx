@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { RouteGuard } from '@/components/RouteGuard';
 import { DashboardLayout } from '@/components/DashboardLayout';
 import { apiClient } from '@/lib/api';
+import { useToast } from '@/hooks/useToast';
 import Link from 'next/link';
 
 export default function SellerSubmissionsPage() {
@@ -11,6 +12,7 @@ export default function SellerSubmissionsPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [statusFilter, setStatusFilter] = useState<string>('');
+  const toast = useToast();
 
   const menuItems = [
     { title: 'Dashboard', href: '/seller/dashboard', icon: '📊' },
@@ -36,6 +38,7 @@ export default function SellerSubmissionsPage() {
     } catch (err: any) {
       console.error('Error fetching submissions:', err);
       setError(err.message || 'Failed to load submissions');
+      toast.error(err.message || 'Failed to load submissions');
     } finally {
       setLoading(false);
     }

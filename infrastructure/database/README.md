@@ -62,7 +62,26 @@ DATABASE_URL=postgresql://user:pass@postgres:5432/hos_marketplace?schema=auth_se
 ### Cross-Schema Views
 
 When a service needs to read data owned by another service, a read-only SQL view
-is created in the consuming service's schema. Views are defined in `init-schemas.sh`:
+is created in the consuming service's schema. View DDL lives in **`create-cross-schema-views.sql`**.
+
+**Important:** These views reference tables (`auth_service.users`, `seller_service.sellers`,
+`order_service.orders`, `product_service.products`) that are created by **Prisma migrations**
+when microservices start—not during Postgres init. So view creation must run **after** the
+first successful bring-up (once migrations have created the tables).
+
+Run once after migrations exist (from repo root; SQL file is on the host):
+
+```bash
+cat infrastructure/database/create-cross-schema-views.sql | docker compose exec -T postgres psql -U hos_user -d hos_marketplace
+```
+
+Or from the host with `psql` and your DB URL:
+
+```bash
+psql "$DATABASE_URL" -f infrastructure/database/create-cross-schema-views.sql
+```
+
+Views created:
 
 - `order_service.v_users` -- user email/name from auth_service
 - `order_service.v_sellers` -- seller info from seller_service

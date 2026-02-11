@@ -58,6 +58,39 @@ export class SubmissionsController {
     };
   }
 
+  @Post(':id/resubmit')
+  @ApiOperation({
+    summary: 'Resubmit a rejected submission',
+    description:
+      'Resubmits a previously rejected product submission. Optionally update the product data. Seller access required.',
+  })
+  @ApiParam({ name: 'id', description: 'Submission UUID', type: String })
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: {
+        productData: { type: 'object', description: 'Updated product data (optional)' },
+        notes: { type: 'string', description: 'Resubmission notes (optional)' },
+      },
+    },
+  })
+  @SwaggerApiResponse({ status: 200, description: 'Submission resubmitted successfully' })
+  @SwaggerApiResponse({ status: 400, description: 'Submission is not in a rejected status' })
+  @SwaggerApiResponse({ status: 401, description: 'Unauthorized' })
+  @SwaggerApiResponse({ status: 403, description: 'Forbidden - Not your submission' })
+  @SwaggerApiResponse({ status: 404, description: 'Submission not found' })
+  async resubmit(
+    @Request() req: any,
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() body: { productData?: any; notes?: string },
+  ): Promise<ApiResponse<any>> {
+    const submission = await this.submissionsService.resubmit(id, req.user.id, body);
+    return {
+      data: submission,
+      message: 'Submission resubmitted successfully',
+    };
+  }
+
   @Post('bulk')
   @ApiOperation({
     summary: 'Bulk create product submissions',

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { RouteGuard } from '@/components/RouteGuard';
 import { DashboardLayout } from '@/components/DashboardLayout';
@@ -8,6 +8,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { CategorySelector } from '@/components/taxonomy/CategorySelector';
 import { FandomSelector } from '@/components/taxonomy/FandomSelector';
 import { apiClient } from '@/lib/api';
+import { useToast } from '@/hooks/useToast';
 import Image from 'next/image';
 
 interface ImageUpload {
@@ -29,9 +30,11 @@ interface Variation {
 export default function SubmitProductPage() {
   const router = useRouter();
   const { user, effectiveRole } = useAuth();
+  const toast = useToast();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState(false);
+  const submittingRef = useRef(false);
 
   // Form state
   const [formData, setFormData] = useState({
@@ -173,6 +176,8 @@ export default function SubmitProductPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (submittingRef.current) return;
+    submittingRef.current = true;
     setError('');
     setSuccess(false);
     setLoading(true);
@@ -181,30 +186,35 @@ export default function SubmitProductPage() {
     if (!formData.name.trim()) {
       setError('Product name is required');
       setLoading(false);
+      submittingRef.current = false;
       return;
     }
 
     if (!formData.description.trim()) {
       setError('Product description is required');
       setLoading(false);
+      submittingRef.current = false;
       return;
     }
 
     if (!formData.price || parseFloat(formData.price) <= 0) {
       setError('Valid price is required');
       setLoading(false);
+      submittingRef.current = false;
       return;
     }
 
     if (!formData.stock || parseInt(formData.stock) < 0) {
       setError('Valid stock quantity is required');
       setLoading(false);
+      submittingRef.current = false;
       return;
     }
 
     if (images.length === 0) {
       setError('At least one product image is required');
       setLoading(false);
+      submittingRef.current = false;
       return;
     }
 
@@ -242,17 +252,21 @@ export default function SubmitProductPage() {
 
       if (response?.data) {
         setSuccess(true);
+        toast.success('Product submitted for review!');
         setTimeout(() => {
-          router.push('/seller/products');
+          router.push('/seller/submissions');
         }, 2000);
       } else {
         throw new Error('Failed to create submission');
       }
     } catch (err: any) {
       console.error('Submission error:', err);
-      setError(err.message || 'Failed to submit product. Please try again.');
+      const msg = err.message || 'Failed to submit product. Please try again.';
+      setError(msg);
+      toast.error(msg);
     } finally {
       setLoading(false);
+      submittingRef.current = false;
     }
   };
 

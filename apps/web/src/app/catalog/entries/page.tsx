@@ -5,6 +5,7 @@ import { RouteGuard } from '@/components/RouteGuard';
 import { DashboardLayout } from '@/components/DashboardLayout';
 import Image from 'next/image';
 import { apiClient } from '@/lib/api';
+import { useToast } from '@/hooks/useToast';
 
 export default function CatalogEntriesPage() {
   const [pendingSubmissions, setPendingSubmissions] = useState<any[]>([]);
@@ -21,6 +22,7 @@ export default function CatalogEntriesPage() {
   const [newKeyword, setNewKeyword] = useState('');
   const [images, setImages] = useState<string[]>([]);
   const [newImageUrl, setNewImageUrl] = useState('');
+  const toast = useToast();
 
   useEffect(() => {
     fetchPending();
@@ -85,7 +87,7 @@ export default function CatalogEntriesPage() {
 
   const handleSubmit = async () => {
     if (!selectedSubmission || !title.trim() || !description.trim() || images.length === 0) {
-      setError('Title, description, and at least one image are required');
+      toast.error('Title, description, and at least one image are required');
       return;
     }
 
@@ -103,10 +105,11 @@ export default function CatalogEntriesPage() {
       setDescription('');
       setKeywords([]);
       setImages([]);
+      toast.success('Catalog entry created successfully');
       await fetchPending();
     } catch (err: any) {
       console.error('Error creating catalog entry:', err);
-      setError(err.message || 'Failed to create catalog entry');
+      toast.error(err.message || 'Failed to create catalog entry');
     } finally {
       setActionLoading(false);
     }
@@ -172,7 +175,7 @@ export default function CatalogEntriesPage() {
                           )}
                           {productData.price && (
                             <span>
-                              <strong>Price:</strong> {productData.currency || 'USD'}{' '}
+                              <strong>Price:</strong> {productData.currency || 'GBP'}{' '}
                               {parseFloat(productData.price).toFixed(2)}
                             </span>
                           )}

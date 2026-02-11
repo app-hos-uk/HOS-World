@@ -5,10 +5,11 @@
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "scripts": {
-    "build": "tsc",
+    "build": "DATABASE_URL=postgresql://localhost:5432/dummy pnpm exec prisma generate && tsc",
     "dev": "tsc --watch",
     "clean": "rm -rf dist",
-    "type-check": "tsc --noEmit"
+    "type-check": "tsc --noEmit",
+    "prisma:generate": "pnpm exec prisma generate"
   },
   "dependencies": {
     "@nestjs/common": "^10.3.0",
@@ -16,7 +17,8 @@
   },
   "devDependencies": {
     "@types/node": "^20.10.6",
-    "typescript": "^5.3.3"
+    "typescript": "^5.3.3",
+    "prisma": "^5.22.0"
   },
   "files": [
     "dist"

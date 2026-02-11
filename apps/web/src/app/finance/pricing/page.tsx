@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { RouteGuard } from '@/components/RouteGuard';
 import { DashboardLayout } from '@/components/DashboardLayout';
 import { apiClient } from '@/lib/api';
+import { useToast } from '@/hooks/useToast';
 
 export default function FinancePricingPage() {
   const [pendingSubmissions, setPendingSubmissions] = useState<any[]>([]);
@@ -19,6 +20,7 @@ export default function FinancePricingPage() {
   const [visibilityLevel, setVisibilityLevel] = useState<string>('STANDARD');
   const [notes, setNotes] = useState('');
   const [rejectReason, setRejectReason] = useState('');
+  const toast = useToast();
 
   useEffect(() => {
     fetchPending();
@@ -52,24 +54,29 @@ export default function FinancePricingPage() {
 
   const handleSetPricing = async () => {
     if (!selectedSubmission || !margin || parseFloat(margin) <= 0) {
-      setError('Margin must be greater than 0');
+      toast.error('Margin must be greater than 0');
       return;
     }
+
+    const productData = selectedSubmission.productData || {};
+    const basePrice = productData.price ? parseFloat(productData.price) : 0;
+    const hosMargin = parseFloat(margin) / 100; // Convert percentage to decimal
 
     try {
       setActionLoading(true);
       await apiClient.setFinancePricing(selectedSubmission.id, {
-        margin: parseFloat(margin),
+        basePrice,
+        hosMargin,
         visibilityLevel: visibilityLevel,
-        notes: notes || undefined,
       });
+      toast.success(`Pricing set: ${hosMargin * 100}% margin on £${basePrice.toFixed(2)}`);
       setActionType(null);
       setMargin('');
       setNotes('');
       await fetchPending();
     } catch (err: any) {
       console.error('Error setting pricing:', err);
-      setError(err.message || 'Failed to set pricing');
+      toast.error(err.message || 'Failed to set pricing');
     } finally {
       setActionLoading(false);
     }
@@ -86,10 +93,11 @@ export default function FinancePricingPage() {
       setShowModal(false);
       setSelectedSubmission(null);
       setNotes('');
+      toast.success('Pricing approved — product ready for publishing');
       await fetchPending();
     } catch (err: any) {
       console.error('Error approving:', err);
-      setError(err.message || 'Failed to approve pricing');
+      toast.error(err.message || 'Failed to approve pricing');
     } finally {
       setActionLoading(false);
     }
@@ -97,7 +105,7 @@ export default function FinancePricingPage() {
 
   const handleReject = async () => {
     if (!selectedSubmission || !rejectReason.trim()) {
-      setError('Rejection reason is required');
+      toast.error('Rejection reason is required');
       return;
     }
 
@@ -109,10 +117,11 @@ export default function FinancePricingPage() {
       setShowModal(false);
       setSelectedSubmission(null);
       setRejectReason('');
+      toast.success('Pricing rejected');
       await fetchPending();
     } catch (err: any) {
       console.error('Error rejecting:', err);
-      setError(err.message || 'Failed to reject pricing');
+      toast.error(err.message || 'Failed to reject pricing');
     } finally {
       setActionLoading(false);
     }
@@ -171,19 +180,19 @@ export default function FinancePricingPage() {
                         <div className="flex flex-wrap gap-4 mt-4 text-sm text-gray-600">
                           {productData.price && (
                             <span>
-                              <strong>Price:</strong> {productData.currency || 'USD'}{' '}
+                              <strong>Price:</strong> {productData.currency || 'GBP'}{' '}
                               {parseFloat(productData.price).toFixed(2)}
                             </span>
                           )}
                           {productData.tradePrice && (
                             <span>
-                              <strong>Trade Price:</strong> {productData.currency || 'USD'}{' '}
+                              <strong>Trade Price:</strong> {productData.currency || 'GBP'}{' '}
                               {parseFloat(productData.tradePrice).toFixed(2)}
                             </span>
                           )}
                           {productData.rrp && (
                             <span>
-                              <strong>RRP:</strong> {productData.currency || 'USD'}{' '}
+                              <strong>RRP:</strong> {productData.currency || 'GBP'}{' '}
                               {parseFloat(productData.rrp).toFixed(2)}
                             </span>
                           )}
@@ -252,7 +261,7 @@ export default function FinancePricingPage() {
                             <div>
                               <p className="text-sm font-medium text-gray-500">Price</p>
                               <p className="text-gray-900">
-                                {selectedSubmission.productData.currency || 'USD'}{' '}
+                                {selectedSubmission.productData.currency || 'GBP'}{' '}
                                 {parseFloat(selectedSubmission.productData.price).toFixed(2)}
                               </p>
                             </div>
@@ -261,7 +270,7 @@ export default function FinancePricingPage() {
                             <div>
                               <p className="text-sm font-medium text-gray-500">Trade Price</p>
                               <p className="text-gray-900">
-                                {selectedSubmission.productData.currency || 'USD'}{' '}
+                                {selectedSubmission.productData.currency || 'GBP'}{' '}
                                 {parseFloat(selectedSubmission.productData.tradePrice).toFixed(2)}
                               </p>
                             </div>

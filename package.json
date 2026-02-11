@@ -15,7 +15,8 @@
     "test": "turbo run test",
     "clean": "turbo run clean",
     "format": "prettier --write \"**/*.{ts,tsx,js,jsx,json,md}\"",
-    "type-check": "turbo run type-check"
+    "type-check": "turbo run type-check",
+    "fix:pnpm-state": "rm -f node_modules/.pnpm-workspace-state-v1.json && pnpm install"
   },
   "devDependencies": {
     "baseline-browser-mapping": "^2.9.19",

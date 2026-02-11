@@ -111,7 +111,7 @@ export class CatalogService {
         await this.prisma.notification.create({
           data: {
             userId: user.id,
-            type: 'ORDER_CONFIRMATION', // Using existing type, can be extended with CATALOG_COMPLETED later
+            type: 'CATALOG_COMPLETED',
             subject: 'Product Catalog Entry Completed',
             content: `Product submission ${submissionId} has been cataloged and is ready for marketing review.`,
             email: user.email || undefined,
@@ -260,7 +260,7 @@ export class CatalogService {
     // Send notification to marketing team
     await this.notificationsService.sendNotificationToRole(
       'MARKETING',
-      'ORDER_CONFIRMATION', // Using existing type as placeholder
+      'CATALOG_COMPLETED',
       'Catalog Entry Completed',
       `A catalog entry has been completed for submission from ${submission.seller?.storeName || 'Unknown Seller'}. The product is ready for marketing review.`,
       { submissionId, catalogEntryId: updated.id },

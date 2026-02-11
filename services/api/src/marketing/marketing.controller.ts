@@ -188,6 +188,28 @@ export class MarketingController {
     };
   }
 
+  @Post('submissions/:submissionId/reopen')
+  @ApiOperation({
+    summary: 'Reopen marketing for a submission',
+    description:
+      'Reopens a marketing-completed submission so additional materials can be added. Marketing/Admin access required.',
+  })
+  @ApiParam({ name: 'submissionId', description: 'Submission UUID', type: String })
+  @SwaggerApiResponse({ status: 200, description: 'Marketing reopened successfully' })
+  @SwaggerApiResponse({ status: 400, description: 'Submission not in MARKETING_COMPLETED status' })
+  @SwaggerApiResponse({ status: 401, description: 'Unauthorized' })
+  @SwaggerApiResponse({ status: 403, description: 'Forbidden - Marketing/Admin access required' })
+  @SwaggerApiResponse({ status: 404, description: 'Submission not found' })
+  async reopenMarketing(
+    @Param('submissionId', ParseUUIDPipe) submissionId: string,
+  ): Promise<ApiResponse<any>> {
+    const submission = await this.marketingService.reopenMarketing(submissionId);
+    return {
+      data: submission,
+      message: 'Marketing reopened for additional materials',
+    };
+  }
+
   @Get('dashboard/stats')
   @ApiOperation({
     summary: 'Get marketing dashboard statistics',
