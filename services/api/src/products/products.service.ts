@@ -12,13 +12,13 @@ import { SearchProductsDto } from './dto/search-products.dto';
 import type { Product, PaginatedResponse } from '@hos-marketplace/shared-types';
 import { Prisma, ProductStatus, ImageType } from '@prisma/client';
 import { slugify } from '@hos-marketplace/utils';
-import { ProductsElasticsearchHook } from './products-elasticsearch.hook';
+import { ProductsCacheHook } from './products-cache.hook';
 
 @Injectable()
 export class ProductsService {
   constructor(
     private prisma: PrismaService,
-    private elasticsearchHook: ProductsElasticsearchHook,
+    private cacheHook: ProductsCacheHook,
   ) {}
 
   async create(sellerId: string, createProductDto: CreateProductDto): Promise<Product> {
@@ -214,9 +214,9 @@ export class ProductsService {
 
     const mappedProduct = this.mapToProductType(product);
 
-    // Sync with Elasticsearch and cache (fire and forget - don't block response)
-    this.elasticsearchHook.onProductCreated(product).catch((error) => {
-      console.error('Failed to sync product to Elasticsearch:', error);
+    // Sync cache (fire and forget - don't block response)
+    this.cacheHook.onProductCreated(product).catch((error) => {
+      console.error('Failed to sync product to cache:', error);
     });
 
     return mappedProduct;
@@ -762,9 +762,9 @@ export class ProductsService {
 
     const mappedProduct = this.mapToProductType(updated);
 
-    // Sync with Elasticsearch and cache (fire and forget - don't block response)
-    this.elasticsearchHook.onProductUpdated(updated).catch((error) => {
-      console.error('Failed to sync product update to Elasticsearch:', error);
+    // Sync cache (fire and forget - don't block response)
+    this.cacheHook.onProductUpdated(updated).catch((error) => {
+      console.error('Failed to sync product update to cache:', error);
     });
 
     return mappedProduct;
@@ -789,13 +789,20 @@ export class ProductsService {
       throw new ForbiddenException('You do not have permission to delete this product');
     }
 
-    // Delete from Elasticsearch and cache (fire-and-forget so DB delete is not blocked by ES/cache unavailability)
-    this.elasticsearchHook.onProductDeleted(productId).catch((error) => {
-      console.error('Failed to delete product from Elasticsearch:', error);
+    const orderItemCount = await this.prisma.orderItem.count({ where: { productId } });
+    if (orderItemCount > 0) {
+      throw new BadRequestException(
+        'Product cannot be deleted because it appears in past orders. Consider setting status to Inactive instead.',
+      );
+    }
+
+    await this.prisma.$transaction(async (tx) => {
+      await tx.cartItem.deleteMany({ where: { productId } });
+      await tx.product.delete({ where: { id: productId } });
     });
 
-    await this.prisma.product.delete({
-      where: { id: productId },
+    this.cacheHook.onProductDeleted(productId).catch((error) => {
+      console.error('Failed to invalidate product cache:', error);
     });
   }
 
@@ -1029,8 +1036,8 @@ export class ProductsService {
       },
     });
 
-    // Index in Elasticsearch
-    await this.elasticsearchHook.onProductCreated(bundle.id);
+    // Invalidate cache for bundle
+    await this.cacheHook.onProductCreated(bundle.id);
 
     return this.mapToProductType(bundle, false, true);
   }

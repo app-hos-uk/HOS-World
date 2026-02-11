@@ -1,7 +1,7 @@
 import { Injectable, BadRequestException, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../database/prisma.service';
 import { ProductsService } from '../products/products.service';
-import { ProductsElasticsearchHook } from '../products/products-elasticsearch.hook';
+import { ProductsCacheHook } from '../products/products-cache.hook';
 import { slugify } from '@hos-marketplace/utils';
 
 @Injectable()
@@ -9,7 +9,7 @@ export class AdminProductsService {
   constructor(
     private prisma: PrismaService,
     private productsService: ProductsService,
-    private elasticsearchHook: ProductsElasticsearchHook,
+    private cacheHook: ProductsCacheHook,
   ) {}
 
   async createProduct(data: {
@@ -231,9 +231,9 @@ export class AdminProductsService {
       },
     });
 
-    // Sync with Elasticsearch and cache (fire and forget - don't block response)
-    this.elasticsearchHook.onProductCreated(product).catch((error) => {
-      console.error('Failed to sync product to Elasticsearch:', error);
+    // Sync cache (fire and forget - don't block response)
+    this.cacheHook.onProductCreated(product).catch((error) => {
+      console.error('Failed to sync product to cache:', error);
     });
 
     return product;
@@ -491,9 +491,9 @@ export class AdminProductsService {
       },
     });
 
-    // Sync with Elasticsearch and cache (fire and forget - don't block response)
-    this.elasticsearchHook.onProductUpdated(updated).catch((error) => {
-      console.error('Failed to sync product update to Elasticsearch:', error);
+    // Sync cache (fire and forget - don't block response)
+    this.cacheHook.onProductUpdated(updated).catch((error) => {
+      console.error('Failed to sync product update to cache:', error);
     });
 
     return updated;
@@ -588,14 +588,22 @@ export class AdminProductsService {
       throw new NotFoundException('Product not found');
     }
 
-    // Delete product (cascade will handle related records)
-    await this.prisma.product.delete({
-      where: { id: productId },
+    // Product is referenced by cart_items (no onDelete cascade) - remove those first
+    const orderItemCount = await this.prisma.orderItem.count({ where: { productId } });
+    if (orderItemCount > 0) {
+      throw new BadRequestException(
+        'Product cannot be deleted because it appears in past orders. Consider setting status to Inactive instead.',
+      );
+    }
+
+    await this.prisma.$transaction(async (tx) => {
+      await tx.cartItem.deleteMany({ where: { productId } });
+      await tx.product.delete({ where: { id: productId } });
     });
 
-    // Sync with Elasticsearch (fire and forget)
-    this.elasticsearchHook.onProductDeleted(productId).catch((error) => {
-      console.error('Failed to sync product deletion to Elasticsearch:', error);
+    // Invalidate cache (fire and forget)
+    this.cacheHook.onProductDeleted(productId).catch((error) => {
+      console.error('Failed to invalidate product cache:', error);
     });
 
     return { message: 'Product deleted successfully' };
