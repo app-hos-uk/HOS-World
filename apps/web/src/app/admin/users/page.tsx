@@ -75,6 +75,7 @@ export default function AdminUsersPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [roleFilter, setRoleFilter] = useState<string>('ALL');
   const [statusFilter, setStatusFilter] = useState<string>('ALL');
+  const [showNewThisMonth, setShowNewThisMonth] = useState(false);
   const [sortBy, setSortBy] = useState<'name' | 'email' | 'date' | 'role'>('date');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
@@ -242,6 +243,13 @@ export default function AdminUsersPage() {
       }
     }
 
+    // New this month filter
+    if (showNewThisMonth) {
+      const now = new Date();
+      const firstOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+      filtered = filtered.filter(u => new Date(u.createdAt) >= firstOfMonth);
+    }
+
     // Sort
     filtered.sort((a, b) => {
       let comparison = 0;
@@ -263,7 +271,7 @@ export default function AdminUsersPage() {
     });
 
     return filtered;
-  }, [users, searchTerm, roleFilter, statusFilter, sortBy, sortOrder]);
+  }, [users, searchTerm, roleFilter, statusFilter, showNewThisMonth, sortBy, sortOrder]);
 
   const handleViewDetails = (user: User) => {
     setSelectedUser(user);
@@ -555,61 +563,70 @@ export default function AdminUsersPage() {
           {stats && (
             <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-3">
               <button
-                onClick={() => { setRoleFilter('ALL'); setStatusFilter('ALL'); }}
-                className={`bg-white rounded-lg shadow p-3 text-left hover:shadow-md transition-shadow ${roleFilter === 'ALL' && statusFilter === 'ALL' ? 'ring-2 ring-purple-500' : ''}`}
+                onClick={() => { setRoleFilter('ALL'); setStatusFilter('ALL'); setShowNewThisMonth(false); }}
+                className={`bg-white rounded-lg shadow p-3 text-left hover:shadow-md transition-shadow ${roleFilter === 'ALL' && statusFilter === 'ALL' && !showNewThisMonth ? 'ring-2 ring-purple-500' : ''}`}
               >
                 <p className="text-xs text-gray-500">Total</p>
                 <p className="text-xl font-bold text-gray-900">{stats.total}</p>
               </button>
               <button
-                onClick={() => setRoleFilter('ADMIN')}
-                className={`bg-white rounded-lg shadow p-3 text-left hover:shadow-md transition-shadow ${roleFilter === 'ADMIN' ? 'ring-2 ring-purple-500' : ''}`}
+                onClick={() => { setRoleFilter('ADMIN'); setShowNewThisMonth(false); }}
+                className={`bg-white rounded-lg shadow p-3 text-left hover:shadow-md transition-shadow ${roleFilter === 'ADMIN' && !showNewThisMonth ? 'ring-2 ring-purple-500' : ''}`}
               >
                 <p className="text-xs text-gray-500">Admins</p>
                 <p className="text-xl font-bold text-red-600">{stats.admins}</p>
               </button>
               <button
-                onClick={() => setRoleFilter('SELLERS')}
-                className={`bg-white rounded-lg shadow p-3 text-left hover:shadow-md transition-shadow ${roleFilter === 'SELLERS' ? 'ring-2 ring-purple-500' : ''}`}
+                onClick={() => { setRoleFilter('SELLERS'); setShowNewThisMonth(false); }}
+                className={`bg-white rounded-lg shadow p-3 text-left hover:shadow-md transition-shadow ${roleFilter === 'SELLERS' && !showNewThisMonth ? 'ring-2 ring-purple-500' : ''}`}
               >
                 <p className="text-xs text-gray-500">Sellers</p>
                 <p className="text-xl font-bold text-blue-600">{stats.sellers}</p>
               </button>
               <button
-                onClick={() => setRoleFilter('CUSTOMER')}
-                className={`bg-white rounded-lg shadow p-3 text-left hover:shadow-md transition-shadow ${roleFilter === 'CUSTOMER' ? 'ring-2 ring-purple-500' : ''}`}
+                onClick={() => { setRoleFilter('CUSTOMER'); setShowNewThisMonth(false); }}
+                className={`bg-white rounded-lg shadow p-3 text-left hover:shadow-md transition-shadow ${roleFilter === 'CUSTOMER' && !showNewThisMonth ? 'ring-2 ring-purple-500' : ''}`}
               >
                 <p className="text-xs text-gray-500">Customers</p>
                 <p className="text-xl font-bold text-gray-600">{stats.customers}</p>
               </button>
               <button
-                onClick={() => setRoleFilter('TEAM')}
-                className={`bg-white rounded-lg shadow p-3 text-left hover:shadow-md transition-shadow ${roleFilter === 'TEAM' ? 'ring-2 ring-purple-500' : ''}`}
+                onClick={() => { setRoleFilter('TEAM'); setShowNewThisMonth(false); }}
+                className={`bg-white rounded-lg shadow p-3 text-left hover:shadow-md transition-shadow ${roleFilter === 'TEAM' && !showNewThisMonth ? 'ring-2 ring-purple-500' : ''}`}
               >
                 <p className="text-xs text-gray-500">Team</p>
                 <p className="text-xl font-bold text-purple-600">{stats.teamMembers}</p>
               </button>
               <button
-                onClick={() => setRoleFilter('INFLUENCER')}
-                className={`bg-white rounded-lg shadow p-3 text-left hover:shadow-md transition-shadow ${roleFilter === 'INFLUENCER' ? 'ring-2 ring-purple-500' : ''}`}
+                onClick={() => { setRoleFilter('INFLUENCER'); setShowNewThisMonth(false); }}
+                className={`bg-white rounded-lg shadow p-3 text-left hover:shadow-md transition-shadow ${roleFilter === 'INFLUENCER' && !showNewThisMonth ? 'ring-2 ring-purple-500' : ''}`}
               >
                 <p className="text-xs text-gray-500">Influencers</p>
                 <p className="text-xl font-bold text-amber-600">{stats.influencers}</p>
               </button>
-              <div className="bg-white rounded-lg shadow p-3">
+              <button
+                onClick={() => {
+                  setShowNewThisMonth(!showNewThisMonth);
+                  if (!showNewThisMonth) {
+                    setRoleFilter('ALL');
+                    setStatusFilter('ALL');
+                  }
+                }}
+                className={`bg-white rounded-lg shadow p-3 text-left hover:shadow-md transition-shadow ${showNewThisMonth ? 'ring-2 ring-green-500' : ''}`}
+              >
                 <p className="text-xs text-gray-500">New This Month</p>
                 <p className="text-xl font-bold text-green-600">{stats.newThisMonth}</p>
-              </div>
+              </button>
               <button
-                onClick={() => setStatusFilter('ACTIVE')}
-                className={`bg-white rounded-lg shadow p-3 text-left hover:shadow-md transition-shadow ${statusFilter === 'ACTIVE' ? 'ring-2 ring-purple-500' : ''}`}
+                onClick={() => { setStatusFilter('ACTIVE'); setShowNewThisMonth(false); }}
+                className={`bg-white rounded-lg shadow p-3 text-left hover:shadow-md transition-shadow ${statusFilter === 'ACTIVE' && !showNewThisMonth ? 'ring-2 ring-purple-500' : ''}`}
               >
                 <p className="text-xs text-gray-500">Active</p>
                 <p className="text-xl font-bold text-green-600">{stats.active}</p>
               </button>
               <button
-                onClick={() => setStatusFilter('INACTIVE')}
-                className={`bg-white rounded-lg shadow p-3 text-left hover:shadow-md transition-shadow ${statusFilter === 'INACTIVE' ? 'ring-2 ring-purple-500' : ''}`}
+                onClick={() => { setStatusFilter('INACTIVE'); setShowNewThisMonth(false); }}
+                className={`bg-white rounded-lg shadow p-3 text-left hover:shadow-md transition-shadow ${statusFilter === 'INACTIVE' && !showNewThisMonth ? 'ring-2 ring-purple-500' : ''}`}
               >
                 <p className="text-xs text-gray-500">Inactive</p>
                 <p className="text-xl font-bold text-red-600">{stats.inactive}</p>
