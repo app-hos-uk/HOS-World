@@ -686,29 +686,44 @@ function AdminProductsContent() {
             </div>
           )}
 
-          {/* Stats Cards */}
+          {/* Stats Cards — click to filter */}
           {stats && (
             <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-4">
-              <div className="bg-white rounded-lg shadow p-4">
+              <button
+                onClick={() => { setStatusFilter('ALL'); setStockFilter('ALL'); }}
+                className={`bg-white rounded-lg shadow p-4 text-left hover:ring-2 hover:ring-purple-300 transition ${statusFilter === 'ALL' && stockFilter === 'ALL' ? 'ring-2 ring-purple-500' : ''}`}
+              >
                 <p className="text-sm text-gray-600">Total</p>
                 <p className="text-2xl font-bold text-purple-600">{stats.totalProducts}</p>
-              </div>
-              <div className="bg-white rounded-lg shadow p-4">
+              </button>
+              <button
+                onClick={() => { setStatusFilter('ACTIVE'); setStockFilter('ALL'); }}
+                className={`bg-white rounded-lg shadow p-4 text-left hover:ring-2 hover:ring-green-300 transition ${statusFilter === 'ACTIVE' ? 'ring-2 ring-green-500' : ''}`}
+              >
                 <p className="text-sm text-gray-600">Active</p>
                 <p className="text-2xl font-bold text-green-600">{stats.activeProducts}</p>
-              </div>
-              <div className="bg-white rounded-lg shadow p-4">
+              </button>
+              <button
+                onClick={() => { setStatusFilter('DRAFT'); setStockFilter('ALL'); }}
+                className={`bg-white rounded-lg shadow p-4 text-left hover:ring-2 hover:ring-yellow-300 transition ${statusFilter === 'DRAFT' ? 'ring-2 ring-yellow-500' : ''}`}
+              >
                 <p className="text-sm text-gray-600">Draft</p>
                 <p className="text-2xl font-bold text-yellow-600">{stats.draftProducts}</p>
-              </div>
-              <div className="bg-white rounded-lg shadow p-4">
+              </button>
+              <button
+                onClick={() => { setStatusFilter('ALL'); setStockFilter('OUT'); }}
+                className={`bg-white rounded-lg shadow p-4 text-left hover:ring-2 hover:ring-red-300 transition ${stockFilter === 'OUT' ? 'ring-2 ring-red-500' : ''}`}
+              >
                 <p className="text-sm text-gray-600">Out of Stock</p>
                 <p className="text-2xl font-bold text-red-600">{stats.outOfStock}</p>
-              </div>
-              <div className="bg-white rounded-lg shadow p-4">
+              </button>
+              <button
+                onClick={() => { setStatusFilter('ALL'); setStockFilter('LOW'); }}
+                className={`bg-white rounded-lg shadow p-4 text-left hover:ring-2 hover:ring-orange-300 transition ${stockFilter === 'LOW' ? 'ring-2 ring-orange-500' : ''}`}
+              >
                 <p className="text-sm text-gray-600">Low Stock</p>
                 <p className="text-2xl font-bold text-orange-600">{stats.lowStock}</p>
-              </div>
+              </button>
               <div className="bg-white rounded-lg shadow p-4">
                 <p className="text-sm text-gray-600">Platform</p>
                 <p className="text-2xl font-bold text-blue-600">{stats.platformOwned}</p>
