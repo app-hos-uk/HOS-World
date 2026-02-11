@@ -87,6 +87,26 @@ async function bootstrap() {
     allowedOrigins = ['https://hos-marketplaceweb-production.up.railway.app'];
   }
 
+  // Reconstruct origin when behind a proxy that strips Origin (e.g. Railway). Defined here so both OPTIONS handler and CORS safety-net middleware can use it.
+  const getRequestOrigin = (req: any): string | undefined => {
+    const origin = (req.headers?.origin as string)?.trim();
+    if (origin) return origin;
+    const proto = (req.headers?.['x-forwarded-proto'] as string)?.split(',')[0]?.trim();
+    const host = (req.headers?.['x-forwarded-host'] as string)?.split(',')[0]?.trim();
+    if (proto && host) return `${proto}://${host}`;
+    return undefined;
+  };
+
+  const isOriginAllowed = (origin: string | undefined): string | null => {
+    if (!origin) return '*';
+    const normalized = normalizeOrigin(origin);
+    if (!normalized) return '*';
+    const allowed = allowedOrigins.some(
+      (a) => a && (normalized === a || normalized.startsWith(a + '/')),
+    );
+    return allowed ? origin : null;
+  };
+
   try {
     logger.info('🚀 Starting API server...', 'Bootstrap');
 
@@ -154,28 +174,6 @@ async function bootstrap() {
 
       // CORS first: handle OPTIONS preflight before any other middleware so browser gets CORS headers
       logger.info(`🌐 CORS allowed origins: ${allowedOrigins.join(', ')}`, 'Bootstrap');
-
-      // Reconstruct origin when behind a proxy that strips Origin (e.g. Railway)
-      const getRequestOrigin = (req: any): string | undefined => {
-        const origin = (req.headers?.origin as string)?.trim();
-        if (origin) return origin;
-        const proto = (req.headers?.['x-forwarded-proto'] as string)?.split(',')[0]?.trim();
-        const host = (req.headers?.['x-forwarded-host'] as string)?.split(',')[0]?.trim();
-        if (proto && host) return `${proto}://${host}`;
-        return undefined;
-      };
-
-      // Check if origin is allowed - returns the origin to echo (or '*' when no origin), null if not allowed.
-      // CORS spec: when Access-Control-Allow-Credentials is true, Access-Control-Allow-Origin must NOT be '*'.
-      const isOriginAllowed = (origin: string | undefined): string | null => {
-        if (!origin) return '*'; // No origin (e.g. server-to-server, curl) - allow with *
-        const normalized = normalizeOrigin(origin);
-        if (!normalized) return '*';
-        const allowed = allowedOrigins.some(
-          (a) => a && (normalized === a || normalized.startsWith(a + '/')),
-        );
-        return allowed ? origin : null; // Echo back the exact origin the browser sent
-      };
 
       app.use((req: any, res: any, next: any) => {
         if (req.method === 'OPTIONS') {
