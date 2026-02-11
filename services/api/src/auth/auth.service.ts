@@ -466,6 +466,7 @@ export class AuthService {
           firstName: true,
           lastName: true,
           role: true,
+          isActive: true,
           avatar: true,
           createdAt: true,
           updatedAt: true,
@@ -573,6 +574,11 @@ export class AuthService {
         }).catch(() => {});
         // #endregion
         throw new UnauthorizedException('Invalid credentials');
+      }
+
+      // Check if user account is active
+      if (user.isActive === false) {
+        throw new UnauthorizedException('Your account has been deactivated. Please contact support.');
       }
 
       // Remove password from response

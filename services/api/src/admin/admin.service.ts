@@ -20,6 +20,7 @@ export class AdminService {
         firstName: true,
         lastName: true,
         role: true,
+        isActive: true,
         avatar: true,
         createdAt: true,
         updatedAt: true,
@@ -435,6 +436,7 @@ export class AdminService {
       email?: string;
       role?: string;
       avatar?: string;
+      isActive?: boolean;
     },
   ) {
     // Check if user exists
@@ -446,13 +448,16 @@ export class AdminService {
       throw new NotFoundException('User not found');
     }
 
-    // Protect hard-protected admin accounts from role/email changes (prevents making them deletable).
+    // Protect hard-protected admin accounts from role/email/status changes.
     if (this.protectedAdminEmails.has(user.email)) {
       if (updateData.role && updateData.role !== 'ADMIN') {
         throw new BadRequestException('Cannot change role of a protected admin user');
       }
       if (updateData.email && updateData.email !== user.email) {
         throw new BadRequestException('Cannot change email of a protected admin user');
+      }
+      if (updateData.isActive === false) {
+        throw new BadRequestException('Cannot deactivate a protected admin user');
       }
     }
 
@@ -490,6 +495,40 @@ export class AdminService {
         firstName: true,
         lastName: true,
         role: true,
+        isActive: true,
+        avatar: true,
+        createdAt: true,
+        updatedAt: true,
+      },
+    });
+  }
+
+  async toggleUserStatus(userId: string) {
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+    });
+
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+
+    // Protect hard-protected admin accounts from being deactivated
+    if (this.protectedAdminEmails.has(user.email)) {
+      throw new BadRequestException('Cannot deactivate a protected admin user');
+    }
+
+    const newStatus = !user.isActive;
+
+    return this.prisma.user.update({
+      where: { id: userId },
+      data: { isActive: newStatus },
+      select: {
+        id: true,
+        email: true,
+        firstName: true,
+        lastName: true,
+        role: true,
+        isActive: true,
         avatar: true,
         createdAt: true,
         updatedAt: true,

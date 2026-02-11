@@ -78,6 +78,7 @@ export class AdminUsersController {
           firstName: true,
           lastName: true,
           role: true,
+          isActive: true,
           avatar: true,
           createdAt: true,
           updatedAt: true,

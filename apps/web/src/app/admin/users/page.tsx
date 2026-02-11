@@ -127,9 +127,10 @@ export default function AdminUsersPage() {
   // Calculate stats from user list - pure function to avoid closure issues
   // Returns stats object; caller is responsible for setting state
   const calculateUserStats = (userList: User[]) => {
-    // Calculate current month boundary at call time (not captured in closure)
+    // Calculate current month boundary in UTC so it aligns with server-side ISO timestamps.
+    // Using Date.UTC avoids local-timezone offsets that would shift the month boundary.
     const now = new Date();
-    const firstOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+    const firstOfMonth = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1));
     
     const sellerRoles = ['SELLER', 'B2C_SELLER', 'WHOLESALER'];
     const teamRoles = ['PROCUREMENT', 'FULFILLMENT', 'CATALOG', 'MARKETING', 'FINANCE', 'CMS_EDITOR'];
@@ -224,10 +225,10 @@ export default function AdminUsersPage() {
       }
     }
 
-    // New this month filter
+    // New this month filter — use UTC boundary to match server-side ISO timestamps
     if (showNewThisMonth) {
       const now = new Date();
-      const firstOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+      const firstOfMonth = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1));
       filtered = filtered.filter(u => new Date(u.createdAt) >= firstOfMonth);
     }
 
@@ -409,8 +410,14 @@ export default function AdminUsersPage() {
       toast.error('Cannot modify the primary admin user');
       return;
     }
-    // TODO: Implement user status toggle when backend supports it
-    toast.error('User status toggle is not yet supported by the API');
+    try {
+      const response = await apiClient.toggleUserStatus(user.id);
+      const updatedUser = response.data;
+      toast.success(updatedUser?.isActive ? 'User activated' : 'User deactivated');
+      await fetchUsers();
+    } catch (err: any) {
+      toast.error(err.message || 'Failed to toggle user status');
+    }
   };
 
   const handleBulkAction = async (action: 'activate' | 'deactivate' | 'delete') => {
@@ -429,16 +436,22 @@ export default function AdminUsersPage() {
 
     if (!confirm(`${action === 'delete' ? 'Delete' : action === 'activate' ? 'Activate' : 'Deactivate'} ${selectedList.length} users?`)) return;
 
-    if (action !== 'delete') {
-      // TODO: Implement user status toggle when backend supports it
-      toast.error('User activate/deactivate is not yet supported by the API');
-      return;
-    }
-
     let success = 0;
     for (const id of selectedList) {
       try {
-        await apiClient.deleteUser(id);
+        if (action === 'delete') {
+          await apiClient.deleteUser(id);
+        } else {
+          // For activate/deactivate, use toggle — but only if the user's current status
+          // needs changing (i.e. deactivate only active users, activate only inactive ones)
+          const user = users.find(u => u.id === id);
+          const shouldToggle =
+            (action === 'deactivate' && user?.isActive !== false) ||
+            (action === 'activate' && user?.isActive === false);
+          if (shouldToggle) {
+            await apiClient.toggleUserStatus(id);
+          }
+        }
         success++;
       } catch {
         // Continue on error

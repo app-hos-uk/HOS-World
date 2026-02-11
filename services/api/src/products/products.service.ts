@@ -227,9 +227,9 @@ export class ProductsService {
     const limit = searchDto.limit || 20;
     const skip = (page - 1) * limit;
 
-    // Build where clause
+    // Build where clause — default to ACTIVE for public browsing; allow override for admin/internal use
     const where: Prisma.ProductWhereInput = {
-      status: 'ACTIVE',
+      status: searchDto.status || 'ACTIVE',
     };
 
     if (searchDto.query) {

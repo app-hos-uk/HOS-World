@@ -25,6 +25,10 @@ export class SearchProductsDto {
 
   @IsOptional()
   @IsString()
+  status?: string; // Filter by product status (ACTIVE, DRAFT, INACTIVE, OUT_OF_STOCK)
+
+  @IsOptional()
+  @IsString()
   fandom?: string;
 
   @IsOptional()

@@ -888,11 +888,18 @@ export class ApiClient {
       email?: string;
       role?: string;
       avatar?: string;
+      isActive?: boolean;
     }
   ): Promise<ApiResponse<any>> {
     return this.request<ApiResponse<any>>(`/admin/users/${userId}`, {
       method: 'PUT',
       body: JSON.stringify(data),
+    });
+  }
+
+  async toggleUserStatus(userId: string): Promise<ApiResponse<any>> {
+    return this.request<ApiResponse<any>>(`/admin/users/${userId}/toggle-status`, {
+      method: 'PUT',
     });
   }
 
