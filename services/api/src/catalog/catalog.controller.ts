@@ -64,13 +64,13 @@ export class CatalogController {
     name: 'status',
     required: false,
     type: String,
-    enum: ['pending', 'completed'],
-    description: 'Filter by status',
+    enum: ['pending', 'in_progress', 'completed'],
+    description: 'Filter by status. in_progress returns same as pending (entries not yet completed).',
   })
   @SwaggerApiResponse({ status: 200, description: 'Catalog entries retrieved successfully' })
   @SwaggerApiResponse({ status: 401, description: 'Unauthorized' })
   @SwaggerApiResponse({ status: 403, description: 'Forbidden - Catalog/Admin access required' })
-  async findAll(@Query('status') status?: 'pending' | 'completed'): Promise<ApiResponse<any[]>> {
+  async findAll(@Query('status') status?: 'pending' | 'in_progress' | 'completed'): Promise<ApiResponse<any[]>> {
     const entries = await this.catalogService.findAll(status);
     return {
       data: entries,

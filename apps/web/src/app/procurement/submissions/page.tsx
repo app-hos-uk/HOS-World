@@ -1,9 +1,10 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { RouteGuard } from '@/components/RouteGuard';
 import { DashboardLayout } from '@/components/DashboardLayout';
+import { useAuth } from '@/contexts/AuthContext';
 import { apiClient } from '@/lib/api';
 import { useToast } from '@/hooks/useToast';
 import Image from 'next/image';
@@ -27,6 +28,9 @@ type DuplicateGroup = {
 export default function ProcurementSubmissionsPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const { user, effectiveRole } = useAuth();
+  const currentRole = effectiveRole || user?.role;
+
   const [submissions, setSubmissions] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -48,10 +52,19 @@ export default function ProcurementSubmissionsPage() {
   const [notes, setNotes] = useState<string>('');
   const [rejectReason, setRejectReason] = useState<string>('');
 
-  const menuItems = [
-    { title: 'Dashboard', href: '/procurement/dashboard', icon: '📊' },
-    { title: 'Review Submissions', href: '/procurement/submissions', icon: '📦', badge: submissions.filter(s => s.status === 'SUBMITTED' || s.status === 'UNDER_REVIEW').length },
-  ];
+  // Layout reflects current user role: CATALOG users see Catalog context when on this shared page
+  const isCatalogContext = currentRole === 'CATALOG';
+  const layoutTitle = isCatalogContext ? 'Catalog' : 'Procurement';
+  const layoutRole = isCatalogContext ? 'CATALOG' : 'PROCUREMENT';
+  const menuItems = isCatalogContext
+    ? [
+        { title: 'Dashboard', href: '/catalog/dashboard', icon: '📊' },
+        { title: 'Same product from multiple sellers', href: '/procurement/submissions?view=cross-seller', icon: '🔄', badge: duplicateGroups.length },
+      ]
+    : [
+        { title: 'Dashboard', href: '/procurement/dashboard', icon: '📊' },
+        { title: 'Review Submissions', href: '/procurement/submissions', icon: '📦', badge: submissions.filter(s => s.status === 'SUBMITTED' || s.status === 'UNDER_REVIEW').length },
+      ];
 
   useEffect(() => {
     fetchSubmissions();
@@ -62,7 +75,7 @@ export default function ProcurementSubmissionsPage() {
     if (searchParams.get('view') === 'cross-seller') setShowDuplicateGroups(true);
   }, [searchParams]);
 
-  const fetchDuplicateGroups = async () => {
+  const fetchDuplicateGroups = useCallback(async () => {
     try {
       setDuplicateGroupsLoading(true);
       const response = await apiClient.getCrossSellerDuplicateGroups();
@@ -75,11 +88,11 @@ export default function ProcurementSubmissionsPage() {
     } finally {
       setDuplicateGroupsLoading(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
     if (showDuplicateGroups) fetchDuplicateGroups();
-  }, [showDuplicateGroups]);
+  }, [showDuplicateGroups, fetchDuplicateGroups]);
 
   const fetchSubmissions = async () => {
     try {
@@ -177,7 +190,7 @@ export default function ProcurementSubmissionsPage() {
 
   return (
     <RouteGuard allowedRoles={['PROCUREMENT', 'CATALOG', 'ADMIN']} showAccessDenied={true}>
-      <DashboardLayout role="PROCUREMENT" menuItems={menuItems} title="Procurement">
+      <DashboardLayout role={layoutRole} menuItems={menuItems} title={layoutTitle}>
         <div className="mb-6">
           <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold">Review Submissions</h1>
           <p className="text-gray-600 mt-2">Review and approve product submissions from sellers</p>
@@ -285,7 +298,7 @@ export default function ProcurementSubmissionsPage() {
                                   </button>
                                   <button
                                     onClick={() => {
-                                      setSelectedSubmission({ id: sub.id, productData: sub.productData, seller: { storeName: sub.sellerStoreName }, status: sub.status });
+                                      setSelectedSubmission({ id: sub.id, productData: sub.productData, seller: { storeName: sub.sellerStoreName }, status: sub.status, createdAt: sub.createdAt });
                                       setActionType('reject');
                                       setShowModal(true);
                                       setRejectReason('Duplicate: another seller’s submission approved for this product.');
@@ -552,7 +565,9 @@ export default function ProcurementSubmissionsPage() {
                         <div>
                           <p className="text-sm font-medium text-gray-500">Submitted</p>
                           <p className="text-gray-900">
-                            {new Date(selectedSubmission.createdAt).toLocaleString()}
+                            {selectedSubmission.createdAt
+                              ? new Date(selectedSubmission.createdAt).toLocaleString()
+                              : '—'}
                           </p>
                         </div>
                       </div>

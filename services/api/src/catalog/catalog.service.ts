@@ -221,10 +221,11 @@ export class CatalogService {
     return submission;
   }
 
-  async findAll(status?: 'pending' | 'completed') {
+  async findAll(status?: 'pending' | 'in_progress' | 'completed') {
     const where: any = {};
 
-    if (status === 'pending') {
+    // 'in_progress' is an alias for 'pending': entries that exist but are not yet completed
+    if (status === 'pending' || status === 'in_progress') {
       where.completedAt = null;
     } else if (status === 'completed') {
       where.completedAt = { not: null };

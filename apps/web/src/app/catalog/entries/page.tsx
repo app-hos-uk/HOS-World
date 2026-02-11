@@ -8,13 +8,29 @@ import Image from 'next/image';
 import { apiClient } from '@/lib/api';
 import { useToast } from '@/hooks/useToast';
 
+type CatalogStatusTab = 'pending' | 'in_progress' | 'completed';
+
+const VALID_STATUS_PARAMS: CatalogStatusTab[] = ['pending', 'in_progress', 'completed'];
+
+function parseStatusParam(value: string | null): CatalogStatusTab | null {
+  if (!value) return null;
+  return VALID_STATUS_PARAMS.includes(value as CatalogStatusTab) ? (value as CatalogStatusTab) : null;
+}
+
 export default function CatalogEntriesPage() {
   const searchParams = useSearchParams();
-  const statusFilter = searchParams.get('status') as 'pending' | 'completed' | null;
+  const statusFilter = parseStatusParam(searchParams.get('status'));
 
   const [pendingSubmissions, setPendingSubmissions] = useState<any[]>([]);
+  const [inProgressEntries, setInProgressEntries] = useState<any[]>([]);
   const [completedEntries, setCompletedEntries] = useState<any[]>([]);
-  const [activeTab, setActiveTab] = useState<'pending' | 'completed'>(statusFilter === 'completed' ? 'completed' : 'pending');
+  const [activeTab, setActiveTab] = useState<CatalogStatusTab>(
+    statusFilter === 'completed'
+      ? 'completed'
+      : statusFilter === 'in_progress'
+        ? 'in_progress'
+        : 'pending',
+  );
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [selectedSubmission, setSelectedSubmission] = useState<any | null>(null);
@@ -37,6 +53,8 @@ export default function CatalogEntriesPage() {
   useEffect(() => {
     if (statusFilter === 'completed') {
       setActiveTab('completed');
+    } else if (statusFilter === 'in_progress') {
+      setActiveTab('in_progress');
     } else if (statusFilter === 'pending') {
       setActiveTab('pending');
     }
@@ -46,12 +64,16 @@ export default function CatalogEntriesPage() {
     try {
       setLoading(true);
       setError(null);
-      const [pendingRes, completedRes] = await Promise.all([
+      const [pendingRes, inProgressRes, completedRes] = await Promise.all([
         apiClient.getCatalogPending(),
+        apiClient.getCatalogEntries('in_progress'),
         apiClient.getCatalogEntries('completed'),
       ]);
       if (pendingRes?.data) {
         setPendingSubmissions(pendingRes.data);
+      }
+      if (inProgressRes?.data) {
+        setInProgressEntries(inProgressRes.data);
       }
       if (completedRes?.data) {
         setCompletedEntries(completedRes.data);
@@ -161,6 +183,16 @@ export default function CatalogEntriesPage() {
               Pending ({pendingSubmissions.length})
             </button>
             <button
+              onClick={() => setActiveTab('in_progress')}
+              className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+                activeTab === 'in_progress'
+                  ? 'bg-white text-yellow-700 shadow-sm'
+                  : 'text-gray-600 hover:text-gray-900'
+              }`}
+            >
+              In Progress ({inProgressEntries.length})
+            </button>
+            <button
               onClick={() => setActiveTab('completed')}
               className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
                 activeTab === 'completed'
@@ -234,6 +266,60 @@ export default function CatalogEntriesPage() {
                         >
                           Create Entry
                         </button>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+
+          {/* In Progress Entries Tab */}
+          {!loading && activeTab === 'in_progress' && inProgressEntries.length === 0 && (
+            <div className="bg-white border border-gray-200 rounded-lg p-8 text-center">
+              <p className="text-gray-500 text-lg">No entries in progress</p>
+              <p className="text-sm text-gray-400 mt-1">Catalog entries not yet completed will appear here</p>
+            </div>
+          )}
+
+          {!loading && activeTab === 'in_progress' && inProgressEntries.length > 0 && (
+            <div className="space-y-4">
+              {inProgressEntries.map((entry) => {
+                const submission = entry.submission || {};
+                const productData = submission.productData || {};
+                return (
+                  <div
+                    key={entry.id}
+                    className="bg-white border border-gray-200 rounded-lg p-6 hover:shadow-md transition-shadow"
+                  >
+                    <div className="flex flex-col sm:flex-row justify-between gap-4">
+                      <div className="flex-1">
+                        <h3 className="text-lg font-semibold text-gray-900">
+                          {entry.title || productData.name || 'Untitled Product'}
+                        </h3>
+                        <p className="text-sm text-gray-500 mt-1">
+                          Seller: {submission.seller?.storeName || 'Unknown'}
+                        </p>
+                        <p className="text-sm text-gray-600 mt-2 line-clamp-2">
+                          {entry.description || productData.description || 'No description'}
+                        </p>
+                        <div className="flex flex-wrap gap-4 mt-4 text-sm text-gray-600">
+                          {entry.keywords && entry.keywords.length > 0 && (
+                            <span>
+                              <strong>Keywords:</strong> {entry.keywords.join(', ')}
+                            </span>
+                          )}
+                          {entry.createdAt && (
+                            <span>
+                              <strong>Started:</strong> {new Date(entry.createdAt).toLocaleDateString()}
+                            </span>
+                          )}
+                        </div>
+                        <div className="mt-2">
+                          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
+                            In progress
+                          </span>
+                        </div>
                       </div>
                     </div>
                   </div>
