@@ -95,7 +95,7 @@ export default function ProcurementDashboardPage() {
                   <div className="text-4xl">⚠️</div>
                 </div>
                 <Link
-                  href="/procurement/submissions?status=SUBMITTED&duplicates=true"
+                  href="/procurement/submissions?view=cross-seller"
                   className="text-sm text-orange-600 hover:text-orange-700 mt-2 inline-block"
                 >
                   Review duplicates →

@@ -69,6 +69,9 @@ WORKDIR /app/services/api
 RUN (pnpm build 2>&1 | tail -50) || true
 # Verify dist directory was created and main.js exists - this is critical
 RUN if [ ! -f dist/main.js ]; then echo "ERROR: dist/main.js not found - build failed!" && exit 1; else echo "✅ Build successful - dist/main.js exists"; fi
+# List dist/products for build logs and ensure products-cache.hook.js is emitted (required at runtime)
+RUN pnpm run list-dist-products
+RUN if [ ! -f dist/products/products-cache.hook.js ]; then echo "ERROR: dist/products/products-cache.hook.js not found - app will crash at runtime!" && exit 1; else echo "✅ products-cache.hook.js exists"; fi
 
 # Production image - Use Debian-based image for better native module compatibility
 FROM node:18-slim

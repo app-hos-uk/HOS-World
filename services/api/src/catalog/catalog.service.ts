@@ -14,7 +14,7 @@ export class CatalogService {
   async findPending() {
     const submissions = await this.prisma.productSubmission.findMany({
       where: {
-        status: 'FC_ACCEPTED',
+        status: 'PROCUREMENT_APPROVED',
         catalogEntry: null, // Not yet cataloged
       },
       include: {
@@ -33,7 +33,7 @@ export class CatalogService {
           },
         },
       },
-      orderBy: { fcAcceptedAt: 'asc' },
+      orderBy: { procurementApprovedAt: 'asc' },
     });
 
     return submissions;
@@ -48,9 +48,9 @@ export class CatalogService {
       throw new NotFoundException('Submission not found');
     }
 
-    if (submission.status !== 'FC_ACCEPTED') {
+    if (submission.status !== 'PROCUREMENT_APPROVED') {
       throw new BadRequestException(
-        'Catalog entry can only be created for FC-accepted submissions',
+        'Catalog entry can only be created for procurement-approved submissions',
       );
     }
 
@@ -273,7 +273,7 @@ export class CatalogService {
     const [pending, completed, total] = await Promise.all([
       this.prisma.productSubmission.count({
         where: {
-          status: 'FC_ACCEPTED',
+          status: 'PROCUREMENT_APPROVED',
           catalogEntry: null,
         },
       }),

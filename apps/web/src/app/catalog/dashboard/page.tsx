@@ -203,6 +203,16 @@ export default function CatalogDashboardPage() {
                       {inProgress} entries in progress
                     </p>
                   </Link>
+                  <Link
+                    href="/procurement/submissions?view=cross-seller"
+                    className="block p-4 border-2 border-dashed border-amber-300 rounded-lg hover:border-amber-500 hover:bg-amber-50 transition-colors text-center"
+                  >
+                    <div className="text-2xl mb-2">🔄</div>
+                    <p className="font-medium">Same product from multiple sellers</p>
+                    <p className="text-sm text-gray-500 mt-1">
+                      Review and resolve duplicate submissions across sellers
+                    </p>
+                  </Link>
                 </div>
               </div>
             </div>

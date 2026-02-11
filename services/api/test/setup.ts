@@ -8,7 +8,6 @@ if (!process.env.DATABASE_URL) {
 }
 
 // Set all required environment variables for tests (allow override for integration)
-if (!process.env.ELASTICSEARCH_NODE) process.env.ELASTICSEARCH_NODE = 'http://localhost:9200';
 if (!process.env.REDIS_URL) process.env.REDIS_URL = 'redis://localhost:6379';
 process.env.CLOUDINARY_CLOUD_NAME = 'test';
 process.env.CLOUDINARY_API_KEY = 'test';

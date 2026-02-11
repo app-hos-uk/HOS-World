@@ -581,6 +581,46 @@ export class ApiClient {
     });
   }
 
+  /** Cross-seller duplicate groups: same product submitted by multiple sellers/wholesalers (Procurement/Catalog/Admin). */
+  async getCrossSellerDuplicateGroups(): Promise<
+    ApiResponse<
+      Array<{
+        groupId: string;
+        submissions: Array<{
+          id: string;
+          sellerId: string;
+          sellerStoreName: string;
+          sellerSlug: string;
+          productName: string;
+          productData: Record<string, unknown>;
+          createdAt: string;
+          status: string;
+        }>;
+        matchReasons: string[];
+        suggestedPrimaryId: string;
+      }>
+    >
+  > {
+    return this.request(`/duplicates/cross-seller-groups`, { method: 'GET' });
+  }
+
+  /** Reject all submissions in a cross-seller duplicate group except the one to keep. */
+  async rejectOthersInGroup(groupId: string, keepSubmissionId: string): Promise<
+    ApiResponse<{ rejectedIds: string[] }>
+  > {
+    return this.request(`/duplicates/cross-seller-groups/reject-others`, {
+      method: 'POST',
+      body: JSON.stringify({ groupId, keepSubmissionId }),
+    });
+  }
+
+  /** Assign persisted cross-seller group ids (Admin only). Run periodically or after bulk imports. */
+  async assignCrossSellerGroups(): Promise<
+    ApiResponse<{ groupsAssigned: number; submissionsUpdated: number }>
+  > {
+    return this.request(`/duplicates/cross-seller-groups/assign`, { method: 'POST' });
+  }
+
   // Fulfillment
   async getFulfillmentShipments(status?: string): Promise<ApiResponse<any[]>> {
     const url = status ? `/fulfillment/shipments?status=${status}` : '/fulfillment/shipments';

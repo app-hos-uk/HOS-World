@@ -17,6 +17,9 @@ export class SubmissionsService {
     private duplicatesService: DuplicatesService,
   ) {}
 
+  /** Idempotency window: reject duplicate submissions with same name from same seller within this period (ms). */
+  private static readonly DUPLICATE_WINDOW_MS = 2 * 60 * 1000; // 2 minutes
+
   async create(userId: string, createSubmissionDto: CreateSubmissionDto) {
     // Verify seller exists
     const seller = await this.prisma.seller.findUnique({
@@ -25,6 +28,28 @@ export class SubmissionsService {
 
     if (!seller) {
       throw new NotFoundException('Seller profile not found');
+    }
+
+    const name = createSubmissionDto.name?.trim();
+    if (name) {
+      const since = new Date(Date.now() - SubmissionsService.DUPLICATE_WINDOW_MS);
+      const recentSubmissions = await this.prisma.productSubmission.findMany({
+        where: {
+          sellerId: seller.id,
+          status: 'SUBMITTED',
+          createdAt: { gte: since },
+        },
+        select: { id: true, productData: true },
+      });
+      const duplicate = recentSubmissions.some((s) => {
+        const data = s.productData as { name?: string };
+        return (data?.name ?? '').trim() === name;
+      });
+      if (duplicate) {
+        throw new BadRequestException(
+          'A submission with this product name was just created. Please check your submissions list to avoid duplicates.',
+        );
+      }
     }
 
     // Prepare product data as JSON

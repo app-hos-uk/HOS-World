@@ -3,7 +3,7 @@ import { NotFoundException, ForbiddenException } from '@nestjs/common';
 import { ProductsService } from './products.service';
 import { PrismaService } from '../database/prisma.service';
 import { CreateProductDto } from './dto/create-product.dto';
-import { ProductsElasticsearchHook } from './products-elasticsearch.hook';
+import { ProductsCacheHook } from './products-cache.hook';
 
 describe('ProductsService - Phase 1 Tests', () => {
   let service: ProductsService;
@@ -23,7 +23,7 @@ describe('ProductsService - Phase 1 Tests', () => {
     },
   };
 
-  const mockElasticsearchHook = {
+  const mockCacheHook = {
     onProductCreated: jest.fn().mockResolvedValue(undefined),
     onProductUpdated: jest.fn().mockResolvedValue(undefined),
     onProductDeleted: jest.fn().mockResolvedValue(undefined),
@@ -38,8 +38,8 @@ describe('ProductsService - Phase 1 Tests', () => {
           useValue: mockPrismaService,
         },
         {
-          provide: ProductsElasticsearchHook,
-          useValue: mockElasticsearchHook,
+          provide: ProductsCacheHook,
+          useValue: mockCacheHook,
         },
       ],
     }).compile();

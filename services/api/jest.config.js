@@ -20,7 +20,7 @@ module.exports = {
   },
   setupFilesAfterEnv: ['<rootDir>/../test/setup.ts'],
   transformIgnorePatterns: [
-    'node_modules/(?!(@nestjs|@elastic|bcrypt))',
+    'node_modules/(?!(@nestjs|bcrypt))',
   ],
 };
 

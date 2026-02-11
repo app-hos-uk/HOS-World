@@ -1,10 +1,34 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../database/prisma.service';
+import { randomUUID } from 'crypto';
+
+const REJECT_OTHERS_REASON =
+  "Duplicate: another seller's submission approved for this product.";
 
 interface SimilarityResult {
   productId: string;
   similarityScore: number;
   reasons: string[];
+}
+
+/** One submission in a cross-seller duplicate group */
+export interface CrossSellerDuplicateSubmission {
+  id: string;
+  sellerId: string;
+  sellerStoreName: string;
+  sellerSlug: string;
+  productName: string;
+  productData: Record<string, unknown>;
+  createdAt: Date;
+  status: string;
+}
+
+/** A group of submissions from different sellers that represent the same product */
+export interface CrossSellerDuplicateGroup {
+  groupId: string;
+  submissions: CrossSellerDuplicateSubmission[];
+  matchReasons: string[];
+  suggestedPrimaryId: string; // Oldest submission id - recommend approving this one
 }
 
 @Injectable()
@@ -181,6 +205,136 @@ export class DuplicatesService {
   }
 
   /**
+   * Find groups of submissions from different sellers that represent the same product.
+   * Used by procurement and catalogue to approve only one per product across sellers/wholesalers.
+   * Matches on: exact SKU, barcode, or EAN; or name similarity >= 85%.
+   */
+  async findCrossSellerDuplicateGroups(): Promise<CrossSellerDuplicateGroup[]> {
+    const submissions = await this.prisma.productSubmission.findMany({
+      where: {
+        status: { in: ['SUBMITTED', 'UNDER_REVIEW'] },
+      },
+      include: {
+        seller: {
+          select: { id: true, storeName: true, slug: true },
+        },
+      },
+      orderBy: { createdAt: 'asc' },
+    });
+
+    if (submissions.length === 0) return [];
+
+    const n = submissions.length;
+    const parent = Array.from({ length: n }, (_, i) => i);
+
+    const find = (i: number): number => {
+      if (parent[i] !== i) parent[i] = find(parent[i]);
+      return parent[i];
+    };
+    const union = (i: number, j: number) => {
+      const pi = find(i);
+      const pj = find(j);
+      if (pi !== pj) parent[pi] = pj;
+    };
+
+    for (let i = 0; i < n; i++) {
+      for (let j = i + 1; j < n; j++) {
+        if (submissions[i].sellerId === submissions[j].sellerId) continue;
+        const { match, reasons } = this.areSameProduct(
+          submissions[i].productData as Record<string, unknown>,
+          submissions[j].productData as Record<string, unknown>,
+        );
+        if (match) union(i, j);
+      }
+    }
+
+    const groupByRoot = new Map<number, number[]>();
+    for (let i = 0; i < n; i++) {
+      const root = find(i);
+      if (!groupByRoot.has(root)) groupByRoot.set(root, []);
+      groupByRoot.get(root)!.push(i);
+    }
+
+    const groups: CrossSellerDuplicateGroup[] = [];
+    for (const indices of groupByRoot.values()) {
+      if (indices.length < 2) continue; // Only groups with 2+ submissions (different sellers implied by match)
+      const subs = indices.map((idx) => submissions[idx]);
+      const matchReasons = this.inferMatchReasons(subs.map((s) => s.productData as Record<string, unknown>));
+      const suggestedPrimaryId = subs[0].id; // Oldest
+      groups.push({
+        groupId: `group-${subs.map((s) => s.id).sort().join('-').slice(0, 50)}`,
+        submissions: subs.map((s) => ({
+          id: s.id,
+          sellerId: s.sellerId,
+          sellerStoreName: s.seller?.storeName ?? 'Unknown',
+          sellerSlug: s.seller?.slug ?? '',
+          productName: (s.productData as any)?.name ?? 'Unknown',
+          productData: (s.productData as Record<string, unknown>) ?? {},
+          createdAt: s.createdAt,
+          status: s.status,
+        })),
+        matchReasons,
+        suggestedPrimaryId,
+      });
+    }
+
+    return groups;
+  }
+
+  /**
+   * Check if two product payloads represent the same product (exact identifiers or high name similarity).
+   */
+  private areSameProduct(
+    a: Record<string, unknown>,
+    b: Record<string, unknown>,
+  ): { match: boolean; reasons: string[] } {
+    const reasons: string[] = [];
+    const skuA = (a?.sku as string)?.trim();
+    const skuB = (b?.sku as string)?.trim();
+    if (skuA && skuB && skuA === skuB) {
+      reasons.push('Exact SKU match');
+      return { match: true, reasons };
+    }
+    const barcodeA = (a?.barcode as string)?.trim();
+    const barcodeB = (b?.barcode as string)?.trim();
+    if (barcodeA && barcodeB && barcodeA === barcodeB) {
+      reasons.push('Exact barcode match');
+      return { match: true, reasons };
+    }
+    const eanA = (a?.ean as string)?.trim();
+    const eanB = (b?.ean as string)?.trim();
+    if (eanA && eanB && eanA === eanB) {
+      reasons.push('Exact EAN match');
+      return { match: true, reasons };
+    }
+    const nameA = (a?.name as string)?.trim().toLowerCase();
+    const nameB = (b?.name as string)?.trim().toLowerCase();
+    if (nameA && nameB) {
+      const sim = this.calculateStringSimilarity(nameA, nameB);
+      if (sim >= 85) {
+        reasons.push(`Name similarity: ${sim.toFixed(1)}%`);
+        return { match: true, reasons };
+      }
+    }
+    return { match: false, reasons: [] };
+  }
+
+  private inferMatchReasons(productDataList: Record<string, unknown>[]): string[] {
+    const reasons: string[] = [];
+    const first = productDataList[0];
+    if (!first) return reasons;
+    const sku = (first.sku as string)?.trim();
+    if (sku && productDataList.every((p) => (p?.sku as string)?.trim() === sku)) reasons.push('Same SKU');
+    const barcode = (first.barcode as string)?.trim();
+    if (barcode && productDataList.every((p) => (p?.barcode as string)?.trim() === barcode)) reasons.push('Same barcode');
+    const ean = (first.ean as string)?.trim();
+    if (ean && productDataList.every((p) => (p?.ean as string)?.trim() === ean)) reasons.push('Same EAN');
+    const name = (first.name as string)?.trim();
+    if (name && !reasons.length) reasons.push('Similar product name');
+    return reasons;
+  }
+
+  /**
    * Get all duplicate detections for a submission
    */
   async getDuplicatesForSubmission(submissionId: string) {
@@ -204,6 +358,115 @@ export class DuplicatesService {
         similarityScore: 'desc',
       },
     });
+  }
+
+  /**
+   * Reject all submissions in a cross-seller duplicate group except the one to keep.
+   * Use after approving one submission in the group.
+   */
+  async rejectOthersInGroup(groupId: string, keepSubmissionId: string): Promise<{ rejectedIds: string[] }> {
+    const groups = await this.findCrossSellerDuplicateGroups();
+    const group = groups.find((g) => g.groupId === groupId);
+    if (!group) {
+      throw new NotFoundException('Cross-seller duplicate group not found');
+    }
+    const keepId = keepSubmissionId;
+    const toReject = group.submissions.filter((s) => s.id !== keepId);
+    if (toReject.length === 0) {
+      return { rejectedIds: [] };
+    }
+    const inGroupIds = new Set(group.submissions.map((s) => s.id));
+    if (!inGroupIds.has(keepId)) {
+      throw new BadRequestException('keepSubmissionId must be a submission in this group');
+    }
+    const rejectedIds: string[] = [];
+    for (const sub of toReject) {
+      const submission = await this.prisma.productSubmission.findUnique({
+        where: { id: sub.id },
+      });
+      if (!submission || (submission.status !== 'SUBMITTED' && submission.status !== 'UNDER_REVIEW')) {
+        continue;
+      }
+      await this.prisma.productSubmission.update({
+        where: { id: sub.id },
+        data: {
+          status: 'PROCUREMENT_REJECTED',
+          procurementNotes: [submission.procurementNotes, REJECT_OTHERS_REASON].filter(Boolean).join('\n\n'),
+        },
+      });
+      rejectedIds.push(sub.id);
+    }
+    return { rejectedIds };
+  }
+
+  /**
+   * Assign persisted crossSellerGroupId to all SUBMITTED/UNDER_REVIEW submissions
+   * based on current cross-seller duplicate grouping. Use for reporting or run via cron.
+   * Call after new submissions or periodically.
+   */
+  async assignCrossSellerGroupIds(): Promise<{ groupsAssigned: number; submissionsUpdated: number }> {
+    const submissions = await this.prisma.productSubmission.findMany({
+      where: { status: { in: ['SUBMITTED', 'UNDER_REVIEW'] } },
+      orderBy: { createdAt: 'asc' },
+    });
+
+    if (submissions.length === 0) {
+      return { groupsAssigned: 0, submissionsUpdated: 0 };
+    }
+
+    const n = submissions.length;
+    const parent = Array.from({ length: n }, (_, i) => i);
+    const find = (i: number): number => {
+      if (parent[i] !== i) parent[i] = find(parent[i]);
+      return parent[i];
+    };
+    const union = (i: number, j: number) => {
+      const pi = find(i);
+      const pj = find(j);
+      if (pi !== pj) parent[pi] = pj;
+    };
+
+    for (let i = 0; i < n; i++) {
+      for (let j = i + 1; j < n; j++) {
+        if (submissions[i].sellerId === submissions[j].sellerId) continue;
+        const { match } = this.areSameProduct(
+          submissions[i].productData as Record<string, unknown>,
+          submissions[j].productData as Record<string, unknown>,
+        );
+        if (match) union(i, j);
+      }
+    }
+
+    const groupByRoot = new Map<number, number[]>();
+    for (let i = 0; i < n; i++) {
+      const root = find(i);
+      if (!groupByRoot.has(root)) groupByRoot.set(root, []);
+      groupByRoot.get(root)!.push(i);
+    }
+
+    let submissionsUpdated = 0;
+    for (const indices of groupByRoot.values()) {
+      if (indices.length < 2) {
+        const id = submissions[indices[0]].id;
+        const current = await this.prisma.productSubmission.findUnique({ where: { id }, select: { crossSellerGroupId: true } });
+        if (current?.crossSellerGroupId) {
+          await this.prisma.productSubmission.update({ where: { id }, data: { crossSellerGroupId: null } });
+          submissionsUpdated++;
+        }
+        continue;
+      }
+      const groupId = randomUUID();
+      for (const idx of indices) {
+        await this.prisma.productSubmission.update({
+          where: { id: submissions[idx].id },
+          data: { crossSellerGroupId: groupId },
+        });
+        submissionsUpdated++;
+      }
+    }
+
+    const groupsAssigned = Array.from(groupByRoot.values()).filter((arr) => arr.length >= 2).length;
+    return { groupsAssigned, submissionsUpdated };
   }
 
   /**

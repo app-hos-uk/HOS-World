@@ -1,12 +1,10 @@
-import { Controller, Get, Optional, Inject, Res } from '@nestjs/common';
+import { Controller, Get, Res } from '@nestjs/common';
 import { Response } from 'express';
 import { ApiTags, ApiOperation, ApiResponse as SwaggerApiResponse } from '@nestjs/swagger';
 import { AppService } from './app.service';
 import { Public } from './common/decorators/public.decorator';
 import { PrismaService } from './database/prisma.service';
 import { RedisService } from './cache/redis.service';
-import { ConfigService } from '@nestjs/config';
-import { ElasticsearchService } from '@nestjs/elasticsearch';
 
 @ApiTags('health')
 @Controller()
@@ -15,8 +13,6 @@ export class AppController {
     private readonly appService: AppService,
     private readonly prisma: PrismaService,
     private readonly redis: RedisService,
-    private readonly configService: ConfigService,
-    @Optional() @Inject(ElasticsearchService) private readonly elasticsearch?: ElasticsearchService,
   ) {}
 
   @Public()
@@ -43,7 +39,7 @@ export class AppController {
   @Get('health/ready')
   @ApiOperation({
     summary: 'Readiness probe',
-    description: 'Checks DB, Redis (and optionally ES). Use for load balancer / traffic routing.',
+    description: 'Checks DB and Redis. Use for load balancer / traffic routing.',
   })
   @SwaggerApiResponse({ status: 200, description: 'Service is ready to accept traffic' })
   @SwaggerApiResponse({ status: 503, description: 'Service not ready' })
@@ -75,7 +71,6 @@ export class AppController {
             service: { type: 'object' },
             database: { type: 'object' },
             redis: { type: 'object' },
-            elasticsearch: { type: 'object' },
           },
         },
       },
@@ -111,28 +106,6 @@ export class AppController {
       checks.redis = {
         status: 'error',
         message: error.message || 'Redis check failed',
-      };
-    }
-
-    // Check Elasticsearch (if configured)
-    const elasticsearchNode = this.configService.get('ELASTICSEARCH_NODE');
-    if (elasticsearchNode && this.elasticsearch) {
-      try {
-        const health = await this.elasticsearch.ping();
-        checks.elasticsearch = {
-          status: health ? 'ok' : 'error',
-          message: health ? 'Connected' : 'Ping failed',
-        };
-      } catch (error: any) {
-        checks.elasticsearch = {
-          status: 'error',
-          message: error.message || 'Elasticsearch connection failed',
-        };
-      }
-    } else {
-      checks.elasticsearch = {
-        status: 'disabled',
-        message: 'Elasticsearch not configured',
       };
     }
 

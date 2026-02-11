@@ -60,8 +60,8 @@ export enum IntegrationProvider {
   CLOUDINARY = 'cloudinary',
 
   // Search
-  ELASTICSEARCH = 'elasticsearch',
   ALGOLIA = 'algolia',
+  MEILISEARCH = 'meilisearch',
 
   // Analytics
   GOOGLE_ANALYTICS = 'google_analytics',

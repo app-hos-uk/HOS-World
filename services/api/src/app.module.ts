@@ -18,7 +18,6 @@ import { PaymentsModule } from './payments/payments.module';
 import { NotificationsModule } from './notifications/notifications.module';
 import { DashboardModule } from './dashboard/dashboard.module';
 import { DatabaseModule } from './database/database.module';
-import { SearchModule } from './search/search.module';
 import { CacheModule } from './cache/cache.module';
 import { RateLimitModule } from './rate-limit/rate-limit.module';
 import { PerformanceModule } from './performance/performance.module';
@@ -112,8 +111,7 @@ import { MeilisearchModule } from './meilisearch/meilisearch.module';
     PaymentsModule,
     NotificationsModule,
     DashboardModule,
-    SearchModule,
-    MeilisearchModule, // Enhanced search with Meilisearch
+    MeilisearchModule,
     PerformanceModule,
     NewsletterModule,
     GiftCardsModule,

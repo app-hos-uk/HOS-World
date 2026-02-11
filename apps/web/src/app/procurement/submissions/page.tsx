@@ -1,14 +1,31 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { RouteGuard } from '@/components/RouteGuard';
 import { DashboardLayout } from '@/components/DashboardLayout';
 import { apiClient } from '@/lib/api';
 import Image from 'next/image';
 
+type DuplicateGroup = {
+  groupId: string;
+  submissions: Array<{
+    id: string;
+    sellerId: string;
+    sellerStoreName: string;
+    sellerSlug: string;
+    productName: string;
+    productData: Record<string, unknown>;
+    createdAt: string;
+    status: string;
+  }>;
+  matchReasons: string[];
+  suggestedPrimaryId: string;
+};
+
 export default function ProcurementSubmissionsPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [submissions, setSubmissions] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -17,6 +34,12 @@ export default function ProcurementSubmissionsPage() {
   const [showModal, setShowModal] = useState(false);
   const [actionType, setActionType] = useState<'approve' | 'reject' | null>(null);
   const [actionLoading, setActionLoading] = useState(false);
+
+  // Cross-seller duplicate groups (same product from multiple sellers)
+  const [duplicateGroups, setDuplicateGroups] = useState<DuplicateGroup[]>([]);
+  const [duplicateGroupsLoading, setDuplicateGroupsLoading] = useState(false);
+  const [showDuplicateGroups, setShowDuplicateGroups] = useState(false);
+  const [rejectOthersLoading, setRejectOthersLoading] = useState<string | null>(null); // groupId when loading
 
   // Form state for approve/reject
   const [quantity, setQuantity] = useState<string>('');
@@ -32,6 +55,29 @@ export default function ProcurementSubmissionsPage() {
     fetchSubmissions();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [statusFilter]);
+
+  useEffect(() => {
+    if (searchParams.get('view') === 'cross-seller') setShowDuplicateGroups(true);
+  }, [searchParams]);
+
+  const fetchDuplicateGroups = async () => {
+    try {
+      setDuplicateGroupsLoading(true);
+      const response = await apiClient.getCrossSellerDuplicateGroups();
+      if (response?.data) {
+        setDuplicateGroups(Array.isArray(response.data) ? response.data : []);
+      }
+    } catch (err: any) {
+      console.error('Error fetching cross-seller duplicate groups:', err);
+      setDuplicateGroups([]);
+    } finally {
+      setDuplicateGroupsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (showDuplicateGroups) fetchDuplicateGroups();
+  }, [showDuplicateGroups]);
 
   const fetchSubmissions = async () => {
     try {
@@ -77,6 +123,7 @@ export default function ProcurementSubmissionsPage() {
       setQuantity('');
       setNotes('');
       await fetchSubmissions();
+      if (showDuplicateGroups) await fetchDuplicateGroups();
     } catch (err: any) {
       console.error('Error approving submission:', err);
       setError(err.message || 'Failed to approve submission');
@@ -100,6 +147,7 @@ export default function ProcurementSubmissionsPage() {
       setSelectedSubmission(null);
       setRejectReason('');
       await fetchSubmissions();
+      if (showDuplicateGroups) await fetchDuplicateGroups();
     } catch (err: any) {
       console.error('Error rejecting submission:', err);
       setError(err.message || 'Failed to reject submission');
@@ -124,7 +172,7 @@ export default function ProcurementSubmissionsPage() {
   };
 
   return (
-    <RouteGuard allowedRoles={['PROCUREMENT', 'ADMIN']} showAccessDenied={true}>
+    <RouteGuard allowedRoles={['PROCUREMENT', 'CATALOG', 'ADMIN']} showAccessDenied={true}>
       <DashboardLayout role="PROCUREMENT" menuItems={menuItems} title="Procurement">
         <div className="mb-6">
           <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold">Review Submissions</h1>
@@ -138,7 +186,147 @@ export default function ProcurementSubmissionsPage() {
             </div>
           )}
 
-          {/* Status Filter */}
+          {/* Toggle: All submissions vs Same product from multiple sellers */}
+          <div className="mb-6 flex flex-wrap items-center gap-4">
+            <span className="text-sm font-medium text-gray-700">View:</span>
+            <button
+              onClick={() => setShowDuplicateGroups(false)}
+              className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+                !showDuplicateGroups ? 'bg-purple-600 text-white' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+              }`}
+            >
+              All submissions
+            </button>
+            <button
+              onClick={() => setShowDuplicateGroups(true)}
+              className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+                showDuplicateGroups ? 'bg-amber-600 text-white' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+              }`}
+            >
+              Same product from multiple sellers
+            </button>
+          </div>
+
+          {/* Cross-seller duplicate groups section */}
+          {showDuplicateGroups && (
+            <div className="mb-8">
+              <h2 className="text-xl font-semibold text-gray-900 mb-2">
+                Duplicate groups — approve one per product
+              </h2>
+              <p className="text-sm text-gray-600 mb-4">
+                These submissions represent the same product from different sellers/wholesalers. Approve only one per product.
+              </p>
+              {duplicateGroupsLoading && (
+                <div className="flex justify-center py-8">
+                  <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-amber-600"></div>
+                </div>
+              )}
+              {!duplicateGroupsLoading && duplicateGroups.length === 0 && (
+                <div className="bg-white border border-gray-200 rounded-lg p-6 text-center">
+                  <p className="text-gray-500">No duplicate groups found. No same product submitted by multiple sellers.</p>
+                </div>
+              )}
+              {!duplicateGroupsLoading && duplicateGroups.length > 0 && (
+                <div className="space-y-6">
+                  {duplicateGroups.map((group) => (
+                    <div
+                      key={group.groupId}
+                      className="bg-amber-50 border border-amber-200 rounded-lg p-6"
+                    >
+                      <div className="flex flex-wrap gap-2 mb-3">
+                        {group.matchReasons.map((r) => (
+                          <span key={r} className="px-2 py-0.5 bg-amber-200 text-amber-900 rounded text-xs font-medium">
+                            {r}
+                          </span>
+                        ))}
+                      </div>
+                      <p className="text-sm font-medium text-amber-900 mb-3">
+                        Same product from {group.submissions.length} seller(s) — approve one, reject others
+                      </p>
+                      <div className="space-y-3">
+                        {group.submissions.map((sub) => (
+                          <div
+                            key={sub.id}
+                            className="bg-white border border-amber-100 rounded-lg p-4 flex flex-wrap items-center justify-between gap-3"
+                          >
+                            <div>
+                              <p className="font-medium text-gray-900">{sub.productName}</p>
+                              <p className="text-sm text-gray-600">
+                                Seller: {sub.sellerStoreName} · {new Date(sub.createdAt).toLocaleDateString()}
+                              </p>
+                            </div>
+                            <div className="flex gap-2">
+                              <button
+                                onClick={() => handleViewDetails(sub.id)}
+                                className="px-3 py-1.5 text-sm bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300"
+                              >
+                                View
+                              </button>
+                              {sub.id === group.suggestedPrimaryId && (
+                                <span className="px-2 py-1 text-xs bg-green-100 text-green-800 rounded">Suggested</span>
+                              )}
+                              {(sub.status === 'SUBMITTED' || sub.status === 'UNDER_REVIEW') && (
+                                <>
+                                  <button
+                                    onClick={() => {
+                                      setSelectedSubmission({ id: sub.id, productData: sub.productData, seller: { storeName: sub.sellerStoreName }, status: sub.status, createdAt: sub.createdAt });
+                                      setActionType('approve');
+                                      setShowModal(true);
+                                      setQuantity('');
+                                      setNotes('');
+                                    }}
+                                    className="px-3 py-1.5 text-sm bg-green-600 text-white rounded-lg hover:bg-green-700"
+                                  >
+                                    Approve
+                                  </button>
+                                  <button
+                                    onClick={() => {
+                                      setSelectedSubmission({ id: sub.id, productData: sub.productData, seller: { storeName: sub.sellerStoreName }, status: sub.status });
+                                      setActionType('reject');
+                                      setShowModal(true);
+                                      setRejectReason('Duplicate: another seller’s submission approved for this product.');
+                                    }}
+                                    className="px-3 py-1.5 text-sm bg-red-600 text-white rounded-lg hover:bg-red-700"
+                                  >
+                                    Reject as duplicate
+                                  </button>
+                                  {group.submissions.filter((s) => s.status === 'SUBMITTED' || s.status === 'UNDER_REVIEW').length > 1 && (
+                                    <button
+                                      onClick={async () => {
+                                        if (rejectOthersLoading) return;
+                                        try {
+                                          setRejectOthersLoading(group.groupId);
+                                          await apiClient.rejectOthersInGroup(group.groupId, sub.id);
+                                          await fetchDuplicateGroups();
+                                          await fetchSubmissions();
+                                        } catch (err: any) {
+                                          console.error('Reject others failed:', err);
+                                          alert(err?.message || 'Failed to reject others');
+                                        } finally {
+                                          setRejectOthersLoading(null);
+                                        }
+                                      }}
+                                      disabled={!!rejectOthersLoading}
+                                      className="px-3 py-1.5 text-sm bg-amber-600 text-white rounded-lg hover:bg-amber-700 disabled:opacity-50"
+                                    >
+                                      {rejectOthersLoading === group.groupId ? 'Rejecting…' : 'Keep this & reject others'}
+                                    </button>
+                                  )}
+                                </>
+                              )}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Status Filter (when not showing duplicate groups) */}
+          {!showDuplicateGroups && (
           <div className="mb-6 flex gap-2 flex-wrap">
             {['SUBMITTED', 'UNDER_REVIEW', 'PROCUREMENT_APPROVED', 'PROCUREMENT_REJECTED'].map(
               (status) => (
@@ -156,20 +344,21 @@ export default function ProcurementSubmissionsPage() {
               )
             )}
           </div>
+          )}
 
-          {loading && (
+          {!showDuplicateGroups && loading && (
             <div className="flex items-center justify-center py-12">
               <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600"></div>
             </div>
           )}
 
-          {!loading && submissions.length === 0 && (
+          {!showDuplicateGroups && !loading && submissions.length === 0 && (
             <div className="bg-white border border-gray-200 rounded-lg p-8 text-center">
               <p className="text-gray-500 text-lg">No submissions found for this status</p>
             </div>
           )}
 
-          {!loading && submissions.length > 0 && (
+          {!showDuplicateGroups && !loading && submissions.length > 0 && (
             <div className="space-y-4">
               {submissions.map((submission) => {
                 const productData = submission.productData || {};

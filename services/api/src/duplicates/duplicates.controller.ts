@@ -1,10 +1,11 @@
-import { Controller, Get, Param, UseGuards, ParseUUIDPipe } from '@nestjs/common';
+import { Controller, Get, Post, Param, Body, UseGuards, ParseUUIDPipe } from '@nestjs/common';
 import {
   ApiTags,
   ApiOperation,
   ApiResponse as SwaggerApiResponse,
   ApiBearerAuth,
   ApiParam,
+  ApiBody,
 } from '@nestjs/swagger';
 import { DuplicatesService } from './duplicates.service';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
@@ -35,6 +36,85 @@ export class DuplicatesController {
     return {
       data: duplicates,
       message: 'Duplicate alerts retrieved successfully',
+    };
+  }
+
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('PROCUREMENT', 'CATALOG', 'ADMIN')
+  @Get('cross-seller-groups')
+  @ApiBearerAuth('JWT-auth')
+  @ApiOperation({
+    summary: 'Get cross-seller duplicate groups',
+    description:
+      'Groups of submissions from different sellers/wholesalers that represent the same product. Use to approve only one per product. Procurement, Catalog, or Admin access required.',
+  })
+  @SwaggerApiResponse({ status: 200, description: 'Duplicate groups retrieved successfully' })
+  @SwaggerApiResponse({ status: 401, description: 'Unauthorized' })
+  @SwaggerApiResponse({ status: 403, description: 'Forbidden - Insufficient permissions' })
+  async getCrossSellerGroups(): Promise<ApiResponse<any[]>> {
+    const groups = await this.duplicatesService.findCrossSellerDuplicateGroups();
+    return {
+      data: groups,
+      message: 'Cross-seller duplicate groups retrieved successfully',
+    };
+  }
+
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('ADMIN')
+  @Post('cross-seller-groups/assign')
+  @ApiBearerAuth('JWT-auth')
+  @ApiOperation({
+    summary: 'Assign persisted cross-seller group ids (Admin only)',
+    description:
+      'Recomputes cross-seller duplicate groups and persists crossSellerGroupId on each submission for reporting. Run periodically (e.g. cron) or after bulk imports.',
+  })
+  @SwaggerApiResponse({ status: 200, description: 'Group ids assigned' })
+  @SwaggerApiResponse({ status: 401, description: 'Unauthorized' })
+  @SwaggerApiResponse({ status: 403, description: 'Forbidden' })
+  async assignCrossSellerGroups(): Promise<
+    ApiResponse<{ groupsAssigned: number; submissionsUpdated: number }>
+  > {
+    const result = await this.duplicatesService.assignCrossSellerGroupIds();
+    return {
+      data: result,
+      message: `Assigned ${result.groupsAssigned} group(s), updated ${result.submissionsUpdated} submission(s)`,
+    };
+  }
+
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('PROCUREMENT', 'CATALOG', 'ADMIN')
+  @Post('cross-seller-groups/reject-others')
+  @ApiBearerAuth('JWT-auth')
+  @ApiOperation({
+    summary: 'Reject all others in a cross-seller duplicate group',
+    description:
+      'Rejects all submissions in the group except the one to keep (e.g. after approving one). Procurement, Catalog, or Admin access required.',
+  })
+  @ApiBody({
+    schema: {
+      type: 'object',
+      required: ['groupId', 'keepSubmissionId'],
+      properties: {
+        groupId: { type: 'string', description: 'Cross-seller group id from GET /duplicates/cross-seller-groups' },
+        keepSubmissionId: { type: 'string', format: 'uuid', description: 'Submission id to keep (approved)' },
+      },
+    },
+  })
+  @SwaggerApiResponse({ status: 200, description: 'Other submissions in the group rejected' })
+  @SwaggerApiResponse({ status: 400, description: 'Bad request - keepSubmissionId not in group' })
+  @SwaggerApiResponse({ status: 404, description: 'Group not found' })
+  @SwaggerApiResponse({ status: 401, description: 'Unauthorized' })
+  @SwaggerApiResponse({ status: 403, description: 'Forbidden' })
+  async rejectOthersInGroup(
+    @Body('groupId') groupId: string,
+    @Body('keepSubmissionId') keepSubmissionId: string,
+  ): Promise<ApiResponse<{ rejectedIds: string[] }>> {
+    const result = await this.duplicatesService.rejectOthersInGroup(groupId, keepSubmissionId);
+    return {
+      data: result,
+      message: result.rejectedIds.length
+        ? `${result.rejectedIds.length} submission(s) rejected as duplicate`
+        : 'No submissions to reject',
     };
   }
 

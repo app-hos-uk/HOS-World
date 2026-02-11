@@ -54,8 +54,10 @@ RUN pnpm db:generate
 WORKDIR /app/services/api
 # Build the application (will show type errors but attempt to compile)
 RUN pnpm build || echo "Build completed with some type errors - checking if dist exists..."
-# Verify dist directory was created
+# Verify dist directory was created and critical runtime modules exist
 RUN ls -la dist/ || (echo "Build failed - dist directory not found" && exit 1)
+RUN pnpm run list-dist-products
+RUN if [ ! -f dist/products/products-cache.hook.js ]; then echo "ERROR: products-cache.hook.js missing - app will crash at runtime" && exit 1; else echo "✅ products-cache.hook.js present"; fi
 
 # Production image - Use Debian-based image for better native module compatibility
 FROM node:18-slim
