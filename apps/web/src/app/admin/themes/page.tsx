@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState, useMemo, useCallback } from 'react';
-import Image from 'next/image';
+import { SafeImage } from '@/components/SafeImage';
 import { RouteGuard } from '@/components/RouteGuard';
 import { AdminLayout } from '@/components/AdminLayout';
 import { apiClient } from '@/lib/api';
@@ -472,7 +472,7 @@ export default function AdminThemesPage() {
                   <div className="flex items-center gap-4">
                     <div className="relative w-24 h-16 bg-gray-100 rounded-lg overflow-hidden">
                       {stats.mostUsed.previewImages?.[0] ? (
-                        <Image src={stats.mostUsed.previewImages[0]} alt="" fill className="object-cover" sizes="96px" />
+                        <SafeImage src={stats.mostUsed.previewImages[0]} alt="" fill className="object-cover" sizes="96px" />
                       ) : (
                         <div className="w-full h-full flex items-center justify-center text-2xl">🎨</div>
                       )}
@@ -601,7 +601,7 @@ export default function AdminThemesPage() {
                   {/* Preview Image */}
                   <div className="aspect-video bg-gray-100 relative">
                     {theme.previewImages && theme.previewImages.length > 0 ? (
-                      <Image src={theme.previewImages[0]} alt={theme.name} fill className="object-cover" sizes="(max-width: 768px) 100vw, 50vw" />
+                      <SafeImage src={theme.previewImages[0]} alt={theme.name} fill className="object-cover" sizes="(max-width: 768px) 100vw, 50vw" />
                     ) : (
                       <div className="w-full h-full flex items-center justify-center text-gray-400">
                         <div className="text-center">
@@ -835,7 +835,7 @@ export default function AdminThemesPage() {
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         {selectedTheme.previewImages.map((img, idx) => (
                           <div key={idx} className="relative w-full aspect-video rounded-lg border border-gray-200 overflow-hidden">
-                            <Image src={img} alt={`Preview ${idx + 1}`} fill className="object-contain" sizes="(max-width: 768px) 100vw, 50vw" />
+                            <SafeImage src={img} alt={`Preview ${idx + 1}`} fill className="object-contain" sizes="(max-width: 768px) 100vw, 50vw" />
                           </div>
                         ))}
                       </div>

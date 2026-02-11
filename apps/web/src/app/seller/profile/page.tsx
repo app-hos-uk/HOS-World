@@ -6,7 +6,7 @@ import { DashboardLayout } from '@/components/DashboardLayout';
 import { useAuth } from '@/contexts/AuthContext';
 import { apiClient } from '@/lib/api';
 import { useToast } from '@/hooks/useToast';
-import Image from 'next/image';
+import { SafeImage } from '@/components/SafeImage';
 
 interface SellerProfile {
   id: string;
@@ -265,7 +265,7 @@ export default function SellerProfilePage() {
           <div className="bg-gradient-to-r from-purple-600 to-indigo-600 rounded-lg p-6 text-white">
             <div className="flex items-center gap-4">
               {profile?.logo ? (
-                <Image src={profile.logo} alt={profile.storeName ?? ''} width={64} height={64} className="rounded-full object-cover bg-white" />
+                <SafeImage src={profile.logo} alt={profile.storeName ?? ''} width={64} height={64} className="rounded-full object-cover bg-white" fallback="🏪" />
               ) : (
                 <div className="w-16 h-16 rounded-full bg-white bg-opacity-20 flex items-center justify-center text-2xl">
                   🏪

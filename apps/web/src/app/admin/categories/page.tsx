@@ -5,7 +5,7 @@ import { RouteGuard } from '@/components/RouteGuard';
 import { AdminLayout } from '@/components/AdminLayout';
 import { apiClient } from '@/lib/api';
 import { useToast } from '@/hooks/useToast';
-import Image from 'next/image';
+// Image import removed — not used on this page
 
 interface Category {
   id: string;

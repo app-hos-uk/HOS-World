@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState, useMemo, useCallback } from 'react';
-import Image from 'next/image';
+import { SafeImage } from '@/components/SafeImage';
 import { RouteGuard } from '@/components/RouteGuard';
 import { AdminLayout } from '@/components/AdminLayout';
 import { apiClient } from '@/lib/api';
@@ -615,7 +615,7 @@ export default function AdminSellersPage() {
                                 <div className="flex items-center">
                                   <div className="flex-shrink-0 h-10 w-10">
                                     {seller.avatar ? (
-                                      <Image width={40} height={40} className="h-10 w-10 rounded-full object-cover" src={seller.avatar} alt="" />
+                                      <SafeImage width={40} height={40} className="h-10 w-10 rounded-full object-cover" src={seller.avatar} alt="" fallback="🏪" />
                                     ) : (
                                       <div className="h-10 w-10 rounded-full bg-purple-100 flex items-center justify-center">
                                         <span className="text-purple-600 font-medium text-sm">
@@ -839,7 +839,7 @@ export default function AdminSellersPage() {
                     {/* Header */}
                     <div className="flex items-center gap-4">
                       {selectedSeller.avatar ? (
-                        <Image width={80} height={80} className="rounded-full object-cover" src={selectedSeller.avatar} alt="" />
+                        <SafeImage width={80} height={80} className="rounded-full object-cover" src={selectedSeller.avatar} alt="" fallback="🏪" />
                       ) : (
                         <div className="h-20 w-20 rounded-full bg-purple-100 flex items-center justify-center">
                           <span className="text-purple-600 font-bold text-3xl">

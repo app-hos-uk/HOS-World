@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { Header } from '@/components/Header';
 import { Footer } from '@/components/Footer';
 import { apiClient } from '@/lib/api';
-import Image from 'next/image';
+import { SafeImage } from '@/components/SafeImage';
 import Link from 'next/link';
 
 export default function SellersPage() {
@@ -78,7 +78,7 @@ export default function SellersPage() {
                 <div className="text-center">
                   {seller.logo ? (
                     <div className="w-20 h-20 mx-auto mb-4 rounded-full overflow-hidden">
-                      <Image src={seller.logo} alt={seller.storeName} width={80} height={80} className="object-cover w-full h-full" />
+                      <SafeImage src={seller.logo} alt={seller.storeName} width={80} height={80} className="object-cover w-full h-full" fallback="🏪" />
                     </div>
                   ) : (
                     <div className="w-20 h-20 mx-auto mb-4 bg-purple-100 rounded-full flex items-center justify-center">

@@ -12,7 +12,7 @@ import { AttributeEditor } from '@/components/taxonomy/AttributeEditor';
 import { getPublicApiBaseUrl } from '@/lib/apiBaseUrl';
 import { useCurrency } from '@/contexts/CurrencyContext';
 import { DataExport } from '@/components/DataExport';
-import Image from 'next/image';
+import { SafeImage } from '@/components/SafeImage';
 import Link from 'next/link';
 
 interface Product {
@@ -876,7 +876,7 @@ function AdminProductsContent() {
                         <td className="px-4 py-3">
                           <div className="flex items-center gap-3">
                             {product.images?.[0]?.url ? (
-                              <Image src={product.images[0].url} alt={product.name} width={40} height={40} className="rounded object-cover" />
+                              <SafeImage src={product.images[0].url} alt={product.name} width={40} height={40} className="rounded object-cover" fallback="📦" />
                             ) : (
                               <div className="w-10 h-10 rounded bg-gray-200 flex items-center justify-center text-gray-400">📦</div>
                             )}
@@ -1053,7 +1053,7 @@ function AdminProductsContent() {
                         <div className="mt-4 flex flex-wrap gap-2">
                           {images.map((img, idx) => (
                             <div key={idx} className={`relative ${img.isPrimary ? 'ring-2 ring-purple-500' : ''}`}>
-                              <Image src={img.url} alt="" width={64} height={64} className="object-cover rounded" />
+                              <SafeImage src={img.url} alt="" width={64} height={64} className="object-cover rounded" />
                               {img.isPrimary && <span className="absolute -top-1 -right-1 bg-purple-600 text-white text-xs px-1 rounded">★</span>}
                               <button type="button" onClick={() => removeImage(idx)} className="absolute -bottom-1 -right-1 bg-red-500 text-white text-xs w-5 h-5 rounded-full">×</button>
                             </div>

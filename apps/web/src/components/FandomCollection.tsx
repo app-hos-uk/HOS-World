@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import Image from 'next/image';
+import { SafeImage } from '@/components/SafeImage';
 import { useTheme } from '@hos-marketplace/theme-system';
 import { apiClient } from '@/lib/api';
 
@@ -84,7 +84,7 @@ export function FandomCollection({ limit, showAllPage = false }: FandomCollectio
             >
               <div className="relative aspect-square bg-gray-200 flex items-center justify-center overflow-hidden">
                 {fandom.image ? (
-                  <Image src={fandom.image} alt="" fill className="object-cover" sizes="(max-width: 768px) 50vw, 16vw" />
+                  <SafeImage src={fandom.image} alt="" fill className="object-cover" sizes="(max-width: 768px) 50vw, 16vw" />
                 ) : null}
               </div>
               <div className="p-2 sm:p-3">
