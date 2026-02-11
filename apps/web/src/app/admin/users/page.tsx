@@ -441,18 +441,22 @@ export default function AdminUsersPage() {
       try {
         if (action === 'delete') {
           await apiClient.deleteUser(id);
+          success++;
         } else {
-          // For activate/deactivate, use toggle — but only if the user's current status
-          // needs changing (i.e. deactivate only active users, activate only inactive ones)
+          // Only toggle if the user's current status actually needs changing.
+          // Skip users whose isActive is undefined (data not loaded) to avoid
+          // accidental toggles.
           const user = users.find(u => u.id === id);
+          const isCurrentlyActive = user?.isActive === true;
+          const isCurrentlyInactive = user?.isActive === false;
           const shouldToggle =
-            (action === 'deactivate' && user?.isActive !== false) ||
-            (action === 'activate' && user?.isActive === false);
+            (action === 'deactivate' && isCurrentlyActive) ||
+            (action === 'activate' && isCurrentlyInactive);
           if (shouldToggle) {
             await apiClient.toggleUserStatus(id);
+            success++;
           }
         }
-        success++;
       } catch {
         // Continue on error
       }

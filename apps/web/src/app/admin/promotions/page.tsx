@@ -196,8 +196,14 @@ export default function AdminPromotionsPage() {
   }, [productSearchTerm]);
 
   useEffect(() => {
-    const t = setTimeout(debouncedProductSearch, 300);
-    return () => clearTimeout(t);
+    let cancel: (() => void) | undefined;
+    const t = setTimeout(() => {
+      cancel = debouncedProductSearch() as (() => void) | undefined;
+    }, 300);
+    return () => {
+      clearTimeout(t);
+      cancel?.();
+    };
   }, [productSearchTerm, debouncedProductSearch]);
 
   const flatCategories = categoryTree.length ? flattenCategoryTree(categoryTree) : [];
