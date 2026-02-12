@@ -54,6 +54,27 @@ export class CatalogController {
     };
   }
 
+  @Get('submissions/:submissionId')
+  @ApiOperation({
+    summary: 'Get catalog submission/entry by ID (alias for entries/:id)',
+    description:
+      'Retrieves a catalog entry or submission by ID. Same as GET /catalog/entries/:id. Catalog/Admin access required.',
+  })
+  @ApiParam({ name: 'submissionId', description: 'Submission UUID', type: String })
+  @SwaggerApiResponse({ status: 200, description: 'Catalog entry or submission retrieved successfully' })
+  @SwaggerApiResponse({ status: 401, description: 'Unauthorized' })
+  @SwaggerApiResponse({ status: 403, description: 'Forbidden - Catalog/Admin access required' })
+  @SwaggerApiResponse({ status: 404, description: 'Not found' })
+  async getSubmissionById(
+    @Param('submissionId', ParseUUIDPipe) submissionId: string,
+  ): Promise<ApiResponse<any>> {
+    const entry = await this.catalogService.findOne(submissionId);
+    return {
+      data: entry,
+      message: 'Catalog submission retrieved successfully',
+    };
+  }
+
   @Get('entries')
   @ApiOperation({
     summary: 'Get all catalog entries',
