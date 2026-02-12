@@ -104,7 +104,7 @@ export default function AdminCatalogPage() {
                       entry.product?.name ||
                       entry.submission?.product?.name ||
                       'N/A';
-                    const completed = entry.completed ?? !!entry.catalogEntry ?? false;
+                    const completed = entry.completed ?? !!entry.catalogEntry;
                     return (
                       <tr key={entry.id || submissionId} className="hover:bg-gray-50">
                         <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
