@@ -91,6 +91,10 @@ RUN pnpm build
 # Production image
 FROM node:18-slim
 
+# Force cache invalidation — change this value to trigger a full rebuild
+ARG BUILD_VERSION=2026-02-13-v2
+RUN echo "Build: $BUILD_VERSION"
+
 # Install pnpm
 RUN npm install -g pnpm
 
