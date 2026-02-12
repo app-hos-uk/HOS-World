@@ -125,5 +125,7 @@ ENV NODE_ENV=production
 ENV PORT=3000
 
 # Start Next.js production server
+# The "start" script in package.json passes -H 0.0.0.0 so Next.js
+# listens on all interfaces (required for Railway's proxy/healthcheck).
 CMD ["pnpm", "start"]
 
