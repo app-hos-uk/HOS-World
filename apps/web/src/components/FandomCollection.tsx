@@ -5,12 +5,22 @@ import Link from 'next/link';
 import { SafeImage } from '@/components/SafeImage';
 import { useTheme } from '@hos-marketplace/theme-system';
 import { apiClient } from '@/lib/api';
+import { getPublicApiBaseUrl } from '@/lib/apiBaseUrl';
 
 interface FandomCollectionProps {
   /** Max number to show; undefined = show all (e.g. on /fandoms page). Use 6 for homepage. */
   limit?: number;
   /** When true, hide "See more" and use full-width layout (for /fandoms page). */
   showAllPage?: boolean;
+}
+
+/** Resolve relative image URLs (e.g. /uploads/...) to absolute using API origin. */
+function resolveImageUrl(src: string | null | undefined): string {
+  if (!src || typeof src !== 'string') return '';
+  if (src.startsWith('http://') || src.startsWith('https://') || src.startsWith('//')) return src;
+  const base = getPublicApiBaseUrl();
+  const origin = base.replace(/\/api\/?$/, '');
+  return origin + (src.startsWith('/') ? src : `/${src}`);
 }
 
 export function FandomCollection({ limit, showAllPage = false }: FandomCollectionProps) {
@@ -40,6 +50,8 @@ export function FandomCollection({ limit, showAllPage = false }: FandomCollectio
     }
   };
 
+  const skeletonCount = showAllPage ? 12 : 6;
+
   return (
     <section>
       {!showAllPage && (
@@ -58,7 +70,20 @@ export function FandomCollection({ limit, showAllPage = false }: FandomCollectio
       )}
 
       {loading ? (
-        <div className="text-center text-gray-500 py-8">Loading fandoms...</div>
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3 sm:gap-4">
+          {Array.from({ length: skeletonCount }).map((_, i) => (
+            <div
+              key={`skeleton-${i}`}
+              className="rounded-lg overflow-hidden animate-pulse"
+              style={{ backgroundColor: theme.colors.surface }}
+            >
+              <div className="aspect-square bg-gray-200" />
+              <div className="p-2 sm:p-3">
+                <div className="h-4 bg-gray-200 rounded mx-auto w-3/4" />
+              </div>
+            </div>
+          ))}
+        </div>
       ) : error ? (
         <div className="text-center py-8">
           <p className="text-gray-600 mb-4">{error}</p>
@@ -74,26 +99,40 @@ export function FandomCollection({ limit, showAllPage = false }: FandomCollectio
         </div>
       ) : (
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3 sm:gap-4">
-          {fandoms.map((fandom) => (
-            <Link
-              key={fandom.id ?? fandom.slug}
-              href={`/fandoms/${fandom.slug}`}
-              className="block rounded-lg overflow-hidden hover:shadow-lg transition-shadow"
-              style={{ backgroundColor: theme.colors.surface }}
-              prefetch={true}
-            >
-              <div className="relative aspect-square bg-gray-200 flex items-center justify-center overflow-hidden">
-                {fandom.image ? (
-                  <SafeImage src={fandom.image} alt="" fill className="object-cover" sizes="(max-width: 768px) 50vw, 16vw" />
-                ) : null}
-              </div>
-              <div className="p-2 sm:p-3">
-                <h3 className="font-semibold text-center text-xs sm:text-sm" style={{ color: theme.colors.text.primary }}>
-                  {fandom.name}
-                </h3>
-              </div>
-            </Link>
-          ))}
+          {fandoms.map((fandom) => {
+            const imageUrl = resolveImageUrl(fandom.image);
+            return (
+              <Link
+                key={fandom.id ?? fandom.slug}
+                href={`/fandoms/${fandom.slug}`}
+                className="block rounded-lg overflow-hidden hover:shadow-lg transition-shadow"
+                style={{ backgroundColor: theme.colors.surface }}
+                prefetch={true}
+              >
+                <div className="relative aspect-square bg-gray-200 flex items-center justify-center overflow-hidden">
+                  {imageUrl ? (
+                    <SafeImage
+                      src={imageUrl}
+                      alt={fandom.name || 'Fandom'}
+                      fill
+                      className="object-cover"
+                      sizes="(max-width: 768px) 50vw, 16vw"
+                      fallback="✨"
+                    />
+                  ) : (
+                    <span className="text-4xl sm:text-5xl text-gray-400 font-bold" aria-hidden>
+                      {fandom.name ? (fandom.name as string).charAt(0).toUpperCase() : '✨'}
+                    </span>
+                  )}
+                </div>
+                <div className="p-2 sm:p-3">
+                  <h3 className="font-semibold text-center text-xs sm:text-sm" style={{ color: theme.colors.text.primary }}>
+                    {fandom.name}
+                  </h3>
+                </div>
+              </Link>
+            );
+          })}
         </div>
       )}
     </section>

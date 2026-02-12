@@ -358,3 +358,28 @@ a {
     @apply w-12 h-12;
   }
 }
+
+/* Wishlist heart bounce animation */
+@keyframes heartBounce {
+  0% {
+    transform: scale(1);
+  }
+  15% {
+    transform: scale(1.35);
+  }
+  30% {
+    transform: scale(0.9);
+  }
+  45% {
+    transform: scale(1.15);
+  }
+  60% {
+    transform: scale(0.95);
+  }
+  80% {
+    transform: scale(1.05);
+  }
+  100% {
+    transform: scale(1);
+  }
+}

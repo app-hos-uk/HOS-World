@@ -1,11 +1,12 @@
 'use client';
 
-import { Toaster as HotToaster } from 'react-hot-toast';
+import { Toaster as HotToaster, ToastBar, toast } from 'react-hot-toast';
 
 export function Toaster() {
   return (
     <HotToaster
-      position="top-right"
+      position="bottom-center"
+      gutter={8}
       toastOptions={{
         duration: 4000,
         style: {
@@ -42,7 +43,30 @@ export function Toaster() {
           },
         },
       }}
-    />
+    >
+      {(t) => (
+        <ToastBar toast={t}>
+          {({ icon, message }) => (
+            <div className="flex items-center gap-2 w-full">
+              {icon}
+              <span className="flex-1 min-w-0">{message}</span>
+              {t.type !== 'loading' && (
+                <button
+                  type="button"
+                  onClick={() => toast.dismiss(t.id)}
+                  className="shrink-0 p-1 rounded hover:bg-black/10 text-gray-500 hover:text-gray-700 transition-colors"
+                  aria-label="Dismiss notification"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              )}
+            </div>
+          )}
+        </ToastBar>
+      )}
+    </HotToaster>
   );
 }
 

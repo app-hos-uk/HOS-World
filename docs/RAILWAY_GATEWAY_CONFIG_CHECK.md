@@ -44,7 +44,7 @@ If **gateway-service** has no GitHub (or other) source connected:
 2. Select **gateway-service**.
 3. Go to **Settings** (or **Source**).
 4. Under **Source**, connect your GitHub repo (e.g. `app-hos-uk/HOS-World`).
-5. Set **Branch** (e.g. `feat/phase-1-notifications` or `main`).
+5. Set **Branch** to **`master`**.
 6. Set **Root Directory** to empty (build context = repo root).
 7. **Dockerfile path** is already set via variable: `services/gateway/Dockerfile`.
 

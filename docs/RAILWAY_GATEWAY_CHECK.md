@@ -28,7 +28,7 @@ If **gateway-service** has no repo/source connected, pushes will not trigger bui
 
 1. Railway → **gateway-service** → **Settings** → **Source** (or **Connect Repo**).
 2. Connect **GitHub** and select repo (e.g. `app-hos-uk/HOS-World`).
-3. Set **Branch** (e.g. `feat/phase-1-notifications` or `main`).
+3. Set **Branch** to **`master`**.
 4. **Root Directory:** leave empty (Dockerfile path is already `services/gateway/Dockerfile` via variable).
 
 See **docs/RAILWAY_GATEWAY_CONFIG_CHECK.md** for a full CLI config check.
@@ -41,7 +41,7 @@ If you pushed the circuit-breaker commit but the gateway still returns 404 for `
 
 1. **Connect repo** (if not done) – see “Connect gateway-service to GitHub” above.
 2. **Check the branch**  
-   Railway → **gateway-service** → **Settings** → **Source**. Ensure it builds from the branch you pushed (e.g. `feat/phase-1-notifications`). If it’s set to `main`, either change it or merge your branch and push to `main`.
+   Railway → **gateway-service** → **Settings** → **Source**. Ensure **Branch** is set to **`master`** so pushes to master trigger builds.
 
 2. **Trigger a redeploy**
    - **Option A (CLI):** From repo root:

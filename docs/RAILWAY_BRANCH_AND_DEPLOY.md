@@ -1,27 +1,96 @@
-# Railway: Branch configuration and deploying
+# Railway: Source (repo) and branch configuration
 
-## Why pushes didn’t trigger a deployment
+## Current state
 
-Railway only auto-deploys when you push to the **branch that is set in the Dashboard** for each service (often `main` or `master`). Your push was to `feat/phase-1-notifications`, so no deployment ran if the API service was still set to another branch.
+- **Only API and web** are connected to a GitHub repo and have root/source configured in the Railway Dashboard.
+- **All other services** (gateway, auth, user, admin, order, search, seller, content, payment, product, inventory, influencer, notification) are **not** connected to any repo—they show "Connect Source" / "Connect Repo" in Settings → Source. Deploys for those services today happen via CLI (`railway up`) or one-off builds, not from Git pushes.
+
+To have **every push to `master`** trigger builds for all services, you need to **connect each service to the same repo**, then set **Branch** to **`master`**.
 
 ---
 
-## 1. Set the branch so pushes trigger deployments
+## 1. Services already connected (API, web)
 
-The branch is configured in the **Railway Dashboard**, not in the CLI:
+For **API** and **web** only:
 
-1. Open **[Railway Dashboard](https://railway.app/dashboard)**.
-2. Select the project **HOS-World Production Deployment**.
-3. Select the **@hos-marketplace/api** service (the API that runs `services/api`).
-4. Go to **Settings** (or the **Source** / **Connect** tab).
-5. Under **Source** / **Repository**:
-   - Ensure the repo is connected (e.g. `app-hos-uk/HOS-World`).
-   - Set **Branch** to `feat/phase-1-notifications` (or whichever branch you use for deploys).
-   - Save.
+1. Open **[Railway Dashboard](https://railway.app/dashboard)** → project **HOS-World Production Deployment**.
+2. Open the **API** service (e.g. hos-marketplaceapi) and **web** (e.g. hos-marketplaceweb).
+3. **Settings** → **Source**: ensure **Branch** is **`master`**. Save if you change it.
 
-After this, **every push to `feat/phase-1-notifications`** will trigger a new build and deployment for that service.
+---
 
-To have **multiple services** (e.g. web, gateway) deploy from the same branch, repeat the steps for each service and set the same branch.
+## 2. Connect repo and set branch for all other services
+
+For every other service (gateway, auth, user, admin, order, search, seller, content, payment, product, inventory, influencer, notification), do the following **once** in the Dashboard:
+
+1. Open **[Railway Dashboard](https://railway.app/dashboard)** → project **HOS-World Production Deployment**.
+2. Open the service (e.g. **auth-service**, **content-service**, **influencer-service**, etc.).
+3. Go to **Settings** → **Source**.
+4. Click **Connect Repo** (GitHub).
+5. Select the same repo as API/web (e.g. **app-hos-uk/HOS-World**).
+6. Set **Branch** to **`master`**.
+7. **Root Directory:** leave **empty** or `/` (repo root). Each service’s Dockerfile is set via the **RAILWAY_DOCKERFILE_PATH** variable (e.g. `services/auth/Dockerfile`), not by root directory.
+8. Save.
+
+**“Skipping Dockerfile at services/…” in the log:** When Root Directory is empty, Railway’s scanner only treats the repo root as valid, so it reports “found Dockerfile at Dockerfile” (the root one) and “skipping … at services/xyz/Dockerfile as it is not rooted at a valid path”. That’s expected. Each microservice must have the **RAILWAY_DOCKERFILE_PATH** variable set in **Variables** (e.g. `services/auth/Dockerfile`, `services/gateway/Dockerfile`) so Railway uses the correct Dockerfile for that service. Build context stays the repo root; only the Dockerfile path changes per service.
+
+Repeat for each of the services in the table below.
+
+**Quick way:** From repo root, run `./scripts/railway-set-branch-master.sh` to open the project in the Dashboard and print a checklist.
+
+**Set variables and paths via CLI:** Source/branch cannot be set via CLI; use the Dashboard for that. You can set **RAILWAY_DOCKERFILE_PATH** and **NODE_ENV** (and other variables) per service with the Railway CLI:
+
+```bash
+# From repo root (project already linked: railway link)
+./scripts/railway-set-service-vars.sh              # all microservices
+./scripts/railway-set-service-vars.sh --dry-run    # print commands only
+./scripts/railway-set-service-vars.sh gateway-service   # single service
+```
+
+Or manually per service:
+
+```bash
+railway variable set "RAILWAY_DOCKERFILE_PATH=services/gateway/Dockerfile" "NODE_ENV=production" -s gateway-service
+railway variable set "RAILWAY_DOCKERFILE_PATH=services/auth/Dockerfile" "NODE_ENV=production" -s auth-service
+# ... etc. Use -s <service> for each Railway service name.
+```
+
+To set other variables (e.g. DATABASE_URL, JWT_SECRET) via CLI:
+
+```bash
+railway variable set "DATABASE_URL=postgresql://..." -s auth-service
+railway variable set "JWT_SECRET=your-secret" -s gateway-service
+railway variable list -s auth-service   # list variables for a service
+```
+
+### Services that need "Connect Repo" then Branch = `master`
+
+For each service, set **Variables** → **RAILWAY_DOCKERFILE_PATH** to the path below (if not already set):
+
+| Railway Service Name   | RAILWAY_DOCKERFILE_PATH           |
+|------------------------|-----------------------------------|
+| **gateway-service**     | `services/gateway/Dockerfile`     |
+| **auth-service**       | `services/auth/Dockerfile`        |
+| **user-service**       | `services/user/Dockerfile`        |
+| **admin-service**      | `services/admin/Dockerfile`       |
+| **order-service**      | `services/order/Dockerfile`       |
+| **search-service**     | `services/search/Dockerfile`      |
+| **seller-service**     | `services/seller/Dockerfile`      |
+| **content-service**    | `services/content/Dockerfile`     |
+| **payment-service**    | `services/payment/Dockerfile`     |
+| **product-service**    | `services/product/Dockerfile`     |
+| **inventory-service**  | `services/inventory/Dockerfile`   |
+| **influencer-service** | `services/influencer/Dockerfile`  |
+| **notification-service** | `services/notification/Dockerfile` |
+
+### Already connected (only set Branch = `master` if needed)
+
+| Railway Service Name   | Notes                    |
+|------------------------|-------------------------|
+| **api** / **hos-marketplaceapi** | Monolith API (`services/api`) |
+| **web** / **hos-marketplaceweb** | Next.js frontend |
+
+After every service has a connected repo and Branch = `master`, **pushes to `master`** will trigger builds for all of them.
 
 ---
 
@@ -36,11 +105,9 @@ railway up --detach               # trigger deploy; returns when upload is done
 ```
 
 - **Project:** HOS-World Production Deployment  
-- **Service:** @hos-marketplace/api (already linked in your setup)
+- **Service:** Link with `railway link --service <name>` then run `railway up --detach`.
 
-Build logs: Railway will print a URL like  
-`https://railway.com/project/.../service/...?id=...`  
-Open it to watch the build and deployment.
+Build logs: Railway will print a URL; open it to watch the build and deployment.
 
 ---
 
@@ -52,7 +119,7 @@ If you need to link another service (e.g. after cloning or a new project):
 cd "/Users/sabuj/Desktop/HOS-latest Sabu"
 railway link                     # pick project + service interactively
 # or
-railway link --service "@hos-marketplace/api"
+railway link --service "gateway-service"
 railway status
 railway up --detach
 ```
@@ -63,6 +130,9 @@ railway up --detach
 
 | Goal | Action |
 |------|--------|
-| **Pushes to `feat/phase-1-notifications` trigger deploy** | Dashboard → @hos-marketplace/api → Settings → Source → Branch = `feat/phase-1-notifications` |
-| **Deploy current local code now** | `railway up --detach` from repo root (with API service linked) |
+| **Pushes to `master` trigger deploy** | Dashboard → each service → Settings → Source → Branch = **`master`** |
+| **Open Dashboard to set branch** | `./scripts/railway-set-branch-master.sh` or `railway open` |
+| **Set RAILWAY_DOCKERFILE_PATH / NODE_ENV** | `./scripts/railway-set-service-vars.sh` or `railway variable set KEY=value -s <service>` |
+| **Set other variables (e.g. DATABASE_URL)** | `railway variable set "DATABASE_URL=..." -s <service>` |
+| **Deploy current local code now** | `railway link --service <name>` then `railway up --detach` |
 | **Check current link** | `railway status` |

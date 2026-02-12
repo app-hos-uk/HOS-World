@@ -50,8 +50,12 @@
 
 ## Railway Configuration Per Service
 
+- **Source (repo) and branch:** Only **API** and **web** are connected to a GitHub repo. All other services show "Connect Source" in the Dashboard—for each of them: **Settings** → **Source** → **Connect Repo** (same repo as API, e.g. app-hos-uk/HOS-World), set **Branch** to **`master`**, **Root Directory** empty. Then pushes to `master` will trigger deployments. See **docs/RAILWAY_BRANCH_AND_DEPLOY.md** and `./scripts/railway-set-branch-master.sh`.
 - **Root directory:** Leave empty (build context = repo root).
-- **Dockerfile path:** Set via variable `RAILWAY_DOCKERFILE_PATH=services/<name>/Dockerfile` (e.g. `services/payment/Dockerfile`). This was set for services where the CLI completed; you can set/confirm in the dashboard.
+- **Dockerfile path:** Set via variable `RAILWAY_DOCKERFILE_PATH=services/<name>/Dockerfile` (e.g. `services/payment/Dockerfile`). Use the CLI or Dashboard:
+  - **CLI (all microservices):** From repo root run `./scripts/railway-set-service-vars.sh` (sets `RAILWAY_DOCKERFILE_PATH` and `NODE_ENV=production` per service). Use `--dry-run` to print commands only, or pass a single service name (e.g. `./scripts/railway-set-service-vars.sh gateway-service`).
+  - **CLI (single service):** `railway variable set "RAILWAY_DOCKERFILE_PATH=services/<name>/Dockerfile" "NODE_ENV=production" -s <service-name>` (e.g. `-s payment-service`).
+  - **Other variables:** `railway variable set "DATABASE_URL=..." -s auth-service`, `railway variable list -s <service>` to list.
 
 ### Required environment variables (per service)
 
@@ -90,16 +94,26 @@ railway up --detach
 
 ---
 
-## Add Missing RAILWAY_DOCKERFILE_PATH
+## Set service variables and paths via CLI
 
-If a service was created without the correct Dockerfile path:
+**Set Dockerfile path and NODE_ENV for all microservices:**
 
 ```bash
-railway service <service-name>
-railway variable set "RAILWAY_DOCKERFILE_PATH=services/<name>/Dockerfile"
+cd "/Users/sabuj/Desktop/HOS-latest Sabu"
+./scripts/railway-set-service-vars.sh              # all services
+./scripts/railway-set-service-vars.sh --dry-run    # print commands only
+./scripts/railway-set-service-vars.sh gateway-service   # single service
 ```
 
-Example: `railway variable set "RAILWAY_DOCKERFILE_PATH=services/auth/Dockerfile"` for auth-service.
+**Set or add for a single service** (no need to `railway link` first when using `-s`):
+
+```bash
+railway variable set "RAILWAY_DOCKERFILE_PATH=services/auth/Dockerfile" "NODE_ENV=production" -s auth-service
+railway variable set "DATABASE_URL=postgresql://user:pass@host:5432/db" -s auth-service
+railway variable list -s auth-service
+```
+
+Source (repo) and branch cannot be set via CLI—use Dashboard → each service → Settings → Source. See **docs/RAILWAY_BRANCH_AND_DEPLOY.md**.
 
 ---
 

@@ -32,6 +32,8 @@ interface CartContextType {
   cartItemCount: number;
   loading: boolean;
   refreshCart: () => Promise<void>;
+  /** Sync context with cart data from an API response (avoids an extra getCart() call). */
+  syncCart: (cart: Cart | null) => void;
   addToCart: (productId: string, quantity?: number, variationOptions?: Record<string, string>) => Promise<void>;
   removeFromCart: (itemId: string) => Promise<void>;
   updateCartItem: (itemId: string, quantity: number) => Promise<void>;
@@ -75,6 +77,10 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     await fetchCart();
   }, [fetchCart]);
 
+  const syncCart = useCallback((cart: Cart | null) => {
+    setCart(cart);
+  }, []);
+
   const addToCart = useCallback(async (productId: string, quantity: number = 1, variationOptions?: Record<string, string>) => {
     try {
       await apiClient.addToCart(productId, quantity, variationOptions);
@@ -114,6 +120,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
         cartItemCount,
         loading,
         refreshCart,
+        syncCart,
         addToCart,
         removeFromCart,
         updateCartItem,

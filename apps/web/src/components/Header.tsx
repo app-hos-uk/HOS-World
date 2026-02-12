@@ -158,7 +158,7 @@ export function Header() {
           
           {/* Desktop Navigation */}
           <nav className="hidden md:flex items-center space-x-4 lg:space-x-6">
-            {/* Storefront navigation: only for guests or CUSTOMER role, and not on dashboard pages */}
+            {/* Storefront: Products & Fandoms only when not on dashboard */}
             {isCustomerRole && !isDashboardPage && (
               <>
                 <Link 
@@ -173,23 +173,24 @@ export function Header() {
                 >
                   Fandoms
                 </Link>
-                {isAuthenticated && currentRole === 'CUSTOMER' && (
-                  <>
-                    <Link 
-                      href="/wishlist" 
-                      className="text-sm lg:text-base text-purple-700 hover:text-amber-600 font-medium font-secondary transition-colors duration-300"
-                      title="Wishlist"
-                    >
-                      ❤️ Wishlist
-                    </Link>
-                    <Link 
-                      href="/orders" 
-                      className="text-sm lg:text-base text-purple-700 hover:text-amber-600 font-medium font-secondary transition-colors duration-300"
-                    >
-                      My Orders
-                    </Link>
-                  </>
-                )}
+              </>
+            )}
+            {/* Wishlist, My Orders, Cart: always visible for CUSTOMER (storefront and dashboard) so nav works */}
+            {isCustomerRole && isAuthenticated && currentRole === 'CUSTOMER' && (
+              <>
+                <Link 
+                  href="/wishlist" 
+                  className="text-sm lg:text-base text-purple-700 hover:text-amber-600 font-medium font-secondary transition-colors duration-300"
+                  title="Wishlist"
+                >
+                  ❤️ Wishlist
+                </Link>
+                <Link 
+                  href="/orders" 
+                  className="text-sm lg:text-base text-purple-700 hover:text-amber-600 font-medium font-secondary transition-colors duration-300"
+                >
+                  My Orders
+                </Link>
                 <Link 
                   href="/cart" 
                   className="relative text-sm lg:text-base text-purple-700 hover:text-amber-600 font-medium font-secondary transition-colors duration-300"
@@ -201,11 +202,22 @@ export function Header() {
                     </span>
                   )}
                 </Link>
-                {/* Currency selector: only for logged-in CUSTOMER */}
-                {isAuthenticated && currentRole === 'CUSTOMER' && (
-                  <CurrencySelector />
-                )}
+                {!isDashboardPage && <CurrencySelector />}
               </>
+            )}
+            {/* Cart for guests (when on storefront) */}
+            {isCustomerRole && !isAuthenticated && !isDashboardPage && (
+              <Link 
+                href="/cart" 
+                className="relative text-sm lg:text-base text-purple-700 hover:text-amber-600 font-medium font-secondary transition-colors duration-300"
+              >
+                Cart
+                {cartItemCount > 0 && (
+                  <span className="absolute -top-2 -right-2 bg-red-600 text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center">
+                    {cartItemCount > 99 ? '99+' : cartItemCount}
+                  </span>
+                )}
+              </Link>
             )}
 
             {/* Role-specific quick links for non-customer roles */}
@@ -295,7 +307,7 @@ export function Header() {
         {isMobileMenuOpen && (
           <nav className="md:hidden pb-4 border-t border-purple-200 mt-2 pt-4">
             <div className="flex flex-col space-y-3">
-              {/* Storefront navigation for guests or CUSTOMER */}
+              {/* Products & Fandoms only when not on dashboard */}
               {isCustomerRole && !isDashboardPage && (
                 <>
                   <Link 
@@ -312,24 +324,25 @@ export function Header() {
                   >
                     Fandoms
                   </Link>
-                  {isAuthenticated && currentRole === 'CUSTOMER' && (
-                    <>
-                      <Link 
-                        href="/wishlist" 
-                        onClick={() => setIsMobileMenuOpen(false)}
-                        className="text-base text-purple-700 hover:text-amber-600 font-medium font-secondary transition-colors duration-300 py-2 px-2 rounded-lg hover:bg-purple-50"
-                      >
-                        ❤️ Wishlist
-                      </Link>
-                      <Link 
-                        href="/orders" 
-                        onClick={() => setIsMobileMenuOpen(false)}
-                        className="text-base text-purple-700 hover:text-amber-600 font-medium font-secondary transition-colors duration-300 py-2 px-2 rounded-lg hover:bg-purple-50"
-                      >
-                        My Orders
-                      </Link>
-                    </>
-                  )}
+                </>
+              )}
+              {/* Wishlist, My Orders, Cart: always for CUSTOMER so nav works from dashboard too */}
+              {isCustomerRole && isAuthenticated && currentRole === 'CUSTOMER' && (
+                <>
+                  <Link 
+                    href="/wishlist" 
+                    onClick={() => setIsMobileMenuOpen(false)}
+                    className="text-base text-purple-700 hover:text-amber-600 font-medium font-secondary transition-colors duration-300 py-2 px-2 rounded-lg hover:bg-purple-50"
+                  >
+                    ❤️ Wishlist
+                  </Link>
+                  <Link 
+                    href="/orders" 
+                    onClick={() => setIsMobileMenuOpen(false)}
+                    className="text-base text-purple-700 hover:text-amber-600 font-medium font-secondary transition-colors duration-300 py-2 px-2 rounded-lg hover:bg-purple-50"
+                  >
+                    My Orders
+                  </Link>
                   <Link 
                     href="/cart" 
                     onClick={() => setIsMobileMenuOpen(false)}
@@ -342,13 +355,27 @@ export function Header() {
                       </span>
                     )}
                   </Link>
-                  {/* Currency selector only for logged-in CUSTOMER */}
-                  {isAuthenticated && currentRole === 'CUSTOMER' && (
+                  {!isDashboardPage && (
                     <div className="px-2 py-2">
                       <CurrencySelector />
                     </div>
                   )}
                 </>
+              )}
+              {/* Cart for guests on storefront */}
+              {isCustomerRole && !isAuthenticated && !isDashboardPage && (
+                <Link 
+                  href="/cart" 
+                  onClick={() => setIsMobileMenuOpen(false)}
+                  className="relative text-base text-purple-700 hover:text-amber-600 font-medium font-secondary transition-colors duration-300 py-2 px-2 rounded-lg hover:bg-purple-50"
+                >
+                  Cart
+                  {cartItemCount > 0 && (
+                    <span className="ml-2 bg-red-600 text-white text-xs font-bold rounded-full px-2 py-0.5">
+                      {cartItemCount > 99 ? '99+' : cartItemCount}
+                    </span>
+                  )}
+                </Link>
               )}
 
               {/* Role-specific quick links for non-customer roles */}

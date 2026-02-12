@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { useParams } from 'next/navigation';
 import { Header } from '@/components/Header';
 import { Footer } from '@/components/Footer';
@@ -29,6 +29,10 @@ export default function ProductDetailPage() {
   const [product, setProduct] = useState<any>(null);
   const [reviews, setReviews] = useState<any[]>([]);
   const [isInWishlist, setIsInWishlist] = useState(false);
+  const [wishlistAnimating, setWishlistAnimating] = useState(false);
+  const wishlistAnimationTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  /** True when the current animation is for an add (so burst shows only on add, not on remove). */
+  const wishlistIsAddAnimationRef = useRef(false);
   const [loading, setLoading] = useState(true);
   const [reviewsLoading, setReviewsLoading] = useState(false);
   const [quantity, setQuantity] = useState(1);
@@ -108,11 +112,33 @@ export default function ProductDetailPage() {
     return () => { cancelled = true; };
   }, [product?.id, isAuthenticated]);
 
+  // Clear wishlist animation timeout on unmount to avoid setState on unmounted component
+  useEffect(() => {
+    return () => {
+      if (wishlistAnimationTimeoutRef.current) {
+        clearTimeout(wishlistAnimationTimeoutRef.current);
+        wishlistAnimationTimeoutRef.current = null;
+      }
+    };
+  }, []);
+
   const handleToggleWishlist = async () => {
     if (!isAuthenticated || !product?.id) {
       if (!isAuthenticated) toast.error('Please login to add items to wishlist');
       return;
     }
+
+    if (wishlistAnimationTimeoutRef.current) {
+      clearTimeout(wishlistAnimationTimeoutRef.current);
+      wishlistAnimationTimeoutRef.current = null;
+    }
+
+    wishlistIsAddAnimationRef.current = !isInWishlist;
+    setWishlistAnimating(true);
+    wishlistAnimationTimeoutRef.current = setTimeout(() => {
+      setWishlistAnimating(false);
+      wishlistAnimationTimeoutRef.current = null;
+    }, 600);
 
     try {
       if (isInWishlist) {
@@ -125,6 +151,11 @@ export default function ProductDetailPage() {
         toast.success('Added to wishlist');
       }
     } catch (err: any) {
+      if (wishlistAnimationTimeoutRef.current) {
+        clearTimeout(wishlistAnimationTimeoutRef.current);
+        wishlistAnimationTimeoutRef.current = null;
+      }
+      setWishlistAnimating(false);
       toast.error(err.message || 'Failed to update wishlist');
     }
   };
@@ -376,14 +407,33 @@ export default function ProductDetailPage() {
               </button>
               <button
                 onClick={handleToggleWishlist}
-                className={`px-6 py-3 border rounded-lg transition-colors font-medium ${
+                className={`group relative px-6 py-3 border rounded-lg font-medium transition-all duration-300 ${
                   isInWishlist
                     ? 'border-red-300 bg-red-50 text-red-600 hover:bg-red-100'
                     : 'border-gray-300 hover:bg-gray-50'
-                }`}
+                } ${wishlistAnimating ? 'scale-110' : 'scale-100'}`}
                 title={isInWishlist ? 'Remove from wishlist' : 'Add to wishlist'}
               >
-                {isInWishlist ? '❤️' : '🤍'}
+                <span
+                  className={`inline-block text-xl transition-transform duration-300 ${
+                    wishlistAnimating
+                      ? 'animate-[heartBounce_0.6s_ease-in-out]'
+                      : ''
+                  }`}
+                  style={{
+                    display: 'inline-block',
+                  }}
+                >
+                  {isInWishlist ? '❤️' : '🤍'}
+                </span>
+                {/* Burst particles only when this animation was for an add */}
+                {wishlistAnimating && wishlistIsAddAnimationRef.current && (
+                  <>
+                    <span className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                      <span className="animate-ping absolute inline-flex h-8 w-8 rounded-full bg-red-300 opacity-40" />
+                    </span>
+                  </>
+                )}
               </button>
             </div>
 

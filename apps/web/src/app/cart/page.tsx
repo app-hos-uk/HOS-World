@@ -6,6 +6,7 @@ import { useState, useEffect, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { apiClient } from '@/lib/api';
 import { useCurrency } from '@/contexts/CurrencyContext';
+import { useCart } from '@/contexts/CartContext';
 import { useToast } from '@/hooks/useToast';
 import Link from 'next/link';
 import Image from 'next/image';
@@ -35,6 +36,7 @@ interface Cart {
 export default function CartPage() {
   const router = useRouter();
   const { formatPrice } = useCurrency();
+  const { syncCart } = useCart();
   const toast = useToast();
   const [cart, setCart] = useState<Cart | null>(null);
   const [loading, setLoading] = useState(true);
@@ -42,6 +44,8 @@ export default function CartPage() {
   const [applyingCoupon, setApplyingCoupon] = useState(false);
   const [removingCoupon, setRemovingCoupon] = useState(false);
   const [movingToWishlist, setMovingToWishlist] = useState<string | null>(null);
+  const [updatingQuantityItemId, setUpdatingQuantityItemId] = useState<string | null>(null);
+  const [removingItemId, setRemovingItemId] = useState<string | null>(null);
 
   useEffect(() => {
     fetchCart();
@@ -104,31 +108,84 @@ export default function CartPage() {
     }
   };
 
-  const handleUpdateQuantity = async (itemId: string, quantity: number) => {
-    if (quantity < 1) {
+  const handleUpdateQuantity = async (itemId: string, newQuantity: number) => {
+    if (newQuantity < 1) {
       toast.error('Quantity must be at least 1');
       return;
     }
+    if (updatingQuantityItemId === itemId) return;
+
+    const item = cart?.items.find((i) => i.id === itemId);
+    if (!item || !cart) return;
+    const maxQty = item.product?.stock != null ? Math.min(item.product.stock, 99) : 99;
+    const clamped = Math.min(Math.max(newQuantity, 1), maxQty);
+    const previousQuantity = item.quantity;
+
+    // Optimistic update: reflect new quantity immediately
+    setCart((prev) =>
+      prev
+        ? {
+            ...prev,
+            items: prev.items.map((i) =>
+              i.id === itemId ? { ...i, quantity: clamped } : i
+            ),
+          }
+        : null
+    );
+    setUpdatingQuantityItemId(itemId);
 
     try {
-      const response = await apiClient.updateCartItem(itemId, quantity);
+      const response = await apiClient.updateCartItem(itemId, clamped);
       if (response?.data) {
         setCart(response.data);
+        syncCart(response.data);
       }
     } catch (error: any) {
+      // Revert on failure
+      setCart((prev) =>
+        prev
+          ? {
+              ...prev,
+              items: prev.items.map((i) =>
+                i.id === itemId ? { ...i, quantity: previousQuantity } : i
+              ),
+            }
+          : null
+      );
       toast.error(error.message || 'Failed to update item');
+    } finally {
+      setUpdatingQuantityItemId(null);
     }
   };
 
   const handleRemoveItem = async (itemId: string) => {
+    if (removingItemId === itemId) return;
+    const item = cart?.items.find((i) => i.id === itemId);
+    if (!item || !cart) return;
+
+    // Optimistic update: remove from UI immediately
+    setCart((prev) =>
+      prev ? { ...prev, items: prev.items.filter((i) => i.id !== itemId) } : null
+    );
+    setRemovingItemId(itemId);
+
     try {
       const response = await apiClient.removeCartItem(itemId);
       if (response?.data) {
         setCart(response.data);
+        syncCart(response.data);
         toast.success('Item removed from cart');
       }
     } catch (error: any) {
+      // Revert only this item: re-add it to current cart state so concurrent changes (coupon, other updates) are preserved
+      setCart((prev) => {
+        if (!prev) return null;
+        if (prev.items.some((i) => i.id === itemId)) return prev;
+        return { ...prev, items: [...prev.items, item] };
+      });
       toast.error(error.message || 'Failed to remove item');
+    } finally {
+      setRemovingItemId(null);
     }
   };
 
@@ -283,25 +340,30 @@ export default function CartPage() {
                       
                       {/* Quantity Controls */}
                       <div className="flex flex-wrap items-center gap-3 mt-3">
-                        <div className="flex items-center">
+                        <div className={`flex items-center ${updatingQuantityItemId === item.id ? 'opacity-80' : ''}`}>
                           <button
                             onClick={() => handleUpdateQuantity(item.id, item.quantity - 1)}
-                            className="w-8 h-8 rounded-l border border-gray-300 hover:bg-gray-100 flex items-center justify-center disabled:opacity-50"
-                            disabled={item.quantity <= 1}
+                            className="w-8 h-8 rounded-l border border-gray-300 hover:bg-gray-100 flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed transition-opacity"
+                            disabled={item.quantity <= 1 || updatingQuantityItemId === item.id}
+                            aria-label="Decrease quantity"
                           >
                             −
                           </button>
                           <span className="w-12 h-8 flex items-center justify-center border-t border-b border-gray-300 font-medium bg-white">
                             {item.quantity}
                           </span>
+                          {updatingQuantityItemId === item.id && (
+                            <span className="ml-1 inline-block h-3 w-3 animate-spin rounded-full border-2 border-gray-300 border-t-purple-600" aria-label="Updating" />
+                          )}
                           <button
                             onClick={() => handleUpdateQuantity(item.id, item.quantity + 1)}
-                            className="w-8 h-8 rounded-r border border-gray-300 hover:bg-gray-100 flex items-center justify-center disabled:opacity-50"
+                            className="w-8 h-8 rounded-r border border-gray-300 hover:bg-gray-100 flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed transition-opacity"
                             disabled={
-                              // Disable if: at/over stock limit, OR at maximum quantity (99)
+                              updatingQuantityItemId === item.id ||
                               (item.product?.stock != null && item.quantity >= item.product.stock) ||
                               item.quantity >= 99
                             }
+                            aria-label="Increase quantity"
                           >
                             +
                           </button>
@@ -322,7 +384,8 @@ export default function CartPage() {
                           <span className="text-gray-300">|</span>
                           <button
                             onClick={() => handleRemoveItem(item.id)}
-                            className="text-red-600 hover:text-red-700 text-sm"
+                            disabled={removingItemId === item.id}
+                            className="text-red-600 hover:text-red-700 text-sm disabled:opacity-50 disabled:cursor-not-allowed"
                           >
                             Remove
                           </button>
