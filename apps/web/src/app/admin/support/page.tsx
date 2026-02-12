@@ -640,7 +640,7 @@ export default function AdminSupportPage() {
                       <label className="block text-sm font-medium text-gray-700 mb-1">Priority</label>
                       <select
                         value={newTicket.priority}
-                        onChange={(e) => setNewTicket({ ...newTicket, priority: e.target.value })}
+                        onChange={(e) => setNewTicket({ ...newTicket, priority: e.target.value as 'HIGH' | 'MEDIUM' | 'LOW' | 'URGENT' })}
                         className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
                       >
                         {TICKET_PRIORITIES.map((p) => (
