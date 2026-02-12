@@ -28,14 +28,14 @@ import type { ApiResponse } from '@hos-marketplace/shared-types';
 @ApiBearerAuth('JWT-auth')
 @Controller('finance/transactions')
 @UseGuards(JwtAuthGuard, RolesGuard)
-@Roles('ADMIN')
+@Roles('FINANCE', 'ADMIN')
 export class TransactionsController {
   constructor(private readonly transactionsService: TransactionsService) {}
 
   @Post()
   @ApiOperation({
-    summary: 'Create transaction (Admin only)',
-    description: 'Creates a new financial transaction. Admin access required.',
+    summary: 'Create transaction',
+    description: 'Creates a new financial transaction. Finance/Admin access required.',
   })
   @ApiBody({
     schema: {
@@ -65,7 +65,7 @@ export class TransactionsController {
   @SwaggerApiResponse({ status: 201, description: 'Transaction created successfully' })
   @SwaggerApiResponse({ status: 400, description: 'Invalid request data' })
   @SwaggerApiResponse({ status: 401, description: 'Unauthorized' })
-  @SwaggerApiResponse({ status: 403, description: 'Forbidden - Admin access required' })
+  @SwaggerApiResponse({ status: 403, description: 'Forbidden - Finance/Admin access required' })
   async createTransaction(
     @Body()
     body: {
@@ -91,9 +91,9 @@ export class TransactionsController {
 
   @Get()
   @ApiOperation({
-    summary: 'Get all transactions (Admin only)',
+    summary: 'Get all transactions',
     description:
-      'Retrieves all financial transactions with filtering options. Admin access required.',
+      'Retrieves all financial transactions with filtering options. Finance/Admin access required.',
   })
   @ApiQuery({ name: 'sellerId', required: false, type: String, description: 'Filter by seller ID' })
   @ApiQuery({
@@ -138,7 +138,7 @@ export class TransactionsController {
   @ApiQuery({ name: 'limit', required: false, type: String, description: 'Items per page' })
   @SwaggerApiResponse({ status: 200, description: 'Transactions retrieved successfully' })
   @SwaggerApiResponse({ status: 401, description: 'Unauthorized' })
-  @SwaggerApiResponse({ status: 403, description: 'Forbidden - Admin access required' })
+  @SwaggerApiResponse({ status: 403, description: 'Forbidden - Finance/Admin access required' })
   async getTransactions(
     @Query('sellerId') sellerId?: string,
     @Query('customerId') customerId?: string,
@@ -173,13 +173,13 @@ export class TransactionsController {
 
   @Get(':id')
   @ApiOperation({
-    summary: 'Get transaction by ID (Admin only)',
-    description: 'Retrieves a specific transaction by ID. Admin access required.',
+    summary: 'Get transaction by ID',
+    description: 'Retrieves a specific transaction by ID. Finance/Admin access required.',
   })
   @ApiParam({ name: 'id', description: 'Transaction UUID', type: String })
   @SwaggerApiResponse({ status: 200, description: 'Transaction retrieved successfully' })
   @SwaggerApiResponse({ status: 401, description: 'Unauthorized' })
-  @SwaggerApiResponse({ status: 403, description: 'Forbidden - Admin access required' })
+  @SwaggerApiResponse({ status: 403, description: 'Forbidden - Finance/Admin access required' })
   @SwaggerApiResponse({ status: 404, description: 'Transaction not found' })
   async getTransactionById(@Param('id', ParseUUIDPipe) id: string): Promise<ApiResponse<any>> {
     const transaction = await this.transactionsService.getTransactionById(id);
@@ -191,8 +191,8 @@ export class TransactionsController {
 
   @Put(':id/status')
   @ApiOperation({
-    summary: 'Update transaction status (Admin only)',
-    description: 'Updates the status of a financial transaction. Admin access required.',
+    summary: 'Update transaction status',
+    description: 'Updates the status of a financial transaction. Finance/Admin access required.',
   })
   @ApiParam({ name: 'id', description: 'Transaction UUID', type: String })
   @ApiBody({
@@ -210,7 +210,7 @@ export class TransactionsController {
   @SwaggerApiResponse({ status: 200, description: 'Transaction status updated successfully' })
   @SwaggerApiResponse({ status: 400, description: 'Invalid status' })
   @SwaggerApiResponse({ status: 401, description: 'Unauthorized' })
-  @SwaggerApiResponse({ status: 403, description: 'Forbidden - Admin access required' })
+  @SwaggerApiResponse({ status: 403, description: 'Forbidden - Finance/Admin access required' })
   @SwaggerApiResponse({ status: 404, description: 'Transaction not found' })
   async updateTransactionStatus(
     @Param('id', ParseUUIDPipe) id: string,
@@ -225,8 +225,8 @@ export class TransactionsController {
 
   @Get('export')
   @ApiOperation({
-    summary: 'Export transactions (Admin only)',
-    description: 'Exports financial transactions as a downloadable file. Admin access required.',
+    summary: 'Export transactions',
+    description: 'Exports financial transactions as a downloadable file. Finance/Admin access required.',
   })
   @ApiQuery({ name: 'sellerId', required: false, type: String, description: 'Filter by seller ID' })
   @ApiQuery({
@@ -261,7 +261,7 @@ export class TransactionsController {
   })
   @SwaggerApiResponse({ status: 200, description: 'Transactions exported successfully' })
   @SwaggerApiResponse({ status: 401, description: 'Unauthorized' })
-  @SwaggerApiResponse({ status: 403, description: 'Forbidden - Admin access required' })
+  @SwaggerApiResponse({ status: 403, description: 'Forbidden - Finance/Admin access required' })
   async exportTransactions(
     @Query('sellerId') sellerId?: string,
     @Query('customerId') customerId?: string,
