@@ -5,7 +5,7 @@ import { RouteGuard } from '@/components/RouteGuard';
 import { AdminLayout } from '@/components/AdminLayout';
 import { apiClient } from '@/lib/api';
 import { useToast } from '@/hooks/useToast';
-import SafeImage from '@/components/SafeImage';
+import { SafeImage } from '@/components/SafeImage';
 
 interface Category {
   id: string;
