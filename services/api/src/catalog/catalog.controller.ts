@@ -29,23 +29,20 @@ import type { ApiResponse } from '@hos-marketplace/shared-types';
 @ApiTags('catalog')
 @ApiBearerAuth('JWT-auth')
 @Controller('catalog')
-@UseGuards(JwtAuthGuard, RolesGuard)
-@Roles('CATALOG', 'ADMIN')
 export class CatalogController {
   constructor(private readonly catalogService: CatalogService) {}
 
   @Get('pending')
+  @Public()
   @ApiOperation({
     summary: 'Get pending catalog entries',
     description:
-      'Retrieves all pending catalog entries awaiting processing. Catalog/Admin access required.',
+      'Retrieves all pending catalog entries awaiting processing. No authentication required.',
   })
   @SwaggerApiResponse({
     status: 200,
     description: 'Pending catalog entries retrieved successfully',
   })
-  @SwaggerApiResponse({ status: 401, description: 'Unauthorized' })
-  @SwaggerApiResponse({ status: 403, description: 'Forbidden - Catalog/Admin access required' })
   async findPending(): Promise<ApiResponse<any[]>> {
     const submissions = await this.catalogService.findPending();
     return {
@@ -55,15 +52,14 @@ export class CatalogController {
   }
 
   @Get('submissions/:submissionId')
+  @Public()
   @ApiOperation({
     summary: 'Get catalog submission/entry by ID (alias for entries/:id)',
     description:
-      'Retrieves a catalog entry or submission by ID. Same as GET /catalog/entries/:id. Catalog/Admin access required.',
+      'Retrieves a catalog entry or submission by ID. Same as GET /catalog/entries/:id. No authentication required.',
   })
   @ApiParam({ name: 'submissionId', description: 'Submission UUID', type: String })
   @SwaggerApiResponse({ status: 200, description: 'Catalog entry or submission retrieved successfully' })
-  @SwaggerApiResponse({ status: 401, description: 'Unauthorized' })
-  @SwaggerApiResponse({ status: 403, description: 'Forbidden - Catalog/Admin access required' })
   @SwaggerApiResponse({ status: 404, description: 'Not found' })
   async getSubmissionById(
     @Param('submissionId', ParseUUIDPipe) submissionId: string,
@@ -76,10 +72,11 @@ export class CatalogController {
   }
 
   @Get('entries')
+  @Public()
   @ApiOperation({
     summary: 'Get all catalog entries',
     description:
-      'Retrieves all catalog entries with optional status filtering. Catalog/Admin access required.',
+      'Retrieves all catalog entries with optional status filtering. No authentication required.',
   })
   @ApiQuery({
     name: 'status',
@@ -89,8 +86,6 @@ export class CatalogController {
     description: 'Filter by status. in_progress returns same as pending (entries not yet completed).',
   })
   @SwaggerApiResponse({ status: 200, description: 'Catalog entries retrieved successfully' })
-  @SwaggerApiResponse({ status: 401, description: 'Unauthorized' })
-  @SwaggerApiResponse({ status: 403, description: 'Forbidden - Catalog/Admin access required' })
   async findAll(@Query('status') status?: 'pending' | 'in_progress' | 'completed'): Promise<ApiResponse<any[]>> {
     const entries = await this.catalogService.findAll(status);
     return {
@@ -100,15 +95,14 @@ export class CatalogController {
   }
 
   @Get('entries/:submissionId')
+  @Public()
   @ApiOperation({
     summary: 'Get catalog entry by submission ID',
     description:
-      'Retrieves a specific catalog entry by submission ID. Catalog/Admin access required.',
+      'Retrieves a specific catalog entry by submission ID. No authentication required.',
   })
   @ApiParam({ name: 'submissionId', description: 'Submission UUID', type: String })
   @SwaggerApiResponse({ status: 200, description: 'Catalog entry retrieved successfully' })
-  @SwaggerApiResponse({ status: 401, description: 'Unauthorized' })
-  @SwaggerApiResponse({ status: 403, description: 'Forbidden - Catalog/Admin access required' })
   @SwaggerApiResponse({ status: 404, description: 'Catalog entry not found' })
   async findOne(
     @Param('submissionId', ParseUUIDPipe) submissionId: string,
@@ -121,6 +115,8 @@ export class CatalogController {
   }
 
   @Post('entries/:submissionId')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('CATALOG', 'ADMIN')
   @ApiOperation({
     summary: 'Create catalog entry',
     description: 'Creates a new catalog entry from a submission. Catalog/Admin access required.',
@@ -145,6 +141,8 @@ export class CatalogController {
   }
 
   @Put('entries/:submissionId')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('CATALOG', 'ADMIN')
   @ApiOperation({
     summary: 'Update catalog entry',
     description: 'Updates an existing catalog entry. Catalog/Admin access required.',
@@ -169,6 +167,8 @@ export class CatalogController {
   }
 
   @Post('entries/:submissionId/complete')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('CATALOG', 'ADMIN')
   @ApiOperation({
     summary: 'Mark catalog entry as complete',
     description: 'Marks a catalog entry as completed. Catalog/Admin access required.',
