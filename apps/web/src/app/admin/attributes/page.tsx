@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState, useMemo, useCallback } from 'react';
-// Image import removed — not used on this page
+import SafeImage from '@/components/SafeImage';
 import { RouteGuard } from '@/components/RouteGuard';
 import { AdminLayout } from '@/components/AdminLayout';
 import { CategorySelector } from '@/components/taxonomy/CategorySelector';
@@ -1210,7 +1210,7 @@ export default function AdminAttributesPage() {
                       {usageProducts.map((product) => (
                         <div key={product.id} className="p-3 bg-gray-50 rounded flex items-center gap-3">
                           {product.images?.[0] && (
-                            <Image
+                            <SafeImage
                               src={typeof product.images[0] === 'string' ? product.images[0] : product.images[0].url}
                               alt={product.name}
                               width={40}

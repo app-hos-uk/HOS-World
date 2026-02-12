@@ -5,7 +5,7 @@ import { RouteGuard } from '@/components/RouteGuard';
 import { AdminLayout } from '@/components/AdminLayout';
 import { apiClient } from '@/lib/api';
 import { useToast } from '@/hooks/useToast';
-// Image import removed — not used on this page
+import SafeImage from '@/components/SafeImage';
 
 interface Category {
   id: string;
@@ -416,7 +416,7 @@ export default function AdminCategoriesPage() {
               {/* Icon/Image */}
               {category.image ? (
                 <div className="w-10 h-10 rounded overflow-hidden bg-gray-100 flex-shrink-0">
-                  <Image
+                  <SafeImage
                     src={category.image}
                     alt={category.name}
                     width={40}
@@ -525,7 +525,7 @@ export default function AdminCategoriesPage() {
         <div className="flex items-start gap-3">
           {category.image ? (
             <div className="w-16 h-16 rounded overflow-hidden bg-gray-100 flex-shrink-0">
-              <Image
+              <SafeImage
                 src={category.image}
                 alt={category.name}
                 width={64}

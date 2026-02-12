@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState, useMemo, useCallback } from 'react';
-// Image import removed — not used on this page
+import SafeImage from '@/components/SafeImage';
 import { RouteGuard } from '@/components/RouteGuard';
 import { AdminLayout } from '@/components/AdminLayout';
 import { apiClient } from '@/lib/api';
@@ -481,7 +481,7 @@ export default function AdminSubmissionsPage() {
                               {(() => {
                                 const thumbUrl = getImageUrl(submission.productData?.images?.[0]);
                                 return thumbUrl ? (
-                                  <Image
+                                  <SafeImage
                                     src={thumbUrl}
                                     alt=""
                                     width={40}
@@ -652,7 +652,7 @@ export default function AdminSubmissionsPage() {
                           {selectedSubmission.productData.images.map((img, idx) => {
                             const url = getImageUrl(img);
                             return url ? (
-                              <Image
+                              <SafeImage
                                 key={idx}
                                 src={url}
                                 alt={`Product ${idx + 1}`}
