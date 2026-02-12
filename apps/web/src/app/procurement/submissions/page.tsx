@@ -1,13 +1,13 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
+import { Suspense, useCallback, useEffect, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { RouteGuard } from '@/components/RouteGuard';
 import { DashboardLayout } from '@/components/DashboardLayout';
 import { useAuth } from '@/contexts/AuthContext';
 import { apiClient } from '@/lib/api';
 import { useToast } from '@/hooks/useToast';
-import Image from 'next/image';
+import { SafeImage } from '@/components/SafeImage';
 
 type DuplicateGroup = {
   groupId: string;
@@ -26,6 +26,14 @@ type DuplicateGroup = {
 };
 
 export default function ProcurementSubmissionsPage() {
+  return (
+    <Suspense fallback={<div className="flex items-center justify-center min-h-screen"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-600" /></div>}>
+      <ProcurementSubmissionsContent />
+    </Suspense>
+  );
+}
+
+function ProcurementSubmissionsContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { user, effectiveRole } = useAuth();
@@ -579,7 +587,7 @@ export default function ProcurementSubmissionsPage() {
                             <div className="grid grid-cols-3 gap-2">
                               {selectedSubmission.productData.images.map((img: any, idx: number) => (
                                 <div key={idx} className="relative w-full h-24">
-                                  <Image
+                                  <SafeImage
                                     src={img.url}
                                     alt={img.alt || `Product image ${idx + 1}`}
                                     fill

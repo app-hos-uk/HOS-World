@@ -1,10 +1,10 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { Suspense, useEffect, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { RouteGuard } from '@/components/RouteGuard';
 import { DashboardLayout } from '@/components/DashboardLayout';
-import Image from 'next/image';
+import { SafeImage } from '@/components/SafeImage';
 import { apiClient } from '@/lib/api';
 import { useToast } from '@/hooks/useToast';
 
@@ -18,6 +18,14 @@ function parseStatusParam(value: string | null): CatalogStatusTab | null {
 }
 
 export default function CatalogEntriesPage() {
+  return (
+    <Suspense fallback={<div className="flex items-center justify-center min-h-screen"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-600" /></div>}>
+      <CatalogEntriesContent />
+    </Suspense>
+  );
+}
+
+function CatalogEntriesContent() {
   const searchParams = useSearchParams();
   const statusFilter = parseStatusParam(searchParams.get('status'));
 
@@ -509,7 +517,7 @@ export default function CatalogEntriesPage() {
                         <div className="grid grid-cols-3 gap-2">
                           {images.map((url, index) => (
                             <div key={index} className="relative h-24">
-                              <Image
+                              <SafeImage
                                 src={url}
                                 alt={`Product ${index + 1}`}
                                 fill
