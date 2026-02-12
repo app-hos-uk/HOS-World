@@ -9,17 +9,19 @@ export class CreateCatalogEntryDto {
   @IsNotEmpty()
   description: string;
 
+  @IsOptional()
   @IsArray()
   @IsString({ each: true })
-  keywords: string[];
+  keywords?: string[];
 
   @IsOptional()
   @IsObject()
   specs?: any;
 
+  @IsOptional()
   @IsArray()
   @IsString({ each: true })
-  images: string[];
+  images?: string[];
 }
 
 export class UpdateCatalogEntryDto {

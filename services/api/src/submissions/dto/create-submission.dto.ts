@@ -100,10 +100,11 @@ export class CreateSubmissionDto {
   @IsString({ each: true })
   tags?: string[];
 
+  @IsOptional()
   @IsArray()
   @ValidateNested({ each: true })
   @Type(() => ProductImageSubmissionDto)
-  images: ProductImageSubmissionDto[];
+  images?: ProductImageSubmissionDto[];
 
   @IsOptional()
   @IsArray()

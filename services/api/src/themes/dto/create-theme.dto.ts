@@ -12,40 +12,41 @@ export class CreateThemeDto {
   name: string;
 
   @IsEnum(ThemeType)
+  @IsNotEmpty()
   type: ThemeType;
 
   @IsOptional()
   @IsString()
   sellerId?: string;
 
+  @IsOptional()
   @IsObject()
-  @IsNotEmpty()
-  config: {
-    colors: {
-      primary: string;
-      secondary: string;
-      background: string;
-      surface: string;
-      text: {
-        primary: string;
-        secondary: string;
+  config?: {
+    colors?: {
+      primary?: string;
+      secondary?: string;
+      background?: string;
+      surface?: string;
+      text?: {
+        primary?: string;
+        secondary?: string;
       };
-      accent: string;
-      error: string;
-      success: string;
-      warning: string;
+      accent?: string;
+      error?: string;
+      success?: string;
+      warning?: string;
     };
-    typography: {
-      fontFamily: {
-        primary: string;
-        secondary: string;
+    typography?: {
+      fontFamily?: {
+        primary?: string;
+        secondary?: string;
       };
-      fontSize: {
-        xs: string;
-        sm: string;
-        base: string;
-        lg: string;
-        xl: string;
+      fontSize?: {
+        xs?: string;
+        sm?: string;
+        base?: string;
+        lg?: string;
+        xl?: string;
       };
     };
     spacing?: Record<string, string>;

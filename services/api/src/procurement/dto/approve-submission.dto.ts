@@ -22,9 +22,9 @@ export class RejectSubmissionDto {
 }
 
 export class SelectQuantityDto {
+  @IsOptional()
   @IsNumber()
-  @IsNotEmpty()
-  quantity: number;
+  quantity?: number;
 
   @IsOptional()
   @IsString()
