@@ -1631,6 +1631,40 @@ export class ApiClient {
     return this.request<ApiResponse<any>>(`/finance/reports/revenue${query ? `?${query}` : ''}`);
   }
 
+  // Newsletter (public subscribe/unsubscribe; admin/marketing/cms list)
+  async newsletterSubscribe(data: { email: string; source?: string; tags?: Record<string, string> }): Promise<ApiResponse<any>> {
+    return this.request<ApiResponse<any>>('/newsletter/subscribe', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async newsletterUnsubscribe(email: string): Promise<ApiResponse<{ message: string }>> {
+    return this.request<ApiResponse<{ message: string }>>('/newsletter/unsubscribe', {
+      method: 'POST',
+      body: JSON.stringify({ email }),
+    });
+  }
+
+  async newsletterGetStatus(email: string): Promise<ApiResponse<{ email: string; subscribed: boolean; status: string }>> {
+    return this.request<ApiResponse<{ email: string; subscribed: boolean; status: string }>>(
+      `/newsletter/status?email=${encodeURIComponent(email)}`
+    );
+  }
+
+  async newsletterGetSubscriptions(params?: { status?: string; page?: number; limit?: number }): Promise<
+    ApiResponse<{ data: any[]; total: number; page: number; limit: number; totalPages: number }>
+  > {
+    const search = new URLSearchParams();
+    if (params?.status) search.append('status', params.status);
+    if (params?.page != null) search.append('page', String(params.page));
+    if (params?.limit != null) search.append('limit', String(params.limit));
+    const query = search.toString();
+    return this.request<ApiResponse<{ data: any[]; total: number; page: number; limit: number; totalPages: number }>>(
+      `/newsletter/subscriptions${query ? `?${query}` : ''}`
+    );
+  }
+
   // Support - Tickets
   async getSupportTickets(filters?: { status?: string; assignedTo?: string; priority?: string }): Promise<ApiResponse<any[]>> {
     const params = new URLSearchParams();

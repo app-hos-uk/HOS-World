@@ -15,7 +15,9 @@ echo "════════════════════════�
 
 if [ ! -d "$DIST_PRODUCTS" ]; then
   echo "  ⚠️  dist/products not found at: $DIST_PRODUCTS"
-  exit 1
+  echo "  (Build verification on next step will fail if products-cache.hook.js is missing.)"
+  echo "═══════════════════════════════════════════════════════════"
+  exit 0
 fi
 
 ls -la "$DIST_PRODUCTS"

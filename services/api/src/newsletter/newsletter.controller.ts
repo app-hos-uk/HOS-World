@@ -97,12 +97,12 @@ export class NewsletterController {
   }
 
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles('ADMIN')
+  @Roles('ADMIN', 'MARKETING', 'CMS_EDITOR')
   @Get('subscriptions')
   @ApiBearerAuth('JWT-auth')
   @ApiOperation({
-    summary: 'Get all newsletter subscriptions (Admin only)',
-    description: 'Retrieves all newsletter subscriptions with pagination. Admin access required.',
+    summary: 'Get all newsletter subscriptions',
+    description: 'Retrieves all newsletter subscriptions with pagination. Admin, Marketing, or CMS Editor access required.',
   })
   @ApiQuery({
     name: 'status',
@@ -124,7 +124,7 @@ export class NewsletterController {
   })
   @SwaggerApiResponse({ status: 200, description: 'Subscriptions retrieved successfully' })
   @SwaggerApiResponse({ status: 401, description: 'Unauthorized' })
-  @SwaggerApiResponse({ status: 403, description: 'Forbidden - Admin access required' })
+  @SwaggerApiResponse({ status: 403, description: 'Forbidden - Admin/Marketing/CMS Editor access required' })
   async getAllSubscriptions(
     @Query('status') status?: string,
     @Query('page', new DefaultValuePipe(1), ParseIntPipe) page: number = 1,

@@ -96,32 +96,40 @@ export default function AdminCatalogPage() {
                     </td>
                   </tr>
                 ) : (
-                  entries.map((entry) => (
-                    <tr key={entry.id || entry.submissionId} className="hover:bg-gray-50">
-                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                        {entry.submissionId?.substring(0, 8) || 'N/A'}...
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        {entry.product?.name || entry.submission?.product?.name || 'N/A'}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <span
-                          className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                            entry.completed
-                              ? 'bg-green-100 text-green-800'
-                              : 'bg-yellow-100 text-yellow-800'
-                          }`}
-                        >
-                          {entry.completed ? 'Completed' : 'Pending'}
-                        </span>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        {entry.createdAt
-                          ? new Date(entry.createdAt).toLocaleDateString()
-                          : 'N/A'}
-                      </td>
-                    </tr>
-                  ))
+                  entries.map((entry) => {
+                    // API returns ProductSubmission objects: id is submission id, productData/product hold name
+                    const submissionId = entry.submissionId ?? entry.id;
+                    const productName =
+                      (entry.productData && typeof entry.productData === 'object' && (entry.productData as { name?: string }).name) ||
+                      entry.product?.name ||
+                      entry.submission?.product?.name ||
+                      'N/A';
+                    const completed = entry.completed ?? !!entry.catalogEntry ?? false;
+                    return (
+                      <tr key={entry.id || submissionId} className="hover:bg-gray-50">
+                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                          {submissionId ? `${String(submissionId).substring(0, 8)}...` : 'N/A'}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                          {productName}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <span
+                            className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
+                              completed ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'
+                            }`}
+                          >
+                            {completed ? 'Completed' : 'Pending'}
+                          </span>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                          {entry.createdAt
+                            ? new Date(entry.createdAt).toLocaleDateString()
+                            : 'N/A'}
+                        </td>
+                      </tr>
+                    );
+                  })
                 )}
               </tbody>
             </table>

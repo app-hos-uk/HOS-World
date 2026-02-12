@@ -3,16 +3,35 @@
 import Link from 'next/link';
 import { useTheme } from '@hos-marketplace/theme-system';
 import { useState } from 'react';
+import { apiClient } from '@/lib/api';
 
 export function Footer() {
   const theme = useTheme();
   const [email, setEmail] = useState('');
+  const [status, setStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
+  const [message, setMessage] = useState('');
 
-  const handleNewsletterSubmit = (e: React.FormEvent) => {
+  const handleNewsletterSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // TODO: Implement newsletter subscription
-    console.log('Newsletter subscription:', email);
-    setEmail('');
+    if (!email.trim()) return;
+    setStatus('loading');
+    setMessage('');
+    try {
+      await apiClient.newsletterSubscribe({
+        email: email.trim(),
+        source: 'website',
+      });
+      setStatus('success');
+      setMessage('Thanks! You\'re subscribed.');
+      setEmail('');
+    } catch (err: unknown) {
+      setStatus('error');
+      const raw = err && typeof err === 'object' && 'message' in err ? String((err as { message: string }).message) : '';
+      const msg = raw && (raw.includes('already subscribed') || raw.includes('Already subscribed'))
+        ? 'This email is already subscribed.'
+        : raw || 'Subscription failed. Please try again.';
+      setMessage(msg);
+    }
   };
 
   return (
@@ -109,7 +128,8 @@ export function Footer() {
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="Your email"
                 required
-                className="w-full px-3 py-2 text-sm sm:text-base rounded border focus:outline-none focus:ring-2 focus:ring-accent"
+                disabled={status === 'loading'}
+                className="w-full px-3 py-2 text-sm sm:text-base rounded border focus:outline-none focus:ring-2 focus:ring-accent disabled:opacity-70"
                 style={{
                   backgroundColor: theme.colors.background,
                   color: theme.colors.text.primary,
@@ -118,14 +138,25 @@ export function Footer() {
               />
               <button
                 type="submit"
-                className="w-full px-4 py-2 text-sm sm:text-base rounded font-medium transition-colors"
+                disabled={status === 'loading'}
+                className="w-full px-4 py-2 text-sm sm:text-base rounded font-medium transition-colors disabled:opacity-70"
                 style={{
                   backgroundColor: theme.colors.accent,
                   color: '#ffffff',
                 }}
               >
-                Subscribe
+                {status === 'loading' ? 'Subscribing…' : 'Subscribe'}
               </button>
+              {message && (
+                <p
+                  className="text-xs sm:text-sm"
+                  style={{
+                    color: status === 'success' ? 'var(--success, #059669)' : status === 'error' ? 'var(--error, #dc2626)' : theme.colors.text.secondary,
+                  }}
+                >
+                  {message}
+                </p>
+              )}
             </form>
           </div>
         </div>

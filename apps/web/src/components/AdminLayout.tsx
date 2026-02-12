@@ -38,6 +38,7 @@ const menuItems: MenuItem[] = [
       { title: 'Shipments', href: '/admin/shipments', icon: '🚚' },
       { title: 'Catalog Entries', href: '/admin/catalog', icon: '📚' },
       { title: 'Marketing Materials', href: '/admin/marketing', icon: '📢' },
+      { title: 'Newsletter', href: '/admin/newsletter', icon: '📧' },
       { title: 'Pricing Approvals', href: '/admin/pricing', icon: '💰' },
     ],
   },

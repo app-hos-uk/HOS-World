@@ -53,14 +53,15 @@ export default function FinancePricingPage() {
   };
 
   const handleSetPricing = async () => {
-    if (!selectedSubmission || !margin || parseFloat(margin) <= 0) {
-      toast.error('Margin must be greater than 0');
+    const marginNum = parseFloat(margin);
+    if (!selectedSubmission || margin === '' || !Number.isFinite(marginNum) || marginNum <= 0) {
+      toast.error('Margin must be a number greater than 0');
       return;
     }
 
     const productData = selectedSubmission.productData || {};
     const basePrice = productData.price ? parseFloat(productData.price) : 0;
-    const hosMargin = parseFloat(margin) / 100; // Convert percentage to decimal
+    const hosMargin = marginNum / 100; // Convert percentage to decimal
 
     try {
       setActionLoading(true);

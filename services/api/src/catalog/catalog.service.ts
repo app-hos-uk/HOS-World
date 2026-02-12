@@ -32,6 +32,12 @@ export class CatalogService {
             receivedAt: true,
           },
         },
+        product: {
+          select: {
+            id: true,
+            name: true,
+          },
+        },
       },
       orderBy: { procurementApprovedAt: 'asc' },
     });

@@ -698,28 +698,28 @@ function AdminProductsContent() {
               </button>
               <button
                 onClick={() => { setStatusFilter('ACTIVE'); setStockFilter('ALL'); }}
-                className={`bg-white rounded-lg shadow p-4 text-left hover:ring-2 hover:ring-green-300 transition ${statusFilter === 'ACTIVE' ? 'ring-2 ring-green-500' : ''}`}
+                className={`bg-white rounded-lg shadow p-4 text-left hover:ring-2 hover:ring-green-300 transition ${statusFilter === 'ACTIVE' && stockFilter === 'ALL' ? 'ring-2 ring-green-500' : ''}`}
               >
                 <p className="text-sm text-gray-600">Active</p>
                 <p className="text-2xl font-bold text-green-600">{stats.activeProducts}</p>
               </button>
               <button
                 onClick={() => { setStatusFilter('DRAFT'); setStockFilter('ALL'); }}
-                className={`bg-white rounded-lg shadow p-4 text-left hover:ring-2 hover:ring-yellow-300 transition ${statusFilter === 'DRAFT' ? 'ring-2 ring-yellow-500' : ''}`}
+                className={`bg-white rounded-lg shadow p-4 text-left hover:ring-2 hover:ring-yellow-300 transition ${statusFilter === 'DRAFT' && stockFilter === 'ALL' ? 'ring-2 ring-yellow-500' : ''}`}
               >
                 <p className="text-sm text-gray-600">Draft</p>
                 <p className="text-2xl font-bold text-yellow-600">{stats.draftProducts}</p>
               </button>
               <button
                 onClick={() => { setStatusFilter('ALL'); setStockFilter('OUT'); }}
-                className={`bg-white rounded-lg shadow p-4 text-left hover:ring-2 hover:ring-red-300 transition ${stockFilter === 'OUT' ? 'ring-2 ring-red-500' : ''}`}
+                className={`bg-white rounded-lg shadow p-4 text-left hover:ring-2 hover:ring-red-300 transition ${stockFilter === 'OUT' && statusFilter === 'ALL' ? 'ring-2 ring-red-500' : ''}`}
               >
                 <p className="text-sm text-gray-600">Out of Stock</p>
                 <p className="text-2xl font-bold text-red-600">{stats.outOfStock}</p>
               </button>
               <button
                 onClick={() => { setStatusFilter('ALL'); setStockFilter('LOW'); }}
-                className={`bg-white rounded-lg shadow p-4 text-left hover:ring-2 hover:ring-orange-300 transition ${stockFilter === 'LOW' ? 'ring-2 ring-orange-500' : ''}`}
+                className={`bg-white rounded-lg shadow p-4 text-left hover:ring-2 hover:ring-orange-300 transition ${stockFilter === 'LOW' && statusFilter === 'ALL' ? 'ring-2 ring-orange-500' : ''}`}
               >
                 <p className="text-sm text-gray-600">Low Stock</p>
                 <p className="text-2xl font-bold text-orange-600">{stats.lowStock}</p>

@@ -90,6 +90,9 @@ function ProfilePageContent() {
   const [gdprConsentHistory, setGdprConsentHistory] = useState<any[]>([]);
   const [exportingData, setExportingData] = useState(false);
   const [deletingAccount, setDeletingAccount] = useState(false);
+  const [newsletterStatus, setNewsletterStatus] = useState<{ email: string; subscribed: boolean; status: string } | null>(null);
+  const [newsletterLoading, setNewsletterLoading] = useState(false);
+  const [newsletterUnsubscribing, setNewsletterUnsubscribing] = useState(false);
 
   // Address management state
   const [addresses, setAddresses] = useState<any[]>([]);
@@ -1146,6 +1149,69 @@ function ProfilePageContent() {
                           >
                             Cancel
                           </button>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Newsletter */}
+                  <div>
+                    <h3 className="text-lg font-semibold mb-4">Newsletter</h3>
+                    <div className="bg-gray-50 rounded-lg p-4 sm:p-6 space-y-4">
+                      <p className="text-sm text-gray-600">
+                        Manage your newsletter subscription for this account ({profile?.email}).
+                      </p>
+                      {newsletterStatus === null && !newsletterLoading && (
+                        <button
+                          type="button"
+                          onClick={async () => {
+                            if (!profile?.email) return;
+                            setNewsletterLoading(true);
+                            try {
+                              const res = await apiClient.newsletterGetStatus(profile.email);
+                              if (res?.data) setNewsletterStatus(res.data);
+                            } catch {
+                              setNewsletterStatus({ email: profile.email, subscribed: false, status: 'not_subscribed' });
+                            } finally {
+                              setNewsletterLoading(false);
+                            }
+                          }}
+                          className="px-4 py-2 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300 font-medium text-sm"
+                        >
+                          Check subscription status
+                        </button>
+                      )}
+                      {newsletterLoading && <p className="text-sm text-gray-500">Checking…</p>}
+                      {newsletterStatus && (
+                        <div className="flex flex-wrap items-center justify-between gap-3 p-3 bg-white rounded-lg border">
+                          <div>
+                            <span className="font-medium">
+                              {newsletterStatus.subscribed ? 'You are subscribed to the newsletter.' : 'You are not subscribed.'}
+                            </span>
+                            <span className="ml-2 text-sm text-gray-500">({newsletterStatus.status})</span>
+                          </div>
+                          {newsletterStatus.subscribed && (
+                            <button
+                              type="button"
+                              disabled={newsletterUnsubscribing}
+                              onClick={async () => {
+                                if (!newsletterStatus.email) return;
+                                setNewsletterUnsubscribing(true);
+                                try {
+                                  await apiClient.newsletterUnsubscribe(newsletterStatus.email);
+                                  setNewsletterStatus({ ...newsletterStatus, subscribed: false, status: 'unsubscribed' });
+                                  toast.success('Unsubscribed from newsletter');
+                                } catch (err: any) {
+                                  toast.error(err?.message || 'Failed to unsubscribe');
+                                } finally {
+                                  setNewsletterUnsubscribing(false);
+                                }
+                              }}
+                              className="px-4 py-2 bg-red-100 text-red-800 rounded-lg hover:bg-red-200 font-medium text-sm disabled:opacity-50"
+                            >
+                              {newsletterUnsubscribing ? 'Unsubscribing…' : 'Unsubscribe'}
+                            </button>
+                          )}
                         </div>
                       )}
                     </div>
