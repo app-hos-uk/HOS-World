@@ -20,7 +20,10 @@ export default function MarketingMaterialsPage() {
   // Form state
   const [materialType, setMaterialType] = useState<string>('BANNER');
   const [materialUrl, setMaterialUrl] = useState('');
+  const [uploadingMaterial, setUploadingMaterial] = useState(false);
   const toast = useToast();
+
+  const marketingFileInputId = 'marketing-material-upload';
 
   useEffect(() => {
     if (activeTab === 'pending') {
@@ -67,6 +70,36 @@ export default function MarketingMaterialsPage() {
     setMaterialType('BANNER');
     setMaterialUrl('');
     setShowModal(true);
+  };
+
+  const uploadMarketingFile = async (files: FileList | null) => {
+    if (!files || files.length === 0) return;
+    const file = files[0];
+    const allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+    const maxSizeBytes = 250 * 1024; // 250KB
+    if (!allowedTypes.includes(file.type)) {
+      toast.error('Only JPEG, PNG, GIF, and WebP images are allowed');
+      return;
+    }
+    if (file.size > maxSizeBytes) {
+      toast.error('Max file size is 250KB');
+      return;
+    }
+    try {
+      setUploadingMaterial(true);
+      const res = await apiClient.uploadSingleFile(file, 'marketing');
+      const url = res?.data?.url;
+      if (url) {
+        setMaterialUrl(url);
+        toast.success('File uploaded');
+      } else {
+        throw new Error('Upload failed (no URL returned)');
+      }
+    } catch (err: any) {
+      toast.error(err.message || 'Failed to upload file');
+    } finally {
+      setUploadingMaterial(false);
+    }
   };
 
   const handleSubmit = async () => {
@@ -279,7 +312,8 @@ export default function MarketingMaterialsPage() {
                       >
                         <option value="BANNER">Banner</option>
                         <option value="CREATIVE">Creative</option>
-                        <option value="SOCIAL_MEDIA">Social Media</option>
+                        <option value="PRODUCT_IMAGE">Product Image</option>
+                        <option value="CAMPAIGN_ASSET">Campaign Asset</option>
                       </select>
                     </div>
 
@@ -287,6 +321,34 @@ export default function MarketingMaterialsPage() {
                       <label className="block text-sm font-medium text-gray-700 mb-1">
                         Material URL <span className="text-red-500">*</span>
                       </label>
+                      <div className="flex flex-wrap items-center gap-2 mb-2">
+                        <input
+                          id={marketingFileInputId}
+                          type="file"
+                          accept="image/jpeg,image/png,image/gif,image/webp"
+                          className="hidden"
+                          disabled={uploadingMaterial}
+                          onChange={(e) => {
+                            uploadMarketingFile(e.target.files);
+                            e.target.value = '';
+                          }}
+                        />
+                        <label
+                          htmlFor={marketingFileInputId}
+                          className={`inline-flex items-center gap-2 px-4 py-2 rounded-lg border border-gray-300 bg-white text-gray-700 text-sm font-medium cursor-pointer hover:bg-gray-50 transition-colors ${uploadingMaterial ? 'opacity-60 cursor-not-allowed' : ''}`}
+                        >
+                          {uploadingMaterial ? (
+                            <>
+                              <span className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-gray-300 border-t-purple-600" aria-hidden />
+                              Uploading…
+                            </>
+                          ) : (
+                            <>📤 Upload file</>
+                          )}
+                        </label>
+                        <span className="text-xs text-gray-500">JPEG, PNG, GIF, WebP · max 250KB</span>
+                      </div>
+                      <p className="text-xs text-gray-500 mb-1">Or paste a URL:</p>
                       <input
                         type="url"
                         value={materialUrl}

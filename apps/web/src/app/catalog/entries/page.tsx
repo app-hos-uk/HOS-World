@@ -52,7 +52,10 @@ function CatalogEntriesContent() {
   const [newKeyword, setNewKeyword] = useState('');
   const [images, setImages] = useState<string[]>([]);
   const [newImageUrl, setNewImageUrl] = useState('');
+  const [uploadingImages, setUploadingImages] = useState(false);
   const toast = useToast();
+
+  const catalogImageInputId = 'catalog-entry-image-upload';
 
   useEffect(() => {
     fetchData();
@@ -133,6 +136,39 @@ function CatalogEntriesContent() {
 
   const removeImage = (index: number) => {
     setImages(images.filter((_, i) => i !== index));
+  };
+
+  const uploadCatalogImages = async (files: FileList | null) => {
+    if (!files || files.length === 0) return;
+    const allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+    const maxSizeBytes = 250 * 1024; // 250KB
+    const fileArr = Array.from(files).slice(0, 4);
+    if (files.length > 4) {
+      toast.error('You can upload up to 4 images at a time');
+      return;
+    }
+    for (const f of fileArr) {
+      if (!allowedTypes.includes(f.type)) {
+        toast.error('Only JPEG, PNG, GIF, and WebP images are allowed');
+        return;
+      }
+      if (f.size > maxSizeBytes) {
+        toast.error('Max image size is 250KB per file');
+        return;
+      }
+    }
+    try {
+      setUploadingImages(true);
+      const res = await apiClient.uploadMultipleFiles(fileArr, 'catalog');
+      const urls = res?.data?.urls || [];
+      if (urls.length === 0) throw new Error('Upload failed (no URLs returned)');
+      setImages((prev) => [...prev, ...urls]);
+      toast.success(`${urls.length} image(s) uploaded`);
+    } catch (err: any) {
+      toast.error(err.message || 'Failed to upload images');
+    } finally {
+      setUploadingImages(false);
+    }
   };
 
   const handleSubmit = async () => {
@@ -492,6 +528,35 @@ function CatalogEntriesContent() {
                       <label className="block text-sm font-medium text-gray-700 mb-1">
                         Images <span className="text-red-500">*</span>
                       </label>
+                      <div className="flex flex-wrap items-center gap-2 mb-2">
+                        <input
+                          id={catalogImageInputId}
+                          type="file"
+                          accept="image/jpeg,image/png,image/gif,image/webp"
+                          multiple
+                          className="hidden"
+                          disabled={uploadingImages}
+                          onChange={(e) => {
+                            uploadCatalogImages(e.target.files);
+                            e.target.value = '';
+                          }}
+                        />
+                        <label
+                          htmlFor={catalogImageInputId}
+                          className={`inline-flex items-center gap-2 px-4 py-2 rounded-lg border border-gray-300 bg-white text-gray-700 text-sm font-medium cursor-pointer hover:bg-gray-50 transition-colors ${uploadingImages ? 'opacity-60 cursor-not-allowed' : ''}`}
+                        >
+                          {uploadingImages ? (
+                            <>
+                              <span className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-gray-300 border-t-purple-600" aria-hidden />
+                              Uploading…
+                            </>
+                          ) : (
+                            <>📤 Upload image(s)</>
+                          )}
+                        </label>
+                        <span className="text-xs text-gray-500">JPEG, PNG, GIF, WebP · max 250KB each · up to 4</span>
+                      </div>
+                      <p className="text-xs text-gray-500 mb-2">Or paste a URL below:</p>
                       <div className="flex gap-2 mb-2">
                         <input
                           type="url"
@@ -504,13 +569,14 @@ function CatalogEntriesContent() {
                             }
                           }}
                           className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
-                          placeholder="Image URL"
+                          placeholder="https://..."
                         />
                         <button
+                          type="button"
                           onClick={addImage}
                           className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300"
                         >
-                          Add
+                          Add URL
                         </button>
                       </div>
                       {images.length > 0 && (
