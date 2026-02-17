@@ -16,6 +16,7 @@ export default function MarketingMaterialsPage() {
   const [selectedSubmission, setSelectedSubmission] = useState<any | null>(null);
   const [showModal, setShowModal] = useState(false);
   const [actionLoading, setActionLoading] = useState(false);
+  const [markingCompleteId, setMarkingCompleteId] = useState<string | null>(null);
 
   // Form state
   const [materialType, setMaterialType] = useState<string>('BANNER');
@@ -70,6 +71,19 @@ export default function MarketingMaterialsPage() {
     setMaterialType('BANNER');
     setMaterialUrl('');
     setShowModal(true);
+  };
+
+  const handleMarkComplete = async (submissionId: string) => {
+    try {
+      setMarkingCompleteId(submissionId);
+      await apiClient.markMarketingComplete(submissionId);
+      toast.success('Submission marked as complete');
+      await fetchPending();
+    } catch (err: any) {
+      toast.error(err.message || 'Failed to mark as complete');
+    } finally {
+      setMarkingCompleteId(null);
+    }
   };
 
   const uploadMarketingFile = async (files: FileList | null) => {
@@ -214,15 +228,36 @@ export default function MarketingMaterialsPage() {
                         <p className="text-sm text-gray-600 mt-2 line-clamp-2">
                           {productData.description || 'No description'}
                         </p>
+                        {submission.marketingMaterials?.length > 0 && (
+                          <p className="text-xs text-green-600 mt-2 font-medium">
+                            {submission.marketingMaterials.length} material(s) added
+                          </p>
+                        )}
                       </div>
 
-                      <div className="flex gap-2">
+                      <div className="flex flex-wrap gap-2">
                         <button
                           onClick={() => handleCreateMaterial(submission)}
                           className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors font-medium text-sm whitespace-nowrap"
                         >
                           Create Material
                         </button>
+                        {submission.marketingMaterials?.length > 0 && (
+                          <button
+                            onClick={() => handleMarkComplete(submission.id)}
+                            disabled={markingCompleteId === submission.id}
+                            className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors font-medium text-sm whitespace-nowrap disabled:opacity-60 disabled:cursor-not-allowed"
+                          >
+                            {markingCompleteId === submission.id ? (
+                              <>
+                                <span className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent align-middle mr-1" aria-hidden />
+                                Completing…
+                              </>
+                            ) : (
+                              'Mark Complete'
+                            )}
+                          </button>
+                        )}
                       </div>
                     </div>
                   </div>
