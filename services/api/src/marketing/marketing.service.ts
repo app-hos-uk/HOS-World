@@ -234,9 +234,20 @@ export class MarketingService {
       throw new NotFoundException('Submission not found');
     }
 
+    // Idempotent: if already completed, return success (handles double-click, race conditions)
+    if (submission.status === 'MARKETING_COMPLETED') {
+      return this.prisma.productSubmission.findUniqueOrThrow({
+        where: { id: submissionId },
+        include: {
+          seller: { select: { id: true, storeName: true, slug: true } },
+          marketingMaterials: true,
+        },
+      });
+    }
+
     if (submission.status !== 'CATALOG_COMPLETED') {
       throw new BadRequestException(
-        'Marketing can only be completed for catalog-completed submissions',
+        `Marketing can only be completed for catalog-completed submissions (current status: ${submission.status})`,
       );
     }
 
