@@ -12,11 +12,6 @@ export default function MarketingDashboardPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const menuItems = [
-    { title: 'Dashboard', href: '/marketing/dashboard', icon: '📊' },
-    { title: 'Marketing Materials', href: '/marketing/materials', icon: '📢', badge: 0 },
-  ];
-
   useEffect(() => {
     const fetchDashboardData = async () => {
       try {
@@ -25,8 +20,6 @@ export default function MarketingDashboardPage() {
         const response = await apiClient.getMarketingDashboardData();
         if (response?.data) {
           setDashboardData(response.data);
-          const pendingCount = response.data.pendingProducts || 0;
-          menuItems[1].badge = pendingCount;
         } else {
           setError('Failed to load dashboard data');
         }
@@ -42,10 +35,21 @@ export default function MarketingDashboardPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const pendingProducts = dashboardData?.pendingProducts || 0;
-  const materialsCreated = dashboardData?.materialsCreated || 0;
-  const activeCampaigns = dashboardData?.activeCampaigns || 0;
-  const totalMaterials = dashboardData?.totalMaterials || 0;
+  // pendingProducts from API is the array; use length for count (or totalPending if available)
+  const pendingProducts =
+    typeof dashboardData?.pendingProducts === 'number'
+      ? dashboardData.pendingProducts
+      : Array.isArray(dashboardData?.pendingProducts)
+        ? dashboardData.pendingProducts.length
+        : dashboardData?.totalPending ?? 0;
+  const materialsCreated = dashboardData?.materialsCreated ?? 0;
+  const activeCampaigns = dashboardData?.activeCampaigns ?? 0;
+  const totalMaterials = dashboardData?.totalMaterials ?? 0;
+
+  const menuItems = [
+    { title: 'Dashboard', href: '/marketing/dashboard', icon: '📊' },
+    { title: 'Marketing Materials', href: '/marketing/materials', icon: '📢', badge: pendingProducts },
+  ];
 
   return (
     <RouteGuard allowedRoles={['MARKETING', 'ADMIN']} showAccessDenied={true}>
