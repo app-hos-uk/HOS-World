@@ -113,19 +113,18 @@ export class CatalogService {
         select: { id: true, email: true },
       });
 
-      for (const user of marketingTeam) {
-        await this.prisma.notification.create({
-          data: {
+      if (marketingTeam.length > 0) {
+        await this.prisma.notification.createMany({
+          data: marketingTeam.map(user => ({
             userId: user.id,
-            type: 'CATALOG_COMPLETED',
+            type: 'CATALOG_COMPLETED' as any,
             subject: 'Product Catalog Entry Completed',
             content: `Product submission ${submissionId} has been cataloged and is ready for marketing review.`,
-            email: user.email || undefined,
             metadata: {
               submissionId,
               catalogEntryId: catalogEntry.id,
             } as any,
-          },
+          })),
         });
       }
     } catch (error) {

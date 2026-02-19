@@ -55,7 +55,17 @@ const teamUsers = [
 @ApiTags('admin')
 @Controller('admin')
 export class CreateTeamUsersController {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private configService: ConfigService,
+  ) {}
+
+  private guardDevelopmentOnly() {
+    const env = this.configService.get('NODE_ENV');
+    if (env === 'production') {
+      throw new ForbiddenException('This endpoint is disabled in production');
+    }
+  }
 
   @Public()
   @Post('create-team-users')
@@ -66,6 +76,8 @@ export class CreateTeamUsersController {
   })
   @SwaggerApiResponse({ status: 201, description: 'Team users created/updated successfully' })
   async createTeamUsers(): Promise<ApiResponse<any>> {
+    this.guardDevelopmentOnly();
+
     // Generate password hash for "Test123!"
     const password = 'Test123!';
     const saltRounds = 10;
@@ -126,6 +138,8 @@ export class CreateTeamUsersController {
   })
   @SwaggerApiResponse({ status: 201, description: 'Business users created/updated successfully' })
   async createBusinessUsers(): Promise<ApiResponse<any>> {
+    this.guardDevelopmentOnly();
+
     // Generate password hash for "Test123!"
     const password = 'Test123!';
     const saltRounds = 10;
@@ -296,6 +310,8 @@ export class CreateTeamUsersController {
   })
   @SwaggerApiResponse({ status: 201, description: 'Influencer test user created/updated' })
   async createInfluencerTestUser(): Promise<ApiResponse<any>> {
+    this.guardDevelopmentOnly();
+
     const email = 'influencer@hos.test';
     const password = 'Test!123';
     const passwordHash = await bcrypt.hash(password, 10);

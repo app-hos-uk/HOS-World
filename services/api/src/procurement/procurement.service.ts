@@ -151,8 +151,9 @@ export class ProcurementService {
       updateData.procurementNotes = approveDto.notes;
     }
 
+    // Atomic status check prevents race conditions
     const updated = await this.prisma.productSubmission.update({
-      where: { id },
+      where: { id, status: { in: ['SUBMITTED', 'UNDER_REVIEW'] } },
       data: updateData,
       include: {
         seller: {
@@ -194,7 +195,7 @@ export class ProcurementService {
     }
 
     const updated = await this.prisma.productSubmission.update({
-      where: { id },
+      where: { id, status: { in: ['SUBMITTED', 'UNDER_REVIEW'] } },
       data: {
         status: 'PROCUREMENT_REJECTED',
         procurementNotes: rejectDto.reason + (rejectDto.notes ? `\n\n${rejectDto.notes}` : ''),

@@ -1,5 +1,4 @@
 'use client';
-import { RouteGuard } from '@/components/RouteGuard';
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';

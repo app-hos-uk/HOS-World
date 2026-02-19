@@ -425,6 +425,8 @@ model Product {
   @@unique([sellerId, slug])
   @@index([productType])
   @@index([parentProductId])
+  @@index([status])
+  @@index([sellerId, status])
   @@map("products")
 }
 
@@ -623,6 +625,8 @@ model Order {
   @@index([status])
   @@index([userId])
   @@index([sellerId])
+  @@index([paymentStatus])
+  @@index([createdAt])
   @@map("orders")
 }
 
@@ -867,6 +871,8 @@ model Notification {
   metadata  Json?
   createdAt DateTime           @default(now())
 
+  @@index([userId, read])
+  @@index([createdAt])
   @@map("notifications")
 }
 
@@ -983,6 +989,9 @@ model ProductSubmission {
   duplicateProducts  DuplicateProduct[]
 
   @@index([crossSellerGroupId])
+  @@index([status])
+  @@index([sellerId, status])
+  @@index([status, createdAt])
   @@map("product_submissions")
 }
 

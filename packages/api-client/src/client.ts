@@ -93,6 +93,12 @@ export class ApiClient {
         }
       }
 
+      // Retry once on 5xx server errors (transient failures)
+      if (response.status >= 500 && !isAuthEndpoint) {
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        response = await doFetch();
+      }
+
       // NOTE: We intentionally parse the error body (if any) before throwing.
       // This preserves useful backend messages like "Invalid credentials" for /auth/login.
       if (!response.ok) {

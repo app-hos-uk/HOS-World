@@ -6,6 +6,7 @@ import { CurrencyProvider } from '@/contexts/CurrencyContext';
 import { CartProvider } from '@/contexts/CartContext';
 import { GDPRConsentBanner } from '@/components/GDPRConsentBanner';
 import { Toaster } from '@/components/Toaster';
+import { ErrorBoundary } from '@/components/ErrorBoundary';
 import './globals.css';
 
 // Cinzel for headings, brand, and magical feel (customer-facing)
@@ -54,7 +55,9 @@ export default function RootLayout({
           <CurrencyProvider>
             <CartProvider>
               <ThemeProviderWrapper>
-                {children}
+                <ErrorBoundary>
+                  {children}
+                </ErrorBoundary>
                 <GDPRConsentBanner />
                 <Toaster />
               </ThemeProviderWrapper>

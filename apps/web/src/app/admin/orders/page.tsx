@@ -97,7 +97,7 @@ export default function AdminOrdersPage() {
       clearInterval(interval);
       document.removeEventListener('visibilitychange', onVisibilityChange);
     };
-  }, [);
+  }, []);
 
   const fetchOrders = async () => {
     try {
