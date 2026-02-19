@@ -65,7 +65,7 @@ function CatalogEntriesContent() {
     const onVisibilityChange = () => {
       if (document.visibilityState === 'visible') fetchData();
     };
-    const interval = setInterval(fetchData, 60_000);
+    const interval = setInterval(fetchData, 30_000);
     document.addEventListener('visibilitychange', onVisibilityChange);
     return () => {
       clearInterval(interval);
@@ -222,9 +222,18 @@ function CatalogEntriesContent() {
   return (
     <RouteGuard allowedRoles={['CATALOG', 'ADMIN']} showAccessDenied={true}>
       <DashboardLayout role="CATALOG" menuItems={menuItems} title="Catalog">
-        <div className="mb-6">
-          <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold">Catalog Entries</h1>
-          <p className="text-gray-600 mt-2">Create marketplace-ready product listings</p>
+        <div className="mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div>
+            <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold">Catalog Entries</h1>
+            <p className="text-gray-600 mt-2">Create marketplace-ready product listings</p>
+          </div>
+          <button
+            onClick={() => fetchData()}
+            disabled={loading}
+            className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50"
+          >
+            {loading ? 'Refreshing...' : 'Refresh'}
+          </button>
         </div>
 
           {/* Tabs */}

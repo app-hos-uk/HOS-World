@@ -45,7 +45,7 @@ export default function CatalogDashboardPage() {
     const onVisibilityChange = () => {
       if (document.visibilityState === 'visible') fetchDashboardData(false);
     };
-    const interval = setInterval(() => fetchDashboardData(false), 60_000);
+    const interval = setInterval(() => fetchDashboardData(false), 30_000);
     document.addEventListener('visibilitychange', onVisibilityChange);
     return () => {
       clearInterval(interval);
@@ -175,7 +175,7 @@ export default function CatalogDashboardPage() {
                         <div className="flex items-start justify-between">
                           <div className="flex-1">
                             <p className="font-medium text-gray-900">
-                              {submission.productData?.name || 'Untitled Product'}
+                              {submission.product?.name || (submission.productData as any)?.name || 'Untitled Product'}
                             </p>
                             <p className="text-sm text-gray-500 mt-1">
                               {submission.seller?.storeName || 'Unknown Seller'}

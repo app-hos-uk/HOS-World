@@ -387,9 +387,11 @@ export class DashboardService {
 
   // Catalog Dashboard
   async getCatalogDashboard() {
+    // Pending: submissions ready for catalog (PROCUREMENT_APPROVED or FC_ACCEPTED) with no catalog entry yet
+    // Aligns with CatalogService.findPending() which uses PROCUREMENT_APPROVED
     const pending = await this.prisma.productSubmission.findMany({
       where: {
-        status: 'FC_ACCEPTED',
+        status: { in: ['PROCUREMENT_APPROVED', 'FC_ACCEPTED'] },
         catalogEntry: null,
       },
       include: {
@@ -398,21 +400,26 @@ export class DashboardService {
             storeName: true,
           },
         },
+        product: {
+          select: {
+            name: true,
+          },
+        },
         shipment: {
           select: {
             receivedAt: true,
           },
         },
       },
-      orderBy: { fcAcceptedAt: 'asc' },
+      orderBy: { procurementApprovedAt: 'asc' },
       take: 50,
     });
 
+    // In progress: catalog entries not yet completed (completedAt null)
+    // Catalog service creates entries atomically and sets CATALOG_COMPLETED; CATALOG_PENDING is rarely used
     const inProgress = await this.prisma.catalogEntry.findMany({
       where: {
-        submission: {
-          status: 'CATALOG_PENDING',
-        },
+        completedAt: null,
       },
       include: {
         submission: {
