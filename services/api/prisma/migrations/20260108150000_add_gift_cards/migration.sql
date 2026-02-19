@@ -1,5 +1,5 @@
 -- CreateTable
-CREATE TABLE "gift_cards" (
+CREATE TABLE IF NOT EXISTS "gift_cards" (
     "id" TEXT NOT NULL,
     "code" TEXT NOT NULL,
     "userId" TEXT,
@@ -21,7 +21,7 @@ CREATE TABLE "gift_cards" (
 );
 
 -- CreateTable
-CREATE TABLE "gift_card_transactions" (
+CREATE TABLE IF NOT EXISTS "gift_card_transactions" (
     "id" TEXT NOT NULL,
     "giftCardId" TEXT NOT NULL,
     "orderId" TEXT,
@@ -35,28 +35,33 @@ CREATE TABLE "gift_card_transactions" (
 );
 
 -- CreateIndex
-CREATE UNIQUE INDEX "gift_cards_code_key" ON "gift_cards"("code");
+CREATE UNIQUE INDEX IF NOT EXISTS "gift_cards_code_key" ON "gift_cards"("code");
 
 -- CreateIndex
-CREATE INDEX "gift_cards_code_idx" ON "gift_cards"("code");
+CREATE INDEX IF NOT EXISTS "gift_cards_code_idx" ON "gift_cards"("code");
 
 -- CreateIndex
-CREATE INDEX "gift_cards_userId_idx" ON "gift_cards"("userId");
+CREATE INDEX IF NOT EXISTS "gift_cards_userId_idx" ON "gift_cards"("userId");
 
 -- CreateIndex
-CREATE INDEX "gift_cards_status_idx" ON "gift_cards"("status");
+CREATE INDEX IF NOT EXISTS "gift_cards_status_idx" ON "gift_cards"("status");
 
 -- CreateIndex
-CREATE INDEX "gift_card_transactions_giftCardId_idx" ON "gift_card_transactions"("giftCardId");
+CREATE INDEX IF NOT EXISTS "gift_card_transactions_giftCardId_idx" ON "gift_card_transactions"("giftCardId");
 
 -- CreateIndex
-CREATE INDEX "gift_card_transactions_orderId_idx" ON "gift_card_transactions"("orderId");
+CREATE INDEX IF NOT EXISTS "gift_card_transactions_orderId_idx" ON "gift_card_transactions"("orderId");
 
 -- AddForeignKey
-ALTER TABLE "gift_cards" ADD CONSTRAINT "gift_cards_userId_fkey" FOREIGN KEY ("userId") REFERENCES "users"("id") ON DELETE SET NULL ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE "gift_card_transactions" ADD CONSTRAINT "gift_card_transactions_giftCardId_fkey" FOREIGN KEY ("giftCardId") REFERENCES "gift_cards"("id") ON DELETE CASCADE ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE "gift_card_transactions" ADD CONSTRAINT "gift_card_transactions_orderId_fkey" FOREIGN KEY ("orderId") REFERENCES "orders"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+DO $$
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'gift_cards_userId_fkey') THEN
+    ALTER TABLE "gift_cards" ADD CONSTRAINT "gift_cards_userId_fkey" FOREIGN KEY ("userId") REFERENCES "users"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+  END IF;
+  IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'gift_card_transactions_giftCardId_fkey') THEN
+    ALTER TABLE "gift_card_transactions" ADD CONSTRAINT "gift_card_transactions_giftCardId_fkey" FOREIGN KEY ("giftCardId") REFERENCES "gift_cards"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+  END IF;
+  IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'gift_card_transactions_orderId_fkey') THEN
+    ALTER TABLE "gift_card_transactions" ADD CONSTRAINT "gift_card_transactions_orderId_fkey" FOREIGN KEY ("orderId") REFERENCES "orders"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+  END IF;
+END $$;

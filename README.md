@@ -36,8 +36,10 @@ This is a monorepo containing:
 ### Installation
 
 ```bash
-npm install
+pnpm install
 ```
+
+> **Note:** After pulling or on a new machine, always run `pnpm install` so native dependencies (Prisma, bcrypt) are built correctly.
 
 ### Development
 

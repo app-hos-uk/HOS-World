@@ -8,8 +8,13 @@ ALTER TABLE "users" ADD COLUMN IF NOT EXISTS "employeeId" TEXT;
 ALTER TABLE "users" ADD COLUMN IF NOT EXISTS "managerId" TEXT;
 
 -- Add foreign key for manager relationship (self-referencing)
-ALTER TABLE "users" ADD CONSTRAINT "users_managerId_fkey" 
-  FOREIGN KEY ("managerId") REFERENCES "users"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+DO $$
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'users_managerId_fkey') THEN
+    ALTER TABLE "users" ADD CONSTRAINT "users_managerId_fkey"
+      FOREIGN KEY ("managerId") REFERENCES "users"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+  END IF;
+END $$;
 
 -- Customer: B2B/Wholesaler fields
 ALTER TABLE "customers" ADD COLUMN IF NOT EXISTS "companyName" TEXT;

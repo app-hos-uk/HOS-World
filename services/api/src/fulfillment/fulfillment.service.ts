@@ -453,4 +453,88 @@ export class FulfillmentService {
       rejected,
     };
   }
+
+  async rejectShipmentForResubmission(
+    shipmentId: string,
+    userId: string,
+    reason: string,
+  ) {
+    const shipment = await this.prisma.shipment.findUnique({
+      where: { id: shipmentId },
+      include: {
+        submission: {
+          include: {
+            seller: {
+              select: {
+                userId: true,
+                storeName: true,
+              },
+            },
+          },
+        },
+      },
+    });
+
+    if (!shipment) {
+      throw new NotFoundException('Shipment not found');
+    }
+
+    if (shipment.status !== 'FC_REJECTED') {
+      throw new BadRequestException(
+        'Only FC_REJECTED shipments can be resubmitted',
+      );
+    }
+
+    // Update submission back to PROCUREMENT_APPROVED for resubmission
+    const updated = await this.prisma.productSubmission.update({
+      where: { id: shipment.submissionId },
+      data: {
+        status: 'PROCUREMENT_APPROVED',
+        procurementApprovedAt: new Date(),
+      },
+      include: {
+        seller: {
+          select: {
+            id: true,
+            storeName: true,
+            userId: true,
+          },
+        },
+      },
+    });
+
+    // Update shipment status to REJECTED_FOR_RESUBMISSION or keep as FC_REJECTED but mark as resubmittable
+    await this.prisma.shipment.update({
+      where: { id: shipmentId },
+      data: {
+        verificationNotes: `Rejected for resubmission: ${reason}`,
+      },
+    });
+
+    // Notify seller about resubmission opportunity
+    try {
+      if (shipment.submission?.seller?.userId) {
+        await this.prisma.notification.create({
+          data: {
+            userId: shipment.submission.seller.userId,
+            type: 'SUBMISSION_RESUBMITTED',
+            subject: 'Shipment Resubmission Available',
+            content: `Your shipment has been rejected: "${reason}". You can now resubmit for fulfillment.`,
+            email: undefined,
+            metadata: {
+              shipmentId,
+              submissionId: shipment.submissionId,
+              reason,
+            } as any,
+          },
+        });
+      }
+    } catch (error) {
+      console.error('Failed to notify seller about resubmission:', error);
+    }
+
+    return updated;
+  }
+
+
 }

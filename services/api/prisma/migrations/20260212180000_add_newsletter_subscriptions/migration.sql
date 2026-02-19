@@ -1,5 +1,5 @@
 -- CreateTable
-CREATE TABLE "newsletter_subscriptions" (
+CREATE TABLE IF NOT EXISTS "newsletter_subscriptions" (
     "id" TEXT NOT NULL,
     "email" TEXT NOT NULL,
     "userId" TEXT,
@@ -15,16 +15,21 @@ CREATE TABLE "newsletter_subscriptions" (
 );
 
 -- CreateIndex
-CREATE UNIQUE INDEX "newsletter_subscriptions_email_key" ON "newsletter_subscriptions"("email");
+CREATE UNIQUE INDEX IF NOT EXISTS "newsletter_subscriptions_email_key" ON "newsletter_subscriptions"("email");
 
 -- CreateIndex
-CREATE INDEX "newsletter_subscriptions_email_idx" ON "newsletter_subscriptions"("email");
+CREATE INDEX IF NOT EXISTS "newsletter_subscriptions_email_idx" ON "newsletter_subscriptions"("email");
 
 -- CreateIndex
-CREATE INDEX "newsletter_subscriptions_status_idx" ON "newsletter_subscriptions"("status");
+CREATE INDEX IF NOT EXISTS "newsletter_subscriptions_status_idx" ON "newsletter_subscriptions"("status");
 
 -- CreateIndex
-CREATE INDEX "newsletter_subscriptions_userId_idx" ON "newsletter_subscriptions"("userId");
+CREATE INDEX IF NOT EXISTS "newsletter_subscriptions_userId_idx" ON "newsletter_subscriptions"("userId");
 
 -- AddForeignKey
-ALTER TABLE "newsletter_subscriptions" ADD CONSTRAINT "newsletter_subscriptions_userId_fkey" FOREIGN KEY ("userId") REFERENCES "users"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+DO $$
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'newsletter_subscriptions_userId_fkey') THEN
+    ALTER TABLE "newsletter_subscriptions" ADD CONSTRAINT "newsletter_subscriptions_userId_fkey" FOREIGN KEY ("userId") REFERENCES "users"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+  END IF;
+END $$;

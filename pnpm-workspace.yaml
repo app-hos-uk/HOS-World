@@ -3,5 +3,8 @@ packages:
   - packages/*
   - services/*
 
-ignoredBuiltDependencies:
+onlyBuiltDependencies:
+  - prisma
+  - "@prisma/client"
+  - "@prisma/engines"
   - bcrypt

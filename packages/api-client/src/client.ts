@@ -364,7 +364,7 @@ export class ApiClient {
   }
 
   async clearCart(): Promise<ApiResponse<Cart>> {
-    return this.request<ApiResponse<Cart>>('/cart', {
+    return this.request<ApiResponse<Cart>>('/cart/clear', {
       method: 'DELETE',
     });
   }
@@ -1046,7 +1046,7 @@ export class ApiClient {
   }
 
   async getMyDomains(): Promise<ApiResponse<any>> {
-    return this.request<ApiResponse<any>>('/domains/my-domains', {
+    return this.request<ApiResponse<any>>('/domains/me', {
       method: 'GET',
     });
   }
@@ -3861,4 +3861,61 @@ export class ApiClient {
       method: 'DELETE',
     });
   }
+
+  // Fulfillment - Create Shipment
+  async createShipment(data: {
+    submissionId: string;
+    fulfillmentCenterId: string;
+    trackingNumber?: string;
+    logistics?: string;
+  }): Promise<ApiResponse<any>> {
+    return this.request<ApiResponse<any>>('/fulfillment/shipments', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
+  // Fulfillment - Get Dashboard Stats
+  async getFulfillmentDashboardStats(): Promise<ApiResponse<any>> {
+    return this.request<ApiResponse<any>>('/fulfillment/dashboard/stats', {
+      method: 'GET',
+    });
+  }
+
+  // Settlements - Process Settlement
+  async processSettlement(id: string): Promise<ApiResponse<any>> {
+    return this.request<ApiResponse<any>>(`/settlements/${id}/process`, {
+      method: 'POST',
+    });
+  }
+
+  // Settlements - Mark as Paid
+  async markSettlementPaid(id: string): Promise<ApiResponse<any>> {
+    return this.request<ApiResponse<any>>(`/settlements/${id}/mark-paid`, {
+      method: 'POST',
+    });
+  }
+
+  // Settlements - Cancel Settlement
+  async cancelSettlement(id: string): Promise<ApiResponse<any>> {
+    return this.request<ApiResponse<any>>(`/settlements/${id}/cancel`, {
+      method: 'POST',
+    });
+  }
+
+  // Settlements - Retry Settlement
+  async retrySettlement(id: string): Promise<ApiResponse<any>> {
+    return this.request<ApiResponse<any>>(`/settlements/${id}/retry`, {
+      method: 'POST',
+    });
+  }
+
+  // Gift Card Refund
+  async refundGiftCard(id: string, amount: number, reason?: string): Promise<ApiResponse<any>> {
+    return this.request<ApiResponse<any>>(`/gift-cards/${id}/refund`, {
+      method: 'POST',
+      body: JSON.stringify({ amount, reason }),
+    });
+  }
+
 }

@@ -327,7 +327,7 @@ export class DashboardService {
   async getFulfillmentDashboard() {
     const shipments = await this.prisma.shipment.findMany({
       where: {
-        status: { in: ['PENDING', 'IN_TRANSIT', 'RECEIVED'] },
+        status: { in: ['PENDING', 'IN_TRANSIT', 'RECEIVED', 'VERIFIED', 'REJECTED'] },
       },
       include: {
         submission: {
@@ -355,7 +355,7 @@ export class DashboardService {
       include: {
         shipments: {
           where: {
-            status: { in: ['PENDING', 'IN_TRANSIT', 'RECEIVED'] },
+            status: { in: ['PENDING', 'IN_TRANSIT', 'RECEIVED', 'VERIFIED', 'REJECTED'] },
           },
         },
       },
@@ -541,7 +541,7 @@ export class DashboardService {
   async getFinanceDashboard() {
     const pending = await this.prisma.productSubmission.findMany({
       where: {
-        status: 'MARKETING_COMPLETED',
+        status: { in: ['MARKETING_COMPLETED', 'FINANCE_PENDING'] },
       },
       include: {
         seller: {

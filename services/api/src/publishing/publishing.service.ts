@@ -45,7 +45,7 @@ export class PublishingService {
     const catalogEntry = submission.catalogEntry;
 
     // Use structured pricingData (set by finance service), fall back to legacy regex for old submissions
-    const pricingData = submission.pricingData as PricingData | null;
+    const pricingData = submission.pricingData as unknown as PricingData | null;
     let finalPrice: number;
     let hosMargin: number;
     let visibilityLevel: string;

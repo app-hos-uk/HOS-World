@@ -229,7 +229,7 @@ export class ProductsService {
 
     // Build where clause — default to ACTIVE for public browsing; allow override for admin/internal use
     const where: Prisma.ProductWhereInput = {
-      status: searchDto.status || 'ACTIVE',
+      status: (searchDto.status as ProductStatus) || ProductStatus.ACTIVE,
     };
 
     if (searchDto.query) {

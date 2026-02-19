@@ -120,6 +120,8 @@ function AdminProductsContent() {
   const [showEditModal, setShowEditModal] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [productToDelete, setProductToDelete] = useState<Product | null>(null);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
+  const [deleteLoading, setDeleteLoading] = useState(false);
   const [showBulkModal, setShowBulkModal] = useState(false);
   const [bulkAction, setBulkAction] = useState<'publish' | 'unpublish' | 'inactive' | 'delete'>('publish');
   const [updatingProduct, setUpdatingProduct] = useState(false);
@@ -531,12 +533,15 @@ function AdminProductsContent() {
 
   const handleDeleteClick = (product: Product) => {
     setProductToDelete(product);
+    setDeleteError(null);
     setShowDeleteModal(true);
   };
 
   const handleDeleteConfirm = async () => {
     if (!productToDelete) return;
 
+    setDeleteLoading(true);
+    setDeleteError(null);
     try {
       const token = localStorage.getItem('auth_token');
       const apiUrl = getPublicApiBaseUrl();
@@ -551,17 +556,41 @@ function AdminProductsContent() {
         }
       );
       
+      const data = await response.json().catch(() => ({}));
+      const errorMessage = data.message || (Array.isArray(data.message) ? data.message[0] : 'Failed to delete product');
+      
       if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.message || 'Failed to delete product');
+        setDeleteError(errorMessage);
+        return;
       }
       
       toast.success('Product deleted successfully');
       setShowDeleteModal(false);
       setProductToDelete(null);
+      setDeleteError(null);
       fetchProducts();
     } catch (err: any) {
+      setDeleteError(err.message || 'Failed to delete product');
       toast.error(err.message || 'Failed to delete product');
+    } finally {
+      setDeleteLoading(false);
+    }
+  };
+
+  const handleSetInactiveFromDeleteModal = async () => {
+    if (!productToDelete) return;
+    try {
+      setDeleteLoading(true);
+      await apiClient.updateAdminProduct(productToDelete.id, { status: 'INACTIVE' });
+      toast.success('Product set to Inactive');
+      setShowDeleteModal(false);
+      setProductToDelete(null);
+      setDeleteError(null);
+      fetchProducts();
+    } catch (err: any) {
+      toast.error(err.message || 'Failed to set product inactive');
+    } finally {
+      setDeleteLoading(false);
     }
   };
 
@@ -1108,17 +1137,52 @@ function AdminProductsContent() {
             <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
               <div className="bg-white rounded-lg max-w-md w-full p-6">
                 <h2 className="text-2xl font-bold mb-4">Delete Product</h2>
-                <p className="text-gray-600 mb-6">
-                  Are you sure you want to delete <strong>{productToDelete.name}</strong>? This cannot be undone.
-                </p>
-                <div className="flex gap-3">
-                  <button onClick={handleDeleteConfirm} className="flex-1 px-6 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 font-medium">
-                    Delete
-                  </button>
-                  <button onClick={() => { setShowDeleteModal(false); setProductToDelete(null); }} className="px-6 py-2 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400 font-medium">
-                    Cancel
-                  </button>
-                </div>
+                {deleteError ? (
+                  <>
+                    <div className="mb-4 p-4 bg-amber-50 border border-amber-200 rounded-lg">
+                      <p className="text-amber-800 text-sm">{deleteError}</p>
+                    </div>
+                    <p className="text-gray-600 mb-4">
+                      Use <strong>Set to Inactive</strong> to hide the product from the marketplace while keeping order history intact.
+                    </p>
+                    <div className="flex flex-col gap-2">
+                      <button
+                        onClick={handleSetInactiveFromDeleteModal}
+                        disabled={deleteLoading}
+                        className="w-full px-6 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 font-medium disabled:opacity-50"
+                      >
+                        {deleteLoading ? 'Updating...' : 'Set to Inactive'}
+                      </button>
+                      <button
+                        onClick={() => { setShowDeleteModal(false); setProductToDelete(null); setDeleteError(null); }}
+                        className="w-full px-6 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 font-medium"
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <p className="text-gray-600 mb-6">
+                      Are you sure you want to delete <strong>{productToDelete.name}</strong>? This cannot be undone.
+                    </p>
+                    <div className="flex gap-3">
+                      <button
+                        onClick={handleDeleteConfirm}
+                        disabled={deleteLoading}
+                        className="flex-1 px-6 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 font-medium disabled:opacity-50"
+                      >
+                        {deleteLoading ? 'Deleting...' : 'Delete'}
+                      </button>
+                      <button
+                        onClick={() => { setShowDeleteModal(false); setProductToDelete(null); setDeleteError(null); }}
+                        className="px-6 py-2 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400 font-medium"
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  </>
+                )}
               </div>
             </div>
           )}

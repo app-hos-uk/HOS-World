@@ -87,7 +87,17 @@ export default function AdminOrdersPage() {
 
   useEffect(() => {
     fetchOrders();
-  }, []);
+    
+    const onVisibilityChange = () => {
+      if (document.visibilityState === 'visible') fetchOrders();
+    };
+    const interval = setInterval(fetchOrders, 60000);
+    document.addEventListener('visibilitychange', onVisibilityChange);
+    return () => {
+      clearInterval(interval);
+      document.removeEventListener('visibilitychange', onVisibilityChange);
+    };
+  }, [);
 
   const fetchOrders = async () => {
     try {

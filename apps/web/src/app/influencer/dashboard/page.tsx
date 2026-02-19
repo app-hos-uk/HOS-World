@@ -1,4 +1,5 @@
 'use client';
+import { RouteGuard } from '@/components/RouteGuard';
 
 import { useState, useEffect, useMemo } from 'react';
 import { useRouter } from 'next/navigation';

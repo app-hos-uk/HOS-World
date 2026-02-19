@@ -377,6 +377,34 @@ export class SubmissionsService {
     // Re-run duplicate detection on resubmission
     await this.duplicatesService.detectDuplicates(updated.id);
 
+    // Send SUBMISSION_RESUBMITTED notification to procurement team
+    try {
+      const procurementTeam = await this.prisma.user.findMany({
+        where: {
+          role: { in: ['PROCUREMENT', 'ADMIN'] },
+        },
+        select: { id: true, email: true },
+      });
+
+      for (const user of procurementTeam) {
+        await this.prisma.notification.create({
+          data: {
+            userId: user.id,
+            type: 'SUBMISSION_RESUBMITTED',
+            subject: 'Product Resubmitted for Review',
+            content: `Submission from ${updated.seller?.storeName || 'Unknown Seller'} has been resubmitted and is ready for review.`,
+            email: user.email || undefined,
+            metadata: {
+              submissionId: updated.id,
+              sellerId: updated.sellerId,
+            } as any,
+          },
+        });
+      }
+    } catch (error) {
+      console.error('Failed to send resubmission notification:', error);
+    }
+
     return updated;
   }
 

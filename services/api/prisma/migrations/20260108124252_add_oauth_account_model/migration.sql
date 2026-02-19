@@ -23,7 +23,12 @@ CREATE INDEX IF NOT EXISTS "oauth_accounts_provider_idx" ON "oauth_accounts"("pr
 CREATE UNIQUE INDEX IF NOT EXISTS "oauth_accounts_provider_providerId_key" ON "oauth_accounts"("provider", "providerId");
 
 -- AddForeignKey
-ALTER TABLE "oauth_accounts" ADD CONSTRAINT "oauth_accounts_userId_fkey" FOREIGN KEY ("userId") REFERENCES "users"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+DO $$
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'oauth_accounts_userId_fkey') THEN
+    ALTER TABLE "oauth_accounts" ADD CONSTRAINT "oauth_accounts_userId_fkey" FOREIGN KEY ("userId") REFERENCES "users"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+  END IF;
+END $$;
 
 -- AlterTable: Make password optional
 ALTER TABLE "users" ALTER COLUMN "password" DROP NOT NULL;

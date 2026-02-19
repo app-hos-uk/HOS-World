@@ -85,26 +85,31 @@ CREATE INDEX IF NOT EXISTS "configs_tenantId_idx" ON "configs"("tenantId");
 -- CreateIndex: configs storeId index
 CREATE INDEX IF NOT EXISTS "configs_storeId_idx" ON "configs"("storeId");
 
--- AddForeignKey: tenant_users.tenantId -> tenants.id
-ALTER TABLE "tenant_users" ADD CONSTRAINT "tenant_users_tenantId_fkey" FOREIGN KEY ("tenantId") REFERENCES "tenants"("id") ON DELETE CASCADE ON UPDATE CASCADE;
-
--- AddForeignKey: tenant_users.userId -> users.id
-ALTER TABLE "tenant_users" ADD CONSTRAINT "tenant_users_userId_fkey" FOREIGN KEY ("userId") REFERENCES "users"("id") ON DELETE CASCADE ON UPDATE CASCADE;
-
--- AddForeignKey: stores.tenantId -> tenants.id
-ALTER TABLE "stores" ADD CONSTRAINT "stores_tenantId_fkey" FOREIGN KEY ("tenantId") REFERENCES "tenants"("id") ON DELETE CASCADE ON UPDATE CASCADE;
-
--- AddForeignKey: configs.tenantId -> tenants.id
-ALTER TABLE "configs" ADD CONSTRAINT "configs_tenantId_fkey" FOREIGN KEY ("tenantId") REFERENCES "tenants"("id") ON DELETE CASCADE ON UPDATE CASCADE;
-
--- AddForeignKey: configs.storeId -> stores.id
-ALTER TABLE "configs" ADD CONSTRAINT "configs_storeId_fkey" FOREIGN KEY ("storeId") REFERENCES "stores"("id") ON DELETE CASCADE ON UPDATE CASCADE;
-
--- AddColumn: users.defaultTenantId
+-- AddColumn: users.defaultTenantId (must be before FK)
 ALTER TABLE "users" ADD COLUMN IF NOT EXISTS "defaultTenantId" TEXT;
 
--- AddForeignKey: users.defaultTenantId -> tenants.id (nullable)
-ALTER TABLE "users" ADD CONSTRAINT "users_defaultTenantId_fkey" FOREIGN KEY ("defaultTenantId") REFERENCES "tenants"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+-- AddForeignKey: tenant_users.tenantId -> tenants.id
+DO $$
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'tenant_users_tenantId_fkey') THEN
+    ALTER TABLE "tenant_users" ADD CONSTRAINT "tenant_users_tenantId_fkey" FOREIGN KEY ("tenantId") REFERENCES "tenants"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+  END IF;
+  IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'tenant_users_userId_fkey') THEN
+    ALTER TABLE "tenant_users" ADD CONSTRAINT "tenant_users_userId_fkey" FOREIGN KEY ("userId") REFERENCES "users"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+  END IF;
+  IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'stores_tenantId_fkey') THEN
+    ALTER TABLE "stores" ADD CONSTRAINT "stores_tenantId_fkey" FOREIGN KEY ("tenantId") REFERENCES "tenants"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+  END IF;
+  IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'configs_tenantId_fkey') THEN
+    ALTER TABLE "configs" ADD CONSTRAINT "configs_tenantId_fkey" FOREIGN KEY ("tenantId") REFERENCES "tenants"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+  END IF;
+  IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'configs_storeId_fkey') THEN
+    ALTER TABLE "configs" ADD CONSTRAINT "configs_storeId_fkey" FOREIGN KEY ("storeId") REFERENCES "stores"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+  END IF;
+  IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'users_defaultTenantId_fkey') THEN
+    ALTER TABLE "users" ADD CONSTRAINT "users_defaultTenantId_fkey" FOREIGN KEY ("defaultTenantId") REFERENCES "tenants"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+  END IF;
+END $$;
 
 -- Create platform tenant if it doesn't exist
 INSERT INTO "tenants" ("id", "name", "subdomain", "isActive", "createdAt", "updatedAt")
