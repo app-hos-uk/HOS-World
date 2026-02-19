@@ -651,6 +651,24 @@ export class ApiClient {
     return this.request(`/duplicates/cross-seller-groups/assign`, { method: 'POST' });
   }
 
+  // Publishing (Admin only - for FINANCE_APPROVED submissions)
+  async getReadyToPublish(): Promise<ApiResponse<any[]>> {
+    return this.request<ApiResponse<any[]>>('/publishing/ready', { method: 'GET' });
+  }
+
+  async publishSubmission(submissionId: string): Promise<ApiResponse<any>> {
+    return this.request<ApiResponse<any>>(`/publishing/publish/${submissionId}`, {
+      method: 'POST',
+    });
+  }
+
+  async bulkPublishSubmissions(submissionIds: string[]): Promise<ApiResponse<any>> {
+    return this.request<ApiResponse<any>>('/publishing/bulk-publish', {
+      method: 'POST',
+      body: JSON.stringify({ submissionIds }),
+    });
+  }
+
   // Fulfillment
   async getFulfillmentShipments(status?: string): Promise<ApiResponse<any[]>> {
     const url = status ? `/fulfillment/shipments?status=${status}` : '/fulfillment/shipments';

@@ -99,11 +99,13 @@ export default function AdminSubmissionsPage() {
   const [actionLoading, setActionLoading] = useState(false);
   const [actionNotes, setActionNotes] = useState('');
   const [rejectionReason, setRejectionReason] = useState('');
+  const [publishLoading, setPublishLoading] = useState<string | null>(null);
 
   const fetchSubmissions = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
+      // No status = return ALL submissions (admin overview). Procurement uses status filter for their queue.
       const response = await apiClient.getProcurementSubmissions();
       const data = response?.data || [];
       const submissionList = Array.isArray(data) ? data : [];
@@ -133,6 +135,17 @@ export default function AdminSubmissionsPage() {
 
   useEffect(() => {
     fetchSubmissions();
+  }, [fetchSubmissions]);
+
+  // Auto-refresh every 60 seconds and on window focus
+  useEffect(() => {
+    const interval = setInterval(fetchSubmissions, 60_000);
+    const onFocus = () => fetchSubmissions();
+    window.addEventListener('focus', onFocus);
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener('focus', onFocus);
+    };
   }, [fetchSubmissions]);
 
   // Filtered and sorted submissions
@@ -250,6 +263,20 @@ export default function AdminSubmissionsPage() {
     }
   };
 
+  const handlePublish = async (submission: Submission) => {
+    try {
+      setPublishLoading(submission.id);
+      await apiClient.publishSubmission(submission.id);
+      toast.success('Product published successfully');
+      setShowDetailModal(false);
+      fetchSubmissions();
+    } catch (err: any) {
+      toast.error(err.message || 'Failed to publish product');
+    } finally {
+      setPublishLoading(null);
+    }
+  };
+
   const getStatusBadge = (status: string) => {
     const statusInfo = STATUSES.find(s => s.value === status) || { label: status, color: 'bg-gray-100 text-gray-800' };
     return <span className={`px-2 py-0.5 text-xs rounded-full ${statusInfo.color}`}>{statusInfo.label}</span>;
@@ -278,7 +305,16 @@ export default function AdminSubmissionsPage() {
               <h1 className="text-2xl font-bold text-gray-900">Product Submissions</h1>
               <p className="text-gray-600 mt-1">Review and manage seller product submissions</p>
             </div>
-            <DataExport data={filteredSubmissions} columns={exportColumns} filename="submissions-export" />
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => fetchSubmissions()}
+                disabled={loading}
+                className="px-3 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50"
+              >
+                {loading ? 'Refreshing...' : 'Refresh'}
+              </button>
+              <DataExport data={filteredSubmissions} columns={exportColumns} filename="submissions-export" />
+            </div>
           </div>
 
           {/* Stats Cards */}
@@ -539,6 +575,15 @@ export default function AdminSubmissionsPage() {
                                   </button>
                                 </>
                               )}
+                              {submission.status === 'FINANCE_APPROVED' && (
+                                <button
+                                  onClick={() => handlePublish(submission)}
+                                  disabled={publishLoading === submission.id}
+                                  className="px-2 py-1 text-sm text-white bg-green-600 hover:bg-green-700 rounded disabled:opacity-50"
+                                >
+                                  {publishLoading === submission.id ? 'Publishing...' : 'Publish'}
+                                </button>
+                              )}
                             </div>
                           </td>
                         </tr>
@@ -716,6 +761,15 @@ export default function AdminSubmissionsPage() {
                             Reject
                           </button>
                         </>
+                      )}
+                      {selectedSubmission.status === 'FINANCE_APPROVED' && (
+                        <button
+                          onClick={() => handlePublish(selectedSubmission)}
+                          disabled={publishLoading === selectedSubmission.id}
+                          className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50"
+                        >
+                          {publishLoading === selectedSubmission.id ? 'Publishing...' : 'Publish Product'}
+                        </button>
                       )}
                       <button
                         onClick={() => setShowDetailModal(false)}

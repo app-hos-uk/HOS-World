@@ -22,16 +22,13 @@ export class ProcurementService {
     private notificationsService: NotificationsService,
   ) {}
 
-  async findAll(status?: ProductSubmissionStatus) {
+  async findAll(status?: ProductSubmissionStatus | string) {
     const where: any = {};
 
-    if (status) {
+    // Only filter by status when explicitly provided (for procurement review queue).
+    // When no status is passed (e.g. admin overview), return ALL submissions.
+    if (status && status !== 'ALL') {
       where.status = status;
-    } else {
-      // Default: show submitted and under review
-      where.status = {
-        in: ['SUBMITTED', 'UNDER_REVIEW'],
-      };
     }
 
     const submissions = await this.prisma.productSubmission.findMany({
@@ -45,6 +42,13 @@ export class ProcurementService {
             storeName: true,
             slug: true,
             sellerType: true,
+          },
+        },
+        catalogEntry: {
+          select: {
+            id: true,
+            title: true,
+            description: true,
           },
         },
         duplicateProducts: {
