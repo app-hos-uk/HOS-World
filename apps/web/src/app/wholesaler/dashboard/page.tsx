@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { RouteGuard } from '@/components/RouteGuard';
 import { DashboardLayout } from '@/components/DashboardLayout';
 import { apiClient } from '@/lib/api';
@@ -19,27 +19,41 @@ export default function WholesalerDashboardPage() {
     { title: 'Submissions', href: '/wholesaler/submissions', icon: '📝' },
   ];
 
-  useEffect(() => {
-    const fetchDashboardData = async () => {
-      try {
+  const fetchDashboardData = useCallback(async (showLoading = true) => {
+    try {
+      if (showLoading) {
         setLoading(true);
         setError(null);
-        const response = await apiClient.getWholesalerDashboardData();
-        if (response?.data) {
-          setDashboardData(response.data);
-        } else {
-          setError('Failed to load dashboard data');
-        }
-      } catch (err: any) {
-        console.error('Error fetching wholesaler dashboard:', err);
-        setError(err.message || 'Failed to load dashboard data');
-      } finally {
-        setLoading(false);
       }
-    };
-
-    fetchDashboardData();
+      const response = await apiClient.getWholesalerDashboardData();
+      if (response?.data) {
+        setDashboardData(response.data);
+      } else if (showLoading) {
+        setError('Failed to load dashboard data');
+      }
+    } catch (err: any) {
+      console.error('Error fetching wholesaler dashboard:', err);
+      if (showLoading) setError(err.message || 'Failed to load dashboard data');
+    } finally {
+      if (showLoading) setLoading(false);
+    }
   }, []);
+
+  useEffect(() => {
+    fetchDashboardData(true);
+  }, [fetchDashboardData]);
+
+  useEffect(() => {
+    const onVisibilityChange = () => {
+      if (document.visibilityState === 'visible') fetchDashboardData(false);
+    };
+    const interval = setInterval(() => fetchDashboardData(false), 60_000);
+    document.addEventListener('visibilitychange', onVisibilityChange);
+    return () => {
+      clearInterval(interval);
+      document.removeEventListener('visibilitychange', onVisibilityChange);
+    };
+  }, [fetchDashboardData]);
 
   const pendingApprovals = dashboardData?.submissionsByStatus?.find(
     (s: any) => s.status === 'SUBMITTED' || s.status === 'UNDER_REVIEW'

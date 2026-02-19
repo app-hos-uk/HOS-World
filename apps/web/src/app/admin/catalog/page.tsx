@@ -1,6 +1,7 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
+import Link from 'next/link';
 import { RouteGuard } from '@/components/RouteGuard';
 import { AdminLayout } from '@/components/AdminLayout';
 import { apiClient } from '@/lib/api';
@@ -9,16 +10,13 @@ export default function AdminCatalogPage() {
   const [entries, setEntries] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [statusFilter, setStatusFilter] = useState<string>('');
 
-  useEffect(() => {
-    fetchEntries();
-  }, [statusFilter]);
-
-  const fetchEntries = async () => {
+  const fetchEntries = useCallback(async (showLoading = true) => {
     try {
-      setLoading(true);
-      setError(null);
+      if (showLoading) {
+        setLoading(true);
+        setError(null);
+      }
       const response = await apiClient.getCatalogPending();
       if (response?.data && Array.isArray(response.data)) {
         setEntries(response.data);
@@ -27,12 +25,30 @@ export default function AdminCatalogPage() {
       }
     } catch (err: any) {
       console.error('Error fetching catalog entries:', err);
-      setError(err.message || 'Failed to load catalog entries');
-      setEntries([]);
+      if (showLoading) {
+        setError(err.message || 'Failed to load catalog entries');
+        setEntries([]);
+      }
     } finally {
-      setLoading(false);
+      if (showLoading) setLoading(false);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    fetchEntries(true);
+  }, [fetchEntries]);
+
+  useEffect(() => {
+    const onVisibilityChange = () => {
+      if (document.visibilityState === 'visible') fetchEntries(false);
+    };
+    const interval = setInterval(() => fetchEntries(false), 60_000);
+    document.addEventListener('visibilitychange', onVisibilityChange);
+    return () => {
+      clearInterval(interval);
+      document.removeEventListener('visibilitychange', onVisibilityChange);
+    };
+  }, [fetchEntries]);
 
   if (loading) {
     return (
@@ -53,7 +69,7 @@ export default function AdminCatalogPage() {
           <div className="bg-red-50 border border-red-200 rounded-lg p-4">
             <p className="text-red-800">Error: {error}</p>
             <button
-              onClick={fetchEntries}
+              onClick={() => fetchEntries(true)}
               className="mt-2 px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700"
             >
               Retry
@@ -68,7 +84,27 @@ export default function AdminCatalogPage() {
     <RouteGuard allowedRoles={['ADMIN']}>
       <AdminLayout>
         <div className="space-y-6">
-          <h1 className="text-2xl font-bold text-gray-900">Catalog Entries</h1>
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div>
+              <h1 className="text-2xl font-bold text-gray-900">Catalog Entries</h1>
+              <p className="text-sm text-gray-500 mt-1">Pending submissions ready for catalog creation</p>
+            </div>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => fetchEntries(true)}
+                disabled={loading}
+                className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50"
+              >
+                {loading ? 'Refreshing...' : 'Refresh'}
+              </button>
+              <Link
+                href="/catalog/entries"
+                className="px-4 py-2 text-sm font-medium text-white bg-purple-600 rounded-lg hover:bg-purple-700"
+              >
+                Full Catalog Workflow →
+              </Link>
+            </div>
+          </div>
 
           <div className="bg-white rounded-lg shadow overflow-hidden">
             <table className="min-w-full divide-y divide-gray-200">

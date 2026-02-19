@@ -80,6 +80,19 @@ function ProcurementSubmissionsContent() {
   }, [statusFilter]);
 
   useEffect(() => {
+    const onVisibilityChange = () => {
+      if (document.visibilityState === 'visible') fetchSubmissions();
+    };
+    const interval = setInterval(fetchSubmissions, 60_000);
+    document.addEventListener('visibilitychange', onVisibilityChange);
+    return () => {
+      clearInterval(interval);
+      document.removeEventListener('visibilitychange', onVisibilityChange);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [statusFilter]);
+
+  useEffect(() => {
     if (searchParams.get('view') === 'cross-seller') setShowDuplicateGroups(true);
   }, [searchParams]);
 

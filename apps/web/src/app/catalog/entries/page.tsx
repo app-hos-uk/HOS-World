@@ -62,6 +62,19 @@ function CatalogEntriesContent() {
   }, []);
 
   useEffect(() => {
+    const onVisibilityChange = () => {
+      if (document.visibilityState === 'visible') fetchData();
+    };
+    const interval = setInterval(fetchData, 60_000);
+    document.addEventListener('visibilitychange', onVisibilityChange);
+    return () => {
+      clearInterval(interval);
+      document.removeEventListener('visibilitychange', onVisibilityChange);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  useEffect(() => {
     if (statusFilter === 'completed') {
       setActiveTab('completed');
     } else if (statusFilter === 'in_progress') {

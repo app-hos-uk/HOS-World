@@ -34,6 +34,23 @@ export default function MarketingMaterialsPage() {
     }
   }, [activeTab]);
 
+  useEffect(() => {
+    const refresh = () => {
+      if (activeTab === 'pending') fetchPending();
+      else fetchMaterials();
+    };
+    const onVisibilityChange = () => {
+      if (document.visibilityState === 'visible') refresh();
+    };
+    const interval = setInterval(refresh, 60_000);
+    document.addEventListener('visibilitychange', onVisibilityChange);
+    return () => {
+      clearInterval(interval);
+      document.removeEventListener('visibilitychange', onVisibilityChange);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeTab]);
+
   const fetchPending = async () => {
     try {
       setLoading(true);

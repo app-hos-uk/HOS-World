@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import Image from 'next/image';
 import { RouteGuard } from '@/components/RouteGuard';
 import { DashboardLayout } from '@/components/DashboardLayout';
@@ -12,28 +12,41 @@ export default function MarketingDashboardPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    const fetchDashboardData = async () => {
-      try {
+  const fetchDashboardData = useCallback(async (showLoading = true) => {
+    try {
+      if (showLoading) {
         setLoading(true);
         setError(null);
-        const response = await apiClient.getMarketingDashboardData();
-        if (response?.data) {
-          setDashboardData(response.data);
-        } else {
-          setError('Failed to load dashboard data');
-        }
-      } catch (err: any) {
-        console.error('Error fetching marketing dashboard:', err);
-        setError(err.message || 'Failed to load dashboard data');
-      } finally {
-        setLoading(false);
       }
-    };
-
-    fetchDashboardData();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+      const response = await apiClient.getMarketingDashboardData();
+      if (response?.data) {
+        setDashboardData(response.data);
+      } else if (showLoading) {
+        setError('Failed to load dashboard data');
+      }
+    } catch (err: any) {
+      console.error('Error fetching marketing dashboard:', err);
+      if (showLoading) setError(err.message || 'Failed to load dashboard data');
+    } finally {
+      if (showLoading) setLoading(false);
+    }
   }, []);
+
+  useEffect(() => {
+    fetchDashboardData(true);
+  }, [fetchDashboardData]);
+
+  useEffect(() => {
+    const onVisibilityChange = () => {
+      if (document.visibilityState === 'visible') fetchDashboardData(false);
+    };
+    const interval = setInterval(() => fetchDashboardData(false), 60_000);
+    document.addEventListener('visibilitychange', onVisibilityChange);
+    return () => {
+      clearInterval(interval);
+      document.removeEventListener('visibilitychange', onVisibilityChange);
+    };
+  }, [fetchDashboardData]);
 
   // pendingProducts from API is the array; use length for count (or totalPending if available)
   const pendingProducts =
@@ -54,9 +67,18 @@ export default function MarketingDashboardPage() {
   return (
     <RouteGuard allowedRoles={['MARKETING', 'ADMIN']} showAccessDenied={true}>
       <DashboardLayout role="MARKETING" menuItems={menuItems} title="Marketing">
-        <div className="mb-6">
-          <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold">Marketing Dashboard</h1>
-          <p className="text-gray-600 mt-2">Create and manage marketing materials</p>
+        <div className="mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div>
+            <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold">Marketing Dashboard</h1>
+            <p className="text-gray-600 mt-2">Create and manage marketing materials</p>
+          </div>
+          <button
+            onClick={() => fetchDashboardData(true)}
+            disabled={loading}
+            className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50"
+          >
+            {loading ? 'Refreshing...' : 'Refresh'}
+          </button>
         </div>
 
         {loading && (

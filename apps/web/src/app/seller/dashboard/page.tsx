@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { RouteGuard } from '@/components/RouteGuard';
 import { DashboardLayout } from '@/components/DashboardLayout';
 import { apiClient } from '@/lib/api';
@@ -31,47 +31,54 @@ export default function SellerDashboardPage() {
     { title: 'Submissions', href: '/seller/submissions', icon: '📝' },
   ];
 
-  useEffect(() => {
-    const checkOnboardingAndFetchData = async () => {
-      try {
+  const fetchDashboardData = useCallback(async (showLoading = true) => {
+    try {
+      if (showLoading) {
         setLoading(true);
         setError(null);
-
-        // First check if seller profile is complete
-        try {
-          const profileResponse = await apiClient.getSellerProfile();
-          const seller = profileResponse?.data;
-
-          // If profile is incomplete, redirect to onboarding
-          if (!seller || !seller.storeName || !seller.country) {
-            window.location.href = '/seller/onboarding';
-            return;
-          }
-        } catch (profileErr: any) {
-          // If profile doesn't exist, redirect to onboarding
-          if (profileErr.message?.includes('not found') || profileErr.status === 404) {
-            window.location.href = '/seller/onboarding';
-            return;
-          }
-        }
-
-        // Fetch dashboard data
-        const response = await apiClient.getSellerDashboardData();
-        if (response?.data) {
-          setDashboardData(response.data);
-        } else {
-          setError('Failed to load dashboard data');
-        }
-      } catch (err: any) {
-        console.error('Error fetching seller dashboard:', err);
-        setError(err.message || 'Failed to load dashboard data');
-      } finally {
-        setLoading(false);
       }
-    };
-
-    checkOnboardingAndFetchData();
+      try {
+        const profileResponse = await apiClient.getSellerProfile();
+        const seller = profileResponse?.data;
+        if (!seller || !seller.storeName || !seller.country) {
+          if (showLoading) window.location.href = '/seller/onboarding';
+          return;
+        }
+      } catch (profileErr: any) {
+        if (profileErr.message?.includes('not found') || profileErr.status === 404) {
+          if (showLoading) window.location.href = '/seller/onboarding';
+          return;
+        }
+      }
+      const response = await apiClient.getSellerDashboardData();
+      if (response?.data) {
+        setDashboardData(response.data);
+      } else if (showLoading) {
+        setError('Failed to load dashboard data');
+      }
+    } catch (err: any) {
+      console.error('Error fetching seller dashboard:', err);
+      if (showLoading) setError(err.message || 'Failed to load dashboard data');
+    } finally {
+      if (showLoading) setLoading(false);
+    }
   }, []);
+
+  useEffect(() => {
+    fetchDashboardData(true);
+  }, [fetchDashboardData]);
+
+  useEffect(() => {
+    const onVisibilityChange = () => {
+      if (document.visibilityState === 'visible') fetchDashboardData(false);
+    };
+    const interval = setInterval(() => fetchDashboardData(false), 60_000);
+    document.addEventListener('visibilitychange', onVisibilityChange);
+    return () => {
+      clearInterval(interval);
+      document.removeEventListener('visibilitychange', onVisibilityChange);
+    };
+  }, [fetchDashboardData]);
 
   const pendingApprovals = dashboardData?.submissionsByStatus?.find(
     (s) => s.status === 'SUBMITTED' || s.status === 'UNDER_REVIEW'

@@ -34,12 +34,17 @@ const menuItems: MenuItem[] = [
     icon: '🏢',
     children: [
       { title: 'Product Submissions', href: '/admin/submissions', icon: '📦' },
+      { title: 'Procurement Dashboard', href: '/procurement/dashboard', icon: '📊' },
+      { title: 'Review Submissions', href: '/procurement/submissions', icon: '✅' },
       { title: 'Orders', href: '/admin/orders', icon: '🛒' },
       { title: 'Shipments', href: '/admin/shipments', icon: '🚚' },
       { title: 'Catalog Entries', href: '/admin/catalog', icon: '📚' },
+      { title: 'Catalog Dashboard', href: '/catalog/dashboard', icon: '📊' },
+      { title: 'Catalog Workflow', href: '/catalog/entries', icon: '📝' },
       { title: 'Marketing Materials', href: '/admin/marketing', icon: '📢' },
       { title: 'Newsletter', href: '/admin/newsletter', icon: '📧' },
       { title: 'Pricing Approvals', href: '/admin/pricing', icon: '💰' },
+      { title: 'Finance Pricing', href: '/finance/pricing', icon: '💵' },
     ],
   },
   {

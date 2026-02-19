@@ -31,6 +31,18 @@ export default function CMSDashboardPage() {
     loadDashboardData();
   }, []);
 
+  useEffect(() => {
+    const onVisibilityChange = () => {
+      if (document.visibilityState === 'visible') loadDashboardData();
+    };
+    const interval = setInterval(() => loadDashboardData(), 60_000);
+    document.addEventListener('visibilitychange', onVisibilityChange);
+    return () => {
+      clearInterval(interval);
+      document.removeEventListener('visibilitychange', onVisibilityChange);
+    };
+  }, []);
+
   const loadDashboardData = async () => {
     try {
       setLoading(true);

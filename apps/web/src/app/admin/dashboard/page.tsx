@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { RouteGuard } from '@/components/RouteGuard';
 import { AdminLayout } from '@/components/AdminLayout';
 import { apiClient } from '@/lib/api';
@@ -63,42 +63,41 @@ export default function AdminDashboardPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    let isMounted = true;
-    const fetchDashboardData = async (showLoading = true) => {
-      try {
-        if (showLoading) {
-          setLoading(true);
-          setError(null);
-        }
-        const response = await apiClient.getAdminDashboardData();
-        if (!isMounted) return;
-        if (response?.data) {
-          setDashboardData(response.data);
-        } else if (showLoading) {
-          setError('Failed to load dashboard data');
-        }
-      } catch (err: any) {
-        if (!isMounted) return;
-        console.error('Error fetching admin dashboard:', err);
-        if (showLoading) setError(err.message || 'Failed to load dashboard data');
-      } finally {
-        if (isMounted && showLoading) setLoading(false);
+  const fetchDashboardData = useCallback(async (showLoading = true) => {
+    try {
+      if (showLoading) {
+        setLoading(true);
+        setError(null);
       }
-    };
+      const response = await apiClient.getAdminDashboardData();
+      if (response?.data) {
+        setDashboardData(response.data);
+      } else if (showLoading) {
+        setError('Failed to load dashboard data');
+      }
+    } catch (err: any) {
+      console.error('Error fetching admin dashboard:', err);
+      if (showLoading) setError(err.message || 'Failed to load dashboard data');
+    } finally {
+      if (showLoading) setLoading(false);
+    }
+  }, []);
 
+  useEffect(() => {
     fetchDashboardData(true);
+  }, [fetchDashboardData]);
 
-    // Refetch when user returns to this tab (e.g. after adding users elsewhere) so stats stay up to date
+  useEffect(() => {
     const onVisibilityChange = () => {
       if (document.visibilityState === 'visible') fetchDashboardData(false);
     };
+    const interval = setInterval(() => fetchDashboardData(false), 60_000);
     document.addEventListener('visibilitychange', onVisibilityChange);
     return () => {
-      isMounted = false;
+      clearInterval(interval);
       document.removeEventListener('visibilitychange', onVisibilityChange);
     };
-  }, []);
+  }, [fetchDashboardData]);
 
   const stats = dashboardData?.statistics || {
     totalProducts: 0,
@@ -149,9 +148,18 @@ export default function AdminDashboardPage() {
     <RouteGuard allowedRoles={['ADMIN']} showAccessDenied={true}>
       <AdminLayout>
         {/* Page Header */}
-        <div className="mb-8">
-          <h1 className="text-2xl font-semibold text-gray-900">Dashboard</h1>
-          <p className="text-sm text-gray-500 mt-1">Overview of platform operations and key metrics</p>
+        <div className="mb-8 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div>
+            <h1 className="text-2xl font-semibold text-gray-900">Dashboard</h1>
+            <p className="text-sm text-gray-500 mt-1">Overview of platform operations and key metrics</p>
+          </div>
+          <button
+            onClick={() => fetchDashboardData(true)}
+            disabled={loading}
+            className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50"
+          >
+            {loading ? 'Refreshing...' : 'Refresh'}
+          </button>
         </div>
           
         {loading && (

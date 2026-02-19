@@ -26,6 +26,19 @@ export default function FinancePricingPage() {
     fetchPending();
   }, []);
 
+  useEffect(() => {
+    const onVisibilityChange = () => {
+      if (document.visibilityState === 'visible') fetchPending();
+    };
+    const interval = setInterval(fetchPending, 60_000);
+    document.addEventListener('visibilitychange', onVisibilityChange);
+    return () => {
+      clearInterval(interval);
+      document.removeEventListener('visibilitychange', onVisibilityChange);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   const fetchPending = async () => {
     try {
       setLoading(true);
