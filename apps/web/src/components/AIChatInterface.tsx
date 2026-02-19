@@ -34,11 +34,43 @@ export function AIChatInterface({ characterId, character, onClose }: AIChatInter
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    if (characterId && !characterInfo) {
-      loadCharacter();
-    }
-    loadChatHistory();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    const controller = new AbortController();
+    const signal = controller.signal;
+
+    const loadCharacterWithAbort = async () => {
+      try {
+        const apiUrl = getPublicApiBaseUrl() || 'http://localhost:3001/api';
+        const response = await fetch(`${apiUrl}/characters/${characterId}`, { signal });
+        if (!response.ok) throw new Error(`Failed to load character: ${response.status}`);
+        const data = await response.json();
+        setCharacterInfo(data.data);
+      } catch (err) {
+        if ((err as Error).name !== 'AbortError') console.error('Error loading character:', err);
+      }
+    };
+
+    const loadChatHistoryWithAbort = async () => {
+      try {
+        const apiUrl = getPublicApiBaseUrl() || 'http://localhost:3001/api';
+        const token = localStorage.getItem('auth_token');
+        const response = await fetch(`${apiUrl}/ai/chat/history?characterId=${characterId}`, {
+          headers: { Authorization: `Bearer ${token}` },
+          signal,
+        });
+        if (!response.ok) throw new Error(`Failed to load chat history: ${response.status}`);
+        const data = await response.json();
+        if (data.data?.length > 0) {
+          setMessages(data.data[0].messages || []);
+        }
+      } catch (err) {
+        if ((err as Error).name !== 'AbortError') console.error('Error loading chat history:', err);
+      }
+    };
+
+    if (characterId && !character) loadCharacterWithAbort();
+    loadChatHistoryWithAbort();
+
+    return () => controller.abort();
   }, [characterId]);
 
   useEffect(() => {
@@ -47,47 +79,6 @@ export function AIChatInterface({ characterId, character, onClose }: AIChatInter
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  };
-
-  const loadCharacter = async () => {
-    try {
-      const apiUrl = getPublicApiBaseUrl() || 'http://localhost:3001/api';
-      const response = await fetch(`${apiUrl}/characters/${characterId}`);
-      
-      if (!response.ok) {
-        throw new Error(`Failed to load character: ${response.status} ${response.statusText}`);
-      }
-      
-      const data = await response.json();
-      setCharacterInfo(data.data);
-    } catch (error) {
-      console.error('Error loading character:', error);
-    }
-  };
-
-  const loadChatHistory = async () => {
-    try {
-      const apiUrl = getPublicApiBaseUrl() || 'http://localhost:3001/api';
-      const token = localStorage.getItem('auth_token');
-      const response = await fetch(`${apiUrl}/ai/chat/history?characterId=${characterId}`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-      
-      if (!response.ok) {
-        throw new Error(`Failed to load chat history: ${response.status} ${response.statusText}`);
-      }
-      
-      const data = await response.json();
-      
-      if (data.data && data.data.length > 0) {
-        const latestChat = data.data[0];
-        setMessages(latestChat.messages || []);
-      }
-    } catch (error) {
-      console.error('Error loading chat history:', error);
-    }
   };
 
   const sendMessage = async (e: React.FormEvent) => {

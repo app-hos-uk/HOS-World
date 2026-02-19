@@ -83,6 +83,17 @@ export class AuthService {
   }
 
   /**
+   * Parse refresh token TTL string (e.g. '30d', '7d', '14d') to days
+   */
+  private parseRefreshTokenTTLDays(ttl: string): number {
+    const match = ttl.match(/^(\d+)([dh])$/);
+    if (!match) return 30;
+    const value = parseInt(match[1], 10);
+    const unit = match[2];
+    return unit === 'd' ? value : Math.ceil(value / 24);
+  }
+
+  /**
    * Get country code from country name
    */
   private getCountryCode(country: string | undefined): string {
@@ -734,7 +745,7 @@ export class AuthService {
       // #endregion
 
       // Generate refresh token
-      const refreshTokenTTL = '30d';
+      const refreshTokenTTL = this.configService.get<string>('REFRESH_TOKEN_TTL') || '30d';
       const refreshToken = this.jwtService.sign(payload, {
         expiresIn: refreshTokenTTL,
       });
@@ -772,7 +783,8 @@ export class AuthService {
       // #endregion
       const tokenHash = await bcrypt.hash(refreshToken, 10);
       const expiresAt = new Date();
-      expiresAt.setDate(expiresAt.getDate() + 30); // 30 days
+      const ttlDays = this.parseRefreshTokenTTLDays(refreshTokenTTL);
+      expiresAt.setDate(expiresAt.getDate() + ttlDays);
 
       // Defensive check: ensure RefreshToken model exists
       if (!this.refreshTokenAvailable) {

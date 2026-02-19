@@ -3,8 +3,13 @@ packages:
   - packages/*
   - services/*
 
+ignoredBuiltDependencies:
+  - '@nestjs/core'
+  - msgpackr-extract
+  - unrs-resolver
+
 onlyBuiltDependencies:
   - prisma
-  - "@prisma/client"
-  - "@prisma/engines"
+  - '@prisma/client'
+  - '@prisma/engines'
   - bcrypt

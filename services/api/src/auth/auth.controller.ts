@@ -9,6 +9,7 @@ import {
   HttpStatus,
   Query,
 } from '@nestjs/common';
+import { Throttle } from '@nestjs/throttler';
 import {
   ApiTags,
   ApiOperation,
@@ -59,6 +60,7 @@ export class AuthController {
   }
 
   @Public()
+  @Throttle({ default: { limit: 5, ttl: 60000 } }) // 5 requests per minute for invitation acceptance
   @Post('accept-invitation')
   @HttpCode(HttpStatus.CREATED)
   @ApiOperation({
@@ -99,6 +101,7 @@ export class AuthController {
   }
 
   @Public()
+  @Throttle({ default: { limit: 5, ttl: 60000 } }) // 5 requests per minute for registration
   @Post('register')
   @HttpCode(HttpStatus.CREATED)
   @ApiOperation({
@@ -128,6 +131,7 @@ export class AuthController {
   }
 
   @Public()
+  @Throttle({ default: { limit: 5, ttl: 60000 } }) // 5 requests per minute for login
   @Post('login')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Login user', description: 'Authenticate user with email and password' })
@@ -196,6 +200,7 @@ export class AuthController {
   }
 
   @Public()
+  @Throttle({ default: { limit: 10, ttl: 60000 } }) // 10 requests per minute for token refresh
   @Post('refresh')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({

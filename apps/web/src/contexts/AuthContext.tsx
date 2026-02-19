@@ -1,6 +1,6 @@
 'use client';
 
-import React, { createContext, useContext, useEffect, useState, useCallback } from 'react';
+import React, { createContext, useContext, useEffect, useState, useCallback, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { apiClient } from '@/lib/api';
 import type { User, UserRole } from '@hos-marketplace/shared-types';
@@ -46,18 +46,23 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }, [user, impersonatedRole]);
 
+  const mountedRef = useRef(true);
+
   const fetchUser = useCallback(async () => {
     try {
       const token = typeof window !== 'undefined' ? localStorage.getItem('auth_token') : null;
       
       if (!token) {
-        setUser(null);
-        setImpersonatedRole(null);
-        setLoading(false);
+        if (mountedRef.current) {
+          setUser(null);
+          setImpersonatedRole(null);
+          setLoading(false);
+        }
         return;
       }
 
       const response = await apiClient.getCurrentUser();
+      if (!mountedRef.current) return;
       
       if (response?.data) {
         // Normalize role to uppercase to match backend
@@ -65,39 +70,44 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           ...response.data,
           role: response.data.role?.toUpperCase() as UserRole,
         };
-        setUser(normalizedUser);
+        if (mountedRef.current) setUser(normalizedUser);
         // Only restore impersonated role from localStorage for ADMIN users.
-        // This prevents wholesalers/sellers from inheriting a stale admin_impersonated_role
-        // (e.g. from a previous admin session) which caused random "access denied" on sidebar nav.
-        if (normalizedUser.role === 'ADMIN' && typeof window !== 'undefined') {
-          const stored = localStorage.getItem('admin_impersonated_role');
-          if (stored && isValidUserRole(stored)) {
-            setImpersonatedRole(stored as UserRole);
-          } else if (stored) {
-            localStorage.removeItem('admin_impersonated_role');
+        if (mountedRef.current) {
+          if (normalizedUser.role === 'ADMIN' && typeof window !== 'undefined') {
+            const stored = localStorage.getItem('admin_impersonated_role');
+            if (stored && isValidUserRole(stored)) {
+              setImpersonatedRole(stored as UserRole);
+            } else if (stored) {
+              localStorage.removeItem('admin_impersonated_role');
+            }
+          } else {
+            if (typeof window !== 'undefined') {
+              localStorage.removeItem('admin_impersonated_role');
+            }
+            setImpersonatedRole(null);
           }
-        } else {
-          if (typeof window !== 'undefined') {
-            localStorage.removeItem('admin_impersonated_role');
-          }
-          setImpersonatedRole(null);
         }
       } else {
-        setUser(null);
-        setImpersonatedRole(null);
+        if (mountedRef.current) {
+          setUser(null);
+          setImpersonatedRole(null);
+        }
         localStorage.removeItem('auth_token');
       }
     } catch (error: any) {
       console.error('Failed to fetch user:', error);
-      setUser(null);
-      setImpersonatedRole(null);
+      if (mountedRef.current) {
+        setUser(null);
+        setImpersonatedRole(null);
+      }
       localStorage.removeItem('auth_token');
     } finally {
-      setLoading(false);
+      if (mountedRef.current) setLoading(false);
     }
   }, []);
 
   useEffect(() => {
+    mountedRef.current = true;
     fetchUser();
 
     // Listen for storage changes (login/logout in other tabs)
@@ -108,7 +118,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     };
 
     window.addEventListener('storage', handleStorageChange);
-    return () => window.removeEventListener('storage', handleStorageChange);
+    return () => {
+      mountedRef.current = false;
+      window.removeEventListener('storage', handleStorageChange);
+    };
   }, [fetchUser]);
 
   // Get effective role (impersonated if set, otherwise actual user role)

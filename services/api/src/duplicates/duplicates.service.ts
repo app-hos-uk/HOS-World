@@ -214,6 +214,7 @@ export class DuplicatesService {
       where: {
         status: { in: ['SUBMITTED', 'UNDER_REVIEW'] },
       },
+      take: 100,
       include: {
         seller: {
           select: { id: true, storeName: true, slug: true },
@@ -408,6 +409,7 @@ export class DuplicatesService {
     const submissions = await this.prisma.productSubmission.findMany({
       where: { status: { in: ['SUBMITTED', 'UNDER_REVIEW'] } },
       orderBy: { createdAt: 'asc' },
+      take: 100,
     });
 
     if (submissions.length === 0) {

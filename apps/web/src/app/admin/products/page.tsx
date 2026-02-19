@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, useMemo, useCallback, Suspense } from 'react';
+import { useEffect, useState, useMemo, useCallback, useRef, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { RouteGuard } from '@/components/RouteGuard';
 import { AdminLayout } from '@/components/AdminLayout';
@@ -13,6 +13,7 @@ import { getPublicApiBaseUrl } from '@/lib/apiBaseUrl';
 import { useCurrency } from '@/contexts/CurrencyContext';
 import { DataExport } from '@/components/DataExport';
 import { SafeImage } from '@/components/SafeImage';
+import { VirtualizedTableBody } from '@/components/VirtualizedTableBody';
 import Link from 'next/link';
 
 interface Product {
@@ -76,7 +77,8 @@ function AdminProductsContent() {
   const [categories, setCategories] = useState<any[]>([]);
   const [publishNow, setPublishNow] = useState(true);
   const [selectedProducts, setSelectedProducts] = useState<Set<string>>(new Set());
-  
+  const tableScrollRef = useRef<HTMLDivElement>(null);
+
   // Read seller filter from URL query param
   const sellerFilterFromUrl = searchParams.get('seller') || '';
   
@@ -879,9 +881,9 @@ function AdminProductsContent() {
                 Select All Visible
               </button>
             </div>
-            <div className="overflow-x-auto">
+            <div ref={tableScrollRef} className="overflow-auto max-h-[500px] overflow-x-auto">
               <table className="min-w-full divide-y divide-gray-200">
-                <thead className="bg-gray-50">
+                <thead className="bg-gray-50 sticky top-0 z-10">
                   <tr>
                     <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
                       <input
@@ -889,6 +891,7 @@ function AdminProductsContent() {
                         checked={selectedProducts.size === filteredProducts.length && filteredProducts.length > 0}
                         onChange={() => selectedProducts.size === filteredProducts.length ? clearSelection() : selectAllVisible()}
                         className="rounded border-gray-300 text-purple-600"
+                        aria-label="Select all products"
                       />
                     </th>
                     <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Product</th>
@@ -899,22 +902,28 @@ function AdminProductsContent() {
                     <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">Actions</th>
                   </tr>
                 </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
-                  {filteredProducts.length === 0 ? (
+                {filteredProducts.length === 0 ? (
+                  <tbody className="bg-white divide-y divide-gray-200">
                     <tr>
                       <td colSpan={7} className="px-6 py-8 text-center text-gray-500">
                         No products found
                       </td>
                     </tr>
-                  ) : (
-                    filteredProducts.map((product) => (
-                      <tr key={product.id} className={`hover:bg-gray-50 ${selectedProducts.has(product.id) ? 'bg-purple-50' : ''}`}>
+                  </tbody>
+                ) : (
+                  <VirtualizedTableBody
+                    items={filteredProducts}
+                    scrollRef={tableScrollRef}
+                    getRowClassName={(product) => `hover:bg-gray-50 ${selectedProducts.has(product.id) ? 'bg-purple-50' : ''}`}
+                    renderRow={(product) => (
+                      <>
                         <td className="px-4 py-3">
                           <input
                             type="checkbox"
                             checked={selectedProducts.has(product.id)}
                             onChange={() => toggleProductSelection(product.id)}
                             className="rounded border-gray-300 text-purple-600"
+                            aria-label={`Select ${product.name}`}
                           />
                         </td>
                         <td className="px-4 py-3">
@@ -978,21 +987,27 @@ function AdminProductsContent() {
                             </button>
                           </div>
                         </td>
-                      </tr>
-                    ))
-                  )}
-                </tbody>
+                      </>
+                    )}
+                  />
+                )}
               </table>
             </div>
           </div>
 
           {/* Edit Modal - Simplified for brevity, uses same form structure */}
           {showEditModal && editingProduct && (
-            <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50 overflow-y-auto">
+            <div
+              className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50 overflow-y-auto"
+              role="dialog"
+              aria-modal="true"
+              aria-labelledby="edit-product-modal-title"
+              onKeyDown={(e) => e.key === 'Escape' && (setShowEditModal(false), setEditingProduct(null))}
+            >
               <div className="bg-white rounded-lg max-w-4xl w-full my-4 max-h-[90vh] overflow-y-auto">
                 <div className="p-6">
                   <div className="flex justify-between items-start mb-4">
-                    <h2 className="text-2xl font-bold">Edit Product</h2>
+                    <h2 id="edit-product-modal-title" className="text-2xl font-bold">Edit Product</h2>
                     <button onClick={() => { setShowEditModal(false); setEditingProduct(null); }} className="text-gray-500 hover:text-gray-700 text-2xl">
                       ×
                     </button>
@@ -1097,7 +1112,7 @@ function AdminProductsContent() {
                         <div className="mt-4 flex flex-wrap gap-2">
                           {images.map((img, idx) => (
                             <div key={idx} className={`relative ${img.isPrimary ? 'ring-2 ring-purple-500' : ''}`}>
-                              <SafeImage src={img.url} alt="" width={64} height={64} className="object-cover rounded" />
+                              <SafeImage src={img.url} alt={img.alt || `Product image ${idx + 1}`} width={64} height={64} className="object-cover rounded" />
                               {img.isPrimary && <span className="absolute -top-1 -right-1 bg-purple-600 text-white text-xs px-1 rounded">★</span>}
                               <button type="button" onClick={() => removeImage(idx)} className="absolute -bottom-1 -right-1 bg-red-500 text-white text-xs w-5 h-5 rounded-full">×</button>
                             </div>
@@ -1134,9 +1149,15 @@ function AdminProductsContent() {
 
           {/* Delete Modal */}
           {showDeleteModal && productToDelete && (
-            <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+            <div
+              className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50"
+              role="dialog"
+              aria-modal="true"
+              aria-labelledby="delete-product-modal-title"
+              onKeyDown={(e) => e.key === 'Escape' && (setShowDeleteModal(false), setProductToDelete(null), setDeleteError(null))}
+            >
               <div className="bg-white rounded-lg max-w-md w-full p-6">
-                <h2 className="text-2xl font-bold mb-4">Delete Product</h2>
+                <h2 id="delete-product-modal-title" className="text-2xl font-bold mb-4">Delete Product</h2>
                 {deleteError ? (
                   <>
                     <div className="mb-4 p-4 bg-amber-50 border border-amber-200 rounded-lg">
@@ -1189,9 +1210,15 @@ function AdminProductsContent() {
 
           {/* Bulk Action Modal */}
           {showBulkModal && (
-            <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+            <div
+              className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50"
+              role="dialog"
+              aria-modal="true"
+              aria-labelledby="bulk-action-modal-title"
+              onKeyDown={(e) => e.key === 'Escape' && setShowBulkModal(false)}
+            >
               <div className="bg-white rounded-lg max-w-md w-full p-6">
-                <h2 className="text-2xl font-bold mb-4">
+                <h2 id="bulk-action-modal-title" className="text-2xl font-bold mb-4">
                   {bulkAction === 'publish' ? 'Publish Products' : 
                    bulkAction === 'unpublish' ? 'Unpublish Products' : 
                    bulkAction === 'inactive' ? 'Set Products Inactive' : 

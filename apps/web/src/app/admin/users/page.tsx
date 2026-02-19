@@ -1,12 +1,13 @@
 'use client';
 
-import { useEffect, useState, useMemo, useCallback } from 'react';
+import { useEffect, useState, useMemo, useCallback, useRef } from 'react';
 import { SafeImage } from '@/components/SafeImage';
 import { RouteGuard } from '@/components/RouteGuard';
 import { AdminLayout } from '@/components/AdminLayout';
 import { apiClient } from '@/lib/api';
 import { useToast } from '@/hooks/useToast';
 import { DataExport } from '@/components/DataExport';
+import { VirtualizedTableBody } from '@/components/VirtualizedTableBody';
 
 interface User {
   id: string;
@@ -78,6 +79,7 @@ export default function AdminUsersPage() {
   const [showNewThisMonth, setShowNewThisMonth] = useState(false);
   const [sortBy, setSortBy] = useState<'name' | 'email' | 'date' | 'role'>('date');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
+  const tableScrollRef = useRef<HTMLDivElement>(null);
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [showEditModal, setShowEditModal] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
@@ -733,9 +735,9 @@ export default function AdminUsersPage() {
                   {selectedUsers.size === filteredUsers.length ? 'Deselect All' : 'Select All'}
                 </button>
               </div>
-              <div className="overflow-x-auto">
+              <div ref={tableScrollRef} className="overflow-auto max-h-[500px] overflow-x-auto">
                 <table className="min-w-full divide-y divide-gray-200">
-                  <thead className="bg-gray-50">
+                  <thead className="bg-gray-50 sticky top-0 z-10">
                     <tr>
                       <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
                         <input
@@ -743,6 +745,7 @@ export default function AdminUsersPage() {
                           checked={selectedUsers.size === filteredUsers.length && filteredUsers.length > 0}
                           onChange={selectAll}
                           className="rounded border-gray-300 text-purple-600"
+                          aria-label="Select all users"
                         />
                       </th>
                       <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">User</th>
@@ -752,22 +755,26 @@ export default function AdminUsersPage() {
                       <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">Actions</th>
                     </tr>
                   </thead>
-                  <tbody className="bg-white divide-y divide-gray-200">
-                    {filteredUsers.map((user) => (
-                      <tr key={user.id} className={`hover:bg-gray-50 ${selectedUsers.has(user.id) ? 'bg-purple-50' : ''}`}>
+                  <VirtualizedTableBody
+                    items={filteredUsers}
+                    scrollRef={tableScrollRef}
+                    getRowClassName={(user) => `hover:bg-gray-50 ${selectedUsers.has(user.id) ? 'bg-purple-50' : ''}`}
+                    renderRow={(user) => (
+                      <>
                         <td className="px-4 py-3">
                           <input
                             type="checkbox"
                             checked={selectedUsers.has(user.id)}
                             onChange={() => toggleSelection(user.id)}
                             className="rounded border-gray-300 text-purple-600"
+                            aria-label={`Select ${user.email}`}
                           />
                         </td>
                         <td className="px-4 py-3">
                           <div className="flex items-center">
                             <div className="flex-shrink-0 h-10 w-10">
                               {user.avatar ? (
-                                <SafeImage width={40} height={40} className="h-10 w-10 rounded-full object-cover" src={user.avatar} alt="" fallback="👤" />
+                                <SafeImage width={40} height={40} className="h-10 w-10 rounded-full object-cover" src={user.avatar} alt={`${user.firstName || user.email} avatar`} fallback="👤" />
                               ) : (
                                 <div className="h-10 w-10 rounded-full bg-purple-100 flex items-center justify-center">
                                   <span className="text-purple-600 font-medium text-sm">
@@ -835,9 +842,9 @@ export default function AdminUsersPage() {
                             )}
                           </div>
                         </td>
-                      </tr>
-                    ))}
-                  </tbody>
+                      </>
+                    )}
+                  />
                 </table>
               </div>
             </div>
@@ -845,11 +852,17 @@ export default function AdminUsersPage() {
 
           {/* User Detail Modal */}
           {showDetailModal && selectedUser && (
-            <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+            <div
+              className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50"
+              role="dialog"
+              aria-modal="true"
+              aria-labelledby="user-detail-modal-title"
+              onKeyDown={(e) => e.key === 'Escape' && setShowDetailModal(false)}
+            >
               <div className="bg-white rounded-lg max-w-lg w-full max-h-[90vh] overflow-y-auto">
                 <div className="p-6">
                   <div className="flex justify-between items-start mb-6">
-                    <h2 className="text-2xl font-bold">User Details</h2>
+                    <h2 id="user-detail-modal-title" className="text-2xl font-bold">User Details</h2>
                     <button onClick={() => setShowDetailModal(false)} className="text-gray-500 hover:text-gray-700 text-2xl">×</button>
                   </div>
 
@@ -932,11 +945,17 @@ export default function AdminUsersPage() {
 
           {/* Edit Modal */}
           {showEditModal && selectedUser && (
-            <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+            <div
+              className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50"
+              role="dialog"
+              aria-modal="true"
+              aria-labelledby="edit-user-modal-title"
+              onKeyDown={(e) => e.key === 'Escape' && setShowEditModal(false)}
+            >
               <div className="bg-white rounded-lg max-w-md w-full">
                 <div className="p-6">
                   <div className="flex justify-between items-start mb-4">
-                    <h2 className="text-2xl font-bold">Edit User</h2>
+                    <h2 id="edit-user-modal-title" className="text-2xl font-bold">Edit User</h2>
                     <button onClick={() => setShowEditModal(false)} className="text-gray-500 hover:text-gray-700">✕</button>
                   </div>
 
@@ -1022,11 +1041,17 @@ export default function AdminUsersPage() {
 
           {/* Create Modal */}
           {showCreateModal && (
-            <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+            <div
+              className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50"
+              role="dialog"
+              aria-modal="true"
+              aria-labelledby="create-user-modal-title"
+              onKeyDown={(e) => e.key === 'Escape' && setShowCreateModal(false)}
+            >
               <div className="bg-white rounded-lg max-w-md w-full max-h-[90vh] overflow-y-auto">
                 <div className="p-6">
                   <div className="flex justify-between items-start mb-4">
-                    <h2 className="text-2xl font-bold">Create User</h2>
+                    <h2 id="create-user-modal-title" className="text-2xl font-bold">Create User</h2>
                     <button onClick={() => setShowCreateModal(false)} className="text-gray-500 hover:text-gray-700">✕</button>
                   </div>
 
@@ -1251,10 +1276,16 @@ export default function AdminUsersPage() {
 
           {/* Delete Modal */}
           {showDeleteModal && selectedUser && (
-            <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+            <div
+              className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50"
+              role="dialog"
+              aria-modal="true"
+              aria-labelledby="delete-user-modal-title"
+              onKeyDown={(e) => e.key === 'Escape' && setShowDeleteModal(false)}
+            >
               <div className="bg-white rounded-lg max-w-md w-full">
                 <div className="p-6">
-                  <h2 className="text-2xl font-bold mb-4">Delete User</h2>
+                  <h2 id="delete-user-modal-title" className="text-2xl font-bold mb-4">Delete User</h2>
                   <p className="text-gray-600 mb-6">
                     Are you sure you want to delete <strong>{selectedUser.email}</strong>? This action cannot be undone.
                   </p>

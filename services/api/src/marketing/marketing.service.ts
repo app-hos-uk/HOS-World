@@ -16,6 +16,7 @@ export class MarketingService {
       where: {
         status: 'CATALOG_COMPLETED',
       },
+      take: 100,
       include: {
         seller: {
           select: {
@@ -95,6 +96,7 @@ export class MarketingService {
     const materials = await this.prisma.marketingMaterial.findMany({
       where,
       orderBy: { createdAt: 'desc' },
+      take: 100,
       include: {
         submission: {
           include: {

@@ -17,6 +17,7 @@ export class CatalogService {
         status: 'PROCUREMENT_APPROVED',
         catalogEntry: null, // Not yet cataloged
       },
+      take: 100,
       include: {
         seller: {
           select: {
@@ -239,6 +240,7 @@ export class CatalogService {
     const entries = await this.prisma.catalogEntry.findMany({
       where,
       orderBy: { createdAt: 'desc' },
+      take: 100,
       include: {
         submission: {
           include: {

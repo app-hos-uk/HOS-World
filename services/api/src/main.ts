@@ -23,7 +23,7 @@ let bullServerAdapter: any = null;
 let bullJobsQueue: Queue | null = null;
 let bullRedisClient: InstanceType<typeof IORedis> | null = null;
 
-// Validate required environment variables
+// Validate required environment variables (config schema validation)
 function validateEnvironment() {
   const required = ['DATABASE_URL', 'JWT_SECRET', 'JWT_REFRESH_SECRET'];
   const missing: string[] = [];
@@ -53,6 +53,22 @@ function validateEnvironment() {
       'JWT_SECRET is too short (minimum 32 characters recommended)',
       'Environment Validation',
     );
+  }
+
+  // Validate REFRESH_TOKEN_TTL format if set (e.g. 30d, 7d, 14d)
+  const refreshTtl = process.env.REFRESH_TOKEN_TTL;
+  if (refreshTtl && !/^\d+[dh]$/.test(refreshTtl)) {
+    logger.warn(
+      `REFRESH_TOKEN_TTL should match format like 30d or 7d (got: ${refreshTtl})`,
+      'Environment Validation',
+    );
+  }
+
+  // Validate PORT if set (must be number)
+  const port = process.env.PORT;
+  if (port && (isNaN(parseInt(port, 10)) || parseInt(port, 10) < 1 || parseInt(port, 10) > 65535)) {
+    logger.error('PORT must be a valid number between 1 and 65535', 'Environment Validation');
+    process.exit(1);
   }
 
   logger.info('Environment variables validated successfully', 'Environment Validation');

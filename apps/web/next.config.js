@@ -8,11 +8,18 @@ const nextConfig = {
     '@hos-marketplace/utils',
   ],
   images: {
-    // Disable server-side image optimization for all images.
-    // Product images come from arbitrary external sources (OneDrive, placehold.co,
-    // etc.) that return 403/400 when fetched server-side by the Next.js optimizer.
-    // Images are still lazy-loaded and responsive; they just skip the resize proxy.
-    unoptimized: true,
+    // Enable optimization for images from allowed domains
+    unoptimized: false,
+    remotePatterns: [
+      { protocol: 'https', hostname: '**.placehold.co', pathname: '/**' },
+      { protocol: 'https', hostname: 'res.cloudinary.com', pathname: '/**' },
+      { protocol: 'https', hostname: '**.amazonaws.com', pathname: '/**' },
+      { protocol: 'https', hostname: '**.railway.app', pathname: '/**' },
+      { protocol: 'https', hostname: '**.railway.internal', pathname: '/**' },
+      { protocol: 'http', hostname: 'localhost', pathname: '/**' },
+      { protocol: 'https', hostname: 'localhost', pathname: '/**' },
+      { protocol: 'http', hostname: '127.0.0.1', pathname: '/**' },
+    ],
   },
   // ESLint configuration
   // Temporarily ignore ESLint during builds to allow deployment

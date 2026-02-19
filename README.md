@@ -44,12 +44,15 @@ pnpm install
 ### Development
 
 ```bash
-# Start all applications
-npm run dev
+# Start API + Web only (recommended - avoids file table overflow with full monorepo)
+pnpm run dev:core
+
+# Start all applications (requires high ulimit on macOS: ulimit -n 65536)
+pnpm run dev
 
 # Start specific workspace
-npm run dev --workspace=apps/web
-npm run dev --workspace=services/api
+pnpm --filter @hos-marketplace/web dev
+pnpm --filter @hos-marketplace/api dev
 ```
 
 ### Build

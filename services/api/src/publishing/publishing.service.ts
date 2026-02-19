@@ -171,6 +171,7 @@ export class PublishingService {
       where: {
         status: 'FINANCE_APPROVED',
       },
+      take: 100,
       include: {
         seller: {
           select: {
@@ -199,6 +200,7 @@ export class PublishingService {
       where: {
         status: 'PUBLISHED',
       },
+      take: 100,
       include: {
         seller: {
           select: {

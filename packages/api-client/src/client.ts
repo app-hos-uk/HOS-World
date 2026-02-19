@@ -3888,34 +3888,6 @@ export class ApiClient {
     });
   }
 
-  // Settlements - Process Settlement
-  async processSettlement(id: string): Promise<ApiResponse<any>> {
-    return this.request<ApiResponse<any>>(`/settlements/${id}/process`, {
-      method: 'POST',
-    });
-  }
-
-  // Settlements - Mark as Paid
-  async markSettlementPaid(id: string): Promise<ApiResponse<any>> {
-    return this.request<ApiResponse<any>>(`/settlements/${id}/mark-paid`, {
-      method: 'POST',
-    });
-  }
-
-  // Settlements - Cancel Settlement
-  async cancelSettlement(id: string): Promise<ApiResponse<any>> {
-    return this.request<ApiResponse<any>>(`/settlements/${id}/cancel`, {
-      method: 'POST',
-    });
-  }
-
-  // Settlements - Retry Settlement
-  async retrySettlement(id: string): Promise<ApiResponse<any>> {
-    return this.request<ApiResponse<any>>(`/settlements/${id}/retry`, {
-      method: 'POST',
-    });
-  }
-
   // Gift Card Refund
   async refundGiftCard(id: string, amount: number, reason?: string): Promise<ApiResponse<any>> {
     return this.request<ApiResponse<any>>(`/gift-cards/${id}/refund`, {

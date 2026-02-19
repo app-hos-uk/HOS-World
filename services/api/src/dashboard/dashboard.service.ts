@@ -45,6 +45,8 @@ export class DashboardService {
     const [orders, products] = await Promise.all([
       this.prisma.order.findMany({
         where: whereClause,
+        orderBy: { createdAt: 'desc' },
+        take: 500,
         include: {
           items: {
             include: {
@@ -181,6 +183,8 @@ export class DashboardService {
         },
         paymentStatus: 'PAID',
       },
+      orderBy: { createdAt: 'desc' },
+      take: 500,
       include: {
         items: {
           include: {

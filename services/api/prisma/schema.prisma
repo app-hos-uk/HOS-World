@@ -871,7 +871,7 @@ model Notification {
   metadata  Json?
   createdAt DateTime           @default(now())
 
-  @@index([userId, read])
+  @@index([userId, readAt])
   @@index([createdAt])
   @@map("notifications")
 }
@@ -979,6 +979,7 @@ model ProductSubmission {
   updatedAt             DateTime                @updatedAt
   crossSellerGroupId    String?                 // Set by duplicate grouping (cron or on-demand) for reporting
   pricingData           Json?                   // Structured pricing data set by finance (basePrice, hosMargin, finalPrice, visibilityLevel)
+  version               Int                     @default(1) // Optimistic concurrency control
 
   // Relations
   product            Product?            @relation(fields: [productId], references: [id])

@@ -192,19 +192,18 @@ export class FulfillmentService {
         select: { id: true, email: true },
       });
 
-      for (const staff of fcStaff) {
-        await this.prisma.notification.create({
-          data: {
+      if (fcStaff.length > 0) {
+        await this.prisma.notification.createMany({
+          data: fcStaff.map((staff) => ({
             userId: staff.id,
-            type: 'ORDER_CONFIRMATION', // Using existing type, can be extended later
+            type: 'ORDER_CONFIRMATION' as any,
             subject: 'New Shipment Received',
             content: `New shipment ${shipment.trackingNumber || shipment.id} has been created for fulfillment center ${shipment.fulfillmentCenter?.name || 'N/A'}`,
-            email: staff.email || undefined,
             metadata: {
               shipmentId: shipment.id,
               fulfillmentCenterId: shipment.fulfillmentCenterId,
             } as any,
-          },
+          })),
         });
       }
     } catch (error) {
@@ -229,6 +228,7 @@ export class FulfillmentService {
     const shipments = await this.prisma.shipment.findMany({
       where,
       orderBy: { createdAt: 'desc' },
+      take: 100,
       include: {
         submission: {
           include: {
@@ -347,19 +347,18 @@ export class FulfillmentService {
           select: { id: true, email: true, role: true },
         });
 
-        for (const user of teams) {
-          await this.prisma.notification.create({
-            data: {
+        if (teams.length > 0) {
+          await this.prisma.notification.createMany({
+            data: teams.map((user) => ({
               userId: user.id,
-              type: 'ORDER_CONFIRMATION', // Using existing type, can be extended with CATALOG_PENDING later
+              type: 'ORDER_CONFIRMATION' as any,
               subject: 'Shipment Verified - Ready for Catalog',
               content: `Shipment ${updated.trackingNumber || updated.id} has been verified and accepted at fulfillment center. Product submission is ready for catalog.`,
-              email: user.email || undefined,
               metadata: {
                 shipmentId: updated.id,
                 submissionId: shipment.submissionId,
               } as any,
-            },
+            })),
           });
         }
       } catch (error) {
@@ -406,19 +405,18 @@ export class FulfillmentService {
           select: { id: true, email: true },
         });
 
-        for (const user of procurementTeam) {
-          await this.prisma.notification.create({
-            data: {
+        if (procurementTeam.length > 0) {
+          await this.prisma.notification.createMany({
+            data: procurementTeam.map((user) => ({
               userId: user.id,
-              type: 'ORDER_CANCELLED', // Using existing type, can be extended later
+              type: 'ORDER_CANCELLED' as any,
               subject: 'Shipment Rejected - Action Required',
               content: `Shipment ${updated.trackingNumber || updated.id} has been rejected. Review required.`,
-              email: user.email || undefined,
               metadata: {
                 shipmentId: updated.id,
                 submissionId: shipment.submissionId,
               } as any,
-            },
+            })),
           });
         }
       } catch (error) {
@@ -479,9 +477,10 @@ export class FulfillmentService {
       throw new NotFoundException('Shipment not found');
     }
 
-    if (shipment.status !== 'FC_REJECTED') {
+    // ShipmentStatus.REJECTED = FC rejected the shipment (ProductSubmission becomes FC_REJECTED)
+    if (shipment.status !== ShipmentStatus.REJECTED) {
       throw new BadRequestException(
-        'Only FC_REJECTED shipments can be resubmitted',
+        'Only rejected shipments can be resubmitted',
       );
     }
 

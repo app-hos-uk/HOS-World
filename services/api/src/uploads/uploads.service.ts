@@ -1,6 +1,6 @@
 import { Injectable, BadRequestException, NotFoundException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { existsSync, unlinkSync, mkdirSync } from 'fs';
+import { existsSync, unlinkSync, mkdirSync, readFileSync } from 'fs';
 import { join } from 'path';
 import { randomUUID } from 'crypto';
 
@@ -73,13 +73,33 @@ export class UploadsService {
     return `${this.apiBaseUrl}/uploads/${safeFolder}/${filename}`;
   }
 
+  /**
+   * Validate file content by magic bytes (prevents MIME spoofing)
+   */
+  private validateFileContent(buffer: Buffer): boolean {
+    if (!buffer || buffer.length < 12) return false;
+    // JPEG: FF D8 FF
+    if (buffer[0] === 0xff && buffer[1] === 0xd8 && buffer[2] === 0xff) return true;
+    // PNG: 89 50 4E 47 0D 0A 1A 0A
+    if (buffer[0] === 0x89 && buffer[1] === 0x50 && buffer[2] === 0x4e && buffer[3] === 0x47) return true;
+    // GIF: GIF87a or GIF89a
+    if (buffer[0] === 0x47 && buffer[1] === 0x49 && buffer[2] === 0x46) return true;
+    // WebP: RIFF....WEBP
+    if (buffer[0] === 0x52 && buffer[1] === 0x49 && buffer[2] === 0x46 && buffer[3] === 0x46 &&
+        buffer[8] === 0x57 && buffer[9] === 0x45 && buffer[10] === 0x42 && buffer[11] === 0x50) return true;
+    // SVG: <?xml or <svg
+    const start = buffer.slice(0, 200).toString('utf8').trim().toLowerCase();
+    if (start.startsWith('<?xml') || start.startsWith('<svg')) return true;
+    return false;
+  }
+
   async uploadFile(file: Express.Multer.File, folder: string = 'uploads'): Promise<UploadResult> {
     // Validate file
     if (!file) {
       throw new BadRequestException('No file provided');
     }
 
-    // Validate file type
+    // Validate file type (client-provided)
     const allowedMimeTypes = [
       'image/jpeg',
       'image/jpg',
@@ -91,6 +111,12 @@ export class UploadsService {
 
     if (!allowedMimeTypes.includes(file.mimetype)) {
       throw new BadRequestException('Invalid file type. Only images are allowed.');
+    }
+
+    // Validate actual file content (magic bytes) to prevent MIME spoofing
+    const buffer = file.buffer || (file.path ? readFileSync(file.path) : null);
+    if (buffer && !this.validateFileContent(buffer)) {
+      throw new BadRequestException('File content does not match declared type. Invalid or unsupported image.');
     }
 
     // Validate file size (max 10MB)
@@ -137,8 +163,15 @@ export class UploadsService {
    * Get file path for serving
    */
   getFileForServing(folder: string, filename: string): string {
+    // Explicit path traversal prevention
+    if (folder.includes('..') || filename.includes('..')) {
+      throw new BadRequestException('Invalid path');
+    }
     const safeFolder = this.sanitizeFolder(folder);
-    const safeFilename = filename.replace(/[^a-zA-Z0-9._-]/g, ''); // Basic sanitization
+    const safeFilename = filename.replace(/[^a-zA-Z0-9._-]/g, '').substring(0, 255);
+    if (!safeFilename) {
+      throw new BadRequestException('Invalid filename');
+    }
     const filePath = join(this.uploadBasePath, safeFolder, safeFilename);
 
     if (!existsSync(filePath)) {

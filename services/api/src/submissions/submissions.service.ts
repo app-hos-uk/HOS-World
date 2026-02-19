@@ -120,6 +120,7 @@ export class SubmissionsService {
     const submissions = await this.prisma.productSubmission.findMany({
       where,
       orderBy: { createdAt: 'desc' },
+      take: 100,
       include: {
         seller: {
           select: {
@@ -386,19 +387,18 @@ export class SubmissionsService {
         select: { id: true, email: true },
       });
 
-      for (const user of procurementTeam) {
-        await this.prisma.notification.create({
-          data: {
+      if (procurementTeam.length > 0) {
+        await this.prisma.notification.createMany({
+          data: procurementTeam.map((user) => ({
             userId: user.id,
-            type: 'SUBMISSION_RESUBMITTED',
+            type: 'SUBMISSION_RESUBMITTED' as any,
             subject: 'Product Resubmitted for Review',
             content: `Submission from ${updated.seller?.storeName || 'Unknown Seller'} has been resubmitted and is ready for review.`,
-            email: user.email || undefined,
             metadata: {
               submissionId: updated.id,
               sellerId: updated.sellerId,
             } as any,
-          },
+          })),
         });
       }
     } catch (error) {

@@ -22,7 +22,7 @@ export class ProcurementService {
     private notificationsService: NotificationsService,
   ) {}
 
-  async findAll(status?: ProductSubmissionStatus | string) {
+  async findAll(status?: ProductSubmissionStatus | string, skip = 0, take = 100) {
     const where: any = {};
 
     // Only filter by status when explicitly provided (for procurement review queue).
@@ -34,6 +34,8 @@ export class ProcurementService {
     const submissions = await this.prisma.productSubmission.findMany({
       where,
       orderBy: { createdAt: 'desc' },
+      skip,
+      take,
       include: {
         seller: {
           select: {

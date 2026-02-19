@@ -16,6 +16,7 @@ export class FinanceService {
       where: {
         status: { in: ['MARKETING_COMPLETED', 'FINANCE_PENDING'] },
       },
+      take: 100,
       include: {
         seller: {
           select: {
