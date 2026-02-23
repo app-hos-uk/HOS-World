@@ -16,6 +16,7 @@ const nextConfig = {
       { protocol: 'https', hostname: '**.amazonaws.com', pathname: '/**' },
       { protocol: 'https', hostname: '**.railway.app', pathname: '/**' },
       { protocol: 'https', hostname: '**.railway.internal', pathname: '/**' },
+      { protocol: 'https', hostname: 'cdn.shopify.com', pathname: '/**' },
       { protocol: 'http', hostname: 'localhost', pathname: '/**' },
       { protocol: 'https', hostname: 'localhost', pathname: '/**' },
       { protocol: 'http', hostname: '127.0.0.1', pathname: '/**' },
