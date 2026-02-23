@@ -6,7 +6,6 @@ import { Header } from '@/components/Header';
 import { Footer } from '@/components/Footer';
 import { apiClient } from '@/lib/api';
 import { useToast } from '@/hooks/useToast';
-import { useCurrency } from '@/contexts/CurrencyContext';
 import Image from 'next/image';
 import Link from 'next/link';
 
@@ -29,7 +28,6 @@ interface DigitalProduct {
 
 export default function DownloadsPage() {
   const toast = useToast();
-  const { formatPrice } = useCurrency();
   const [downloads, setDownloads] = useState<DigitalProduct[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<'all' | 'available' | 'expired'>('all');
@@ -73,46 +71,8 @@ export default function DownloadsPage() {
       }
     } catch (err: any) {
       console.error('Error fetching downloads:', err);
-      // Generate sample data for demo
-      setDownloads([
-        {
-          id: '1',
-          name: 'Ultimate Fandom Art Pack',
-          description: 'High-resolution artwork collection featuring your favorite characters',
-          fileName: 'fandom-art-pack.zip',
-          fileSize: 256000000,
-          fileType: 'application/zip',
-          thumbnailUrl: undefined,
-          downloadCount: 2,
-          maxDownloads: 5,
-          purchasedAt: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString(),
-          status: 'available',
-        },
-        {
-          id: '2',
-          name: 'Exclusive Wallpaper Collection',
-          description: '4K wallpapers for desktop and mobile',
-          fileName: 'wallpapers-4k.zip',
-          fileSize: 128000000,
-          fileType: 'application/zip',
-          downloadCount: 5,
-          maxDownloads: 5,
-          purchasedAt: new Date(Date.now() - 14 * 24 * 60 * 60 * 1000).toISOString(),
-          status: 'limit_reached',
-        },
-        {
-          id: '3',
-          name: 'Character Design Tutorial',
-          description: 'Step-by-step video tutorial on character design',
-          fileName: 'tutorial.mp4',
-          fileSize: 512000000,
-          fileType: 'video/mp4',
-          downloadCount: 1,
-          expiresAt: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString(),
-          purchasedAt: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString(),
-          status: 'expired',
-        },
-      ]);
+      toast.error(err.message || 'Failed to load downloads');
+      setDownloads([]);
     } finally {
       setLoading(false);
     }
@@ -393,7 +353,7 @@ export default function DownloadsPage() {
 
                         {product.orderId && (
                           <Link
-                            href={`/orders?id=${product.orderId}`}
+                            href={`/orders/${product.orderId}`}
                             className="text-sm text-purple-600 hover:text-purple-700"
                           >
                             View Order →
@@ -434,7 +394,7 @@ export default function DownloadsPage() {
               Having trouble with your downloads? Contact our support team for assistance.
             </p>
             <Link
-              href="/support"
+              href="/help"
               className="inline-block px-6 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors font-medium"
             >
               Contact Support

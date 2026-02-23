@@ -87,6 +87,52 @@ export class WebhooksController {
     };
   }
 
+  // ==================== Dead Letter Queue (must be before :id routes) ====================
+
+  @Get('dlq/deliveries')
+  @Roles('ADMIN')
+  @ApiOperation({
+    summary: 'List dead-lettered webhook deliveries',
+    description: 'Returns deliveries that exhausted all retry attempts. Admin only.',
+  })
+  @ApiQuery({ name: 'limit', required: false, type: Number })
+  @ApiQuery({ name: 'offset', required: false, type: Number })
+  @SwaggerApiResponse({ status: 200, description: 'Dead-lettered deliveries retrieved' })
+  async listDeadLettered(
+    @Query('limit') limit?: string,
+    @Query('offset') offset?: string,
+  ): Promise<ApiResponse<any>> {
+    const [deliveries, total] = await Promise.all([
+      this.webhooksService.listDeadLettered(
+        limit ? parseInt(limit, 10) : 50,
+        offset ? parseInt(offset, 10) : 0,
+      ),
+      this.webhooksService.countDeadLettered(),
+    ]);
+    return {
+      data: { deliveries, total },
+      message: 'Dead-lettered deliveries retrieved successfully',
+    };
+  }
+
+  @Post('dlq/deliveries/:id/retry')
+  @Roles('ADMIN')
+  @ApiOperation({
+    summary: 'Retry a dead-lettered delivery',
+    description: 'Resets attempt count and re-queues a dead-lettered webhook delivery. Admin only.',
+  })
+  @ApiParam({ name: 'id', description: 'Delivery UUID', type: String })
+  @SwaggerApiResponse({ status: 200, description: 'Dead-lettered delivery retried' })
+  async retryDeadLettered(@Param('id') id: string): Promise<ApiResponse<any>> {
+    const result = await this.webhooksService.retryDeadLettered(id);
+    return {
+      data: result,
+      message: 'Dead-lettered delivery retry attempted',
+    };
+  }
+
+  // ==================== Parameterized routes ====================
+
   @Get(':id')
   @ApiOperation({
     summary: 'Get webhook by ID',

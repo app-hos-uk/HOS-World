@@ -21,6 +21,18 @@ export class ProductsService {
     private cacheHook: ProductsCacheHook,
   ) {}
 
+  /**
+   * Invalidate product cache. If productId is given, clears that specific
+   * product entry AND the list caches; otherwise clears only list caches.
+   */
+  async invalidateProductCache(productId?: string): Promise<void> {
+    if (productId) {
+      await this.cacheHook.onProductDeleted(productId);
+    } else {
+      await this.cacheHook.onListCacheInvalidated();
+    }
+  }
+
   async create(sellerId: string, createProductDto: CreateProductDto): Promise<Product> {
     // Check if user is admin - they may not have a seller profile
     const user = await this.prisma.user.findUnique({

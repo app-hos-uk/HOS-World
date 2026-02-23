@@ -148,15 +148,17 @@ export default function LoginPage() {
         throw new Error('Invalid response from server');
       }
 
-      const { token: authToken } = response.data;
+      const { token: authToken, refreshToken } = response.data;
 
       if (!authToken) {
         throw new Error('No token received from server');
       }
 
-      // Save token to localStorage
       try {
         localStorage.setItem('auth_token', authToken);
+        if (refreshToken) {
+          localStorage.setItem('refresh_token', refreshToken);
+        }
         setToken(authToken);
       } catch (e) {
         console.error('Failed to save token:', e);
@@ -277,11 +279,19 @@ export default function LoginPage() {
         gdprConsent,
         dataProcessingConsent,
       });
-      const { token: authToken, user } = response.data;
+      if (!response || !response.data) {
+        throw new Error('Invalid response from server');
+      }
+      const { token: authToken, refreshToken: regRefreshToken, user } = response.data;
+      if (!authToken) {
+        throw new Error('No authentication token received');
+      }
 
-      // Save token to localStorage
       try {
         localStorage.setItem('auth_token', authToken);
+        if (regRefreshToken) {
+          localStorage.setItem('refresh_token', regRefreshToken);
+        }
         setToken(authToken);
       } catch (e) {
         console.error('Failed to save token:', e);
@@ -312,11 +322,10 @@ export default function LoginPage() {
           router.replace('/seller/onboarding');
         }
       } else {
-        // Customers go through character selection
         if (typeof window !== 'undefined') {
-          window.location.replace('/');
+          window.location.replace('/customer/dashboard');
         } else {
-          router.replace('/');
+          router.replace('/customer/dashboard');
         }
       }
     } catch (err: any) {
@@ -360,15 +369,13 @@ export default function LoginPage() {
     setResetSuccess(false);
 
     try {
-      // TODO: Connect to actual password reset endpoint when available
-      // For now, show success message
-      await new Promise((resolve) => setTimeout(resolve, 1000)); // Simulate API call
+      await apiClient.forgotPassword(resetEmail);
       setResetSuccess(true);
       setTimeout(() => {
         setStep('login');
         setResetEmail('');
         setResetSuccess(false);
-      }, 3000);
+      }, 5000);
     } catch (err: any) {
       setError(err.message || 'Failed to send reset email. Please try again.');
     } finally {
@@ -446,11 +453,13 @@ export default function LoginPage() {
                   Enter your email address and we&apos;ll send you a link to reset your password.
                 </p>
 
-                {error && (
-                  <div className="mb-4 p-3 bg-red-100 text-red-700 rounded-lg text-sm">
-                    {error}
-                  </div>
-                )}
+                <div aria-live="polite" aria-atomic="true">
+                  {error && (
+                    <div role="alert" className="mb-4 p-3 bg-red-100 text-red-700 rounded-lg text-sm">
+                      {error}
+                    </div>
+                  )}
+                </div>
 
                 <form onSubmit={handleForgotPassword} className="space-y-4">
                   <div>
@@ -504,11 +513,13 @@ export default function LoginPage() {
               {isLogin ? 'Welcome Back!' : 'Join the Magic'}
             </h2>
 
-            {error && (
-              <div className="mb-4 p-3 bg-red-100 text-red-700 rounded-lg text-sm">
-                {error}
-              </div>
-            )}
+            <div aria-live="polite" aria-atomic="true">
+              {error && (
+                <div role="alert" className="mb-4 p-3 bg-red-100 text-red-700 rounded-lg text-sm">
+                  {error}
+                </div>
+              )}
+            </div>
 
             <form onSubmit={isLogin ? handleLogin : handleRegister} className="space-y-4">
               <div>
@@ -537,7 +548,7 @@ export default function LoginPage() {
                   {isLogin && (
                     <button
                       type="button"
-                      onClick={() => setStep('forgot-password')}
+                      onClick={() => { setError(''); setStep('forgot-password'); }}
                       className="text-sm text-purple-600 hover:underline"
                     >
                       Forgot password?
@@ -822,6 +833,17 @@ export default function LoginPage() {
               >
                 {loading ? 'Loading...' : isLogin ? 'Login' : 'Create Account'}
               </button>
+
+              {!isLogin && (
+                <div className="mt-3 p-3 bg-blue-50 border border-blue-200 rounded-lg flex items-start gap-2">
+                  <svg className="w-5 h-5 text-blue-500 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  <p className="text-sm text-blue-700">
+                    Please check your email to verify your account after registration.
+                  </p>
+                </div>
+              )}
             </form>
 
             <div className="mt-6 text-center">

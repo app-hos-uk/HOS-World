@@ -37,7 +37,8 @@ export interface CMSBlogPost {
   publishedAt?: string;
 }
 
-const CMS_URL = process.env.NEXT_PUBLIC_CMS_URL || 'http://localhost:1337/api';
+const CMS_URL = process.env.NEXT_PUBLIC_CMS_URL
+  || (process.env.NODE_ENV === 'production' ? '' : 'http://localhost:1337/api');
 
 /**
  * Fetch a CMS page by slug with caching
@@ -114,7 +115,10 @@ export async function getCMSBlogPosts(limit: number = 10): Promise<CMSBlogPost[]
  */
 export async function revalidateCMSPath(path: string): Promise<void> {
   try {
-    await fetch(`${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/api/cms/revalidate`, {
+    const appUrl = process.env.NEXT_PUBLIC_APP_URL
+      || (process.env.NODE_ENV === 'production' ? '' : 'http://localhost:3000');
+    if (!appUrl) return;
+    await fetch(`${appUrl}/api/cms/revalidate`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

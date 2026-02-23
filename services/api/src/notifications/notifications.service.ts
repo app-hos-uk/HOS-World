@@ -1,10 +1,11 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../database/prisma.service';
+import { QueueService, JobType } from '../queue/queue.service';
 import * as nodemailer from 'nodemailer';
 
 @Injectable()
-export class NotificationsService {
+export class NotificationsService implements OnModuleInit {
   private transporter: nodemailer.Transporter | null = null;
   private readonly logger = new Logger(NotificationsService.name);
   private emailEnabled: boolean;
@@ -12,8 +13,21 @@ export class NotificationsService {
   constructor(
     private prisma: PrismaService,
     private configService: ConfigService,
+    private queueService: QueueService,
   ) {
     this.initializeEmailTransporter();
+  }
+
+  onModuleInit() {
+    this.queueService.registerProcessor(JobType.EMAIL_NOTIFICATION, async (job) => {
+      const { to, subject, html } = job.data;
+      await this.sendEmail(to, subject, html);
+    });
+    this.logger.log('Registered EMAIL_NOTIFICATION processor with BullMQ');
+  }
+
+  async queueNotification(to: string, subject: string, html: string): Promise<void> {
+    await this.queueService.addJob(JobType.EMAIL_NOTIFICATION, { to, subject, html });
   }
 
   private initializeEmailTransporter() {
@@ -117,8 +131,8 @@ export class NotificationsService {
       </html>
     `;
 
-    await this.sendEmail(email, subject, html);
-    this.logger.log(`📧 Seller invitation sent to ${email} (${sellerTypeName})`);
+    await this.queueNotification(email, subject, html);
+    this.logger.log(`📧 Seller invitation queued for ${email} (${sellerTypeName})`);
   }
 
   async sendOrderConfirmation(orderId: string): Promise<void> {
@@ -146,26 +160,25 @@ export class NotificationsService {
 
     const subject = `Order Confirmation - ${order.orderNumber}`;
     const html = this.generateOrderConfirmationEmail(order);
-    await this.sendEmail(order.user.email, subject, html);
 
-    // Log notification
     await this.prisma.notification.create({
       data: {
         userId: order.userId,
         type: 'ORDER_CONFIRMATION',
-        subject: `Order Confirmation - ${order.orderNumber}`,
+        subject,
         content: `Your order ${order.orderNumber} has been confirmed.`,
         email: order.user.email,
-        status: 'SENT',
-        sentAt: new Date(),
+        status: 'PENDING' as any,
       },
     });
+
+    await this.queueNotification(order.user.email, subject, html);
   }
 
   async sendOrderShipped(orderId: string, trackingCode: string): Promise<void> {
     const order = await this.prisma.order.findUnique({
       where: { id: orderId },
-      include: { user: true },
+      include: { user: { select: { id: true, email: true, firstName: true, lastName: true } } },
     });
 
     if (!order) {
@@ -174,25 +187,25 @@ export class NotificationsService {
 
     const subject = `Your Order Has Shipped - ${order.orderNumber}`;
     const html = this.generateOrderShippedEmail(order, trackingCode);
-    await this.sendEmail(order.user.email, subject, html);
 
     await this.prisma.notification.create({
       data: {
         userId: order.userId,
         type: 'ORDER_SHIPPED',
-        subject: `Your Order Has Shipped - ${order.orderNumber}`,
+        subject,
         content: `Your order ${order.orderNumber} has been shipped. Tracking: ${trackingCode}`,
         email: order.user.email,
-        status: 'SENT',
-        sentAt: new Date(),
+        status: 'PENDING' as any,
       },
     });
+
+    await this.queueNotification(order.user.email, subject, html);
   }
 
   async sendOrderDelivered(orderId: string): Promise<void> {
     const order = await this.prisma.order.findUnique({
       where: { id: orderId },
-      include: { user: true },
+      include: { user: { select: { id: true, email: true, firstName: true, lastName: true } } },
     });
 
     if (!order) {
@@ -201,19 +214,19 @@ export class NotificationsService {
 
     const subject = `Order Delivered - ${order.orderNumber}`;
     const html = this.generateOrderDeliveredEmail(order);
-    await this.sendEmail(order.user.email, subject, html);
 
     await this.prisma.notification.create({
       data: {
         userId: order.userId,
         type: 'ORDER_DELIVERED',
-        subject: `Order Delivered - ${order.orderNumber}`,
+        subject,
         content: `Your order ${order.orderNumber} has been delivered.`,
         email: order.user.email,
-        status: 'SENT',
-        sentAt: new Date(),
+        status: 'PENDING' as any,
       },
     });
+
+    await this.queueNotification(order.user.email, subject, html);
   }
 
   private generateOrderConfirmationEmail(order: any): string {
@@ -347,13 +360,33 @@ export class NotificationsService {
     `;
   }
 
-  async getUserNotifications(userId: string): Promise<any[]> {
+  async getUserNotifications(userId: string, limit?: number): Promise<any[]> {
     const notifications = await this.prisma.notification.findMany({
       where: { userId },
       orderBy: { createdAt: 'desc' },
-      take: 50, // Limit to last 50 notifications
+      take: limit || 50,
     });
     return notifications;
+  }
+
+  async markNotificationRead(userId: string, notificationId: string): Promise<any> {
+    return this.prisma.notification.updateMany({
+      where: { id: notificationId, userId },
+      data: { readAt: new Date(), status: 'READ' as any },
+    });
+  }
+
+  async markAllNotificationsRead(userId: string): Promise<any> {
+    return this.prisma.notification.updateMany({
+      where: { userId, readAt: null },
+      data: { readAt: new Date(), status: 'READ' as any },
+    });
+  }
+
+  async deleteNotification(userId: string, notificationId: string): Promise<any> {
+    return this.prisma.notification.deleteMany({
+      where: { id: notificationId, userId },
+    });
   }
 
   /**
@@ -391,12 +424,7 @@ export class NotificationsService {
         data: notifications,
       });
 
-      // Send emails
-      for (const user of users) {
-        await this.sendEmail(
-          user.email,
-          subject,
-          `
+      const emailHtml = `
           <!DOCTYPE html>
           <html>
           <head>
@@ -422,8 +450,10 @@ export class NotificationsService {
             </div>
           </body>
           </html>
-        `,
-        );
+        `;
+
+      for (const user of users) {
+        await this.queueNotification(user.email, subject, emailHtml);
       }
 
       this.logger.log(`✅ Sent ${notifications.length} notifications to ${role} team`);
@@ -460,13 +490,12 @@ export class NotificationsService {
           subject,
           content,
           email: user.email,
-          status: 'SENT',
-          sentAt: new Date(),
+          status: 'PENDING' as any,
           metadata: metadata ? (metadata as any) : undefined,
         },
       });
 
-      await this.sendEmail(
+      await this.queueNotification(
         user.email,
         subject,
         `
@@ -498,7 +527,7 @@ export class NotificationsService {
       `,
       );
 
-      this.logger.log(`✅ Sent notification to user ${userId}`);
+      this.logger.log(`✅ Queued notification for user ${userId}`);
     } catch (error: any) {
       this.logger.error(`Failed to send notification to user ${userId}: ${error?.message}`);
     }

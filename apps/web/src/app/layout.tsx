@@ -34,12 +34,37 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: 'House of Spells Marketplace',
-  description: 'Discover magical items from your favorite fandoms',
+  title: {
+    default: 'House of Spells - Magical Marketplace',
+    template: '%s | House of Spells',
+  },
+  description: 'Discover magical merchandise, collectibles, and enchanted items from your favourite fandoms at House of Spells marketplace.',
+  keywords: ['Harry Potter', 'merchandise', 'collectibles', 'magical', 'fandoms', 'spells', 'marketplace'],
+  authors: [{ name: 'House of Spells' }],
+  creator: 'House of Spells',
+  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || 'https://hos-marketplaceweb-production.up.railway.app'),
   icons: {
     icon: '/favicon.svg',
     shortcut: '/favicon.svg',
     apple: '/favicon.svg',
+  },
+  openGraph: {
+    type: 'website',
+    locale: 'en_GB',
+    siteName: 'House of Spells',
+    title: 'House of Spells - Magical Marketplace',
+    description: 'Discover magical merchandise, collectibles, and enchanted items from your favourite fandoms.',
+    images: [{ url: '/og-image.png', width: 1200, height: 630, alt: 'House of Spells Marketplace' }],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'House of Spells - Magical Marketplace',
+    description: 'Discover magical merchandise and collectibles.',
+  },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: { index: true, follow: true, 'max-video-preview': -1, 'max-image-preview': 'large', 'max-snippet': -1 },
   },
 };
 

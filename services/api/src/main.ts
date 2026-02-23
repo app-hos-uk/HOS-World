@@ -78,23 +78,18 @@ async function bootstrap() {
   // Validate environment variables first
   validateEnvironment();
 
-  logger.info('═══════════════════════════════════════════════════════════', 'Bootstrap');
-  logger.info('🚀 BOOTSTRAP STARTED', 'Bootstrap');
-  logger.info('═══════════════════════════════════════════════════════════', 'Bootstrap');
-  logger.info(`Timestamp: ${new Date().toISOString()}`, 'Bootstrap');
-  logger.info(`Node version: ${process.version}`, 'Bootstrap');
-  logger.info(`Working directory: ${process.cwd()}`, 'Bootstrap');
-  logger.info(`dist/main.js exists: ${require('fs').existsSync('./dist/main.js')}`, 'Bootstrap');
-  logger.info('═══════════════════════════════════════════════════════════', 'Bootstrap');
+  logger.info('Bootstrap started', 'Bootstrap');
+  logger.info(`Node ${process.version} | cwd: ${process.cwd()}`, 'Bootstrap');
 
   // CORS allowed origins - defined early so OPTIONS handler and enableCors both use it
   // Normalize: trim and remove trailing slash so "https://example.com" and "https://example.com/" both match
   const normalizeOrigin = (o: string) => (o || '').trim().replace(/\/+$/, '') || null;
+  const isProduction = process.env.NODE_ENV === 'production';
+
   let allowedOrigins: string[] = [
     process.env.FRONTEND_URL,
     'https://hos-marketplaceweb-production.up.railway.app',
-    'http://localhost:3000',
-    'http://localhost:3001',
+    ...(isProduction ? [] : ['http://localhost:3000', 'http://localhost:3001']),
   ]
     .filter(Boolean)
     .map((o) => normalizeOrigin(o as string))
@@ -223,7 +218,7 @@ async function bootstrap() {
         next();
       });
 
-      // Add security headers (helmet)
+      // Add security headers (helmet + additional hardening)
       app.use(
         helmet({
           contentSecurityPolicy: {
@@ -235,9 +230,16 @@ async function bootstrap() {
             },
           },
           crossOriginEmbedderPolicy: false, // Allow embedding for API docs
+          hsts: {
+            maxAge: 31536000, // 1 year
+            includeSubDomains: true,
+            preload: true,
+          },
+          referrerPolicy: { policy: 'strict-origin-when-cross-origin' },
+          noSniff: true, // X-Content-Type-Options: nosniff
         }),
       );
-      logger.info('✅ Security headers configured', 'Bootstrap');
+      logger.info('✅ Security headers configured (HSTS, Referrer-Policy, noSniff)', 'Bootstrap');
 
       // Add response compression
       app.use(compression());
@@ -357,7 +359,7 @@ async function bootstrap() {
     app.setGlobalPrefix('api');
 
     // Configure Swagger/OpenAPI documentation
-    const config = new DocumentBuilder()
+    const configBuilder = new DocumentBuilder()
       .setTitle('House of Spells Marketplace API')
       .setDescription('Complete API documentation for the House of Spells Marketplace platform')
       .setVersion('1.0.0')
@@ -380,42 +382,49 @@ async function bootstrap() {
       .addTag('admin', 'Admin operations')
       .addTag('sellers', 'Seller operations')
       .addTag('health', 'Health check endpoints')
-      .addServer('https://hos-marketplaceapi-production.up.railway.app/api', 'Production')
-      .addServer('http://localhost:3001/api', 'Local Development')
-      .build();
+      .addServer('https://hos-marketplaceapi-production.up.railway.app/api', 'Production');
 
-    const document = SwaggerModule.createDocument(app, config);
-    SwaggerModule.setup('api/docs', app, document, {
-      swaggerOptions: {
-        persistAuthorization: true,
-        tagsSorter: 'alpha',
-        operationsSorter: 'alpha',
-      },
-    });
-    logger.info('✅ Swagger documentation available at /api/docs', 'Bootstrap');
+    if (!isProduction) {
+      configBuilder.addServer('http://localhost:3001/api', 'Local Development');
+    }
 
-    // Bull Board dashboard for monitoring queues (optional - requires @bull-board packages)
-    try {
-      const serverAdapter = new ExpressAdapter();
-      serverAdapter.setBasePath('/api/admin/queues');
-      // Connect to existing Redis via REDIS_URL
-      const redisUrl = process.env.REDIS_URL || 'redis://localhost:6379';
-      // Create a shared IORedis instance so we can close it on shutdown
-      bullRedisClient = new IORedis(redisUrl);
-      const jobsQueue = new Queue('jobs', { connection: bullRedisClient });
-      const bullAdapter = new BullMQAdapter(jobsQueue);
-      createBullBoard({
-        queues: [bullAdapter as any],
-        serverAdapter,
+    const swaggerConfig = configBuilder.build();
+    const document = SwaggerModule.createDocument(app, swaggerConfig);
+
+    if (!isProduction) {
+      SwaggerModule.setup('api/docs', app, document, {
+        swaggerOptions: {
+          persistAuthorization: true,
+          tagsSorter: 'alpha',
+          operationsSorter: 'alpha',
+        },
       });
-      // Mount router
-      app.use('/api/admin/queues', serverAdapter.getRouter());
-      // Save references for graceful shutdown
-      bullServerAdapter = serverAdapter;
-      bullJobsQueue = jobsQueue;
-      logger.info('✅ Bull Board mounted at /api/admin/queues');
-    } catch (err: any) {
-      logger.warn('Bull Board not available (missing packages or redis) - skipping dashboard');
+      logger.info('Swagger documentation available at /api/docs', 'Bootstrap');
+    } else {
+      logger.info('Swagger documentation disabled in production', 'Bootstrap');
+    }
+
+    // Bull Board dashboard for monitoring queues (non-production only)
+    if (!isProduction && process.env.REDIS_URL) {
+      try {
+        const serverAdapter = new ExpressAdapter();
+        serverAdapter.setBasePath('/api/admin/queues');
+        bullRedisClient = new IORedis(process.env.REDIS_URL);
+        const jobsQueue = new Queue('jobs', { connection: bullRedisClient });
+        const bullAdapter = new BullMQAdapter(jobsQueue);
+        createBullBoard({
+          queues: [bullAdapter as any],
+          serverAdapter,
+        });
+        app.use('/api/admin/queues', serverAdapter.getRouter());
+        bullServerAdapter = serverAdapter;
+        bullJobsQueue = jobsQueue;
+        logger.info('Bull Board mounted at /api/admin/queues', 'Bootstrap');
+      } catch (err: any) {
+        logger.warn('Bull Board not available (missing packages or redis) - skipping dashboard', 'Bootstrap');
+      }
+    } else if (isProduction) {
+      logger.info('Bull Board disabled in production', 'Bootstrap');
     }
 
     // Global validation pipe
@@ -536,18 +545,8 @@ process.on('unhandledRejection', (reason, promise) => {
   }
 });
 
-// Start bootstrap
-logger.info('═══════════════════════════════════════════════════════════', 'Bootstrap');
-logger.info('📝 About to call bootstrap()', 'Bootstrap');
-logger.info(`Timestamp: ${new Date().toISOString()}`, 'Bootstrap');
-logger.info('═══════════════════════════════════════════════════════════', 'Bootstrap');
-
 bootstrap().catch((error) => {
-  logger.error('═══════════════════════════════════════════════════════════', 'Bootstrap');
-  logger.error('❌ BOOTSTRAP PROMISE REJECTED', 'Bootstrap');
-  logger.error('═══════════════════════════════════════════════════════════', 'Bootstrap');
-  logger.error(`Error: ${error?.message}`, 'Bootstrap');
-  logger.error(`Stack: ${error?.stack}`, 'Bootstrap');
-  logger.error('═══════════════════════════════════════════════════════════', 'Bootstrap');
+  logger.error(`Bootstrap failed: ${error?.message}`, 'Bootstrap');
+  logger.error(error?.stack, 'Bootstrap');
   setTimeout(() => process.exit(1), 5000);
 });

@@ -102,7 +102,12 @@ export default function WishlistPage() {
       setWishlistItems(items => items.filter(item => item.productId !== productId));
       toast.success('Added to cart!');
     } catch (err: any) {
-      toast.error(err.message || 'Failed to add to cart');
+      const message = err.message || 'Failed to add to cart';
+      if (message.toLowerCase().includes('variation') || message.toLowerCase().includes('option')) {
+        toast.error('This product requires selecting options. Please visit the product page to add it to cart.');
+      } else {
+        toast.error(message);
+      }
     } finally {
       setAddingToCart(null);
     }
@@ -133,20 +138,17 @@ export default function WishlistPage() {
   };
 
   const handleShareWishlist = async () => {
-    const wishlistUrl = window.location.href;
+    const productNames = wishlistItems
+      .map(item => item.product?.name)
+      .filter(Boolean)
+      .join(', ');
+    const shareText = `Check out my wishlist: ${productNames}`;
     try {
-      if (navigator.share) {
-        await navigator.share({
-          title: 'My Wishlist',
-          text: 'Check out my wishlist!',
-          url: wishlistUrl,
-        });
-      } else {
-        await navigator.clipboard.writeText(wishlistUrl);
-        toast.success('Wishlist link copied to clipboard!');
-      }
+      await navigator.clipboard.writeText(shareText);
+      toast.success('Share link copied!');
     } catch (err) {
       console.error('Error sharing:', err);
+      toast.error('Failed to copy to clipboard');
     }
   };
 

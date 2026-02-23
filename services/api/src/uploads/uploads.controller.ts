@@ -26,6 +26,7 @@ import {
 import { FileInterceptor, FilesInterceptor } from '@nestjs/platform-express';
 import { UploadsService } from './uploads.service';
 import { StorageService } from '../storage/storage.service';
+import { PrismaService } from '../database/prisma.service';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../common/guards/roles.guard';
 import { Roles } from '../common/decorators/roles.decorator';
@@ -80,7 +81,81 @@ export class UploadsController {
     private readonly uploadsService: UploadsService,
     private readonly storageService: StorageService,
     private readonly configService: ConfigService,
+    private readonly prisma: PrismaService,
   ) {}
+
+  @Get()
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('ADMIN')
+  @ApiBearerAuth('JWT-auth')
+  @ApiOperation({
+    summary: 'List all uploaded media assets (Admin only)',
+    description: 'Returns paginated list of all product images stored in the system.',
+  })
+  @ApiQuery({ name: 'page', required: false, type: Number, description: 'Page number (default: 1)' })
+  @ApiQuery({ name: 'limit', required: false, type: Number, description: 'Items per page (default: 24)' })
+  @ApiQuery({ name: 'search', required: false, type: String, description: 'Filter by filename in URL' })
+  @SwaggerApiResponse({ status: 200, description: 'Media assets retrieved successfully' })
+  @SwaggerApiResponse({ status: 401, description: 'Unauthorized' })
+  @SwaggerApiResponse({ status: 403, description: 'Forbidden - Admin access required' })
+  async listMediaAssets(
+    @Query('page') page?: string,
+    @Query('limit') limit?: string,
+    @Query('search') search?: string,
+  ): Promise<ApiResponse<any>> {
+    const pageNum = Math.max(1, parseInt(page || '1', 10) || 1);
+    const limitNum = Math.min(100, Math.max(1, parseInt(limit || '24', 10) || 24));
+    const skip = (pageNum - 1) * limitNum;
+
+    const where: any = {};
+    if (search) {
+      where.url = { contains: search, mode: 'insensitive' };
+    }
+
+    const [items, total] = await Promise.all([
+      this.prisma.productImage.findMany({
+        where,
+        select: {
+          id: true,
+          url: true,
+          alt: true,
+          type: true,
+          order: true,
+          productId: true,
+          product: { select: { name: true, createdAt: true } },
+        },
+        orderBy: { product: { createdAt: 'desc' } },
+        skip,
+        take: limitNum,
+      }),
+      this.prisma.productImage.count({ where }),
+    ]);
+
+    const assets = items.map((img) => {
+      const filename = img.url.split('/').pop() || img.url;
+      return {
+        id: img.id,
+        url: img.url,
+        filename,
+        alt: img.alt,
+        type: img.type,
+        productId: img.productId,
+        productName: img.product?.name || null,
+        createdAt: img.product?.createdAt || null,
+      };
+    });
+
+    return {
+      data: {
+        items: assets,
+        total,
+        page: pageNum,
+        limit: limitNum,
+        totalPages: Math.ceil(total / limitNum),
+      },
+      message: 'Media assets retrieved successfully',
+    };
+  }
 
   @Post('single')
   @UseGuards(JwtAuthGuard)

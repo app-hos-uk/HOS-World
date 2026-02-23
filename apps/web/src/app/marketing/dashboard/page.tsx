@@ -26,7 +26,7 @@ export default function MarketingDashboardPage() {
       }
     } catch (err: any) {
       console.error('Error fetching marketing dashboard:', err);
-      if (showLoading) setError(err.message || 'Failed to load dashboard data');
+      if (showLoading) setError(err?.message || 'Failed to load dashboard data');
     } finally {
       if (showLoading) setLoading(false);
     }
@@ -54,7 +54,9 @@ export default function MarketingDashboardPage() {
       ? dashboardData.pendingProducts
       : Array.isArray(dashboardData?.pendingProducts)
         ? dashboardData.pendingProducts.length
-        : dashboardData?.totalPending ?? 0;
+        : typeof dashboardData?.totalPending === 'number'
+          ? dashboardData.totalPending
+          : 0;
   const materialsCreated = dashboardData?.materialsCreated ?? 0;
   const activeCampaigns = dashboardData?.activeCampaigns ?? 0;
   const totalMaterials = dashboardData?.totalMaterials ?? 0;
@@ -62,6 +64,7 @@ export default function MarketingDashboardPage() {
   const menuItems = [
     { title: 'Dashboard', href: '/marketing/dashboard', icon: '📊' },
     { title: 'Marketing Materials', href: '/marketing/materials', icon: '📢', badge: pendingProducts },
+    { title: 'Campaigns', href: '/marketing/campaigns', icon: '📣' },
   ];
 
   return (

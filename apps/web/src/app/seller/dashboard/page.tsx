@@ -29,6 +29,9 @@ export default function SellerDashboardPage() {
     { title: 'My Products', href: '/seller/products', icon: '📦' },
     { title: 'Orders', href: '/seller/orders', icon: '🛒' },
     { title: 'Submissions', href: '/seller/submissions', icon: '📝' },
+    { title: 'Profile', href: '/seller/profile', icon: '👤' },
+    { title: 'Themes', href: '/seller/themes', icon: '🎨' },
+    { title: 'Bulk Import', href: '/seller/products/bulk', icon: '📤' },
   ];
 
   const fetchDashboardData = useCallback(async (showLoading = true) => {
@@ -80,9 +83,9 @@ export default function SellerDashboardPage() {
     };
   }, [fetchDashboardData]);
 
-  const pendingApprovals = dashboardData?.submissionsByStatus?.find(
-    (s) => s.status === 'SUBMITTED' || s.status === 'UNDER_REVIEW'
-  )?._count || 0;
+  const pendingApprovals = dashboardData?.submissionsByStatus
+    ?.filter((s: any) => s.status === 'SUBMITTED' || s.status === 'UNDER_REVIEW')
+    .reduce((sum: number, s: any) => sum + (s._count || 0), 0) || 0;
 
   return (
     <RouteGuard allowedRoles={['B2C_SELLER', 'SELLER', 'WHOLESALER', 'ADMIN']} showAccessDenied={true}>
@@ -112,7 +115,7 @@ export default function SellerDashboardPage() {
                   <div>
                     <h3 className="text-sm font-medium text-gray-600 mb-1">Total Sales</h3>
                     <p className="text-3xl font-bold text-green-600">
-                      ${dashboardData?.totalSales?.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) || '0.00'}
+                      {formatPrice(Number(dashboardData?.totalSales) || 0)}
                     </p>
                   </div>
                   <div className="text-4xl">💵</div>
@@ -298,7 +301,7 @@ export default function SellerDashboardPage() {
                 <div>
                   <h3 className="text-lg font-semibold mb-1">Average Order Value</h3>
                   <p className="text-3xl font-bold text-purple-600">
-                    ${dashboardData?.averageOrderValue?.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) || '0.00'}
+                    {formatPrice(Number(dashboardData?.averageOrderValue) || 0)}
                   </p>
                 </div>
                 <Link

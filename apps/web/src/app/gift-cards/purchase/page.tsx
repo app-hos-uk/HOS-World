@@ -17,6 +17,7 @@ export default function PurchaseGiftCardPage() {
   const toast = useToast();
   const { formatPrice } = useCurrency();
   const [loading, setLoading] = useState(false);
+  const [showConfirmation, setShowConfirmation] = useState(false);
   const [formData, setFormData] = useState({
     type: 'digital' as 'digital' | 'physical',
     amount: 50,
@@ -28,11 +29,11 @@ export default function PurchaseGiftCardPage() {
     expiresAt: '',
   });
 
-  const handlePurchase = async (e: React.FormEvent) => {
+  const handleRequestConfirmation = (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     const amount = formData.customAmount ? parseFloat(formData.customAmount) : formData.amount;
-    
+
     if (!amount || amount < 1) {
       toast.error('Please enter a valid amount');
       return;
@@ -42,6 +43,12 @@ export default function PurchaseGiftCardPage() {
       toast.error('Email is required for digital gift cards');
       return;
     }
+
+    setShowConfirmation(true);
+  };
+
+  const handleConfirmedPurchase = async () => {
+    const amount = formData.customAmount ? parseFloat(formData.customAmount) : formData.amount;
 
     try {
       setLoading(true);
@@ -56,14 +63,19 @@ export default function PurchaseGiftCardPage() {
       });
 
       if (response?.data) {
-        toast.success('Gift card created successfully!');
-        // Redirect to payment or gift card details
-        router.push(`/gift-cards/${response.data.id}`);
+        if (response.data.orderId) {
+          toast.success('Gift card created! Redirecting to payment...');
+          router.push(`/payment?orderId=${response.data.orderId}`);
+        } else {
+          toast.success('Gift card purchased successfully! The amount will be charged to your card on file.');
+          router.push(`/gift-cards/${response.data.id}`);
+        }
       }
     } catch (err: any) {
       toast.error(err.message || 'Failed to create gift card');
     } finally {
       setLoading(false);
+      setShowConfirmation(false);
     }
   };
 
@@ -82,7 +94,7 @@ export default function PurchaseGiftCardPage() {
             <div className="bg-white border border-gray-200 rounded-lg p-6">
               <h1 className="text-3xl font-bold mb-6">Purchase Gift Card</h1>
               
-              <form onSubmit={handlePurchase} className="space-y-6">
+              <form onSubmit={handleRequestConfirmation} className="space-y-6">
                 {/* Gift Card Type */}
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -274,6 +286,54 @@ export default function PurchaseGiftCardPage() {
                 </div>
               </form>
             </div>
+
+            {showConfirmation && (
+              <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+                <div className="bg-white rounded-lg max-w-md w-full p-6">
+                  <h2 className="text-xl font-bold mb-4">Confirm Purchase</h2>
+                  <div className="space-y-3 mb-6">
+                    <div className="flex justify-between">
+                      <span className="text-gray-600">Type:</span>
+                      <span className="font-medium capitalize">{formData.type}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-gray-600">Amount:</span>
+                      <span className="font-medium text-purple-600">
+                        {formatPrice(
+                          formData.customAmount ? parseFloat(formData.customAmount) || 0 : formData.amount,
+                          formData.currency
+                        )}
+                      </span>
+                    </div>
+                    {formData.issuedToEmail && (
+                      <div className="flex justify-between">
+                        <span className="text-gray-600">Recipient:</span>
+                        <span className="font-medium">{formData.issuedToEmail}</span>
+                      </div>
+                    )}
+                  </div>
+                  <p className="text-sm text-gray-500 mb-6">
+                    This amount will be charged to your card on file. Please confirm to proceed.
+                  </p>
+                  <div className="flex gap-3">
+                    <button
+                      onClick={() => setShowConfirmation(false)}
+                      disabled={loading}
+                      className="flex-1 px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      onClick={handleConfirmedPurchase}
+                      disabled={loading}
+                      className="flex-1 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors font-medium disabled:opacity-50"
+                    >
+                      {loading ? 'Processing...' : 'Confirm Purchase'}
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
         </main>
         <Footer />

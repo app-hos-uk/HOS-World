@@ -132,13 +132,19 @@ export default function PriceManagementPage() {
     e.preventDefault();
     if (!selectedProduct) return;
 
+    const price = parseFloat(pricingData.price);
+    if (isNaN(price) || price < 0) {
+      toast.error('Please enter a valid price');
+      return;
+    }
+
     try {
       setUpdating(true);
       await apiClient.updateAdminProduct(selectedProduct.id, {
-        price: parseFloat(pricingData.price),
+        price,
         tradePrice: pricingData.tradePrice ? parseFloat(pricingData.tradePrice) : undefined,
         rrp: pricingData.rrp ? parseFloat(pricingData.rrp) : undefined,
-        stock: parseInt(pricingData.stock, 10),
+        stock: parseInt(pricingData.stock, 10) || 0,
         ...(pricingData.taxClassId ? { taxClassId: pricingData.taxClassId } : {}),
         ...(pricingData.taxRate !== '' ? { taxRate: parseFloat(pricingData.taxRate) } : {}),
         // Note: currency is managed at platform/tenant level, not per-product
@@ -148,7 +154,7 @@ export default function PriceManagementPage() {
       setSelectedProduct(null);
       fetchProducts();
     } catch (err: any) {
-      toast.error(err.message || 'Failed to update pricing');
+      toast.error(err?.message || 'Failed to update pricing');
     } finally {
       setUpdating(false);
     }
@@ -464,7 +470,7 @@ export default function PriceManagementPage() {
                         </select>
                         {taxClasses.length === 0 && (
                           <p className="mt-1 text-xs text-gray-500">
-                            No tax classes configured. <a href="/admin/tax" className="text-purple-600 hover:underline">Configure tax classes</a>
+                            No tax classes configured. <a href="/admin/settings/integrations/tax" className="text-purple-600 hover:underline">Configure tax classes</a>
                           </p>
                         )}
                       </div>

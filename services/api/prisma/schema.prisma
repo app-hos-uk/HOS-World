@@ -113,9 +113,17 @@ model User {
   influencerProfile     Influencer?
   influencerInvitations InfluencerInvitation[] @relation("InfluencerInvitedBy")
 
+  // Account Lockout
+  failedLoginAttempts Int       @default(0)
+  lockedUntil         DateTime?
+
   // Newsletter
   newsletterSubscriptions NewsletterSubscription[]
 
+  // Soft delete
+  deletedAt DateTime?
+
+  @@index([deletedAt])
   @@map("users")
 }
 
@@ -313,6 +321,10 @@ model Seller {
   webhooks              Webhook[]
   returnPolicies        ReturnPolicy[]
 
+  // Soft delete
+  deletedAt DateTime?
+
+  @@index([deletedAt])
   @@map("sellers")
 }
 
@@ -422,11 +434,18 @@ model Product {
   volumePricing      VolumePricing[] // Quantity-based pricing tiers
   influencerLinks    InfluencerProductLink[]
 
+  // Soft delete
+  deletedAt DateTime?
+
   @@unique([sellerId, slug])
   @@index([productType])
   @@index([parentProductId])
   @@index([status])
   @@index([sellerId, status])
+  @@index([deletedAt])
+  @@index([sku])
+  @@index([barcode])
+  @@index([ean])
   @@map("products")
 }
 
@@ -620,6 +639,9 @@ model Order {
   createdAt            DateTime              @default(now())
   updatedAt            DateTime              @updatedAt
 
+  // Soft delete
+  deletedAt DateTime?
+
   @@index([fulfillingWarehouseId])
   @@index([fulfillmentCenterId])
   @@index([status])
@@ -627,6 +649,7 @@ model Order {
   @@index([sellerId])
   @@index([paymentStatus])
   @@index([createdAt])
+  @@index([deletedAt])
   @@map("orders")
 }
 
@@ -989,10 +1012,14 @@ model ProductSubmission {
   marketingMaterials MarketingMaterial[]
   duplicateProducts  DuplicateProduct[]
 
+  // Soft delete
+  deletedAt DateTime?
+
   @@index([crossSellerGroupId])
   @@index([status])
   @@index([sellerId, status])
   @@index([status, createdAt])
+  @@index([deletedAt])
   @@map("product_submissions")
 }
 

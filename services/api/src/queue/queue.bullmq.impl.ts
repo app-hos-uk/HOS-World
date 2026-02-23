@@ -12,6 +12,7 @@ export enum JobType {
   ORDER_CONFIRMATION = 'order-confirmation',
   INVENTORY_SYNC = 'inventory-sync',
   ANALYTICS_UPDATE = 'analytics-update',
+  BULK_IMPORT = 'bulk-import',
 }
 
 export interface JobOptions {
@@ -138,5 +139,13 @@ export class QueueService implements OnModuleInit, OnModuleDestroy {
 
   async queueImageProcessing(imageUrl: string, transformations: any) {
     return this.addJob(JobType.IMAGE_PROCESSING, { imageUrl, transformations });
+  }
+
+  async queueReportGeneration(reportType: string, params: any) {
+    return this.addJob(JobType.REPORT_GENERATION, { reportType, params });
+  }
+
+  async queueBulkImport(payload: any) {
+    return this.addJob(JobType.BULK_IMPORT, payload);
   }
 }

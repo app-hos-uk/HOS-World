@@ -5,6 +5,7 @@ import { useSearchParams } from 'next/navigation';
 import { Header } from '@/components/Header';
 import { Footer } from '@/components/Footer';
 import { apiClient } from '@/lib/api';
+import { useToast } from '@/hooks/useToast';
 import { useCurrency } from '@/contexts/CurrencyContext';
 import Link from 'next/link';
 import Image from 'next/image';
@@ -53,6 +54,7 @@ const ORDER_STATUSES = [
 
 function TrackOrderContent() {
   const searchParams = useSearchParams();
+  const toast = useToast();
   const { formatPrice } = useCurrency();
   const [orderNumber, setOrderNumber] = useState(searchParams.get('orderNumber') || '');
   const [order, setOrder] = useState<Order | null>(null);
@@ -81,25 +83,15 @@ function TrackOrderContent() {
     setSearched(true);
 
     try {
-      // Try to fetch user orders and find the matching one
-      const response = await apiClient.getOrders();
+      const response = await apiClient.getOrder(numberToSearch);
       if (response?.data) {
-        const orders = Array.isArray(response.data) ? response.data : [];
-        const foundOrder = orders.find((o: Order) => 
-          o.orderNumber === numberToSearch || 
-          o.id === numberToSearch ||
-          o.id.startsWith(numberToSearch)
-        );
-
-        if (foundOrder) {
-          setOrder(foundOrder);
-        } else {
-          setError('Order not found. Please check the order number and try again.');
-        }
+        setOrder(response.data);
+      } else {
+        setError('Order not found. Please check the order number and try again.');
       }
     } catch (err: any) {
       console.error('Error tracking order:', err);
-      setError('Unable to track order. Please check the order number and try again.');
+      setError('Order not found. Please check the order number and try again.');
     } finally {
       setLoading(false);
     }
@@ -153,7 +145,7 @@ function TrackOrderContent() {
                 type="text"
                 value={orderNumber}
                 onChange={(e) => setOrderNumber(e.target.value)}
-                onKeyPress={(e) => e.key === 'Enter' && handleTrackOrder()}
+                onKeyDown={(e) => e.key === 'Enter' && handleTrackOrder()}
                 placeholder="Enter order number or ID"
                 className="flex-1 px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
               />
@@ -289,7 +281,7 @@ function TrackOrderContent() {
                   <button
                     onClick={() => {
                       navigator.clipboard.writeText(order.trackingNumber!);
-                      alert('Tracking number copied!');
+                      toast.success('Tracking number copied!');
                     }}
                     className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors font-medium text-sm"
                   >
@@ -384,7 +376,7 @@ function TrackOrderContent() {
                 View All Orders
               </Link>
               <Link
-                href="/support"
+                href="/help"
                 className="px-6 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors font-medium"
               >
                 Contact Support

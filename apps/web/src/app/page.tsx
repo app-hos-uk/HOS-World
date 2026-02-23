@@ -56,6 +56,20 @@ export default function HomePage() {
   
   return (
     <div className="min-h-screen bg-white">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify({
+            '@context': 'https://schema.org',
+            '@type': 'Organization',
+            name: 'House of Spells',
+            url: 'https://hos-marketplaceweb-production.up.railway.app',
+            logo: 'https://hos-marketplaceweb-production.up.railway.app/logo.png',
+            description: 'Magical merchandise marketplace for fandom collectibles',
+            sameAs: [],
+          }),
+        }}
+      />
       <Header />
       <main>
         {/* Search bar at the very top */}

@@ -166,6 +166,7 @@ export default function MarketingMaterialsPage() {
   const menuItems = [
     { title: 'Dashboard', href: '/marketing/dashboard', icon: '📊' },
     { title: 'Marketing Materials', href: '/marketing/materials', icon: '📢', badge: pendingSubmissions.length },
+    { title: 'Campaigns', href: '/marketing/campaigns', icon: '📣' },
   ];
 
   return (

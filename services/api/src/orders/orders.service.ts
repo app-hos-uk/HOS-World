@@ -26,6 +26,26 @@ import { Decimal } from '@prisma/client/runtime/library';
 export class OrdersService {
   private readonly logger = new Logger(OrdersService.name);
 
+  private readonly ALLOWED_TRANSITIONS: Record<string, string[]> = {
+    PENDING: ['CONFIRMED', 'CANCELLED'],
+    CONFIRMED: ['PROCESSING', 'CANCELLED'],
+    PROCESSING: ['FULFILLED', 'CANCELLED'],
+    FULFILLED: ['SHIPPED', 'CANCELLED'],
+    SHIPPED: ['DELIVERED'],
+    DELIVERED: ['REFUNDED'],
+    CANCELLED: [],
+    REFUNDED: [],
+  };
+
+  private validateStatusTransition(currentStatus: string, newStatus: string): void {
+    const allowed = this.ALLOWED_TRANSITIONS[currentStatus];
+    if (!allowed || !allowed.includes(newStatus)) {
+      throw new BadRequestException(
+        `Cannot transition order from ${currentStatus} to ${newStatus}. Allowed transitions: ${(allowed || []).join(', ') || 'none'}`,
+      );
+    }
+  }
+
   constructor(
     private prisma: PrismaService,
     @Optional() @Inject(TaxService) private taxService?: TaxService,
@@ -640,6 +660,10 @@ export class OrdersService {
       throw new ForbiddenException('You do not have permission to update this order');
     }
 
+    if (updateOrderDto.status) {
+      this.validateStatusTransition(order.status, updateOrderDto.status);
+    }
+
     const updated = await this.prisma.order.update({
       where: { id },
       data: {
@@ -754,31 +778,14 @@ export class OrdersService {
       }
     }
 
-    // Define cancellable statuses based on role
+    // Validate state machine transition first
+    this.validateStatusTransition(order.status, 'CANCELLED');
+
+    // Additional role-based restrictions on top of state machine
     const customerCancellableStatuses = ['PENDING', 'CONFIRMED'];
-    const adminSellerCancellableStatuses = ['PENDING', 'CONFIRMED', 'PROCESSING'];
-    const finalStatuses = ['SHIPPED', 'DELIVERED', 'CANCELLED', 'REFUNDED'];
-
-    const currentStatus = order.status;
-
-    if (finalStatuses.includes(currentStatus)) {
+    if (role === 'CUSTOMER' && !customerCancellableStatuses.includes(order.status)) {
       throw new BadRequestException(
-        `Order cannot be cancelled. Current status: ${currentStatus}. Orders that are shipped, delivered, or already cancelled cannot be cancelled.`,
-      );
-    }
-
-    if (role === 'CUSTOMER' && !customerCancellableStatuses.includes(currentStatus)) {
-      throw new BadRequestException(
-        `Customers can only cancel orders that are PENDING or CONFIRMED. Current status: ${currentStatus}`,
-      );
-    }
-
-    if (
-      (role === 'SELLER' || role === 'ADMIN') &&
-      !adminSellerCancellableStatuses.includes(currentStatus)
-    ) {
-      throw new BadRequestException(
-        `Orders can only be cancelled when PENDING, CONFIRMED, or PROCESSING. Current status: ${currentStatus}`,
+        `Customers can only cancel orders that are PENDING or CONFIRMED. Current status: ${order.status}`,
       );
     }
 

@@ -8,9 +8,10 @@ import { VolumePricingController } from './volume-pricing.controller';
 import { BundleController } from './bundle.controller';
 import { CacheModule } from '../cache/cache.module';
 import { DatabaseModule } from '../database/database.module';
+import { QueueModule } from '../queue/queue.module';
 
 @Module({
-  imports: [forwardRef(() => CacheModule), DatabaseModule],
+  imports: [forwardRef(() => CacheModule), DatabaseModule, QueueModule],
   controllers: [ProductsController, VolumePricingController, BundleController],
   providers: [
     ProductsService,

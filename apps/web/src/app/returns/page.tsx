@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { RouteGuard } from '@/components/RouteGuard';
 import { Header } from '@/components/Header';
 import { Footer } from '@/components/Footer';
@@ -46,6 +47,8 @@ interface ReturnRequest {
 export default function ReturnsPage() {
   const toast = useToast();
   const { formatPrice } = useCurrency();
+  const searchParams = useSearchParams();
+  const orderIdParam = searchParams.get('orderId');
   const [orders, setOrders] = useState<Order[]>([]);
   const [returnRequests, setReturnRequests] = useState<ReturnRequest[]>([]);
   const [loading, setLoading] = useState(true);
@@ -65,6 +68,15 @@ export default function ReturnsPage() {
     fetchData();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  useEffect(() => {
+    if (!orderIdParam || loading || orders.length === 0) return;
+    const matchedOrder = orders.find((o) => o.id === orderIdParam);
+    if (matchedOrder && canReturnOrder(matchedOrder)) {
+      handleCreateReturn(matchedOrder);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [orderIdParam, loading, orders]);
 
   const fetchData = async () => {
     try {

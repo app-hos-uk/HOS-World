@@ -82,6 +82,7 @@ import { InfluencerCommissionsModule } from './influencer-commissions/influencer
 import { InfluencerPayoutsModule } from './influencer-payouts/influencer-payouts.module';
 import { InfluencerCampaignsModule } from './influencer-campaigns/influencer-campaigns.module';
 import { MeilisearchModule } from './meilisearch/meilisearch.module';
+import { validateEnvironmentVariables } from './config/env.validation';
 
 @Module({
   imports: [
@@ -92,6 +93,7 @@ import { MeilisearchModule } from './meilisearch/meilisearch.module';
           ? undefined
           : '.env',
       ignoreEnvFile: process.env.NODE_ENV === 'test' || process.env.IGNORE_ENV_FILE === 'true',
+      validate: validateEnvironmentVariables,
     }),
     LoggerModule,
     DatabaseModule,

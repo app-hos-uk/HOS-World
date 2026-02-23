@@ -2,7 +2,7 @@
 
 import { useEffect, useState, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
-import { apiClient } from '@/lib/api';
+import { apiClient, markLoginSuccess } from '@/lib/api';
 import { useToast } from '@/hooks/useToast';
 
 function AcceptInvitationForm() {
@@ -27,10 +27,12 @@ function AcceptInvitationForm() {
   const [validating, setValidating] = useState(true);
   const [invitationData, setInvitationData] = useState<any>(null);
   const [error, setError] = useState<string | null>(null);
+  const [isValidationError, setIsValidationError] = useState(false);
 
   useEffect(() => {
     if (!token) {
       setError('Invalid invitation link. No token provided.');
+      setIsValidationError(true);
       setValidating(false);
       return;
     }
@@ -48,9 +50,11 @@ function AcceptInvitationForm() {
           }));
         } else {
           setError('Invalid or expired invitation token.');
+          setIsValidationError(true);
         }
       } catch (err: any) {
         setError(err.message || 'Invalid or expired invitation token.');
+        setIsValidationError(true);
       } finally {
         setValidating(false);
       }
@@ -114,9 +118,10 @@ function AcceptInvitationForm() {
         if (response.data.refreshToken) {
           localStorage.setItem('refresh_token', response.data.refreshToken);
         }
+        markLoginSuccess();
         toast.success('Account created successfully! Redirecting to dashboard...');
         setTimeout(() => {
-          router.push('/seller/dashboard');
+          router.replace('/seller/dashboard');
         }, 1500);
       } else {
         throw new Error('Failed to create account');
@@ -141,7 +146,7 @@ function AcceptInvitationForm() {
     );
   }
 
-  if (!token || error) {
+  if (!token || isValidationError) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
         <div className="max-w-md w-full bg-white rounded-lg shadow p-6">

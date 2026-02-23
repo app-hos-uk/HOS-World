@@ -15,6 +15,7 @@ export default function FulfillmentDashboardPage() {
   const menuItems = [
     { title: 'Dashboard', href: '/fulfillment/dashboard', icon: '📊' },
     { title: 'Manage Shipments', href: '/fulfillment/shipments', icon: '🚚', badge: incomingShipments },
+    { title: 'Centers', href: '/fulfillment/centers', icon: '🏭' },
   ];
 
   const fetchDashboardData = useCallback(async (showLoading = true) => {
@@ -229,6 +230,14 @@ export default function FulfillmentDashboardPage() {
                     <div className="text-2xl mb-2">📋</div>
                     <p className="font-medium">View All Shipments</p>
                     <p className="text-sm text-gray-500 mt-1">Manage all shipment records</p>
+                  </Link>
+                  <Link
+                    href="/fulfillment/centers"
+                    className="block p-4 border-2 border-dashed border-gray-300 rounded-lg hover:border-purple-500 hover:bg-purple-50 transition-colors text-center"
+                  >
+                    <div className="text-2xl mb-2">🏭</div>
+                    <p className="font-medium">Fulfillment Centers</p>
+                    <p className="text-sm text-gray-500 mt-1">Manage center locations</p>
                   </Link>
                 </div>
               </div>

@@ -72,7 +72,9 @@ export class ApiClient {
         endpoint.startsWith('/auth/login') ||
         endpoint.startsWith('/auth/register') ||
         endpoint.startsWith('/auth/accept-invitation') ||
-        endpoint.startsWith('/auth/refresh');
+        endpoint.startsWith('/auth/refresh') ||
+        endpoint.startsWith('/auth/forgot-password') ||
+        endpoint.startsWith('/auth/reset-password');
 
       const doFetch = async () => {
         const nextHeaders: Record<string, string> = { ...headers };
@@ -239,6 +241,20 @@ export class ApiClient {
     });
   }
 
+  async forgotPassword(email: string): Promise<ApiResponse<{ message: string }>> {
+    return this.request<ApiResponse<{ message: string }>>('/auth/forgot-password', {
+      method: 'POST',
+      body: JSON.stringify({ email }),
+    });
+  }
+
+  async resetPassword(token: string, newPassword: string): Promise<ApiResponse<{ message: string }>> {
+    return this.request<ApiResponse<{ message: string }>>('/auth/reset-password', {
+      method: 'POST',
+      body: JSON.stringify({ token, newPassword }),
+    });
+  }
+
   async getCurrentUser(): Promise<ApiResponse<User>> {
     return this.request<ApiResponse<User>>('/auth/me');
   }
@@ -384,10 +400,12 @@ export class ApiClient {
     return this.request<ApiResponse<Order>>(`/orders/${id}`);
   }
 
-  async updateOrderStatus(id: string, status: string): Promise<ApiResponse<Order>> {
+  async updateOrderStatus(id: string, status: string, trackingNumber?: string): Promise<ApiResponse<Order>> {
+    const body: Record<string, string> = { status };
+    if (trackingNumber) body.trackingNumber = trackingNumber;
     return this.request<ApiResponse<Order>>(`/orders/${id}`, {
       method: 'PUT',
-      body: JSON.stringify({ status }),
+      body: JSON.stringify(body),
     });
   }
 
@@ -553,6 +571,12 @@ export class ApiClient {
     });
   }
 
+  async getSubmission(id: string): Promise<ApiResponse<any>> {
+    return this.request<ApiResponse<any>>(`/submissions/${id}`, {
+      method: 'GET',
+    });
+  }
+
   async resubmitSubmission(
     id: string,
     data?: { productData?: any; notes?: string }
@@ -672,6 +696,50 @@ export class ApiClient {
     return this.request<ApiResponse<any>>('/publishing/bulk-publish', {
       method: 'POST',
       body: JSON.stringify({ submissionIds }),
+    });
+  }
+
+  async getPublishedProducts(): Promise<ApiResponse<any[]>> {
+    return this.request<ApiResponse<any[]>>('/publishing/published', { method: 'GET' });
+  }
+
+  // Webhooks
+  async getWebhooks(): Promise<ApiResponse<any[]>> {
+    return this.request<ApiResponse<any[]>>('/webhooks');
+  }
+
+  async getWebhook(id: string): Promise<ApiResponse<any>> {
+    return this.request<ApiResponse<any>>(`/webhooks/${id}`);
+  }
+
+  async createWebhook(data: { url: string; events: string[]; secret?: string; isActive?: boolean; sellerId?: string }): Promise<ApiResponse<any>> {
+    return this.request<ApiResponse<any>>('/webhooks', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async updateWebhook(id: string, data: Partial<{ url: string; events: string[]; secret?: string; isActive?: boolean }>): Promise<ApiResponse<any>> {
+    return this.request<ApiResponse<any>>(`/webhooks/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async deleteWebhook(id: string): Promise<ApiResponse<any>> {
+    return this.request<ApiResponse<any>>(`/webhooks/${id}`, {
+      method: 'DELETE',
+    });
+  }
+
+  async getWebhookDeliveries(webhookId: string, limit?: number): Promise<ApiResponse<any[]>> {
+    const query = limit ? `?limit=${limit}` : '';
+    return this.request<ApiResponse<any[]>>(`/webhooks/${webhookId}/deliveries${query}`);
+  }
+
+  async retryWebhookDelivery(deliveryId: string): Promise<ApiResponse<any>> {
+    return this.request<ApiResponse<any>>(`/webhooks/deliveries/${deliveryId}/retry`, {
+      method: 'POST',
     });
   }
 
@@ -1440,8 +1508,8 @@ export class ApiClient {
     currentPassword: string;
     newPassword: string;
   }): Promise<ApiResponse<{ message: string }>> {
-    return this.request<ApiResponse<{ message: string }>>('/users/password', {
-      method: 'PUT',
+    return this.request<ApiResponse<{ message: string }>>('/auth/change-password', {
+      method: 'POST',
       body: JSON.stringify(data),
     });
   }
@@ -2191,6 +2259,18 @@ export class ApiClient {
     });
   }
 
+  async publishCMSPage(id: string): Promise<ApiResponse<any>> {
+    return this.request<ApiResponse<any>>(`/cms/pages/${id}/publish`, {
+      method: 'POST',
+    });
+  }
+
+  async unpublishCMSPage(id: string): Promise<ApiResponse<any>> {
+    return this.request<ApiResponse<any>>(`/cms/pages/${id}/unpublish`, {
+      method: 'POST',
+    });
+  }
+
   async getCMSBanners(type?: 'hero' | 'promotional' | 'sidebar'): Promise<ApiResponse<any[]>> {
     const url = type ? `/cms/banners?type=${type}` : '/cms/banners';
     return this.request<ApiResponse<any[]>>(url);
@@ -2280,6 +2360,12 @@ export class ApiClient {
 
   async publishCMSBlogPost(id: string): Promise<ApiResponse<any>> {
     return this.request<ApiResponse<any>>(`/cms/blog/${id}/publish`, {
+      method: 'POST',
+    });
+  }
+
+  async unpublishCMSBlogPost(id: string): Promise<ApiResponse<any>> {
+    return this.request<ApiResponse<any>>(`/cms/blog/${id}/unpublish`, {
       method: 'POST',
     });
   }
@@ -2940,6 +3026,12 @@ export class ApiClient {
     return this.request<ApiResponse<any>>(`/returns/${id}/status`, {
       method: 'PUT',
       body: JSON.stringify(data),
+    });
+  }
+
+  async cancelReturn(id: string): Promise<ApiResponse<any>> {
+    return this.request<ApiResponse<any>>(`/returns/${id}/cancel`, {
+      method: 'PUT',
     });
   }
 
@@ -3894,6 +3986,183 @@ export class ApiClient {
       method: 'POST',
       body: JSON.stringify({ amount, reason }),
     });
+  }
+
+  // ===== Finance: Payouts =====
+  async processPayout(id: string): Promise<ApiResponse<any>> {
+    return this.request<ApiResponse<any>>(`/finance/payouts/${id}/process`, { method: 'PUT' });
+  }
+
+  async getSellerPayoutHistory(sellerId: string): Promise<ApiResponse<any>> {
+    return this.request<ApiResponse<any>>(`/finance/payouts/${sellerId}/history`, { method: 'GET' });
+  }
+
+  // ===== Finance: Reports =====
+  async getPlatformFeesReport(startDate?: string, endDate?: string): Promise<ApiResponse<any>> {
+    const params = new URLSearchParams();
+    if (startDate) params.append('startDate', startDate);
+    if (endDate) params.append('endDate', endDate);
+    const qs = params.toString();
+    return this.request<ApiResponse<any>>(`/finance/reports/platform-fees${qs ? `?${qs}` : ''}`, { method: 'GET' });
+  }
+
+  async getSellerPerformanceReport(startDate?: string, endDate?: string): Promise<ApiResponse<any>> {
+    const params = new URLSearchParams();
+    if (startDate) params.append('startDate', startDate);
+    if (endDate) params.append('endDate', endDate);
+    const qs = params.toString();
+    return this.request<ApiResponse<any>>(`/finance/reports/seller-performance${qs ? `?${qs}` : ''}`, { method: 'GET' });
+  }
+
+  async exportTransactions(format: string, startDate?: string, endDate?: string): Promise<ApiResponse<any>> {
+    const params = new URLSearchParams({ format });
+    if (startDate) params.append('startDate', startDate);
+    if (endDate) params.append('endDate', endDate);
+    return this.request<ApiResponse<any>>(`/finance/transactions/export?${params.toString()}`, { method: 'GET' });
+  }
+
+  // ===== Meilisearch / Search =====
+  async searchProducts(query: string, filters?: {
+    categoryId?: string; category?: string; fandom?: string; sellerId?: string;
+    minPrice?: number; maxPrice?: number; minRating?: number; inStock?: boolean;
+    tags?: string[]; sort?: string; page?: number; limit?: number;
+  }): Promise<ApiResponse<any>> {
+    const params = new URLSearchParams();
+    if (query) params.append('q', query);
+    if (filters) {
+      if (filters.categoryId) params.append('categoryId', filters.categoryId);
+      if (filters.category) params.append('category', filters.category);
+      if (filters.fandom) params.append('fandom', filters.fandom);
+      if (filters.sellerId) params.append('sellerId', filters.sellerId);
+      if (filters.minPrice !== undefined) params.append('minPrice', String(filters.minPrice));
+      if (filters.maxPrice !== undefined) params.append('maxPrice', String(filters.maxPrice));
+      if (filters.minRating !== undefined) params.append('minRating', String(filters.minRating));
+      if (filters.inStock !== undefined) params.append('inStock', String(filters.inStock));
+      if (filters.tags?.length) filters.tags.forEach(t => params.append('tags', t));
+      if (filters.sort) params.append('sort', filters.sort);
+      if (filters.page) params.append('page', String(filters.page));
+      if (filters.limit) params.append('limit', String(filters.limit));
+    }
+    return this.request<ApiResponse<any>>(`/meilisearch/search?${params.toString()}`, { method: 'GET' });
+  }
+
+  async getInstantSearch(query: string, limit?: number): Promise<ApiResponse<any>> {
+    const params = new URLSearchParams({ q: query });
+    if (limit) params.append('limit', String(limit));
+    return this.request<ApiResponse<any>>(`/meilisearch/instant?${params.toString()}`, { method: 'GET' });
+  }
+
+  async getSearchSuggestions(query: string, limit?: number): Promise<ApiResponse<any>> {
+    const params = new URLSearchParams({ q: query });
+    if (limit) params.append('limit', String(limit));
+    return this.request<ApiResponse<any>>(`/meilisearch/suggestions?${params.toString()}`, { method: 'GET' });
+  }
+
+  async getSearchStats(): Promise<ApiResponse<any>> {
+    return this.request<ApiResponse<any>>('/meilisearch/stats', { method: 'GET' });
+  }
+
+  async syncSearchIndex(): Promise<ApiResponse<any>> {
+    return this.request<ApiResponse<any>>('/meilisearch/sync', { method: 'POST' });
+  }
+
+  async rebuildSearchIndex(): Promise<ApiResponse<any>> {
+    return this.request<ApiResponse<any>>('/meilisearch/rebuild', { method: 'POST' });
+  }
+
+  // ===== Notifications =====
+  async getNotifications(params?: { limit?: number }): Promise<ApiResponse<any>> {
+    const qs = params?.limit ? `?limit=${params.limit}` : '';
+    return this.request<ApiResponse<any>>(`/notifications${qs}`, { method: 'GET' });
+  }
+
+  async markNotificationRead(id: string): Promise<ApiResponse<any>> {
+    return this.request<ApiResponse<any>>(`/notifications/${id}/read`, { method: 'PUT' });
+  }
+
+  async markAllNotificationsRead(): Promise<ApiResponse<any>> {
+    return this.request<ApiResponse<any>>('/notifications/read-all', { method: 'PUT' });
+  }
+
+  async deleteNotification(id: string): Promise<ApiResponse<any>> {
+    return this.request<ApiResponse<any>>(`/notifications/${id}`, { method: 'DELETE' });
+  }
+
+  // ===== Support: Tickets =====
+  async getMyTickets(status?: string): Promise<ApiResponse<any>> {
+    const qs = status ? `?status=${status}` : '';
+    return this.request<ApiResponse<any>>(`/support/tickets/my${qs}`, { method: 'GET' });
+  }
+
+  async getTicketById(id: string): Promise<ApiResponse<any>> {
+    return this.request<ApiResponse<any>>(`/support/tickets/${id}`, { method: 'GET' });
+  }
+
+  async addTicketMessage(ticketId: string, message: string): Promise<ApiResponse<any>> {
+    return this.request<ApiResponse<any>>(`/support/tickets/${ticketId}/messages`, {
+      method: 'POST',
+      body: JSON.stringify({ message }),
+    });
+  }
+
+  // ===== Support: Knowledge Base =====
+  async getKBArticles(search?: string): Promise<ApiResponse<any>> {
+    const qs = search ? `?search=${encodeURIComponent(search)}` : '';
+    return this.request<ApiResponse<any>>(`/support/kb/articles${qs}`, { method: 'GET' });
+  }
+
+  async getKBArticleBySlug(slug: string): Promise<ApiResponse<any>> {
+    return this.request<ApiResponse<any>>(`/support/kb/articles/slug/${slug}`, { method: 'GET' });
+  }
+
+  async markKBArticleHelpful(id: string): Promise<ApiResponse<any>> {
+    return this.request<ApiResponse<any>>(`/support/kb/articles/${id}/helpful`, { method: 'POST' });
+  }
+
+  // ===== Media / Uploads =====
+  async getMediaAssets(page?: number, limit?: number): Promise<ApiResponse<any>> {
+    const params = new URLSearchParams();
+    if (page) params.append('page', String(page));
+    if (limit) params.append('limit', String(limit));
+    const qs = params.toString();
+    return this.request<ApiResponse<any>>(`/uploads${qs ? `?${qs}` : ''}`, { method: 'GET' });
+  }
+
+  async deleteMediaAsset(id: string): Promise<ApiResponse<any>> {
+    return this.request<ApiResponse<any>>(`/uploads/${id}`, { method: 'DELETE' });
+  }
+
+  // ===== Background Jobs =====
+  async getJobStatus(jobId: string): Promise<ApiResponse<any>> {
+    return this.request<ApiResponse<any>>(`/jobs/${jobId}/status`, { method: 'GET' });
+  }
+
+  // ===== Fulfillment: Center Detail =====
+  async getFulfillmentCenter(id: string): Promise<ApiResponse<any>> {
+    return this.request<ApiResponse<any>>(`/fulfillment/centers/${id}`, { method: 'GET' });
+  }
+
+  // ===== Marketing: Campaigns =====
+  async getMarketingCampaigns(): Promise<ApiResponse<any>> {
+    return this.request<ApiResponse<any>>('/admin/influencer-campaigns', { method: 'GET' });
+  }
+
+  async createMarketingCampaign(data: any): Promise<ApiResponse<any>> {
+    return this.request<ApiResponse<any>>('/admin/influencer-campaigns', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async updateMarketingCampaign(id: string, data: any): Promise<ApiResponse<any>> {
+    return this.request<ApiResponse<any>>(`/admin/influencer-campaigns/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async deleteMarketingCampaign(id: string): Promise<ApiResponse<any>> {
+    return this.request<ApiResponse<any>>(`/admin/influencer-campaigns/${id}`, { method: 'DELETE' });
   }
 
 }

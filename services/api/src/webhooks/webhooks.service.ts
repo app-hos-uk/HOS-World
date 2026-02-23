@@ -7,6 +7,7 @@ import * as crypto from 'crypto';
 @Injectable()
 export class WebhooksService {
   private readonly logger = new Logger(WebhooksService.name);
+  private readonly MAX_DELIVERY_ATTEMPTS = 5;
 
   constructor(
     private prisma: PrismaService,
@@ -248,8 +249,10 @@ export class WebhooksService {
       throw new BadRequestException('Delivery already succeeded');
     }
 
-    if (delivery.attempts >= 5) {
-      throw new BadRequestException('Maximum retry attempts reached');
+    if (delivery.attempts >= this.MAX_DELIVERY_ATTEMPTS) {
+      throw new BadRequestException(
+        'Maximum retry attempts reached. Use the dead letter queue retry endpoint instead.',
+      );
     }
 
     try {
@@ -269,5 +272,74 @@ export class WebhooksService {
       orderBy: { createdAt: 'desc' },
       take: limit,
     });
+  }
+
+  // ==================== Dead Letter Queue ====================
+
+  /**
+   * List dead-lettered deliveries — those that exhausted all retry attempts
+   */
+  async listDeadLettered(limit = 50, offset = 0) {
+    return this.prisma.webhookDelivery.findMany({
+      where: {
+        status: 'FAILED',
+        attempts: { gte: this.MAX_DELIVERY_ATTEMPTS },
+      },
+      include: {
+        webhook: {
+          select: { id: true, url: true, events: true },
+        },
+      },
+      orderBy: { createdAt: 'desc' },
+      take: limit,
+      skip: offset,
+    });
+  }
+
+  /**
+   * Count dead-lettered deliveries
+   */
+  async countDeadLettered(): Promise<number> {
+    return this.prisma.webhookDelivery.count({
+      where: {
+        status: 'FAILED',
+        attempts: { gte: this.MAX_DELIVERY_ATTEMPTS },
+      },
+    });
+  }
+
+  /**
+   * Retry a dead-lettered delivery: reset attempts and re-deliver
+   */
+  async retryDeadLettered(deliveryId: string) {
+    const delivery = await this.prisma.webhookDelivery.findUnique({
+      where: { id: deliveryId },
+      include: { webhook: true },
+    });
+
+    if (!delivery) {
+      throw new NotFoundException('Webhook delivery not found');
+    }
+
+    if (delivery.status === 'SUCCESS') {
+      throw new BadRequestException('Delivery already succeeded');
+    }
+
+    if (delivery.attempts < this.MAX_DELIVERY_ATTEMPTS) {
+      throw new BadRequestException('Delivery is not in the dead letter queue');
+    }
+
+    // Reset attempts so the delivery can be retried
+    await this.prisma.webhookDelivery.update({
+      where: { id: deliveryId },
+      data: { attempts: 0, status: 'PENDING' },
+    });
+
+    try {
+      await this.deliverWebhook(delivery.webhook, delivery.event, delivery.payload as any);
+      return { success: true, message: 'Dead-lettered delivery retried successfully' };
+    } catch (error: any) {
+      return { success: false, error: error.message };
+    }
   }
 }

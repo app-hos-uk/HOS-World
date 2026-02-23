@@ -1,14 +1,34 @@
-import { Injectable, BadRequestException } from '@nestjs/common';
+import { Injectable, BadRequestException, Logger, OnModuleInit } from '@nestjs/common';
 import { PrismaService } from '../database/prisma.service';
 import { ProductsService } from './products.service';
 import { ProductStatus } from '@prisma/client';
+import { QueueService, JobType } from '../queue/queue.service';
 
 @Injectable()
-export class ProductsBulkService {
+export class ProductsBulkService implements OnModuleInit {
+  private readonly logger = new Logger(ProductsBulkService.name);
+
   constructor(
     private prisma: PrismaService,
     private productsService: ProductsService,
+    private queueService: QueueService,
   ) {}
+
+  async onModuleInit() {
+    this.queueService.registerProcessor(JobType.BULK_IMPORT, async (job) => {
+      const { sellerId, products } = job.data;
+      this.logger.log(`Processing bulk import job ${job.id}: ${products.length} products for seller ${sellerId}`);
+      return this.importProducts(sellerId, products);
+    });
+
+    this.logger.log('Registered BULK_IMPORT job processor');
+  }
+
+  async queueBulkImport(sellerId: string, products: any[]): Promise<string> {
+    const jobId = await this.queueService.queueBulkImport({ sellerId, products });
+    this.logger.log(`Queued bulk import job ${jobId}: ${products.length} products for seller ${sellerId}`);
+    return jobId;
+  }
 
   async exportProducts(sellerId: string): Promise<any[]> {
     const seller = await this.prisma.seller.findUnique({

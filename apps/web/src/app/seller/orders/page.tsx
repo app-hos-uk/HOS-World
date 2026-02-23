@@ -68,6 +68,9 @@ export default function SellerOrdersPage() {
     { title: 'My Products', href: '/seller/products', icon: '📦' },
     { title: 'Orders', href: '/seller/orders', icon: '🛒' },
     { title: 'Submissions', href: '/seller/submissions', icon: '📝' },
+    { title: 'Profile', href: '/seller/profile', icon: '👤' },
+    { title: 'Themes', href: '/seller/themes', icon: '🎨' },
+    { title: 'Bulk Import', href: '/seller/products/bulk', icon: '📤' },
   ];
 
   const fetchAllOrders = useCallback(async () => {
@@ -175,13 +178,31 @@ export default function SellerOrdersPage() {
     
     try {
       setUpdatingStatus(true);
-      await apiClient.updateOrderStatus(selectedOrder.id, newStatus);
+      await apiClient.updateOrderStatus(selectedOrder.id, newStatus, trackingNumber || undefined);
       toast.success(`Order status updated to ${newStatus}`);
-      setSelectedOrder({ ...selectedOrder, status: newStatus });
+      setSelectedOrder({ ...selectedOrder, status: newStatus, trackingNumber: trackingNumber || selectedOrder.trackingNumber });
       fetchOrders(statusFilter);
       fetchAllOrders();
     } catch (err: any) {
       toast.error(err.message || 'Failed to update order status');
+    } finally {
+      setUpdatingStatus(false);
+    }
+  };
+
+  const handleCancelOrder = async () => {
+    if (!selectedOrder) return;
+    if (!window.confirm('Are you sure you want to cancel this order? This action cannot be undone.')) return;
+    
+    try {
+      setUpdatingStatus(true);
+      await apiClient.cancelOrder(selectedOrder.id);
+      toast.success('Order cancelled');
+      setSelectedOrder({ ...selectedOrder, status: 'CANCELLED' });
+      fetchOrders(statusFilter);
+      fetchAllOrders();
+    } catch (err: any) {
+      toast.error(err.message || 'Failed to cancel order');
     } finally {
       setUpdatingStatus(false);
     }
@@ -388,7 +409,7 @@ export default function SellerOrdersPage() {
                       {selectedOrder.status}
                     </span>
                   </div>
-                  <div className="flex gap-2">
+                  <div className="flex gap-2 flex-wrap">
                     {selectedOrder.status === 'PENDING' && (
                       <button
                         onClick={() => handleStatusUpdate('PROCESSING')}
@@ -405,6 +426,24 @@ export default function SellerOrdersPage() {
                         className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 disabled:opacity-50 text-sm"
                       >
                         Mark as Shipped
+                      </button>
+                    )}
+                    {selectedOrder.status === 'SHIPPED' && (
+                      <button
+                        onClick={() => handleStatusUpdate('DELIVERED')}
+                        disabled={updatingStatus}
+                        className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 text-sm"
+                      >
+                        Mark as Delivered
+                      </button>
+                    )}
+                    {['PENDING', 'PROCESSING'].includes(selectedOrder.status) && (
+                      <button
+                        onClick={handleCancelOrder}
+                        disabled={updatingStatus}
+                        className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50 text-sm"
+                      >
+                        Cancel Order
                       </button>
                     )}
                   </div>
@@ -500,12 +539,40 @@ export default function SellerOrdersPage() {
                 </div>
 
                 {/* Tracking Number */}
-                {(selectedOrder.status === 'SHIPPED' || selectedOrder.trackingNumber) && (
+                {(['PROCESSING', 'SHIPPED', 'DELIVERED', 'COMPLETED'].includes(selectedOrder.status) || selectedOrder.trackingNumber) && (
                   <div className="bg-purple-50 rounded-lg p-4">
                     <h3 className="font-medium text-gray-900 mb-2">Tracking Information</h3>
-                    <p className="text-sm text-gray-700">
-                      Tracking Number: {selectedOrder.trackingNumber || 'Not provided'}
-                    </p>
+                    <div className="flex gap-2">
+                      <input
+                        type="text"
+                        value={trackingNumber}
+                        onChange={(e) => setTrackingNumber(e.target.value)}
+                        placeholder="Enter tracking number"
+                        className="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                      />
+                      <button
+                        onClick={async () => {
+                          if (!trackingNumber.trim()) {
+                            toast.error('Please enter a tracking number');
+                            return;
+                          }
+                          try {
+                            setUpdatingStatus(true);
+                            await apiClient.updateOrderStatus(selectedOrder.id, selectedOrder.status, trackingNumber);
+                            setSelectedOrder({ ...selectedOrder, trackingNumber });
+                            toast.success('Tracking number saved');
+                          } catch (err: any) {
+                            toast.error(err.message || 'Failed to save tracking number');
+                          } finally {
+                            setUpdatingStatus(false);
+                          }
+                        }}
+                        disabled={updatingStatus}
+                        className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 disabled:opacity-50 text-sm"
+                      >
+                        Save
+                      </button>
+                    </div>
                   </div>
                 )}
               </div>

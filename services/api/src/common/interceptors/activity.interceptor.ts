@@ -121,26 +121,38 @@ export class ActivityInterceptor implements NestInterceptor {
     return `${entityType}${nameStr}${idPart} was ${action}`;
   }
 
+  private static readonly SENSITIVE_KEYS = new Set([
+    'password', 'token', 'refreshToken', 'secret', 'apiKey',
+    'creditCard', 'cardNumber', 'cvv', 'ssn', 'authorization',
+  ]);
+
+  private sanitizeValue(value: any): any {
+    if (value === null || value === undefined) return value;
+    if (Array.isArray(value)) return value.map((item) => this.sanitizeValue(item));
+    if (typeof value === 'object' && !(value instanceof Date)) {
+      const sanitized: Record<string, any> = {};
+      for (const [key, val] of Object.entries(value)) {
+        if (ActivityInterceptor.SENSITIVE_KEYS.has(key)) {
+          sanitized[key] = '[REDACTED]';
+        } else {
+          sanitized[key] = this.sanitizeValue(val);
+        }
+      }
+      return sanitized;
+    }
+    return value;
+  }
+
   private sanitizeBody(body: any): any {
     if (!body) return null;
-    const sanitized = { ...body };
-    // Remove sensitive fields
-    delete sanitized.password;
-    delete sanitized.token;
-    delete sanitized.refreshToken;
-    return sanitized;
+    return this.sanitizeValue(body);
   }
 
   private sanitizeResponse(response: any): any {
     if (!response) return null;
     if (response.data) {
-      const sanitized = { ...response.data };
-      // Remove sensitive fields
-      delete sanitized.password;
-      delete sanitized.token;
-      delete sanitized.refreshToken;
-      return sanitized;
+      return this.sanitizeValue(response.data);
     }
-    return response;
+    return this.sanitizeValue(response);
   }
 }

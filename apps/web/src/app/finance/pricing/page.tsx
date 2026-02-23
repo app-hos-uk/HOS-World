@@ -144,6 +144,9 @@ export default function FinancePricingPage() {
   const menuItems = [
     { title: 'Dashboard', href: '/finance/dashboard', icon: '📊' },
     { title: 'Pricing Approvals', href: '/finance/pricing', icon: '💰', badge: pendingSubmissions.length },
+    { title: 'Payouts', href: '/finance/payouts', icon: '💸' },
+    { title: 'Revenue Reports', href: '/finance/reports/revenue', icon: '📊' },
+    { title: 'Fee Reports', href: '/finance/reports/fees', icon: '📋' },
   ];
 
   return (

@@ -49,6 +49,9 @@ export default function SellerProductsPage() {
     { title: 'My Products', href: '/seller/products', icon: '📦' },
     { title: 'Orders', href: '/seller/orders', icon: '🛒' },
     { title: 'Submissions', href: '/seller/submissions', icon: '📝' },
+    { title: 'Profile', href: '/seller/profile', icon: '👤' },
+    { title: 'Themes', href: '/seller/themes', icon: '🎨' },
+    { title: 'Bulk Import', href: '/seller/products/bulk', icon: '📤' },
   ];
 
   useEffect(() => {
@@ -71,7 +74,7 @@ export default function SellerProductsPage() {
       }
     } catch (err: any) {
       console.error('Error fetching products:', err);
-      setError(err.message || 'Failed to load products');
+      setError(err?.message || 'Failed to load products');
     } finally {
       setLoading(false);
     }

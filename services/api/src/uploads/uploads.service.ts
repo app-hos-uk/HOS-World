@@ -1,8 +1,16 @@
-import { Injectable, BadRequestException, NotFoundException } from '@nestjs/common';
+import { Injectable, BadRequestException, NotFoundException, Logger, OnModuleInit } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { existsSync, unlinkSync, mkdirSync, readFileSync } from 'fs';
-import { join } from 'path';
+import { join, parse as parsePath } from 'path';
 import { randomUUID } from 'crypto';
+import { QueueService, JobType } from '../queue/queue.service';
+
+let sharp: any;
+try {
+  sharp = require('sharp');
+} catch {
+  sharp = null;
+}
 
 interface UploadResult {
   url: string;
@@ -10,12 +18,29 @@ interface UploadResult {
   publicId?: string;
 }
 
+interface ImageSizes {
+  original: string;
+  thumbnail?: string;
+  medium?: string;
+  large?: string;
+}
+
+const IMAGE_SIZE_CONFIGS = [
+  { suffix: '-thumb', width: 150, height: 150 },
+  { suffix: '-medium', width: 600, height: 600 },
+  { suffix: '-large', width: 1200, height: 1200 },
+] as const;
+
 @Injectable()
-export class UploadsService {
+export class UploadsService implements OnModuleInit {
+  private readonly logger = new Logger(UploadsService.name);
   private readonly uploadBasePath: string;
   private readonly apiBaseUrl: string;
 
-  constructor(private configService: ConfigService) {
+  constructor(
+    private configService: ConfigService,
+    private queueService: QueueService,
+  ) {
     // Railway Volume path (configurable via env, defaults to /data/uploads)
     this.uploadBasePath = this.configService.get<string>('UPLOAD_BASE_PATH') || '/data/uploads';
 
@@ -32,6 +57,68 @@ export class UploadsService {
           : `http://localhost:${port}`;
       this.apiBaseUrl = `${host}/api`;
     }
+  }
+
+  async onModuleInit() {
+    if (!sharp) {
+      this.logger.warn('sharp is not installed — image processing pipeline disabled');
+      return;
+    }
+
+    this.queueService.registerProcessor(JobType.IMAGE_PROCESSING, async (job) => {
+      const { imageUrl, transformations } = job.data;
+      return this.processImage(imageUrl, transformations);
+    });
+
+    this.logger.log('Registered IMAGE_PROCESSING job processor');
+  }
+
+  /**
+   * Process an uploaded image into multiple sizes using sharp.
+   * Reads from the local upload path, writes resized variants alongside the original.
+   */
+  async processImage(imageUrl: string, _transformations?: any): Promise<ImageSizes> {
+    if (!sharp) {
+      this.logger.warn('sharp is not available — skipping image processing');
+      return { original: imageUrl };
+    }
+
+    const urlMatch = imageUrl.match(/\/uploads\/([^/]+)\/([^/]+)$/);
+    if (!urlMatch) {
+      this.logger.warn(`Cannot parse image URL for processing: ${imageUrl}`);
+      return { original: imageUrl };
+    }
+
+    const [, folder, filename] = urlMatch;
+    const safeFolder = this.sanitizeFolder(folder);
+    const filePath = join(this.uploadBasePath, safeFolder, filename);
+
+    if (!existsSync(filePath)) {
+      this.logger.warn(`Source file not found for processing: ${filePath}`);
+      return { original: imageUrl };
+    }
+
+    const { name: baseName, ext } = parsePath(filename);
+    const result: ImageSizes = { original: imageUrl };
+
+    for (const config of IMAGE_SIZE_CONFIGS) {
+      try {
+        const resizedFilename = `${baseName}${config.suffix}${ext}`;
+        const outputPath = join(this.uploadBasePath, safeFolder, resizedFilename);
+
+        await sharp(filePath)
+          .resize(config.width, config.height, { fit: 'inside', withoutEnlargement: true })
+          .toFile(outputPath);
+
+        const key = config.suffix.replace('-', '') as 'thumb' | 'medium' | 'large';
+        const sizeKey = key === 'thumb' ? 'thumbnail' : key;
+        result[sizeKey] = this.getPublicUrl(safeFolder, resizedFilename);
+      } catch (err: any) {
+        this.logger.error(`Failed to generate ${config.suffix} for ${filename}: ${err.message}`);
+      }
+    }
+
+    return result;
   }
 
   /**
@@ -136,6 +223,15 @@ export class UploadsService {
 
     // Construct public URL using the saved filename
     const publicUrl = this.getPublicUrl(safeFolder, savedFilename);
+
+    // Queue background image processing if sharp is available
+    if (sharp) {
+      try {
+        await this.queueService.queueImageProcessing(publicUrl, {});
+      } catch (err: any) {
+        this.logger.warn(`Failed to queue image processing: ${err.message}`);
+      }
+    }
 
     return {
       url: publicUrl,

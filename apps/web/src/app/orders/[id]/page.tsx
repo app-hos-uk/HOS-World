@@ -433,7 +433,7 @@ export default function OrderDetailPage() {
                   {['DELIVERED', 'COMPLETED'].includes(order.status.toUpperCase()) && (
                     <>
                       <Link
-                        href="/returns"
+                        href={`/returns?orderId=${order.id}`}
                         className="block w-full px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 text-center font-medium transition-colors"
                       >
                         Request Return

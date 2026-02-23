@@ -130,7 +130,7 @@ export class RedisService implements OnModuleInit, OnModuleDestroy {
   }
 
   /**
-   * Delete keys matching pattern
+   * Delete keys matching pattern (uses KEYS — acceptable for low-cardinality patterns)
    */
   async delPattern(pattern: string): Promise<void> {
     if (!this.isConnected) return;
@@ -143,6 +143,30 @@ export class RedisService implements OnModuleInit, OnModuleDestroy {
     } catch (error) {
       this.logger.error(`Failed to delete Redis keys matching ${pattern}:`, error);
     }
+  }
+
+  /**
+   * Delete keys matching pattern using SCAN (non-blocking, production-safe).
+   * Iterates the keyspace in batches of 100 to avoid blocking the Redis server.
+   */
+  async deleteByPattern(pattern: string): Promise<number> {
+    if (!this.isConnected) return 0;
+
+    let deleted = 0;
+    try {
+      let cursor = 0;
+      do {
+        const result = await this.client.scan(cursor, { MATCH: pattern, COUNT: 100 });
+        cursor = result.cursor;
+        if (result.keys.length > 0) {
+          await this.client.del(result.keys);
+          deleted += result.keys.length;
+        }
+      } while (cursor !== 0);
+    } catch (error) {
+      this.logger.error(`Failed to deleteByPattern Redis keys matching ${pattern}:`, error);
+    }
+    return deleted;
   }
 
   /**

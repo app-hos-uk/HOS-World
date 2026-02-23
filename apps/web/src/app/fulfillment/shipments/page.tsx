@@ -20,6 +20,7 @@ export default function FulfillmentShipmentsPage() {
   const menuItems = [
     { title: 'Dashboard', href: '/fulfillment/dashboard', icon: '📊' },
     { title: 'Manage Shipments', href: '/fulfillment/shipments', icon: '🚚', badge: shipments.filter(s => s.status === 'PENDING').length },
+    { title: 'Centers', href: '/fulfillment/centers', icon: '🏭' },
   ];
 
   useEffect(() => {

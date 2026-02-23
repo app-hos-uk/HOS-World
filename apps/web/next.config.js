@@ -8,7 +8,6 @@ const nextConfig = {
     '@hos-marketplace/utils',
   ],
   images: {
-    // Enable optimization for images from allowed domains
     unoptimized: false,
     remotePatterns: [
       { protocol: 'https', hostname: '**.placehold.co', pathname: '/**' },
@@ -22,12 +21,8 @@ const nextConfig = {
       { protocol: 'http', hostname: '127.0.0.1', pathname: '/**' },
     ],
   },
-  // ESLint configuration
-  // Temporarily ignore ESLint during builds to allow deployment
-  // Warnings (img tags, useEffect deps) are non-critical and can be fixed later
   eslint: {
-    // Allow build to proceed with warnings - errors are fixed
-    ignoreDuringBuilds: true,
+    ignoreDuringBuilds: false,
   },
   typescript: {
     // Warning: This allows production builds to successfully complete even if

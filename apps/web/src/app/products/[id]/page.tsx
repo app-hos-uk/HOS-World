@@ -4,14 +4,13 @@ import { useEffect, useState, useRef } from 'react';
 import { useParams } from 'next/navigation';
 import { Header } from '@/components/Header';
 import { Footer } from '@/components/Footer';
-import { AIChatInterface } from '@/components/AIChatInterface';
 import { SocialShare } from '@/components/SocialShare';
 import { apiClient } from '@/lib/api';
 import { useToast } from '@/hooks/useToast';
 import { useCurrency } from '@/contexts/CurrencyContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { useCart } from '@/contexts/CartContext';
-import Image from 'next/image';
+import { SafeImage } from '@/components/SafeImage';
 import Link from 'next/link';
 
 const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
@@ -37,7 +36,6 @@ export default function ProductDetailPage() {
   const [reviewsLoading, setReviewsLoading] = useState(false);
   const [quantity, setQuantity] = useState(1);
   const [addingToCart, setAddingToCart] = useState(false);
-  const [showAIChat, setShowAIChat] = useState(false);
   const [showReviewForm, setShowReviewForm] = useState(false);
   const [submittingReview, setSubmittingReview] = useState(false);
   const [reviewForm, setReviewForm] = useState({ rating: 5, comment: '', title: '' });
@@ -275,10 +273,11 @@ export default function ProductDetailPage() {
           <div>
             {product.images && product.images.length > 0 ? (
               <div className="relative w-full h-96 mb-4">
-                <Image
+                <SafeImage
                   src={typeof product.images[0] === 'string' ? product.images[0] : product.images[0]?.url || product.images[0]}
                   alt={product.name}
                   fill
+                  sizes="(max-width: 768px) 100vw, 50vw"
                   className="object-cover rounded-lg"
                 />
               </div>
@@ -293,10 +292,11 @@ export default function ProductDetailPage() {
                   const imageUrl = typeof image === 'string' ? image : image?.url || image;
                   return (
                     <div key={index} className="relative w-full h-20">
-                      <Image
+                      <SafeImage
                         src={imageUrl}
                         alt={`${product.name} ${index + 2}`}
                         fill
+                        sizes="96px"
                         className="object-cover rounded-lg"
                       />
                     </div>
@@ -382,8 +382,12 @@ export default function ProductDetailPage() {
                 </button>
                 <span className="text-lg font-semibold">{quantity}</span>
                 <button
-                  onClick={() => setQuantity(quantity + 1)}
-                  className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50"
+                  onClick={() => {
+                    const max = product.stock ?? 99;
+                    setQuantity(Math.min(max, quantity + 1));
+                  }}
+                  disabled={quantity >= (product.stock ?? 99)}
+                  className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   +
                 </button>
@@ -447,31 +451,8 @@ export default function ProductDetailPage() {
               />
             </div>
 
-            {/* AI Chat Toggle */}
-            <button
-              onClick={() => setShowAIChat(!showAIChat)}
-              className="w-full px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium"
-            >
-              {showAIChat ? 'Hide' : 'Ask AI About This Product'}
-            </button>
           </div>
         </div>
-
-        {/* AI Chat Interface - Note: Requires characterId, using product context for now */}
-        {showAIChat && (
-          <div className="mb-8">
-            <div className="bg-gray-50 rounded-lg p-6">
-              <h3 className="text-lg font-semibold mb-4">AI Product Assistant</h3>
-              <p className="text-gray-600 mb-4">
-                Ask questions about this product, get recommendations, or learn more about its features.
-              </p>
-              {/* Note: AIChatInterface requires characterId - would need to fetch user's character or use a default */}
-              <p className="text-sm text-gray-500">
-                AI chat feature requires character selection. Please select a character in your profile to use this feature.
-              </p>
-            </div>
-          </div>
-        )}
 
         {/* Reviews Section */}
         <div className="mt-12 border-t pt-8">
@@ -597,7 +578,7 @@ export default function ProductDetailPage() {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-8">
           {product.category && (
             <div className="bg-gray-50 rounded-lg p-4">
-              <h3 className="font-semibold mb-2">Fandom</h3>
+              <h3 className="font-semibold mb-2">Category</h3>
               <p className="text-gray-600">{product.category}</p>
             </div>
           )}

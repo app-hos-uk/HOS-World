@@ -295,6 +295,12 @@ export default function OrdersPage() {
                     >
                       View Details
                     </button>
+                    <Link
+                      href={`/orders/${order.id}`}
+                      className="px-4 py-2 border border-purple-300 text-purple-700 rounded-lg hover:bg-purple-50 transition-colors font-medium text-sm"
+                    >
+                      View Full Details
+                    </Link>
                     {order.trackingNumber && (
                       <Link
                         href={`/track-order?orderNumber=${order.orderNumber || order.id}`}
@@ -305,7 +311,7 @@ export default function OrdersPage() {
                     )}
                     {['DELIVERED', 'COMPLETED'].includes(order.status) && (
                       <Link
-                        href="/returns"
+                        href={`/returns?orderId=${order.id}`}
                         className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors font-medium text-sm"
                       >
                         Request Return
@@ -457,9 +463,15 @@ export default function OrdersPage() {
               </div>
 
               <div className="p-6 border-t bg-gray-50 flex gap-3">
+                <Link
+                  href={`/orders/${selectedOrder.id}`}
+                  className="flex-1 px-4 py-2 border border-purple-300 text-purple-700 rounded-lg hover:bg-purple-50 text-center font-medium"
+                >
+                  View Full Details
+                </Link>
                 {['DELIVERED', 'COMPLETED'].includes(selectedOrder.status) && (
                   <Link
-                    href="/returns"
+                    href={`/returns?orderId=${selectedOrder.id}`}
                     className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-100 text-center font-medium"
                   >
                     Request Return

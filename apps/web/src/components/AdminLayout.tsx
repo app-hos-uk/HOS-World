@@ -45,6 +45,8 @@ const menuItems: MenuItem[] = [
       { title: 'Newsletter', href: '/admin/newsletter', icon: '📧' },
       { title: 'Pricing Approvals', href: '/admin/pricing', icon: '💰' },
       { title: 'Finance Pricing', href: '/finance/pricing', icon: '💵' },
+      { title: 'Publishing', href: '/admin/publishing', icon: '🚀' },
+      { title: 'Media Library', href: '/admin/media', icon: '🖼️' },
     ],
   },
   {
@@ -72,6 +74,7 @@ const menuItems: MenuItem[] = [
     icon: '💰',
     children: [
       { title: 'Transactions', href: '/admin/finance', icon: '💳' },
+      { title: 'Settlements', href: '/admin/settlements', icon: '💸' },
     ],
   },
   {
@@ -115,6 +118,8 @@ const menuItems: MenuItem[] = [
       { title: 'Settings', href: '/admin/settings', icon: '🔧' },
       { title: 'Permissions', href: '/admin/permissions', icon: '🔐' },
       { title: 'Themes', href: '/admin/themes', icon: '🎨' },
+      { title: 'Webhooks', href: '/admin/webhooks', icon: '🔗' },
+      { title: 'Search', href: '/admin/search', icon: '🔍' },
       { title: 'Domain Management', href: '/admin/domains', icon: '🌐' },
       { title: 'Fulfillment Centers', href: '/admin/fulfillment-centers', icon: '🏭' },
       { title: 'Warehouses', href: '/admin/warehouses', icon: '📦' },
@@ -129,10 +134,12 @@ const menuItems: MenuItem[] = [
     title: 'Analytics & Reports',
     icon: '📊',
     children: [
+      { title: 'All Reports', href: '/admin/reports', icon: '📋' },
       { title: 'Sales Reports', href: '/admin/reports/sales', icon: '💵' },
       { title: 'User Analytics', href: '/admin/reports/users', icon: '👥' },
       { title: 'Product Analytics', href: '/admin/reports/products', icon: '📦' },
       { title: 'Platform Metrics', href: '/admin/reports/platform', icon: '📈' },
+      { title: 'Inventory Reports', href: '/admin/reports/inventory', icon: '📦' },
     ],
   },
 ];

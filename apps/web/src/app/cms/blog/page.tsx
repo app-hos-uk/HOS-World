@@ -13,7 +13,10 @@ export default function CMSBlogPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showCreateForm, setShowCreateForm] = useState(false);
+  const [showEditForm, setShowEditForm] = useState(false);
+  const [editingPostId, setEditingPostId] = useState<string | null>(null);
   const [creatingPost, setCreatingPost] = useState(false);
+  const [updatingPost, setUpdatingPost] = useState(false);
   const [formData, setFormData] = useState({
     title: '',
     slug: '',
@@ -70,6 +73,73 @@ export default function CMSBlogPage() {
     }
   };
 
+  const handleEditPost = (post: any) => {
+    setFormData({
+      title: post.title || '',
+      slug: post.slug || '',
+      excerpt: post.excerpt || '',
+      content: post.content || '',
+      coverImage: post.coverImage || '',
+      author: post.author || '',
+    });
+    setEditingPostId(post.id);
+    setShowEditForm(true);
+    setShowCreateForm(false);
+  };
+
+  const handleUpdatePost = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingPostId || updatingPost) return;
+    try {
+      setUpdatingPost(true);
+      await apiClient.updateCMSBlogPost(editingPostId, formData);
+      toast.success('Blog post updated successfully');
+      setShowEditForm(false);
+      setEditingPostId(null);
+      setFormData({
+        title: '',
+        slug: '',
+        excerpt: '',
+        content: '',
+        coverImage: '',
+        author: '',
+      });
+      loadBlogPosts();
+    } catch (err: any) {
+      toast.error(err.message || 'Failed to update blog post');
+    } finally {
+      setUpdatingPost(false);
+    }
+  };
+
+  const handleDeletePost = async (post: any) => {
+    if (!window.confirm(`Are you sure you want to delete "${post.title}"? This action cannot be undone.`)) {
+      return;
+    }
+    try {
+      await apiClient.deleteCMSBlogPost(post.id);
+      toast.success('Blog post deleted successfully');
+      loadBlogPosts();
+    } catch (err: any) {
+      toast.error(err.message || 'Failed to delete blog post');
+    }
+  };
+
+  const handleTogglePublish = async (post: any) => {
+    try {
+      if (post.publishedAt) {
+        await apiClient.unpublishCMSBlogPost(post.id);
+        toast.success('Blog post unpublished');
+      } else {
+        await apiClient.publishCMSBlogPost(post.id);
+        toast.success('Blog post published');
+      }
+      loadBlogPosts();
+    } catch (err: any) {
+      toast.error(err.message || 'Failed to update publish status');
+    }
+  };
+
   if (loading) {
     return (
       <RouteGuard allowedRoles={['CMS_EDITOR', 'ADMIN']}>
@@ -99,6 +169,107 @@ export default function CMSBlogPage() {
           {error && (
             <div className="bg-red-50 border border-red-200 rounded-lg p-4">
               <p className="text-red-800">Error: {error}</p>
+            </div>
+          )}
+
+          {showEditForm && editingPostId && (
+            <div className="bg-white rounded-lg shadow p-6">
+              <h2 className="text-lg font-semibold mb-4">Edit Blog Post</h2>
+              <form onSubmit={handleUpdatePost} className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Post Title</label>
+                  <input
+                    type="text"
+                    required
+                    value={formData.title}
+                    onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
+                    placeholder="Blog post title"
+                  />
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Slug</label>
+                    <input
+                      type="text"
+                      required
+                      value={formData.slug}
+                      onChange={(e) => setFormData({ ...formData, slug: e.target.value })}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
+                      placeholder="blog-post-slug"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Author</label>
+                    <input
+                      type="text"
+                      value={formData.author}
+                      onChange={(e) => setFormData({ ...formData, author: e.target.value })}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
+                      placeholder="Author name"
+                    />
+                  </div>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Excerpt</label>
+                  <textarea
+                    required
+                    value={formData.excerpt}
+                    onChange={(e) => setFormData({ ...formData, excerpt: e.target.value })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
+                    rows={2}
+                    placeholder="Short excerpt or summary"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Cover Image URL</label>
+                  <input
+                    type="url"
+                    value={formData.coverImage}
+                    onChange={(e) => setFormData({ ...formData, coverImage: e.target.value })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
+                    placeholder="https://example.com/image.jpg"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Content</label>
+                  <textarea
+                    required
+                    value={formData.content}
+                    onChange={(e) => setFormData({ ...formData, content: e.target.value })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
+                    rows={15}
+                    placeholder="Blog post content (Markdown or HTML)"
+                  />
+                </div>
+                <div className="flex gap-2">
+                  <button
+                    type="submit"
+                    disabled={updatingPost}
+                    className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {updatingPost ? 'Saving...' : 'Save Changes'}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setShowEditForm(false);
+                      setEditingPostId(null);
+                      setFormData({
+                        title: '',
+                        slug: '',
+                        excerpt: '',
+                        content: '',
+                        coverImage: '',
+                        author: '',
+                      });
+                    }}
+                    className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </form>
             </div>
           )}
 
@@ -251,10 +422,26 @@ export default function CMSBlogPage() {
                           )}
                         </div>
                         <div className="flex gap-2">
-                          <button className="px-3 py-1 text-sm bg-blue-600 text-white rounded hover:bg-blue-700">
+                          <button
+                            onClick={() => handleTogglePublish(post)}
+                            className={`px-3 py-1 text-sm rounded ${
+                              post.publishedAt
+                                ? 'bg-yellow-500 text-white hover:bg-yellow-600'
+                                : 'bg-green-600 text-white hover:bg-green-700'
+                            }`}
+                          >
+                            {post.publishedAt ? 'Unpublish' : 'Publish'}
+                          </button>
+                          <button
+                            onClick={() => handleEditPost(post)}
+                            className="px-3 py-1 text-sm bg-blue-600 text-white rounded hover:bg-blue-700"
+                          >
                             Edit
                           </button>
-                          <button className="px-3 py-1 text-sm bg-red-600 text-white rounded hover:bg-red-700">
+                          <button
+                            onClick={() => handleDeletePost(post)}
+                            className="px-3 py-1 text-sm bg-red-600 text-white rounded hover:bg-red-700"
+                          >
                             Delete
                           </button>
                         </div>

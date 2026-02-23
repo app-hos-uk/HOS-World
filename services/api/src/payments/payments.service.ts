@@ -243,12 +243,13 @@ export class PaymentsService {
       },
     });
 
-    // Update order payment status and status
+    // Update order payment status; transition PENDING -> CONFIRMED on successful payment
+    const newStatus = order.status === 'PENDING' ? 'CONFIRMED' : order.status;
     await this.prisma.order.update({
       where: { id: order.id },
       data: {
         paymentStatus: 'PAID',
-        status: order.status === 'PENDING' ? 'CONFIRMED' : order.status, // Only transition from PENDING to CONFIRMED
+        status: newStatus,
       },
     });
 

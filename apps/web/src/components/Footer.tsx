@@ -37,6 +37,7 @@ export function Footer() {
   return (
     <footer 
       className="w-full border-t border-gray-200 mt-12"
+      role="contentinfo"
       style={{ backgroundColor: theme.colors.surface, borderColor: theme.colors.secondary }}
     >
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12">
@@ -69,7 +70,7 @@ export function Footer() {
           </div>
 
           {/* Links */}
-          <div>
+          <nav aria-label="Quick Links">
             <h4 className="text-sm sm:text-base font-semibold mb-3 sm:mb-4" style={{ color: theme.colors.text.primary }}>
               Quick Links
             </h4>
@@ -90,10 +91,10 @@ export function Footer() {
                 </Link>
               </li>
             </ul>
-          </div>
+          </nav>
 
           {/* Customer Service */}
-          <div>
+          <nav aria-label="Customer Service">
             <h4 className="text-sm sm:text-base font-semibold mb-3 sm:mb-4" style={{ color: theme.colors.text.primary }}>
               Customer Service
             </h4>
@@ -114,7 +115,7 @@ export function Footer() {
                 </Link>
               </li>
             </ul>
-          </div>
+          </nav>
 
           {/* Newsletter */}
           <div>
@@ -129,6 +130,7 @@ export function Footer() {
                 placeholder="Your email"
                 required
                 disabled={status === 'loading'}
+                aria-label="Email address for newsletter"
                 className="w-full px-3 py-2 text-sm sm:text-base rounded border focus:outline-none focus:ring-2 focus:ring-accent disabled:opacity-70"
                 style={{
                   backgroundColor: theme.colors.background,
@@ -149,6 +151,8 @@ export function Footer() {
               </button>
               {message && (
                 <p
+                  role="alert"
+                  aria-live="polite"
                   className="text-xs sm:text-sm"
                   style={{
                     color: status === 'success' ? 'var(--success, #059669)' : status === 'error' ? 'var(--error, #dc2626)' : theme.colors.text.secondary,

@@ -26,5 +26,10 @@ export class ProductsCacheHook {
 
   async onProductDeleted(productId: string): Promise<void> {
     await this.cacheService.invalidateProduct(productId);
+    await this.cacheService.delPattern('products:*');
+  }
+
+  async onListCacheInvalidated(): Promise<void> {
+    await this.cacheService.delPattern('products:*');
   }
 }

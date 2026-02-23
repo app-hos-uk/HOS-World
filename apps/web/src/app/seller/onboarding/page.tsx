@@ -53,19 +53,18 @@ export default function SellerOnboardingPage() {
         setSellerProfile(seller);
 
         // If profile is complete, redirect to dashboard
-        if (seller.storeName && seller.country && seller.verified !== false) {
+        if (seller.storeName && seller.country && seller.verified === true) {
           router.push('/seller/dashboard');
           return;
         }
 
-        // Pre-fill form with existing data
+        // Pre-fill form with existing data, determine furthest completed step
         if (seller.storeName) {
           setStoreInfo({
             storeName: seller.storeName,
             description: seller.description || '',
             logo: seller.logo || '',
           });
-          setCurrentStep('location');
         }
 
         if (seller.country) {
@@ -75,12 +74,18 @@ export default function SellerOnboardingPage() {
             region: seller.region || '',
             timezone: seller.timezone || 'UTC',
           });
-          setCurrentStep('theme');
         }
 
         if (seller.themeId) {
           setTheme({ themeId: seller.themeId });
+        }
+
+        if (seller.themeId) {
           setCurrentStep('payment');
+        } else if (seller.country) {
+          setCurrentStep('theme');
+        } else if (seller.storeName) {
+          setCurrentStep('location');
         }
       }
     } catch (err: any) {
@@ -105,7 +110,7 @@ export default function SellerOnboardingPage() {
       toast.success('Store information saved');
       setCurrentStep('location');
     } catch (err: any) {
-      toast.error(err.message || 'Failed to save store information');
+      toast.error(err?.message || 'Failed to save store information');
     } finally {
       setLoading(false);
     }
@@ -127,7 +132,7 @@ export default function SellerOnboardingPage() {
       toast.success('Location information saved');
       setCurrentStep('theme');
     } catch (err: any) {
-      toast.error(err.message || 'Failed to save location');
+      toast.error(err?.message || 'Failed to save location');
     } finally {
       setLoading(false);
     }
@@ -145,7 +150,7 @@ export default function SellerOnboardingPage() {
       toast.success('Theme selected');
       setCurrentStep('payment');
     } catch (err: any) {
-      toast.error(err.message || 'Failed to save theme');
+      toast.error(err?.message || 'Failed to save theme');
     } finally {
       setLoading(false);
     }

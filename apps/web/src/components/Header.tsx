@@ -8,6 +8,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useCart } from '@/contexts/CartContext';
 import { RoleSwitcher } from '@/components/RoleSwitcher';
 import { CurrencySelector } from '@/components/CurrencySelector';
+import { NotificationBell } from '@/components/NotificationBell';
 import type { UserRole } from '@hos-marketplace/shared-types';
 
 // Role-specific quick links for the header (non-customer roles)
@@ -157,7 +158,7 @@ export function Header() {
           </Link>
           
           {/* Desktop Navigation */}
-          <nav className="hidden md:flex items-center space-x-4 lg:space-x-6">
+          <nav className="hidden md:flex items-center space-x-4 lg:space-x-6" role="navigation" aria-label="Main navigation">
             {/* Storefront: Products & Fandoms only when not on dashboard */}
             {isCustomerRole && !isDashboardPage && (
               <>
@@ -238,6 +239,7 @@ export function Header() {
 
             {isAuthenticated && user ? (
               <>
+                <NotificationBell />
                 {/* Dashboard link for authenticated users */}
                 <Link
                   href={getDashboardLink()}
@@ -305,8 +307,8 @@ export function Header() {
 
         {/* Mobile Menu */}
         {isMobileMenuOpen && (
-          <nav className="md:hidden pb-4 border-t border-purple-200 mt-2 pt-4">
-            <div className="flex flex-col space-y-3">
+          <nav className="md:hidden pb-4 border-t border-purple-200 mt-2 pt-4" role="navigation" aria-label="Mobile navigation">
+            <div className="flex flex-col space-y-3" role="menu">
               {/* Products & Fandoms only when not on dashboard */}
               {isCustomerRole && !isDashboardPage && (
                 <>
@@ -400,6 +402,16 @@ export function Header() {
 
               {isAuthenticated && user ? (
                 <>
+                  <Link
+                    href="/notifications"
+                    onClick={() => setIsMobileMenuOpen(false)}
+                    className="text-base text-purple-700 hover:text-amber-600 font-medium font-secondary transition-colors duration-300 py-2 px-2 rounded-lg hover:bg-purple-50 flex items-center gap-2"
+                  >
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+                    </svg>
+                    <span>Notifications</span>
+                  </Link>
                   <Link
                     href={getDashboardLink()}
                     onClick={() => setIsMobileMenuOpen(false)}

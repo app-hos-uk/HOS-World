@@ -164,9 +164,9 @@ export class UsersService {
   }
 
   async deleteAccount(userId: string): Promise<void> {
-    // Check if user exists
     const user = await this.prisma.user.findUnique({
       where: { id: userId },
+      select: { id: true, email: true },
     });
 
     if (!user) {

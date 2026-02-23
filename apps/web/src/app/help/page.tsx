@@ -1,3 +1,4 @@
+import Link from 'next/link';
 import { Header } from '@/components/Header';
 import { Footer } from '@/components/Footer';
 
@@ -31,10 +32,27 @@ export default function HelpPage() {
               </div>
             </div>
           </section>
+
+          <section className="bg-purple-50 border border-purple-200 rounded-xl p-6 sm:p-8">
+            <h2 className="text-xl sm:text-2xl font-semibold mb-2">Need More Help?</h2>
+            <p className="text-sm sm:text-base text-gray-600 mb-4">
+              Can&apos;t find what you&apos;re looking for? Submit a support ticket and our team will get back to you within 24 hours.
+            </p>
+            <Link
+              href="/support/new"
+              className="inline-flex items-center gap-2 px-6 py-2.5 bg-purple-600 text-white rounded-lg hover:bg-purple-700 font-medium transition-colors"
+            >
+              Submit a Support Ticket
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+              </svg>
+            </Link>
+          </section>
+
           <section>
             <h2 className="text-xl sm:text-2xl font-semibold mb-3 sm:mb-4">Contact Support</h2>
             <p className="text-sm sm:text-base text-gray-600 mb-3 sm:mb-4">
-              Need more help? Contact our support team:
+              You can also reach us directly:
             </p>
             <p className="text-sm sm:text-base text-gray-600">
               Email: support@houseofspells.com<br />

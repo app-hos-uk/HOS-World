@@ -39,17 +39,22 @@ export class StripeProvider implements PaymentProvider {
     }
 
     try {
-      const paymentIntent = await this.stripe.paymentIntents.create({
-        amount: Math.round(params.amount * 100), // Convert to cents
-        currency: params.currency.toLowerCase(),
-        metadata: {
-          orderId: params.orderId,
-          ...params.metadata,
+      const paymentIntent = await this.stripe.paymentIntents.create(
+        {
+          amount: Math.round(params.amount * 100),
+          currency: params.currency.toLowerCase(),
+          metadata: {
+            orderId: params.orderId,
+            ...params.metadata,
+          },
+          automatic_payment_methods: {
+            enabled: true,
+          },
         },
-        automatic_payment_methods: {
-          enabled: true,
+        {
+          idempotencyKey: `order-${params.orderId}`,
         },
-      });
+      );
 
       return {
         paymentIntentId: paymentIntent.id,
@@ -106,12 +111,17 @@ export class StripeProvider implements PaymentProvider {
     }
 
     try {
-      const refund = await this.stripe.refunds.create({
-        payment_intent: params.paymentId,
-        amount: params.amount ? Math.round(params.amount * 100) : undefined,
-        reason: params.reason as any,
-        metadata: params.metadata,
-      });
+      const refund = await this.stripe.refunds.create(
+        {
+          payment_intent: params.paymentId,
+          amount: params.amount ? Math.round(params.amount * 100) : undefined,
+          reason: params.reason as any,
+          metadata: params.metadata,
+        },
+        {
+          idempotencyKey: `refund-${params.paymentId}`,
+        },
+      );
 
       return {
         success: refund.status === 'succeeded',
@@ -158,8 +168,7 @@ export class StripeProvider implements PaymentProvider {
 
     const webhookSecret = this.configService.get<string>('STRIPE_WEBHOOK_SECRET');
     if (!webhookSecret) {
-      this.logger.warn('STRIPE_WEBHOOK_SECRET not set - webhook validation disabled');
-      return false;
+      throw new Error('Stripe webhook secret not configured');
     }
 
     try {

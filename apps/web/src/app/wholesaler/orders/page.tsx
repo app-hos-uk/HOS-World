@@ -20,6 +20,8 @@ export default function WholesalerOrdersPage() {
     { title: 'My Products', href: '/wholesaler/products', icon: '📦' },
     { title: 'Bulk Orders', href: '/wholesaler/orders', icon: '🛒' },
     { title: 'Submissions', href: '/wholesaler/submissions', icon: '📝' },
+    { title: 'Profile', href: '/wholesaler/profile', icon: '👤' },
+    { title: 'Bulk Import', href: '/wholesaler/bulk', icon: '📥' },
   ];
 
   useEffect(() => {

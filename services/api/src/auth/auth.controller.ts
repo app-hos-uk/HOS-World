@@ -139,62 +139,13 @@ export class AuthController {
   @SwaggerApiResponse({ status: 200, description: 'Login successful' })
   @SwaggerApiResponse({ status: 401, description: 'Invalid credentials' })
   async login(@Body() loginDto: LoginDto): Promise<ApiResponse<AuthResponse>> {
-    // #region agent log
-    fetch('http://127.0.0.1:7242/ingest/8743deaa-734d-4185-9f60-b0828f74ef5b', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        location: 'auth.controller.ts:122',
-        message: 'Login controller entry',
-        data: { email: loginDto.email },
-        timestamp: Date.now(),
-        sessionId: 'debug-session',
-        runId: 'run1',
-        hypothesisId: 'E',
-      }),
-    }).catch(() => {});
-    // #endregion
     try {
       const result = await this.authService.login(loginDto);
-      // #region agent log
-      fetch('http://127.0.0.1:7242/ingest/8743deaa-734d-4185-9f60-b0828f74ef5b', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          location: 'auth.controller.ts:124',
-          message: 'Login controller success',
-          data: { hasToken: !!result.token, hasUser: !!result.user },
-          timestamp: Date.now(),
-          sessionId: 'debug-session',
-          runId: 'run1',
-          hypothesisId: 'E',
-        }),
-      }).catch(() => {});
-      // #endregion
       return {
         data: result,
         message: 'Login successful',
       };
     } catch (error: any) {
-      // #region agent log
-      fetch('http://127.0.0.1:7242/ingest/8743deaa-734d-4185-9f60-b0828f74ef5b', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          location: 'auth.controller.ts:128',
-          message: 'Login controller error',
-          data: {
-            errorMessage: error?.message,
-            errorName: error?.name,
-            errorStatus: error?.status,
-          },
-          timestamp: Date.now(),
-          sessionId: 'debug-session',
-          runId: 'run1',
-          hypothesisId: 'E',
-        }),
-      }).catch(() => {});
-      // #endregion
       throw error;
     }
   }
@@ -284,7 +235,44 @@ export class AuthController {
     };
   }
 
+  @Public()
+  @Post('forgot-password')
+  @HttpCode(HttpStatus.OK)
+  @Throttle({ default: { limit: 3, ttl: 60000 } })
+  @ApiOperation({ summary: 'Request password reset', description: 'Sends a password reset email if the account exists.' })
+  @ApiBody({ schema: { type: 'object', required: ['email'], properties: { email: { type: 'string' } } } })
+  @SwaggerApiResponse({ status: 200, description: 'Reset email sent (always returns success for security)' })
+  async forgotPassword(@Body() body: { email: string }): Promise<ApiResponse<{ message: string }>> {
+    const result = await this.authService.requestPasswordReset(body.email);
+    return { data: result, message: result.message };
+  }
+
+  @Public()
+  @Post('reset-password')
+  @HttpCode(HttpStatus.OK)
+  @Throttle({ default: { limit: 5, ttl: 60000 } })
+  @ApiOperation({ summary: 'Reset password with token', description: 'Resets user password using a valid reset token.' })
+  @ApiBody({ schema: { type: 'object', required: ['token', 'newPassword'], properties: { token: { type: 'string' }, newPassword: { type: 'string' } } } })
+  @SwaggerApiResponse({ status: 200, description: 'Password reset successfully' })
+  @SwaggerApiResponse({ status: 400, description: 'Invalid or expired token' })
+  async resetPassword(@Body() body: { token: string; newPassword: string }): Promise<ApiResponse<{ message: string }>> {
+    const result = await this.authService.resetPassword(body.token, body.newPassword);
+    return { data: result, message: result.message };
+  }
+
   @UseGuards(JwtAuthGuard)
+  @Post('change-password')
+  @HttpCode(HttpStatus.OK)
+  @ApiBearerAuth('JWT-auth')
+  @ApiOperation({ summary: 'Change password', description: 'Changes the password for the currently authenticated user.' })
+  @ApiBody({ schema: { type: 'object', required: ['currentPassword', 'newPassword'], properties: { currentPassword: { type: 'string' }, newPassword: { type: 'string' } } } })
+  @SwaggerApiResponse({ status: 200, description: 'Password changed successfully' })
+  @SwaggerApiResponse({ status: 400, description: 'Current password is incorrect' })
+  async changePassword(@Request() req: any, @Body() body: { currentPassword: string; newPassword: string }): Promise<ApiResponse<{ message: string }>> {
+    const result = await this.authService.changePassword(req.user.id, body.currentPassword, body.newPassword);
+    return { data: result, message: result.message };
+  }
+
   @Post('fandom-quiz')
   @HttpCode(HttpStatus.OK)
   @ApiBearerAuth('JWT-auth')

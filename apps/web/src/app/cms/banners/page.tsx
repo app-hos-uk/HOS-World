@@ -15,6 +15,8 @@ export default function CMSBannersPage() {
   const [filterType, setFilterType] = useState<'all' | 'hero' | 'promotional' | 'sidebar'>('all');
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [creatingBanner, setCreatingBanner] = useState(false);
+  const [editingBannerId, setEditingBannerId] = useState<string | null>(null);
+  const [updatingBanner, setUpdatingBanner] = useState(false);
   const [formData, setFormData] = useState({
     title: '',
     type: 'hero' as 'hero' | 'promotional' | 'sidebar',
@@ -79,6 +81,54 @@ export default function CMSBannersPage() {
       loadBanners();
     } catch (err: any) {
       toast.error(err.message || 'Failed to update banner');
+    }
+  };
+
+  const handleEditBanner = (banner: any) => {
+    setFormData({
+      title: banner.title || '',
+      type: banner.type || 'hero',
+      image: banner.image || '',
+      link: banner.link || '',
+      content: banner.content || '',
+      active: banner.active ?? true,
+    });
+    setEditingBannerId(banner.id);
+    setShowCreateForm(false);
+  };
+
+  const handleUpdateBanner = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingBannerId || updatingBanner) return;
+    try {
+      setUpdatingBanner(true);
+      await apiClient.updateCMSBanner(editingBannerId, formData);
+      toast.success('Banner updated successfully');
+      setEditingBannerId(null);
+      setFormData({
+        title: '',
+        type: 'hero',
+        image: '',
+        link: '',
+        content: '',
+        active: true,
+      });
+      loadBanners();
+    } catch (err: any) {
+      toast.error(err.message || 'Failed to update banner');
+    } finally {
+      setUpdatingBanner(false);
+    }
+  };
+
+  const handleDeleteBanner = async (banner: any) => {
+    if (!confirm(`Are you sure you want to delete "${banner.title}"? This action cannot be undone.`)) return;
+    try {
+      await apiClient.deleteCMSBanner(banner.id);
+      toast.success('Banner deleted successfully');
+      loadBanners();
+    } catch (err: any) {
+      toast.error(err.message || 'Failed to delete banner');
     }
   };
 
@@ -159,6 +209,107 @@ export default function CMSBannersPage() {
               </button>
             </div>
           </div>
+
+          {editingBannerId && (
+            <div className="bg-white rounded-lg shadow p-6">
+              <h2 className="text-lg font-semibold mb-4">Edit Banner</h2>
+              <form onSubmit={handleUpdateBanner} className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Banner Title</label>
+                  <input
+                    type="text"
+                    required
+                    value={formData.title}
+                    onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
+                    placeholder="Banner title"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Banner Type</label>
+                  <select
+                    value={formData.type}
+                    onChange={(e) =>
+                      setFormData({ ...formData, type: e.target.value as any })
+                    }
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
+                  >
+                    <option value="hero">Hero Banner</option>
+                    <option value="promotional">Promotional Banner</option>
+                    <option value="sidebar">Sidebar Banner</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Image URL</label>
+                  <input
+                    type="url"
+                    required
+                    value={formData.image}
+                    onChange={(e) => setFormData({ ...formData, image: e.target.value })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
+                    placeholder="https://example.com/banner.jpg"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Link URL (optional)</label>
+                  <input
+                    type="url"
+                    value={formData.link}
+                    onChange={(e) => setFormData({ ...formData, link: e.target.value })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
+                    placeholder="https://example.com/page"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Content (optional)</label>
+                  <textarea
+                    value={formData.content}
+                    onChange={(e) => setFormData({ ...formData, content: e.target.value })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
+                    rows={3}
+                    placeholder="Banner content or description"
+                  />
+                </div>
+                <div className="flex items-center">
+                  <label className="flex items-center space-x-2">
+                    <input
+                      type="checkbox"
+                      checked={formData.active}
+                      onChange={(e) => setFormData({ ...formData, active: e.target.checked })}
+                      className="rounded border-gray-300 text-purple-600 focus:ring-purple-500"
+                    />
+                    <span className="text-sm text-gray-700">Active</span>
+                  </label>
+                </div>
+                <div className="flex gap-2">
+                  <button
+                    type="submit"
+                    disabled={updatingBanner}
+                    className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {updatingBanner ? 'Saving...' : 'Save Changes'}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setEditingBannerId(null);
+                      setFormData({
+                        title: '',
+                        type: 'hero',
+                        image: '',
+                        link: '',
+                        content: '',
+                        active: true,
+                      });
+                    }}
+                    className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </form>
+            </div>
+          )}
 
           {showCreateForm && (
             <div className="bg-white rounded-lg shadow p-6">
@@ -324,10 +475,16 @@ export default function CMSBannersPage() {
                         >
                           {banner.active ? 'Deactivate' : 'Activate'}
                         </button>
-                        <button className="flex-1 px-3 py-1 text-sm bg-blue-600 text-white rounded hover:bg-blue-700">
+                        <button
+                          onClick={() => handleEditBanner(banner)}
+                          className="flex-1 px-3 py-1 text-sm bg-blue-600 text-white rounded hover:bg-blue-700"
+                        >
                           Edit
                         </button>
-                        <button className="flex-1 px-3 py-1 text-sm bg-red-600 text-white rounded hover:bg-red-700">
+                        <button
+                          onClick={() => handleDeleteBanner(banner)}
+                          className="flex-1 px-3 py-1 text-sm bg-red-600 text-white rounded hover:bg-red-700"
+                        >
                           Delete
                         </button>
                       </div>

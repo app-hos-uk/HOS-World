@@ -210,7 +210,17 @@ export class ProductsController {
     @Request() req: any,
     @Body() body: { products: any[] },
   ): Promise<ApiResponse<any>> {
-    const result = await this.productsBulkService.importProducts(req.user.id, body.products);
+    const products = body.products;
+
+    if (products.length > 10) {
+      const jobId = await this.productsBulkService.queueBulkImport(req.user.id, products);
+      return {
+        data: { jobId, status: 'queued', totalItems: products.length },
+        message: `Bulk import of ${products.length} products has been queued for background processing`,
+      };
+    }
+
+    const result = await this.productsBulkService.importProducts(req.user.id, products);
     return {
       data: result,
       message: `Import completed: ${result.success} succeeded, ${result.failed} failed`,

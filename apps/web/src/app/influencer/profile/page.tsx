@@ -94,7 +94,7 @@ export default function InfluencerProfilePage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="flex items-center justify-center py-12">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600 mx-auto" />
           <p className="mt-4 text-gray-600">Loading profile...</p>
@@ -104,8 +104,7 @@ export default function InfluencerProfilePage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <Link
           href="/influencer/dashboard"
           className="inline-flex items-center gap-2 text-purple-600 hover:text-purple-700 font-medium mb-6"
@@ -232,7 +231,6 @@ export default function InfluencerProfilePage() {
             </Link>
           </div>
         </div>
-      </div>
     </div>
   );
 }

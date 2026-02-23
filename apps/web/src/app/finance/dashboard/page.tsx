@@ -12,11 +12,17 @@ export default function FinanceDashboardPage() {
   const [error, setError] = useState<string | null>(null);
 
   const pendingApprovals =
-    dashboardData?.totalPending ??
-    (Array.isArray(dashboardData?.pendingApprovals) ? dashboardData.pendingApprovals.length : 0);
+    typeof dashboardData?.totalPending === 'number'
+      ? dashboardData.totalPending
+      : Array.isArray(dashboardData?.pendingApprovals)
+        ? dashboardData.pendingApprovals.length
+        : 0;
   const menuItems = [
     { title: 'Dashboard', href: '/finance/dashboard', icon: '📊' },
     { title: 'Pricing Approvals', href: '/finance/pricing', icon: '💰', badge: pendingApprovals },
+    { title: 'Payouts', href: '/finance/payouts', icon: '💸' },
+    { title: 'Revenue Reports', href: '/finance/reports/revenue', icon: '📊' },
+    { title: 'Fee Reports', href: '/finance/reports/fees', icon: '📋' },
   ];
 
   const fetchDashboardData = useCallback(async (showLoading = true) => {

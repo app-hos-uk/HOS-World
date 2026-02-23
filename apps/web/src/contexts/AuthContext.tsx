@@ -93,6 +93,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           setImpersonatedRole(null);
         }
         localStorage.removeItem('auth_token');
+        localStorage.removeItem('refresh_token');
       }
     } catch (error: any) {
       console.error('Failed to fetch user:', error);
@@ -101,6 +102,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setImpersonatedRole(null);
       }
       localStorage.removeItem('auth_token');
+      localStorage.removeItem('refresh_token');
     } finally {
       if (mountedRef.current) setLoading(false);
     }
@@ -171,6 +173,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       console.error('Logout error:', error);
     }
     localStorage.removeItem('auth_token');
+    localStorage.removeItem('refresh_token');
     localStorage.removeItem('admin_impersonated_role');
     setUser(null);
     setImpersonatedRole(null);

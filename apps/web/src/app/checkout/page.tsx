@@ -2,6 +2,7 @@
 
 import { Header } from '@/components/Header';
 import { Footer } from '@/components/Footer';
+import { RouteGuard } from '@/components/RouteGuard';
 import { useState, useEffect, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { apiClient } from '@/lib/api';
@@ -202,11 +203,10 @@ export default function CheckoutPage() {
       const discount = cart.discount || 0;
       const totalBeforeTax = subtotal - discount + shippingCost;
 
-      // Calculate tax for each item
-      let totalTax = 0;
-      for (const item of cart.items) {
-        if (item.product?.taxClassId) {
-          const taxResponse = await apiClient.calculateTax({
+      const taxPromises = cart.items
+        .filter((item: any) => item.product?.taxClassId)
+        .map((item: any) =>
+          apiClient.calculateTax({
             amount: item.price * item.quantity,
             taxClassId: item.product.taxClassId,
             location: {
@@ -215,18 +215,18 @@ export default function CheckoutPage() {
               city: address.city,
               postalCode: address.postalCode,
             },
-          });
+          })
+        );
 
-          if (taxResponse?.data?.tax) {
-            totalTax += taxResponse.data.tax;
-          }
-        }
-      }
+      const taxResults = await Promise.allSettled(taxPromises);
+      const totalTax = taxResults.reduce(
+        (sum, result) => sum + (result.status === 'fulfilled' ? (result.value?.data?.tax || 0) : 0),
+        0
+      );
 
       setTaxAmount(totalTax);
     } catch (error: any) {
       console.error('Error calculating tax:', error);
-      // Don't show error toast - tax might not be configured
     }
   };
 
@@ -294,34 +294,38 @@ export default function CheckoutPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-white">
-        <Header />
-        <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 lg:py-12">
-          <p className="text-sm sm:text-base">Loading checkout...</p>
-        </main>
-        <Footer />
-      </div>
+      <RouteGuard allowedRoles={['CUSTOMER', 'SELLER', 'B2C_SELLER', 'WHOLESALER', 'ADMIN', 'INFLUENCER']}>
+        <div className="min-h-screen bg-white">
+          <Header />
+          <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 lg:py-12">
+            <p className="text-sm sm:text-base">Loading checkout...</p>
+          </main>
+          <Footer />
+        </div>
+      </RouteGuard>
     );
   }
 
   if (!cart || !cart.items || cart.items.length === 0) {
     return (
-      <div className="min-h-screen bg-white">
-        <Header />
-        <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 lg:py-12">
-          <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold mb-6 sm:mb-8">Checkout</h1>
-          <div className="bg-gray-50 rounded-lg p-6 sm:p-8 text-center">
-            <p className="text-base sm:text-lg text-gray-600 mb-4 sm:mb-6">Your cart is empty</p>
-            <Link
-              href="/products"
-              className="inline-block px-5 sm:px-6 py-2.5 sm:py-3 text-sm sm:text-base bg-gradient-to-r from-purple-700 to-indigo-700 hover:from-purple-600 hover:to-indigo-600 text-white font-semibold rounded-lg transition-all duration-300"
-            >
-              Browse Products
-            </Link>
-          </div>
-        </main>
-        <Footer />
-      </div>
+      <RouteGuard allowedRoles={['CUSTOMER', 'SELLER', 'B2C_SELLER', 'WHOLESALER', 'ADMIN', 'INFLUENCER']}>
+        <div className="min-h-screen bg-white">
+          <Header />
+          <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 lg:py-12">
+            <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold mb-6 sm:mb-8">Checkout</h1>
+            <div className="bg-gray-50 rounded-lg p-6 sm:p-8 text-center">
+              <p className="text-base sm:text-lg text-gray-600 mb-4 sm:mb-6">Your cart is empty</p>
+              <Link
+                href="/products"
+                className="inline-block px-5 sm:px-6 py-2.5 sm:py-3 text-sm sm:text-base bg-gradient-to-r from-purple-700 to-indigo-700 hover:from-purple-600 hover:to-indigo-600 text-white font-semibold rounded-lg transition-all duration-300"
+              >
+                Browse Products
+              </Link>
+            </div>
+          </main>
+          <Footer />
+        </div>
+      </RouteGuard>
     );
   }
 
@@ -330,6 +334,7 @@ export default function CheckoutPage() {
   const total = subtotal - discount + shippingCost + taxAmount;
 
   return (
+    <RouteGuard allowedRoles={['CUSTOMER', 'SELLER', 'B2C_SELLER', 'WHOLESALER', 'ADMIN', 'INFLUENCER']}>
     <div className="min-h-screen bg-white">
       <Header />
       <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 lg:py-12">
@@ -339,13 +344,13 @@ export default function CheckoutPage() {
           {/* Checkout Form */}
           <div className="lg:col-span-2 space-y-6">
             {/* Shipping Address */}
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 sm:p-6">
+            <section aria-label="Shipping Address" className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 sm:p-6">
               <h2 className="text-lg font-semibold mb-4">Shipping Address</h2>
               {addresses.length === 0 ? (
                 <div className="text-center py-4">
                   <p className="text-gray-600 mb-4">No addresses found. Please add a shipping address to continue.</p>
                   <Link
-                    href="/profile?tab=addresses&action=add"
+                    href="/profile?tab=addresses&action=add&returnUrl=/checkout"
                     className="inline-flex items-center gap-2 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
                   >
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -388,18 +393,18 @@ export default function CheckoutPage() {
                     </label>
                   ))}
                   <Link
-                    href="/profile?tab=addresses"
+                    href="/profile?tab=addresses&action=add&returnUrl=/checkout"
                     className="block text-center text-purple-700 hover:text-purple-600 text-sm"
                   >
                     + Add New Address
                   </Link>
                 </div>
               )}
-            </div>
+            </section>
 
             {/* Shipping Method */}
             {shippingAddressId && shippingOptions.length > 0 && (
-              <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 sm:p-6">
+              <section aria-label="Shipping Method" className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 sm:p-6">
                 <h2 className="text-lg font-semibold mb-4">Shipping Method</h2>
                 <div className="space-y-3">
                   {shippingOptions.map((option: any) => (
@@ -432,18 +437,18 @@ export default function CheckoutPage() {
                     </label>
                   ))}
                 </div>
-              </div>
+              </section>
             )}
 
             {/* Order Items */}
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 sm:p-6">
+            <section aria-label="Order Items" className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 sm:p-6">
               <h2 className="text-lg font-semibold mb-4">Order Items</h2>
               
               {/* Stock Issues Warning Banner */}
               {hasCriticalStockIssues && (
-                <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-4">
+                <div role="alert" className="bg-red-50 border border-red-200 rounded-lg p-4 mb-4">
                   <div className="flex items-start gap-3">
-                    <span className="text-red-500 text-xl">⚠️</span>
+                    <span className="text-red-500 text-xl" aria-hidden="true">⚠️</span>
                     <div>
                       <p className="font-medium text-red-800">Stock Issues Detected</p>
                       <p className="text-sm text-red-600 mt-1">
@@ -487,17 +492,52 @@ export default function CheckoutPage() {
                   );
                 })}
               </div>
-            </div>
+            </section>
           </div>
 
-          {/* Order Summary */}
+          {/* Order Review & Summary */}
           <div className="lg:col-span-1">
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 sm:p-6 sticky top-4">
-              <h2 className="text-lg font-semibold mb-4">Order Summary</h2>
+            <section aria-label="Order Review" className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 sm:p-6 sticky top-4">
+              <h2 className="text-lg font-semibold mb-4">Order Review</h2>
 
-              <div className="space-y-3 mb-4">
+              {/* Selected Shipping Address Summary */}
+              {shippingAddressId && (() => {
+                const selectedAddress = addresses.find((a: any) => a.id === shippingAddressId);
+                return selectedAddress ? (
+                  <div className="mb-4 p-3 bg-gray-50 rounded-lg border border-gray-100">
+                    <p className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-1">Ship to</p>
+                    <p className="text-sm font-medium">{selectedAddress.fullName}</p>
+                    <p className="text-xs text-gray-600">{selectedAddress.street}</p>
+                    <p className="text-xs text-gray-600">
+                      {selectedAddress.city}, {selectedAddress.state} {selectedAddress.postalCode}
+                    </p>
+                    <p className="text-xs text-gray-600">{selectedAddress.country}</p>
+                  </div>
+                ) : null;
+              })()}
+
+              {/* Cart Items Summary */}
+              <div className="mb-4">
+                <p className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-2">
+                  Items ({cart.items.length})
+                </p>
+                <div className="space-y-2 max-h-48 overflow-y-auto">
+                  {cart.items.map((item: any) => (
+                    <div key={item.id} className="flex justify-between items-center text-sm">
+                      <div className="flex-1 min-w-0 mr-2">
+                        <p className="truncate text-gray-800">{item.product?.name || 'Product'}</p>
+                        <p className="text-xs text-gray-500">Qty: {item.quantity}</p>
+                      </div>
+                      <p className="text-sm font-medium whitespace-nowrap">{formatPrice(item.price * item.quantity)}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Price Breakdown */}
+              <div className="border-t border-gray-200 pt-3 space-y-2 mb-3">
                 <div className="flex justify-between text-sm">
-                  <span>Subtotal</span>
+                  <span className="text-gray-600">Subtotal</span>
                   <span>{formatPrice(subtotal)}</span>
                 </div>
 
@@ -508,26 +548,65 @@ export default function CheckoutPage() {
                   </div>
                 )}
 
-                {shippingCost > 0 && (
-                  <div className="flex justify-between text-sm">
-                    <span>Shipping</span>
-                    <span>{formatPrice(shippingCost)}</span>
-                  </div>
-                )}
+                <div className="flex justify-between text-sm">
+                  <span className="text-gray-600">Shipping</span>
+                  <span>{shippingCost > 0 ? formatPrice(shippingCost) : 'Free'}</span>
+                </div>
 
-                {taxAmount > 0 && (
-                  <div className="flex justify-between text-sm">
-                    <span>Tax</span>
-                    <span>{formatPrice(taxAmount)}</span>
-                  </div>
-                )}
+                <div className="flex justify-between text-sm">
+                  <span className="text-gray-600">Tax</span>
+                  <span>{taxAmount > 0 ? formatPrice(taxAmount) : formatPrice(0)}</span>
+                </div>
               </div>
 
-              <div className="border-t border-gray-200 pt-4 mb-4">
-                <div className="flex justify-between font-bold text-lg">
+              {/* Total */}
+              <div className="border-t-2 border-purple-200 pt-3 mb-4">
+                <div className="flex justify-between font-bold text-lg text-purple-900">
                   <span>Total</span>
                   <span>{formatPrice(total)}</span>
                 </div>
+              </div>
+
+              {/* Review Confirmation Separator */}
+              <div className="relative mb-4">
+                <div className="absolute inset-0 flex items-center" aria-hidden="true">
+                  <div className="w-full border-t border-gray-200" />
+                </div>
+                <div className="relative flex justify-center">
+                  <span className="bg-white px-3 text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Review &amp; Confirm
+                  </span>
+                </div>
+              </div>
+
+              {/* Readiness Checklist */}
+              <div className="space-y-1.5 mb-4 text-xs">
+                <div className="flex items-center gap-2">
+                  {shippingAddressId ? (
+                    <svg className="w-4 h-4 text-green-500 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" /></svg>
+                  ) : (
+                    <svg className="w-4 h-4 text-gray-300 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><circle cx="10" cy="10" r="8" /></svg>
+                  )}
+                  <span className={shippingAddressId ? 'text-gray-700' : 'text-gray-400'}>Shipping address selected</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  {!hasCriticalStockIssues ? (
+                    <svg className="w-4 h-4 text-green-500 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" /></svg>
+                  ) : (
+                    <svg className="w-4 h-4 text-red-400 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" /></svg>
+                  )}
+                  <span className={!hasCriticalStockIssues ? 'text-gray-700' : 'text-red-500'}>All items in stock</span>
+                </div>
+                {shippingOptions.length > 0 && (
+                  <div className="flex items-center gap-2">
+                    {selectedShippingMethod ? (
+                      <svg className="w-4 h-4 text-green-500 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" /></svg>
+                    ) : (
+                      <svg className="w-4 h-4 text-gray-300 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><circle cx="10" cy="10" r="8" /></svg>
+                    )}
+                    <span className={selectedShippingMethod ? 'text-gray-700' : 'text-gray-400'}>Shipping method selected</span>
+                  </div>
+                )}
               </div>
 
               <button
@@ -539,7 +618,7 @@ export default function CheckoutPage() {
               </button>
               
               {hasCriticalStockIssues && (
-                <p className="text-center mt-2 text-sm text-red-600">
+                <p role="alert" className="text-center mt-2 text-sm text-red-600">
                   Please resolve stock issues to continue
                 </p>
               )}
@@ -550,11 +629,12 @@ export default function CheckoutPage() {
               >
                 Back to Cart
               </Link>
-            </div>
+            </section>
           </div>
         </div>
       </main>
       <Footer />
     </div>
+    </RouteGuard>
   );
 }

@@ -2,6 +2,7 @@
 
 import { Header } from '@/components/Header';
 import { Footer } from '@/components/Footer';
+import { RouteGuard } from '@/components/RouteGuard';
 import { useState, useEffect, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { useCurrency } from '@/contexts/CurrencyContext';
@@ -19,7 +20,33 @@ function PaymentContent() {
   const toast = useToast();
   const router = useRouter();
 
+  const [klarnaReturn, setKlarnaReturn] = useState<{ status: string; klarnaOrderId?: string } | null>(null);
+
   useEffect(() => {
+    const klarnaOrderId = searchParams.get('klarna_order_id');
+    const paymentStatus = searchParams.get('payment_status');
+
+    if (klarnaOrderId || paymentStatus) {
+      const status = paymentStatus || 'pending';
+      setKlarnaReturn({ status, klarnaOrderId: klarnaOrderId || undefined });
+
+      if (status === 'completed' || status === 'success') {
+        toast.success('Klarna payment completed successfully!');
+        const redirectOrderId = orderId || searchParams.get('order_id');
+        if (redirectOrderId) {
+          const timer = setTimeout(() => router.push(`/orders/${redirectOrderId}`), 3000);
+          return () => clearTimeout(timer);
+        }
+      } else if (status === 'cancelled' || status === 'failed') {
+        toast.error(`Klarna payment ${status}. Please try again.`);
+      } else {
+        toast.info?.('Klarna payment is being processed. You will be notified once confirmed.') ??
+          toast.success('Klarna payment is being processed.');
+      }
+      setLoading(false);
+      return;
+    }
+
     if (orderId) {
       fetchOrder();
     } else {
@@ -27,7 +54,7 @@ function PaymentContent() {
       setLoading(false);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [orderId]);
+  }, [searchParams]);
 
   const fetchOrder = async () => {
     try {
@@ -59,6 +86,106 @@ function PaymentContent() {
               <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600 mx-auto mb-4"></div>
               <p className="text-sm sm:text-base text-gray-600">Loading order details...</p>
             </div>
+          </div>
+        </main>
+        <Footer />
+      </div>
+    );
+  }
+
+  if (klarnaReturn) {
+    const isSuccess = klarnaReturn.status === 'completed' || klarnaReturn.status === 'success';
+    const isFailed = klarnaReturn.status === 'cancelled' || klarnaReturn.status === 'failed';
+    const isPending = !isSuccess && !isFailed;
+    const redirectOrderId = orderId || searchParams.get('order_id');
+
+    return (
+      <div className="min-h-screen bg-white">
+        <Header />
+        <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 lg:py-12">
+          <div className="max-w-2xl mx-auto text-center">
+            {isSuccess ? (
+              <>
+                <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <svg className="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                  </svg>
+                </div>
+                <h1 className="text-2xl sm:text-3xl font-bold mb-4 text-green-700">Payment Successful</h1>
+                <p className="text-gray-600 mb-2">Your Klarna payment has been processed successfully.</p>
+                {klarnaReturn.klarnaOrderId && (
+                  <p className="text-sm text-gray-500 mb-6">Klarna Reference: {klarnaReturn.klarnaOrderId}</p>
+                )}
+                <p className="text-sm text-gray-500 mb-6">Redirecting to your order details...</p>
+                {redirectOrderId && (
+                  <Link
+                    href={`/orders/${redirectOrderId}`}
+                    className="px-6 py-3 bg-purple-700 text-white rounded-lg hover:bg-purple-600 transition-colors inline-block"
+                  >
+                    View Order
+                  </Link>
+                )}
+              </>
+            ) : isPending ? (
+              <>
+                <div className="w-16 h-16 bg-yellow-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <svg className="w-8 h-8 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                </div>
+                <h1 className="text-2xl sm:text-3xl font-bold mb-4 text-yellow-700">Payment Processing</h1>
+                <p className="text-gray-600 mb-2">Your Klarna payment is being processed. You will be notified once it is confirmed.</p>
+                {klarnaReturn.klarnaOrderId && (
+                  <p className="text-sm text-gray-500 mb-6">Klarna Reference: {klarnaReturn.klarnaOrderId}</p>
+                )}
+                <div className="flex gap-4 justify-center">
+                  {redirectOrderId && (
+                    <Link
+                      href={`/orders/${redirectOrderId}`}
+                      className="px-6 py-3 bg-purple-700 text-white rounded-lg hover:bg-purple-600 transition-colors inline-block"
+                    >
+                      View Order
+                    </Link>
+                  )}
+                  <Link
+                    href="/orders"
+                    className="px-6 py-3 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors"
+                  >
+                    View My Orders
+                  </Link>
+                </div>
+              </>
+            ) : (
+              <>
+                <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <svg className="w-8 h-8 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </div>
+                <h1 className="text-2xl sm:text-3xl font-bold mb-4 text-red-700">Payment {klarnaReturn.status === 'cancelled' ? 'Cancelled' : 'Failed'}</h1>
+                <p className="text-gray-600 mb-6">
+                  {klarnaReturn.status === 'cancelled'
+                    ? 'You cancelled the Klarna payment. You can try again or choose a different payment method.'
+                    : 'The Klarna payment could not be completed. Please try again or choose a different payment method.'}
+                </p>
+                <div className="flex gap-4 justify-center">
+                  {redirectOrderId && (
+                    <Link
+                      href={`/payment?orderId=${redirectOrderId}`}
+                      className="px-6 py-3 bg-purple-700 text-white rounded-lg hover:bg-purple-600 transition-colors"
+                    >
+                      Try Again
+                    </Link>
+                  )}
+                  <Link
+                    href="/orders"
+                    className="px-6 py-3 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors"
+                  >
+                    View My Orders
+                  </Link>
+                </div>
+              </>
+            )}
           </div>
         </main>
         <Footer />
@@ -187,6 +314,10 @@ function PaymentForm({ order }: { order: any }) {
   // Use array instead of Set for React immutability compatibility
   const [redeemedGiftCardCodes, setRedeemedGiftCardCodes] = useState<string[]>(() => []);
   const [processing, setProcessing] = useState(false);
+  const [stripeClientSecret, setStripeClientSecret] = useState<string | null>(null);
+  const [stripePaymentIntentId, setStripePaymentIntentId] = useState<string | null>(null);
+  const [cardDetails, setCardDetails] = useState({ number: '', expiry: '', cvc: '' });
+  const [paymentError, setPaymentError] = useState<string | null>(null);
   const router = useRouter();
   const toast = useToast();
   const { formatPrice } = useCurrency();
@@ -321,12 +452,13 @@ function PaymentForm({ order }: { order: any }) {
   };
 
   const handlePayment = async () => {
+    setPaymentError(null);
+
     if (!order?.id) {
       toast.error('Order not found');
       return;
     }
 
-    // Validate payment method: catch both missing selection and no available providers
     if (!selectedProvider || availableProviders.length === 0) {
       if (availableProviders.length === 0) {
         toast.error('No payment methods available. Please contact support or refresh the page.');
@@ -449,30 +581,12 @@ function PaymentForm({ order }: { order: any }) {
               return; // Exit early to prevent fallthrough to generic payment handler
             }
           } else if (selectedProvider === 'stripe') {
-            // For Stripe, use client secret
             if (response.data.clientSecret) {
-              // In a real implementation, you'd use Stripe Elements here
-              // For now, we'll confirm the payment directly (this is a simplified flow)
-              try {
-                const confirmResponse = await apiClient.confirmPayment({
-                  orderId: order.id,
-                  paymentIntentId: response.data.paymentIntentId,
-                });
-                if (confirmResponse?.data) {
-                  toast.success('Payment successful!');
-                  router.push(`/orders/${order.id}`);
-                  // Return immediately after navigation to prevent finally block from executing
-                  // This prevents state updates on an unmounted component
-                  return;
-                } else {
-                  throw new Error('Payment confirmation failed');
-                }
-              } catch (confirmErr: any) {
-                console.error('Payment confirmation error:', confirmErr);
-                toast.error('Payment confirmation failed. Please try again or contact support.');
-                setProcessing(false);
-                return; // Exit early to prevent further execution and ensure proper cleanup
-              }
+              setStripeClientSecret(response.data.clientSecret);
+              setStripePaymentIntentId(response.data.paymentIntentId);
+              setCardDetails({ number: '', expiry: '', cvc: '' });
+              setProcessing(false);
+              return;
             } else {
               toast.error('Stripe client secret not available. Please contact support.');
               setProcessing(false);
@@ -494,9 +608,8 @@ function PaymentForm({ order }: { order: any }) {
         } catch (err: any) {
           console.error('Payment intent creation error:', err);
           const errorMessage = err.message || 'Failed to create payment intent';
+          setPaymentError(errorMessage);
           toast.error(errorMessage);
-          // Return early to prevent execution from continuing to the else block
-          // which would show a false success message
           setProcessing(false);
           return;
         }
@@ -509,10 +622,70 @@ function PaymentForm({ order }: { order: any }) {
     } catch (err: any) {
       console.error('Payment processing error:', err);
       const errorMessage = err.message || 'Payment processing failed';
+      setPaymentError(errorMessage);
       toast.error(errorMessage);
     } finally {
       setProcessing(false);
     }
+  };
+
+  const handleStripeConfirm = async () => {
+    if (!cardDetails.number || !cardDetails.expiry || !cardDetails.cvc) {
+      toast.error('Please fill in all card details');
+      return;
+    }
+
+    if (cardDetails.number.replace(/\s/g, '').length < 16) {
+      toast.error('Please enter a valid card number');
+      return;
+    }
+
+    if (!/^\d{2}\s?\/\s?\d{2}$/.test(cardDetails.expiry.trim())) {
+      toast.error('Please enter a valid expiry date (MM/YY)');
+      return;
+    }
+
+    if (cardDetails.cvc.length < 3) {
+      toast.error('Please enter a valid CVC');
+      return;
+    }
+
+    try {
+      setProcessing(true);
+      const confirmResponse = await apiClient.confirmPayment({
+        orderId: order.id,
+        paymentIntentId: stripePaymentIntentId!,
+      });
+      if (confirmResponse?.data) {
+        toast.success('Payment successful!');
+        setStripeClientSecret(null);
+        setStripePaymentIntentId(null);
+        router.push(`/orders/${order.id}`);
+        return;
+      } else {
+        throw new Error('Payment confirmation failed');
+      }
+    } catch (confirmErr: any) {
+      console.error('Payment confirmation error:', confirmErr);
+      const errorMessage = confirmErr.message || 'Payment confirmation failed. Please try again or contact support.';
+      setPaymentError(errorMessage);
+      toast.error(errorMessage);
+    } finally {
+      setProcessing(false);
+    }
+  };
+
+  const formatCardNumber = (value: string) => {
+    const digits = value.replace(/\D/g, '').slice(0, 16);
+    return digits.replace(/(\d{4})(?=\d)/g, '$1 ');
+  };
+
+  const formatExpiry = (value: string) => {
+    const digits = value.replace(/\D/g, '').slice(0, 4);
+    if (digits.length >= 3) {
+      return digits.slice(0, 2) + '/' + digits.slice(2);
+    }
+    return digits;
   };
 
   const getProviderDisplayName = (provider: string) => {
@@ -655,34 +828,118 @@ function PaymentForm({ order }: { order: any }) {
         </div>
       )}
 
-      <button
-        onClick={handlePayment}
-        disabled={processing || loadingProviders || availableProviders.length === 0 || !selectedProvider}
-        className="w-full bg-purple-600 text-white py-2.5 sm:py-3 text-sm sm:text-base rounded-lg font-medium hover:bg-purple-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-      >
-        {processing ? 'Processing...' : loadingProviders ? 'Loading payment methods...' : availableProviders.length === 0 ? 'No Payment Methods Available' : !selectedProvider ? 'Select a Payment Method' : `Complete Payment - ${formatPrice(calculateTotal(), order?.currency || 'GBP')}`}
-      </button>
+      {/* Stripe Card Details Form */}
+      {stripeClientSecret && selectedProvider === 'stripe' && (
+        <div className="mb-4 p-4 border border-purple-200 bg-purple-50 rounded-lg">
+          <h3 className="text-sm font-semibold text-purple-900 mb-3">Enter Card Details</h3>
+          <div className="space-y-3">
+            <div>
+              <label className="block text-xs font-medium text-gray-600 mb-1">Card Number</label>
+              <input
+                type="text"
+                value={cardDetails.number}
+                onChange={(e) => setCardDetails(prev => ({ ...prev, number: formatCardNumber(e.target.value) }))}
+                placeholder="4242 4242 4242 4242"
+                maxLength={19}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 text-sm font-mono"
+                disabled={processing}
+              />
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="block text-xs font-medium text-gray-600 mb-1">Expiry Date</label>
+                <input
+                  type="text"
+                  value={cardDetails.expiry}
+                  onChange={(e) => setCardDetails(prev => ({ ...prev, expiry: formatExpiry(e.target.value) }))}
+                  placeholder="MM/YY"
+                  maxLength={5}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 text-sm font-mono"
+                  disabled={processing}
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-gray-600 mb-1">CVC</label>
+                <input
+                  type="text"
+                  value={cardDetails.cvc}
+                  onChange={(e) => setCardDetails(prev => ({ ...prev, cvc: e.target.value.replace(/\D/g, '').slice(0, 4) }))}
+                  placeholder="123"
+                  maxLength={4}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 text-sm font-mono"
+                  disabled={processing}
+                />
+              </div>
+            </div>
+          </div>
+          <button
+            onClick={handleStripeConfirm}
+            disabled={processing || !cardDetails.number || !cardDetails.expiry || !cardDetails.cvc}
+            className="w-full mt-4 bg-purple-600 text-white py-2.5 sm:py-3 text-sm sm:text-base rounded-lg font-medium hover:bg-purple-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {processing ? 'Processing Payment...' : `Pay ${formatPrice(calculateTotal(), order?.currency || 'GBP')}`}
+          </button>
+        </div>
+      )}
+
+      {/* Payment Error with Retry */}
+      {paymentError && (
+        <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-lg">
+          <div className="flex items-start gap-3">
+            <svg className="w-5 h-5 text-red-500 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+              <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+            </svg>
+            <div className="flex-1">
+              <p className="text-sm font-medium text-red-800">Payment Failed</p>
+              <p className="text-sm text-red-600 mt-1">{paymentError}</p>
+            </div>
+          </div>
+          <button
+            onClick={() => {
+              setPaymentError(null);
+              setStripeClientSecret(null);
+              setStripePaymentIntentId(null);
+              setCardDetails({ number: '', expiry: '', cvc: '' });
+            }}
+            className="w-full mt-3 px-4 py-2.5 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors font-medium text-sm"
+          >
+            Retry Payment
+          </button>
+        </div>
+      )}
+
+      {!stripeClientSecret && !paymentError && (
+        <button
+          onClick={handlePayment}
+          disabled={processing || loadingProviders || availableProviders.length === 0 || !selectedProvider}
+          className="w-full bg-purple-600 text-white py-2.5 sm:py-3 text-sm sm:text-base rounded-lg font-medium hover:bg-purple-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          {processing ? 'Processing...' : loadingProviders ? 'Loading payment methods...' : availableProviders.length === 0 ? 'No Payment Methods Available' : !selectedProvider ? 'Select a Payment Method' : `Complete Payment - ${formatPrice(calculateTotal(), order?.currency || 'GBP')}`}
+        </button>
+      )}
     </div>
   );
 }
 
 export default function PaymentPage() {
   return (
-    <Suspense fallback={
-      <div className="min-h-screen bg-white">
-        <Header />
-        <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 lg:py-12">
-          <div className="flex items-center justify-center py-12">
-            <div className="text-center">
-              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600 mx-auto mb-4"></div>
-              <p className="text-sm sm:text-base text-gray-600">Loading...</p>
+    <RouteGuard allowedRoles={['CUSTOMER', 'SELLER', 'B2C_SELLER', 'WHOLESALER', 'ADMIN', 'INFLUENCER']}>
+      <Suspense fallback={
+        <div className="min-h-screen bg-white">
+          <Header />
+          <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 lg:py-12">
+            <div className="flex items-center justify-center py-12">
+              <div className="text-center">
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600 mx-auto mb-4"></div>
+                <p className="text-sm sm:text-base text-gray-600">Loading...</p>
+              </div>
             </div>
-          </div>
-        </main>
-        <Footer />
-      </div>
-    }>
-      <PaymentContent />
-    </Suspense>
+          </main>
+          <Footer />
+        </div>
+      }>
+        <PaymentContent />
+      </Suspense>
+    </RouteGuard>
   );
 }

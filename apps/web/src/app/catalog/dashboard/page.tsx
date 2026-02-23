@@ -12,11 +12,17 @@ export default function CatalogDashboardPage() {
   const [error, setError] = useState<string | null>(null);
 
   const pendingCount =
-    dashboardData?.totalPending ??
-    (Array.isArray(dashboardData?.pendingEntries) ? dashboardData.pendingEntries.length : 0);
+    typeof dashboardData?.totalPending === 'number'
+      ? dashboardData.totalPending
+      : Array.isArray(dashboardData?.pendingEntries)
+        ? dashboardData.pendingEntries.length
+        : 0;
   const inProgressCount =
-    dashboardData?.totalInProgress ??
-    (Array.isArray(dashboardData?.inProgress) ? dashboardData.inProgress.length : 0);
+    typeof dashboardData?.totalInProgress === 'number'
+      ? dashboardData.totalInProgress
+      : Array.isArray(dashboardData?.inProgress)
+        ? dashboardData.inProgress.length
+        : 0;
   const menuItems = [
     { title: 'Dashboard', href: '/catalog/dashboard', icon: '📊' },
     { title: 'Catalog Entries', href: '/catalog/entries', icon: '📚', badge: pendingCount },
@@ -36,7 +42,7 @@ export default function CatalogDashboardPage() {
       }
     } catch (err: any) {
       console.error('Error fetching catalog dashboard:', err);
-      if (showLoading) setError(err.message || 'Failed to load dashboard data');
+      if (showLoading) setError(err?.message || 'Failed to load dashboard data');
     } finally {
       if (showLoading) setLoading(false);
     }
