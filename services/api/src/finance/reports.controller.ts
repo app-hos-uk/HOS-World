@@ -16,7 +16,7 @@ import type { ApiResponse } from '@hos-marketplace/shared-types';
 @ApiBearerAuth('JWT-auth')
 @Controller('finance/reports')
 @UseGuards(JwtAuthGuard, RolesGuard)
-@Roles('ADMIN')
+@Roles('FINANCE', 'ADMIN')
 export class ReportsController {
   constructor(private readonly reportsService: ReportsService) {}
 

@@ -171,58 +171,6 @@ export class TransactionsController {
     };
   }
 
-  @Get(':id')
-  @ApiOperation({
-    summary: 'Get transaction by ID',
-    description: 'Retrieves a specific transaction by ID. Finance/Admin access required.',
-  })
-  @ApiParam({ name: 'id', description: 'Transaction UUID', type: String })
-  @SwaggerApiResponse({ status: 200, description: 'Transaction retrieved successfully' })
-  @SwaggerApiResponse({ status: 401, description: 'Unauthorized' })
-  @SwaggerApiResponse({ status: 403, description: 'Forbidden - Finance/Admin access required' })
-  @SwaggerApiResponse({ status: 404, description: 'Transaction not found' })
-  async getTransactionById(@Param('id', ParseUUIDPipe) id: string): Promise<ApiResponse<any>> {
-    const transaction = await this.transactionsService.getTransactionById(id);
-    return {
-      data: transaction,
-      message: 'Transaction retrieved successfully',
-    };
-  }
-
-  @Put(':id/status')
-  @ApiOperation({
-    summary: 'Update transaction status',
-    description: 'Updates the status of a financial transaction. Finance/Admin access required.',
-  })
-  @ApiParam({ name: 'id', description: 'Transaction UUID', type: String })
-  @ApiBody({
-    schema: {
-      type: 'object',
-      required: ['status'],
-      properties: {
-        status: {
-          type: 'string',
-          enum: ['PENDING', 'COMPLETED', 'FAILED', 'CANCELLED'],
-        },
-      },
-    },
-  })
-  @SwaggerApiResponse({ status: 200, description: 'Transaction status updated successfully' })
-  @SwaggerApiResponse({ status: 400, description: 'Invalid status' })
-  @SwaggerApiResponse({ status: 401, description: 'Unauthorized' })
-  @SwaggerApiResponse({ status: 403, description: 'Forbidden - Finance/Admin access required' })
-  @SwaggerApiResponse({ status: 404, description: 'Transaction not found' })
-  async updateTransactionStatus(
-    @Param('id', ParseUUIDPipe) id: string,
-    @Body() body: { status: 'PENDING' | 'COMPLETED' | 'FAILED' | 'CANCELLED' },
-  ): Promise<ApiResponse<any>> {
-    const transaction = await this.transactionsService.updateTransactionStatus(id, body.status);
-    return {
-      data: transaction,
-      message: 'Transaction status updated successfully',
-    };
-  }
-
   @Get('export')
   @ApiOperation({
     summary: 'Export transactions',
@@ -281,6 +229,58 @@ export class TransactionsController {
     return {
       data: transactions,
       message: 'Transactions exported successfully',
+    };
+  }
+
+  @Get(':id')
+  @ApiOperation({
+    summary: 'Get transaction by ID',
+    description: 'Retrieves a specific transaction by ID. Finance/Admin access required.',
+  })
+  @ApiParam({ name: 'id', description: 'Transaction UUID', type: String })
+  @SwaggerApiResponse({ status: 200, description: 'Transaction retrieved successfully' })
+  @SwaggerApiResponse({ status: 401, description: 'Unauthorized' })
+  @SwaggerApiResponse({ status: 403, description: 'Forbidden - Finance/Admin access required' })
+  @SwaggerApiResponse({ status: 404, description: 'Transaction not found' })
+  async getTransactionById(@Param('id', ParseUUIDPipe) id: string): Promise<ApiResponse<any>> {
+    const transaction = await this.transactionsService.getTransactionById(id);
+    return {
+      data: transaction,
+      message: 'Transaction retrieved successfully',
+    };
+  }
+
+  @Put(':id/status')
+  @ApiOperation({
+    summary: 'Update transaction status',
+    description: 'Updates the status of a financial transaction. Finance/Admin access required.',
+  })
+  @ApiParam({ name: 'id', description: 'Transaction UUID', type: String })
+  @ApiBody({
+    schema: {
+      type: 'object',
+      required: ['status'],
+      properties: {
+        status: {
+          type: 'string',
+          enum: ['PENDING', 'COMPLETED', 'FAILED', 'CANCELLED'],
+        },
+      },
+    },
+  })
+  @SwaggerApiResponse({ status: 200, description: 'Transaction status updated successfully' })
+  @SwaggerApiResponse({ status: 400, description: 'Invalid status' })
+  @SwaggerApiResponse({ status: 401, description: 'Unauthorized' })
+  @SwaggerApiResponse({ status: 403, description: 'Forbidden - Finance/Admin access required' })
+  @SwaggerApiResponse({ status: 404, description: 'Transaction not found' })
+  async updateTransactionStatus(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() body: { status: 'PENDING' | 'COMPLETED' | 'FAILED' | 'CANCELLED' },
+  ): Promise<ApiResponse<any>> {
+    const transaction = await this.transactionsService.updateTransactionStatus(id, body.status);
+    return {
+      data: transaction,
+      message: 'Transaction status updated successfully',
     };
   }
 }
