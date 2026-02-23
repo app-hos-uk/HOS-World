@@ -11,10 +11,15 @@ export default function CatalogDashboardPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const pendingEntries = dashboardData?.pendingEntries || 0;
+  const pendingCount =
+    dashboardData?.totalPending ??
+    (Array.isArray(dashboardData?.pendingEntries) ? dashboardData.pendingEntries.length : 0);
+  const inProgressCount =
+    dashboardData?.totalInProgress ??
+    (Array.isArray(dashboardData?.inProgress) ? dashboardData.inProgress.length : 0);
   const menuItems = [
     { title: 'Dashboard', href: '/catalog/dashboard', icon: '📊' },
-    { title: 'Catalog Entries', href: '/catalog/entries', icon: '📚', badge: pendingEntries },
+    { title: 'Catalog Entries', href: '/catalog/entries', icon: '📚', badge: pendingCount },
   ];
 
   const fetchDashboardData = useCallback(async (showLoading = true) => {
@@ -52,7 +57,6 @@ export default function CatalogDashboardPage() {
       document.removeEventListener('visibilitychange', onVisibilityChange);
     };
   }, [fetchDashboardData]);
-  const inProgress = dashboardData?.inProgress || 0;
   const completedToday = dashboardData?.completedToday || 0;
   const totalEntries = dashboardData?.totalEntries || 0;
 
@@ -92,7 +96,7 @@ export default function CatalogDashboardPage() {
                 <div className="flex items-center justify-between">
                   <div>
                     <h3 className="text-sm font-medium text-gray-600 mb-1">Pending Entries</h3>
-                    <p className="text-3xl font-bold text-purple-600">{pendingEntries.toLocaleString()}</p>
+                    <p className="text-3xl font-bold text-purple-600">{pendingCount.toLocaleString()}</p>
                   </div>
                   <div className="text-4xl">📝</div>
                 </div>
@@ -108,7 +112,7 @@ export default function CatalogDashboardPage() {
                 <div className="flex items-center justify-between">
                   <div>
                     <h3 className="text-sm font-medium text-gray-600 mb-1">In Progress</h3>
-                    <p className="text-3xl font-bold text-yellow-600">{inProgress.toLocaleString()}</p>
+                    <p className="text-3xl font-bold text-yellow-600">{inProgressCount.toLocaleString()}</p>
                   </div>
                   <div className="text-4xl">⏳</div>
                 </div>
@@ -209,7 +213,7 @@ export default function CatalogDashboardPage() {
                     <div className="text-2xl mb-2">➕</div>
                     <p className="font-medium">Create New Entry</p>
                     <p className="text-sm text-gray-500 mt-1">
-                      {pendingEntries} submissions ready for catalog creation
+                      {pendingCount} submissions ready for catalog creation
                     </p>
                   </Link>
                   <Link
@@ -219,7 +223,7 @@ export default function CatalogDashboardPage() {
                     <div className="text-2xl mb-2">📝</div>
                     <p className="font-medium">Continue Work</p>
                     <p className="text-sm text-gray-500 mt-1">
-                      {inProgress} entries in progress
+                      {inProgressCount} entries in progress
                     </p>
                   </Link>
                   <Link

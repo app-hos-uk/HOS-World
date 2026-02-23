@@ -11,7 +11,9 @@ export default function FinanceDashboardPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const pendingApprovals = dashboardData?.pendingApprovals || 0;
+  const pendingApprovals =
+    dashboardData?.totalPending ??
+    (Array.isArray(dashboardData?.pendingApprovals) ? dashboardData.pendingApprovals.length : 0);
   const menuItems = [
     { title: 'Dashboard', href: '/finance/dashboard', icon: '📊' },
     { title: 'Pricing Approvals', href: '/finance/pricing', icon: '💰', badge: pendingApprovals },
