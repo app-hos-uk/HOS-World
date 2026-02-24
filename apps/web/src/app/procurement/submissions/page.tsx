@@ -53,6 +53,9 @@ function ProcurementSubmissionsContent() {
   const [duplicateGroupsLoading, setDuplicateGroupsLoading] = useState(false);
   const [showDuplicateGroups, setShowDuplicateGroups] = useState(false);
   const [rejectOthersLoading, setRejectOthersLoading] = useState<string | null>(null); // groupId when loading
+  const [compareProduct, setCompareProduct] = useState<any | null>(null);
+  const [compareSubmissionData, setCompareSubmissionData] = useState<any | null>(null);
+  const [expandedGroupId, setExpandedGroupId] = useState<string | null>(null);
   const toast = useToast();
 
   // Form state for approve/reject
@@ -158,6 +161,8 @@ function ProcurementSubmissionsContent() {
       setSelectedSubmission(null);
       setQuantity('');
       setNotes('');
+      setCompareProduct(null);
+      setCompareSubmissionData(null);
       toast.success('Submission approved successfully');
       await fetchSubmissions();
       if (showDuplicateGroups) await fetchDuplicateGroups();
@@ -183,6 +188,8 @@ function ProcurementSubmissionsContent() {
       setShowModal(false);
       setSelectedSubmission(null);
       setRejectReason('');
+      setCompareProduct(null);
+      setCompareSubmissionData(null);
       toast.success('Submission rejected');
       await fetchSubmissions();
       if (showDuplicateGroups) await fetchDuplicateGroups();
@@ -278,9 +285,72 @@ function ProcurementSubmissionsContent() {
                           </span>
                         ))}
                       </div>
-                      <p className="text-sm font-medium text-amber-900 mb-3">
-                        Same product from {group.submissions.length} seller(s) — approve one, reject others
-                      </p>
+                      <div className="flex items-center justify-between mb-3">
+                        <p className="text-sm font-medium text-amber-900">
+                          Same product from {group.submissions.length} seller(s) — approve one, reject others
+                        </p>
+                        <button
+                          onClick={() => setExpandedGroupId(expandedGroupId === group.groupId ? null : group.groupId)}
+                          className="px-3 py-1.5 text-xs bg-white border border-amber-300 text-amber-800 rounded-lg hover:bg-amber-100 font-medium"
+                        >
+                          {expandedGroupId === group.groupId ? 'Hide Comparison' : 'Compare All'}
+                        </button>
+                      </div>
+
+                      {expandedGroupId === group.groupId && (
+                        <div className="mb-4 overflow-x-auto border border-amber-200 rounded-lg bg-white">
+                          <table className="w-full text-sm">
+                            <thead>
+                              <tr className="bg-amber-50">
+                                <th className="px-3 py-2 text-left text-xs font-semibold text-amber-800 border-r border-amber-200 w-24">Field</th>
+                                {group.submissions.map((s) => (
+                                  <th key={s.id} className={`px-3 py-2 text-left text-xs font-semibold border-r last:border-r-0 border-amber-200 ${s.id === group.suggestedPrimaryId ? 'text-green-800 bg-green-50' : 'text-gray-700'}`}>
+                                    {s.sellerStoreName}
+                                    {s.id === group.suggestedPrimaryId && <span className="ml-1 text-[10px] bg-green-200 text-green-900 px-1 rounded">Primary</span>}
+                                  </th>
+                                ))}
+                              </tr>
+                            </thead>
+                            <tbody className="divide-y divide-gray-100">
+                              {['name', 'sku', 'barcode', 'ean', 'price', 'stock', 'category'].map((field) => {
+                                const vals = group.submissions.map((s) => {
+                                  const pd = s.productData as Record<string, any>;
+                                  if (field === 'price' && pd?.price != null) return `${pd.currency || 'GBP'} ${parseFloat(pd.price).toFixed(2)}`;
+                                  return pd?.[field]?.toString() || '—';
+                                });
+                                const allSame = vals.every((v) => v === vals[0]);
+                                return (
+                                  <tr key={field}>
+                                    <td className="px-3 py-2 font-medium text-gray-600 border-r border-gray-200 capitalize">{field}</td>
+                                    {vals.map((v, i) => (
+                                      <td key={i} className={`px-3 py-2 border-r last:border-r-0 border-gray-100 ${allSame && v !== '—' ? 'bg-green-50 text-green-800' : !allSame && v !== '—' ? 'bg-amber-50 text-amber-800' : 'text-gray-500'}`}>
+                                        {v}
+                                      </td>
+                                    ))}
+                                  </tr>
+                                );
+                              })}
+                              <tr>
+                                <td className="px-3 py-2 font-medium text-gray-600 border-r border-gray-200">Submitted</td>
+                                {group.submissions.map((s) => (
+                                  <td key={s.id} className="px-3 py-2 border-r last:border-r-0 border-gray-100 text-gray-600">
+                                    {new Date(s.createdAt).toLocaleDateString()}
+                                  </td>
+                                ))}
+                              </tr>
+                              <tr>
+                                <td className="px-3 py-2 font-medium text-gray-600 border-r border-gray-200">Status</td>
+                                {group.submissions.map((s) => (
+                                  <td key={s.id} className="px-3 py-2 border-r last:border-r-0 border-gray-100">
+                                    <span className={`px-1.5 py-0.5 rounded text-xs font-medium ${getStatusBadgeColor(s.status)}`}>{s.status.replace(/_/g, ' ')}</span>
+                                  </td>
+                                ))}
+                              </tr>
+                            </tbody>
+                          </table>
+                        </div>
+                      )}
+
                       <div className="space-y-3">
                         {group.submissions.map((sub) => (
                           <div
@@ -453,13 +523,32 @@ function ProcurementSubmissionsContent() {
                           </span>
                         </div>
 
-                        {submission.duplicateProducts && submission.duplicateProducts.length > 0 && (
-                          <div className="mt-3 p-3 bg-orange-50 border border-orange-200 rounded">
-                            <p className="text-sm font-medium text-orange-800">
-                              ⚠️ {submission.duplicateProducts.length} potential duplicate(s) detected
-                            </p>
-                          </div>
-                        )}
+                        {submission.duplicateProducts && submission.duplicateProducts.length > 0 && (() => {
+                          const topMatch = submission.duplicateProducts[0];
+                          const score = topMatch.similarityScore ?? 0;
+                          const isHigh = score >= 90;
+                          return (
+                            <div
+                              className={`mt-3 p-3 rounded cursor-pointer ${isHigh ? 'bg-red-50 border border-red-300' : 'bg-orange-50 border border-orange-200'}`}
+                              onClick={() => handleViewDetails(submission.id)}
+                            >
+                              <div className="flex items-center justify-between">
+                                <div className="flex-1 min-w-0">
+                                  <p className={`text-sm font-medium ${isHigh ? 'text-red-800' : 'text-orange-800'}`}>
+                                    {submission.duplicateProducts.length} duplicate(s) found
+                                  </p>
+                                  <p className={`text-xs mt-0.5 truncate ${isHigh ? 'text-red-600' : 'text-orange-600'}`}>
+                                    Top match: &ldquo;{topMatch.existingProduct?.name}&rdquo;
+                                    {topMatch.existingProduct?.sku ? ` (SKU: ${topMatch.existingProduct.sku})` : ''}
+                                  </p>
+                                </div>
+                                <span className={`ml-3 shrink-0 px-2 py-1 rounded text-xs font-bold ${isHigh ? 'bg-red-200 text-red-900' : 'bg-orange-200 text-orange-900'}`}>
+                                  {score}% match
+                                </span>
+                              </div>
+                            </div>
+                          );
+                        })()}
                       </div>
 
                       <div className="flex gap-2 sm:flex-col">
@@ -522,6 +611,8 @@ function ProcurementSubmissionsContent() {
                         setShowModal(false);
                         setSelectedSubmission(null);
                         setActionType(null);
+                        setCompareProduct(null);
+                        setCompareSubmissionData(null);
                       }}
                       className="text-gray-500 hover:text-gray-700"
                     >
@@ -612,6 +703,68 @@ function ProcurementSubmissionsContent() {
                             </div>
                           </div>
                         )}
+
+                      {selectedSubmission.duplicateProducts && selectedSubmission.duplicateProducts.length > 0 && (
+                        <div className="border border-orange-300 rounded-lg overflow-hidden">
+                          <div className="bg-orange-50 px-4 py-3 border-b border-orange-200">
+                            <h4 className="font-semibold text-orange-900">
+                              {selectedSubmission.duplicateProducts.length} Similar Product(s) Found
+                            </h4>
+                            <p className="text-xs text-orange-700 mt-0.5">Compare the submitted product against existing catalogue matches</p>
+                          </div>
+                          <div className="divide-y divide-orange-100">
+                            {selectedSubmission.duplicateProducts.map((dup: any) => {
+                              const ep = dup.existingProduct;
+                              const score = dup.similarityScore ?? 0;
+                              const isHigh = score >= 90;
+                              return (
+                                <div key={dup.id || ep?.id} className="p-4 bg-white">
+                                  <div className="flex items-start justify-between gap-3">
+                                    <div className="flex-1 min-w-0">
+                                      <p className="font-medium text-gray-900 truncate">{ep?.name || 'Unknown'}</p>
+                                      <div className="flex flex-wrap gap-3 mt-1 text-xs text-gray-500">
+                                        {ep?.sku && <span>SKU: {ep.sku}</span>}
+                                        {ep?.barcode && <span>Barcode: {ep.barcode}</span>}
+                                        {ep?.ean && <span>EAN: {ep.ean}</span>}
+                                        {ep?.price && <span>Price: {ep.currency || 'GBP'} {parseFloat(ep.price).toFixed(2)}</span>}
+                                        {ep?.status && <span className="px-1.5 py-0.5 bg-gray-100 rounded">{ep.status}</span>}
+                                      </div>
+                                      {ep?.images && ep.images.length > 0 && (
+                                        <div className="flex gap-1 mt-2">
+                                          {ep.images.slice(0, 3).map((img: any, i: number) => (
+                                            <div key={i} className="relative w-10 h-10 shrink-0">
+                                              <SafeImage src={img.url} alt={img.alt || ''} fill className="object-cover rounded" sizes="40px" />
+                                            </div>
+                                          ))}
+                                        </div>
+                                      )}
+                                    </div>
+                                    <div className="flex flex-col items-end gap-2 shrink-0">
+                                      <div className="text-right">
+                                        <span className={`inline-block px-2 py-1 rounded text-xs font-bold ${isHigh ? 'bg-red-100 text-red-800' : 'bg-orange-100 text-orange-800'}`}>
+                                          {score}% match
+                                        </span>
+                                        <div className="w-20 h-1.5 bg-gray-200 rounded-full mt-1">
+                                          <div className={`h-full rounded-full ${isHigh ? 'bg-red-500' : score >= 80 ? 'bg-orange-400' : 'bg-yellow-400'}`} style={{ width: `${score}%` }} />
+                                        </div>
+                                      </div>
+                                      <button
+                                        onClick={() => {
+                                          setCompareProduct(ep);
+                                          setCompareSubmissionData(selectedSubmission.productData);
+                                        }}
+                                        className="px-3 py-1.5 text-xs bg-purple-600 text-white rounded-lg hover:bg-purple-700 font-medium"
+                                      >
+                                        Compare Side-by-Side
+                                      </button>
+                                    </div>
+                                  </div>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      )}
 
                       {selectedSubmission.procurementNotes && (
                         <div>
@@ -716,6 +869,111 @@ function ProcurementSubmissionsContent() {
                       </div>
                     </div>
                   )}
+                </div>
+              </div>
+            </div>
+          )}
+          {/* Side-by-Side Comparison Modal */}
+          {compareProduct && compareSubmissionData && (
+            <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center p-4 z-[60]">
+              <div className="bg-white rounded-lg max-w-5xl w-full max-h-[92vh] overflow-y-auto">
+                <div className="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between z-10">
+                  <h2 className="text-xl font-bold text-gray-900">Side-by-Side Comparison</h2>
+                  <button
+                    onClick={() => { setCompareProduct(null); setCompareSubmissionData(null); }}
+                    className="text-gray-500 hover:text-gray-700"
+                  >
+                    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+                  </button>
+                </div>
+
+                <div className="p-6">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="text-center">
+                      <span className="inline-block px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm font-semibold mb-3">Submitted Product</span>
+                    </div>
+                    <div className="text-center">
+                      <span className="inline-block px-3 py-1 bg-green-100 text-green-800 rounded-full text-sm font-semibold mb-3">Existing Product</span>
+                    </div>
+                  </div>
+
+                  {(() => {
+                    const sub = compareSubmissionData;
+                    const ex = compareProduct;
+                    const fields: Array<{ label: string; subVal: string; exVal: string }> = [
+                      { label: 'Name', subVal: sub?.name || '—', exVal: ex?.name || '—' },
+                      { label: 'SKU', subVal: sub?.sku || '—', exVal: ex?.sku || '—' },
+                      { label: 'Barcode', subVal: sub?.barcode || '—', exVal: ex?.barcode || '—' },
+                      { label: 'EAN', subVal: sub?.ean || '—', exVal: ex?.ean || '—' },
+                      { label: 'Price', subVal: sub?.price ? `${sub.currency || 'GBP'} ${parseFloat(sub.price).toFixed(2)}` : '—', exVal: ex?.price ? `${ex.currency || 'GBP'} ${parseFloat(ex.price).toFixed(2)}` : '—' },
+                      { label: 'Stock', subVal: sub?.stock?.toString() ?? '—', exVal: ex?.stock?.toString() ?? '—' },
+                      { label: 'Category', subVal: sub?.category || '—', exVal: ex?.category || '—' },
+                      { label: 'Status', subVal: 'Submission', exVal: ex?.status || '—' },
+                    ];
+
+                    return (
+                      <div className="mt-4 border border-gray-200 rounded-lg overflow-hidden">
+                        {fields.map((f, i) => {
+                          const match = f.subVal === f.exVal && f.subVal !== '—';
+                          const bothEmpty = f.subVal === '—' && f.exVal === '—';
+                          return (
+                            <div key={f.label} className={`grid grid-cols-[120px_1fr_1fr] ${i % 2 === 0 ? 'bg-white' : 'bg-gray-50'}`}>
+                              <div className="px-4 py-3 font-medium text-sm text-gray-600 border-r border-gray-200">{f.label}</div>
+                              <div className={`px-4 py-3 text-sm border-r border-gray-200 ${match ? 'bg-green-50 text-green-800' : bothEmpty ? '' : f.subVal !== '—' && f.exVal !== '—' && f.subVal !== f.exVal ? 'bg-amber-50 text-amber-800' : ''}`}>
+                                {f.subVal}
+                              </div>
+                              <div className={`px-4 py-3 text-sm ${match ? 'bg-green-50 text-green-800' : bothEmpty ? '' : f.subVal !== '—' && f.exVal !== '—' && f.subVal !== f.exVal ? 'bg-amber-50 text-amber-800' : ''}`}>
+                                {f.exVal}
+                              </div>
+                            </div>
+                          );
+                        })}
+
+                        <div className="grid grid-cols-[120px_1fr_1fr] bg-white border-t border-gray-200">
+                          <div className="px-4 py-3 font-medium text-sm text-gray-600 border-r border-gray-200">Description</div>
+                          <div className="px-4 py-3 text-sm border-r border-gray-200">
+                            <p className="line-clamp-4 text-gray-700">{sub?.description || '—'}</p>
+                          </div>
+                          <div className="px-4 py-3 text-sm">
+                            <p className="line-clamp-4 text-gray-700">{ex?.description || '—'}</p>
+                          </div>
+                        </div>
+
+                        <div className="grid grid-cols-[120px_1fr_1fr] bg-gray-50 border-t border-gray-200">
+                          <div className="px-4 py-3 font-medium text-sm text-gray-600 border-r border-gray-200">Images</div>
+                          <div className="px-4 py-3 border-r border-gray-200">
+                            <div className="flex gap-1 flex-wrap">
+                              {(sub?.images || []).slice(0, 4).map((img: any, i: number) => (
+                                <div key={i} className="relative w-16 h-16">
+                                  <SafeImage src={img.url || img} alt={img.alt || ''} fill className="object-cover rounded" sizes="64px" />
+                                </div>
+                              ))}
+                              {(!sub?.images || sub.images.length === 0) && <span className="text-xs text-gray-400">No images</span>}
+                            </div>
+                          </div>
+                          <div className="px-4 py-3">
+                            <div className="flex gap-1 flex-wrap">
+                              {(ex?.images || []).slice(0, 4).map((img: any, i: number) => (
+                                <div key={i} className="relative w-16 h-16">
+                                  <SafeImage src={img.url || img} alt={img.alt || ''} fill className="object-cover rounded" sizes="64px" />
+                                </div>
+                              ))}
+                              {(!ex?.images || ex.images.length === 0) && <span className="text-xs text-gray-400">No images</span>}
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })()}
+
+                  <div className="flex justify-end gap-3 mt-6">
+                    <button
+                      onClick={() => { setCompareProduct(null); setCompareSubmissionData(null); }}
+                      className="px-5 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 font-medium text-sm"
+                    >
+                      Close
+                    </button>
+                  </div>
                 </div>
               </div>
             </div>
