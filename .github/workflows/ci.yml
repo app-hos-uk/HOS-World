@@ -20,17 +20,18 @@ jobs:
           node-version: '20'
           cache: 'pnpm'
       - run: pnpm install --frozen-lockfile
+      - name: Generate Prisma client
+        run: cd services/api && npx prisma generate
       - name: Build shared packages
         run: |
           pnpm --filter @hos-marketplace/shared-types build || true
           pnpm --filter @hos-marketplace/events build || true
+          pnpm --filter @hos-marketplace/utils build || true
           pnpm --filter @hos-marketplace/api-client build
       - name: Type check API
         run: cd services/api && npx tsc --noEmit
       - name: Type check Web
         run: cd apps/web && npx tsc --noEmit
-      - name: Generate Prisma client
-        run: cd services/api && npx prisma generate
 
   test:
     name: Tests
@@ -69,13 +70,14 @@ jobs:
           node-version: '20'
           cache: 'pnpm'
       - run: pnpm install --frozen-lockfile
+      - name: Generate Prisma client
+        run: cd services/api && npx prisma generate
       - name: Build shared packages
         run: |
           pnpm --filter @hos-marketplace/shared-types build || true
           pnpm --filter @hos-marketplace/events build || true
+          pnpm --filter @hos-marketplace/utils build || true
           pnpm --filter @hos-marketplace/api-client build
-      - name: Generate Prisma client
-        run: cd services/api && npx prisma generate
       - name: Build API
         run: cd services/api && pnpm build
       - name: Build Web
