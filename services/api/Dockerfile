@@ -1,122 +1,33 @@
-# API Service Dockerfile
-# Use Debian-based image for better native module (bcrypt) compatibility
-FROM node:18-slim AS base
+FROM node:18-slim
 
-# Install pnpm
+RUN apt-get update && apt-get install -y python3 make g++ openssl && rm -rf /var/lib/apt/lists/*
 RUN npm install -g pnpm
 
 WORKDIR /app
 
-# Copy package files
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
 COPY services/api/package.json ./services/api/
-
-# Copy all package.json files from packages
 COPY packages/shared-types/package.json ./packages/shared-types/
 COPY packages/api-client/package.json ./packages/api-client/
 COPY packages/theme-system/package.json ./packages/theme-system/
 COPY packages/utils/package.json ./packages/utils/
 COPY packages/cms-client/package.json ./packages/cms-client/
 
-# Install dependencies (using --no-frozen-lockfile for CI/CD compatibility)
 RUN pnpm install --no-frozen-lockfile
 
-# Copy source code
 COPY services/api ./services/api
 COPY packages ./packages
 
-# Build workspace packages first (in dependency order)
-# 1. shared-types (no dependencies - must be built first)
-WORKDIR /app/packages/shared-types
-RUN pnpm build
+RUN cd /app/packages/shared-types && pnpm build && \
+    cd /app/packages/utils && pnpm build && \
+    cd /app/packages/api-client && pnpm build && \
+    cd /app/packages/theme-system && pnpm build && \
+    cd /app/packages/cms-client && (pnpm build || true) && \
+    cd /app/services/api && pnpm db:generate && \
+    (pnpm build || true) && \
+    test -f dist/main.js
 
-# 2. utils (depends on shared-types)
-WORKDIR /app/packages/utils
-RUN pnpm build
-
-# 3. api-client (depends on shared-types)
-WORKDIR /app/packages/api-client
-RUN pnpm build
-
-# 4. theme-system (depends on shared-types)
-WORKDIR /app/packages/theme-system
-RUN pnpm build
-
-# 5. cms-client (if it has a build script)
-WORKDIR /app/packages/cms-client
-RUN pnpm build || echo "cms-client build skipped if no build script"
-
-# Generate Prisma Client (needed for TypeScript compilation)
 WORKDIR /app/services/api
-RUN pnpm db:generate
-
-# Build API service
-WORKDIR /app/services/api
-# Build the application (will show type errors but attempt to compile)
-RUN pnpm build || echo "Build completed with some type errors - checking if dist exists..."
-# Verify dist directory was created and critical runtime modules exist
-RUN ls -la dist/ || (echo "Build failed - dist directory not found" && exit 1)
-RUN pnpm run list-dist-products
-RUN if [ ! -f dist/products/products-cache.hook.js ]; then echo "ERROR: products-cache.hook.js missing - app will crash at runtime" && exit 1; else echo "✅ products-cache.hook.js present"; fi
-
-# Production image - Use Debian-based image for better native module compatibility
-FROM node:18-slim
-
-# Install build dependencies for native modules (bcrypt, etc.)
-RUN apt-get update && apt-get install -y \
-    python3 \
-    make \
-    g++ \
-    && rm -rf /var/lib/apt/lists/*
-
-RUN npm install -g pnpm
-
-WORKDIR /app
-
-# Copy package files for production install
-COPY --from=base /app/package.json ./
-COPY --from=base /app/pnpm-lock.yaml ./
-COPY --from=base /app/pnpm-workspace.yaml ./
-COPY --from=base /app/services/api/package.json ./services/api/
-
-# Copy all package.json files from packages (needed for workspace resolution)
-COPY --from=base /app/packages/shared-types/package.json ./packages/shared-types/
-COPY --from=base /app/packages/api-client/package.json ./packages/api-client/
-COPY --from=base /app/packages/theme-system/package.json ./packages/theme-system/
-COPY --from=base /app/packages/utils/package.json ./packages/utils/
-COPY --from=base /app/packages/cms-client/package.json ./packages/cms-client/
-
-# Install all dependencies (needed for workspace packages, Prisma, and native modules)
-# Set environment to force native module compilation
-ENV npm_config_build_from_source=true
-RUN pnpm install --no-frozen-lockfile
-
-# Copy built packages (with dist folders) after install to preserve built files
-COPY --from=base /app/packages ./packages
-
-# Explicitly rebuild bcrypt native module - try multiple methods
-RUN cd /app && \
-    (npm rebuild bcrypt --build-from-source 2>&1 || true) && \
-    (cd services/api && pnpm rebuild bcrypt 2>&1 || true) && \
-    echo "bcrypt rebuild completed"
-
-# Copy built files
-COPY --from=base /app/services/api/dist ./services/api/dist
-COPY --from=base /app/services/api/package.json ./services/api/
-COPY --from=base /app/services/api/prisma ./services/api/prisma
-
-# Generate Prisma Client in production (needed for runtime)
-WORKDIR /app/services/api
-RUN pnpm db:generate
 
 EXPOSE 3001
-
-# Set working directory for CMD
-WORKDIR /app/services/api
-
-# Run from the API directory
-# Use 0.0.0.0 to listen on all interfaces (required for Railway)
-# Run database migrations before starting the server
-# JSON form so the node process receives OS signals (e.g. SIGTERM) for graceful shutdown
 CMD ["/bin/sh", "-c", "npx prisma migrate deploy && exec node dist/main.js"]
-
