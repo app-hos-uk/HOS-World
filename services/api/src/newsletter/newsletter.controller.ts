@@ -8,6 +8,7 @@ import {
   Request,
   ParseIntPipe,
   DefaultValuePipe,
+  BadRequestException,
 } from '@nestjs/common';
 import {
   ApiTags,
@@ -88,7 +89,10 @@ export class NewsletterController {
   })
   @ApiQuery({ name: 'email', required: true, type: String, description: 'Email address to check' })
   @SwaggerApiResponse({ status: 200, description: 'Subscription status retrieved successfully' })
-  async getStatus(@Query('email') email: string): Promise<ApiResponse<any>> {
+  async getStatus(@Query('email') email?: string): Promise<ApiResponse<any>> {
+    if (!email?.trim()) {
+      throw new BadRequestException('Email query parameter is required');
+    }
     const status = await this.newsletterService.getSubscriptionStatus(email);
     return {
       data: status,

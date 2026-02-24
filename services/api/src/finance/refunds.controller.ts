@@ -28,7 +28,7 @@ import type { ApiResponse } from '@hos-marketplace/shared-types';
 @ApiBearerAuth('JWT-auth')
 @Controller('finance/refunds')
 @UseGuards(JwtAuthGuard, RolesGuard)
-@Roles('ADMIN')
+@Roles('ADMIN', 'FINANCE')
 export class RefundsController {
   constructor(private readonly refundsService: RefundsService) {}
 
