@@ -76,7 +76,7 @@ export default function AdminPlatformMetricsPage() {
 
       const [usersRes, productsRes, ordersRes] = await Promise.all([
         apiClient.getUsers().catch(() => ({ data: { data: [] } })),
-        apiClient.getProducts({ limit: 1000 }).catch(() => ({ data: { data: [] } })),
+        apiClient.getProducts({ limit: 100 }).catch(() => ({ data: { data: [], pagination: { total: 0 } } })),
         apiClient.getOrders().catch(() => ({ data: { data: [] } })),
       ]);
 
@@ -90,9 +90,12 @@ export default function AdminPlatformMetricsPage() {
       const products = extract(productsRes);
       const orders = extract(ordersRes);
 
+      // Use pagination.total for accurate product count (API caps limit at 100)
+      const productTotal = productsRes?.data?.pagination?.total ?? products.length;
+
       setMetrics({
         totalUsers: users.length,
-        totalProducts: products.length,
+        totalProducts: productTotal,
         totalOrders: orders.length,
         totalRevenue: orders.reduce((sum: number, o: any) => sum + (o.total || 0), 0),
         activeSellers: users.filter((u: any) => ['SELLER', 'B2C_SELLER', 'WHOLESALER'].includes(u.role)).length,
