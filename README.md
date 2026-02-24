@@ -4,34 +4,37 @@ A scalable e-commerce marketplace platform supporting 2,500-5,000 sellers, 150,0
 
 ## Architecture
 
-This is a monorepo containing:
+**Modular Monolith** — all business logic in a single NestJS API with domain modules, backed by a Next.js frontend. Background jobs run via BullMQ (Redis).
 
-- **apps/web** - Next.js web application
-- **apps/mobile** - React Native mobile app (Android & iOS)
-- **services/api** - NestJS backend API
-- **packages/** - Shared packages (types, api-client, ui-components, theme-system, utils)
-- **themes/** - Theme definitions and templates
+| Service | Description |
+|---------|-------------|
+| `apps/web` | Next.js 14 frontend |
+| `services/api` | NestJS API (auth, products, orders, payments, admin, finance, search, etc.) |
+
+Infrastructure:
+- **PostgreSQL** — primary database (Prisma ORM)
+- **Redis** — caching, BullMQ job queue, pub/sub events
+- **Meilisearch** — full-text product search with typo tolerance, faceting, filtering
 
 ## Technology Stack
 
-- **Frontend (Web)**: Next.js 14+ with TypeScript
-- **Mobile**: React Native with Expo
-- **Backend**: NestJS with TypeScript
-- **Database**: PostgreSQL
-- **Search**: Elasticsearch/Algolia
-- **Cache**: Redis
-- **Storage**: AWS S3/Cloudinary
-- **Authentication**: NextAuth.js / JWT
-- **Payment**: Stripe
+- **Frontend**: Next.js 14+ with TypeScript, Tailwind CSS
+- **Backend**: NestJS with TypeScript, Prisma ORM
+- **Database**: PostgreSQL 15
+- **Search**: Meilisearch
+- **Cache/Queue**: Redis + BullMQ
+- **Storage**: Cloudinary / AWS S3
+- **Authentication**: JWT with refresh tokens, OAuth (Google, Apple)
+- **Payments**: Stripe, Klarna
 
 ## Getting Started
 
 ### Prerequisites
 
 - Node.js >= 18.0.0
-- npm >= 9.0.0
+- pnpm
 - PostgreSQL
-- Redis (for caching)
+- Redis
 
 ### Installation
 
@@ -39,15 +42,10 @@ This is a monorepo containing:
 pnpm install
 ```
 
-> **Note:** After pulling or on a new machine, always run `pnpm install` so native dependencies (Prisma, bcrypt) are built correctly.
-
 ### Development
 
 ```bash
-# Start API + Web only (recommended - avoids file table overflow with full monorepo)
-pnpm run dev:core
-
-# Start all applications (requires high ulimit on macOS: ulimit -n 65536)
+# Start API + Web
 pnpm run dev
 
 # Start specific workspace
@@ -55,10 +53,16 @@ pnpm --filter @hos-marketplace/web dev
 pnpm --filter @hos-marketplace/api dev
 ```
 
+### Docker
+
+```bash
+docker compose up
+```
+
 ### Build
 
 ```bash
-npm run build
+pnpm run build
 ```
 
 ## Project Structure
@@ -66,21 +70,25 @@ npm run build
 ```
 hos-marketplace/
 ├── apps/
-│   ├── web/              # Next.js web application
+│   ├── web/              # Next.js frontend
 │   └── mobile/           # React Native mobile app
 ├── packages/
 │   ├── api-client/       # Shared API client
 │   ├── shared-types/     # TypeScript types
-│   ├── ui-components/    # Shared UI components
 │   ├── theme-system/     # Theme management
+│   ├── cms-client/       # CMS integration
+│   ├── events/           # Event bus (Redis pub/sub)
+│   ├── observability/    # Logging & monitoring
 │   └── utils/            # Shared utilities
 ├── services/
-│   └── api/              # NestJS backend API
-└── themes/               # Theme definitions
+│   └── api/              # NestJS API (all business logic)
+└── infrastructure/       # Docker, K8s, load testing
 ```
+
+## Deployment
+
+Deployed on Railway. See [docs/RAILWAY_BRANCH_AND_DEPLOY.md](docs/RAILWAY_BRANCH_AND_DEPLOY.md).
 
 ## License
 
 Private - House of Spells Marketplace
-
-

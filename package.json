@@ -6,11 +6,10 @@
   "workspaces": [
     "apps/*",
     "packages/*",
-    "services/*"
+    "services/api"
   ],
   "scripts": {
-    "dev": "turbo run dev --concurrency=25",
-    "dev:core": "turbo run dev --filter=@hos-marketplace/api --filter=@hos-marketplace/web --concurrency=5",
+    "dev": "turbo run dev --filter=@hos-marketplace/api --filter=@hos-marketplace/web --concurrency=5",
     "build": "turbo run build",
     "lint": "turbo run lint",
     "test": "turbo run test",

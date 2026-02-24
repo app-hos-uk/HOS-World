@@ -1,7 +1,7 @@
 packages:
   - apps/*
   - packages/*
-  - services/*
+  - services/api
 
 ignoredBuiltDependencies:
   - '@nestjs/core'
