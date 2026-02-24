@@ -7,21 +7,32 @@ on:
     branches: [master, main, develop]
 
 jobs:
-  lint-and-typecheck:
-    name: Lint & Type Check
+  ci:
+    name: Lint, Test & Build
     runs-on: ubuntu-latest
+    env:
+      DATABASE_URL: 'postgresql://test:test@localhost:5432/test'
+      JWT_SECRET: 'test-secret-minimum-32-chars-long-for-ci'
+      JWT_REFRESH_SECRET: 'test-refresh-secret-minimum-32-chars-for-ci'
+      NEXT_PUBLIC_API_URL: 'https://hos-marketplaceapi-production.up.railway.app'
     steps:
       - uses: actions/checkout@v4
+
       - uses: pnpm/action-setup@v2
         with:
           version: 10
+
       - uses: actions/setup-node@v4
         with:
           node-version: '20'
           cache: 'pnpm'
-      - run: pnpm install --frozen-lockfile
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
       - name: Generate Prisma client
         run: cd services/api && npx prisma generate
+
       - name: Build shared packages
         run: |
           pnpm --filter @hos-marketplace/shared-types build || true
@@ -30,67 +41,25 @@ jobs:
           pnpm --filter @hos-marketplace/theme-system build || true
           pnpm --filter @hos-marketplace/cms-client build || true
           pnpm --filter @hos-marketplace/api-client build
-      - name: Type check API
-        run: cd services/api && npx tsc --noEmit
-      - name: Type check Web
-        run: cd apps/web && npx tsc --noEmit
 
-  test:
-    name: Tests
-    runs-on: ubuntu-latest
-    needs: lint-and-typecheck
-    steps:
-      - uses: actions/checkout@v4
-      - uses: pnpm/action-setup@v2
-        with:
-          version: 10
-      - uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-          cache: 'pnpm'
-      - run: pnpm install --frozen-lockfile
-      - name: Generate Prisma client
-        run: cd services/api && npx prisma generate
-      - name: Build shared packages
+      - name: Type check API & Web (parallel)
         run: |
-          pnpm --filter @hos-marketplace/shared-types build || true
-          pnpm --filter @hos-marketplace/events build || true
-          pnpm --filter @hos-marketplace/utils build || true
+          cd services/api && npx tsc --noEmit &
+          PID_API=$!
+          cd apps/web && npx tsc --noEmit &
+          PID_WEB=$!
+          wait $PID_API || exit 1
+          wait $PID_WEB || exit 1
+
       - name: Run API tests
         run: cd services/api && npx jest --passWithNoTests
         continue-on-error: true
-        env:
-          DATABASE_URL: 'postgresql://test:test@localhost:5432/test'
-          JWT_SECRET: 'test-secret-minimum-32-chars-long-for-ci'
-          JWT_REFRESH_SECRET: 'test-refresh-secret-minimum-32-chars-for-ci'
 
-  build:
-    name: Build
-    runs-on: ubuntu-latest
-    needs: lint-and-typecheck
-    steps:
-      - uses: actions/checkout@v4
-      - uses: pnpm/action-setup@v2
-        with:
-          version: 10
-      - uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-          cache: 'pnpm'
-      - run: pnpm install --frozen-lockfile
-      - name: Generate Prisma client
-        run: cd services/api && npx prisma generate
-      - name: Build shared packages
+      - name: Build API & Web (parallel)
         run: |
-          pnpm --filter @hos-marketplace/shared-types build || true
-          pnpm --filter @hos-marketplace/events build || true
-          pnpm --filter @hos-marketplace/utils build || true
-          pnpm --filter @hos-marketplace/theme-system build || true
-          pnpm --filter @hos-marketplace/cms-client build || true
-          pnpm --filter @hos-marketplace/api-client build
-      - name: Build API
-        run: cd services/api && pnpm build
-      - name: Build Web
-        run: cd apps/web && pnpm build
-        env:
-          NEXT_PUBLIC_API_URL: 'https://hos-marketplaceapi-production.up.railway.app'
+          cd services/api && pnpm build &
+          PID_API=$!
+          cd apps/web && pnpm build &
+          PID_WEB=$!
+          wait $PID_API || exit 1
+          wait $PID_WEB || exit 1
