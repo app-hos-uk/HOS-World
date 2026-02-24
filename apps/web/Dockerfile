@@ -86,13 +86,15 @@ WORKDIR /app/apps/web
 # Debug: Print env vars to verify they're set (will be visible in build logs)
 RUN echo "Building with NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL"
 
+# Avoid OOM on Railway Metal builder (Next.js build can use a lot of memory)
+ENV NODE_OPTIONS="--max-old-space-size=4096"
 RUN pnpm build
 
 # Production image
 FROM node:18-slim
 
 # Force cache invalidation — change this value to trigger a full rebuild
-ARG BUILD_VERSION=2026-02-13-v2
+ARG BUILD_VERSION=2026-02-25
 RUN echo "Build: $BUILD_VERSION"
 
 # Install pnpm

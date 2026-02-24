@@ -11,8 +11,7 @@ dist/
 coverage/
 **/coverage/
 
-# Exclude non-essential dirs
-apps/
+# Exclude non-essential dirs (do not exclude apps/ — web Dockerfile needs apps/web with context at repo root)
 docs/
 scripts/
 .github/
