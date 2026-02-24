@@ -27,8 +27,16 @@ export default function AdminFinancePage() {
     const data = response.data;
     if (Array.isArray(data)) return data;
     if (data.data && Array.isArray(data.data)) return data.data;
+    // Transactions, payouts, and refunds endpoints all return { transactions } from getTransactions()
+    if (data.transactions && Array.isArray(data.transactions)) return data.transactions;
+    if (data.payouts && Array.isArray(data.payouts)) return data.payouts;
+    if (data.refunds && Array.isArray(data.refunds)) return data.refunds;
     return [];
   };
+
+  const safeTransactions = useMemo(() => Array.isArray(transactions) ? transactions : [], [transactions]);
+  const safePayouts = useMemo(() => Array.isArray(payouts) ? payouts : [], [payouts]);
+  const safeRefunds = useMemo(() => Array.isArray(refunds) ? refunds : [], [refunds]);
 
   // Note: toast is NOT included in deps because useToast() returns a new object each render
   // The toast methods themselves are stable; including toast would cause infinite re-fetches
@@ -93,14 +101,14 @@ export default function AdminFinancePage() {
     }
   }, [activeTab, fetchDataForTab]);
 
-  // Calculate financial metrics
+  // Calculate financial metrics (guard: API may return { transactions } object)
   const metrics = useMemo(() => {
-    const completedTx = transactions.filter(tx => tx.status === 'COMPLETED');
+    const completedTx = safeTransactions.filter(tx => tx.status === 'COMPLETED');
     const totalRevenue = completedTx.reduce((sum, tx) => sum + (Number(tx.amount) || 0), 0);
-    const pendingTx = transactions.filter(tx => tx.status === 'PENDING');
+    const pendingTx = safeTransactions.filter(tx => tx.status === 'PENDING');
     const pendingAmount = pendingTx.reduce((sum, tx) => sum + (Number(tx.amount) || 0), 0);
-    const totalPayouts = payouts.reduce((sum, p) => sum + (Number(p.amount) || 0), 0);
-    const totalRefunds = refunds.reduce((sum, r) => sum + (Number(r.amount) || 0), 0);
+    const totalPayouts = safePayouts.reduce((sum, p) => sum + (Number(p.amount) || 0), 0);
+    const totalRefunds = safeRefunds.reduce((sum, r) => sum + (Number(r.amount) || 0), 0);
     const netRevenue = totalRevenue - totalRefunds;
     const platformFees = totalRevenue * 0.05; // 5% platform fee
 
@@ -111,10 +119,10 @@ export default function AdminFinancePage() {
       totalRefunds,
       netRevenue,
       platformFees,
-      transactionCount: transactions.length,
+      transactionCount: safeTransactions.length,
       avgTransactionValue: completedTx.length > 0 ? totalRevenue / completedTx.length : 0,
     };
-  }, [transactions, payouts, refunds]);
+  }, [safeTransactions, safePayouts, safeRefunds]);
 
   // Helper to format date as YYYY-MM-DD in LOCAL time (not UTC)
   const formatLocalDate = (d: Date): string => {
@@ -136,7 +144,7 @@ export default function AdminFinancePage() {
       // Use local date format consistently to avoid timezone mismatches
       const dateStr = formatLocalDate(date);
       
-      const dayTransactions = transactions.filter(tx => {
+      const dayTransactions = safeTransactions.filter(tx => {
         // Convert transaction date to local date string for consistent comparison
         const txDate = new Date(tx.createdAt);
         const txDateStr = formatLocalDate(txDate);
@@ -153,29 +161,29 @@ export default function AdminFinancePage() {
     }
     
     return data;
-  }, [transactions, dateRange]);
+  }, [safeTransactions, dateRange]);
 
   // Transaction type breakdown
   const transactionTypeData = useMemo(() => {
     const types: Record<string, number> = {};
-    transactions.forEach(tx => {
+    safeTransactions.forEach(tx => {
       const type = tx.type || 'OTHER';
       types[type] = (types[type] || 0) + (Number(tx.amount) || 0);
     });
     
     return Object.entries(types).map(([name, value]) => ({ name, value }));
-  }, [transactions]);
+  }, [safeTransactions]);
 
   // Payment status breakdown
   const paymentStatusData = useMemo(() => {
     const statuses: Record<string, number> = {};
-    transactions.forEach(tx => {
+    safeTransactions.forEach(tx => {
       const status = tx.status || 'UNKNOWN';
       statuses[status] = (statuses[status] || 0) + 1;
     });
     
     return Object.entries(statuses).map(([name, value]) => ({ name, value }));
-  }, [transactions]);
+  }, [safeTransactions]);
 
   const tabs = [
     { id: 'overview', label: 'Overview', icon: '📊' },
@@ -361,7 +369,7 @@ export default function AdminFinancePage() {
                   <div className="p-4 border-b flex justify-between items-center">
                     <h3 className="font-semibold">All Transactions</h3>
                     <DataExport
-                      data={transactions}
+                      data={safeTransactions}
                       columns={[
                         { key: 'type', header: 'Type' },
                         { key: 'amount', header: 'Amount', format: (v: number, t: any) => `${t.currency || 'GBP'} ${Number(v).toFixed(2)}` },
@@ -381,12 +389,12 @@ export default function AdminFinancePage() {
                       </tr>
                     </thead>
                     <tbody className="bg-white divide-y divide-gray-200">
-                      {transactions.length === 0 ? (
+                      {safeTransactions.length === 0 ? (
                         <tr>
                           <td colSpan={4} className="px-6 py-8 text-center text-gray-500">No transactions found</td>
                         </tr>
                       ) : (
-                        transactions.map((tx) => (
+                        safeTransactions.map((tx) => (
                           <tr key={tx.id} className="hover:bg-gray-50">
                             <td className="px-6 py-4 whitespace-nowrap text-sm">{tx.type}</td>
                             <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
@@ -417,7 +425,7 @@ export default function AdminFinancePage() {
                   <div className="p-4 border-b flex justify-between items-center">
                     <h3 className="font-semibold">Seller Payouts</h3>
                     <DataExport
-                      data={payouts}
+                      data={safePayouts}
                       columns={[
                         { key: 'sellerId', header: 'Seller' },
                         { key: 'amount', header: 'Amount', format: (v: number, p: any) => `${p.currency || 'GBP'} ${Number(v).toFixed(2)}` },
@@ -437,12 +445,12 @@ export default function AdminFinancePage() {
                       </tr>
                     </thead>
                     <tbody className="bg-white divide-y divide-gray-200">
-                      {payouts.length === 0 ? (
+                      {safePayouts.length === 0 ? (
                         <tr>
                           <td colSpan={4} className="px-6 py-8 text-center text-gray-500">No payouts found</td>
                         </tr>
                       ) : (
-                        payouts.map((payout) => (
+                        safePayouts.map((payout) => (
                           <tr key={payout.id} className="hover:bg-gray-50">
                             <td className="px-6 py-4 whitespace-nowrap text-sm">{payout.sellerId}</td>
                             <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
@@ -473,7 +481,7 @@ export default function AdminFinancePage() {
                   <div className="p-4 border-b flex justify-between items-center">
                     <h3 className="font-semibold">Refunds</h3>
                     <DataExport
-                      data={refunds}
+                      data={safeRefunds}
                       columns={[
                         { key: 'orderId', header: 'Order' },
                         { key: 'amount', header: 'Amount', format: (v: number, r: any) => `${r.currency || 'GBP'} ${Number(v).toFixed(2)}` },
@@ -493,12 +501,12 @@ export default function AdminFinancePage() {
                       </tr>
                     </thead>
                     <tbody className="bg-white divide-y divide-gray-200">
-                      {refunds.length === 0 ? (
+                      {safeRefunds.length === 0 ? (
                         <tr>
                           <td colSpan={4} className="px-6 py-8 text-center text-gray-500">No refunds found</td>
                         </tr>
                       ) : (
-                        refunds.map((refund) => (
+                        safeRefunds.map((refund) => (
                           <tr key={refund.id} className="hover:bg-gray-50">
                             <td className="px-6 py-4 whitespace-nowrap text-sm">{refund.orderId}</td>
                             <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">

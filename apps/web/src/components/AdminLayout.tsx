@@ -440,11 +440,11 @@ export function AdminLayout({ children }: AdminLayoutProps) {
           {/* Footer */}
           <div className="border-t border-gray-100 p-3">
             <Link
-              href="/"
-              className="flex items-center gap-2.5 px-3 py-2.5 text-sm text-gray-600 hover:bg-gray-50 rounded-lg transition-colors font-medium"
+              href="/admin/dashboard"
+              className="flex items-center gap-2.5 px-3 py-2.5 text-sm text-purple-600 hover:bg-purple-50 rounded-lg transition-colors font-medium"
             >
-              <span>🏠</span>
-              <span>Back to Site</span>
+              <span>📊</span>
+              <span>Dashboard</span>
             </Link>
           </div>
         </div>
@@ -463,14 +463,22 @@ export function AdminLayout({ children }: AdminLayoutProps) {
         {/* Top Bar */}
         <div className="sticky top-0 z-30 bg-white/95 backdrop-blur-sm border-b border-gray-100">
           <div className="flex items-center justify-between h-14 px-4 sm:px-6 lg:px-8">
-            <button
-              onClick={() => setSidebarOpen(true)}
-              className="lg:hidden p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
-            >
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-              </svg>
-            </button>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => setSidebarOpen(true)}
+                className="lg:hidden p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+                </svg>
+              </button>
+              <Link
+                href="/admin/dashboard"
+                className="text-sm font-medium text-purple-600 hover:text-purple-700 hidden sm:inline"
+              >
+                Dashboard
+              </Link>
+            </div>
             <div className="flex items-center gap-3 ml-auto">
               {user && (
                 <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 bg-gray-50 rounded-lg">

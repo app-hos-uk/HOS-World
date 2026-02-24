@@ -33,6 +33,16 @@ export default function FinancePayoutsPage() {
     { title: 'Fee Reports', href: '/finance/reports/fees', icon: '📋' },
   ];
 
+  const extractPayoutsList = (response: any): any[] => {
+    if (!response?.data) return [];
+    const d = response.data;
+    if (Array.isArray(d)) return d;
+    // API returns getTransactions() shape: { transactions, balances, pagination }
+    if (d?.transactions && Array.isArray(d.transactions)) return d.transactions;
+    if (d?.payouts && Array.isArray(d.payouts)) return d.payouts;
+    return [];
+  };
+
   const fetchPayouts = useCallback(async (showLoading = true) => {
     try {
       if (showLoading) {
@@ -40,9 +50,11 @@ export default function FinancePayoutsPage() {
         setError(null);
       }
       const response = await apiClient.getPayouts();
-      if (response?.data) {
-        setPayouts(response.data);
-      } else if (showLoading) {
+      // Only replace payouts when the API returned a valid payload; preserve existing data on empty/null response (e.g. refresh failures)
+      if (response?.data != null) {
+        setPayouts(extractPayoutsList(response));
+      }
+      if (!response?.data && showLoading) {
         setError('Failed to load payouts');
       }
     } catch (err: any) {
@@ -72,10 +84,11 @@ export default function FinancePayoutsPage() {
     };
   }, [fetchPayouts]);
 
+  const payoutList = Array.isArray(payouts) ? payouts : [];
   const filteredPayouts =
     activeTab === 'ALL'
-      ? payouts
-      : payouts.filter((p) => p.status === activeTab);
+      ? payoutList
+      : payoutList.filter((p) => p.status === activeTab);
 
   const handleSchedulePayout = async () => {
     if (!scheduleForm.sellerId.trim()) {
@@ -152,8 +165,8 @@ export default function FinancePayoutsPage() {
           {tabs.map((tab) => {
             const count =
               tab === 'ALL'
-                ? payouts.length
-                : payouts.filter((p) => p.status === tab).length;
+                ? payoutList.length
+                : payoutList.filter((p) => p.status === tab).length;
             return (
               <button
                 key={tab}

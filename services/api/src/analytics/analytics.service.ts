@@ -138,27 +138,36 @@ export class AnalyticsService {
   async getCustomerMetrics(filters: AnalyticsFilters): Promise<CustomerMetrics> {
     const { startDate, endDate } = filters;
 
-    const dateFilter: any = {};
+    // Customer model has no createdAt; filter by related User.createdAt.
+    // Prisma relation filter: where.user.createdAt is valid for filtering Customer by User's creation date.
+    const customerWhere: any = {};
     if (startDate || endDate) {
-      dateFilter.createdAt = {};
-      if (startDate) dateFilter.createdAt.gte = startDate;
-      if (endDate) dateFilter.createdAt.lte = endDate;
+      customerWhere.user = {
+        createdAt: {
+          ...(startDate && { gte: startDate }),
+          ...(endDate && { lte: endDate }),
+        },
+      };
     }
 
-    // Get all customers
+    // Get all customers (in date range via user.createdAt)
     const allCustomers = await this.prisma.customer.findMany({
-      where: dateFilter,
+      where: customerWhere,
       include: {
         user: true,
       },
     });
 
-    // Get customers with orders
+    // Get customers with orders (Order has createdAt)
+    const orderWhere: any = { paymentStatus: 'PAID' };
+    if (startDate || endDate) {
+      orderWhere.createdAt = {
+        ...(startDate && { gte: startDate }),
+        ...(endDate && { lte: endDate }),
+      };
+    }
     const customersWithOrders = await this.prisma.order.findMany({
-      where: {
-        ...dateFilter,
-        paymentStatus: 'PAID',
-      },
+      where: orderWhere,
       select: {
         userId: true,
         total: true,

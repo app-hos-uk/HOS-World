@@ -199,11 +199,11 @@ export function CMSLayout({ children }: CMSLayoutProps) {
           {/* Footer */}
           <div className="border-t border-gray-200 p-4">
             <Link
-              href="/"
-              className="flex items-center gap-2 px-3 py-2 text-sm text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
+              href="/cms/dashboard"
+              className="flex items-center gap-2 px-3 py-2 text-sm text-purple-600 hover:bg-purple-50 rounded-lg transition-colors font-medium"
             >
-              <span>🏠</span>
-              <span>Back to Site</span>
+              <span>📊</span>
+              <span>Dashboard</span>
             </Link>
           </div>
         </div>
@@ -222,12 +222,20 @@ export function CMSLayout({ children }: CMSLayoutProps) {
         {/* Top Bar */}
         <div className="sticky top-0 z-30 bg-white border-b border-gray-200">
           <div className="flex items-center justify-between h-16 px-4 sm:px-6 lg:px-8">
-            <button
-              onClick={() => setSidebarOpen(true)}
-              className="lg:hidden text-gray-500 hover:text-gray-700"
-            >
-              ☰
-            </button>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => setSidebarOpen(true)}
+                className="lg:hidden text-gray-500 hover:text-gray-700"
+              >
+                ☰
+              </button>
+              <Link
+                href="/cms/dashboard"
+                className="text-sm font-medium text-purple-600 hover:text-purple-700 hidden sm:inline"
+              >
+                Dashboard
+              </Link>
+            </div>
             <div className="flex items-center gap-4">
               {user && (
                 <span className="text-sm text-gray-600 hidden sm:inline">
