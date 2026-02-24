@@ -37,6 +37,30 @@ import { ProductSubmissionStatus } from '@prisma/client';
 export class SubmissionsController {
   constructor(private readonly submissionsService: SubmissionsService) {}
 
+  @Get('check-duplicates')
+  @ApiOperation({
+    summary: 'Check for duplicate products before submission',
+    description: 'Searches the catalogue and seller\'s own pending/active products for potential duplicates by name, SKU, barcode, or EAN.',
+  })
+  @ApiQuery({ name: 'name', required: false, type: String })
+  @ApiQuery({ name: 'sku', required: false, type: String })
+  @ApiQuery({ name: 'barcode', required: false, type: String })
+  @ApiQuery({ name: 'ean', required: false, type: String })
+  @SwaggerApiResponse({ status: 200, description: 'Duplicate check results' })
+  async checkDuplicates(
+    @Request() req: any,
+    @Query('name') name?: string,
+    @Query('sku') sku?: string,
+    @Query('barcode') barcode?: string,
+    @Query('ean') ean?: string,
+  ): Promise<ApiResponse<any>> {
+    const results = await this.submissionsService.checkDuplicates(req.user.id, { name, sku, barcode, ean });
+    return {
+      data: results,
+      message: 'Duplicate check completed',
+    };
+  }
+
   @Post()
   @ApiOperation({
     summary: 'Create product submission',

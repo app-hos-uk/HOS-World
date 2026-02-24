@@ -145,12 +145,24 @@ export class ProcurementService {
       throw new BadRequestException(`Cannot approve submission in status: ${submission.status}`);
     }
 
-    // Check for duplicates before approving
     const duplicates = await this.duplicatesService.getDuplicatesForSubmission(id);
     if (duplicates.length > 0 && duplicates[0].similarityScore >= 90) {
-      throw new BadRequestException(
-        'Cannot approve: High similarity duplicate detected. Please review duplicates first.',
-      );
+      if (!approveDto.acknowledgeDuplicates) {
+        throw new BadRequestException(
+          'High similarity duplicate detected. To proceed, acknowledge the duplicates and provide a reason.',
+        );
+      }
+      if (!approveDto.duplicateAcknowledgementNote?.trim()) {
+        throw new BadRequestException(
+          'A note explaining why this duplicate should be approved is required.',
+        );
+      }
+    }
+
+    const noteParts: string[] = [];
+    if (approveDto.notes) noteParts.push(approveDto.notes);
+    if (approveDto.duplicateAcknowledgementNote?.trim()) {
+      noteParts.push(`[Duplicate acknowledged] ${approveDto.duplicateAcknowledgementNote.trim()}`);
     }
 
     const updateData: any = {
@@ -162,8 +174,8 @@ export class ProcurementService {
       updateData.selectedQuantity = approveDto.selectedQuantity;
     }
 
-    if (approveDto.notes) {
-      updateData.procurementNotes = approveDto.notes;
+    if (noteParts.length > 0) {
+      updateData.procurementNotes = noteParts.join('\n\n');
     }
 
     // Atomic status check prevents race conditions

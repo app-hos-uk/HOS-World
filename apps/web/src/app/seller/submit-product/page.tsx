@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useMemo, useRef, Suspense } from 'react';
+import { useState, useEffect, useMemo, useRef, useCallback, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { RouteGuard } from '@/components/RouteGuard';
 import { DashboardLayout } from '@/components/DashboardLayout';
@@ -353,6 +353,9 @@ function SubmitProductForm() {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState(false);
   const submittingRef = useRef(false);
+  const [duplicateWarnings, setDuplicateWarnings] = useState<any>(null);
+  const [checkingDuplicates, setCheckingDuplicates] = useState(false);
+  const duplicateTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Form state
   const [formData, setFormData] = useState({
@@ -384,11 +387,42 @@ function SubmitProductForm() {
   const [newOptionName, setNewOptionName] = useState('');
   const [newOptionValue, setNewOptionValue] = useState('');
 
+  const runDuplicateCheck = useCallback(async (data: typeof formData) => {
+    const hasIdentifier = data.name.trim().length >= 3 || data.sku.trim() || data.barcode.trim() || data.ean.trim();
+    if (!hasIdentifier) {
+      setDuplicateWarnings(null);
+      return;
+    }
+    try {
+      setCheckingDuplicates(true);
+      const res = await apiClient.checkSubmissionDuplicates({
+        name: data.name.trim() || undefined,
+        sku: data.sku.trim() || undefined,
+        barcode: data.barcode.trim() || undefined,
+        ean: data.ean.trim() || undefined,
+      });
+      const d = res?.data;
+      const total = (d?.catalogueMatches?.length || 0) + (d?.sellerPendingMatches?.length || 0) + (d?.sellerActiveMatches?.length || 0);
+      setDuplicateWarnings(total > 0 ? d : null);
+    } catch {
+      // Silently ignore check errors
+    } finally {
+      setCheckingDuplicates(false);
+    }
+  }, []);
+
   const handleInputChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
   ) => {
     const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
+    setFormData((prev) => {
+      const next = { ...prev, [name]: value };
+      if (['name', 'sku', 'barcode', 'ean'].includes(name)) {
+        if (duplicateTimerRef.current) clearTimeout(duplicateTimerRef.current);
+        duplicateTimerRef.current = setTimeout(() => runDuplicateCheck(next), 800);
+      }
+      return next;
+    });
   };
 
   const addImage = () => {
@@ -641,6 +675,72 @@ function SubmitProductForm() {
               </div>
             )}
 
+            {duplicateWarnings && (
+              <div className="mb-6 border border-amber-300 rounded-lg overflow-hidden">
+                <div className="bg-amber-50 px-4 py-3 border-b border-amber-200">
+                  <h3 className="font-semibold text-amber-900">Potential Duplicates Detected</h3>
+                  <p className="text-xs text-amber-700 mt-0.5">Review matches below before submitting. You can still proceed if this is a different product.</p>
+                </div>
+                <div className="p-4 space-y-3 bg-white">
+                  {duplicateWarnings.sellerActiveMatches?.length > 0 && (
+                    <div>
+                      <p className="text-sm font-semibold text-red-800 mb-1.5">Your Active Products</p>
+                      <p className="text-xs text-red-600 mb-2">You already have these products listed. Consider updating stock/price instead of submitting again.</p>
+                      {duplicateWarnings.sellerActiveMatches.slice(0, 3).map((m: any) => (
+                        <div key={m.id} className="flex items-center justify-between p-2.5 bg-red-50 rounded-lg mb-1.5 border border-red-200">
+                          <div className="min-w-0">
+                            <p className="text-sm font-medium text-gray-900 truncate">{m.name}</p>
+                            <p className="text-xs text-gray-500">{m.sku ? `SKU: ${m.sku}` : ''} {m.reasons?.[0] || ''}</p>
+                          </div>
+                          <span className="ml-2 shrink-0 px-2 py-0.5 bg-red-200 text-red-900 rounded text-xs font-bold">{m.similarityScore}%</span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                  {duplicateWarnings.sellerPendingMatches?.length > 0 && (
+                    <div>
+                      <p className="text-sm font-semibold text-orange-800 mb-1.5">Your Pending Submissions</p>
+                      <p className="text-xs text-orange-600 mb-2">You already have pending submissions for similar products.</p>
+                      {duplicateWarnings.sellerPendingMatches.slice(0, 3).map((m: any) => (
+                        <div key={m.id} className="flex items-center justify-between p-2.5 bg-orange-50 rounded-lg mb-1.5 border border-orange-200">
+                          <div className="min-w-0">
+                            <p className="text-sm font-medium text-gray-900 truncate">{m.name}</p>
+                            <p className="text-xs text-gray-500">Status: {m.status?.replace(/_/g, ' ')} &middot; {m.reasons?.[0] || ''}</p>
+                          </div>
+                          <span className="ml-2 shrink-0 px-2 py-0.5 bg-orange-200 text-orange-900 rounded text-xs font-bold">{m.similarityScore}%</span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                  {duplicateWarnings.catalogueMatches?.length > 0 && (
+                    <div>
+                      <p className="text-sm font-semibold text-amber-800 mb-1.5">Existing Catalogue Products</p>
+                      <p className="text-xs text-amber-600 mb-2">Similar products already exist in the catalogue from other sellers.</p>
+                      {duplicateWarnings.catalogueMatches.slice(0, 3).map((m: any) => (
+                        <div key={m.id} className="flex items-center justify-between p-2.5 bg-amber-50 rounded-lg mb-1.5 border border-amber-200">
+                          <div className="min-w-0">
+                            <p className="text-sm font-medium text-gray-900 truncate">{m.name}</p>
+                            <p className="text-xs text-gray-500">{m.sku ? `SKU: ${m.sku}` : ''} {m.reasons?.[0] || ''}</p>
+                          </div>
+                          <span className="ml-2 shrink-0 px-2 py-0.5 bg-amber-200 text-amber-900 rounded text-xs font-bold">{m.similarityScore}%</span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {checkingDuplicates && (
+              <div className="mb-4 flex items-center gap-2 text-sm text-gray-500">
+                <svg className="animate-spin h-4 w-4 text-purple-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+                </svg>
+                Checking for duplicates...
+              </div>
+            )}
+
             <form onSubmit={handleSubmit} className="space-y-6 sm:space-y-8">
               {/* Basic Information */}
               <div className="bg-white border border-gray-200 rounded-lg p-6 sm:p-8">
@@ -825,7 +925,7 @@ function SubmitProductForm() {
                         htmlFor="stock"
                         className="block text-sm font-medium text-gray-700 mb-1"
                       >
-                        Stock Quantity <span className="text-red-500">*</span>
+                        Available Stock <span className="text-red-500">*</span>
                       </label>
                       <input
                         type="number"
@@ -838,6 +938,7 @@ function SubmitProductForm() {
                         className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
                         placeholder="0"
                       />
+                      <p className="text-xs text-gray-500 mt-1">Total units you have available to supply</p>
                     </div>
 
                     <div>
@@ -862,12 +963,13 @@ function SubmitProductForm() {
                     </div>
                   </div>
 
+                  {isWholesaler && (
                   <div>
                     <label
                       htmlFor="quantity"
                       className="block text-sm font-medium text-gray-700 mb-1"
                     >
-                      Quantity (for wholesalers)
+                      Minimum Order Quantity
                     </label>
                     <input
                       type="number"
@@ -875,11 +977,13 @@ function SubmitProductForm() {
                       name="quantity"
                       value={formData.quantity}
                       onChange={handleInputChange}
-                      min="0"
+                      min="1"
                       className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-                      placeholder="Quantity to submit"
+                      placeholder="Minimum order quantity for bulk buyers"
                     />
+                    <p className="text-xs text-gray-500 mt-1">Minimum units a buyer must order at wholesale price</p>
                   </div>
+                  )}
                 </div>
               </div>
 

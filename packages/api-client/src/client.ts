@@ -539,6 +539,22 @@ export class ApiClient {
   }
 
   // Submissions
+  async checkSubmissionDuplicates(query: {
+    name?: string;
+    sku?: string;
+    barcode?: string;
+    ean?: string;
+  }): Promise<ApiResponse<any>> {
+    const params = new URLSearchParams();
+    if (query.name) params.set('name', query.name);
+    if (query.sku) params.set('sku', query.sku);
+    if (query.barcode) params.set('barcode', query.barcode);
+    if (query.ean) params.set('ean', query.ean);
+    return this.request<ApiResponse<any>>(`/submissions/check-duplicates?${params.toString()}`, {
+      method: 'GET',
+    });
+  }
+
   async createSubmission(data: {
     name: string;
     description: string;
@@ -603,7 +619,7 @@ export class ApiClient {
 
   async approveProcurementSubmission(
     id: string,
-    data: { selectedQuantity?: number; notes?: string }
+    data: { selectedQuantity?: number; notes?: string; acknowledgeDuplicates?: boolean; duplicateAcknowledgementNote?: string }
   ): Promise<ApiResponse<any>> {
     return this.request<ApiResponse<any>>(`/procurement/submissions/${id}/approve`, {
       method: 'POST',

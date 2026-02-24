@@ -408,6 +408,120 @@ export class SubmissionsService {
     return updated;
   }
 
+  async checkDuplicates(userId: string, query: { name?: string; sku?: string; barcode?: string; ean?: string }) {
+    const seller = await this.prisma.seller.findUnique({
+      where: { userId },
+    });
+
+    if (!seller) {
+      throw new NotFoundException('Seller profile not found');
+    }
+
+    const results: {
+      catalogueMatches: any[];
+      sellerPendingMatches: any[];
+      sellerActiveMatches: any[];
+    } = {
+      catalogueMatches: [],
+      sellerPendingMatches: [],
+      sellerActiveMatches: [],
+    };
+
+    const existingProducts = await this.prisma.product.findMany({
+      where: { status: { in: ['ACTIVE', 'DRAFT'] } },
+      select: { id: true, name: true, sku: true, barcode: true, ean: true, slug: true, price: true, status: true, sellerId: true },
+      take: 500,
+    });
+
+    for (const product of existingProducts) {
+      let score = 0;
+      const reasons: string[] = [];
+
+      if (query.sku && product.sku && query.sku.trim() === product.sku.trim()) {
+        score = 100;
+        reasons.push('Exact SKU match');
+      } else if (query.barcode && product.barcode && query.barcode.trim() === product.barcode.trim()) {
+        score = 100;
+        reasons.push('Exact barcode match');
+      } else if (query.ean && product.ean && query.ean.trim() === product.ean.trim()) {
+        score = 100;
+        reasons.push('Exact EAN match');
+      } else if (query.name && product.name) {
+        const sim = this.duplicatesService['calculateStringSimilarity'](
+          query.name.toLowerCase(),
+          product.name.toLowerCase(),
+        );
+        if (sim >= 80) {
+          score = sim;
+          reasons.push(`Name similarity: ${sim.toFixed(1)}%`);
+        }
+      }
+
+      if (score >= 80) {
+        const isSameSeller = product.sellerId === seller.id;
+        const entry = { ...product, similarityScore: score, reasons };
+        if (isSameSeller) {
+          results.sellerActiveMatches.push(entry);
+        } else {
+          results.catalogueMatches.push(entry);
+        }
+      }
+    }
+
+    const pendingSubmissions = await this.prisma.productSubmission.findMany({
+      where: {
+        sellerId: seller.id,
+        status: { in: ['SUBMITTED', 'UNDER_REVIEW', 'PROCUREMENT_APPROVED', 'CATALOG_COMPLETED', 'MARKETING_COMPLETED', 'FINANCE_APPROVED'] },
+      },
+      select: { id: true, productData: true, status: true, createdAt: true },
+      take: 100,
+    });
+
+    for (const sub of pendingSubmissions) {
+      const pd = sub.productData as any;
+      let score = 0;
+      const reasons: string[] = [];
+
+      if (query.sku && pd?.sku && query.sku.trim() === pd.sku.trim()) {
+        score = 100;
+        reasons.push('Exact SKU match');
+      } else if (query.barcode && pd?.barcode && query.barcode.trim() === pd.barcode.trim()) {
+        score = 100;
+        reasons.push('Exact barcode match');
+      } else if (query.ean && pd?.ean && query.ean.trim() === pd.ean.trim()) {
+        score = 100;
+        reasons.push('Exact EAN match');
+      } else if (query.name && pd?.name) {
+        const sim = this.duplicatesService['calculateStringSimilarity'](
+          query.name.toLowerCase(),
+          pd.name.toLowerCase(),
+        );
+        if (sim >= 80) {
+          score = sim;
+          reasons.push(`Name similarity: ${sim.toFixed(1)}%`);
+        }
+      }
+
+      if (score >= 80) {
+        results.sellerPendingMatches.push({
+          id: sub.id,
+          name: pd?.name,
+          sku: pd?.sku,
+          status: sub.status,
+          createdAt: sub.createdAt,
+          similarityScore: score,
+          reasons,
+        });
+      }
+    }
+
+    results.catalogueMatches.sort((a, b) => b.similarityScore - a.similarityScore);
+    results.sellerActiveMatches.sort((a, b) => b.similarityScore - a.similarityScore);
+    results.sellerPendingMatches.sort((a, b) => b.similarityScore - a.similarityScore);
+
+    return results;
+  }
+
   async bulkCreate(userId: string, submissions: CreateSubmissionDto[]) {
     const seller = await this.prisma.seller.findUnique({
       where: { userId },

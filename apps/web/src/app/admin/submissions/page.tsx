@@ -17,6 +17,22 @@ function getImageUrl(img: string | { url: string; alt?: string; order?: number }
   return typeof img === 'string' ? img : img?.url;
 }
 
+interface DuplicateProduct {
+  id: string;
+  similarityScore: number;
+  existingProduct?: {
+    id: string;
+    name: string;
+    slug?: string;
+    sku?: string;
+    barcode?: string;
+    ean?: string;
+    price?: number;
+    currency?: string;
+    status?: string;
+  };
+}
+
 interface Submission {
   id: string;
   status: string;
@@ -26,6 +42,7 @@ interface Submission {
     price?: number;
     currency?: string;
     sku?: string;
+    stock?: number;
     images?: (string | { url: string; alt?: string; order?: number })[];
   };
   catalogEntry?: {
@@ -43,11 +60,14 @@ interface Submission {
     firstName?: string;
     lastName?: string;
   };
+  duplicateProducts?: DuplicateProduct[];
   procurementNotes?: string;
   catalogNotes?: string;
   marketingNotes?: string;
   financeNotes?: string;
   rejectionReason?: string;
+  selectedQuantity?: number;
+  procurementApprovedAt?: string;
   createdAt: string;
   updatedAt?: string;
 }
@@ -532,9 +552,21 @@ export default function AdminSubmissionsPage() {
                                 <p className="text-sm font-medium text-gray-900">
                                   {submission.productData?.name || submission.catalogEntry?.title || 'Untitled'}
                                 </p>
-                                {submission.productData?.sku && (
-                                  <p className="text-xs text-gray-500">SKU: {submission.productData.sku}</p>
-                                )}
+                                <div className="flex items-center gap-1.5 flex-wrap">
+                                  {submission.productData?.sku && (
+                                    <span className="text-xs text-gray-500">SKU: {submission.productData.sku}</span>
+                                  )}
+                                  {submission.duplicateProducts && submission.duplicateProducts.length > 0 && (
+                                    <span className={`inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[10px] font-semibold ${
+                                      submission.procurementNotes?.includes('[Duplicate acknowledged]')
+                                        ? 'bg-amber-100 text-amber-800'
+                                        : 'bg-red-100 text-red-700'
+                                    }`}>
+                                      {submission.duplicateProducts.length} dup{submission.duplicateProducts.length > 1 ? 's' : ''}
+                                      {submission.procurementNotes?.includes('[Duplicate acknowledged]') && ' (ack)'}
+                                    </span>
+                                  )}
+                                </div>
                               </div>
                             </div>
                           </td>
@@ -711,7 +743,94 @@ export default function AdminSubmissionsPage() {
                       </div>
                     )}
 
-                    {/* Notes */}
+                    {/* Duplicate Products */}
+                    {selectedSubmission.duplicateProducts && selectedSubmission.duplicateProducts.length > 0 && (
+                      <div>
+                        <h3 className="font-semibold mb-2 flex items-center gap-2">
+                          Duplicate Detection
+                          <span className={`px-2 py-0.5 rounded text-xs font-bold ${
+                            selectedSubmission.procurementNotes?.includes('[Duplicate acknowledged]')
+                              ? 'bg-amber-100 text-amber-800'
+                              : 'bg-red-100 text-red-700'
+                          }`}>
+                            {selectedSubmission.duplicateProducts.length} match{selectedSubmission.duplicateProducts.length > 1 ? 'es' : ''}
+                          </span>
+                        </h3>
+                        <div className="space-y-2">
+                          {selectedSubmission.duplicateProducts.map((dup) => {
+                            const ep = dup.existingProduct;
+                            const score = dup.similarityScore ?? 0;
+                            return (
+                              <div key={dup.id || ep?.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg border border-gray-200">
+                                <div className="min-w-0 flex-1">
+                                  <p className="text-sm font-medium text-gray-900 truncate">{ep?.name || 'Unknown product'}</p>
+                                  <div className="flex flex-wrap gap-2 text-xs text-gray-500 mt-0.5">
+                                    {ep?.sku && <span>SKU: {ep.sku}</span>}
+                                    {ep?.barcode && <span>Barcode: {ep.barcode}</span>}
+                                    {ep?.ean && <span>EAN: {ep.ean}</span>}
+                                    {ep?.price != null && <span>Price: {ep.currency || 'GBP'} {Number(ep.price).toFixed(2)}</span>}
+                                    {ep?.status && <span className="px-1 py-0.5 bg-gray-200 rounded">{ep.status}</span>}
+                                  </div>
+                                </div>
+                                <div className="ml-3 shrink-0 text-right">
+                                  <span className={`inline-block px-2 py-1 rounded text-xs font-bold ${
+                                    score >= 90 ? 'bg-red-100 text-red-800' : score >= 80 ? 'bg-orange-100 text-orange-800' : 'bg-yellow-100 text-yellow-800'
+                                  }`}>
+                                    {score}%
+                                  </span>
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                        {selectedSubmission.procurementNotes?.includes('[Duplicate acknowledged]') && (
+                          <div className="mt-3 p-3 bg-amber-50 border border-amber-200 rounded-lg">
+                            <p className="text-sm font-semibold text-amber-900">Approved with Duplicate Acknowledgement</p>
+                            <p className="text-xs text-amber-700 mt-1">
+                              {selectedSubmission.procurementNotes
+                                .split('\n\n')
+                                .filter((part: string) => part.startsWith('[Duplicate acknowledged]'))
+                                .map((part: string) => part.replace('[Duplicate acknowledged] ', ''))
+                                .join('; ') || 'No reason provided'}
+                            </p>
+                            {selectedSubmission.procurementApprovedAt && (
+                              <p className="text-xs text-amber-600 mt-1">
+                                Approved at: {new Date(selectedSubmission.procurementApprovedAt).toLocaleString()}
+                              </p>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    )}
+
+                    {/* Procurement Approval Details */}
+                    {selectedSubmission.status !== 'SUBMITTED' && selectedSubmission.status !== 'UNDER_REVIEW' && selectedSubmission.status !== 'REJECTED' && (
+                      <div>
+                        <h3 className="font-semibold mb-2">Procurement Approval Log</h3>
+                        <div className="bg-blue-50 rounded-lg p-3 border border-blue-200 text-sm">
+                          <div className="grid grid-cols-2 gap-x-4 gap-y-1">
+                            <p className="text-blue-700">Status:</p>
+                            <p className="text-blue-900 font-medium">Approved</p>
+                            {selectedSubmission.procurementApprovedAt && (
+                              <>
+                                <p className="text-blue-700">Approved at:</p>
+                                <p className="text-blue-900">{new Date(selectedSubmission.procurementApprovedAt).toLocaleString()}</p>
+                              </>
+                            )}
+                            {selectedSubmission.selectedQuantity != null && (
+                              <>
+                                <p className="text-blue-700">Approved qty:</p>
+                                <p className="text-blue-900 font-medium">{selectedSubmission.selectedQuantity} units</p>
+                              </>
+                            )}
+                            <p className="text-blue-700">Seller offered:</p>
+                            <p className="text-blue-900">{(selectedSubmission.productData as any)?.stock ?? 'N/A'} units</p>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Review Notes */}
                     {(selectedSubmission.procurementNotes || selectedSubmission.catalogNotes || selectedSubmission.marketingNotes || selectedSubmission.financeNotes) && (
                       <div>
                         <h3 className="font-semibold mb-2">Review Notes</h3>
@@ -719,7 +838,11 @@ export default function AdminSubmissionsPage() {
                           {selectedSubmission.procurementNotes && (
                             <div className="p-2 bg-blue-50 rounded">
                               <p className="text-blue-800 font-medium">Procurement:</p>
-                              <p className="text-blue-700">{selectedSubmission.procurementNotes}</p>
+                              {selectedSubmission.procurementNotes.split('\n\n').map((part: string, i: number) => (
+                                <p key={i} className={`mt-0.5 ${part.startsWith('[Duplicate acknowledged]') ? 'text-amber-700 font-medium' : 'text-blue-700'}`}>
+                                  {part}
+                                </p>
+                              ))}
                             </div>
                           )}
                           {selectedSubmission.catalogNotes && (

@@ -9,6 +9,14 @@ export class ApproveSubmissionDto {
   @IsOptional()
   @IsString()
   notes?: string;
+
+  @IsOptional()
+  @IsBoolean()
+  acknowledgeDuplicates?: boolean;
+
+  @IsOptional()
+  @IsString()
+  duplicateAcknowledgementNote?: string;
 }
 
 export class RejectSubmissionDto {

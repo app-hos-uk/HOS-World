@@ -62,6 +62,8 @@ function ProcurementSubmissionsContent() {
   const [quantity, setQuantity] = useState<string>('');
   const [notes, setNotes] = useState<string>('');
   const [rejectReason, setRejectReason] = useState<string>('');
+  const [acknowledgeDuplicates, setAcknowledgeDuplicates] = useState(false);
+  const [duplicateAcknowledgementNote, setDuplicateAcknowledgementNote] = useState('');
 
   // Layout reflects current user role: CATALOG users see Catalog context when on this shared page
   const isCatalogContext = currentRole === 'CATALOG';
@@ -156,11 +158,15 @@ function ProcurementSubmissionsContent() {
       await apiClient.approveProcurementSubmission(selectedSubmission.id, {
         selectedQuantity: quantity ? parseInt(quantity) : undefined,
         notes: notes || undefined,
+        acknowledgeDuplicates: acknowledgeDuplicates || undefined,
+        duplicateAcknowledgementNote: duplicateAcknowledgementNote || undefined,
       });
       setShowModal(false);
       setSelectedSubmission(null);
       setQuantity('');
       setNotes('');
+      setAcknowledgeDuplicates(false);
+      setDuplicateAcknowledgementNote('');
       setCompareProduct(null);
       setCompareSubmissionData(null);
       toast.success('Submission approved successfully');
@@ -190,6 +196,8 @@ function ProcurementSubmissionsContent() {
       setRejectReason('');
       setCompareProduct(null);
       setCompareSubmissionData(null);
+      setAcknowledgeDuplicates(false);
+      setDuplicateAcknowledgementNote('');
       toast.success('Submission rejected');
       await fetchSubmissions();
       if (showDuplicateGroups) await fetchDuplicateGroups();
@@ -613,6 +621,8 @@ function ProcurementSubmissionsContent() {
                         setActionType(null);
                         setCompareProduct(null);
                         setCompareSubmissionData(null);
+                        setAcknowledgeDuplicates(false);
+                        setDuplicateAcknowledgementNote('');
                       }}
                       className="text-gray-500 hover:text-gray-700"
                     >
@@ -792,9 +802,40 @@ function ProcurementSubmissionsContent() {
 
                   {actionType === 'approve' && (
                     <div className="space-y-4">
+                      {selectedSubmission.duplicateProducts && selectedSubmission.duplicateProducts.length > 0 &&
+                        selectedSubmission.duplicateProducts.some((d: any) => (d.similarityScore ?? 0) >= 90) && (
+                        <div className="p-4 border border-red-300 rounded-lg bg-red-50">
+                          <label className="flex items-start gap-3 cursor-pointer">
+                            <input
+                              type="checkbox"
+                              checked={acknowledgeDuplicates}
+                              onChange={(e) => setAcknowledgeDuplicates(e.target.checked)}
+                              className="mt-0.5 h-4 w-4 rounded border-red-300 text-red-600 focus:ring-red-500"
+                            />
+                            <div>
+                              <span className="text-sm font-semibold text-red-900">I acknowledge this product has high-similarity duplicates</span>
+                              <p className="text-xs text-red-700 mt-0.5">This submission matches existing products with 90%+ similarity. Check this box and provide a reason to proceed with approval.</p>
+                            </div>
+                          </label>
+                          {acknowledgeDuplicates && (
+                            <div className="mt-3">
+                              <label className="block text-sm font-medium text-red-800 mb-1">
+                                Reason for approving despite duplicate <span className="text-red-500">*</span>
+                              </label>
+                              <textarea
+                                value={duplicateAcknowledgementNote}
+                                onChange={(e) => setDuplicateAcknowledgementNote(e.target.value)}
+                                rows={2}
+                                className="w-full px-3 py-2 border border-red-300 rounded-lg focus:ring-2 focus:ring-red-500 text-sm"
+                                placeholder="e.g., Different variant, different seller region, verified distinct product..."
+                              />
+                            </div>
+                          )}
+                        </div>
+                      )}
                       <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1">
-                          Selected Quantity (Optional)
+                          Approved Order Quantity (Optional)
                         </label>
                         <input
                           type="number"
@@ -802,17 +843,21 @@ function ProcurementSubmissionsContent() {
                           onChange={(e) => setQuantity(e.target.value)}
                           min="1"
                           className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
-                          placeholder="Leave empty to use submitted quantity"
+                          placeholder={`Seller offered: ${(selectedSubmission.productData as any)?.stock ?? '—'} units`}
                         />
+                        <p className="text-xs text-gray-500 mt-1">
+                          Seller&apos;s available stock: {(selectedSubmission.productData as any)?.stock ?? 'N/A'} &middot;
+                          Enter how many units to approve for procurement
+                        </p>
                       </div>
                       <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1">
-                          Notes (Optional)
+                          Procurement Notes (Optional)
                         </label>
                         <textarea
                           value={notes}
                           onChange={(e) => setNotes(e.target.value)}
-                          rows={4}
+                          rows={3}
                           className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
                           placeholder="Add notes about this approval..."
                         />
@@ -820,7 +865,10 @@ function ProcurementSubmissionsContent() {
                       <div className="flex gap-3 pt-4">
                         <button
                           onClick={handleApprove}
-                          disabled={actionLoading}
+                          disabled={actionLoading || (
+                            selectedSubmission.duplicateProducts?.some((d: any) => (d.similarityScore ?? 0) >= 90) &&
+                            !acknowledgeDuplicates
+                          )}
                           className="px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors font-medium disabled:opacity-50"
                         >
                           {actionLoading ? 'Approving...' : 'Confirm Approval'}
