@@ -12,9 +12,15 @@ coverage/
 **/coverage/
 
 # Exclude non-essential dirs
+apps/
 docs/
 scripts/
 .github/
+services/api/test/
+**/*.spec.ts
+**/*.test.ts
+**/*.md
+LICENSE
 
 # VCS / IDE
 .git/
