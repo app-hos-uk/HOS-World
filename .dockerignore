@@ -1,4 +1,4 @@
-# Keep Docker build context small and avoid symlink loops in pnpm store
+# Keep Docker build context small
 .pnpm-store/
 
 # Dependencies / builds
@@ -10,6 +10,14 @@ dist/
 **/dist/
 coverage/
 **/coverage/
+
+# Exclude web app (745MB) - not needed for API builds
+apps/
+
+# Exclude non-essential dirs
+docs/
+scripts/
+.github/
 
 # VCS / IDE
 .git/
