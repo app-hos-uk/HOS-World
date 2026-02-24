@@ -52,7 +52,7 @@ jobs:
       - name: Generate Prisma client
         run: cd services/api && npx prisma generate
       - name: Run API tests
-        run: cd services/api && pnpm test -- --passWithNoTests
+        run: cd services/api && npx jest --passWithNoTests
         env:
           DATABASE_URL: 'postgresql://test:test@localhost:5432/test'
           JWT_SECRET: 'test-secret-minimum-32-chars-long-for-ci'
