@@ -22,7 +22,7 @@ COPY packages/observability/package.json ./packages/observability/
 
 RUN pnpm install --no-frozen-lockfile
 
-# ── Layer 3: Source code + build (changes on every push) ──
+# ── Layer 3: Source code + build ──
 COPY packages ./packages
 COPY services/api ./services/api
 
@@ -34,6 +34,14 @@ RUN cd packages/shared-types && pnpm build \
     && cd ../../services/api && pnpm db:generate \
     && (pnpm build || true) \
     && test -f dist/main.js
+
+# ── Layer 4: Strip build tools & dev artifacts to shrink image ──
+RUN apt-get purge -y python3 make g++ && apt-get autoremove -y \
+    && rm -rf /tmp/* /root/.cache /root/.npm \
+    && find /app/packages -name "*.ts" ! -name "*.d.ts" -delete 2>/dev/null || true \
+    && find /app/services/api/src -name "*.ts" -delete 2>/dev/null || true \
+    && rm -rf /app/services/api/test 2>/dev/null || true \
+    && pnpm store prune 2>/dev/null || true
 
 WORKDIR /app/services/api
 EXPOSE 3001
