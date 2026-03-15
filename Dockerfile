@@ -45,4 +45,4 @@ RUN apt-get purge -y python3 make g++ && apt-get autoremove -y \
 
 WORKDIR /app/services/api
 EXPOSE 3001
-CMD ["sh", "-c", "npx prisma migrate resolve --rolled-back 20260219100000_convert_gbp_to_usd 2>/dev/null; npx prisma migrate deploy || echo 'WARNING: migrate deploy had issues, starting app anyway'; exec node dist/main.js"]
+CMD ["sh", "-c", "npx prisma migrate resolve --applied 20260219100000_convert_gbp_to_usd 2>/dev/null || true; npx prisma migrate deploy || echo 'WARN: migrate deploy had issues, continuing anyway'; exec node dist/main.js"]
