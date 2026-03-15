@@ -21,5 +21,6 @@ RUN pnpm install --no-frozen-lockfile \
     && test -f dist/main.js
 
 WORKDIR /app/services/api
+RUN chmod +x docker-entrypoint.sh
 EXPOSE 3001
-CMD ["/bin/sh", "-c", "npx prisma migrate resolve --applied 20260219100000_convert_gbp_to_usd 2>/dev/null || true; npx prisma migrate deploy || echo 'WARN: migrate deploy had issues, continuing anyway'; exec node dist/main.js"]
+CMD ["./docker-entrypoint.sh"]
