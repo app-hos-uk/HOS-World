@@ -90,6 +90,7 @@ async function bootstrap() {
     process.env.FRONTEND_URL,
     'https://hos-marketplaceweb-production.up.railway.app',
     'https://hos-marketplace-web.vercel.app',
+    'https://hos-world-web.vercel.app',
     ...(isProduction ? [] : ['http://localhost:3000', 'http://localhost:3001']),
   ]
     .filter(Boolean)
@@ -116,7 +117,10 @@ async function bootstrap() {
     const allowed = allowedOrigins.some(
       (a) => a && (normalized === a || normalized.startsWith(a + '/')),
     );
-    return allowed ? origin : null;
+    if (allowed) return origin;
+    // Allow Vercel preview deployments (hos-world-web-*.vercel.app)
+    if (/^https:\/\/hos-world-web[\w-]*\.vercel\.app$/.test(normalized)) return origin;
+    return null;
   };
 
   try {
@@ -282,8 +286,10 @@ async function bootstrap() {
         const isAllowed = allowedOrigins.some(
           (a) => a && (normalized === a || normalized.startsWith(a + '/')),
         );
+        // Also allow Vercel preview deployments
+        const isVercelPreview = /^https:\/\/hos-world-web[\w-]*\.vercel\.app$/.test(normalized);
 
-        if (isAllowed) {
+        if (isAllowed || isVercelPreview) {
           logger.debug(`CORS: Allowing origin: ${origin}`, 'CORS');
           callback(null, true);
         } else {
