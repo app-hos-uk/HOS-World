@@ -27,6 +27,23 @@ export class ProductsService {
     @Optional() private meilisearchService?: MeilisearchService,
   ) {}
 
+  private vendorTableChecked = false;
+  private vendorTableExistsFlag = false;
+
+  private async checkVendorTableExists(): Promise<boolean> {
+    if (this.vendorTableChecked) return this.vendorTableExistsFlag;
+    try {
+      const result: any[] = await this.prisma.$queryRawUnsafe(
+        `SELECT 1 AS exists FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'vendor_products' LIMIT 1`,
+      );
+      this.vendorTableExistsFlag = result.length > 0;
+    } catch {
+      this.vendorTableExistsFlag = false;
+    }
+    this.vendorTableChecked = true;
+    return this.vendorTableExistsFlag;
+  }
+
   /**
    * Invalidate product cache. If productId is given, clears that specific
    * product entry AND the list caches; otherwise clears only list caches.
@@ -274,24 +291,33 @@ export class ProductsService {
 
     // Listing eligibility: when browsing publicly (status=ACTIVE), only show products that
     // either have an active VendorProduct with stock + price, or are platform-owned (no vendor mapping).
+    // Wrapped in vendorTableExists check to gracefully degrade if vendor_products table
+    // hasn't been created yet (migration pending).
     if (!searchDto.status || searchDto.status === 'ACTIVE') {
-      if (!where.AND) where.AND = [];
-      (where.AND as Prisma.ProductWhereInput[]).push({
-        OR: [
-          // Platform-owned products (no vendor mapping) — eligible if in stock with price > 0
-          { vendorProducts: { none: {} }, stock: { gt: 0 }, price: { gt: 0 } },
-          // Vendor-supplied products: active vendor with stock and either platform or vendor price set
-          {
-            vendorProducts: {
-              some: {
-                status: 'ACTIVE',
-                vendorStock: { gt: 0 },
-                vendorPrice: { gt: 0 },
+      const vendorTableExists = await this.checkVendorTableExists();
+      if (vendorTableExists) {
+        if (!where.AND) where.AND = [];
+        (where.AND as Prisma.ProductWhereInput[]).push({
+          OR: [
+            { vendorProducts: { none: {} }, stock: { gt: 0 }, price: { gt: 0 } },
+            {
+              vendorProducts: {
+                some: {
+                  status: 'ACTIVE',
+                  vendorStock: { gt: 0 },
+                  vendorPrice: { gt: 0 },
+                },
               },
             },
-          },
-        ],
-      });
+          ],
+        });
+      } else {
+        if (!where.AND) where.AND = [];
+        (where.AND as Prisma.ProductWhereInput[]).push({
+          stock: { gt: 0 },
+          price: { gt: 0 },
+        });
+      }
     }
 
     if (searchDto.query) {
