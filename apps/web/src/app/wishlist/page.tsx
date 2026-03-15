@@ -159,25 +159,17 @@ export default function WishlistPage() {
     return { text: 'In Stock', class: 'bg-green-100 text-green-800' };
   };
 
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-gray-50">
-        <Header />
-        <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 lg:py-12">
-          <div className="flex items-center justify-center py-12">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600"></div>
-          </div>
-        </main>
-        <Footer />
-      </div>
-    );
-  }
-
   return (
     <RouteGuard allowedRoles={['CUSTOMER', 'ADMIN']} showAccessDenied={true}>
       <div className="min-h-screen bg-gray-50">
         <Header />
         <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 lg:py-12">
+          {loading ? (
+            <div className="flex items-center justify-center py-12">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600"></div>
+            </div>
+          ) : (
+          <>
           {/* Header */}
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
             <div>
@@ -207,7 +199,7 @@ export default function WishlistPage() {
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-6">
               <div className="bg-white rounded-lg shadow p-4">
                 <h3 className="text-xs font-medium text-gray-500 uppercase">Total Value</h3>
-                <p className="text-xl font-bold text-purple-600 mt-1">{formatPrice(stats.totalValue, 'GBP')}</p>
+                <p className="text-xl font-bold text-purple-600 mt-1">{formatPrice(stats.totalValue, 'USD')}</p>
               </div>
               <div className="bg-white rounded-lg shadow p-4">
                 <h3 className="text-xs font-medium text-gray-500 uppercase">In Stock</h3>
@@ -306,11 +298,11 @@ export default function WishlistPage() {
                       </Link>
                      <div className="flex items-center gap-2 mb-4">
                        <p className="text-purple-600 font-bold">
-                         {formatPrice(item.product?.price ?? 0, item.product?.currency || 'GBP')}
+                         {formatPrice(item.product?.price ?? 0, item.product?.currency || 'USD')}
                        </p>
                        {item.product?.originalPrice && item.product.originalPrice > (item.product?.price || 0) && (
                          <p className="text-gray-400 line-through text-sm">
-                           {formatPrice(item.product.originalPrice, item.product?.currency || 'GBP')}
+                           {formatPrice(item.product.originalPrice, item.product?.currency || 'USD')}
                          </p>
                        )}
                      </div>
@@ -357,6 +349,8 @@ export default function WishlistPage() {
                 );
               })}
             </div>
+          )}
+          </>
           )}
         </main>
         <Footer />

@@ -125,7 +125,7 @@ export class CourierService {
         provider: providerName,
         service: request.service || 'STANDARD',
         rate,
-        currency: 'GBP',
+        currency: 'USD',
         estimatedDays,
       };
     } catch (error: any) {

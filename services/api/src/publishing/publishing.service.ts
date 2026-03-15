@@ -1,7 +1,14 @@
-import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  BadRequestException,
+  Logger,
+  Optional,
+} from '@nestjs/common';
 import { PrismaService } from '../database/prisma.service';
 import { ProductsService } from '../products/products.service';
 import { NotificationsService } from '../notifications/notifications.service';
+import { MeilisearchService } from '../meilisearch/meilisearch.service';
 import { ProductSubmissionStatus, ProductStatus, ImageType } from '@prisma/client';
 
 interface PricingData {
@@ -11,12 +18,18 @@ interface PricingData {
   visibilityLevel: string;
 }
 
+const VALID_PUBLISH_FROM: ReadonlySet<string> = new Set(['FINANCE_APPROVED']);
+const VALID_UNPUBLISH_FROM: ReadonlySet<string> = new Set(['PUBLISHED']);
+
 @Injectable()
 export class PublishingService {
+  private readonly logger = new Logger(PublishingService.name);
+
   constructor(
     private prisma: PrismaService,
     private productsService: ProductsService,
     private notificationsService: NotificationsService,
+    @Optional() private meilisearchService?: MeilisearchService,
   ) {}
 
   async publish(submissionId: string, userId: string) {
@@ -33,8 +46,10 @@ export class PublishingService {
       throw new NotFoundException('Submission not found');
     }
 
-    if (submission.status !== 'FINANCE_APPROVED') {
-      throw new BadRequestException('Product can only be published after finance approval');
+    if (!VALID_PUBLISH_FROM.has(submission.status)) {
+      throw new BadRequestException(
+        `Cannot publish from status "${submission.status}". Product must be in FINANCE_APPROVED status.`,
+      );
     }
 
     if (!submission.catalogEntry) {
@@ -84,7 +99,7 @@ export class PublishingService {
       price: finalPrice,
       tradePrice: productData.tradePrice,
       rrp: productData.rrp,
-      currency: productData.currency || 'GBP',
+      currency: productData.currency || 'USD',
       taxRate: productData.taxRate > 1 ? productData.taxRate / 100 : productData.taxRate || 0,
       stock: submission.selectedQuantity || productData.stock || 0,
       fandom: productData.fandom,
@@ -123,6 +138,16 @@ export class PublishingService {
         approvedAt: new Date(),
       },
     });
+
+    // Index in MeiliSearch (non-blocking — don't let search indexing failures block publish)
+    if (this.meilisearchService) {
+      this.meilisearchService.indexProduct(product).catch((err) => {
+        this.logger.warn(
+          `MeiliSearch indexing failed for product ${product.id}, will be retried on next sync`,
+          err,
+        );
+      });
+    }
 
     // Send notification to seller
     if (submission.seller?.userId) {
@@ -164,6 +189,44 @@ export class PublishingService {
       failed: results.filter((r) => !r.success).length,
       results,
     };
+  }
+
+  async unpublish(submissionId: string) {
+    const submission = await this.prisma.productSubmission.findUnique({
+      where: { id: submissionId },
+      include: { product: true, seller: true },
+    });
+
+    if (!submission) {
+      throw new NotFoundException('Submission not found');
+    }
+
+    if (!VALID_UNPUBLISH_FROM.has(submission.status)) {
+      throw new BadRequestException(
+        `Cannot unpublish from status "${submission.status}". Only PUBLISHED submissions can be unpublished.`,
+      );
+    }
+
+    if (submission.productId) {
+      await this.prisma.product.update({
+        where: { id: submission.productId },
+        data: { status: 'INACTIVE' },
+      });
+
+      // Remove from MeiliSearch (non-blocking)
+      if (this.meilisearchService) {
+        this.meilisearchService.deleteProduct(submission.productId).catch((err) => {
+          this.logger.warn(`MeiliSearch removal failed for product ${submission.productId}`, err);
+        });
+      }
+    }
+
+    await this.prisma.productSubmission.update({
+      where: { id: submissionId },
+      data: { status: 'FINANCE_APPROVED' },
+    });
+
+    return { submissionId, unpublished: true };
   }
 
   async getReadyToPublish() {

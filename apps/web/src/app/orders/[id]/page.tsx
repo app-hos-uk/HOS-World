@@ -259,11 +259,11 @@ export default function OrderDetailPage() {
                               {item.product?.name || 'Product'}
                             </Link>
                             <p className="text-sm text-gray-500">Quantity: {item.quantity}</p>
-                            <p className="text-sm text-gray-500">Unit Price: {formatPrice(item.price, order.currency || 'GBP')}</p>
+                            <p className="text-sm text-gray-500">Unit Price: {formatPrice(item.price, order.currency || 'USD')}</p>
                           </div>
                           <div className="text-right">
                             <p className="font-semibold text-gray-900">
-                              {formatPrice(item.price * item.quantity, order.currency || 'GBP')}
+                              {formatPrice(item.price * item.quantity, order.currency || 'USD')}
                             </p>
                             {['DELIVERED', 'COMPLETED'].includes(order.status) && (
                               <Link
@@ -337,30 +337,30 @@ export default function OrderDetailPage() {
                   {order.subtotal !== undefined && (
                     <div className="flex justify-between text-sm">
                       <span className="text-gray-600">Subtotal</span>
-                      <span className="text-gray-900">{formatPrice(order.subtotal, order.currency || 'GBP')}</span>
+                      <span className="text-gray-900">{formatPrice(order.subtotal, order.currency || 'USD')}</span>
                     </div>
                   )}
                   {order.shippingCost !== undefined && order.shippingCost > 0 && (
                     <div className="flex justify-between text-sm">
                       <span className="text-gray-600">Shipping</span>
-                      <span className="text-gray-900">{formatPrice(order.shippingCost, order.currency || 'GBP')}</span>
+                      <span className="text-gray-900">{formatPrice(order.shippingCost, order.currency || 'USD')}</span>
                     </div>
                   )}
                   {order.tax !== undefined && order.tax > 0 && (
                     <div className="flex justify-between text-sm">
                       <span className="text-gray-600">Tax</span>
-                      <span className="text-gray-900">{formatPrice(order.tax, order.currency || 'GBP')}</span>
+                      <span className="text-gray-900">{formatPrice(order.tax, order.currency || 'USD')}</span>
                     </div>
                   )}
                   {order.discount !== undefined && order.discount > 0 && (
                     <div className="flex justify-between text-sm text-green-600">
                       <span>Discount</span>
-                      <span>-{formatPrice(order.discount, order.currency || 'GBP')}</span>
+                      <span>-{formatPrice(order.discount, order.currency || 'USD')}</span>
                     </div>
                   )}
                   <div className="flex justify-between font-bold text-base pt-3 border-t">
                     <span className="text-gray-900">Total</span>
-                    <span className="text-purple-600">{formatPrice(order.total, order.currency || 'GBP')}</span>
+                    <span className="text-purple-600">{formatPrice(order.total, order.currency || 'USD')}</span>
                   </div>
                 </div>
               </div>

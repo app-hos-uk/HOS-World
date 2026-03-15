@@ -60,7 +60,10 @@ export class CatalogController {
       'Retrieves a catalog entry or submission by ID. Same as GET /catalog/entries/:id. No authentication required.',
   })
   @ApiParam({ name: 'submissionId', description: 'Submission UUID', type: String })
-  @SwaggerApiResponse({ status: 200, description: 'Catalog entry or submission retrieved successfully' })
+  @SwaggerApiResponse({
+    status: 200,
+    description: 'Catalog entry or submission retrieved successfully',
+  })
   @SwaggerApiResponse({ status: 404, description: 'Not found' })
   async getSubmissionById(
     @Param('submissionId', ParseUUIDPipe) submissionId: string,
@@ -84,10 +87,13 @@ export class CatalogController {
     required: false,
     type: String,
     enum: ['pending', 'in_progress', 'completed'],
-    description: 'Filter by status. in_progress returns same as pending (entries not yet completed).',
+    description:
+      'Filter by status. in_progress returns same as pending (entries not yet completed).',
   })
   @SwaggerApiResponse({ status: 200, description: 'Catalog entries retrieved successfully' })
-  async findAll(@Query('status') status?: 'pending' | 'in_progress' | 'completed'): Promise<ApiResponse<any[]>> {
+  async findAll(
+    @Query('status') status?: 'pending' | 'in_progress' | 'completed',
+  ): Promise<ApiResponse<any[]>> {
     const entries = await this.catalogService.findAll(status);
     return {
       data: entries,
@@ -99,8 +105,7 @@ export class CatalogController {
   @Public()
   @ApiOperation({
     summary: 'Get catalog entry by submission ID',
-    description:
-      'Retrieves a specific catalog entry by submission ID. No authentication required.',
+    description: 'Retrieves a specific catalog entry by submission ID. No authentication required.',
   })
   @ApiParam({ name: 'submissionId', description: 'Submission UUID', type: String })
   @SwaggerApiResponse({ status: 200, description: 'Catalog entry retrieved successfully' })

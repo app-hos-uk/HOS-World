@@ -59,7 +59,7 @@ export class GeolocationController {
   ): Promise<ApiResponse<any>> {
     const currency = body.countryCode
       ? this.geolocationService.getCurrencyForCountry(body.countryCode)
-      : 'GBP';
+      : 'USD';
 
     // Update user's country and currency
     await this.geolocationService['prisma'].user.update({

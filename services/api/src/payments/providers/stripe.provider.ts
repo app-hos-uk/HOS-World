@@ -202,6 +202,133 @@ export class StripeProvider implements PaymentProvider {
     }
   }
 
+  // === Stripe Connect Methods ===
+
+  getStripeInstance(): Stripe | null {
+    return this.stripe;
+  }
+
+  async createConnectedAccount(params: {
+    email: string;
+    businessName: string;
+    country?: string;
+    metadata?: Record<string, string>;
+  }): Promise<{ accountId: string; onboardingUrl?: string }> {
+    if (!this.stripe) throw new Error('Stripe provider is not available');
+
+    const account = await this.stripe.accounts.create({
+      type: 'express',
+      email: params.email,
+      country: params.country || 'US',
+      business_type: 'individual',
+      capabilities: {
+        card_payments: { requested: true },
+        transfers: { requested: true },
+      },
+      business_profile: {
+        name: params.businessName,
+      },
+      metadata: params.metadata || {},
+    });
+
+    return { accountId: account.id };
+  }
+
+  async createAccountOnboardingLink(
+    accountId: string,
+    returnUrl: string,
+    refreshUrl: string,
+  ): Promise<string> {
+    if (!this.stripe) throw new Error('Stripe provider is not available');
+
+    const accountLink = await this.stripe.accountLinks.create({
+      account: accountId,
+      return_url: returnUrl,
+      refresh_url: refreshUrl,
+      type: 'account_onboarding',
+    });
+
+    return accountLink.url;
+  }
+
+  async getConnectedAccountStatus(accountId: string): Promise<{
+    chargesEnabled: boolean;
+    payoutsEnabled: boolean;
+    detailsSubmitted: boolean;
+  }> {
+    if (!this.stripe) throw new Error('Stripe provider is not available');
+
+    const account = await this.stripe.accounts.retrieve(accountId);
+    return {
+      chargesEnabled: account.charges_enabled,
+      payoutsEnabled: account.payouts_enabled,
+      detailsSubmitted: account.details_submitted,
+    };
+  }
+
+  async createPaymentIntentWithSplit(params: {
+    amount: number;
+    currency: string;
+    orderId: string;
+    connectedAccountId: string;
+    applicationFeeAmount: number;
+    metadata?: Record<string, string>;
+  }): Promise<PaymentIntentResult> {
+    if (!this.stripe) throw new Error('Stripe provider is not available');
+
+    const paymentIntent = await this.stripe.paymentIntents.create(
+      {
+        amount: Math.round(params.amount * 100),
+        currency: params.currency.toLowerCase(),
+        application_fee_amount: Math.round(params.applicationFeeAmount * 100),
+        transfer_data: {
+          destination: params.connectedAccountId,
+        },
+        metadata: {
+          orderId: params.orderId,
+          ...params.metadata,
+        },
+        automatic_payment_methods: { enabled: true },
+      },
+      { idempotencyKey: `order-split-${params.orderId}` },
+    );
+
+    return {
+      paymentIntentId: paymentIntent.id,
+      clientSecret: paymentIntent.client_secret || undefined,
+      requiresAction: paymentIntent.status === 'requires_action',
+      metadata: { ...paymentIntent.metadata },
+    };
+  }
+
+  async createTransfer(params: {
+    amount: number;
+    currency: string;
+    connectedAccountId: string;
+    sourceTransaction?: string;
+    description?: string;
+    metadata?: Record<string, string>;
+  }): Promise<{ transferId: string }> {
+    if (!this.stripe) throw new Error('Stripe provider is not available');
+
+    const transfer = await this.stripe.transfers.create({
+      amount: Math.round(params.amount * 100),
+      currency: params.currency.toLowerCase(),
+      destination: params.connectedAccountId,
+      source_transaction: params.sourceTransaction,
+      description: params.description,
+      metadata: params.metadata || {},
+    });
+
+    return { transferId: transfer.id };
+  }
+
+  async createLoginLink(accountId: string): Promise<string> {
+    if (!this.stripe) throw new Error('Stripe provider is not available');
+    const loginLink = await this.stripe.accounts.createLoginLink(accountId);
+    return loginLink.url;
+  }
+
   private mapStripeStatus(status: string): PaymentStatus {
     const statusMap: Record<string, PaymentStatus> = {
       requires_payment_method: PaymentStatus.PENDING,

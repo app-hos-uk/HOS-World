@@ -1,8 +1,4 @@
-import {
-  Injectable,
-  ConflictException,
-  NotFoundException,
-} from '@nestjs/common';
+import { Injectable, ConflictException, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../database/prisma.service';
 import { CreateNewsletterSubscriptionDto } from './dto/create-newsletter-subscription.dto';
 
@@ -61,7 +57,9 @@ export class NewsletterService {
     });
   }
 
-  async getSubscriptionStatus(email: string): Promise<{ email: string; subscribed: boolean; status: string }> {
+  async getSubscriptionStatus(
+    email: string,
+  ): Promise<{ email: string; subscribed: boolean; status: string }> {
     const subscription = await this.prisma.newsletterSubscription.findUnique({
       where: { email: email.toLowerCase().trim() },
     });
@@ -73,7 +71,11 @@ export class NewsletterService {
     };
   }
 
-  async getAllSubscriptions(status?: string, page = 1, limit = 50): Promise<{
+  async getAllSubscriptions(
+    status?: string,
+    page = 1,
+    limit = 50,
+  ): Promise<{
     data: any[];
     total: number;
     page: number;

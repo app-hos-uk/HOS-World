@@ -142,6 +142,47 @@ export class OrdersController {
     };
   }
 
+  @Post(':id/accept')
+  @UseGuards(RolesGuard)
+  @Roles('SELLER', 'B2C_SELLER')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({
+    summary: 'Accept a vendor order',
+    description: 'Vendor accepts a child order assigned to them. Transitions PENDING → ACCEPTED.',
+  })
+  @ApiParam({ name: 'id', description: 'Order UUID', type: String })
+  @SwaggerApiResponse({ status: 200, description: 'Order accepted by vendor' })
+  @SwaggerApiResponse({ status: 400, description: 'Order cannot be accepted' })
+  @SwaggerApiResponse({ status: 403, description: 'Not your order' })
+  async acceptOrder(
+    @Request() req: any,
+    @Param('id', ParseUUIDPipe) id: string,
+  ): Promise<ApiResponse<Order>> {
+    const order = await this.ordersService.vendorAcceptOrder(id, req.user.id);
+    return { data: order, message: 'Order accepted successfully' };
+  }
+
+  @Post(':id/reject')
+  @UseGuards(RolesGuard)
+  @Roles('SELLER', 'B2C_SELLER')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({
+    summary: 'Reject a vendor order',
+    description: 'Vendor rejects a child order assigned to them. Transitions PENDING → REJECTED.',
+  })
+  @ApiParam({ name: 'id', description: 'Order UUID', type: String })
+  @SwaggerApiResponse({ status: 200, description: 'Order rejected by vendor' })
+  @SwaggerApiResponse({ status: 400, description: 'Order cannot be rejected' })
+  @SwaggerApiResponse({ status: 403, description: 'Not your order' })
+  async rejectOrder(
+    @Request() req: any,
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() body: { reason: string },
+  ): Promise<ApiResponse<Order>> {
+    const order = await this.ordersService.vendorRejectOrder(id, req.user.id, body.reason);
+    return { data: order, message: 'Order rejected' };
+  }
+
   @Post(':id/cancel')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({

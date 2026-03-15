@@ -318,7 +318,7 @@ function CatalogEntriesContent() {
                           )}
                           {productData.price && (
                             <span>
-                              <strong>Price:</strong> {productData.currency || 'GBP'}{' '}
+                              <strong>Price:</strong> {productData.currency || 'USD'}{' '}
                               {parseFloat(productData.price).toFixed(2)}
                             </span>
                           )}

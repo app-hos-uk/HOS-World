@@ -11,9 +11,10 @@ import { ReportsController } from './reports.controller';
 import { ReportsService } from './reports.service';
 import { DatabaseModule } from '../database/database.module';
 import { NotificationsModule } from '../notifications/notifications.module';
+import { PaymentProviderModule } from '../payments/payment-provider.module';
 
 @Module({
-  imports: [DatabaseModule, NotificationsModule],
+  imports: [DatabaseModule, NotificationsModule, PaymentProviderModule],
   controllers: [
     FinanceController,
     TransactionsController,

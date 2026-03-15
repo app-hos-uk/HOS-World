@@ -94,16 +94,20 @@ export class ProductsController {
   }
 
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles('SELLER', 'B2C_SELLER', 'WHOLESALER')
+  @Roles('ADMIN', 'CATALOG')
   @Post()
   @ApiBearerAuth('JWT-auth')
   @ApiOperation({
-    summary: 'Create a new product',
-    description: 'Create a new product (Seller only)',
+    summary: 'Create a new product in the centralized catalog',
+    description:
+      'Creates a product in the centralized catalog. Admin/Catalog only. Vendors must submit products through the vendor-products endpoint.',
   })
   @SwaggerApiResponse({ status: 201, description: 'Product created successfully' })
   @SwaggerApiResponse({ status: 401, description: 'Unauthorized' })
-  @SwaggerApiResponse({ status: 403, description: 'Forbidden - Seller role required' })
+  @SwaggerApiResponse({
+    status: 403,
+    description: 'Forbidden - Admin/Catalog role required. Vendors must use POST /vendor-products.',
+  })
   async create(
     @Request() req: any,
     @Body() createProductDto: CreateProductDto,
@@ -116,12 +120,13 @@ export class ProductsController {
   }
 
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles('SELLER', 'B2C_SELLER', 'WHOLESALER')
+  @Roles('ADMIN', 'CATALOG')
   @Put(':id')
   @ApiBearerAuth('JWT-auth')
   @ApiOperation({
-    summary: 'Update product',
-    description: 'Update an existing product (Seller only)',
+    summary: 'Update product in centralized catalog',
+    description:
+      'Update an existing product (Admin/Catalog only). Vendors update through vendor-products.',
   })
   @ApiParam({ name: 'id', description: 'Product UUID', type: String })
   @ApiBody({ type: UpdateProductDto })

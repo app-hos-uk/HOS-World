@@ -23,10 +23,7 @@ describe('DuplicatesService', () => {
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
-      providers: [
-        DuplicatesService,
-        { provide: PrismaService, useValue: mockPrismaService },
-      ],
+      providers: [DuplicatesService, { provide: PrismaService, useValue: mockPrismaService }],
     }).compile();
 
     service = module.get<DuplicatesService>(DuplicatesService);
@@ -74,9 +71,9 @@ describe('DuplicatesService', () => {
   describe('rejectOthersInGroup', () => {
     it('should throw NotFoundException when group not found', async () => {
       mockPrismaService.productSubmission.findMany.mockResolvedValue([]);
-      await expect(
-        service.rejectOthersInGroup('unknown-group', 'sub-1'),
-      ).rejects.toThrow(NotFoundException);
+      await expect(service.rejectOthersInGroup('unknown-group', 'sub-1')).rejects.toThrow(
+        NotFoundException,
+      );
     });
 
     it('should throw BadRequestException when keepSubmissionId not in group', async () => {

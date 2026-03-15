@@ -3,7 +3,7 @@
 import { Header } from '@/components/Header';
 import { Footer } from '@/components/Footer';
 import { RouteGuard } from '@/components/RouteGuard';
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { apiClient } from '@/lib/api';
 import { useCurrency } from '@/contexts/CurrencyContext';
@@ -239,7 +239,11 @@ export default function CheckoutPage() {
     return stockIssues.find(issue => issue.productId === productId);
   };
 
+  const isSubmittingRef = useRef(false);
+
   const handleCreateOrder = async () => {
+    if (isSubmittingRef.current) return;
+
     if (!shippingAddressId) {
       toast.error('Please select a shipping address');
       return;
@@ -256,19 +260,20 @@ export default function CheckoutPage() {
       return;
     }
 
-    // Prevent order creation if stock issues exist
     if (hasCriticalStockIssues) {
       toast.error('Please resolve stock issues before placing order');
       return;
     }
 
     try {
+      isSubmittingRef.current = true;
       setCreatingOrder(true);
-      // Note: paymentMethod is optional at order creation stage; payment is handled on payment page
       const orderResponse = await apiClient.createOrder({
         shippingAddressId,
         billingAddressId: billingAddressId || shippingAddressId,
-      });
+        shippingMethodId: selectedShippingMethod || undefined,
+        shippingCost: shippingCost || undefined,
+      } as any);
 
       if (orderResponse?.data) {
         // Refresh cart context to clear the header cart badge (cart is cleared on backend)
@@ -289,6 +294,7 @@ export default function CheckoutPage() {
       }
     } finally {
       setCreatingOrder(false);
+      isSubmittingRef.current = false;
     }
   };
 

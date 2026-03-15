@@ -11,6 +11,7 @@ import {
 } from './interfaces/tax-provider.interface';
 import { AvalaraProvider } from './providers/avalara.provider';
 import { TaxJarProvider } from './providers/taxjar.provider';
+import { StripeTaxProvider } from './providers/stripe-tax.provider';
 
 /**
  * TaxFactory - Dynamically loads and manages tax service providers
@@ -110,6 +111,9 @@ export class TaxFactoryService implements OnModuleInit {
         return new AvalaraProvider(credentials, isTestMode);
       case 'taxjar':
         return new TaxJarProvider(credentials, isTestMode);
+      case 'stripe_tax':
+      case 'stripe':
+        return new StripeTaxProvider(credentials, isTestMode);
       default:
         this.logger.warn(`Unknown tax provider type: ${providerType}`);
         return null;

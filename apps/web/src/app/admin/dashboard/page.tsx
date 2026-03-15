@@ -197,7 +197,7 @@ export default function AdminDashboardPage() {
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
               <StatCard
                 label="Total Revenue"
-                value={`£${(stats.totalRevenue || 0).toLocaleString()}`}
+                value={`$${(stats.totalRevenue || 0).toLocaleString()}`}
                 icon={<span className="text-lg">💰</span>}
                 iconBgColor="bg-green-50"
                 trend={{ value: 12, label: 'vs last month', isPositive: true }}
@@ -255,7 +255,7 @@ export default function AdminDashboardPage() {
                       fontSize={12}
                       tickLine={false}
                       axisLine={false}
-                      tickFormatter={(value) => `£${value / 1000}k`}
+                      tickFormatter={(value) => `$${value / 1000}k`}
                     />
                     <Tooltip 
                       contentStyle={{ 
@@ -264,7 +264,7 @@ export default function AdminDashboardPage() {
                         borderRadius: '12px',
                         boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)'
                       }}
-                      formatter={(value: number) => [`£${value.toLocaleString()}`, 'Revenue']}
+                      formatter={(value: number) => [`$${value.toLocaleString()}`, 'Revenue']}
                     />
                     <Line 
                       type="monotone" 

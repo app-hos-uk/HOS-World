@@ -323,7 +323,7 @@ function ProcurementSubmissionsContent() {
                               {['name', 'sku', 'barcode', 'ean', 'price', 'stock', 'category'].map((field) => {
                                 const vals = group.submissions.map((s) => {
                                   const pd = s.productData as Record<string, any>;
-                                  if (field === 'price' && pd?.price != null) return `${pd.currency || 'GBP'} ${parseFloat(pd.price).toFixed(2)}`;
+                                  if (field === 'price' && pd?.price != null) return `${pd.currency || 'USD'} ${parseFloat(pd.price).toFixed(2)}`;
                                   return pd?.[field]?.toString() || '—';
                                 });
                                 const allSame = vals.every((v) => v === vals[0]);
@@ -516,7 +516,7 @@ function ProcurementSubmissionsContent() {
                           )}
                           {productData.price && (
                             <span>
-                              <strong>Price:</strong> {productData.currency || 'GBP'}{' '}
+                              <strong>Price:</strong> {productData.currency || 'USD'}{' '}
                               {parseFloat(productData.price).toFixed(2)}
                             </span>
                           )}
@@ -673,7 +673,7 @@ function ProcurementSubmissionsContent() {
                           <div>
                             <p className="text-sm font-medium text-gray-500">Price</p>
                             <p className="text-gray-900">
-                              {selectedSubmission.productData.currency || 'GBP'}{' '}
+                              {selectedSubmission.productData.currency || 'USD'}{' '}
                               {parseFloat(selectedSubmission.productData.price).toFixed(2)}
                             </p>
                           </div>
@@ -736,7 +736,7 @@ function ProcurementSubmissionsContent() {
                                         {ep?.sku && <span>SKU: {ep.sku}</span>}
                                         {ep?.barcode && <span>Barcode: {ep.barcode}</span>}
                                         {ep?.ean && <span>EAN: {ep.ean}</span>}
-                                        {ep?.price && <span>Price: {ep.currency || 'GBP'} {parseFloat(ep.price).toFixed(2)}</span>}
+                                        {ep?.price && <span>Price: {ep.currency || 'USD'} {parseFloat(ep.price).toFixed(2)}</span>}
                                         {ep?.status && <span className="px-1.5 py-0.5 bg-gray-100 rounded">{ep.status}</span>}
                                       </div>
                                       {ep?.images && ep.images.length > 0 && (
@@ -953,7 +953,7 @@ function ProcurementSubmissionsContent() {
                       { label: 'SKU', subVal: sub?.sku || '—', exVal: ex?.sku || '—' },
                       { label: 'Barcode', subVal: sub?.barcode || '—', exVal: ex?.barcode || '—' },
                       { label: 'EAN', subVal: sub?.ean || '—', exVal: ex?.ean || '—' },
-                      { label: 'Price', subVal: sub?.price ? `${sub.currency || 'GBP'} ${parseFloat(sub.price).toFixed(2)}` : '—', exVal: ex?.price ? `${ex.currency || 'GBP'} ${parseFloat(ex.price).toFixed(2)}` : '—' },
+                      { label: 'Price', subVal: sub?.price ? `${sub.currency || 'USD'} ${parseFloat(sub.price).toFixed(2)}` : '—', exVal: ex?.price ? `${ex.currency || 'USD'} ${parseFloat(ex.price).toFixed(2)}` : '—' },
                       { label: 'Stock', subVal: sub?.stock?.toString() ?? '—', exVal: ex?.stock?.toString() ?? '—' },
                       { label: 'Category', subVal: sub?.category || '—', exVal: ex?.category || '—' },
                       { label: 'Status', subVal: 'Submission', exVal: ex?.status || '—' },

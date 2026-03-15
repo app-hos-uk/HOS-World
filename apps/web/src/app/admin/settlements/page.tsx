@@ -345,8 +345,8 @@ export default function AdminSettlementsPage() {
   const exportColumns = [
     { key: 'id', header: 'Settlement ID' },
     { key: 'seller', header: 'Seller', format: (v: any) => v?.storeName || '' },
-    { key: 'netAmount', header: 'Net Amount', format: (v: number, r: Settlement) => `${r.currency || 'GBP'} ${Number(v).toFixed(2)}` },
-    { key: 'platformFee', header: 'Platform Fee', format: (v: number, r: Settlement) => `${r.currency || 'GBP'} ${Number(v).toFixed(2)}` },
+    { key: 'netAmount', header: 'Net Amount', format: (v: number, r: Settlement) => `${r.currency || 'USD'} ${Number(v).toFixed(2)}` },
+    { key: 'platformFee', header: 'Platform Fee', format: (v: number, r: Settlement) => `${r.currency || 'USD'} ${Number(v).toFixed(2)}` },
     { key: 'status', header: 'Status' },
     { key: 'periodStart', header: 'Period Start', format: (v: string) => new Date(v).toLocaleDateString() },
     { key: 'periodEnd', header: 'Period End', format: (v: string) => new Date(v).toLocaleDateString() },
@@ -423,8 +423,8 @@ export default function AdminSettlementsPage() {
                 <BarChart data={chartData}>
                   <CartesianGrid strokeDasharray="3 3" />
                   <XAxis dataKey="date" tick={{ fontSize: 10 }} />
-                  <YAxis tick={{ fontSize: 12 }} tickFormatter={(v) => `£${v}`} />
-                  <Tooltip formatter={(value: number) => [`£${value.toFixed(2)}`, 'Amount']} />
+                  <YAxis tick={{ fontSize: 12 }} tickFormatter={(v) => `$${v}`} />
+                  <Tooltip formatter={(value: number) => [`$${value.toFixed(2)}`, 'Amount']} />
                   <Bar dataKey="amount" fill="#8b5cf6" radius={[4, 4, 0, 0]} />
                 </BarChart>
               </ResponsiveContainer>

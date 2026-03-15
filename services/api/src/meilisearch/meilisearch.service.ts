@@ -20,6 +20,7 @@ export interface SearchFilters {
   maxPrice?: number;
   minRating?: number;
   inStock?: boolean;
+  includeInactive?: boolean;
   tags?: string[];
   attributes?: Record<string, string[]>;
   page?: number;
@@ -186,6 +187,8 @@ export class MeilisearchService implements OnModuleInit, OnModuleDestroy {
         'name',
         'description',
         'slug',
+        'sku',
+        'barcode',
         'price',
         'currency',
         'stock',
@@ -212,6 +215,16 @@ export class MeilisearchService implements OnModuleInit, OnModuleDestroy {
         poster: ['print', 'artwork'],
         figure: ['figurine', 'statue', 'collectible'],
         plush: ['plushie', 'soft toy', 'stuffed toy'],
+        'harry potter': ['hp', 'potter', 'wizarding world'],
+        marvel: ['mcu', 'avengers'],
+        'star wars': ['starwars', 'jedi', 'sith'],
+        pokemon: ['pokémon', 'pikachu'],
+        'lord of the rings': ['lotr', 'tolkien', 'middle earth'],
+        'game of thrones': ['got', 'westeros'],
+        dc: ['dc comics', 'batman', 'superman'],
+        disney: ['mickey', 'pixar'],
+        anime: ['manga', 'japanese animation'],
+        wand: ['magic wand', 'wizard wand'],
       },
 
       // Stop words to ignore
@@ -310,7 +323,7 @@ export class MeilisearchService implements OnModuleInit, OnModuleDestroy {
       sku: product.sku || null,
       barcode: product.barcode || null,
       price: parseFloat(product.price || '0'),
-      currency: product.currency || 'GBP',
+      currency: product.currency || 'USD',
       stock: product.stock || 0,
       category: product.category || null,
       categoryId: product.categoryId || null,
@@ -333,19 +346,57 @@ export class MeilisearchService implements OnModuleInit, OnModuleDestroy {
   }
 
   /**
-   * Delete product from index
+   * Delete product from index with retry logic
    */
-  async deleteProduct(productId: string): Promise<void> {
+  async deleteProduct(productId: string, retries = 3): Promise<void> {
     if (!this.isAvailable()) return;
 
-    try {
-      await this.productsIndex!.deleteDocument(productId);
-      this.logger.debug(`Deleted product from index: ${productId}`);
-    } catch (error: any) {
-      if (!error.message?.includes('not found')) {
-        this.logger.error(`Failed to delete product ${productId}: ${error.message}`);
+    for (let attempt = 1; attempt <= retries; attempt++) {
+      try {
+        const task = await this.productsIndex!.deleteDocument(productId);
+        await this.client!.waitForTask(task.taskUid, { timeOutMs: 10000 });
+        this.logger.debug(`Deleted product from index: ${productId}`);
+        return;
+      } catch (error: any) {
+        if (error.message?.includes('not found')) return;
+        if (attempt < retries) {
+          this.logger.warn(
+            `Retry ${attempt}/${retries} deleting product ${productId}: ${error.message}`,
+          );
+          await new Promise((r) => setTimeout(r, 500 * attempt));
+        } else {
+          this.logger.error(
+            `Failed to delete product ${productId} after ${retries} attempts: ${error.message}`,
+          );
+        }
       }
     }
+  }
+
+  private static readonly ALLOWED_FILTER_KEYS = new Set([
+    'categoryId',
+    'category',
+    'fandom',
+    'sellerId',
+    'price',
+    'stock',
+    'averageRating',
+    'isActive',
+    'tags',
+    'isPlatformOwned',
+    'createdAt',
+  ]);
+
+  /**
+   * Sanitise a string value used inside a Meilisearch filter expression.
+   * Rejects values that contain characters capable of injecting operators
+   * or breaking out of the quoted context.
+   */
+  private sanitizeFilterValue(value: string): string {
+    if (/["\\<>=!(){}[\]]/.test(value)) {
+      throw new Error(`Invalid filter value: ${value}`);
+    }
+    return value;
   }
 
   /**
@@ -361,19 +412,22 @@ export class MeilisearchService implements OnModuleInit, OnModuleDestroy {
     const offset = (page - 1) * limit;
 
     // Build filter string
-    const filterConditions: string[] = ['isActive = true'];
+    const filterConditions: string[] = [];
+    if (!filters.includeInactive) {
+      filterConditions.push('isActive = true');
+    }
 
     if (filters.categoryId) {
-      filterConditions.push(`categoryId = "${filters.categoryId}"`);
+      filterConditions.push(`categoryId = "${this.sanitizeFilterValue(filters.categoryId)}"`);
     }
     if (filters.category) {
-      filterConditions.push(`category = "${filters.category}"`);
+      filterConditions.push(`category = "${this.sanitizeFilterValue(filters.category)}"`);
     }
     if (filters.fandom) {
-      filterConditions.push(`fandom = "${filters.fandom}"`);
+      filterConditions.push(`fandom = "${this.sanitizeFilterValue(filters.fandom)}"`);
     }
     if (filters.sellerId) {
-      filterConditions.push(`sellerId = "${filters.sellerId}"`);
+      filterConditions.push(`sellerId = "${this.sanitizeFilterValue(filters.sellerId)}"`);
     }
     if (filters.minPrice !== undefined) {
       filterConditions.push(`price >= ${filters.minPrice}`);
@@ -388,7 +442,9 @@ export class MeilisearchService implements OnModuleInit, OnModuleDestroy {
       filterConditions.push(`stock > 0`);
     }
     if (filters.tags && filters.tags.length > 0) {
-      const tagFilters = filters.tags.map((tag) => `tags = "${tag}"`).join(' OR ');
+      const tagFilters = filters.tags
+        .map((tag) => `tags = "${this.sanitizeFilterValue(tag)}"`)
+        .join(' OR ');
       filterConditions.push(`(${tagFilters})`);
     }
 
@@ -481,16 +537,21 @@ export class MeilisearchService implements OnModuleInit, OnModuleDestroy {
       return { indexed: 0, failed: 0 };
     }
 
+    const syncStart = Date.now();
     this.logger.log('Starting full product sync to Meilisearch...');
+
+    // Get total count for progress reporting
+    const totalCount = await this.prisma.product.count({ where: { status: 'ACTIVE' } });
+    this.logger.log(`Total active products to sync: ${totalCount}`);
 
     let indexed = 0;
     let failed = 0;
     let skip = 0;
-    const take = 500; // Larger batch for bulk sync
+    const take = 500;
 
     try {
-      // Clear existing index for full sync
-      await this.productsIndex!.deleteAllDocuments();
+      const clearTask = await this.productsIndex!.deleteAllDocuments();
+      await this.client!.waitForTask(clearTask.taskUid, { timeOutMs: 30000 });
       this.logger.log('Cleared existing index');
 
       while (true) {
@@ -521,7 +582,7 @@ export class MeilisearchService implements OnModuleInit, OnModuleDestroy {
 
         try {
           const task = await this.productsIndex!.addDocuments(documents, { primaryKey: 'id' });
-          await this.client!.waitForTask(task.taskUid, { timeOutMs: 60000 });
+          await this.client!.waitForTask(task.taskUid, { timeOutMs: 120000 });
           indexed += documents.length;
         } catch (batchError: any) {
           this.logger.error(`Batch sync failed at offset ${skip}: ${batchError.message}`);
@@ -529,10 +590,17 @@ export class MeilisearchService implements OnModuleInit, OnModuleDestroy {
         }
 
         skip += take;
-        this.logger.log(`Synced ${skip} products...`);
+        const progress = totalCount > 0 ? Math.round((skip / totalCount) * 100) : 100;
+        const elapsed = ((Date.now() - syncStart) / 1000).toFixed(1);
+        this.logger.log(
+          `Sync progress: ${Math.min(skip, totalCount)}/${totalCount} (${Math.min(progress, 100)}%) — ${elapsed}s elapsed`,
+        );
       }
 
-      this.logger.log(`Product sync complete! Indexed: ${indexed}, Failed: ${failed}`);
+      const totalElapsed = ((Date.now() - syncStart) / 1000).toFixed(1);
+      this.logger.log(
+        `Product sync complete in ${totalElapsed}s! Indexed: ${indexed}, Failed: ${failed}`,
+      );
     } catch (error: any) {
       this.logger.error(`Sync error: ${error.message}`);
     }
@@ -548,14 +616,18 @@ export class MeilisearchService implements OnModuleInit, OnModuleDestroy {
     const limit = Math.min(filters.limit || 20, 100);
     const skip = (page - 1) * limit;
 
-    const where: any = {
-      status: 'ACTIVE',
-    };
+    const where: any = {};
+    if (!filters.includeInactive) {
+      where.status = 'ACTIVE';
+    } else {
+      where.status = { in: ['ACTIVE', 'DRAFT'] };
+    }
 
     if (query && query.trim()) {
       where.OR = [
         { name: { contains: query, mode: 'insensitive' } },
         { description: { contains: query, mode: 'insensitive' } },
+        { sku: { contains: query, mode: 'insensitive' } },
       ];
     }
 
@@ -563,8 +635,11 @@ export class MeilisearchService implements OnModuleInit, OnModuleDestroy {
     if (filters.category) where.category = filters.category;
     if (filters.fandom) where.fandom = filters.fandom;
     if (filters.sellerId) where.sellerId = filters.sellerId;
-    if (filters.minPrice !== undefined) where.price = { ...where.price, gte: filters.minPrice };
-    if (filters.maxPrice !== undefined) where.price = { ...where.price, lte: filters.maxPrice };
+    if (filters.minPrice !== undefined || filters.maxPrice !== undefined) {
+      where.price = {};
+      if (filters.minPrice !== undefined) where.price.gte = filters.minPrice;
+      if (filters.maxPrice !== undefined) where.price.lte = filters.maxPrice;
+    }
     if (filters.inStock) where.stock = { gt: 0 };
 
     const [products, total] = await Promise.all([

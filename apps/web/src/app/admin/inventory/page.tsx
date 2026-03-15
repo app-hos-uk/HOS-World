@@ -212,7 +212,7 @@ export default function AdminInventoryDashboardPage() {
                 <div className="bg-white rounded-lg shadow p-4">
                   <div className="text-sm text-gray-600 mb-1">Total Stock Value</div>
                   <div className="text-2xl font-bold text-purple-600">
-                    £{(stats?.totalStockValue ?? 0).toLocaleString()}
+                    ${(stats?.totalStockValue ?? 0).toLocaleString()}
                   </div>
                 </div>
               </div>

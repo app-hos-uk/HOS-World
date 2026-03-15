@@ -1,4 +1,12 @@
-import { IsString, IsOptional, IsEmail, IsEnum, IsDateString, MinLength, Matches } from 'class-validator';
+import {
+  IsString,
+  IsOptional,
+  IsEmail,
+  IsEnum,
+  IsDateString,
+  MinLength,
+  Matches,
+} from 'class-validator';
 
 export enum CommunicationMethod {
   EMAIL = 'EMAIL',
@@ -62,7 +70,8 @@ export class ChangePasswordDto {
   @IsString()
   @MinLength(8)
   @Matches(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$/, {
-    message: 'Password must contain at least one uppercase letter, one lowercase letter, and one number',
+    message:
+      'Password must contain at least one uppercase letter, one lowercase letter, and one number',
   })
   newPassword: string;
 }

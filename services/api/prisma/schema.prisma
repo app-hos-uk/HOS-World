@@ -32,7 +32,7 @@ model User {
   // Validation still happens at the API boundary (DTO). Using a Prisma enum here requires a Postgres enum
   // type to exist in the DB, which is not currently present in production.
   preferredCommunicationMethod String?
-  currencyPreference           String    @default("GBP")
+  currencyPreference           String    @default("USD")
   ipAddress                    String?
   gdprConsent                  Boolean   @default(false)
   gdprConsentDate              DateTime?
@@ -236,6 +236,7 @@ enum UserRole {
   MARKETING
   FINANCE
   CMS_EDITOR
+  SALES
 }
 
 // Note: Communication method values are validated in DTOs (see `src/auth/dto/register.dto.ts`).
@@ -248,7 +249,7 @@ model Customer {
   loyaltyPoints      Int     @default(0)
   themePreference    String?
   country            String?
-  currencyPreference String  @default("GBP")
+  currencyPreference String  @default("USD")
 
   // B2B/Wholesaler fields (null for regular customers)
   companyName       String?
@@ -286,10 +287,26 @@ model Seller {
   createdAt              DateTime        @default(now())
   updatedAt              DateTime        @updatedAt
 
+  // Vendor management fields
+  vendorStatus           VendorStatus    @default(PENDING)
+  commissionRate         Decimal         @default(0.10) @db.Decimal(5, 4)
+  monthlySubscriptionFee Decimal?        @db.Decimal(10, 2)
+  subscriptionPlan       String?
+  subscriptionExpiresAt  DateTime?
+  applicationNotes       String?         @db.Text
+  approvedAt             DateTime?
+  approvedBy             String?
+
+  // Stripe Connect
+  stripeConnectAccountId String?  @unique
+  stripeConnectOnboarded Boolean  @default(false)
+  stripeConnectPayoutsEnabled Boolean @default(false)
+
   // Business compliance fields
   legalBusinessName String?
   companyName       String?
   vatNumber         String?
+  taxId             String?
 
   // Bank details (encrypted)
   bankName         String?
@@ -307,6 +324,7 @@ model Seller {
 
   // Relations
   products              Product[]
+  vendorProducts        VendorProduct[]
   orders                Order[]
   themeSettings         SellerThemeSettings?
   submissions           ProductSubmission[]
@@ -320,11 +338,14 @@ model Seller {
   shippingMethods       ShippingMethod[]
   webhooks              Webhook[]
   returnPolicies        ReturnPolicy[]
+  vendorLedgerEntries   VendorLedgerEntry[]
 
   // Soft delete
   deletedAt DateTime?
 
   @@index([deletedAt])
+  @@index([vendorStatus])
+  @@index([stripeConnectAccountId])
   @@map("sellers")
 }
 
@@ -392,7 +413,7 @@ model Product {
   price           Decimal       @db.Decimal(10, 2)
   tradePrice      Decimal?      @db.Decimal(10, 2)
   rrp             Decimal?      @db.Decimal(10, 2)
-  currency        String        @default("GBP")
+  currency        String        @default("USD")
   taxRate         Decimal       @default(0) @db.Decimal(5, 4)
   stock           Int           @default(0)
   fandom          String?
@@ -429,10 +450,11 @@ model Product {
   taxClassId         String?
   taxClass           TaxClass?               @relation(fields: [taxClassId], references: [id], onDelete: SetNull)
   returnPolicies     ReturnPolicy[]
-  bundleItems        ProductBundleItem[]     @relation("ProductBundles") // For bundled products
-  bundledIn          ProductBundleItem[]     @relation("ProductBundledIn") // Products that are part of bundles
-  volumePricing      VolumePricing[] // Quantity-based pricing tiers
+  bundleItems        ProductBundleItem[]     @relation("ProductBundles")
+  bundledIn          ProductBundleItem[]     @relation("ProductBundledIn")
+  volumePricing      VolumePricing[]
   influencerLinks    InfluencerProductLink[]
+  vendorProducts     VendorProduct[]
 
   // Soft delete
   deletedAt DateTime?
@@ -460,6 +482,109 @@ enum ProductType {
   SIMPLE // Single product without variations
   VARIANT // Product with variations (size, color, etc.)
   BUNDLED // Bundle of multiple products
+}
+
+// Vendor Status for onboarding/approval workflow
+enum VendorStatus {
+  PENDING    // Application submitted, awaiting review
+  APPROVED   // Approved to sell
+  ACTIVE     // Actively selling
+  SUSPENDED  // Temporarily suspended
+  REJECTED   // Application rejected
+  DEACTIVATED
+}
+
+enum VendorProductStatus {
+  DRAFT
+  PENDING_APPROVAL
+  APPROVED
+  REJECTED
+  ACTIVE
+  INACTIVE
+  OUT_OF_STOCK
+}
+
+// VendorProduct — links a vendor to the centralized product catalog
+// with vendor-specific pricing, stock, and approval status
+model VendorProduct {
+  id        String              @id @default(uuid())
+  sellerId  String
+  seller    Seller              @relation(fields: [sellerId], references: [id], onDelete: Cascade)
+  productId String
+  product   Product             @relation(fields: [productId], references: [id], onDelete: Cascade)
+  status    VendorProductStatus @default(DRAFT)
+
+  // Vendor-specific pricing
+  vendorPrice    Decimal   @db.Decimal(10, 2)
+  vendorCurrency String    @default("USD")
+  platformPrice  Decimal?  @db.Decimal(10, 2) // Final selling price set by platform
+  costPrice      Decimal?  @db.Decimal(10, 2) // Vendor's cost price
+  marginPercent  Decimal?  @db.Decimal(5, 4)
+
+  // Vendor-specific stock
+  vendorStock         Int     @default(0)
+  lowStockThreshold   Int     @default(5)
+  allowBackorder      Boolean @default(false)
+
+  // Fulfillment
+  fulfillmentMethod String? // VENDOR_SHIPS, HOS_FULFILLS, DROPSHIP
+  leadTimeDays      Int     @default(3)
+
+  // Approval workflow
+  submittedAt  DateTime?
+  approvedAt   DateTime?
+  approvedBy   String?
+  rejectedAt   DateTime?
+  rejectionReason String? @db.Text
+
+  // Tracking
+  totalUnitsSold Int     @default(0)
+  totalRevenue   Decimal @default(0) @db.Decimal(10, 2)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([sellerId, productId])
+  @@index([sellerId])
+  @@index([productId])
+  @@index([status])
+  @@index([sellerId, status])
+  @@map("vendor_products")
+}
+
+// Ledger entry types
+enum LedgerEntryType {
+  SALE             // Revenue from order
+  COMMISSION       // Platform commission deducted
+  REFUND           // Refund to customer
+  PAYOUT           // Payout to vendor
+  ADJUSTMENT       // Manual adjustment
+  SUBSCRIPTION_FEE // Monthly subscription charge
+  CHARGEBACK
+}
+
+// VendorLedgerEntry — financial audit trail per vendor
+model VendorLedgerEntry {
+  id          String          @id @default(uuid())
+  sellerId    String
+  seller      Seller          @relation(fields: [sellerId], references: [id], onDelete: Cascade)
+  orderId     String?
+  order       Order?          @relation(fields: [orderId], references: [id], onDelete: SetNull)
+  type        LedgerEntryType
+  amount      Decimal         @db.Decimal(10, 2) // Positive = credit, negative = debit
+  currency    String          @default("USD")
+  balance     Decimal         @db.Decimal(10, 2) // Running balance after this entry
+  description String?         @db.Text
+  metadata    Json?
+  referenceId String?         // External reference (Stripe transfer ID, etc.)
+  createdAt   DateTime        @default(now())
+
+  @@index([sellerId])
+  @@index([orderId])
+  @@index([type])
+  @@index([createdAt])
+  @@index([sellerId, createdAt])
+  @@map("vendor_ledger_entries")
 }
 
 // Product images
@@ -541,7 +666,7 @@ model Cart {
   tax        Decimal    @default(0) @db.Decimal(10, 2)
   discount   Decimal    @default(0) @db.Decimal(10, 2) // Total discount amount
   shipping   Decimal    @default(0) @db.Decimal(10, 2) // Shipping cost
-  currency   String     @default("GBP")
+  currency   String     @default("USD")
   couponCode String? // Applied coupon code
   coupon     Coupon?    @relation(fields: [couponCode], references: [code], onDelete: SetNull)
   createdAt  DateTime   @default(now())
@@ -607,7 +732,9 @@ model Order {
   subtotal          Decimal       @db.Decimal(10, 2)
   tax               Decimal       @db.Decimal(10, 2)
   total             Decimal       @db.Decimal(10, 2)
-  currency          String        @default("GBP")
+  shippingAmount    Decimal       @default(0) @db.Decimal(10, 2)
+  discountAmount    Decimal       @default(0) @db.Decimal(10, 2)
+  currency          String        @default("USD")
   status            OrderStatus   @default(PENDING)
   shippingAddressId String
   shippingAddress   Address       @relation("ShippingAddress", fields: [shippingAddressId], references: [id])
@@ -617,13 +744,24 @@ model Order {
   paymentStatus     PaymentStatus @default(PENDING)
   trackingCode      String?
 
+  // Parent/child order support for multi-vendor checkout
+  parentOrderId    String?
+  parentOrder      Order?   @relation("OrderChildren", fields: [parentOrderId], references: [id], onDelete: SetNull)
+  childOrders      Order[]  @relation("OrderChildren")
+  rejectionReason  String?  @db.Text
+
+  // Stripe Connect payment splitting
+  stripePaymentIntentId String?
+  platformFeeAmount     Decimal? @db.Decimal(10, 2)
+  stripeTaxAmount       Decimal? @db.Decimal(10, 2)
+
   // Fulfillment routing
   fulfillingWarehouseId String?
   fulfillingWarehouse   Warehouse?         @relation(fields: [fulfillingWarehouseId], references: [id])
   fulfillmentCenterId   String?
   fulfillmentCenter     FulfillmentCenter? @relation(fields: [fulfillmentCenterId], references: [id])
-  estimatedDistance     Float? // Distance in km from warehouse to customer
-  routingMethod         String? // NEAREST, ZONE_BASED, MANUAL
+  estimatedDistance     Float?
+  routingMethod         String?
 
   notes                OrderNote[]
   payments             Payment[]
@@ -636,6 +774,7 @@ model Order {
   couponUsages         CouponUsage[]
   stockReservations    StockReservation[]
   referral             Referral?
+  vendorLedgerEntries  VendorLedgerEntry[]
   createdAt            DateTime              @default(now())
   updatedAt            DateTime              @updatedAt
 
@@ -650,11 +789,14 @@ model Order {
   @@index([paymentStatus])
   @@index([createdAt])
   @@index([deletedAt])
+  @@index([parentOrderId])
   @@map("orders")
 }
 
 enum OrderStatus {
   PENDING
+  ACCEPTED       // Vendor accepted the child order
+  REJECTED       // Vendor rejected the child order
   CONFIRMED
   PROCESSING
   FULFILLED
@@ -835,7 +977,7 @@ model Payment {
   order           Order         @relation(fields: [orderId], references: [id], onDelete: Cascade)
   stripePaymentId String?       @unique
   amount          Decimal       @db.Decimal(10, 2)
-  currency        String        @default("GBP")
+  currency        String        @default("USD")
   status          PaymentStatus @default(PENDING)
   paymentMethod   String?
   refundAmount    Decimal?      @db.Decimal(10, 2)
@@ -916,6 +1058,7 @@ enum NotificationType {
   SUBMISSION_RESUBMITTED
   CATALOG_COMPLETED
   MARKETING_COMPLETED
+  CONTENT_COMPLETED
   FINANCE_APPROVED
   FINANCE_REJECTED
   PRODUCT_PUBLISHED
@@ -946,6 +1089,7 @@ enum ProductSubmissionStatus {
   CATALOG_COMPLETED
   MARKETING_PENDING
   MARKETING_COMPLETED
+  CONTENT_COMPLETED
   FINANCE_PENDING
   FINANCE_APPROVED
   PUBLISHED
@@ -1165,7 +1309,7 @@ model Settlement {
   totalOrders   Int
   platformFee   Decimal          @db.Decimal(10, 2)
   netAmount     Decimal          @db.Decimal(10, 2)
-  currency      String           @default("GBP")
+  currency      String           @default("USD")
   status        SettlementStatus @default(PENDING)
   paymentMethod String?
   paidAt        DateTime?
@@ -1357,7 +1501,7 @@ model SharedItem {
 // Currency Exchange Rate model
 model CurrencyExchangeRate {
   id             String   @id @default(uuid())
-  baseCurrency   String   @default("GBP")
+  baseCurrency   String   @default("USD")
   targetCurrency String
   rate           Decimal  @db.Decimal(10, 6)
   cachedAt       DateTime @default(now())
@@ -1376,7 +1520,7 @@ model GiftCard {
   type          String                @default("digital") // 'digital' or 'physical'
   amount        Decimal               @db.Decimal(10, 2)
   balance       Decimal               @db.Decimal(10, 2) // Remaining balance
-  currency      String                @default("GBP")
+  currency      String                @default("USD")
   status        String                @default("ACTIVE") // 'ACTIVE', 'REDEEMED', 'EXPIRED', 'CANCELLED'
   issuedToEmail String?
   issuedToName  String?
@@ -1482,7 +1626,7 @@ model Transaction {
   id            String            @id @default(uuid())
   type          TransactionType
   amount        Decimal           @db.Decimal(10, 2)
-  currency      String            @default("GBP")
+  currency      String            @default("USD")
   status        TransactionStatus @default(PENDING)
   sellerId      String?
   seller        Seller?           @relation(fields: [sellerId], references: [id])
@@ -2582,7 +2726,7 @@ model InfluencerCommission {
 
   // Order Details
   orderTotal Decimal @db.Decimal(10, 2)
-  currency   String  @default("GBP")
+  currency   String  @default("USD")
 
   // Commission Calculation (stored at time of conversion)
   rateSource  String // BASE, CATEGORY, CAMPAIGN
@@ -2627,7 +2771,7 @@ model InfluencerPayout {
 
   // Amount
   totalAmount Decimal @db.Decimal(10, 2)
-  currency    String  @default("GBP")
+  currency    String  @default("USD")
 
   // Manual Payment Details
   paymentMethod String? // BANK, PAYPAL, etc.

@@ -26,14 +26,13 @@ export class NotificationsController {
   async getNotifications(
     @Request() req: any,
     @Query('limit') limit?: string,
-  ): Promise<ApiResponse<any[]>> {
+  ): Promise<ApiResponse<any>> {
     const parsedLimit = limit ? parseInt(limit, 10) : undefined;
-    const notifications = await this.notificationsService.getUserNotifications(
-      req.user.id,
-      parsedLimit,
-    );
+    const result = await this.notificationsService.getUserNotifications(req.user.id, {
+      limit: parsedLimit,
+    });
     return {
-      data: notifications,
+      data: result,
       message: 'Notifications retrieved successfully',
     };
   }
@@ -60,10 +59,7 @@ export class NotificationsController {
   })
   @SwaggerApiResponse({ status: 200, description: 'Notification marked as read' })
   @SwaggerApiResponse({ status: 401, description: 'Unauthorized' })
-  async markRead(
-    @Request() req: any,
-    @Param('id') id: string,
-  ): Promise<ApiResponse<any>> {
+  async markRead(@Request() req: any, @Param('id') id: string): Promise<ApiResponse<any>> {
     const result = await this.notificationsService.markNotificationRead(req.user.id, id);
     return {
       data: result,

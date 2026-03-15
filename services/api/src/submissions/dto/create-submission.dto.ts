@@ -6,6 +6,7 @@ import {
   IsArray,
   ValidateNested,
   IsObject,
+  Min,
 } from 'class-validator';
 import { Type } from 'class-transformer';
 
@@ -61,14 +62,17 @@ export class CreateSubmissionDto {
 
   @IsNumber()
   @IsNotEmpty()
+  @Min(0)
   price: number;
 
   @IsOptional()
   @IsNumber()
+  @Min(0)
   tradePrice?: number;
 
   @IsOptional()
   @IsNumber()
+  @Min(0)
   rrp?: number;
 
   @IsOptional()
@@ -77,10 +81,12 @@ export class CreateSubmissionDto {
 
   @IsOptional()
   @IsNumber()
+  @Min(0)
   taxRate?: number;
 
   @IsNumber()
   @IsNotEmpty()
+  @Min(0)
   stock: number;
 
   @IsOptional()

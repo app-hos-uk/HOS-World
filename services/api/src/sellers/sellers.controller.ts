@@ -1,12 +1,16 @@
 import {
   Controller,
   Get,
+  Post,
   Put,
   Param,
   Body,
+  Query,
   UseGuards,
   Request,
   ParseUUIDPipe,
+  HttpCode,
+  HttpStatus,
 } from '@nestjs/common';
 import {
   ApiTags,
@@ -23,6 +27,7 @@ import { RolesGuard } from '../common/guards/roles.guard';
 import { Roles } from '../common/decorators/roles.decorator';
 import { Public } from '../common/decorators/public.decorator';
 import type { ApiResponse } from '@hos-marketplace/shared-types';
+import { VendorApplicationDto } from './dto/vendor-application.dto';
 
 @ApiTags('sellers')
 @Controller('sellers')
@@ -59,6 +64,22 @@ export class SellersController {
       data: seller,
       message: 'Seller retrieved successfully',
     };
+  }
+
+  @Public()
+  @Post('apply')
+  @HttpCode(HttpStatus.CREATED)
+  @ApiOperation({
+    summary: 'Apply as a vendor',
+    description:
+      'Public endpoint for vendor applications. Creates a user account + seller profile with PENDING status for Marketing/Admin review.',
+  })
+  @ApiBody({ type: VendorApplicationDto })
+  @SwaggerApiResponse({ status: 201, description: 'Vendor application submitted' })
+  @SwaggerApiResponse({ status: 400, description: 'Invalid data or email already exists' })
+  async applyAsVendor(@Body() body: VendorApplicationDto): Promise<ApiResponse<any>> {
+    const result = await this.sellersService.applyAsVendor(body);
+    return { data: result, message: 'Vendor application submitted successfully' };
   }
 
   @UseGuards(JwtAuthGuard, RolesGuard)
@@ -171,5 +192,108 @@ export class SellersController {
       data: seller,
       message: 'Seller profile updated successfully',
     };
+  }
+
+  // === Vendor Management Endpoints (Admin) ===
+
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('ADMIN', 'PROCUREMENT', 'MARKETING', 'SALES')
+  @Get('admin/vendors')
+  async listVendors(
+    @Query('status') status?: string,
+    @Query('search') search?: string,
+    @Query('page') page?: string,
+    @Query('limit') limit?: string,
+  ): Promise<ApiResponse<any>> {
+    const result = await this.sellersService.findAllVendors({
+      status,
+      search,
+      page: page ? parseInt(page, 10) : 1,
+      limit: limit ? parseInt(limit, 10) : 20,
+    });
+    return { data: result, message: 'Vendors retrieved' };
+  }
+
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('ADMIN', 'MARKETING', 'SALES')
+  @Post('admin/vendors/:id/approve')
+  @HttpCode(HttpStatus.OK)
+  async approveVendor(
+    @Param('id') id: string,
+    @Request() req,
+    @Body() body: { notes?: string },
+  ): Promise<ApiResponse<any>> {
+    const result = await this.sellersService.approveVendor(id, req.user.id, body.notes);
+    return { data: result, message: 'Vendor approved' };
+  }
+
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('ADMIN', 'MARKETING', 'SALES')
+  @Post('admin/vendors/:id/reject')
+  @HttpCode(HttpStatus.OK)
+  async rejectVendor(
+    @Param('id') id: string,
+    @Body() body: { reason: string },
+  ): Promise<ApiResponse<any>> {
+    const result = await this.sellersService.rejectVendor(id, body.reason);
+    return { data: result, message: 'Vendor rejected' };
+  }
+
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('ADMIN')
+  @Post('admin/vendors/:id/suspend')
+  @HttpCode(HttpStatus.OK)
+  async suspendVendor(
+    @Param('id') id: string,
+    @Body() body: { reason: string },
+  ): Promise<ApiResponse<any>> {
+    const result = await this.sellersService.suspendVendor(id, body.reason);
+    return { data: result, message: 'Vendor suspended' };
+  }
+
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('ADMIN')
+  @Post('admin/vendors/:id/activate')
+  @HttpCode(HttpStatus.OK)
+  async activateVendor(@Param('id') id: string): Promise<ApiResponse<any>> {
+    const result = await this.sellersService.activateVendor(id);
+    return { data: result, message: 'Vendor activated' };
+  }
+
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('ADMIN', 'FINANCE')
+  @Put('admin/vendors/:id/commission')
+  async updateCommission(
+    @Param('id') id: string,
+    @Body() body: { rate: number },
+  ): Promise<ApiResponse<any>> {
+    const result = await this.sellersService.updateCommissionRate(id, body.rate);
+    return { data: result, message: 'Commission rate updated' };
+  }
+
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('ADMIN', 'FINANCE')
+  @Put('admin/vendors/:id/subscription')
+  async updateSubscription(
+    @Param('id') id: string,
+    @Body() body: { plan: string; fee: number; expiresAt?: string },
+  ): Promise<ApiResponse<any>> {
+    const result = await this.sellersService.updateSubscription(
+      id,
+      body.plan,
+      body.fee,
+      body.expiresAt ? new Date(body.expiresAt) : undefined,
+    );
+    return { data: result, message: 'Subscription updated' };
+  }
+
+  // === Vendor Dashboard Endpoint ===
+
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('SELLER', 'B2C_SELLER')
+  @Get('me/dashboard')
+  async getMyDashboard(@Request() req): Promise<ApiResponse<any>> {
+    const result = await this.sellersService.getVendorDashboardStats(req.user.id);
+    return { data: result, message: 'Dashboard stats retrieved' };
   }
 }

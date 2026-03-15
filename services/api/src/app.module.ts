@@ -82,6 +82,9 @@ import { InfluencerCommissionsModule } from './influencer-commissions/influencer
 import { InfluencerPayoutsModule } from './influencer-payouts/influencer-payouts.module';
 import { InfluencerCampaignsModule } from './influencer-campaigns/influencer-campaigns.module';
 import { MeilisearchModule } from './meilisearch/meilisearch.module';
+import { VendorProductsModule } from './vendor-products/vendor-products.module';
+import { VendorLedgerModule } from './vendor-ledger/vendor-ledger.module';
+import { InvoicesModule } from './invoices/invoices.module';
 import { validateEnvironmentVariables } from './config/env.validation';
 
 @Module({
@@ -172,6 +175,11 @@ import { validateEnvironmentVariables } from './config/env.validation';
     InfluencerCommissionsModule,
     InfluencerPayoutsModule,
     InfluencerCampaignsModule,
+    // Vendor Marketplace
+    VendorProductsModule,
+    VendorLedgerModule,
+    // Invoices
+    InvoicesModule,
   ],
   controllers: [AppController],
   providers: [

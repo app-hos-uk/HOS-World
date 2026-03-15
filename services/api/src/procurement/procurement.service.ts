@@ -299,7 +299,11 @@ export class ProcurementService {
     }
 
     // Allow quantity update at any stage before publishing
-    const nonEditableStatuses: ProductSubmissionStatus[] = ['PUBLISHED', 'REJECTED', 'PROCUREMENT_REJECTED'];
+    const nonEditableStatuses: ProductSubmissionStatus[] = [
+      'PUBLISHED',
+      'REJECTED',
+      'PROCUREMENT_REJECTED',
+    ];
     if (nonEditableStatuses.includes(submission.status)) {
       throw new BadRequestException(
         `Cannot update quantity for submission in status: ${submission.status}`,

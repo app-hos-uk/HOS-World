@@ -89,6 +89,7 @@ async function bootstrap() {
   let allowedOrigins: string[] = [
     process.env.FRONTEND_URL,
     'https://hos-marketplaceweb-production.up.railway.app',
+    'https://hos-marketplace-web.vercel.app',
     ...(isProduction ? [] : ['http://localhost:3000', 'http://localhost:3001']),
   ]
     .filter(Boolean)
@@ -421,7 +422,10 @@ async function bootstrap() {
         bullJobsQueue = jobsQueue;
         logger.info('Bull Board mounted at /api/admin/queues', 'Bootstrap');
       } catch (err: any) {
-        logger.warn('Bull Board not available (missing packages or redis) - skipping dashboard', 'Bootstrap');
+        logger.warn(
+          'Bull Board not available (missing packages or redis) - skipping dashboard',
+          'Bootstrap',
+        );
       }
     } else if (isProduction) {
       logger.info('Bull Board disabled in production', 'Bootstrap');

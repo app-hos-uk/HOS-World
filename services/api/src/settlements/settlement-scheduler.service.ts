@@ -49,20 +49,27 @@ export class SettlementSchedulerService {
     try {
       this.logger.log('Starting weekly settlement creation...');
 
-      // Calculate previous week's date range
+      // Calculate previous week's date range: [Monday 00:00:00 → next Monday 00:00:00)
       const now = new Date();
-      const periodEnd = new Date(now);
-      periodEnd.setHours(0, 0, 0, 0);
-      // Go back to start of current week (Monday)
-      const dayOfWeek = periodEnd.getDay();
-      const daysToMonday = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
-      periodEnd.setDate(periodEnd.getDate() - daysToMonday);
+      const today = new Date(now);
+      today.setHours(0, 0, 0, 0);
 
+      // Find Monday 00:00 of the current week (periodEnd is exclusive upper bound)
+      const dayOfWeek = today.getDay(); // 0=Sun, 1=Mon, ...
+      const daysToMonday = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
+      const periodEnd = new Date(today);
+      periodEnd.setDate(today.getDate() - daysToMonday);
+      periodEnd.setHours(0, 0, 0, 0);
+
+      // periodStart = exactly 7 days before periodEnd
       const periodStart = new Date(periodEnd);
-      periodStart.setDate(periodStart.getDate() - 7);
+      periodStart.setDate(periodEnd.getDate() - 7);
 
       this.logger.log(
-        `Settlement period: ${periodStart.toISOString()} to ${periodEnd.toISOString()}`,
+        `Settlement period: ${periodStart.toISOString()} to ${periodEnd.toISOString()} (exclusive upper bound)`,
+      );
+      this.logger.log(
+        `Audit: periodStart=${periodStart.toISOString()}, periodEnd=${periodEnd.toISOString()}, triggeredAt=${now.toISOString()}`,
       );
 
       // Get sellers who have completed orders in the settlement period
@@ -74,10 +81,11 @@ export class SettlementSchedulerService {
         where: {
           orders: {
             some: {
-              status: 'DELIVERED',
+              status: { in: ['DELIVERED', 'PAID'] as any },
+              paymentStatus: 'PAID',
               createdAt: {
                 gte: periodStart,
-                lte: periodEnd,
+                lt: periodEnd,
               },
             },
           },
@@ -133,7 +141,7 @@ export class SettlementSchedulerService {
 
           results.created++;
           this.logger.log(
-            `Created settlement for ${seller.storeName}: ${calculation.totalOrders} orders, £${calculation.netAmount.toFixed(2)}`,
+            `Created settlement for ${seller.storeName}: ${calculation.totalOrders} orders, $${calculation.netAmount.toFixed(2)}`,
           );
         } catch (error: any) {
           results.failed++;
@@ -243,7 +251,7 @@ export class SettlementSchedulerService {
       // Log reminders (in production, would send emails)
       for (const settlement of pendingSettlements) {
         this.logger.warn(
-          `Pending settlement reminder: ${settlement.seller.storeName} - £${Number(settlement.netAmount).toFixed(2)} (created ${settlement.createdAt.toISOString()})`,
+          `Pending settlement reminder: ${settlement.seller.storeName} - $${Number(settlement.netAmount).toFixed(2)} (created ${settlement.createdAt.toISOString()})`,
         );
       }
 

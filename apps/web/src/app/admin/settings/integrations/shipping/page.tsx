@@ -36,12 +36,12 @@ interface ProviderMetadata {
 }
 
 const SHIPPING_PROVIDERS: Record<string, ProviderMetadata> = {
-  royal_mail: {
-    displayName: 'Royal Mail',
-    description: 'UK domestic and international postal service with tracking and Click & Drop integration',
-    requiredCredentials: ['clientId', 'clientSecret', 'accountNumber'],
-    optionalCredentials: ['postingLocation'],
-    documentationUrl: 'https://developer.royalmail.net/',
+  usps: {
+    displayName: 'USPS',
+    description: 'United States Postal Service with domestic and international shipping, tracking, and label generation',
+    requiredCredentials: ['userId', 'apiKey'],
+    optionalCredentials: ['facilityId', 'mailerIdNumber'],
+    documentationUrl: 'https://www.usps.com/business/web-tools-apis/',
   },
   fedex: {
     displayName: 'FedEx',

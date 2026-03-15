@@ -81,7 +81,7 @@ function ProfilePageContent() {
     country: '',
     whatsappNumber: '',
     preferredCommunicationMethod: 'EMAIL' as 'EMAIL' | 'SMS' | 'WHATSAPP' | 'PHONE',
-    currencyPreference: 'GBP',
+    currencyPreference: 'USD',
     // Marketing dates (optional)
     birthday: '',
     anniversary: '',
@@ -151,7 +151,7 @@ function ProfilePageContent() {
           country: profileRes.data.country || '',
           whatsappNumber: profileRes.data.whatsappNumber || '',
           preferredCommunicationMethod: profileRes.data.preferredCommunicationMethod || 'EMAIL',
-          currencyPreference: profileRes.data.currencyPreference || 'GBP',
+          currencyPreference: profileRes.data.currencyPreference || 'USD',
           birthday: profileRes.data.birthday ? new Date(profileRes.data.birthday).toISOString().split('T')[0] : '',
           anniversary: profileRes.data.anniversary ? new Date(profileRes.data.anniversary).toISOString().split('T')[0] : '',
         });
@@ -1078,7 +1078,7 @@ function ProfilePageContent() {
                       <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1">Currency Preference</label>
                         <select
-                          value={editing ? formData.currencyPreference : (profile?.currencyPreference || 'GBP')}
+                          value={editing ? formData.currencyPreference : (profile?.currencyPreference || 'USD')}
                           onChange={(e) => setFormData({ ...formData, currencyPreference: e.target.value })}
                           disabled={!editing}
                           className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-white disabled:bg-gray-100"
@@ -1140,7 +1140,7 @@ function ProfilePageContent() {
                                 country: profile?.country || '',
                                 whatsappNumber: profile?.whatsappNumber || '',
                                 preferredCommunicationMethod: profile?.preferredCommunicationMethod || 'EMAIL',
-                                currencyPreference: profile?.currencyPreference || 'GBP',
+                                currencyPreference: profile?.currencyPreference || 'USD',
                                 birthday: profile?.birthday ? new Date(profile.birthday).toISOString().split('T')[0] : '',
                                 anniversary: profile?.anniversary ? new Date(profile.anniversary).toISOString().split('T')[0] : '',
                               });

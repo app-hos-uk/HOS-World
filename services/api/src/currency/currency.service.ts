@@ -8,8 +8,8 @@ export class CurrencyService {
   private readonly logger = new Logger(CurrencyService.name);
   private readonly apiKey: string;
   private readonly baseUrl = 'https://api.exchangerate-api.com/v4/latest';
-  private readonly baseCurrency = 'GBP';
-  private readonly supportedCurrencies = ['GBP', 'USD', 'EUR', 'AED'];
+  private readonly baseCurrency = 'USD';
+  private readonly supportedCurrencies = ['USD', 'GBP', 'EUR', 'AED'];
   private readonly cacheKeyPrefix = 'currency_rate:';
   private readonly cacheDuration = 3600; // 1 hour in seconds
 
@@ -179,9 +179,9 @@ export class CurrencyService {
    */
   private getDefaultRate(targetCurrency: string): number {
     const defaultRates: Record<string, number> = {
-      USD: 1.27, // Approximate GBP to USD
-      EUR: 1.17, // Approximate GBP to EUR
-      AED: 4.67, // Approximate GBP to AED
+      GBP: 0.79,
+      EUR: 0.92,
+      AED: 3.67,
     };
 
     return defaultRates[targetCurrency] || 1;

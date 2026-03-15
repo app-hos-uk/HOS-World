@@ -202,7 +202,7 @@ function TrackOrderContent() {
                 </div>
                 <div className="text-right">
                   <p className="text-xl font-bold text-purple-600">
-                    {formatPrice(order.total, order.currency || 'GBP')}
+                    {formatPrice(order.total, order.currency || 'USD')}
                   </p>
                   {order.estimatedDelivery && (
                     <p className="text-sm text-gray-500">
@@ -359,7 +359,7 @@ function TrackOrderContent() {
                         <p className="text-sm text-gray-500">Qty: {item.quantity}</p>
                       </div>
                       <p className="font-medium text-gray-900">
-                        {formatPrice(item.price * item.quantity, order.currency || 'GBP')}
+                        {formatPrice(item.price * item.quantity, order.currency || 'USD')}
                       </p>
                     </div>
                   );

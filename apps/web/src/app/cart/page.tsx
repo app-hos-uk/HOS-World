@@ -219,11 +219,22 @@ export default function CartPage() {
     }
   };
 
+  const hasOutOfStockItems = useMemo(() => {
+    if (!cart?.items) return false;
+    return cart.items.some((item) => {
+      if (!item.product) return true;
+      const stock = item.product.stock ?? 0;
+      return stock <= 0 || item.quantity > stock;
+    });
+  }, [cart?.items]);
+
   const handleCheckout = () => {
-    // Use defensive check to match the pattern at line 126
-    // Prevents crash if cart.items is undefined
     if (!cart || !cart.items || cart.items.length === 0) {
       toast.error('Your cart is empty');
+      return;
+    }
+    if (hasOutOfStockItems) {
+      toast.error('Some items in your cart are out of stock or exceed available stock. Please update your cart.');
       return;
     }
     router.push('/checkout');
@@ -242,12 +253,13 @@ export default function CartPage() {
   }, [cart]);
 
   const getStockWarning = (item: CartItem) => {
-    const stock = item.product?.stock;
+    if (!item.product) return { text: 'Product no longer available — please remove this item', type: 'error' };
+    const stock = item.product.stock;
     if (stock === undefined) return null;
     if (stock <= 0) return { text: 'Out of Stock', type: 'error' };
     if (stock < item.quantity) return { text: `Only ${stock} available`, type: 'warning' };
     if (stock <= 5) return { text: `Only ${stock} left in stock`, type: 'info' };
-    return null;
+    return { text: `${stock} in stock`, type: 'success' };
   };
 
   if (loading) {
@@ -333,14 +345,15 @@ export default function CartPage() {
                       </Link>
                       <p className="text-sm text-gray-600 mb-2">{formatPrice(item.price)} each</p>
                       
-                      {/* Stock Warning */}
+                      {/* Stock Availability */}
                       {stockWarning && (
                         <p className={`text-xs mb-2 ${
-                          stockWarning.type === 'error' ? 'text-red-600' :
+                          stockWarning.type === 'error' ? 'text-red-600 font-medium' :
                           stockWarning.type === 'warning' ? 'text-orange-600' :
+                          stockWarning.type === 'success' ? 'text-green-600' :
                           'text-yellow-600'
                         }`}>
-                          ⚠️ {stockWarning.text}
+                          {stockWarning.type === 'success' ? '✓' : '⚠️'} {stockWarning.text}
                         </p>
                       )}
                       
@@ -506,9 +519,10 @@ export default function CartPage() {
 
               <button
                 onClick={handleCheckout}
-                className="w-full px-6 py-3 bg-gradient-to-r from-purple-700 to-indigo-700 hover:from-purple-600 hover:to-indigo-600 text-white font-semibold rounded-lg transition-all duration-300"
+                disabled={hasOutOfStockItems}
+                className="w-full px-6 py-3 bg-gradient-to-r from-purple-700 to-indigo-700 hover:from-purple-600 hover:to-indigo-600 text-white font-semibold rounded-lg transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                Proceed to Checkout
+                {hasOutOfStockItems ? 'Update Stock Issues' : 'Proceed to Checkout'}
               </button>
 
               <Link

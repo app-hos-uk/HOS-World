@@ -1,13 +1,21 @@
-import { Injectable, NotFoundException, BadRequestException, Logger } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  BadRequestException,
+  Logger,
+  Optional,
+} from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../database/prisma.service';
 import { CreatePaymentDto } from './dto/create-payment.dto';
 import { CurrencyService } from '../currency/currency.service';
 import { PaymentProviderService } from './payment-provider.service';
+import { StripeConnectService } from './stripe-connect/stripe-connect.service';
+import { VendorLedgerService } from '../vendor-ledger/vendor-ledger.service';
 
 @Injectable()
 export class PaymentsService {
-  private readonly BASE_CURRENCY = 'GBP';
+  private readonly BASE_CURRENCY = 'USD';
   private readonly logger = new Logger(PaymentsService.name);
 
   constructor(
@@ -15,6 +23,8 @@ export class PaymentsService {
     private configService: ConfigService,
     private currencyService: CurrencyService,
     private paymentProviderService: PaymentProviderService,
+    @Optional() private stripeConnectService?: StripeConnectService,
+    @Optional() private vendorLedgerService?: VendorLedgerService,
   ) {
     this.logger.log('PaymentsService initialized with payment provider framework');
   }
@@ -36,6 +46,7 @@ export class PaymentsService {
             logo: true,
             country: true,
             city: true,
+            stripeConnectAccountId: true,
           },
         },
         items: {
@@ -63,24 +74,26 @@ export class PaymentsService {
       throw new BadRequestException('Order is already paid');
     }
 
-    // Use provided amount if available (e.g., after gift card redemption), otherwise use order total
     const paymentAmount =
       createPaymentDto.amount !== undefined ? createPaymentDto.amount : Number(order.total);
     const paymentCurrency = createPaymentDto.currency || order.currency;
 
-    // Convert payment amount to GBP for payment processing
-    let paymentAmountGBP: number;
+    if (paymentAmount <= 0) {
+      throw new BadRequestException('Payment amount must be greater than zero');
+    }
+
+    // Convert payment amount to base currency for processing
+    let paymentAmountBase: number;
     if (paymentCurrency === this.BASE_CURRENCY) {
-      paymentAmountGBP = paymentAmount;
+      paymentAmountBase = paymentAmount;
     } else {
-      paymentAmountGBP = await this.currencyService.convertBetween(
+      paymentAmountBase = await this.currencyService.convertBetween(
         paymentAmount,
         paymentCurrency,
         this.BASE_CURRENCY,
       );
     }
 
-    // Determine payment provider (default to 'stripe' or first available)
     const paymentMethod = createPaymentDto.paymentMethod || 'stripe';
     const availableProviders = this.paymentProviderService.getAvailableProviders();
 
@@ -94,31 +107,43 @@ export class PaymentsService {
 
     const provider = this.paymentProviderService.getProvider(providerName);
 
-    // Create payment intent using provider
     let clientSecret: string | null = null;
     let paymentIntentId: string | null = null;
 
     try {
-      const result = await provider.createPaymentIntent({
-        amount: paymentAmountGBP,
-        currency: this.BASE_CURRENCY.toLowerCase(),
-        orderId: order.id,
-        customerId: userId,
-        metadata: {
-          originalCurrency: order.currency,
-          originalAmount: Number(order.total).toFixed(2),
-        },
-      });
+      // Use Stripe Connect split if vendor has a connected account
+      const vendorAccountId = order.seller?.stripeConnectAccountId;
+      const platformFee = order.platformFeeAmount ? Number(order.platformFeeAmount) : 0;
 
-      paymentIntentId = result.paymentIntentId;
-      clientSecret = result.clientSecret || null;
+      if (vendorAccountId && this.stripeConnectService && platformFee > 0) {
+        const result = await this.stripeConnectService.createSplitPaymentIntent({
+          orderId: order.id,
+          amount: paymentAmountBase,
+          currency: this.BASE_CURRENCY.toLowerCase(),
+          vendorAccountId,
+          platformFee,
+        });
+        paymentIntentId = result.paymentIntentId;
+        clientSecret = result.clientSecret || null;
+      } else {
+        const result = await provider.createPaymentIntent({
+          amount: paymentAmountBase,
+          currency: this.BASE_CURRENCY.toLowerCase(),
+          orderId: order.id,
+          customerId: userId,
+          metadata: {
+            originalCurrency: order.currency,
+            originalAmount: Number(order.total).toFixed(2),
+          },
+        });
+        paymentIntentId = result.paymentIntentId;
+        clientSecret = result.clientSecret || null;
+      }
     } catch (error: any) {
       this.logger.error(`Failed to create payment intent with ${providerName}:`, error);
-      throw new BadRequestException(`Failed to create payment intent: ${error.message}`);
+      throw new BadRequestException('Failed to create payment intent. Please try again.');
     }
 
-    // Return order with seller information revealed (for payment page)
-    // Include both original currency (for display) and GBP amount (for processing)
     return {
       clientSecret,
       paymentIntentId,
@@ -126,25 +151,26 @@ export class PaymentsService {
         id: order.id,
         orderNumber: order.orderNumber,
         total: Number(order.total),
-        currency: order.currency, // Original currency for display
-        totalGBP: paymentAmountGBP, // GBP amount for payment processing
-        currencyGBP: this.BASE_CURRENCY,
-        seller: {
-          id: order.seller.id,
-          storeName: order.seller.storeName,
-          slug: order.seller.slug,
-          logo: order.seller.logo,
-          location: {
-            country: order.seller.country,
-            city: order.seller.city,
-          },
-        },
+        currency: order.currency,
+        totalBase: paymentAmountBase,
+        currencyBase: this.BASE_CURRENCY,
+        seller: order.seller
+          ? {
+              id: order.seller.id,
+              storeName: order.seller.storeName,
+              slug: order.seller.slug,
+              logo: order.seller.logo,
+              location: {
+                country: order.seller?.country,
+                city: order.seller?.city,
+              },
+            }
+          : null,
       },
     };
   }
 
   async confirmPayment(paymentIntentId: string, orderId: string): Promise<void> {
-    // Get order to get the amount
     const order = await this.prisma.order.findUnique({
       where: { id: orderId },
     });
@@ -153,17 +179,19 @@ export class PaymentsService {
       throw new NotFoundException('Order not found');
     }
 
-    // Check if already paid (webhook may have processed it)
+    if (order.stripePaymentIntentId && order.stripePaymentIntentId !== paymentIntentId) {
+      throw new BadRequestException('Payment intent does not belong to this order');
+    }
+
     if (order.paymentStatus === 'PAID') {
       this.logger.log(`Order ${orderId} already paid - likely processed by webhook`);
       return;
     }
 
-    // Get payment record to determine provider
     const payment = await this.prisma.payment.findFirst({
       where: {
         orderId,
-        stripePaymentId: paymentIntentId, // This field stores payment intent ID from any provider
+        stripePaymentId: paymentIntentId,
       },
     });
 
@@ -200,58 +228,93 @@ export class PaymentsService {
   private async markPaymentAsPaid(
     order: any,
     stripePaymentId: string,
-    amountGBP: number,
+    amount: number,
   ): Promise<void> {
-    // Check if payment already exists
-    const existingPayment = await this.prisma.payment.findFirst({
-      where: {
-        orderId: order.id,
-        status: 'PAID',
-      },
-    });
-
-    if (existingPayment) {
-      this.logger.log(`Payment already exists for order ${order.id}`);
-      return;
-    }
-
-    // Convert order total to GBP for payment record if needed
-    let paymentAmountGBP: number;
+    let paymentAmountBase: number;
     if (order.currency === this.BASE_CURRENCY) {
-      paymentAmountGBP = Number(order.total);
+      paymentAmountBase = Number(order.total);
     } else {
-      paymentAmountGBP = await this.currencyService.convertBetween(
+      paymentAmountBase = await this.currencyService.convertBetween(
         Number(order.total),
         order.currency,
         this.BASE_CURRENCY,
       );
     }
 
-    // Create payment record - always in GBP
-    await this.prisma.payment.create({
-      data: {
-        orderId: order.id,
-        stripePaymentId,
-        amount: paymentAmountGBP, // Amount in GBP
-        currency: this.BASE_CURRENCY, // Always GBP for payments
-        status: 'PAID',
-        paymentMethod: 'card',
-        metadata: {
-          originalCurrency: order.currency,
-          originalAmount: Number(order.total).toFixed(2),
-        } as any,
-      },
+    const created = await this.prisma.$transaction(async (tx) => {
+      const existingPayment = await tx.payment.findFirst({
+        where: { orderId: order.id, status: 'PAID' },
+      });
+
+      if (existingPayment) {
+        this.logger.log(`Payment already exists for order ${order.id}`);
+        return false;
+      }
+
+      await tx.payment.create({
+        data: {
+          orderId: order.id,
+          stripePaymentId,
+          amount: paymentAmountBase,
+          currency: this.BASE_CURRENCY,
+          status: 'PAID',
+          paymentMethod: 'card',
+          metadata: {
+            originalCurrency: order.currency,
+            originalAmount: Number(order.total).toFixed(2),
+          } as any,
+        },
+      });
+
+      const newStatus = order.status === 'PENDING' ? 'CONFIRMED' : order.status;
+      await tx.order.update({
+        where: { id: order.id },
+        data: {
+          paymentStatus: 'PAID',
+          status: newStatus,
+          stripePaymentIntentId: stripePaymentId,
+        },
+      });
+
+      return true;
     });
 
-    // Update order payment status; transition PENDING -> CONFIRMED on successful payment
-    const newStatus = order.status === 'PENDING' ? 'CONFIRMED' : order.status;
-    await this.prisma.order.update({
-      where: { id: order.id },
-      data: {
-        paymentStatus: 'PAID',
-        status: newStatus,
-      },
-    });
+    if (!created) return;
+
+    // Record sale in vendor ledger for each child order (or the main order if single-vendor)
+    if (this.vendorLedgerService) {
+      const childOrders = await this.prisma.order.findMany({
+        where: { parentOrderId: order.id },
+        include: { seller: true },
+      });
+
+      if (childOrders.length > 0) {
+        for (const child of childOrders) {
+          if (child.sellerId) {
+            const commissionRate = child.seller?.commissionRate
+              ? Number(child.seller.commissionRate)
+              : 0.1;
+            await this.vendorLedgerService.recordSale({
+              sellerId: child.sellerId,
+              orderId: child.id,
+              saleAmount: Number(child.subtotal),
+              commissionRate,
+              currency: child.currency,
+            });
+          }
+        }
+      } else if (order.sellerId) {
+        const seller = await this.prisma.seller.findUnique({ where: { id: order.sellerId } });
+        const commissionRate = seller?.commissionRate ? Number(seller.commissionRate) : 0.1;
+        await this.vendorLedgerService.recordSale({
+          sellerId: order.sellerId,
+          orderId: order.id,
+          saleAmount: Number(order.subtotal),
+          commissionRate,
+          currency: order.currency,
+        });
+      }
+    }
 
     this.logger.log(`Payment confirmed for order ${order.id}`);
   }

@@ -155,7 +155,7 @@ export default function AdminSalesReportsPage() {
             <div className="bg-white rounded-lg shadow p-6">
               <h3 className="text-sm font-medium text-gray-500">Total Revenue</h3>
               <p className="text-3xl font-bold text-gray-900 mt-2">
-                £{Number(data?.totalRevenue || 0).toFixed(2)}
+                ${Number(data?.totalRevenue || 0).toFixed(2)}
               </p>
               {data?.growthRate && (
                 <p
@@ -178,7 +178,7 @@ export default function AdminSalesReportsPage() {
             <div className="bg-white rounded-lg shadow p-6">
               <h3 className="text-sm font-medium text-gray-500">Average Order Value</h3>
               <p className="text-3xl font-bold text-gray-900 mt-2">
-                £
+                $
                 {data?.totalOrders > 0
                   ? (data.totalRevenue / data.totalOrders).toFixed(2)
                   : '0.00'}
@@ -201,7 +201,7 @@ export default function AdminSalesReportsPage() {
                 <div>
                   <h3 className="text-sm font-medium text-gray-500">Current Period</h3>
                   <p className="text-2xl font-bold text-gray-900 mt-1">
-                    £{Number(data.periodComparison.current.revenue).toFixed(2)}
+                    ${Number(data.periodComparison.current.revenue).toFixed(2)}
                   </p>
                   <p className="text-sm text-gray-500 mt-1">
                     {data.periodComparison.current.orders} orders
@@ -210,7 +210,7 @@ export default function AdminSalesReportsPage() {
                 <div>
                   <h3 className="text-sm font-medium text-gray-500">Previous Period</h3>
                   <p className="text-2xl font-bold text-gray-900 mt-1">
-                    £{Number(data.periodComparison.previous.revenue).toFixed(2)}
+                    ${Number(data.periodComparison.previous.revenue).toFixed(2)}
                   </p>
                   <p className="text-sm text-gray-500 mt-1">
                     {data.periodComparison.previous.orders} orders
@@ -243,8 +243,8 @@ export default function AdminSalesReportsPage() {
                     <XAxis dataKey="period" />
                     <YAxis
                       yAxisId="revenue"
-                      label={{ value: 'Revenue (£)', angle: -90, position: 'insideLeft' }}
-                      tickFormatter={(value) => `£${Number(value).toFixed(0)}`}
+                      label={{ value: 'Revenue ($)', angle: -90, position: 'insideLeft' }}
+                      tickFormatter={(value) => `$${Number(value).toFixed(0)}`}
                     />
                     {compareWithPrevious && (
                       <YAxis
@@ -259,7 +259,7 @@ export default function AdminSalesReportsPage() {
                         if (name === 'Growth %') {
                           return `${Number(value).toFixed(2)}%`;
                         }
-                        return `£${Number(value).toFixed(2)}`;
+                        return `$${Number(value).toFixed(2)}`;
                       }}
                       labelFormatter={(label) => `Period: ${label}`}
                     />
@@ -308,7 +308,7 @@ export default function AdminSalesReportsPage() {
                     <XAxis dataKey="period" />
                     <YAxis />
                     <Tooltip
-                      formatter={(value: any) => `£${Number(value).toFixed(2)}`}
+                      formatter={(value: any) => `$${Number(value).toFixed(2)}`}
                       labelFormatter={(label) => `Period: ${label}`}
                     />
                     <Legend />

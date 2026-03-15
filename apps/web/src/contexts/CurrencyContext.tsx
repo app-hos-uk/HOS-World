@@ -18,7 +18,7 @@ interface CurrencyContextType {
 const CurrencyContext = createContext<CurrencyContextType | undefined>(undefined);
 
 export function CurrencyProvider({ children }: { children: React.ReactNode }) {
-  const [currency, setCurrencyState] = useState<string>('GBP');
+  const [currency, setCurrencyState] = useState<string>('USD');
   const [rates, setRates] = useState<Record<string, number>>({});
   const [loading, setLoading] = useState(true);
   const pathname = usePathname();
@@ -48,7 +48,7 @@ export function CurrencyProvider({ children }: { children: React.ReactNode }) {
         // Try to get user's currency preference
         const userCurrencyResponse = await apiClient.getUserCurrency();
         if (userCurrencyResponse?.data) {
-          setCurrencyState(userCurrencyResponse.data.currency || 'GBP');
+          setCurrencyState(userCurrencyResponse.data.currency || 'USD');
           setRates(userCurrencyResponse.data.rates || {});
           return;
         }
@@ -73,10 +73,10 @@ export function CurrencyProvider({ children }: { children: React.ReactNode }) {
       console.error('Failed to load currency data:', error);
       // Set default rates
       setRates({
-        GBP: 1,
-        USD: 1.27,
-        EUR: 1.17,
-        AED: 4.67,
+        USD: 1,
+        GBP: 0.79,
+        EUR: 0.92,
+        AED: 3.67,
       });
     } finally {
       setLoading(false);
@@ -122,7 +122,7 @@ export function CurrencyProvider({ children }: { children: React.ReactNode }) {
   }, [updateCurrencyPreference]);
 
   const convertPrice = useCallback(
-    (amount: number, fromCurrency: string = 'GBP'): number => {
+    (amount: number, fromCurrency: string = 'USD'): number => {
       if (fromCurrency === currency) {
         return amount;
       }
@@ -131,22 +131,28 @@ export function CurrencyProvider({ children }: { children: React.ReactNode }) {
         return amount; // Fallback to original amount if rates not available
       }
 
-      // Convert from source currency to GBP (base), then to target currency
-      const amountInGBP = amount / rates[fromCurrency];
-      return amountInGBP * rates[currency];
+      // Convert from source currency to USD (base), then to target currency
+      const amountInUSD = amount / rates[fromCurrency];
+      return amountInUSD * rates[currency];
     },
     [currency, rates]
   );
 
   const formatPrice = useCallback(
-    (amount: number, fromCurrency: string = 'GBP'): string => {
+    (amount: number, fromCurrency: string = 'USD'): string => {
       const convertedAmount = convertPrice(amount, fromCurrency);
-      const symbol = getCurrencySymbol(currency);
-      
-      // Format with appropriate decimal places - ensure convertedAmount is a number
       const safeAmount = typeof convertedAmount === 'number' && !Number.isNaN(convertedAmount) ? convertedAmount : 0;
-      const formatted = safeAmount.toFixed(2);
-      return `${symbol}${formatted}`;
+      try {
+        return new Intl.NumberFormat(undefined, {
+          style: 'currency',
+          currency: currency,
+          minimumFractionDigits: 2,
+          maximumFractionDigits: 2,
+        }).format(safeAmount);
+      } catch {
+        const symbol = getCurrencySymbol(currency);
+        return `${symbol}${safeAmount.toFixed(2)}`;
+      }
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [currency, convertPrice]

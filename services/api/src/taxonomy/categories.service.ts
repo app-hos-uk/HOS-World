@@ -46,7 +46,9 @@ export class CategoriesService {
       }
 
       level = parentCategory.level + 1;
-      path = parentCategory.path ? `${parentCategory.path}/${slugify(data.name)}` : `/${slugify(data.name)}`;
+      path = parentCategory.path
+        ? `${parentCategory.path}/${slugify(data.name)}`
+        : `/${slugify(data.name)}`;
     } else {
       path = `/${slugify(data.name)}`;
     }
@@ -215,7 +217,9 @@ export class CategoriesService {
         const parentCategory = await this.prisma.category.findUnique({
           where: { id: category.parentId },
         });
-        path = parentCategory?.path ? `${parentCategory.path}/${slugify(data.name)}` : `/${slugify(data.name)}`;
+        path = parentCategory?.path
+          ? `${parentCategory.path}/${slugify(data.name)}`
+          : `/${slugify(data.name)}`;
       } else {
         path = `/${slugify(data.name)}`;
       }

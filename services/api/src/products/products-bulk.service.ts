@@ -17,7 +17,9 @@ export class ProductsBulkService implements OnModuleInit {
   async onModuleInit() {
     this.queueService.registerProcessor(JobType.BULK_IMPORT, async (job) => {
       const { sellerId, products } = job.data;
-      this.logger.log(`Processing bulk import job ${job.id}: ${products.length} products for seller ${sellerId}`);
+      this.logger.log(
+        `Processing bulk import job ${job.id}: ${products.length} products for seller ${sellerId}`,
+      );
       return this.importProducts(sellerId, products);
     });
 
@@ -26,7 +28,9 @@ export class ProductsBulkService implements OnModuleInit {
 
   async queueBulkImport(sellerId: string, products: any[]): Promise<string> {
     const jobId = await this.queueService.queueBulkImport({ sellerId, products });
-    this.logger.log(`Queued bulk import job ${jobId}: ${products.length} products for seller ${sellerId}`);
+    this.logger.log(
+      `Queued bulk import job ${jobId}: ${products.length} products for seller ${sellerId}`,
+    );
     return jobId;
   }
 
@@ -105,7 +109,7 @@ export class ProductsBulkService implements OnModuleInit {
           price: Number(productData.price) || 0,
           tradePrice: productData.tradePrice ? Number(productData.tradePrice) : undefined,
           rrp: productData.rrp ? Number(productData.rrp) : undefined,
-          currency: productData.currency || 'GBP',
+          currency: productData.currency || 'USD',
           taxRate: productData.taxRate ? Number(productData.taxRate) : 0,
           stock: Number(productData.stock) || 0,
           fandom: productData.fandom,

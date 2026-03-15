@@ -29,7 +29,7 @@ export class PayoutsService {
     const transaction = await this.transactionsService.createTransaction({
       type: 'PAYOUT',
       amount: data.amount,
-      currency: data.currency || 'GBP',
+      currency: data.currency || 'USD',
       sellerId: data.sellerId,
       description: data.description || `Payout to ${seller.storeName}`,
       status: data.scheduledDate && data.scheduledDate > new Date() ? 'PENDING' : 'PENDING',

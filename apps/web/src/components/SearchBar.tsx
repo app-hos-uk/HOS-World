@@ -53,6 +53,7 @@ export function SearchBar() {
   const [recentSearches, setRecentSearches] = useState<string[]>([]);
   const [showDropdown, setShowDropdown] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [searchError, setSearchError] = useState<string | null>(null);
   const [highlightIndex, setHighlightIndex] = useState(-1);
   const router = useRouter();
   const theme = useTheme();
@@ -99,6 +100,7 @@ export function SearchBar() {
           if (response?.data) {
             const data = response.data as any;
             setResults(data.products || []);
+            setSearchError(null);
             setShowDropdown(true);
           } else {
             setResults([]);
@@ -108,6 +110,7 @@ export function SearchBar() {
           console.error('Instant search error:', error);
           if (!controller.signal.aborted) {
             setResults([]);
+            setSearchError('Search is temporarily unavailable. Please try again.');
           }
         } finally {
           if (!controller.signal.aborted) {
@@ -117,6 +120,7 @@ export function SearchBar() {
       }, 250);
     } else {
       setResults([]);
+      setSearchError(null);
       setLoading(false);
     }
 
@@ -188,7 +192,7 @@ export function SearchBar() {
     }
   };
 
-  const shouldShowDropdown = showDropdown && (showingRecent || showingResults);
+  const shouldShowDropdown = showDropdown && (showingRecent || showingResults || (searchError !== null && query.trim().length >= 2));
 
   return (
     <div ref={searchRef} className="w-full max-w-2xl mx-auto relative">
@@ -207,7 +211,8 @@ export function SearchBar() {
             type="text"
             value={query}
             onChange={(e) => {
-              setQuery(e.target.value);
+              const sanitized = e.target.value.replace(/[<>]/g, '');
+              setQuery(sanitized);
               setHighlightIndex(-1);
             }}
             onFocus={handleFocus}
@@ -325,7 +330,7 @@ export function SearchBar() {
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-medium text-gray-900 truncate">{product.name}</p>
                     <p className="text-sm text-purple-700 font-semibold">
-                      {product.currency === 'USD' ? '$' : '£'}{Number(product.price).toFixed(2)}
+                      {new Intl.NumberFormat('en-US', { style: 'currency', currency: product.currency || 'USD' }).format(Number(product.price))}
                     </p>
                   </div>
                   <svg className="w-4 h-4 text-gray-300 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -355,8 +360,15 @@ export function SearchBar() {
             </>
           )}
 
+          {/* Search error */}
+          {searchError && !loading && query.trim().length >= 2 && (
+            <div className="p-4 text-center text-sm text-red-500">
+              {searchError}
+            </div>
+          )}
+
           {/* No results */}
-          {!showingRecent && !loading && query.trim().length >= 2 && results.length === 0 && (
+          {!showingRecent && !loading && !searchError && query.trim().length >= 2 && results.length === 0 && (
             <div className="p-4 text-center text-sm text-gray-500">
               No results found for &ldquo;{query}&rdquo;
             </div>

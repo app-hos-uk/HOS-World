@@ -124,7 +124,7 @@ export default function ReturnDetailPage() {
                   <div>
                     <dt className="text-sm font-medium text-gray-500">Refund Amount</dt>
                     <dd className="mt-1 text-lg font-semibold text-green-600">
-                      {formatPrice(Number(returnRequest.refundAmount), returnRequest.currency || 'GBP')}
+                      {formatPrice(Number(returnRequest.refundAmount), returnRequest.currency || 'USD')}
                     </dd>
                   </div>
                 )}

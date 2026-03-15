@@ -11,9 +11,9 @@ import {
   AddressValidationResult,
   Address,
 } from './interfaces/courier-provider.interface';
-import { RoyalMailProvider } from './providers/royal-mail.provider';
 import { FedExProvider } from './providers/fedex.provider';
 import { DHLProvider } from './providers/dhl.provider';
+import { USPSProvider } from './providers/usps.provider';
 
 /**
  * CourierFactory - Dynamically loads and manages courier providers
@@ -97,12 +97,15 @@ export class CourierFactoryService implements OnModuleInit {
     isTestMode: boolean,
   ): ICourierProvider | null {
     switch (providerType) {
-      case 'royal_mail':
-        return new RoyalMailProvider(credentials, isTestMode);
       case 'fedex':
         return new FedExProvider(credentials, isTestMode);
       case 'dhl':
         return new DHLProvider(credentials, isTestMode);
+      case 'usps':
+        return new USPSProvider(credentials, isTestMode);
+      case 'royal_mail':
+        this.logger.warn('Royal Mail provider is deprecated for US-only platform, skipping');
+        return null;
       default:
         this.logger.warn(`Unknown provider type: ${providerType}`);
         return null;
@@ -181,7 +184,7 @@ export class CourierFactoryService implements OnModuleInit {
     await Promise.all(
       activeProviders.map(async (provider) => {
         try {
-          const rates = await provider.getRates(request);
+          const rates = await this.withTimeout(provider.getRates(request), 15000);
           allRates.push(...rates);
         } catch (error: any) {
           this.logger.warn(`Failed to get rates from ${provider.providerId}: ${error.message}`);
@@ -214,11 +217,21 @@ export class CourierFactoryService implements OnModuleInit {
       throw new Error(`Provider ${providerName} not found or not active`);
     }
 
-    // Log the shipment creation
     await this.logApiCall(providerName, 'CREATE_SHIPMENT', request.orderId);
 
     try {
-      const response = await provider.createShipment(request);
+      const response = await this.withRetry(
+        () => this.withTimeout(provider.createShipment(request), 30000),
+        2,
+        providerName,
+      );
+
+      if (response.trackingNumber && !this.isValidTrackingNumber(response.trackingNumber)) {
+        this.logger.warn(
+          `Provider ${providerName} returned suspicious tracking number: ${response.trackingNumber}`,
+        );
+      }
+
       await this.logApiCall(providerName, 'CREATE_SHIPMENT_SUCCESS', request.orderId, {
         trackingNumber: response.trackingNumber,
       });
@@ -227,6 +240,11 @@ export class CourierFactoryService implements OnModuleInit {
       await this.logApiCall(providerName, 'CREATE_SHIPMENT_FAILED', request.orderId, {
         error: error.message,
       });
+      if (error.message?.includes('label') || error.message?.includes('Label')) {
+        throw new Error(
+          `Shipping label generation failed for ${providerName}. Order ${request.orderId} was not shipped. Please retry or choose another carrier.`,
+        );
+      }
       throw error;
     }
   }
@@ -249,7 +267,7 @@ export class CourierFactoryService implements OnModuleInit {
 
     for (const provider of activeProviders) {
       try {
-        const response = await provider.trackShipment(trackingNumber);
+        const response = await this.withTimeout(provider.trackShipment(trackingNumber), 15000);
         if (response.status !== 'UNKNOWN') {
           return response;
         }
@@ -358,6 +376,41 @@ export class CourierFactoryService implements OnModuleInit {
     } catch (error) {
       this.logger.error('Failed to log API call', error);
     }
+  }
+
+  private withTimeout<T>(promise: Promise<T>, ms: number): Promise<T> {
+    return Promise.race([
+      promise,
+      new Promise<never>((_, reject) =>
+        setTimeout(() => reject(new Error(`Request timed out after ${ms}ms`)), ms),
+      ),
+    ]);
+  }
+
+  private async withRetry<T>(
+    fn: () => Promise<T>,
+    maxRetries: number,
+    context: string,
+  ): Promise<T> {
+    let lastError: Error | undefined;
+    for (let attempt = 0; attempt <= maxRetries; attempt++) {
+      try {
+        return await fn();
+      } catch (error: any) {
+        lastError = error;
+        if (attempt < maxRetries) {
+          const delay = Math.min(1000 * 2 ** attempt, 5000);
+          this.logger.warn(`Retry ${attempt + 1}/${maxRetries} for ${context}: ${error.message}`);
+          await new Promise((r) => setTimeout(r, delay));
+        }
+      }
+    }
+    throw lastError;
+  }
+
+  private isValidTrackingNumber(trackingNumber: string): boolean {
+    if (!trackingNumber || trackingNumber.trim().length < 6) return false;
+    return /^[A-Za-z0-9]{6,40}$/.test(trackingNumber.trim());
   }
 
   /**

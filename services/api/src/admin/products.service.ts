@@ -1,15 +1,25 @@
-import { Injectable, BadRequestException, NotFoundException } from '@nestjs/common';
+import {
+  Injectable,
+  BadRequestException,
+  NotFoundException,
+  Optional,
+  Logger,
+} from '@nestjs/common';
 import { PrismaService } from '../database/prisma.service';
 import { ProductsService } from '../products/products.service';
 import { ProductsCacheHook } from '../products/products-cache.hook';
+import { MeilisearchService } from '../meilisearch/meilisearch.service';
 import { slugify } from '@hos-marketplace/utils';
 
 @Injectable()
 export class AdminProductsService {
+  private readonly logger = new Logger(AdminProductsService.name);
+
   constructor(
     private prisma: PrismaService,
     private productsService: ProductsService,
     private cacheHook: ProductsCacheHook,
+    @Optional() private meilisearchService?: MeilisearchService,
   ) {}
 
   async createProduct(data: {
@@ -149,7 +159,7 @@ export class AdminProductsService {
         shortDescription: data.shortDescription,
         slug,
         price: data.price,
-        currency: data.currency || 'GBP',
+        currency: data.currency || 'USD',
         stock: data.stock || 0,
         productType,
         category: data.category, // Keep for backward compatibility
@@ -235,6 +245,12 @@ export class AdminProductsService {
     this.cacheHook.onProductCreated(product).catch((error) => {
       console.error('Failed to sync product to cache:', error);
     });
+
+    if (this.meilisearchService) {
+      this.meilisearchService.indexProduct(product).catch((err) => {
+        this.logger.warn(`Failed to index admin product ${product.id}:`, err);
+      });
+    }
 
     return product;
   }
@@ -496,6 +512,12 @@ export class AdminProductsService {
       console.error('Failed to sync product update to cache:', error);
     });
 
+    if (this.meilisearchService) {
+      this.meilisearchService.indexProduct(updated).catch((err) => {
+        this.logger.warn(`Failed to re-index admin product ${updated.id}:`, err);
+      });
+    }
+
     return updated;
   }
 
@@ -601,10 +623,15 @@ export class AdminProductsService {
       await tx.product.delete({ where: { id: productId } });
     });
 
-    // Invalidate cache (fire and forget)
     this.cacheHook.onProductDeleted(productId).catch((error) => {
       console.error('Failed to invalidate product cache:', error);
     });
+
+    if (this.meilisearchService) {
+      this.meilisearchService.deleteProduct(productId).catch((err) => {
+        this.logger.warn(`Failed to remove product ${productId} from MeiliSearch:`, err);
+      });
+    }
 
     return { message: 'Product deleted successfully' };
   }

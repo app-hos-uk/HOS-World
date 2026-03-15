@@ -6,12 +6,7 @@ import { ConfigModule } from '@nestjs/config';
 import { StorageModule } from '../storage/storage.module';
 
 @Module({
-  imports: [
-    DatabaseModule,
-    CacheModule,
-    ConfigModule,
-    StorageModule,
-  ],
+  imports: [DatabaseModule, CacheModule, ConfigModule, StorageModule],
   providers: [QueueService],
   exports: [QueueService],
 })

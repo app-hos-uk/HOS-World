@@ -170,7 +170,7 @@ export default function AdminProductAnalyticsPage() {
             <div className="bg-white rounded-lg shadow p-6">
               <h3 className="text-sm font-medium text-gray-500">Total Revenue</h3>
               <p className="text-3xl font-bold text-gray-900 mt-2">
-                £{totalRevenue.toFixed(2)}
+                ${totalRevenue.toFixed(2)}
               </p>
             </div>
             <div className="bg-white rounded-lg shadow p-6">
@@ -192,7 +192,7 @@ export default function AdminProductAnalyticsPage() {
                     <CartesianGrid strokeDasharray="3 3" />
                     <XAxis type="number" />
                     <YAxis dataKey="name" type="category" width={150} />
-                    <Tooltip formatter={(value: any) => `£${Number(value).toFixed(2)}`} />
+                    <Tooltip formatter={(value: any) => `$${Number(value).toFixed(2)}`} />
                     <Legend />
                     <Bar dataKey="revenue" fill="#3b82f6" name="Revenue" />
                   </BarChart>
@@ -251,7 +251,7 @@ export default function AdminProductAnalyticsPage() {
                         {product.sku || '-'}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                        £{Number(product.revenue || 0).toFixed(2)}
+                        ${Number(product.revenue || 0).toFixed(2)}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                         {product.orders || 0}
@@ -260,7 +260,7 @@ export default function AdminProductAnalyticsPage() {
                         {product.quantity || 0}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                        £{Number(product.averagePrice || 0).toFixed(2)}
+                        ${Number(product.averagePrice || 0).toFixed(2)}
                       </td>
                     </tr>
                   ))}

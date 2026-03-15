@@ -55,6 +55,7 @@ const menuItems: MenuItem[] = [
     children: [
       { title: 'All Sellers', href: '/admin/sellers', icon: '👤' },
       { title: 'Seller Applications', href: '/admin/seller-applications', icon: '📝' },
+      { title: 'Vendor Products', href: '/admin/vendor-products', icon: '📋' },
       { title: 'Seller Analytics', href: '/admin/seller-analytics', icon: '📈' },
     ],
   },
@@ -123,6 +124,7 @@ const menuItems: MenuItem[] = [
       { title: 'Domain Management', href: '/admin/domains', icon: '🌐' },
       { title: 'Fulfillment Centers', href: '/admin/fulfillment-centers', icon: '🏭' },
       { title: 'Warehouses', href: '/admin/warehouses', icon: '📦' },
+      { title: 'Warehouse Transfers', href: '/admin/warehouses/transfers', icon: '🔄' },
       { title: 'Inventory Dashboard', href: '/admin/inventory', icon: '📊' },
       { title: 'Tax Zones', href: '/admin/tax-zones', icon: '💰' },
       { title: 'Logistics Partners', href: '/admin/logistics', icon: '🚛' },

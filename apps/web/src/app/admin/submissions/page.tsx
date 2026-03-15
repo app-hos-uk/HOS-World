@@ -79,6 +79,7 @@ interface Stats {
   procurementApproved: number;
   catalogCompleted: number;
   marketingCompleted: number;
+  contentCompleted: number;
   financeApproved: number;
   published: number;
   rejected: number;
@@ -90,6 +91,7 @@ const STATUSES = [
   { value: 'PROCUREMENT_APPROVED', label: 'Procurement OK', color: 'bg-blue-100 text-blue-800', chartColor: '#3b82f6' },
   { value: 'CATALOG_COMPLETED', label: 'Catalog Done', color: 'bg-indigo-100 text-indigo-800', chartColor: '#6366f1' },
   { value: 'MARKETING_COMPLETED', label: 'Marketing Done', color: 'bg-purple-100 text-purple-800', chartColor: '#8b5cf6' },
+  { value: 'CONTENT_COMPLETED', label: 'Content Completed', color: 'bg-green-100 text-green-800', chartColor: '#10b981' },
   { value: 'FINANCE_APPROVED', label: 'Finance OK', color: 'bg-cyan-100 text-cyan-800', chartColor: '#06b6d4' },
   { value: 'PUBLISHED', label: 'Published', color: 'bg-green-100 text-green-800', chartColor: '#10b981' },
   { value: 'REJECTED', label: 'Rejected', color: 'bg-red-100 text-red-800', chartColor: '#ef4444' },
@@ -147,6 +149,7 @@ export default function AdminSubmissionsPage() {
       procurementApproved: submissionList.filter(s => s.status === 'PROCUREMENT_APPROVED').length,
       catalogCompleted: submissionList.filter(s => s.status === 'CATALOG_COMPLETED').length,
       marketingCompleted: submissionList.filter(s => s.status === 'MARKETING_COMPLETED').length,
+      contentCompleted: submissionList.filter(s => s.status === 'CONTENT_COMPLETED').length,
       financeApproved: submissionList.filter(s => s.status === 'FINANCE_APPROVED').length,
       published: submissionList.filter(s => s.status === 'PUBLISHED').length,
       rejected: submissionList.filter(s => s.status === 'REJECTED').length,
@@ -303,7 +306,7 @@ export default function AdminSubmissionsPage() {
   };
 
   const getWorkflowStep = (status: string): number => {
-    const steps = ['SUBMITTED', 'UNDER_REVIEW', 'PROCUREMENT_APPROVED', 'CATALOG_COMPLETED', 'MARKETING_COMPLETED', 'FINANCE_APPROVED', 'PUBLISHED'];
+    const steps = ['SUBMITTED', 'UNDER_REVIEW', 'PROCUREMENT_APPROVED', 'CATALOG_COMPLETED', 'MARKETING_COMPLETED', 'CONTENT_COMPLETED', 'FINANCE_APPROVED', 'PUBLISHED'];
     return steps.indexOf(status);
   };
 
@@ -312,7 +315,7 @@ export default function AdminSubmissionsPage() {
     { key: 'seller', header: 'Seller', format: (v: any) => v?.storeName || v?.email || '' },
     { key: 'status', header: 'Status' },
     { key: 'createdAt', header: 'Submitted', format: (v: string) => new Date(v).toLocaleDateString() },
-    { key: 'productData', header: 'Price', format: (v: any) => v?.price ? `${v.currency || 'GBP'} ${Number(v.price).toFixed(2)}` : '' },
+    { key: 'productData', header: 'Price', format: (v: any) => v?.price ? `${v.currency || 'USD'} ${Number(v.price).toFixed(2)}` : '' },
   ];
 
   return (
@@ -339,7 +342,7 @@ export default function AdminSubmissionsPage() {
 
           {/* Stats Cards */}
           {stats && (
-            <div className="grid grid-cols-2 md:grid-cols-5 lg:grid-cols-9 gap-3">
+            <div className="grid grid-cols-2 md:grid-cols-5 lg:grid-cols-10 gap-3">
               <button
                 onClick={() => setStatusFilter('ALL')}
                 className={`bg-white rounded-lg shadow p-3 text-left hover:shadow-md ${statusFilter === 'ALL' ? 'ring-2 ring-purple-500' : ''}`}
@@ -381,6 +384,13 @@ export default function AdminSubmissionsPage() {
               >
                 <p className="text-xs text-gray-500">Marketing</p>
                 <p className="text-xl font-bold text-purple-600">{stats.marketingCompleted}</p>
+              </button>
+              <button
+                onClick={() => setStatusFilter('CONTENT_COMPLETED')}
+                className={`bg-white rounded-lg shadow p-3 text-left hover:shadow-md ${statusFilter === 'CONTENT_COMPLETED' ? 'ring-2 ring-purple-500' : ''}`}
+              >
+                <p className="text-xs text-gray-500">Content</p>
+                <p className="text-xl font-bold text-green-600">{stats.contentCompleted}</p>
               </button>
               <button
                 onClick={() => setStatusFilter('FINANCE_APPROVED')}
@@ -576,7 +586,7 @@ export default function AdminSubmissionsPage() {
                           </td>
                           <td className="px-4 py-3 text-sm text-gray-900">
                             {submission.productData?.price 
-                              ? `${submission.productData.currency || 'GBP'} ${Number(submission.productData.price).toFixed(2)}`
+                              ? `${submission.productData.currency || 'USD'} ${Number(submission.productData.price).toFixed(2)}`
                               : 'N/A'}
                           </td>
                           <td className="px-4 py-3">{getStatusBadge(submission.status)}</td>
@@ -645,7 +655,7 @@ export default function AdminSubmissionsPage() {
                     <div className="bg-gray-50 rounded-lg p-4">
                       <h3 className="font-semibold mb-3">Workflow Progress</h3>
                       <div className="flex items-center justify-between">
-                        {['Submitted', 'Review', 'Procurement', 'Catalog', 'Marketing', 'Finance', 'Published'].map((step, index) => {
+                        {['Submitted', 'Review', 'Procurement', 'Catalog', 'Marketing', 'Content', 'Finance', 'Published'].map((step, index) => {
                           const currentStep = getWorkflowStep(selectedSubmission.status);
                           const isCompleted = index <= currentStep && selectedSubmission.status !== 'REJECTED';
                           const isCurrent = index === currentStep;
@@ -690,7 +700,7 @@ export default function AdminSubmissionsPage() {
                             <p className="text-gray-500">Price</p>
                             <p className="font-medium">
                               {selectedSubmission.productData?.price 
-                                ? `${selectedSubmission.productData.currency || 'GBP'} ${Number(selectedSubmission.productData.price).toFixed(2)}`
+                                ? `${selectedSubmission.productData.currency || 'USD'} ${Number(selectedSubmission.productData.price).toFixed(2)}`
                                 : 'Not set'}
                             </p>
                           </div>
@@ -768,7 +778,7 @@ export default function AdminSubmissionsPage() {
                                     {ep?.sku && <span>SKU: {ep.sku}</span>}
                                     {ep?.barcode && <span>Barcode: {ep.barcode}</span>}
                                     {ep?.ean && <span>EAN: {ep.ean}</span>}
-                                    {ep?.price != null && <span>Price: {ep.currency || 'GBP'} {Number(ep.price).toFixed(2)}</span>}
+                                    {ep?.price != null && <span>Price: {ep.currency || 'USD'} {Number(ep.price).toFixed(2)}</span>}
                                     {ep?.status && <span className="px-1 py-0.5 bg-gray-200 rounded">{ep.status}</span>}
                                   </div>
                                 </div>

@@ -61,7 +61,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         return;
       }
 
-      const response = await apiClient.getCurrentUser();
+      const authTimeout = new Promise<never>((_, reject) =>
+        setTimeout(() => reject(new Error('Auth check timed out')), 10000)
+      );
+      const response = await Promise.race([apiClient.getCurrentUser(), authTimeout]);
       if (!mountedRef.current) return;
       
       if (response?.data) {

@@ -187,9 +187,9 @@ export default function PrivacyPolicyPage() {
               If you have any questions about this Privacy Policy or wish to exercise your rights, please contact us:
             </p>
             <div className="bg-gray-50 rounded-lg p-4">
-              <p className="mb-2"><strong>Email:</strong> privacy@houseofspells.co.uk</p>
+              <p className="mb-2"><strong>Email:</strong> privacy@houseofspells.com</p>
               <p className="mb-2"><strong>Address:</strong> House of Spells Marketplace</p>
-              <p><strong>Data Protection Officer:</strong> dpo@houseofspells.co.uk</p>
+              <p><strong>Data Protection Officer:</strong> dpo@houseofspells.com</p>
             </div>
           </section>
 

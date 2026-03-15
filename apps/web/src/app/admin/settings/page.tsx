@@ -44,6 +44,7 @@ export default function AdminSettingsPage() {
   const [activeTab, setActiveTab] = useState<'general' | 'email' | 'payment' | 'fulfillment' | 'notifications'>('general');
   const [saving, setSaving] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [showConfirm, setShowConfirm] = useState(false);
   
   const [settings, setSettings] = useState(defaultSettings);
 
@@ -58,10 +59,12 @@ export default function AdminSettingsPage() {
       setLoading(true);
       const response = await apiClient.getSystemSettings();
       if (response?.data) {
-        // Merge fetched settings with defaults to ensure all fields exist
+        const d = response.data;
         setSettings({
           ...defaultSettings,
-          ...response.data,
+          ...d,
+          defaultCurrency: d.defaultCurrency || d.currency || defaultSettings.defaultCurrency,
+          platformFee: d.platformFee ?? (d.platformFeeRate != null ? d.platformFeeRate * 100 : defaultSettings.platformFee),
         });
       }
     } catch (err: any) {
@@ -76,7 +79,12 @@ export default function AdminSettingsPage() {
   const handleSave = async () => {
     try {
       setSaving(true);
-      await apiClient.updateSystemSettings(settings);
+      const payload = {
+        ...settings,
+        currency: settings.defaultCurrency,
+        platformFeeRate: settings.platformFee / 100,
+      };
+      await apiClient.updateSystemSettings(payload);
       toast.success('Settings saved successfully!');
     } catch (error: any) {
       console.error('Error saving settings:', error);
@@ -136,7 +144,7 @@ export default function AdminSettingsPage() {
               <h3 className="font-semibold text-gray-900 group-hover:text-blue-700">Shipping Carriers</h3>
             </div>
             <p className="text-sm text-gray-600">
-              Royal Mail, FedEx, DHL - Generate labels and track shipments
+              USPS, FedEx, DHL - Generate labels and track shipments
             </p>
             <span className="inline-flex items-center mt-3 text-sm text-blue-600 font-medium group-hover:gap-2 transition-all">
               Configure Carriers
@@ -471,13 +479,40 @@ export default function AdminSettingsPage() {
             {/* Save Button */}
             <div className="mt-6 pt-6 border-t border-gray-200">
               <button
-                onClick={handleSave}
+                onClick={() => setShowConfirm(true)}
                 disabled={saving}
                 className="px-6 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors font-medium disabled:opacity-50"
               >
                 {saving ? 'Saving...' : 'Save Settings'}
               </button>
             </div>
+
+            {/* Confirmation Dialog */}
+            {showConfirm && (
+              <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+                <div className="bg-white rounded-lg shadow-xl p-6 max-w-sm w-full mx-4">
+                  <h3 className="text-lg font-semibold mb-2">Confirm Changes</h3>
+                  <p className="text-gray-600 text-sm mb-6">
+                    Are you sure you want to save these settings? This will apply changes platform-wide.
+                  </p>
+                  <div className="flex justify-end gap-3">
+                    <button
+                      onClick={() => setShowConfirm(false)}
+                      className="px-4 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors font-medium"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      onClick={() => { setShowConfirm(false); handleSave(); }}
+                      disabled={saving}
+                      className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors font-medium disabled:opacity-50"
+                    >
+                      {saving ? 'Saving...' : 'Confirm & Save'}
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
         </div>
         )}

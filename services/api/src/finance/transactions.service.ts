@@ -1,12 +1,17 @@
 import { Injectable, BadRequestException, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../database/prisma.service';
 
+const ALLOWED_TRANSACTION_TYPES = ['PAYMENT', 'PAYOUT', 'REFUND', 'FEE', 'ADJUSTMENT'] as const;
+type TransactionType = (typeof ALLOWED_TRANSACTION_TYPES)[number];
+
+const ALLOWED_CURRENCIES = ['USD', 'GBP', 'EUR', 'AED'] as const;
+
 @Injectable()
 export class TransactionsService {
   constructor(private prisma: PrismaService) {}
 
   async createTransaction(data: {
-    type: 'PAYMENT' | 'PAYOUT' | 'REFUND' | 'FEE' | 'ADJUSTMENT';
+    type: TransactionType;
     amount: number;
     currency?: string;
     sellerId?: string;
@@ -18,6 +23,18 @@ export class TransactionsService {
     metadata?: any;
     status?: 'PENDING' | 'COMPLETED' | 'FAILED' | 'CANCELLED';
   }) {
+    if (!ALLOWED_TRANSACTION_TYPES.includes(data.type)) {
+      throw new BadRequestException(
+        `Invalid transaction type "${data.type}". Allowed: ${ALLOWED_TRANSACTION_TYPES.join(', ')}`,
+      );
+    }
+
+    if (data.currency && !ALLOWED_CURRENCIES.includes(data.currency as any)) {
+      throw new BadRequestException(
+        `Unsupported currency "${data.currency}". Allowed: ${ALLOWED_CURRENCIES.join(', ')}`,
+      );
+    }
+
     // Validate related entities exist
     if (data.sellerId) {
       const seller = await this.prisma.seller.findUnique({
@@ -68,7 +85,7 @@ export class TransactionsService {
       data: {
         type: data.type,
         amount: data.amount,
-        currency: data.currency || 'GBP',
+        currency: data.currency || 'USD',
         status: data.status || 'PENDING',
         sellerId: data.sellerId,
         customerId: data.customerId,
@@ -381,6 +398,8 @@ export class TransactionsService {
     status?: string;
     startDate?: Date;
     endDate?: Date;
+    page?: number;
+    limit?: number;
   }) {
     const where: any = {};
 
@@ -410,31 +429,50 @@ export class TransactionsService {
       }
     }
 
-    return this.prisma.transaction.findMany({
-      where,
-      include: {
-        seller: {
-          select: {
-            storeName: true,
-            slug: true,
+    const page = filters?.page || 1;
+    const limit = Math.min(filters?.limit || 1000, 5000);
+    const skip = (page - 1) * limit;
+
+    const [transactions, total] = await Promise.all([
+      this.prisma.transaction.findMany({
+        where,
+        include: {
+          seller: {
+            select: {
+              storeName: true,
+              slug: true,
+            },
+          },
+          customer: {
+            select: {
+              email: true,
+              firstName: true,
+              lastName: true,
+            },
+          },
+          order: {
+            select: {
+              orderNumber: true,
+            },
           },
         },
-        customer: {
-          select: {
-            email: true,
-            firstName: true,
-            lastName: true,
-          },
+        orderBy: {
+          createdAt: 'desc',
         },
-        order: {
-          select: {
-            orderNumber: true,
-          },
-        },
+        skip,
+        take: limit,
+      }),
+      this.prisma.transaction.count({ where }),
+    ]);
+
+    return {
+      transactions,
+      pagination: {
+        page,
+        limit,
+        total,
+        totalPages: Math.ceil(total / limit),
       },
-      orderBy: {
-        createdAt: 'desc',
-      },
-    });
+    };
   }
 }

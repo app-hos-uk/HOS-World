@@ -174,7 +174,8 @@ export class TransactionsController {
   @Get('export')
   @ApiOperation({
     summary: 'Export transactions',
-    description: 'Exports financial transactions as a downloadable file. Finance/Admin access required.',
+    description:
+      'Exports financial transactions as a downloadable file. Finance/Admin access required.',
   })
   @ApiQuery({ name: 'sellerId', required: false, type: String, description: 'Filter by seller ID' })
   @ApiQuery({
@@ -217,8 +218,8 @@ export class TransactionsController {
     @Query('status') status?: string,
     @Query('startDate') startDate?: string,
     @Query('endDate') endDate?: string,
-  ): Promise<ApiResponse<any[]>> {
-    const transactions = await this.transactionsService.exportTransactions({
+  ): Promise<ApiResponse<any>> {
+    const result = await this.transactionsService.exportTransactions({
       sellerId,
       customerId,
       type: type as any,
@@ -227,7 +228,7 @@ export class TransactionsController {
       endDate: endDate ? new Date(endDate) : undefined,
     });
     return {
-      data: transactions,
+      data: result,
       message: 'Transactions exported successfully',
     };
   }

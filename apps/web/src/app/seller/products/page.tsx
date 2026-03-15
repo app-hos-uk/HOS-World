@@ -262,7 +262,7 @@ export default function SellerProductsPage() {
             </button>
             <div className="bg-white rounded-lg shadow p-4">
               <h3 className="text-xs font-medium text-gray-500 uppercase">Inventory Value</h3>
-              <p className="text-xl font-bold text-green-600 mt-1">£{stats.totalValue.toFixed(2)}</p>
+              <p className="text-xl font-bold text-green-600 mt-1">${stats.totalValue.toFixed(2)}</p>
             </div>
           </div>
 
@@ -371,7 +371,7 @@ export default function SellerProductsPage() {
                             </span>
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                            £{Number(product.price || 0).toFixed(2)}
+                            ${Number(product.price || 0).toFixed(2)}
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap">
                             <span className={`text-sm font-medium ${

@@ -280,7 +280,7 @@ export default function SellerOrdersPage() {
             </button>
             <div className="bg-white rounded-lg shadow p-4">
               <h3 className="text-xs font-medium text-gray-500 uppercase">Revenue</h3>
-              <p className="text-2xl font-bold text-green-600 mt-1">£{stats.totalRevenue.toFixed(2)}</p>
+              <p className="text-2xl font-bold text-green-600 mt-1">${stats.totalRevenue.toFixed(2)}</p>
             </div>
           </div>
 
@@ -347,7 +347,7 @@ export default function SellerOrdersPage() {
                             </div>
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                            £{Number(order.total || 0).toFixed(2)}
+                            ${Number(order.total || 0).toFixed(2)}
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap">
                             <span className={`px-2 py-1 text-xs font-medium rounded-full ${getStatusColor(order.status)}`}>
@@ -503,7 +503,7 @@ export default function SellerOrdersPage() {
                             <p className="text-sm text-gray-500">Qty: {item.quantity}</p>
                           </div>
                           <p className="font-medium text-gray-900">
-                            £{Number(item.price || 0).toFixed(2)}
+                            ${Number(item.price || 0).toFixed(2)}
                           </p>
                         </div>
                       ))
@@ -522,18 +522,18 @@ export default function SellerOrdersPage() {
                     {selectedOrder.subtotal && (
                       <div className="flex justify-between">
                         <span className="text-gray-500">Subtotal</span>
-                        <span className="text-gray-900">£{Number(selectedOrder.subtotal).toFixed(2)}</span>
+                        <span className="text-gray-900">${Number(selectedOrder.subtotal).toFixed(2)}</span>
                       </div>
                     )}
                     {selectedOrder.shippingCost !== undefined && (
                       <div className="flex justify-between">
                         <span className="text-gray-500">Shipping</span>
-                        <span className="text-gray-900">£{Number(selectedOrder.shippingCost).toFixed(2)}</span>
+                        <span className="text-gray-900">${Number(selectedOrder.shippingCost).toFixed(2)}</span>
                       </div>
                     )}
                     <div className="flex justify-between font-medium text-base pt-2 border-t">
                       <span className="text-gray-900">Total</span>
-                      <span className="text-gray-900">£{Number(selectedOrder.total).toFixed(2)}</span>
+                      <span className="text-gray-900">${Number(selectedOrder.total).toFixed(2)}</span>
                     </div>
                   </div>
                 </div>

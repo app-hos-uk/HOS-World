@@ -328,7 +328,7 @@ export default function ProductDetailPage() {
 
             <div className="mb-6">
               <div className="text-3xl font-bold text-purple-600 mb-2">
-                {formatPrice(product.price, product.currency || 'GBP')}
+                {formatPrice(product.price, product.currency || 'USD')}
               </div>
               {product.stock !== undefined && (
                 <p className={`text-sm ${product.stock > 0 ? 'text-green-600' : 'text-red-600'}`}>
@@ -360,7 +360,7 @@ export default function ProductDetailPage() {
                             }`}
                           >
                             {value}
-                            {optionPrice != null && <span className="ml-1 text-purple-600">({formatPrice(optionPrice, product.currency || 'GBP')})</span>}
+                            {optionPrice != null && <span className="ml-1 text-purple-600">({formatPrice(optionPrice, product.currency || 'USD')})</span>}
                           </button>
                         );
                       })}

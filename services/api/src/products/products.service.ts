@@ -3,6 +3,8 @@ import {
   NotFoundException,
   ForbiddenException,
   BadRequestException,
+  Optional,
+  Logger,
 } from '@nestjs/common';
 import { PrismaService } from '../database/prisma.service';
 import { CreateProductDto } from './dto/create-product.dto';
@@ -13,12 +15,16 @@ import type { Product, PaginatedResponse } from '@hos-marketplace/shared-types';
 import { Prisma, ProductStatus, ImageType } from '@prisma/client';
 import { slugify } from '@hos-marketplace/utils';
 import { ProductsCacheHook } from './products-cache.hook';
+import { MeilisearchService } from '../meilisearch/meilisearch.service';
 
 @Injectable()
 export class ProductsService {
+  private readonly logger = new Logger(ProductsService.name);
+
   constructor(
     private prisma: PrismaService,
     private cacheHook: ProductsCacheHook,
+    @Optional() private meilisearchService?: MeilisearchService,
   ) {}
 
   /**
@@ -59,7 +65,22 @@ export class ProductsService {
     }
 
     if (!seller) {
-      throw new NotFoundException('Seller profile not found. Please set up your seller profile first.');
+      throw new NotFoundException(
+        'Seller profile not found. Please set up your seller profile first.',
+      );
+    }
+
+    if (
+      createProductDto.price != null &&
+      (typeof createProductDto.price !== 'number' || createProductDto.price < 0)
+    ) {
+      throw new BadRequestException('Price must be a non-negative number');
+    }
+    if (
+      createProductDto.stock != null &&
+      (typeof createProductDto.stock !== 'number' || createProductDto.stock < 0)
+    ) {
+      throw new BadRequestException('Stock cannot be negative');
     }
 
     // Generate slug
@@ -137,7 +158,7 @@ export class ProductsService {
         price: createProductDto.price,
         tradePrice: createProductDto.tradePrice,
         rrp: createProductDto.rrp,
-        currency: createProductDto.currency || 'GBP',
+        currency: createProductDto.currency || 'USD',
         taxRate: createProductDto.taxRate || 0,
         stock: createProductDto.stock,
         fandom: createProductDto.fandom,
@@ -231,18 +252,47 @@ export class ProductsService {
       console.error('Failed to sync product to cache:', error);
     });
 
+    // Index in MeiliSearch
+    if (this.meilisearchService) {
+      this.meilisearchService.indexProduct(product).catch((err) => {
+        this.logger.warn(`Failed to index product ${product.id} in MeiliSearch:`, err);
+      });
+    }
+
     return mappedProduct;
   }
 
   async findAll(searchDto: SearchProductsDto): Promise<PaginatedResponse<Product>> {
     const page = searchDto.page || 1;
-    const limit = searchDto.limit || 20;
+    const limit = Math.min(searchDto.limit || 20, 100);
     const skip = (page - 1) * limit;
 
     // Build where clause — default to ACTIVE for public browsing; allow override for admin/internal use
     const where: Prisma.ProductWhereInput = {
       status: (searchDto.status as ProductStatus) || ProductStatus.ACTIVE,
     };
+
+    // Listing eligibility: when browsing publicly (status=ACTIVE), only show products that
+    // either have an active VendorProduct with stock + price, or are platform-owned (no vendor mapping).
+    if (!searchDto.status || searchDto.status === 'ACTIVE') {
+      if (!where.AND) where.AND = [];
+      (where.AND as Prisma.ProductWhereInput[]).push({
+        OR: [
+          // Platform-owned products (no vendor mapping) — eligible if in stock with price > 0
+          { vendorProducts: { none: {} }, stock: { gt: 0 }, price: { gt: 0 } },
+          // Vendor-supplied products: active vendor with stock and either platform or vendor price set
+          {
+            vendorProducts: {
+              some: {
+                status: 'ACTIVE',
+                vendorStock: { gt: 0 },
+                vendorPrice: { gt: 0 },
+              },
+            },
+          },
+        ],
+      });
+    }
 
     if (searchDto.query) {
       where.OR = [
@@ -624,6 +674,19 @@ export class ProductsService {
       throw new ForbiddenException('You do not have permission to update this product');
     }
 
+    if (
+      updateProductDto.price != null &&
+      (typeof updateProductDto.price !== 'number' || updateProductDto.price < 0)
+    ) {
+      throw new BadRequestException('Price must be a non-negative number');
+    }
+    if (
+      updateProductDto.stock != null &&
+      (typeof updateProductDto.stock !== 'number' || updateProductDto.stock < 0)
+    ) {
+      throw new BadRequestException('Stock cannot be negative');
+    }
+
     // Validate categoryId if provided
     if (updateProductDto.categoryId !== undefined) {
       if (updateProductDto.categoryId) {
@@ -774,10 +837,15 @@ export class ProductsService {
 
     const mappedProduct = this.mapToProductType(updated);
 
-    // Sync cache (fire and forget - don't block response)
     this.cacheHook.onProductUpdated(updated).catch((error) => {
       console.error('Failed to sync product update to cache:', error);
     });
+
+    if (this.meilisearchService) {
+      this.meilisearchService.indexProduct(updated).catch((err) => {
+        this.logger.warn(`Failed to re-index product ${updated.id} in MeiliSearch:`, err);
+      });
+    }
 
     return mappedProduct;
   }
@@ -816,6 +884,12 @@ export class ProductsService {
     this.cacheHook.onProductDeleted(productId).catch((error) => {
       console.error('Failed to invalidate product cache:', error);
     });
+
+    if (this.meilisearchService) {
+      this.meilisearchService.deleteProduct(productId).catch((err) => {
+        this.logger.warn(`Failed to remove product ${productId} from MeiliSearch:`, err);
+      });
+    }
   }
 
   private mapToProductType(
@@ -1013,7 +1087,7 @@ export class ProductsService {
         slug,
         sku: createBundleDto.sku,
         price: createBundleDto.price,
-        currency: 'GBP',
+        currency: products[0]?.currency || 'USD',
         stock: bundleStock,
         categoryId: createBundleDto.categoryId,
         productType: 'BUNDLED',

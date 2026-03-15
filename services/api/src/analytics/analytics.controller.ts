@@ -472,7 +472,7 @@ export class AnalyticsController {
           data.trends.forEach((trend: any) => {
             doc.fontSize(10);
             doc.text(
-              `${trend.period}: Revenue £${trend.revenue}, Orders ${trend.orders}, AOV £${trend.averageOrderValue}${trend.growth ? ` (Growth: ${trend.growth.toFixed(2)}%)` : ''}`,
+              `${trend.period}: Revenue $${trend.revenue}, Orders ${trend.orders}, AOV $${trend.averageOrderValue}${trend.growth ? ` (Growth: ${trend.growth.toFixed(2)}%)` : ''}`,
             );
             doc.moveDown(0.5);
           });
@@ -485,7 +485,7 @@ export class AnalyticsController {
           data.slice(0, 50).forEach((product: any) => {
             doc.fontSize(10);
             doc.text(
-              `${product.name} (${product.sku}): Revenue £${product.revenue}, Orders ${product.orders}, Quantity ${product.quantity}`,
+              `${product.name} (${product.sku}): Revenue $${product.revenue}, Orders ${product.orders}, Quantity ${product.quantity}`,
             );
             doc.moveDown(0.5);
           });
@@ -499,7 +499,7 @@ export class AnalyticsController {
         doc.text(`New Customers: ${data.newCustomers}`);
         doc.text(`Returning Customers: ${data.returningCustomers}`);
         doc.text(`Retention Rate: ${data.retentionRate}%`);
-        doc.text(`Average LTV: £${data.averageLTV}`);
+        doc.text(`Average LTV: $${data.averageLTV}`);
         doc.text(`Average Order Frequency: ${data.averageOrderFrequency}`);
         doc.text(`Churn Rate: ${data.churnRate}%`);
         break;
@@ -507,7 +507,7 @@ export class AnalyticsController {
         doc.fontSize(14).text('Inventory Metrics', { underline: true });
         doc.moveDown();
         doc.fontSize(10);
-        doc.text(`Total Value: £${data.totalValue}`);
+        doc.text(`Total Value: $${data.totalValue}`);
         doc.text(`Total Quantity: ${data.totalQuantity}`);
         doc.text(`Warehouse Count: ${data.warehouseCount}`);
         doc.text(`Low Stock Items: ${data.lowStockItems}`);

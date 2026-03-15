@@ -103,7 +103,7 @@ describe('ChatbotService', () => {
         id: 'order-1',
         orderNumber: 'ORD-123',
         total: 100,
-        currency: 'GBP',
+        currency: 'USD',
         items: [{ product: { name: 'Product 1', price: 100 } }],
       };
 

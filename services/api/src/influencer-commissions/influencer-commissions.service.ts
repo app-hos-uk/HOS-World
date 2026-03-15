@@ -84,7 +84,7 @@ export class InfluencerCommissionsService {
         rateSource: data.rateSource,
         rateApplied: data.rateApplied,
         amount: data.amount,
-        currency: data.currency || 'GBP',
+        currency: data.currency || 'USD',
         status: 'PENDING',
       },
     });

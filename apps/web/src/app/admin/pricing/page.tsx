@@ -348,9 +348,9 @@ export default function AdminPricingPage() {
   const exportColumns = [
     { key: 'name', header: 'Product Name' },
     { key: 'sku', header: 'SKU' },
-    { key: 'price', header: 'Price', format: (v: number, r: Product) => `${r.currency || 'GBP'} ${Number(v || 0).toFixed(2)}` },
-    { key: 'tradePrice', header: 'Trade Price', format: (v: number, r: Product) => v ? `${r.currency || 'GBP'} ${Number(v).toFixed(2)}` : '' },
-    { key: 'rrp', header: 'RRP', format: (v: number, r: Product) => v ? `${r.currency || 'GBP'} ${Number(v).toFixed(2)}` : '' },
+    { key: 'price', header: 'Price', format: (v: number, r: Product) => `${r.currency || 'USD'} ${Number(v || 0).toFixed(2)}` },
+    { key: 'tradePrice', header: 'Trade Price', format: (v: number, r: Product) => v ? `${r.currency || 'USD'} ${Number(v).toFixed(2)}` : '' },
+    { key: 'rrp', header: 'RRP', format: (v: number, r: Product) => v ? `${r.currency || 'USD'} ${Number(v).toFixed(2)}` : '' },
     { key: 'stock', header: 'Stock' },
     { key: 'taxRate', header: 'Tax Rate', format: (v: number) => v ? `${v}%` : '' },
     { key: 'status', header: 'Status' },

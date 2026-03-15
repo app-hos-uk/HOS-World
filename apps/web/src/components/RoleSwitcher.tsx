@@ -55,17 +55,10 @@ export function RoleSwitcher() {
   const router = useRouter();
   const [isOpen, setIsOpen] = useState(false);
 
-  // Debug logging to help troubleshoot
   useEffect(() => {
-    if (typeof window !== 'undefined') {
-      console.log('[RoleSwitcher] Debug Info:', {
-        hasUser: !!user,
-        userRole: user?.role,
-        isAdmin: user?.role === 'ADMIN',
-        loading,
-        impersonatedRole,
-        effectiveRole,
-      });
+    if (typeof window !== 'undefined' && process.env.NODE_ENV === 'development') {
+      // eslint-disable-next-line no-console
+      console.debug('[RoleSwitcher]', { role: user?.role, effectiveRole });
     }
   }, [user, loading, impersonatedRole, effectiveRole]);
 

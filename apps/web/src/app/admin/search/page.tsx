@@ -292,7 +292,7 @@ export default function AdminSearchPage() {
                               {item.name || item.title || '—'}
                             </td>
                             <td className="px-4 py-3 text-sm text-gray-700 text-right">
-                              {item.price != null ? `£${Number(item.price).toFixed(2)}` : '—'}
+                              {item.price != null ? `$${Number(item.price).toFixed(2)}` : '—'}
                             </td>
                           </tr>
                         ))}

@@ -3,10 +3,6 @@ import { ProductSubmissionStatus } from '@prisma/client';
 
 export class UpdateSubmissionDto {
   @IsOptional()
-  @IsEnum(ProductSubmissionStatus)
-  status?: ProductSubmissionStatus;
-
-  @IsOptional()
   @IsString()
   procurementNotes?: string;
 
@@ -28,5 +24,11 @@ export class UpdateSubmissionDto {
 
   @IsOptional()
   @IsObject()
-  productData?: any; // For updating raw product data
+  productData?: any;
+}
+
+export class AdminUpdateSubmissionDto extends UpdateSubmissionDto {
+  @IsOptional()
+  @IsEnum(ProductSubmissionStatus)
+  status?: ProductSubmissionStatus;
 }

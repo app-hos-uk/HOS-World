@@ -37,6 +37,21 @@ interface ProviderMetadata {
 }
 
 const TAX_PROVIDERS: Record<string, ProviderMetadata> = {
+  stripe_tax: {
+    displayName: 'Stripe Tax',
+    description: 'Automatic tax calculation powered by Stripe, integrated with your existing Stripe payments',
+    requiredCredentials: ['stripeSecretKey'],
+    optionalCredentials: ['stripeWebhookSecret'],
+    features: [
+      'Automatic tax calculation at checkout',
+      'US sales tax for all states',
+      'No separate tax registration needed',
+      'Works with Stripe Checkout & Elements',
+      'Real-time tax rates',
+      'Transaction-level reporting',
+    ],
+    documentationUrl: 'https://stripe.com/docs/tax',
+  },
   avalara: {
     displayName: 'Avalara AvaTax',
     description: 'Enterprise-grade tax automation for sales tax, VAT, and GST calculations with full compliance',

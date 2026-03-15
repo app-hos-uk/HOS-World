@@ -208,7 +208,7 @@ export class MigrationController {
         `ALTER TABLE "users" ADD COLUMN IF NOT EXISTS "country" TEXT`,
         `ALTER TABLE "users" ADD COLUMN IF NOT EXISTS "whatsappNumber" TEXT`,
         `ALTER TABLE "users" ADD COLUMN IF NOT EXISTS "preferredCommunicationMethod" TEXT`,
-        `ALTER TABLE "users" ADD COLUMN IF NOT EXISTS "currencyPreference" TEXT DEFAULT 'GBP'`,
+        `ALTER TABLE "users" ADD COLUMN IF NOT EXISTS "currencyPreference" TEXT DEFAULT 'USD'`,
         `ALTER TABLE "users" ADD COLUMN IF NOT EXISTS "ipAddress" TEXT`,
         `ALTER TABLE "users" ADD COLUMN IF NOT EXISTS "gdprConsent" BOOLEAN DEFAULT false`,
         `ALTER TABLE "users" ADD COLUMN IF NOT EXISTS "gdprConsentDate" TIMESTAMP`,
@@ -217,12 +217,12 @@ export class MigrationController {
 
         // Add columns to customers table
         `ALTER TABLE "customers" ADD COLUMN IF NOT EXISTS "country" TEXT`,
-        `ALTER TABLE "customers" ADD COLUMN IF NOT EXISTS "currencyPreference" TEXT DEFAULT 'GBP'`,
+        `ALTER TABLE "customers" ADD COLUMN IF NOT EXISTS "currencyPreference" TEXT DEFAULT 'USD'`,
 
         // Create CurrencyExchangeRate table
         `CREATE TABLE IF NOT EXISTS "currency_exchange_rates" (
           "id" TEXT NOT NULL PRIMARY KEY,
-          "baseCurrency" TEXT NOT NULL DEFAULT 'GBP',
+          "baseCurrency" TEXT NOT NULL DEFAULT 'USD',
           "targetCurrency" TEXT NOT NULL,
           "rate" DECIMAL(10, 6) NOT NULL,
           "cachedAt" TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -253,21 +253,24 @@ export class MigrationController {
         `CREATE INDEX IF NOT EXISTS "users_currencyPreference_idx" ON "users"("currencyPreference")`,
 
         // Update default currency
-        `ALTER TABLE "products" ALTER COLUMN "currency" SET DEFAULT 'GBP'`,
-        `ALTER TABLE "carts" ALTER COLUMN "currency" SET DEFAULT 'GBP'`,
-        `ALTER TABLE "orders" ALTER COLUMN "currency" SET DEFAULT 'GBP'`,
-        `ALTER TABLE "payments" ALTER COLUMN "currency" SET DEFAULT 'GBP'`,
+        `ALTER TABLE "products" ALTER COLUMN "currency" SET DEFAULT 'USD'`,
+        `ALTER TABLE "carts" ALTER COLUMN "currency" SET DEFAULT 'USD'`,
+        `ALTER TABLE "orders" ALTER COLUMN "currency" SET DEFAULT 'USD'`,
+        `ALTER TABLE "payments" ALTER COLUMN "currency" SET DEFAULT 'USD'`,
 
         // Backfill currency preference
-        `UPDATE "users" SET "currencyPreference" = 'GBP' WHERE "currencyPreference" IS NULL`,
+        `UPDATE "users" SET "currencyPreference" = 'USD' WHERE "currencyPreference" IS NULL OR "currencyPreference" = 'GBP'`,
 
-        // Initialize default exchange rates
+        // Update all existing product currencies from GBP to USD
+        `UPDATE "products" SET "currency" = 'USD' WHERE "currency" = 'GBP'`,
+
+        // Initialize default exchange rates (USD as base)
         `INSERT INTO "currency_exchange_rates" ("id", "baseCurrency", "targetCurrency", "rate", "cachedAt", "expiresAt")
          VALUES 
-           (gen_random_uuid()::text, 'GBP', 'GBP', 1.0, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP + INTERVAL '1 hour'),
-           (gen_random_uuid()::text, 'GBP', 'USD', 1.27, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP + INTERVAL '1 hour'),
-           (gen_random_uuid()::text, 'GBP', 'EUR', 1.17, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP + INTERVAL '1 hour'),
-           (gen_random_uuid()::text, 'GBP', 'AED', 4.67, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP + INTERVAL '1 hour')
+           (gen_random_uuid()::text, 'USD', 'USD', 1.0, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP + INTERVAL '1 hour'),
+           (gen_random_uuid()::text, 'USD', 'GBP', 0.79, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP + INTERVAL '1 hour'),
+           (gen_random_uuid()::text, 'USD', 'EUR', 0.92, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP + INTERVAL '1 hour'),
+           (gen_random_uuid()::text, 'USD', 'AED', 3.67, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP + INTERVAL '1 hour')
          ON CONFLICT ("baseCurrency", "targetCurrency") DO NOTHING`,
       ];
 

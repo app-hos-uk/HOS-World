@@ -1,4 +1,4 @@
-import { Injectable, NestInterceptor, ExecutionContext, CallHandler } from '@nestjs/common';
+import { Injectable, NestInterceptor, ExecutionContext, CallHandler, Logger } from '@nestjs/common';
 import { Observable } from 'rxjs';
 import { tap } from 'rxjs/operators';
 import { ActivityService } from '../../activity/activity.service';
@@ -6,6 +6,8 @@ import { PrismaService } from '../../database/prisma.service';
 
 @Injectable()
 export class ActivityInterceptor implements NestInterceptor {
+  private readonly logger = new Logger(ActivityInterceptor.name);
+
   constructor(
     private activityService: ActivityService,
     private prisma: PrismaService,
@@ -74,12 +76,10 @@ export class ActivityInterceptor implements NestInterceptor {
               userAgent,
             })
             .catch((error) => {
-              // Silently fail - don't break the request
-              console.error('Failed to log activity:', error);
+              this.logger.error(`Failed to log activity: ${error?.message}`);
             });
-        } catch (error) {
-          // Silently fail - don't break the request
-          console.error('Error in activity interceptor:', error);
+        } catch (error: any) {
+          this.logger.error(`Error in activity interceptor: ${error?.message}`);
         }
       }),
     );
@@ -122,8 +122,16 @@ export class ActivityInterceptor implements NestInterceptor {
   }
 
   private static readonly SENSITIVE_KEYS = new Set([
-    'password', 'token', 'refreshToken', 'secret', 'apiKey',
-    'creditCard', 'cardNumber', 'cvv', 'ssn', 'authorization',
+    'password',
+    'token',
+    'refreshToken',
+    'secret',
+    'apiKey',
+    'creditCard',
+    'cardNumber',
+    'cvv',
+    'ssn',
+    'authorization',
   ]);
 
   private sanitizeValue(value: any): any {

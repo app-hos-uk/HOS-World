@@ -48,7 +48,7 @@ describe('RefundsService', () => {
     const refundData = {
       returnId: 'return-1',
       amount: 100,
-      currency: 'GBP',
+      currency: 'USD',
       description: 'Refund for return',
     };
 
@@ -60,7 +60,7 @@ describe('RefundsService', () => {
         status: 'APPROVED',
         order: {
           id: 'order-1',
-          currency: 'GBP',
+          currency: 'USD',
         },
       };
       const mockTransaction = {
@@ -105,7 +105,7 @@ describe('RefundsService', () => {
       const mockReturnRequest = {
         id: 'return-1',
         status: 'PENDING',
-        order: { currency: 'GBP' },
+        order: { currency: 'USD' },
       };
 
       mockPrismaService.returnRequest.findUnique.mockResolvedValue(mockReturnRequest);

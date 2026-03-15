@@ -124,8 +124,7 @@ export function AIChatInterface({ characterId, character, onClose }: AIChatInter
 
         // Show product recommendations if available
         if (data.data.productRecommendations && data.data.productRecommendations.length > 0) {
-          // You can display these in a separate component
-          console.log('Product recommendations:', data.data.productRecommendations);
+          // Product recommendations available — can be rendered in a dedicated component
         }
       }
     } catch (error) {

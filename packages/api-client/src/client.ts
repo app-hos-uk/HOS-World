@@ -82,7 +82,19 @@ export class ApiClient {
         if (token) {
           nextHeaders['Authorization'] = `Bearer ${token}`;
         }
-        return fetch(url, { ...options, headers: nextHeaders });
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 15000);
+        try {
+          const res = await fetch(url, { ...options, headers: nextHeaders, signal: controller.signal });
+          clearTimeout(timeoutId);
+          return res;
+        } catch (err: any) {
+          clearTimeout(timeoutId);
+          if (err.name === 'AbortError') {
+            throw new Error(`Request timed out: ${endpoint}`);
+          }
+          throw err;
+        }
       };
 
       let response = await doFetch();
@@ -156,7 +168,7 @@ export class ApiClient {
     } catch (error: any) {
       // Enhanced error logging
       if (typeof window !== 'undefined') {
-        if (!(this.unauthorizedHandled && String(error?.message || '').toLowerCase().includes('invalid or expired token'))) {
+        if (!(this.unauthorizedHandled && (String(error?.message || '').toLowerCase().includes('invalid or expired token') || String(error?.message || '').toLowerCase().includes('please log in')))) {
           console.error('API Request failed:', { 
             url, 
             method: options.method || 'GET',
@@ -551,6 +563,24 @@ export class ApiClient {
     if (query.barcode) params.set('barcode', query.barcode);
     if (query.ean) params.set('ean', query.ean);
     return this.request<ApiResponse<any>>(`/submissions/check-duplicates?${params.toString()}`, {
+      method: 'GET',
+    });
+  }
+
+  async browseCatalogForVendor(params?: {
+    fandom?: string;
+    search?: string;
+    page?: number;
+    limit?: number;
+  }): Promise<ApiResponse<any>> {
+    const qs = new URLSearchParams();
+    if (params) {
+      Object.entries(params).forEach(([k, v]) => {
+        if (v !== undefined && v !== null) qs.append(k, String(v));
+      });
+    }
+    const query = qs.toString();
+    return this.request<ApiResponse<any>>(`/submissions/browse-catalog${query ? `?${query}` : ''}`, {
       method: 'GET',
     });
   }
@@ -4179,6 +4209,203 @@ export class ApiClient {
 
   async deleteMarketingCampaign(id: string): Promise<ApiResponse<any>> {
     return this.request<ApiResponse<any>>(`/admin/influencer-campaigns/${id}`, { method: 'DELETE' });
+  }
+
+  // ===== Vendor Products =====
+  async getVendorProducts(params?: {
+    sellerId?: string;
+    productId?: string;
+    status?: string;
+    search?: string;
+    page?: number;
+    limit?: number;
+    sortBy?: string;
+    sortOrder?: string;
+  }): Promise<ApiResponse<any>> {
+    const qs = new URLSearchParams();
+    if (params) {
+      Object.entries(params).forEach(([k, v]) => {
+        if (v !== undefined && v !== null) qs.append(k, String(v));
+      });
+    }
+    const query = qs.toString();
+    return this.request<ApiResponse<any>>(`/vendor-products${query ? `?${query}` : ''}`, { method: 'GET' });
+  }
+
+  async getVendorProduct(id: string): Promise<ApiResponse<any>> {
+    return this.request<ApiResponse<any>>(`/vendor-products/${id}`, { method: 'GET' });
+  }
+
+  async approveVendorProduct(id: string, data?: { platformPrice?: number; marginPercent?: number }): Promise<ApiResponse<any>> {
+    return this.request<ApiResponse<any>>(`/vendor-products/${id}/approve`, {
+      method: 'POST',
+      body: JSON.stringify(data || {}),
+    });
+  }
+
+  async rejectVendorProduct(id: string, reason: string): Promise<ApiResponse<any>> {
+    return this.request<ApiResponse<any>>(`/vendor-products/${id}/reject`, {
+      method: 'POST',
+      body: JSON.stringify({ reason }),
+    });
+  }
+
+  async activateVendorProduct(id: string): Promise<ApiResponse<any>> {
+    return this.request<ApiResponse<any>>(`/vendor-products/${id}/activate`, {
+      method: 'POST',
+    });
+  }
+
+  // My vendor products (for seller dashboard)
+  async getMyVendorProducts(params?: { status?: string; page?: number; limit?: number }): Promise<ApiResponse<any>> {
+    const qs = new URLSearchParams();
+    if (params) {
+      Object.entries(params).forEach(([k, v]) => {
+        if (v !== undefined && v !== null) qs.append(k, String(v));
+      });
+    }
+    const query = qs.toString();
+    return this.request<ApiResponse<any>>(`/vendor-products/me${query ? `?${query}` : ''}`, { method: 'GET' });
+  }
+
+  async getMyVendorStats(): Promise<ApiResponse<any>> {
+    return this.request<ApiResponse<any>>('/vendor-products/me/stats', { method: 'GET' });
+  }
+
+  async createVendorProduct(data: {
+    productId: string;
+    vendorPrice: number;
+    vendorStock: number;
+    vendorCurrency?: string;
+    costPrice?: number;
+    fulfillmentMethod?: string;
+    leadTimeDays?: number;
+  }): Promise<ApiResponse<any>> {
+    return this.request<ApiResponse<any>>('/vendor-products', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
+  // ===== Vendor Ledger =====
+  async getVendorLedger(sellerId: string, params?: { type?: string; page?: number; limit?: number }): Promise<ApiResponse<any>> {
+    const qs = new URLSearchParams();
+    if (params) {
+      Object.entries(params).forEach(([k, v]) => {
+        if (v !== undefined && v !== null) qs.append(k, String(v));
+      });
+    }
+    const query = qs.toString();
+    return this.request<ApiResponse<any>>(`/vendor-ledger/${sellerId}${query ? `?${query}` : ''}`, { method: 'GET' });
+  }
+
+  async getVendorLedgerSummary(sellerId: string): Promise<ApiResponse<any>> {
+    return this.request<ApiResponse<any>>(`/vendor-ledger/${sellerId}/summary`, { method: 'GET' });
+  }
+
+  async getMyLedger(params?: { type?: string; page?: number; limit?: number }): Promise<ApiResponse<any>> {
+    const qs = new URLSearchParams();
+    if (params) {
+      Object.entries(params).forEach(([k, v]) => {
+        if (v !== undefined && v !== null) qs.append(k, String(v));
+      });
+    }
+    const query = qs.toString();
+    return this.request<ApiResponse<any>>(`/vendor-ledger/me${query ? `?${query}` : ''}`, { method: 'GET' });
+  }
+
+  async getMyLedgerBalance(): Promise<ApiResponse<any>> {
+    return this.request<ApiResponse<any>>('/vendor-ledger/me/balance', { method: 'GET' });
+  }
+
+  // ===== Invoices =====
+  async downloadInvoice(orderId: string): Promise<Blob> {
+    const token = this.getToken();
+    const headers: Record<string, string> = {};
+    if (token) headers['Authorization'] = `Bearer ${token}`;
+    const response = await fetch(`${this.baseUrl}/invoices/order/${orderId}`, {
+      method: 'GET',
+      headers,
+    });
+    if (!response.ok) throw new Error('Failed to download invoice');
+    return response.blob();
+  }
+
+  // ===== Vendor Application =====
+  async applyAsVendor(data: {
+    email: string;
+    password: string;
+    firstName: string;
+    lastName: string;
+    storeName: string;
+    description?: string;
+    country?: string;
+    city?: string;
+    legalBusinessName?: string;
+    applicationNotes?: string;
+  }): Promise<ApiResponse<any>> {
+    return this.request<ApiResponse<any>>('/sellers/apply', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
+  // ===== Admin Vendors =====
+  async getAdminVendors(params?: { status?: string; search?: string; page?: number; limit?: number }): Promise<ApiResponse<any>> {
+    const qs = new URLSearchParams();
+    if (params) {
+      Object.entries(params).forEach(([k, v]) => {
+        if (v !== undefined && v !== null) qs.append(k, String(v));
+      });
+    }
+    const query = qs.toString();
+    return this.request<ApiResponse<any>>(`/sellers/admin/vendors${query ? `?${query}` : ''}`, { method: 'GET' });
+  }
+
+  async approveVendor(id: string, notes?: string): Promise<ApiResponse<any>> {
+    return this.request<ApiResponse<any>>(`/sellers/admin/vendors/${id}/approve`, {
+      method: 'POST',
+      body: JSON.stringify({ notes }),
+    });
+  }
+
+  async rejectVendor(id: string, reason: string): Promise<ApiResponse<any>> {
+    return this.request<ApiResponse<any>>(`/sellers/admin/vendors/${id}/reject`, {
+      method: 'POST',
+      body: JSON.stringify({ reason }),
+    });
+  }
+
+  async suspendVendor(id: string, reason: string): Promise<ApiResponse<any>> {
+    return this.request<ApiResponse<any>>(`/sellers/admin/vendors/${id}/suspend`, {
+      method: 'POST',
+      body: JSON.stringify({ reason }),
+    });
+  }
+
+  async activateVendor(id: string): Promise<ApiResponse<any>> {
+    return this.request<ApiResponse<any>>(`/sellers/admin/vendors/${id}/activate`, {
+      method: 'POST',
+    });
+  }
+
+  async updateVendorCommission(id: string, rate: number): Promise<ApiResponse<any>> {
+    return this.request<ApiResponse<any>>(`/sellers/admin/vendors/${id}/commission`, {
+      method: 'PUT',
+      body: JSON.stringify({ rate }),
+    });
+  }
+
+  // ===== Order Accept/Reject (Vendor) =====
+  async acceptOrder(orderId: string): Promise<ApiResponse<any>> {
+    return this.request<ApiResponse<any>>(`/orders/${orderId}/accept`, { method: 'POST' });
+  }
+
+  async rejectOrder(orderId: string, reason: string): Promise<ApiResponse<any>> {
+    return this.request<ApiResponse<any>>(`/orders/${orderId}/reject`, {
+      method: 'POST',
+      body: JSON.stringify({ reason }),
+    });
   }
 
 }

@@ -1,0 +1,5 @@
+{
+  "framework": "nextjs",
+  "installCommand": "cd ../.. && pnpm install --no-frozen-lockfile",
+  "buildCommand": "cd ../.. && pnpm --filter @hos-marketplace/shared-types build && pnpm --filter @hos-marketplace/utils build && pnpm --filter @hos-marketplace/api-client build && pnpm --filter @hos-marketplace/theme-system build && cd apps/web && pnpm next build"
+}

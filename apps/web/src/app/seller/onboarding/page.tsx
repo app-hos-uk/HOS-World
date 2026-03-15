@@ -90,7 +90,7 @@ export default function SellerOnboardingPage() {
       }
     } catch (err: any) {
       // Profile doesn't exist yet, start from beginning
-      console.log('No existing profile, starting onboarding');
+      // Profile doesn't exist yet — expected for new sellers
     }
   };
 

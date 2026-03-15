@@ -1,8 +1,7 @@
 /**
  * Format currency amount
- * Note: Base currency is GBP. For other currencies, amount should already be converted.
  */
-export function formatCurrency(amount: number, currency: string = 'GBP', locale: string = 'en-GB'): string {
+export function formatCurrency(amount: number, currency: string = 'USD', locale: string = 'en-US'): string {
   // Map currency to appropriate locale
   const localeMap: Record<string, string> = {
     GBP: 'en-GB',
@@ -21,9 +20,8 @@ export function formatCurrency(amount: number, currency: string = 'GBP', locale:
 
 /**
  * Format price with tax
- * Note: Base currency is GBP. For other currencies, price should already be converted.
  */
-export function formatPriceWithTax(price: number, taxRate: number, currency: string = 'GBP'): string {
+export function formatPriceWithTax(price: number, taxRate: number, currency: string = 'USD'): string {
   const taxAmount = price * taxRate;
   const total = price + taxAmount;
   return formatCurrency(total, currency);

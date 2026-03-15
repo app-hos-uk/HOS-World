@@ -76,7 +76,7 @@ export default function GiftCardDetailPage() {
     );
   }
 
-  const currency = giftCard.currency || 'GBP';
+  const currency = giftCard.currency || 'USD';
   const balance = Number(giftCard.balance ?? 0);
   const amount = Number(giftCard.amount ?? 0);
 

@@ -123,9 +123,9 @@ export default function AdminInfluencerCampaignsPage() {
   };
 
   const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('en-GB', {
+    return new Intl.NumberFormat('en-US', {
       style: 'currency',
-      currency: 'GBP',
+      currency: 'USD',
     }).format(amount);
   };
 

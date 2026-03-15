@@ -3,7 +3,7 @@
 import { Header } from '@/components/Header';
 import { Footer } from '@/components/Footer';
 import { RouteGuard } from '@/components/RouteGuard';
-import { useState, useEffect, Suspense } from 'react';
+import { useState, useEffect, useRef, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { useCurrency } from '@/contexts/CurrencyContext';
 import { apiClient } from '@/lib/api';
@@ -254,40 +254,40 @@ function PaymentContent() {
             {order.items?.map((item: any, index: number) => (
               <div key={index} className="flex justify-between">
                 <span>{item.product?.name || 'Product'} x {item.quantity}</span>
-                <span>{formatPrice(item.price * item.quantity, order.currency || 'GBP')}</span>
+                <span>{formatPrice(item.price * item.quantity, order.currency || 'USD')}</span>
               </div>
             ))}
           </div>
           <div className="border-t mt-4 pt-4">
             <div className="flex justify-between mb-2">
               <span>Subtotal</span>
-              <span>{formatPrice(order.subtotal || 0, order.currency || 'GBP')}</span>
+              <span>{formatPrice(order.subtotal || 0, order.currency || 'USD')}</span>
             </div>
             {order.discount > 0 && (
               <div className="flex justify-between mb-2 text-green-600">
                 <span>Discount</span>
-                <span>-{formatPrice(order.discount, order.currency || 'GBP')}</span>
+                <span>-{formatPrice(order.discount, order.currency || 'USD')}</span>
               </div>
             )}
             {order.shipping > 0 && (
               <div className="flex justify-between mb-2">
                 <span>Shipping</span>
-                <span>{formatPrice(order.shipping, order.currency || 'GBP')}</span>
+                <span>{formatPrice(order.shipping, order.currency || 'USD')}</span>
               </div>
             )}
             {order.tax > 0 && (
               <div className="flex justify-between mb-2">
                 <span>Tax</span>
-                <span>{formatPrice(order.tax, order.currency || 'GBP')}</span>
+                <span>{formatPrice(order.tax, order.currency || 'USD')}</span>
               </div>
             )}
             <div className="flex justify-between font-bold text-lg pt-2 border-t">
               <span>Total</span>
-              <span>{formatPrice(order.total, order.currency || 'GBP')}</span>
+              <span>{formatPrice(order.total, order.currency || 'USD')}</span>
             </div>
-            {order.currency && order.currency !== 'GBP' && (
+            {order.currency && order.currency !== 'USD' && (
               <p className="text-xs text-gray-500 mt-2">
-                Original amount: £{typeof order.total === 'number' ? order.total.toFixed(2) : '0.00'} GBP
+                Original amount: ${typeof order.total === 'number' ? order.total.toFixed(2) : '0.00'} USD
               </p>
             )}
           </div>
@@ -318,6 +318,7 @@ function PaymentForm({ order }: { order: any }) {
   const [stripePaymentIntentId, setStripePaymentIntentId] = useState<string | null>(null);
   const [cardDetails, setCardDetails] = useState({ number: '', expiry: '', cvc: '' });
   const [paymentError, setPaymentError] = useState<string | null>(null);
+  const isPaymentSubmittingRef = useRef(false);
   const router = useRouter();
   const toast = useToast();
   const { formatPrice } = useCurrency();
@@ -452,6 +453,7 @@ function PaymentForm({ order }: { order: any }) {
   };
 
   const handlePayment = async () => {
+    if (isPaymentSubmittingRef.current) return;
     setPaymentError(null);
 
     if (!order?.id) {
@@ -469,6 +471,7 @@ function PaymentForm({ order }: { order: any }) {
     }
 
     try {
+      isPaymentSubmittingRef.current = true;
       setProcessing(true);
       const giftCardRedemptionAmount = calculateGiftCardRedemptionAmount();
       
@@ -529,7 +532,7 @@ function PaymentForm({ order }: { order: any }) {
           }
           
           // If partial coverage, continue to payment for remaining amount
-          toast.success(`Gift card applied: ${formatPrice(giftCardRedemptionAmount, order.currency || 'GBP')} deducted`);
+          toast.success(`Gift card applied: ${formatPrice(giftCardRedemptionAmount, order.currency || 'USD')} deducted`);
         } catch (err: any) {
           console.error('Gift card redemption error:', err);
           const errorMessage = err.message || 'Gift card redemption failed';
@@ -554,7 +557,7 @@ function PaymentForm({ order }: { order: any }) {
             orderId: order.id,
             paymentMethod: selectedProvider,
             amount: finalAmount,
-            currency: order.currency || 'GBP',
+            currency: order.currency || 'USD',
           });
 
           if (!response?.data) {
@@ -626,10 +629,12 @@ function PaymentForm({ order }: { order: any }) {
       toast.error(errorMessage);
     } finally {
       setProcessing(false);
+      isPaymentSubmittingRef.current = false;
     }
   };
 
   const handleStripeConfirm = async () => {
+    if (isPaymentSubmittingRef.current) return;
     if (!cardDetails.number || !cardDetails.expiry || !cardDetails.cvc) {
       toast.error('Please fill in all card details');
       return;
@@ -651,6 +656,7 @@ function PaymentForm({ order }: { order: any }) {
     }
 
     try {
+      isPaymentSubmittingRef.current = true;
       setProcessing(true);
       const confirmResponse = await apiClient.confirmPayment({
         orderId: order.id,
@@ -672,6 +678,7 @@ function PaymentForm({ order }: { order: any }) {
       toast.error(errorMessage);
     } finally {
       setProcessing(false);
+      isPaymentSubmittingRef.current = false;
     }
   };
 
@@ -720,7 +727,16 @@ function PaymentForm({ order }: { order: any }) {
   }
 
   return (
-    <div className="bg-white border rounded-lg p-4 sm:p-6">
+    <div className="bg-white border rounded-lg p-4 sm:p-6 relative">
+      {processing && (
+        <div className="absolute inset-0 bg-white/80 z-10 flex items-center justify-center rounded-lg">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-purple-600 mx-auto mb-3"></div>
+            <p className="text-sm font-medium text-gray-700">Processing payment...</p>
+            <p className="text-xs text-gray-500 mt-1">Please do not close this page</p>
+          </div>
+        </div>
+      )}
       <h2 className="text-lg sm:text-xl font-semibold mb-3 sm:mb-4">Payment Details</h2>
       
       {/* Payment Provider Selection */}
@@ -788,7 +804,7 @@ function PaymentForm({ order }: { order: any }) {
         {giftCardApplied && giftCardBalance !== null && (
           <div className="mt-2 p-2 bg-green-50 border border-green-200 rounded">
             <p className="text-sm text-green-800">
-              Gift card applied: {formatPrice(giftCardBalance, order.currency || 'GBP')} available
+              Gift card applied: {formatPrice(giftCardBalance, order.currency || 'USD')} available
             </p>
           </div>
         )}
@@ -799,23 +815,23 @@ function PaymentForm({ order }: { order: any }) {
         <div className="mb-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
           <div className="flex justify-between text-sm mb-2">
             <span>Original Order Total:</span>
-            <span>{formatPrice(order.total, order.currency || 'GBP')}</span>
+            <span>{formatPrice(order.total, order.currency || 'USD')}</span>
           </div>
           {giftCardRedeemedAmount > 0 && (
             <div className="flex justify-between text-sm mb-2 text-green-700">
               <span>Previously Redeemed Gift Cards:</span>
-              <span>-{formatPrice(giftCardRedeemedAmount, order.currency || 'GBP')}</span>
+              <span>-{formatPrice(giftCardRedeemedAmount, order.currency || 'USD')}</span>
             </div>
           )}
           {giftCardApplied && giftCardBalance !== null && giftCardBalance !== undefined && giftCardBalance > 0 && (
             <div className="flex justify-between text-sm mb-2 text-green-700">
               <span>Gift Card Applied (Not Yet Redeemed):</span>
-              <span>-{formatPrice(Math.min(giftCardBalance, Math.max(0, (order.total || 0) - giftCardRedeemedAmount)), order.currency || 'GBP')}</span>
+              <span>-{formatPrice(Math.min(giftCardBalance, Math.max(0, (order.total || 0) - giftCardRedeemedAmount)), order.currency || 'USD')}</span>
             </div>
           )}
           <div className="flex justify-between font-bold text-lg pt-2 border-t border-blue-300">
             <span>Amount to Pay:</span>
-            <span>{formatPrice(calculateTotal(), order.currency || 'GBP')}</span>
+            <span>{formatPrice(calculateTotal(), order.currency || 'USD')}</span>
           </div>
         </div>
       )}
@@ -877,7 +893,7 @@ function PaymentForm({ order }: { order: any }) {
             disabled={processing || !cardDetails.number || !cardDetails.expiry || !cardDetails.cvc}
             className="w-full mt-4 bg-purple-600 text-white py-2.5 sm:py-3 text-sm sm:text-base rounded-lg font-medium hover:bg-purple-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            {processing ? 'Processing Payment...' : `Pay ${formatPrice(calculateTotal(), order?.currency || 'GBP')}`}
+            {processing ? 'Processing Payment...' : `Pay ${formatPrice(calculateTotal(), order?.currency || 'USD')}`}
           </button>
         </div>
       )}
@@ -914,7 +930,7 @@ function PaymentForm({ order }: { order: any }) {
           disabled={processing || loadingProviders || availableProviders.length === 0 || !selectedProvider}
           className="w-full bg-purple-600 text-white py-2.5 sm:py-3 text-sm sm:text-base rounded-lg font-medium hover:bg-purple-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          {processing ? 'Processing...' : loadingProviders ? 'Loading payment methods...' : availableProviders.length === 0 ? 'No Payment Methods Available' : !selectedProvider ? 'Select a Payment Method' : `Complete Payment - ${formatPrice(calculateTotal(), order?.currency || 'GBP')}`}
+          {processing ? 'Processing...' : loadingProviders ? 'Loading payment methods...' : availableProviders.length === 0 ? 'No Payment Methods Available' : !selectedProvider ? 'Select a Payment Method' : `Complete Payment - ${formatPrice(calculateTotal(), order?.currency || 'USD')}`}
         </button>
       )}
     </div>

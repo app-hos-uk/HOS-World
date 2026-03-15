@@ -111,7 +111,7 @@ function FandomProducts({ fandomSlug, fandomName }: { fandomSlug: string; fandom
               <p className="text-sm text-gray-600 mt-1 line-clamp-2">{product.description}</p>
               <div className="mt-2">
                 <span className="text-lg font-bold text-purple-900">
-                  £{Number(product.price).toFixed(2)}
+                  ${Number(product.price).toFixed(2)}
                 </span>
               </div>
             </div>

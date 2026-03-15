@@ -102,6 +102,10 @@ export class InventoryService {
    * Create or update inventory location
    */
   async upsertInventoryLocation(createDto: CreateInventoryLocationDto) {
+    if (!Number.isInteger(createDto.quantity) || createDto.quantity < 0) {
+      throw new BadRequestException('Quantity must be a non-negative integer');
+    }
+
     // Verify warehouse exists
     await this.findWarehouseById(createDto.warehouseId);
 
@@ -184,35 +188,11 @@ export class InventoryService {
   }
 
   /**
-   * Reserve stock for an order or cart
+   * Reserve stock for an order or cart (transactional to prevent race conditions)
    */
   async reserveStock(reserveDto: ReserveStockDto) {
-    const location = await this.prisma.inventoryLocation.findUnique({
-      where: {
-        id: reserveDto.inventoryLocationId,
-      },
-      include: {
-        stockReservations: {
-          where: {
-            status: 'ACTIVE',
-            expiresAt: { gt: new Date() },
-          },
-        },
-      },
-    });
-
-    if (!location) {
-      throw new NotFoundException('Inventory location not found');
-    }
-
-    // Calculate available stock (quantity - reserved)
-    const reserved = location.stockReservations.reduce((sum, res) => sum + res.quantity, 0);
-    const available = location.quantity - reserved;
-
-    if (available < reserveDto.quantity) {
-      throw new BadRequestException(
-        `Insufficient stock. Available: ${available}, Requested: ${reserveDto.quantity}`,
-      );
+    if (!Number.isInteger(reserveDto.quantity) || reserveDto.quantity <= 0) {
+      throw new BadRequestException('Quantity must be a positive integer');
     }
 
     // Set expiration (default: 24 hours from now)
@@ -220,35 +200,60 @@ export class InventoryService {
       ? new Date(reserveDto.expiresAt)
       : new Date(Date.now() + 24 * 60 * 60 * 1000);
 
-    // Create reservation
-    const reservation = await this.prisma.stockReservation.create({
-      data: {
-        inventoryLocationId: location.id,
-        orderId: reserveDto.orderId,
-        cartId: reserveDto.cartId,
-        quantity: reserveDto.quantity,
-        expiresAt,
-        status: 'ACTIVE',
-      },
-      include: {
-        inventoryLocation: {
-          include: {
-            warehouse: true,
-            product: true,
+    return this.prisma.$transaction(async (tx) => {
+      const location = await tx.inventoryLocation.findUnique({
+        where: { id: reserveDto.inventoryLocationId },
+        include: {
+          stockReservations: {
+            where: {
+              status: 'ACTIVE',
+              expiresAt: { gt: new Date() },
+            },
           },
         },
-      },
-    });
+      });
 
-    // Update reserved count
-    await this.prisma.inventoryLocation.update({
-      where: { id: location.id },
-      data: {
-        reserved: { increment: reserveDto.quantity },
-      },
-    });
+      if (!location) {
+        throw new NotFoundException('Inventory location not found');
+      }
 
-    return reservation;
+      const reserved = location.stockReservations.reduce((sum, res) => sum + res.quantity, 0);
+      const available = location.quantity - reserved;
+
+      if (available < reserveDto.quantity) {
+        throw new BadRequestException(
+          `Insufficient stock. Available: ${available}, Requested: ${reserveDto.quantity}`,
+        );
+      }
+
+      const reservation = await tx.stockReservation.create({
+        data: {
+          inventoryLocationId: location.id,
+          orderId: reserveDto.orderId,
+          cartId: reserveDto.cartId,
+          quantity: reserveDto.quantity,
+          expiresAt,
+          status: 'ACTIVE',
+        },
+        include: {
+          inventoryLocation: {
+            include: {
+              warehouse: true,
+              product: true,
+            },
+          },
+        },
+      });
+
+      await tx.inventoryLocation.update({
+        where: { id: location.id },
+        data: {
+          reserved: { increment: reserveDto.quantity },
+        },
+      });
+
+      return reservation;
+    });
   }
 
   /**
@@ -268,6 +273,10 @@ export class InventoryService {
 
     if (reservation.status !== 'ACTIVE') {
       throw new BadRequestException('Reservation is not active');
+    }
+
+    if (reservation.expiresAt && reservation.expiresAt < new Date()) {
+      throw new BadRequestException('Reservation has expired and cannot be confirmed');
     }
 
     // Update reservation status and link to order
@@ -368,16 +377,13 @@ export class InventoryService {
    * Get low stock alerts
    */
   async getLowStockAlerts(warehouseId?: string) {
-    const where: any = {
-      quantity: {
-        lte: this.prisma.inventoryLocation.fields.lowStockThreshold,
-      },
-    };
+    const where: any = {};
 
     if (warehouseId) {
       where.warehouseId = warehouseId;
     }
 
+    // Fetch all locations then filter in JS, because Prisma can't compare two columns directly
     const locations = await this.prisma.inventoryLocation.findMany({
       where,
       include: {
@@ -392,14 +398,16 @@ export class InventoryService {
       },
     });
 
-    return locations.map((location) => ({
-      warehouse: location.warehouse.name,
-      product: location.product.name,
-      sku: location.product.sku,
-      currentStock: location.quantity,
-      threshold: location.lowStockThreshold,
-      status: location.quantity === 0 ? 'OUT_OF_STOCK' : 'LOW_STOCK',
-    }));
+    return locations
+      .filter((location) => location.quantity <= location.lowStockThreshold)
+      .map((location) => ({
+        warehouse: location.warehouse.name,
+        product: location.product.name,
+        sku: location.product.sku,
+        currentStock: location.quantity,
+        threshold: location.lowStockThreshold,
+        status: location.quantity === 0 ? 'OUT_OF_STOCK' : 'LOW_STOCK',
+      }));
   }
 
   /**
@@ -464,6 +472,10 @@ export class InventoryService {
    * Transfer stock between warehouses
    */
   async transferStock(createDto: CreateStockTransferDto, requestedBy: string) {
+    if (!Number.isInteger(createDto.quantity) || createDto.quantity <= 0) {
+      throw new BadRequestException('Transfer quantity must be a positive integer');
+    }
+
     // Verify warehouses exist and are different
     if (createDto.fromWarehouseId === createDto.toWarehouseId) {
       throw new BadRequestException('Source and destination warehouses must be different');
@@ -672,6 +684,10 @@ export class InventoryService {
    * Record stock movement (for manual adjustments, returns, etc.)
    */
   async recordStockMovement(createDto: CreateStockMovementDto, performedBy?: string) {
+    if (!Number.isInteger(createDto.quantity) || createDto.quantity <= 0) {
+      throw new BadRequestException('Movement quantity must be a positive integer');
+    }
+
     // Verify inventory location exists
     const location = await this.prisma.inventoryLocation.findUnique({
       where: { id: createDto.inventoryLocationId },
@@ -1018,12 +1034,9 @@ export class InventoryService {
       this.prisma.warehouse.count({ where: { isActive: true } }),
       this.prisma.inventoryLocation.count(),
       this.prisma.inventoryLocation
-        .count({
-          where: {
-            quantity: { lte: this.prisma.inventoryLocation.fields.lowStockThreshold },
-          },
-        })
-        .catch(() => 0), // Fallback if the complex query fails
+        .findMany({ select: { quantity: true, lowStockThreshold: true } })
+        .then((locs) => locs.filter((l) => l.quantity <= l.lowStockThreshold).length)
+        .catch(() => 0),
       this.prisma.inventoryLocation.aggregate({
         _sum: { quantity: true },
       }),

@@ -43,7 +43,7 @@ export default function LoginPage() {
     analytics: false,
     essential: true, // Always true
   });
-  const [currencyPreference, setCurrencyPreference] = useState('GBP');
+  const [currencyPreference, setCurrencyPreference] = useState('USD');
 
   // Backend OAuth endpoints
   const oauthBaseUrl = getPublicApiBaseUrl() || 'https://hos-marketplaceapi-production.up.railway.app/api';
@@ -68,13 +68,13 @@ export default function LoginPage() {
       if (response?.data) {
         setDetectedCountry(response.data);
         setCountry(response.data.country || '');
-        setCurrencyPreference(response.data.currency || 'GBP');
+        setCurrencyPreference(response.data.currency || 'USD');
       }
     } catch (error) {
       console.error('Failed to detect country:', error);
       // Set defaults
-      setCountry('United Kingdom');
-      setCurrencyPreference('GBP');
+      setCountry('United States');
+      setCurrencyPreference('USD');
     } finally {
       setDetectingCountry(false);
     }
@@ -83,7 +83,7 @@ export default function LoginPage() {
   const handleCountryConfirm = () => {
     if (detectedCountry) {
       setCountry(detectedCountry.country);
-      setCurrencyPreference(detectedCountry.currency || 'GBP');
+      setCurrencyPreference(detectedCountry.currency || 'USD');
     }
   };
 
@@ -681,7 +681,7 @@ export default function LoginPage() {
                             'Italy': 'EUR',
                             'Spain': 'EUR',
                           };
-                          setCurrencyPreference(countryCurrencies[e.target.value] || 'GBP');
+                          setCurrencyPreference(countryCurrencies[e.target.value] || 'USD');
                         }}
                         required
                         className="w-full px-4 py-2.5 bg-white border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 text-gray-900 text-base"
@@ -729,11 +729,11 @@ export default function LoginPage() {
                       value={whatsappNumber}
                       onChange={(e) => setWhatsappNumber(e.target.value)}
                       className="w-full px-4 py-2.5 bg-white border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 text-gray-900 placeholder-gray-500 text-base"
-                      placeholder="+44 7700 900000"
+                      placeholder="+1 555 123 4567"
                       style={{ backgroundColor: '#ffffff', color: '#111827' }}
                     />
                     <p className="mt-1 text-xs text-gray-500">
-                      Include country code (e.g., +44 for UK)
+                      Include country code (e.g., +1 for US)
                     </p>
                   </div>
 

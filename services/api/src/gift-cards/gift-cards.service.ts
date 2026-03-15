@@ -6,6 +6,7 @@ import {
   NotImplementedException,
 } from '@nestjs/common';
 import { PrismaService } from '../database/prisma.service';
+import { Prisma } from '@prisma/client';
 import { CreateGiftCardDto } from './dto/create-gift-card.dto';
 import { RedeemGiftCardDto } from './dto/redeem-gift-card.dto';
 
@@ -32,6 +33,10 @@ export class GiftCardsService {
    * Create/purchase a gift card
    */
   async create(userId: string, dto: CreateGiftCardDto): Promise<any> {
+    if (!dto.amount || dto.amount <= 0) {
+      throw new BadRequestException('Gift card amount must be greater than zero');
+    }
+
     // Generate unique code
     let code: string;
     let isUnique = false;
@@ -67,7 +72,7 @@ export class GiftCardsService {
         type: dto.type,
         amount: dto.amount,
         balance: dto.amount, // Initial balance equals amount
-        currency: dto.currency || 'GBP',
+        currency: dto.currency || 'USD',
         status: 'ACTIVE',
         issuedToEmail: dto.issuedToEmail,
         issuedToName: dto.issuedToName,
@@ -96,16 +101,6 @@ export class GiftCardsService {
   async validate(code: string): Promise<any> {
     const giftCard = await (this.prisma as any).giftCard.findUnique({
       where: { code: code.toUpperCase() },
-      include: {
-        user: {
-          select: {
-            id: true,
-            email: true,
-            firstName: true,
-            lastName: true,
-          },
-        },
-      },
     });
 
     if (!giftCard) {
@@ -134,7 +129,6 @@ export class GiftCardsService {
       currency: giftCard.currency,
       status: giftCard.status,
       expiresAt: giftCard.expiresAt,
-      owner: giftCard.user,
     };
   }
 
@@ -142,99 +136,113 @@ export class GiftCardsService {
    * Redeem gift card (apply to order)
    */
   async redeem(userId: string, dto: RedeemGiftCardDto): Promise<any> {
-    // Validate gift card
-    const giftCard = await (this.prisma as any).giftCard.findUnique({
-      where: { code: dto.code.toUpperCase() },
-    });
-
-    if (!giftCard) {
-      throw new NotFoundException('Gift card not found');
+    if (!dto.amount || dto.amount <= 0) {
+      throw new BadRequestException('Redemption amount must be greater than zero');
     }
 
-    // Check if user owns the gift card or if it's unassigned
-    if (giftCard.userId && giftCard.userId !== userId) {
-      throw new ForbiddenException('You do not own this gift card');
-    }
+    // Use transaction with Serializable isolation to prevent race conditions on balance
+    return this.prisma.$transaction(async (tx) => {
+      const giftCard = await (tx as any).giftCard.findUnique({
+        where: { code: dto.code.toUpperCase() },
+      });
 
-    // Check if expired
-    if (giftCard.expiresAt && giftCard.expiresAt < new Date()) {
-      throw new BadRequestException('Gift card has expired');
-    }
+      if (!giftCard) {
+        throw new NotFoundException('Gift card not found');
+      }
 
-    // Check if already fully redeemed
-    if (giftCard.status === 'REDEEMED' || Number(giftCard.balance) <= 0) {
-      throw new BadRequestException('Gift card has no remaining balance');
-    }
+      if (giftCard.userId && giftCard.userId !== userId) {
+        throw new ForbiddenException('You do not own this gift card');
+      }
 
-    // Check if cancelled
-    if (giftCard.status === 'CANCELLED') {
-      throw new BadRequestException('Gift card has been cancelled');
-    }
+      if (giftCard.expiresAt && giftCard.expiresAt < new Date()) {
+        throw new BadRequestException('Gift card has expired');
+      }
 
-    const currentBalance = Number(giftCard.balance);
-    const redeemAmount = dto.amount;
+      if (giftCard.status === 'REDEEMED' || Number(giftCard.balance) <= 0) {
+        throw new BadRequestException('Gift card has no remaining balance');
+      }
 
-    if (redeemAmount > currentBalance) {
-      throw new BadRequestException(`Insufficient balance. Available: ${currentBalance}`);
-    }
+      if (giftCard.status === 'CANCELLED') {
+        throw new BadRequestException('Gift card has been cancelled');
+      }
 
-    // Calculate new balance
-    const newBalance = currentBalance - redeemAmount;
+      const currentBalance = Number(giftCard.balance);
+      const redeemAmount = dto.amount;
 
-    // Update gift card
-    const updatedGiftCard = await this.prisma.giftCard.update({
-      where: { id: giftCard.id },
-      data: {
-        balance: newBalance,
-        status: newBalance <= 0 ? 'REDEEMED' : 'ACTIVE',
-        redeemedAt: newBalance <= 0 ? new Date() : giftCard.redeemedAt,
-        userId: giftCard.userId || userId, // Assign to user if not already assigned
-      },
-    });
+      if (redeemAmount > currentBalance) {
+        throw new BadRequestException(`Insufficient balance. Available: ${currentBalance}`);
+      }
 
-    // Create transaction record
-    await (this.prisma as any).giftCardTransaction.create({
-      data: {
-        giftCardId: giftCard.id,
-        orderId: dto.orderId,
-        type: 'REDEMPTION',
-        amount: redeemAmount,
-        balanceAfter: newBalance,
-        notes: dto.orderId ? `Redeemed for order ${dto.orderId}` : 'Redeemed',
-      },
-    });
+      const newBalance = currentBalance - redeemAmount;
 
-    return updatedGiftCard;
+      const updatedGiftCard = await tx.giftCard.update({
+        where: { id: giftCard.id },
+        data: {
+          balance: newBalance,
+          status: newBalance <= 0 ? 'REDEEMED' : 'ACTIVE',
+          redeemedAt: newBalance <= 0 ? new Date() : giftCard.redeemedAt,
+          userId: giftCard.userId || userId,
+        },
+      });
+
+      await (tx as any).giftCardTransaction.create({
+        data: {
+          giftCardId: giftCard.id,
+          orderId: dto.orderId,
+          type: 'REDEMPTION',
+          amount: redeemAmount,
+          balanceAfter: newBalance,
+          notes: dto.orderId ? `Redeemed for order ${dto.orderId}` : 'Redeemed',
+        },
+      });
+
+      return updatedGiftCard;
+    }, { isolationLevel: Prisma.TransactionIsolationLevel.Serializable });
   }
 
   /**
    * Get user's gift cards
    */
-  async getMyGiftCards(userId: string): Promise<any[]> {
-    const giftCards = await (this.prisma as any).giftCard.findMany({
-      where: { userId },
-      orderBy: { createdAt: 'desc' },
-      include: {
-        transactions: {
-          orderBy: { createdAt: 'desc' },
-          take: 5, // Last 5 transactions
-        },
-      },
-    });
+  async getMyGiftCards(userId: string, page = 1, limit = 20) {
+    const skip = (page - 1) * limit;
 
-    return giftCards.map((gc) => ({
-      id: gc.id,
-      code: gc.code,
-      type: gc.type,
-      amount: gc.amount,
-      balance: gc.balance,
-      currency: gc.currency,
-      status: gc.status,
-      expiresAt: gc.expiresAt,
-      purchasedAt: gc.purchasedAt,
-      redeemedAt: gc.redeemedAt,
-      recentTransactions: gc.transactions,
-    }));
+    const [giftCards, total] = await Promise.all([
+      (this.prisma as any).giftCard.findMany({
+        where: { userId },
+        orderBy: { createdAt: 'desc' },
+        skip,
+        take: limit,
+        include: {
+          transactions: {
+            orderBy: { createdAt: 'desc' },
+            take: 5,
+          },
+        },
+      }),
+      (this.prisma as any).giftCard.count({ where: { userId } }),
+    ]);
+
+    return {
+      items: giftCards.map((gc) => ({
+        id: gc.id,
+        code: gc.code,
+        type: gc.type,
+        amount: gc.amount,
+        balance: gc.balance,
+        currency: gc.currency,
+        status: gc.status,
+        expiresAt: gc.expiresAt,
+        purchasedAt: gc.purchasedAt,
+        redeemedAt: gc.redeemedAt,
+        recentTransactions: gc.transactions,
+      })),
+      pagination: {
+        page,
+        limit,
+        total,
+        totalPages: Math.ceil(total / limit),
+      },
+    };
   }
 
   /**
@@ -276,52 +284,69 @@ export class GiftCardsService {
    * Refund gift card (restore balance)
    */
   async refund(giftCardId: string, orderId: string, amount: number): Promise<any> {
-    const giftCard = await this.prisma.giftCard.findUnique({
-      where: { id: giftCardId },
-    });
-
-    if (!giftCard) {
-      throw new NotFoundException('Gift card not found');
+    if (amount <= 0) {
+      throw new BadRequestException('Refund amount must be greater than zero');
     }
 
-    // Verify the order exists and used this gift card
-    const transaction = await (this.prisma as any).giftCardTransaction.findFirst({
-      where: {
-        giftCardId,
-        orderId,
-        type: 'REDEMPTION',
-      },
-    });
+    return this.prisma.$transaction(async (tx) => {
+      const giftCard = await tx.giftCard.findUnique({
+        where: { id: giftCardId },
+      });
 
-    if (!transaction) {
-      throw new BadRequestException('This gift card was not used for the specified order');
-    }
+      if (!giftCard) {
+        throw new NotFoundException('Gift card not found');
+      }
 
-    const currentBalance = Number(giftCard.balance);
-    const newBalance = currentBalance + amount;
+      const transaction = await (tx as any).giftCardTransaction.findFirst({
+        where: {
+          giftCardId,
+          orderId,
+          type: 'REDEMPTION',
+        },
+      });
 
-    // Update gift card
-    const updatedGiftCard = await this.prisma.giftCard.update({
-      where: { id: giftCardId },
-      data: {
-        balance: newBalance,
-        status: 'ACTIVE', // Reactivate if it was redeemed
-        redeemedAt: null, // Clear redeemed date
-      },
-    });
+      if (!transaction) {
+        throw new BadRequestException('This gift card was not used for the specified order');
+      }
 
-    // Create refund transaction
-    await (this.prisma as any).giftCardTransaction.create({
-      data: {
-        giftCardId,
-        orderId,
-        type: 'REFUND',
-        amount,
-        balanceAfter: newBalance,
-        notes: `Refund for order ${orderId}`,
-      },
-    });
+      const existingRefunds = await (tx as any).giftCardTransaction.aggregate({
+        where: { giftCardId, orderId, type: 'REFUND' },
+        _sum: { amount: true },
+      });
+      const alreadyRefunded = Number(existingRefunds._sum?.amount || 0);
+      const maxRefund = Number(transaction.amount) - alreadyRefunded;
 
-    return updatedGiftCard;
+      if (amount > maxRefund) {
+        throw new BadRequestException(
+          `Refund amount ($${amount}) exceeds refundable amount ($${maxRefund})`,
+        );
+      }
+
+      const currentBalance = Number(giftCard.balance);
+      const originalAmount = Number(giftCard.amount);
+      const newBalance = Math.min(currentBalance + amount, originalAmount);
+
+      const updatedGiftCard = await tx.giftCard.update({
+        where: { id: giftCardId },
+        data: {
+          balance: newBalance,
+          status: 'ACTIVE',
+          redeemedAt: null,
+        },
+      });
+
+      await (tx as any).giftCardTransaction.create({
+        data: {
+          giftCardId,
+          orderId,
+          type: 'REFUND',
+          amount,
+          balanceAfter: newBalance,
+          notes: `Refund for order ${orderId}`,
+        },
+      });
+
+      return updatedGiftCard;
+    }, { isolationLevel: Prisma.TransactionIsolationLevel.Serializable });
   }
 }

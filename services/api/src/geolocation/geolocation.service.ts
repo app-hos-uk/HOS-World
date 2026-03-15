@@ -33,11 +33,11 @@ export class GeolocationService {
     GR: 'EUR', // Greece
     FI: 'EUR', // Finland
     AE: 'AED', // UAE
-    SA: 'AED', // Saudi Arabia (often uses AED)
-    KW: 'AED', // Kuwait
-    QA: 'AED', // Qatar
-    BH: 'AED', // Bahrain
-    OM: 'AED', // Oman
+    SA: 'SAR', // Saudi Arabia
+    KW: 'KWD', // Kuwait
+    QA: 'QAR', // Qatar
+    BH: 'BHD', // Bahrain
+    OM: 'OMR', // Oman
   };
 
   constructor(
@@ -80,9 +80,9 @@ export class GeolocationService {
         return this.getDefaultCountry();
       }
 
-      const countryCode = data.country_code || 'GB';
-      const country = data.country_name || 'United Kingdom';
-      const currency = this.countryCurrencyMap[countryCode] || 'GBP';
+      const countryCode = data.country_code || 'US';
+      const country = data.country_name || 'United States';
+      const currency = this.countryCurrencyMap[countryCode] || 'USD';
 
       return {
         country,
@@ -100,7 +100,7 @@ export class GeolocationService {
    * Get currency for a country
    */
   getCurrencyForCountry(countryCode: string): string {
-    return this.countryCurrencyMap[countryCode] || 'GBP';
+    return this.countryCurrencyMap[countryCode] || 'USD';
   }
 
   /**
@@ -158,10 +158,10 @@ export class GeolocationService {
    */
   private getDefaultCountry(): CountryInfo {
     return {
-      country: 'United Kingdom',
-      countryCode: 'GB',
-      currency: 'GBP',
-      timezone: 'Europe/London',
+      country: 'United States',
+      countryCode: 'US',
+      currency: 'USD',
+      timezone: 'America/New_York',
     };
   }
 }

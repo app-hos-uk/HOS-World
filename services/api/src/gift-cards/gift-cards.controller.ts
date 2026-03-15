@@ -4,6 +4,7 @@ import {
   Post,
   Body,
   Param,
+  Query,
   UseGuards,
   Request,
   ParseUUIDPipe,
@@ -15,6 +16,7 @@ import {
   ApiBearerAuth,
   ApiParam,
   ApiBody,
+  ApiQuery,
 } from '@nestjs/swagger';
 import { GiftCardsService } from './gift-cards.service';
 import { CreateGiftCardDto } from './dto/create-gift-card.dto';
@@ -94,14 +96,32 @@ export class GiftCardsController {
   @ApiBearerAuth('JWT-auth')
   @ApiOperation({
     summary: 'Get my gift cards',
-    description: 'Retrieves all gift cards owned by the authenticated user.',
+    description: 'Retrieves gift cards owned by the authenticated user with pagination.',
+  })
+  @ApiQuery({
+    name: 'page',
+    required: false,
+    type: Number,
+    description: 'Page number (default: 1)',
+  })
+  @ApiQuery({
+    name: 'limit',
+    required: false,
+    type: Number,
+    description: 'Items per page (default: 20)',
   })
   @SwaggerApiResponse({ status: 200, description: 'Gift cards retrieved successfully' })
   @SwaggerApiResponse({ status: 401, description: 'Unauthorized' })
-  async getMyGiftCards(@Request() req: any): Promise<ApiResponse<any[]>> {
-    const giftCards = await this.giftCardsService.getMyGiftCards(req.user.id);
+  async getMyGiftCards(
+    @Request() req: any,
+    @Query('page') page?: string,
+    @Query('limit') limit?: string,
+  ): Promise<ApiResponse<any>> {
+    const pageNum = Math.max(1, parseInt(page, 10) || 1);
+    const limitNum = Math.min(100, Math.max(1, parseInt(limit, 10) || 20));
+    const result = await this.giftCardsService.getMyGiftCards(req.user.id, pageNum, limitNum);
     return {
-      data: giftCards,
+      data: result,
       message: 'Gift cards retrieved successfully',
     };
   }
@@ -129,13 +149,14 @@ export class GiftCardsController {
     };
   }
 
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('ADMIN')
   @Post(':id/refund')
   @ApiBearerAuth('JWT-auth')
   @ApiOperation({
     summary: 'Refund gift card',
     description:
-      'Refunds a gift card amount back to the card after an order cancellation or return.',
+      'Refunds a gift card amount back to the card after an order cancellation or return. Admin only.',
   })
   @ApiParam({ name: 'id', description: 'Gift card UUID', type: String })
   @ApiBody({

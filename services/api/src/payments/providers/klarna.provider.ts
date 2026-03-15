@@ -16,7 +16,7 @@ import {
 export class KlarnaProvider implements PaymentProvider {
   readonly name = 'klarna';
   private readonly logger = new Logger(KlarnaProvider.name);
-  private readonly BASE_CURRENCY = 'GBP';
+  private readonly BASE_CURRENCY = 'USD';
   private klarnaApiUrl: string;
   private klarnaUsername: string | null = null;
   private klarnaPassword: string | null = null;

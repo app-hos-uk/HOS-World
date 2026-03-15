@@ -82,25 +82,17 @@ export default function CollectionsPage() {
     }
   };
 
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-white">
-        <Header />
-        <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 lg:py-12">
-          <div className="flex items-center justify-center py-12">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600"></div>
-          </div>
-        </main>
-        <Footer />
-      </div>
-    );
-  }
-
   return (
     <RouteGuard allowedRoles={['CUSTOMER', 'ADMIN']} showAccessDenied={true}>
       <div className="min-h-screen bg-white">
         <Header />
         <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 lg:py-12">
+          {loading ? (
+            <div className="flex items-center justify-center py-12">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600"></div>
+            </div>
+          ) : (
+            <>
           <div className="flex justify-between items-center mb-6">
             <h1 className="text-3xl font-bold">Collections</h1>
             <button
@@ -158,7 +150,7 @@ export default function CollectionsPage() {
           )}
 
           {/* Create Collection Modal */}
-          {showCreateModal && (
+          {!loading && showCreateModal && (
             <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
               <div className="bg-white rounded-lg p-6 max-w-md w-full">
                 <h2 className="text-2xl font-bold mb-4">Create Collection</h2>
@@ -220,6 +212,8 @@ export default function CollectionsPage() {
                 </div>
               </div>
             </div>
+          )}
+          </>
           )}
         </main>
         <Footer />

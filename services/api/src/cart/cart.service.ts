@@ -155,6 +155,17 @@ export class CartService {
       });
     }
 
+    // Enforce max cart items limit to prevent abuse
+    const MAX_CART_ITEMS = 50;
+    if (cart.items.length >= MAX_CART_ITEMS) {
+      const hasMatchingItem = cart.items.some((item) => item.productId === addToCartDto.productId);
+      if (!hasMatchingItem) {
+        throw new BadRequestException(
+          `Cart cannot contain more than ${MAX_CART_ITEMS} distinct items`,
+        );
+      }
+    }
+
     // Check if item already exists in cart with same variations
     const existingItem = cart.items.find((item) => {
       if (item.productId !== addToCartDto.productId) return false;
@@ -311,6 +322,36 @@ export class CartService {
       throw new NotFoundException('Cart not found');
     }
 
+    // Validate all items reference active products; remove invalid/inactive ones
+    const invalidItemIds: string[] = [];
+    for (const item of cart.items) {
+      if (!item.product || item.product.status !== 'ACTIVE') {
+        invalidItemIds.push(item.id);
+        this.logger.warn(
+          `Removing cart item ${item.id} (product ${item.productId}): product is ${item.product ? item.product.status : 'deleted'}`,
+        );
+      }
+    }
+
+    if (invalidItemIds.length > 0) {
+      await this.prisma.cartItem.deleteMany({
+        where: { id: { in: invalidItemIds } },
+      });
+      cart.items = cart.items.filter((item) => !invalidItemIds.includes(item.id));
+    }
+
+    // Refresh cart item prices from current product data
+    for (const item of cart.items) {
+      const currentPrice = item.product.price;
+      if (!new Decimal(item.price).equals(currentPrice)) {
+        await this.prisma.cartItem.update({
+          where: { id: item.id },
+          data: { price: currentPrice },
+        });
+        item.price = currentPrice;
+      }
+    }
+
     let subtotal = new Decimal(0);
     let tax = new Decimal(0);
 
@@ -413,8 +454,11 @@ export class CartService {
       }
     }
 
-    // Calculate total: subtotal + tax - discount + shipping
-    const total = subtotal.add(tax).sub(discount).add(shipping);
+    // Clamp discount so it cannot exceed subtotal
+    discount = Decimal.min(discount, subtotal);
+
+    // Calculate total with floor at zero
+    const total = Decimal.max(subtotal.add(tax).sub(discount).add(shipping), new Decimal(0));
 
     const updatedCart = await this.prisma.cart.update({
       where: { id: cartId },
@@ -424,7 +468,7 @@ export class CartService {
         discount,
         shipping,
         total,
-        currency: cart.items[0]?.product.currency || 'GBP',
+        currency: cart.items[0]?.product.currency || 'USD',
       },
       include: {
         items: {

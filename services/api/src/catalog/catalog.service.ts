@@ -70,6 +70,7 @@ export class CatalogService {
       throw new BadRequestException('Catalog entry already exists for this submission');
     }
 
+    const now = new Date();
     const catalogEntry = await this.prisma.catalogEntry.create({
       data: {
         submissionId,
@@ -79,7 +80,7 @@ export class CatalogService {
         specs: createDto.specs as any,
         images: createDto.images,
         completedBy: userId,
-        completedAt: new Date(),
+        completedAt: now,
       },
       include: {
         submission: {
@@ -96,41 +97,41 @@ export class CatalogService {
       },
     });
 
-    // Update submission status
+    // Create marketing materials inline if provided (merged pipeline)
+    if (createDto.marketingMaterials && createDto.marketingMaterials.length > 0) {
+      await this.prisma.marketingMaterial.createMany({
+        data: createDto.marketingMaterials.map((m) => ({
+          submissionId,
+          type: m.type as any,
+          url: m.url,
+          createdBy: userId,
+        })),
+      });
+    }
+
+    // Determine target status: CONTENT_COMPLETED (merged) when materials provided, else CATALOG_COMPLETED
+    const hasMarketingMaterials = (createDto.marketingMaterials?.length ?? 0) > 0;
+
     await this.prisma.productSubmission.update({
       where: { id: submissionId },
       data: {
-        status: 'CATALOG_COMPLETED',
-        catalogCompletedAt: new Date(),
+        status: 'CONTENT_COMPLETED' as any,
+        catalogCompletedAt: now,
+        marketingCompletedAt: hasMarketingMaterials ? now : null,
       },
     });
 
-    // Send notification to marketing team
+    // Notify finance team that content is ready for pricing review
     try {
-      const marketingTeam = await this.prisma.user.findMany({
-        where: {
-          role: { in: ['MARKETING', 'ADMIN'] },
-        },
-        select: { id: true, email: true },
-      });
-
-      if (marketingTeam.length > 0) {
-        await this.prisma.notification.createMany({
-          data: marketingTeam.map(user => ({
-            userId: user.id,
-            type: 'CATALOG_COMPLETED' as any,
-            subject: 'Product Catalog Entry Completed',
-            content: `Product submission ${submissionId} has been cataloged and is ready for marketing review.`,
-            metadata: {
-              submissionId,
-              catalogEntryId: catalogEntry.id,
-            } as any,
-          })),
-        });
-      }
+      await this.notificationsService.sendNotificationToRole(
+        'FINANCE',
+        'CONTENT_COMPLETED' as any,
+        'Product Content Completed',
+        `Product submission has been cataloged${hasMarketingMaterials ? ' with marketing materials' : ''} and is ready for finance/pricing review.`,
+        { submissionId, catalogEntryId: catalogEntry.id },
+      );
     } catch (error) {
-      // Log error but don't fail the catalog entry creation
-      console.error('Failed to send notification to marketing team:', error);
+      console.error('Failed to send notification to finance team:', error);
     }
 
     return catalogEntry;
@@ -276,12 +277,12 @@ export class CatalogService {
       },
     });
 
-    // Update submission status
     const submission = await this.prisma.productSubmission.update({
       where: { id: submissionId },
       data: {
-        status: 'CATALOG_COMPLETED',
+        status: 'CONTENT_COMPLETED' as any,
         catalogCompletedAt: new Date(),
+        marketingCompletedAt: new Date(),
       },
       include: {
         seller: {
@@ -292,12 +293,11 @@ export class CatalogService {
       },
     });
 
-    // Send notification to marketing team
     await this.notificationsService.sendNotificationToRole(
-      'MARKETING',
-      'CATALOG_COMPLETED',
-      'Catalog Entry Completed',
-      `A catalog entry has been completed for submission from ${submission.seller?.storeName || 'Unknown Seller'}. The product is ready for marketing review.`,
+      'FINANCE',
+      'CONTENT_COMPLETED' as any,
+      'Product Content Completed',
+      `Content has been completed for submission from ${submission.seller?.storeName || 'Unknown Seller'}. The product is ready for finance/pricing review.`,
       { submissionId, catalogEntryId: updated.id },
     );
 

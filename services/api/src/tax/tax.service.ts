@@ -9,6 +9,23 @@ import { Decimal } from '@prisma/client/runtime/library';
 export class TaxService {
   private readonly logger = new Logger(TaxService.name);
 
+  private readonly taxRateCache = new Map<string, { data: any; expiresAt: number }>();
+  private readonly CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutes
+
+  private getCachedTaxRate(key: string): any | null {
+    const entry = this.taxRateCache.get(key);
+    if (!entry) return null;
+    if (Date.now() > entry.expiresAt) {
+      this.taxRateCache.delete(key);
+      return null;
+    }
+    return entry.data;
+  }
+
+  private setCachedTaxRate(key: string, data: any): void {
+    this.taxRateCache.set(key, { data, expiresAt: Date.now() + this.CACHE_TTL_MS });
+  }
+
   constructor(private prisma: PrismaService) {}
 
   /**
@@ -205,6 +222,12 @@ export class TaxService {
    * Create a tax rate
    */
   async createTaxRate(createDto: CreateTaxRateDto | any) {
+    // Validate rate is between 0 and 1 (0% to 100%)
+    const rateValue = Number(createDto.rate);
+    if (isNaN(rateValue) || rateValue < 0 || rateValue > 1) {
+      throw new BadRequestException('Tax rate must be between 0 and 1 (representing 0% to 100%)');
+    }
+
     // Verify tax zone exists
     await this.findTaxZoneById(createDto.taxZoneId);
 
@@ -266,42 +289,37 @@ export class TaxService {
     city?: string,
     postalCode?: string,
   ) {
-    // Build where clause for zone matching
-    const where: any = {
-      isActive: true,
-      country,
-    };
-
-    if (state) {
-      where.state = state;
-    }
-
-    if (city) {
-      where.city = city;
-    }
-
-    if (postalCode) {
-      where.postalCodes = {
-        has: postalCode,
-      };
-    }
-
+    // Find all active zones for this country, then pick the most specific match
     const zones = await this.prisma.taxZone.findMany({
-      where,
+      where: {
+        isActive: true,
+        country,
+      },
       include: {
         rates: {
           where: { isActive: true },
         },
       },
-      orderBy: [
-        // More specific zones first (city > state > country)
-        { city: 'desc' },
-        { state: 'desc' },
-      ],
     });
 
-    // Return the most specific matching zone
-    return zones[0] || null;
+    if (zones.length === 0) return null;
+
+    // Score each zone by specificity (higher = more specific)
+    const scored = zones.map((zone) => {
+      let score = 0;
+      if (postalCode && zone.postalCodes?.includes(postalCode)) score += 100;
+      if (city && zone.city === city) score += 10;
+      if (state && zone.state === state) score += 5;
+      // Country-only zones (state=null) match any state
+      if (!zone.state && !zone.city) score += 1;
+      // Disqualify zones that require a specific state/city we don't match
+      if (zone.state && zone.state !== state) score = -1;
+      if (zone.city && zone.city !== city) score = -1;
+      return { zone, score };
+    });
+
+    const best = scored.filter((s) => s.score >= 0).sort((a, b) => b.score - a.score)[0];
+    return best?.zone || null;
   }
 
   /**
@@ -316,6 +334,10 @@ export class TaxService {
       city?: string;
       postalCode?: string;
     },
+    options?: {
+      shippingAmount?: number;
+      isTaxExempt?: boolean;
+    },
   ): Promise<{
     amount: number;
     tax: number;
@@ -325,7 +347,12 @@ export class TaxService {
     taxZone?: any;
     taxClass?: any;
   }> {
-    // Find tax zone for location
+    // Tax-exempt customers pay zero tax
+    if (options?.isTaxExempt) {
+      const totalWithShipping = amount + (options?.shippingAmount || 0);
+      return { amount, tax: 0, total: totalWithShipping, rate: 0, isInclusive: false };
+    }
+
     const taxZone = await this.findTaxZoneForLocation(
       location.country,
       location.state,
@@ -344,17 +371,22 @@ export class TaxService {
       };
     }
 
-    // Find tax rate for zone and class
-    const taxRate = await this.prisma.taxRate.findFirst({
-      where: {
-        taxZoneId: taxZone.id,
-        taxClassId,
-        isActive: true,
-      },
-      include: {
-        taxClass: true,
-      },
-    });
+    // Find tax rate for zone and class (cached)
+    const cacheKey = `${taxZone.id}:${taxClassId}`;
+    let taxRate = this.getCachedTaxRate(cacheKey);
+    if (taxRate === null) {
+      taxRate = await this.prisma.taxRate.findFirst({
+        where: {
+          taxZoneId: taxZone.id,
+          taxClassId,
+          isActive: true,
+        },
+        include: {
+          taxClass: true,
+        },
+      });
+      this.setCachedTaxRate(cacheKey, taxRate);
+    }
 
     if (!taxRate) {
       // No tax rate found - return zero tax
@@ -370,19 +402,18 @@ export class TaxService {
 
     const rate = Number(taxRate.rate);
     const isInclusive = taxRate.isInclusive;
+    const shippingAmount = options?.shippingAmount || 0;
+    const taxableAmount = amount + shippingAmount;
 
     let tax: number;
     let total: number;
 
     if (isInclusive) {
-      // Tax is included in the amount
-      // Calculate tax: amount * (rate / (1 + rate))
-      tax = amount * (rate / (1 + rate));
-      total = amount; // Total is the same as amount (tax included)
+      tax = taxableAmount * (rate / (1 + rate));
+      total = taxableAmount;
     } else {
-      // Tax is added to the amount
-      tax = amount * rate;
-      total = amount + tax;
+      tax = taxableAmount * rate;
+      total = taxableAmount + tax;
     }
 
     return {
@@ -461,6 +492,10 @@ export class TaxService {
 
     const updateData: any = { ...updateDto };
     if (updateDto.rate !== undefined) {
+      const rateValue = Number(updateDto.rate);
+      if (isNaN(rateValue) || rateValue < 0 || rateValue > 1) {
+        throw new BadRequestException('Tax rate must be between 0 and 1 (representing 0% to 100%)');
+      }
       updateData.rate = new Decimal(updateDto.rate);
     }
 
@@ -481,12 +516,27 @@ export class TaxService {
     await this.findTaxZoneById(id);
 
     // Check if zone has active tax rates
-    const rates = await this.prisma.taxRate.findMany({
+    const activeRates = await this.prisma.taxRate.findMany({
       where: { taxZoneId: id, isActive: true },
     });
 
-    if (rates.length > 0) {
+    if (activeRates.length > 0) {
       throw new BadRequestException('Cannot delete tax zone with active tax rates');
+    }
+
+    // Check for inactive rates referencing this zone — soft-delete instead of hard delete
+    const inactiveRates = await this.prisma.taxRate.findMany({
+      where: { taxZoneId: id, isActive: false },
+    });
+
+    if (inactiveRates.length > 0) {
+      this.logger.warn(
+        `Tax zone ${id} has ${inactiveRates.length} inactive rate(s) — soft-deleting zone instead of hard delete`,
+      );
+      return this.prisma.taxZone.update({
+        where: { id },
+        data: { isActive: false },
+      });
     }
 
     return this.prisma.taxZone.delete({

@@ -49,7 +49,7 @@ describe('FinanceService', () => {
       const mockSubmissions = [
         {
           id: 'submission-1',
-          status: 'MARKETING_COMPLETED',
+          status: 'CONTENT_COMPLETED',
           seller: { id: 'seller-1', storeName: 'Test Store' },
         },
       ];
@@ -59,7 +59,7 @@ describe('FinanceService', () => {
       const result = await service.findPending();
 
       expect(mockPrismaService.productSubmission.findMany).toHaveBeenCalledWith({
-        where: { status: 'MARKETING_COMPLETED' },
+        where: { status: { in: ['MARKETING_COMPLETED', 'CONTENT_COMPLETED', 'FINANCE_PENDING'] } },
         include: expect.any(Object),
         orderBy: { marketingCompletedAt: 'asc' },
       });
@@ -79,7 +79,7 @@ describe('FinanceService', () => {
     it('should set pricing successfully', async () => {
       const mockSubmission = {
         id: submissionId,
-        status: 'MARKETING_COMPLETED',
+        status: 'CONTENT_COMPLETED',
         productData: { price: 100 },
       };
 
@@ -107,7 +107,7 @@ describe('FinanceService', () => {
       );
     });
 
-    it('should throw BadRequestException if status is not MARKETING_COMPLETED', async () => {
+    it('should throw BadRequestException if status is not CONTENT_COMPLETED', async () => {
       const mockSubmission = {
         id: submissionId,
         status: 'PENDING',

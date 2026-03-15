@@ -41,7 +41,7 @@ export default function PriceManagementPage() {
     stock: '0',
     taxClassId: '',
     taxRate: '',
-    currency: 'GBP',
+    currency: 'USD',
   });
 
   useEffect(() => {
@@ -113,7 +113,7 @@ export default function PriceManagementPage() {
       stock: product.stock?.toString() || '0',
       taxClassId: product.taxClassId || '',
       taxRate: product.taxRate != null ? String(Number(product.taxRate)) : '',
-      currency: product.currency || 'GBP',
+      currency: product.currency || 'USD',
     });
     setShowPricingModal(true);
   };
@@ -312,7 +312,7 @@ export default function PriceManagementPage() {
                           <div className="text-sm text-gray-500">{product.sku || 'No SKU'}</div>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                          {product.currency || 'GBP'} {Number(product.price || 0).toFixed(2)}
+                          {product.currency || 'USD'} {Number(product.price || 0).toFixed(2)}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                           {product.stock || 0}

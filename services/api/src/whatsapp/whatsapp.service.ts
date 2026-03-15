@@ -1,9 +1,10 @@
-import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException, Logger } from '@nestjs/common';
 import { PrismaService } from '../database/prisma.service';
 import { ConfigService } from '@nestjs/config';
 
 @Injectable()
 export class WhatsAppService {
+  private readonly logger = new Logger(WhatsAppService.name);
   private twilioAccountSid: string;
   private twilioAuthToken: string;
   private twilioWhatsAppNumber: string;
@@ -65,15 +66,13 @@ export class WhatsAppService {
 
         messageId = twilioMessage.sid;
       } catch (error: any) {
-        console.error('Twilio WhatsApp send error:', error);
+        this.logger.error(`Twilio WhatsApp send error: ${error?.message}`);
         status = 'FAILED';
         messageId = `failed-${Date.now()}`;
       }
     } else {
       // Fallback: log message (for development/testing)
-      console.log(`📱 WhatsApp message (not sent - Twilio not configured):`);
-      console.log(`   To: ${data.to}`);
-      console.log(`   Message: ${data.message}`);
+      this.logger.debug(`WhatsApp message (not sent - Twilio not configured): To=${data.to}`);
       messageId = `mock-${Date.now()}`;
     }
 

@@ -463,7 +463,7 @@ export class DashboardService {
   async getMarketingDashboard() {
     const pending = await this.prisma.productSubmission.findMany({
       where: {
-        status: 'CATALOG_COMPLETED',
+        status: { in: ['CATALOG_COMPLETED', 'PROCUREMENT_APPROVED'] },
       },
       include: {
         seller: {
@@ -521,7 +521,12 @@ export class DashboardService {
           {
             submission: {
               status: {
-                in: ['MARKETING_COMPLETED', 'FINANCE_PENDING', 'PUBLISHED'],
+                in: [
+                  'MARKETING_COMPLETED',
+                  'CONTENT_COMPLETED' as any,
+                  'FINANCE_PENDING',
+                  'PUBLISHED',
+                ],
               },
             },
           },
@@ -545,7 +550,7 @@ export class DashboardService {
   async getFinanceDashboard() {
     const pending = await this.prisma.productSubmission.findMany({
       where: {
-        status: { in: ['MARKETING_COMPLETED', 'FINANCE_PENDING'] },
+        status: { in: ['MARKETING_COMPLETED', 'CONTENT_COMPLETED' as any, 'FINANCE_PENDING'] },
       },
       include: {
         seller: {

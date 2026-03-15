@@ -12,6 +12,7 @@ import {
   Param,
   Res,
   NotFoundException,
+  Request,
 } from '@nestjs/common';
 import {
   ApiTags,
@@ -39,6 +40,24 @@ import { randomUUID } from 'crypto';
 import { Response } from 'express';
 import { existsSync, mkdirSync } from 'fs';
 import { StorageProvider } from '../storage/storage.service';
+import { BadRequestException } from '@nestjs/common';
+
+const ALLOWED_FILE_EXTENSIONS = ['.jpg', '.jpeg', '.png', '.gif', '.webp', '.svg', '.pdf'];
+const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
+
+function fileFilter(req: any, file: Express.Multer.File, cb: Function) {
+  const ext = extname(file.originalname).toLowerCase();
+  if (ALLOWED_FILE_EXTENSIONS.includes(ext)) {
+    cb(null, true);
+  } else {
+    cb(
+      new BadRequestException(
+        `File type ${ext} is not allowed. Allowed: ${ALLOWED_FILE_EXTENSIONS.join(', ')}`,
+      ),
+      false,
+    );
+  }
+}
 
 // Determine storage provider at module load time
 const storageProvider = process.env.STORAGE_PROVIDER || 'local';
@@ -92,9 +111,24 @@ export class UploadsController {
     summary: 'List all uploaded media assets (Admin only)',
     description: 'Returns paginated list of all product images stored in the system.',
   })
-  @ApiQuery({ name: 'page', required: false, type: Number, description: 'Page number (default: 1)' })
-  @ApiQuery({ name: 'limit', required: false, type: Number, description: 'Items per page (default: 24)' })
-  @ApiQuery({ name: 'search', required: false, type: String, description: 'Filter by filename in URL' })
+  @ApiQuery({
+    name: 'page',
+    required: false,
+    type: Number,
+    description: 'Page number (default: 1)',
+  })
+  @ApiQuery({
+    name: 'limit',
+    required: false,
+    type: Number,
+    description: 'Items per page (default: 24)',
+  })
+  @ApiQuery({
+    name: 'search',
+    required: false,
+    type: String,
+    description: 'Filter by filename in URL',
+  })
   @SwaggerApiResponse({ status: 200, description: 'Media assets retrieved successfully' })
   @SwaggerApiResponse({ status: 401, description: 'Unauthorized' })
   @SwaggerApiResponse({ status: 403, description: 'Forbidden - Admin access required' })
@@ -162,7 +196,8 @@ export class UploadsController {
   @UseInterceptors(
     FileInterceptor('file', {
       storage: createStorage(),
-      limits: { fileSize: 250 * 1024 }, // 250KB limit for product images
+      limits: { fileSize: MAX_FILE_SIZE },
+      fileFilter,
     }),
   )
   @ApiBearerAuth('JWT-auth')
@@ -216,9 +251,10 @@ export class UploadsController {
   @Post('multiple')
   @UseGuards(JwtAuthGuard)
   @UseInterceptors(
-    FilesInterceptor('files', 4, {
+    FilesInterceptor('files', 10, {
       storage: createStorage(),
-      limits: { fileSize: 250 * 1024 }, // 250KB limit, max 4 files for product images
+      limits: { fileSize: MAX_FILE_SIZE },
+      fileFilter,
     }),
   )
   @ApiBearerAuth('JWT-auth')
@@ -288,6 +324,16 @@ export class UploadsController {
     @Param('filename') filename: string,
     @Res() res: Response,
   ): Promise<void> {
+    // Prevent path traversal attacks
+    if (
+      folder.includes('..') ||
+      folder.startsWith('/') ||
+      filename.includes('..') ||
+      filename.includes('/')
+    ) {
+      throw new NotFoundException('File not found');
+    }
+
     try {
       const filePath = this.uploadsService.getFileForServing(folder, filename);
 
@@ -350,8 +396,33 @@ export class UploadsController {
   @SwaggerApiResponse({ status: 401, description: 'Unauthorized' })
   @SwaggerApiResponse({ status: 403, description: 'Forbidden - Seller/Admin access required' })
   @SwaggerApiResponse({ status: 404, description: 'File not found' })
-  async deleteFile(@Param('url') url: string): Promise<ApiResponse<{ message: string }>> {
-    await this.uploadsService.deleteFile(decodeURIComponent(url));
+  async deleteFile(
+    @Param('url') url: string,
+    @Request() req: any,
+  ): Promise<ApiResponse<{ message: string }>> {
+    const decodedUrl = decodeURIComponent(url);
+    const role = req.user?.role;
+    const userId = req.user?.id;
+
+    if (role !== 'ADMIN') {
+      const seller = await this.prisma.seller.findUnique({
+        where: { userId },
+        select: { id: true },
+      });
+      if (seller) {
+        const ownsImage = await this.prisma.productImage.findFirst({
+          where: {
+            url: { contains: decodedUrl },
+            product: { sellerId: seller.id },
+          },
+        });
+        if (!ownsImage) {
+          throw new BadRequestException('You can only delete your own files');
+        }
+      }
+    }
+
+    await this.uploadsService.deleteFile(decodedUrl);
     return {
       data: { message: 'File deleted successfully' },
       message: 'File deleted successfully',

@@ -321,7 +321,7 @@ export default function CollectionDetailPage() {
                       </div>
                     )}
                     <h3 className="font-semibold mb-2 line-clamp-2">{product.name}</h3>
-                    <p className="text-purple-600 font-bold">£{product.price}</p>
+                    <p className="text-purple-600 font-bold">${product.price}</p>
                   </Link>
                   {isOwner && (
                     <button

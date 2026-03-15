@@ -650,7 +650,7 @@ function AdminProductsContent() {
   const exportColumns = [
     { key: 'name', header: 'Name' },
     { key: 'sku', header: 'SKU' },
-    { key: 'price', header: 'Price', format: (v: number, r: Product) => `${r.currency || 'GBP'} ${Number(v || 0).toFixed(2)}` },
+    { key: 'price', header: 'Price', format: (v: number, r: Product) => `${r.currency || 'USD'} ${Number(v || 0).toFixed(2)}` },
     { key: 'stock', header: 'Stock' },
     { key: 'status', header: 'Status' },
     { key: 'category', header: 'Fandom', format: (v: any) => v?.name || '' },

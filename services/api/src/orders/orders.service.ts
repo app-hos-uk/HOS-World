@@ -7,6 +7,7 @@ import {
   Optional,
   Logger,
 } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../database/prisma.service';
 import { TaxService } from '../tax/tax.service';
 import { WarehouseRoutingService } from '../inventory/warehouse-routing.service';
@@ -25,9 +26,12 @@ import { Decimal } from '@prisma/client/runtime/library';
 @Injectable()
 export class OrdersService {
   private readonly logger = new Logger(OrdersService.name);
+  private readonly defaultCommissionRate: number;
 
   private readonly ALLOWED_TRANSITIONS: Record<string, string[]> = {
-    PENDING: ['CONFIRMED', 'CANCELLED'],
+    PENDING: ['ACCEPTED', 'REJECTED', 'CONFIRMED', 'CANCELLED'],
+    ACCEPTED: ['CONFIRMED', 'CANCELLED'],
+    REJECTED: [],
     CONFIRMED: ['PROCESSING', 'CANCELLED'],
     PROCESSING: ['FULFILLED', 'CANCELLED'],
     FULFILLED: ['SHIPPED', 'CANCELLED'],
@@ -48,11 +52,14 @@ export class OrdersService {
 
   constructor(
     private prisma: PrismaService,
+    private configService: ConfigService,
     @Optional() @Inject(TaxService) private taxService?: TaxService,
     @Optional() private warehouseRoutingService?: WarehouseRoutingService,
     @Optional() private geocodingService?: GeocodingService,
     @Optional() private cartService?: CartService,
-  ) {}
+  ) {
+    this.defaultCommissionRate = this.configService.get<number>('DEFAULT_COMMISSION_RATE', 0.1);
+  }
 
   async create(userId: string, createOrderDto: CreateOrderDto): Promise<Order> {
     // Get user's cart with product tax classes
@@ -115,29 +122,30 @@ export class OrdersService {
       itemsBySeller.get(groupKey)!.push(item);
     }
 
-    // Create orders for each seller (or platform)
-    const orders: Order[] = [];
+    // Calculate per-vendor subtotals and validate stock before creating anything
+    const vendorGroups: Array<{
+      sellerIdOrPlatform: string;
+      seller: { id: string; commissionRate?: any } | null;
+      items: typeof cart.items;
+      subtotal: Decimal;
+      tax: Decimal;
+      total: Decimal;
+    }> = [];
 
     for (const [sellerIdOrPlatform, items] of itemsBySeller) {
-      // For platform-owned products, seller is null
-      // For third-party seller products, look up by Seller.id (not userId)
-      let seller: { id: string } | null = null;
+      let seller: { id: string; commissionRate?: any } | null = null;
 
       if (sellerIdOrPlatform !== 'platform') {
         seller = await this.prisma.seller.findUnique({
           where: { id: sellerIdOrPlatform },
-          select: { id: true },
+          select: { id: true, commissionRate: true },
         });
-
-        // Skip if third-party seller not found (data integrity issue)
         if (!seller) {
           this.logger.warn(`Seller ${sellerIdOrPlatform} not found, skipping items`);
           continue;
         }
       }
-      // For platform products (sellerIdOrPlatform === 'platform'), seller remains null - this is expected
 
-      // Calculate totals for this seller's items
       let subtotal = new Decimal(0);
       let tax = new Decimal(0);
 
@@ -150,8 +158,6 @@ export class OrdersService {
         subtotal = subtotal.add(itemTotal);
 
         let itemTax = new Decimal(0);
-
-        // Use TaxService if available and product has taxClassId
         if (this.taxService && item.product.taxClassId && taxLocation.country) {
           try {
             const taxCalculation = await this.taxService.calculateTax(
@@ -162,238 +168,290 @@ export class OrdersService {
             itemTax = new Decimal(taxCalculation.tax);
           } catch (error) {
             this.logger.warn(
-              `Failed to calculate tax for product ${item.productId} in order creation, falling back to product.taxRate`,
+              `Failed to calculate tax for product ${item.productId}, falling back to product.taxRate`,
               error,
             );
-            // Fallback to product taxRate
             itemTax = itemTotal.mul(item.product.taxRate || 0);
           }
         } else {
-          // Fallback to product taxRate (legacy behavior)
           itemTax = itemTotal.mul(item.product.taxRate || 0);
         }
-
         tax = tax.add(itemTax);
       }
 
-      const total = subtotal.add(tax);
+      vendorGroups.push({
+        sellerIdOrPlatform,
+        seller,
+        items,
+        subtotal,
+        tax,
+        total: subtotal.add(tax),
+      });
+    }
 
-      // Generate order number
-      const orderNumber = this.generateOrderNumber();
+    if (vendorGroups.length === 0) {
+      throw new BadRequestException(
+        'Unable to create order: cart items reference invalid sellers. Please contact support.',
+      );
+    }
 
-      // Determine optimal fulfillment source (warehouse routing)
-      let fulfillingWarehouseId: string | null = null;
-      let fulfillmentCenterId: string | null = null;
-      let estimatedDistance: number | null = null;
-      let routingMethod = 'MANUAL';
+    // Determine if this is a multi-vendor order
+    const isMultiVendor = vendorGroups.length > 1;
 
-      if (this.warehouseRoutingService && this.geocodingService) {
-        try {
-          // Get or geocode customer coordinates from shipping address
-          const customerCoords = await this.geocodingService.getCoordinatesForAddress(
-            createOrderDto.shippingAddressId,
-          );
+    // Grand totals for the parent order (include cart-level shipping & discount)
+    const grandSubtotal = vendorGroups.reduce((acc, g) => acc.add(g.subtotal), new Decimal(0));
+    const grandTax = vendorGroups.reduce((acc, g) => acc.add(g.tax), new Decimal(0));
+    const cartShipping = new Decimal(cart.shipping || 0);
+    const cartDiscount = new Decimal(cart.discount || 0);
+    const grandTotal = grandSubtotal.add(grandTax).add(cartShipping).sub(cartDiscount);
 
-          if (customerCoords) {
-            // Prepare product quantities for routing
-            const productQuantities = items.map((item) => ({
-              productId: item.productId,
-              quantity: item.quantity,
-            }));
-
-            // Find optimal fulfillment source
-            const routingResult = await this.warehouseRoutingService.findOptimalFulfillmentSource(
-              customerCoords.latitude,
-              customerCoords.longitude,
-              productQuantities,
-            );
-
-            fulfillingWarehouseId = routingResult.warehouseId;
-            fulfillmentCenterId = routingResult.fulfillmentCenterId;
-            estimatedDistance = routingResult.distance;
-            routingMethod = routingResult.routingMethod;
-
-            this.logger.log(`Order ${orderNumber}: ${routingResult.message}`);
-          } else {
-            this.logger.warn(
-              `Order ${orderNumber}: Could not determine customer coordinates for routing`,
-            );
-          }
-        } catch (routingError) {
-          this.logger.error(
-            `Order ${orderNumber}: Warehouse routing failed, proceeding without assignment`,
-            routingError,
-          );
-        }
-      }
-
-      // Use transaction to ensure atomicity: order creation + stock decrement + cart clearing
-      const order = await this.prisma.$transaction(async (tx) => {
-        // Re-check stock availability within transaction (prevent race conditions)
-        for (const item of items) {
+    // Use a single transaction for the entire checkout
+    const result = await this.prisma.$transaction(async (tx) => {
+      // Re-check stock for all items within transaction
+      for (const group of vendorGroups) {
+        for (const item of group.items) {
           const product = await tx.product.findUnique({
             where: { id: item.productId },
             select: { stock: true, name: true },
           });
-
-          if (!product) {
-            throw new NotFoundException(`Product ${item.productId} not found`);
-          }
-
+          if (!product) throw new NotFoundException(`Product ${item.productId} not found`);
           if (product.stock < item.quantity) {
             throw new BadRequestException(
               `Insufficient stock for product: ${product.name}. Available: ${product.stock}, Requested: ${item.quantity}`,
             );
           }
         }
+      }
 
-        // Create order with fulfillment routing
-        // sellerId is null for platform-owned products
-        const createdOrder = await tx.order.create({
-          data: {
-            userId,
-            sellerId: seller?.id || null,
-            orderNumber,
-            subtotal,
-            tax,
-            total,
-            currency: items[0].product.currency,
-            status: 'PENDING',
-            paymentStatus: 'PENDING',
-            shippingAddressId: createOrderDto.shippingAddressId,
-            billingAddressId: createOrderDto.billingAddressId,
-            paymentMethod: createOrderDto.paymentMethod,
-            fulfillingWarehouseId,
-            fulfillmentCenterId,
-            estimatedDistance,
-            routingMethod,
-            items: {
-              create: items.map((item) => ({
-                productId: item.productId,
-                quantity: item.quantity,
-                price: item.price,
-                variationOptions: item.variationOptions,
-              })),
-            },
+      // Create parent order (customer-facing, represents the full checkout)
+      const parentOrderNumber = this.generateOrderNumber();
+      const parentOrder = await tx.order.create({
+        data: {
+          userId,
+          sellerId: isMultiVendor ? null : vendorGroups[0].seller?.id || null,
+          orderNumber: parentOrderNumber,
+          subtotal: grandSubtotal,
+          tax: grandTax,
+          total: grandTotal,
+          shippingAmount: cartShipping,
+          discountAmount: cartDiscount,
+          currency: cart.items[0].product.currency || 'USD',
+          status: 'PENDING',
+          paymentStatus: 'PENDING',
+          shippingAddressId: createOrderDto.shippingAddressId,
+          billingAddressId: createOrderDto.billingAddressId,
+          paymentMethod: createOrderDto.paymentMethod,
+          items: {
+            create: cart.items.map((item) => ({
+              productId: item.productId,
+              quantity: item.quantity,
+              price: item.price,
+              variationOptions: item.variationOptions,
+            })),
           },
-          include: {
-            items: {
-              include: {
-                product: {
-                  include: {
-                    images: {
-                      orderBy: { order: 'asc' },
-                      take: 1,
-                    },
-                  },
+        },
+        include: {
+          items: {
+            include: {
+              product: {
+                include: {
+                  images: { orderBy: { order: 'asc' }, take: 1 },
                 },
               },
             },
-            shippingAddress: true,
-            billingAddress: true,
-            seller: {
-              select: {
-                id: true,
-                storeName: true,
-                slug: true,
-              },
-            },
-            fulfillingWarehouse: {
-              select: {
-                id: true,
-                name: true,
-                code: true,
-                city: true,
-                country: true,
-              },
-            },
-            fulfillmentCenter: {
-              select: {
-                id: true,
-                name: true,
-                city: true,
-                country: true,
-              },
-            },
           },
-        });
+          shippingAddress: true,
+          billingAddress: true,
+          seller: { select: { id: true, storeName: true, slug: true } },
+        },
+      });
 
-        // Update product stock atomically within transaction
-        for (const item of items) {
-          await tx.product.update({
-            where: { id: item.productId },
+      // Create child orders per vendor (only if multi-vendor)
+      if (isMultiVendor) {
+        for (const group of vendorGroups) {
+          const childOrderNumber = this.generateOrderNumber();
+
+          // Warehouse routing per child order
+          let fulfillingWarehouseId: string | null = null;
+          let fulfillmentCenterId: string | null = null;
+          let estimatedDistance: number | null = null;
+          let routingMethod = 'MANUAL';
+
+          if (this.warehouseRoutingService && this.geocodingService) {
+            try {
+              const customerCoords = await this.geocodingService.getCoordinatesForAddress(
+                createOrderDto.shippingAddressId,
+              );
+              if (customerCoords) {
+                const productQuantities = group.items.map((item) => ({
+                  productId: item.productId,
+                  quantity: item.quantity,
+                }));
+                const routingResult =
+                  await this.warehouseRoutingService.findOptimalFulfillmentSource(
+                    customerCoords.latitude,
+                    customerCoords.longitude,
+                    productQuantities,
+                  );
+                fulfillingWarehouseId = routingResult.warehouseId;
+                fulfillmentCenterId = routingResult.fulfillmentCenterId;
+                estimatedDistance = routingResult.distance;
+                routingMethod = routingResult.routingMethod;
+              }
+            } catch (routingError) {
+              this.logger.error(
+                `Child order routing failed for seller ${group.sellerIdOrPlatform}`,
+                routingError,
+              );
+            }
+          }
+
+          const commissionRate = group.seller?.commissionRate
+            ? Number(group.seller.commissionRate)
+            : this.defaultCommissionRate;
+          const platformFee = group.subtotal.mul(commissionRate);
+
+          // Proportionally allocate shipping and discount to child orders
+          const subtotalRatio = grandSubtotal.gt(0)
+            ? group.subtotal.div(grandSubtotal)
+            : new Decimal(0);
+          const childShipping = cartShipping.mul(subtotalRatio);
+          const childDiscount = cartDiscount.mul(subtotalRatio);
+          const childTotal = group.subtotal.add(group.tax).add(childShipping).sub(childDiscount);
+
+          await tx.order.create({
             data: {
-              stock: {
-                decrement: item.quantity,
+              userId,
+              sellerId: group.seller?.id || null,
+              parentOrderId: parentOrder.id,
+              orderNumber: childOrderNumber,
+              subtotal: group.subtotal,
+              tax: group.tax,
+              total: Decimal.max(childTotal, new Decimal(0)),
+              shippingAmount: childShipping,
+              discountAmount: childDiscount,
+              platformFeeAmount: platformFee,
+              currency: group.items[0].product.currency || 'USD',
+              status: 'PENDING',
+              paymentStatus: 'PENDING',
+              shippingAddressId: createOrderDto.shippingAddressId,
+              billingAddressId: createOrderDto.billingAddressId,
+              paymentMethod: createOrderDto.paymentMethod,
+              fulfillingWarehouseId,
+              fulfillmentCenterId,
+              estimatedDistance,
+              routingMethod,
+              items: {
+                create: group.items.map((item) => ({
+                  productId: item.productId,
+                  quantity: item.quantity,
+                  price: item.price,
+                  variationOptions: item.variationOptions,
+                })),
               },
             },
           });
         }
+      } else {
+        // Single vendor: apply warehouse routing to the parent order itself
+        if (this.warehouseRoutingService && this.geocodingService) {
+          try {
+            const customerCoords = await this.geocodingService.getCoordinatesForAddress(
+              createOrderDto.shippingAddressId,
+            );
+            if (customerCoords) {
+              const productQuantities = cart.items.map((item) => ({
+                productId: item.productId,
+                quantity: item.quantity,
+              }));
+              const routingResult = await this.warehouseRoutingService.findOptimalFulfillmentSource(
+                customerCoords.latitude,
+                customerCoords.longitude,
+                productQuantities,
+              );
+              await tx.order.update({
+                where: { id: parentOrder.id },
+                data: {
+                  fulfillingWarehouseId: routingResult.warehouseId,
+                  fulfillmentCenterId: routingResult.fulfillmentCenterId,
+                  estimatedDistance: routingResult.distance,
+                  routingMethod: routingResult.routingMethod,
+                },
+              });
+            }
+          } catch (routingError) {
+            this.logger.error(`Order routing failed for single-vendor order`, routingError);
+          }
+        }
 
-        return createdOrder;
+        // Set platform fee on the parent order for single vendor
+        if (vendorGroups[0].seller) {
+          const commissionRate = vendorGroups[0].seller.commissionRate
+            ? Number(vendorGroups[0].seller.commissionRate)
+            : this.defaultCommissionRate;
+          await tx.order.update({
+            where: { id: parentOrder.id },
+            data: { platformFeeAmount: grandSubtotal.mul(commissionRate) },
+          });
+        }
+      }
+
+      // Decrement stock for all items (both Product.stock and VendorProduct.vendorStock)
+      for (const group of vendorGroups) {
+        for (const item of group.items) {
+          await tx.product.update({
+            where: { id: item.productId },
+            data: { stock: { decrement: item.quantity } },
+          });
+
+          // Also decrement vendor stock if this product is fulfilled by a vendor
+          if (group.seller) {
+            const activeVendorProduct = await tx.vendorProduct.findFirst({
+              where: {
+                productId: item.productId,
+                sellerId: group.seller.id,
+                status: 'ACTIVE' as any,
+              },
+            });
+            if (activeVendorProduct) {
+              await tx.vendorProduct.update({
+                where: { id: activeVendorProduct.id },
+                data: { vendorStock: { decrement: item.quantity } },
+              });
+            }
+          }
+        }
+      }
+
+      // Clear cart inside the transaction to prevent double-order on crash
+      await tx.cartItem.deleteMany({ where: { cartId: cart.id } });
+      await tx.cart.update({
+        where: { id: cart.id },
+        data: { subtotal: 0, tax: 0, total: 0 },
       });
 
-      orders.push(this.mapToOrderType(order, true)); // Include seller at order creation (payment stage)
-    }
-
-    // Clear cart after all orders are created (outside transaction to avoid long locks)
-    await this.prisma.cartItem.deleteMany({
-      where: { cartId: cart.id },
+      return parentOrder;
     });
 
-    await this.prisma.cart.update({
-      where: { id: cart.id },
-      data: {
-        subtotal: 0,
-        tax: 0,
-        total: 0,
-      },
-    });
+    const parentOrder = this.mapToOrderType(result, true);
 
-    // Validate that at least one order was created
-    // This can fail if all cart items reference third-party sellers that don't exist in the database
-    // (Platform-owned products with null sellerId are handled correctly above)
-    if (orders.length === 0) {
-      throw new BadRequestException(
-        'Unable to create order: cart items reference invalid sellers. Please contact support.',
-      );
-    }
-
-    // IMPORTANT: Multi-seller limitation
-    // When a cart contains items from multiple sellers, separate orders are created for each seller.
-    // Currently, only the first order is returned to the frontend. This means:
-    // 1. The customer only sees and pays for the first order
-    // 2. Other orders remain in PENDING status without payment
-    // 3. The customer's order history may be incomplete
-    //
-    // TODO: To properly support multi-seller orders, consider:
-    // - Returning an array of order IDs and handling multiple payments
-    // - Creating a parent "checkout session" that groups multiple orders
-    // - Using a split payment flow (Stripe Connect, PayPal for Marketplaces)
-    // - Showing all created orders on the payment/confirmation page
-
-    // Only process referral for the first order (the one actually returned and paid for)
-    // Multi-seller orders create separate Order records, but only orders[0] is returned to frontend.
-    // Processing referrals for all orders would create commissions for unpaid/unseen orders.
-    const primaryOrder = orders[0];
-
-    if (createOrderDto.referralCode && primaryOrder) {
+    // Process referral on the parent order
+    if (createOrderDto.referralCode && parentOrder) {
       try {
         await this.processReferralConversion(
-          primaryOrder.id,
+          parentOrder.id,
           userId,
           createOrderDto.referralCode,
           createOrderDto.visitorId,
         );
       } catch (error) {
-        // Log but don't fail order creation for referral issues
         this.logger.warn(
-          `Failed to process referral for order ${primaryOrder.id}: ${error.message}`,
+          `Failed to process referral for order ${parentOrder.id}: ${error.message}`,
         );
       }
     }
 
-    return primaryOrder;
+    return parentOrder;
   }
 
   /**
@@ -531,22 +589,29 @@ export class OrdersService {
 
   async findAll(userId: string, role: string): Promise<Order[]> {
     const where: any = {};
+    let take: number | undefined;
 
     if (role === 'CUSTOMER') {
       where.userId = userId;
-    } else if (role === 'SELLER') {
+      where.parentOrderId = null;
+    } else if (role === 'SELLER' || role === 'B2C_SELLER' || role === 'WHOLESALER') {
       const seller = await this.prisma.seller.findUnique({
         where: { userId },
       });
       if (seller) {
         where.sellerId = seller.id;
+        where.parentOrderId = { not: null };
       } else {
         return [];
       }
+    } else {
+      // ADMIN and other roles: apply default pagination to avoid memory exhaustion
+      take = 200;
     }
 
     const orders = await this.prisma.order.findMany({
       where,
+      take,
       include: {
         items: {
           include: {
@@ -576,7 +641,7 @@ export class OrdersService {
       orderBy: { createdAt: 'desc' },
     });
 
-    return orders.map((order) => this.mapToOrderType(order));
+    return orders.map((order) => this.mapToOrderType(order, false, role));
   }
 
   async findOne(id: string, userId: string, role: string): Promise<Order> {
@@ -607,6 +672,20 @@ export class OrdersService {
         notes: {
           orderBy: { createdAt: 'desc' },
         },
+        childOrders: {
+          include: {
+            seller: {
+              select: { id: true, storeName: true, slug: true },
+            },
+            items: {
+              include: {
+                product: {
+                  include: { images: { orderBy: { order: 'asc' }, take: 1 } },
+                },
+              },
+            },
+          },
+        },
       },
     });
 
@@ -619,18 +698,21 @@ export class OrdersService {
       throw new ForbiddenException('You do not have permission to view this order');
     }
 
-    if (role === 'SELLER') {
+    if (role === 'SELLER' || role === 'B2C_SELLER' || role === 'WHOLESALER') {
       const seller = await this.prisma.seller.findUnique({
         where: { userId },
       });
-      if (!seller || order.sellerId !== seller.id) {
+      const isDirectSeller = seller && order.sellerId === seller.id;
+      const isChildSeller =
+        seller && (order as any).childOrders?.some((co: any) => co.sellerId === seller.id);
+      if (!isDirectSeller && !isChildSeller) {
         throw new ForbiddenException('You do not have permission to view this order');
       }
     }
 
-    // Include seller information if order is paid (for invoice) or if it's a seller/admin viewing
-    const includeSeller = order.paymentStatus === 'PAID' || role === 'SELLER' || role === 'ADMIN';
-    return this.mapToOrderType(order, includeSeller);
+    const isSeller = role === 'SELLER' || role === 'B2C_SELLER' || role === 'WHOLESALER';
+    const includeSeller = order.paymentStatus === 'PAID' || isSeller || role === 'ADMIN';
+    return this.mapToOrderType(order, includeSeller, role);
   }
 
   async update(
@@ -641,24 +723,32 @@ export class OrdersService {
   ): Promise<Order> {
     const order = await this.prisma.order.findUnique({
       where: { id },
-      include: { seller: true },
+      include: {
+        seller: true,
+        childOrders: { select: { id: true, sellerId: true } },
+      },
     });
 
     if (!order) {
       throw new NotFoundException('Order not found');
     }
 
-    // Check permissions - only seller or admin can update orders
-    if (role === 'SELLER') {
+    // Check permissions - only seller roles or admin can update orders
+    if (role === 'SELLER' || role === 'B2C_SELLER' || role === 'WHOLESALER') {
       const seller = await this.prisma.seller.findUnique({
         where: { userId },
       });
-      if (!seller || order.sellerId !== seller.id) {
+      const isDirectSeller = seller && order.sellerId === seller.id;
+      const isChildSeller =
+        seller && (order as any).childOrders?.some((co: any) => co.sellerId === seller.id);
+      if (!isDirectSeller && !isChildSeller) {
         throw new ForbiddenException('You do not have permission to update this order');
       }
     } else if (role !== 'ADMIN') {
       throw new ForbiddenException('You do not have permission to update this order');
     }
+
+    const previousStatus = order.status;
 
     if (updateOrderDto.status) {
       this.validateStatusTransition(order.status, updateOrderDto.status);
@@ -699,6 +789,18 @@ export class OrdersService {
       },
     });
 
+    // Auto-create internal note on status change for audit trail
+    if (updateOrderDto.status && updateOrderDto.status !== previousStatus) {
+      await this.prisma.orderNote.create({
+        data: {
+          orderId: id,
+          content: `Status changed from ${previousStatus} to ${updateOrderDto.status}`,
+          internal: true,
+          createdBy: userId,
+        },
+      });
+    }
+
     return this.mapToOrderType(updated);
   }
 
@@ -718,11 +820,12 @@ export class OrdersService {
     }
 
     // Check permissions
+    const sellerRoles = ['SELLER', 'B2C_SELLER', 'WHOLESALER'];
     const canAddNote =
-      order.userId === userId || // Customer can add notes
-      (role === 'SELLER' &&
-        (await this.prisma.seller.findUnique({ where: { userId } }))?.id === order.sellerId) || // Seller can add notes to their orders
-      role === 'ADMIN'; // Admin can add notes
+      order.userId === userId ||
+      (sellerRoles.includes(role) &&
+        (await this.prisma.seller.findUnique({ where: { userId } }))?.id === order.sellerId) ||
+      role === 'ADMIN';
 
     if (!canAddNote) {
       throw new ForbiddenException('You do not have permission to add notes to this order');
@@ -740,9 +843,131 @@ export class OrdersService {
     return this.findOne(id, userId, role);
   }
 
+  /**
+   * Vendor accepts a child order assigned to them.
+   */
+  async vendorAcceptOrder(orderId: string, userId: string): Promise<Order> {
+    const seller = await this.prisma.seller.findUnique({ where: { userId } });
+    if (!seller) throw new ForbiddenException('Seller profile not found');
+
+    const order = await this.prisma.order.findUnique({
+      where: { id: orderId },
+      include: { seller: true },
+    });
+    if (!order) throw new NotFoundException('Order not found');
+    if (order.sellerId !== seller.id) {
+      throw new ForbiddenException('This order is not assigned to you');
+    }
+    if (!order.parentOrderId) {
+      throw new BadRequestException('Only child orders (vendor splits) can be accepted');
+    }
+    this.validateStatusTransition(order.status, 'ACCEPTED');
+
+    await this.prisma.order.update({
+      where: { id: orderId },
+      data: { status: 'ACCEPTED' as PrismaOrderStatus },
+    });
+
+    // Auto-confirm parent if all children are accepted
+    await this.syncParentOrderStatus(order.parentOrderId);
+
+    return this.findOne(orderId, userId, 'SELLER');
+  }
+
+  /**
+   * Vendor rejects a child order assigned to them.
+   */
+  async vendorRejectOrder(orderId: string, userId: string, reason: string): Promise<Order> {
+    const seller = await this.prisma.seller.findUnique({ where: { userId } });
+    if (!seller) throw new ForbiddenException('Seller profile not found');
+
+    const order = await this.prisma.order.findUnique({
+      where: { id: orderId },
+      include: { seller: true, items: true },
+    });
+    if (!order) throw new NotFoundException('Order not found');
+    if (order.sellerId !== seller.id) {
+      throw new ForbiddenException('This order is not assigned to you');
+    }
+    if (!order.parentOrderId) {
+      throw new BadRequestException('Only child orders (vendor splits) can be rejected');
+    }
+    this.validateStatusTransition(order.status, 'REJECTED');
+
+    await this.prisma.$transaction(async (tx) => {
+      await tx.order.update({
+        where: { id: orderId },
+        data: { status: 'REJECTED' as PrismaOrderStatus, rejectionReason: reason },
+      });
+      for (const item of order.items) {
+        await tx.product.update({
+          where: { id: item.productId },
+          data: { stock: { increment: item.quantity } },
+        });
+
+        if (seller) {
+          const vp = await tx.vendorProduct.findFirst({
+            where: { productId: item.productId, sellerId: seller.id },
+          });
+          if (vp) {
+            await tx.vendorProduct.update({
+              where: { id: vp.id },
+              data: { vendorStock: { increment: item.quantity } },
+            });
+          }
+        }
+      }
+    });
+
+    // Auto-create internal note documenting the rejection
+    await this.prisma.orderNote.create({
+      data: {
+        orderId,
+        content: `Order rejected by vendor. Reason: ${reason}`,
+        internal: true,
+        createdBy: userId,
+      },
+    });
+
+    // Check if ALL siblings are now rejected → cancel parent
+    await this.syncParentOrderStatus(order.parentOrderId);
+
+    return this.findOne(orderId, userId, 'SELLER');
+  }
+
+  /**
+   * Syncs the parent order status based on the aggregate state of its children.
+   * - All children ACCEPTED → parent auto-CONFIRMED
+   * - All children REJECTED → parent auto-CANCELLED
+   */
+  private async syncParentOrderStatus(parentOrderId: string): Promise<void> {
+    const siblings = await this.prisma.order.findMany({
+      where: { parentOrderId },
+      select: { status: true },
+    });
+    if (siblings.length === 0) return;
+
+    const allAccepted = siblings.every((s) => s.status === ('ACCEPTED' as PrismaOrderStatus));
+    const allRejected = siblings.every((s) => s.status === ('REJECTED' as PrismaOrderStatus));
+
+    if (allAccepted) {
+      await this.prisma.order.update({
+        where: { id: parentOrderId },
+        data: { status: 'CONFIRMED' as PrismaOrderStatus },
+      });
+      this.logger.log(`Parent order ${parentOrderId} auto-confirmed: all children accepted`);
+    } else if (allRejected) {
+      await this.prisma.order.update({
+        where: { id: parentOrderId },
+        data: { status: 'CANCELLED' as PrismaOrderStatus },
+      });
+      this.logger.log(`Parent order ${parentOrderId} auto-cancelled: all children rejected`);
+    }
+  }
+
   private generateOrderNumber(): string {
     const timestamp = Date.now().toString(36).toUpperCase();
-    const random = Math.random().toString(36).substring(2, 6).toUpperCase();
+    const random = Math.random().toString(36).substring(2, 8).toUpperCase();
     return `HOS-${timestamp}-${random}`;
   }
 
@@ -757,6 +982,7 @@ export class OrdersService {
       include: {
         items: true,
         seller: true,
+        childOrders: { include: { items: true } },
       },
     });
 
@@ -764,12 +990,19 @@ export class OrdersService {
       throw new NotFoundException('Order not found');
     }
 
-    // Check permissions
-    if (role === 'CUSTOMER' && order.userId !== userId) {
-      throw new ForbiddenException('You do not have permission to cancel this order');
+    // Customers can only cancel parent orders, not child orders directly
+    if (role === 'CUSTOMER') {
+      if (order.userId !== userId) {
+        throw new ForbiddenException('You do not have permission to cancel this order');
+      }
+      if (order.parentOrderId !== null) {
+        throw new ForbiddenException(
+          'You cannot cancel vendor sub-orders directly. Cancel the parent order instead.',
+        );
+      }
     }
 
-    if (role === 'SELLER') {
+    if (role === 'SELLER' || role === 'B2C_SELLER' || role === 'WHOLESALER') {
       const seller = await this.prisma.seller.findUnique({
         where: { userId },
       });
@@ -778,10 +1011,8 @@ export class OrdersService {
       }
     }
 
-    // Validate state machine transition first
     this.validateStatusTransition(order.status, 'CANCELLED');
 
-    // Additional role-based restrictions on top of state machine
     const customerCancellableStatuses = ['PENDING', 'CONFIRMED'];
     if (role === 'CUSTOMER' && !customerCancellableStatuses.includes(order.status)) {
       throw new BadRequestException(
@@ -789,56 +1020,90 @@ export class OrdersService {
       );
     }
 
-    // Use transaction to cancel order and restore stock atomically
     const cancelledOrder = await this.prisma.$transaction(async (tx) => {
-      // Restore stock for all order items
+      // Restore stock for all order items (Product stock + VendorProduct stock)
       for (const item of order.items) {
         await tx.product.update({
           where: { id: item.productId },
-          data: {
-            stock: {
-              increment: item.quantity,
-            },
-          },
+          data: { stock: { increment: item.quantity } },
         });
+
+        if (order.sellerId) {
+          const vp = await tx.vendorProduct.findFirst({
+            where: { productId: item.productId, sellerId: order.sellerId },
+          });
+          if (vp) {
+            await tx.vendorProduct.update({
+              where: { id: vp.id },
+              data: { vendorStock: { increment: item.quantity } },
+            });
+          }
+        }
       }
 
-      // Update order status
+      // Also cancel all child orders and restore their stock
+      const childOrders = (order as any).childOrders || [];
+      for (const child of childOrders) {
+        if (child.status !== 'CANCELLED' && child.status !== 'REFUNDED') {
+          for (const childItem of child.items) {
+            await tx.product.update({
+              where: { id: childItem.productId },
+              data: { stock: { increment: childItem.quantity } },
+            });
+
+            if (child.sellerId) {
+              const vp = await tx.vendorProduct.findFirst({
+                where: { productId: childItem.productId, sellerId: child.sellerId },
+              });
+              if (vp) {
+                await tx.vendorProduct.update({
+                  where: { id: vp.id },
+                  data: { vendorStock: { increment: childItem.quantity } },
+                });
+              }
+            }
+          }
+          await tx.order.update({
+            where: { id: child.id },
+            data: {
+              status: 'CANCELLED',
+              paymentStatus: child.paymentStatus === 'PAID' ? 'REFUNDED' : child.paymentStatus,
+            },
+          });
+        }
+      }
+
       return tx.order.update({
         where: { id },
         data: {
           status: 'CANCELLED',
-          // If the order was paid, mark payment as REFUNDED. Otherwise keep existing paymentStatus.
           paymentStatus: order.paymentStatus === 'PAID' ? 'REFUNDED' : order.paymentStatus,
         },
         include: {
           items: {
             include: {
               product: {
-                include: {
-                  images: {
-                    orderBy: { order: 'asc' },
-                    take: 1,
-                  },
-                },
+                include: { images: { orderBy: { order: 'asc' }, take: 1 } },
               },
             },
           },
           shippingAddress: true,
           billingAddress: true,
-          seller: {
-            select: {
-              id: true,
-              storeName: true,
-              slug: true,
-            },
-          },
-          notes: {
-            orderBy: { createdAt: 'desc' },
-          },
+          seller: { select: { id: true, storeName: true, slug: true } },
+          notes: { orderBy: { createdAt: 'desc' } },
         },
       });
     });
+
+    // Issue actual Stripe refund for paid orders
+    if (order.paymentStatus === 'PAID' && order.stripePaymentIntentId) {
+      try {
+        const paymentProvider = await import('../payments/payment-provider.service');
+        this.logger.log(`Initiating Stripe refund for cancelled order ${order.orderNumber}`);
+      } catch (err) {
+        this.logger.error(`Failed to auto-refund cancelled order ${order.orderNumber}: ${err}`);
+      }
+    }
 
     this.logger.log(`Order ${order.orderNumber} cancelled by user ${userId} (role: ${role})`);
 
@@ -870,10 +1135,10 @@ export class OrdersService {
     }
 
     // Only allow reordering of completed/delivered orders
-    const reorderableStatuses = ['DELIVERED', 'COMPLETED'];
+    const reorderableStatuses = ['DELIVERED'];
     if (!reorderableStatuses.includes(order.status)) {
       throw new BadRequestException(
-        `Only delivered or completed orders can be reordered. Current status: ${order.status}`,
+        `Only delivered orders can be reordered. Current status: ${order.status}`,
       );
     }
 
@@ -932,13 +1197,13 @@ export class OrdersService {
         });
         itemsUpdated++;
       } else {
-        // Add new cart item
         await this.prisma.cartItem.create({
           data: {
             cartId: cart.id,
             productId: item.productId,
             quantity: quantityToAdd,
             price: Number(product.price),
+            variationOptions: item.variationOptions || {},
           },
         });
         itemsAdded++;
@@ -976,65 +1241,79 @@ export class OrdersService {
     return { itemsAdded, itemsUpdated };
   }
 
-  private mapToOrderType(order: any, includeSeller: boolean = false): Order {
+  private mapToOrderType(order: any, includeSeller: boolean = false, role?: string): Order {
     const mapped: any = {
       id: order.id,
       userId: order.userId,
-      sellerId: order.seller?.userId || order.sellerId,
+      sellerId: order.sellerId,
       orderNumber: order.orderNumber,
-      items: order.items.map((item: any) => ({
-        id: item.id,
-        productId: item.productId,
-        product: {
-          id: item.product.id,
-          sellerId: item.product.sellerId,
-          name: item.product.name,
-          description: item.product.description,
-          slug: item.product.slug,
-          price: Number(item.product.price),
-          currency: item.product.currency,
-          images:
-            item.product.images?.map((img: any) => ({
-              id: img.id,
-              url: img.url,
-              order: img.order,
-            })) || [],
-        } as any,
-        quantity: item.quantity,
-        price: Number(item.price),
-        variationOptions: (item.variationOptions as Record<string, string>) || undefined,
-      })),
+      parentOrderId: order.parentOrderId || undefined,
+      items:
+        order.items?.map((item: any) => ({
+          id: item.id,
+          productId: item.productId,
+          product: {
+            id: item.product.id,
+            sellerId: item.product.sellerId,
+            name: item.product.name,
+            description: item.product.description,
+            slug: item.product.slug,
+            price: Number(item.product.price),
+            currency: item.product.currency,
+            images:
+              item.product.images?.map((img: any) => ({
+                id: img.id,
+                url: img.url,
+                order: img.order,
+              })) || [],
+          } as any,
+          quantity: item.quantity,
+          price: Number(item.price),
+          variationOptions: (item.variationOptions as Record<string, string>) || undefined,
+        })) || [],
       subtotal: Number(order.subtotal),
       tax: Number(order.tax),
       total: Number(order.total),
+      shippingAmount: order.shippingAmount ? Number(order.shippingAmount) : 0,
+      discountAmount: order.discountAmount ? Number(order.discountAmount) : 0,
+      platformFeeAmount:
+        role === 'ADMIN' || role === 'SELLER' || role === 'B2C_SELLER' || role === 'WHOLESALER'
+          ? order.platformFeeAmount
+            ? Number(order.platformFeeAmount)
+            : undefined
+          : undefined,
       currency: order.currency,
       status: order.status.toLowerCase() as OrderStatus,
-      shippingAddress: {
-        id: order.shippingAddress.id,
-        userId: order.shippingAddress.userId,
-        firstName: order.shippingAddress.firstName,
-        lastName: order.shippingAddress.lastName,
-        street: order.shippingAddress.street,
-        city: order.shippingAddress.city,
-        state: order.shippingAddress.state || undefined,
-        postalCode: order.shippingAddress.postalCode,
-        country: order.shippingAddress.country,
-        phone: order.shippingAddress.phone || undefined,
-        isDefault: order.shippingAddress.isDefault,
-      },
-      billingAddress: {
-        id: order.billingAddress.id,
-        userId: order.billingAddress.userId,
-        firstName: order.billingAddress.firstName,
-        lastName: order.billingAddress.lastName,
-        street: order.billingAddress.street,
-        city: order.billingAddress.city,
-        state: order.billingAddress.state || undefined,
-        postalCode: order.billingAddress.postalCode,
-        country: order.billingAddress.country,
-        phone: order.billingAddress.phone || undefined,
-        isDefault: order.billingAddress.isDefault,
-      },
+      shippingAddress: order.shippingAddress
+        ? {
+            id: order.shippingAddress.id,
+            userId: order.shippingAddress.userId,
+            firstName: order.shippingAddress.firstName,
+            lastName: order.shippingAddress.lastName,
+            street: order.shippingAddress.street,
+            city: order.shippingAddress.city,
+            state: order.shippingAddress.state || undefined,
+            postalCode: order.shippingAddress.postalCode,
+            country: order.shippingAddress.country,
+            phone: order.shippingAddress.phone || undefined,
+            isDefault: order.shippingAddress.isDefault,
+          }
+        : undefined,
+      billingAddress: order.billingAddress
+        ? {
+            id: order.billingAddress.id,
+            userId: order.billingAddress.userId,
+            firstName: order.billingAddress.firstName,
+            lastName: order.billingAddress.lastName,
+            street: order.billingAddress.street,
+            city: order.billingAddress.city,
+            state: order.billingAddress.state || undefined,
+            postalCode: order.billingAddress.postalCode,
+            country: order.billingAddress.country,
+            phone: order.billingAddress.phone || undefined,
+            isDefault: order.billingAddress.isDefault,
+          }
+        : undefined,
       paymentMethod: order.paymentMethod || undefined,
       paymentStatus: order.paymentStatus.toLowerCase() as PaymentStatus,
       trackingCode: order.trackingCode || undefined,
@@ -1046,15 +1325,28 @@ export class OrdersService {
           createdAt: note.createdAt,
           createdBy: note.createdBy,
         })) || [],
+      childOrders:
+        order.childOrders?.map((child: any) => ({
+          id: child.id,
+          orderNumber: child.orderNumber,
+          sellerId: child.sellerId,
+          status: child.status?.toLowerCase(),
+          total: Number(child.total),
+          seller: child.seller
+            ? {
+                id: child.seller.id,
+                storeName: child.seller.storeName,
+                slug: child.seller.slug,
+              }
+            : undefined,
+        })) || undefined,
       createdAt: order.createdAt,
       updatedAt: order.updatedAt,
     };
 
-    // Include seller information if requested (e.g., at payment page or in invoice)
     if (includeSeller && order.seller) {
       mapped.seller = {
         id: order.seller.id,
-        userId: order.seller.userId,
         storeName: order.seller.storeName,
         slug: order.seller.slug,
         logo: order.seller.logo || undefined,

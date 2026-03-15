@@ -14,7 +14,7 @@ export class MarketingService {
   async findPending() {
     const submissions = await this.prisma.productSubmission.findMany({
       where: {
-        status: 'CATALOG_COMPLETED',
+        status: { in: ['CATALOG_COMPLETED'] },
       },
       take: 100,
       include: {
@@ -51,9 +51,10 @@ export class MarketingService {
       throw new NotFoundException('Submission not found');
     }
 
-    if (submission.status !== 'CATALOG_COMPLETED' && submission.status !== 'MARKETING_COMPLETED') {
+    const allowedStatuses = ['CATALOG_COMPLETED', 'MARKETING_COMPLETED', 'CONTENT_COMPLETED'];
+    if (!allowedStatuses.includes(submission.status)) {
       throw new BadRequestException(
-        'Marketing materials can only be added to catalog-completed or marketing-completed submissions',
+        'Marketing materials can only be added to content-completed or catalog-completed submissions',
       );
     }
 
@@ -196,18 +197,18 @@ export class MarketingService {
       throw new NotFoundException('Submission not found');
     }
 
-    if (submission.status !== 'MARKETING_COMPLETED') {
-      throw new BadRequestException(
-        'Only marketing-completed submissions can be reopened',
-      );
+    const st = submission.status as string;
+    if (st !== 'MARKETING_COMPLETED' && st !== 'CONTENT_COMPLETED') {
+      throw new BadRequestException('Only content-completed submissions can be reopened');
     }
 
     const updated = await this.prisma.productSubmission.update({
       where: { id: submissionId },
       data: {
-        status: 'CATALOG_COMPLETED',
+        status: 'CATALOG_COMPLETED' as any,
         marketingCompletedAt: null,
-        marketingNotes: `${submission.marketingNotes || ''}\n\nReopened for additional materials at ${new Date().toISOString()}`.trim(),
+        marketingNotes:
+          `${submission.marketingNotes || ''}\n\nReopened for additional materials at ${new Date().toISOString()}`.trim(),
       },
       include: {
         seller: {
@@ -236,8 +237,9 @@ export class MarketingService {
       throw new NotFoundException('Submission not found');
     }
 
-    // Idempotent: if already completed, return success (handles double-click, race conditions)
-    if (submission.status === 'MARKETING_COMPLETED') {
+    // Idempotent: if already completed, return success
+    const status = submission.status as string;
+    if (status === 'MARKETING_COMPLETED' || status === 'CONTENT_COMPLETED') {
       return this.prisma.productSubmission.findUniqueOrThrow({
         where: { id: submissionId },
         include: {
@@ -253,16 +255,10 @@ export class MarketingService {
       );
     }
 
-    if (submission.marketingMaterials.length === 0) {
-      throw new BadRequestException(
-        'At least one marketing material is required before marking as complete',
-      );
-    }
-
     const updated = await this.prisma.productSubmission.update({
       where: { id: submissionId },
       data: {
-        status: 'MARKETING_COMPLETED',
+        status: 'CONTENT_COMPLETED' as any,
         marketingCompletedAt: new Date(),
       },
       include: {
@@ -277,12 +273,11 @@ export class MarketingService {
       },
     });
 
-    // Send notification to finance team
     await this.notificationsService.sendNotificationToRole(
       'FINANCE',
-      'MARKETING_COMPLETED',
-      'Marketing Materials Completed',
-      `Marketing materials have been completed for submission from ${updated.seller?.storeName || 'Unknown Seller'}. The product is ready for finance review.`,
+      'CONTENT_COMPLETED' as any,
+      'Product Content Completed',
+      `Content has been completed for submission from ${updated.seller?.storeName || 'Unknown Seller'}. The product is ready for finance review.`,
       { submissionId },
     );
 
@@ -293,12 +288,12 @@ export class MarketingService {
     const [pending, completed, totalMaterials] = await Promise.all([
       this.prisma.productSubmission.count({
         where: {
-          status: 'CATALOG_COMPLETED',
+          status: { in: ['CATALOG_COMPLETED'] },
         },
       }),
       this.prisma.productSubmission.count({
         where: {
-          status: 'MARKETING_COMPLETED',
+          status: { in: ['MARKETING_COMPLETED', 'CONTENT_COMPLETED' as any] },
         },
       }),
       this.prisma.marketingMaterial.count(),

@@ -29,12 +29,12 @@ interface ProviderMetadata {
 
 const PROVIDER_METADATA: Record<string, ProviderMetadata> = {
   // Shipping
-  royal_mail: {
-    displayName: 'Royal Mail',
-    description: 'UK domestic and international postal service',
-    requiredCredentials: ['clientId', 'clientSecret', 'accountNumber'],
-    optionalCredentials: ['postingLocation'],
-    documentationUrl: 'https://developer.royalmail.net/',
+  usps: {
+    displayName: 'USPS',
+    description: 'United States Postal Service for domestic and international shipping',
+    requiredCredentials: ['userId', 'apiKey'],
+    optionalCredentials: ['facilityId', 'mailerIdNumber'],
+    documentationUrl: 'https://www.usps.com/business/web-tools-apis/',
   },
   fedex: {
     displayName: 'FedEx',
@@ -64,6 +64,13 @@ const PROVIDER_METADATA: Record<string, ProviderMetadata> = {
     requiredCredentials: ['apiToken'],
     optionalCredentials: [],
     documentationUrl: 'https://developers.taxjar.com/',
+  },
+  stripe_tax: {
+    displayName: 'Stripe Tax',
+    description: 'Automatic tax calculation powered by Stripe',
+    requiredCredentials: ['stripeSecretKey'],
+    optionalCredentials: ['stripeWebhookSecret'],
+    documentationUrl: 'https://stripe.com/docs/tax',
   },
   // Payment
   stripe: {
@@ -109,6 +116,13 @@ export class IntegrationsService {
     if (existing) {
       throw new ConflictException(
         `Integration for ${createDto.provider} in ${createDto.category} already exists`,
+      );
+    }
+
+    // Validate provider name against known providers
+    if (!PROVIDER_METADATA[createDto.provider]) {
+      throw new BadRequestException(
+        `Unknown provider "${createDto.provider}". Allowed providers: ${Object.keys(PROVIDER_METADATA).join(', ')}`,
       );
     }
 
@@ -399,8 +413,8 @@ export class IntegrationsService {
    */
   getAvailableProviders(category: string): Array<{ provider: string; metadata: ProviderMetadata }> {
     const categoryProviders: Record<string, string[]> = {
-      [IntegrationCategory.SHIPPING]: ['royal_mail', 'fedex', 'dhl'],
-      [IntegrationCategory.TAX]: ['avalara', 'taxjar'],
+      [IntegrationCategory.SHIPPING]: ['usps', 'fedex', 'dhl'],
+      [IntegrationCategory.TAX]: ['avalara', 'taxjar', 'stripe_tax'],
       [IntegrationCategory.PAYMENT]: ['stripe'],
       [IntegrationCategory.EMAIL]: ['sendgrid'],
     };
@@ -507,17 +521,34 @@ export class IntegrationsService {
     metadata?: Record<string, any>,
   ): Promise<void> {
     try {
+      // Strip any credential-like values from metadata before persisting
+      const sanitized = metadata ? this.sanitizeLogMetadata(metadata) : undefined;
       await this.prisma.integrationLog.create({
         data: {
           integrationId,
           action,
           provider,
-          metadata,
+          metadata: sanitized,
         },
       });
     } catch (error) {
-      this.logger.error('Failed to log integration action', error);
+      this.logger.error('Failed to log integration action');
     }
+  }
+
+  private sanitizeLogMetadata(obj: Record<string, any>): Record<string, any> {
+    const sensitiveKeys = /key|secret|password|token|credential/i;
+    const sanitized: Record<string, any> = {};
+    for (const [k, v] of Object.entries(obj)) {
+      if (typeof v === 'string' && sensitiveKeys.test(k)) {
+        sanitized[k] = v.length > 4 ? '****' + v.slice(-4) : '****';
+      } else if (typeof v === 'object' && v !== null && !Array.isArray(v)) {
+        sanitized[k] = this.sanitizeLogMetadata(v);
+      } else {
+        sanitized[k] = v;
+      }
+    }
+    return sanitized;
   }
 
   private async performProviderTest(

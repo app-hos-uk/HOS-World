@@ -95,8 +95,15 @@ export class DuplicatesController {
       type: 'object',
       required: ['groupId', 'keepSubmissionId'],
       properties: {
-        groupId: { type: 'string', description: 'Cross-seller group id from GET /duplicates/cross-seller-groups' },
-        keepSubmissionId: { type: 'string', format: 'uuid', description: 'Submission id to keep (approved)' },
+        groupId: {
+          type: 'string',
+          description: 'Cross-seller group id from GET /duplicates/cross-seller-groups',
+        },
+        keepSubmissionId: {
+          type: 'string',
+          format: 'uuid',
+          description: 'Submission id to keep (approved)',
+        },
       },
     },
   })

@@ -170,7 +170,7 @@ export default function AdminCustomerAnalyticsPage() {
             <div className="bg-white rounded-lg shadow p-6">
               <h3 className="text-sm font-medium text-gray-500 mb-2">Average Lifetime Value</h3>
               <p className="text-4xl font-bold text-gray-900">
-                £{data?.averageLTV ? data.averageLTV.toFixed(2) : '0.00'}
+                ${data?.averageLTV ? data.averageLTV.toFixed(2) : '0.00'}
               </p>
               <p className="text-sm text-gray-500 mt-2">
                 Average total value of purchases per customer

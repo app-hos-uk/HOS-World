@@ -37,10 +37,41 @@ import { ProductSubmissionStatus } from '@prisma/client';
 export class SubmissionsController {
   constructor(private readonly submissionsService: SubmissionsService) {}
 
+  @Get('browse-catalog')
+  @ApiOperation({
+    summary: 'Browse existing catalog products by fandom',
+    description:
+      'Allows sellers to browse the existing catalog filtered by fandom/category before submitting. Returns products the seller can list as a vendor instead of creating a new submission.',
+  })
+  @ApiQuery({ name: 'fandom', required: false, type: String })
+  @ApiQuery({ name: 'search', required: false, type: String })
+  @ApiQuery({ name: 'page', required: false, type: Number })
+  @ApiQuery({ name: 'limit', required: false, type: Number })
+  @SwaggerApiResponse({ status: 200, description: 'Catalog products retrieved' })
+  async browseCatalog(
+    @Request() req: any,
+    @Query('fandom') fandom?: string,
+    @Query('search') search?: string,
+    @Query('page') page?: string,
+    @Query('limit') limit?: string,
+  ): Promise<ApiResponse<any>> {
+    const results = await this.submissionsService.browseCatalogForVendor(req.user.id, {
+      fandom,
+      search,
+      page: page ? parseInt(page) : 1,
+      limit: limit ? Math.min(parseInt(limit), 50) : 20,
+    });
+    return {
+      data: results,
+      message: 'Catalog products retrieved',
+    };
+  }
+
   @Get('check-duplicates')
   @ApiOperation({
     summary: 'Check for duplicate products before submission',
-    description: 'Searches the catalogue and seller\'s own pending/active products for potential duplicates by name, SKU, barcode, or EAN.',
+    description:
+      "Searches the catalogue and seller's own pending/active products for potential duplicates by name, SKU, barcode, or EAN.",
   })
   @ApiQuery({ name: 'name', required: false, type: String })
   @ApiQuery({ name: 'sku', required: false, type: String })
@@ -54,7 +85,12 @@ export class SubmissionsController {
     @Query('barcode') barcode?: string,
     @Query('ean') ean?: string,
   ): Promise<ApiResponse<any>> {
-    const results = await this.submissionsService.checkDuplicates(req.user.id, { name, sku, barcode, ean });
+    const results = await this.submissionsService.checkDuplicates(req.user.id, {
+      name,
+      sku,
+      barcode,
+      ean,
+    });
     return {
       data: results,
       message: 'Duplicate check completed',

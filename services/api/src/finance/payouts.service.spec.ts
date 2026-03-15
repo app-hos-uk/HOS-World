@@ -50,7 +50,7 @@ describe('PayoutsService', () => {
     const payoutData = {
       sellerId: 'seller-1',
       amount: 1000,
-      currency: 'GBP',
+      currency: 'USD',
       description: 'Monthly payout',
     };
 

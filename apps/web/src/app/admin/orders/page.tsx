@@ -73,6 +73,9 @@ export default function AdminOrdersPage() {
   const [showDetailsModal, setShowDetailsModal] = useState(false);
   // Track which specific order is being updated (null = none)
   const [updatingOrderId, setUpdatingOrderId] = useState<string | null>(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const pageSize = 20;
+  const [confirmDialog, setConfirmDialog] = useState<{ orderId: string; orderNumber: string; currentStatus: string; newStatus: string } | null>(null);
 
   // Stats
   const [stats, setStats] = useState({
@@ -132,6 +135,22 @@ export default function AdminOrdersPage() {
     } finally {
       setLoading(false);
     }
+  };
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm, statusFilter, dateRange.start, dateRange.end]);
+
+  const handleStatusChange = (orderId: string, newStatus: string, orderNumber?: string, currentStatus?: string) => {
+    if (newStatus === currentStatus) return;
+    setConfirmDialog({ orderId, orderNumber: orderNumber || orderId.substring(0, 8), currentStatus: currentStatus || '', newStatus });
+  };
+
+  const confirmStatusUpdate = async () => {
+    if (!confirmDialog) return;
+    const { orderId, newStatus } = confirmDialog;
+    setConfirmDialog(null);
+    await handleStatusUpdate(orderId, newStatus);
   };
 
   const handleStatusUpdate = async (orderId: string, newStatus: string) => {
@@ -195,10 +214,13 @@ export default function AdminOrdersPage() {
     return matchesSearch && matchesStatus && matchesDate;
   });
 
+  const totalPages = Math.ceil(filteredOrders.length / pageSize);
+  const paginatedOrders = filteredOrders.slice((currentPage - 1) * pageSize, currentPage * pageSize);
+
   const exportColumns = [
     { key: 'orderNumber', header: 'Order #', format: (v: string, o: Order) => o.orderNumber || o.id.slice(0, 8) },
     { key: 'user', header: 'Customer', format: (v: any, o: Order) => o.user?.email || o.customer?.email || 'N/A' },
-    { key: 'total', header: 'Total', format: (v: number, o: Order) => `${o.currency || 'GBP'} ${Number(v || 0).toFixed(2)}` },
+    { key: 'total', header: 'Total', format: (v: number, o: Order) => `${o.currency || 'USD'} ${Number(v || 0).toFixed(2)}` },
     { key: 'status', header: 'Status' },
     { key: 'paymentStatus', header: 'Payment Status' },
     { key: 'createdAt', header: 'Date', format: (v: string) => new Date(v).toLocaleDateString() },
@@ -228,7 +250,7 @@ export default function AdminOrdersPage() {
             </div>
             <div className="bg-white rounded-lg shadow p-4">
               <h3 className="text-xs font-medium text-gray-500 uppercase">Revenue</h3>
-              <p className="text-2xl font-bold text-green-600 mt-1">£{stats.totalRevenue.toFixed(2)}</p>
+              <p className="text-2xl font-bold text-green-600 mt-1">${stats.totalRevenue.toFixed(2)}</p>
             </div>
             <button
               onClick={() => setStatusFilter(statusFilter === 'PENDING' ? 'ALL' : 'PENDING')}
@@ -315,7 +337,7 @@ export default function AdminOrdersPage() {
             {(searchTerm || statusFilter !== 'ALL' || dateRange.start || dateRange.end) && (
               <div className="mt-3 flex items-center gap-2">
                 <span className="text-sm text-gray-500">
-                  Showing {filteredOrders.length} of {orders.length} orders
+                  Showing {filteredOrders.length} of {orders.length} orders (page {currentPage} of {totalPages || 1})
                 </span>
                 <button
                   onClick={() => {
@@ -376,7 +398,7 @@ export default function AdminOrdersPage() {
                     </tr>
                   </thead>
                   <tbody className="bg-white divide-y divide-gray-200">
-                    {filteredOrders.length === 0 ? (
+                    {paginatedOrders.length === 0 ? (
                       <tr>
                         <td colSpan={6} className="px-6 py-12 text-center text-gray-500">
                           <span className="text-4xl block mb-2">📦</span>
@@ -384,7 +406,7 @@ export default function AdminOrdersPage() {
                         </td>
                       </tr>
                     ) : (
-                      filteredOrders.map((order) => (
+                      paginatedOrders.map((order) => (
                         <tr key={order.id} className="hover:bg-gray-50">
                           <td className="px-6 py-4 whitespace-nowrap">
                             <div className="text-sm font-medium text-gray-900">
@@ -401,16 +423,16 @@ export default function AdminOrdersPage() {
                             </div>
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                            {order.currency || 'GBP'} {Number(order.total || 0).toFixed(2)}
+                            {order.currency || 'USD'} {Number(order.total || 0).toFixed(2)}
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap">
                             <select
                               value={order.status}
-                              onChange={(e) => handleStatusUpdate(order.id, e.target.value)}
-                              disabled={updatingOrderId === order.id}
+                              onChange={(e) => handleStatusChange(order.id, e.target.value, order.orderNumber || order.id.substring(0, 8), order.status)}
+                              disabled={updatingOrderId !== null}
                               className={`text-xs font-semibold rounded-full px-2 py-1 border-0 cursor-pointer ${
                                 STATUS_COLORS[order.status] || 'bg-gray-100 text-gray-800'
-                              } ${updatingOrderId === order.id ? 'opacity-50' : ''}`}
+                              } ${updatingOrderId !== null ? 'opacity-50' : ''}`}
                             >
                               {ORDER_STATUSES.map((status) => (
                                 <option key={status} value={status}>{status}</option>
@@ -433,6 +455,68 @@ export default function AdminOrdersPage() {
                     )}
                   </tbody>
                 </table>
+              </div>
+            </div>
+          )}
+
+          {/* Pagination */}
+          {!loading && !error && totalPages > 1 && (
+            <div className="flex items-center justify-between bg-white rounded-lg shadow px-6 py-3">
+              <p className="text-sm text-gray-600">
+                Showing {((currentPage - 1) * pageSize) + 1}–{Math.min(currentPage * pageSize, filteredOrders.length)} of {filteredOrders.length} orders
+              </p>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                  disabled={currentPage <= 1}
+                  className="px-3 py-1.5 border border-gray-300 rounded text-sm disabled:opacity-50 hover:bg-gray-50"
+                >
+                  Previous
+                </button>
+                <span className="text-sm text-gray-600">
+                  Page {currentPage} of {totalPages}
+                </span>
+                <button
+                  onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                  disabled={currentPage >= totalPages}
+                  className="px-3 py-1.5 border border-gray-300 rounded text-sm disabled:opacity-50 hover:bg-gray-50"
+                >
+                  Next
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* Status Change Confirmation Dialog */}
+          {confirmDialog && (
+            <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+              <div className="bg-white rounded-lg max-w-md w-full p-6">
+                <h3 className="text-lg font-bold text-gray-900 mb-2">Confirm Status Change</h3>
+                <p className="text-sm text-gray-600 mb-4">
+                  Are you sure you want to change the status of order{' '}
+                  <span className="font-semibold">#{confirmDialog.orderNumber}</span> from{' '}
+                  <span className={`inline-block px-2 py-0.5 text-xs font-semibold rounded-full ${STATUS_COLORS[confirmDialog.currentStatus] || 'bg-gray-100 text-gray-800'}`}>
+                    {confirmDialog.currentStatus}
+                  </span>{' '}
+                  to{' '}
+                  <span className={`inline-block px-2 py-0.5 text-xs font-semibold rounded-full ${STATUS_COLORS[confirmDialog.newStatus] || 'bg-gray-100 text-gray-800'}`}>
+                    {confirmDialog.newStatus}
+                  </span>?
+                </p>
+                <div className="flex gap-3 justify-end">
+                  <button
+                    onClick={() => setConfirmDialog(null)}
+                    className="px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={confirmStatusUpdate}
+                    className="px-4 py-2 bg-purple-600 text-white rounded-lg text-sm font-medium hover:bg-purple-700"
+                  >
+                    Confirm
+                  </button>
+                </div>
               </div>
             </div>
           )}
@@ -501,11 +585,11 @@ export default function AdminOrdersPage() {
                         <span className="text-sm text-gray-500 mr-2">Status:</span>
                         <select
                           value={selectedOrder.status}
-                          onChange={(e) => handleStatusUpdate(selectedOrder.id, e.target.value)}
-                          disabled={updatingOrderId === selectedOrder.id}
+                          onChange={(e) => handleStatusChange(selectedOrder.id, e.target.value, selectedOrder.orderNumber || selectedOrder.id.substring(0, 8), selectedOrder.status)}
+                          disabled={updatingOrderId !== null}
                           className={`text-sm font-semibold rounded-full px-3 py-1 border-0 ${
                             STATUS_COLORS[selectedOrder.status] || 'bg-gray-100 text-gray-800'
-                          } ${updatingOrderId === selectedOrder.id ? 'opacity-50' : ''}`}
+                          } ${updatingOrderId !== null ? 'opacity-50' : ''}`}
                         >
                           {ORDER_STATUSES.map((status) => (
                             <option key={status} value={status}>{status}</option>
@@ -551,9 +635,9 @@ export default function AdminOrdersPage() {
                                   )}
                                 </td>
                                 <td className="px-4 py-3 text-sm text-center">{item.quantity}</td>
-                                <td className="px-4 py-3 text-sm text-right">£{Number(item.price).toFixed(2)}</td>
+                                <td className="px-4 py-3 text-sm text-right">${Number(item.price).toFixed(2)}</td>
                                 <td className="px-4 py-3 text-sm text-right font-medium">
-                                  £{(Number(item.price) * item.quantity).toFixed(2)}
+                                  ${(Number(item.price) * item.quantity).toFixed(2)}
                                 </td>
                               </tr>
                             ))}
@@ -572,30 +656,30 @@ export default function AdminOrdersPage() {
                       {selectedOrder.subtotal !== undefined && (
                         <div className="flex justify-between">
                           <span className="text-gray-500">Subtotal:</span>
-                          <span>£{Number(selectedOrder.subtotal).toFixed(2)}</span>
+                          <span>${Number(selectedOrder.subtotal).toFixed(2)}</span>
                         </div>
                       )}
                       {selectedOrder.shipping !== undefined && (
                         <div className="flex justify-between">
                           <span className="text-gray-500">Shipping:</span>
-                          <span>£{Number(selectedOrder.shipping).toFixed(2)}</span>
+                          <span>${Number(selectedOrder.shipping).toFixed(2)}</span>
                         </div>
                       )}
                       {selectedOrder.tax !== undefined && (
                         <div className="flex justify-between">
                           <span className="text-gray-500">Tax:</span>
-                          <span>£{Number(selectedOrder.tax).toFixed(2)}</span>
+                          <span>${Number(selectedOrder.tax).toFixed(2)}</span>
                         </div>
                       )}
                       {selectedOrder.discount !== undefined && selectedOrder.discount > 0 && (
                         <div className="flex justify-between text-green-600">
                           <span>Discount:</span>
-                          <span>-£{Number(selectedOrder.discount).toFixed(2)}</span>
+                          <span>-${Number(selectedOrder.discount).toFixed(2)}</span>
                         </div>
                       )}
                       <div className="flex justify-between font-bold text-lg pt-2 border-t">
                         <span>Total:</span>
-                        <span>{selectedOrder.currency || 'GBP'} {Number(selectedOrder.total).toFixed(2)}</span>
+                        <span>{selectedOrder.currency || 'USD'} {Number(selectedOrder.total).toFixed(2)}</span>
                       </div>
                     </div>
                   </div>

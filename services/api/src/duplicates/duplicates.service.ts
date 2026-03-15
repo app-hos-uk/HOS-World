@@ -2,8 +2,7 @@ import { Injectable, NotFoundException, BadRequestException } from '@nestjs/comm
 import { PrismaService } from '../database/prisma.service';
 import { randomUUID } from 'crypto';
 
-const REJECT_OTHERS_REASON =
-  "Duplicate: another seller's submission approved for this product.";
+const REJECT_OTHERS_REASON = "Duplicate: another seller's submission approved for this product.";
 
 interface SimilarityResult {
   productId: string;
@@ -260,10 +259,16 @@ export class DuplicatesService {
     for (const indices of groupByRoot.values()) {
       if (indices.length < 2) continue; // Only groups with 2+ submissions (different sellers implied by match)
       const subs = indices.map((idx) => submissions[idx]);
-      const matchReasons = this.inferMatchReasons(subs.map((s) => s.productData as Record<string, unknown>));
+      const matchReasons = this.inferMatchReasons(
+        subs.map((s) => s.productData as Record<string, unknown>),
+      );
       const suggestedPrimaryId = subs[0].id; // Oldest
       groups.push({
-        groupId: `group-${subs.map((s) => s.id).sort().join('-').slice(0, 50)}`,
+        groupId: `group-${subs
+          .map((s) => s.id)
+          .sort()
+          .join('-')
+          .slice(0, 50)}`,
         submissions: subs.map((s) => ({
           id: s.id,
           sellerId: s.sellerId,
@@ -325,11 +330,14 @@ export class DuplicatesService {
     const first = productDataList[0];
     if (!first) return reasons;
     const sku = (first.sku as string)?.trim();
-    if (sku && productDataList.every((p) => (p?.sku as string)?.trim() === sku)) reasons.push('Same SKU');
+    if (sku && productDataList.every((p) => (p?.sku as string)?.trim() === sku))
+      reasons.push('Same SKU');
     const barcode = (first.barcode as string)?.trim();
-    if (barcode && productDataList.every((p) => (p?.barcode as string)?.trim() === barcode)) reasons.push('Same barcode');
+    if (barcode && productDataList.every((p) => (p?.barcode as string)?.trim() === barcode))
+      reasons.push('Same barcode');
     const ean = (first.ean as string)?.trim();
-    if (ean && productDataList.every((p) => (p?.ean as string)?.trim() === ean)) reasons.push('Same EAN');
+    if (ean && productDataList.every((p) => (p?.ean as string)?.trim() === ean))
+      reasons.push('Same EAN');
     const name = (first.name as string)?.trim();
     if (name && !reasons.length) reasons.push('Similar product name');
     return reasons;
@@ -365,7 +373,10 @@ export class DuplicatesService {
    * Reject all submissions in a cross-seller duplicate group except the one to keep.
    * Use after approving one submission in the group.
    */
-  async rejectOthersInGroup(groupId: string, keepSubmissionId: string): Promise<{ rejectedIds: string[] }> {
+  async rejectOthersInGroup(
+    groupId: string,
+    keepSubmissionId: string,
+  ): Promise<{ rejectedIds: string[] }> {
     const groups = await this.findCrossSellerDuplicateGroups();
     const group = groups.find((g) => g.groupId === groupId);
     if (!group) {
@@ -385,14 +396,19 @@ export class DuplicatesService {
       const submission = await this.prisma.productSubmission.findUnique({
         where: { id: sub.id },
       });
-      if (!submission || (submission.status !== 'SUBMITTED' && submission.status !== 'UNDER_REVIEW')) {
+      if (
+        !submission ||
+        (submission.status !== 'SUBMITTED' && submission.status !== 'UNDER_REVIEW')
+      ) {
         continue;
       }
       await this.prisma.productSubmission.update({
         where: { id: sub.id },
         data: {
           status: 'PROCUREMENT_REJECTED',
-          procurementNotes: [submission.procurementNotes, REJECT_OTHERS_REASON].filter(Boolean).join('\n\n'),
+          procurementNotes: [submission.procurementNotes, REJECT_OTHERS_REASON]
+            .filter(Boolean)
+            .join('\n\n'),
         },
       });
       rejectedIds.push(sub.id);
@@ -405,7 +421,10 @@ export class DuplicatesService {
    * based on current cross-seller duplicate grouping. Use for reporting or run via cron.
    * Call after new submissions or periodically.
    */
-  async assignCrossSellerGroupIds(): Promise<{ groupsAssigned: number; submissionsUpdated: number }> {
+  async assignCrossSellerGroupIds(): Promise<{
+    groupsAssigned: number;
+    submissionsUpdated: number;
+  }> {
     const submissions = await this.prisma.productSubmission.findMany({
       where: { status: { in: ['SUBMITTED', 'UNDER_REVIEW'] } },
       orderBy: { createdAt: 'asc' },
@@ -450,9 +469,15 @@ export class DuplicatesService {
     for (const indices of groupByRoot.values()) {
       if (indices.length < 2) {
         const id = submissions[indices[0]].id;
-        const current = await this.prisma.productSubmission.findUnique({ where: { id }, select: { crossSellerGroupId: true } });
+        const current = await this.prisma.productSubmission.findUnique({
+          where: { id },
+          select: { crossSellerGroupId: true },
+        });
         if (current?.crossSellerGroupId) {
-          await this.prisma.productSubmission.update({ where: { id }, data: { crossSellerGroupId: null } });
+          await this.prisma.productSubmission.update({
+            where: { id },
+            data: { crossSellerGroupId: null },
+          });
           submissionsUpdated++;
         }
         continue;

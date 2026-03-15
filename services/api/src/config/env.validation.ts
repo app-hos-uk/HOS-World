@@ -23,9 +23,16 @@ interface EnvSchema {
 
 const required: (keyof EnvSchema)[] = ['DATABASE_URL', 'JWT_SECRET', 'JWT_REFRESH_SECRET'];
 
-const urlFields: (keyof EnvSchema)[] = ['DATABASE_URL', 'REDIS_URL', 'MEILISEARCH_HOST', 'FRONTEND_URL'];
+const urlFields: (keyof EnvSchema)[] = [
+  'DATABASE_URL',
+  'REDIS_URL',
+  'MEILISEARCH_HOST',
+  'FRONTEND_URL',
+];
 
-export function validateEnvironmentVariables(config: Record<string, unknown>): Record<string, unknown> {
+export function validateEnvironmentVariables(
+  config: Record<string, unknown>,
+): Record<string, unknown> {
   const errors: string[] = [];
   const warnings: string[] = [];
 
@@ -52,16 +59,27 @@ export function validateEnvironmentVariables(config: Record<string, unknown>): R
   for (const field of urlFields) {
     if (config[field] && typeof config[field] === 'string') {
       const value = config[field] as string;
-      if (field === 'DATABASE_URL' && !value.startsWith('postgresql://') && !value.startsWith('postgres://')) {
+      if (
+        field === 'DATABASE_URL' &&
+        !value.startsWith('postgresql://') &&
+        !value.startsWith('postgres://')
+      ) {
         errors.push(`${field} must be a valid PostgreSQL URL`);
       }
-      if (field === 'REDIS_URL' && !value.startsWith('redis://') && !value.startsWith('rediss://')) {
+      if (
+        field === 'REDIS_URL' &&
+        !value.startsWith('redis://') &&
+        !value.startsWith('rediss://')
+      ) {
         warnings.push(`${field} should be a valid Redis URL`);
       }
     }
   }
 
-  if (config.STORAGE_PROVIDER && !['local', 's3', 'minio', 'cloudinary'].includes(String(config.STORAGE_PROVIDER))) {
+  if (
+    config.STORAGE_PROVIDER &&
+    !['local', 's3', 'minio', 'cloudinary'].includes(String(config.STORAGE_PROVIDER))
+  ) {
     errors.push('STORAGE_PROVIDER must be one of: local, s3, minio, cloudinary');
   }
 
@@ -78,7 +96,7 @@ export function validateEnvironmentVariables(config: Record<string, unknown>): R
   }
 
   if (errors.length > 0) {
-    throw new Error(`Environment validation failed:\n${errors.map(e => `  - ${e}`).join('\n')}`);
+    throw new Error(`Environment validation failed:\n${errors.map((e) => `  - ${e}`).join('\n')}`);
   }
 
   return config;

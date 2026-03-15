@@ -151,16 +151,15 @@ export class AdminController {
   @Put('users/:id/toggle-status')
   @ApiOperation({
     summary: 'Toggle user active/inactive status',
-    description: 'Activates or deactivates a user account. Inactive users cannot log in. Admin access required.',
+    description:
+      'Activates or deactivates a user account. Inactive users cannot log in. Admin access required.',
   })
   @ApiParam({ name: 'id', description: 'User UUID', type: String })
   @SwaggerApiResponse({ status: 200, description: 'User status toggled successfully' })
   @SwaggerApiResponse({ status: 401, description: 'Unauthorized' })
   @SwaggerApiResponse({ status: 403, description: 'Forbidden - Admin access required' })
   @SwaggerApiResponse({ status: 404, description: 'User not found' })
-  async toggleUserStatus(
-    @Param('id', ParseUUIDPipe) id: string,
-  ): Promise<ApiResponse<any>> {
+  async toggleUserStatus(@Param('id', ParseUUIDPipe) id: string): Promise<ApiResponse<any>> {
     const user = await this.adminService.toggleUserStatus(id);
     return {
       data: user,
@@ -408,9 +407,7 @@ export class AdminController {
   @SwaggerApiResponse({ status: 401, description: 'Unauthorized' })
   @SwaggerApiResponse({ status: 403, description: 'Forbidden - Admin access required' })
   @SwaggerApiResponse({ status: 404, description: 'Seller not found' })
-  async suspendSeller(
-    @Param('id', ParseUUIDPipe) id: string,
-  ): Promise<ApiResponse<any>> {
+  async suspendSeller(@Param('id', ParseUUIDPipe) id: string): Promise<ApiResponse<any>> {
     const result = await this.adminService.suspendSeller(id);
     return {
       data: result,

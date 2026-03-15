@@ -14,7 +14,7 @@ export class FinanceService {
   async findPending() {
     const submissions = await this.prisma.productSubmission.findMany({
       where: {
-        status: { in: ['MARKETING_COMPLETED', 'FINANCE_PENDING'] },
+        status: { in: ['MARKETING_COMPLETED', 'CONTENT_COMPLETED' as any, 'FINANCE_PENDING'] },
       },
       take: 100,
       include: {
@@ -38,7 +38,7 @@ export class FinanceService {
           orderBy: { createdAt: 'desc' },
         },
       },
-      orderBy: { marketingCompletedAt: 'asc' },
+      orderBy: { catalogCompletedAt: 'asc' },
     });
 
     return submissions;
@@ -53,9 +53,10 @@ export class FinanceService {
       throw new NotFoundException('Submission not found');
     }
 
-    if (submission.status !== 'MARKETING_COMPLETED' && submission.status !== 'FINANCE_PENDING') {
+    const allowedForPricing = ['MARKETING_COMPLETED', 'CONTENT_COMPLETED', 'FINANCE_PENDING'];
+    if (!allowedForPricing.includes(submission.status)) {
       throw new BadRequestException(
-        'Pricing can only be set for marketing-completed or finance-pending submissions',
+        'Pricing can only be set for content-completed or finance-pending submissions',
       );
     }
 
@@ -82,7 +83,7 @@ export class FinanceService {
       data: {
         status: 'FINANCE_PENDING',
         pricingData: pricingData as any,
-        financeNotes: `Pricing set: Base: £${basePrice.toFixed(2)}, Margin: ${(setPricingDto.hosMargin * 100).toFixed(2)}%, Final: £${finalPrice.toFixed(2)}, Visibility: ${visibilityLevel}`,
+        financeNotes: `Pricing set: Base: $${basePrice.toFixed(2)}, Margin: ${(setPricingDto.hosMargin * 100).toFixed(2)}%, Final: $${finalPrice.toFixed(2)}, Visibility: ${visibilityLevel}`,
       },
     });
 
@@ -105,9 +106,7 @@ export class FinanceService {
     }
 
     if (submission.status !== 'FINANCE_PENDING') {
-      throw new BadRequestException(
-        'Pricing can only be updated for finance-pending submissions',
-      );
+      throw new BadRequestException('Pricing can only be updated for finance-pending submissions');
     }
 
     const productData = submission.productData as any;
@@ -128,7 +127,7 @@ export class FinanceService {
       where: { id: submissionId },
       data: {
         pricingData: pricingData as any,
-        financeNotes: `${submission.financeNotes || ''}\n\nPricing updated: Base: £${basePrice.toFixed(2)}, Margin: ${(setPricingDto.hosMargin * 100).toFixed(2)}%, Final: £${finalPrice.toFixed(2)}, Visibility: ${visibilityLevel}`,
+        financeNotes: `${submission.financeNotes || ''}\n\nPricing updated: Base: $${basePrice.toFixed(2)}, Margin: ${(setPricingDto.hosMargin * 100).toFixed(2)}%, Final: $${finalPrice.toFixed(2)}, Visibility: ${visibilityLevel}`,
       },
     });
 
@@ -279,7 +278,9 @@ export class FinanceService {
   async getDashboardStats() {
     const [pending, approved, rejected, total] = await Promise.all([
       this.prisma.productSubmission.count({
-        where: { status: { in: ['MARKETING_COMPLETED', 'FINANCE_PENDING'] } },
+        where: {
+          status: { in: ['MARKETING_COMPLETED', 'CONTENT_COMPLETED' as any, 'FINANCE_PENDING'] },
+        },
       }),
       this.prisma.productSubmission.count({
         where: { status: 'FINANCE_APPROVED' },
@@ -290,7 +291,12 @@ export class FinanceService {
       this.prisma.productSubmission.count({
         where: {
           status: {
-            in: ['MARKETING_COMPLETED', 'FINANCE_PENDING', 'FINANCE_APPROVED'],
+            in: [
+              'MARKETING_COMPLETED',
+              'CONTENT_COMPLETED' as any,
+              'FINANCE_PENDING',
+              'FINANCE_APPROVED',
+            ],
           },
         },
       }),

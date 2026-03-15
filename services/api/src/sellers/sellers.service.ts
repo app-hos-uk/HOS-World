@@ -3,6 +3,7 @@ import {
   NotFoundException,
   ForbiddenException,
   BadRequestException,
+  Logger,
 } from '@nestjs/common';
 import { PrismaService } from '../database/prisma.service';
 import { UpdateSellerDto } from './dto/update-seller.dto';
@@ -11,7 +12,38 @@ import { slugify } from '@hos-marketplace/utils';
 
 @Injectable()
 export class SellersService {
-  constructor(private prisma: PrismaService) {}
+  private readonly logger = new Logger(SellersService.name);
+  private readonly encryptionKey: string;
+
+  constructor(private prisma: PrismaService) {
+    this.encryptionKey = process.env.ENCRYPTION_KEY || 'hos-default-key-change-in-production';
+  }
+
+  private encryptField(value: string): string {
+    const crypto = require('crypto');
+    const key = crypto.scryptSync(this.encryptionKey, 'salt', 32);
+    const iv = crypto.randomBytes(16);
+    const cipher = crypto.createCipheriv('aes-256-cbc', key, iv);
+    let encrypted = cipher.update(value, 'utf8', 'hex');
+    encrypted += cipher.final('hex');
+    return iv.toString('hex') + ':' + encrypted;
+  }
+
+  private decryptField(encrypted: string): string {
+    try {
+      const crypto = require('crypto');
+      const [ivHex, encData] = encrypted.split(':');
+      if (!ivHex || !encData) return encrypted;
+      const key = crypto.scryptSync(this.encryptionKey, 'salt', 32);
+      const iv = Buffer.from(ivHex, 'hex');
+      const decipher = crypto.createDecipheriv('aes-256-cbc', key, iv);
+      let decrypted = decipher.update(encData, 'hex', 'utf8');
+      decrypted += decipher.final('utf8');
+      return decrypted;
+    } catch {
+      return encrypted;
+    }
+  }
 
   async findMyProducts(userId: string) {
     const seller = await this.prisma.seller.findUnique({
@@ -66,21 +98,22 @@ export class SellersService {
       throw new NotFoundException('Seller profile not found');
     }
 
-    // Mask sensitive bank details in response
     return {
       ...seller,
-      accountNumberLast4: seller.accountNumberEnc ? seller.accountNumberEnc.slice(-4) : null,
-      sortCodeLast4: seller.sortCodeEnc ? seller.sortCodeEnc.slice(-4) : null,
+      accountNumberLast4: seller.accountNumberEnc
+        ? this.decryptField(seller.accountNumberEnc).slice(-4)
+        : null,
+      sortCodeLast4: seller.sortCodeEnc ? this.decryptField(seller.sortCodeEnc).slice(-4) : null,
       accountNumberEnc: undefined,
       sortCodeEnc: undefined,
     };
   }
 
-  async findAllPublic() {
+  async findAllPublic(limit = 200) {
     const sellers = await this.prisma.seller.findMany({
+      take: Math.min(limit, 500),
       select: {
         id: true,
-        userId: true,
         storeName: true,
         slug: true,
         description: true,
@@ -156,11 +189,25 @@ export class SellersService {
       throw new NotFoundException('Seller not found');
     }
 
-    // Return public-safe seller data (strip sensitive bank fields)
+    // Return public-safe seller data (strip sensitive/internal fields)
+    const {
+      accountNumberEnc: _enc,
+      sortCodeEnc: _sc,
+      userId: _uid,
+      stripeConnectAccountId: _stripe,
+      commissionRate: _cr,
+      ...publicSeller
+    } = seller as any;
     return {
-      ...seller,
-      accountNumberEnc: undefined,
-      sortCodeEnc: undefined,
+      ...publicSeller,
+      user: publicSeller.user
+        ? {
+            firstName: publicSeller.user.firstName,
+            lastName: publicSeller.user.lastName,
+            avatar: publicSeller.user.avatar,
+            role: publicSeller.user.role,
+          }
+        : undefined,
     };
   }
 
@@ -174,16 +221,14 @@ export class SellersService {
     }
 
     // Build update data, excluding nested objects and sensitive fields that need special handling
-    const { warehouseAddress, accountNumber, sortCode, ...restDto } = updateSellerDto;
+    const { warehouseAddress: _wh, accountNumber, sortCode, ...restDto } = updateSellerDto;
     const updateData: any = { ...restDto };
 
-    // Handle bank account fields - store encrypted
-    // TODO: Implement proper encryption for production
     if (accountNumber) {
-      updateData.accountNumberEnc = accountNumber; // In production, encrypt this
+      updateData.accountNumberEnc = this.encryptField(accountNumber);
     }
     if (sortCode) {
-      updateData.sortCodeEnc = sortCode; // In production, encrypt this
+      updateData.sortCodeEnc = this.encryptField(sortCode);
     }
 
     // If updating slug (via storeName), ensure uniqueness
@@ -216,11 +261,12 @@ export class SellersService {
       },
     });
 
-    // Mask sensitive data in response
     return {
       ...updated,
-      accountNumberLast4: updated.accountNumberEnc ? updated.accountNumberEnc.slice(-4) : null,
-      sortCodeLast4: updated.sortCodeEnc ? updated.sortCodeEnc.slice(-4) : null,
+      accountNumberLast4: updated.accountNumberEnc
+        ? this.decryptField(updated.accountNumberEnc).slice(-4)
+        : null,
+      sortCodeLast4: updated.sortCodeEnc ? this.decryptField(updated.sortCodeEnc).slice(-4) : null,
       accountNumberEnc: undefined,
       sortCodeEnc: undefined,
     };
@@ -278,5 +324,305 @@ export class SellersService {
         domainPackagePurchased,
       },
     });
+  }
+
+  /**
+   * Public vendor application — creates a user with SELLER role and a seller
+   * profile with PENDING vendorStatus. Marketing/Admin must approve.
+   */
+  async applyAsVendor(applicationData: {
+    email: string;
+    password: string;
+    firstName: string;
+    lastName: string;
+    storeName: string;
+    description?: string;
+    country?: string;
+    city?: string;
+    legalBusinessName?: string;
+    companyName?: string;
+    vatNumber?: string;
+    taxId?: string;
+    applicationNotes?: string;
+  }) {
+    const existingUser = await this.prisma.user.findUnique({
+      where: { email: applicationData.email },
+      include: { sellerProfile: true },
+    });
+
+    // Allow re-application if previous application was rejected
+    if (existingUser) {
+      if (existingUser.sellerProfile?.vendorStatus === 'REJECTED') {
+        const updated = await this.prisma.seller.update({
+          where: { userId: existingUser.id },
+          data: {
+            vendorStatus: 'PENDING',
+            storeName: applicationData.storeName,
+            description: applicationData.description,
+            applicationNotes: applicationData.applicationNotes,
+          },
+        });
+        return {
+          userId: existingUser.id,
+          sellerId: updated.id,
+          storeName: updated.storeName,
+          slug: updated.slug,
+          vendorStatus: updated.vendorStatus,
+          message: 'Vendor re-application submitted. Your application is under review.',
+        };
+      }
+      throw new BadRequestException('Unable to process this application. Please contact support.');
+    }
+
+    const bcrypt = await import('bcrypt');
+    const hashedPassword = await bcrypt.hash(applicationData.password, 10);
+
+    const baseSlug = slugify(applicationData.storeName);
+    let slug = baseSlug;
+    let counter = 1;
+    while (await this.prisma.seller.findUnique({ where: { slug } })) {
+      slug = `${baseSlug}-${counter}`;
+      counter++;
+    }
+
+    const result = await this.prisma.$transaction(async (tx) => {
+      const user = await tx.user.create({
+        data: {
+          email: applicationData.email,
+          password: hashedPassword,
+          firstName: applicationData.firstName,
+          lastName: applicationData.lastName,
+          role: 'SELLER',
+          country: applicationData.country,
+        },
+      });
+
+      const seller = await tx.seller.create({
+        data: {
+          userId: user.id,
+          storeName: applicationData.storeName,
+          slug,
+          description: applicationData.description,
+          country: applicationData.country,
+          city: applicationData.city,
+          legalBusinessName: applicationData.legalBusinessName,
+          companyName: applicationData.companyName,
+          vatNumber: applicationData.vatNumber,
+          taxId: applicationData.taxId,
+          applicationNotes: applicationData.applicationNotes,
+          vendorStatus: 'PENDING',
+        },
+      });
+
+      return {
+        userId: user.id,
+        sellerId: seller.id,
+        storeName: seller.storeName,
+        slug: seller.slug,
+        vendorStatus: seller.vendorStatus,
+        message: 'Vendor application submitted. Your application is under review.',
+      };
+    });
+
+    return result;
+  }
+
+  // === Vendor Management Methods ===
+
+  async findAllVendors(params: {
+    status?: string;
+    search?: string;
+    page?: number;
+    limit?: number;
+  }) {
+    const { status, search, page = 1, limit = 20 } = params;
+    const where: any = {};
+
+    if (status) where.vendorStatus = status;
+    if (search) {
+      where.OR = [
+        { storeName: { contains: search, mode: 'insensitive' } },
+        { user: { email: { contains: search, mode: 'insensitive' } } },
+        { legalBusinessName: { contains: search, mode: 'insensitive' } },
+      ];
+    }
+
+    const skip = (page - 1) * limit;
+
+    const [vendors, total] = await Promise.all([
+      this.prisma.seller.findMany({
+        where,
+        skip,
+        take: limit,
+        orderBy: { createdAt: 'desc' },
+        include: {
+          user: {
+            select: {
+              id: true,
+              email: true,
+              firstName: true,
+              lastName: true,
+            },
+          },
+          _count: {
+            select: { products: true, orders: true, vendorProducts: true },
+          },
+        },
+      }),
+      this.prisma.seller.count({ where }),
+    ]);
+
+    return {
+      data: vendors.map(
+        ({ accountNumberEnc: _a, sortCodeEnc: _s, stripeConnectAccountId: _sid, ...rest }) => rest,
+      ),
+      pagination: {
+        total,
+        page,
+        limit,
+        totalPages: Math.ceil(total / limit),
+      },
+    };
+  }
+
+  async approveVendor(sellerId: string, adminUserId: string, notes?: string) {
+    const seller = await this.prisma.seller.findUnique({
+      where: { id: sellerId },
+    });
+    if (!seller) throw new NotFoundException('Seller not found');
+
+    if (seller.vendorStatus !== 'PENDING') {
+      throw new BadRequestException(`Cannot approve vendor with status ${seller.vendorStatus}`);
+    }
+
+    const updated = await this.prisma.seller.update({
+      where: { id: sellerId },
+      data: {
+        vendorStatus: 'APPROVED',
+        verified: true,
+        approvedAt: new Date(),
+        approvedBy: adminUserId,
+        applicationNotes: notes,
+      },
+    });
+
+    this.logger.log(`Vendor ${sellerId} approved by admin ${adminUserId}`);
+    return updated;
+  }
+
+  async rejectVendor(sellerId: string, reason: string) {
+    const seller = await this.prisma.seller.findUnique({
+      where: { id: sellerId },
+    });
+    if (!seller) throw new NotFoundException('Seller not found');
+
+    if (seller.vendorStatus !== 'PENDING') {
+      throw new BadRequestException(`Cannot reject vendor with status ${seller.vendorStatus}`);
+    }
+
+    return this.prisma.seller.update({
+      where: { id: sellerId },
+      data: {
+        vendorStatus: 'REJECTED',
+        applicationNotes: reason,
+      },
+    });
+  }
+
+  async suspendVendor(sellerId: string, reason: string) {
+    const seller = await this.prisma.seller.findUnique({
+      where: { id: sellerId },
+    });
+    if (!seller) throw new NotFoundException('Seller not found');
+
+    return this.prisma.seller.update({
+      where: { id: sellerId },
+      data: {
+        vendorStatus: 'SUSPENDED',
+        applicationNotes: reason,
+      },
+    });
+  }
+
+  async activateVendor(sellerId: string) {
+    const seller = await this.prisma.seller.findUnique({
+      where: { id: sellerId },
+    });
+    if (!seller) throw new NotFoundException('Seller not found');
+
+    if (seller.vendorStatus !== 'APPROVED' && seller.vendorStatus !== 'SUSPENDED') {
+      throw new BadRequestException('Vendor must be approved or suspended to activate');
+    }
+
+    return this.prisma.seller.update({
+      where: { id: sellerId },
+      data: { vendorStatus: 'ACTIVE' },
+    });
+  }
+
+  async updateCommissionRate(sellerId: string, rate: number) {
+    if (rate < 0 || rate > 1) {
+      throw new BadRequestException('Commission rate must be between 0 and 1');
+    }
+
+    const seller = await this.prisma.seller.findUnique({
+      where: { id: sellerId },
+    });
+    if (!seller) throw new NotFoundException('Seller not found');
+
+    return this.prisma.seller.update({
+      where: { id: sellerId },
+      data: { commissionRate: rate },
+    });
+  }
+
+  async updateSubscription(sellerId: string, plan: string, fee: number, expiresAt?: Date) {
+    const seller = await this.prisma.seller.findUnique({
+      where: { id: sellerId },
+    });
+    if (!seller) throw new NotFoundException('Seller not found');
+
+    return this.prisma.seller.update({
+      where: { id: sellerId },
+      data: {
+        subscriptionPlan: plan,
+        monthlySubscriptionFee: fee,
+        subscriptionExpiresAt: expiresAt,
+      },
+    });
+  }
+
+  async getVendorDashboardStats(userId: string) {
+    const seller = await this.prisma.seller.findUnique({
+      where: { userId },
+    });
+    if (!seller) throw new NotFoundException('Seller profile not found');
+
+    const [totalOrders, pendingOrders, totalProducts, activeProducts, pendingListings] =
+      await Promise.all([
+        this.prisma.order.count({ where: { sellerId: seller.id } }),
+        this.prisma.order.count({
+          where: { sellerId: seller.id, status: 'PENDING' },
+        }),
+        this.prisma.product.count({ where: { sellerId: seller.id } }),
+        this.prisma.product.count({
+          where: { sellerId: seller.id, status: 'ACTIVE' },
+        }),
+        this.prisma.vendorProduct.count({
+          where: { sellerId: seller.id, status: 'PENDING_APPROVAL' },
+        }),
+      ]);
+
+    return {
+      vendorStatus: seller.vendorStatus,
+      commissionRate: Number(seller.commissionRate),
+      stripeConnectOnboarded: seller.stripeConnectOnboarded,
+      totalOrders,
+      pendingOrders,
+      totalProducts,
+      activeProducts,
+      pendingListings,
+      totalSales: seller.totalSales,
+    };
   }
 }

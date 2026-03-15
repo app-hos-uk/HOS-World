@@ -19,7 +19,7 @@ import type { User, AuthResponse } from '@hos-marketplace/shared-types';
 @Injectable()
 export class AuthService {
   private readonly logger = new Logger(AuthService.name);
-  private refreshTokenAvailable: boolean = false;
+  private refreshTokenAvailable: boolean = true;
   private refreshTokenChecked: boolean = false;
 
   // Simple country name to country code mapping
@@ -65,7 +65,9 @@ export class AuthService {
       this.refreshTokenAvailable = typeof (this.prisma as any).refreshToken !== 'undefined';
       this.refreshTokenChecked = true;
       if (!this.refreshTokenAvailable) {
-        this.logger.warn('RefreshToken model not available in Prisma client. Auth methods will skip refresh token storage. Solution: pnpm db:generate');
+        this.logger.warn(
+          'RefreshToken model not available in Prisma client. Auth methods will skip refresh token storage. Solution: pnpm db:generate',
+        );
       } else {
         this.logger.log('RefreshToken model available');
       }
@@ -91,7 +93,7 @@ export class AuthService {
    * Get country code from country name
    */
   private getCountryCode(country: string | undefined): string {
-    if (!country) return 'GB';
+    if (!country) return 'US';
     // Try exact match first
     if (this.countryCodeMap[country]) {
       return this.countryCodeMap[country];
@@ -103,8 +105,7 @@ export class AuthService {
         return code;
       }
     }
-    // Default to GB if not found
-    return 'GB';
+    return 'US';
   }
 
   async register(registerDto: RegisterDto, ipAddress?: string): Promise<AuthResponse> {
@@ -147,7 +148,7 @@ export class AuthService {
 
     // Determine currency preference based on country
     const countryCode = this.getCountryCode(registerDto.country);
-    const currencyPreference = this.geolocationService.getCurrencyForCountry(countryCode) || 'GBP';
+    const currencyPreference = this.geolocationService.getCurrencyForCountry(countryCode) || 'USD';
 
     // Create user with global platform fields
     const user = await this.prisma.user.create({
@@ -226,7 +227,7 @@ export class AuthService {
           userId: user.id,
           storeName: registerDto.storeName!,
           slug,
-          country: registerDto.country ?? (user as { country?: string }).country ?? 'GB',
+          country: registerDto.country ?? (user as { country?: string }).country ?? 'US',
           timezone: 'UTC',
           sellerType: sellerType || registerDto.sellerType || 'B2C_SELLER',
           logisticsOption: registerDto.logisticsOption || 'HOS_LOGISTICS',
@@ -341,7 +342,7 @@ export class AuthService {
 
     // Determine currency preference based on country
     const countryCode = this.getCountryCode(registerDto.country);
-    const currencyPreference = this.geolocationService.getCurrencyForCountry(countryCode) || 'GBP';
+    const currencyPreference = this.geolocationService.getCurrencyForCountry(countryCode) || 'USD';
 
     // Create user
     const user = await this.prisma.user.create({
@@ -465,7 +466,7 @@ export class AuthService {
 
       // Verify password
       if (!user.password) {
-        throw new UnauthorizedException('Invalid credentials. This account uses OAuth login.');
+        throw new UnauthorizedException('Invalid credentials');
       }
       const isPasswordValid = await bcrypt.compare(loginDto.password, user.password);
       if (!isPasswordValid) {
@@ -488,7 +489,9 @@ export class AuthService {
 
       // Check if user account is active
       if (user.isActive === false) {
-        throw new UnauthorizedException('Your account has been deactivated. Please contact support.');
+        throw new UnauthorizedException(
+          'Your account has been deactivated. Please contact support.',
+        );
       }
 
       // Reset failed login attempts on successful login
@@ -511,7 +514,11 @@ export class AuthService {
         refreshToken: tokens.refreshToken,
       };
     } catch (error: any) {
-      throw error;
+      if (error instanceof UnauthorizedException) {
+        throw error;
+      }
+      this.logger.error(`Login error: ${error?.message}`);
+      throw new UnauthorizedException('Authentication failed. Please try again.');
     }
   }
 
@@ -556,8 +563,8 @@ export class AuthService {
 
       // Defensive check: ensure RefreshToken model exists
       if (!this.refreshTokenAvailable) {
-        console.warn('[AUTH] ⚠️ RefreshToken model not available - skipping token storage');
-        console.warn('[AUTH] Token will be generated but not stored in database');
+        this.logger.warn('RefreshToken model not available - skipping token storage');
+        this.logger.warn('Token will be generated but not stored in database');
         // Continue without storing refresh token - this allows the service to start
         // but refresh functionality won't work until Prisma client is regenerated
         return {
@@ -568,7 +575,7 @@ export class AuthService {
 
       const refreshTokenModel = (this.prisma as any).refreshToken;
       if (!refreshTokenModel) {
-        console.warn('[AUTH] ⚠️ RefreshToken model not found - skipping storage');
+        this.logger.warn('RefreshToken model not found - skipping storage');
         return {
           accessToken,
           refreshToken,
@@ -608,7 +615,10 @@ export class AuthService {
         refreshToken,
       };
     } catch (error: any) {
-      throw error;
+      this.logger.error(`Token generation error: ${error?.message}`);
+      throw new UnauthorizedException(
+        'Failed to generate authentication tokens. Please try again.',
+      );
     }
   }
 
@@ -643,8 +653,8 @@ export class AuthService {
 
     // Find and verify refresh token in DB
     if (!this.refreshTokenAvailable) {
-      console.warn(
-        '[AUTH] ⚠️ RefreshToken model not available - refresh token functionality disabled',
+      this.logger.warn(
+        'RefreshToken model not available - refresh token functionality disabled',
       );
       throw new UnauthorizedException(
         'Token refresh is currently unavailable. Please log in again.',
@@ -653,7 +663,7 @@ export class AuthService {
 
     const refreshTokenModel = (this.prisma as any).refreshToken;
     if (!refreshTokenModel) {
-      console.warn('[AUTH] ⚠️ RefreshToken model not found during refresh');
+      this.logger.warn('RefreshToken model not found during refresh');
       throw new UnauthorizedException(
         'Token refresh is currently unavailable. Please log in again.',
       );
@@ -681,11 +691,10 @@ export class AuthService {
               data: { revokedAt: new Date() },
             });
           } catch (updateError: any) {
-            console.error(
-              '[AUTH] ❌ CRITICAL: Failed to revoke old refresh token:',
-              updateError?.message,
+            this.logger.error(
+              `CRITICAL: Failed to revoke old refresh token: ${updateError?.message}`,
             );
-            console.error('[AUTH] Token rotation aborted - old token remains valid');
+            this.logger.error('Token rotation aborted - old token remains valid');
             // Fail the refresh to prevent token replay attacks
             throw new UnauthorizedException(
               'Token refresh failed - unable to revoke previous token. Please log in again.',
@@ -700,12 +709,19 @@ export class AuthService {
       throw new UnauthorizedException('Invalid or expired refresh token');
     }
 
-    // Generate new tokens (rotation)
-    const { password, ...userWithoutPassword } = user as any;
-    const tokens = await this.generateTokens(userWithoutPassword);
+    // Generate new tokens (rotation) — strip all sensitive fields
+    const {
+      password,
+      failedLoginAttempts,
+      lockedUntil,
+      resetToken,
+      resetTokenExpiry,
+      ...userWithoutSensitive
+    } = user as any;
+    const tokens = await this.generateTokens(userWithoutSensitive);
 
     return {
-      user: userWithoutPassword as User,
+      user: userWithoutSensitive as User,
       token: tokens.accessToken,
       refreshToken: tokens.refreshToken,
     };
@@ -717,7 +733,7 @@ export class AuthService {
   async revokeAllTokens(userId: string): Promise<void> {
     const refreshTokenModel = (this.prisma as any).refreshToken;
     if (!refreshTokenModel) {
-      console.warn('[AUTH] ⚠️ RefreshToken model not found, skipping token revocation');
+      this.logger.warn('RefreshToken model not found, skipping token revocation');
       return;
     }
     await refreshTokenModel.updateMany({
@@ -736,13 +752,13 @@ export class AuthService {
    */
   async cleanupExpiredTokens(): Promise<void> {
     if (!this.refreshTokenAvailable) {
-      console.warn('[AUTH] ⚠️ RefreshToken model not available, skipping cleanup');
+      this.logger.warn('RefreshToken model not available, skipping cleanup');
       return;
     }
 
     const refreshTokenModel = (this.prisma as any).refreshToken;
     if (!refreshTokenModel) {
-      console.warn('[AUTH] ⚠️ RefreshToken model not found, skipping cleanup');
+      this.logger.warn('RefreshToken model not found, skipping cleanup');
       return;
     }
     await refreshTokenModel.deleteMany({
@@ -847,7 +863,7 @@ export class AuthService {
     }
     const crypto = await import('crypto');
     const resetToken = crypto.randomBytes(32).toString('hex');
-    const resetExpiry = new Date(Date.now() + 3600000); // 1 hour
+    const resetExpiry = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours
 
     await this.prisma.user.update({
       where: { id: user.id },
@@ -870,6 +886,7 @@ export class AuthService {
         resetToken: token,
         resetTokenExpiry: { gte: new Date() },
       } as any,
+      orderBy: { resetTokenExpiry: 'desc' } as any,
     });
 
     if (!user) {
@@ -889,7 +906,11 @@ export class AuthService {
     return { message: 'Password has been reset successfully' };
   }
 
-  async changePassword(userId: string, currentPassword: string, newPassword: string): Promise<{ message: string }> {
+  async changePassword(
+    userId: string,
+    currentPassword: string,
+    newPassword: string,
+  ): Promise<{ message: string }> {
     if (!newPassword || newPassword.length < 8) {
       throw new BadRequestException('Password must be at least 8 characters');
     }

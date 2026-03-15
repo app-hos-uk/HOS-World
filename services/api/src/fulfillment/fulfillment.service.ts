@@ -452,11 +452,7 @@ export class FulfillmentService {
     };
   }
 
-  async rejectShipmentForResubmission(
-    shipmentId: string,
-    userId: string,
-    reason: string,
-  ) {
+  async rejectShipmentForResubmission(shipmentId: string, userId: string, reason: string) {
     const shipment = await this.prisma.shipment.findUnique({
       where: { id: shipmentId },
       include: {
@@ -479,9 +475,7 @@ export class FulfillmentService {
 
     // ShipmentStatus.REJECTED = FC rejected the shipment (ProductSubmission becomes FC_REJECTED)
     if (shipment.status !== ShipmentStatus.REJECTED) {
-      throw new BadRequestException(
-        'Only rejected shipments can be resubmitted',
-      );
+      throw new BadRequestException('Only rejected shipments can be resubmitted');
     }
 
     // Update submission back to PROCUREMENT_APPROVED for resubmission
@@ -534,6 +528,4 @@ export class FulfillmentService {
 
     return updated;
   }
-
-
 }

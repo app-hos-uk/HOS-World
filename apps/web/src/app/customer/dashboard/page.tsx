@@ -117,7 +117,7 @@ export default function CustomerDashboardPage() {
           id: `order-${order.id}`,
           type: 'order',
           title: `Order #${order.orderNumber || order.id.slice(0, 8)}`,
-          description: `${order.status} - ${formatPrice(order.total, 'GBP')}`,
+          description: `${order.status} - ${formatPrice(order.total, 'USD')}`,
           date: order.createdAt,
           icon: '📦',
           link: `/orders/${order.id}`,

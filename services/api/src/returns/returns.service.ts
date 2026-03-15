@@ -134,15 +134,20 @@ export class ReturnsService {
     return this.mapToReturnType(returnRequest);
   }
 
-  async findAll(userId: string, role: string): Promise<ReturnRequest[]> {
+  async findAll(userId: string, role: string, page = 1, limit = 50): Promise<ReturnRequest[]> {
     const where: any = {};
 
     if (role === 'CUSTOMER') {
       where.userId = userId;
     }
 
+    const take = Math.min(limit, 100);
+    const skip = (page - 1) * take;
+
     const returns = await this.prisma.returnRequest.findMany({
       where,
+      skip,
+      take,
       include: {
         order: {
           select: {
@@ -216,31 +221,72 @@ export class ReturnsService {
   ): Promise<ReturnRequest> {
     const returnRequest = await this.prisma.returnRequest.findUnique({
       where: { id },
+      include: {
+        order: { include: { items: true, seller: true } },
+        items: true,
+      },
     });
 
     if (!returnRequest) {
       throw new NotFoundException('Return request not found');
     }
 
-    const updated = await this.prisma.returnRequest.update({
-      where: { id },
-      data: {
-        status: status.toUpperCase() as any,
-        refundAmount: refundAmount ? refundAmount : undefined,
-        refundMethod,
-        processedAt: status === 'COMPLETED' ? new Date() : undefined,
-      },
-    });
+    const validTransitions: Record<string, string[]> = {
+      PENDING: ['APPROVED', 'REJECTED'],
+      APPROVED: ['PROCESSING', 'COMPLETED', 'CANCELLED'],
+      PROCESSING: ['COMPLETED', 'CANCELLED'],
+    };
+    const currentStatus = returnRequest.status;
+    const newStatus = status.toUpperCase();
+    const allowed = validTransitions[currentStatus] || [];
+    if (!allowed.includes(newStatus)) {
+      throw new BadRequestException(
+        `Cannot transition return from ${currentStatus} to ${newStatus}`,
+      );
+    }
 
-    // If approved and refund amount set, update order payment status
-    if (status === 'APPROVED' && refundAmount) {
-      await this.prisma.order.update({
-        where: { id: returnRequest.orderId },
+    const updated = await this.prisma.$transaction(async (tx) => {
+      const result = await tx.returnRequest.update({
+        where: { id },
         data: {
-          paymentStatus: 'REFUNDED',
+          status: newStatus as any,
+          refundAmount: refundAmount ? refundAmount : undefined,
+          refundMethod,
+          processedAt: newStatus === 'COMPLETED' ? new Date() : undefined,
         },
       });
-    }
+
+      if (newStatus === 'APPROVED' && refundAmount) {
+        await tx.order.update({
+          where: { id: returnRequest.orderId },
+          data: { paymentStatus: 'REFUNDED' },
+        });
+      }
+
+      if (newStatus === 'COMPLETED' && returnRequest.order) {
+        const returnItems = (returnRequest as any).items;
+        if (returnItems && returnItems.length > 0) {
+          for (const ri of returnItems) {
+            const orderItem = returnRequest.order.items.find((oi: any) => oi.id === ri.orderItemId);
+            if (orderItem) {
+              await tx.product.update({
+                where: { id: orderItem.productId },
+                data: { stock: { increment: ri.quantity } },
+              });
+            }
+          }
+        } else {
+          for (const item of returnRequest.order.items) {
+            await tx.product.update({
+              where: { id: item.productId },
+              data: { stock: { increment: item.quantity } },
+            });
+          }
+        }
+      }
+
+      return result;
+    });
 
     return this.mapToReturnType(updated);
   }

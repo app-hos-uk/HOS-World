@@ -94,7 +94,11 @@ export class FinanceController {
     @Param('submissionId', ParseUUIDPipe) submissionId: string,
     @Body() setPricingDto: SetPricingDto,
   ): Promise<ApiResponse<any>> {
-    const pricing = await this.financeService.updatePricing(submissionId, req.user.id, setPricingDto);
+    const pricing = await this.financeService.updatePricing(
+      submissionId,
+      req.user.id,
+      setPricingDto,
+    );
     return {
       data: pricing,
       message: 'Pricing updated successfully',

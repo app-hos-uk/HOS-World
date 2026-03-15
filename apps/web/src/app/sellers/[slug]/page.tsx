@@ -317,7 +317,7 @@ export default function SellerStorefrontPage() {
                     )}
                     <div className="mt-2 flex items-center justify-between">
                       <p className="text-lg font-bold text-purple-600">
-                        {formatPrice(product.price, product.currency || 'GBP')}
+                        {formatPrice(product.price, product.currency || 'USD')}
                       </p>
                       {product.averageRating != null && product.averageRating > 0 && (
                         <div className="flex items-center gap-1 text-xs text-gray-500">

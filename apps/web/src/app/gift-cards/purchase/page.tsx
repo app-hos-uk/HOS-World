@@ -22,7 +22,7 @@ export default function PurchaseGiftCardPage() {
     type: 'digital' as 'digital' | 'physical',
     amount: 50,
     customAmount: '',
-    currency: 'GBP',
+    currency: 'USD',
     issuedToEmail: '',
     issuedToName: '',
     message: '',

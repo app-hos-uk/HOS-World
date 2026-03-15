@@ -13,12 +13,7 @@ import { QueueModule } from '../queue/queue.module';
 @Module({
   imports: [forwardRef(() => CacheModule), DatabaseModule, QueueModule],
   controllers: [ProductsController, VolumePricingController, BundleController],
-  providers: [
-    ProductsService,
-    ProductsBulkService,
-    ProductsCacheHook,
-    VolumePricingService,
-  ],
+  providers: [ProductsService, ProductsBulkService, ProductsCacheHook, VolumePricingService],
   exports: [ProductsService, ProductsBulkService, ProductsCacheHook, VolumePricingService],
 })
 export class ProductsModule {}

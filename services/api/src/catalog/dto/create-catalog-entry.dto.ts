@@ -1,4 +1,12 @@
-import { IsString, IsNotEmpty, IsOptional, IsArray, IsObject } from 'class-validator';
+import {
+  IsString,
+  IsNotEmpty,
+  IsOptional,
+  IsArray,
+  IsObject,
+  IsUrl,
+  IsEnum,
+} from 'class-validator';
 
 export class CreateCatalogEntryDto {
   @IsString()
@@ -22,6 +30,10 @@ export class CreateCatalogEntryDto {
   @IsArray()
   @IsString({ each: true })
   images?: string[];
+
+  @IsOptional()
+  @IsArray()
+  marketingMaterials?: Array<{ type: string; url: string }>;
 }
 
 export class UpdateCatalogEntryDto {
@@ -46,4 +58,8 @@ export class UpdateCatalogEntryDto {
   @IsArray()
   @IsString({ each: true })
   images?: string[];
+
+  @IsOptional()
+  @IsArray()
+  marketingMaterials?: Array<{ type: string; url: string }>;
 }

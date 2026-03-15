@@ -109,7 +109,7 @@ export default function InfluencerProductLinksPage() {
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('en-GB', {
       style: 'currency',
-      currency: 'GBP',
+      currency: 'USD',
     }).format(amount);
   };
 

@@ -246,22 +246,22 @@ export default function AdminFinancePage() {
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                     <div className="bg-white rounded-lg shadow p-6">
                       <h3 className="text-sm font-medium text-gray-500 mb-1">Total Revenue</h3>
-                      <p className="text-3xl font-bold text-green-600">£{metrics.totalRevenue.toFixed(2)}</p>
+                      <p className="text-3xl font-bold text-green-600">${metrics.totalRevenue.toFixed(2)}</p>
                       <p className="text-xs text-gray-500 mt-1">{metrics.transactionCount} transactions</p>
                     </div>
                     <div className="bg-white rounded-lg shadow p-6">
                       <h3 className="text-sm font-medium text-gray-500 mb-1">Net Revenue</h3>
-                      <p className="text-3xl font-bold text-purple-600">£{metrics.netRevenue.toFixed(2)}</p>
+                      <p className="text-3xl font-bold text-purple-600">${metrics.netRevenue.toFixed(2)}</p>
                       <p className="text-xs text-gray-500 mt-1">After refunds</p>
                     </div>
                     <div className="bg-white rounded-lg shadow p-6">
                       <h3 className="text-sm font-medium text-gray-500 mb-1">Platform Fees</h3>
-                      <p className="text-3xl font-bold text-blue-600">£{metrics.platformFees.toFixed(2)}</p>
+                      <p className="text-3xl font-bold text-blue-600">${metrics.platformFees.toFixed(2)}</p>
                       <p className="text-xs text-gray-500 mt-1">5% commission</p>
                     </div>
                     <div className="bg-white rounded-lg shadow p-6">
                       <h3 className="text-sm font-medium text-gray-500 mb-1">Pending</h3>
-                      <p className="text-3xl font-bold text-yellow-600">£{metrics.pendingAmount.toFixed(2)}</p>
+                      <p className="text-3xl font-bold text-yellow-600">${metrics.pendingAmount.toFixed(2)}</p>
                       <p className="text-xs text-gray-500 mt-1">Awaiting settlement</p>
                     </div>
                   </div>
@@ -269,16 +269,16 @@ export default function AdminFinancePage() {
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                     <div className="bg-white rounded-lg shadow p-4">
                       <h3 className="text-sm font-medium text-gray-500">Seller Payouts</h3>
-                      <p className="text-xl font-bold text-gray-900 mt-1">£{metrics.totalPayouts.toFixed(2)}</p>
+                      <p className="text-xl font-bold text-gray-900 mt-1">${metrics.totalPayouts.toFixed(2)}</p>
                     </div>
                     <div className="bg-white rounded-lg shadow p-4">
                       <h3 className="text-sm font-medium text-gray-500">Total Refunds</h3>
-                      <p className="text-xl font-bold text-red-600 mt-1">£{metrics.totalRefunds.toFixed(2)}</p>
+                      <p className="text-xl font-bold text-red-600 mt-1">${metrics.totalRefunds.toFixed(2)}</p>
                     </div>
                     <div className="bg-white rounded-lg shadow p-4">
                       <h3 className="text-sm font-medium text-gray-500">Avg Transaction</h3>
                       <p className="text-xl font-bold text-gray-900 mt-1">
-                        £{isNaN(metrics.avgTransactionValue) ? '0.00' : metrics.avgTransactionValue.toFixed(2)}
+                        ${isNaN(metrics.avgTransactionValue) ? '0.00' : metrics.avgTransactionValue.toFixed(2)}
                       </p>
                     </div>
                     <div className="bg-white rounded-lg shadow p-4">
@@ -297,8 +297,8 @@ export default function AdminFinancePage() {
                         <AreaChart data={revenueChartData}>
                           <CartesianGrid strokeDasharray="3 3" />
                           <XAxis dataKey="date" tick={{ fontSize: 12 }} />
-                          <YAxis tick={{ fontSize: 12 }} tickFormatter={(v) => `£${v}`} />
-                          <Tooltip formatter={(value: number) => [`£${value.toFixed(2)}`, 'Revenue']} />
+                          <YAxis tick={{ fontSize: 12 }} tickFormatter={(v) => `$${v}`} />
+                          <Tooltip formatter={(value: number) => [`$${value.toFixed(2)}`, 'Revenue']} />
                           <Area type="monotone" dataKey="revenue" stroke="#8b5cf6" fill="#8b5cf680" />
                         </AreaChart>
                       </ResponsiveContainer>
@@ -328,7 +328,7 @@ export default function AdminFinancePage() {
                                   <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                                 ))}
                               </Pie>
-                              <Tooltip formatter={(value: number) => `£${value.toFixed(2)}`} />
+                              <Tooltip formatter={(value: number) => `$${value.toFixed(2)}`} />
                             </PieChart>
                           </ResponsiveContainer>
                         </div>
@@ -372,7 +372,7 @@ export default function AdminFinancePage() {
                       data={safeTransactions}
                       columns={[
                         { key: 'type', header: 'Type' },
-                        { key: 'amount', header: 'Amount', format: (v: number, t: any) => `${t.currency || 'GBP'} ${Number(v).toFixed(2)}` },
+                        { key: 'amount', header: 'Amount', format: (v: number, t: any) => `${t.currency || 'USD'} ${Number(v).toFixed(2)}` },
                         { key: 'status', header: 'Status' },
                         { key: 'createdAt', header: 'Date', format: (v: string) => new Date(v).toLocaleDateString() },
                       ]}
@@ -398,7 +398,7 @@ export default function AdminFinancePage() {
                           <tr key={tx.id} className="hover:bg-gray-50">
                             <td className="px-6 py-4 whitespace-nowrap text-sm">{tx.type}</td>
                             <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                              {tx.currency || 'GBP'} {Number(tx.amount).toFixed(2)}
+                              {tx.currency || 'USD'} {Number(tx.amount).toFixed(2)}
                             </td>
                             <td className="px-6 py-4 whitespace-nowrap">
                               <span className={`px-2 py-1 text-xs rounded-full ${
@@ -428,7 +428,7 @@ export default function AdminFinancePage() {
                       data={safePayouts}
                       columns={[
                         { key: 'sellerId', header: 'Seller' },
-                        { key: 'amount', header: 'Amount', format: (v: number, p: any) => `${p.currency || 'GBP'} ${Number(v).toFixed(2)}` },
+                        { key: 'amount', header: 'Amount', format: (v: number, p: any) => `${p.currency || 'USD'} ${Number(v).toFixed(2)}` },
                         { key: 'status', header: 'Status' },
                         { key: 'createdAt', header: 'Date', format: (v: string) => new Date(v).toLocaleDateString() },
                       ]}
@@ -454,7 +454,7 @@ export default function AdminFinancePage() {
                           <tr key={payout.id} className="hover:bg-gray-50">
                             <td className="px-6 py-4 whitespace-nowrap text-sm">{payout.sellerId}</td>
                             <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                              {payout.currency || 'GBP'} {Number(payout.amount).toFixed(2)}
+                              {payout.currency || 'USD'} {Number(payout.amount).toFixed(2)}
                             </td>
                             <td className="px-6 py-4 whitespace-nowrap">
                               <span className={`px-2 py-1 text-xs rounded-full ${
@@ -484,7 +484,7 @@ export default function AdminFinancePage() {
                       data={safeRefunds}
                       columns={[
                         { key: 'orderId', header: 'Order' },
-                        { key: 'amount', header: 'Amount', format: (v: number, r: any) => `${r.currency || 'GBP'} ${Number(v).toFixed(2)}` },
+                        { key: 'amount', header: 'Amount', format: (v: number, r: any) => `${r.currency || 'USD'} ${Number(v).toFixed(2)}` },
                         { key: 'status', header: 'Status' },
                         { key: 'createdAt', header: 'Date', format: (v: string) => new Date(v).toLocaleDateString() },
                       ]}
@@ -510,7 +510,7 @@ export default function AdminFinancePage() {
                           <tr key={refund.id} className="hover:bg-gray-50">
                             <td className="px-6 py-4 whitespace-nowrap text-sm">{refund.orderId}</td>
                             <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                              {refund.currency || 'GBP'} {Number(refund.amount).toFixed(2)}
+                              {refund.currency || 'USD'} {Number(refund.amount).toFixed(2)}
                             </td>
                             <td className="px-6 py-4 whitespace-nowrap">
                               <span className={`px-2 py-1 text-xs rounded-full ${
@@ -603,19 +603,19 @@ function RevenueReportsTab() {
             <div className="bg-purple-50 rounded-lg p-4">
               <div className="text-sm text-gray-600">Total Revenue</div>
               <div className="text-2xl font-bold text-purple-900">
-                {reportData.totalRevenue ? `£${Number(reportData.totalRevenue).toFixed(2)}` : 'N/A'}
+                {reportData.totalRevenue ? `$${Number(reportData.totalRevenue).toFixed(2)}` : 'N/A'}
               </div>
             </div>
             <div className="bg-green-50 rounded-lg p-4">
               <div className="text-sm text-gray-600">Platform Fees</div>
               <div className="text-2xl font-bold text-green-900">
-                {reportData.platformFees ? `£${Number(reportData.platformFees).toFixed(2)}` : 'N/A'}
+                {reportData.platformFees ? `$${Number(reportData.platformFees).toFixed(2)}` : 'N/A'}
               </div>
             </div>
             <div className="bg-blue-50 rounded-lg p-4">
               <div className="text-sm text-gray-600">Seller Payouts</div>
               <div className="text-2xl font-bold text-blue-900">
-                {reportData.sellerPayouts ? `£${Number(reportData.sellerPayouts).toFixed(2)}` : 'N/A'}
+                {reportData.sellerPayouts ? `$${Number(reportData.sellerPayouts).toFixed(2)}` : 'N/A'}
               </div>
             </div>
           </div>

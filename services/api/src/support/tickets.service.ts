@@ -39,13 +39,20 @@ export class TicketsService {
     // Resolve the message content — accept initialMessage OR description
     const messageContent = data.initialMessage || data.description || '';
     if (!messageContent.trim()) {
-      throw new BadRequestException('Ticket message content is required (initialMessage or description)');
+      throw new BadRequestException(
+        'Ticket message content is required (initialMessage or description)',
+      );
     }
 
     // Normalize category: map legacy/invalid values to a valid TicketCategory enum value
     const validCategories = [
-      'ORDER_INQUIRY', 'PRODUCT_QUESTION', 'RETURN_REQUEST',
-      'PAYMENT_ISSUE', 'TECHNICAL_SUPPORT', 'SELLER_SUPPORT', 'OTHER',
+      'ORDER_INQUIRY',
+      'PRODUCT_QUESTION',
+      'RETURN_REQUEST',
+      'PAYMENT_ISSUE',
+      'TECHNICAL_SUPPORT',
+      'SELLER_SUPPORT',
+      'OTHER',
     ];
     const category = validCategories.includes(data.category) ? data.category : 'OTHER';
 

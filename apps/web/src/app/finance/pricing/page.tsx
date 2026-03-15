@@ -83,7 +83,7 @@ export default function FinancePricingPage() {
         hosMargin,
         visibilityLevel: visibilityLevel,
       });
-      toast.success(`Pricing set: ${hosMargin * 100}% margin on £${basePrice.toFixed(2)}`);
+      toast.success(`Pricing set: ${hosMargin * 100}% margin on $${basePrice.toFixed(2)}`);
       setActionType(null);
       setMargin('');
       setNotes('');
@@ -197,19 +197,19 @@ export default function FinancePricingPage() {
                         <div className="flex flex-wrap gap-4 mt-4 text-sm text-gray-600">
                           {productData.price && (
                             <span>
-                              <strong>Price:</strong> {productData.currency || 'GBP'}{' '}
+                              <strong>Price:</strong> {productData.currency || 'USD'}{' '}
                               {parseFloat(productData.price).toFixed(2)}
                             </span>
                           )}
                           {productData.tradePrice && (
                             <span>
-                              <strong>Trade Price:</strong> {productData.currency || 'GBP'}{' '}
+                              <strong>Trade Price:</strong> {productData.currency || 'USD'}{' '}
                               {parseFloat(productData.tradePrice).toFixed(2)}
                             </span>
                           )}
                           {productData.rrp && (
                             <span>
-                              <strong>RRP:</strong> {productData.currency || 'GBP'}{' '}
+                              <strong>RRP:</strong> {productData.currency || 'USD'}{' '}
                               {parseFloat(productData.rrp).toFixed(2)}
                             </span>
                           )}
@@ -278,7 +278,7 @@ export default function FinancePricingPage() {
                             <div>
                               <p className="text-sm font-medium text-gray-500">Price</p>
                               <p className="text-gray-900">
-                                {selectedSubmission.productData.currency || 'GBP'}{' '}
+                                {selectedSubmission.productData.currency || 'USD'}{' '}
                                 {parseFloat(selectedSubmission.productData.price).toFixed(2)}
                               </p>
                             </div>
@@ -287,7 +287,7 @@ export default function FinancePricingPage() {
                             <div>
                               <p className="text-sm font-medium text-gray-500">Trade Price</p>
                               <p className="text-gray-900">
-                                {selectedSubmission.productData.currency || 'GBP'}{' '}
+                                {selectedSubmission.productData.currency || 'USD'}{' '}
                                 {parseFloat(selectedSubmission.productData.tradePrice).toFixed(2)}
                               </p>
                             </div>

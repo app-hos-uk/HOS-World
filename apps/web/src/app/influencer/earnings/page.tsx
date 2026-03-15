@@ -51,7 +51,7 @@ export default function InfluencerEarningsPage() {
     }
   };
 
-  const formatCurrency = (amount: number, currency = 'GBP') => {
+  const formatCurrency = (amount: number, currency = 'USD') => {
     return new Intl.NumberFormat('en-GB', {
       style: 'currency',
       currency,

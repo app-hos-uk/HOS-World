@@ -286,7 +286,7 @@ export default function AdminSellerAnalyticsPage() {
                     <span className="text-2xl">💰</span>
                   </div>
                   <p className="text-3xl font-bold text-gray-900 mt-2">
-                    £{analytics.totalRevenue.toLocaleString()}
+                    ${analytics.totalRevenue.toLocaleString()}
                   </p>
                 </div>
               </div>

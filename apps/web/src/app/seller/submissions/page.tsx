@@ -69,6 +69,7 @@ export default function SellerSubmissionsPage() {
                 <option value="PROCUREMENT_REJECTED">Procurement Rejected</option>
                 <option value="CATALOG_COMPLETED">Catalog Completed</option>
                 <option value="MARKETING_COMPLETED">Marketing Completed</option>
+                <option value="CONTENT_COMPLETED">Content Completed</option>
                 <option value="FINANCE_APPROVED">Finance Approved</option>
               </select>
               <Link
@@ -145,14 +146,23 @@ export default function SellerSubmissionsPage() {
                           <span
                             className={`px-2 py-1 text-xs font-medium rounded ${
                               submission.status === 'PROCUREMENT_APPROVED' ||
-                              submission.status === 'FINANCE_APPROVED'
+                              submission.status === 'FINANCE_APPROVED' ||
+                              submission.status === 'CATALOG_COMPLETED' ||
+                              submission.status === 'MARKETING_COMPLETED' ||
+                              submission.status === 'CONTENT_COMPLETED'
                                 ? 'bg-green-100 text-green-800'
                                 : submission.status === 'PROCUREMENT_REJECTED'
                                   ? 'bg-red-100 text-red-800'
                                   : 'bg-yellow-100 text-yellow-800'
                             }`}
                           >
-                            {submission.status}
+                            {submission.status === 'CONTENT_COMPLETED'
+                              ? 'Content Completed'
+                              : submission.status === 'CATALOG_COMPLETED'
+                                ? 'Catalog Completed'
+                                : submission.status === 'MARKETING_COMPLETED'
+                                  ? 'Marketing Completed'
+                                  : submission.status}
                           </span>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">

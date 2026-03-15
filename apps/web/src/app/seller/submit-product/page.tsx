@@ -34,6 +34,7 @@ function getStatusBadgeClass(status: string): string {
     case 'FINANCE_APPROVED':
     case 'CATALOG_COMPLETED':
     case 'MARKETING_COMPLETED':
+    case 'CONTENT_COMPLETED':
       return 'bg-green-100 text-green-800';
     case 'PROCUREMENT_REJECTED':
       return 'bg-red-100 text-red-800';
@@ -220,7 +221,7 @@ function SubmissionViewMode({ submissionId }: { submissionId: string }) {
                   <div>
                     <label className="block text-sm font-medium text-gray-500">Price</label>
                     <p className="mt-1 text-gray-900 font-semibold text-lg">
-                      {productData.currency || 'GBP'} {Number(productData.price || 0).toFixed(2)}
+                      {productData.currency || 'USD'} {Number(productData.price || 0).toFixed(2)}
                     </p>
                   </div>
                   <div>
@@ -230,13 +231,13 @@ function SubmissionViewMode({ submissionId }: { submissionId: string }) {
                   {productData.tradePrice && (
                     <div>
                       <label className="block text-sm font-medium text-gray-500">Trade Price</label>
-                      <p className="mt-1 text-gray-900">{productData.currency || 'GBP'} {Number(productData.tradePrice).toFixed(2)}</p>
+                      <p className="mt-1 text-gray-900">{productData.currency || 'USD'} {Number(productData.tradePrice).toFixed(2)}</p>
                     </div>
                   )}
                   {productData.rrp && (
                     <div>
                       <label className="block text-sm font-medium text-gray-500">RRP</label>
-                      <p className="mt-1 text-gray-900">{productData.currency || 'GBP'} {Number(productData.rrp).toFixed(2)}</p>
+                      <p className="mt-1 text-gray-900">{productData.currency || 'USD'} {Number(productData.rrp).toFixed(2)}</p>
                     </div>
                   )}
                   {productData.taxRate !== undefined && productData.taxRate !== null && (
@@ -357,6 +358,90 @@ function SubmitProductForm() {
   const [checkingDuplicates, setCheckingDuplicates] = useState(false);
   const duplicateTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
+  // Browse Catalog state
+  const [activeTab, setActiveTab] = useState<'browse' | 'submit'>('browse');
+  const [catalogProducts, setCatalogProducts] = useState<any[]>([]);
+  const [catalogFandoms, setCatalogFandoms] = useState<{ name: string; count: number }[]>([]);
+  const [catalogLoading, setCatalogLoading] = useState(false);
+  const [catalogSearch, setCatalogSearch] = useState('');
+  const [selectedFandom, setSelectedFandom] = useState('');
+  const [catalogPage, setCatalogPage] = useState(1);
+  const [catalogTotal, setCatalogTotal] = useState(0);
+  const [searchMeta, setSearchMeta] = useState<{ processingTimeMs?: number; engine?: string } | null>(null);
+  const [listAsVendorModal, setListAsVendorModal] = useState<any>(null);
+  const [vendorPrice, setVendorPrice] = useState('');
+  const [vendorStock, setVendorStock] = useState('');
+  const [vendorSubmitting, setVendorSubmitting] = useState(false);
+
+  const fetchCatalog = useCallback(async (fandom?: string, search?: string, page = 1) => {
+    try {
+      setCatalogLoading(true);
+      const res = await apiClient.browseCatalogForVendor({
+        fandom: fandom || undefined,
+        search: search || undefined,
+        page,
+        limit: 20,
+      });
+      const d = res?.data;
+      if (d) {
+        setCatalogProducts(d.products || []);
+        setCatalogTotal(d.pagination?.total || 0);
+        setSearchMeta(d.searchMeta || null);
+        if (d.fandoms?.length > 0 && catalogFandoms.length === 0) {
+          setCatalogFandoms(d.fandoms);
+        }
+      }
+    } catch {
+      // silent
+    } finally {
+      setCatalogLoading(false);
+    }
+  }, [catalogFandoms.length]);
+
+  useEffect(() => {
+    if (activeTab === 'browse') {
+      fetchCatalog(selectedFandom, catalogSearch, catalogPage);
+    }
+  }, [activeTab, selectedFandom, catalogPage]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Debounced auto-search as user types (300ms delay)
+  useEffect(() => {
+    if (activeTab !== 'browse') return;
+    const timer = setTimeout(() => {
+      setCatalogPage(1);
+      fetchCatalog(selectedFandom, catalogSearch, 1);
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [catalogSearch]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const handleCatalogSearchSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    setCatalogPage(1);
+    fetchCatalog(selectedFandom, catalogSearch, 1);
+  };
+
+  const handleListAsVendor = async () => {
+    if (!listAsVendorModal || !vendorPrice || !vendorStock) return;
+    try {
+      setVendorSubmitting(true);
+      await apiClient.createVendorProduct({
+        productId: listAsVendorModal.id,
+        vendorPrice: parseFloat(vendorPrice),
+        vendorStock: parseInt(vendorStock),
+        vendorCurrency: 'USD',
+      });
+      toast.success(`Successfully listed "${listAsVendorModal.name}" as your vendor product!`);
+      setListAsVendorModal(null);
+      setVendorPrice('');
+      setVendorStock('');
+      fetchCatalog(selectedFandom, catalogSearch, catalogPage);
+    } catch (err: any) {
+      toast.error(err.message || 'Failed to create vendor listing');
+    } finally {
+      setVendorSubmitting(false);
+    }
+  };
+
   // Form state
   const [formData, setFormData] = useState({
     name: '',
@@ -367,7 +452,7 @@ function SubmitProductForm() {
     price: '',
     tradePrice: '',
     rrp: '',
-    currency: 'GBP',
+    currency: 'USD',
     taxRate: '0',
     stock: '',
     quantity: '',
@@ -656,10 +741,246 @@ function SubmitProductForm() {
         <div className="max-w-4xl mx-auto">
           <div className="mb-6">
             <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold">
-              Submit New Product
+              Add Product
             </h1>
-            <p className="text-gray-600 mt-2">Submit a new product for review and approval</p>
+            <p className="text-gray-600 mt-2">Browse existing catalog or submit a new product for review</p>
           </div>
+
+            {/* Tab Switcher */}
+            <div className="mb-6 flex gap-1 bg-gray-100 rounded-lg p-1">
+              <button
+                type="button"
+                onClick={() => setActiveTab('browse')}
+                className={`flex-1 py-2.5 px-4 rounded-md text-sm font-medium transition-all ${
+                  activeTab === 'browse'
+                    ? 'bg-white text-purple-700 shadow-sm'
+                    : 'text-gray-600 hover:text-gray-900'
+                }`}
+              >
+                Browse Catalog
+              </button>
+              <button
+                type="button"
+                onClick={() => setActiveTab('submit')}
+                className={`flex-1 py-2.5 px-4 rounded-md text-sm font-medium transition-all ${
+                  activeTab === 'submit'
+                    ? 'bg-white text-purple-700 shadow-sm'
+                    : 'text-gray-600 hover:text-gray-900'
+                }`}
+              >
+                Submit New Product
+              </button>
+            </div>
+
+            {/* Browse Catalog Tab */}
+            {activeTab === 'browse' && (
+              <div className="space-y-4">
+                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                  <p className="text-sm text-blue-800">
+                    <strong>Browse first:</strong> Check if the product you want to sell already exists in our catalog.
+                    If it does, you can list it instantly with your own price and stock — no approval process needed.
+                  </p>
+                </div>
+
+                {/* Search & Filter */}
+                <div className="bg-white border border-gray-200 rounded-lg p-4">
+                  <form onSubmit={handleCatalogSearchSubmit} className="flex flex-col sm:flex-row gap-3">
+                    <select
+                      value={selectedFandom}
+                      onChange={(e) => { setSelectedFandom(e.target.value); setCatalogPage(1); }}
+                      className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                    >
+                      <option value="">All Fandoms</option>
+                      {catalogFandoms.map((f) => (
+                        <option key={f.name} value={f.name}>{f.name} ({f.count})</option>
+                      ))}
+                    </select>
+                    <input
+                      type="text"
+                      value={catalogSearch}
+                      onChange={(e) => setCatalogSearch(e.target.value)}
+                      placeholder="Search products (typo-tolerant)..."
+                      className="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                    />
+                    <button
+                      type="submit"
+                      className="px-4 py-2 bg-purple-600 text-white rounded-lg text-sm font-medium hover:bg-purple-700"
+                    >
+                      Search
+                    </button>
+                  </form>
+                </div>
+
+                {/* Product Grid */}
+                {catalogLoading ? (
+                  <div className="flex justify-center py-12">
+                    <svg className="animate-spin h-8 w-8 text-purple-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+                    </svg>
+                  </div>
+                ) : catalogProducts.length === 0 ? (
+                  <div className="text-center py-12 bg-white border border-gray-200 rounded-lg">
+                    <p className="text-gray-500 mb-2">No catalog products found</p>
+                    <p className="text-sm text-gray-400">Try a different search or fandom filter, or submit a new product below</p>
+                    <button
+                      type="button"
+                      onClick={() => setActiveTab('submit')}
+                      className="mt-4 px-4 py-2 bg-purple-600 text-white rounded-lg text-sm font-medium hover:bg-purple-700"
+                    >
+                      Submit New Product
+                    </button>
+                  </div>
+                ) : (
+                  <>
+                    <div className="text-sm text-gray-500 mb-2 flex items-center gap-2">
+                      <span>{catalogTotal} products found</span>
+                      {searchMeta?.processingTimeMs != null && (
+                        <span className="text-xs text-gray-400">({searchMeta.processingTimeMs}ms)</span>
+                      )}
+                    </div>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      {catalogProducts.map((product: any) => (
+                        <div key={product.id} className="bg-white border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow">
+                          <div className="flex gap-3">
+                            {product.imageUrl && (
+                              <div className="w-16 h-16 rounded-lg overflow-hidden bg-gray-100 shrink-0">
+                                <img src={product.imageUrl} alt={product.name} className="w-full h-full object-cover" />
+                              </div>
+                            )}
+                            <div className="min-w-0 flex-1">
+                              <h3 className="text-sm font-semibold text-gray-900 truncate">{product.name}</h3>
+                              <p className="text-xs text-gray-500 mt-0.5">
+                                {product.sku ? `SKU: ${product.sku}` : ''}{product.fandom ? ` · ${product.fandom}` : ''}
+                              </p>
+                              <div className="flex items-center gap-2 mt-1">
+                                <span className="text-sm font-bold text-gray-900">${Number(product.price || 0).toFixed(2)}</span>
+                                <span className="text-xs text-gray-400">·</span>
+                                <span className="text-xs text-gray-500">{product.vendorCount} vendor{product.vendorCount !== 1 ? 's' : ''}</span>
+                              </div>
+                            </div>
+                          </div>
+                          <div className="mt-3 flex gap-2">
+                            {product.alreadyListed ? (
+                              <span className="flex-1 text-center py-1.5 bg-green-50 text-green-700 rounded-lg text-xs font-medium border border-green-200">
+                                Already Listed (${Number(product.myListing?.vendorPrice || 0).toFixed(2)})
+                              </span>
+                            ) : (
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setListAsVendorModal(product);
+                                  setVendorPrice(String(product.price || ''));
+                                  setVendorStock('');
+                                }}
+                                className="flex-1 py-1.5 bg-purple-600 text-white rounded-lg text-xs font-medium hover:bg-purple-700 transition-colors"
+                              >
+                                List as Vendor
+                              </button>
+                            )}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+
+                    {/* Pagination */}
+                    {catalogTotal > 20 && (
+                      <div className="flex justify-center gap-2 mt-4">
+                        <button
+                          type="button"
+                          disabled={catalogPage <= 1}
+                          onClick={() => setCatalogPage((p) => Math.max(1, p - 1))}
+                          className="px-3 py-1.5 border border-gray-300 rounded text-sm disabled:opacity-50"
+                        >
+                          Previous
+                        </button>
+                        <span className="px-3 py-1.5 text-sm text-gray-600">
+                          Page {catalogPage} of {Math.ceil(catalogTotal / 20)}
+                        </span>
+                        <button
+                          type="button"
+                          disabled={catalogPage >= Math.ceil(catalogTotal / 20)}
+                          onClick={() => setCatalogPage((p) => p + 1)}
+                          className="px-3 py-1.5 border border-gray-300 rounded text-sm disabled:opacity-50"
+                        >
+                          Next
+                        </button>
+                      </div>
+                    )}
+                  </>
+                )}
+
+                <div className="text-center pt-4 border-t border-gray-200">
+                  <p className="text-sm text-gray-500 mb-2">Can&apos;t find your product?</p>
+                  <button
+                    type="button"
+                    onClick={() => setActiveTab('submit')}
+                    className="px-6 py-2 bg-gray-900 text-white rounded-lg text-sm font-medium hover:bg-gray-800"
+                  >
+                    Submit a New Product
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {/* List as Vendor Modal */}
+            {listAsVendorModal && (
+              <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4">
+                <div className="bg-white rounded-xl shadow-xl max-w-md w-full p-6">
+                  <h3 className="text-lg font-bold mb-1">List as Vendor</h3>
+                  <p className="text-sm text-gray-500 mb-4">
+                    Sell &ldquo;{listAsVendorModal.name}&rdquo; with your own pricing and stock.
+                  </p>
+                  <div className="space-y-3">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Your Price ($)</label>
+                      <input
+                        type="number"
+                        step="0.01"
+                        min="0.01"
+                        value={vendorPrice}
+                        onChange={(e) => setVendorPrice(e.target.value)}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-purple-500"
+                        placeholder="Enter your selling price"
+                      />
+                      <p className="text-xs text-gray-400 mt-1">Catalog price: ${Number(listAsVendorModal.price || 0).toFixed(2)}</p>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Your Stock</label>
+                      <input
+                        type="number"
+                        min="1"
+                        value={vendorStock}
+                        onChange={(e) => setVendorStock(e.target.value)}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-purple-500"
+                        placeholder="Quantity available"
+                      />
+                    </div>
+                  </div>
+                  <div className="flex gap-3 mt-5">
+                    <button
+                      type="button"
+                      onClick={() => setListAsVendorModal(null)}
+                      className="flex-1 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handleListAsVendor}
+                      disabled={vendorSubmitting || !vendorPrice || !vendorStock}
+                      className="flex-1 py-2 bg-purple-600 text-white rounded-lg text-sm font-medium hover:bg-purple-700 disabled:opacity-50"
+                    >
+                      {vendorSubmitting ? 'Listing...' : 'List Product'}
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Submit New Product Tab */}
+            {activeTab === 'submit' && (
+            <>
 
             {success && (
               <div className="mb-6 p-4 bg-green-100 border border-green-400 text-green-700 rounded-lg">
@@ -679,7 +1000,7 @@ function SubmitProductForm() {
               <div className="mb-6 border border-amber-300 rounded-lg overflow-hidden">
                 <div className="bg-amber-50 px-4 py-3 border-b border-amber-200">
                   <h3 className="font-semibold text-amber-900">Potential Duplicates Detected</h3>
-                  <p className="text-xs text-amber-700 mt-0.5">Review matches below before submitting. You can still proceed if this is a different product.</p>
+                  <p className="text-xs text-amber-700 mt-0.5">Review matches below. If a product already exists, use &ldquo;Browse Catalog&rdquo; tab to list it as your vendor product instead.</p>
                 </div>
                 <div className="p-4 space-y-3 bg-white">
                   {duplicateWarnings.sellerActiveMatches?.length > 0 && (
@@ -715,14 +1036,27 @@ function SubmitProductForm() {
                   {duplicateWarnings.catalogueMatches?.length > 0 && (
                     <div>
                       <p className="text-sm font-semibold text-amber-800 mb-1.5">Existing Catalogue Products</p>
-                      <p className="text-xs text-amber-600 mb-2">Similar products already exist in the catalogue from other sellers.</p>
+                      <p className="text-xs text-amber-600 mb-2">Similar products already exist. Consider using &ldquo;Browse Catalog&rdquo; to list them as vendor products instead.</p>
                       {duplicateWarnings.catalogueMatches.slice(0, 3).map((m: any) => (
                         <div key={m.id} className="flex items-center justify-between p-2.5 bg-amber-50 rounded-lg mb-1.5 border border-amber-200">
                           <div className="min-w-0">
                             <p className="text-sm font-medium text-gray-900 truncate">{m.name}</p>
                             <p className="text-xs text-gray-500">{m.sku ? `SKU: ${m.sku}` : ''} {m.reasons?.[0] || ''}</p>
                           </div>
-                          <span className="ml-2 shrink-0 px-2 py-0.5 bg-amber-200 text-amber-900 rounded text-xs font-bold">{m.similarityScore}%</span>
+                          <div className="flex items-center gap-2 ml-2 shrink-0">
+                            <span className="px-2 py-0.5 bg-amber-200 text-amber-900 rounded text-xs font-bold">{m.similarityScore}%</span>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setListAsVendorModal({ id: m.id, name: m.name, price: m.price });
+                                setVendorPrice(String(m.price || ''));
+                                setVendorStock('');
+                              }}
+                              className="px-2 py-0.5 bg-purple-600 text-white rounded text-xs font-medium hover:bg-purple-700"
+                            >
+                              List as Vendor
+                            </button>
+                          </div>
                         </div>
                       ))}
                     </div>
@@ -1237,6 +1571,8 @@ function SubmitProductForm() {
                 </button>
               </div>
             </form>
+            </>
+            )}
         </div>
       </DashboardLayout>
     </RouteGuard>

@@ -4,6 +4,24 @@ import { PrismaService } from '../database/prisma.service';
 import { QueueService, JobType } from '../queue/queue.service';
 import * as nodemailer from 'nodemailer';
 
+const VALID_NOTIFICATION_TYPES = new Set([
+  'ORDER_CONFIRMATION',
+  'ORDER_SHIPPED',
+  'ORDER_DELIVERED',
+  'ORDER_CANCELLED',
+  'ORDER_REFUNDED',
+  'PAYMENT_RECEIVED',
+  'PAYMENT_FAILED',
+  'SUBMISSION_RESUBMITTED',
+  'SUBMISSION_APPROVED',
+  'SUBMISSION_REJECTED',
+  'PRODUCT_APPROVED',
+  'PRODUCT_REJECTED',
+  'SETTLEMENT_COMPLETED',
+  'SYSTEM',
+  'GENERAL',
+]);
+
 @Injectable()
 export class NotificationsService implements OnModuleInit {
   private transporter: nodemailer.Transporter | null = null;
@@ -236,8 +254,8 @@ export class NotificationsService implements OnModuleInit {
       <tr>
         <td>${item.product.name}</td>
         <td>${item.quantity}</td>
-        <td>£${item.price.toFixed(2)}</td>
-        <td>£${(item.price * item.quantity).toFixed(2)}</td>
+        <td>$${item.price.toFixed(2)}</td>
+        <td>$${(item.price * item.quantity).toFixed(2)}</td>
       </tr>
     `,
       )
@@ -280,7 +298,7 @@ export class NotificationsService implements OnModuleInit {
                 ${itemsHtml}
               </tbody>
             </table>
-            <div class="total">Total: £${order.total.toFixed(2)}</div>
+            <div class="total">Total: $${order.total.toFixed(2)}</div>
             <p>We'll send you another email when your order ships.</p>
           </div>
           <div class="footer">
@@ -360,13 +378,25 @@ export class NotificationsService implements OnModuleInit {
     `;
   }
 
-  async getUserNotifications(userId: string, limit?: number): Promise<any[]> {
-    const notifications = await this.prisma.notification.findMany({
-      where: { userId },
-      orderBy: { createdAt: 'desc' },
-      take: limit || 50,
-    });
-    return notifications;
+  async getUserNotifications(
+    userId: string,
+    options?: { limit?: number; page?: number },
+  ): Promise<{ data: any[]; pagination: { page: number; limit: number; total: number } }> {
+    const limit = Math.min(options?.limit || 50, 100);
+    const page = options?.page || 1;
+    const skip = (page - 1) * limit;
+
+    const [notifications, total] = await Promise.all([
+      this.prisma.notification.findMany({
+        where: { userId },
+        orderBy: { createdAt: 'desc' },
+        take: limit,
+        skip,
+      }),
+      this.prisma.notification.count({ where: { userId } }),
+    ]);
+
+    return { data: notifications, pagination: { page, limit, total } };
   }
 
   async markNotificationRead(userId: string, notificationId: string): Promise<any> {
@@ -399,6 +429,11 @@ export class NotificationsService implements OnModuleInit {
     content: string,
     metadata?: any,
   ): Promise<void> {
+    if (!VALID_NOTIFICATION_TYPES.has(type)) {
+      this.logger.warn(`Invalid notification type: ${type}`);
+      throw new Error(`Invalid notification type: ${type}`);
+    }
+
     try {
       const users = await this.prisma.user.findMany({
         where: { role: role as any },
@@ -459,6 +494,7 @@ export class NotificationsService implements OnModuleInit {
       this.logger.log(`✅ Sent ${notifications.length} notifications to ${role} team`);
     } catch (error: any) {
       this.logger.error(`Failed to send notifications to ${role}: ${error?.message}`);
+      throw error;
     }
   }
 
@@ -472,6 +508,11 @@ export class NotificationsService implements OnModuleInit {
     content: string,
     metadata?: any,
   ): Promise<void> {
+    if (!VALID_NOTIFICATION_TYPES.has(type)) {
+      this.logger.warn(`Invalid notification type: ${type}`);
+      throw new Error(`Invalid notification type: ${type}`);
+    }
+
     try {
       const user = await this.prisma.user.findUnique({
         where: { id: userId },
@@ -530,6 +571,7 @@ export class NotificationsService implements OnModuleInit {
       this.logger.log(`✅ Queued notification for user ${userId}`);
     } catch (error: any) {
       this.logger.error(`Failed to send notification to user ${userId}: ${error?.message}`);
+      throw error;
     }
   }
 }

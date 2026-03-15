@@ -135,7 +135,7 @@ export default function GiftCardsPage() {
             {!loading && !error && giftCards.length > 0 && (
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
                 {giftCards.map((card: any) => {
-                  const currency = card.currency || 'GBP';
+                  const currency = card.currency || 'USD';
                   const balance = Number(card.balance ?? 0);
                   const statusStyle = getStatusStyle(card.status);
                   const isExpired = card.expiresAt && new Date(card.expiresAt) < new Date();

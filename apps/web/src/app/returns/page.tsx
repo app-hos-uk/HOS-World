@@ -291,7 +291,7 @@ export default function ReturnsPage() {
                     </div>
                     <div className="mt-2 sm:mt-0 text-right">
                       <p className="text-lg font-semibold text-purple-900">
-                        {formatPrice(order.total, order.currency || 'GBP')}
+                        {formatPrice(order.total, order.currency || 'USD')}
                       </p>
                       <span className={`inline-block px-2 py-1 text-xs font-medium rounded-full ${
                         order.status === 'DELIVERED' || order.status === 'COMPLETED'
@@ -316,7 +316,7 @@ export default function ReturnsPage() {
                         <div className="flex-grow">
                           <p className="font-medium text-gray-900">{item.product.name}</p>
                           <p className="text-sm text-gray-500">
-                            Quantity: {item.quantity} × {formatPrice(item.price, order.currency || 'GBP')}
+                            Quantity: {item.quantity} × {formatPrice(item.price, order.currency || 'USD')}
                           </p>
                         </div>
                       </div>
@@ -386,7 +386,7 @@ export default function ReturnsPage() {
                         <div>
                           <p className="text-sm font-medium text-gray-700">Refund Amount:</p>
                           <p className="text-lg font-semibold text-green-600">
-                            {formatPrice(returnRequest.refundAmount, order?.currency || 'GBP')}
+                            {formatPrice(returnRequest.refundAmount, order?.currency || 'USD')}
                           </p>
                         </div>
                       )}
@@ -456,7 +456,7 @@ export default function ReturnsPage() {
                         <div className="flex-grow">
                           <p className="font-medium text-gray-900">{item.product.name}</p>
                           <p className="text-sm text-gray-500">
-                            Qty: {item.quantity} × {formatPrice(item.price, selectedOrder.currency || 'GBP')}
+                            Qty: {item.quantity} × {formatPrice(item.price, selectedOrder.currency || 'USD')}
                           </p>
                         </div>
                       </label>

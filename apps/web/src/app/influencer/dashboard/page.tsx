@@ -48,9 +48,9 @@ const ACHIEVEMENTS = [
   { id: 'sales_10', name: 'Rising Star', description: 'Completed 10 sales', icon: '⭐', threshold: 10, metric: 'conversions' },
   { id: 'sales_50', name: 'Top Performer', description: 'Completed 50 sales', icon: '🏆', threshold: 50, metric: 'conversions' },
   { id: 'sales_100', name: 'Sales Champion', description: 'Completed 100 sales', icon: '👑', threshold: 100, metric: 'conversions' },
-  { id: 'earnings_100', name: 'First Payout', description: 'Earned £100 in commissions', icon: '💷', threshold: 100, metric: 'earnings' },
-  { id: 'earnings_1000', name: 'Money Maker', description: 'Earned £1,000 in commissions', icon: '💰', threshold: 1000, metric: 'earnings' },
-  { id: 'earnings_5000', name: 'High Earner', description: 'Earned £5,000 in commissions', icon: '🤑', threshold: 5000, metric: 'earnings' },
+  { id: 'earnings_100', name: 'First Payout', description: 'Earned $100 in commissions', icon: '💵', threshold: 100, metric: 'earnings' },
+  { id: 'earnings_1000', name: 'Money Maker', description: 'Earned $1,000 in commissions', icon: '💰', threshold: 1000, metric: 'earnings' },
+  { id: 'earnings_5000', name: 'High Earner', description: 'Earned $5,000 in commissions', icon: '🤑', threshold: 5000, metric: 'earnings' },
 ] as const;
 
 interface Influencer {
@@ -169,9 +169,9 @@ export default function InfluencerDashboardPage() {
   };
 
   const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('en-GB', {
+    return new Intl.NumberFormat('en-US', {
       style: 'currency',
-      currency: 'GBP',
+      currency: 'USD',
     }).format(amount);
   };
 
@@ -202,7 +202,7 @@ export default function InfluencerDashboardPage() {
       .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
       .map(item => ({
         ...item,
-        displayDate: new Date(item.date).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' }),
+        displayDate: new Date(item.date).toLocaleDateString('en-US', { day: 'numeric', month: 'short' }),
       }));
   }, [analytics?.clicksByDay, analytics?.conversionsByDay]);
 

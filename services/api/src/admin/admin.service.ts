@@ -415,9 +415,47 @@ export class AdminService {
   async getUserById(userId: string) {
     const user = await this.prisma.user.findUnique({
       where: { id: userId },
-      include: {
-        sellerProfile: true,
-        customerProfile: true,
+      select: {
+        id: true,
+        email: true,
+        firstName: true,
+        lastName: true,
+        phone: true,
+        role: true,
+        isActive: true,
+        avatar: true,
+        createdAt: true,
+        updatedAt: true,
+        permissionRoleId: true,
+        department: true,
+        employeeId: true,
+        country: true,
+        currencyPreference: true,
+        sellerProfile: {
+          select: {
+            id: true,
+            storeName: true,
+            slug: true,
+            country: true,
+            city: true,
+            verified: true,
+            vendorStatus: true,
+            sellerType: true,
+            commissionRate: true,
+            totalSales: true,
+            createdAt: true,
+          },
+        },
+        customerProfile: {
+          select: {
+            id: true,
+            companyName: true,
+            vatNumber: true,
+            businessType: true,
+            country: true,
+            currencyPreference: true,
+          },
+        },
       },
     });
 
@@ -604,7 +642,7 @@ export class AdminService {
         allowRegistration: process.env.ALLOW_REGISTRATION !== 'false',
         requireEmailVerification: process.env.REQUIRE_EMAIL_VERIFICATION === 'true',
         platformFeeRate: parseFloat(process.env.PLATFORM_FEE_RATE || '0.15'),
-        currency: process.env.DEFAULT_CURRENCY || 'GBP',
+        currency: process.env.DEFAULT_CURRENCY || 'USD',
         maxUploadSize: parseInt(process.env.MAX_UPLOAD_SIZE || '10485760', 10), // 10MB default
         enableOAuth: process.env.ENABLE_OAUTH !== 'false',
         enableStripe: process.env.STRIPE_SECRET_KEY ? true : false,
@@ -746,10 +784,12 @@ export class AdminService {
           warehouseAddress,
           totalProducts: seller._count?.products || 0,
         };
-      })
+      }),
     );
 
-    return sellersWithAddresses;
+    return sellersWithAddresses.map(
+      ({ accountNumberEnc, sortCodeEnc, stripeConnectAccountId, ...rest }) => rest,
+    );
   }
 
   async suspendSeller(sellerId: string) {
