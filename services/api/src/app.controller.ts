@@ -1,6 +1,7 @@
 import { Controller, Get, Res } from '@nestjs/common';
 import { Response } from 'express';
 import { ApiTags, ApiOperation, ApiResponse as SwaggerApiResponse } from '@nestjs/swagger';
+import { ConfigService } from '@nestjs/config';
 import { AppService } from './app.service';
 import { Public } from './common/decorators/public.decorator';
 import { PrismaService } from './database/prisma.service';
@@ -13,6 +14,7 @@ export class AppController {
     private readonly appService: AppService,
     private readonly prisma: PrismaService,
     private readonly redis: RedisService,
+    private readonly configService: ConfigService,
   ) {}
 
   @Public()
@@ -107,6 +109,30 @@ export class AppController {
         status: 'error',
         message: error.message || 'Redis check failed',
       };
+    }
+
+    // Check Meilisearch (non-critical; failures => degraded, not error)
+    const meilisearchHost = this.configService.get<string>('MEILISEARCH_HOST');
+    if (meilisearchHost) {
+      try {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 3000);
+        const url = meilisearchHost.replace(/\/$/, '') + '/health';
+        const res = await fetch(url, { signal: controller.signal });
+        clearTimeout(timeoutId);
+        const ok = res.ok && (await res.json()).status === 'available';
+        checks.meilisearch = {
+          status: ok ? 'ok' : 'degraded',
+          message: ok ? 'connected' : 'unavailable',
+        };
+      } catch (error: any) {
+        checks.meilisearch = {
+          status: 'degraded',
+          message: 'unavailable',
+        };
+      }
+    } else {
+      checks.meilisearch = { status: 'degraded', message: 'unavailable' };
     }
 
     const allHealthy = Object.values(checks).every(

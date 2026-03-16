@@ -291,7 +291,7 @@ export default function SellerOnboardingPage() {
                       type="text"
                       value={location.country}
                       onChange={(e) => setLocation({ ...location, country: e.target.value })}
-                      placeholder="United Kingdom"
+                      placeholder="United States"
                       className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
                       required
                     />

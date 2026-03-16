@@ -176,8 +176,15 @@ export class TicketsController {
   @SwaggerApiResponse({ status: 401, description: 'Unauthorized' })
   @SwaggerApiResponse({ status: 403, description: 'Forbidden - Cannot access this ticket' })
   @SwaggerApiResponse({ status: 404, description: 'Ticket not found' })
-  async getTicketById(@Param('id', ParseUUIDPipe) id: string): Promise<ApiResponse<any>> {
-    const ticket = await this.ticketsService.getTicketById(id);
+  async getTicketById(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Request() req: any,
+  ): Promise<ApiResponse<any>> {
+    const ticket = await this.ticketsService.getTicketById(
+      id,
+      req.user?.id,
+      req.user?.role,
+    );
     return {
       data: ticket,
       message: 'Ticket retrieved successfully',

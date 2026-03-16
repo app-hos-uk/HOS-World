@@ -7,9 +7,10 @@ import { PaymentProviderModule } from './payment-provider.module';
 import { StripeConnectService } from './stripe-connect/stripe-connect.service';
 import { StripeConnectController } from './stripe-connect/stripe-connect.controller';
 import { VendorLedgerModule } from '../vendor-ledger/vendor-ledger.module';
+import { NotificationsModule } from '../notifications/notifications.module';
 
 @Module({
-  imports: [DatabaseModule, CurrencyModule, PaymentProviderModule, VendorLedgerModule],
+  imports: [DatabaseModule, CurrencyModule, PaymentProviderModule, VendorLedgerModule, NotificationsModule],
   controllers: [PaymentsController, StripeConnectController],
   providers: [PaymentsService, StripeConnectService],
   exports: [PaymentsService, PaymentProviderModule, StripeConnectService],

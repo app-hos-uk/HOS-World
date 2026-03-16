@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import { Cinzel, Lora, Inter } from 'next/font/google';
 import { ThemeProviderWrapper } from '@/components/ThemeProviderWrapper';
 import { AuthProviderWrapper } from '@/components/AuthProviderWrapper';
+import { QueryProvider } from '@/components/QueryProvider';
 import { CurrencyProvider } from '@/contexts/CurrencyContext';
 import { CartProvider } from '@/contexts/CartContext';
 import { GDPRConsentBanner } from '@/components/GDPRConsentBanner';
@@ -38,7 +39,7 @@ export const metadata: Metadata = {
     default: 'House of Spells - Magical Marketplace',
     template: '%s | House of Spells',
   },
-  description: 'Discover magical merchandise, collectibles, and enchanted items from your favourite fandoms at House of Spells marketplace.',
+  description: 'Discover magical merchandise, collectibles, and enchanted items from your favorite fandoms at House of Spells marketplace.',
   keywords: ['Harry Potter', 'merchandise', 'collectibles', 'magical', 'fandoms', 'spells', 'marketplace'],
   authors: [{ name: 'House of Spells' }],
   creator: 'House of Spells',
@@ -50,10 +51,10 @@ export const metadata: Metadata = {
   },
   openGraph: {
     type: 'website',
-    locale: 'en_GB',
+    locale: 'en_US',
     siteName: 'House of Spells',
     title: 'House of Spells - Magical Marketplace',
-    description: 'Discover magical merchandise, collectibles, and enchanted items from your favourite fandoms.',
+    description: 'Discover magical merchandise, collectibles, and enchanted items from your favorite fandoms.',
     images: [{ url: '/og-image.png', width: 1200, height: 630, alt: 'House of Spells Marketplace' }],
   },
   twitter: {
@@ -76,19 +77,21 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={`${cinzel.variable} ${lora.variable} ${inter.variable}`}>
-        <AuthProviderWrapper>
-          <CurrencyProvider>
-            <CartProvider>
-              <ThemeProviderWrapper>
-                <ErrorBoundary>
-                  {children}
-                </ErrorBoundary>
-                <GDPRConsentBanner />
-                <Toaster />
-              </ThemeProviderWrapper>
-            </CartProvider>
-          </CurrencyProvider>
-        </AuthProviderWrapper>
+        <QueryProvider>
+          <AuthProviderWrapper>
+            <CurrencyProvider>
+              <CartProvider>
+                <ThemeProviderWrapper>
+                  <ErrorBoundary>
+                    {children}
+                  </ErrorBoundary>
+                  <GDPRConsentBanner />
+                  <Toaster />
+                </ThemeProviderWrapper>
+              </CartProvider>
+            </CurrencyProvider>
+          </AuthProviderWrapper>
+        </QueryProvider>
       </body>
     </html>
   );

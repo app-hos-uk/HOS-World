@@ -79,7 +79,7 @@ describe('Products Integration Tests', () => {
         lastName: 'Integration',
         role: RegisterRole.SELLER,
         storeName: `Test Store ${Date.now()}`,
-        country: 'GB',
+        country: 'US',
         preferredCommunicationMethod: CommunicationMethod.EMAIL,
         gdprConsent: true,
       });

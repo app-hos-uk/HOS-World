@@ -35,11 +35,13 @@ describe('DuplicatesService', () => {
       mockPrismaService.productSubmission.findMany.mockResolvedValue([]);
       const result = await service.findCrossSellerDuplicateGroups();
       expect(result).toEqual([]);
-      expect(mockPrismaService.productSubmission.findMany).toHaveBeenCalledWith({
-        where: { status: { in: ['SUBMITTED', 'UNDER_REVIEW'] } },
-        include: { seller: { select: { id: true, storeName: true, slug: true } } },
-        orderBy: { createdAt: 'asc' },
-      });
+      expect(mockPrismaService.productSubmission.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: { status: { in: ['SUBMITTED', 'UNDER_REVIEW'] } },
+          include: { seller: { select: { id: true, storeName: true, slug: true } } },
+          orderBy: { createdAt: 'asc' },
+        }),
+      );
     });
 
     it('should return groups of same product from different sellers', async () => {

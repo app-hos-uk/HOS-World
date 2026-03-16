@@ -1,5 +1,5 @@
 import { NestFactory } from '@nestjs/core';
-import { ValidationPipe, VersioningType } from '@nestjs/common';
+import { ValidationPipe, VersioningType, VERSION_NEUTRAL } from '@nestjs/common';
 import { AppModule } from './app.module';
 import { Logger } from './common/logger/logger.service';
 import { SentryExceptionFilter } from './common/filters/sentry-exception.filter';
@@ -224,6 +224,7 @@ async function bootstrap() {
       });
 
       // Add security headers (helmet + additional hardening)
+      const frontendUrl = process.env.FRONTEND_URL || 'https://hos-world-web.vercel.app';
       app.use(
         helmet({
           contentSecurityPolicy: {
@@ -232,19 +233,42 @@ async function bootstrap() {
               styleSrc: ["'self'", "'unsafe-inline'"],
               scriptSrc: ["'self'"],
               imgSrc: ["'self'", 'data:', 'https:'],
+              frameAncestors: ["'self'", frontendUrl],
             },
           },
-          crossOriginEmbedderPolicy: false, // Allow embedding for API docs
+          crossOriginEmbedderPolicy: false,
           hsts: {
-            maxAge: 31536000, // 1 year
+            maxAge: 31536000,
             includeSubDomains: true,
             preload: true,
           },
           referrerPolicy: { policy: 'strict-origin-when-cross-origin' },
-          noSniff: true, // X-Content-Type-Options: nosniff
+          noSniff: true,
         }),
       );
-      logger.info('✅ Security headers configured (HSTS, Referrer-Policy, noSniff)', 'Bootstrap');
+
+      // CSRF protection: verify Origin header on state-changing requests
+      app.use((req: any, res: any, next: any) => {
+        if (['GET', 'HEAD', 'OPTIONS'].includes(req.method)) return next();
+        const origin = req.headers['origin'];
+        if (!origin) return next();
+        const allowedOrigins = (process.env.CORS_ALLOWED_ORIGINS || frontendUrl)
+          .split(',')
+          .map((o: string) => o.trim());
+        const localOrigins = ['http://localhost:3000', 'http://localhost:3001'];
+        const all = [...allowedOrigins, ...localOrigins];
+        if (
+          all.some((o: string) => origin === o) ||
+          /^https:\/\/hos-world-web[a-z0-9-]*\.vercel\.app$/.test(origin) ||
+          origin.includes('.up.railway.app')
+        ) {
+          return next();
+        }
+        logger.warn(`CSRF: Blocked state-changing request from origin ${origin}`, 'Security');
+        return res.status(403).json({ error: 'Forbidden: origin not allowed' });
+      });
+
+      logger.info('✅ Security headers + CSRF origin check configured', 'Bootstrap');
 
       // Add response compression
       app.use(compression());
@@ -353,14 +377,12 @@ async function bootstrap() {
       next();
     });
 
-    // API versioning: disabled – routes use /api prefix only (aligned with frontend).
-    // Re-enable when you need a second API version (e.g. v2): uncomment below and add @Version('1') to controllers.
-    // app.enableVersioning({
-    //   type: VersioningType.URI,
-    //   defaultVersion: '1',
-    //   prefix: 'v',
-    // });
-    logger.info('✅ API routes use /api prefix (versioning disabled)', 'Bootstrap');
+    app.enableVersioning({
+      type: VersioningType.URI,
+      defaultVersion: [VERSION_NEUTRAL, '1'],
+      prefix: 'v',
+    });
+    logger.info('✅ API versioning enabled — responds to /api/ and /api/v1/', 'Bootstrap');
 
     // Global prefix for all routes
     app.setGlobalPrefix('api');
@@ -389,10 +411,11 @@ async function bootstrap() {
       .addTag('admin', 'Admin operations')
       .addTag('sellers', 'Seller operations')
       .addTag('health', 'Health check endpoints')
-      .addServer('https://hos-marketplaceapi-production.up.railway.app/api', 'Production');
+      .addServer('https://hos-marketplaceapi-production.up.railway.app/api/v1', 'Production')
+      .addServer('https://hos-marketplaceapi-production.up.railway.app/api', 'Production (legacy)');
 
     if (!isProduction) {
-      configBuilder.addServer('http://localhost:3001/api', 'Local Development');
+      configBuilder.addServer('http://localhost:3001/api/v1', 'Local Development');
     }
 
     const swaggerConfig = configBuilder.build();

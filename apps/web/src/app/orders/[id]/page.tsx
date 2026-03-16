@@ -207,7 +207,7 @@ export default function OrderDetailPage() {
                   Order #{order.orderNumber || order.id.slice(0, 8)}
                 </h1>
                 <p className="text-gray-600 mt-1">
-                  Placed on {new Date(order.createdAt).toLocaleDateString('en-GB', {
+                  Placed on {new Date(order.createdAt).toLocaleDateString('en-US', {
                     day: 'numeric',
                     month: 'long',
                     year: 'numeric',
@@ -292,7 +292,7 @@ export default function OrderDetailPage() {
                       <>
                         <p className="text-sm text-gray-600 mt-3 mb-1">Estimated Delivery</p>
                         <p className="text-gray-900">
-                          {new Date(order.estimatedDelivery).toLocaleDateString('en-GB', {
+                          {new Date(order.estimatedDelivery).toLocaleDateString('en-US', {
                             day: 'numeric',
                             month: 'long',
                             year: 'numeric',

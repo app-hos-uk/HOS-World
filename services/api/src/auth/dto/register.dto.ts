@@ -39,9 +39,9 @@ export class RegisterDto {
 
   @IsString()
   @MinLength(8)
-  @Matches(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$/, {
+  @Matches(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/, {
     message:
-      'Password must contain at least one uppercase letter, one lowercase letter, and one number',
+      'Password must contain at least one uppercase letter, one lowercase letter, one digit, and one special character',
   })
   password: string;
 
@@ -80,8 +80,8 @@ export class RegisterDto {
   preferredCommunicationMethod: CommunicationMethod; // Required
 
   @IsBoolean()
-  gdprConsent: boolean; // Required
+  gdprConsent: boolean; // Required privacy notice acknowledgement
 
   @IsOptional()
-  dataProcessingConsent?: Record<string, boolean>; // Granular consent
+  dataProcessingConsent?: Record<string, boolean>; // Optional granular preferences
 }

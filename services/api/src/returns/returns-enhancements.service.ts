@@ -118,7 +118,7 @@ export class ReturnsEnhancementsService {
     const refundAmount = returnRequest.refundAmount || orderTotal;
 
     // Process refund through payment provider
-    // This is a simplified version - in production, integrate with Stripe/Klarna
+    // This is a simplified version - in production, integrate with Stripe
     const refundId = `refund_${Date.now()}`;
 
     await this.prisma.returnRequest.update({

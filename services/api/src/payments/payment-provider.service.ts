@@ -1,7 +1,6 @@
 import { Injectable, Logger, BadRequestException } from '@nestjs/common';
 import { PaymentProvider } from './interfaces/payment-provider.interface';
 import { StripeProvider } from './providers/stripe.provider';
-import { KlarnaProvider } from './providers/klarna.provider';
 
 @Injectable()
 export class PaymentProviderService {
@@ -10,17 +9,10 @@ export class PaymentProviderService {
 
   constructor(
     private stripeProvider: StripeProvider,
-    private klarnaProvider: KlarnaProvider,
   ) {
-    // Register available providers
     if (this.stripeProvider.isAvailable()) {
       this.providers.set('stripe', this.stripeProvider);
       this.logger.log('Stripe provider registered');
-    }
-
-    if (this.klarnaProvider.isAvailable()) {
-      this.providers.set('klarna', this.klarnaProvider);
-      this.logger.log('Klarna provider registered');
     }
 
     this.logger.log(`Registered ${this.providers.size} payment provider(s)`);

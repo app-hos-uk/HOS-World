@@ -404,8 +404,13 @@ export class ApiClient {
   }
 
   // Orders endpoints
-  async getOrders(): Promise<ApiResponse<Order[]>> {
-    return this.request<ApiResponse<Order[]>>('/orders');
+  async getOrders(params?: { page?: number; limit?: number; status?: string }): Promise<ApiResponse<Order[]>> {
+    const search = new URLSearchParams();
+    if (params?.page != null) search.append('page', String(params.page));
+    if (params?.limit != null) search.append('limit', String(params.limit));
+    if (params?.status) search.append('status', params.status);
+    const query = search.toString();
+    return this.request<ApiResponse<Order[]>>(`/orders${query ? `?${query}` : ''}`);
   }
 
   async getOrder(id: string): Promise<ApiResponse<Order>> {
@@ -450,9 +455,9 @@ export class ApiClient {
    * 
    * @param data - Payment intent data (MUST use named properties, not positional arguments)
    * @param data.orderId - Order ID (required)
-   * @param data.paymentMethod - Payment provider name, e.g., 'stripe', 'klarna' (optional)
+   * @param data.paymentMethod - Payment provider name, e.g., 'stripe' (optional)
    * @param data.amount - Payment amount (required, critical for accurate processing after gift card redemptions)
-   * @param data.currency - Payment currency, e.g., 'GBP' (required, critical for currency conversion)
+   * @param data.currency - Payment currency, e.g., 'USD' (required, critical for currency conversion)
    * 
    * @example
    * ```typescript
@@ -461,7 +466,7 @@ export class ApiClient {
    *   orderId: 'order-123',
    *   paymentMethod: 'stripe',
    *   amount: 100.50,
-   *   currency: 'GBP'
+   *   currency: 'USD'
    * });
    * ```
    */
@@ -1320,7 +1325,7 @@ export class ApiClient {
     });
   }
 
-  // GDPR
+  // Privacy / Consent
   async updateGDPRConsent(data: { marketing?: boolean; analytics?: boolean; essential?: boolean }): Promise<ApiResponse<any>> {
     return this.request<ApiResponse<any>>('/gdpr/consent', {
       method: 'POST',
@@ -1348,6 +1353,25 @@ export class ApiClient {
 
   async getGDPRConsentHistory(): Promise<ApiResponse<any[]>> {
     return this.request<ApiResponse<any[]>>('/gdpr/consent-history', {
+      method: 'GET',
+    });
+  }
+
+  async setDoNotSell(optOut: boolean, email: string): Promise<ApiResponse<any>> {
+    return this.request<ApiResponse<any>>('/gdpr/do-not-sell', {
+      method: 'POST',
+      body: JSON.stringify({ optOut, email }),
+    });
+  }
+
+  async getPrivacyPolicyVersion(): Promise<ApiResponse<{ version: string }>> {
+    return this.request<ApiResponse<{ version: string }>>('/gdpr/policy-version', {
+      method: 'GET',
+    });
+  }
+
+  async getConsentAuditLog(page = 1, limit = 50): Promise<ApiResponse<{ logs: any[]; total: number }>> {
+    return this.request<ApiResponse<{ logs: any[]; total: number }>>(`/gdpr/admin/audit-log?page=${page}&limit=${limit}`, {
       method: 'GET',
     });
   }
@@ -3701,8 +3725,8 @@ export class ApiClient {
     return this.request<ApiResponse<InfluencerInvitation>>(`/influencer-invitations/token/${token}`);
   }
 
-  async acceptInfluencerInvitation(token: string, data: AcceptInfluencerInvitationDto): Promise<ApiResponse<unknown>> {
-    return this.request<ApiResponse<unknown>>(`/influencer-invitations/accept/${token}`, {
+  async acceptInfluencerInvitation(token: string, data: AcceptInfluencerInvitationDto): Promise<ApiResponse<{ user: any; influencer: any; token?: string; refreshToken?: string }>> {
+    return this.request<ApiResponse<{ user: any; influencer: any; token?: string; refreshToken?: string }>>(`/influencer-invitations/accept/${token}`, {
       method: 'POST',
       body: JSON.stringify(data),
     });
@@ -4134,6 +4158,19 @@ export class ApiClient {
     return this.request<ApiResponse<any>>(`/notifications/${id}`, { method: 'DELETE' });
   }
 
+  async getFailedNotifications(page = 1, limit = 20): Promise<ApiResponse<any>> {
+    return this.request<ApiResponse<any>>(
+      `/notifications/admin/failed-jobs?page=${page}&limit=${limit}`
+    );
+  }
+
+  async retryFailedNotification(id: string): Promise<ApiResponse<any>> {
+    return this.request<ApiResponse<any>>(
+      `/notifications/admin/failed-jobs/${id}/retry`,
+      { method: 'POST' }
+    );
+  }
+
   // ===== Support: Tickets =====
   async getMyTickets(status?: string): Promise<ApiResponse<any>> {
     const qs = status ? `?status=${status}` : '';
@@ -4406,6 +4443,49 @@ export class ApiClient {
       method: 'POST',
       body: JSON.stringify({ reason }),
     });
+  }
+
+  // ===== Template Management =====
+  async getTemplates(channel?: string): Promise<ApiResponse<any>> {
+    const query = channel ? `?channel=${channel}` : '';
+    return this.request<ApiResponse<any>>(`/templates${query}`);
+  }
+
+  async getTemplate(slug: string): Promise<ApiResponse<any>> {
+    return this.request<ApiResponse<any>>(`/templates/${slug}`);
+  }
+
+  async previewTemplate(slug: string): Promise<ApiResponse<any>> {
+    return this.request<ApiResponse<any>>(`/templates/${slug}/preview`);
+  }
+
+  async renderTemplate(slug: string, variables: Record<string, string>): Promise<ApiResponse<any>> {
+    return this.request<ApiResponse<any>>(`/templates/${slug}/render`, {
+      method: 'POST',
+      body: JSON.stringify({ variables }),
+    });
+  }
+
+  async createTemplate(data: { name: string; category: string; content: string; variables?: string[] }): Promise<ApiResponse<any>> {
+    return this.request<ApiResponse<any>>('/templates', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async updateTemplate(slug: string, data: { content?: string; variables?: string[]; isActive?: boolean }): Promise<ApiResponse<any>> {
+    return this.request<ApiResponse<any>>(`/templates/${slug}`, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async activateTemplate(slug: string): Promise<ApiResponse<any>> {
+    return this.request<ApiResponse<any>>(`/templates/${slug}/activate`, { method: 'PUT' });
+  }
+
+  async deactivateTemplate(slug: string): Promise<ApiResponse<any>> {
+    return this.request<ApiResponse<any>>(`/templates/${slug}/deactivate`, { method: 'PUT' });
   }
 
 }

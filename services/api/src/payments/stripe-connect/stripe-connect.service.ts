@@ -27,7 +27,7 @@ export class StripeConnectService {
     const result = await this.stripeProvider.createConnectedAccount({
       email: seller.user.email,
       businessName: seller.storeName,
-      country: seller.country === 'UK' ? 'GB' : seller.country || 'US',
+      country: seller.country || 'US',
       metadata: {
         sellerId: seller.id,
         userId,

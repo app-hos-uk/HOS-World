@@ -75,7 +75,7 @@ export class ProductsService {
           storeName: 'House of Spells',
           slug: `admin-store-${sellerId.substring(0, 8)}`,
           sellerType: 'B2C_SELLER',
-          country: 'United Kingdom',
+          country: 'United States',
           verified: true,
         },
       });

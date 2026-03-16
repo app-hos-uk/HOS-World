@@ -448,7 +448,7 @@ export default function AdminTaxZonesPage() {
                             value={zoneFormData.name}
                             onChange={(e) => setZoneFormData({ ...zoneFormData, name: e.target.value })}
                             className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
-                            placeholder="e.g., UK Standard Rate"
+                            placeholder="e.g., US Standard Rate"
                           />
                         </div>
 
@@ -462,7 +462,7 @@ export default function AdminTaxZonesPage() {
                               value={zoneFormData.country}
                               onChange={(e) => setZoneFormData({ ...zoneFormData, country: e.target.value })}
                               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
-                              placeholder="GB"
+                              placeholder="US"
                             />
                           </div>
                           <div>

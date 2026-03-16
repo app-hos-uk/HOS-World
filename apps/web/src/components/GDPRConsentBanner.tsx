@@ -28,26 +28,41 @@ export function GDPRConsentBanner() {
 
   const checkConsentStatus = async () => {
     try {
-      // Check if consent has been given
       const consentKey = 'gdpr_consent_given';
       const consentGiven = localStorage.getItem(consentKey);
-      
+      const token = localStorage.getItem('auth_token');
+
+      if (consentGiven && token) {
+        // Consent was given (possibly anonymously). Sync to server if not already synced.
+        const syncedKey = 'gdpr_consent_synced';
+        if (!localStorage.getItem(syncedKey)) {
+          try {
+            const prefs = JSON.parse(localStorage.getItem('gdpr_consent_preferences') || '{}');
+            await apiClient.updateGDPRConsent({
+              marketing: prefs.marketing ?? false,
+              analytics: prefs.analytics ?? false,
+              essential: prefs.essential ?? true,
+            });
+            localStorage.setItem(syncedKey, 'true');
+          } catch {
+            // Best-effort sync; will retry on next page load
+          }
+        }
+        return; // Banner already dismissed
+      }
+
       if (!consentGiven) {
-        // Only call the API if the user is logged in (prevents 401 spam on expired/no token)
-        const token = localStorage.getItem('auth_token');
         if (token) {
           try {
             const response = await apiClient.getGDPRConsent();
             if (response?.data?.gdprConsent) {
               localStorage.setItem(consentKey, 'true');
-              return; // Don't show banner if consent already given
+              return;
             }
-          } catch (error) {
-            // User not logged in / expired token / no consent — we'll show banner
+          } catch {
+            // User not logged in / expired token / no consent — show banner
           }
         }
-        
-        // Show banner if no consent recorded
         setShowBanner(true);
       }
     } catch (error) {
@@ -88,7 +103,7 @@ export function GDPRConsentBanner() {
         } catch (apiError: any) {
           // Silently handle API errors (e.g., expired token)
           // Consent will still be saved to localStorage
-          console.debug('GDPR consent API call failed, saving locally:', apiError?.message);
+          console.debug('Privacy consent API call failed, saving locally:', apiError?.message);
         }
       }
 
@@ -132,6 +147,9 @@ export function GDPRConsentBanner() {
                 By clicking &quot;Accept All&quot;, you consent to our use of cookies. You can customize your preferences or learn more in our{' '}
                 <Link href="/privacy-policy" className="text-purple-600 hover:underline font-medium">
                   Privacy Policy
+                </Link>.{' '}
+                <Link href="/do-not-sell" className="text-purple-600 hover:underline font-medium">
+                  Do Not Sell or Share My Personal Information
                 </Link>.
               </p>
             </div>

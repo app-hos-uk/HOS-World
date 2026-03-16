@@ -12,12 +12,19 @@ import {
   PaymentStatus,
   WebhookResult,
 } from '../interfaces/payment-provider.interface';
+import { CircuitBreaker } from '../../common/utils/circuit-breaker';
 
 @Injectable()
 export class StripeProvider implements PaymentProvider {
   readonly name = 'stripe';
   private readonly logger = new Logger(StripeProvider.name);
   private stripe: Stripe | null = null;
+  private readonly circuitBreaker = new CircuitBreaker({
+    name: 'stripe',
+    failureThreshold: 5,
+    resetTimeoutMs: 30000,
+    halfOpenMaxAttempts: 1,
+  });
 
   constructor(private configService: ConfigService) {
     const stripeKey = this.configService.get<string>('STRIPE_SECRET_KEY');
@@ -38,8 +45,9 @@ export class StripeProvider implements PaymentProvider {
       throw new Error('Stripe provider is not available');
     }
 
-    try {
-      const paymentIntent = await this.stripe.paymentIntents.create(
+    return this.circuitBreaker.execute(async () => {
+      try {
+        const paymentIntent = await this.stripe!.paymentIntents.create(
         {
           amount: Math.round(params.amount * 100),
           currency: params.currency.toLowerCase(),
@@ -56,18 +64,19 @@ export class StripeProvider implements PaymentProvider {
         },
       );
 
-      return {
-        paymentIntentId: paymentIntent.id,
-        clientSecret: paymentIntent.client_secret || undefined,
-        requiresAction: paymentIntent.status === 'requires_action',
-        metadata: {
-          ...paymentIntent.metadata,
-        },
-      };
-    } catch (error: any) {
-      this.logger.error('Failed to create Stripe payment intent:', error);
-      throw error;
-    }
+        return {
+          paymentIntentId: paymentIntent.id,
+          clientSecret: paymentIntent.client_secret || undefined,
+          requiresAction: paymentIntent.status === 'requires_action',
+          metadata: {
+            ...paymentIntent.metadata,
+          },
+        };
+      } catch (error: any) {
+        this.logger.error('Failed to create Stripe payment intent:', error);
+        throw error;
+      }
+    });
   }
 
   async confirmPayment(params: ConfirmPaymentParams): Promise<PaymentResult> {
@@ -75,34 +84,36 @@ export class StripeProvider implements PaymentProvider {
       throw new Error('Stripe provider is not available');
     }
 
-    try {
-      const paymentIntent = await this.stripe.paymentIntents.retrieve(params.paymentIntentId);
+    return this.circuitBreaker.execute(async () => {
+      try {
+        const paymentIntent = await this.stripe!.paymentIntents.retrieve(params.paymentIntentId);
 
-      if (paymentIntent.status === 'succeeded') {
+        if (paymentIntent.status === 'succeeded') {
+          return {
+            success: true,
+            paymentId: paymentIntent.id,
+            transactionId: paymentIntent.latest_charge as string,
+            amount: paymentIntent.amount / 100,
+            currency: paymentIntent.currency,
+            status: PaymentStatus.SUCCEEDED,
+            metadata: paymentIntent.metadata,
+          };
+        }
+
         return {
-          success: true,
+          success: false,
           paymentId: paymentIntent.id,
-          transactionId: paymentIntent.latest_charge as string,
           amount: paymentIntent.amount / 100,
           currency: paymentIntent.currency,
-          status: PaymentStatus.SUCCEEDED,
+          status: this.mapStripeStatus(paymentIntent.status),
           metadata: paymentIntent.metadata,
+          error: paymentIntent.last_payment_error?.message,
         };
+      } catch (error: any) {
+        this.logger.error('Failed to confirm Stripe payment:', error);
+        throw error;
       }
-
-      return {
-        success: false,
-        paymentId: paymentIntent.id,
-        amount: paymentIntent.amount / 100,
-        currency: paymentIntent.currency,
-        status: this.mapStripeStatus(paymentIntent.status),
-        metadata: paymentIntent.metadata,
-        error: paymentIntent.last_payment_error?.message,
-      };
-    } catch (error: any) {
-      this.logger.error('Failed to confirm Stripe payment:', error);
-      throw error;
-    }
+    });
   }
 
   async refundPayment(params: RefundPaymentParams): Promise<RefundResult> {

@@ -212,7 +212,7 @@ export default function AdminSettlementsPage() {
       const date = new Date(now);
       date.setDate(date.getDate() - i);
       const dateStr = date.toISOString().split('T')[0];
-      last30Days[dateStr] = { date: date.toLocaleDateString('en-GB', { day: '2-digit', month: 'short' }), amount: 0, count: 0 };
+      last30Days[dateStr] = { date: date.toLocaleDateString('en-US', { day: '2-digit', month: 'short' }), amount: 0, count: 0 };
     }
     
     settlements

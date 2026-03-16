@@ -154,7 +154,7 @@ export default function AdminFinancePage() {
       const dayRevenue = dayTransactions.reduce((sum, tx) => sum + (Number(tx.amount) || 0), 0);
       
       data.push({
-        date: date.toLocaleDateString('en-GB', { day: '2-digit', month: 'short' }),
+        date: date.toLocaleDateString('en-US', { day: '2-digit', month: 'short' }),
         revenue: dayRevenue,
         transactions: dayTransactions.length,
       });

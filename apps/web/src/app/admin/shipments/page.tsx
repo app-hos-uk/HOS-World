@@ -641,7 +641,7 @@ export default function AdminShipmentsPage() {
                         type="text"
                         value={updateForm.carrier}
                         onChange={(e) => setUpdateForm({ ...updateForm, carrier: e.target.value })}
-                        placeholder="e.g., Royal Mail, DHL, UPS"
+                        placeholder="e.g., USPS, FedEx, DHL, UPS"
                         className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
                       />
                     </div>

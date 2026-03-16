@@ -34,10 +34,8 @@ export enum IntegrationProvider {
   // Payment
   STRIPE = 'stripe',
   PAYPAL = 'paypal',
-  KLARNA = 'klarna',
 
   // Shipping
-  ROYAL_MAIL = 'royal_mail',
   FEDEX = 'fedex',
   DHL = 'dhl',
   UPS = 'ups',

@@ -12,7 +12,7 @@ export default function PrivacyPolicyPage() {
         <div className="prose prose-purple max-w-none">
           <h1 className="text-3xl sm:text-4xl font-bold mb-6">Privacy Policy</h1>
           <p className="text-sm text-gray-600 mb-8">
-            Last updated: {new Date().toLocaleDateString('en-GB', { year: 'numeric', month: 'long', day: 'numeric' })}
+            Last updated: {new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}
           </p>
 
           <section className="mb-8">
@@ -24,7 +24,7 @@ export default function PrivacyPolicyPage() {
             </p>
             <p>
               By using our service, you agree to the collection and use of information in accordance with this policy. 
-              We comply with the General Data Protection Regulation (GDPR) and other applicable data protection laws.
+              We comply with the California Consumer Privacy Act (CCPA) and other applicable US data protection laws.
             </p>
           </section>
 
@@ -109,38 +109,59 @@ export default function PrivacyPolicyPage() {
           </section>
 
           <section className="mb-8">
-            <h2 className="text-2xl font-semibold mb-4">6. Your Rights (GDPR)</h2>
-            <p className="mb-4">Under GDPR, you have the following rights:</p>
+            <h2 className="text-2xl font-semibold mb-4">6. Your Privacy Rights</h2>
+            <p className="mb-4">Under applicable US privacy laws (including CCPA), you have the following rights:</p>
             <ul className="list-disc pl-6 mb-4 space-y-2">
               <li>
-                <strong>Right to Access (Article 15):</strong> Request a copy of your personal data
+                <strong>Right to Know:</strong> Request disclosure of the personal information we collect, use, and share
               </li>
               <li>
-                <strong>Right to Rectification (Article 16):</strong> Correct inaccurate or incomplete data
+                <strong>Right to Delete:</strong> Request deletion of your personal data
               </li>
               <li>
-                <strong>Right to Erasure (Article 17):</strong> Request deletion of your personal data
+                <strong>Right to Correct:</strong> Correct inaccurate personal information
               </li>
               <li>
-                <strong>Right to Restrict Processing (Article 18):</strong> Limit how we use your data
+                <strong>Right to Opt-Out:</strong> Opt out of the sale or sharing of your personal information
               </li>
               <li>
-                <strong>Right to Data Portability (Article 20):</strong> Receive your data in a structured format
+                <strong>Right to Data Portability:</strong> Receive your data in a structured, machine-readable format
               </li>
               <li>
-                <strong>Right to Object (Article 21):</strong> Object to processing of your data
+                <strong>Right to Non-Discrimination:</strong> You will not be discriminated against for exercising your privacy rights
               </li>
               <li>
                 <strong>Right to Withdraw Consent:</strong> Withdraw consent at any time
               </li>
             </ul>
             <p>
-              You can exercise these rights through your account settings or by contacting us directly.
+              You can exercise these rights through the{' '}
+              <Link href="/do-not-sell" className="text-purple-600 hover:underline font-medium">
+                Do Not Sell or Share
+              </Link>{' '}
+              page or by contacting us directly.
             </p>
           </section>
 
           <section className="mb-8">
-            <h2 className="text-2xl font-semibold mb-4">7. Data Security</h2>
+            <h2 className="text-2xl font-semibold mb-4">7. Do Not Sell or Share My Personal Information</h2>
+            <p className="mb-4">
+              We do not sell your personal information in exchange for monetary consideration. Under CCPA,
+              &quot;sharing&quot; includes disclosing personal information for cross-context behavioral advertising.
+              You have the right to opt out of any such sharing.
+            </p>
+            <p className="mb-4">
+              To exercise this right, visit our{' '}
+              <Link href="/do-not-sell" className="text-purple-600 hover:underline font-medium">
+                Do Not Sell or Share My Personal Information
+              </Link>{' '}
+              page to submit your opt-out request, or contact us at{' '}
+              <strong>privacy@houseofspells.com</strong>.
+            </p>
+          </section>
+
+          <section className="mb-8">
+            <h2 className="text-2xl font-semibold mb-4">8. Data Security</h2>
             <p className="mb-4">
               We implement appropriate technical and organizational measures to protect your personal data against 
               unauthorized access, alteration, disclosure, or destruction. However, no method of transmission over 
@@ -149,7 +170,7 @@ export default function PrivacyPolicyPage() {
           </section>
 
           <section className="mb-8">
-            <h2 className="text-2xl font-semibold mb-4">8. Data Retention</h2>
+            <h2 className="text-2xl font-semibold mb-4">9. Data Retention</h2>
             <p className="mb-4">
               We retain your personal data only for as long as necessary to fulfill the purposes outlined in this 
               policy, unless a longer retention period is required or permitted by law. Order history may be retained 
@@ -158,7 +179,7 @@ export default function PrivacyPolicyPage() {
           </section>
 
           <section className="mb-8">
-            <h2 className="text-2xl font-semibold mb-4">9. International Data Transfers</h2>
+            <h2 className="text-2xl font-semibold mb-4">10. International Data Transfers</h2>
             <p className="mb-4">
               Your information may be transferred to and processed in countries other than your country of residence. 
               We ensure appropriate safeguards are in place to protect your data in accordance with this Privacy Policy.
@@ -166,7 +187,7 @@ export default function PrivacyPolicyPage() {
           </section>
 
           <section className="mb-8">
-            <h2 className="text-2xl font-semibold mb-4">10. Children&apos;s Privacy</h2>
+            <h2 className="text-2xl font-semibold mb-4">11. Children&apos;s Privacy</h2>
             <p className="mb-4">
               Our service is not intended for children under 18 years of age. We do not knowingly collect personal 
               information from children. If you believe we have collected information from a child, please contact us immediately.
@@ -174,7 +195,7 @@ export default function PrivacyPolicyPage() {
           </section>
 
           <section className="mb-8">
-            <h2 className="text-2xl font-semibold mb-4">11. Changes to This Privacy Policy</h2>
+            <h2 className="text-2xl font-semibold mb-4">12. Changes to This Privacy Policy</h2>
             <p className="mb-4">
               We may update our Privacy Policy from time to time. We will notify you of any changes by posting the 
               new Privacy Policy on this page and updating the &quot;Last updated&quot; date.
@@ -182,7 +203,7 @@ export default function PrivacyPolicyPage() {
           </section>
 
           <section className="mb-8">
-            <h2 className="text-2xl font-semibold mb-4">12. Contact Us</h2>
+            <h2 className="text-2xl font-semibold mb-4">13. Contact Us</h2>
             <p className="mb-4">
               If you have any questions about this Privacy Policy or wish to exercise your rights, please contact us:
             </p>

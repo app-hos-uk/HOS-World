@@ -102,7 +102,12 @@ export default function ShipmentDetailPage() {
 
   return (
     <RouteGuard allowedRoles={['FULFILLMENT', 'ADMIN']} showAccessDenied={true}>
-      <DashboardLayout role="FULFILLMENT" menuItems={menuItems} title="Fulfillment">
+      <DashboardLayout
+        role="FULFILLMENT"
+        menuItems={menuItems}
+        title="Fulfillment"
+        backToHref={{ title: 'Admin Dashboard', href: '/admin/dashboard' }}
+      >
         <div className="mb-6">
           <Link
             href="/fulfillment/shipments"

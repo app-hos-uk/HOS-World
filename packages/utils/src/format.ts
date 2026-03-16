@@ -4,9 +4,8 @@
 export function formatCurrency(amount: number, currency: string = 'USD', locale: string = 'en-US'): string {
   // Map currency to appropriate locale
   const localeMap: Record<string, string> = {
-    GBP: 'en-GB',
     USD: 'en-US',
-    EUR: 'de-DE', // or 'fr-FR', 'es-ES' etc.
+    EUR: 'de-DE',
     AED: 'ar-AE',
   };
   

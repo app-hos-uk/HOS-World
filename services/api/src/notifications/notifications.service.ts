@@ -1,7 +1,8 @@
-import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
+import { Injectable, Logger, NotFoundException, OnModuleInit } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../database/prisma.service';
 import { QueueService, JobType } from '../queue/queue.service';
+import { TemplatesService } from '../templates/templates.service';
 import * as nodemailer from 'nodemailer';
 
 const VALID_NOTIFICATION_TYPES = new Set([
@@ -32,20 +33,35 @@ export class NotificationsService implements OnModuleInit {
     private prisma: PrismaService,
     private configService: ConfigService,
     private queueService: QueueService,
+    private templatesService: TemplatesService,
   ) {
     this.initializeEmailTransporter();
   }
 
   onModuleInit() {
     this.queueService.registerProcessor(JobType.EMAIL_NOTIFICATION, async (job) => {
-      const { to, subject, html } = job.data;
-      await this.sendEmail(to, subject, html);
+      const { to, subject, html, notificationId } = job.data;
+      const sent = await this.sendEmail(to, subject, html);
+
+      if (notificationId) {
+        try {
+          await this.prisma.notification.update({
+            where: { id: notificationId },
+            data: {
+              status: sent ? ('SENT' as any) : ('FAILED' as any),
+              sentAt: sent ? new Date() : undefined,
+            },
+          });
+        } catch (e) {
+          this.logger.warn(`Could not update notification ${notificationId}: ${(e as Error)?.message}`);
+        }
+      }
     });
     this.logger.log('Registered EMAIL_NOTIFICATION processor with BullMQ');
   }
 
-  async queueNotification(to: string, subject: string, html: string): Promise<void> {
-    await this.queueService.addJob(JobType.EMAIL_NOTIFICATION, { to, subject, html });
+  async queueNotification(to: string, subject: string, html: string, notificationId?: string): Promise<void> {
+    await this.queueService.addJob(JobType.EMAIL_NOTIFICATION, { to, subject, html, notificationId });
   }
 
   private initializeEmailTransporter() {
@@ -112,45 +128,15 @@ export class NotificationsService implements OnModuleInit {
     },
   ): Promise<void> {
     const sellerTypeName = data.sellerType === 'WHOLESALER' ? 'Wholesaler' : 'B2C Seller';
-    const subject = `You've been invited to join House of Spells as a ${sellerTypeName}`;
 
-    const html = `
-      <!DOCTYPE html>
-      <html>
-      <head>
-        <style>
-          body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
-          .container { max-width: 600px; margin: 0 auto; padding: 20px; }
-          .header { background: #4a5568; color: white; padding: 20px; text-align: center; }
-          .content { padding: 20px; background: #f7fafc; }
-          .button { display: inline-block; padding: 12px 24px; background: #4299e1; color: white; text-decoration: none; border-radius: 4px; margin: 20px 0; }
-          .footer { text-align: center; padding: 20px; color: #718096; font-size: 12px; }
-        </style>
-      </head>
-      <body>
-        <div class="container">
-          <div class="header">
-            <h1>House of Spells Marketplace</h1>
-          </div>
-          <div class="content">
-            <h2>You've Been Invited!</h2>
-            <p>You have been invited to join House of Spells Marketplace as a <strong>${sellerTypeName}</strong>.</p>
-            ${data.message ? `<p>${data.message}</p>` : ''}
-            <a href="${data.invitationLink}" class="button">Accept Invitation</a>
-            <p>Or copy and paste this link into your browser:</p>
-            <p style="word-break: break-all; color: #4299e1;">${data.invitationLink}</p>
-            <p>This invitation will expire in 7 days.</p>
-          </div>
-          <div class="footer">
-            <p>House of Spells Marketplace - Your magical shopping destination</p>
-          </div>
-        </div>
-      </body>
-      </html>
-    `;
+    const rendered = await this.templatesService.render('seller_invitation', {
+      sellerTypeName,
+      invitationLink: data.invitationLink,
+      personalMessage: data.message ? `<p>${data.message}</p>` : '',
+    });
 
-    await this.queueNotification(email, subject, html);
-    this.logger.log(`📧 Seller invitation queued for ${email} (${sellerTypeName})`);
+    await this.queueNotification(email, rendered.subject, rendered.body);
+    this.logger.log(`Seller invitation queued for ${email} (${sellerTypeName})`);
   }
 
   async sendOrderConfirmation(orderId: string): Promise<void> {
@@ -176,24 +162,33 @@ export class NotificationsService implements OnModuleInit {
       return;
     }
 
-    const subject = `Order Confirmation - ${order.orderNumber}`;
-    const html = this.generateOrderConfirmationEmail(order);
+    const customerName = [order.user.firstName, order.user.lastName].filter(Boolean).join(' ') || 'Customer';
 
-    await this.prisma.notification.create({
+    const itemsTable = `<table><thead><tr><th>Product</th><th>Quantity</th><th>Price</th><th>Total</th></tr></thead><tbody>${order.items.map((item: any) => `<tr><td>${item.product.name}</td><td>${item.quantity}</td><td>$${Number(item.price).toFixed(2)}</td><td>$${(Number(item.price) * item.quantity).toFixed(2)}</td></tr>`).join('')}</tbody></table>`;
+
+    const rendered = await this.templatesService.render('order_confirmation', {
+      orderNumber: order.orderNumber,
+      customerName,
+      itemsTable,
+      orderTotal: Number(order.total).toFixed(2),
+      currency: '$',
+    });
+
+    const notification = await this.prisma.notification.create({
       data: {
         userId: order.userId,
         type: 'ORDER_CONFIRMATION',
-        subject,
+        subject: rendered.subject,
         content: `Your order ${order.orderNumber} has been confirmed.`,
         email: order.user.email,
         status: 'PENDING' as any,
       },
     });
 
-    await this.queueNotification(order.user.email, subject, html);
+    await this.queueNotification(order.user.email, rendered.subject, rendered.body, notification.id);
   }
 
-  async sendOrderShipped(orderId: string, trackingCode: string): Promise<void> {
+  async sendOrderShipped(orderId: string, trackingCode: string, carrier = 'USPS'): Promise<void> {
     const order = await this.prisma.order.findUnique({
       where: { id: orderId },
       include: { user: { select: { id: true, email: true, firstName: true, lastName: true } } },
@@ -203,21 +198,27 @@ export class NotificationsService implements OnModuleInit {
       return;
     }
 
-    const subject = `Your Order Has Shipped - ${order.orderNumber}`;
-    const html = this.generateOrderShippedEmail(order, trackingCode);
+    const customerName = [order.user.firstName, order.user.lastName].filter(Boolean).join(' ') || 'Customer';
 
-    await this.prisma.notification.create({
+    const rendered = await this.templatesService.render('order_shipped', {
+      orderNumber: order.orderNumber,
+      customerName,
+      trackingCode,
+      carrier,
+    });
+
+    const notification = await this.prisma.notification.create({
       data: {
         userId: order.userId,
         type: 'ORDER_SHIPPED',
-        subject,
+        subject: rendered.subject,
         content: `Your order ${order.orderNumber} has been shipped. Tracking: ${trackingCode}`,
         email: order.user.email,
         status: 'PENDING' as any,
       },
     });
 
-    await this.queueNotification(order.user.email, subject, html);
+    await this.queueNotification(order.user.email, rendered.subject, rendered.body, notification.id);
   }
 
   async sendOrderDelivered(orderId: string): Promise<void> {
@@ -230,152 +231,25 @@ export class NotificationsService implements OnModuleInit {
       return;
     }
 
-    const subject = `Order Delivered - ${order.orderNumber}`;
-    const html = this.generateOrderDeliveredEmail(order);
+    const customerName = [order.user.firstName, order.user.lastName].filter(Boolean).join(' ') || 'Customer';
 
-    await this.prisma.notification.create({
+    const rendered = await this.templatesService.render('order_delivered', {
+      orderNumber: order.orderNumber,
+      customerName,
+    });
+
+    const notification = await this.prisma.notification.create({
       data: {
         userId: order.userId,
         type: 'ORDER_DELIVERED',
-        subject,
+        subject: rendered.subject,
         content: `Your order ${order.orderNumber} has been delivered.`,
         email: order.user.email,
         status: 'PENDING' as any,
       },
     });
 
-    await this.queueNotification(order.user.email, subject, html);
-  }
-
-  private generateOrderConfirmationEmail(order: any): string {
-    const itemsHtml = order.items
-      .map(
-        (item: any) => `
-      <tr>
-        <td>${item.product.name}</td>
-        <td>${item.quantity}</td>
-        <td>$${item.price.toFixed(2)}</td>
-        <td>$${(item.price * item.quantity).toFixed(2)}</td>
-      </tr>
-    `,
-      )
-      .join('');
-
-    return `
-      <!DOCTYPE html>
-      <html>
-      <head>
-        <style>
-          body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
-          .container { max-width: 600px; margin: 0 auto; padding: 20px; }
-          .header { background: #4a5568; color: white; padding: 20px; text-align: center; }
-          .content { padding: 20px; background: #f7fafc; }
-          table { width: 100%; border-collapse: collapse; margin: 20px 0; }
-          th, td { padding: 12px; text-align: left; border-bottom: 1px solid #ddd; }
-          th { background: #e2e8f0; }
-          .total { font-size: 18px; font-weight: bold; text-align: right; margin-top: 20px; }
-          .footer { text-align: center; padding: 20px; color: #718096; font-size: 12px; }
-        </style>
-      </head>
-      <body>
-        <div class="container">
-          <div class="header">
-            <h1>Order Confirmation</h1>
-          </div>
-          <div class="content">
-            <h2>Thank you for your order!</h2>
-            <p>Your order <strong>${order.orderNumber}</strong> has been confirmed.</p>
-            <table>
-              <thead>
-                <tr>
-                  <th>Product</th>
-                  <th>Quantity</th>
-                  <th>Price</th>
-                  <th>Total</th>
-                </tr>
-              </thead>
-              <tbody>
-                ${itemsHtml}
-              </tbody>
-            </table>
-            <div class="total">Total: $${order.total.toFixed(2)}</div>
-            <p>We'll send you another email when your order ships.</p>
-          </div>
-          <div class="footer">
-            <p>House of Spells Marketplace</p>
-          </div>
-        </div>
-      </body>
-      </html>
-    `;
-  }
-
-  private generateOrderShippedEmail(order: any, trackingCode: string): string {
-    return `
-      <!DOCTYPE html>
-      <html>
-      <head>
-        <style>
-          body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
-          .container { max-width: 600px; margin: 0 auto; padding: 20px; }
-          .header { background: #4299e1; color: white; padding: 20px; text-align: center; }
-          .content { padding: 20px; background: #f7fafc; }
-          .tracking { background: #edf2f7; padding: 15px; border-radius: 4px; margin: 20px 0; }
-          .footer { text-align: center; padding: 20px; color: #718096; font-size: 12px; }
-        </style>
-      </head>
-      <body>
-        <div class="container">
-          <div class="header">
-            <h1>Your Order Has Shipped!</h1>
-          </div>
-          <div class="content">
-            <h2>Great news!</h2>
-            <p>Your order <strong>${order.orderNumber}</strong> has been shipped.</p>
-            <div class="tracking">
-              <strong>Tracking Code:</strong> ${trackingCode}
-            </div>
-            <p>You can track your order using the tracking code above.</p>
-          </div>
-          <div class="footer">
-            <p>House of Spells Marketplace</p>
-          </div>
-        </div>
-      </body>
-      </html>
-    `;
-  }
-
-  private generateOrderDeliveredEmail(order: any): string {
-    return `
-      <!DOCTYPE html>
-      <html>
-      <head>
-        <style>
-          body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
-          .container { max-width: 600px; margin: 0 auto; padding: 20px; }
-          .header { background: #48bb78; color: white; padding: 20px; text-align: center; }
-          .content { padding: 20px; background: #f7fafc; }
-          .footer { text-align: center; padding: 20px; color: #718096; font-size: 12px; }
-        </style>
-      </head>
-      <body>
-        <div class="container">
-          <div class="header">
-            <h1>Order Delivered!</h1>
-          </div>
-          <div class="content">
-            <h2>Your order has been delivered</h2>
-            <p>Your order <strong>${order.orderNumber}</strong> has been successfully delivered.</p>
-            <p>We hope you enjoy your purchase! If you have any questions, please don't hesitate to contact us.</p>
-          </div>
-          <div class="footer">
-            <p>House of Spells Marketplace</p>
-          </div>
-        </div>
-      </body>
-      </html>
-    `;
+    await this.queueNotification(order.user.email, rendered.subject, rendered.body, notification.id);
   }
 
   async getUserNotifications(
@@ -420,6 +294,65 @@ export class NotificationsService implements OnModuleInit {
   }
 
   /**
+   * Get failed notifications (admin) – paginated
+   */
+  async getFailedNotifications(
+    page = 1,
+    limit = 20,
+  ): Promise<{ data: any[]; pagination: { page: number; limit: number; total: number } }> {
+    const safeLimit = Math.min(Math.max(1, limit), 100);
+    const safePage = Math.max(1, page);
+    const skip = (safePage - 1) * safeLimit;
+
+    const [data, total] = await Promise.all([
+      this.prisma.notification.findMany({
+        where: { status: 'FAILED' as any },
+        orderBy: { createdAt: 'desc' },
+        take: safeLimit,
+        skip,
+      }),
+      this.prisma.notification.count({ where: { status: 'FAILED' as any } }),
+    ]);
+
+    return { data, pagination: { page: safePage, limit: safeLimit, total } };
+  }
+
+  /**
+   * Retry a failed notification (admin) – re-queue and reset status to PENDING
+   */
+  async retryFailedNotification(id: string): Promise<any> {
+    const notification = await this.prisma.notification.findFirst({
+      where: { id, status: 'FAILED' as any },
+    });
+
+    if (!notification) {
+      throw new NotFoundException(`Failed notification not found: ${id}`);
+    }
+
+    const to = notification.email;
+    if (!to) {
+      throw new Error(`Notification ${id} has no email address`);
+    }
+
+    const subject = notification.subject || 'Notification';
+    const html = await this.templatesService.render('generic_notification', {
+      subject,
+      bodyContent: (notification.content || '').replace(/\n/g, '<br>'),
+    });
+
+    await this.prisma.notification.update({
+      where: { id },
+      data: { status: 'PENDING' as any },
+    });
+
+    await this.queueNotification(to, subject, html.body, id);
+
+    this.logger.log(`Retried failed notification ${id} for ${to}`);
+
+    return this.prisma.notification.findUnique({ where: { id } });
+  }
+
+  /**
    * Send notification to all users with a specific role
    */
   async sendNotificationToRole(
@@ -459,36 +392,13 @@ export class NotificationsService implements OnModuleInit {
         data: notifications,
       });
 
-      const emailHtml = `
-          <!DOCTYPE html>
-          <html>
-          <head>
-            <style>
-              body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
-              .container { max-width: 600px; margin: 0 auto; padding: 20px; }
-              .header { background: #4a5568; color: white; padding: 20px; text-align: center; }
-              .content { padding: 20px; background: #f7fafc; }
-              .footer { text-align: center; padding: 20px; color: #718096; font-size: 12px; }
-            </style>
-          </head>
-          <body>
-            <div class="container">
-              <div class="header">
-                <h1>${subject}</h1>
-              </div>
-              <div class="content">
-                ${content.replace(/\n/g, '<br>')}
-              </div>
-              <div class="footer">
-                <p>House of Spells Marketplace</p>
-              </div>
-            </div>
-          </body>
-          </html>
-        `;
+      const rendered = await this.templatesService.render('generic_notification', {
+        subject,
+        bodyContent: content.replace(/\n/g, '<br>'),
+      });
 
       for (const user of users) {
-        await this.queueNotification(user.email, subject, emailHtml);
+        await this.queueNotification(user.email, rendered.subject, rendered.body);
       }
 
       this.logger.log(`✅ Sent ${notifications.length} notifications to ${role} team`);
@@ -524,7 +434,7 @@ export class NotificationsService implements OnModuleInit {
         return;
       }
 
-      await this.prisma.notification.create({
+      const notification = await this.prisma.notification.create({
         data: {
           userId: user.id,
           type: type as any,
@@ -536,36 +446,16 @@ export class NotificationsService implements OnModuleInit {
         },
       });
 
+      const rendered = await this.templatesService.render('generic_notification', {
+        subject,
+        bodyContent: content.replace(/\n/g, '<br>'),
+      });
+
       await this.queueNotification(
         user.email,
-        subject,
-        `
-        <!DOCTYPE html>
-        <html>
-        <head>
-          <style>
-            body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
-            .container { max-width: 600px; margin: 0 auto; padding: 20px; }
-            .header { background: #4a5568; color: white; padding: 20px; text-align: center; }
-            .content { padding: 20px; background: #f7fafc; }
-            .footer { text-align: center; padding: 20px; color: #718096; font-size: 12px; }
-          </style>
-        </head>
-        <body>
-          <div class="container">
-            <div class="header">
-              <h1>${subject}</h1>
-            </div>
-            <div class="content">
-              ${content.replace(/\n/g, '<br>')}
-            </div>
-            <div class="footer">
-              <p>House of Spells Marketplace</p>
-            </div>
-          </div>
-        </body>
-        </html>
-      `,
+        rendered.subject,
+        rendered.body,
+        notification.id,
       );
 
       this.logger.log(`✅ Queued notification for user ${userId}`);

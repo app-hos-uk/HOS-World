@@ -38,13 +38,13 @@ const menuItems: MenuItem[] = [
       { title: 'Review Submissions', href: '/procurement/submissions', icon: '✅' },
       { title: 'Orders', href: '/admin/orders', icon: '🛒' },
       { title: 'Shipments', href: '/admin/shipments', icon: '🚚' },
-      { title: 'Catalog Entries', href: '/admin/catalog', icon: '📚' },
+      { title: 'Catalog Admin Queue', href: '/admin/catalog', icon: '📚' },
       { title: 'Catalog Dashboard', href: '/catalog/dashboard', icon: '📊' },
-      { title: 'Catalog Workflow', href: '/catalog/entries', icon: '📝' },
+      { title: 'Catalog Team Workflow', href: '/catalog/entries', icon: '📝' },
       { title: 'Marketing Materials', href: '/admin/marketing', icon: '📢' },
       { title: 'Newsletter', href: '/admin/newsletter', icon: '📧' },
-      { title: 'Pricing Approvals', href: '/admin/pricing', icon: '💰' },
-      { title: 'Finance Pricing', href: '/finance/pricing', icon: '💵' },
+      { title: 'Admin Pricing Approvals', href: '/admin/pricing', icon: '💰' },
+      { title: 'Finance Team Pricing', href: '/finance/pricing', icon: '💵' },
       { title: 'Publishing', href: '/admin/publishing', icon: '🚀' },
       { title: 'Media Library', href: '/admin/media', icon: '🖼️' },
     ],
@@ -96,6 +96,8 @@ const menuItems: MenuItem[] = [
     children: [
       { title: 'Activity Logs', href: '/admin/activity', icon: '📝' },
       { title: 'Discrepancies', href: '/admin/discrepancies', icon: '⚠️' },
+      { title: 'Privacy Audit Log', href: '/admin/privacy-audit', icon: '🔒' },
+      { title: 'Notification Templates', href: '/admin/templates', icon: '📋' },
       { title: 'WhatsApp', href: '/admin/whatsapp', icon: '💬' },
     ],
   },
@@ -442,11 +444,11 @@ export function AdminLayout({ children }: AdminLayoutProps) {
           {/* Footer */}
           <div className="border-t border-gray-100 p-3">
             <Link
-              href="/admin/dashboard"
-              className="flex items-center gap-2.5 px-3 py-2.5 text-sm text-purple-600 hover:bg-purple-50 rounded-lg transition-colors font-medium"
+              href="/"
+              className="flex items-center gap-2.5 px-3 py-2.5 text-sm text-gray-600 hover:bg-gray-50 rounded-lg transition-colors font-medium"
             >
-              <span>📊</span>
-              <span>Dashboard</span>
+              <span>🏠</span>
+              <span>View Store</span>
             </Link>
           </div>
         </div>
@@ -474,12 +476,6 @@ export function AdminLayout({ children }: AdminLayoutProps) {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
                 </svg>
               </button>
-              <Link
-                href="/admin/dashboard"
-                className="text-sm font-medium text-purple-600 hover:text-purple-700 hidden sm:inline"
-              >
-                Dashboard
-              </Link>
             </div>
             <div className="flex items-center gap-3 ml-auto">
               {user && (

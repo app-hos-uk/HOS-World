@@ -4,7 +4,7 @@ import { PrismaService } from '../database/prisma.service';
 const ALLOWED_TRANSACTION_TYPES = ['PAYMENT', 'PAYOUT', 'REFUND', 'FEE', 'ADJUSTMENT'] as const;
 type TransactionType = (typeof ALLOWED_TRANSACTION_TYPES)[number];
 
-const ALLOWED_CURRENCIES = ['USD', 'GBP', 'EUR', 'AED'] as const;
+const ALLOWED_CURRENCIES = ['USD', 'EUR', 'AED'] as const;
 
 @Injectable()
 export class TransactionsService {

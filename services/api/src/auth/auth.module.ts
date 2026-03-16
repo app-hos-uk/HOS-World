@@ -10,6 +10,8 @@ import { LocalStrategy } from './strategies/local.strategy';
 import { UsersModule } from '../users/users.module';
 import { AdminModule } from '../admin/admin.module';
 import { GeolocationModule } from '../geolocation/geolocation.module';
+import { NotificationsModule } from '../notifications/notifications.module';
+import { TemplatesModule } from '../templates/templates.module';
 
 const logger = new Logger('AuthModule');
 
@@ -29,6 +31,8 @@ const logger = new Logger('AuthModule');
     }),
     forwardRef(() => AdminModule),
     GeolocationModule,
+    NotificationsModule,
+    TemplatesModule,
   ],
   controllers: [AuthController, AuthOAuthController],
   providers: [AuthService, JwtStrategy, LocalStrategy],

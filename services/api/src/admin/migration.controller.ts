@@ -268,7 +268,6 @@ export class MigrationController {
         `INSERT INTO "currency_exchange_rates" ("id", "baseCurrency", "targetCurrency", "rate", "cachedAt", "expiresAt")
          VALUES 
            (gen_random_uuid()::text, 'USD', 'USD', 1.0, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP + INTERVAL '1 hour'),
-           (gen_random_uuid()::text, 'USD', 'GBP', 0.79, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP + INTERVAL '1 hour'),
            (gen_random_uuid()::text, 'USD', 'EUR', 0.92, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP + INTERVAL '1 hour'),
            (gen_random_uuid()::text, 'USD', 'AED', 3.67, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP + INTERVAL '1 hour')
          ON CONFLICT ("baseCurrency", "targetCurrency") DO NOTHING`,

@@ -28,7 +28,7 @@ export class DHLLegacyProvider implements CourierProvider {
     );
 
     // DHL Express rates (simplified)
-    let baseRate = 15.0; // Base rate in GBP
+    let baseRate = 15.0; // Base rate in USD
 
     // Weight-based pricing
     const dimWeight = (dimensions.length * dimensions.width * dimensions.height) / 5000;

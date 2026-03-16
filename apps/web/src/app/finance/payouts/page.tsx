@@ -137,7 +137,12 @@ export default function FinancePayoutsPage() {
 
   return (
     <RouteGuard allowedRoles={['FINANCE', 'ADMIN']} showAccessDenied={true}>
-      <DashboardLayout role="FINANCE" menuItems={menuItems} title="Finance">
+      <DashboardLayout
+        role="FINANCE"
+        menuItems={menuItems}
+        title="Finance"
+        backToHref={{ title: 'Admin Dashboard', href: '/admin/dashboard' }}
+      >
         <div className="mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
             <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold">Process Payouts</h1>

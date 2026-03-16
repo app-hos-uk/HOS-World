@@ -208,8 +208,10 @@ export class InfluencerInvitationsController {
           lastName: result.user.lastName,
         },
         influencer: result.influencer,
+        token: result.token,
+        refreshToken: result.refreshToken,
       },
-      message: 'Invitation accepted successfully. You can now log in.',
+      message: 'Invitation accepted successfully.',
     };
   }
 }

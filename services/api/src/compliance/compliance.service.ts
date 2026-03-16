@@ -14,33 +14,26 @@ interface CountryRequirements {
 export class ComplianceService {
   // Country-specific compliance requirements
   private readonly countryRequirements: Record<string, CountryRequirements> = {
-    GB: {
-      vatRate: 0.2, // 20% VAT
+    US: {
+      vatRate: 0, // No federal VAT in US; sales tax varies by state
       requiresAgeVerification: false,
       dataRetentionDays: 2555, // 7 years for financial records
-      requiresCookieConsent: true,
-      paymentMethods: ['stripe', 'klarna'],
-    },
-    US: {
-      vatRate: 0, // Sales tax varies by state
-      requiresAgeVerification: false,
-      dataRetentionDays: 2555, // 7 years
       requiresCookieConsent: false, // Varies by state (CCPA)
-      paymentMethods: ['stripe', 'klarna'],
+      paymentMethods: ['stripe'],
     },
     DE: {
       vatRate: 0.19, // 19% VAT
       requiresAgeVerification: false,
       dataRetentionDays: 1825, // 5 years
       requiresCookieConsent: true,
-      paymentMethods: ['stripe', 'klarna'],
+      paymentMethods: ['stripe'],
     },
     FR: {
       vatRate: 0.2, // 20% VAT
       requiresAgeVerification: false,
       dataRetentionDays: 1825, // 5 years
       requiresCookieConsent: true,
-      paymentMethods: ['stripe', 'klarna'],
+      paymentMethods: ['stripe'],
     },
     AE: {
       vatRate: 0.05, // 5% VAT
@@ -60,7 +53,7 @@ export class ComplianceService {
         vatRate: 0,
         requiresAgeVerification: false,
         dataRetentionDays: 1825,
-        requiresCookieConsent: true,
+        requiresCookieConsent: false,
         paymentMethods: ['stripe'],
       }
     );

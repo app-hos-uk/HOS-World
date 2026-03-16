@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { MiddlewareConsumer, Module, NestModule } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { APP_GUARD } from '@nestjs/core';
 import { AppController } from './app.controller';
@@ -23,7 +23,6 @@ import { RateLimitModule } from './rate-limit/rate-limit.module';
 import { PerformanceModule } from './performance/performance.module';
 import { NewsletterModule } from './newsletter/newsletter.module';
 import { GiftCardsModule } from './gift-cards/gift-cards.module';
-import { KlarnaModule } from './payments/klarna/klarna.module';
 import { CharactersModule } from './characters/characters.module';
 import { FandomsModule } from './fandoms/fandoms.module';
 import { SocialSharingModule } from './social-sharing/social-sharing.module';
@@ -71,6 +70,8 @@ import { LoggerModule } from './common/logger/logger.module';
 import { MonitoringModule } from './monitoring/monitoring.module';
 import { APP_INTERCEPTOR } from '@nestjs/core';
 import { MonitoringInterceptor } from './monitoring/monitoring.interceptor';
+import { ActivityInterceptor } from './common/interceptors/activity.interceptor';
+import { TemplatesModule } from './templates/templates.module';
 import { IntegrationsModule } from './integrations/integrations.module';
 import { GamificationModule } from './gamification/gamification.module';
 import { DigitalProductsModule } from './digital-products/digital-products.module';
@@ -86,6 +87,7 @@ import { VendorProductsModule } from './vendor-products/vendor-products.module';
 import { VendorLedgerModule } from './vendor-ledger/vendor-ledger.module';
 import { InvoicesModule } from './invoices/invoices.module';
 import { validateEnvironmentVariables } from './config/env.validation';
+import { CorrelationIdMiddleware } from './common/middleware/correlation-id.middleware';
 
 @Module({
   imports: [
@@ -120,7 +122,6 @@ import { validateEnvironmentVariables } from './config/env.validation';
     PerformanceModule,
     NewsletterModule,
     GiftCardsModule,
-    KlarnaModule,
     CharactersModule,
     FandomsModule,
     SocialSharingModule,
@@ -180,6 +181,8 @@ import { validateEnvironmentVariables } from './config/env.validation';
     VendorLedgerModule,
     // Invoices
     InvoicesModule,
+    // Templates
+    TemplatesModule,
   ],
   controllers: [AppController],
   providers: [
@@ -192,6 +195,14 @@ import { validateEnvironmentVariables } from './config/env.validation';
       provide: APP_INTERCEPTOR,
       useClass: MonitoringInterceptor,
     },
+    {
+      provide: APP_INTERCEPTOR,
+      useClass: ActivityInterceptor,
+    },
   ],
 })
-export class AppModule {}
+export class AppModule implements NestModule {
+  configure(consumer: MiddlewareConsumer) {
+    consumer.apply(CorrelationIdMiddleware).forRoutes('*');
+  }
+}

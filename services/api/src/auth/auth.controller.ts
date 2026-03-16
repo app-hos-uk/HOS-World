@@ -93,7 +93,8 @@ export class AuthController {
       req.ip ||
       req.connection.remoteAddress;
 
-    const result = await this.authService.acceptInvitation(body.token, body.registerDto, ipAddress);
+    const userAgent = req.headers['user-agent'];
+    const result = await this.authService.acceptInvitation(body.token, body.registerDto, ipAddress, userAgent);
     return {
       data: result,
       message: 'Invitation accepted and account created successfully',
@@ -106,7 +107,8 @@ export class AuthController {
   @HttpCode(HttpStatus.CREATED)
   @ApiOperation({
     summary: 'Register a new user',
-    description: 'Create a new user account with email and password',
+    description:
+      'Create a new user account with email and password. Privacy notice acknowledgement is required.',
   })
   @ApiBody({ type: RegisterDto })
   @SwaggerApiResponse({ status: 201, description: 'User registered successfully' })
@@ -116,14 +118,14 @@ export class AuthController {
     @Body() registerDto: RegisterDto,
     @Request() req: any,
   ): Promise<ApiResponse<AuthResponse>> {
-    // Get IP address for country detection
     const ipAddress =
       req.headers['x-forwarded-for']?.split(',')[0] ||
       req.headers['x-real-ip'] ||
       req.ip ||
       req.connection.remoteAddress;
+    const userAgent = req.headers['user-agent'];
 
-    const result = await this.authService.register(registerDto, ipAddress);
+    const result = await this.authService.register(registerDto, ipAddress, userAgent);
     return {
       data: result,
       message: 'User registered successfully',

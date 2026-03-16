@@ -5,7 +5,11 @@ import {
   ConflictException,
   Logger,
 } from '@nestjs/common';
+import { Inject, forwardRef } from '@nestjs/common';
 import { PrismaService } from '../database/prisma.service';
+import { NotificationsService } from '../notifications/notifications.service';
+import { TemplatesService } from '../templates/templates.service';
+import { AuthService } from '../auth/auth.service';
 import { CreateInfluencerInvitationDto } from './dto/create-invitation.dto';
 import { randomBytes } from 'crypto';
 
@@ -13,7 +17,12 @@ import { randomBytes } from 'crypto';
 export class InfluencerInvitationsService {
   private readonly logger = new Logger(InfluencerInvitationsService.name);
 
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private notificationsService: NotificationsService,
+    private templatesService: TemplatesService,
+    @Inject(forwardRef(() => AuthService)) private authService: AuthService,
+  ) {}
 
   /**
    * Create and send an influencer invitation
@@ -64,8 +73,20 @@ export class InfluencerInvitationsService {
 
     this.logger.log(`Influencer invitation created for ${dto.email} by user ${invitedBy}`);
 
-    // TODO: Send invitation email
-    // await this.emailService.sendInfluencerInvitation(invitation);
+    try {
+      const rendered = await this.templatesService.render('influencer_invitation', {
+        invitationLink: `${process.env.FRONTEND_URL || 'http://localhost:3000'}/auth/accept-invitation?token=${token}&type=influencer`,
+        personalMessage: dto.message ? `<p>${dto.message}</p>` : '',
+        commissionRate: String(dto.baseCommissionRate || 10),
+      });
+      await this.notificationsService.sendSellerInvitation(dto.email, {
+        sellerType: 'B2C_SELLER',
+        invitationLink: `${process.env.FRONTEND_URL || 'http://localhost:3000'}/auth/accept-invitation?token=${token}&type=influencer`,
+        message: rendered.body,
+      });
+    } catch (err) {
+      this.logger.warn(`Failed to send influencer invitation email: ${err?.message}`);
+    }
 
     return invitation;
   }
@@ -223,7 +244,9 @@ export class InfluencerInvitationsService {
 
     this.logger.log(`Influencer invitation accepted by ${invitation.email}`);
 
-    return result;
+    const tokens = await this.authService.generateTokens(result.user);
+
+    return { ...result, token: tokens.accessToken, refreshToken: tokens.refreshToken };
   }
 
   /**
@@ -275,8 +298,15 @@ export class InfluencerInvitationsService {
       data: { expiresAt },
     });
 
-    // TODO: Resend invitation email
-    // await this.emailService.sendInfluencerInvitation(invitation);
+    try {
+      await this.notificationsService.sendSellerInvitation(invitation.email, {
+        sellerType: 'B2C_SELLER',
+        invitationLink: `${process.env.FRONTEND_URL || 'http://localhost:3000'}/auth/accept-invitation?token=${invitation.token}&type=influencer`,
+        message: (invitation as any).message,
+      });
+    } catch (err) {
+      this.logger.warn(`Failed to resend influencer invitation email: ${err?.message}`);
+    }
 
     return { message: 'Invitation resent successfully' };
   }

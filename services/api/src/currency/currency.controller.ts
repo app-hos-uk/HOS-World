@@ -50,7 +50,7 @@ export class CurrencyController {
     name: 'to',
     required: true,
     type: String,
-    description: 'Target currency code (e.g., GBP)',
+    description: 'Target currency code (e.g., EUR)',
   })
   @SwaggerApiResponse({ status: 200, description: 'Currency converted successfully' })
   @SwaggerApiResponse({ status: 400, description: 'Invalid currency codes or amount' })

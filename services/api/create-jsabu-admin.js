@@ -51,7 +51,7 @@ async function createJabuAdmin() {
         firstName: 'Admin',
         lastName: 'User',
         role: UserRole.ADMIN,
-        country: 'GB',
+        country: 'US',
         preferredCommunicationMethod: 'EMAIL',
         gdprConsent: true,
       },

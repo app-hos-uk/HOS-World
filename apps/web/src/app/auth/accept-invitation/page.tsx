@@ -5,12 +5,16 @@ import { useSearchParams, useRouter } from 'next/navigation';
 import { apiClient, markLoginSuccess } from '@/lib/api';
 import { useToast } from '@/hooks/useToast';
 
+type InvitationType = 'seller' | 'influencer';
+
 function AcceptInvitationForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const toast = useToast();
   const token = searchParams.get('token');
-  
+  const typeParam = searchParams.get('type');
+  const invitationType: InvitationType = typeParam === 'influencer' ? 'influencer' : 'seller';
+
   const [formData, setFormData] = useState({
     email: '',
     firstName: '',
@@ -18,6 +22,7 @@ function AcceptInvitationForm() {
     password: '',
     confirmPassword: '',
     storeName: '',
+    displayName: '',
     country: '',
     whatsappNumber: '',
     preferredCommunicationMethod: 'EMAIL' as 'EMAIL' | 'SMS' | 'WHATSAPP' | 'PHONE',
@@ -28,6 +33,7 @@ function AcceptInvitationForm() {
   const [invitationData, setInvitationData] = useState<any>(null);
   const [error, setError] = useState<string | null>(null);
   const [isValidationError, setIsValidationError] = useState(false);
+  const [detectedType, setDetectedType] = useState<InvitationType>(invitationType);
 
   useEffect(() => {
     if (!token) {
@@ -36,21 +42,58 @@ function AcceptInvitationForm() {
       setValidating(false);
       return;
     }
-    
-    // Validate invitation token and fetch details
+
     const validateToken = async () => {
       try {
         setValidating(true);
-        const response = await apiClient.validateInvitation(token);
-        if (response?.data) {
-          setInvitationData(response.data);
-          setFormData(prev => ({
-            ...prev,
-            email: response?.data?.email || '',
-          }));
+
+        if (invitationType === 'influencer') {
+          const response = await apiClient.getInfluencerInvitationByToken(token);
+          if (response?.data) {
+            setInvitationData(response.data);
+            setDetectedType('influencer');
+            setFormData(prev => ({
+              ...prev,
+              email: response.data?.email || '',
+            }));
+          } else {
+            setError('Invalid or expired invitation token.');
+            setIsValidationError(true);
+          }
         } else {
-          setError('Invalid or expired invitation token.');
-          setIsValidationError(true);
+          // Try seller first
+          try {
+            const response = await apiClient.validateInvitation(token);
+            if (response?.data) {
+              setInvitationData(response.data);
+              setDetectedType('seller');
+              setFormData(prev => ({
+                ...prev,
+                email: response.data?.email || '',
+              }));
+            } else {
+              throw new Error('not_seller');
+            }
+          } catch {
+            // Seller validation failed — try influencer as fallback
+            try {
+              const infResponse = await apiClient.getInfluencerInvitationByToken(token);
+              if (infResponse?.data) {
+                setInvitationData(infResponse.data);
+                setDetectedType('influencer');
+                setFormData(prev => ({
+                  ...prev,
+                  email: infResponse.data?.email || '',
+                }));
+              } else {
+                setError('Invalid or expired invitation token.');
+                setIsValidationError(true);
+              }
+            } catch {
+              setError('Invalid or expired invitation token.');
+              setIsValidationError(true);
+            }
+          }
         }
       } catch (err: any) {
         setError(err.message || 'Invalid or expired invitation token.');
@@ -59,9 +102,9 @@ function AcceptInvitationForm() {
         setValidating(false);
       }
     };
-    
+
     validateToken();
-  }, [token]);
+  }, [token, invitationType]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -77,18 +120,23 @@ function AcceptInvitationForm() {
       return;
     }
 
-    if (!formData.storeName) {
+    if (detectedType === 'seller' && !formData.storeName) {
       setError('Store name is required');
       return;
     }
 
-    if (!formData.country) {
+    if (detectedType === 'influencer' && !formData.displayName) {
+      setError('Display name is required');
+      return;
+    }
+
+    if (detectedType === 'seller' && !formData.country) {
       setError('Country is required');
       return;
     }
 
     if (!formData.gdprConsent) {
-      setError('You must consent to GDPR terms');
+      setError('You must acknowledge the Privacy Notice to continue');
       return;
     }
 
@@ -99,32 +147,58 @@ function AcceptInvitationForm() {
 
     try {
       setLoading(true);
-      const response = await apiClient.acceptInvitation({
-        token,
-        email: formData.email,
-        firstName: formData.firstName,
-        lastName: formData.lastName,
-        password: formData.password,
-        storeName: formData.storeName,
-        country: formData.country,
-        whatsappNumber: formData.whatsappNumber || undefined,
-        preferredCommunicationMethod: formData.preferredCommunicationMethod,
-        gdprConsent: formData.gdprConsent,
-      });
-      
-      if (response?.data?.token) {
-        // Store auth token
-        localStorage.setItem('auth_token', response.data.token);
-        if (response.data.refreshToken) {
-          localStorage.setItem('refresh_token', response.data.refreshToken);
+
+      if (detectedType === 'influencer') {
+        const infResponse = await apiClient.acceptInfluencerInvitation(token, {
+          password: formData.password,
+          firstName: formData.firstName,
+          lastName: formData.lastName,
+          displayName: formData.displayName,
+        });
+
+        if (infResponse?.data?.token) {
+          localStorage.setItem('auth_token', infResponse.data.token);
+          if (infResponse.data.refreshToken) {
+            localStorage.setItem('refresh_token', infResponse.data.refreshToken);
+          }
+          markLoginSuccess();
+          toast.success('Account created successfully! Redirecting to dashboard...');
+          setTimeout(() => {
+            router.replace('/influencer/dashboard');
+          }, 1500);
+        } else {
+          toast.success('Account created! Redirecting to login...');
+          setTimeout(() => {
+            router.replace('/auth/login');
+          }, 1500);
         }
-        markLoginSuccess();
-        toast.success('Account created successfully! Redirecting to dashboard...');
-        setTimeout(() => {
-          router.replace('/seller/dashboard');
-        }, 1500);
       } else {
-        throw new Error('Failed to create account');
+        const response = await apiClient.acceptInvitation({
+          token,
+          email: formData.email,
+          firstName: formData.firstName,
+          lastName: formData.lastName,
+          password: formData.password,
+          storeName: formData.storeName,
+          country: formData.country,
+          whatsappNumber: formData.whatsappNumber || undefined,
+          preferredCommunicationMethod: formData.preferredCommunicationMethod,
+          gdprConsent: formData.gdprConsent,
+        });
+
+        if (response?.data?.token) {
+          localStorage.setItem('auth_token', response.data.token);
+          if (response.data.refreshToken) {
+            localStorage.setItem('refresh_token', response.data.refreshToken);
+          }
+          markLoginSuccess();
+          toast.success('Account created successfully! Redirecting to dashboard...');
+          setTimeout(() => {
+            router.replace('/seller/dashboard');
+          }, 1500);
+        } else {
+          throw new Error('Failed to create account');
+        }
       }
     } catch (err: any) {
       setError(err.message || 'Failed to accept invitation');
@@ -157,19 +231,27 @@ function AcceptInvitationForm() {
     );
   }
 
+  const isInfluencer = detectedType === 'influencer';
+  const headingText = isInfluencer ? 'Accept Influencer Invitation' : 'Accept Seller Invitation';
+  const roleLabel = isInfluencer
+    ? 'Influencer'
+    : invitationData?.sellerType === 'WHOLESALER'
+      ? 'Wholesaler'
+      : 'B2C Seller';
+
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-md w-full space-y-8">
         <div>
           <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
-            Accept Seller Invitation
+            {headingText}
           </h2>
           <p className="mt-2 text-center text-sm text-gray-600">
             Create your account to get started
           </p>
           {invitationData && (
             <p className="mt-1 text-center text-xs text-gray-500">
-              Invited as: {invitationData.sellerType === 'WHOLESALER' ? 'Wholesaler' : 'B2C Seller'}
+              Invited as: {roleLabel}
             </p>
           )}
         </div>
@@ -198,21 +280,39 @@ function AcceptInvitationForm() {
               <p className="mt-1 text-xs text-gray-500">Email is pre-filled from invitation</p>
             </div>
 
-            <div>
-              <label htmlFor="storeName" className="block text-sm font-medium text-gray-700">
-                Store Name *
-              </label>
-              <input
-                id="storeName"
-                name="storeName"
-                type="text"
-                required
-                value={formData.storeName}
-                onChange={(e) => setFormData({ ...formData, storeName: e.target.value })}
-                className="mt-1 appearance-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-lg focus:outline-none focus:ring-purple-500 focus:border-purple-500 focus:z-10 sm:text-sm"
-                placeholder="Your store name"
-              />
-            </div>
+            {isInfluencer ? (
+              <div>
+                <label htmlFor="displayName" className="block text-sm font-medium text-gray-700">
+                  Display Name *
+                </label>
+                <input
+                  id="displayName"
+                  name="displayName"
+                  type="text"
+                  required
+                  value={formData.displayName}
+                  onChange={(e) => setFormData({ ...formData, displayName: e.target.value })}
+                  className="mt-1 appearance-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-lg focus:outline-none focus:ring-purple-500 focus:border-purple-500 focus:z-10 sm:text-sm"
+                  placeholder="Your public display name"
+                />
+              </div>
+            ) : (
+              <div>
+                <label htmlFor="storeName" className="block text-sm font-medium text-gray-700">
+                  Store Name *
+                </label>
+                <input
+                  id="storeName"
+                  name="storeName"
+                  type="text"
+                  required
+                  value={formData.storeName}
+                  onChange={(e) => setFormData({ ...formData, storeName: e.target.value })}
+                  className="mt-1 appearance-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-lg focus:outline-none focus:ring-purple-500 focus:border-purple-500 focus:z-10 sm:text-sm"
+                  placeholder="Your store name"
+                />
+              </div>
+            )}
 
             <div className="grid grid-cols-2 gap-4">
               <div>
@@ -248,55 +348,59 @@ function AcceptInvitationForm() {
               </div>
             </div>
 
-            <div>
-              <label htmlFor="country" className="block text-sm font-medium text-gray-700">
-                Country *
-              </label>
-              <input
-                id="country"
-                name="country"
-                type="text"
-                required
-                value={formData.country}
-                onChange={(e) => setFormData({ ...formData, country: e.target.value })}
-                className="mt-1 appearance-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-lg focus:outline-none focus:ring-purple-500 focus:border-purple-500 focus:z-10 sm:text-sm"
-                placeholder="Country"
-              />
-            </div>
+            {!isInfluencer && (
+              <>
+                <div>
+                  <label htmlFor="country" className="block text-sm font-medium text-gray-700">
+                    Country *
+                  </label>
+                  <input
+                    id="country"
+                    name="country"
+                    type="text"
+                    required
+                    value={formData.country}
+                    onChange={(e) => setFormData({ ...formData, country: e.target.value })}
+                    className="mt-1 appearance-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-lg focus:outline-none focus:ring-purple-500 focus:border-purple-500 focus:z-10 sm:text-sm"
+                    placeholder="Country"
+                  />
+                </div>
 
-            <div>
-              <label htmlFor="whatsappNumber" className="block text-sm font-medium text-gray-700">
-                WhatsApp Number (Optional)
-              </label>
-              <input
-                id="whatsappNumber"
-                name="whatsappNumber"
-                type="tel"
-                value={formData.whatsappNumber}
-                onChange={(e) => setFormData({ ...formData, whatsappNumber: e.target.value })}
-                className="mt-1 appearance-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-lg focus:outline-none focus:ring-purple-500 focus:border-purple-500 focus:z-10 sm:text-sm"
-                placeholder="+44 123 456 7890"
-              />
-            </div>
+                <div>
+                  <label htmlFor="whatsappNumber" className="block text-sm font-medium text-gray-700">
+                    WhatsApp Number (Optional)
+                  </label>
+                  <input
+                    id="whatsappNumber"
+                    name="whatsappNumber"
+                    type="tel"
+                    value={formData.whatsappNumber}
+                    onChange={(e) => setFormData({ ...formData, whatsappNumber: e.target.value })}
+                    className="mt-1 appearance-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-lg focus:outline-none focus:ring-purple-500 focus:border-purple-500 focus:z-10 sm:text-sm"
+                    placeholder="+1 555 123 4567"
+                  />
+                </div>
 
-            <div>
-              <label htmlFor="preferredCommunicationMethod" className="block text-sm font-medium text-gray-700">
-                Preferred Communication Method *
-              </label>
-              <select
-                id="preferredCommunicationMethod"
-                name="preferredCommunicationMethod"
-                required
-                value={formData.preferredCommunicationMethod}
-                onChange={(e) => setFormData({ ...formData, preferredCommunicationMethod: e.target.value as any })}
-                className="mt-1 appearance-none relative block w-full px-3 py-2 border border-gray-300 text-gray-900 rounded-lg focus:outline-none focus:ring-purple-500 focus:border-purple-500 focus:z-10 sm:text-sm"
-              >
-                <option value="EMAIL">Email</option>
-                <option value="SMS">SMS</option>
-                <option value="WHATSAPP">WhatsApp</option>
-                <option value="PHONE">Phone</option>
-              </select>
-            </div>
+                <div>
+                  <label htmlFor="preferredCommunicationMethod" className="block text-sm font-medium text-gray-700">
+                    Preferred Communication Method *
+                  </label>
+                  <select
+                    id="preferredCommunicationMethod"
+                    name="preferredCommunicationMethod"
+                    required
+                    value={formData.preferredCommunicationMethod}
+                    onChange={(e) => setFormData({ ...formData, preferredCommunicationMethod: e.target.value as any })}
+                    className="mt-1 appearance-none relative block w-full px-3 py-2 border border-gray-300 text-gray-900 rounded-lg focus:outline-none focus:ring-purple-500 focus:border-purple-500 focus:z-10 sm:text-sm"
+                  >
+                    <option value="EMAIL">Email</option>
+                    <option value="SMS">SMS</option>
+                    <option value="WHATSAPP">WhatsApp</option>
+                    <option value="PHONE">Phone</option>
+                  </select>
+                </div>
+              </>
+            )}
 
             <div>
               <label htmlFor="password" className="block text-sm font-medium text-gray-700">
@@ -341,7 +445,7 @@ function AcceptInvitationForm() {
                 className="h-4 w-4 text-purple-600 focus:ring-purple-500 border-gray-300 rounded"
               />
               <label htmlFor="gdprConsent" className="ml-2 block text-sm text-gray-900">
-                I consent to GDPR terms and data processing *
+                I acknowledge the <a href="/privacy-policy" target="_blank" className="text-purple-600 hover:underline">Privacy Policy</a> and consent to data processing *
               </label>
             </div>
           </div>
@@ -372,4 +476,3 @@ export default function AcceptInvitationPage() {
     </Suspense>
   );
 }
-

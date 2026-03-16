@@ -97,9 +97,6 @@ checks.push(checkEnvVar('APPLE_PRIVATE_KEY', false));
 // Payment providers (optional)
 checks.push(checkEnvVar('STRIPE_SECRET_KEY', false));
 checks.push(checkEnvVar('STRIPE_PUBLISHABLE_KEY', false));
-checks.push(checkEnvVar('KLARNA_USERNAME', false));
-checks.push(checkEnvVar('KLARNA_PASSWORD', false));
-
 // Storage (optional)
 checks.push(checkEnvVar('AWS_ACCESS_KEY_ID', false));
 checks.push(checkEnvVar('AWS_SECRET_ACCESS_KEY', false));

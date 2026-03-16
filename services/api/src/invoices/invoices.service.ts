@@ -77,7 +77,7 @@ export class InvoicesService {
 
       const currency = order.currency || 'USD';
       const currencySymbol =
-        currency === 'USD' ? '$' : currency === 'GBP' ? '£' : currency === 'EUR' ? '€' : currency;
+        currency === 'USD' ? '$' : currency === 'EUR' ? '€' : currency;
 
       // Header — HoS branding
       doc.fontSize(24).font('Helvetica-Bold').text('House of Spells', 50, 50);

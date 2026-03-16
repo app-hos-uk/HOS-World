@@ -22,8 +22,17 @@ jest.mock('ioredis', () => ({
   default: jest.fn().mockImplementation(() => mockConnection),
 }));
 
+const mockDlqQueue = {
+  add: jest.fn(),
+  getJobCounts: jest.fn(),
+  close: jest.fn().mockResolvedValue(undefined),
+};
+
 jest.mock('bullmq', () => ({
-  Queue: jest.fn().mockImplementation(() => mockQueue),
+  Queue: jest.fn().mockImplementation((name: string) => {
+    if (name === 'jobs-dlq') return mockDlqQueue;
+    return mockQueue;
+  }),
   Worker: jest.fn().mockImplementation(() => mockWorker),
 }));
 
@@ -145,6 +154,10 @@ describe('QueueService', () => {
         delayed: 1,
         paused: 0,
       });
+      mockDlqQueue.getJobCounts.mockResolvedValue({
+        waiting: 1,
+        failed: 0,
+      });
 
       const stats = await service.getQueueStats();
 
@@ -163,17 +176,19 @@ describe('QueueService', () => {
         failed: 3,
         delayed: 1,
         paused: 0,
+        dlq: 1,
       });
     });
   });
 
   describe('onModuleDestroy', () => {
-    it('should close worker, queue and connection', async () => {
+    it('should close worker, queue, dlq and connection', async () => {
       await service.onModuleInit();
       await service.onModuleDestroy();
 
       expect(mockWorker.close).toHaveBeenCalled();
       expect(mockQueue.close).toHaveBeenCalled();
+      expect(mockDlqQueue.close).toHaveBeenCalled();
       expect(mockConnection.quit).toHaveBeenCalled();
     });
   });

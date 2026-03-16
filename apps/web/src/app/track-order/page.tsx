@@ -193,7 +193,7 @@ function TrackOrderContent() {
                     Order #{order.orderNumber || order.id.slice(0, 8)}
                   </h2>
                   <p className="text-sm text-gray-500 mt-1">
-                    Placed on {new Date(order.createdAt).toLocaleDateString('en-GB', {
+                    Placed on {new Date(order.createdAt).toLocaleDateString('en-US', {
                       day: 'numeric',
                       month: 'long',
                       year: 'numeric',

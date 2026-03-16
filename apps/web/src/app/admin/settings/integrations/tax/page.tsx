@@ -63,7 +63,7 @@ const TAX_PROVIDERS: Record<string, ProviderMetadata> = {
       'Exemption certificate management',
       'Multi-jurisdiction support',
       'Automatic filing & remittance',
-      'VAT/GST for 100+ countries',
+      'Sales tax, VAT, and GST for 100+ countries',
     ],
     documentationUrl: 'https://developer.avalara.com/',
   },

@@ -561,8 +561,6 @@ export class IntegrationsService {
     // These will be replaced with actual API calls in later phases
 
     switch (provider) {
-      case 'royal_mail':
-        return this.testRoyalMailConnection(credentials, isTestMode);
       case 'fedex':
         return this.testFedExConnection(credentials, isTestMode);
       case 'dhl':
@@ -584,21 +582,6 @@ export class IntegrationsService {
   }
 
   // Placeholder test methods - will be implemented with real API calls later
-
-  private async testRoyalMailConnection(
-    credentials: Record<string, any>,
-    isTestMode: boolean,
-  ): Promise<TestConnectionResultDto> {
-    // TODO: Implement real Royal Mail API test
-    if (!credentials.clientId || !credentials.clientSecret) {
-      return { success: false, message: 'Missing client ID or client secret' };
-    }
-    return {
-      success: true,
-      message: `Royal Mail ${isTestMode ? 'sandbox' : 'production'} connection verified (placeholder)`,
-      details: { environment: isTestMode ? 'sandbox' : 'production' },
-    };
-  }
 
   private async testFedExConnection(
     credentials: Record<string, any>,

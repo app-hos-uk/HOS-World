@@ -171,7 +171,12 @@ export default function MarketingMaterialsPage() {
 
   return (
     <RouteGuard allowedRoles={['MARKETING', 'ADMIN']} showAccessDenied={true}>
-      <DashboardLayout role="MARKETING" menuItems={menuItems} title="Marketing">
+      <DashboardLayout
+        role="MARKETING"
+        menuItems={menuItems}
+        title="Marketing"
+        backToHref={{ title: 'Admin Dashboard', href: '/admin/dashboard' }}
+      >
         <div className="mb-6">
           <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold">Marketing Materials</h1>
           <p className="text-gray-600 mt-2">Create and manage marketing materials for products</p>

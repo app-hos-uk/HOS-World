@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException, ForbiddenException } from '@nestjs/common';
 import { PrismaService } from '../database/prisma.service';
 
 @Injectable()
@@ -231,7 +231,7 @@ export class TicketsService {
     };
   }
 
-  async getTicketById(id: string) {
+  async getTicketById(id: string, requestingUserId?: string, requestingUserRole?: string) {
     const ticket = await this.prisma.supportTicket.findUnique({
       where: { id },
       include: {
@@ -285,6 +285,16 @@ export class TicketsService {
 
     if (!ticket) {
       throw new NotFoundException('Ticket not found');
+    }
+
+    if (
+      requestingUserId &&
+      requestingUserRole &&
+      requestingUserRole !== 'ADMIN' &&
+      ticket.userId !== requestingUserId &&
+      ticket.assignedAgent?.id !== requestingUserId
+    ) {
+      throw new ForbiddenException('You do not have permission to view this ticket');
     }
 
     return ticket;

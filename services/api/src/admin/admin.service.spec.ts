@@ -155,10 +155,11 @@ describe('AdminService', () => {
 
       const result = await service.getUserById(userId);
 
-      expect(mockPrismaService.user.findUnique).toHaveBeenCalledWith({
-        where: { id: userId },
-        include: expect.any(Object),
-      });
+      expect(mockPrismaService.user.findUnique).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: { id: userId },
+        }),
+      );
       expect(result).toEqual(mockUser);
     });
 

@@ -1,6 +1,7 @@
 import { Injectable, NotFoundException, BadRequestException, Logger } from '@nestjs/common';
 import { PrismaService } from '../database/prisma.service';
 import { ConfigService } from '@nestjs/config';
+import { TemplatesService } from '../templates/templates.service';
 
 @Injectable()
 export class WhatsAppService {
@@ -13,6 +14,7 @@ export class WhatsAppService {
   constructor(
     private prisma: PrismaService,
     private configService: ConfigService,
+    private templatesService: TemplatesService,
   ) {
     this.twilioAccountSid = this.configService.get<string>('TWILIO_ACCOUNT_SID') || '';
     this.twilioAuthToken = this.configService.get<string>('TWILIO_AUTH_TOKEN') || '';
@@ -353,7 +355,6 @@ export class WhatsAppService {
       throw new BadRequestException('Template is not active');
     }
 
-    // Replace template variables
     let message = template.content;
     template.variables.forEach((variable) => {
       const value = data.variables[variable] || '';
@@ -363,6 +364,34 @@ export class WhatsAppService {
     return this.sendMessage({
       to: data.to,
       message,
+    });
+  }
+
+  /**
+   * Send a WhatsApp message using the centralized TemplatesService.
+   *
+   * @example
+   *   await whatsAppService.sendFromTemplate('+15551234567', 'whatsapp_order_confirmation', {
+   *     customerName: 'Jane Doe',
+   *     orderNumber: 'ORD-001',
+   *     orderTotal: '59.99',
+   *     currency: '$',
+   *   });
+   */
+  async sendFromTemplate(
+    to: string,
+    templateSlug: string,
+    variables: Record<string, string>,
+    options?: { userId?: string; sellerId?: string; ticketId?: string },
+  ) {
+    const rendered = await this.templatesService.render(templateSlug, variables);
+
+    return this.sendMessage({
+      to,
+      message: rendered.body,
+      userId: options?.userId,
+      sellerId: options?.sellerId,
+      ticketId: options?.ticketId,
     });
   }
 }

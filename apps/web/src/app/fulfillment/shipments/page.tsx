@@ -97,7 +97,12 @@ export default function FulfillmentShipmentsPage() {
 
   return (
     <RouteGuard allowedRoles={['FULFILLMENT', 'ADMIN']} showAccessDenied={true}>
-      <DashboardLayout role="FULFILLMENT" menuItems={menuItems} title="Fulfillment">
+      <DashboardLayout
+        role="FULFILLMENT"
+        menuItems={menuItems}
+        title="Fulfillment"
+        backToHref={{ title: 'Admin Dashboard', href: '/admin/dashboard' }}
+      >
         <div className="mb-6">
           <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold">Manage Shipments</h1>
           <p className="text-gray-600 mt-2">Verify and manage incoming shipments</p>

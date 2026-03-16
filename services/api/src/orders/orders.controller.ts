@@ -5,6 +5,7 @@ import {
   Put,
   Param,
   Body,
+  Query,
   UseGuards,
   Request,
   ParseUUIDPipe,
@@ -64,11 +65,21 @@ export class OrdersController {
   })
   @SwaggerApiResponse({ status: 200, description: 'Orders retrieved successfully' })
   @SwaggerApiResponse({ status: 401, description: 'Unauthorized' })
-  async findAll(@Request() req: any): Promise<ApiResponse<Order[]>> {
-    const orders = await this.ordersService.findAll(req.user.id, req.user.role);
+  async findAll(
+    @Request() req: any,
+    @Query('page') page?: string,
+    @Query('limit') limit?: string,
+    @Query('status') status?: string,
+  ): Promise<ApiResponse<Order[]>> {
+    const result = await this.ordersService.findAll(req.user.id, req.user.role, {
+      page: page ? parseInt(page, 10) : 1,
+      limit: limit ? parseInt(limit, 10) : 20,
+      status,
+    });
     return {
-      data: orders,
+      data: result.data,
       message: 'Orders retrieved successfully',
+      pagination: result.pagination,
     };
   }
 

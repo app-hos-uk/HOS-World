@@ -145,16 +145,16 @@ export class DHLProvider extends BaseCourierProvider implements ICourierProvider
         from: {
           name: 'Test Sender',
           street1: '123 Test Street',
-          city: 'London',
-          postalCode: 'EC1A 1BB',
-          country: 'GB',
+          city: 'New York',
+          postalCode: '10001',
+          country: 'US',
         },
         to: {
           name: 'Test Recipient',
           street1: '456 Test Avenue',
-          city: 'Paris',
-          postalCode: '75001',
-          country: 'FR',
+          city: 'Los Angeles',
+          postalCode: '90001',
+          country: 'US',
         },
         packages: [{ length: 20, width: 15, height: 10, weight: 1 }],
       };
@@ -283,7 +283,7 @@ export class DHLProvider extends BaseCourierProvider implements ICourierProvider
     const cleanPhone = phone.replace(/\s+/g, '');
     if (!/^\+?[\d\-()]+$/.test(cleanPhone)) {
       throw new Error(
-        `Invalid phone number format for ${party}: "${phone}". Please use international format (e.g., +44 20 1234 5678).`,
+        `Invalid phone number format for ${party}: "${phone}". Please use international format (e.g., +1 555 123 4567).`,
       );
     }
 

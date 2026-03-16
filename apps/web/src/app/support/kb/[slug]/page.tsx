@@ -117,7 +117,7 @@ export default function KBArticlePage() {
                   )}
                   {article.updatedAt && (
                     <span className="text-xs text-gray-500">
-                      Updated {new Date(article.updatedAt).toLocaleDateString('en-GB', {
+                      Updated {new Date(article.updatedAt).toLocaleDateString('en-US', {
                         day: 'numeric',
                         month: 'long',
                         year: 'numeric',

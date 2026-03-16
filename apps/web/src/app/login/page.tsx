@@ -237,7 +237,7 @@ export default function LoginPage() {
     }
 
     if (!gdprConsent) {
-      setError('You must accept the GDPR consent to create an account');
+      setError('You must acknowledge the Privacy Notice to create an account');
       setLoading(false);
       return;
     }
@@ -673,7 +673,6 @@ export default function LoginPage() {
                           setCountry(e.target.value);
                           // Update currency based on country
                           const countryCurrencies: Record<string, string> = {
-                            'United Kingdom': 'GBP',
                             'United States': 'USD',
                             'United Arab Emirates': 'AED',
                             'Germany': 'EUR',
@@ -688,7 +687,6 @@ export default function LoginPage() {
                         style={{ backgroundColor: '#ffffff', color: '#111827' }}
                       >
                         <option value="">Select your country</option>
-                        <option value="United Kingdom">United Kingdom</option>
                         <option value="United States">United States</option>
                         <option value="United Arab Emirates">United Arab Emirates</option>
                         <option value="Germany">Germany</option>
@@ -757,8 +755,17 @@ export default function LoginPage() {
                     </select>
                   </div>
 
-                  {/* GDPR Consent */}
+                  {/* Privacy notice acknowledgement and consent preferences */}
                   <div className="space-y-3 p-4 bg-gray-50 rounded-lg border border-gray-200">
+                    <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg mb-2">
+                      <p className="text-xs text-blue-800 font-medium mb-1">Notice at Collection</p>
+                      <p className="text-xs text-blue-700">
+                        We collect your name, email, phone number, and shipping address to create and manage your
+                        account, process orders, and communicate with you. We do not sell your personal information.
+                        For more details, see our{' '}
+                        <a href="/privacy-policy" target="_blank" className="underline font-medium">Privacy Policy</a>.
+                      </p>
+                    </div>
                     <div className="flex items-start">
                       <input
                         id="gdprConsent"
@@ -769,13 +776,19 @@ export default function LoginPage() {
                         className="mt-1 h-4 w-4 text-purple-600 focus:ring-purple-500 border-gray-300 rounded"
                       />
                       <label htmlFor="gdprConsent" className="ml-2 text-sm text-gray-700">
-                        I accept the{' '}
+                        I acknowledge the{' '}
                         <a href="/privacy-policy" target="_blank" className="text-purple-600 hover:underline">
                           Privacy Policy
                         </a>{' '}
-                        and consent to data processing <span className="text-red-500">*</span>
+                        and consent to account-related data processing{' '}
+                        <span className="text-red-500">*</span>
                       </label>
                     </div>
+                    <p className="ml-6 text-xs text-gray-500">
+                      California residents: You have the right to know, delete, correct, and opt out.
+                      You can exercise these rights anytime from your{' '}
+                      <a href="/profile?tab=settings" className="text-purple-600 hover:underline">Privacy Request Center</a>.
+                    </p>
 
                     {/* Granular Consent Options */}
                     {gdprConsent && (

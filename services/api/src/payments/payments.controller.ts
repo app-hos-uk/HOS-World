@@ -119,7 +119,7 @@ export class PaymentsController {
   })
   @ApiHeader({
     name: 'x-provider',
-    description: 'Payment provider name (stripe, klarna, etc.)',
+    description: 'Payment provider name (stripe, etc.)',
     required: false,
   })
   @ApiBody({

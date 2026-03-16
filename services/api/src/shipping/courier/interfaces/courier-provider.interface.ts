@@ -190,7 +190,7 @@ export interface TestConnectionResult {
  * All courier implementations must provide these methods
  */
 export interface ICourierProvider {
-  /** Provider identifier (e.g., 'fedex', 'royal_mail') */
+  /** Provider identifier (e.g., 'fedex', 'dhl', 'usps') */
   readonly providerId: string;
 
   /** Human-readable provider name */

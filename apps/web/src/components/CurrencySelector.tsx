@@ -4,7 +4,6 @@ import { useCurrency } from '@/contexts/CurrencyContext';
 import { getCurrencySymbol } from '@hos-marketplace/utils';
 
 const SUPPORTED_CURRENCIES = [
-  { code: 'GBP', name: 'British Pound', symbol: '£' },
   { code: 'USD', name: 'US Dollar', symbol: '$' },
   { code: 'EUR', name: 'Euro', symbol: '€' },
   { code: 'AED', name: 'UAE Dirham', symbol: 'د.إ' },

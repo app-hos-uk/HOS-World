@@ -26,14 +26,15 @@ export class QueueService implements OnModuleInit, OnModuleDestroy {
   private readonly logger = new Logger(QueueService.name);
   private connection: InstanceType<typeof IORedis>;
   private queue: Queue;
+  private dlq: Queue;
   private worker: Worker;
   private processors: Map<JobType, (job: Job) => Promise<any>> = new Map();
 
   constructor() {
     const redisUrl = process.env.REDIS_URL || 'redis://localhost:6379';
-    // BullMQ requires maxRetriesPerRequest: null when using blocking commands (Worker)
     this.connection = new IORedis(redisUrl, { maxRetriesPerRequest: null });
     this.queue = new Queue('jobs', { connection: this.connection });
+    this.dlq = new Queue('jobs-dlq', { connection: this.connection });
   }
 
   async onModuleInit() {
@@ -54,17 +55,38 @@ export class QueueService implements OnModuleInit, OnModuleDestroy {
     this.worker.on('completed', (job) => {
       this.logger.debug(`Job completed: ${job.id} (${job.name})`);
     });
+
     this.worker.on('failed', (job, err) => {
-      this.logger.error(`Job failed: ${job?.id} (${job?.name}) - ${err.message}`);
+      if (!job) return;
+      const maxAttempts = job.opts?.attempts ?? 3;
+      if (job.attemptsMade >= maxAttempts) {
+        this.moveToDLQ(job).catch((dlqErr) =>
+          this.logger.error(`Failed to move job ${job.id} to DLQ: ${dlqErr.message}`),
+        );
+      }
+      this.logger.error(
+        `Job failed: ${job.id} (${job.name}) attempt ${job.attemptsMade}/${maxAttempts} - ${err.message}`,
+      );
     });
 
-    this.logger.log('BullMQ worker initialized');
+    this.logger.log('BullMQ worker initialized with exponential backoff and DLQ');
+  }
+
+  private async moveToDLQ(job: Job): Promise<void> {
+    await this.dlq.add(job.name, job.data, {
+      removeOnComplete: false,
+      removeOnFail: false,
+    });
+    this.logger.warn(
+      `Job ${job.id} (${job.name}) moved to DLQ after exhausting all retries`,
+    );
   }
 
   async onModuleDestroy() {
     try {
       await this.worker?.close();
       await this.queue?.close();
+      await this.dlq?.close();
       await this.connection?.quit();
     } catch (e) {
       this.logger.error('Error shutting down queue components', e);
@@ -81,7 +103,8 @@ export class QueueService implements OnModuleInit, OnModuleDestroy {
       delay: options.delay,
       attempts: options.attempts || 3,
       priority: options.priority,
-      removeOnComplete: { age: 604800 }, // 7 days
+      backoff: { type: 'exponential', delay: 5000 },
+      removeOnComplete: { age: 604800 },
       removeOnFail: { age: 604800 },
     });
     this.logger.debug(`Added job ${job.id} (${jobType})`);
@@ -114,7 +137,7 @@ export class QueueService implements OnModuleInit, OnModuleDestroy {
   }
 
   async getQueueStats() {
-    return await this.queue.getJobCounts(
+    const main = await this.queue.getJobCounts(
       'waiting',
       'active',
       'completed',
@@ -122,6 +145,21 @@ export class QueueService implements OnModuleInit, OnModuleDestroy {
       'delayed',
       'paused',
     );
+    const dlqCounts = await this.dlq.getJobCounts('waiting', 'failed');
+    return { ...main, dlq: dlqCounts.waiting + dlqCounts.failed };
+  }
+
+  async getDLQJobs(start = 0, end = 20) {
+    return this.dlq.getJobs(['waiting', 'failed'], start, end);
+  }
+
+  async retryDLQJob(jobId: string): Promise<boolean> {
+    const job = await this.dlq.getJob(jobId);
+    if (!job) return false;
+    await this.addJob(job.name as JobType, job.data);
+    await job.remove();
+    this.logger.log(`DLQ job ${jobId} re-queued as ${job.name}`);
+    return true;
   }
 
   // Convenience methods

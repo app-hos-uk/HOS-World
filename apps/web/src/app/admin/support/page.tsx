@@ -283,7 +283,7 @@ export default function AdminSupportPage() {
   });
 
   const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleString('en-GB', {
+    return new Date(dateString).toLocaleString('en-US', {
       day: '2-digit',
       month: 'short',
       year: 'numeric',

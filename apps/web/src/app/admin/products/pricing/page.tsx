@@ -405,7 +405,6 @@ export default function PriceManagementPage() {
                           onChange={(e) => setPricingData({ ...pricingData, currency: e.target.value })}
                           className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
                         >
-                          <option value="GBP">GBP</option>
                           <option value="USD">USD</option>
                           <option value="EUR">EUR</option>
                         </select>

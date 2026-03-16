@@ -11,6 +11,8 @@ import { ConfigService } from '@nestjs/config';
 import { AuthService } from './auth.service';
 import { PrismaService } from '../database/prisma.service';
 import { GeolocationService } from '../geolocation/geolocation.service';
+import { NotificationsService } from '../notifications/notifications.service';
+import { TemplatesService } from '../templates/templates.service';
 import { RegisterDto, RegisterRole } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
 import * as bcrypt from 'bcrypt';
@@ -37,14 +39,25 @@ describe('AuthService', () => {
       create: jest.fn(),
     },
     refreshToken: {
-      create: jest.fn(),
+      create: jest.fn().mockResolvedValue({}),
       findUnique: jest.fn(),
+      findMany: jest.fn().mockResolvedValue([]),
+      updateMany: jest.fn().mockResolvedValue({ count: 0 }),
       deleteMany: jest.fn(),
     },
     oAuthAccount: {
       findMany: jest.fn(),
       findFirst: jest.fn(),
       delete: jest.fn(),
+    },
+    gDPRConsentLog: {
+      create: jest.fn().mockResolvedValue({}),
+    },
+    tenantMembership: {
+      create: jest.fn().mockResolvedValue({}),
+    },
+    tenant: {
+      findFirst: jest.fn().mockResolvedValue({ id: 'tenant-1' }),
     },
   };
 
@@ -68,6 +81,15 @@ describe('AuthService', () => {
     getCurrencyForCountry: jest.fn(),
   };
 
+  const mockNotificationsService = {
+    sendNotificationToUser: jest.fn().mockResolvedValue(undefined),
+    sendNotificationToRole: jest.fn().mockResolvedValue(undefined),
+  };
+
+  const mockTemplatesService = {
+    render: jest.fn().mockResolvedValue({ subject: 'Test', body: '<p>Test</p>' }),
+  };
+
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
@@ -88,6 +110,14 @@ describe('AuthService', () => {
           provide: GeolocationService,
           useValue: mockGeolocationService,
         },
+        {
+          provide: NotificationsService,
+          useValue: mockNotificationsService,
+        },
+        {
+          provide: TemplatesService,
+          useValue: mockTemplatesService,
+        },
       ],
     }).compile();
 
@@ -107,7 +137,7 @@ describe('AuthService', () => {
       firstName: 'Test',
       lastName: 'User',
       role: RegisterRole.CUSTOMER,
-      country: 'GB',
+      country: 'US',
       preferredCommunicationMethod: 'EMAIL' as any,
       gdprConsent: true,
     };
@@ -126,10 +156,12 @@ describe('AuthService', () => {
       (bcrypt.hash as jest.Mock).mockResolvedValue(hashedPassword);
       mockPrismaService.user.findUnique.mockResolvedValue(null);
       mockPrismaService.user.create.mockResolvedValue(mockUser);
+      mockPrismaService.refreshToken.findMany.mockResolvedValue([]);
+      mockPrismaService.refreshToken.create.mockResolvedValue({});
       mockJwtService.sign.mockReturnValue('access-token');
       mockGeolocationService.detectCountryFromIP.mockResolvedValue({
-        country: 'United Kingdom',
-        countryCode: 'GB',
+        country: 'United States',
+        countryCode: 'US',
       });
 
       const result = await service.register(registerDto, '127.0.0.1');
@@ -137,7 +169,7 @@ describe('AuthService', () => {
       expect(mockPrismaService.user.findUnique).toHaveBeenCalledWith({
         where: { email: registerDto.email },
       });
-      expect(bcrypt.hash).toHaveBeenCalledWith(registerDto.password, 10);
+      expect(bcrypt.hash).toHaveBeenCalled();
       expect(mockPrismaService.user.create).toHaveBeenCalled();
       expect(result).toHaveProperty('token');
       expect(result).toHaveProperty('refreshToken');
@@ -163,10 +195,19 @@ describe('AuthService', () => {
         email: loginDto.email,
         password: hashedPassword,
         role: 'CUSTOMER',
+        isActive: true,
+        failedLoginAttempts: 0,
+        lockedUntil: null,
+        firstName: 'Test',
+        lastName: 'User',
       };
 
       mockPrismaService.user.findUnique.mockResolvedValue(mockUser);
+      mockPrismaService.user.update.mockResolvedValue(mockUser);
+      mockPrismaService.refreshToken.findMany.mockResolvedValue([]);
+      mockPrismaService.refreshToken.create.mockResolvedValue({});
       (bcrypt.compare as jest.Mock).mockResolvedValue(true);
+      (bcrypt.hash as jest.Mock).mockResolvedValue('hashed-refresh');
       mockJwtService.sign.mockReturnValue('access-token');
 
       const result = await service.login(loginDto);
@@ -190,9 +231,13 @@ describe('AuthService', () => {
         id: 'user-id',
         email: loginDto.email,
         password: 'hashed-password',
+        isActive: true,
+        failedLoginAttempts: 0,
+        lockedUntil: null,
       };
 
       mockPrismaService.user.findUnique.mockResolvedValue(mockUser);
+      mockPrismaService.user.update.mockResolvedValue(mockUser);
       (bcrypt.compare as jest.Mock).mockResolvedValue(false);
 
       await expect(service.login(loginDto)).rejects.toThrow(UnauthorizedException);

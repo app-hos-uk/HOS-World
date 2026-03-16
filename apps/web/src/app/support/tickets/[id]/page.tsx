@@ -170,7 +170,7 @@ export default function TicketDetailPage() {
                   <div>
                     <span className="text-gray-500 block">Created</span>
                     <span className="font-medium text-gray-900">
-                      {new Date(ticket.createdAt).toLocaleDateString('en-GB', {
+                      {new Date(ticket.createdAt).toLocaleDateString('en-US', {
                         day: 'numeric',
                         month: 'short',
                         year: 'numeric',
@@ -218,7 +218,7 @@ export default function TicketDetailPage() {
                               </div>
                             </div>
                             <span className="text-xs text-gray-500">
-                              {new Date(msg.createdAt).toLocaleString('en-GB', {
+                              {new Date(msg.createdAt).toLocaleString('en-US', {
                                 day: 'numeric',
                                 month: 'short',
                                 year: 'numeric',

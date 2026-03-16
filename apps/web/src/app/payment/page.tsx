@@ -20,32 +20,7 @@ function PaymentContent() {
   const toast = useToast();
   const router = useRouter();
 
-  const [klarnaReturn, setKlarnaReturn] = useState<{ status: string; klarnaOrderId?: string } | null>(null);
-
   useEffect(() => {
-    const klarnaOrderId = searchParams.get('klarna_order_id');
-    const paymentStatus = searchParams.get('payment_status');
-
-    if (klarnaOrderId || paymentStatus) {
-      const status = paymentStatus || 'pending';
-      setKlarnaReturn({ status, klarnaOrderId: klarnaOrderId || undefined });
-
-      if (status === 'completed' || status === 'success') {
-        toast.success('Klarna payment completed successfully!');
-        const redirectOrderId = orderId || searchParams.get('order_id');
-        if (redirectOrderId) {
-          const timer = setTimeout(() => router.push(`/orders/${redirectOrderId}`), 3000);
-          return () => clearTimeout(timer);
-        }
-      } else if (status === 'cancelled' || status === 'failed') {
-        toast.error(`Klarna payment ${status}. Please try again.`);
-      } else {
-        toast.info?.('Klarna payment is being processed. You will be notified once confirmed.') ??
-          toast.success('Klarna payment is being processed.');
-      }
-      setLoading(false);
-      return;
-    }
 
     if (orderId) {
       fetchOrder();
@@ -86,106 +61,6 @@ function PaymentContent() {
               <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600 mx-auto mb-4"></div>
               <p className="text-sm sm:text-base text-gray-600">Loading order details...</p>
             </div>
-          </div>
-        </main>
-        <Footer />
-      </div>
-    );
-  }
-
-  if (klarnaReturn) {
-    const isSuccess = klarnaReturn.status === 'completed' || klarnaReturn.status === 'success';
-    const isFailed = klarnaReturn.status === 'cancelled' || klarnaReturn.status === 'failed';
-    const isPending = !isSuccess && !isFailed;
-    const redirectOrderId = orderId || searchParams.get('order_id');
-
-    return (
-      <div className="min-h-screen bg-white">
-        <Header />
-        <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 lg:py-12">
-          <div className="max-w-2xl mx-auto text-center">
-            {isSuccess ? (
-              <>
-                <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <svg className="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                  </svg>
-                </div>
-                <h1 className="text-2xl sm:text-3xl font-bold mb-4 text-green-700">Payment Successful</h1>
-                <p className="text-gray-600 mb-2">Your Klarna payment has been processed successfully.</p>
-                {klarnaReturn.klarnaOrderId && (
-                  <p className="text-sm text-gray-500 mb-6">Klarna Reference: {klarnaReturn.klarnaOrderId}</p>
-                )}
-                <p className="text-sm text-gray-500 mb-6">Redirecting to your order details...</p>
-                {redirectOrderId && (
-                  <Link
-                    href={`/orders/${redirectOrderId}`}
-                    className="px-6 py-3 bg-purple-700 text-white rounded-lg hover:bg-purple-600 transition-colors inline-block"
-                  >
-                    View Order
-                  </Link>
-                )}
-              </>
-            ) : isPending ? (
-              <>
-                <div className="w-16 h-16 bg-yellow-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <svg className="w-8 h-8 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                  </svg>
-                </div>
-                <h1 className="text-2xl sm:text-3xl font-bold mb-4 text-yellow-700">Payment Processing</h1>
-                <p className="text-gray-600 mb-2">Your Klarna payment is being processed. You will be notified once it is confirmed.</p>
-                {klarnaReturn.klarnaOrderId && (
-                  <p className="text-sm text-gray-500 mb-6">Klarna Reference: {klarnaReturn.klarnaOrderId}</p>
-                )}
-                <div className="flex gap-4 justify-center">
-                  {redirectOrderId && (
-                    <Link
-                      href={`/orders/${redirectOrderId}`}
-                      className="px-6 py-3 bg-purple-700 text-white rounded-lg hover:bg-purple-600 transition-colors inline-block"
-                    >
-                      View Order
-                    </Link>
-                  )}
-                  <Link
-                    href="/orders"
-                    className="px-6 py-3 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors"
-                  >
-                    View My Orders
-                  </Link>
-                </div>
-              </>
-            ) : (
-              <>
-                <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <svg className="w-8 h-8 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                  </svg>
-                </div>
-                <h1 className="text-2xl sm:text-3xl font-bold mb-4 text-red-700">Payment {klarnaReturn.status === 'cancelled' ? 'Cancelled' : 'Failed'}</h1>
-                <p className="text-gray-600 mb-6">
-                  {klarnaReturn.status === 'cancelled'
-                    ? 'You cancelled the Klarna payment. You can try again or choose a different payment method.'
-                    : 'The Klarna payment could not be completed. Please try again or choose a different payment method.'}
-                </p>
-                <div className="flex gap-4 justify-center">
-                  {redirectOrderId && (
-                    <Link
-                      href={`/payment?orderId=${redirectOrderId}`}
-                      className="px-6 py-3 bg-purple-700 text-white rounded-lg hover:bg-purple-600 transition-colors"
-                    >
-                      Try Again
-                    </Link>
-                  )}
-                  <Link
-                    href="/orders"
-                    className="px-6 py-3 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors"
-                  >
-                    View My Orders
-                  </Link>
-                </div>
-              </>
-            )}
           </div>
         </main>
         <Footer />
@@ -338,14 +213,13 @@ function PaymentForm({ order }: { order: any }) {
         setSelectedProvider(response.data[0]);
       } else {
         // Fallback to default providers if API doesn't return any
-        setAvailableProviders(['stripe', 'klarna']);
+        setAvailableProviders(['stripe']);
         setSelectedProvider('stripe');
         toast.error('No payment providers available. Using default options.');
       }
     } catch (err: any) {
       console.error('Error loading payment providers:', err);
-      // Fallback to default providers
-      setAvailableProviders(['stripe', 'klarna']);
+      setAvailableProviders(['stripe']);
       setSelectedProvider('stripe');
       toast.error('Failed to load payment providers. Using default options.');
     } finally {
@@ -565,25 +439,7 @@ function PaymentForm({ order }: { order: any }) {
           }
 
           // Handle different payment providers
-          if (selectedProvider === 'klarna') {
-            // Redirect to Klarna checkout
-            if (response.data.checkoutUrl) {
-              window.location.href = response.data.checkoutUrl;
-              // Return immediately after redirect to prevent execution from continuing
-              // This prevents error toasts from showing if redirect is delayed or fails
-              return;
-            } else if (response.data.clientSecret) {
-              // Some Klarna implementations use client secret
-              // In a real implementation, you'd initialize Klarna SDK here
-              toast.error('Klarna checkout URL not available. Please contact support.');
-              setProcessing(false);
-              return; // Exit early to prevent fallthrough to generic payment handler
-            } else {
-              toast.error('Klarna checkout URL not available');
-              setProcessing(false);
-              return; // Exit early to prevent fallthrough to generic payment handler
-            }
-          } else if (selectedProvider === 'stripe') {
+          if (selectedProvider === 'stripe') {
             if (response.data.clientSecret) {
               setStripeClientSecret(response.data.clientSecret);
               setStripePaymentIntentId(response.data.paymentIntentId);
@@ -698,7 +554,6 @@ function PaymentForm({ order }: { order: any }) {
   const getProviderDisplayName = (provider: string) => {
     const names: Record<string, string> = {
       stripe: 'Credit/Debit Card (Stripe)',
-      klarna: 'Klarna (Pay in Installments)',
       'gift-card': 'Gift Card',
     };
     return names[provider] || provider.charAt(0).toUpperCase() + provider.slice(1);
@@ -707,7 +562,6 @@ function PaymentForm({ order }: { order: any }) {
   const getProviderDescription = (provider: string) => {
     const descriptions: Record<string, string> = {
       stripe: 'Card payment will be processed securely through Stripe. You will be redirected to complete the payment.',
-      klarna: 'Pay in installments with Klarna. You will be redirected to Klarna\'s secure checkout.',
       'gift-card': 'Use a gift card to pay for your order.',
     };
     return descriptions[provider] || `Pay securely with ${provider}.`;

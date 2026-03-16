@@ -4,7 +4,7 @@
  */
 export interface PaymentProvider {
   /**
-   * Provider identifier (e.g., 'stripe', 'klarna', 'paypal')
+   * Provider identifier (e.g., 'stripe', 'paypal')
    */
   readonly name: string;
 

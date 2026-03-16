@@ -353,13 +353,13 @@ export default function SellerProfilePage() {
                       />
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">VAT/Tax ID</label>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Tax ID / EIN</label>
                       <input
                         type="text"
                         value={businessForm.vatNumber}
                         onChange={(e) => setBusinessForm({ ...businessForm, vatNumber: e.target.value })}
                         disabled={!editing}
-                        placeholder="GB123456789"
+                        placeholder="12-3456789"
                         className="w-full px-4 py-2 border border-gray-300 rounded-lg disabled:bg-gray-100"
                       />
                     </div>
@@ -372,7 +372,6 @@ export default function SellerProfilePage() {
                         className="w-full px-4 py-2 border border-gray-300 rounded-lg disabled:bg-gray-100"
                       >
                         <option value="">Select country</option>
-                        <option value="United Kingdom">United Kingdom</option>
                         <option value="United States">United States</option>
                         <option value="Germany">Germany</option>
                         <option value="France">France</option>
@@ -530,7 +529,7 @@ export default function SellerProfilePage() {
                         type="tel"
                         value={opsForm.opsContactPhone}
                         onChange={(e) => setOpsForm({ ...opsForm, opsContactPhone: e.target.value })}
-                        placeholder="+44 123 456 7890"
+                        placeholder="+1 555 123 4567"
                         className="w-full px-4 py-2 border border-gray-300 rounded-lg"
                       />
                     </div>
@@ -602,7 +601,6 @@ export default function SellerProfilePage() {
                         className="w-full px-4 py-2 border border-gray-300 rounded-lg"
                       >
                         <option value="">Select country</option>
-                        <option value="United Kingdom">United Kingdom</option>
                         <option value="United States">United States</option>
                         <option value="Germany">Germany</option>
                         <option value="France">France</option>

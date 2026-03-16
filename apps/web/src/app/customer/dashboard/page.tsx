@@ -249,7 +249,7 @@ export default function CustomerDashboardPage() {
     if (diffDays === 0) return 'Today';
     if (diffDays === 1) return 'Yesterday';
     if (diffDays < 7) return `${diffDays} days ago`;
-    return date.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
+    return date.toLocaleDateString('en-US', { day: 'numeric', month: 'short' });
   };
 
   if (loading) {
@@ -622,7 +622,7 @@ export default function CustomerDashboardPage() {
                               Order #{order.orderNumber || order.id.slice(0, 8)}
                             </p>
                             <p className="text-sm text-gray-500">
-                              {new Date(order.createdAt).toLocaleDateString('en-GB', {
+                              {new Date(order.createdAt).toLocaleDateString('en-US', {
                                 day: 'numeric',
                                 month: 'short',
                                 year: 'numeric',

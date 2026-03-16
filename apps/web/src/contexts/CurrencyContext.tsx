@@ -74,7 +74,6 @@ export function CurrencyProvider({ children }: { children: React.ReactNode }) {
       // Set default rates
       setRates({
         USD: 1,
-        GBP: 0.79,
         EUR: 0.92,
         AED: 3.67,
       });

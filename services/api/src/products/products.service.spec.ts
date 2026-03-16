@@ -17,10 +17,21 @@ describe('ProductsService - Phase 1 Tests', () => {
       findFirst: jest.fn(),
       update: jest.fn(),
       delete: jest.fn(),
+      count: jest.fn(),
+    },
+    user: {
+      findUnique: jest.fn(),
     },
     seller: {
       findUnique: jest.fn(),
     },
+    orderItem: {
+      count: jest.fn(),
+    },
+    cartItem: {
+      deleteMany: jest.fn(),
+    },
+    $transaction: jest.fn((callback: any) => callback(mockPrismaService)),
   };
 
   const mockCacheHook = {

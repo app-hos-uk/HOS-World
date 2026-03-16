@@ -69,7 +69,12 @@ export default function MarketingDashboardPage() {
 
   return (
     <RouteGuard allowedRoles={['MARKETING', 'ADMIN']} showAccessDenied={true}>
-      <DashboardLayout role="MARKETING" menuItems={menuItems} title="Marketing">
+      <DashboardLayout
+        role="MARKETING"
+        menuItems={menuItems}
+        title="Marketing"
+        backToHref={{ title: 'Admin Dashboard', href: '/admin/dashboard' }}
+      >
         <div className="mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
             <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold">Marketing Dashboard</h1>

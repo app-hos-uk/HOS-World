@@ -1190,7 +1190,7 @@ export default function AdminUsersPage() {
                         </div>
                         <div className="grid grid-cols-2 gap-3">
                           <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">VAT/Tax ID</label>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">Tax ID / EIN</label>
                             <input
                               type="text"
                               value={createForm.vatNumber}

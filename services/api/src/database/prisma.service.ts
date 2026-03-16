@@ -5,9 +5,25 @@ import { promisify } from 'util';
 
 const execAsync = promisify(exec);
 
+function buildDatasourceUrl(): string | undefined {
+  const baseUrl = process.env.DATABASE_URL;
+  if (!baseUrl) return undefined;
+  if (baseUrl.includes('connection_limit')) return baseUrl;
+  const separator = baseUrl.includes('?') ? '&' : '?';
+  const poolSize = process.env.DB_POOL_SIZE || '20';
+  const poolTimeout = process.env.DB_POOL_TIMEOUT || '10';
+  return `${baseUrl}${separator}connection_limit=${poolSize}&pool_timeout=${poolTimeout}`;
+}
+
 @Injectable()
 export class PrismaService extends PrismaClient implements OnModuleInit, OnModuleDestroy {
   private readonly logger = new Logger(PrismaService.name);
+
+  constructor() {
+    super({
+      datasourceUrl: buildDatasourceUrl(),
+    });
+  }
 
   async onModuleInit() {
     this.connectWithRetry()

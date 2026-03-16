@@ -19,9 +19,11 @@ interface DashboardLayoutProps {
   title: string;
   /** Link for "Back to Dashboard" in sidebar footer. Defaults to first menu item href. */
   dashboardHref?: string;
+  /** Optional link to show in sidebar footer (e.g. "Admin Dashboard" for procurement/catalog). */
+  backToHref?: { title: string; href: string };
 }
 
-export function DashboardLayout({ children, role, menuItems, title, dashboardHref }: DashboardLayoutProps) {
+export function DashboardLayout({ children, role, menuItems, title, dashboardHref, backToHref }: DashboardLayoutProps) {
   const dashboardLink = dashboardHref ?? menuItems[0]?.href;
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const pathname = usePathname();
@@ -83,9 +85,18 @@ export function DashboardLayout({ children, role, menuItems, title, dashboardHre
             </ul>
           </nav>
 
-          {/* Footer */}
-          <div className="border-t border-gray-200 p-4">
-            {dashboardLink && (
+          {/* Footer: Admin link when provided; role Dashboard only if not already first nav item (avoids 3x "Dashboard") */}
+          <div className="border-t border-gray-200 p-4 space-y-1">
+            {backToHref && (
+              <Link
+                href={backToHref.href}
+                className="flex items-center gap-2 px-3 py-2 text-sm text-gray-600 hover:bg-gray-100 rounded-lg transition-colors font-medium"
+              >
+                <span>←</span>
+                <span>{backToHref.title}</span>
+              </Link>
+            )}
+            {dashboardLink && dashboardLink !== menuItems[0]?.href && (
               <Link
                 href={dashboardLink}
                 className="flex items-center gap-2 px-3 py-2 text-sm text-purple-600 hover:bg-purple-50 rounded-lg transition-colors font-medium"
@@ -111,14 +122,22 @@ export function DashboardLayout({ children, role, menuItems, title, dashboardHre
         {/* Top Bar */}
         <div className="sticky top-0 z-30 bg-white border-b border-gray-200">
           <div className="flex items-center justify-between h-16 px-4 sm:px-6 lg:px-8">
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-3">
               <button
                 onClick={() => setSidebarOpen(true)}
                 className="lg:hidden text-gray-500 hover:text-gray-700"
               >
                 ☰
               </button>
-              {dashboardLink && (
+              {backToHref && (
+                <Link
+                  href={backToHref.href}
+                  className="text-sm font-medium text-gray-600 hover:text-gray-800 hidden sm:inline"
+                >
+                  ← {backToHref.title}
+                </Link>
+              )}
+              {dashboardLink && dashboardLink !== menuItems[0]?.href && (
                 <Link
                   href={dashboardLink}
                   className="text-sm font-medium text-purple-600 hover:text-purple-700 hidden sm:inline"

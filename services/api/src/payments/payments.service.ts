@@ -12,6 +12,7 @@ import { CurrencyService } from '../currency/currency.service';
 import { PaymentProviderService } from './payment-provider.service';
 import { StripeConnectService } from './stripe-connect/stripe-connect.service';
 import { VendorLedgerService } from '../vendor-ledger/vendor-ledger.service';
+import { NotificationsService } from '../notifications/notifications.service';
 
 @Injectable()
 export class PaymentsService {
@@ -25,6 +26,7 @@ export class PaymentsService {
     private paymentProviderService: PaymentProviderService,
     @Optional() private stripeConnectService?: StripeConnectService,
     @Optional() private vendorLedgerService?: VendorLedgerService,
+    @Optional() private notificationsService?: NotificationsService,
   ) {
     this.logger.log('PaymentsService initialized with payment provider framework');
   }
@@ -196,7 +198,7 @@ export class PaymentsService {
     });
 
     // Determine provider from payment method or default to stripe
-    const providerName = payment?.paymentMethod === 'klarna' ? 'klarna' : 'stripe';
+    const providerName = 'stripe';
     const provider = this.paymentProviderService.getProvider(providerName);
 
     try {
@@ -317,6 +319,15 @@ export class PaymentsService {
     }
 
     this.logger.log(`Payment confirmed for order ${order.id}`);
+
+    // Send order confirmation email
+    if (this.notificationsService) {
+      try {
+        await this.notificationsService.sendOrderConfirmation(order.id);
+      } catch (err) {
+        this.logger.warn(`Failed to send order confirmation for ${order.id}: ${err?.message}`);
+      }
+    }
   }
 
   async handleWebhook(

@@ -226,7 +226,12 @@ function ProcurementSubmissionsContent() {
 
   return (
     <RouteGuard allowedRoles={['PROCUREMENT', 'CATALOG', 'ADMIN']} showAccessDenied={true}>
-      <DashboardLayout role={layoutRole} menuItems={menuItems} title={layoutTitle}>
+      <DashboardLayout
+        role={layoutRole}
+        menuItems={menuItems}
+        title={layoutTitle}
+        backToHref={{ title: 'Admin Dashboard', href: '/admin/dashboard' }}
+      >
         <div className="mb-6">
           <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold">Review Submissions</h1>
           <p className="text-gray-600 mt-2">Review and approve product submissions from sellers</p>

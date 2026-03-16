@@ -3,6 +3,7 @@ import { NotFoundException, BadRequestException } from '@nestjs/common';
 import { RefundsService } from './refunds.service';
 import { PrismaService } from '../database/prisma.service';
 import { TransactionsService } from './transactions.service';
+import { PaymentProviderService } from '../payments/payment-provider.service';
 
 describe('RefundsService', () => {
   let service: RefundsService;
@@ -22,6 +23,10 @@ describe('RefundsService', () => {
     getTransactions: jest.fn(),
   };
 
+  const mockPaymentProviderService = {
+    refundPayment: jest.fn().mockResolvedValue({ success: true }),
+  };
+
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
@@ -33,6 +38,10 @@ describe('RefundsService', () => {
         {
           provide: TransactionsService,
           useValue: mockTransactionsService,
+        },
+        {
+          provide: PaymentProviderService,
+          useValue: mockPaymentProviderService,
         },
       ],
     }).compile();

@@ -5,8 +5,11 @@ interface ConsentData {
   marketing?: boolean;
   analytics?: boolean;
   essential?: boolean;
+  doNotSell?: boolean;
   [key: string]: boolean | undefined;
 }
+
+export const CURRENT_PRIVACY_POLICY_VERSION = '2026-02-19-v1';
 
 @Injectable()
 export class GDPRService {
@@ -15,7 +18,7 @@ export class GDPRService {
   constructor(private prisma: PrismaService) {}
 
   /**
-   * Grant or revoke GDPR consent
+   * Grant or revoke privacy consent (US Privacy / CCPA)
    */
   async updateConsent(
     userId: string,
@@ -82,11 +85,98 @@ export class GDPRService {
       throw new NotFoundException('User not found');
     }
 
+    const consent = (user.dataProcessingConsent as ConsentData) || {};
+
     return {
       gdprConsent: user.gdprConsent,
       gdprConsentDate: user.gdprConsentDate,
-      dataProcessingConsent: user.dataProcessingConsent || {},
+      dataProcessingConsent: consent,
+      doNotSell: consent.doNotSell || false,
+      privacyPolicyVersion: CURRENT_PRIVACY_POLICY_VERSION,
     };
+  }
+
+  /**
+   * CCPA "Do Not Sell or Share My Personal Information" opt-out
+   */
+  async setDoNotSell(
+    userId: string,
+    optOut: boolean,
+    ipAddress?: string,
+    userAgent?: string,
+  ): Promise<void> {
+    const user = await this.prisma.user.findUnique({ where: { id: userId } });
+    if (!user) throw new NotFoundException('User not found');
+
+    const current = (user.dataProcessingConsent as ConsentData) || {};
+    const updated = { ...current, doNotSell: optOut };
+
+    await this.prisma.user.update({
+      where: { id: userId },
+      data: { dataProcessingConsent: updated },
+    });
+
+    await this.prisma.gDPRConsentLog.create({
+      data: {
+        userId,
+        consentType: 'DO_NOT_SELL',
+        granted: optOut,
+        grantedAt: new Date(),
+        ipAddress,
+        userAgent,
+      },
+    });
+
+    this.logger.log(`User ${userId} set doNotSell=${optOut}`);
+  }
+
+  /**
+   * CCPA public opt-out by email (no auth required — required for CCPA compliance)
+   */
+  async setDoNotSellByEmail(
+    email: string,
+    optOut: boolean,
+    ipAddress?: string,
+    userAgent?: string,
+  ): Promise<{ updated: boolean }> {
+    const normalizedEmail = email?.trim()?.toLowerCase();
+    if (!normalizedEmail) {
+      throw new NotFoundException('Email is required');
+    }
+
+    const user = await this.prisma.user.findFirst({
+      where: { email: { equals: normalizedEmail, mode: 'insensitive' } },
+    });
+
+    if (!user) {
+      // Return success without revealing whether email exists (privacy best practice)
+      this.logger.log(`Do-not-sell request for unknown email (optOut=${optOut})`);
+      return { updated: false };
+    }
+
+    await this.setDoNotSell(user.id, optOut, ipAddress, userAgent);
+    return { updated: true };
+  }
+
+  /**
+   * Get a summary of all consent events for admin auditing
+   */
+  async getConsentAuditLog(page = 1, limit = 50): Promise<{ logs: any[]; total: number }> {
+    const skip = (page - 1) * limit;
+
+    const [logs, total] = await Promise.all([
+      this.prisma.gDPRConsentLog.findMany({
+        skip,
+        take: limit,
+        orderBy: { grantedAt: 'desc' },
+        include: {
+          user: { select: { id: true, email: true, firstName: true, lastName: true } },
+        },
+      }),
+      this.prisma.gDPRConsentLog.count(),
+    ]);
+
+    return { logs, total };
   }
 
   /**
@@ -102,9 +192,9 @@ export class GDPRService {
   }
 
   /**
-   * Export user data (GDPR Article 15)
+   * Export user data (CCPA right to know / data portability)
    */
-  async exportUserData(userId: string): Promise<any> {
+  async exportUserData(userId: string, ipAddress?: string, userAgent?: string): Promise<any> {
     const user = await this.prisma.user.findUnique({
       where: { id: userId },
       include: {
@@ -145,7 +235,18 @@ export class GDPRService {
       throw new NotFoundException('User not found');
     }
 
-    // Remove sensitive data
+    await this.prisma.gDPRConsentLog.create({
+      data: {
+        userId,
+        consentType: 'DATA_EXPORT_REQUEST',
+        granted: true,
+        grantedAt: new Date(),
+        ipAddress,
+        userAgent,
+      },
+    });
+    this.logger.log(`Data export requested by user ${userId}`);
+
     const exportData = {
       profile: {
         id: user.id,
@@ -185,9 +286,9 @@ export class GDPRService {
   }
 
   /**
-   * Delete/anonymize user data (GDPR Article 17 - Right to be forgotten)
+   * Delete/anonymize user data (CCPA right to deletion)
    */
-  async deleteUserData(userId: string): Promise<void> {
+  async deleteUserData(userId: string, ipAddress?: string, userAgent?: string): Promise<void> {
     const user = await this.prisma.user.findUnique({
       where: { id: userId },
     });
@@ -195,6 +296,18 @@ export class GDPRService {
     if (!user) {
       throw new NotFoundException('User not found');
     }
+
+    // Log the deletion request BEFORE anonymizing (audit trail survives the deletion)
+    await this.prisma.gDPRConsentLog.create({
+      data: {
+        userId,
+        consentType: 'ACCOUNT_DELETION_REQUEST',
+        granted: true,
+        grantedAt: new Date(),
+        ipAddress,
+        userAgent,
+      },
+    });
 
     // Anonymize user data instead of hard delete (legal requirement for orders)
     await this.prisma.user.update({
@@ -205,24 +318,21 @@ export class GDPRService {
         lastName: 'User',
         phone: null,
         avatar: null,
-        password: '', // Invalidate password
+        password: '',
         whatsappNumber: null,
         ipAddress: null,
         gdprConsent: false,
         dataProcessingConsent: null,
-        // Keep country and currency for analytics (anonymized)
-        // Keep orders for legal/compliance reasons
       },
     });
 
-    // Delete non-essential data
+    // Delete non-essential data (but KEEP consent logs for audit compliance)
     await this.prisma.collection.deleteMany({ where: { userId } });
     await this.prisma.sharedItem.deleteMany({ where: { userId } });
     await this.prisma.aIChat.deleteMany({ where: { userId } });
     await this.prisma.userBadge.deleteMany({ where: { userId } });
     await this.prisma.userQuest.deleteMany({ where: { userId } });
     await this.prisma.wishlistItem.deleteMany({ where: { userId } });
-    await this.prisma.gDPRConsentLog.deleteMany({ where: { userId } });
 
     this.logger.log(`User data anonymized for user ${userId}`);
   }

@@ -200,7 +200,7 @@ export default function SupportTicketsPage() {
                           {CATEGORY_LABELS[ticket.category] || ticket.category}
                         </td>
                         <td className="px-6 py-4 text-sm text-gray-500">
-                          {new Date(ticket.createdAt).toLocaleDateString('en-GB', {
+                          {new Date(ticket.createdAt).toLocaleDateString('en-US', {
                             day: 'numeric',
                             month: 'short',
                             year: 'numeric',
@@ -232,7 +232,7 @@ export default function SupportTicketsPage() {
                       <span>{CATEGORY_LABELS[ticket.category] || ticket.category}</span>
                       <span>&middot;</span>
                       <span>
-                        {new Date(ticket.createdAt).toLocaleDateString('en-GB', {
+                        {new Date(ticket.createdAt).toLocaleDateString('en-US', {
                           day: 'numeric',
                           month: 'short',
                         })}

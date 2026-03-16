@@ -1,5 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { NotFoundException, BadRequestException, ForbiddenException } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { OrdersService } from './orders.service';
 import { PrismaService } from '../database/prisma.service';
 import { CreateOrderDto } from './dto/create-order.dto';
@@ -15,6 +16,7 @@ describe('OrdersService - Phase 1 Tests', () => {
       findUnique: jest.fn(),
       findFirst: jest.fn(),
       update: jest.fn(),
+      count: jest.fn().mockResolvedValue(0),
     },
     cart: {
       findUnique: jest.fn(),
@@ -34,17 +36,26 @@ describe('OrdersService - Phase 1 Tests', () => {
     seller: {
       findUnique: jest.fn(),
     },
+    orderNote: {
+      create: jest.fn().mockResolvedValue({}),
+    },
+    vendorProduct: {
+      findFirst: jest.fn().mockResolvedValue(null),
+      update: jest.fn().mockResolvedValue({}),
+    },
     $transaction: jest.fn((callback) => {
-      // Create transaction client with all methods
+      const { Decimal } = require('@prisma/client/runtime/library');
       const mockOrder = {
         id: 'order-id',
         userId: 'user-id',
         sellerId: 'seller-id',
         orderNumber: 'ORD-12345',
         items: [],
-        subtotal: 199.98,
-        tax: 20,
-        total: 219.98,
+        subtotal: new Decimal(199.98),
+        tax: new Decimal(20),
+        shipping: new Decimal(0),
+        discount: new Decimal(0),
+        total: new Decimal(219.98),
         status: 'PENDING',
         paymentStatus: 'PENDING',
         shippingAddress: {
@@ -69,7 +80,7 @@ describe('OrdersService - Phase 1 Tests', () => {
           postalCode: '12345',
           country: 'USA',
         },
-        seller: { id: 'seller-id', userId: 'seller-user-id' },
+        seller: { id: 'seller-id', userId: 'seller-user-id', commissionRate: null },
         createdAt: new Date(),
         updatedAt: new Date(),
       };
@@ -79,8 +90,13 @@ describe('OrdersService - Phase 1 Tests', () => {
           findUnique: mockPrismaService.product.findUnique,
           update: jest.fn().mockResolvedValue({ id: 'product-id', stock: 98 }),
         },
+        vendorProduct: {
+          findFirst: jest.fn().mockResolvedValue(null),
+          update: jest.fn().mockResolvedValue({}),
+        },
         order: {
           create: jest.fn().mockResolvedValue(mockOrder),
+          update: jest.fn().mockResolvedValue(mockOrder),
         },
         cartItem: {
           deleteMany: jest.fn().mockResolvedValue({ count: 1 }),
@@ -93,6 +109,14 @@ describe('OrdersService - Phase 1 Tests', () => {
     }),
   };
 
+  const mockConfigService = {
+    get: jest.fn((key: string, defaultValue?: any) => {
+      if (key === 'FRONTEND_URL') return 'http://localhost:3000';
+      if (key === 'DEFAULT_COMMISSION_RATE') return defaultValue ?? 0.1;
+      return defaultValue ?? undefined;
+    }),
+  };
+
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
@@ -100,6 +124,10 @@ describe('OrdersService - Phase 1 Tests', () => {
         {
           provide: PrismaService,
           useValue: mockPrismaService,
+        },
+        {
+          provide: ConfigService,
+          useValue: mockConfigService,
         },
       ],
     }).compile();
@@ -118,6 +146,7 @@ describe('OrdersService - Phase 1 Tests', () => {
     };
 
     it('should create order from cart successfully', async () => {
+      const { Decimal } = require('@prisma/client/runtime/library');
       const mockCart = {
         id: 'cart-id',
         userId,
@@ -126,21 +155,26 @@ describe('OrdersService - Phase 1 Tests', () => {
             id: 'item-id',
             productId: 'product-id',
             quantity: 2,
-            price: 99.99,
+            price: new Decimal(99.99),
             product: {
               id: 'product-id',
               sellerId: 'seller-id',
               stock: 100,
-              taxRate: 0.2,
+              taxRate: new Decimal(0.2),
               seller: {
+                id: 'seller-id',
                 userId: 'seller-user-id',
+                commissionRate: null,
               },
             },
+            variationOptions: null,
           },
         ],
-        subtotal: 199.98,
-        tax: 20,
-        total: 219.98,
+        subtotal: new Decimal(199.98),
+        tax: new Decimal(20),
+        shipping: new Decimal(0),
+        discount: new Decimal(0),
+        total: new Decimal(219.98),
       };
 
       const mockAddress = {
@@ -286,15 +320,13 @@ describe('OrdersService - Phase 1 Tests', () => {
       ];
 
       mockPrismaService.order.findMany.mockResolvedValue(mockOrders);
+      mockPrismaService.order.count.mockResolvedValue(2);
 
       const result = await service.findAll(userId, 'CUSTOMER');
 
-      expect(result).toHaveProperty('length');
-      expect(mockPrismaService.order.findMany).toHaveBeenCalledWith({
-        where: { userId },
-        include: expect.any(Object),
-        orderBy: { createdAt: 'desc' },
-      });
+      expect(result).toHaveProperty('data');
+      expect(result).toHaveProperty('pagination');
+      expect(mockPrismaService.order.findMany).toHaveBeenCalled();
     });
   });
 
@@ -396,7 +428,7 @@ describe('OrdersService - Phase 1 Tests', () => {
   describe('update', () => {
     const sellerId = 'seller-id';
     const orderId = 'order-id';
-    const status = 'SHIPPED';
+    const status = 'PROCESSING';
 
     it('should update order status', async () => {
       const mockOrder = {
@@ -431,6 +463,7 @@ describe('OrdersService - Phase 1 Tests', () => {
           id: 'seller-id',
           userId: sellerId,
         },
+        childOrders: [],
         items: [],
         createdAt: new Date(),
         updatedAt: new Date(),

@@ -90,6 +90,7 @@ function ProfilePageContent() {
   const [gdprConsentHistory, setGdprConsentHistory] = useState<any[]>([]);
   const [exportingData, setExportingData] = useState(false);
   const [deletingAccount, setDeletingAccount] = useState(false);
+  const [doNotSellUpdating, setDoNotSellUpdating] = useState(false);
   const [newsletterStatus, setNewsletterStatus] = useState<{ email: string; subscribed: boolean; status: string } | null>(null);
   const [newsletterLoading, setNewsletterLoading] = useState(false);
   const [newsletterUnsubscribing, setNewsletterUnsubscribing] = useState(false);
@@ -217,6 +218,24 @@ function ProfilePageContent() {
       await fetchProfileData();
     } catch (err: any) {
       toast.error(err.message || 'Failed to update consent');
+    }
+  };
+
+  const handleDoNotSell = async (optOut: boolean) => {
+    const userEmail = profile?.email;
+    if (!userEmail) {
+      toast.error('Unable to update preference. Please use the Do Not Sell page.');
+      return;
+    }
+    try {
+      setDoNotSellUpdating(true);
+      await apiClient.setDoNotSell(optOut, userEmail);
+      toast.success(optOut ? 'You have opted out of the sale or sharing of your personal information.' : 'Opt-out preference removed.');
+      await fetchProfileData();
+    } catch (err: any) {
+      toast.error(err.message || 'Failed to update Do Not Sell preference');
+    } finally {
+      setDoNotSellUpdating(false);
     }
   };
 
@@ -754,7 +773,7 @@ function ProfilePageContent() {
                             value={addressForm.phone}
                             onChange={(e) => setAddressForm({ ...addressForm, phone: e.target.value })}
                             className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
-                            placeholder="+44 7700 900000"
+                            placeholder="+1 555 123 4567"
                           />
                         </div>
                       </div>
@@ -810,7 +829,6 @@ function ProfilePageContent() {
                             required
                           >
                             <option value="">Select country</option>
-                            <option value="United Kingdom">United Kingdom</option>
                             <option value="United States">United States</option>
                             <option value="Germany">Germany</option>
                             <option value="France">France</option>
@@ -1028,7 +1046,6 @@ function ProfilePageContent() {
                           className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-white disabled:bg-gray-100"
                         >
                           <option value="">Select country</option>
-                          <option value="United Kingdom">United Kingdom</option>
                           <option value="United States">United States</option>
                           <option value="United Arab Emirates">United Arab Emirates</option>
                           <option value="Germany">Germany</option>
@@ -1056,10 +1073,10 @@ function ProfilePageContent() {
                           value={editing ? formData.whatsappNumber : (profile?.whatsappNumber || '')}
                           onChange={(e) => setFormData({ ...formData, whatsappNumber: e.target.value })}
                           disabled={!editing}
-                          placeholder="+44 7700 900000"
+                          placeholder="+1 555 123 4567"
                           className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-white disabled:bg-gray-100"
                         />
-                        <p className="text-xs text-gray-500 mt-1">Include country code (e.g., +44 for UK)</p>
+                        <p className="text-xs text-gray-500 mt-1">Include country code (e.g., +1 for US)</p>
                       </div>
                       <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1">Preferred Communication Method</label>
@@ -1083,7 +1100,6 @@ function ProfilePageContent() {
                           disabled={!editing}
                           className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-white disabled:bg-gray-100"
                         >
-                          <option value="GBP">£ GBP (British Pound)</option>
                           <option value="USD">$ USD (US Dollar)</option>
                           <option value="EUR">€ EUR (Euro)</option>
                           <option value="AED">د.إ AED (UAE Dirham)</option>
@@ -1217,28 +1233,60 @@ function ProfilePageContent() {
                     </div>
                   </div>
 
-                  {/* GDPR & Privacy */}
+                  {/* Privacy Request Center */}
                   <div>
-                    <h3 className="text-lg font-semibold mb-4">Privacy & Data Management</h3>
+                    <h3 className="text-lg font-semibold mb-4">Privacy Request Center</h3>
+                    <p className="text-sm text-gray-600 mb-4">
+                      Manage your privacy preferences and exercise your rights under applicable US privacy laws including the California Consumer Privacy Act (CCPA).
+                    </p>
                     <div className="bg-gray-50 rounded-lg p-4 sm:p-6 space-y-6">
-                      {/* GDPR Consent Status */}
+
+                      {/* Do Not Sell or Share */}
+                      <div>
+                        <h4 className="font-medium mb-2">Do Not Sell or Share My Personal Information</h4>
+                        <p className="text-sm text-gray-600 mb-3">
+                          Under CCPA, you have the right to opt out of the sale or sharing of your personal information.
+                          When enabled, we will not sell or share your personal data with third parties for cross-context
+                          behavioral advertising purposes.
+                        </p>
+                        <div className="flex items-center justify-between p-3 bg-white rounded-lg border">
+                          <div>
+                            <div className="font-medium text-sm">Opt Out of Sale / Sharing</div>
+                            <div className="text-xs text-gray-500">
+                              {gdprConsent?.doNotSell ? 'You have opted out.' : 'Currently opted in (default).'}
+                            </div>
+                          </div>
+                          <label className="relative inline-flex items-center cursor-pointer">
+                            <input
+                              type="checkbox"
+                              checked={gdprConsent?.doNotSell || false}
+                              onChange={(e) => handleDoNotSell(e.target.checked)}
+                              disabled={doNotSellUpdating}
+                              className="sr-only peer"
+                            />
+                            <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-purple-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-purple-600"></div>
+                          </label>
+                        </div>
+                      </div>
+
+                      {/* Consent Preferences */}
                       {gdprConsent && (
-                        <div>
+                        <div className="border-t pt-4">
                           <h4 className="font-medium mb-3">Consent Preferences</h4>
                           <div className="space-y-3">
                             <div className="flex items-center justify-between p-3 bg-white rounded-lg border">
                               <div>
-                                <div className="font-medium">Essential Cookies</div>
-                                <div className="text-sm text-gray-600">Required for site functionality</div>
+                                <div className="font-medium text-sm">Essential Cookies</div>
+                                <div className="text-xs text-gray-600">Required for site functionality</div>
                               </div>
-                              <span className="px-3 py-1 bg-green-100 text-green-800 rounded-full text-sm font-medium">
+                              <span className="px-3 py-1 bg-green-100 text-green-800 rounded-full text-xs font-medium">
                                 Always Active
                               </span>
                             </div>
                             <div className="flex items-center justify-between p-3 bg-white rounded-lg border">
                               <div>
-                                <div className="font-medium">Marketing Communications</div>
-                                <div className="text-sm text-gray-600">Receive promotional emails and offers</div>
+                                <div className="font-medium text-sm">Marketing Communications</div>
+                                <div className="text-xs text-gray-600">Receive promotional emails and offers</div>
                               </div>
                               <label className="relative inline-flex items-center cursor-pointer">
                                 <input
@@ -1252,8 +1300,8 @@ function ProfilePageContent() {
                             </div>
                             <div className="flex items-center justify-between p-3 bg-white rounded-lg border">
                               <div>
-                                <div className="font-medium">Analytics & Tracking</div>
-                                <div className="text-sm text-gray-600">Help us improve our services</div>
+                                <div className="font-medium text-sm">Analytics & Tracking</div>
+                                <div className="text-xs text-gray-600">Help us improve our services</div>
                               </div>
                               <label className="relative inline-flex items-center cursor-pointer">
                                 <input
@@ -1268,41 +1316,84 @@ function ProfilePageContent() {
                           </div>
                           {gdprConsent.gdprConsentDate && (
                             <p className="text-xs text-gray-500 mt-3">
-                              Consent given: {new Date(gdprConsent.gdprConsentDate).toLocaleDateString()}
+                              Consent last updated: {new Date(gdprConsent.gdprConsentDate).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}
+                            </p>
+                          )}
+                          {gdprConsent.privacyPolicyVersion && (
+                            <p className="text-xs text-gray-500 mt-1">
+                              Privacy Policy version: {gdprConsent.privacyPolicyVersion}
                             </p>
                           )}
                         </div>
                       )}
 
-                      {/* Data Export */}
+                      {/* Your Privacy Rights (DSAR) */}
                       <div className="border-t pt-4">
-                        <h4 className="font-medium mb-3">Data Export (GDPR Article 15)</h4>
-                        <p className="text-sm text-gray-600 mb-3">
-                          Download a copy of all your personal data stored in our system.
+                        <h4 className="font-medium mb-3">Your Privacy Rights</h4>
+                        <p className="text-sm text-gray-600 mb-4">
+                          Under applicable US privacy laws, you have the following rights:
                         </p>
-                        <button
-                          onClick={handleExportData}
-                          disabled={exportingData}
-                          className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium disabled:opacity-50 text-sm"
-                        >
-                          {exportingData ? 'Exporting...' : 'Export My Data'}
-                        </button>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4">
+                          <div className="p-3 bg-white rounded-lg border">
+                            <div className="font-medium text-sm mb-1">Right to Know</div>
+                            <p className="text-xs text-gray-600">Request a copy of the personal information we have collected about you.</p>
+                          </div>
+                          <div className="p-3 bg-white rounded-lg border">
+                            <div className="font-medium text-sm mb-1">Right to Delete</div>
+                            <p className="text-xs text-gray-600">Request deletion of your personal information (subject to legal exceptions).</p>
+                          </div>
+                          <div className="p-3 bg-white rounded-lg border">
+                            <div className="font-medium text-sm mb-1">Right to Correct</div>
+                            <p className="text-xs text-gray-600">Update or correct inaccurate personal information in your profile above.</p>
+                          </div>
+                          <div className="p-3 bg-white rounded-lg border">
+                            <div className="font-medium text-sm mb-1">Right to Opt-Out</div>
+                            <p className="text-xs text-gray-600">Opt out of the sale or sharing of your personal information (see above).</p>
+                          </div>
+                        </div>
+
+                        <div className="flex flex-wrap gap-3">
+                          <button
+                            onClick={handleExportData}
+                            disabled={exportingData}
+                            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium disabled:opacity-50 text-sm"
+                          >
+                            {exportingData ? 'Preparing...' : 'Download My Data'}
+                          </button>
+                          <button
+                            onClick={handleDeleteAccount}
+                            disabled={deletingAccount}
+                            className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors font-medium disabled:opacity-50 text-sm"
+                          >
+                            {deletingAccount ? 'Deleting...' : 'Delete My Account'}
+                          </button>
+                        </div>
+                        <p className="text-xs text-gray-500 mt-3">
+                          Deleting your account will anonymize personal data. Order history is retained for legal compliance. This action cannot be undone.
+                        </p>
                       </div>
 
-                      {/* Account Deletion */}
-                      <div className="border-t pt-4">
-                        <h4 className="font-medium mb-3 text-red-600">Delete Account (GDPR Article 17)</h4>
-                        <p className="text-sm text-gray-600 mb-3">
-                          Permanently delete your account. Your data will be anonymized, but order history will be retained for legal compliance. This action cannot be undone.
-                        </p>
-                        <button
-                          onClick={handleDeleteAccount}
-                          disabled={deletingAccount}
-                          className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors font-medium disabled:opacity-50 text-sm"
-                        >
-                          {deletingAccount ? 'Deleting...' : 'Delete My Account'}
-                        </button>
-                      </div>
+                      {/* Consent History */}
+                      {gdprConsentHistory.length > 0 && (
+                        <div className="border-t pt-4">
+                          <h4 className="font-medium mb-3">Consent Change History</h4>
+                          <div className="max-h-48 overflow-y-auto space-y-2">
+                            {gdprConsentHistory.slice(0, 20).map((entry: any, idx: number) => (
+                              <div key={idx} className="flex items-center justify-between p-2 bg-white rounded border text-xs">
+                                <div>
+                                  <span className="font-medium">{entry.consentType}</span>
+                                  <span className={`ml-2 px-1.5 py-0.5 rounded-full ${entry.granted ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
+                                    {entry.granted ? 'Granted' : 'Revoked'}
+                                  </span>
+                                </div>
+                                <span className="text-gray-500">
+                                  {new Date(entry.grantedAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                                </span>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
                     </div>
                   </div>
 

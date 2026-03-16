@@ -646,7 +646,6 @@ export class AdminService {
         maxUploadSize: parseInt(process.env.MAX_UPLOAD_SIZE || '10485760', 10), // 10MB default
         enableOAuth: process.env.ENABLE_OAUTH !== 'false',
         enableStripe: process.env.STRIPE_SECRET_KEY ? true : false,
-        enableKlarna: process.env.KLARNA_USERNAME ? true : false,
       };
 
       // Try to get custom settings from a metadata field or dedicated storage

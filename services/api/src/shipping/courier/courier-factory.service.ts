@@ -103,9 +103,6 @@ export class CourierFactoryService implements OnModuleInit {
         return new DHLProvider(credentials, isTestMode);
       case 'usps':
         return new USPSProvider(credentials, isTestMode);
-      case 'royal_mail':
-        this.logger.warn('Royal Mail provider is deprecated for US-only platform, skipping');
-        return null;
       default:
         this.logger.warn(`Unknown provider type: ${providerType}`);
         return null;

@@ -228,7 +228,7 @@ test.describe('Phase 1 & Phase 2 E2E Tests', () => {
             freeShippingThreshold: 50,
             estimatedDays: 5,
             conditions: {
-              country: 'GB',
+              country: 'US',
             },
             isActive: true,
           },
@@ -245,7 +245,7 @@ test.describe('Phase 1 & Phase 2 E2E Tests', () => {
             weight: 2.5,
             cartValue: 75,
             destination: {
-              country: 'GB',
+              country: 'US',
               city: 'London',
               postalCode: 'SW1A 1AA',
             },

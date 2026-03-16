@@ -183,32 +183,16 @@ export class FulfillmentService {
       },
     });
 
-    // Send notification to fulfillment center staff
     try {
-      const fcStaff = await this.prisma.user.findMany({
-        where: {
-          role: { in: ['FULFILLMENT', 'ADMIN'] },
-        },
-        select: { id: true, email: true },
-      });
-
-      if (fcStaff.length > 0) {
-        await this.prisma.notification.createMany({
-          data: fcStaff.map((staff) => ({
-            userId: staff.id,
-            type: 'ORDER_CONFIRMATION' as any,
-            subject: 'New Shipment Received',
-            content: `New shipment ${shipment.trackingNumber || shipment.id} has been created for fulfillment center ${shipment.fulfillmentCenter?.name || 'N/A'}`,
-            metadata: {
-              shipmentId: shipment.id,
-              fulfillmentCenterId: shipment.fulfillmentCenterId,
-            } as any,
-          })),
-        });
-      }
-    } catch (error) {
-      // Log error but don't fail the shipment creation
-      console.error('Failed to send notification to fulfillment center:', error);
+      await this.notificationsService.sendNotificationToRole(
+        'FULFILLMENT',
+        'SYSTEM',
+        'New Shipment Received',
+        `New shipment ${shipment.trackingNumber || shipment.id} has been created for fulfillment center ${shipment.fulfillmentCenter?.name || 'N/A'}`,
+        { shipmentId: shipment.id, fulfillmentCenterId: shipment.fulfillmentCenterId },
+      );
+    } catch {
+      // Non-blocking
     }
 
     return shipment;
@@ -347,22 +331,17 @@ export class FulfillmentService {
           select: { id: true, email: true, role: true },
         });
 
-        if (teams.length > 0) {
-          await this.prisma.notification.createMany({
-            data: teams.map((user) => ({
-              userId: user.id,
-              type: 'ORDER_CONFIRMATION' as any,
-              subject: 'Shipment Verified - Ready for Catalog',
-              content: `Shipment ${updated.trackingNumber || updated.id} has been verified and accepted at fulfillment center. Product submission is ready for catalog.`,
-              metadata: {
-                shipmentId: updated.id,
-                submissionId: shipment.submissionId,
-              } as any,
-            })),
-          });
+        for (const role of ['PROCUREMENT', 'CATALOG']) {
+          await this.notificationsService.sendNotificationToRole(
+            role,
+            'SYSTEM',
+            'Shipment Verified - Ready for Catalog',
+            `Shipment ${updated.trackingNumber || updated.id} has been verified and accepted at fulfillment center. Product submission is ready for catalog.`,
+            { shipmentId: updated.id, submissionId: shipment.submissionId },
+          );
         }
-      } catch (error) {
-        console.error('Failed to send verification notifications:', error);
+      } catch {
+        // Non-blocking
       }
     } else if (verifyDto.status === 'REJECTED') {
       await this.prisma.productSubmission.update({
@@ -382,45 +361,25 @@ export class FulfillmentService {
           });
 
           if (seller) {
-            await this.prisma.notification.create({
-              data: {
-                userId: seller.userId,
-                type: 'ORDER_CANCELLED', // Using existing type, can be extended later
-                subject: 'Shipment Rejected',
-                content: `Your shipment ${updated.trackingNumber || updated.id} has been rejected at the fulfillment center. Please review and resubmit.`,
-                metadata: {
-                  shipmentId: updated.id,
-                  submissionId: shipment.submissionId,
-                } as any,
-              },
-            });
+            await this.notificationsService.sendNotificationToUser(
+              seller.userId,
+              'SYSTEM',
+              'Shipment Rejected',
+              `Your shipment ${updated.trackingNumber || updated.id} has been rejected at the fulfillment center. Please review and resubmit.`,
+              { shipmentId: updated.id, submissionId: shipment.submissionId },
+            );
           }
         }
 
-        // Notify procurement team
-        const procurementTeam = await this.prisma.user.findMany({
-          where: {
-            role: { in: ['PROCUREMENT', 'ADMIN'] },
-          },
-          select: { id: true, email: true },
-        });
-
-        if (procurementTeam.length > 0) {
-          await this.prisma.notification.createMany({
-            data: procurementTeam.map((user) => ({
-              userId: user.id,
-              type: 'ORDER_CANCELLED' as any,
-              subject: 'Shipment Rejected - Action Required',
-              content: `Shipment ${updated.trackingNumber || updated.id} has been rejected. Review required.`,
-              metadata: {
-                shipmentId: updated.id,
-                submissionId: shipment.submissionId,
-              } as any,
-            })),
-          });
-        }
-      } catch (error) {
-        console.error('Failed to send rejection notifications:', error);
+        await this.notificationsService.sendNotificationToRole(
+          'PROCUREMENT',
+          'SYSTEM',
+          'Shipment Rejected - Action Required',
+          `Shipment ${updated.trackingNumber || updated.id} has been rejected. Review required.`,
+          { shipmentId: updated.id, submissionId: shipment.submissionId },
+        );
+      } catch {
+        // Non-blocking
       }
     }
 

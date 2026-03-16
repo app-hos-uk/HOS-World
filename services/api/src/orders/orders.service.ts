@@ -16,6 +16,7 @@ import { CartService } from '../cart/cart.service';
 import { CreateOrderDto } from './dto/create-order.dto';
 import { UpdateOrderDto } from './dto/update-order.dto';
 import { AddOrderNoteDto } from './dto/add-order-note.dto';
+import { PaymentProviderService } from '../payments/payment-provider.service';
 import type { Order, OrderStatus, PaymentStatus } from '@hos-marketplace/shared-types';
 import {
   OrderStatus as PrismaOrderStatus,
@@ -57,6 +58,7 @@ export class OrdersService {
     @Optional() private warehouseRoutingService?: WarehouseRoutingService,
     @Optional() private geocodingService?: GeocodingService,
     @Optional() private cartService?: CartService,
+    @Optional() private paymentProviderService?: PaymentProviderService,
   ) {
     this.defaultCommissionRate = this.configService.get<number>('DEFAULT_COMMISSION_RATE', 0.1);
   }
@@ -201,7 +203,7 @@ export class OrdersService {
     // Grand totals for the parent order (include cart-level shipping & discount)
     const grandSubtotal = vendorGroups.reduce((acc, g) => acc.add(g.subtotal), new Decimal(0));
     const grandTax = vendorGroups.reduce((acc, g) => acc.add(g.tax), new Decimal(0));
-    const cartShipping = new Decimal(cart.shipping || 0);
+    const cartShipping = new Decimal(createOrderDto.shippingCost ?? cart.shipping ?? 0);
     const cartDiscount = new Decimal(cart.discount || 0);
     const grandTotal = grandSubtotal.add(grandTax).add(cartShipping).sub(cartDiscount);
 
@@ -587,9 +589,20 @@ export class OrdersService {
     );
   }
 
-  async findAll(userId: string, role: string): Promise<Order[]> {
+  async findAll(
+    userId: string,
+    role: string,
+    opts?: { page?: number; limit?: number; status?: string },
+  ): Promise<{ data: Order[]; pagination: { page: number; limit: number; total: number; totalPages: number } }> {
+    const page = Math.max(1, opts?.page ?? 1);
+    const limit = Math.min(100, Math.max(1, opts?.limit ?? 20));
+    const skip = (page - 1) * limit;
+
     const where: any = {};
-    let take: number | undefined;
+
+    if (opts?.status) {
+      where.status = opts.status.toUpperCase();
+    }
 
     if (role === 'CUSTOMER') {
       where.userId = userId;
@@ -602,46 +615,62 @@ export class OrdersService {
         where.sellerId = seller.id;
         where.parentOrderId = { not: null };
       } else {
-        return [];
+        return {
+          data: [],
+          pagination: { page: 1, limit, total: 0, totalPages: 0 },
+        };
       }
-    } else {
-      // ADMIN and other roles: apply default pagination to avoid memory exhaustion
-      take = 200;
     }
 
-    const orders = await this.prisma.order.findMany({
-      where,
-      take,
-      include: {
-        items: {
-          include: {
-            product: {
-              include: {
-                images: {
-                  orderBy: { order: 'asc' },
-                  take: 1,
+    const [orders, total] = await Promise.all([
+      this.prisma.order.findMany({
+        where,
+        skip,
+        take: limit,
+        include: {
+          items: {
+            include: {
+              product: {
+                select: {
+                  id: true,
+                  sellerId: true,
+                  name: true,
+                  description: true,
+                  slug: true,
+                  price: true,
+                  currency: true,
+                  images: {
+                    orderBy: { order: 'asc' },
+                    take: 1,
+                    select: { id: true, url: true, order: true },
+                  },
                 },
               },
             },
           },
-        },
-        shippingAddress: true,
-        billingAddress: true,
-        seller: {
-          select: {
-            id: true,
-            storeName: true,
-            slug: true,
+          shippingAddress: true,
+          billingAddress: true,
+          seller: {
+            select: {
+              id: true,
+              storeName: true,
+              slug: true,
+            },
+          },
+          notes: {
+            orderBy: { createdAt: 'desc' },
           },
         },
-        notes: {
-          orderBy: { createdAt: 'desc' },
-        },
-      },
-      orderBy: { createdAt: 'desc' },
-    });
+        orderBy: { createdAt: 'desc' },
+      }),
+      this.prisma.order.count({ where }),
+    ]);
 
-    return orders.map((order) => this.mapToOrderType(order, false, role));
+    const totalPages = Math.ceil(total / limit);
+    return {
+      data: orders.map((order) => this.mapToOrderType(order, false, role)),
+      pagination: { page, limit, total, totalPages },
+    };
   }
 
   async findOne(id: string, userId: string, role: string): Promise<Order> {
@@ -1097,11 +1126,26 @@ export class OrdersService {
 
     // Issue actual Stripe refund for paid orders
     if (order.paymentStatus === 'PAID' && order.stripePaymentIntentId) {
-      try {
-        const paymentProvider = await import('../payments/payment-provider.service');
-        this.logger.log(`Initiating Stripe refund for cancelled order ${order.orderNumber}`);
-      } catch (err) {
-        this.logger.error(`Failed to auto-refund cancelled order ${order.orderNumber}: ${err}`);
+      if (this.paymentProviderService?.isProviderAvailable('stripe')) {
+        try {
+          const provider = this.paymentProviderService.getProvider('stripe');
+          const result = await provider.refundPayment({
+            paymentId: order.stripePaymentIntentId,
+            amount: Number(order.total),
+            metadata: { currency: order.currency, reason: 'order_cancelled' },
+          });
+          if (result?.success) {
+            this.logger.log(`Stripe refund succeeded for cancelled order ${order.orderNumber}`);
+          } else {
+            this.logger.warn(`Stripe refund returned non-success for order ${order.orderNumber}`);
+          }
+        } catch (err) {
+          this.logger.error(`Failed to auto-refund cancelled order ${order.orderNumber}: ${err}`);
+        }
+      } else {
+        this.logger.warn(
+          `Stripe provider unavailable — refund for order ${order.orderNumber} must be processed manually`,
+        );
       }
     }
 

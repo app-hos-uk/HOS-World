@@ -59,7 +59,12 @@ export default function ProcurementDashboardPage() {
 
   return (
     <RouteGuard allowedRoles={['PROCUREMENT', 'ADMIN']} showAccessDenied={true}>
-      <DashboardLayout role="PROCUREMENT" menuItems={menuItems} title="Procurement">
+      <DashboardLayout
+        role="PROCUREMENT"
+        menuItems={menuItems}
+        title="Procurement"
+        backToHref={{ title: 'Admin Dashboard', href: '/admin/dashboard' }}
+      >
         <div className="mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
             <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold">Procurement Dashboard</h1>

@@ -124,14 +124,21 @@ export class ActivityInterceptor implements NestInterceptor {
   private static readonly SENSITIVE_KEYS = new Set([
     'password',
     'token',
-    'refreshToken',
     'secret',
-    'apiKey',
-    'creditCard',
+    'email',
+    'phone',
+    'whatsappNumber',
     'cardNumber',
-    'cvv',
     'ssn',
+    'taxId',
+    'vatNumber',
+    'resetToken',
+    'accessToken',
+    'refreshToken',
+    'apiKey',
     'authorization',
+    'creditCard',
+    'cvv',
   ]);
 
   private sanitizeValue(value: any): any {

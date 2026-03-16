@@ -11,6 +11,8 @@ import { ConfigService } from '@nestjs/config';
 import * as bcrypt from 'bcrypt';
 import { PrismaService } from '../database/prisma.service';
 import { GeolocationService } from '../geolocation/geolocation.service';
+import { NotificationsService } from '../notifications/notifications.service';
+import { TemplatesService } from '../templates/templates.service';
 import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
 import { slugify } from '@hos-marketplace/utils';
@@ -24,7 +26,6 @@ export class AuthService {
 
   // Simple country name to country code mapping
   private readonly countryCodeMap: Record<string, string> = {
-    'United Kingdom': 'GB',
     'United States': 'US',
     USA: 'US',
     Canada: 'CA',
@@ -54,6 +55,8 @@ export class AuthService {
     private jwtService: JwtService,
     private configService: ConfigService,
     private geolocationService: GeolocationService,
+    private notificationsService: NotificationsService,
+    private templatesService: TemplatesService,
   ) {
     // Check if RefreshToken model is available on startup
     this.checkRefreshTokenAvailability();
@@ -108,7 +111,7 @@ export class AuthService {
     return 'US';
   }
 
-  async register(registerDto: RegisterDto, ipAddress?: string): Promise<AuthResponse> {
+  async register(registerDto: RegisterDto, ipAddress?: string, userAgent?: string): Promise<AuthResponse> {
     // Check if user already exists
     const existingUser = await this.prisma.user.findUnique({
       where: { email: registerDto.email },
@@ -122,6 +125,11 @@ export class AuthService {
     const sellerRoles = ['seller', 'wholesaler', 'b2c_seller'];
     if (sellerRoles.includes(registerDto.role) && !registerDto.storeName) {
       throw new BadRequestException('Store name is required for seller registration');
+    }
+    if (!registerDto.gdprConsent) {
+      throw new BadRequestException(
+        'Privacy notice acknowledgement is required to create an account',
+      );
     }
 
     // Determine user role and seller type
@@ -178,27 +186,39 @@ export class AuthService {
       },
     });
 
-    // Create GDPR consent log (best-effort)
-    // If the prod DB hasn't been migrated yet (missing gdpr_consent_logs table/columns),
-    // we should not fail registration — the account creation is higher priority.
+    // Log privacy consent events (best-effort – registration must not fail if logging fails)
     if (registerDto.gdprConsent) {
       try {
+        // Log the base privacy-notice acknowledgement
+        await this.prisma.gDPRConsentLog.create({
+          data: {
+            userId: user.id,
+            consentType: 'PRIVACY_NOTICE_ACCEPTED',
+            granted: true,
+            grantedAt: new Date(),
+            ipAddress,
+            userAgent,
+          },
+        });
+
+        // Log each granular consent preference
         const consentTypes = registerDto.dataProcessingConsent || {};
         for (const [consentType, granted] of Object.entries(consentTypes)) {
-          if (granted) {
+          if (granted !== undefined) {
             await this.prisma.gDPRConsentLog.create({
               data: {
                 userId: user.id,
                 consentType: consentType.toUpperCase(),
-                granted: true,
+                granted: !!granted,
                 grantedAt: new Date(),
                 ipAddress,
+                userAgent,
               },
             });
           }
         }
       } catch (e) {
-        // Swallow and continue – registration should succeed even if logging fails.
+        // Swallow – registration should succeed even if logging fails
       }
     }
 
@@ -287,6 +307,7 @@ export class AuthService {
     token: string,
     registerDto: RegisterDto,
     ipAddress?: string,
+    userAgent?: string,
   ): Promise<AuthResponse> {
     // Get invitation
     const invitation = await this.prisma.sellerInvitation.findUnique({
@@ -326,6 +347,11 @@ export class AuthService {
     // Validate seller registration
     if (!registerDto.storeName) {
       throw new BadRequestException('Store name is required for seller registration');
+    }
+    if (!registerDto.gdprConsent) {
+      throw new BadRequestException(
+        'Privacy notice acknowledgement is required to create an account',
+      );
     }
 
     // Determine user role based on seller type
@@ -372,20 +398,37 @@ export class AuthService {
       },
     });
 
-    // Create GDPR consent log
+    // Log privacy consent events (best-effort)
     if (registerDto.gdprConsent) {
-      const consentTypes = registerDto.dataProcessingConsent || {};
-      for (const [consentType, granted] of Object.entries(consentTypes)) {
-        if (granted) {
-          await this.prisma.gDPRConsentLog.create({
-            data: {
-              userId: user.id,
-              consentType: consentType.toUpperCase(),
-              granted: true,
-              grantedAt: new Date(),
-            },
-          });
+      try {
+        await this.prisma.gDPRConsentLog.create({
+          data: {
+            userId: user.id,
+            consentType: 'PRIVACY_NOTICE_ACCEPTED',
+            granted: true,
+            grantedAt: new Date(),
+            ipAddress,
+            userAgent,
+          },
+        });
+
+        const consentTypes = registerDto.dataProcessingConsent || {};
+        for (const [consentType, granted] of Object.entries(consentTypes)) {
+          if (granted !== undefined) {
+            await this.prisma.gDPRConsentLog.create({
+              data: {
+                userId: user.id,
+                consentType: consentType.toUpperCase(),
+                granted: !!granted,
+                grantedAt: new Date(),
+                ipAddress,
+                userAgent,
+              },
+            });
+          }
         }
+      } catch (e) {
+        // Swallow – account creation should succeed even if logging fails
       }
     }
 
@@ -872,6 +915,26 @@ export class AuthService {
         resetTokenExpiry: resetExpiry,
       } as any,
     });
+
+    const frontendUrl = this.configService.get<string>('FRONTEND_URL') || 'http://localhost:3000';
+    const resetLink = `${frontendUrl}/reset-password?token=${resetToken}`;
+    const customerName = [user.firstName, user.lastName].filter(Boolean).join(' ') || 'there';
+
+    try {
+      const rendered = await this.templatesService.render('password_reset', {
+        customerName,
+        resetLink,
+        expiresInMinutes: '1440',
+      });
+      await this.notificationsService.sendNotificationToUser(
+        user.id,
+        'SYSTEM',
+        rendered.subject,
+        rendered.body,
+      );
+    } catch (err) {
+      this.logger.warn(`Failed to queue password reset email for ${email}: ${err?.message}`);
+    }
 
     this.logger.log(`Password reset requested for ${email}`);
     return { message: 'If an account with that email exists, a reset link has been sent.' };

@@ -16,19 +16,29 @@ import { DatabaseModule } from '../database/database.module';
 import { NotificationsModule } from '../notifications/notifications.module';
 import { ProductsModule } from '../products/products.module';
 
+const isProduction = process.env.NODE_ENV === 'production';
+const migrationControllersEnabled = process.env.ENABLE_ADMIN_MIGRATIONS === 'true';
+
+const coreControllers = [
+  CreateTeamUsersController,
+  AdminUsersController,
+  AdminController,
+  AdminSellersController,
+  AdminProductsController,
+];
+
+const migrationControllers = migrationControllersEnabled
+  ? [
+      MigrationController,
+      MigrationFeaturesController,
+      MigrationTaxonomyController,
+      MigrationTaxonomyDataController,
+    ]
+  : [];
+
 @Module({
   imports: [DatabaseModule, ConfigModule, NotificationsModule, ProductsModule],
-  controllers: [
-    CreateTeamUsersController,
-    AdminUsersController,
-    AdminController,
-    MigrationController,
-    AdminSellersController,
-    AdminProductsController,
-    MigrationFeaturesController,
-    MigrationTaxonomyController,
-    MigrationTaxonomyDataController,
-  ],
+  controllers: [...coreControllers, ...migrationControllers],
   providers: [AdminService, AdminSellersService, AdminProductsService],
   exports: [AdminService, AdminSellersService, AdminProductsService],
 })

@@ -105,7 +105,7 @@ describe('Authentication Integration Tests', () => {
           firstName: 'Integration',
           lastName: 'Test',
           role: RegisterRole.CUSTOMER,
-          country: 'GB',
+          country: 'US',
           preferredCommunicationMethod: 'EMAIL' as any,
           gdprConsent: true,
         });
@@ -153,7 +153,7 @@ describe('Authentication Integration Tests', () => {
           firstName: 'Password',
           lastName: 'Test',
           role: RegisterRole.CUSTOMER,
-          country: 'GB',
+          country: 'US',
           preferredCommunicationMethod: 'EMAIL' as any,
           gdprConsent: true,
         });
@@ -206,7 +206,7 @@ describe('Authentication Integration Tests', () => {
           firstName: 'Login',
           lastName: 'Test',
           role: RegisterRole.CUSTOMER,
-          country: 'GB',
+          country: 'US',
           preferredCommunicationMethod: 'EMAIL' as any,
           gdprConsent: true,
         });

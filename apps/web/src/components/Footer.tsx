@@ -165,7 +165,12 @@ export function Footer() {
           </div>
         </div>
 
-        <div className="pt-6 sm:pt-8 border-t text-center" style={{ borderColor: theme.colors.secondary }}>
+        <div className="pt-6 sm:pt-8 border-t text-center space-y-2" style={{ borderColor: theme.colors.secondary }}>
+          <div className="flex flex-wrap justify-center gap-3 text-xs sm:text-sm" style={{ color: theme.colors.text.secondary }}>
+            <Link href="/privacy-policy" className="hover:underline">Privacy Policy</Link>
+            <span>|</span>
+            <Link href="/do-not-sell" className="hover:underline">Do Not Sell or Share My Personal Information</Link>
+          </div>
           <p className="text-xs sm:text-sm" style={{ color: theme.colors.text.secondary }}>
             © {new Date().getFullYear()} House of Spells Marketplace. All rights reserved.
           </p>

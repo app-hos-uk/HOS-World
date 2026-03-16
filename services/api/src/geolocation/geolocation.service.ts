@@ -16,7 +16,6 @@ export class GeolocationService {
 
   // Country to currency mapping
   private readonly countryCurrencyMap: Record<string, string> = {
-    GB: 'GBP',
     US: 'USD',
     CA: 'USD', // Canada uses USD for e-commerce often
     AU: 'USD', // Australia
@@ -108,7 +107,6 @@ export class GeolocationService {
    */
   getCountryName(countryCode: string): string {
     const countryNames: Record<string, string> = {
-      GB: 'United Kingdom',
       US: 'United States',
       CA: 'Canada',
       AU: 'Australia',
