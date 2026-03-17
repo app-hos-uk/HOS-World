@@ -1,7 +1,7 @@
 'use client';
 
 import { Suspense, useEffect, useState } from 'react';
-import { useSearchParams } from 'next/navigation';
+import { useSearchParams, useRouter } from 'next/navigation';
 import { RouteGuard } from '@/components/RouteGuard';
 import { Header } from '@/components/Header';
 import { Footer } from '@/components/Footer';
@@ -58,6 +58,7 @@ interface Collection {
 
 function ProfilePageContent() {
   const toast = useToast();
+  const router = useRouter();
   const searchParams = useSearchParams();
   const { currency, setCurrency } = useCurrency();
   const [profile, setProfile] = useState<any>(null);
@@ -67,6 +68,14 @@ function ProfilePageContent() {
   const [loading, setLoading] = useState(true);
   const tabParam = searchParams.get('tab');
   const actionParam = searchParams.get('action');
+  const returnUrlRaw = searchParams.get('returnUrl');
+  const returnUrl =
+    returnUrlRaw &&
+    typeof returnUrlRaw === 'string' &&
+    returnUrlRaw.startsWith('/') &&
+    !returnUrlRaw.startsWith('//')
+      ? returnUrlRaw
+      : null;
   const [activeTab, setActiveTab] = useState<'overview' | 'badges' | 'collections' | 'settings' | 'addresses'>(
     tabParam === 'addresses' ? 'addresses' : tabParam === 'settings' ? 'settings' : tabParam === 'badges' ? 'badges' : tabParam === 'collections' ? 'collections' : 'overview'
   );
@@ -332,6 +341,11 @@ function ProfilePageContent() {
         longitude: undefined,
       });
       fetchAddresses();
+
+      if (returnUrl) {
+        toast.success(editingAddress ? 'Address updated! Returning to checkout...' : 'Address added! Returning to checkout...');
+        setTimeout(() => router.push(returnUrl), 1000);
+      }
     } catch (err: any) {
       toast.error(err.message || 'Failed to save address');
     } finally {
@@ -690,6 +704,19 @@ function ProfilePageContent() {
 
             {activeTab === 'addresses' && (
               <div className="space-y-6">
+                {returnUrl && (
+                  <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 flex items-center justify-between">
+                    <p className="text-sm text-blue-800">
+                      Add or select a shipping address, then continue your checkout.
+                    </p>
+                    <button
+                      onClick={() => router.push(returnUrl)}
+                      className="ml-4 px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors whitespace-nowrap"
+                    >
+                      Return to Checkout
+                    </button>
+                  </div>
+                )}
                 <div className="flex justify-between items-center">
                   <h3 className="text-lg font-semibold">Saved Addresses</h3>
                   <button

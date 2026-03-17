@@ -9,6 +9,7 @@ import { useCart } from '@/contexts/CartContext';
 import { RoleSwitcher } from '@/components/RoleSwitcher';
 import { CurrencySelector } from '@/components/CurrencySelector';
 import { NotificationBell } from '@/components/NotificationBell';
+import { SearchBar } from '@/components/SearchBar';
 import type { UserRole } from '@hos-marketplace/shared-types';
 
 // Role-specific quick links for the header (non-customer roles)
@@ -159,8 +160,8 @@ export function Header() {
           
           {/* Desktop Navigation */}
           <nav className="hidden md:flex items-center space-x-4 lg:space-x-6" role="navigation" aria-label="Main navigation">
-            {/* Storefront: Products & Fandoms only when not on dashboard */}
-            {isCustomerRole && !isDashboardPage && (
+            {/* Storefront: Products & Fandoms always visible for customers/guests */}
+            {isCustomerRole && (
               <>
                 <Link 
                   href="/products" 
@@ -174,6 +175,7 @@ export function Header() {
                 >
                   Fandoms
                 </Link>
+                <SearchBar compact />
               </>
             )}
             {/* Wishlist, My Orders, Cart: always visible for CUSTOMER (storefront and dashboard) so nav works */}
@@ -309,9 +311,12 @@ export function Header() {
         {isMobileMenuOpen && (
           <nav className="md:hidden pb-4 border-t border-purple-200 mt-2 pt-4" role="navigation" aria-label="Mobile navigation">
             <div className="flex flex-col space-y-3" role="menu">
-              {/* Products & Fandoms only when not on dashboard */}
-              {isCustomerRole && !isDashboardPage && (
+              {/* Products & Fandoms always visible for customers/guests */}
+              {isCustomerRole && (
                 <>
+                  <div className="px-2 py-2">
+                    <SearchBar compact />
+                  </div>
                   <Link 
                     href="/products" 
                     onClick={() => setIsMobileMenuOpen(false)}

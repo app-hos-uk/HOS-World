@@ -160,12 +160,12 @@ export class MeilisearchService implements OnModuleInit, OnModuleDestroy {
       // Distinct attribute to avoid duplicates
       distinctAttribute: 'id',
 
-      // Typo tolerance settings
+      // Typo tolerance — aggressive settings for maximum fuzzy matching
       typoTolerance: {
         enabled: true,
         minWordSizeForTypos: {
-          oneTypo: 4, // Allow 1 typo for words >= 4 chars
-          twoTypos: 8, // Allow 2 typos for words >= 8 chars
+          oneTypo: 3, // Allow 1 typo for words >= 3 chars (e.g. "mug" -> "mig")
+          twoTypos: 6, // Allow 2 typos for words >= 6 chars (e.g. "potter" -> "poter")
         },
         disableOnWords: [],
         disableOnAttributes: ['id', 'sku', 'barcode'],
@@ -207,24 +207,72 @@ export class MeilisearchService implements OnModuleInit, OnModuleDestroy {
         'createdAt',
       ],
 
-      // Synonyms for better search matching
+      // Synonyms for better search matching — bidirectional groups
       synonyms: {
-        tshirt: ['t-shirt', 'tee', 'shirt'],
-        hoodie: ['hoody', 'sweatshirt'],
-        mug: ['cup'],
-        poster: ['print', 'artwork'],
-        figure: ['figurine', 'statue', 'collectible'],
-        plush: ['plushie', 'soft toy', 'stuffed toy'],
-        'harry potter': ['hp', 'potter', 'wizarding world'],
-        marvel: ['mcu', 'avengers'],
-        'star wars': ['starwars', 'jedi', 'sith'],
-        pokemon: ['pokémon', 'pikachu'],
-        'lord of the rings': ['lotr', 'tolkien', 'middle earth'],
-        'game of thrones': ['got', 'westeros'],
-        dc: ['dc comics', 'batman', 'superman'],
-        disney: ['mickey', 'pixar'],
-        anime: ['manga', 'japanese animation'],
-        wand: ['magic wand', 'wizard wand'],
+        tshirt: ['t-shirt', 'tee', 'shirt', 'top'],
+        't-shirt': ['tshirt', 'tee', 'shirt', 'top'],
+        tee: ['tshirt', 't-shirt', 'shirt'],
+        hoodie: ['hoody', 'sweatshirt', 'pullover', 'jumper'],
+        hoody: ['hoodie', 'sweatshirt', 'pullover'],
+        sweatshirt: ['hoodie', 'hoody', 'pullover'],
+        mug: ['cup', 'drinkware'],
+        cup: ['mug', 'drinkware'],
+        poster: ['print', 'artwork', 'wall art'],
+        print: ['poster', 'artwork', 'wall art'],
+        figure: ['figurine', 'statue', 'collectible', 'action figure'],
+        figurine: ['figure', 'statue', 'collectible'],
+        statue: ['figure', 'figurine', 'collectible'],
+        collectible: ['figure', 'figurine', 'statue', 'memorabilia'],
+        plush: ['plushie', 'soft toy', 'stuffed toy', 'stuffed animal', 'cuddly toy'],
+        plushie: ['plush', 'soft toy', 'stuffed toy', 'stuffed animal'],
+        'harry potter': ['hp', 'potter', 'wizarding world', 'hogwarts'],
+        hp: ['harry potter', 'potter', 'wizarding world'],
+        hogwarts: ['harry potter', 'wizarding world'],
+        potter: ['harry potter', 'hp', 'wizarding world'],
+        marvel: ['mcu', 'avengers', 'marvel comics'],
+        mcu: ['marvel', 'avengers'],
+        avengers: ['marvel', 'mcu'],
+        'star wars': ['starwars', 'jedi', 'sith', 'mandalorian', 'lightsaber'],
+        starwars: ['star wars', 'jedi', 'sith'],
+        jedi: ['star wars', 'starwars', 'lightsaber'],
+        lightsaber: ['star wars', 'jedi', 'light saber'],
+        'light saber': ['lightsaber', 'star wars'],
+        pokemon: ['pokémon', 'pikachu', 'poke'],
+        'pokémon': ['pokemon', 'pikachu'],
+        pikachu: ['pokemon', 'pokémon'],
+        'lord of the rings': ['lotr', 'tolkien', 'middle earth', 'middle-earth'],
+        lotr: ['lord of the rings', 'tolkien', 'middle earth'],
+        tolkien: ['lord of the rings', 'lotr', 'middle earth'],
+        'middle earth': ['lord of the rings', 'lotr', 'middle-earth'],
+        'game of thrones': ['got', 'westeros', 'thrones'],
+        got: ['game of thrones', 'westeros'],
+        dc: ['dc comics', 'batman', 'superman', 'justice league'],
+        'dc comics': ['dc', 'batman', 'superman'],
+        batman: ['dc', 'dc comics', 'dark knight'],
+        superman: ['dc', 'dc comics', 'man of steel'],
+        disney: ['mickey', 'pixar', 'frozen', 'disney princess'],
+        pixar: ['disney'],
+        anime: ['manga', 'japanese animation', 'otaku'],
+        manga: ['anime', 'japanese animation'],
+        wand: ['magic wand', 'wizard wand', 'spell wand'],
+        'magic wand': ['wand', 'wizard wand'],
+        necklace: ['pendant', 'chain', 'jewelry', 'jewellery'],
+        pendant: ['necklace', 'chain', 'jewelry'],
+        ring: ['band', 'jewelry', 'jewellery'],
+        jewelry: ['jewellery', 'accessories'],
+        jewellery: ['jewelry', 'accessories'],
+        bag: ['backpack', 'tote', 'satchel', 'purse'],
+        backpack: ['bag', 'rucksack'],
+        costume: ['cosplay', 'outfit', 'dress up'],
+        cosplay: ['costume', 'outfit', 'dress up'],
+        keychain: ['keyring', 'key chain', 'key ring'],
+        keyring: ['keychain', 'key chain', 'key ring'],
+        notebook: ['journal', 'diary', 'notepad'],
+        journal: ['notebook', 'diary'],
+        cap: ['hat', 'beanie'],
+        hat: ['cap', 'beanie'],
+        phone: ['mobile', 'cell', 'iphone', 'smartphone'],
+        'phone case': ['mobile case', 'cell case', 'iphone case'],
       },
 
       // Stop words to ignore
@@ -250,6 +298,12 @@ export class MeilisearchService implements OnModuleInit, OnModuleDestroy {
         'are',
         'were',
         'been',
+        'it',
+        'its',
+        'this',
+        'that',
+        'these',
+        'those',
       ],
     };
 
@@ -457,8 +511,9 @@ export class MeilisearchService implements OnModuleInit, OnModuleDestroy {
       attributesToHighlight: ['name', 'description'],
       highlightPreTag: '<mark>',
       highlightPostTag: '</mark>',
-      showMatchesPosition: false,
-      matchingStrategy: 'last', // Match as many words as possible
+      cropLength: 50,
+      showMatchesPosition: true,
+      matchingStrategy: 'last', // Return results even if not all words match
     };
 
     // Add sorting
@@ -495,26 +550,59 @@ export class MeilisearchService implements OnModuleInit, OnModuleDestroy {
   }
 
   /**
-   * Get instant search suggestions (autocomplete)
+   * Get instant search suggestions (autocomplete).
+   * Uses MeiliSearch's built-in typo tolerance so misspelled
+   * queries still yield relevant suggestions.
    */
   async getSuggestions(prefix: string, limit: number = 10): Promise<string[]> {
     if (!this.isAvailable() || !prefix || prefix.length < 2) {
-      return [];
+      return this.fallbackSuggestions(prefix, limit);
     }
 
     try {
       const result = await this.productsIndex!.search(prefix, {
-        limit,
-        attributesToRetrieve: ['name'],
+        limit: limit * 2,
+        attributesToRetrieve: ['name', 'category', 'fandom'],
         attributesToHighlight: [],
         showMatchesPosition: false,
+        matchingStrategy: 'last',
       });
 
-      // Extract unique product names
-      const suggestions = [...new Set(result.hits.map((hit: any) => hit.name))];
-      return suggestions.slice(0, limit);
+      const names = result.hits.map((hit: any) => hit.name as string);
+      const categories = result.hits
+        .map((hit: any) => hit.category as string | null)
+        .filter(Boolean) as string[];
+      const fandoms = result.hits
+        .map((hit: any) => hit.fandom as string | null)
+        .filter(Boolean) as string[];
+
+      const combined = [...new Set([...names, ...categories, ...fandoms])];
+      return combined.slice(0, limit);
     } catch (error: any) {
       this.logger.error(`Suggestions error: ${error.message}`);
+      return this.fallbackSuggestions(prefix, limit);
+    }
+  }
+
+  /**
+   * Fallback suggestions using Prisma when MeiliSearch is unavailable
+   */
+  private async fallbackSuggestions(prefix: string, limit: number): Promise<string[]> {
+    if (!prefix || prefix.length < 2) return [];
+
+    try {
+      const products = await this.prisma.product.findMany({
+        where: {
+          status: 'ACTIVE',
+          name: { contains: prefix, mode: 'insensitive' },
+        },
+        select: { name: true },
+        take: limit,
+        orderBy: { createdAt: 'desc' },
+      });
+
+      return [...new Set(products.map((p) => p.name))];
+    } catch {
       return [];
     }
   }

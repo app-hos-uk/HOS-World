@@ -47,9 +47,14 @@ interface InstantProduct {
   image: string | null;
 }
 
-export function SearchBar() {
+interface SearchBarProps {
+  compact?: boolean;
+}
+
+export function SearchBar({ compact = false }: SearchBarProps) {
   const [query, setQuery] = useState('');
   const [results, setResults] = useState<InstantProduct[]>([]);
+  const [suggestions, setSuggestions] = useState<string[]>([]);
   const [recentSearches, setRecentSearches] = useState<string[]>([]);
   const [showDropdown, setShowDropdown] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -63,11 +68,17 @@ export function SearchBar() {
   const abortControllerRef = useRef<AbortController | null>(null);
 
   const showingRecent = query.trim().length === 0 && recentSearches.length > 0;
-  const showingResults = query.trim().length >= 2 && (results.length > 0 || loading);
+  const showingResults = query.trim().length >= 2 && (results.length > 0 || loading || suggestions.length > 0);
 
+  const filteredSuggestions = suggestions.filter(s =>
+    s.toLowerCase() !== query.trim().toLowerCase() &&
+    !results.some(r => r.name.toLowerCase() === s.toLowerCase())
+  );
+
+  const displayedSuggestionsCount = Math.min(3, filteredSuggestions.length);
   const totalItems = showingRecent
     ? recentSearches.length
-    : results.length + (query.trim().length >= 2 ? 1 : 0); // +1 for "View all results"
+    : displayedSuggestionsCount + results.length + (query.trim().length >= 2 ? 1 : 0);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -94,22 +105,34 @@ export function SearchBar() {
         abortControllerRef.current = controller;
 
         try {
-          const response = await apiClient.getInstantSearch(query.trim(), 6);
+          const [searchResponse, suggestionsResponse] = await Promise.allSettled([
+            apiClient.getInstantSearch(query.trim(), 6),
+            apiClient.getSearchSuggestions(query.trim(), 5),
+          ]);
+
           if (controller.signal.aborted) return;
 
-          if (response?.data) {
-            const data = response.data as any;
+          if (searchResponse.status === 'fulfilled' && searchResponse.value?.data) {
+            const data = searchResponse.value.data as any;
             setResults(data.products || []);
             setSearchError(null);
             setShowDropdown(true);
           } else {
             setResults([]);
           }
+
+          if (suggestionsResponse.status === 'fulfilled' && suggestionsResponse.value?.data) {
+            const sugData = suggestionsResponse.value.data;
+            setSuggestions(Array.isArray(sugData) ? sugData : []);
+          } else {
+            setSuggestions([]);
+          }
         } catch (error: any) {
           if (error?.name === 'AbortError') return;
           console.error('Instant search error:', error);
           if (!controller.signal.aborted) {
             setResults([]);
+            setSuggestions([]);
             setSearchError('Search is temporarily unavailable. Please try again.');
           }
         } finally {
@@ -120,6 +143,7 @@ export function SearchBar() {
       }, 250);
     } else {
       setResults([]);
+      setSuggestions([]);
       setSearchError(null);
       setLoading(false);
     }
@@ -180,8 +204,10 @@ export function SearchBar() {
       if (showingRecent) {
         navigateToSearch(recentSearches[highlightIndex]);
       } else {
-        if (highlightIndex < results.length) {
-          navigateToProduct(results[highlightIndex].id);
+        if (highlightIndex < displayedSuggestionsCount) {
+          navigateToSearch(filteredSuggestions[highlightIndex]);
+        } else if (highlightIndex < displayedSuggestionsCount + results.length) {
+          navigateToProduct(results[highlightIndex - displayedSuggestionsCount].id);
         } else {
           navigateToSearch(query);
         }
@@ -192,14 +218,15 @@ export function SearchBar() {
     }
   };
 
-  const shouldShowDropdown = showDropdown && (showingRecent || showingResults || (searchError !== null && query.trim().length >= 2));
+  const displayedSuggestions = filteredSuggestions.slice(0, displayedSuggestionsCount);
+  const shouldShowDropdown = showDropdown && (showingRecent || showingResults || filteredSuggestions.length > 0 || (searchError !== null && query.trim().length >= 2));
 
   return (
-    <div ref={searchRef} className="w-full max-w-2xl mx-auto relative">
+    <div ref={searchRef} className={compact ? "relative w-full max-w-xs lg:max-w-sm" : "w-full max-w-2xl mx-auto relative"}>
       <form onSubmit={handleSubmit}>
         <div className="relative">
           <svg
-            className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none"
+            className={`absolute left-3 top-1/2 -translate-y-1/2 ${compact ? 'w-3.5 h-3.5' : 'w-4 h-4'} text-gray-400 pointer-events-none`}
             fill="none"
             stroke="currentColor"
             viewBox="0 0 24 24"
@@ -217,9 +244,12 @@ export function SearchBar() {
             }}
             onFocus={handleFocus}
             onKeyDown={handleKeyDown}
-            placeholder="Search products, fandoms, sellers..."
-            className="w-full px-3 sm:px-4 py-2 sm:py-3 pl-9 sm:pl-10 pr-20 sm:pr-24 text-sm sm:text-base rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-accent"
-            style={{
+            placeholder={compact ? "Search..." : "Search products, fandoms, sellers..."}
+            className={compact
+              ? "w-full pl-9 pr-3 py-1.5 text-sm rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500 bg-gray-50"
+              : "w-full px-3 sm:px-4 py-2 sm:py-3 pl-9 sm:pl-10 pr-20 sm:pr-24 text-sm sm:text-base rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-accent"
+            }
+            style={compact ? undefined : {
               backgroundColor: theme.colors.surface,
               color: theme.colors.text.primary,
               borderColor: theme.colors.secondary,
@@ -232,16 +262,18 @@ export function SearchBar() {
             aria-controls={shouldShowDropdown ? 'search-results-listbox' : undefined}
             aria-activedescendant={highlightIndex >= 0 ? `search-option-${highlightIndex}` : undefined}
           />
-          <button
-            type="submit"
-            className="absolute right-1 sm:right-2 top-1/2 transform -translate-y-1/2 px-3 sm:px-4 py-1.5 sm:py-2 text-xs sm:text-sm rounded-md font-medium transition-colors"
-            style={{
-              backgroundColor: theme.colors.accent,
-              color: '#ffffff',
-            }}
-          >
-            Search
-          </button>
+          {!compact && (
+            <button
+              type="submit"
+              className="absolute right-1 sm:right-2 top-1/2 transform -translate-y-1/2 px-3 sm:px-4 py-1.5 sm:py-2 text-xs sm:text-sm rounded-md font-medium transition-colors"
+              style={{
+                backgroundColor: theme.colors.accent,
+                color: '#ffffff',
+              }}
+            >
+              Search
+            </button>
+          )}
         </div>
       </form>
 
@@ -295,10 +327,41 @@ export function SearchBar() {
             </div>
           )}
 
+          {/* Suggestions (did you mean / related searches) */}
+          {!showingRecent && !loading && filteredSuggestions.length > 0 && (
+            <>
+              <div className="px-4 py-2 border-b border-gray-100">
+                <span className="text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  {results.length === 0 ? 'Did you mean' : 'Related searches'}
+                </span>
+              </div>
+              {displayedSuggestions.map((suggestion, index) => (
+                <button
+                  key={suggestion}
+                  type="button"
+                  id={`search-option-${index}`}
+                  onClick={() => navigateToSearch(suggestion)}
+                  className={`w-full text-left px-4 py-2.5 flex items-center gap-3 transition-colors ${
+                    highlightIndex === index ? 'bg-purple-50' : 'hover:bg-gray-50'
+                  }`}
+                  role="option"
+                  aria-selected={highlightIndex === index}
+                >
+                  <svg className="w-4 h-4 text-gray-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                  </svg>
+                  <span className="text-sm text-gray-700 truncate">{suggestion}</span>
+                </button>
+              ))}
+            </>
+          )}
+
           {/* Product results */}
           {!showingRecent && results.length > 0 && (
             <>
-              {results.map((product, index) => (
+              {results.map((product, rawIndex) => {
+                const index = displayedSuggestionsCount + rawIndex;
+                return (
                 <button
                   key={product.id}
                   type="button"
@@ -337,18 +400,19 @@ export function SearchBar() {
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                   </svg>
                 </button>
-              ))}
+                );
+              })}
 
               {/* View all results link */}
               <button
                 type="button"
-                id={`search-option-${results.length}`}
+                id={`search-option-${displayedSuggestionsCount + results.length}`}
                 onClick={() => navigateToSearch(query)}
                 className={`w-full text-left px-4 py-3 border-t border-gray-100 flex items-center justify-center gap-2 transition-colors ${
-                  highlightIndex === results.length ? 'bg-purple-50' : 'hover:bg-gray-50'
+                  highlightIndex === displayedSuggestionsCount + results.length ? 'bg-purple-50' : 'hover:bg-gray-50'
                 }`}
                 role="option"
-                aria-selected={highlightIndex === results.length}
+                aria-selected={highlightIndex === displayedSuggestionsCount + results.length}
               >
                 <span className="text-sm font-medium text-purple-600">
                   View all results for &ldquo;{query}&rdquo;
@@ -368,7 +432,7 @@ export function SearchBar() {
           )}
 
           {/* No results */}
-          {!showingRecent && !loading && !searchError && query.trim().length >= 2 && results.length === 0 && (
+          {!showingRecent && !loading && !searchError && query.trim().length >= 2 && results.length === 0 && filteredSuggestions.length === 0 && (
             <div className="p-4 text-center text-sm text-gray-500">
               No results found for &ldquo;{query}&rdquo;
             </div>

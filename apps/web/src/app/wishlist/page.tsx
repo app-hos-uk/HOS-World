@@ -46,7 +46,9 @@ export default function WishlistPage() {
       setLoading(true);
       const response = await apiClient.getWishlist();
       if (response?.data) {
-        setWishlistItems(response.data);
+        const data = response.data;
+        const items = Array.isArray(data) ? data : (data as any)?.products || [];
+        setWishlistItems(items);
       }
     } catch (err: any) {
       console.error('Error fetching wishlist:', err);

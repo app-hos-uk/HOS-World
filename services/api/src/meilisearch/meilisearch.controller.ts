@@ -194,7 +194,7 @@ export class MeilisearchController {
   @Get('suggestions')
   @ApiOperation({
     summary: 'Get search suggestions (autocomplete)',
-    description: 'Returns product name suggestions based on query prefix.',
+    description: 'Returns product name suggestions based on query prefix. Supports typo tolerance and fuzzy matching.',
   })
   @ApiQuery({ name: 'q', required: true, type: String, description: 'Search prefix (min 2 chars)' })
   @ApiQuery({
@@ -220,6 +220,30 @@ export class MeilisearchController {
     return {
       data: suggestions,
       message: 'Suggestions retrieved successfully',
+    };
+  }
+
+  @Public()
+  @Get('trending')
+  @ApiOperation({
+    summary: 'Get trending/popular search terms',
+    description: 'Returns trending search terms based on recent activity.',
+  })
+  @ApiQuery({
+    name: 'limit',
+    required: false,
+    type: Number,
+    description: 'Max results (default: 10)',
+  })
+  @SwaggerApiResponse({ status: 200, description: 'Trending searches returned' })
+  async getTrending(
+    @Query('limit', new DefaultValuePipe(10), ParseIntPipe) limit: number = 10,
+  ): Promise<ApiResponse<string[]>> {
+    const trending = await this.meilisearchService.getTrendingSearches(limit);
+
+    return {
+      data: trending,
+      message: 'Trending searches retrieved',
     };
   }
 
