@@ -48,6 +48,12 @@ const getInitialFormData = () => ({
   fandom: '',
   productType: 'SIMPLE' as 'SIMPLE' | 'VARIANT',
   variations: [] as { name: string; options: ProductVariationOptionForm[] }[],
+  metaTitle: '',
+  metaDescription: '',
+  weight: '',
+  length: '',
+  width: '',
+  height: '',
 });
 
 export default function ProductCreationPage() {
@@ -61,6 +67,7 @@ export default function ProductCreationPage() {
   const [lastCreatedProduct, setLastCreatedProduct] = useState<string | null>(null);
   const [currentVariation, setCurrentVariation] = useState<ProductVariationForm>({ name: '', options: [{ value: '' }] });
   const [uploadingVariationImage, setUploadingVariationImage] = useState<string | null>(null);
+  const [newImageUrl, setNewImageUrl] = useState('');
 
   useEffect(() => {
     fetchSellers();
@@ -87,9 +94,14 @@ export default function ProductCreationPage() {
   const handleCreateProduct = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    // Validate before setting loading state (early return won't reach finally block)
-    if (images.length === 0) {
-      toast.error('Please upload at least 1 product image');
+    const validationErrors: string[] = [];
+    if (!formData.name.trim()) validationErrors.push('Product name is required');
+    if (formData.description.trim().length < 10) validationErrors.push('Description must be at least 10 characters');
+    if (images.length === 0) validationErrors.push('At least one product image is required');
+    if (!formData.categoryId && !formData.fandom) validationErrors.push('A fandom or category must be selected');
+
+    if (validationErrors.length > 0) {
+      validationErrors.forEach((err) => toast.error(err));
       return;
     }
     
@@ -128,6 +140,12 @@ export default function ProductCreationPage() {
         attributes: formData.attributes.length > 0 ? formData.attributes : undefined,
         images: images.length > 0 ? images.map(img => ({ url: img.url, alt: img.alt, order: img.order })) : undefined,
         fandom: formData.fandom || undefined,
+        metaTitle: formData.metaTitle?.trim() || undefined,
+        metaDescription: formData.metaDescription?.trim() || undefined,
+        ...(formData.weight ? { weight: parseFloat(formData.weight) } : {}),
+        ...(formData.length ? { length: parseFloat(formData.length) } : {}),
+        ...(formData.width ? { width: parseFloat(formData.width) } : {}),
+        ...(formData.height ? { height: parseFloat(formData.height) } : {}),
         productType,
         variations: variationsPayload,
       });
@@ -153,7 +171,7 @@ export default function ProductCreationPage() {
     if (!files || files.length === 0) return;
 
     const allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
-    const maxSizeBytes = 250 * 1024; // 250KB limit
+    const maxSizeBytes = 5 * 1024 * 1024; // 5MB (matches backend limit)
     const fileArr = Array.from(files);
     const limited = fileArr.slice(0, 4);
     if (fileArr.length > 4) {
@@ -167,7 +185,7 @@ export default function ProductCreationPage() {
         return;
       }
       if (f.size > maxSizeBytes) {
-        toast.error('Max image size is 250KB');
+        toast.error('Max image size is 5MB');
         return;
       }
     }
@@ -225,6 +243,22 @@ export default function ProductCreationPage() {
 
   const updateImageAlt = (idx: number, alt: string) => {
     setImages((prev) => prev.map((img, i) => (i === idx ? { ...img, alt } : img)));
+  };
+
+  const addImageByUrl = () => {
+    const url = newImageUrl.trim();
+    if (!url) return;
+    try {
+      new URL(url);
+    } catch {
+      toast.error('Please enter a valid URL');
+      return;
+    }
+    setImages((prev) => [
+      ...prev,
+      { url, alt: '', order: prev.length },
+    ]);
+    setNewImageUrl('');
   };
 
   const addVariationOption = () => {
@@ -330,12 +364,14 @@ export default function ProductCreationPage() {
                 <label className="block text-sm font-medium text-gray-700 mb-1">Description *</label>
                 <textarea
                   required
+                  minLength={10}
                   value={formData.description}
                   onChange={(e) => setFormData((prev) => ({ ...prev, description: e.target.value }))}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
                   rows={4}
-                  placeholder="Product description"
+                  placeholder="Product description (minimum 10 characters)"
                 />
+                <p className="text-xs text-gray-400 mt-1">{formData.description.length}/10 minimum characters</p>
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Short Description</label>
@@ -383,9 +419,13 @@ export default function ProductCreationPage() {
                 <FandomSelector
                   value={formData.fandom}
                   onChange={(fandomSlug) => setFormData((prev) => ({ ...prev, fandom: fandomSlug || '' }))}
-                  label="Fandom"
+                  label="Fandom *"
                   placeholder="Select a fandom"
+                  required={!formData.categoryId}
                 />
+                {!formData.fandom && !formData.categoryId && (
+                  <p className="text-xs text-red-500 mt-1">A fandom or category is required</p>
+                )}
               </div>
               <div>
                 <label className="flex items-center space-x-2">
@@ -425,8 +465,9 @@ export default function ProductCreationPage() {
                   <CategorySelector
                     value={formData.categoryId}
                     onChange={(categoryId) => setFormData((prev) => ({ ...prev, categoryId: categoryId || '' }))}
-                    label="Fandom"
-                    placeholder="Select a fandom"
+                    label="Category *"
+                    placeholder="Select a category"
+                    required={!formData.fandom}
                   />
                   
                   <TagSelector
@@ -603,12 +644,64 @@ export default function ProductCreationPage() {
               </div>
 
               <div className="border-t border-gray-200 pt-4 mt-4">
-                <h3 className="text-sm font-semibold text-gray-700 mb-4">Images</h3>
+                <h3 className="text-sm font-semibold text-gray-700 mb-3">SEO & Search</h3>
+                <div className="space-y-3">
+                  <div>
+                    <label className="block text-xs font-medium text-gray-600 mb-1">Meta Title</label>
+                    <input
+                      type="text"
+                      value={formData.metaTitle}
+                      onChange={(e) => setFormData((prev) => ({ ...prev, metaTitle: e.target.value }))}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 text-sm"
+                      placeholder="SEO title for search engine results"
+                      maxLength={70}
+                    />
+                    <p className="text-xs text-gray-400 mt-1">{formData.metaTitle.length}/70 characters</p>
+                  </div>
+                  <div>
+                    <label className="block text-xs font-medium text-gray-600 mb-1">Meta Description</label>
+                    <textarea
+                      value={formData.metaDescription}
+                      onChange={(e) => setFormData((prev) => ({ ...prev, metaDescription: e.target.value }))}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 text-sm"
+                      placeholder="SEO description for search engine results"
+                      rows={2}
+                      maxLength={160}
+                    />
+                    <p className="text-xs text-gray-400 mt-1">{formData.metaDescription.length}/160 characters</p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="border-t border-gray-200 pt-4 mt-4">
+                <h3 className="text-sm font-semibold text-gray-700 mb-3">Shipping Dimensions</h3>
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                  <div>
+                    <label className="block text-xs font-medium text-gray-600 mb-1">Weight (kg)</label>
+                    <input type="number" step="0.001" min="0" value={formData.weight} onChange={(e) => setFormData((prev) => ({ ...prev, weight: e.target.value }))} className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm" placeholder="0.00" />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-medium text-gray-600 mb-1">Length (cm)</label>
+                    <input type="number" step="0.1" min="0" value={formData.length} onChange={(e) => setFormData((prev) => ({ ...prev, length: e.target.value }))} className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm" placeholder="0.0" />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-medium text-gray-600 mb-1">Width (cm)</label>
+                    <input type="number" step="0.1" min="0" value={formData.width} onChange={(e) => setFormData((prev) => ({ ...prev, width: e.target.value }))} className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm" placeholder="0.0" />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-medium text-gray-600 mb-1">Height (cm)</label>
+                    <input type="number" step="0.1" min="0" value={formData.height} onChange={(e) => setFormData((prev) => ({ ...prev, height: e.target.value }))} className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm" placeholder="0.0" />
+                  </div>
+                </div>
+              </div>
+
+              <div className="border-t border-gray-200 pt-4 mt-4">
+                <h3 className="text-sm font-semibold text-gray-700 mb-4">Images <span className="text-red-500">*</span></h3>
                 <div className="p-4 border border-gray-200 rounded-lg bg-gray-50">
                   <div className="flex items-center justify-between gap-3 flex-wrap">
                     <div>
                       <div className="font-medium text-gray-900">Upload product images</div>
-                      <div className="text-xs text-gray-600">JPEG/PNG/GIF/WebP, max 250KB each, up to 4 images</div>
+                      <div className="text-xs text-gray-600">JPEG/PNG/GIF/WebP, max 5MB each, up to 4 images</div>
                     </div>
                     <label className="inline-flex items-center px-4 py-2 bg-purple-600 text-white rounded hover:bg-purple-700 cursor-pointer">
                       <input
@@ -621,6 +714,33 @@ export default function ProductCreationPage() {
                       />
                       {uploadingImages ? 'Uploading…' : 'Choose Files'}
                     </label>
+                  </div>
+
+                  <div className="mt-4">
+                    <div className="text-sm font-medium text-gray-700 mb-2">Or add image by URL</div>
+                    <div className="flex gap-2">
+                      <input
+                        type="url"
+                        value={newImageUrl}
+                        onChange={(e) => setNewImageUrl(e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter') {
+                            e.preventDefault();
+                            addImageByUrl();
+                          }
+                        }}
+                        className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent bg-white text-sm"
+                        placeholder="https://example.com/product-image.jpg"
+                      />
+                      <button
+                        type="button"
+                        onClick={addImageByUrl}
+                        disabled={!newImageUrl.trim()}
+                        className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors text-sm disabled:opacity-50"
+                      >
+                        Add URL
+                      </button>
+                    </div>
                   </div>
 
                   {images.length > 0 && (
@@ -666,9 +786,51 @@ export default function ProductCreationPage() {
                 </div>
               </div>
 
+              {/* Creation Readiness Checklist */}
+              <div className="border-t border-gray-200 pt-4 mt-4">
+                <h3 className="text-sm font-semibold text-gray-700 mb-3">Creation Checklist</h3>
+                <div className="bg-gray-50 rounded-lg p-4 space-y-2">
+                  {[
+                    { label: 'Product name', ok: !!formData.name.trim(), required: true },
+                    { label: 'Description (min 10 chars)', ok: formData.description.trim().length >= 10, required: true },
+                    { label: 'At least one image', ok: images.length > 0, required: true },
+                    { label: 'Fandom or category assigned', ok: !!formData.categoryId || !!formData.fandom, required: true },
+                    { label: 'Short description', ok: !!formData.shortDescription.trim(), required: false },
+                    { label: 'SKU', ok: !!formData.sku.trim(), required: false },
+                    { label: 'SEO title', ok: !!formData.metaTitle.trim(), required: false },
+                    { label: 'SEO description', ok: !!formData.metaDescription.trim(), required: false },
+                  ].map((check) => (
+                    <div key={check.label} className="flex items-center gap-2 text-sm">
+                      <span className={check.ok ? 'text-green-600' : check.required ? 'text-red-500' : 'text-amber-500'}>
+                        {check.ok ? '✓' : check.required ? '✗' : '○'}
+                      </span>
+                      <span className={check.ok ? 'text-gray-700' : check.required ? 'text-red-700' : 'text-amber-700'}>
+                        {check.label}{check.required ? '' : ' (recommended)'}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+                {(() => {
+                  const missingCount = [
+                    !formData.name.trim(),
+                    formData.description.trim().length < 10,
+                    images.length === 0,
+                    !formData.categoryId && !formData.fandom,
+                  ].filter(Boolean).length;
+                  if (missingCount > 0) {
+                    return (
+                      <p className="text-xs text-red-600 mt-2">
+                        {missingCount} required item{missingCount > 1 ? 's' : ''} missing — fix before creating.
+                      </p>
+                    );
+                  }
+                  return null;
+                })()}
+              </div>
+
               <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
                 <p className="text-sm text-blue-800">
-                  <strong>Note:</strong> Products are created as DRAFT status. After creation, use the Price Management interface to set pricing, stock, and tax information before activating the product.
+                  <strong>Note:</strong> Products are created as DRAFT. After creation, set pricing and stock in the Price Management interface, then publish.
                 </p>
               </div>
               

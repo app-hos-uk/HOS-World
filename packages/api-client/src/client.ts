@@ -2002,6 +2002,12 @@ export class ApiClient {
     taxRate?: number;
     taxClassId?: string;
     fandom?: string;
+    metaTitle?: string;
+    metaDescription?: string;
+    weight?: number;
+    length?: number;
+    width?: number;
+    height?: number;
     images?: Array<{ url: string; alt?: string; order?: number }>;
     productType?: 'SIMPLE' | 'VARIANT' | 'BUNDLED';
     variations?: Array<{
@@ -2045,6 +2051,12 @@ export class ApiClient {
       taxRate?: number;
       taxClassId?: string;
       fandom?: string;
+      metaTitle?: string;
+      metaDescription?: string;
+      weight?: number;
+      length?: number;
+      width?: number;
+      height?: number;
       images?: Array<{ url: string; alt?: string; order?: number }>;
       productType?: 'SIMPLE' | 'VARIANT' | 'BUNDLED';
       variations?: Array<{
@@ -2057,6 +2069,15 @@ export class ApiClient {
       method: 'PUT',
       body: JSON.stringify(data),
     });
+  }
+
+  async getProductPublishReadiness(id: string): Promise<ApiResponse<{
+    productId: string;
+    canPublish: boolean;
+    allPassed: boolean;
+    checks: Array<{ key: string; label: string; passed: boolean; required: boolean }>;
+  }>> {
+    return this.request<ApiResponse<any>>(`/admin/products/${id}/publish-readiness`);
   }
 
   async getAdminProducts(params?: {

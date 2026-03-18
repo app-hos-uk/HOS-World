@@ -7,6 +7,7 @@ import { AdminLayout } from '@/components/AdminLayout';
 import { apiClient } from '@/lib/api';
 import { useToast } from '@/hooks/useToast';
 import { CategorySelector } from '@/components/taxonomy/CategorySelector';
+import { FandomSelector } from '@/components/taxonomy/FandomSelector';
 import { TagSelector } from '@/components/taxonomy/TagSelector';
 import { AttributeEditor } from '@/components/taxonomy/AttributeEditor';
 import { getPublicApiBaseUrl } from '@/lib/apiBaseUrl';
@@ -101,6 +102,7 @@ function AdminProductsContent() {
     isPlatformOwned: true,
     sellerId: '',
     categoryId: '',
+    fandom: '',
     tagIds: [] as string[],
     attributes: [] as any[],
     // Shipping dimensions
@@ -118,6 +120,7 @@ function AdminProductsContent() {
   });
   const [images, setImages] = useState<Array<{ url: string; alt?: string; order?: number; size?: number; width?: number; height?: number; format?: string; uploadedAt?: Date; isPrimary?: boolean }>>([]);
   const [uploadingImages, setUploadingImages] = useState(false);
+  const [newImageUrl, setNewImageUrl] = useState('');
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [showEditModal, setShowEditModal] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
@@ -277,11 +280,27 @@ function AdminProductsContent() {
     return filtered;
   }, [products, searchTerm, statusFilter, categoryFilter, stockFilter, sortBy, sortOrder]);
 
+  const addImageByUrl = () => {
+    const url = newImageUrl.trim();
+    if (!url) return;
+    try {
+      new URL(url);
+    } catch {
+      toast.error('Please enter a valid URL');
+      return;
+    }
+    setImages((prev) => [
+      ...prev,
+      { url, alt: '', order: prev.length, isPrimary: prev.length === 0 },
+    ]);
+    setNewImageUrl('');
+  };
+
   const uploadImages = async (files: FileList | null) => {
     if (!files || files.length === 0) return;
 
     const allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
-    const maxSizeBytes = 250 * 1024;
+    const maxSizeBytes = 5 * 1024 * 1024;
     const fileArr = Array.from(files);
     const limited = fileArr.slice(0, 4);
 
@@ -296,7 +315,7 @@ function AdminProductsContent() {
         return;
       }
       if (f.size > maxSizeBytes) {
-        toast.error('Max image size is 250KB');
+        toast.error('Max image size is 5MB');
         return;
       }
     }
@@ -424,6 +443,7 @@ function AdminProductsContent() {
       isPlatformOwned: !product.sellerId || product.isPlatformOwned || false,
       sellerId: product.sellerId || '',
       categoryId: product.categoryId || product.categoryRelation?.categoryId || '',
+      fandom: (product as any).fandom || '',
       tagIds: product.tagsRelation?.map((t: any) => t.tagId) || product.tags?.map((t: any) => t.id) || [],
       variations: (product.variations || []).map((v: any) => ({
         name: v.name,
@@ -472,6 +492,7 @@ function AdminProductsContent() {
         ...(formData.taxClassId ? { taxClassId: formData.taxClassId } : {}),
         status: publishNow ? 'ACTIVE' : 'DRAFT',
         categoryId: formData.categoryId || undefined,
+        fandom: formData.fandom || undefined,
         tagIds: formData.tagIds.length > 0 ? formData.tagIds : undefined,
         variations: formData.variations.length > 0 ? formData.variations : undefined,
         attributes: formData.attributes.length > 0 ? formData.attributes : undefined,
@@ -481,6 +502,12 @@ function AdminProductsContent() {
           order: img.order,
         })) : undefined,
         sellerId: formData.isPlatformOwned ? null : formData.sellerId || null,
+        metaTitle: formData.metaTitle || undefined,
+        metaDescription: formData.metaDescription || undefined,
+        ...(formData.weight ? { weight: parseFloat(formData.weight) } : {}),
+        ...(formData.length ? { length: parseFloat(formData.length) } : {}),
+        ...(formData.width ? { width: parseFloat(formData.width) } : {}),
+        ...(formData.height ? { height: parseFloat(formData.height) } : {}),
       });
       toast.success('Product updated successfully');
       setShowEditModal(false);
@@ -529,7 +556,18 @@ function AdminProductsContent() {
       toast.success(`Product ${labels[newStatus] || newStatus}`);
       fetchProducts();
     } catch (err: any) {
-      toast.error(err.message || 'Failed to change product status');
+      const parsed = typeof err.message === 'string' ? err.message : 'Failed to change product status';
+      if (parsed.includes('not ready to publish') || parsed.includes('errors')) {
+        try {
+          const body = JSON.parse(err.message);
+          const errorList = body.errors?.join(', ') || parsed;
+          toast.error(`Cannot publish: ${errorList}`);
+        } catch {
+          toast.error(parsed);
+        }
+      } else {
+        toast.error(parsed);
+      }
     }
   };
 
@@ -602,6 +640,7 @@ function AdminProductsContent() {
     let success = 0;
     let failed = 0;
 
+    const failedNames: string[] = [];
     for (const id of selectedProducts) {
       try {
         if (bulkAction === 'publish') {
@@ -619,12 +658,18 @@ function AdminProductsContent() {
           });
         }
         success++;
-      } catch {
+      } catch (err: any) {
         failed++;
+        const p = products.find((pr) => pr.id === id);
+        failedNames.push(p?.name || id);
       }
     }
 
-    toast.success(`${bulkAction === 'delete' ? 'Deleted' : 'Updated'} ${success} products${failed > 0 ? `, ${failed} failed` : ''}`);
+    if (failed > 0 && bulkAction === 'publish') {
+      toast.error(`${failed} product${failed > 1 ? 's' : ''} could not be published (missing required fields: images, price, category, or description). Updated ${success} successfully.`);
+    } else {
+      toast.success(`${bulkAction === 'delete' ? 'Deleted' : 'Updated'} ${success} products${failed > 0 ? `, ${failed} failed` : ''}`);
+    }
     setShowBulkModal(false);
     setSelectedProducts(new Set());
     fetchProducts();
@@ -1090,7 +1135,19 @@ function AdminProductsContent() {
 
                     {/* Taxonomy */}
                     <div className="border-t pt-4">
-                      <CategorySelector value={formData.categoryId} onChange={(categoryId) => setFormData(prev => ({ ...prev, categoryId: categoryId || '' }))} label="Fandom" />
+                      <FandomSelector
+                        value={formData.fandom}
+                        onChange={(fandomSlug) => setFormData(prev => ({ ...prev, fandom: fandomSlug || '' }))}
+                        label="Fandom *"
+                        placeholder="Select a fandom"
+                        required={!formData.categoryId}
+                      />
+                      {!formData.fandom && !formData.categoryId && (
+                        <p className="text-xs text-red-500 mt-1">A fandom or category is required</p>
+                      )}
+                      <div className="mt-4">
+                        <CategorySelector value={formData.categoryId} onChange={(categoryId) => setFormData(prev => ({ ...prev, categoryId: categoryId || '' }))} label="Category" />
+                      </div>
                       <div className="mt-4">
                         <TagSelector value={formData.tagIds} onChange={(tagIds) => setFormData(prev => ({ ...prev, tagIds }))} label="Tags" />
                       </div>
@@ -1104,10 +1161,26 @@ function AdminProductsContent() {
                     {/* Images */}
                     <div className="border-t pt-4">
                       <h3 className="text-sm font-semibold text-gray-700 mb-4">Images</h3>
-                      <label className="inline-flex items-center px-4 py-2 bg-purple-600 text-white rounded hover:bg-purple-700 cursor-pointer">
-                        <input type="file" accept="image/jpeg,image/png,image/gif,image/webp" multiple className="hidden" disabled={uploadingImages} onChange={(e) => uploadImages(e.target.files)} />
-                        {uploadingImages ? 'Uploading…' : 'Add Images'}
-                      </label>
+                      <div className="flex items-center gap-3 flex-wrap">
+                        <label className="inline-flex items-center px-4 py-2 bg-purple-600 text-white rounded hover:bg-purple-700 cursor-pointer">
+                          <input type="file" accept="image/jpeg,image/png,image/gif,image/webp" multiple className="hidden" disabled={uploadingImages} onChange={(e) => uploadImages(e.target.files)} />
+                          {uploadingImages ? 'Uploading…' : 'Upload Files'}
+                        </label>
+                        <span className="text-xs text-gray-400">or</span>
+                        <div className="flex gap-2 flex-1 min-w-[200px]">
+                          <input
+                            type="url"
+                            value={newImageUrl}
+                            onChange={(e) => setNewImageUrl(e.target.value)}
+                            onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); addImageByUrl(); } }}
+                            className="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                            placeholder="Paste image URL"
+                          />
+                          <button type="button" onClick={addImageByUrl} disabled={!newImageUrl.trim()} className="px-3 py-2 bg-purple-600 text-white rounded-lg text-sm hover:bg-purple-700 disabled:opacity-50">
+                            Add
+                          </button>
+                        </div>
+                      </div>
                       {images.length > 0 && (
                         <div className="mt-4 flex flex-wrap gap-2">
                           {images.map((img, idx) => (
@@ -1119,6 +1192,90 @@ function AdminProductsContent() {
                           ))}
                         </div>
                       )}
+                    </div>
+
+                    {/* SEO */}
+                    <div className="border-t pt-4">
+                      <h3 className="text-sm font-semibold text-gray-700 mb-3">SEO & Search</h3>
+                      <div className="space-y-3">
+                        <div>
+                          <label className="block text-xs font-medium text-gray-600 mb-1">Meta Title</label>
+                          <input type="text" value={formData.metaTitle} onChange={(e) => setFormData(prev => ({ ...prev, metaTitle: e.target.value }))} className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-purple-500" placeholder="SEO title (shown in search engine results)" maxLength={70} />
+                          <p className="text-xs text-gray-400 mt-1">{formData.metaTitle.length}/70 characters</p>
+                        </div>
+                        <div>
+                          <label className="block text-xs font-medium text-gray-600 mb-1">Meta Description</label>
+                          <textarea value={formData.metaDescription} onChange={(e) => setFormData(prev => ({ ...prev, metaDescription: e.target.value }))} className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-purple-500" placeholder="SEO description (shown in search engine results)" rows={2} maxLength={160} />
+                          <p className="text-xs text-gray-400 mt-1">{formData.metaDescription.length}/160 characters</p>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Shipping Dimensions */}
+                    <div className="border-t pt-4">
+                      <h3 className="text-sm font-semibold text-gray-700 mb-3">Shipping Dimensions</h3>
+                      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                        <div>
+                          <label className="block text-xs font-medium text-gray-600 mb-1">Weight (kg)</label>
+                          <input type="number" step="0.001" min="0" value={formData.weight} onChange={(e) => setFormData(prev => ({ ...prev, weight: e.target.value }))} className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm" placeholder="0.00" />
+                        </div>
+                        <div>
+                          <label className="block text-xs font-medium text-gray-600 mb-1">Length (cm)</label>
+                          <input type="number" step="0.1" min="0" value={formData.length} onChange={(e) => setFormData(prev => ({ ...prev, length: e.target.value }))} className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm" placeholder="0.0" />
+                        </div>
+                        <div>
+                          <label className="block text-xs font-medium text-gray-600 mb-1">Width (cm)</label>
+                          <input type="number" step="0.1" min="0" value={formData.width} onChange={(e) => setFormData(prev => ({ ...prev, width: e.target.value }))} className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm" placeholder="0.0" />
+                        </div>
+                        <div>
+                          <label className="block text-xs font-medium text-gray-600 mb-1">Height (cm)</label>
+                          <input type="number" step="0.1" min="0" value={formData.height} onChange={(e) => setFormData(prev => ({ ...prev, height: e.target.value }))} className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm" placeholder="0.0" />
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Publish Readiness Checklist */}
+                    <div className="border-t pt-4">
+                      <h3 className="text-sm font-semibold text-gray-700 mb-3">Publish Readiness</h3>
+                      <div className="bg-gray-50 rounded-lg p-4 space-y-2">
+                        {[
+                          { label: 'Product name', ok: !!formData.name.trim() },
+                          { label: 'Description (min 10 chars)', ok: formData.description.trim().length >= 10 },
+                          { label: 'Price > $0', ok: parseFloat(formData.price) > 0 },
+                          { label: 'At least one image', ok: images.length > 0 },
+                          { label: 'Fandom or category assigned', ok: !!formData.categoryId || !!formData.fandom },
+                          { label: 'SEO title', ok: !!formData.metaTitle.trim(), optional: true },
+                          { label: 'SEO description', ok: !!formData.metaDescription.trim(), optional: true },
+                          { label: 'Short description', ok: !!formData.shortDescription.trim(), optional: true },
+                          { label: 'SKU assigned', ok: !!(editingProduct?.sku), optional: true },
+                        ].map((check) => (
+                          <div key={check.label} className="flex items-center gap-2 text-sm">
+                            <span className={check.ok ? 'text-green-600' : check.optional ? 'text-amber-500' : 'text-red-500'}>
+                              {check.ok ? '✓' : check.optional ? '○' : '✗'}
+                            </span>
+                            <span className={check.ok ? 'text-gray-700' : check.optional ? 'text-amber-700' : 'text-red-700'}>
+                              {check.label}{check.optional ? ' (recommended)' : ' *'}
+                            </span>
+                          </div>
+                        ))}
+                        {(() => {
+                          const requiredMissing = [
+                            !formData.name.trim(),
+                            formData.description.trim().length < 10,
+                            !(parseFloat(formData.price) > 0),
+                            images.length === 0,
+                            !formData.categoryId && !formData.fandom,
+                          ].filter(Boolean).length;
+                          if (requiredMissing > 0 && publishNow) {
+                            return (
+                              <div className="mt-2 p-2 bg-red-50 border border-red-200 rounded text-xs text-red-700">
+                                {requiredMissing} required item{requiredMissing > 1 ? 's' : ''} missing. The product cannot be published until all required items are complete.
+                              </div>
+                            );
+                          }
+                          return null;
+                        })()}
+                      </div>
                     </div>
 
                     {/* Visibility */}

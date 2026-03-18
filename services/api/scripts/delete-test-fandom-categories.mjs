@@ -31,25 +31,10 @@ function loadDatabaseUrlFromEnvFile() {
   }
 }
 
-const NAMES = [
-  'Test Root Category - 1766074022784L0',
-  'Test Root Category - 1766073826533L0',
-  'Test Root Category - 1766074220600L0',
-  'Test Root Category - 1766074376817L0',
-  'Test Subcategory - 1766074825133L0',
-  'Test Root Category - 1766074519944L0',
-  'Test Root Category - 1766074679441L0',
-  'Test Subcategory - 1766074680442L0',
-  'Test Subcategory - 1766075119767L0',
-  'Test Subcategory - 1766074377800L0',
-  'Test Root Category - 1766074824116L0',
-  'Test Subcategory - 1766074521044L0',
-  'Test Subcategory - 1766074967277L0',
-  'Test Root Category - 1766074966161L0',
-  'Test Root Category - 1766075118772L0',
-  'Test Subcategory - 1766073828516L0',
-  'Test Subcategory - 1766074023867L0',
-  'Test Subcategory - 1766074221585L0',
+const NAME_PATTERNS = [
+  'Test Root Category - ',
+  'Test Subcategory - ',
+  'Test one',
 ];
 
 async function collectDescendantIds(prisma, rootIds) {
@@ -81,7 +66,9 @@ async function main() {
 
   try {
     const matched = await prisma.category.findMany({
-      where: { name: { in: NAMES } },
+      where: {
+        OR: NAME_PATTERNS.map((p) => ({ name: { startsWith: p } })),
+      },
       select: { id: true, name: true, slug: true, parentId: true, level: true },
     });
 
@@ -138,46 +125,47 @@ async function main() {
       return;
     }
 
-    await prisma.$transaction(async (tx) => {
-      if (deletableIds.length) {
-        await tx.cartItem.deleteMany({ where: { productId: { in: deletableIds } } });
-        await tx.productSubmission.updateMany({
-          where: { productId: { in: deletableIds } },
-          data: { productId: null },
-        });
-        await tx.discrepancy.updateMany({
-          where: { productId: { in: deletableIds } },
-          data: { productId: null },
-        });
-        await tx.product.deleteMany({ where: { id: { in: deletableIds } } });
-        console.log(`Deleted ${deletableIds.length} products.`);
-      }
-
-      if (detachIds.length) {
-        await tx.product.updateMany({
-          where: { id: { in: detachIds } },
-          data: { categoryId: null, fandom: null, category: null },
-        });
-        console.log(`Detached ${detachIds.length} products from fandom/category (kept for order history).`);
-      }
-
-      await tx.attribute.updateMany({
-        where: { categoryId: { in: categoryIds } },
-        data: { categoryId: null },
+    // Step 1: delete products (outside the category transaction to avoid timeout)
+    if (deletableIds.length) {
+      await prisma.cartItem.deleteMany({ where: { productId: { in: deletableIds } } });
+      await prisma.productSubmission.updateMany({
+        where: { productId: { in: deletableIds } },
+        data: { productId: null },
       });
-      await tx.returnPolicy.updateMany({
-        where: { categoryId: { in: categoryIds } },
-        data: { categoryId: null },
+      await prisma.discrepancy.updateMany({
+        where: { productId: { in: deletableIds } },
+        data: { productId: null },
       });
+      await prisma.product.deleteMany({ where: { id: { in: deletableIds } } });
+      console.log(`Deleted ${deletableIds.length} products.`);
+    }
 
-      const byLevel = [...categories].sort((a, b) => b.level - a.level);
-      let deleted = 0;
-      for (const c of byLevel) {
-        await tx.category.delete({ where: { id: c.id } });
-        deleted++;
-      }
-      console.log(`Deleted ${deleted} categories.`);
+    if (detachIds.length) {
+      await prisma.product.updateMany({
+        where: { id: { in: detachIds } },
+        data: { categoryId: null, fandom: null, category: null },
+      });
+      console.log(`Detached ${detachIds.length} products from fandom/category (kept for order history).`);
+    }
+
+    // Step 2: clear FK refs to categories
+    await prisma.attribute.updateMany({
+      where: { categoryId: { in: categoryIds } },
+      data: { categoryId: null },
     });
+    await prisma.returnPolicy.updateMany({
+      where: { categoryId: { in: categoryIds } },
+      data: { categoryId: null },
+    });
+
+    // Step 3: delete categories (deepest first)
+    const byLevel = [...categories].sort((a, b) => b.level - a.level);
+    let deleted = 0;
+    for (const c of byLevel) {
+      await prisma.category.delete({ where: { id: c.id } });
+      deleted++;
+    }
+    console.log(`Deleted ${deleted} categories.`);
 
     console.log('Done.');
   } finally {

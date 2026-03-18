@@ -108,6 +108,12 @@ export class AdminProductsController {
       taxRate?: number;
       taxClassId?: string;
       fandom?: string;
+      metaTitle?: string;
+      metaDescription?: string;
+      weight?: number;
+      length?: number;
+      width?: number;
+      height?: number;
       images?: Array<{ url: string; alt?: string; order?: number }>;
       productType?: 'SIMPLE' | 'VARIANT' | 'BUNDLED';
       variations?: Array<{
@@ -196,6 +202,12 @@ export class AdminProductsController {
       taxRate?: number;
       taxClassId?: string;
       fandom?: string;
+      metaTitle?: string;
+      metaDescription?: string;
+      weight?: number;
+      length?: number;
+      width?: number;
+      height?: number;
       images?: Array<{ url: string; alt?: string; order?: number }>;
       productType?: 'SIMPLE' | 'VARIANT' | 'BUNDLED';
       variations?: Array<{
@@ -272,6 +284,24 @@ export class AdminProductsController {
     return {
       data: result,
       message: 'Products retrieved successfully',
+    };
+  }
+
+  @Get(':id/publish-readiness')
+  @ApiOperation({
+    summary: 'Check product publish readiness',
+    description: 'Returns a checklist of requirements that must be met before a product can be published (set to ACTIVE).',
+  })
+  @ApiParam({ name: 'id', description: 'Product UUID', type: String })
+  @SwaggerApiResponse({ status: 200, description: 'Readiness checklist returned' })
+  @SwaggerApiResponse({ status: 404, description: 'Product not found' })
+  async getPublishReadiness(
+    @Param('id', ParseUUIDPipe) id: string,
+  ): Promise<ApiResponse<any>> {
+    const result = await this.productsService.getPublishReadiness(id);
+    return {
+      data: result,
+      message: 'Publish readiness checklist retrieved',
     };
   }
 

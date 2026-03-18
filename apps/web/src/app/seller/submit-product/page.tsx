@@ -1393,7 +1393,7 @@ function SubmitProductForm() {
                           type="url"
                           value={newImageUrl}
                           onChange={(e) => setNewImageUrl(e.target.value)}
-                          onKeyPress={(e) => {
+                          onKeyDown={(e) => {
                             if (e.key === 'Enter') {
                               e.preventDefault();
                               addImage();

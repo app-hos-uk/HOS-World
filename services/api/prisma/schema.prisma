@@ -456,6 +456,16 @@ model Product {
   influencerLinks    InfluencerProductLink[]
   vendorProducts     VendorProduct[]
 
+  // SEO
+  metaTitle       String?
+  metaDescription String?
+
+  // Shipping dimensions
+  weight Decimal? @db.Decimal(10, 3)
+  length Decimal? @db.Decimal(10, 2)
+  width  Decimal? @db.Decimal(10, 2)
+  height Decimal? @db.Decimal(10, 2)
+
   // Soft delete
   deletedAt DateTime?
 

@@ -117,10 +117,18 @@ export class ProductsBulkService implements OnModuleInit {
           tags: productData.tags ? productData.tags.split(',').map((t: string) => t.trim()) : [],
           status: (productData.status as ProductStatus) || ProductStatus.DRAFT,
           images: productData.images
-            ? productData.images.split('|').map((url: string, index: number) => ({
-                url: url.trim(),
-                order: index,
-              }))
+            ? (typeof productData.images === 'string'
+                ? productData.images.split('|').map((url: string, index: number) => ({
+                    url: url.trim(),
+                    order: index,
+                  }))
+                : Array.isArray(productData.images)
+                  ? productData.images.map((img: any, index: number) => ({
+                      url: typeof img === 'string' ? img.trim() : img.url?.trim() || '',
+                      alt: typeof img === 'object' ? img.alt : undefined,
+                      order: typeof img === 'object' && img.order != null ? img.order : index,
+                    }))
+                  : [])
             : [],
           variations: productData.variations ? JSON.parse(productData.variations) : undefined,
         });

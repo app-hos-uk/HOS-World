@@ -22,6 +22,52 @@ export class AdminProductsService {
     @Optional() private meilisearchService?: MeilisearchService,
   ) {}
 
+  private validatePublishReadiness(
+    data: {
+      name?: string;
+      description?: string;
+      price?: number;
+      images?: Array<{ url: string }>;
+      categoryId?: string;
+      fandom?: string;
+    },
+    existingProduct?: {
+      name: string;
+      description: string;
+      price: any;
+      categoryId: string | null;
+      fandom: string | null;
+      _count?: { images: number };
+    },
+  ) {
+    const errors: string[] = [];
+
+    const name = data.name ?? existingProduct?.name ?? '';
+    const description = data.description ?? existingProduct?.description ?? '';
+    const price = data.price ?? Number(existingProduct?.price ?? 0);
+    const categoryId = data.categoryId ?? existingProduct?.categoryId ?? null;
+    const fandom = data.fandom ?? existingProduct?.fandom ?? null;
+
+    const imageCount =
+      data.images !== undefined
+        ? data.images.length
+        : existingProduct?._count?.images ?? 0;
+
+    if (!name || name.trim().length === 0) errors.push('Product name is required');
+    if (!description || description.trim().length < 10) errors.push('Description must be at least 10 characters');
+    if (!price || price <= 0) errors.push('Price must be greater than $0');
+    if (imageCount === 0) errors.push('At least one product image is required');
+    if (!categoryId && !fandom) errors.push('A fandom or category must be assigned');
+
+    if (errors.length > 0) {
+      throw new BadRequestException({
+        message: 'Product is not ready to publish. Please fix the following:',
+        errors,
+        statusCode: 400,
+      });
+    }
+  }
+
   async createProduct(data: {
     name: string;
     description: string;
@@ -29,10 +75,10 @@ export class AdminProductsService {
     price: number;
     currency?: string;
     stock?: number;
-    category?: string; // Keep for backward compatibility
-    tags?: string[]; // Keep for backward compatibility
-    categoryId?: string; // New: taxonomy category ID
-    tagIds?: string[]; // New: taxonomy tag IDs
+    category?: string;
+    tags?: string[];
+    categoryId?: string;
+    tagIds?: string[];
     attributes?: Array<{
       attributeId: string;
       attributeValueId?: string;
@@ -40,7 +86,7 @@ export class AdminProductsService {
       numberValue?: number;
       booleanValue?: boolean;
       dateValue?: string;
-    }>; // New: product attributes
+    }>;
     sellerId?: string | null;
     isPlatformOwned?: boolean;
     status?: 'DRAFT' | 'ACTIVE' | 'INACTIVE' | 'OUT_OF_STOCK';
@@ -52,6 +98,12 @@ export class AdminProductsService {
     taxRate?: number;
     taxClassId?: string;
     fandom?: string;
+    metaTitle?: string;
+    metaDescription?: string;
+    weight?: number;
+    length?: number;
+    width?: number;
+    height?: number;
     images?: Array<{ url: string; alt?: string; order?: number }>;
     productType?: 'SIMPLE' | 'VARIANT' | 'BUNDLED';
     variations?: Array<{
@@ -59,6 +111,25 @@ export class AdminProductsService {
       options: Array<string | { value: string; price?: number; stock?: number; imageUrl?: string }>;
     }>;
   }) {
+    // --- Creation-time validation (always enforced, even for DRAFT) ---
+    if (!data.name || data.name.trim().length === 0) {
+      throw new BadRequestException('Product name is required');
+    }
+    if (!data.description || data.description.trim().length < 10) {
+      throw new BadRequestException('Description is required (minimum 10 characters)');
+    }
+    if (!data.images || data.images.length === 0) {
+      throw new BadRequestException('At least one product image is required');
+    }
+    if (!data.categoryId && !data.fandom) {
+      throw new BadRequestException('A fandom or category must be assigned');
+    }
+
+    // --- Publish-time validation (only when activating) ---
+    if (data.status === 'ACTIVE') {
+      this.validatePublishReadiness(data);
+    }
+
     // Validate: if sellerId is provided, seller must exist
     if (data.sellerId) {
       const seller = await this.prisma.seller.findUnique({
@@ -121,6 +192,20 @@ export class AdminProductsService {
       }
     }
 
+    // Validate image URLs
+    if (data.images && data.images.length > 0) {
+      for (const img of data.images) {
+        if (!img.url || typeof img.url !== 'string' || img.url.trim().length === 0) {
+          throw new BadRequestException('Each image must have a non-empty URL');
+        }
+        try {
+          new URL(img.url);
+        } catch {
+          throw new BadRequestException(`Invalid image URL: ${img.url}`);
+        }
+      }
+    }
+
     // Generate slug
     const baseSlug = slugify(data.name);
     let slug = baseSlug;
@@ -176,6 +261,12 @@ export class AdminProductsService {
         taxRate: data.taxRate || 0,
         taxClassId: data.taxClassId || undefined,
         fandom: data.fandom,
+        metaTitle: data.metaTitle,
+        metaDescription: data.metaDescription,
+        weight: data.weight,
+        length: data.length,
+        width: data.width,
+        height: data.height,
         images:
           data.images && data.images.length > 0
             ? {
@@ -263,10 +354,10 @@ export class AdminProductsService {
       shortDescription?: string;
       price?: number;
       stock?: number;
-      category?: string; // Keep for backward compatibility
-      tags?: string[]; // Keep for backward compatibility
-      categoryId?: string; // New: taxonomy category ID
-      tagIds?: string[]; // New: taxonomy tag IDs
+      category?: string;
+      tags?: string[];
+      categoryId?: string;
+      tagIds?: string[];
       attributes?: Array<{
         attributeId: string;
         attributeValueId?: string;
@@ -274,7 +365,7 @@ export class AdminProductsService {
         numberValue?: number;
         booleanValue?: boolean;
         dateValue?: string;
-      }>; // New: product attributes
+      }>;
       sellerId?: string | null;
       status?: 'DRAFT' | 'ACTIVE' | 'INACTIVE' | 'OUT_OF_STOCK';
       sku?: string;
@@ -285,6 +376,12 @@ export class AdminProductsService {
       taxRate?: number;
       taxClassId?: string;
       fandom?: string;
+      metaTitle?: string;
+      metaDescription?: string;
+      weight?: number;
+      length?: number;
+      width?: number;
+      height?: number;
       images?: Array<{ url: string; alt?: string; order?: number }>;
       productType?: 'SIMPLE' | 'VARIANT' | 'BUNDLED';
       variations?: Array<{
@@ -297,10 +394,15 @@ export class AdminProductsService {
   ) {
     const product = await this.prisma.product.findUnique({
       where: { id: productId },
+      include: { _count: { select: { images: true } } },
     });
 
     if (!product) {
       throw new NotFoundException('Product not found');
+    }
+
+    if (data.status === 'ACTIVE' && product.status !== 'ACTIVE') {
+      this.validatePublishReadiness(data, product as any);
     }
 
     // If updating sellerId, validate seller exists
@@ -360,6 +462,20 @@ export class AdminProductsService {
               `Attribute value not found for attribute ${attribute.name}`,
             );
           }
+        }
+      }
+    }
+
+    // Validate image URLs
+    if (data.images && data.images.length > 0) {
+      for (const img of data.images) {
+        if (!img.url || typeof img.url !== 'string' || img.url.trim().length === 0) {
+          throw new BadRequestException('Each image must have a non-empty URL');
+        }
+        try {
+          new URL(img.url);
+        } catch {
+          throw new BadRequestException(`Invalid image URL: ${img.url}`);
         }
       }
     }
@@ -598,6 +714,84 @@ export class AdminProductsService {
         total,
         totalPages: Math.ceil(total / limit),
       },
+    };
+  }
+
+  async getPublishReadiness(productId: string) {
+    const product = await this.prisma.product.findUnique({
+      where: { id: productId },
+      include: { _count: { select: { images: true } } },
+    });
+
+    if (!product) {
+      throw new NotFoundException('Product not found');
+    }
+
+    const checks = [
+      {
+        key: 'name',
+        label: 'Product name',
+        passed: !!product.name && product.name.trim().length > 0,
+        required: true,
+      },
+      {
+        key: 'description',
+        label: 'Product description (min 10 characters)',
+        passed: !!product.description && product.description.trim().length >= 10,
+        required: true,
+      },
+      {
+        key: 'price',
+        label: 'Price set (> $0)',
+        passed: Number(product.price) > 0,
+        required: true,
+      },
+      {
+        key: 'images',
+        label: 'At least one product image',
+        passed: product._count.images > 0,
+        required: true,
+      },
+      {
+        key: 'category',
+        label: 'Fandom or category assigned',
+        passed: !!product.categoryId || !!product.fandom,
+        required: true,
+      },
+      {
+        key: 'metaTitle',
+        label: 'SEO title',
+        passed: !!product.metaTitle && product.metaTitle.trim().length > 0,
+        required: false,
+      },
+      {
+        key: 'metaDescription',
+        label: 'SEO description',
+        passed: !!product.metaDescription && product.metaDescription.trim().length > 0,
+        required: false,
+      },
+      {
+        key: 'sku',
+        label: 'SKU assigned',
+        passed: !!product.sku && product.sku.trim().length > 0,
+        required: false,
+      },
+      {
+        key: 'shortDescription',
+        label: 'Short description for listings',
+        passed: !!product.shortDescription && product.shortDescription.trim().length > 0,
+        required: false,
+      },
+    ];
+
+    const requiredPassed = checks.filter((c) => c.required).every((c) => c.passed);
+    const allPassed = checks.every((c) => c.passed);
+
+    return {
+      productId,
+      canPublish: requiredPassed,
+      allPassed,
+      checks,
     };
   }
 
