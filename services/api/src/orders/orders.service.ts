@@ -650,6 +650,14 @@ export class OrdersService {
           },
           shippingAddress: true,
           billingAddress: true,
+          user: {
+            select: {
+              id: true,
+              email: true,
+              firstName: true,
+              lastName: true,
+            },
+          },
           seller: {
             select: {
               id: true,
@@ -691,6 +699,14 @@ export class OrdersService {
         },
         shippingAddress: true,
         billingAddress: true,
+        user: {
+          select: {
+            id: true,
+            email: true,
+            firstName: true,
+            lastName: true,
+          },
+        },
         seller: {
           select: {
             id: true,
@@ -1387,6 +1403,14 @@ export class OrdersService {
       createdAt: order.createdAt,
       updatedAt: order.updatedAt,
     };
+
+    if (order.user) {
+      mapped.user = {
+        email: order.user.email,
+        firstName: order.user.firstName || undefined,
+        lastName: order.user.lastName || undefined,
+      };
+    }
 
     if (includeSeller && order.seller) {
       mapped.seller = {

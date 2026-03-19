@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { RouteGuard } from '@/components/RouteGuard';
 import { DashboardLayout } from '@/components/DashboardLayout';
 import { apiClient } from '@/lib/api';
+import { getSellerMenuItems } from '@/lib/sellerMenu';
 import { useToast } from '@/hooks/useToast';
 import Link from 'next/link';
 
@@ -14,16 +15,7 @@ export default function SellerSubmissionsPage() {
   const [statusFilter, setStatusFilter] = useState<string>('');
   const toast = useToast();
 
-  const menuItems = [
-    { title: 'Dashboard', href: '/seller/dashboard', icon: '📊' },
-    { title: 'Submit Product', href: '/seller/submit-product', icon: '➕' },
-    { title: 'My Products', href: '/seller/products', icon: '📦' },
-    { title: 'Orders', href: '/seller/orders', icon: '🛒' },
-    { title: 'Submissions', href: '/seller/submissions', icon: '📝' },
-    { title: 'Profile', href: '/seller/profile', icon: '👤' },
-    { title: 'Themes', href: '/seller/themes', icon: '🎨' },
-    { title: 'Bulk Import', href: '/seller/products/bulk', icon: '📤' },
-  ];
+  const menuItems = getSellerMenuItems(false);
 
   useEffect(() => {
     fetchSubmissions();

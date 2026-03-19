@@ -416,11 +416,15 @@ export default function AdminOrdersPage() {
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap">
                             <div className="text-sm text-gray-900">
-                              {order.user?.firstName || ''} {order.user?.lastName || ''}
+                              {(order.user?.firstName || order.user?.lastName)
+                                ? `${order.user.firstName || ''} ${order.user.lastName || ''}`.trim()
+                                : order.user?.email || order.customer?.email || 'Guest'}
                             </div>
-                            <div className="text-xs text-gray-500">
-                              {order.user?.email || order.customer?.email || 'N/A'}
-                            </div>
+                            {(order.user?.firstName || order.user?.lastName) && (
+                              <div className="text-xs text-gray-500">
+                                {order.user?.email || order.customer?.email || ''}
+                              </div>
+                            )}
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
                             {order.currency || 'USD'} {Number(order.total || 0).toFixed(2)}
@@ -550,7 +554,9 @@ export default function AdminOrdersPage() {
                       <div className="space-y-2 text-sm">
                         <p>
                           <span className="text-gray-500">Name:</span>{' '}
-                          {selectedOrder.user?.firstName || ''} {selectedOrder.user?.lastName || 'N/A'}
+                          {(selectedOrder.user?.firstName || selectedOrder.user?.lastName)
+                            ? `${selectedOrder.user.firstName || ''} ${selectedOrder.user.lastName || ''}`.trim()
+                            : 'N/A'}
                         </p>
                         <p>
                           <span className="text-gray-500">Email:</span>{' '}

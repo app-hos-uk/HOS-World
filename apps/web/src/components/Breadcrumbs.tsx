@@ -80,11 +80,17 @@ export function Breadcrumbs({
     if (!pathname) return [];
     
     const segments = pathname.split('/').filter(Boolean);
+    const homeParts = homeHref.split('/').filter(Boolean);
     const crumbs: BreadcrumbItem[] = [];
     let currentPath = '';
     
     segments.forEach((segment, index) => {
       currentPath += `/${segment}`;
+
+      // Skip segments already covered by the home link to avoid duplication
+      // e.g. homeHref="/admin/dashboard" covers the "admin" segment
+      if (index < homeParts.length && segment === homeParts[index]) return;
+
       const isLast = index === segments.length - 1;
       
       // Skip UUIDs or other dynamic segments (they'll be shown as the final item)

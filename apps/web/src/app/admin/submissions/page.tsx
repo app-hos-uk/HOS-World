@@ -88,11 +88,12 @@ interface Stats {
 const STATUSES = [
   { value: 'SUBMITTED', label: 'Submitted', color: 'bg-gray-100 text-gray-800', chartColor: '#9ca3af' },
   { value: 'UNDER_REVIEW', label: 'Under Review', color: 'bg-yellow-100 text-yellow-800', chartColor: '#fbbf24' },
-  { value: 'PROCUREMENT_APPROVED', label: 'Procurement OK', color: 'bg-blue-100 text-blue-800', chartColor: '#3b82f6' },
-  { value: 'CATALOG_COMPLETED', label: 'Catalog Done', color: 'bg-indigo-100 text-indigo-800', chartColor: '#6366f1' },
-  { value: 'MARKETING_COMPLETED', label: 'Marketing Done', color: 'bg-purple-100 text-purple-800', chartColor: '#8b5cf6' },
+  { value: 'PROCUREMENT_APPROVED', label: 'Procurement Approved', color: 'bg-blue-100 text-blue-800', chartColor: '#3b82f6' },
+  { value: 'PROCUREMENT_REJECTED', label: 'Procurement Rejected', color: 'bg-red-100 text-red-800', chartColor: '#ef4444' },
+  { value: 'CATALOG_COMPLETED', label: 'Catalog Completed', color: 'bg-indigo-100 text-indigo-800', chartColor: '#6366f1' },
+  { value: 'MARKETING_COMPLETED', label: 'Marketing Completed', color: 'bg-purple-100 text-purple-800', chartColor: '#8b5cf6' },
   { value: 'CONTENT_COMPLETED', label: 'Content Completed', color: 'bg-green-100 text-green-800', chartColor: '#10b981' },
-  { value: 'FINANCE_APPROVED', label: 'Finance OK', color: 'bg-cyan-100 text-cyan-800', chartColor: '#06b6d4' },
+  { value: 'FINANCE_APPROVED', label: 'Finance Approved', color: 'bg-cyan-100 text-cyan-800', chartColor: '#06b6d4' },
   { value: 'PUBLISHED', label: 'Published', color: 'bg-green-100 text-green-800', chartColor: '#10b981' },
   { value: 'REJECTED', label: 'Rejected', color: 'bg-red-100 text-red-800', chartColor: '#ef4444' },
 ];
@@ -300,8 +301,11 @@ export default function AdminSubmissionsPage() {
     }
   };
 
+  const formatStatusLabel = (raw: string) =>
+    raw.replace(/_/g, ' ').toLowerCase().replace(/\b\w/g, c => c.toUpperCase());
+
   const getStatusBadge = (status: string) => {
-    const statusInfo = STATUSES.find(s => s.value === status) || { label: status, color: 'bg-gray-100 text-gray-800' };
+    const statusInfo = STATUSES.find(s => s.value === status) || { label: formatStatusLabel(status), color: 'bg-gray-100 text-gray-800' };
     return <span className={`px-2 py-0.5 text-xs rounded-full ${statusInfo.color}`}>{statusInfo.label}</span>;
   };
 

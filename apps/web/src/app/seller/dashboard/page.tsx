@@ -5,6 +5,7 @@ import { RouteGuard } from '@/components/RouteGuard';
 import { DashboardLayout } from '@/components/DashboardLayout';
 import { apiClient } from '@/lib/api';
 import { useCurrency } from '@/contexts/CurrencyContext';
+import { getSellerMenuItems } from '@/lib/sellerMenu';
 import Link from 'next/link';
 
 interface SellerDashboardData {
@@ -23,16 +24,7 @@ export default function SellerDashboardPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const menuItems = [
-    { title: 'Dashboard', href: '/seller/dashboard', icon: '📊' },
-    { title: 'Submit Product', href: '/seller/submit-product', icon: '➕' },
-    { title: 'My Products', href: '/seller/products', icon: '📦' },
-    { title: 'Orders', href: '/seller/orders', icon: '🛒' },
-    { title: 'Submissions', href: '/seller/submissions', icon: '📝' },
-    { title: 'Profile', href: '/seller/profile', icon: '👤' },
-    { title: 'Themes', href: '/seller/themes', icon: '🎨' },
-    { title: 'Bulk Import', href: '/seller/products/bulk', icon: '📤' },
-  ];
+  const menuItems = getSellerMenuItems(false);
 
   const fetchDashboardData = useCallback(async (showLoading = true) => {
     try {

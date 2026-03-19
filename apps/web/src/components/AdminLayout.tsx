@@ -74,7 +74,7 @@ const menuItems: MenuItem[] = [
     title: 'Finance',
     icon: '💰',
     children: [
-      { title: 'Transactions', href: '/admin/finance', icon: '💳' },
+      { title: 'Finance Dashboard', href: '/admin/finance', icon: '💳' },
       { title: 'Settlements', href: '/admin/settlements', icon: '💸' },
     ],
   },

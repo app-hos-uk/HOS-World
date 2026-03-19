@@ -5,6 +5,7 @@ import { RouteGuard } from '@/components/RouteGuard';
 import { DashboardLayout } from '@/components/DashboardLayout';
 import { useAuth } from '@/contexts/AuthContext';
 import { apiClient } from '@/lib/api';
+import { getSellerMenuItems } from '@/lib/sellerMenu';
 import { useToast } from '@/hooks/useToast';
 import { SafeImage } from '@/components/SafeImage';
 
@@ -94,27 +95,7 @@ export default function SellerThemesPage() {
 
   const currentRole = effectiveRole || user?.role;
   const isWholesaler = currentRole === 'WHOLESALER';
-  const menuItems = useMemo(
-    () =>
-      isWholesaler
-        ? [
-            { title: 'Dashboard', href: '/wholesaler/dashboard', icon: '📊' },
-            { title: 'Submit Product', href: '/seller/submit-product', icon: '➕' },
-            { title: 'My Products', href: '/wholesaler/products', icon: '📦' },
-            { title: 'Bulk Orders', href: '/wholesaler/orders', icon: '🛒' },
-            { title: 'Submissions', href: '/wholesaler/submissions', icon: '📝' },
-            { title: 'Theme Marketplace', href: '/seller/themes', icon: '🎨' },
-          ]
-        : [
-            { title: 'Dashboard', href: '/seller/dashboard', icon: '📊' },
-            { title: 'Submit Product', href: '/seller/submit-product', icon: '➕' },
-            { title: 'My Products', href: '/seller/products', icon: '📦' },
-            { title: 'Orders', href: '/seller/orders', icon: '🛒' },
-            { title: 'Submissions', href: '/seller/submissions', icon: '📝' },
-            { title: 'Theme Marketplace', href: '/seller/themes', icon: '🎨' },
-          ],
-    [isWholesaler]
-  );
+  const menuItems = useMemo(() => getSellerMenuItems(isWholesaler), [isWholesaler]);
 
   const fetchThemes = useCallback(async () => {
     try {
