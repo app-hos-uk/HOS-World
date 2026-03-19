@@ -355,7 +355,7 @@ function ProcurementSubmissionsContent() {
                                 <td className="px-3 py-2 font-medium text-gray-600 border-r border-gray-200">Status</td>
                                 {group.submissions.map((s) => (
                                   <td key={s.id} className="px-3 py-2 border-r last:border-r-0 border-gray-100">
-                                    <span className={`px-1.5 py-0.5 rounded text-xs font-medium ${getStatusBadgeColor(s.status)}`}>{s.status.replace(/_/g, ' ').toLowerCase().replace(/\b\w/g, c => c.toUpperCase())}</span>
+                                    <span className={`px-1.5 py-0.5 rounded text-xs font-medium ${getStatusBadgeColor(s.status)}`}>{s.status.replace(/_/g, ' ').toLowerCase().replace(/\b\w/g, (c: string) => c.toUpperCase())}</span>
                                   </td>
                                 ))}
                               </tr>
@@ -461,7 +461,7 @@ function ProcurementSubmissionsContent() {
                       : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
                   }`}
                 >
-                  {status.replace(/_/g, ' ').toLowerCase().replace(/\b\w/g, c => c.toUpperCase())}
+                  {status.replace(/_/g, ' ').toLowerCase().replace(/\b\w/g, (c: string) => c.toUpperCase())}
                 </button>
               )
             )}
@@ -505,7 +505,7 @@ function ProcurementSubmissionsContent() {
                               submission.status
                             )}`}
                           >
-                            {submission.status.replace(/_/g, ' ').toLowerCase().replace(/\b\w/g, c => c.toUpperCase())}
+                            {submission.status.replace(/_/g, ' ').toLowerCase().replace(/\b\w/g, (c: string) => c.toUpperCase())}
                           </span>
                         </div>
 
@@ -665,7 +665,7 @@ function ProcurementSubmissionsContent() {
                               selectedSubmission.status
                             )}`}
                           >
-                            {selectedSubmission.status.replace(/_/g, ' ').toLowerCase().replace(/\b\w/g, c => c.toUpperCase())}
+                            {selectedSubmission.status.replace(/_/g, ' ').toLowerCase().replace(/\b\w/g, (c: string) => c.toUpperCase())}
                           </span>
                         </div>
                         {selectedSubmission.productData?.sku && (
