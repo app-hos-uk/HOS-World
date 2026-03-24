@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { RouteGuard } from '@/components/RouteGuard';
 import { DashboardLayout } from '@/components/DashboardLayout';
 import { apiClient } from '@/lib/api';
+import { getSellerMenuItems } from '@/lib/sellerMenu';
 import { useCurrency } from '@/contexts/CurrencyContext';
 import Link from 'next/link';
 import Image from 'next/image';
@@ -14,15 +15,7 @@ export default function WholesalerProductsPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const menuItems = [
-    { title: 'Dashboard', href: '/wholesaler/dashboard', icon: '📊' },
-    { title: 'Submit Product', href: '/seller/submit-product', icon: '➕' },
-    { title: 'My Products', href: '/wholesaler/products', icon: '📦' },
-    { title: 'Bulk Orders', href: '/wholesaler/orders', icon: '🛒' },
-    { title: 'Submissions', href: '/wholesaler/submissions', icon: '📝' },
-    { title: 'Profile', href: '/wholesaler/profile', icon: '👤' },
-    { title: 'Bulk Import', href: '/wholesaler/bulk', icon: '📥' },
-  ];
+  const menuItems = getSellerMenuItems(true);
 
   useEffect(() => {
     fetchProducts();
@@ -50,11 +43,11 @@ export default function WholesalerProductsPage() {
         <div className="mb-6">
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold">Bulk Products</h1>
+              <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold">My Products</h1>
               <p className="text-gray-600 mt-2">Manage your wholesale product listings</p>
             </div>
             <Link
-              href="/seller/submit-product"
+              href="/wholesaler/submit-product"
               className="px-6 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors font-medium"
             >
               + Add Bulk Product
@@ -86,7 +79,7 @@ export default function WholesalerProductsPage() {
               <div className="text-center py-12">
                 <p className="text-gray-500 mb-4">No products found</p>
                 <Link
-                  href="/seller/submit-product"
+                  href="/wholesaler/submit-product"
                   className="text-purple-600 hover:text-purple-700 font-medium"
                 >
                   Submit your first bulk product →
@@ -107,7 +100,10 @@ export default function WholesalerProductsPage() {
                         Price
                       </th>
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Quantity
+                        Stock
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Min. Order
                       </th>
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                         Created
@@ -151,7 +147,10 @@ export default function WholesalerProductsPage() {
                           {formatPrice(parseFloat(product.price || 0))}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                          {product.quantity || product.stock || 0}
+                          {product.stock ?? 0}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                          {product.quantity || '—'}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                           {new Date(product.createdAt).toLocaleDateString()}

@@ -8,12 +8,13 @@ export function getSellerMenuItems(isWholesaler: boolean): SellerMenuItem[] {
   if (isWholesaler) {
     return [
       { title: 'Dashboard', href: '/wholesaler/dashboard', icon: '📊' },
-      { title: 'Submit Product', href: '/seller/submit-product', icon: '➕' },
+      { title: 'Submit Product', href: '/wholesaler/submit-product', icon: '➕' },
       { title: 'My Products', href: '/wholesaler/products', icon: '📦' },
       { title: 'Bulk Orders', href: '/wholesaler/orders', icon: '🛒' },
       { title: 'Submissions', href: '/wholesaler/submissions', icon: '📝' },
       { title: 'Profile', href: '/wholesaler/profile', icon: '👤' },
-      { title: 'Themes', href: '/seller/themes', icon: '🎨' },
+      { title: 'Themes', href: '/wholesaler/themes', icon: '🎨' },
+      { title: 'Bulk Import', href: '/wholesaler/bulk', icon: '📥' },
     ];
   }
 

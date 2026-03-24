@@ -4,6 +4,7 @@ import { useEffect, useState, useCallback } from 'react';
 import { RouteGuard } from '@/components/RouteGuard';
 import { DashboardLayout } from '@/components/DashboardLayout';
 import { apiClient } from '@/lib/api';
+import { getSellerMenuItems } from '@/lib/sellerMenu';
 import Link from 'next/link';
 
 export default function WholesalerDashboardPage() {
@@ -11,15 +12,7 @@ export default function WholesalerDashboardPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const menuItems = [
-    { title: 'Dashboard', href: '/wholesaler/dashboard', icon: '📊' },
-    { title: 'Submit Product', href: '/seller/submit-product', icon: '➕' },
-    { title: 'My Products', href: '/wholesaler/products', icon: '📦' },
-    { title: 'Bulk Orders', href: '/wholesaler/orders', icon: '🛒' },
-    { title: 'Submissions', href: '/wholesaler/submissions', icon: '📝' },
-    { title: 'Profile', href: '/wholesaler/profile', icon: '👤' },
-    { title: 'Bulk Import', href: '/wholesaler/bulk', icon: '📥' },
-  ];
+  const menuItems = getSellerMenuItems(true);
 
   const fetchDashboardData = useCallback(async (showLoading = true) => {
     try {
@@ -182,7 +175,7 @@ export default function WholesalerDashboardPage() {
                               {submission.productData?.name || 'Untitled Product'}
                             </p>
                             <p className="text-sm text-gray-500 mt-1">
-                              Quantity: {submission.productData?.quantity || 'N/A'} | Status: {submission.status}
+                              Stock: {submission.productData?.stock ?? 'N/A'}{submission.productData?.quantity ? ` · Min. Order: ${submission.productData.quantity}` : ''} | Status: {submission.status}
                             </p>
                             <p className="text-xs text-gray-400 mt-1">
                               {new Date(submission.createdAt).toLocaleString()}
@@ -207,7 +200,7 @@ export default function WholesalerDashboardPage() {
                   <div className="text-center py-8 text-gray-500">
                     <p>No recent submissions</p>
                     <Link
-                      href="/seller/submit-product"
+                      href="/wholesaler/submit-product"
                       className="text-sm text-purple-600 hover:text-purple-700 mt-2 inline-block"
                     >
                       Submit your first product →
@@ -252,7 +245,7 @@ export default function WholesalerDashboardPage() {
                   </p>
                 </div>
                 <Link
-                  href="/seller/submit-product"
+                  href="/wholesaler/submit-product"
                   className="px-6 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors font-medium"
                 >
                   Submit Bulk Product

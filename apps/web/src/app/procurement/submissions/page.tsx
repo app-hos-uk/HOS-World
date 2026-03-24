@@ -1,6 +1,6 @@
 'use client';
 
-import { Suspense, useCallback, useEffect, useState } from 'react';
+import { Suspense, useCallback, useEffect, useRef, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { RouteGuard } from '@/components/RouteGuard';
 import { DashboardLayout } from '@/components/DashboardLayout';
@@ -47,6 +47,7 @@ function ProcurementSubmissionsContent() {
   const [showModal, setShowModal] = useState(false);
   const [actionType, setActionType] = useState<'approve' | 'reject' | null>(null);
   const [actionLoading, setActionLoading] = useState(false);
+  const [detailsLoadingId, setDetailsLoadingId] = useState<string | null>(null);
 
   // Cross-seller duplicate groups (same product from multiple sellers)
   const [duplicateGroups, setDuplicateGroups] = useState<DuplicateGroup[]>([]);
@@ -136,17 +137,27 @@ function ProcurementSubmissionsContent() {
     }
   };
 
+  const detailsRequestRef = useRef(0);
+
   const handleViewDetails = async (submissionId: string) => {
+    const requestId = ++detailsRequestRef.current;
     try {
+      setDetailsLoadingId(submissionId);
       const response = await apiClient.getProcurementSubmission(submissionId);
+      if (requestId !== detailsRequestRef.current) return;
       if (response?.data) {
         setSelectedSubmission(response.data);
         setActionType(null);
         setShowModal(true);
       }
     } catch (err: any) {
+      if (requestId !== detailsRequestRef.current) return;
       console.error('Error fetching submission details:', err);
       setError(err.message || 'Failed to load submission details');
+    } finally {
+      if (requestId === detailsRequestRef.current) {
+        setDetailsLoadingId(null);
+      }
     }
   };
 
@@ -567,9 +578,13 @@ function ProcurementSubmissionsContent() {
                       <div className="flex gap-2 sm:flex-col">
                         <button
                           onClick={() => handleViewDetails(submission.id)}
-                          className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors font-medium text-sm whitespace-nowrap"
+                          disabled={detailsLoadingId === submission.id}
+                          className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors font-medium text-sm whitespace-nowrap disabled:opacity-70 disabled:cursor-wait flex items-center gap-2"
                         >
-                          View Details
+                          {detailsLoadingId === submission.id && (
+                            <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent" />
+                          )}
+                          {detailsLoadingId === submission.id ? 'Loading...' : 'View Details'}
                         </button>
                         {submission.status === 'SUBMITTED' || submission.status === 'UNDER_REVIEW' ? (
                           <>

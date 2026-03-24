@@ -668,8 +668,10 @@ function SubmitProductForm() {
       if (response?.data) {
         setSuccess(true);
         toast.success('Product submitted for review!');
+        const role = effectiveRole || user?.role;
+        const redirectPath = role === 'WHOLESALER' ? '/wholesaler/submissions' : '/seller/submissions';
         setTimeout(() => {
-          router.push('/seller/submissions');
+          router.push(redirectPath);
         }, 2000);
       } else {
         throw new Error('Failed to create submission');
@@ -699,7 +701,7 @@ function SubmitProductForm() {
         <div className="max-w-4xl mx-auto">
           <div className="mb-6">
             <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold">
-              Add Product
+              Submit Product
             </h1>
             <p className="text-gray-600 mt-2">Browse existing catalog or submit a new product for review</p>
           </div>

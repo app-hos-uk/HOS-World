@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { RouteGuard } from '@/components/RouteGuard';
 import { DashboardLayout } from '@/components/DashboardLayout';
 import { apiClient } from '@/lib/api';
+import { getSellerMenuItems } from '@/lib/sellerMenu';
 import { useToast } from '@/hooks/useToast';
 import { SafeImage } from '@/components/SafeImage';
 
@@ -79,15 +80,7 @@ export default function WholesalerProfilePage() {
     country: '',
   });
 
-  const menuItems = [
-    { title: 'Dashboard', href: '/wholesaler/dashboard', icon: '📊' },
-    { title: 'Submit Product', href: '/seller/submit-product', icon: '➕' },
-    { title: 'My Products', href: '/wholesaler/products', icon: '📦' },
-    { title: 'Bulk Orders', href: '/wholesaler/orders', icon: '🛒' },
-    { title: 'Submissions', href: '/wholesaler/submissions', icon: '📝' },
-    { title: 'Profile', href: '/wholesaler/profile', icon: '👤' },
-    { title: 'Bulk Import', href: '/wholesaler/bulk', icon: '📥' },
-  ];
+  const menuItems = getSellerMenuItems(true);
 
   useEffect(() => {
     fetchProfile();
