@@ -859,6 +859,37 @@ export default function AdminSellersPage() {
                       </div>
                     </div>
 
+                    {/* Seller profile ID — required for Finance → Schedule Payout */}
+                    {selectedSeller.sellerId && (
+                      <div className="rounded-lg border border-purple-200 bg-purple-50/80 p-4">
+                        <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2">
+                          <div className="min-w-0 flex-1">
+                            <p className="text-sm font-medium text-gray-800">Seller ID (payouts &amp; finance)</p>
+                            <p className="text-xs text-gray-600 mt-0.5">
+                              Use this UUID in Finance → Process Payouts → Schedule Payout.
+                            </p>
+                            <p className="mt-2 font-mono text-xs text-gray-900 break-all select-all">
+                              {selectedSeller.sellerId}
+                            </p>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={async () => {
+                              try {
+                                await navigator.clipboard.writeText(selectedSeller.sellerId!);
+                                toast.success('Seller ID copied');
+                              } catch {
+                                toast.error('Could not copy to clipboard');
+                              }
+                            }}
+                            className="shrink-0 px-3 py-1.5 text-sm font-medium text-purple-700 bg-white border border-purple-300 rounded-lg hover:bg-purple-50"
+                          >
+                            Copy ID
+                          </button>
+                        </div>
+                      </div>
+                    )}
+
                     {/* Stats Grid */}
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                       <div className="bg-gray-50 rounded-lg p-4 text-center">

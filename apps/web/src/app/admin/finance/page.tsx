@@ -427,7 +427,14 @@ export default function AdminFinancePage() {
                     <DataExport
                       data={safePayouts}
                       columns={[
-                        { key: 'sellerId', header: 'Seller' },
+                        {
+                          key: 'sellerId',
+                          header: 'Seller',
+                          format: (_v: string, p: any) =>
+                            p?.seller?.storeName
+                              ? `${p.seller.storeName} (${p.sellerId || ''})`
+                              : p?.sellerId || '',
+                        },
                         { key: 'amount', header: 'Amount', format: (v: number, p: any) => `${p.currency || 'USD'} ${Number(v).toFixed(2)}` },
                         { key: 'status', header: 'Status' },
                         { key: 'createdAt', header: 'Date', format: (v: string) => new Date(v).toLocaleDateString() },
@@ -447,12 +454,27 @@ export default function AdminFinancePage() {
                     <tbody className="bg-white divide-y divide-gray-200">
                       {safePayouts.length === 0 ? (
                         <tr>
-                          <td colSpan={4} className="px-6 py-8 text-center text-gray-500">No payouts found</td>
+                          <td colSpan={4} className="px-6 py-8 text-center text-gray-500 text-sm">
+                            <p>No payouts found.</p>
+                            <p className="mt-2 text-xs text-gray-400 max-w-md mx-auto">
+                              Seller IDs appear here once payouts exist. For the first payout, open{' '}
+                              <span className="font-medium text-gray-600">Admin → Sellers</span>,{' '}
+                              <span className="font-medium text-gray-600">View</span> a seller, and copy{' '}
+                              <span className="font-medium text-gray-600">Seller ID</span> into Finance → Schedule Payout.
+                            </p>
+                          </td>
                         </tr>
                       ) : (
                         safePayouts.map((payout) => (
                           <tr key={payout.id} className="hover:bg-gray-50">
-                            <td className="px-6 py-4 whitespace-nowrap text-sm">{payout.sellerId}</td>
+                            <td className="px-6 py-4 text-sm">
+                              <p className="font-medium text-gray-900">
+                                {payout.seller?.storeName || 'Unknown seller'}
+                              </p>
+                              <p className="text-xs text-gray-500 font-mono mt-0.5">
+                                Seller ID: {payout.sellerId || '—'}
+                              </p>
+                            </td>
                             <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                               {payout.currency || 'USD'} {Number(payout.amount).toFixed(2)}
                             </td>

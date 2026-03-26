@@ -217,7 +217,7 @@ export default function FinancePayoutsPage() {
             <p className="text-gray-500 text-lg">No payouts found</p>
             <p className="text-sm text-gray-400 mt-2">
               {activeTab === 'ALL'
-                ? 'Schedule a payout to get started'
+                ? 'Schedule a payout to get started. Need a seller UUID? Admin → Sellers → View → copy Seller ID.'
                 : `No ${activeTab.toLowerCase()} payouts`}
             </p>
           </div>
@@ -253,7 +253,27 @@ export default function FinancePayoutsPage() {
                         <p className="text-sm font-medium text-gray-900">
                           {payout.seller?.storeName || payout.sellerName || 'Unknown Seller'}
                         </p>
-                        <p className="text-xs text-gray-500">{payout.sellerId}</p>
+                        <div className="flex flex-wrap items-center gap-x-2 gap-y-1 mt-0.5">
+                          <p className="text-xs text-gray-500 font-mono">
+                            Seller ID: {payout.sellerId || '—'}
+                          </p>
+                          {payout.sellerId && (
+                            <button
+                              type="button"
+                              onClick={async () => {
+                                try {
+                                  await navigator.clipboard.writeText(payout.sellerId);
+                                  toast.success('Seller ID copied');
+                                } catch {
+                                  toast.error('Could not copy');
+                                }
+                              }}
+                              className="text-xs font-medium text-purple-600 hover:text-purple-800"
+                            >
+                              Copy
+                            </button>
+                          )}
+                        </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <p className="text-sm font-semibold text-gray-900">
@@ -325,9 +345,14 @@ export default function FinancePayoutsPage() {
                       onChange={(e) =>
                         setScheduleForm((prev) => ({ ...prev, sellerId: e.target.value }))
                       }
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-                      placeholder="Enter seller ID"
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent font-mono text-sm"
+                      placeholder="Paste seller profile UUID"
                     />
+                    <p className="text-xs text-gray-500 mt-1.5">
+                      Find it under <span className="font-medium">Admin → Sellers</span>, open{' '}
+                      <span className="font-medium">View</span>, then copy <span className="font-medium">Seller ID</span>.
+                      After payouts exist, it also appears in the table below as &quot;Seller ID&quot;.
+                    </p>
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
