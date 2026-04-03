@@ -106,15 +106,15 @@ After this, future pushes to `master` should deploy automatically from the app@h
 
 ## 6. GitHub Actions: `RAILWAY_TOKEN` (fix “Project Token not found”)
 
-The Deploy workflow runs `railway up` and requires a **project deploy token**, not a UUID and not an account-only API token.
+The Deploy workflow runs `railway up` and requires a **project deploy token** from **Project → Tokens** (not the separate “account” API token page unless docs say otherwise).
 
 1. Open your **project** in Railway (the one that contains **api** and **web** services).
-2. Go to **Project settings → Tokens** (or the Tokens page under the project).
+2. Go to **Project settings → Tokens**.
 3. Click **New Token**, pick environment **production**, name it e.g. `github-actions`, then **Create**.
-4. **Copy the full token immediately** — Railway shows it **once**. It is a **long string**, not the same as:
-   - the **project ID** (`4d88db31-…`),
-   - a short **UUID** alone,
-   - or anything with a leading `-` from a bullet list.
+4. **Copy the full token immediately** — Railway shows it **once** under “We will only show this token once”. The value is often **UUID-shaped** (for example `xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx`). Do **not** confuse it with:
+   - the **project ID** (different UUID, from project settings),
+   - a **leading `-`** pasted from a markdown bullet,
+   - or the **masked** value in the table (only `****-xxxx` is visible later).
 5. Set the GitHub secret (exact name **`RAILWAY_TOKEN`**):
 
    ```bash
