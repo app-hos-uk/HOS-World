@@ -10,6 +10,9 @@ WORKDIR /app
 # Copy package files (order matters for Docker layer caching)
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
 
+# Root `prepare` runs on pnpm install; include this script before any install (no full scripts/ dir needed)
+COPY scripts/setup-git-hooks.mjs ./scripts/setup-git-hooks.mjs
+
 # Copy all package.json files from packages (must be before install)
 COPY packages/shared-types/package.json ./packages/shared-types/
 COPY packages/api-client/package.json ./packages/api-client/
@@ -104,6 +107,7 @@ WORKDIR /app
 
 # Copy package files for production install
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
+COPY scripts/setup-git-hooks.mjs ./scripts/setup-git-hooks.mjs
 COPY apps/web/package.json ./apps/web/
 COPY packages/shared-types/package.json ./packages/shared-types/
 COPY packages/api-client/package.json ./packages/api-client/

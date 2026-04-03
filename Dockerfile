@@ -10,6 +10,8 @@ WORKDIR /app
 COPY package.json pnpm-lock.yaml ./
 RUN printf 'packages:\n  - packages/*\n  - services/api\n\nignoredBuiltDependencies:\n  - "@nestjs/core"\n  - msgpackr-extract\n  - unrs-resolver\n\nonlyBuiltDependencies:\n  - prisma\n  - "@prisma/client"\n  - "@prisma/engines"\n  - bcrypt\n' > pnpm-workspace.yaml
 
+COPY scripts/setup-git-hooks.mjs ./scripts/setup-git-hooks.mjs
+
 # ── Layer 2: Package.json files only (cached unless deps change) ──
 COPY services/api/package.json ./services/api/
 COPY packages/shared-types/package.json ./packages/shared-types/

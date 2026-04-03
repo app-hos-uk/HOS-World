@@ -7,6 +7,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends python3 make g+
 WORKDIR /app
 
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
+COPY scripts/setup-git-hooks.mjs ./scripts/setup-git-hooks.mjs
 COPY packages ./packages
 COPY services/api ./services/api
 

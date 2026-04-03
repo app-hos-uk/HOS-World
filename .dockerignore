@@ -13,7 +13,9 @@ coverage/
 
 # Exclude non-essential dirs (do not exclude apps/ — web Dockerfile needs apps/web with context at repo root)
 docs/
-scripts/
+# Root `pnpm install` runs prepare → scripts/setup-git-hooks.mjs; Dockerfiles COPY that file — it must stay in context.
+scripts/*
+!scripts/setup-git-hooks.mjs
 .github/
 services/api/test/
 **/*.spec.ts

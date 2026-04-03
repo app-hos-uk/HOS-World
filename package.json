@@ -9,7 +9,7 @@
     "services/api"
   ],
   "scripts": {
-    "prepare": "node -e \"const fs=require('fs');const cp=require('child_process');if(fs.existsSync('scripts/setup-git-hooks.mjs'))cp.execSync('node scripts/setup-git-hooks.mjs',{stdio:'inherit'});\"",
+    "prepare": "node scripts/setup-git-hooks.mjs",
     "dev": "turbo run dev --filter=@hos-marketplace/api --filter=@hos-marketplace/web --concurrency=5",
     "build": "turbo run build",
     "lint": "turbo run lint",
