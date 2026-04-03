@@ -1,5 +1,7 @@
 # Link Railway Project
 
+**Deployments must use the Railway account for app@houseofspells.co.uk.** See [docs/RAILWAY_ACCOUNT_AND_DEPLOY.md](docs/RAILWAY_ACCOUNT_AND_DEPLOY.md) to ensure the correct account and trigger deploys.
+
 ## Quick Link Commands
 
 Run these commands to link your Railway project:

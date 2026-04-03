@@ -1,10 +1,12 @@
 #!/bin/bash
 
 # Switch Railway Account Script
-# This script helps you log out and log in with a different Railway account
+# Deployments should use the Railway account for app@houseofspells.co.uk.
+# This script helps you log out and log in with the correct account.
 
 echo "🔄 Switching Railway Account"
 echo "================================"
+echo "Deployments must use: app@houseofspells.co.uk (Railway account)"
 echo ""
 
 # Check if Railway CLI is installed
@@ -61,7 +63,7 @@ echo "================================"
 echo "✅ Account switch complete"
 echo ""
 echo "Next steps:"
-echo "  1. Link your project: cd services/api && railway link"
-echo "  2. Check status: railway status"
-echo "  3. View logs: railway logs --tail"
+echo "  1. Ensure you're logged in as app@houseofspells.co.uk (railway whoami)"
+echo "  2. Link your project: cd services/api && railway link"
+echo "  3. Trigger deploy: see docs/RAILWAY_ACCOUNT_AND_DEPLOY.md"
 echo ""
