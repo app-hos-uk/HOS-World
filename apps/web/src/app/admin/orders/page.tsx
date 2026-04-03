@@ -7,6 +7,34 @@ import { apiClient } from '@/lib/api';
 import { useToast } from '@/hooks/useToast';
 import { DataExport } from '@/components/DataExport';
 
+/** API returns lowercase; normalize so stats/filters work if casing differs */
+function normalizeOrderStatus(status: string | undefined): string {
+  return String(status ?? '')
+    .trim()
+    .toLowerCase();
+}
+
+/**
+ * Handles both `{ data: Order[] }` and legacy/nested `{ data: { data: Order[] } }`.
+ */
+function extractOrdersFromApiResponse(res: unknown): {
+  orders: Order[];
+  pagination?: { page: number; limit: number; total: number; totalPages: number };
+} {
+  const r = res as {
+    data?: unknown;
+    pagination?: { page: number; limit: number; total: number; totalPages: number };
+  };
+  const raw = r?.data;
+  let orders: Order[] = [];
+  if (Array.isArray(raw)) {
+    orders = raw as Order[];
+  } else if (raw && typeof raw === 'object' && Array.isArray((raw as { data?: unknown }).data)) {
+    orders = (raw as { data: Order[] }).data;
+  }
+  return { orders, pagination: r?.pagination };
+}
+
 interface Order {
   id: string;
   orderNumber?: string;
@@ -39,26 +67,31 @@ interface Order {
   updatedAt?: string | Date;
 }
 
+// Must match API: orders.service mapToOrderType returns Prisma OrderStatus in lowercase
 const ORDER_STATUSES = [
-  'PENDING',
-  'CONFIRMED',
-  'PROCESSING',
-  'SHIPPED',
-  'DELIVERED',
-  'COMPLETED',
-  'CANCELLED',
-  'REFUNDED',
-];
+  'pending',
+  'accepted',
+  'rejected',
+  'confirmed',
+  'processing',
+  'fulfilled',
+  'shipped',
+  'delivered',
+  'cancelled',
+  'refunded',
+] as const;
 
 const STATUS_COLORS: Record<string, string> = {
-  PENDING: 'bg-yellow-100 text-yellow-800',
-  CONFIRMED: 'bg-blue-100 text-blue-800',
-  PROCESSING: 'bg-indigo-100 text-indigo-800',
-  SHIPPED: 'bg-purple-100 text-purple-800',
-  DELIVERED: 'bg-green-100 text-green-800',
-  COMPLETED: 'bg-green-100 text-green-800',
-  CANCELLED: 'bg-red-100 text-red-800',
-  REFUNDED: 'bg-gray-100 text-gray-800',
+  pending: 'bg-yellow-100 text-yellow-800',
+  accepted: 'bg-cyan-100 text-cyan-800',
+  rejected: 'bg-orange-100 text-orange-800',
+  confirmed: 'bg-blue-100 text-blue-800',
+  processing: 'bg-indigo-100 text-indigo-800',
+  fulfilled: 'bg-violet-100 text-violet-800',
+  shipped: 'bg-purple-100 text-purple-800',
+  delivered: 'bg-green-100 text-green-800',
+  cancelled: 'bg-red-100 text-red-800',
+  refunded: 'bg-gray-100 text-gray-800',
 };
 
 export default function AdminOrdersPage() {
@@ -77,10 +110,11 @@ export default function AdminOrdersPage() {
   const pageSize = 20;
   const [confirmDialog, setConfirmDialog] = useState<{ orderId: string; orderNumber: string; currentStatus: string; newStatus: string } | null>(null);
 
-  // Stats
+  // Stats (counts may use pagination.total for "Total orders"; per-status from loaded rows)
   const [stats, setStats] = useState({
     total: 0,
     pending: 0,
+    confirmed: 0,
     processing: 0,
     shipped: 0,
     completed: 0,
@@ -106,23 +140,41 @@ export default function AdminOrdersPage() {
     try {
       setLoading(true);
       setError(null);
-      const response = await apiClient.getOrders();
-      const orderList = Array.isArray(response?.data) ? response.data : [];
+
+      // Backend caps at 100 per page; merge all pages so overview stats match the full dataset
+      let page = 1;
+      let totalPages = 1;
+      const orderList: Order[] = [];
+      let reportedTotal: number | undefined;
+
+      do {
+        const response = await apiClient.getOrders({ page, limit: 100 });
+        const { orders, pagination } = extractOrdersFromApiResponse(response);
+        orderList.push(...orders);
+        reportedTotal = pagination?.total;
+        totalPages = Math.max(1, pagination?.totalPages ?? 1);
+        page += 1;
+        if (page > 200) break;
+      } while (page <= totalPages);
+
       setOrders(orderList);
 
-      // Calculate stats
-      const pendingCount = orderList.filter((o: Order) => o.status === 'PENDING').length;
-      const processingCount = orderList.filter((o: Order) => ['CONFIRMED', 'PROCESSING'].includes(o.status)).length;
-      const shippedCount = orderList.filter((o: Order) => o.status === 'SHIPPED').length;
-      const completedCount = orderList.filter((o: Order) => ['DELIVERED', 'COMPLETED'].includes(o.status)).length;
-      const cancelledCount = orderList.filter((o: Order) => ['CANCELLED', 'REFUNDED'].includes(o.status)).length;
+      const st = (o: Order) => normalizeOrderStatus(o.status);
+
+      const pendingCount = orderList.filter((o) => st(o) === 'pending').length;
+      const confirmedCount = orderList.filter((o) => st(o) === 'confirmed').length;
+      const processingCount = orderList.filter((o) => st(o) === 'processing').length;
+      const shippedCount = orderList.filter((o) => st(o) === 'shipped').length;
+      const completedCount = orderList.filter((o) => st(o) === 'delivered').length;
+      const cancelledCount = orderList.filter((o) => ['cancelled', 'refunded'].includes(st(o))).length;
       const totalRevenue = orderList
-        .filter((o: Order) => !['CANCELLED', 'REFUNDED'].includes(o.status))
+        .filter((o) => !['cancelled', 'refunded'].includes(st(o)))
         .reduce((sum: number, o: Order) => sum + (Number(o.total) || 0), 0);
 
       setStats({
-        total: orderList.length,
+        total: reportedTotal ?? orderList.length,
         pending: pendingCount,
+        confirmed: confirmedCount,
         processing: processingCount,
         shipped: shippedCount,
         completed: completedCount,
@@ -185,20 +237,19 @@ export default function AdminOrdersPage() {
       order.user?.email?.toLowerCase().includes(searchLower) ||
       order.customer?.email?.toLowerCase().includes(searchLower);
 
+    const os = normalizeOrderStatus(order.status);
+
     // Status filter - handle multi-status filters to match stats card counts
     let matchesStatus = statusFilter === 'ALL';
     if (!matchesStatus) {
       if (statusFilter === 'PROCESSING') {
-        // Match both CONFIRMED and PROCESSING to align with stats card
-        matchesStatus = ['CONFIRMED', 'PROCESSING'].includes(order.status);
+        matchesStatus = ['confirmed', 'processing'].includes(os);
       } else if (statusFilter === 'COMPLETED') {
-        // Match both DELIVERED and COMPLETED to align with stats card
-        matchesStatus = ['DELIVERED', 'COMPLETED'].includes(order.status);
+        matchesStatus = os === 'delivered';
       } else if (statusFilter === 'CANCELLED') {
-        // Match both CANCELLED and REFUNDED to align with stats card
-        matchesStatus = ['CANCELLED', 'REFUNDED'].includes(order.status);
+        matchesStatus = ['cancelled', 'refunded'].includes(os);
       } else {
-        matchesStatus = order.status === statusFilter;
+        matchesStatus = os === normalizeOrderStatus(statusFilter);
       }
     }
 
@@ -242,8 +293,8 @@ export default function AdminOrdersPage() {
             />
           </div>
 
-          {/* Stats Cards */}
-          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-4">
+          {/* Stats Cards — counts use normalized status; Confirmed / Processing are separate */}
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-8 gap-4">
             <div className="bg-white rounded-lg shadow p-4">
               <h3 className="text-xs font-medium text-gray-500 uppercase">Total Orders</h3>
               <p className="text-2xl font-bold text-gray-900 mt-1">{stats.total}</p>
@@ -253,27 +304,40 @@ export default function AdminOrdersPage() {
               <p className="text-2xl font-bold text-green-600 mt-1">${stats.totalRevenue.toFixed(2)}</p>
             </div>
             <button
-              onClick={() => setStatusFilter(statusFilter === 'PENDING' ? 'ALL' : 'PENDING')}
-              className={`bg-white rounded-lg shadow p-4 text-left ${statusFilter === 'PENDING' ? 'ring-2 ring-purple-500' : ''}`}
+              type="button"
+              onClick={() => setStatusFilter(statusFilter === 'pending' ? 'ALL' : 'pending')}
+              className={`bg-white rounded-lg shadow p-4 text-left ${statusFilter === 'pending' ? 'ring-2 ring-purple-500' : ''}`}
             >
               <h3 className="text-xs font-medium text-gray-500 uppercase">Pending</h3>
               <p className="text-2xl font-bold text-yellow-600 mt-1">{stats.pending}</p>
             </button>
             <button
-              onClick={() => setStatusFilter(statusFilter === 'PROCESSING' ? 'ALL' : 'PROCESSING')}
-              className={`bg-white rounded-lg shadow p-4 text-left ${statusFilter === 'PROCESSING' ? 'ring-2 ring-purple-500' : ''}`}
+              type="button"
+              onClick={() => setStatusFilter(statusFilter === 'confirmed' ? 'ALL' : 'confirmed')}
+              className={`bg-white rounded-lg shadow p-4 text-left ${statusFilter === 'confirmed' ? 'ring-2 ring-purple-500' : ''}`}
             >
-              <h3 className="text-xs font-medium text-gray-500 uppercase">Processing</h3>
-              <p className="text-2xl font-bold text-blue-600 mt-1">{stats.processing}</p>
+              <h3 className="text-xs font-medium text-gray-500 uppercase">Confirmed</h3>
+              <p className="text-2xl font-bold text-sky-600 mt-1">{stats.confirmed}</p>
             </button>
             <button
-              onClick={() => setStatusFilter(statusFilter === 'SHIPPED' ? 'ALL' : 'SHIPPED')}
-              className={`bg-white rounded-lg shadow p-4 text-left ${statusFilter === 'SHIPPED' ? 'ring-2 ring-purple-500' : ''}`}
+              type="button"
+              onClick={() => setStatusFilter(statusFilter === 'PROCESSING' ? 'ALL' : 'PROCESSING')}
+              className={`bg-white rounded-lg shadow p-4 text-left ${statusFilter === 'PROCESSING' ? 'ring-2 ring-purple-500' : ''}`}
+              title="Confirmed + actively processing"
+            >
+              <h3 className="text-xs font-medium text-gray-500 uppercase">In progress</h3>
+              <p className="text-2xl font-bold text-blue-600 mt-1">{stats.confirmed + stats.processing}</p>
+            </button>
+            <button
+              type="button"
+              onClick={() => setStatusFilter(statusFilter === 'shipped' ? 'ALL' : 'shipped')}
+              className={`bg-white rounded-lg shadow p-4 text-left ${statusFilter === 'shipped' ? 'ring-2 ring-purple-500' : ''}`}
             >
               <h3 className="text-xs font-medium text-gray-500 uppercase">Shipped</h3>
               <p className="text-2xl font-bold text-purple-600 mt-1">{stats.shipped}</p>
             </button>
             <button
+              type="button"
               onClick={() => setStatusFilter(statusFilter === 'COMPLETED' ? 'ALL' : 'COMPLETED')}
               className={`bg-white rounded-lg shadow p-4 text-left ${statusFilter === 'COMPLETED' ? 'ring-2 ring-purple-500' : ''}`}
             >
@@ -281,6 +345,7 @@ export default function AdminOrdersPage() {
               <p className="text-2xl font-bold text-green-600 mt-1">{stats.completed}</p>
             </button>
             <button
+              type="button"
               onClick={() => setStatusFilter(statusFilter === 'CANCELLED' ? 'ALL' : 'CANCELLED')}
               className={`bg-white rounded-lg shadow p-4 text-left ${statusFilter === 'CANCELLED' ? 'ring-2 ring-purple-500' : ''}`}
             >
@@ -310,8 +375,13 @@ export default function AdminOrdersPage() {
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
                 >
                   <option value="ALL">All Statuses</option>
+                  <option value="PROCESSING">In progress (confirmed + processing)</option>
+                  <option value="COMPLETED">Completed (delivered)</option>
+                  <option value="CANCELLED">Cancelled (cancelled + refunded)</option>
                   {ORDER_STATUSES.map((status) => (
-                    <option key={status} value={status}>{status}</option>
+                    <option key={status} value={status}>
+                      {status.charAt(0).toUpperCase() + status.slice(1)}
+                    </option>
                   ))}
                 </select>
               </div>

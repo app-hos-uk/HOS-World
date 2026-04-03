@@ -418,8 +418,8 @@ export class ApiClient {
   }
 
   async updateOrderStatus(id: string, status: string, trackingNumber?: string): Promise<ApiResponse<Order>> {
-    const body: Record<string, string> = { status };
-    if (trackingNumber) body.trackingNumber = trackingNumber;
+    const body: Record<string, string> = { status: status.toUpperCase() };
+    if (trackingNumber) body.trackingCode = trackingNumber;
     return this.request<ApiResponse<Order>>(`/orders/${id}`, {
       method: 'PUT',
       body: JSON.stringify(body),
@@ -1614,11 +1614,12 @@ export class ApiClient {
 
   async getSellerOrders(status?: string): Promise<ApiResponse<any[]>> {
     // Orders endpoint automatically filters by user role (seller gets their orders)
-    const response = await this.getOrders();
+    const response = await this.getOrders({ limit: 500 });
     let orders = Array.isArray(response.data) ? response.data : [];
-    // Filter by status if provided
+    // Filter by status if provided (API returns lowercase OrderStatus from mapToOrderType)
     if (status) {
-      orders = orders.filter((order: any) => order.status === status);
+      const want = status.toLowerCase();
+      orders = orders.filter((order: any) => (order.status || '').toLowerCase() === want);
     }
     return { data: orders, message: 'Orders retrieved successfully' };
   }
@@ -1652,12 +1653,11 @@ export class ApiClient {
   }
 
   async getWholesalerOrders(status?: string): Promise<ApiResponse<any[]>> {
-    // Orders endpoint automatically filters by user role (wholesaler gets their orders)
-    const response = await this.getOrders();
+    const response = await this.getOrders({ limit: 500 });
     let orders = Array.isArray(response.data) ? response.data : [];
-    // Filter by status if provided
     if (status) {
-      orders = orders.filter((order: any) => order.status === status);
+      const want = status.toLowerCase();
+      orders = orders.filter((order: any) => (order.status || '').toLowerCase() === want);
     }
     return { data: orders, message: 'Orders retrieved successfully' };
   }

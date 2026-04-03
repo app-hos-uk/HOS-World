@@ -95,11 +95,13 @@ export default function SellerOrdersPage() {
           
           // Apply client-side filtering to match stats aggregation
           if (filterValue === 'PROCESSING') {
-            orderData = orderData.filter((o: Order) => ['CONFIRMED', 'PROCESSING'].includes(o.status));
+            orderData = orderData.filter((o: Order) =>
+              ['confirmed', 'processing'].includes(o.status),
+            );
           } else if (filterValue === 'DELIVERED') {
-            orderData = orderData.filter((o: Order) => ['DELIVERED', 'COMPLETED'].includes(o.status));
+            orderData = orderData.filter((o: Order) => o.status === 'delivered');
           } else if (filterValue === 'CANCELLED') {
-            orderData = orderData.filter((o: Order) => ['CANCELLED', 'REFUNDED'].includes(o.status));
+            orderData = orderData.filter((o: Order) => ['cancelled', 'refunded'].includes(o.status));
           }
           
           setOrders(orderData);
@@ -133,13 +135,13 @@ export default function SellerOrdersPage() {
   const stats = useMemo(() => {
     return {
       total: allOrders.length,
-      pending: allOrders.filter(o => o.status === 'PENDING').length,
-      processing: allOrders.filter(o => ['CONFIRMED', 'PROCESSING'].includes(o.status)).length,
-      shipped: allOrders.filter(o => o.status === 'SHIPPED').length,
-      delivered: allOrders.filter(o => ['DELIVERED', 'COMPLETED'].includes(o.status)).length,
-      cancelled: allOrders.filter(o => ['CANCELLED', 'REFUNDED'].includes(o.status)).length,
+      pending: allOrders.filter(o => o.status === 'pending').length,
+      processing: allOrders.filter(o => ['confirmed', 'processing'].includes(o.status)).length,
+      shipped: allOrders.filter(o => o.status === 'shipped').length,
+      delivered: allOrders.filter(o => o.status === 'delivered').length,
+      cancelled: allOrders.filter(o => ['cancelled', 'refunded'].includes(o.status)).length,
       totalRevenue: allOrders
-        .filter(o => !['CANCELLED', 'REFUNDED'].includes(o.status))
+        .filter(o => !['cancelled', 'refunded'].includes(o.status))
         .reduce((sum, o) => sum + (Number(o.total) || 0), 0),
     };
   }, [allOrders]);
@@ -190,7 +192,7 @@ export default function SellerOrdersPage() {
       setUpdatingStatus(true);
       await apiClient.cancelOrder(selectedOrder.id);
       toast.success('Order cancelled');
-      setSelectedOrder({ ...selectedOrder, status: 'CANCELLED' });
+      setSelectedOrder({ ...selectedOrder, status: 'cancelled' });
       fetchOrders(statusFilter);
       fetchAllOrders();
     } catch (err: any) {
@@ -202,14 +204,15 @@ export default function SellerOrdersPage() {
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'PENDING': return 'bg-yellow-100 text-yellow-800';
-      case 'CONFIRMED':
-      case 'PROCESSING': return 'bg-blue-100 text-blue-800';
-      case 'SHIPPED': return 'bg-purple-100 text-purple-800';
-      case 'DELIVERED':
-      case 'COMPLETED': return 'bg-green-100 text-green-800';
-      case 'CANCELLED':
-      case 'REFUNDED': return 'bg-red-100 text-red-800';
+      case 'pending': return 'bg-yellow-100 text-yellow-800';
+      case 'accepted':
+      case 'confirmed':
+      case 'processing': return 'bg-blue-100 text-blue-800';
+      case 'fulfilled':
+      case 'shipped': return 'bg-purple-100 text-purple-800';
+      case 'delivered': return 'bg-green-100 text-green-800';
+      case 'cancelled':
+      case 'refunded': return 'bg-red-100 text-red-800';
       default: return 'bg-gray-100 text-gray-800';
     }
   };
@@ -402,7 +405,7 @@ export default function SellerOrdersPage() {
                     </span>
                   </div>
                   <div className="flex gap-2 flex-wrap">
-                    {selectedOrder.status === 'PENDING' && (
+                    {selectedOrder.status === 'pending' && (
                       <button
                         onClick={() => handleStatusUpdate('PROCESSING')}
                         disabled={updatingStatus}
@@ -411,7 +414,7 @@ export default function SellerOrdersPage() {
                         Accept Order
                       </button>
                     )}
-                    {selectedOrder.status === 'PROCESSING' && (
+                    {selectedOrder.status === 'processing' && (
                       <button
                         onClick={() => handleStatusUpdate('SHIPPED')}
                         disabled={updatingStatus}
@@ -420,7 +423,7 @@ export default function SellerOrdersPage() {
                         Mark as Shipped
                       </button>
                     )}
-                    {selectedOrder.status === 'SHIPPED' && (
+                    {selectedOrder.status === 'shipped' && (
                       <button
                         onClick={() => handleStatusUpdate('DELIVERED')}
                         disabled={updatingStatus}
@@ -429,7 +432,7 @@ export default function SellerOrdersPage() {
                         Mark as Delivered
                       </button>
                     )}
-                    {['PENDING', 'PROCESSING'].includes(selectedOrder.status) && (
+                    {['pending', 'processing'].includes(selectedOrder.status) && (
                       <button
                         onClick={handleCancelOrder}
                         disabled={updatingStatus}
@@ -531,7 +534,7 @@ export default function SellerOrdersPage() {
                 </div>
 
                 {/* Tracking Number */}
-                {(['PROCESSING', 'SHIPPED', 'DELIVERED', 'COMPLETED'].includes(selectedOrder.status) || selectedOrder.trackingNumber) && (
+                {(['processing', 'fulfilled', 'shipped', 'delivered', 'confirmed'].includes(selectedOrder.status) || selectedOrder.trackingNumber) && (
                   <div className="bg-purple-50 rounded-lg p-4">
                     <h3 className="font-medium text-gray-900 mb-2">Tracking Information</h3>
                     <div className="flex gap-2">
