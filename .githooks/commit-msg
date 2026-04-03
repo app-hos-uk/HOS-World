@@ -1,0 +1,9 @@
+#!/bin/sh
+# Remove Cursor "Made-with:" trailer from commit messages (optional; also disable in
+# Cursor: Settings → Agents → Attribution → Commit Attribution).
+msg_file="$1"
+[ -z "$msg_file" ] || [ ! -f "$msg_file" ] && exit 0
+if grep -q '^Made-with:' "$msg_file" 2>/dev/null; then
+  grep -v '^Made-with:' "$msg_file" > "${msg_file}.strip" && mv "${msg_file}.strip" "$msg_file"
+fi
+exit 0
