@@ -39,7 +39,7 @@ jobs:
           RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
         run: |
           railway up \
-            --service api \
+            --service '@hos-marketplace/api' \
             --environment production \
             --detach \
             --ci
@@ -57,7 +57,7 @@ jobs:
           RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
         run: |
           railway up \
-            --service web \
+            --service '@hos-marketplace/web' \
             --environment production \
             --detach \
             --ci
