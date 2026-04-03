@@ -101,3 +101,26 @@ Check **Deployments** in Railway for each service and confirm the latest commit 
 - [ ] Triggered **Redeploy** for API and Web if the latest push did not deploy
 
 After this, future pushes to `master` should deploy automatically from the app@houseofspells.co.uk Railway account.
+
+---
+
+## 6. GitHub Actions: `RAILWAY_TOKEN` (fix “Project Token not found”)
+
+The Deploy workflow runs `railway up` and requires a **project deploy token**, not a UUID and not an account-only API token.
+
+1. Open your **project** in Railway (the one that contains **api** and **web** services).
+2. Go to **Project settings → Tokens** (or the Tokens page under the project).
+3. Click **New Token**, pick environment **production**, name it e.g. `github-actions`, then **Create**.
+4. **Copy the full token immediately** — Railway shows it **once**. It is a **long string**, not the same as:
+   - the **project ID** (`4d88db31-…`),
+   - a short **UUID** alone,
+   - or anything with a leading `-` from a bullet list.
+5. Set the GitHub secret (exact name **`RAILWAY_TOKEN`**):
+
+   ```bash
+   printf '%s' 'PASTE_FULL_TOKEN_HERE' | gh secret set RAILWAY_TOKEN -R app-hos-uk/HOS-World
+   ```
+
+6. Re-run **Actions → Deploy** or push to `master`.
+
+If you previously saved the wrong value, create a **new** token in Railway and replace the secret; old project tokens can be deleted in the same Tokens table.
