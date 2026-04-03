@@ -5,16 +5,34 @@ on:
     branches: [master]
 
 jobs:
+  # Without this secret, deploy steps were skipped while the workflow still showed "success".
+  verify-railway-token:
+    name: Verify RAILWAY_TOKEN secret
+    runs-on: ubuntu-latest
+    steps:
+      - name: Require GitHub secret RAILWAY_TOKEN
+        env:
+          T: ${{ secrets.RAILWAY_TOKEN }}
+        run: |
+          if [ -z "$T" ]; then
+            echo "::error::Repository secret RAILWAY_TOKEN is missing. Deploy jobs were being skipped."
+            echo "1. Log in to Railway as the account that owns the project (e.g. app@houseofspells.co.uk)"
+            echo "2. Create a token: https://railway.app/account/tokens"
+            echo "3. Add it: GitHub repo → Settings → Secrets and variables → Actions → New repository secret → name RAILWAY_TOKEN"
+            echo "   Or CLI: gh secret set RAILWAY_TOKEN -R app-hos-uk/HOS-World -b\"<paste-token>\""
+            exit 1
+          fi
+          echo "RAILWAY_TOKEN is set."
+
   deploy-api:
     name: Deploy API to Railway
+    needs: [verify-railway-token]
     runs-on: ubuntu-latest
-    # RAILWAY_TOKEN must be on the job so step `if:` can see it (step-level env is not visible to `if`)
     env:
       RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
     steps:
       - uses: actions/checkout@v4
       - name: Deploy API
-        if: env.RAILWAY_TOKEN != ''
         uses: bervProject/railway-deploy@main
         with:
           railway_token: ${{ secrets.RAILWAY_TOKEN }}
@@ -22,13 +40,13 @@ jobs:
 
   deploy-web:
     name: Deploy Web to Railway
+    needs: [verify-railway-token]
     runs-on: ubuntu-latest
     env:
       RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
     steps:
       - uses: actions/checkout@v4
       - name: Deploy Web
-        if: env.RAILWAY_TOKEN != ''
         uses: bervProject/railway-deploy@main
         with:
           railway_token: ${{ secrets.RAILWAY_TOKEN }}
