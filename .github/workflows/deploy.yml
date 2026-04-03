@@ -3,6 +3,7 @@ name: Deploy
 on:
   push:
     branches: [master]
+  workflow_dispatch: # Re-run after adding RAILWAY_TOKEN in repo Settings → Secrets
 
 jobs:
   # Without this secret, deploy steps were skipped while the workflow still showed "success".
@@ -28,28 +29,27 @@ jobs:
     name: Deploy API to Railway
     needs: [verify-railway-token]
     runs-on: ubuntu-latest
-    env:
-      RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
     steps:
       - uses: actions/checkout@v4
+      # bervProject/railway-deploy reads RAILWAY_TOKEN from env only (not `with:`)
       - name: Deploy API
         uses: bervProject/railway-deploy@main
+        env:
+          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
         with:
-          railway_token: ${{ secrets.RAILWAY_TOKEN }}
           service: api
 
   deploy-web:
     name: Deploy Web to Railway
     needs: [verify-railway-token]
     runs-on: ubuntu-latest
-    env:
-      RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
     steps:
       - uses: actions/checkout@v4
       - name: Deploy Web
         uses: bervProject/railway-deploy@main
+        env:
+          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
         with:
-          railway_token: ${{ secrets.RAILWAY_TOKEN }}
           service: web
 
   smoke-test:
