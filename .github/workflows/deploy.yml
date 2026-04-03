@@ -40,7 +40,6 @@ jobs:
         run: |
           railway up \
             --service api \
-            --project 4d88db31-8b7c-4eb3-bd17-352f69c5a66f \
             --environment production \
             --detach \
             --ci
@@ -59,7 +58,6 @@ jobs:
         run: |
           railway up \
             --service web \
-            --project 4d88db31-8b7c-4eb3-bd17-352f69c5a66f \
             --environment production \
             --detach \
             --ci
