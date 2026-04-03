@@ -36,6 +36,8 @@ jobs:
         uses: bervProject/railway-deploy@main
         env:
           RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+          # Required for CI so `railway up` targets the linked project without `railway link`
+          RAILWAY_PROJECT_ID: 4d88db31-8b7c-4eb3-bd17-352f69c5a66f
         with:
           service: api
 
@@ -49,6 +51,7 @@ jobs:
         uses: bervProject/railway-deploy@main
         env:
           RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+          RAILWAY_PROJECT_ID: 4d88db31-8b7c-4eb3-bd17-352f69c5a66f
         with:
           service: web
 
