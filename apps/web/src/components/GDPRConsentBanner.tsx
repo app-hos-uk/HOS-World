@@ -52,7 +52,7 @@ export function GDPRConsentBanner() {
       }
 
       if (!consentGiven) {
-        if (token) {
+        if (isLoggedIn) {
           try {
             const response = await apiClient.getGDPRConsent();
             if (response?.data?.gdprConsent) {

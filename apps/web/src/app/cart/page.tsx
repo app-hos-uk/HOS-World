@@ -31,6 +31,7 @@ interface Cart {
   items: CartItem[];
   discount?: number;
   shipping?: number;
+  tax?: number;
   couponCode?: string;
 }
 

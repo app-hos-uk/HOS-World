@@ -64,8 +64,16 @@ export default function SellerOrdersPage() {
   const [showDetailsModal, setShowDetailsModal] = useState(false);
   const [trackingNumber, setTrackingNumber] = useState('');
   const [updatingStatus, setUpdatingStatus] = useState(false);
+  const [deepLinkId, setDeepLinkId] = useState<string | null>(null);
 
   const menuItems = getSellerMenuItems(false);
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search);
+      setDeepLinkId(params.get('id'));
+    }
+  }, []);
 
   const fetchAllOrders = useCallback(async () => {
     try {
@@ -132,6 +140,19 @@ export default function SellerOrdersPage() {
   useEffect(() => {
     fetchOrders(statusFilter);
   }, [statusFilter, fetchOrders]);
+
+  // Auto-open order details when deep-linked via ?id= param
+  useEffect(() => {
+    if (deepLinkId && allOrders.length > 0 && !selectedOrder) {
+      const target = allOrders.find(o => o.id === deepLinkId);
+      if (target) {
+        setSelectedOrder(target);
+        setTrackingNumber(target.trackingNumber || target.trackingCode || '');
+        setShowDetailsModal(true);
+        setDeepLinkId(null);
+      }
+    }
+  }, [deepLinkId, allOrders, selectedOrder]);
 
   // Calculate stats from all orders
   const stats = useMemo(() => {

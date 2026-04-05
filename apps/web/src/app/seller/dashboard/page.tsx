@@ -275,7 +275,7 @@ export default function SellerDashboardPage() {
                     {dashboardData.recentOrders.slice(0, 10).map((order: any) => (
                       <Link
                         key={order.id}
-                        href="/seller/orders"
+                        href={`/seller/orders?id=${order.id}`}
                         className="block p-3 border rounded-lg hover:bg-gray-50 transition-colors"
                       >
                         <div className="flex items-start justify-between">
