@@ -797,7 +797,7 @@ export class OrdersService {
 
     const previousStatus = order.status;
 
-    if (updateOrderDto.status) {
+    if (updateOrderDto.status && updateOrderDto.status !== order.status) {
       this.validateStatusTransition(order.status, updateOrderDto.status);
     }
 

@@ -220,7 +220,8 @@ export default function ReturnsPage() {
   const canReturnOrder = (order: Order) => {
     // Check if order is delivered and within return window
     // This is a simplified check - actual logic should check return policies
-    return order.status === 'DELIVERED' || order.status === 'COMPLETED';
+    const s = (order.status || '').toLowerCase();
+    return s === 'delivered' || s === 'completed';
   };
 
   return (
@@ -294,7 +295,7 @@ export default function ReturnsPage() {
                         {formatPrice(order.total, order.currency || 'USD')}
                       </p>
                       <span className={`inline-block px-2 py-1 text-xs font-medium rounded-full ${
-                        order.status === 'DELIVERED' || order.status === 'COMPLETED'
+                        ['delivered', 'completed'].includes((order.status || '').toLowerCase())
                           ? 'bg-green-100 text-green-800'
                           : 'bg-gray-100 text-gray-800'
                       }`}>

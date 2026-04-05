@@ -174,7 +174,7 @@ export default function SellerOrdersPage() {
       setUpdatingStatus(true);
       await apiClient.updateOrderStatus(selectedOrder.id, newStatus, trackingNumber || undefined);
       toast.success(`Order status updated to ${newStatus}`);
-      setSelectedOrder({ ...selectedOrder, status: newStatus, trackingNumber: trackingNumber || selectedOrder.trackingNumber });
+      setSelectedOrder({ ...selectedOrder, status: newStatus.toLowerCase(), trackingNumber: trackingNumber || selectedOrder.trackingNumber });
       fetchOrders(statusFilter);
       fetchAllOrders();
     } catch (err: any) {
