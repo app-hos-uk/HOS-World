@@ -512,6 +512,9 @@ export class CartService {
       total: Number(cart.total),
       subtotal: Number(cart.subtotal),
       tax: Number(cart.tax),
+      discount: cart.discount != null ? Number(cart.discount) : 0,
+      couponCode: cart.couponCode || undefined,
+      shipping: cart.shipping != null ? Number(cart.shipping) : 0,
       currency: cart.currency,
       createdAt: cart.createdAt,
       updatedAt: cart.updatedAt,
@@ -533,6 +536,7 @@ export class CartService {
       rrp: product.rrp ? Number(product.rrp) : undefined,
       currency: product.currency,
       taxRate: Number(product.taxRate),
+      taxClassId: product.taxClassId || undefined,
       stock: product.stock,
       images:
         product.images?.map((img: any) => ({

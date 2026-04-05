@@ -84,7 +84,10 @@ function TrackOrderContent() {
     setSearched(true);
 
     try {
-      const response = await apiClient.getOrder(numberToSearch);
+      const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(numberToSearch);
+      const response = isUUID
+        ? await apiClient.getOrder(numberToSearch)
+        : await apiClient.trackOrderByNumber(numberToSearch);
       if (response?.data) {
         setOrder(response.data);
       } else {

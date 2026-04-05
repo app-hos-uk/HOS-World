@@ -302,7 +302,8 @@ export default function CartPage() {
   const subtotal = cart.items.reduce((sum: number, item: any) => sum + (item.price * item.quantity), 0);
   const discount = cart.discount || 0;
   const shipping = cart.shipping || 0;
-  const total = Math.max(0, subtotal - discount + shipping);
+  const tax = cart.tax || 0;
+  const total = Math.max(0, subtotal - discount + shipping + tax);
 
   return (
     <RouteGuard allowedRoles={['CUSTOMER', 'SELLER', 'B2C_SELLER', 'WHOLESALER', 'ADMIN', 'INFLUENCER']}>
@@ -489,6 +490,12 @@ export default function CartPage() {
                   <div className="flex justify-between">
                     <span className="text-gray-600">Shipping</span>
                     <span className="font-medium">{formatPrice(shipping)}</span>
+                  </div>
+                )}
+                {tax > 0 && (
+                  <div className="flex justify-between">
+                    <span className="text-gray-600">Tax</span>
+                    <span className="font-medium">{formatPrice(tax)}</span>
                   </div>
                 )}
               </div>

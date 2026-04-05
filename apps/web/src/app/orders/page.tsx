@@ -65,15 +65,28 @@ export default function OrdersPage() {
   const fetchOrders = async () => {
     try {
       setLoading(true);
-      const response = await apiClient.getOrders();
-      if (response?.data) {
-        const orderData = Array.isArray(response.data) ? response.data : [];
-        // Sort by most recent first
-        orderData.sort((a: Order, b: Order) => 
-          new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-        );
-        setOrders(orderData);
+      const allOrders: Order[] = [];
+      let page = 1;
+      const limit = 50;
+      let hasMore = true;
+
+      while (hasMore) {
+        const response = await apiClient.getOrders({ page, limit });
+        if (response?.data) {
+          const pageData = Array.isArray(response.data) ? response.data : [];
+          allOrders.push(...pageData);
+          const pagination = (response as any).pagination;
+          hasMore = pagination ? page < pagination.totalPages : pageData.length === limit;
+          page++;
+        } else {
+          hasMore = false;
+        }
       }
+
+      allOrders.sort((a: Order, b: Order) => 
+        new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+      );
+      setOrders(allOrders);
     } catch (err: any) {
       console.error('Error fetching orders:', err);
       toast.error(err.message || 'Failed to load orders');

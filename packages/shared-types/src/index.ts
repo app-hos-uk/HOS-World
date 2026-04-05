@@ -140,6 +140,7 @@ export interface Product {
   rrp?: number;
   currency: string;
   taxRate: number;
+  taxClassId?: string;
   stock: number;
   images: ProductImage[];
   variations?: ProductVariation[];
@@ -181,6 +182,9 @@ export interface Cart {
   total: number;
   subtotal: number;
   tax: number;
+  discount?: number;
+  couponCode?: string;
+  shipping?: number;
   currency: string;
   createdAt: Date;
   updatedAt: Date;

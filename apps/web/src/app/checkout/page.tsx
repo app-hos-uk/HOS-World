@@ -50,11 +50,11 @@ export default function CheckoutPage() {
   }, [shippingAddressId, cart]);
 
   useEffect(() => {
-    if (cart && shippingCost > 0) {
+    if (cart && shippingAddressId) {
       calculateTax();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [cart, shippingCost]);
+  }, [cart, shippingCost, shippingAddressId]);
 
   const loadCheckoutData = async () => {
     try {

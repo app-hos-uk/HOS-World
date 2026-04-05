@@ -144,7 +144,7 @@ export default function ReturnDetailPage() {
                 </div>
               </dl>
 
-              {returnRequest.status === 'PENDING' && (
+              {(returnRequest.status || '').toLowerCase() === 'pending' && (
                 <div className="mt-6 pt-6 border-t border-gray-200">
                   <button
                     onClick={handleCancelReturn}

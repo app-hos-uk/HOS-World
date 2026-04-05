@@ -138,16 +138,16 @@ function PaymentContent() {
               <span>Subtotal</span>
               <span>{formatPrice(order.subtotal || 0, order.currency || 'USD')}</span>
             </div>
-            {order.discount > 0 && (
+            {(order.discount || order.discountAmount) > 0 && (
               <div className="flex justify-between mb-2 text-green-600">
                 <span>Discount</span>
-                <span>-{formatPrice(order.discount, order.currency || 'USD')}</span>
+                <span>-{formatPrice(order.discount || order.discountAmount, order.currency || 'USD')}</span>
               </div>
             )}
-            {order.shipping > 0 && (
+            {(order.shipping || order.shippingAmount) > 0 && (
               <div className="flex justify-between mb-2">
                 <span>Shipping</span>
-                <span>{formatPrice(order.shipping, order.currency || 'USD')}</span>
+                <span>{formatPrice(order.shipping || order.shippingAmount, order.currency || 'USD')}</span>
               </div>
             )}
             {order.tax > 0 && (

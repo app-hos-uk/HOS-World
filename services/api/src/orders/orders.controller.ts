@@ -83,6 +83,27 @@ export class OrdersController {
     };
   }
 
+  @Get('track/:orderNumber')
+  @ApiOperation({
+    summary: 'Track order by order number',
+    description:
+      'Retrieves an order by its human-readable order number (e.g. HOS-...) for tracking purposes.',
+  })
+  @ApiParam({ name: 'orderNumber', description: 'Human-readable order number', type: String })
+  @SwaggerApiResponse({ status: 200, description: 'Order retrieved successfully' })
+  @SwaggerApiResponse({ status: 401, description: 'Unauthorized' })
+  @SwaggerApiResponse({ status: 404, description: 'Order not found' })
+  async findByOrderNumber(
+    @Request() req: any,
+    @Param('orderNumber') orderNumber: string,
+  ): Promise<ApiResponse<Order>> {
+    const order = await this.ordersService.findByOrderNumber(orderNumber, req.user.id, req.user.role);
+    return {
+      data: order,
+      message: 'Order retrieved successfully',
+    };
+  }
+
   @Get(':id')
   @ApiOperation({
     summary: 'Get order by ID',

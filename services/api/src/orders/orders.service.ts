@@ -683,6 +683,17 @@ export class OrdersService {
     };
   }
 
+  async findByOrderNumber(orderNumber: string, userId: string, role: string): Promise<Order> {
+    const order = await this.prisma.order.findFirst({
+      where: { orderNumber },
+      select: { id: true },
+    });
+    if (!order) {
+      throw new NotFoundException('Order not found');
+    }
+    return this.findOne(order.id, userId, role);
+  }
+
   async findOne(id: string, userId: string, role: string): Promise<Order> {
     const order = await this.prisma.order.findUnique({
       where: { id },
@@ -796,15 +807,16 @@ export class OrdersService {
     }
 
     const previousStatus = order.status;
+    const normalizedStatus = updateOrderDto.status?.toUpperCase();
 
-    if (updateOrderDto.status && updateOrderDto.status !== order.status) {
-      this.validateStatusTransition(order.status, updateOrderDto.status);
+    if (normalizedStatus && normalizedStatus !== order.status) {
+      this.validateStatusTransition(order.status, normalizedStatus);
     }
 
     const updated = await this.prisma.order.update({
       where: { id },
       data: {
-        status: updateOrderDto.status as PrismaOrderStatus,
+        status: (normalizedStatus || undefined) as PrismaOrderStatus,
         paymentStatus: updateOrderDto.paymentStatus as PrismaPaymentStatus,
         trackingCode: updateOrderDto.trackingCode,
       },
@@ -837,11 +849,11 @@ export class OrdersService {
     });
 
     // Auto-create internal note on status change for audit trail
-    if (updateOrderDto.status && updateOrderDto.status !== previousStatus) {
+    if (normalizedStatus && normalizedStatus !== previousStatus) {
       await this.prisma.orderNote.create({
         data: {
           orderId: id,
-          content: `Status changed from ${previousStatus} to ${updateOrderDto.status}`,
+          content: `Status changed from ${previousStatus} to ${normalizedStatus}`,
           internal: true,
           createdBy: userId,
         },
@@ -853,15 +865,15 @@ export class OrdersService {
         const childOrders = (order as any).childOrders || [];
         for (const child of childOrders) {
           try {
-            this.validateStatusTransition(child.status || previousStatus, updateOrderDto.status);
+            this.validateStatusTransition(child.status || previousStatus, normalizedStatus);
             await this.prisma.order.update({
               where: { id: child.id },
-              data: { status: updateOrderDto.status as PrismaOrderStatus },
+              data: { status: normalizedStatus as PrismaOrderStatus },
             });
             await this.prisma.orderNote.create({
               data: {
                 orderId: child.id,
-                content: `Status cascaded from parent: ${previousStatus} → ${updateOrderDto.status}`,
+                content: `Status cascaded from parent: ${previousStatus} → ${normalizedStatus}`,
                 internal: true,
                 createdBy: userId,
               },

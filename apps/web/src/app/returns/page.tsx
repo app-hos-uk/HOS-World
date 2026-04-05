@@ -207,21 +207,19 @@ export default function ReturnsPage() {
 
   const getStatusColor = (status: string) => {
     const colors: Record<string, string> = {
-      PENDING: 'bg-yellow-100 text-yellow-800',
-      APPROVED: 'bg-green-100 text-green-800',
-      REJECTED: 'bg-red-100 text-red-800',
-      PROCESSING: 'bg-blue-100 text-blue-800',
-      COMPLETED: 'bg-purple-100 text-purple-800',
-      REFUNDED: 'bg-green-100 text-green-800',
+      pending: 'bg-yellow-100 text-yellow-800',
+      approved: 'bg-green-100 text-green-800',
+      rejected: 'bg-red-100 text-red-800',
+      processing: 'bg-blue-100 text-blue-800',
+      completed: 'bg-purple-100 text-purple-800',
+      refunded: 'bg-green-100 text-green-800',
     };
-    return colors[status] || 'bg-gray-100 text-gray-800';
+    return colors[(status || '').toLowerCase()] || 'bg-gray-100 text-gray-800';
   };
 
   const canReturnOrder = (order: Order) => {
-    // Check if order is delivered and within return window
-    // This is a simplified check - actual logic should check return policies
     const s = (order.status || '').toLowerCase();
-    return s === 'delivered' || s === 'completed';
+    return s === 'delivered';
   };
 
   return (
@@ -295,7 +293,7 @@ export default function ReturnsPage() {
                         {formatPrice(order.total, order.currency || 'USD')}
                       </p>
                       <span className={`inline-block px-2 py-1 text-xs font-medium rounded-full ${
-                        ['delivered', 'completed'].includes((order.status || '').toLowerCase())
+                        (order.status || '').toLowerCase() === 'delivered'
                           ? 'bg-green-100 text-green-800'
                           : 'bg-gray-100 text-gray-800'
                       }`}>

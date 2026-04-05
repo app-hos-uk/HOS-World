@@ -117,6 +117,7 @@ export default function OrderDetailPage() {
       case 'CONFIRMED':
       case 'PROCESSING':
         return 'bg-blue-100 text-blue-800';
+      case 'FULFILLED':
       case 'SHIPPED':
         return 'bg-purple-100 text-purple-800';
       case 'DELIVERED':

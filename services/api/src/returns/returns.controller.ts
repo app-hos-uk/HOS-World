@@ -94,6 +94,27 @@ export class ReturnsController {
     };
   }
 
+  @Put(':id/cancel')
+  @ApiOperation({
+    summary: 'Cancel return request',
+    description: 'Allows the customer who created the return request to cancel it while it is still pending.',
+  })
+  @ApiParam({ name: 'id', description: 'Return request UUID', type: String })
+  @SwaggerApiResponse({ status: 200, description: 'Return request cancelled successfully' })
+  @SwaggerApiResponse({ status: 400, description: 'Return request cannot be cancelled' })
+  @SwaggerApiResponse({ status: 403, description: 'Not your return request' })
+  @SwaggerApiResponse({ status: 404, description: 'Return request not found' })
+  async cancelReturn(
+    @Request() req: any,
+    @Param('id', ParseUUIDPipe) id: string,
+  ): Promise<ApiResponse<any>> {
+    const returnRequest = await this.returnsService.cancelReturn(id, req.user.id);
+    return {
+      data: returnRequest,
+      message: 'Return request cancelled successfully',
+    };
+  }
+
   @UseGuards(RolesGuard)
   @Roles('SELLER', 'B2C_SELLER', 'WHOLESALER', 'ADMIN')
   @Put(':id/status')

@@ -24,29 +24,29 @@ const featuredBanners = [
   {
     id: 1,
     title: 'New Arrivals',
-    image: '/banners/new-arrivals.svg', // Placeholder - replace with JPG (800x600px, max 200KB)
-    link: '/products?filter=new',
+    image: '/banners/new-arrivals.svg',
+    link: '/products?sort=newest',
     badge: 'New',
   },
   {
     id: 2,
     title: 'Best Sellers',
-    image: '/banners/best-sellers.svg', // Placeholder - replace with JPG (800x600px, max 200KB)
-    link: '/products?filter=bestsellers',
+    image: '/banners/best-sellers.svg',
+    link: '/products?sort=popular',
     badge: 'Hot',
   },
   {
     id: 3,
     title: 'Limited Edition',
-    image: '/banners/limited-edition.svg', // Placeholder - replace with JPG (800x600px, max 200KB)
-    link: '/products?filter=limited',
+    image: '/banners/limited-edition.svg',
+    link: '/products?sort=newest',
     badge: 'Limited',
   },
   {
     id: 4,
     title: 'Sale Items',
-    image: '/banners/sale.svg', // Placeholder - replace with JPG (800x600px, max 200KB)
-    link: '/products?filter=sale',
+    image: '/banners/sale.svg',
+    link: '/products?sort=price_asc',
     badge: 'Sale',
   },
 ];

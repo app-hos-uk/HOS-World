@@ -169,7 +169,7 @@ function AcceptInvitationForm() {
         } else {
           toast.success('Account created! Redirecting to login...');
           setTimeout(() => {
-            router.replace('/auth/login');
+            router.replace('/login');
           }, 1500);
         }
       } else {

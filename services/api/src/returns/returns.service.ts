@@ -291,6 +291,31 @@ export class ReturnsService {
     return this.mapToReturnType(updated);
   }
 
+  async cancelReturn(id: string, userId: string): Promise<ReturnRequest> {
+    const returnRequest = await this.prisma.returnRequest.findUnique({
+      where: { id },
+    });
+
+    if (!returnRequest) {
+      throw new NotFoundException('Return request not found');
+    }
+
+    if (returnRequest.userId !== userId) {
+      throw new ForbiddenException('You do not have permission to cancel this return request');
+    }
+
+    if (returnRequest.status !== 'PENDING') {
+      throw new BadRequestException('Only pending return requests can be cancelled');
+    }
+
+    const updated = await this.prisma.returnRequest.update({
+      where: { id },
+      data: { status: 'CANCELLED' },
+    });
+
+    return this.mapToReturnType(updated);
+  }
+
   private mapToReturnType(returnRequest: any): ReturnRequest {
     return {
       id: returnRequest.id,

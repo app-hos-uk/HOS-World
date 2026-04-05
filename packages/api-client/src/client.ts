@@ -417,6 +417,10 @@ export class ApiClient {
     return this.request<ApiResponse<Order>>(`/orders/${id}`);
   }
 
+  async trackOrderByNumber(orderNumber: string): Promise<ApiResponse<Order>> {
+    return this.request<ApiResponse<Order>>(`/orders/track/${encodeURIComponent(orderNumber)}`);
+  }
+
   async updateOrderStatus(id: string, status: string, trackingNumber?: string): Promise<ApiResponse<Order>> {
     const body: Record<string, string> = { status: status.toUpperCase() };
     if (trackingNumber) body.trackingCode = trackingNumber;
@@ -2726,17 +2730,17 @@ export class ApiClient {
     });
   }
 
-  async validateCoupon(couponCode: string): Promise<ApiResponse<any>> {
+  async validateCoupon(code: string, cartValue: number): Promise<ApiResponse<any>> {
     return this.request<ApiResponse<any>>('/promotions/coupons/validate', {
       method: 'POST',
-      body: JSON.stringify({ couponCode }),
+      body: JSON.stringify({ code, cartValue }),
     });
   }
 
-  async applyCoupon(cartId: string, couponCode: string): Promise<ApiResponse<Cart>> {
+  async applyCoupon(cartId: string, code: string): Promise<ApiResponse<Cart>> {
     return this.request<ApiResponse<Cart>>('/promotions/coupons/apply', {
       method: 'POST',
-      body: JSON.stringify({ cartId, couponCode }),
+      body: JSON.stringify({ cartId, code }),
     });
   }
 
