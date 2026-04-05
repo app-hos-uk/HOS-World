@@ -595,7 +595,7 @@ export class OrdersService {
     opts?: { page?: number; limit?: number; status?: string },
   ): Promise<{ data: Order[]; pagination: { page: number; limit: number; total: number; totalPages: number } }> {
     const page = Math.max(1, opts?.page ?? 1);
-    const limit = Math.min(100, Math.max(1, opts?.limit ?? 20));
+    const limit = Math.min(500, Math.max(1, opts?.limit ?? 20));
     const skip = (page - 1) * limit;
 
     const where: any = {};
@@ -613,7 +613,9 @@ export class OrdersService {
       });
       if (seller) {
         where.sellerId = seller.id;
-        where.parentOrderId = { not: null };
+        // Show both multi-vendor child orders AND single-vendor parent orders
+        // Single-vendor: parentOrderId is null, sellerId is set on the parent
+        // Multi-vendor: parentOrderId is not null, sellerId is set on the child
       } else {
         return {
           data: [],
@@ -770,7 +772,7 @@ export class OrdersService {
       where: { id },
       include: {
         seller: true,
-        childOrders: { select: { id: true, sellerId: true } },
+        childOrders: { select: { id: true, sellerId: true, status: true } },
       },
     });
 
@@ -844,6 +846,33 @@ export class OrdersService {
           createdBy: userId,
         },
       });
+
+      // When admin updates a parent order's status, cascade to child orders
+      // so sellers (who see child orders) get the updated status.
+      if (role === 'ADMIN' && !order.parentOrderId) {
+        const childOrders = (order as any).childOrders || [];
+        for (const child of childOrders) {
+          try {
+            this.validateStatusTransition(child.status || previousStatus, updateOrderDto.status);
+            await this.prisma.order.update({
+              where: { id: child.id },
+              data: { status: updateOrderDto.status as PrismaOrderStatus },
+            });
+            await this.prisma.orderNote.create({
+              data: {
+                orderId: child.id,
+                content: `Status cascaded from parent: ${previousStatus} → ${updateOrderDto.status}`,
+                internal: true,
+                createdBy: userId,
+              },
+            });
+          } catch (cascadeErr) {
+            this.logger.warn(
+              `Could not cascade status to child order ${child.id}: ${cascadeErr}`,
+            );
+          }
+        }
+      }
     }
 
     return this.mapToOrderType(updated);

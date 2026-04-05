@@ -407,11 +407,20 @@ export default function SellerOrdersPage() {
                   <div className="flex gap-2 flex-wrap">
                     {selectedOrder.status === 'pending' && (
                       <button
-                        onClick={() => handleStatusUpdate('PROCESSING')}
+                        onClick={() => handleStatusUpdate('CONFIRMED')}
                         disabled={updatingStatus}
                         className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 text-sm"
                       >
                         Accept Order
+                      </button>
+                    )}
+                    {selectedOrder.status === 'confirmed' && (
+                      <button
+                        onClick={() => handleStatusUpdate('PROCESSING')}
+                        disabled={updatingStatus}
+                        className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 text-sm"
+                      >
+                        Start Processing
                       </button>
                     )}
                     {selectedOrder.status === 'processing' && (
@@ -432,7 +441,7 @@ export default function SellerOrdersPage() {
                         Mark as Delivered
                       </button>
                     )}
-                    {['pending', 'processing'].includes(selectedOrder.status) && (
+                    {['pending', 'confirmed', 'processing'].includes(selectedOrder.status) && (
                       <button
                         onClick={handleCancelOrder}
                         disabled={updatingStatus}
