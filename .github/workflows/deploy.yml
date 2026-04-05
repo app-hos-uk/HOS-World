@@ -69,11 +69,18 @@ jobs:
     if: success()
     steps:
       - name: Wait for deployment propagation
-        run: sleep 30
-      - name: API health check
+        run: sleep 60
+      - name: API health check (liveness then full)
         run: |
-          STATUS=$(curl -s -o /dev/null -w "%{http_code}" https://hos-marketplaceapi-production.up.railway.app/api/health || echo "000")
-          echo "API health check status: $STATUS"
+          BASE="https://hos-marketplaceapi-production.up.railway.app"
+          for i in 1 2 3 4 5 6 7 8 9 10; do
+            LIVE=$(curl -sS -o /dev/null -w "%{http_code}" "$BASE/api/health/live" || echo "000")
+            echo "Attempt $i — /api/health/live: $LIVE"
+            if [ "$LIVE" = "200" ]; then break; fi
+            sleep 10
+          done
+          STATUS=$(curl -sS -o /dev/null -w "%{http_code}" "$BASE/api/health" || echo "000")
+          echo "API full health check status: $STATUS"
           if [ "$STATUS" != "200" ] && [ "$STATUS" != "201" ]; then
             echo "::warning::API health check returned $STATUS"
           fi

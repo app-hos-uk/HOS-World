@@ -2,7 +2,8 @@
 builder = "DOCKERFILE"
 
 [deploy]
-healthcheckPath = "/api/health"
+# Liveness only: fast 200 once HTTP is up (no DB/Meili). Full dependency status remains at /api/health.
+healthcheckPath = "/api/health/live"
 healthcheckTimeout = 300
 restartPolicyType = "ON_FAILURE"
 restartPolicyMaxRetries = 10

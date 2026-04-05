@@ -1,5 +1,6 @@
 import { Controller, Get, Res } from '@nestjs/common';
 import { Response } from 'express';
+import { SkipThrottle } from '@nestjs/throttler';
 import { ApiTags, ApiOperation, ApiResponse as SwaggerApiResponse } from '@nestjs/swagger';
 import { ConfigService } from '@nestjs/config';
 import { AppService } from './app.service';
@@ -26,6 +27,7 @@ export class AppController {
   }
 
   @Public()
+  @SkipThrottle()
   @Get('health/live')
   @ApiOperation({
     summary: 'Liveness probe',
@@ -38,6 +40,7 @@ export class AppController {
   }
 
   @Public()
+  @SkipThrottle()
   @Get('health/ready')
   @ApiOperation({
     summary: 'Readiness probe',
@@ -53,6 +56,7 @@ export class AppController {
   }
 
   @Public()
+  @SkipThrottle()
   @Get('health')
   @ApiOperation({
     summary: 'Health check endpoint',
