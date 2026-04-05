@@ -39,7 +39,7 @@ const featuredBanners = [
     id: 3,
     title: 'Limited Edition',
     image: '/banners/limited-edition.svg',
-    link: '/products?sort=newest',
+    link: '/products?sort=rating',
     badge: 'Limited',
   },
   {

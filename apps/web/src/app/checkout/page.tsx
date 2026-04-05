@@ -199,10 +199,6 @@ export default function CheckoutPage() {
       const address = addresses.find((a: any) => a.id === shippingAddressId);
       if (!address) return;
 
-      const subtotal = cart.items.reduce((sum: number, item: any) => sum + (item.price * item.quantity), 0);
-      const discount = cart.discount || 0;
-      const totalBeforeTax = subtotal - discount + shippingCost;
-
       const taxPromises = cart.items
         .filter((item: any) => item.product?.taxClassId)
         .map((item: any) =>
