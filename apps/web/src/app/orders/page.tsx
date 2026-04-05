@@ -29,7 +29,9 @@ interface Order {
   total: number;
   subtotal?: number;
   shippingCost?: number;
+  shippingAmount?: number;
   discount?: number;
+  discountAmount?: number;
   currency?: string;
   createdAt: string | Date;
   updatedAt?: string | Date;
@@ -42,6 +44,7 @@ interface Order {
   };
   items?: OrderItem[];
   trackingNumber?: string;
+  trackingCode?: string;
   estimatedDelivery?: string | Date;
 }
 
@@ -79,44 +82,46 @@ export default function OrdersPage() {
     }
   };
 
-  // Calculate stats
+  const normalizeStatus = (s: string) => (s || '').toLowerCase();
+
   const stats = useMemo(() => {
     return {
       total: orders.length,
-      pending: orders.filter(o => o.status === 'PENDING').length,
-      processing: orders.filter(o => ['CONFIRMED', 'PROCESSING'].includes(o.status)).length,
-      shipped: orders.filter(o => o.status === 'SHIPPED').length,
-      delivered: orders.filter(o => ['DELIVERED', 'COMPLETED'].includes(o.status)).length,
-      cancelled: orders.filter(o => ['CANCELLED', 'REFUNDED'].includes(o.status)).length,
+      pending: orders.filter(o => normalizeStatus(o.status) === 'pending').length,
+      processing: orders.filter(o => ['confirmed', 'processing'].includes(normalizeStatus(o.status))).length,
+      shipped: orders.filter(o => normalizeStatus(o.status) === 'shipped').length,
+      delivered: orders.filter(o => ['delivered', 'completed'].includes(normalizeStatus(o.status))).length,
+      cancelled: orders.filter(o => ['cancelled', 'refunded'].includes(normalizeStatus(o.status))).length,
     };
   }, [orders]);
 
-  // Filter orders
   const filteredOrders = useMemo(() => {
     if (!statusFilter) return orders;
-    
+
     if (statusFilter === 'PROCESSING') {
-      return orders.filter(o => ['CONFIRMED', 'PROCESSING'].includes(o.status));
+      return orders.filter(o => ['confirmed', 'processing'].includes(normalizeStatus(o.status)));
     }
     if (statusFilter === 'DELIVERED') {
-      return orders.filter(o => ['DELIVERED', 'COMPLETED'].includes(o.status));
+      return orders.filter(o => ['delivered', 'completed'].includes(normalizeStatus(o.status)));
     }
     if (statusFilter === 'CANCELLED') {
-      return orders.filter(o => ['CANCELLED', 'REFUNDED'].includes(o.status));
+      return orders.filter(o => ['cancelled', 'refunded'].includes(normalizeStatus(o.status)));
     }
-    return orders.filter(o => o.status === statusFilter);
+    return orders.filter(o => normalizeStatus(o.status) === statusFilter.toLowerCase());
   }, [orders, statusFilter]);
 
   const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'PENDING': return 'bg-yellow-100 text-yellow-800';
-      case 'CONFIRMED':
-      case 'PROCESSING': return 'bg-blue-100 text-blue-800';
-      case 'SHIPPED': return 'bg-purple-100 text-purple-800';
-      case 'DELIVERED':
-      case 'COMPLETED': return 'bg-green-100 text-green-800';
-      case 'CANCELLED':
-      case 'REFUNDED': return 'bg-red-100 text-red-800';
+    switch (normalizeStatus(status)) {
+      case 'pending': return 'bg-yellow-100 text-yellow-800';
+      case 'accepted':
+      case 'confirmed':
+      case 'processing': return 'bg-blue-100 text-blue-800';
+      case 'fulfilled':
+      case 'shipped': return 'bg-purple-100 text-purple-800';
+      case 'delivered':
+      case 'completed': return 'bg-green-100 text-green-800';
+      case 'cancelled':
+      case 'refunded': return 'bg-red-100 text-red-800';
       default: return 'bg-gray-100 text-gray-800';
     }
   };
@@ -301,7 +306,7 @@ export default function OrdersPage() {
                     >
                       View Full Details
                     </Link>
-                    {order.trackingNumber && (
+                    {(order.trackingNumber || order.trackingCode) && (
                       <Link
                         href={`/track-order?orderNumber=${order.orderNumber || order.id}`}
                         className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors font-medium text-sm"
@@ -309,7 +314,7 @@ export default function OrdersPage() {
                         Track Order
                       </Link>
                     )}
-                    {['DELIVERED', 'COMPLETED'].includes(order.status) && (
+                    {['delivered', 'completed'].includes(normalizeStatus(order.status)) && (
                       <Link
                         href={`/returns?orderId=${order.id}`}
                         className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors font-medium text-sm"
@@ -367,11 +372,11 @@ export default function OrdersPage() {
                 </div>
 
                 {/* Tracking Info */}
-                {selectedOrder.trackingNumber && (
+                {(selectedOrder.trackingNumber || selectedOrder.trackingCode) && (
                   <div className="bg-purple-50 rounded-lg p-4">
                     <h3 className="font-medium text-gray-900 mb-2">Tracking Information</h3>
                     <p className="text-sm text-gray-700">
-                      Tracking Number: <span className="font-mono">{selectedOrder.trackingNumber}</span>
+                      Tracking Number: <span className="font-mono">{selectedOrder.trackingNumber || selectedOrder.trackingCode}</span>
                     </p>
                     {selectedOrder.estimatedDelivery && (
                       <p className="text-sm text-gray-700 mt-1">
@@ -442,18 +447,18 @@ export default function OrdersPage() {
                         <span className="text-gray-900">{formatPrice(selectedOrder.subtotal, selectedOrder.currency || 'USD')}</span>
                       </div>
                     )}
-                    {selectedOrder.shippingCost !== undefined && selectedOrder.shippingCost > 0 && (
+                    {(selectedOrder.shippingCost || selectedOrder.shippingAmount) ? (
                       <div className="flex justify-between">
                         <span className="text-gray-500">Shipping</span>
-                        <span className="text-gray-900">{formatPrice(selectedOrder.shippingCost, selectedOrder.currency || 'USD')}</span>
+                        <span className="text-gray-900">{formatPrice(selectedOrder.shippingCost || selectedOrder.shippingAmount || 0, selectedOrder.currency || 'USD')}</span>
                       </div>
-                    )}
-                    {selectedOrder.discount !== undefined && selectedOrder.discount > 0 && (
+                    ) : null}
+                    {(selectedOrder.discount || selectedOrder.discountAmount) ? (
                       <div className="flex justify-between text-green-600">
                         <span>Discount</span>
-                        <span>-{formatPrice(selectedOrder.discount, selectedOrder.currency || 'USD')}</span>
+                        <span>-{formatPrice(selectedOrder.discount || selectedOrder.discountAmount || 0, selectedOrder.currency || 'USD')}</span>
                       </div>
-                    )}
+                    ) : null}
                     <div className="flex justify-between font-bold text-base pt-2 border-t">
                       <span className="text-gray-900">Total</span>
                       <span className="text-purple-600">{formatPrice(selectedOrder.total, selectedOrder.currency || 'USD')}</span>
@@ -469,7 +474,7 @@ export default function OrdersPage() {
                 >
                   View Full Details
                 </Link>
-                {['DELIVERED', 'COMPLETED'].includes(selectedOrder.status) && (
+                {['delivered', 'completed'].includes(normalizeStatus(selectedOrder.status)) && (
                   <Link
                     href={`/returns?orderId=${selectedOrder.id}`}
                     className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-100 text-center font-medium"

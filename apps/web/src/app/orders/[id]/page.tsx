@@ -41,7 +41,9 @@ interface Order {
   total: number;
   subtotal?: number;
   shippingCost?: number;
+  shippingAmount?: number;
   discount?: number;
+  discountAmount?: number;
   tax?: number;
   currency?: string;
   createdAt: string | Date;
@@ -67,6 +69,7 @@ interface Order {
   };
   items?: OrderItem[];
   trackingNumber?: string;
+  trackingCode?: string;
   estimatedDelivery?: string | Date;
   notes?: OrderNote[];
 }
@@ -265,7 +268,7 @@ export default function OrderDetailPage() {
                             <p className="font-semibold text-gray-900">
                               {formatPrice(item.price * item.quantity, order.currency || 'USD')}
                             </p>
-                            {['DELIVERED', 'COMPLETED'].includes(order.status) && (
+                            {['DELIVERED', 'COMPLETED'].includes(order.status.toUpperCase()) && (
                               <Link
                                 href={`/products/${item.productId}`}
                                 className="text-sm text-purple-600 hover:text-purple-700 mt-2 inline-block"
@@ -282,12 +285,12 @@ export default function OrderDetailPage() {
               </div>
 
               {/* Tracking Information */}
-              {order.trackingNumber && (
+              {(order.trackingNumber || order.trackingCode) && (
                 <div className="bg-white rounded-lg shadow border border-gray-200 p-4 sm:p-6">
                   <h2 className="text-lg font-semibold text-gray-900 mb-4">Tracking Information</h2>
                   <div className="bg-purple-50 rounded-lg p-4">
                     <p className="text-sm text-gray-600 mb-1">Tracking Number</p>
-                    <p className="font-mono text-lg font-semibold text-purple-900">{order.trackingNumber}</p>
+                    <p className="font-mono text-lg font-semibold text-purple-900">{order.trackingNumber || order.trackingCode}</p>
                     {order.estimatedDelivery && (
                       <>
                         <p className="text-sm text-gray-600 mt-3 mb-1">Estimated Delivery</p>
@@ -340,24 +343,24 @@ export default function OrderDetailPage() {
                       <span className="text-gray-900">{formatPrice(order.subtotal, order.currency || 'USD')}</span>
                     </div>
                   )}
-                  {order.shippingCost !== undefined && order.shippingCost > 0 && (
+                  {(order.shippingCost || order.shippingAmount) ? (
                     <div className="flex justify-between text-sm">
                       <span className="text-gray-600">Shipping</span>
-                      <span className="text-gray-900">{formatPrice(order.shippingCost, order.currency || 'USD')}</span>
+                      <span className="text-gray-900">{formatPrice(order.shippingCost || order.shippingAmount || 0, order.currency || 'USD')}</span>
                     </div>
-                  )}
+                  ) : null}
                   {order.tax !== undefined && order.tax > 0 && (
                     <div className="flex justify-between text-sm">
                       <span className="text-gray-600">Tax</span>
                       <span className="text-gray-900">{formatPrice(order.tax, order.currency || 'USD')}</span>
                     </div>
                   )}
-                  {order.discount !== undefined && order.discount > 0 && (
+                  {(order.discount || order.discountAmount) ? (
                     <div className="flex justify-between text-sm text-green-600">
                       <span>Discount</span>
-                      <span>-{formatPrice(order.discount, order.currency || 'USD')}</span>
+                      <span>-{formatPrice(order.discount || order.discountAmount || 0, order.currency || 'USD')}</span>
                     </div>
-                  )}
+                  ) : null}
                   <div className="flex justify-between font-bold text-base pt-3 border-t">
                     <span className="text-gray-900">Total</span>
                     <span className="text-purple-600">{formatPrice(order.total, order.currency || 'USD')}</span>
@@ -422,7 +425,7 @@ export default function OrderDetailPage() {
               <div className="bg-white rounded-lg shadow border border-gray-200 p-4 sm:p-6">
                 <h2 className="text-lg font-semibold text-gray-900 mb-4">Actions</h2>
                 <div className="space-y-3">
-                  {order.trackingNumber && (
+                  {(order.trackingNumber || order.trackingCode) && (
                     <Link
                       href={`/track-order?orderNumber=${order.orderNumber || order.id}`}
                       className="block w-full px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 text-center font-medium transition-colors"

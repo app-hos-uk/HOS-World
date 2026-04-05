@@ -875,7 +875,7 @@ export class OrdersService {
       }
     }
 
-    return this.mapToOrderType(updated);
+    return this.mapToOrderType(updated, false, role);
   }
 
   async addNote(
@@ -1095,55 +1095,59 @@ export class OrdersService {
     }
 
     const cancelledOrder = await this.prisma.$transaction(async (tx) => {
-      // Restore stock for all order items (Product stock + VendorProduct stock)
-      for (const item of order.items) {
-        await tx.product.update({
-          where: { id: item.productId },
-          data: { stock: { increment: item.quantity } },
-        });
+      const childOrders = (order as any).childOrders || [];
+      const isMultiVendor = childOrders.length > 0;
 
-        if (order.sellerId) {
-          const vp = await tx.vendorProduct.findFirst({
-            where: { productId: item.productId, sellerId: order.sellerId },
-          });
-          if (vp) {
-            await tx.vendorProduct.update({
-              where: { id: vp.id },
-              data: { vendorStock: { increment: item.quantity } },
+      if (isMultiVendor) {
+        // Multi-vendor: restore stock from child orders only (parent items are duplicates)
+        for (const child of childOrders) {
+          if (child.status !== 'CANCELLED' && child.status !== 'REFUNDED') {
+            for (const childItem of child.items) {
+              await tx.product.update({
+                where: { id: childItem.productId },
+                data: { stock: { increment: childItem.quantity } },
+              });
+
+              if (child.sellerId) {
+                const vp = await tx.vendorProduct.findFirst({
+                  where: { productId: childItem.productId, sellerId: child.sellerId },
+                });
+                if (vp) {
+                  await tx.vendorProduct.update({
+                    where: { id: vp.id },
+                    data: { vendorStock: { increment: childItem.quantity } },
+                  });
+                }
+              }
+            }
+            await tx.order.update({
+              where: { id: child.id },
+              data: {
+                status: 'CANCELLED',
+                paymentStatus: child.paymentStatus === 'PAID' ? 'REFUNDED' : child.paymentStatus,
+              },
             });
           }
         }
-      }
+      } else {
+        // Single-vendor or no children: restore stock from parent items
+        for (const item of order.items) {
+          await tx.product.update({
+            where: { id: item.productId },
+            data: { stock: { increment: item.quantity } },
+          });
 
-      // Also cancel all child orders and restore their stock
-      const childOrders = (order as any).childOrders || [];
-      for (const child of childOrders) {
-        if (child.status !== 'CANCELLED' && child.status !== 'REFUNDED') {
-          for (const childItem of child.items) {
-            await tx.product.update({
-              where: { id: childItem.productId },
-              data: { stock: { increment: childItem.quantity } },
+          if (order.sellerId) {
+            const vp = await tx.vendorProduct.findFirst({
+              where: { productId: item.productId, sellerId: order.sellerId },
             });
-
-            if (child.sellerId) {
-              const vp = await tx.vendorProduct.findFirst({
-                where: { productId: childItem.productId, sellerId: child.sellerId },
+            if (vp) {
+              await tx.vendorProduct.update({
+                where: { id: vp.id },
+                data: { vendorStock: { increment: item.quantity } },
               });
-              if (vp) {
-                await tx.vendorProduct.update({
-                  where: { id: vp.id },
-                  data: { vendorStock: { increment: childItem.quantity } },
-                });
-              }
             }
           }
-          await tx.order.update({
-            where: { id: child.id },
-            data: {
-              status: 'CANCELLED',
-              paymentStatus: child.paymentStatus === 'PAID' ? 'REFUNDED' : child.paymentStatus,
-            },
-          });
         }
       }
 

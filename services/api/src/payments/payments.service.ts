@@ -278,6 +278,15 @@ export class PaymentsService {
         },
       });
 
+      // Cascade paymentStatus and status to child orders (multi-vendor)
+      await tx.order.updateMany({
+        where: { parentOrderId: order.id },
+        data: {
+          paymentStatus: 'PAID',
+          status: newStatus,
+        },
+      });
+
       return true;
     });
 

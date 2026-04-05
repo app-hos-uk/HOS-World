@@ -25,6 +25,7 @@ interface Order {
   currency?: string;
   createdAt: string | Date;
   trackingNumber?: string;
+  trackingCode?: string;
   estimatedDelivery?: string | Date;
   shippingAddress?: {
     street?: string;
@@ -98,9 +99,9 @@ function TrackOrderContent() {
   };
 
   const getStatusIndex = (status: string) => {
-    const index = ORDER_STATUSES.findIndex(s => s.key === status);
-    // Handle completed status
-    if (status === 'COMPLETED') return ORDER_STATUSES.length - 1;
+    const upper = (status || '').toUpperCase();
+    const index = ORDER_STATUSES.findIndex(s => s.key === upper);
+    if (upper === 'COMPLETED' || upper === 'FULFILLED') return ORDER_STATUSES.length - 1;
     return index >= 0 ? index : 0;
   };
 
@@ -218,16 +219,16 @@ function TrackOrderContent() {
               <h3 className="font-semibold text-gray-900 mb-6">Order Progress</h3>
               
               {/* Handle cancelled/refunded status */}
-              {['CANCELLED', 'REFUNDED'].includes(order.status) ? (
+              {['cancelled', 'refunded'].includes((order.status || '').toLowerCase()) ? (
                 <div className="text-center py-8">
                   <div className="text-6xl mb-4">
-                    {order.status === 'CANCELLED' ? '❌' : '💸'}
+                    {order.status.toLowerCase() === 'cancelled' ? '❌' : '💸'}
                   </div>
                   <h4 className="text-xl font-bold text-gray-900">
-                    Order {order.status === 'CANCELLED' ? 'Cancelled' : 'Refunded'}
+                    Order {order.status.toLowerCase() === 'cancelled' ? 'Cancelled' : 'Refunded'}
                   </h4>
                   <p className="text-gray-600 mt-2">
-                    {order.status === 'CANCELLED' 
+                    {order.status.toLowerCase() === 'cancelled'
                       ? 'This order has been cancelled.'
                       : 'This order has been refunded.'}
                   </p>
@@ -271,16 +272,16 @@ function TrackOrderContent() {
             </div>
 
             {/* Tracking Number */}
-            {order.trackingNumber && (
+            {(order.trackingNumber || order.trackingCode) && (
               <div className="bg-purple-50 rounded-lg shadow p-6">
                 <div className="flex items-center justify-between flex-wrap gap-4">
                   <div>
                     <h3 className="font-semibold text-gray-900">Tracking Number</h3>
-                    <p className="font-mono text-purple-600 mt-1">{order.trackingNumber}</p>
+                    <p className="font-mono text-purple-600 mt-1">{order.trackingNumber || order.trackingCode}</p>
                   </div>
                   <button
                     onClick={() => {
-                      navigator.clipboard.writeText(order.trackingNumber!);
+                      navigator.clipboard.writeText((order.trackingNumber || order.trackingCode)!);
                       toast.success('Tracking number copied!');
                     }}
                     className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors font-medium text-sm"

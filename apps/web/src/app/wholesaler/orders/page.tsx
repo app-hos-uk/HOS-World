@@ -6,7 +6,6 @@ import { DashboardLayout } from '@/components/DashboardLayout';
 import { apiClient } from '@/lib/api';
 import { getSellerMenuItems } from '@/lib/sellerMenu';
 import { useCurrency } from '@/contexts/CurrencyContext';
-import Link from 'next/link';
 
 export default function WholesalerOrdersPage() {
   const { formatPrice } = useCurrency();
@@ -54,6 +53,7 @@ export default function WholesalerOrdersPage() {
             >
               <option value="">All Status</option>
               <option value="PENDING">Pending</option>
+              <option value="CONFIRMED">Confirmed</option>
               <option value="PROCESSING">Processing</option>
               <option value="SHIPPED">Shipped</option>
               <option value="DELIVERED">Delivered</option>
@@ -128,12 +128,16 @@ export default function WholesalerOrdersPage() {
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
                           <span
-                            className={`px-2 py-1 text-xs font-medium rounded ${
-                              order.status === 'DELIVERED'
-                                ? 'bg-green-100 text-green-800'
-                                : order.status === 'CANCELLED'
-                                  ? 'bg-red-100 text-red-800'
-                                  : 'bg-blue-100 text-blue-800'
+                            className={`px-2 py-1 text-xs font-medium rounded-full ${
+                              (() => {
+                                const s = (order.status || '').toLowerCase();
+                                if (s === 'pending') return 'bg-yellow-100 text-yellow-800';
+                                if (['confirmed', 'processing', 'accepted'].includes(s)) return 'bg-blue-100 text-blue-800';
+                                if (['fulfilled', 'shipped'].includes(s)) return 'bg-purple-100 text-purple-800';
+                                if (s === 'delivered') return 'bg-green-100 text-green-800';
+                                if (['cancelled', 'refunded'].includes(s)) return 'bg-red-100 text-red-800';
+                                return 'bg-gray-100 text-gray-800';
+                              })()
                             }`}
                           >
                             {order.status}

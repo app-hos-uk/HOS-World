@@ -155,7 +155,7 @@ export class OrdersController {
 
   @Post(':id/accept')
   @UseGuards(RolesGuard)
-  @Roles('SELLER', 'B2C_SELLER')
+  @Roles('SELLER', 'B2C_SELLER', 'WHOLESALER')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
     summary: 'Accept a vendor order',
@@ -175,7 +175,7 @@ export class OrdersController {
 
   @Post(':id/reject')
   @UseGuards(RolesGuard)
-  @Roles('SELLER', 'B2C_SELLER')
+  @Roles('SELLER', 'B2C_SELLER', 'WHOLESALER')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
     summary: 'Reject a vendor order',

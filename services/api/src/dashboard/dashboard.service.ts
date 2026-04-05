@@ -640,9 +640,10 @@ export class DashboardService {
       totalUsers,
       submissionsByStatus,
       ordersByStatus,
+      revenueResult,
     ] = await Promise.all([
       this.prisma.product.count(),
-      this.prisma.order.count(),
+      this.prisma.order.count({ where: { parentOrderId: null } }),
       this.prisma.productSubmission.count(),
       this.prisma.seller.count(),
       this.prisma.customer.count(),
@@ -653,9 +654,19 @@ export class DashboardService {
       }),
       this.prisma.order.groupBy({
         by: ['status'],
+        where: { parentOrderId: null },
         _count: true,
       }),
+      this.prisma.order.aggregate({
+        where: {
+          parentOrderId: null,
+          status: { notIn: ['CANCELLED', 'REFUNDED'] },
+        },
+        _sum: { total: true },
+      }),
     ]);
+
+    const totalRevenue = Number(revenueResult._sum?.total || 0);
 
     const recentActivity = await this.prisma.productSubmission.findMany({
       orderBy: { updatedAt: 'desc' },
@@ -677,6 +688,7 @@ export class DashboardService {
         totalSellers,
         totalCustomers,
         totalUsers,
+        totalRevenue,
       },
       submissionsByStatus,
       ordersByStatus,
