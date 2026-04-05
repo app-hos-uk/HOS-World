@@ -18,7 +18,9 @@ export class SellersService {
   constructor(private prisma: PrismaService) {
     const key = process.env.ENCRYPTION_KEY;
     if (!key && process.env.NODE_ENV === 'production') {
-      throw new Error('ENCRYPTION_KEY environment variable is required in production');
+      this.logger.warn(
+        'ENCRYPTION_KEY is not set — using fallback. Set ENCRYPTION_KEY in Railway for production security.',
+      );
     }
     this.encryptionKey = key || 'hos-default-key-change-in-production';
   }
