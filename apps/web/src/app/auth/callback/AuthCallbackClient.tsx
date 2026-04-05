@@ -10,24 +10,25 @@ export function AuthCallbackClient() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    const token = searchParams.get('token');
-    const refreshToken = searchParams.get('refreshToken');
+    // OAuth flow: tokens are now set as HttpOnly cookies by the backend redirect.
+    // Legacy flow: tokens may still arrive as query params for backward compat.
+    const urlToken = searchParams.get('token');
+    const urlRefreshToken = searchParams.get('refreshToken');
 
-    if (!token) {
-      setError('Missing token from OAuth callback.');
-      return;
-    }
-
-    try {
-      localStorage.setItem('auth_token', token);
-      if (refreshToken) {
-        localStorage.setItem('refresh_token', refreshToken);
+    if (urlToken) {
+      // Legacy path: tokens in URL — store them and clean up the URL
+      try {
+        localStorage.setItem('auth_token', urlToken);
+        if (urlRefreshToken) {
+          localStorage.setItem('refresh_token', urlRefreshToken);
+        }
+        window.history.replaceState({}, '', window.location.pathname);
+      } catch {
+        // Cookies are set by backend anyway, continue
       }
-      markLoginSuccess();
-    } catch (e) {
-      setError('Failed to persist login session.');
-      return;
     }
+
+    markLoginSuccess();
 
     (async () => {
       try {
@@ -79,5 +80,3 @@ export function AuthCallbackClient() {
     </div>
   );
 }
-
-

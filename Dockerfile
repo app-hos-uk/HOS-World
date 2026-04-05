@@ -22,7 +22,7 @@ COPY packages/cms-client/package.json ./packages/cms-client/
 COPY packages/events/package.json ./packages/events/
 COPY packages/observability/package.json ./packages/observability/
 
-RUN pnpm install --no-frozen-lockfile
+RUN pnpm install --frozen-lockfile || pnpm install --no-frozen-lockfile
 
 # ── Layer 3: Source code + build ──
 COPY packages ./packages
@@ -45,6 +45,10 @@ RUN apt-get purge -y python3 make g++ && apt-get autoremove -y \
     && rm -rf /app/services/api/test 2>/dev/null || true \
     && pnpm store prune 2>/dev/null || true
 
+RUN addgroup --system --gid 1001 nodejs && adduser --system --uid 1001 appuser
+RUN chown -R appuser:nodejs /app
+
 WORKDIR /app/services/api
+USER appuser
 EXPOSE 3001
 CMD ["sh", "-c", "npx prisma migrate resolve --applied 20260219100000_convert_gbp_to_usd 2>/dev/null || true; npx prisma migrate deploy || echo 'WARN: migrate deploy had issues, continuing anyway'; exec node dist/main.js"]

@@ -28,7 +28,7 @@ export class SentryExceptionFilter implements ExceptionFilter {
               message:
                 (exception.getResponse() as any)?.message || (exception.getResponse() as any),
             }
-        : { message: (exception as any)?.message || 'Internal server error' };
+        : { message: 'Internal server error' };
 
     // If Prisma/DB reports missing column (e.g. migration not run), return 503 with clearer message
     const msg = (message?.message || '').toString();

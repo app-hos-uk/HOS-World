@@ -583,16 +583,15 @@ function AdminProductsContent() {
     setDeleteLoading(true);
     setDeleteError(null);
     try {
-      const token = localStorage.getItem('auth_token');
       const apiUrl = getPublicApiBaseUrl();
       const response = await fetch(
         `${apiUrl}/admin/products/${productToDelete.id}`,
         {
           method: 'DELETE',
           headers: {
-            'Authorization': `Bearer ${token}`,
             'Content-Type': 'application/json',
           },
+          credentials: 'include',
         }
       );
       
@@ -650,11 +649,10 @@ function AdminProductsContent() {
         } else if (bulkAction === 'inactive') {
           await apiClient.updateAdminProduct(id, { status: 'INACTIVE' });
         } else if (bulkAction === 'delete') {
-          const token = localStorage.getItem('auth_token');
           const apiUrl = getPublicApiBaseUrl();
           await fetch(`${apiUrl}/admin/products/${id}`, {
             method: 'DELETE',
-            headers: { 'Authorization': `Bearer ${token}` },
+            credentials: 'include',
           });
         }
         success++;

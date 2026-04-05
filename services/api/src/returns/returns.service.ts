@@ -218,6 +218,8 @@ export class ReturnsService {
     status: string,
     refundAmount?: number,
     refundMethod?: string,
+    userId?: string,
+    role?: string,
   ): Promise<ReturnRequest> {
     const returnRequest = await this.prisma.returnRequest.findUnique({
       where: { id },
@@ -229,6 +231,16 @@ export class ReturnsService {
 
     if (!returnRequest) {
       throw new NotFoundException('Return request not found');
+    }
+
+    if (userId && role && role !== 'ADMIN') {
+      const sellerRoles = ['SELLER', 'B2C_SELLER', 'WHOLESALER'];
+      if (sellerRoles.includes(role)) {
+        const seller = await this.prisma.seller.findUnique({ where: { userId } });
+        if (!seller || returnRequest.order?.sellerId !== seller.id) {
+          throw new ForbiddenException('You do not have permission to update this return');
+        }
+      }
     }
 
     const validTransitions: Record<string, string[]> = {

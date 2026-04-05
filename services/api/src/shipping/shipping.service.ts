@@ -19,6 +19,13 @@ export class ShippingService {
 
   constructor(private prisma: PrismaService) {}
 
+  async getSellerByUserId(userId: string) {
+    return this.prisma.seller.findUnique({
+      where: { userId },
+      select: { id: true },
+    });
+  }
+
   /**
    * Create a new shipping method
    */

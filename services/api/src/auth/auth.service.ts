@@ -579,24 +579,27 @@ export class AuthService {
 
   async generateTokens(user: any): Promise<{ accessToken: string; refreshToken: string }> {
     try {
-      const payload = {
+      const basePayload = {
         sub: user.id,
         email: user.email,
         role: user.role,
         permissionRoleId: user.permissionRoleId,
       };
 
-      // Shorten access token TTL to 15 minutes for better security
       const accessTokenTTL = this.configService.get<string>('JWT_EXPIRES_IN') || '15m';
-      const accessToken = this.jwtService.sign(payload, {
-        expiresIn: accessTokenTTL,
-      });
+      const accessToken = this.jwtService.sign(
+        { ...basePayload, type: 'access' },
+        { expiresIn: accessTokenTTL },
+      );
 
-      // Generate refresh token
       const refreshTokenTTL = this.configService.get<string>('REFRESH_TOKEN_TTL') || '30d';
-      const refreshToken = this.jwtService.sign(payload, {
-        expiresIn: refreshTokenTTL,
-      });
+      const refreshSecret = this.configService.get<string>('JWT_REFRESH_SECRET')
+        || this.configService.get<string>('JWT_SECRET')
+        || 'your-secret-key';
+      const refreshToken = this.jwtService.sign(
+        { ...basePayload, type: 'refresh' },
+        { expiresIn: refreshTokenTTL, secret: refreshSecret },
+      );
 
       // Hash and store refresh token in DB
       const tokenHash = await bcrypt.hash(refreshToken, 10);
@@ -665,9 +668,9 @@ export class AuthService {
     }
   }
 
-  async validateToken(token: string): Promise<any> {
+  async validateToken(token: string, secret?: string): Promise<any> {
     try {
-      return this.jwtService.verify(token);
+      return this.jwtService.verify(token, secret ? { secret } : undefined);
     } catch (error) {
       return null;
     }
@@ -678,8 +681,10 @@ export class AuthService {
       throw new UnauthorizedException('Invalid or expired token');
     }
 
-    // Validate JWT structure first
-    const payload = await this.validateToken(refreshToken);
+    const refreshSecret = this.configService.get<string>('JWT_REFRESH_SECRET')
+      || this.configService.get<string>('JWT_SECRET')
+      || 'your-secret-key';
+    const payload = await this.validateToken(refreshToken, refreshSecret);
     if (!payload?.sub) {
       throw new UnauthorizedException('Invalid or expired token');
     }
@@ -906,12 +911,13 @@ export class AuthService {
     }
     const crypto = await import('crypto');
     const resetToken = crypto.randomBytes(32).toString('hex');
+    const resetTokenHash = crypto.createHash('sha256').update(resetToken).digest('hex');
     const resetExpiry = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours
 
     await this.prisma.user.update({
       where: { id: user.id },
       data: {
-        resetToken,
+        resetToken: resetTokenHash,
         resetTokenExpiry: resetExpiry,
       } as any,
     });
@@ -944,9 +950,11 @@ export class AuthService {
     if (!newPassword || newPassword.length < 8) {
       throw new BadRequestException('Password must be at least 8 characters');
     }
+    const crypto = await import('crypto');
+    const tokenHash = crypto.createHash('sha256').update(token).digest('hex');
     const user = await this.prisma.user.findFirst({
       where: {
-        resetToken: token,
+        resetToken: tokenHash,
         resetTokenExpiry: { gte: new Date() },
       } as any,
       orderBy: { resetTokenExpiry: 'desc' } as any,
@@ -965,6 +973,8 @@ export class AuthService {
         resetTokenExpiry: null,
       } as any,
     });
+
+    await this.revokeAllTokens(user.id);
 
     return { message: 'Password has been reset successfully' };
   }
@@ -993,7 +1003,9 @@ export class AuthService {
       data: { password: hashedPassword },
     });
 
-    return { message: 'Password changed successfully' };
+    await this.revokeAllTokens(userId);
+
+    return { message: 'Password changed successfully. Please log in again.' };
   }
 
   async unlinkOAuthAccount(userId: string, provider: string): Promise<void> {

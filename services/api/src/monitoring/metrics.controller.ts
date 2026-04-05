@@ -1,18 +1,23 @@
-import { Controller, Get, Header } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse as SwaggerApiResponse } from '@nestjs/swagger';
+import { Controller, Get, Header, UseGuards } from '@nestjs/common';
+import { ApiTags, ApiOperation, ApiResponse as SwaggerApiResponse, ApiBearerAuth } from '@nestjs/swagger';
 import { MetricsService } from './metrics.service';
 import { MonitoringService } from './monitoring.service';
 import { Public } from '../common/decorators/public.decorator';
+import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
+import { RolesGuard } from '../common/guards/roles.guard';
+import { Roles } from '../common/decorators/roles.decorator';
 
 @ApiTags('monitoring')
 @Controller('metrics')
+@UseGuards(JwtAuthGuard, RolesGuard)
+@Roles('ADMIN')
+@ApiBearerAuth('JWT-auth')
 export class MetricsController {
   constructor(
     private readonly metricsService: MetricsService,
     private readonly monitoringService: MonitoringService,
   ) {}
 
-  @Public()
   @Get('prometheus')
   @ApiOperation({
     summary: 'Get Prometheus metrics',
@@ -25,7 +30,6 @@ export class MetricsController {
     return this.metricsService.getPrometheusMetrics();
   }
 
-  @Public()
   @Get('json')
   @ApiOperation({
     summary: 'Get metrics as JSON',
@@ -39,7 +43,6 @@ export class MetricsController {
     };
   }
 
-  @Public()
   @Get('health')
   @ApiOperation({
     summary: 'Get monitoring health status',

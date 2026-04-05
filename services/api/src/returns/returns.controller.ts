@@ -21,6 +21,7 @@ import {
 } from '@nestjs/swagger';
 import { ReturnsService } from './returns.service';
 import { CreateReturnDto } from './dto/create-return.dto';
+import { UpdateReturnStatusDto } from './dto/update-return-status.dto';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../common/guards/roles.guard';
 import { Roles } from '../common/decorators/roles.decorator';
@@ -124,33 +125,23 @@ export class ReturnsController {
       'Updates the status of a return request. Sellers and admins can approve, reject, or process returns.',
   })
   @ApiParam({ name: 'id', description: 'Return request UUID', type: String })
-  @ApiBody({
-    description: 'Status update data',
-    schema: {
-      type: 'object',
-      properties: {
-        status: {
-          type: 'string',
-          enum: ['PENDING', 'APPROVED', 'REJECTED', 'PROCESSING', 'COMPLETED', 'REFUNDED'],
-        },
-        refundAmount: { type: 'number', description: 'Refund amount (optional)' },
-        refundMethod: { type: 'string', description: 'Refund method (optional)' },
-      },
-    },
-  })
+  @ApiBody({ type: UpdateReturnStatusDto })
   @SwaggerApiResponse({ status: 200, description: 'Return status updated successfully' })
   @SwaggerApiResponse({ status: 401, description: 'Unauthorized' })
   @SwaggerApiResponse({ status: 403, description: 'Forbidden - Seller/Admin access required' })
   @SwaggerApiResponse({ status: 404, description: 'Return request not found' })
   async updateStatus(
+    @Request() req: any,
     @Param('id', ParseUUIDPipe) id: string,
-    @Body() updateDto: { status: string; refundAmount?: number; refundMethod?: string },
+    @Body() updateDto: UpdateReturnStatusDto,
   ): Promise<ApiResponse<any>> {
     const returnRequest = await this.returnsService.updateStatus(
       id,
       updateDto.status,
       updateDto.refundAmount,
       updateDto.refundMethod,
+      req.user.id,
+      req.user.role,
     );
     return {
       data: returnRequest,

@@ -6,6 +6,7 @@ import { SentryExceptionFilter } from './common/filters/sentry-exception.filter'
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import helmet from 'helmet';
 import compression = require('compression');
+import * as cookieParser from 'cookie-parser';
 import { randomUUID } from 'crypto';
 import * as express from 'express';
 import * as Sentry from '@sentry/node';
@@ -269,6 +270,10 @@ async function bootstrap() {
       });
 
       logger.info('✅ Security headers + CSRF origin check configured', 'Bootstrap');
+
+      // Parse cookies (needed for HttpOnly auth cookies)
+      app.use(cookieParser());
+      logger.info('✅ Cookie parser enabled', 'Bootstrap');
 
       // Add response compression
       app.use(compression());

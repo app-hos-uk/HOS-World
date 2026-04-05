@@ -65,22 +65,20 @@ export const apiClient = ApiClient.create({
                           currentPath.startsWith('/fandoms/') ||
                           currentPath.startsWith('/sellers/');
       
-      // Don't redirect if we're on a public page
       if (isPublicPage) {
-        // Just clear the token silently, don't redirect
         try {
           localStorage.removeItem('auth_token');
+          document.cookie = 'is_logged_in=; path=/; max-age=0';
         } catch (e) {
           // Ignore
         }
         return;
       }
       
-      // Don't redirect if we're already on login page
       if (currentPath === '/login' || currentPath.includes('/login')) {
-        // Just clear the token, don't redirect
         try {
           localStorage.removeItem('auth_token');
+          document.cookie = 'is_logged_in=; path=/; max-age=0';
         } catch (e) {
           // Ignore
         }
@@ -94,11 +92,11 @@ export const apiClient = ApiClient.create({
         return;
       }
       
-      // Clear token and redirect to login (only for protected pages)
       try {
         localStorage.removeItem('auth_token');
         localStorage.removeItem('refresh_token');
-        // Clear login time on unauthorized
+        // Clear the non-HttpOnly session indicator cookie
+        document.cookie = 'is_logged_in=; path=/; max-age=0';
         lastLoginTime = null;
         sessionStorage.removeItem('last_login_time');
       } catch (e) {

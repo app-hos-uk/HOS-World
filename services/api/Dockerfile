@@ -11,7 +11,7 @@ COPY scripts/setup-git-hooks.mjs ./scripts/setup-git-hooks.mjs
 COPY packages ./packages
 COPY services/api ./services/api
 
-RUN pnpm install --no-frozen-lockfile \
+RUN (pnpm install --frozen-lockfile || pnpm install --no-frozen-lockfile) \
     && cd /app/packages/shared-types && pnpm build \
     && cd /app/packages/utils && pnpm build \
     && cd /app/packages/api-client && pnpm build \
@@ -21,7 +21,10 @@ RUN pnpm install --no-frozen-lockfile \
     && (pnpm build || true) \
     && test -f dist/main.js
 
+RUN addgroup --system --gid 1001 nodejs && adduser --system --uid 1001 appuser
+
 WORKDIR /app/services/api
-RUN chmod +x docker-entrypoint.sh
+RUN chmod +x docker-entrypoint.sh && chown -R appuser:nodejs /app
+USER appuser
 EXPOSE 3001
 CMD ["./docker-entrypoint.sh"]

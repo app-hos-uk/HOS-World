@@ -945,7 +945,7 @@ function SubmitProductForm() {
             {success && (
               <div className="mb-6 p-4 bg-green-100 border border-green-400 text-green-700 rounded-lg">
                 <p className="font-semibold">Product submitted successfully!</p>
-                <p className="text-sm mt-1">Redirecting to My Products…</p>
+                <p className="text-sm mt-1">Redirecting to My Submissions…</p>
               </div>
             )}
 

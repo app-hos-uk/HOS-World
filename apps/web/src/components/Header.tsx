@@ -32,7 +32,7 @@ const ROLE_QUICK_LINKS: Record<string, Array<{ title: string; href: string; icon
   WHOLESALER: [
     { title: 'Bulk Products', href: '/wholesaler/products', icon: '📦' },
     { title: 'Bulk Orders', href: '/wholesaler/orders', icon: '🛒' },
-    { title: 'Submit Product', href: '/seller/submit-product', icon: '➕' },
+    { title: 'Submit Product', href: '/wholesaler/submit-product', icon: '➕' },
   ],
   INFLUENCER: [
     { title: 'Earnings', href: '/influencer/earnings', icon: '💰' },

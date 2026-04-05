@@ -290,7 +290,7 @@ export class SellersController {
   // === Vendor Dashboard Endpoint ===
 
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles('SELLER', 'B2C_SELLER')
+  @Roles('SELLER', 'B2C_SELLER', 'WHOLESALER')
   @Get('me/dashboard')
   async getMyDashboard(@Request() req): Promise<ApiResponse<any>> {
     const result = await this.sellersService.getVendorDashboardStats(req.user.id);

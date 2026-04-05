@@ -50,9 +50,9 @@ export default function WholesalerDashboardPage() {
     };
   }, [fetchDashboardData]);
 
-  const pendingApprovals = dashboardData?.submissionsByStatus?.find(
-    (s: any) => s.status === 'SUBMITTED' || s.status === 'UNDER_REVIEW'
-  )?._count || 0;
+  const pendingApprovals = dashboardData?.submissionsByStatus
+    ?.filter((s: any) => s.status === 'SUBMITTED' || s.status === 'UNDER_REVIEW')
+    .reduce((sum: number, s: any) => sum + (typeof s._count === 'number' ? s._count : s._count?._all || 0), 0) || 0;
 
   return (
     <RouteGuard allowedRoles={['WHOLESALER', 'ADMIN']} showAccessDenied={true}>

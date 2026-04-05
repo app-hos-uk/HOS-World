@@ -1,7 +1,6 @@
 'use client';
 
 import { useState } from 'react';
-import { apiClient } from '@/lib/api';
 import { getPublicApiBaseUrl } from '@/lib/apiBaseUrl';
 
 interface SocialShareProps {
@@ -17,14 +16,9 @@ export function SocialShare({ type, itemId, itemName, itemImage }: SocialSharePr
 
   const handleShare = async (platform?: string) => {
     try {
-      const token = localStorage.getItem('auth_token');
-      
-      // Generate share URL
       const apiUrl = getPublicApiBaseUrl() || 'http://localhost:3001/api';
       const urlResponse = await fetch(`${apiUrl}/social-sharing/share-url?type=${type}&itemId=${itemId}`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
+        credentials: 'include',
       });
       const urlData = await urlResponse.json();
       const shareUrl = urlData.data.url;
@@ -38,18 +32,12 @@ export function SocialShare({ type, itemId, itemName, itemImage }: SocialSharePr
         setTimeout(() => setCopied(false), 2000);
         
         // Record share
-        const apiUrl = getPublicApiBaseUrl() || 'http://localhost:3001/api';
-        await fetch(`${apiUrl}/social-sharing/share`, {
+        const recordUrl = getPublicApiBaseUrl() || 'http://localhost:3001/api';
+        await fetch(`${recordUrl}/social-sharing/share`, {
           method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify({
-            type,
-            itemId,
-            platform: 'copy_link',
-          }),
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
+          body: JSON.stringify({ type, itemId, platform: 'copy_link' }),
         });
       } else if (platform === 'facebook') {
         window.open(
@@ -57,17 +45,11 @@ export function SocialShare({ type, itemId, itemName, itemImage }: SocialSharePr
           '_blank'
         );
         
-        await fetch('/api/social-sharing/share', {
+        await fetch(`${apiUrl}/social-sharing/share`, {
           method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify({
-            type,
-            itemId,
-            platform: 'facebook',
-          }),
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
+          body: JSON.stringify({ type, itemId, platform: 'facebook' }),
         });
       } else if (platform === 'twitter') {
         window.open(
@@ -75,17 +57,11 @@ export function SocialShare({ type, itemId, itemName, itemImage }: SocialSharePr
           '_blank'
         );
         
-        await fetch('/api/social-sharing/share', {
+        await fetch(`${apiUrl}/social-sharing/share`, {
           method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify({
-            type,
-            itemId,
-            platform: 'twitter',
-          }),
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
+          body: JSON.stringify({ type, itemId, platform: 'twitter' }),
         });
       } else if (platform === 'whatsapp') {
         window.open(
@@ -93,17 +69,11 @@ export function SocialShare({ type, itemId, itemName, itemImage }: SocialSharePr
           '_blank'
         );
         
-        await fetch('/api/social-sharing/share', {
+        await fetch(`${apiUrl}/social-sharing/share`, {
           method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify({
-            type,
-            itemId,
-            platform: 'whatsapp',
-          }),
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
+          body: JSON.stringify({ type, itemId, platform: 'whatsapp' }),
         });
       }
 

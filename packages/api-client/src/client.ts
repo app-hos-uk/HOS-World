@@ -85,7 +85,12 @@ export class ApiClient {
         const controller = new AbortController();
         const timeoutId = setTimeout(() => controller.abort(), 15000);
         try {
-          const res = await fetch(url, { ...options, headers: nextHeaders, signal: controller.signal });
+          const res = await fetch(url, {
+            ...options,
+            headers: nextHeaders,
+            signal: controller.signal,
+            credentials: 'include',
+          });
           clearTimeout(timeoutId);
           return res;
         } catch (err: any) {
@@ -184,40 +189,47 @@ export class ApiClient {
   private async tryRefreshToken(): Promise<boolean> {
     if (typeof window === 'undefined') return false;
     if (!this.baseUrl) return false;
-    
-    try {
-      const existing = localStorage.getItem('refresh_token');
-      if (!existing) return false;
 
-      if (this.refreshInFlight) return await this.refreshInFlight;
+    // Check for refresh token in localStorage (legacy) or cookie (is_logged_in)
+    const hasLegacyRefresh = !!localStorage.getItem('refresh_token');
+    const hasCookieSession = document.cookie.includes('is_logged_in=true');
+    if (!hasLegacyRefresh && !hasCookieSession) return false;
 
-      this.refreshInFlight = (async () => {
-        try {
-          const res = await fetch(`${this.baseUrl}/auth/refresh`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ refreshToken: existing }),
-          });
-          if (!res.ok) return false;
-          const json = await res.json();
-          const token = json?.data?.token;
-          const refreshToken = json?.data?.refreshToken;
-          if (!token || !refreshToken) return false;
-          localStorage.setItem('auth_token', token);
-          localStorage.setItem('refresh_token', refreshToken);
-          this.unauthorizedHandled = false;
-          return true;
-        } catch {
-          return false;
-        } finally {
-          this.refreshInFlight = null;
+    if (this.refreshInFlight) return await this.refreshInFlight;
+
+    this.refreshInFlight = (async () => {
+      try {
+        const body: Record<string, string> = {};
+        const legacyToken = localStorage.getItem('refresh_token');
+        if (legacyToken) {
+          body.refreshToken = legacyToken;
         }
-      })();
+        const res = await fetch(`${this.baseUrl}/auth/refresh`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
+          body: JSON.stringify(body),
+        });
+        if (!res.ok) return false;
+        const json = await res.json();
+        const token = json?.data?.token;
+        const refreshToken = json?.data?.refreshToken;
+        if (!token) return false;
+        // Store in localStorage for backward compat during migration
+        localStorage.setItem('auth_token', token);
+        if (refreshToken) {
+          localStorage.setItem('refresh_token', refreshToken);
+        }
+        this.unauthorizedHandled = false;
+        return true;
+      } catch {
+        return false;
+      } finally {
+        this.refreshInFlight = null;
+      }
+    })();
 
-      return await this.refreshInFlight;
-    } catch {
-      return false;
-    }
+    return await this.refreshInFlight;
   }
 
   // Auth endpoints

@@ -30,9 +30,9 @@ export function GDPRConsentBanner() {
     try {
       const consentKey = 'gdpr_consent_given';
       const consentGiven = localStorage.getItem(consentKey);
-      const token = localStorage.getItem('auth_token');
+      const isLoggedIn = localStorage.getItem('auth_token') || document.cookie.includes('is_logged_in=true');
 
-      if (consentGiven && token) {
+      if (consentGiven && isLoggedIn) {
         // Consent was given (possibly anonymously). Sync to server if not already synced.
         const syncedKey = 'gdpr_consent_synced';
         if (!localStorage.getItem(syncedKey)) {
@@ -90,9 +90,8 @@ export function GDPRConsentBanner() {
     try {
       setLoading(true);
       
-      // Check if user is logged in before calling API
-      const token = localStorage.getItem('auth_token');
-      if (token) {
+      const isLoggedIn = localStorage.getItem('auth_token') || document.cookie.includes('is_logged_in=true');
+      if (isLoggedIn) {
         try {
           // Update consent via API for authenticated users
           await apiClient.updateGDPRConsent({

@@ -5,10 +5,12 @@ import {
   Get,
   UseGuards,
   Request,
+  Res,
   HttpCode,
   HttpStatus,
   Query,
 } from '@nestjs/common';
+import { Response } from 'express';
 import { Throttle } from '@nestjs/throttler';
 import {
   ApiTags,
@@ -23,11 +25,17 @@ import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
 import { CharacterSelectionDto } from './dto/character-selection.dto';
 import { FandomQuizDto } from './dto/fandom-quiz.dto';
+import { RefreshTokenDto } from './dto/refresh-token.dto';
+import { ForgotPasswordDto } from './dto/forgot-password.dto';
+import { ResetPasswordDto } from './dto/reset-password.dto';
+import { ChangePasswordDto } from './dto/change-password.dto';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { LocalAuthGuard } from '../common/guards/local-auth.guard';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
 import { Public } from '../common/decorators/public.decorator';
 import { AdminSellersService } from '../admin/sellers.service';
+import { ConfigService } from '@nestjs/config';
+import { setAuthCookies, clearAuthCookies } from './cookie.utils';
 import type { ApiResponse, AuthResponse, User } from '@hos-marketplace/shared-types';
 
 @ApiTags('auth')
@@ -36,6 +44,7 @@ export class AuthController {
   constructor(
     private readonly authService: AuthService,
     private readonly adminSellersService: AdminSellersService,
+    private readonly configService: ConfigService,
   ) {}
 
   @Public()
@@ -85,8 +94,8 @@ export class AuthController {
   async acceptInvitation(
     @Body() body: { token: string; registerDto: RegisterDto },
     @Request() req: any,
+    @Res({ passthrough: true }) res: Response,
   ): Promise<ApiResponse<AuthResponse>> {
-    // Get IP address for country detection
     const ipAddress =
       req.headers['x-forwarded-for']?.split(',')[0] ||
       req.headers['x-real-ip'] ||
@@ -95,6 +104,7 @@ export class AuthController {
 
     const userAgent = req.headers['user-agent'];
     const result = await this.authService.acceptInvitation(body.token, body.registerDto, ipAddress, userAgent);
+    setAuthCookies(res, result.token, result.refreshToken, this.configService);
     return {
       data: result,
       message: 'Invitation accepted and account created successfully',
@@ -117,6 +127,7 @@ export class AuthController {
   async register(
     @Body() registerDto: RegisterDto,
     @Request() req: any,
+    @Res({ passthrough: true }) res: Response,
   ): Promise<ApiResponse<AuthResponse>> {
     const ipAddress =
       req.headers['x-forwarded-for']?.split(',')[0] ||
@@ -126,6 +137,7 @@ export class AuthController {
     const userAgent = req.headers['user-agent'];
 
     const result = await this.authService.register(registerDto, ipAddress, userAgent);
+    setAuthCookies(res, result.token, result.refreshToken, this.configService);
     return {
       data: result,
       message: 'User registered successfully',
@@ -140,9 +152,13 @@ export class AuthController {
   @ApiBody({ type: LoginDto })
   @SwaggerApiResponse({ status: 200, description: 'Login successful' })
   @SwaggerApiResponse({ status: 401, description: 'Invalid credentials' })
-  async login(@Body() loginDto: LoginDto): Promise<ApiResponse<AuthResponse>> {
+  async login(
+    @Body() loginDto: LoginDto,
+    @Res({ passthrough: true }) res: Response,
+  ): Promise<ApiResponse<AuthResponse>> {
     try {
       const result = await this.authService.login(loginDto);
+      setAuthCookies(res, result.token, result.refreshToken, this.configService);
       return {
         data: result,
         message: 'Login successful',
@@ -160,19 +176,17 @@ export class AuthController {
     summary: 'Refresh access token',
     description: 'Refresh an access token using a refresh token',
   })
-  @ApiBody({
-    schema: {
-      type: 'object',
-      required: ['refreshToken'],
-      properties: {
-        refreshToken: { type: 'string', description: 'Refresh token' },
-      },
-    },
-  })
+  @ApiBody({ type: RefreshTokenDto })
   @SwaggerApiResponse({ status: 200, description: 'Token refreshed successfully' })
   @SwaggerApiResponse({ status: 401, description: 'Invalid or expired refresh token' })
-  async refresh(@Body() body: { refreshToken: string }): Promise<ApiResponse<AuthResponse>> {
-    const result = await this.authService.refresh(body.refreshToken);
+  async refresh(
+    @Body() body: RefreshTokenDto,
+    @Request() req: any,
+    @Res({ passthrough: true }) res: Response,
+  ): Promise<ApiResponse<AuthResponse>> {
+    const token = body.refreshToken || req.cookies?.refresh_token;
+    const result = await this.authService.refresh(token);
+    setAuthCookies(res, result.token, result.refreshToken, this.configService);
     return {
       data: result,
       message: 'Token refreshed successfully',
@@ -189,9 +203,12 @@ export class AuthController {
   })
   @SwaggerApiResponse({ status: 200, description: 'Logout successful' })
   @SwaggerApiResponse({ status: 401, description: 'Unauthorized' })
-  async logout(@Request() req: any): Promise<ApiResponse<{ message: string }>> {
-    // Revoke all refresh tokens for this user
+  async logout(
+    @Request() req: any,
+    @Res({ passthrough: true }) res: Response,
+  ): Promise<ApiResponse<{ message: string }>> {
     await this.authService.revokeAllTokens(req.user.id);
+    clearAuthCookies(res, this.configService);
     return {
       data: { message: 'Logged out successfully' },
       message: 'Logout successful',
@@ -245,14 +262,12 @@ export class AuthController {
     summary: 'Request password reset',
     description: 'Sends a password reset email if the account exists.',
   })
-  @ApiBody({
-    schema: { type: 'object', required: ['email'], properties: { email: { type: 'string' } } },
-  })
+  @ApiBody({ type: ForgotPasswordDto })
   @SwaggerApiResponse({
     status: 200,
     description: 'Reset email sent (always returns success for security)',
   })
-  async forgotPassword(@Body() body: { email: string }): Promise<ApiResponse<{ message: string }>> {
+  async forgotPassword(@Body() body: ForgotPasswordDto): Promise<ApiResponse<{ message: string }>> {
     const result = await this.authService.requestPasswordReset(body.email);
     return { data: result, message: result.message };
   }
@@ -265,17 +280,11 @@ export class AuthController {
     summary: 'Reset password with token',
     description: 'Resets user password using a valid reset token.',
   })
-  @ApiBody({
-    schema: {
-      type: 'object',
-      required: ['token', 'newPassword'],
-      properties: { token: { type: 'string' }, newPassword: { type: 'string' } },
-    },
-  })
+  @ApiBody({ type: ResetPasswordDto })
   @SwaggerApiResponse({ status: 200, description: 'Password reset successfully' })
   @SwaggerApiResponse({ status: 400, description: 'Invalid or expired token' })
   async resetPassword(
-    @Body() body: { token: string; newPassword: string },
+    @Body() body: ResetPasswordDto,
   ): Promise<ApiResponse<{ message: string }>> {
     const result = await this.authService.resetPassword(body.token, body.newPassword);
     return { data: result, message: result.message };
@@ -289,18 +298,12 @@ export class AuthController {
     summary: 'Change password',
     description: 'Changes the password for the currently authenticated user.',
   })
-  @ApiBody({
-    schema: {
-      type: 'object',
-      required: ['currentPassword', 'newPassword'],
-      properties: { currentPassword: { type: 'string' }, newPassword: { type: 'string' } },
-    },
-  })
+  @ApiBody({ type: ChangePasswordDto })
   @SwaggerApiResponse({ status: 200, description: 'Password changed successfully' })
   @SwaggerApiResponse({ status: 400, description: 'Current password is incorrect' })
   async changePassword(
     @Request() req: any,
-    @Body() body: { currentPassword: string; newPassword: string },
+    @Body() body: ChangePasswordDto,
   ): Promise<ApiResponse<{ message: string }>> {
     const result = await this.authService.changePassword(
       req.user.id,

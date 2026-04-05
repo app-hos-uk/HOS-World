@@ -20,6 +20,7 @@ import {
 } from '@nestjs/swagger';
 import { PaymentsService } from './payments.service';
 import { CreatePaymentDto } from './dto/create-payment.dto';
+import { ConfirmPaymentDto } from './dto/confirm-payment.dto';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { Public } from '../common/decorators/public.decorator';
 import type { ApiResponse } from '@hos-marketplace/shared-types';
@@ -63,25 +64,16 @@ export class PaymentsController {
     description:
       'Confirms a payment intent and marks the order as paid. Called after successful payment on frontend.',
   })
-  @ApiBody({
-    description: 'Payment confirmation data',
-    schema: {
-      type: 'object',
-      required: ['paymentIntentId', 'orderId'],
-      properties: {
-        paymentIntentId: { type: 'string', description: 'Stripe payment intent ID' },
-        orderId: { type: 'string', format: 'uuid', description: 'Order UUID' },
-      },
-    },
-  })
+  @ApiBody({ type: ConfirmPaymentDto })
   @SwaggerApiResponse({ status: 200, description: 'Payment confirmed successfully' })
   @SwaggerApiResponse({ status: 400, description: 'Invalid payment or order' })
   @SwaggerApiResponse({ status: 401, description: 'Unauthorized' })
   @SwaggerApiResponse({ status: 404, description: 'Payment intent or order not found' })
   async confirmPayment(
-    @Body() confirmDto: { paymentIntentId: string; orderId: string },
+    @Request() req: any,
+    @Body() confirmDto: ConfirmPaymentDto,
   ): Promise<ApiResponse<{ message: string }>> {
-    await this.paymentsService.confirmPayment(confirmDto.paymentIntentId, confirmDto.orderId);
+    await this.paymentsService.confirmPayment(confirmDto.paymentIntentId, confirmDto.orderId, req.user.id);
     return {
       data: { message: 'Payment confirmed successfully' },
       message: 'Payment confirmed',

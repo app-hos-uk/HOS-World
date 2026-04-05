@@ -16,7 +16,11 @@ export class SellersService {
   private readonly encryptionKey: string;
 
   constructor(private prisma: PrismaService) {
-    this.encryptionKey = process.env.ENCRYPTION_KEY || 'hos-default-key-change-in-production';
+    const key = process.env.ENCRYPTION_KEY;
+    if (!key && process.env.NODE_ENV === 'production') {
+      throw new Error('ENCRYPTION_KEY environment variable is required in production');
+    }
+    this.encryptionKey = key || 'hos-default-key-change-in-production';
   }
 
   private encryptField(value: string): string {

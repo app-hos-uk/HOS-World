@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, BadRequestException, Logger } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException, ForbiddenException, Logger } from '@nestjs/common';
 import { PrismaService } from '../database/prisma.service';
 import { CreateVolumePricingDto } from './dto/create-volume-pricing.dto';
 import { Decimal } from '@prisma/client/runtime/library';
@@ -22,15 +22,24 @@ export class VolumePricingService {
   /**
    * Create volume pricing tier for a product
    */
-  async createVolumePricing(createDto: CreateVolumePricingDto) {
-    // Verify product exists
+  private async verifyProductOwnership(productId: string, userId?: string, role?: string) {
     const product = await this.prisma.product.findUnique({
-      where: { id: createDto.productId },
+      where: { id: productId },
+      include: { seller: { select: { userId: true } } },
     });
-
     if (!product) {
       throw new NotFoundException('Product not found');
     }
+    if (userId && role && role !== 'ADMIN') {
+      if (!product.seller || product.seller.userId !== userId) {
+        throw new ForbiddenException('You do not have permission to manage pricing for this product');
+      }
+    }
+    return product;
+  }
+
+  async createVolumePricing(createDto: CreateVolumePricingDto, userId?: string, role?: string) {
+    const product = await this.verifyProductOwnership(createDto.productId, userId, role);
 
     // Validate quantity range doesn't overlap with existing tiers
     const existingTiers = await this.prisma.volumePricing.findMany({
@@ -207,7 +216,7 @@ export class VolumePricingService {
   /**
    * Update volume pricing tier
    */
-  async updateVolumePricing(id: string, updateDto: Partial<CreateVolumePricingDto>) {
+  async updateVolumePricing(id: string, updateDto: Partial<CreateVolumePricingDto>, userId?: string, role?: string) {
     const tier = await this.prisma.volumePricing.findUnique({
       where: { id },
     });
@@ -215,6 +224,8 @@ export class VolumePricingService {
     if (!tier) {
       throw new NotFoundException('Volume pricing tier not found');
     }
+
+    await this.verifyProductOwnership(tier.productId, userId, role);
 
     const updateData: any = {};
     if (updateDto.minQuantity !== undefined) updateData.minQuantity = updateDto.minQuantity;
@@ -245,10 +256,16 @@ export class VolumePricingService {
   /**
    * Delete volume pricing tier
    */
-  async deleteVolumePricing(id: string) {
-    await this.prisma.volumePricing.findUniqueOrThrow({
+  async deleteVolumePricing(id: string, userId?: string, role?: string) {
+    const tier = await this.prisma.volumePricing.findUnique({
       where: { id },
     });
+
+    if (!tier) {
+      throw new NotFoundException('Volume pricing tier not found');
+    }
+
+    await this.verifyProductOwnership(tier.productId, userId, role);
 
     return this.prisma.volumePricing.delete({
       where: { id },

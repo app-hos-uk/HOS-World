@@ -33,18 +33,18 @@ export function CurrencyProvider({ children }: { children: React.ReactNode }) {
         typeof window !== 'undefined' &&
         (pathname === '/login' || pathname.startsWith('/login') || pathname.startsWith('/auth/callback'));
 
-      const token =
+      const isLoggedIn =
         typeof window !== 'undefined'
           ? (() => {
               try {
-                return localStorage.getItem('auth_token');
+                return localStorage.getItem('auth_token') || document.cookie.includes('is_logged_in=true');
               } catch {
-                return null;
+                return false;
               }
             })()
-          : null;
+          : false;
 
-      if (token && !isAuthFlowPage) {
+      if (isLoggedIn && !isAuthFlowPage) {
         // Try to get user's currency preference
         const userCurrencyResponse = await apiClient.getUserCurrency();
         if (userCurrencyResponse?.data) {
@@ -93,18 +93,17 @@ export function CurrencyProvider({ children }: { children: React.ReactNode }) {
 
   const updateCurrencyPreference = useCallback(async (newCurrency: string) => {
     try {
-      // Update user profile only if logged in
-      const token =
+      const isLoggedIn =
         typeof window !== 'undefined'
           ? (() => {
               try {
-                return localStorage.getItem('auth_token');
+                return localStorage.getItem('auth_token') || document.cookie.includes('is_logged_in=true');
               } catch {
-                return null;
+                return false;
               }
             })()
-          : null;
-      if (!token) return;
+          : false;
+      if (!isLoggedIn) return;
 
       await apiClient.updateProfile({ currencyPreference: newCurrency });
     } catch (error) {

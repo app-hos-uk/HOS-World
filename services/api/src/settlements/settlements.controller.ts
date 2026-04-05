@@ -9,6 +9,7 @@ import {
   UseGuards,
   Request,
   ParseUUIDPipe,
+  ForbiddenException,
 } from '@nestjs/common';
 import {
   ApiTags,
@@ -60,6 +61,7 @@ export class SettlementsController {
     };
   }
 
+  @Roles('ADMIN', 'FINANCE', 'SELLER', 'B2C_SELLER', 'WHOLESALER')
   @Get()
   @ApiOperation({
     summary: 'Get all settlements',
@@ -109,8 +111,20 @@ export class SettlementsController {
   @SwaggerApiResponse({ status: 401, description: 'Unauthorized' })
   @SwaggerApiResponse({ status: 403, description: 'Forbidden - Cannot access this settlement' })
   @SwaggerApiResponse({ status: 404, description: 'Settlement not found' })
-  async findOne(@Param('id', ParseUUIDPipe) id: string): Promise<ApiResponse<any>> {
+  async findOne(
+    @Request() req: any,
+    @Param('id', ParseUUIDPipe) id: string,
+  ): Promise<ApiResponse<any>> {
     const settlement = await this.settlementsService.findOne(id);
+
+    const sellerRoles = ['WHOLESALER', 'B2C_SELLER', 'SELLER'];
+    if (sellerRoles.includes(req.user.role)) {
+      const callerSellerId = await this.settlementsService.getSellerIdByUserId(req.user.id);
+      if (!callerSellerId || settlement.seller?.id !== callerSellerId) {
+        throw new ForbiddenException('You do not have permission to view this settlement');
+      }
+    }
+
     return {
       data: settlement,
       message: 'Settlement retrieved successfully',
@@ -141,10 +155,11 @@ export class SettlementsController {
     };
   }
 
+  @Roles('ADMIN', 'FINANCE')
   @Get('calculate/:sellerId')
   @ApiOperation({
-    summary: 'Calculate settlement',
-    description: 'Calculates settlement amount for a seller within a date range.',
+    summary: 'Calculate settlement (Admin/Finance only)',
+    description: 'Calculates settlement amount for a seller within a date range. Admin or Finance access required.',
   })
   @ApiParam({ name: 'sellerId', description: 'Seller UUID', type: String })
   @ApiQuery({

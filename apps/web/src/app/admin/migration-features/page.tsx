@@ -61,14 +61,13 @@ export default function MigrationFeaturesPage() {
       console.error('API Error:', apiError);
       // Fallback: try direct fetch
       try {
-        const token = localStorage.getItem('auth_token');
         const apiUrl = getPublicApiBaseUrl() || 'http://localhost:3001/api';
         const fetchResponse = await fetch(`${apiUrl}/admin/migration-features/run-sql`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
-            Authorization: `Bearer ${token}`,
           },
+          credentials: 'include',
         });
 
         const fetchData = await fetchResponse.json();

@@ -52,9 +52,8 @@ export function AIChatInterface({ characterId, character, onClose }: AIChatInter
     const loadChatHistoryWithAbort = async () => {
       try {
         const apiUrl = getPublicApiBaseUrl() || 'http://localhost:3001/api';
-        const token = localStorage.getItem('auth_token');
         const response = await fetch(`${apiUrl}/ai/chat/history?characterId=${characterId}`, {
-          headers: { Authorization: `Bearer ${token}` },
+          credentials: 'include',
           signal,
         });
         if (!response.ok) throw new Error(`Failed to load chat history: ${response.status}`);
@@ -97,13 +96,12 @@ export function AIChatInterface({ characterId, character, onClose }: AIChatInter
 
     try {
       const apiUrl = getPublicApiBaseUrl() || 'http://localhost:3001/api';
-      const token = localStorage.getItem('auth_token');
       const response = await fetch(`${apiUrl}/ai/chat/${characterId}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
         },
+        credentials: 'include',
         body: JSON.stringify({ message: userMessage.content }),
       });
 

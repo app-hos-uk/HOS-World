@@ -1212,7 +1212,7 @@ export class OrdersService {
 
     this.logger.log(`Order ${order.orderNumber} cancelled by user ${userId} (role: ${role})`);
 
-    return this.mapToOrderType(cancelledOrder);
+    return this.mapToOrderType(cancelledOrder, false, role);
   }
 
   /**
@@ -1423,13 +1423,15 @@ export class OrdersService {
       paymentStatus: order.paymentStatus.toLowerCase() as PaymentStatus,
       trackingCode: order.trackingCode || undefined,
       notes:
-        order.notes?.map((note: any) => ({
-          id: note.id,
-          content: note.content,
-          internal: note.internal,
-          createdAt: note.createdAt,
-          createdBy: note.createdBy,
-        })) || [],
+        (order.notes || [])
+          .filter((note: any) => role !== 'CUSTOMER' || !note.internal)
+          .map((note: any) => ({
+            id: note.id,
+            content: note.content,
+            internal: note.internal,
+            createdAt: note.createdAt,
+            createdBy: note.createdBy,
+          })),
       childOrders:
         order.childOrders?.map((child: any) => ({
           id: child.id,

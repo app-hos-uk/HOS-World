@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { apiClient } from '@/lib/api';
 import { useToast } from '@/hooks/useToast';
 import { AdminLayout } from '@/components/AdminLayout';
+import { RouteGuard } from '@/components/RouteGuard';
 
 const api = apiClient as any;
 
@@ -101,7 +102,8 @@ export default function AdminInfluencerCommissionsPage() {
   const approvedTotal = commissions.filter(c => c.status === 'APPROVED').reduce((sum, c) => sum + c.amount, 0);
 
   return (
-    <AdminLayout>
+    <RouteGuard allowedRoles={['ADMIN']}>
+      <AdminLayout>
       <div className="space-y-6">
         {/* Header */}
         <div>
@@ -218,6 +220,7 @@ export default function AdminInfluencerCommissionsPage() {
           )}
         </div>
       </div>
-    </AdminLayout>
+      </AdminLayout>
+    </RouteGuard>
   );
 }

@@ -34,8 +34,17 @@ export class ShippingController {
   @SwaggerApiResponse({ status: 400, description: 'Invalid shipping method data' })
   @SwaggerApiResponse({ status: 401, description: 'Unauthorized' })
   async createShippingMethod(
+    @Request() req: any,
     @Body() createDto: CreateShippingMethodDto,
   ): Promise<ApiResponse<any>> {
+    const sellerRoles = ['SELLER', 'B2C_SELLER', 'WHOLESALER'];
+    if (sellerRoles.includes(req.user.role)) {
+      const seller = await this.shippingService.getSellerByUserId(req.user.id);
+      if (!seller) {
+        return { data: null, message: 'Seller profile not found' } as any;
+      }
+      createDto.sellerId = seller.id;
+    }
     const method = await this.shippingService.createShippingMethod(createDto);
     return {
       data: method,

@@ -77,7 +77,7 @@ export default function SellerDashboardPage() {
 
   const pendingApprovals = dashboardData?.submissionsByStatus
     ?.filter((s: any) => s.status === 'SUBMITTED' || s.status === 'UNDER_REVIEW')
-    .reduce((sum: number, s: any) => sum + (s._count || 0), 0) || 0;
+    .reduce((sum: number, s: any) => sum + (typeof s._count === 'number' ? s._count : s._count?._all || 0), 0) || 0;
 
   return (
     <RouteGuard allowedRoles={['B2C_SELLER', 'SELLER', 'WHOLESALER', 'ADMIN']} showAccessDenied={true}>
@@ -167,7 +167,7 @@ export default function SellerDashboardPage() {
               <div className="bg-white border rounded-lg p-6 shadow-sm">
                 <div className="flex items-center justify-between">
                   <div>
-                    <h3 className="text-sm font-medium text-gray-600 mb-1">Active Products</h3>
+                    <h3 className="text-sm font-medium text-gray-600 mb-1">Total Products</h3>
                     <p className="text-3xl font-bold text-purple-600">
                       {dashboardData?.totalProducts?.toLocaleString() || '0'}
                     </p>
@@ -217,7 +217,7 @@ export default function SellerDashboardPage() {
                     {dashboardData.submissions.slice(0, 10).map((submission: any) => (
                       <Link
                         key={submission.id}
-                        href={`/seller/submissions?id=${submission.id}`}
+                        href={`/seller/submit-product?id=${submission.id}`}
                         className="block p-3 border rounded-lg hover:bg-gray-50 transition-colors"
                       >
                         <div className="flex items-start justify-between">
@@ -234,14 +234,14 @@ export default function SellerDashboardPage() {
                           </div>
                           <span
                             className={`px-2 py-1 text-xs font-medium rounded ${
-                              submission.status === 'PROCUREMENT_APPROVED'
+                              ['PROCUREMENT_APPROVED', 'FINANCE_APPROVED', 'PUBLISHED', 'CATALOG_COMPLETED'].includes(submission.status)
                                 ? 'bg-green-100 text-green-800'
-                                : submission.status === 'PROCUREMENT_REJECTED'
+                                : ['PROCUREMENT_REJECTED', 'FINANCE_REJECTED', 'REJECTED'].includes(submission.status)
                                   ? 'bg-red-100 text-red-800'
                                   : 'bg-yellow-100 text-yellow-800'
                             }`}
                           >
-                            {submission.status}
+                            {submission.status?.replace(/_/g, ' ')}
                           </span>
                         </div>
                       </Link>
@@ -275,7 +275,7 @@ export default function SellerDashboardPage() {
                     {dashboardData.recentOrders.slice(0, 10).map((order: any) => (
                       <Link
                         key={order.id}
-                        href={`/seller/orders?id=${order.id}`}
+                        href="/seller/orders"
                         className="block p-3 border rounded-lg hover:bg-gray-50 transition-colors"
                       >
                         <div className="flex items-start justify-between">
@@ -292,9 +292,9 @@ export default function SellerDashboardPage() {
                           </div>
                           <span
                             className={`px-2 py-1 text-xs font-medium rounded ${
-                              order.status === 'DELIVERED'
+                              (order.status || '').toUpperCase() === 'DELIVERED'
                                 ? 'bg-green-100 text-green-800'
-                                : order.status === 'CANCELLED'
+                                : (order.status || '').toUpperCase() === 'CANCELLED'
                                   ? 'bg-red-100 text-red-800'
                                   : 'bg-blue-100 text-blue-800'
                             }`}

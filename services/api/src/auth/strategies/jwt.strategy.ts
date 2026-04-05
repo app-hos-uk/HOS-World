@@ -3,6 +3,16 @@ import { PassportStrategy } from '@nestjs/passport';
 import { ExtractJwt, Strategy } from 'passport-jwt';
 import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../../database/prisma.service';
+import { AUTH_COOKIE_NAME } from '../cookie.utils';
+
+function extractFromCookieOrBearer(req: any): string | null {
+  // Try cookie first (HttpOnly secure path)
+  if (req?.cookies?.[AUTH_COOKIE_NAME]) {
+    return req.cookies[AUTH_COOKIE_NAME];
+  }
+  // Fall back to Authorization header (API clients, backward compat)
+  return ExtractJwt.fromAuthHeaderAsBearerToken()(req);
+}
 
 @Injectable()
 export class JwtStrategy extends PassportStrategy(Strategy) {
@@ -11,8 +21,9 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     private prisma: PrismaService,
   ) {
     super({
-      jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
+      jwtFromRequest: extractFromCookieOrBearer,
       ignoreExpiration: false,
+      algorithms: ['HS256'],
       secretOrKey:
         configService.get<string>('JWT_SECRET', { infer: true }) ||
         (() => {
@@ -22,6 +33,10 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
   }
 
   async validate(payload: any) {
+    if (payload.type && payload.type !== 'access') {
+      throw new UnauthorizedException('Invalid token type');
+    }
+
     try {
       const user = await this.prisma.user.findUnique({
         where: { id: payload.sub },

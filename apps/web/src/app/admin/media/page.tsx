@@ -108,9 +108,7 @@ export default function AdminMediaLibraryPage() {
       await toast.promise(
         fetch(`${getPublicApiBaseUrl() || 'http://localhost:3001/api'}/uploads/single`, {
           method: 'POST',
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem('auth_token')}`,
-          },
+          credentials: 'include',
           body: formData,
         }).then((res) => {
           if (!res.ok) throw new Error('Upload failed');

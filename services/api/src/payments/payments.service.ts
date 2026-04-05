@@ -2,6 +2,7 @@ import {
   Injectable,
   NotFoundException,
   BadRequestException,
+  ForbiddenException,
   Logger,
   Optional,
 } from '@nestjs/common';
@@ -172,13 +173,17 @@ export class PaymentsService {
     };
   }
 
-  async confirmPayment(paymentIntentId: string, orderId: string): Promise<void> {
+  async confirmPayment(paymentIntentId: string, orderId: string, userId?: string): Promise<void> {
     const order = await this.prisma.order.findUnique({
       where: { id: orderId },
     });
 
     if (!order) {
       throw new NotFoundException('Order not found');
+    }
+
+    if (userId && order.userId !== userId) {
+      throw new ForbiddenException('You do not have permission to confirm this payment');
     }
 
     if (order.stripePaymentIntentId && order.stripePaymentIntentId !== paymentIntentId) {

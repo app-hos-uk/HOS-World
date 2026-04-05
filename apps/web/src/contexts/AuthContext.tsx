@@ -51,8 +51,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const fetchUser = useCallback(async () => {
     try {
       const token = typeof window !== 'undefined' ? localStorage.getItem('auth_token') : null;
-      
-      if (!token) {
+      const hasCookieSession = typeof document !== 'undefined' && document.cookie.includes('is_logged_in=true');
+
+      if (!token && !hasCookieSession) {
         if (mountedRef.current) {
           setUser(null);
           setImpersonatedRole(null);
@@ -97,6 +98,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         }
         localStorage.removeItem('auth_token');
         localStorage.removeItem('refresh_token');
+        document.cookie = 'is_logged_in=; path=/; max-age=0';
       }
     } catch (error: any) {
       console.error('Failed to fetch user:', error);
@@ -106,6 +108,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
       localStorage.removeItem('auth_token');
       localStorage.removeItem('refresh_token');
+      document.cookie = 'is_logged_in=; path=/; max-age=0';
     } finally {
       if (mountedRef.current) setLoading(false);
     }
@@ -115,17 +118,26 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     mountedRef.current = true;
     fetchUser();
 
-    // Listen for storage changes (login/logout in other tabs)
     const handleStorageChange = (e: StorageEvent) => {
       if (e.key === 'auth_token') {
         fetchUser();
       }
     };
 
+    // Periodically check cookie-based session for cross-tab sync
+    const cookieCheckInterval = setInterval(() => {
+      const hasCookieSession = document.cookie.includes('is_logged_in=true');
+      const hasLocalToken = !!localStorage.getItem('auth_token');
+      if (!hasCookieSession && !hasLocalToken && user) {
+        fetchUser();
+      }
+    }, 5000);
+
     window.addEventListener('storage', handleStorageChange);
     return () => {
       mountedRef.current = false;
       window.removeEventListener('storage', handleStorageChange);
+      clearInterval(cookieCheckInterval);
     };
   }, [fetchUser]);
 
@@ -178,6 +190,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     localStorage.removeItem('auth_token');
     localStorage.removeItem('refresh_token');
     localStorage.removeItem('admin_impersonated_role');
+    document.cookie = 'is_logged_in=; path=/; max-age=0';
     setUser(null);
     setImpersonatedRole(null);
     router.push('/login');

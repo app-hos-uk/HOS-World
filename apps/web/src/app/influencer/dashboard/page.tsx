@@ -126,13 +126,12 @@ export default function InfluencerDashboardPage() {
       const text = encodeURIComponent('Check out the House of Spells Marketplace!');
       window.open(`https://twitter.com/intent/tweet?url=${encodeURIComponent(link)}&text=${text}`, '_blank');
 
-      const token = localStorage.getItem('auth_token');
       await fetch('/api/social-sharing/share', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          Authorization: token ? `Bearer ${token}` : '',
         },
+        credentials: 'include',
         body: JSON.stringify({
           type: 'REFERRAL',
           itemId: analytics.referralCode,
@@ -150,13 +149,12 @@ export default function InfluencerDashboardPage() {
       const link = `${window.location.origin}?ref=${analytics.referralCode}`;
       window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(link)}`, '_blank');
 
-      const token = localStorage.getItem('auth_token');
       await fetch('/api/social-sharing/share', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          Authorization: token ? `Bearer ${token}` : '',
         },
+        credentials: 'include',
         body: JSON.stringify({
           type: 'REFERRAL',
           itemId: analytics.referralCode,

@@ -28,6 +28,8 @@ interface Order {
   total: number;
   subtotal?: number;
   shippingCost?: number;
+  shippingAmount?: number;
+  trackingCode?: string;
   createdAt: string;
   updatedAt?: string;
   user?: {
@@ -135,13 +137,13 @@ export default function SellerOrdersPage() {
   const stats = useMemo(() => {
     return {
       total: allOrders.length,
-      pending: allOrders.filter(o => o.status === 'pending').length,
-      processing: allOrders.filter(o => ['confirmed', 'processing'].includes(o.status)).length,
+      pending: allOrders.filter(o => ['pending', 'accepted'].includes(o.status)).length,
+      processing: allOrders.filter(o => ['confirmed', 'processing', 'fulfilled'].includes(o.status)).length,
       shipped: allOrders.filter(o => o.status === 'shipped').length,
       delivered: allOrders.filter(o => o.status === 'delivered').length,
       cancelled: allOrders.filter(o => ['cancelled', 'refunded'].includes(o.status)).length,
       totalRevenue: allOrders
-        .filter(o => !['cancelled', 'refunded'].includes(o.status))
+        .filter(o => !['cancelled', 'refunded'].includes(o.status) && (o as any).paymentStatus === 'paid')
         .reduce((sum, o) => sum + (Number(o.total) || 0), 0),
     };
   }, [allOrders]);
@@ -163,7 +165,7 @@ export default function SellerOrdersPage() {
 
   const openOrderDetails = (order: Order) => {
     setSelectedOrder(order);
-    setTrackingNumber(order.trackingNumber || '');
+    setTrackingNumber(order.trackingNumber || order.trackingCode || '');
     setShowDetailsModal(true);
   };
 
@@ -414,6 +416,15 @@ export default function SellerOrdersPage() {
                         Accept Order
                       </button>
                     )}
+                    {selectedOrder.status === 'accepted' && (
+                      <button
+                        onClick={() => handleStatusUpdate('CONFIRMED')}
+                        disabled={updatingStatus}
+                        className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 text-sm"
+                      >
+                        Confirm Order
+                      </button>
+                    )}
                     {selectedOrder.status === 'confirmed' && (
                       <button
                         onClick={() => handleStatusUpdate('PROCESSING')}
@@ -424,6 +435,15 @@ export default function SellerOrdersPage() {
                       </button>
                     )}
                     {selectedOrder.status === 'processing' && (
+                      <button
+                        onClick={() => handleStatusUpdate('FULFILLED')}
+                        disabled={updatingStatus}
+                        className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 disabled:opacity-50 text-sm"
+                      >
+                        Mark as Fulfilled
+                      </button>
+                    )}
+                    {selectedOrder.status === 'fulfilled' && (
                       <button
                         onClick={() => handleStatusUpdate('SHIPPED')}
                         disabled={updatingStatus}
@@ -441,7 +461,7 @@ export default function SellerOrdersPage() {
                         Mark as Delivered
                       </button>
                     )}
-                    {['pending', 'confirmed', 'processing'].includes(selectedOrder.status) && (
+                    {['pending', 'accepted', 'confirmed', 'processing'].includes(selectedOrder.status) && (
                       <button
                         onClick={handleCancelOrder}
                         disabled={updatingStatus}
@@ -529,12 +549,12 @@ export default function SellerOrdersPage() {
                         <span className="text-gray-900">${Number(selectedOrder.subtotal).toFixed(2)}</span>
                       </div>
                     )}
-                    {selectedOrder.shippingCost !== undefined && (
+                    {(selectedOrder.shippingCost || selectedOrder.shippingAmount) ? (
                       <div className="flex justify-between">
                         <span className="text-gray-500">Shipping</span>
-                        <span className="text-gray-900">${Number(selectedOrder.shippingCost).toFixed(2)}</span>
+                        <span className="text-gray-900">${Number(selectedOrder.shippingCost || selectedOrder.shippingAmount || 0).toFixed(2)}</span>
                       </div>
-                    )}
+                    ) : null}
                     <div className="flex justify-between font-medium text-base pt-2 border-t">
                       <span className="text-gray-900">Total</span>
                       <span className="text-gray-900">${Number(selectedOrder.total).toFixed(2)}</span>
@@ -543,7 +563,7 @@ export default function SellerOrdersPage() {
                 </div>
 
                 {/* Tracking Number */}
-                {(['processing', 'fulfilled', 'shipped', 'delivered', 'confirmed'].includes(selectedOrder.status) || selectedOrder.trackingNumber) && (
+                {(['processing', 'fulfilled', 'shipped', 'delivered', 'confirmed'].includes(selectedOrder.status) || selectedOrder.trackingNumber || selectedOrder.trackingCode) && (
                   <div className="bg-purple-50 rounded-lg p-4">
                     <h3 className="font-medium text-gray-900 mb-2">Tracking Information</h3>
                     <div className="flex gap-2">
