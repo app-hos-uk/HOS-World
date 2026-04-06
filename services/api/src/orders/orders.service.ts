@@ -112,12 +112,26 @@ export class OrdersService {
       postalCode: shippingAddress.postalCode || undefined,
     };
 
-    // Group items by seller (use sellerId directly - it's the Seller.id, not userId)
-    // Platform-owned products have null sellerId, grouped under 'platform' key
+    // Group items by seller, preferring VendorProduct assignments for consistent routing.
+    // If a product has an active VendorProduct, that vendor is used instead of Product.sellerId
+    // to prevent order assignment discrepancies when duplicate products exist.
     const itemsBySeller = new Map<string, typeof cart.items>();
+
+    const productIds = cart.items.map((item) => item.productId);
+    const activeVendorProducts = await this.prisma.vendorProduct.findMany({
+      where: {
+        productId: { in: productIds },
+        status: 'ACTIVE' as any,
+      },
+      select: { productId: true, sellerId: true },
+    });
+    const vendorProductMap = new Map(
+      activeVendorProducts.map((vp) => [vp.productId, vp.sellerId]),
+    );
+
     for (const item of cart.items) {
-      // Use product.sellerId directly (Seller.id) - fallback to 'platform' for platform-owned products
-      const groupKey = item.product.sellerId || 'platform';
+      const groupKey =
+        vendorProductMap.get(item.productId) || item.product.sellerId || 'platform';
       if (!itemsBySeller.has(groupKey)) {
         itemsBySeller.set(groupKey, []);
       }
@@ -612,10 +626,23 @@ export class OrdersService {
         where: { userId },
       });
       if (seller) {
-        where.sellerId = seller.id;
-        // Show both multi-vendor child orders AND single-vendor parent orders
-        // Single-vendor: parentOrderId is null, sellerId is set on the parent
-        // Multi-vendor: parentOrderId is not null, sellerId is set on the child
+        // Show orders directly assigned to this seller AND orders where any item's
+        // product has an active VendorProduct for this seller (handles cases where
+        // the same product is sold by multiple sellers).
+        where.OR = [
+          { sellerId: seller.id },
+          {
+            items: {
+              some: {
+                product: {
+                  vendorProducts: {
+                    some: { sellerId: seller.id, status: 'ACTIVE' },
+                  },
+                },
+              },
+            },
+          },
+        ];
       } else {
         return {
           data: [],

@@ -89,32 +89,114 @@ export class PublishingService {
               .filter(Boolean)
           : [];
 
-    // Create product from submission
-    const product = await this.productsService.create(submission.seller.userId, {
-      name: catalogEntry.title,
-      description: catalogEntry.description,
-      sku: productData.sku,
-      barcode: productData.barcode,
-      ean: productData.ean,
-      price: finalPrice,
-      tradePrice: productData.tradePrice,
-      rrp: productData.rrp,
-      currency: productData.currency || 'USD',
-      taxRate: productData.taxRate > 1 ? productData.taxRate / 100 : productData.taxRate || 0,
-      stock: submission.selectedQuantity || productData.stock || 0,
-      fandom: productData.fandom,
-      category: productData.category, // Legacy field - kept for backward compatibility
-      categoryId: productData.categoryId, // New taxonomy category ID
-      tags: productData.tags || [],
-      status: 'ACTIVE' as any, // Status is handled separately
-      images: imageUrls.map((url, index) => ({
-        url,
-        alt: catalogEntry.title,
-        order: index,
-        type: ImageType.IMAGE,
-      })),
-      variations: productData.variations || [],
-    });
+    // Check for existing product with matching identifiers to prevent duplicates.
+    // If a matching product already exists, create a VendorProduct link instead of a new Product.
+    const sku = productData.sku?.trim();
+    const barcode = productData.barcode?.trim();
+    const ean = productData.ean?.trim();
+
+    let existingProduct: { id: string; sellerId: string | null } | null = null;
+    if (sku || barcode || ean) {
+      const matchConditions: any[] = [];
+      if (sku) matchConditions.push({ sku });
+      if (barcode) matchConditions.push({ barcode });
+      if (ean) matchConditions.push({ ean });
+
+      existingProduct = await this.prisma.product.findFirst({
+        where: {
+          status: { in: ['ACTIVE', 'DRAFT'] },
+          OR: matchConditions,
+          sellerId: { not: submission.seller.id },
+        },
+        select: { id: true, sellerId: true },
+      });
+    }
+
+    let product: any;
+
+    if (existingProduct) {
+      // Product already exists under a different seller — create a VendorProduct link
+      // instead of a duplicate Product record
+      this.logger.log(
+        `Duplicate product detected (existing: ${existingProduct.id}). ` +
+          `Creating VendorProduct for seller ${submission.seller.id} instead of new Product.`,
+      );
+
+      const existingVP = await this.prisma.vendorProduct.findUnique({
+        where: {
+          sellerId_productId: {
+            sellerId: submission.seller.id,
+            productId: existingProduct.id,
+          },
+        },
+      });
+
+      if (!existingVP) {
+        await this.prisma.vendorProduct.create({
+          data: {
+            sellerId: submission.seller.id,
+            productId: existingProduct.id,
+            vendorPrice: finalPrice,
+            vendorCurrency: productData.currency || 'USD',
+            costPrice: productData.tradePrice || null,
+            vendorStock: submission.selectedQuantity || productData.stock || 0,
+            lowStockThreshold: 5,
+            allowBackorder: false,
+            leadTimeDays: 3,
+            status: 'ACTIVE',
+            platformPrice: finalPrice,
+            marginPercent: hosMargin,
+            approvedAt: new Date(),
+            approvedBy: userId,
+            submittedAt: new Date(),
+          },
+        });
+      } else {
+        await this.prisma.vendorProduct.update({
+          where: { id: existingVP.id },
+          data: {
+            vendorPrice: finalPrice,
+            vendorStock: { increment: submission.selectedQuantity || productData.stock || 0 },
+            status: 'ACTIVE',
+          },
+        });
+      }
+
+      product = await this.prisma.product.findUnique({
+        where: { id: existingProduct.id },
+        include: {
+          images: { orderBy: { order: 'asc' } },
+          seller: { select: { id: true, storeName: true, slug: true } },
+        },
+      });
+    } else {
+      // No duplicate — create a new product as normal
+      product = await this.productsService.create(submission.seller.userId, {
+        name: catalogEntry.title,
+        description: catalogEntry.description,
+        sku: productData.sku,
+        barcode: productData.barcode,
+        ean: productData.ean,
+        price: finalPrice,
+        tradePrice: productData.tradePrice,
+        rrp: productData.rrp,
+        currency: productData.currency || 'USD',
+        taxRate: productData.taxRate > 1 ? productData.taxRate / 100 : productData.taxRate || 0,
+        stock: submission.selectedQuantity || productData.stock || 0,
+        fandom: productData.fandom,
+        category: productData.category,
+        categoryId: productData.categoryId,
+        tags: productData.tags || [],
+        status: 'ACTIVE' as any,
+        images: imageUrls.map((url, index) => ({
+          url,
+          alt: catalogEntry.title,
+          order: index,
+          type: ImageType.IMAGE,
+        })),
+        variations: productData.variations || [],
+      });
+    }
 
     // Link product to submission
     await this.prisma.productSubmission.update({
@@ -126,18 +208,23 @@ export class PublishingService {
       },
     });
 
-    // Create ProductPricing record
-    await this.prisma.productPricing.create({
-      data: {
-        productId: product.id,
-        basePrice: pricingData?.basePrice ?? productData.price,
-        hosMargin: hosMargin,
-        finalPrice: finalPrice,
-        visibilityLevel: visibilityLevel as any,
-        approvedBy: userId,
-        approvedAt: new Date(),
-      },
+    // Create ProductPricing record (for new products or updated pricing for existing ones)
+    const existingPricing = await this.prisma.productPricing.findFirst({
+      where: { productId: product.id },
     });
+    if (!existingPricing) {
+      await this.prisma.productPricing.create({
+        data: {
+          productId: product.id,
+          basePrice: pricingData?.basePrice ?? productData.price,
+          hosMargin: hosMargin,
+          finalPrice: finalPrice,
+          visibilityLevel: visibilityLevel as any,
+          approvedBy: userId,
+          approvedAt: new Date(),
+        },
+      });
+    }
 
     // Index in MeiliSearch (non-blocking — don't let search indexing failures block publish)
     if (this.meilisearchService) {

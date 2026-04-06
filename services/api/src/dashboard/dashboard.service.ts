@@ -31,20 +31,38 @@ export class DashboardService {
       throw new NotFoundException('Seller not found');
     }
 
-    const whereClause: any = {
-      sellerId: seller.id,
-      paymentStatus: 'PAID',
-    };
-
+    const dateFilter: any = {};
     if (startDate || endDate) {
-      whereClause.createdAt = {};
-      if (startDate) whereClause.createdAt.gte = startDate;
-      if (endDate) whereClause.createdAt.lte = endDate;
+      dateFilter.createdAt = {};
+      if (startDate) dateFilter.createdAt.gte = startDate;
+      if (endDate) dateFilter.createdAt.lte = endDate;
     }
 
-    const [orders, products] = await Promise.all([
+    // Fetch ALL orders for this seller (regardless of payment status) for counts & recent orders.
+    // Sales/revenue metrics use only PAID orders.
+    const [allOrders, paidOrders, products] = await Promise.all([
       this.prisma.order.findMany({
-        where: whereClause,
+        where: {
+          sellerId: seller.id,
+          status: { notIn: ['CANCELLED', 'REJECTED'] },
+          ...dateFilter,
+        },
+        orderBy: { createdAt: 'desc' },
+        take: 500,
+        include: {
+          items: {
+            include: {
+              product: true,
+            },
+          },
+        },
+      }),
+      this.prisma.order.findMany({
+        where: {
+          sellerId: seller.id,
+          paymentStatus: 'PAID',
+          ...dateFilter,
+        },
         orderBy: { createdAt: 'desc' },
         take: 500,
         include: {
@@ -60,18 +78,18 @@ export class DashboardService {
       }),
     ]);
 
-    const totalSales = orders.reduce((sum, order) => sum + Number(order.total), 0);
-    const totalOrders = orders.length;
-    const averageOrderValue = totalOrders > 0 ? totalSales / totalOrders : 0;
+    const totalSales = paidOrders.reduce((sum, order) => sum + Number(order.total), 0);
+    const totalOrders = allOrders.length;
+    const averageOrderValue = paidOrders.length > 0 ? totalSales / paidOrders.length : 0;
 
-    // Sales by month (last 6 months)
-    const salesByMonth = this.calculateSalesByMonth(orders);
+    // Sales by month uses paid orders only
+    const salesByMonth = this.calculateSalesByMonth(paidOrders);
 
-    // Top products
-    const topProducts = this.calculateTopProducts(orders);
+    // Top products uses paid orders only
+    const topProducts = this.calculateTopProducts(paidOrders);
 
-    // Recent orders (last 10)
-    const recentOrders = orders.slice(0, 10).map((order) => ({
+    // Recent orders shows ALL orders (so sellers can see pending/confirmed orders)
+    const recentOrders = allOrders.slice(0, 10).map((order) => ({
       id: order.id,
       orderNumber: order.orderNumber,
       total: Number(order.total),
@@ -171,38 +189,59 @@ export class DashboardService {
       },
     });
 
-    // Calculate wholesaler-specific stats
-    const orders = await this.prisma.order.findMany({
-      where: {
-        items: {
-          some: {
-            product: {
-              sellerId: seller.id,
+    const sellerProductFilter = {
+      items: {
+        some: {
+          product: {
+            sellerId: seller.id,
+          },
+        },
+      },
+    };
+
+    // Fetch ALL orders for counts, and PAID orders for sales metrics separately
+    const [allOrders, paidOrders, totalProducts] = await Promise.all([
+      this.prisma.order.findMany({
+        where: {
+          ...sellerProductFilter,
+          status: { notIn: ['CANCELLED', 'REJECTED'] },
+        },
+        orderBy: { createdAt: 'desc' },
+        take: 500,
+        include: {
+          items: {
+            include: {
+              product: true,
             },
           },
         },
-        paymentStatus: 'PAID',
-      },
-      orderBy: { createdAt: 'desc' },
-      take: 500,
-      include: {
-        items: {
-          include: {
-            product: true,
+      }),
+      this.prisma.order.findMany({
+        where: {
+          ...sellerProductFilter,
+          paymentStatus: 'PAID',
+        },
+        orderBy: { createdAt: 'desc' },
+        take: 500,
+        include: {
+          items: {
+            include: {
+              product: true,
+            },
           },
         },
-      },
-    });
+      }),
+      this.prisma.product.count({
+        where: { sellerId: seller.id },
+      }),
+    ]);
 
-    const totalSales = orders.reduce((sum, order) => sum + Number(order.total), 0);
-    const totalOrders = orders.length;
-    const averageOrderValue = totalOrders > 0 ? totalSales / totalOrders : 0;
-    const totalProducts = await this.prisma.product.count({
-      where: { sellerId: seller.id },
-    });
+    const totalSales = paidOrders.reduce((sum, order) => sum + Number(order.total), 0);
+    const totalOrders = allOrders.length;
+    const averageOrderValue = paidOrders.length > 0 ? totalSales / paidOrders.length : 0;
 
-    // Calculate bulk order statistics
-    const totalUnitsSold = orders.reduce((sum, order) => {
+    // Bulk order statistics use paid orders for financial accuracy
+    const totalUnitsSold = paidOrders.reduce((sum, order) => {
       return (
         sum +
         order.items.reduce((itemSum, item) => {
@@ -214,7 +253,7 @@ export class DashboardService {
       );
     }, 0);
 
-    const averageOrderQuantity = totalOrders > 0 ? totalUnitsSold / totalOrders : 0;
+    const averageOrderQuantity = paidOrders.length > 0 ? totalUnitsSold / paidOrders.length : 0;
 
     return {
       submissions: seller.submissions,

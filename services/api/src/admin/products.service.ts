@@ -206,6 +206,32 @@ export class AdminProductsService {
       }
     }
 
+    // Block duplicate products by SKU/barcode/EAN
+    const sku = data.sku?.trim();
+    const barcode = data.barcode?.trim();
+    const ean = data.ean?.trim();
+    if (sku || barcode || ean) {
+      const matchConditions: any[] = [];
+      if (sku) matchConditions.push({ sku });
+      if (barcode) matchConditions.push({ barcode });
+      if (ean) matchConditions.push({ ean });
+
+      const duplicate = await this.prisma.product.findFirst({
+        where: {
+          status: { in: ['ACTIVE', 'DRAFT'] },
+          OR: matchConditions,
+        },
+        select: { id: true, name: true, sku: true, sellerId: true },
+      });
+
+      if (duplicate) {
+        throw new BadRequestException(
+          `A product with matching identifiers already exists: "${duplicate.name}" (ID: ${duplicate.id}). ` +
+            `Use the Vendor Products feature to add another seller for this existing product instead of creating a duplicate.`,
+        );
+      }
+    }
+
     // Generate slug
     const baseSlug = slugify(data.name);
     let slug = baseSlug;
@@ -793,6 +819,195 @@ export class AdminProductsService {
       allPassed,
       checks,
     };
+  }
+
+  async findDuplicates() {
+    // Find products that share SKU, barcode, or EAN with other products
+    const products = await this.prisma.product.findMany({
+      where: {
+        status: { in: ['ACTIVE', 'DRAFT'] },
+        OR: [
+          { sku: { not: null } },
+          { barcode: { not: null } },
+          { ean: { not: null } },
+        ],
+      },
+      select: {
+        id: true,
+        name: true,
+        sku: true,
+        barcode: true,
+        ean: true,
+        sellerId: true,
+        status: true,
+        price: true,
+        stock: true,
+        seller: {
+          select: { id: true, storeName: true, sellerType: true },
+        },
+        _count: { select: { orderItems: true } },
+      },
+      orderBy: { name: 'asc' },
+    });
+
+    // Group by identifier matches
+    const groups = new Map<string, typeof products>();
+    for (const product of products) {
+      const keys: string[] = [];
+      if (product.sku) keys.push(`sku:${product.sku}`);
+      if (product.barcode) keys.push(`barcode:${product.barcode}`);
+      if (product.ean) keys.push(`ean:${product.ean}`);
+
+      for (const key of keys) {
+        if (!groups.has(key)) {
+          groups.set(key, []);
+        }
+        groups.get(key)!.push(product);
+      }
+    }
+
+    const duplicateGroups = Array.from(groups.entries())
+      .filter(([, items]) => items.length > 1)
+      .map(([matchKey, items]) => ({
+        matchKey,
+        products: items.map((p) => ({
+          id: p.id,
+          name: p.name,
+          sku: p.sku,
+          barcode: p.barcode,
+          ean: p.ean,
+          sellerId: p.sellerId,
+          sellerName: p.seller?.storeName || 'Platform',
+          sellerType: p.seller?.sellerType || 'PLATFORM',
+          status: p.status,
+          price: Number(p.price),
+          stock: p.stock,
+          orderCount: p._count.orderItems,
+        })),
+      }));
+
+    return {
+      totalDuplicateGroups: duplicateGroups.length,
+      groups: duplicateGroups,
+    };
+  }
+
+  async mergeProducts(
+    canonicalProductId: string,
+    duplicateProductId: string,
+  ) {
+    const [canonical, duplicate] = await Promise.all([
+      this.prisma.product.findUnique({
+        where: { id: canonicalProductId },
+        include: { seller: true },
+      }),
+      this.prisma.product.findUnique({
+        where: { id: duplicateProductId },
+        include: { seller: true, vendorProducts: true },
+      }),
+    ]);
+
+    if (!canonical) throw new NotFoundException('Canonical product not found');
+    if (!duplicate) throw new NotFoundException('Duplicate product not found');
+    if (canonicalProductId === duplicateProductId) {
+      throw new BadRequestException('Cannot merge a product with itself');
+    }
+
+    return this.prisma.$transaction(async (tx) => {
+      // Create VendorProduct for the duplicate's seller on the canonical product
+      if (duplicate.sellerId && duplicate.sellerId !== canonical.sellerId) {
+        const existingVP = await tx.vendorProduct.findUnique({
+          where: {
+            sellerId_productId: {
+              sellerId: duplicate.sellerId,
+              productId: canonicalProductId,
+            },
+          },
+        });
+
+        if (!existingVP) {
+          await tx.vendorProduct.create({
+            data: {
+              sellerId: duplicate.sellerId,
+              productId: canonicalProductId,
+              vendorPrice: Number(duplicate.price),
+              vendorCurrency: duplicate.currency,
+              costPrice: duplicate.tradePrice ? Number(duplicate.tradePrice) : null,
+              vendorStock: duplicate.stock,
+              lowStockThreshold: 5,
+              allowBackorder: false,
+              leadTimeDays: 3,
+              status: 'ACTIVE',
+              platformPrice: Number(duplicate.price),
+              submittedAt: new Date(),
+              approvedAt: new Date(),
+            },
+          });
+        }
+      }
+
+      // Reassign order items from duplicate to canonical
+      await tx.orderItem.updateMany({
+        where: { productId: duplicateProductId },
+        data: { productId: canonicalProductId },
+      });
+
+      // Reassign cart items from duplicate to canonical
+      await tx.cartItem.updateMany({
+        where: { productId: duplicateProductId },
+        data: { productId: canonicalProductId },
+      });
+
+      // Move any VendorProducts that referenced the duplicate
+      const duplicateVPs = await tx.vendorProduct.findMany({
+        where: { productId: duplicateProductId },
+      });
+      for (const vp of duplicateVPs) {
+        const existsOnCanonical = await tx.vendorProduct.findUnique({
+          where: {
+            sellerId_productId: {
+              sellerId: vp.sellerId,
+              productId: canonicalProductId,
+            },
+          },
+        });
+        if (!existsOnCanonical) {
+          await tx.vendorProduct.update({
+            where: { id: vp.id },
+            data: { productId: canonicalProductId },
+          });
+        } else {
+          await tx.vendorProduct.delete({ where: { id: vp.id } });
+        }
+      }
+
+      // Aggregate stock from duplicate into canonical
+      await tx.product.update({
+        where: { id: canonicalProductId },
+        data: {
+          stock: { increment: duplicate.stock },
+        },
+      });
+
+      // Soft-remove the duplicate
+      await tx.product.update({
+        where: { id: duplicateProductId },
+        data: { status: 'INACTIVE', deletedAt: new Date() },
+      });
+
+      // Link any submissions that pointed to the duplicate
+      await tx.productSubmission.updateMany({
+        where: { productId: duplicateProductId },
+        data: { productId: canonicalProductId },
+      });
+
+      return {
+        canonicalProductId,
+        duplicateProductId,
+        merged: true,
+        message: `Product ${duplicateProductId} merged into ${canonicalProductId}. Duplicate set to INACTIVE.`,
+      };
+    });
   }
 
   async deleteProduct(productId: string) {

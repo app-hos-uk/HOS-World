@@ -287,6 +287,22 @@ export class AdminProductsController {
     };
   }
 
+  @Get('duplicates')
+  @ApiOperation({
+    summary: 'Find duplicate products (Admin only)',
+    description:
+      'Finds products that share SKU, barcode, or EAN with other products. ' +
+      'Returns groups of duplicates so admin can decide which to merge.',
+  })
+  @SwaggerApiResponse({ status: 200, description: 'Duplicate groups found' })
+  async findDuplicates(): Promise<ApiResponse<any>> {
+    const result = await this.productsService.findDuplicates();
+    return {
+      data: result,
+      message: 'Duplicate products scan complete',
+    };
+  }
+
   @Get(':id/publish-readiness')
   @ApiOperation({
     summary: 'Check product publish readiness',
@@ -302,6 +318,38 @@ export class AdminProductsController {
     return {
       data: result,
       message: 'Publish readiness checklist retrieved',
+    };
+  }
+
+  @Post('merge')
+  @ApiOperation({
+    summary: 'Merge duplicate products (Admin only)',
+    description:
+      'Merges a duplicate product into a canonical product. Order items, cart items, and vendor products ' +
+      'are reassigned. The duplicate is set to INACTIVE. A VendorProduct is created for the duplicate seller.',
+  })
+  @ApiBody({
+    schema: {
+      type: 'object',
+      required: ['canonicalProductId', 'duplicateProductId'],
+      properties: {
+        canonicalProductId: { type: 'string', format: 'uuid', description: 'Product to keep' },
+        duplicateProductId: { type: 'string', format: 'uuid', description: 'Product to merge/remove' },
+      },
+    },
+  })
+  @SwaggerApiResponse({ status: 200, description: 'Products merged successfully' })
+  @SwaggerApiResponse({ status: 404, description: 'Product not found' })
+  async mergeProducts(
+    @Body() body: { canonicalProductId: string; duplicateProductId: string },
+  ): Promise<ApiResponse<any>> {
+    const result = await this.productsService.mergeProducts(
+      body.canonicalProductId,
+      body.duplicateProductId,
+    );
+    return {
+      data: result,
+      message: 'Products merged successfully',
     };
   }
 
