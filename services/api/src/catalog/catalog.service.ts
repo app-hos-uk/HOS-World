@@ -241,6 +241,7 @@ export class CatalogService {
     const entries = await this.prisma.catalogEntry.findMany({
       where,
       orderBy: { createdAt: 'desc' },
+      take: 500,
       include: {
         submission: {
           include: {
