@@ -115,6 +115,7 @@ export class OrdersService {
     // Group items by seller, preferring VendorProduct assignments for consistent routing.
     // If a product has an active VendorProduct, that vendor is used instead of Product.sellerId
     // to prevent order assignment discrepancies when duplicate products exist.
+    // When multiple vendors carry the same product, pick the one with the most stock.
     const itemsBySeller = new Map<string, typeof cart.items>();
 
     const productIds = cart.items.map((item) => item.productId);
@@ -123,11 +124,24 @@ export class OrdersService {
         productId: { in: productIds },
         status: 'ACTIVE' as any,
       },
-      select: { productId: true, sellerId: true },
+      select: { productId: true, sellerId: true, vendorStock: true },
     });
-    const vendorProductMap = new Map(
-      activeVendorProducts.map((vp) => [vp.productId, vp.sellerId]),
-    );
+
+    // Build map: productId -> sellerId (best vendor = highest stock)
+    const vendorProductMap = new Map<string, string>();
+    for (const vp of activeVendorProducts) {
+      const existing = vendorProductMap.get(vp.productId);
+      if (!existing) {
+        vendorProductMap.set(vp.productId, vp.sellerId);
+      } else {
+        const existingVp = activeVendorProducts.find(
+          (v) => v.productId === vp.productId && v.sellerId === existing,
+        );
+        if (existingVp && (vp.vendorStock ?? 0) > (existingVp.vendorStock ?? 0)) {
+          vendorProductMap.set(vp.productId, vp.sellerId);
+        }
+      }
+    }
 
     for (const item of cart.items) {
       const groupKey =

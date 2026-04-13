@@ -44,7 +44,7 @@ const menuItems: MenuItem[] = [
       { title: 'Marketing Materials', href: '/admin/marketing', icon: '📢' },
       { title: 'Newsletter', href: '/admin/newsletter', icon: '📧' },
       { title: 'Admin Pricing Approvals', href: '/admin/pricing', icon: '💰' },
-      { title: 'Finance Team Pricing', href: '/finance/pricing', icon: '💵' },
+      { title: 'Pricing Review Workflow', href: '/finance/pricing', icon: '💵' },
       { title: 'Publishing', href: '/admin/publishing', icon: '🚀' },
       { title: 'Media Library', href: '/admin/media', icon: '🖼️' },
     ],

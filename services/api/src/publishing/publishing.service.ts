@@ -91,17 +91,19 @@ export class PublishingService {
 
     // Check for existing product with matching identifiers to prevent duplicates.
     // If a matching product already exists, create a VendorProduct link instead of a new Product.
+    // Matches on SKU / barcode / EAN first; falls back to exact name match when none are provided.
     const sku = productData.sku?.trim();
     const barcode = productData.barcode?.trim();
     const ean = productData.ean?.trim();
 
     let existingProduct: { id: string; sellerId: string | null } | null = null;
-    if (sku || barcode || ean) {
-      const matchConditions: any[] = [];
-      if (sku) matchConditions.push({ sku });
-      if (barcode) matchConditions.push({ barcode });
-      if (ean) matchConditions.push({ ean });
 
+    const matchConditions: any[] = [];
+    if (sku) matchConditions.push({ sku });
+    if (barcode) matchConditions.push({ barcode });
+    if (ean) matchConditions.push({ ean });
+
+    if (matchConditions.length > 0) {
       existingProduct = await this.prisma.product.findFirst({
         where: {
           status: { in: ['ACTIVE', 'DRAFT'] },
@@ -110,6 +112,27 @@ export class PublishingService {
         },
         select: { id: true, sellerId: true },
       });
+    }
+
+    // Fallback: when no SKU/barcode/EAN identifiers exist, match by exact product name
+    // to prevent duplicate Product rows for the same item submitted by different sellers.
+    if (!existingProduct && !sku && !barcode && !ean && catalogEntry.title) {
+      existingProduct = await this.prisma.product.findFirst({
+        where: {
+          status: { in: ['ACTIVE', 'DRAFT'] },
+          name: catalogEntry.title,
+          sellerId: { not: submission.seller.id },
+        },
+        select: { id: true, sellerId: true },
+      });
+
+      if (existingProduct) {
+        this.logger.log(
+          `Name-based duplicate detected for "${catalogEntry.title}" ` +
+            `(existing: ${existingProduct.id}, seller: ${existingProduct.sellerId}). ` +
+            `Will create VendorProduct instead of new Product.`,
+        );
+      }
     }
 
     let product: any;

@@ -194,7 +194,7 @@ export default function FinancePricingPage() {
                     <div className="flex flex-col sm:flex-row justify-between gap-4">
                       <div className="flex-1">
                         <h3 className="text-lg font-semibold text-gray-900">
-                          {catalogEntry?.title || productData.name || 'Untitled Product'}
+                          {catalogEntry?.title || submission.product?.name || productData.name || 'Untitled Product'}
                         </h3>
                         <p className="text-sm text-gray-500 mt-1">
                           Seller: {submission.seller?.storeName || 'Unknown'}
@@ -275,6 +275,7 @@ export default function FinancePricingPage() {
                       <div>
                         <h3 className="font-semibold text-lg mb-2">
                           {selectedSubmission.catalogEntry?.title ||
+                            selectedSubmission.product?.name ||
                             selectedSubmission.productData?.name ||
                             'Untitled Product'}
                         </h3>

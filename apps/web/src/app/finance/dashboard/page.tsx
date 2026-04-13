@@ -74,8 +74,8 @@ export default function FinanceDashboardPage() {
       >
         <div className="mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
-            <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold">Finance Dashboard</h1>
-            <p className="text-gray-600 mt-2">Manage pricing approvals and financial operations</p>
+            <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold">Pricing Review Dashboard</h1>
+            <p className="text-gray-600 mt-2">Overview of pending pricing approvals and review history</p>
           </div>
           <button
             onClick={() => fetchDashboardData(true)}
@@ -195,6 +195,7 @@ export default function FinanceDashboardPage() {
                           <div className="flex-1">
                             <p className="font-medium text-gray-900">
                               {approval.submission?.catalogEntry?.title ||
+                                approval.submission?.product?.name ||
                                 approval.submission?.productData?.name ||
                                 'Untitled Product'}
                             </p>

@@ -20,7 +20,8 @@ interface Product {
   currency: string;
   status: string;
   category?: { name: string };
-  seller?: { storeName: string };
+  seller?: { id: string; storeName: string; slug?: string };
+  isPlatformOwned?: boolean;
   taxRate?: number;
   margin?: number;
   createdAt: string | Date;
@@ -347,6 +348,7 @@ export default function AdminPricingPage() {
 
   const exportColumns = [
     { key: 'name', header: 'Product Name' },
+    { key: 'seller', header: 'Seller', format: (_v: any, r: Product) => r.seller?.storeName || (r.isPlatformOwned ? 'Platform' : '') },
     { key: 'sku', header: 'SKU' },
     { key: 'price', header: 'Price', format: (v: number, r: Product) => `${r.currency || 'USD'} ${Number(v || 0).toFixed(2)}` },
     { key: 'tradePrice', header: 'Trade Price', format: (v: number, r: Product) => v ? `${r.currency || 'USD'} ${Number(v).toFixed(2)}` : '' },
@@ -539,6 +541,7 @@ export default function AdminPricingPage() {
                       />
                     </th>
                     <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Product</th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Seller</th>
                     <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Price</th>
                     <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Trade</th>
                     <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">RRP</th>
@@ -552,7 +555,7 @@ export default function AdminPricingPage() {
                 <tbody className="bg-white divide-y divide-gray-200">
                   {filteredProducts.length === 0 ? (
                     <tr>
-                      <td colSpan={10} className="px-4 py-8 text-center text-gray-500">
+                      <td colSpan={11} className="px-4 py-8 text-center text-gray-500">
                         No products found
                       </td>
                     </tr>
@@ -574,6 +577,15 @@ export default function AdminPricingPage() {
                           <div className="text-xs text-gray-500">{product.sku || 'No SKU'}</div>
                           {product.category && (
                             <div className="text-xs text-gray-400">{product.category.name}</div>
+                          )}
+                        </td>
+                        <td className="px-4 py-3">
+                          {product.seller?.storeName ? (
+                            <span className="text-sm text-gray-700">{product.seller.storeName}</span>
+                          ) : product.isPlatformOwned ? (
+                            <span className="text-xs text-purple-600 font-medium">Platform</span>
+                          ) : (
+                            <span className="text-xs text-gray-400">—</span>
                           )}
                         </td>
                         <td className="px-4 py-3">

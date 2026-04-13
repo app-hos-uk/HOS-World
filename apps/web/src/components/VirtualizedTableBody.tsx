@@ -1,6 +1,6 @@
 'use client';
 
-import { useRef } from 'react';
+import { useEffect, useRef } from 'react';
 import { useVirtualizer } from '@tanstack/react-virtual';
 
 interface VirtualizedTableBodyProps {
@@ -33,7 +33,21 @@ export function VirtualizedTableBody({
     overscan,
   });
 
-  // If few items, render normally without virtualization
+  // Keep a stable ref to virtualizer.measure so the effect below doesn't
+  // re-fire on every render (useVirtualizer returns a new object each time).
+  const measureRef = useRef(virtualizer.measure);
+  measureRef.current = virtualizer.measure;
+
+  // Force re-measure after the scroll container mounts or items change.
+  // Without this, the virtualizer may initialize before the container is laid out,
+  // seeing height 0 and rendering zero rows.
+  useEffect(() => {
+    if (items.length > 50) {
+      const frame = requestAnimationFrame(() => measureRef.current());
+      return () => cancelAnimationFrame(frame);
+    }
+  }, [items.length]);
+
   if (items.length <= 50) {
     return (
       <tbody>

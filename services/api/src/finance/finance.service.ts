@@ -26,6 +26,11 @@ export class FinanceService {
             sellerType: true,
           },
         },
+        product: {
+          select: {
+            name: true,
+          },
+        },
         catalogEntry: {
           select: {
             id: true,

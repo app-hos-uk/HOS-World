@@ -479,20 +479,27 @@ export class DashboardService {
       take: 20,
     });
 
-    const completedToday = await this.prisma.catalogEntry.count({
-      where: {
-        completedAt: {
-          gte: new Date(new Date().setHours(0, 0, 0, 0)),
+    const [completedToday, totalEntries, totalCompleted] = await Promise.all([
+      this.prisma.catalogEntry.count({
+        where: {
+          completedAt: {
+            gte: new Date(new Date().setHours(0, 0, 0, 0)),
+          },
         },
-      },
-    });
+      }),
+      this.prisma.catalogEntry.count(),
+      this.prisma.catalogEntry.count({
+        where: { completedAt: { not: null } },
+      }),
+    ]);
 
     return {
       pendingSubmissions: pending,
       pendingEntries: pending,
       inProgress: inProgress,
       completedToday,
-      totalEntries: await this.prisma.catalogEntry.count(),
+      totalEntries,
+      totalCompleted,
       totalPending: pending.length,
       totalInProgress: inProgress.length,
     };
@@ -596,6 +603,11 @@ export class DashboardService {
           select: {
             storeName: true,
             sellerType: true,
+          },
+        },
+        product: {
+          select: {
+            name: true,
           },
         },
         catalogEntry: {

@@ -64,6 +64,7 @@ export default function CatalogDashboardPage() {
     };
   }, [fetchDashboardData]);
   const completedToday = dashboardData?.completedToday || 0;
+  const totalCompleted = dashboardData?.totalCompleted || 0;
   const totalEntries = dashboardData?.totalEntries || 0;
 
   return (
@@ -138,8 +139,11 @@ export default function CatalogDashboardPage() {
               <div className="bg-white border rounded-lg p-6 shadow-sm">
                 <div className="flex items-center justify-between">
                   <div>
-                    <h3 className="text-sm font-medium text-gray-600 mb-1">Completed Today</h3>
-                    <p className="text-3xl font-bold text-green-600">{completedToday.toLocaleString()}</p>
+                    <h3 className="text-sm font-medium text-gray-600 mb-1">Completed</h3>
+                    <p className="text-3xl font-bold text-green-600">{totalCompleted.toLocaleString()}</p>
+                    {completedToday > 0 && (
+                      <p className="text-xs text-gray-500 mt-1">{completedToday} today</p>
+                    )}
                   </div>
                   <div className="text-4xl">✅</div>
                 </div>
