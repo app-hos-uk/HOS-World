@@ -141,8 +141,21 @@ export class ActivityInterceptor implements NestInterceptor {
     'cvv',
   ]);
 
+  private isDecimalLike(value: any): boolean {
+    return (
+      typeof value === 'object' &&
+      value !== null &&
+      typeof value.toFixed === 'function' &&
+      'd' in value &&
+      'e' in value &&
+      's' in value
+    );
+  }
+
   private sanitizeValue(value: any): any {
     if (value === null || value === undefined) return value;
+    if (this.isDecimalLike(value)) return Number(value);
+    if (typeof value === 'function') return undefined;
     if (Array.isArray(value)) return value.map((item) => this.sanitizeValue(item));
     if (typeof value === 'object' && !(value instanceof Date)) {
       const sanitized: Record<string, any> = {};
@@ -150,7 +163,10 @@ export class ActivityInterceptor implements NestInterceptor {
         if (ActivityInterceptor.SENSITIVE_KEYS.has(key)) {
           sanitized[key] = '[REDACTED]';
         } else {
-          sanitized[key] = this.sanitizeValue(val);
+          const sanitized_val = this.sanitizeValue(val);
+          if (sanitized_val !== undefined) {
+            sanitized[key] = sanitized_val;
+          }
         }
       }
       return sanitized;

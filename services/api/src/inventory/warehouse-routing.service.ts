@@ -81,7 +81,7 @@ export class WarehouseRoutingService {
     });
 
     if (warehouses.length === 0) {
-      this.logger.warn('No active warehouses with coordinates found');
+      this.logger.debug('No active warehouses with coordinates found');
       return null;
     }
 
@@ -153,7 +153,7 @@ export class WarehouseRoutingService {
     });
 
     if (centers.length === 0) {
-      this.logger.warn('No active fulfillment centers with coordinates found');
+      this.logger.debug('No active fulfillment centers with coordinates found');
       return null;
     }
 
