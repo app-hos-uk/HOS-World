@@ -259,15 +259,18 @@ export class PublishingService {
       });
     }
 
-    // Send notification to seller
-    if (submission.seller?.userId) {
-      await this.notificationsService.sendNotificationToUser(
-        submission.seller.userId,
-        'PRODUCT_PUBLISHED',
-        'Product Published Successfully',
-        `Your product submission "${product.name}" has been published and is now live on the marketplace.`,
-        { productId: product.id, submissionId },
-      );
+    try {
+      if (submission.seller?.userId) {
+        await this.notificationsService.sendNotificationToUser(
+          submission.seller.userId,
+          'PRODUCT_PUBLISHED',
+          'Product Published Successfully',
+          `Your product submission "${product.name}" has been published and is now live on the marketplace.`,
+          { productId: product.id, submissionId },
+        );
+      }
+    } catch (notifyErr) {
+      this.logger.warn(`Post-publish notification failed for submission ${submissionId}: ${notifyErr}`);
     }
 
     return {

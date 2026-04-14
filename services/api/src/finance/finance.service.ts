@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
+import { Injectable, Logger, NotFoundException, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../database/prisma.service';
 import { NotificationsService } from '../notifications/notifications.service';
 import { SetPricingDto, ApprovePricingDto } from './dto/set-pricing.dto';
@@ -6,6 +6,8 @@ import { ProductSubmissionStatus, VisibilityLevel } from '@prisma/client';
 
 @Injectable()
 export class FinanceService {
+  private readonly logger = new Logger(FinanceService.name);
+
   constructor(
     private prisma: PrismaService,
     private notificationsService: NotificationsService,
@@ -192,14 +194,17 @@ export class FinanceService {
       },
     });
 
-    // Send notification to HOS Admin for publishing
-    await this.notificationsService.sendNotificationToRole(
-      'ADMIN',
-      'FINANCE_APPROVED',
-      'Product Ready for Publishing',
-      `A product submission from ${updated.seller?.storeName || 'Unknown Seller'} has completed all review stages and is ready for publishing.`,
-      { submissionId },
-    );
+    try {
+      await this.notificationsService.sendNotificationToRole(
+        'ADMIN',
+        'FINANCE_APPROVED',
+        'Product Ready for Publishing',
+        `A product submission from ${updated.seller?.storeName || 'Unknown Seller'} has completed all review stages and is ready for publishing.`,
+        { submissionId },
+      );
+    } catch (notifyErr) {
+      this.logger.warn(`Post-approval notification failed for submission ${submissionId}: ${notifyErr}`);
+    }
 
     return updated;
   }
@@ -235,15 +240,18 @@ export class FinanceService {
       },
     });
 
-    // Send notification to seller
-    if (updated.seller?.userId) {
-      await this.notificationsService.sendNotificationToUser(
-        updated.seller.userId,
-        'FINANCE_REJECTED',
-        'Product Submission Rejected',
-        `Your product submission has been rejected by Finance. Reason: ${reason}`,
-        { submissionId },
-      );
+    try {
+      if (updated.seller?.userId) {
+        await this.notificationsService.sendNotificationToUser(
+          updated.seller.userId,
+          'FINANCE_REJECTED',
+          'Product Submission Rejected',
+          `Your product submission has been rejected by Finance. Reason: ${reason}`,
+          { submissionId },
+        );
+      }
+    } catch (notifyErr) {
+      this.logger.warn(`Post-rejection notification failed for submission ${submissionId}: ${notifyErr}`);
     }
 
     return updated;

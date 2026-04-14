@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
+import { Injectable, Logger, NotFoundException, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../database/prisma.service';
 import { NotificationsService } from '../notifications/notifications.service';
 import { CreateCatalogEntryDto, UpdateCatalogEntryDto } from './dto/create-catalog-entry.dto';
@@ -6,6 +6,8 @@ import { ProductSubmissionStatus } from '@prisma/client';
 
 @Injectable()
 export class CatalogService {
+  private readonly logger = new Logger(CatalogService.name);
+
   constructor(
     private prisma: PrismaService,
     private notificationsService: NotificationsService,
@@ -293,13 +295,17 @@ export class CatalogService {
       },
     });
 
-    await this.notificationsService.sendNotificationToRole(
-      'FINANCE',
-      'CONTENT_COMPLETED' as any,
-      'Product Content Completed',
-      `Content has been completed for submission from ${submission.seller?.storeName || 'Unknown Seller'}. The product is ready for finance/pricing review.`,
-      { submissionId, catalogEntryId: updated.id },
-    );
+    try {
+      await this.notificationsService.sendNotificationToRole(
+        'FINANCE',
+        'CONTENT_COMPLETED',
+        'Product Content Completed',
+        `Content has been completed for submission from ${submission.seller?.storeName || 'Unknown Seller'}. The product is ready for finance/pricing review.`,
+        { submissionId, catalogEntryId: updated.id },
+      );
+    } catch (notifyErr) {
+      this.logger.warn(`Post-complete notification failed for submission ${submissionId}: ${notifyErr}`);
+    }
 
     return updated;
   }

@@ -163,7 +163,7 @@ export default function AdminSubmissionsPage() {
       contentCompleted: countByStatus(['CONTENT_COMPLETED']),
       financeApproved: countByStatus(['FINANCE_APPROVED']),
       published: countByStatus(['PUBLISHED']),
-      rejected: countByStatus(['REJECTED', 'FC_REJECTED']),
+      rejected: countByStatus(['REJECTED']),
     });
   };
 

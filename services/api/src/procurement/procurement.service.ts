@@ -1,5 +1,6 @@
 import {
   Injectable,
+  Logger,
   NotFoundException,
   ForbiddenException,
   BadRequestException,
@@ -16,6 +17,8 @@ import { NotificationsService } from '../notifications/notifications.service';
 
 @Injectable()
 export class ProcurementService {
+  private readonly logger = new Logger(ProcurementService.name);
+
   constructor(
     private prisma: PrismaService,
     private duplicatesService: DuplicatesService,
@@ -194,15 +197,18 @@ export class ProcurementService {
       },
     });
 
-    // Send notification to seller about approval
-    if (updated.seller?.userId) {
-      await this.notificationsService.sendNotificationToUser(
-        updated.seller.userId,
-        'SUBMISSION_APPROVED',
-        'Product Submission Approved',
-        `Your product submission has been approved by Procurement and is moving to the next stage.`,
-        { submissionId: id },
-      );
+    try {
+      if (updated.seller?.userId) {
+        await this.notificationsService.sendNotificationToUser(
+          updated.seller.userId,
+          'SUBMISSION_APPROVED',
+          'Product Submission Approved',
+          `Your product submission has been approved by Procurement and is moving to the next stage.`,
+          { submissionId: id },
+        );
+      }
+    } catch (notifyErr) {
+      this.logger.warn(`Post-approval notification failed for submission ${id}: ${notifyErr}`);
     }
 
     return updated;
@@ -239,15 +245,18 @@ export class ProcurementService {
       },
     });
 
-    // Send notification to seller about rejection
-    if (updated.seller?.userId) {
-      await this.notificationsService.sendNotificationToUser(
-        updated.seller.userId,
-        'SUBMISSION_REJECTED',
-        'Product Submission Rejected',
-        `Your product submission has been rejected by Procurement. Reason: ${rejectDto.reason}${rejectDto.notes ? `\n\nNotes: ${rejectDto.notes}` : ''}`,
-        { submissionId: id },
-      );
+    try {
+      if (updated.seller?.userId) {
+        await this.notificationsService.sendNotificationToUser(
+          updated.seller.userId,
+          'SUBMISSION_REJECTED',
+          'Product Submission Rejected',
+          `Your product submission has been rejected by Procurement. Reason: ${rejectDto.reason}${rejectDto.notes ? `\n\nNotes: ${rejectDto.notes}` : ''}`,
+          { submissionId: id },
+        );
+      }
+    } catch (notifyErr) {
+      this.logger.warn(`Post-rejection notification failed for submission ${id}: ${notifyErr}`);
     }
 
     return updated;
