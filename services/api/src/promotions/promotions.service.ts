@@ -437,8 +437,13 @@ export class PromotionsService {
 
     const hasExclusiveApplied = applied.some((p) => p.isStackable === false);
 
+    // Non-stackable: allowed when nothing is applied yet, or when only stackable promos/coupons
+    // are applied (cannot stack with another exclusive / non-stackable).
     if (!promotion.isStackable) {
-      return applied.length === 0;
+      if (applied.length === 0) {
+        return true;
+      }
+      return !hasExclusiveApplied;
     }
 
     if (hasExclusiveApplied) {

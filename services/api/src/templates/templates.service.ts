@@ -362,7 +362,8 @@ export class TemplatesService {
           return val;
         }
         if (key.toLowerCase().includes('link') || key.toLowerCase().includes('url')) {
-          return safeVarPattern.test(val) ? escapeHtml(val) : escapeHtml(val);
+          // Safe http(s) URLs: use raw value in href="{{...}}" — escaping would break the URL
+          return safeVarPattern.test(val) ? val : escapeHtml(val);
         }
         return escapeHtml(val);
       });
