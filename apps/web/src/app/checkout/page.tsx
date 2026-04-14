@@ -213,12 +213,14 @@ export default function CheckoutPage() {
             setShippingCost(response.data[0].rate || 0);
           }
         } else if (response.data.length === 0) {
-          // No shipping options available - set cost to 0
+          // No shipping options available — clear selection so submit does not send a stale method id
+          setSelectedShippingMethod('');
           setShippingCost(0);
         }
       }
     } catch (error: any) {
       console.error('Error calculating shipping:', error);
+      setSelectedShippingMethod('');
       setShippingCost(0);
       setShippingOptions([]);
     } finally {

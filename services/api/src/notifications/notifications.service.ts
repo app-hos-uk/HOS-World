@@ -61,32 +61,19 @@ export class NotificationsService implements OnModuleInit {
   onModuleInit() {
     this.queueService.registerProcessor(JobType.EMAIL_NOTIFICATION, async (job) => {
       const { to, subject, html, notificationId } = job.data;
-      try {
-        const sent = await this.sendEmail(to, subject, html);
-        if (notificationId) {
-          try {
-            await this.prisma.notification.update({
-              where: { id: notificationId },
-              data: {
-                status: sent ? ('SENT' as any) : ('FAILED' as any),
-                sentAt: sent ? new Date() : undefined,
-              },
-            });
-          } catch (e) {
-            this.logger.warn(`Could not update notification ${notificationId}: ${(e as Error)?.message}`);
-          }
+      const sent = await this.sendEmail(to, subject, html);
+      if (notificationId) {
+        try {
+          await this.prisma.notification.update({
+            where: { id: notificationId },
+            data: {
+              status: sent ? ('SENT' as any) : ('FAILED' as any),
+              sentAt: sent ? new Date() : undefined,
+            },
+          });
+        } catch (e) {
+          this.logger.warn(`Could not update notification ${notificationId}: ${(e as Error)?.message}`);
         }
-      } catch (error: any) {
-        this.logger.error(`Email send failed for ${to}: ${error?.message}`);
-        if (notificationId) {
-          try {
-            await this.prisma.notification.update({
-              where: { id: notificationId },
-              data: { status: 'FAILED' as any },
-            });
-          } catch (_) {}
-        }
-        throw error;
       }
     });
     this.logger.log('Registered EMAIL_NOTIFICATION processor with BullMQ');
@@ -136,14 +123,19 @@ export class NotificationsService implements OnModuleInit {
       return false;
     }
 
-    await this.transporter.sendMail({
-      from: this.configService.get('SMTP_FROM', 'noreply@hos-marketplace.com'),
-      to,
-      subject,
-      html,
-    });
-    this.logger.log(`✅ Email sent to ${to}: ${subject}`);
-    return true;
+    try {
+      await this.transporter.sendMail({
+        from: this.configService.get('SMTP_FROM', 'noreply@hos-marketplace.com'),
+        to,
+        subject,
+        html,
+      });
+      this.logger.log(`✅ Email sent to ${to}: ${subject}`);
+      return true;
+    } catch (error: any) {
+      this.logger.error(`❌ Failed to send email to ${to}: ${error?.message}`);
+      return false;
+    }
   }
 
   async sendSellerInvitation(
