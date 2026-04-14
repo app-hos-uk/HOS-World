@@ -17,6 +17,9 @@ import { CreateOrderDto } from './dto/create-order.dto';
 import { UpdateOrderDto } from './dto/update-order.dto';
 import { AddOrderNoteDto } from './dto/add-order-note.dto';
 import { PaymentProviderService } from '../payments/payment-provider.service';
+import { ShippingService } from '../shipping/shipping.service';
+import { PromotionsService } from '../promotions/promotions.service';
+import type { PromotionApplicationResult } from '../promotions/types/promotion.types';
 import type { Order, OrderStatus, PaymentStatus } from '@hos-marketplace/shared-types';
 import {
   OrderStatus as PrismaOrderStatus,
@@ -59,11 +62,41 @@ export class OrdersService {
     @Optional() private geocodingService?: GeocodingService,
     @Optional() private cartService?: CartService,
     @Optional() private paymentProviderService?: PaymentProviderService,
+    @Optional() private shippingService?: ShippingService,
+    @Optional() private promotionsService?: PromotionsService,
   ) {
     this.defaultCommissionRate = this.configService.get<number>('DEFAULT_COMMISSION_RATE', 0.1);
   }
 
   async create(userId: string, createOrderDto: CreateOrderDto): Promise<Order> {
+    if (createOrderDto.idempotencyKey) {
+      const existingOrder = await this.prisma.order.findFirst({
+        where: {
+          userId,
+          idempotencyKey: createOrderDto.idempotencyKey,
+          parentOrderId: null,
+        },
+        include: {
+          items: {
+            include: {
+              product: {
+                include: { images: { orderBy: { order: 'asc' }, take: 1 } },
+              },
+            },
+          },
+          shippingAddress: true,
+          billingAddress: true,
+          seller: { select: { id: true, storeName: true, slug: true } },
+        },
+      });
+      if (existingOrder) {
+        this.logger.log(
+          `Idempotent checkout: returning existing order ${existingOrder.orderNumber} for key ${createOrderDto.idempotencyKey}`,
+        );
+        return this.mapToOrderType(existingOrder, true);
+      }
+    }
+
     // Get user's cart with product tax classes
     const cart = await this.prisma.cart.findUnique({
       where: { userId },
@@ -88,6 +121,21 @@ export class OrdersService {
 
     if (!cart || cart.items.length === 0) {
       throw new BadRequestException('Cart is empty');
+    }
+
+    let appliedPromotionResult: PromotionApplicationResult | null = null;
+    if (this.promotionsService) {
+      appliedPromotionResult = await this.promotionsService.applyPromotionsToCart(
+        cart.id,
+        userId,
+        cart.items.map((item) => ({
+          productId: item.productId,
+          price: Number(item.price),
+          quantity: item.quantity,
+          categoryId: item.product.categoryId,
+        })),
+        cart.couponCode || undefined,
+      );
     }
 
     // Verify addresses belong to user
@@ -171,8 +219,10 @@ export class OrdersService {
           select: { id: true, commissionRate: true },
         });
         if (!seller) {
-          this.logger.warn(`Seller ${sellerIdOrPlatform} not found, skipping items`);
-          continue;
+          const productNames = items.map((i) => i.product.name).join(', ');
+          throw new BadRequestException(
+            `Unable to process order: seller for "${productNames}" is no longer available. Please remove these items and try again.`,
+          );
         }
       }
 
@@ -231,9 +281,48 @@ export class OrdersService {
     // Grand totals for the parent order (include cart-level shipping & discount)
     const grandSubtotal = vendorGroups.reduce((acc, g) => acc.add(g.subtotal), new Decimal(0));
     const grandTax = vendorGroups.reduce((acc, g) => acc.add(g.tax), new Decimal(0));
-    const cartShipping = new Decimal(createOrderDto.shippingCost ?? cart.shipping ?? 0);
+
+    let resolvedShippingCost = new Decimal(createOrderDto.shippingCost ?? cart.shipping ?? 0);
+    if (cart.promotionFreeShipping) {
+      resolvedShippingCost = new Decimal(0);
+    } else if (this.shippingService && shippingAddress) {
+      try {
+        const cartValue = Number(grandSubtotal);
+        const shippingOptions = await this.shippingService.getShippingOptions(
+          cart.items.map((item) => ({
+            productId: item.productId,
+            quantity: item.quantity,
+            weight: (item.product as any).weight ?? null,
+          })),
+          cartValue,
+          {
+            country: shippingAddress.country,
+            state: shippingAddress.state || undefined,
+            city: shippingAddress.city || undefined,
+            postalCode: shippingAddress.postalCode || undefined,
+          },
+        );
+        if (shippingOptions.length > 0) {
+          const selectedOption = createOrderDto.shippingMethodId
+            ? shippingOptions.find((o: any) => o.method?.id === createOrderDto.shippingMethodId)
+            : null;
+          const serverRate = new Decimal(selectedOption?.rate ?? shippingOptions[0]?.rate ?? 0);
+          // Authoritative server quote — do not trust client-submitted shipping (prevents underpayment)
+          resolvedShippingCost = serverRate;
+        }
+      } catch (err) {
+        this.logger.warn(`Shipping re-validation failed, using client value: ${err}`);
+      }
+    }
+
+    const cartShipping = resolvedShippingCost;
     const cartDiscount = new Decimal(cart.discount || 0);
-    const grandTotal = grandSubtotal.add(grandTax).add(cartShipping).sub(cartDiscount);
+    const grandTotal = Decimal.max(
+      grandSubtotal.add(grandTax).add(cartShipping).sub(cartDiscount),
+      new Decimal(0),
+    );
+
+    let skipPromotionUsageRecording = false;
 
     // Use a single transaction for the entire checkout
     const result = await this.prisma.$transaction(async (tx) => {
@@ -271,6 +360,7 @@ export class OrdersService {
           shippingAddressId: createOrderDto.shippingAddressId,
           billingAddressId: createOrderDto.billingAddressId,
           paymentMethod: createOrderDto.paymentMethod,
+          idempotencyKey: createOrderDto.idempotencyKey || null,
           items: {
             create: cart.items.map((item) => ({
               productId: item.productId,
@@ -336,7 +426,7 @@ export class OrdersService {
             }
           }
 
-          const commissionRate = group.seller?.commissionRate
+          const commissionRate = group.seller?.commissionRate != null
             ? Number(group.seller.commissionRate)
             : this.defaultCommissionRate;
           const platformFee = group.subtotal.mul(commissionRate);
@@ -416,7 +506,7 @@ export class OrdersService {
 
         // Set platform fee on the parent order for single vendor
         if (vendorGroups[0].seller) {
-          const commissionRate = vendorGroups[0].seller.commissionRate
+          const commissionRate = vendorGroups[0].seller.commissionRate != null
             ? Number(vendorGroups[0].seller.commissionRate)
             : this.defaultCommissionRate;
           await tx.order.update({
@@ -470,9 +560,49 @@ export class OrdersService {
       });
 
       return parentOrder;
+    }).catch(async (err) => {
+      if (
+        err?.code === 'P2002' &&
+        createOrderDto.idempotencyKey &&
+        err?.meta?.target?.includes?.('idempotencyKey')
+      ) {
+        const existing = await this.prisma.order.findFirst({
+          where: { userId, idempotencyKey: createOrderDto.idempotencyKey, parentOrderId: null },
+          include: {
+            items: { include: { product: { include: { images: { orderBy: { order: 'asc' }, take: 1 } } } } },
+            shippingAddress: true,
+            billingAddress: true,
+            seller: { select: { id: true, storeName: true, slug: true } },
+          },
+        });
+        if (existing) {
+          skipPromotionUsageRecording = true;
+          return existing;
+        }
+      }
+      throw err;
     });
 
     const parentOrder = this.mapToOrderType(result, true);
+
+    if (
+      !skipPromotionUsageRecording &&
+      this.promotionsService &&
+      appliedPromotionResult &&
+      appliedPromotionResult.appliedPromotions.length > 0
+    ) {
+      try {
+        await this.promotionsService.recordUsagesAfterOrder(
+          userId,
+          result.id,
+          appliedPromotionResult,
+        );
+      } catch (error: any) {
+        this.logger.warn(
+          `Failed to record promotion/coupon usages for order ${result.id}: ${error?.message ?? error}`,
+        );
+      }
+    }
 
     // Process referral on the parent order
     if (createOrderDto.referralCode && parentOrder) {
@@ -483,9 +613,9 @@ export class OrdersService {
           createOrderDto.referralCode,
           createOrderDto.visitorId,
         );
-      } catch (error) {
+      } catch (error: any) {
         this.logger.warn(
-          `Failed to process referral for order ${parentOrder.id}: ${error.message}`,
+          `Failed to process referral for order ${parentOrder.id}: ${error?.message ?? error}`,
         );
       }
     }
@@ -623,6 +753,11 @@ export class OrdersService {
       return;
     }
 
+    if (influencer.userId === userId) {
+      this.logger.warn(`Self-referral blocked: user ${userId} used their own referral code`);
+      return;
+    }
+
     // Get order details with items
     const order = await this.prisma.order.findUnique({
       where: { id: orderId },
@@ -718,90 +853,84 @@ export class OrdersService {
 
     const orderTotal = order.total;
 
-    // Try to find the existing tracked (unconverted) referral for this visitor+influencer
-    // so we preserve click history, landing page, UTM params, etc.
-    let referral: { id: string } | null = null;
+    await this.prisma.$transaction(async (tx) => {
+      let referral: { id: string } | null = null;
 
-    if (visitorId) {
-      const existing = await this.prisma.referral.findFirst({
-        where: {
-          influencerId: influencer.id,
-          visitorId,
-          convertedAt: null,
-        },
-        orderBy: { createdAt: 'desc' },
-      });
+      if (visitorId) {
+        const existing = await tx.referral.findFirst({
+          where: {
+            influencerId: influencer.id,
+            visitorId,
+            convertedAt: null,
+          },
+          orderBy: { createdAt: 'desc' },
+        });
 
-      if (existing) {
-        referral = await this.prisma.referral.update({
-          where: { id: existing.id },
+        if (existing) {
+          referral = await tx.referral.update({
+            where: { id: existing.id },
+            data: {
+              userId,
+              orderId,
+              orderTotal: order.total,
+              convertedAt: new Date(),
+              campaignId: campaignForAttribution?.id ?? existing.campaignId,
+            },
+          });
+        }
+      }
+
+      if (!referral) {
+        const expiresAt = new Date();
+        expiresAt.setDate(expiresAt.getDate() + influencer.cookieDuration);
+
+        referral = await tx.referral.create({
           data: {
+            influencerId: influencer.id,
+            visitorId,
             userId,
             orderId,
             orderTotal: order.total,
             convertedAt: new Date(),
-            campaignId: campaignForAttribution?.id ?? existing.campaignId,
+            expiresAt,
+            campaignId: campaignForAttribution?.id,
           },
         });
       }
-    }
 
-    if (!referral) {
-      const expiresAt = new Date();
-      expiresAt.setDate(expiresAt.getDate() + influencer.cookieDuration);
-
-      referral = await this.prisma.referral.create({
+      await tx.influencerCommission.create({
         data: {
           influencerId: influencer.id,
-          visitorId,
-          userId,
+          referralId: referral.id,
           orderId,
           orderTotal: order.total,
-          convertedAt: new Date(),
-          expiresAt,
-          campaignId: campaignForAttribution?.id,
+          rateSource,
+          rateApplied,
+          amount: commissionAmount,
+          status: 'PENDING',
+          currency: order.currency,
         },
       });
-    }
 
-    // Create commission
-    await this.prisma.influencerCommission.create({
-      data: {
-        influencerId: influencer.id,
-        referralId: referral.id,
-        orderId,
-        orderTotal: order.total,
-        rateSource,
-        rateApplied,
-        amount: commissionAmount,
-        status: 'PENDING',
-        currency: order.currency,
-      },
-    });
+      await tx.influencer.update({
+        where: { id: influencer.id },
+        data: {
+          totalConversions: { increment: 1 },
+          totalSalesAmount: { increment: orderTotal },
+          totalCommission: { increment: commissionAmount },
+        },
+      });
 
-    // Update influencer stats using Decimal for precision
-    await this.prisma.influencer.update({
-      where: { id: influencer.id },
-      data: {
-        totalConversions: { increment: 1 },
-        totalSalesAmount: { increment: orderTotal },
-        totalCommission: { increment: commissionAmount },
-      },
-    });
-
-    if (campaignForAttribution?.id) {
-      try {
-        await this.prisma.influencerCampaign.update({
+      if (campaignForAttribution?.id) {
+        await tx.influencerCampaign.update({
           where: { id: campaignForAttribution.id },
           data: {
             totalConversions: { increment: 1 },
             totalSales: { increment: campaignAttributedSales },
           },
         });
-      } catch (e: any) {
-        this.logger.warn(`Failed to update campaign stats for ${campaignForAttribution.id}: ${e?.message}`);
       }
-    }
+    });
 
     // Convert to Number only for logging display
     const ratePercent = rateApplied.mul(100).toNumber();
@@ -1347,8 +1476,9 @@ export class OrdersService {
 
       if (isMultiVendor) {
         // Multi-vendor: restore stock from child orders only (parent items are duplicates)
+        // Skip REJECTED children — vendorRejectOrder already restored their stock
         for (const child of childOrders) {
-          if (child.status !== 'CANCELLED' && child.status !== 'REFUNDED') {
+          if (child.status !== 'CANCELLED' && child.status !== 'REFUNDED' && child.status !== 'REJECTED') {
             for (const childItem of child.items) {
               await tx.product.update({
                 where: { id: childItem.productId },
@@ -1367,6 +1497,14 @@ export class OrdersService {
                 }
               }
             }
+            await tx.order.update({
+              where: { id: child.id },
+              data: {
+                status: 'CANCELLED',
+                paymentStatus: child.paymentStatus === 'PAID' ? 'REFUNDED' : child.paymentStatus,
+              },
+            });
+          } else if (child.status === 'REJECTED') {
             await tx.order.update({
               where: { id: child.id },
               data: {
@@ -1552,7 +1690,7 @@ export class OrdersService {
 
     // Recalculate cart totals using CartService (handles tax, promotions, etc.)
     if (this.cartService) {
-      await this.cartService.recalculateCart(cart.id);
+      await this.cartService.recalculateCart(cart.id, { userMutated: true });
     } else {
       // Fallback: manual calculation without tax (should not happen in production)
       const cartItems = await this.prisma.cartItem.findMany({

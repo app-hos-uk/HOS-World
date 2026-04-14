@@ -438,10 +438,7 @@ export class PromotionsService {
     const hasExclusiveApplied = applied.some((p) => p.isStackable === false);
 
     if (!promotion.isStackable) {
-      if (applied.length === 0) {
-        return true;
-      }
-      return !hasExclusiveApplied;
+      return applied.length === 0;
     }
 
     if (hasExclusiveApplied) {
@@ -516,9 +513,24 @@ export class PromotionsService {
 
     const promotions = await this.findAll();
     for (const promotion of promotions) {
+      const promo = promotion as PromotionWithDetails;
+
+      if (promo.usageLimit != null && promo.usageCount >= promo.usageLimit) {
+        continue;
+      }
+
+      if (promo.userUsageLimit != null) {
+        const userUses = await this.prisma.promotionUsage.count({
+          where: { userId, promotionId: promo.id },
+        });
+        if (userUses >= promo.userUsageLimit) {
+          continue;
+        }
+      }
+
       if (
         !this.canApplyAutomaticPromotion(
-          promotion as PromotionWithDetails,
+          promo,
           couponPromotionId,
           couponBlocksAutomatic,
           appliedPromotions,
@@ -526,8 +538,6 @@ export class PromotionsService {
       ) {
         continue;
       }
-
-      const promo = promotion as PromotionWithDetails;
 
       if (!this.promotionConditionsMet(promo, cartItems, cartSubtotal, customerGroupId)) {
         continue;
@@ -542,6 +552,10 @@ export class PromotionsService {
         totalDiscount = totalDiscount.add(discount);
       }
       appliedPromotions.push(this.buildAppliedPromotionEntry(promo, 'promotion', undefined, discount));
+    }
+
+    if (totalDiscount.gt(cartSubtotal)) {
+      totalDiscount = new Decimal(cartSubtotal);
     }
 
     const freeShipping = appliedPromotions.some((p) => p.grantsFreeShipping);
@@ -594,6 +608,69 @@ export class PromotionsService {
         discountAmount: new Decimal(discountAmount),
       },
     });
+  }
+
+  /**
+   * After a successful checkout, persist coupon + automatic promotion usage counts.
+   * Skipped for idempotent duplicate responses (caller must not invoke when order was not newly created).
+   */
+  async recordUsagesAfterOrder(
+    userId: string,
+    orderId: string,
+    snapshot: PromotionApplicationResult,
+  ): Promise<void> {
+    for (const ap of snapshot.appliedPromotions) {
+      if (ap.type === 'coupon' && ap.code) {
+        try {
+          const coupon = await this.prisma.coupon.findUnique({ where: { code: ap.code } });
+          if (coupon) {
+            await this.recordCouponUsage(coupon.id, userId, orderId, ap.discount);
+          }
+        } catch (e: any) {
+          this.logger.warn(
+            `Coupon usage record failed for order ${orderId} code ${ap.code}: ${e?.message ?? e}`,
+          );
+        }
+      } else if (ap.type === 'promotion' && ap.id) {
+        try {
+          await this.prisma.$transaction(async (tx) => {
+            const promo = await tx.promotion.findUnique({ where: { id: ap.id! } });
+            if (!promo) {
+              return;
+            }
+            if (promo.usageLimit != null && promo.usageCount >= promo.usageLimit) {
+              this.logger.warn(
+                `Promotion ${ap.id} global usage limit reached; skipping increment for order ${orderId}`,
+              );
+              return;
+            }
+            if (promo.userUsageLimit != null) {
+              const n = await tx.promotionUsage.count({
+                where: { userId, promotionId: ap.id! },
+              });
+              if (n >= promo.userUsageLimit) {
+                return;
+              }
+            }
+            await tx.promotion.update({
+              where: { id: ap.id! },
+              data: { usageCount: { increment: 1 } },
+            });
+            await tx.promotionUsage.create({
+              data: {
+                promotionId: ap.id!,
+                userId,
+                orderId,
+              },
+            });
+          });
+        } catch (e: any) {
+          this.logger.warn(
+            `Promotion usage record failed for order ${orderId} promotion ${ap.id}: ${e?.message ?? e}`,
+          );
+        }
+      }
+    }
   }
 
   /**

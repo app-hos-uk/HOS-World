@@ -601,6 +601,9 @@ export class AuthService {
     });
 
     if (user && user.password && (await bcrypt.compare(password, user.password))) {
+      if (!user.isActive) {
+        return null;
+      }
       const { password: _, ...result } = user;
       return result;
     }
@@ -624,8 +627,10 @@ export class AuthService {
 
       const refreshTokenTTL = this.configService.get<string>('REFRESH_TOKEN_TTL') || '30d';
       const refreshSecret = this.configService.get<string>('JWT_REFRESH_SECRET')
-        || this.configService.get<string>('JWT_SECRET')
-        || 'your-secret-key';
+        || this.configService.get<string>('JWT_SECRET');
+      if (!refreshSecret) {
+        throw new Error('JWT_REFRESH_SECRET or JWT_SECRET must be configured');
+      }
       const refreshToken = this.jwtService.sign(
         { ...basePayload, type: 'refresh' },
         { expiresIn: refreshTokenTTL, secret: refreshSecret },
@@ -712,8 +717,10 @@ export class AuthService {
     }
 
     const refreshSecret = this.configService.get<string>('JWT_REFRESH_SECRET')
-      || this.configService.get<string>('JWT_SECRET')
-      || 'your-secret-key';
+      || this.configService.get<string>('JWT_SECRET');
+    if (!refreshSecret) {
+      throw new UnauthorizedException('Token refresh is unavailable due to misconfiguration');
+    }
     const payload = await this.validateToken(refreshToken, refreshSecret);
     if (!payload?.sub) {
       throw new UnauthorizedException('Invalid or expired token');
@@ -727,6 +734,10 @@ export class AuthService {
 
     if (!user) {
       throw new UnauthorizedException('User not found');
+    }
+
+    if (!user.isActive) {
+      throw new UnauthorizedException('Account has been deactivated');
     }
 
     // Find and verify refresh token in DB

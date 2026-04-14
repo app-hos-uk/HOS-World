@@ -34,6 +34,15 @@ const VALID_NOTIFICATION_TYPES = new Set([
   'GENERAL',
 ]);
 
+function escapeHtml(str: string): string {
+  return str
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
 @Injectable()
 export class NotificationsService implements OnModuleInit {
   private transporter: nodemailer.Transporter | null = null;
@@ -52,20 +61,32 @@ export class NotificationsService implements OnModuleInit {
   onModuleInit() {
     this.queueService.registerProcessor(JobType.EMAIL_NOTIFICATION, async (job) => {
       const { to, subject, html, notificationId } = job.data;
-      const sent = await this.sendEmail(to, subject, html);
-
-      if (notificationId) {
-        try {
-          await this.prisma.notification.update({
-            where: { id: notificationId },
-            data: {
-              status: sent ? ('SENT' as any) : ('FAILED' as any),
-              sentAt: sent ? new Date() : undefined,
-            },
-          });
-        } catch (e) {
-          this.logger.warn(`Could not update notification ${notificationId}: ${(e as Error)?.message}`);
+      try {
+        const sent = await this.sendEmail(to, subject, html);
+        if (notificationId) {
+          try {
+            await this.prisma.notification.update({
+              where: { id: notificationId },
+              data: {
+                status: sent ? ('SENT' as any) : ('FAILED' as any),
+                sentAt: sent ? new Date() : undefined,
+              },
+            });
+          } catch (e) {
+            this.logger.warn(`Could not update notification ${notificationId}: ${(e as Error)?.message}`);
+          }
         }
+      } catch (error: any) {
+        this.logger.error(`Email send failed for ${to}: ${error?.message}`);
+        if (notificationId) {
+          try {
+            await this.prisma.notification.update({
+              where: { id: notificationId },
+              data: { status: 'FAILED' as any },
+            });
+          } catch (_) {}
+        }
+        throw error;
       }
     });
     this.logger.log('Registered EMAIL_NOTIFICATION processor with BullMQ');
@@ -115,19 +136,14 @@ export class NotificationsService implements OnModuleInit {
       return false;
     }
 
-    try {
-      await this.transporter.sendMail({
-        from: this.configService.get('SMTP_FROM', 'noreply@hos-marketplace.com'),
-        to,
-        subject,
-        html,
-      });
-      this.logger.log(`✅ Email sent to ${to}: ${subject}`);
-      return true;
-    } catch (error: any) {
-      this.logger.error(`❌ Failed to send email to ${to}: ${error?.message}`);
-      return false;
-    }
+    await this.transporter.sendMail({
+      from: this.configService.get('SMTP_FROM', 'noreply@hos-marketplace.com'),
+      to,
+      subject,
+      html,
+    });
+    this.logger.log(`✅ Email sent to ${to}: ${subject}`);
+    return true;
   }
 
   async sendSellerInvitation(
@@ -143,7 +159,7 @@ export class NotificationsService implements OnModuleInit {
     const rendered = await this.templatesService.render('seller_invitation', {
       sellerTypeName,
       invitationLink: data.invitationLink,
-      personalMessage: data.message ? `<p>${data.message}</p>` : '',
+      personalMessage: data.message ? `<p>${escapeHtml(data.message)}</p>` : '',
     });
 
     await this.queueNotification(email, rendered.subject, rendered.body);
@@ -175,7 +191,7 @@ export class NotificationsService implements OnModuleInit {
 
     const customerName = [order.user.firstName, order.user.lastName].filter(Boolean).join(' ') || 'Customer';
 
-    const itemsTable = `<table><thead><tr><th>Product</th><th>Quantity</th><th>Price</th><th>Total</th></tr></thead><tbody>${order.items.map((item: any) => `<tr><td>${item.product.name}</td><td>${item.quantity}</td><td>$${Number(item.price).toFixed(2)}</td><td>$${(Number(item.price) * item.quantity).toFixed(2)}</td></tr>`).join('')}</tbody></table>`;
+    const itemsTable = `<table><thead><tr><th>Product</th><th>Quantity</th><th>Price</th><th>Total</th></tr></thead><tbody>${order.items.map((item: any) => `<tr><td>${escapeHtml(item.product.name)}</td><td>${item.quantity}</td><td>$${Number(item.price).toFixed(2)}</td><td>$${(Number(item.price) * item.quantity).toFixed(2)}</td></tr>`).join('')}</tbody></table>`;
 
     const rendered = await this.templatesService.render('order_confirmation', {
       orderNumber: order.orderNumber,
@@ -206,9 +222,9 @@ export class NotificationsService implements OnModuleInit {
     userId: string,
     lines: { name: string; quantity: number; lineTotal: number }[],
     currencySymbol = '$',
-  ): Promise<void> {
+  ): Promise<'sent' | 'skipped'> {
     if (!lines.length) {
-      return;
+      return 'skipped';
     }
 
     const user = await this.prisma.user.findUnique({
@@ -218,7 +234,7 @@ export class NotificationsService implements OnModuleInit {
 
     if (!user?.email) {
       this.logger.warn(`Abandoned cart email skipped: no email for user ${userId}`);
-      return;
+      return 'skipped';
     }
 
     const customerName =
@@ -227,7 +243,7 @@ export class NotificationsService implements OnModuleInit {
     const itemsTable = `<table><thead><tr><th>Product</th><th>Qty</th><th>Line total</th></tr></thead><tbody>${lines
       .map(
         (l) =>
-          `<tr><td>${l.name}</td><td>${l.quantity}</td><td>${currencySymbol}${l.lineTotal.toFixed(2)}</td></tr>`,
+          `<tr><td>${escapeHtml(l.name)}</td><td>${l.quantity}</td><td>${currencySymbol}${l.lineTotal.toFixed(2)}</td></tr>`,
       )
       .join('')}</tbody></table>`;
 
@@ -257,6 +273,7 @@ export class NotificationsService implements OnModuleInit {
     });
 
     await this.queueNotification(user.email, rendered.subject, rendered.body, notification.id);
+    return 'sent';
   }
 
   async sendOrderShipped(orderId: string, trackingCode: string, carrier = 'USPS'): Promise<void> {
@@ -406,9 +423,10 @@ export class NotificationsService implements OnModuleInit {
     }
 
     const subject = notification.subject || 'Notification';
+    const rawContent = notification.content || '';
     const html = await this.templatesService.render('generic_notification', {
-      subject,
-      bodyContent: (notification.content || '').replace(/\n/g, '<br>'),
+      subject: escapeHtml(subject),
+      bodyContent: escapeHtml(rawContent).replace(/\n/g, '<br>'),
     });
 
     await this.prisma.notification.update({
@@ -464,8 +482,8 @@ export class NotificationsService implements OnModuleInit {
       });
 
       const rendered = await this.templatesService.render('generic_notification', {
-        subject,
-        bodyContent: content.replace(/\n/g, '<br>'),
+        subject: escapeHtml(subject),
+        bodyContent: escapeHtml(content).replace(/\n/g, '<br>'),
       });
 
       for (const user of users) {
@@ -518,8 +536,8 @@ export class NotificationsService implements OnModuleInit {
       });
 
       const rendered = await this.templatesService.render('generic_notification', {
-        subject,
-        bodyContent: content.replace(/\n/g, '<br>'),
+        subject: escapeHtml(subject),
+        bodyContent: escapeHtml(content).replace(/\n/g, '<br>'),
       });
 
       await this.queueNotification(

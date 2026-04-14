@@ -93,6 +93,9 @@ model User {
   // Coupon Usage Relations
   couponUsages CouponUsage[]
 
+  // Automatic promotion usage (per order, for userUsageLimit enforcement)
+  promotionUsages PromotionUsage[]
+
   // Multi-Tenancy Relations
   tenantMemberships TenantUser[]
   defaultTenantId   String?
@@ -791,15 +794,19 @@ model Order {
   supportTickets       SupportTicket[]       @relation("OrderTickets")
   giftCardTransactions GiftCardTransaction[]
   couponUsages         CouponUsage[]
+  promotionUsages      PromotionUsage[]
   stockReservations    StockReservation[]
   referral             Referral?
   vendorLedgerEntries  VendorLedgerEntry[]
   createdAt            DateTime              @default(now())
   updatedAt            DateTime              @updatedAt
 
+  idempotencyKey String?
+
   // Soft delete
   deletedAt DateTime?
 
+  @@unique([userId, idempotencyKey])
   @@index([fulfillingWarehouseId])
   @@index([fulfillmentCenterId])
   @@index([status])
@@ -2068,6 +2075,7 @@ model Promotion {
   sellerId    String? // If null, platform-wide promotion
   seller      Seller?         @relation(fields: [sellerId], references: [id], onDelete: Cascade)
   coupons     Coupon[]
+  promotionUsages PromotionUsage[]
   createdAt   DateTime        @default(now())
   updatedAt   DateTime        @updatedAt
 
@@ -2139,6 +2147,22 @@ model CouponUsage {
   @@index([userId])
   @@index([orderId])
   @@map("coupon_usages")
+}
+
+// Tracks each completed order that consumed an automatic (non-coupon) promotion — drives userUsageLimit.
+model PromotionUsage {
+  id          String    @id @default(uuid())
+  promotionId String
+  promotion   Promotion @relation(fields: [promotionId], references: [id], onDelete: Cascade)
+  userId      String
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  orderId     String?
+  order       Order?    @relation(fields: [orderId], references: [id], onDelete: SetNull)
+  createdAt   DateTime  @default(now())
+
+  @@index([promotionId, userId])
+  @@index([orderId])
+  @@map("promotion_usages")
 }
 
 // Customer Group model

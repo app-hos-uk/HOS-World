@@ -80,7 +80,7 @@ export class ShippingService {
       rules: (method.rules || []).map((rule: any) => ({
         ...rule,
         rate: Number(rule.rate),
-        freeShippingThreshold: rule.freeShippingThreshold
+        freeShippingThreshold: rule.freeShippingThreshold != null
           ? Number(rule.freeShippingThreshold)
           : null,
         conditions: rule.conditions as ShippingRuleConditions,
@@ -117,7 +117,7 @@ export class ShippingService {
       rules: (method.rules || []).map((rule: any) => ({
         ...rule,
         rate: Number(rule.rate),
-        freeShippingThreshold: rule.freeShippingThreshold
+        freeShippingThreshold: rule.freeShippingThreshold != null
           ? Number(rule.freeShippingThreshold)
           : null,
         conditions: rule.conditions as ShippingRuleConditions,
@@ -139,7 +139,7 @@ export class ShippingService {
         priority: createDto.priority || 0,
         conditions: (createDto.conditions || {}) as any,
         rate: new Decimal(createDto.rate),
-        freeShippingThreshold: createDto.freeShippingThreshold
+        freeShippingThreshold: createDto.freeShippingThreshold != null
           ? new Decimal(createDto.freeShippingThreshold)
           : null,
         estimatedDays: createDto.estimatedDays,
@@ -171,7 +171,7 @@ export class ShippingService {
       const rulesWithDetails: ShippingRuleWithDetails[] = (method.rules || []).map((rule: any) => ({
         ...rule,
         rate: Number(rule.rate),
-        freeShippingThreshold: rule.freeShippingThreshold
+        freeShippingThreshold: rule.freeShippingThreshold != null
           ? Number(rule.freeShippingThreshold)
           : null,
         conditions: rule.conditions as ShippingRuleConditions,
@@ -185,7 +185,7 @@ export class ShippingService {
 
         // Check if free shipping threshold is met
         if (
-          matchingRule.freeShippingThreshold &&
+          matchingRule.freeShippingThreshold != null &&
           cartValue >= Number(matchingRule.freeShippingThreshold)
         ) {
           shippingRate = new Decimal(0);
@@ -389,7 +389,7 @@ export class ShippingService {
       updateData.rate = new Decimal(updateDto.rate);
     }
     if (updateDto.freeShippingThreshold !== undefined) {
-      updateData.freeShippingThreshold = updateDto.freeShippingThreshold
+      updateData.freeShippingThreshold = updateDto.freeShippingThreshold != null
         ? new Decimal(updateDto.freeShippingThreshold)
         : null;
     }

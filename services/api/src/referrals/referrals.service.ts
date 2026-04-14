@@ -33,6 +33,26 @@ export class ReferralsService {
     expiresAt.setDate(expiresAt.getDate() + influencer.cookieDuration);
 
     if (dto.visitorId) {
+      const alreadyConverted = await this.prisma.referral.findFirst({
+        where: {
+          influencerId: influencer.id,
+          visitorId: dto.visitorId,
+          convertedAt: { not: null },
+        },
+        orderBy: { createdAt: 'desc' },
+      });
+      if (alreadyConverted) {
+        this.logger.debug(
+          `Referral already converted for influencer ${influencer.id} visitor ${dto.visitorId}, skipping`,
+        );
+        return {
+          referralId: alreadyConverted.id,
+          expiresAt: alreadyConverted.expiresAt,
+          cookieDuration: influencer.cookieDuration,
+          deduped: true,
+        };
+      }
+
       const existing = await this.prisma.referral.findFirst({
         where: {
           influencerId: influencer.id,
@@ -58,15 +78,28 @@ export class ReferralsService {
           },
         });
 
-        if (campaignChanged && dto.campaignId) {
-          const camp = await this.prisma.influencerCampaign.findFirst({
-            where: { id: dto.campaignId, influencerId: influencer.id },
-          });
-          if (camp) {
-            await this.prisma.influencerCampaign.update({
-              where: { id: camp.id },
-              data: { totalClicks: { increment: 1 } },
+        if (campaignChanged) {
+          if (existing.campaignId) {
+            const oldCamp = await this.prisma.influencerCampaign.findFirst({
+              where: { id: existing.campaignId, influencerId: influencer.id },
             });
+            if (oldCamp && oldCamp.totalClicks > 0) {
+              await this.prisma.influencerCampaign.update({
+                where: { id: oldCamp.id },
+                data: { totalClicks: { decrement: 1 } },
+              });
+            }
+          }
+          if (dto.campaignId) {
+            const newCamp = await this.prisma.influencerCampaign.findFirst({
+              where: { id: dto.campaignId, influencerId: influencer.id },
+            });
+            if (newCamp) {
+              await this.prisma.influencerCampaign.update({
+                where: { id: newCamp.id },
+                data: { totalClicks: { increment: 1 } },
+              });
+            }
           }
         }
 

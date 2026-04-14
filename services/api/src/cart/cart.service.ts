@@ -210,7 +210,7 @@ export class CartService {
     }
 
     // Recalculate cart totals
-    return this.recalculateCart(cart.id);
+    return this.recalculateCart(cart.id, { userMutated: true });
   }
 
   async updateItem(
@@ -234,6 +234,10 @@ export class CartService {
       throw new ForbiddenException('You do not have permission to update this item');
     }
 
+    if (item.product.status !== 'ACTIVE') {
+      throw new BadRequestException('Product is no longer available');
+    }
+
     if (item.product.stock < updateItemDto.quantity) {
       throw new BadRequestException('Insufficient stock available');
     }
@@ -242,11 +246,11 @@ export class CartService {
       where: { id: itemId },
       data: {
         quantity: updateItemDto.quantity,
-        price: item.product.price, // Update price in case it changed
+        price: item.product.price,
       },
     });
 
-    return this.recalculateCart(item.cartId);
+    return this.recalculateCart(item.cartId, { userMutated: true });
   }
 
   async removeItem(userId: string, itemId: string): Promise<Cart> {
@@ -267,7 +271,7 @@ export class CartService {
       where: { id: itemId },
     });
 
-    return this.recalculateCart(item.cartId);
+    return this.recalculateCart(item.cartId, { userMutated: true });
   }
 
   async clearCart(userId: string): Promise<Cart> {
@@ -283,7 +287,7 @@ export class CartService {
       where: { cartId: cart.id },
     });
 
-    return this.recalculateCart(cart.id);
+    return this.recalculateCart(cart.id, { userMutated: true });
   }
 
   private assertGuestSession(guestSessionId: string | undefined): string {
@@ -474,6 +478,10 @@ export class CartService {
       throw new ForbiddenException('You do not have permission to update this item');
     }
 
+    if (item.product.status !== ProductStatus.ACTIVE) {
+      throw new BadRequestException('Product is no longer available');
+    }
+
     if (item.product.stock < updateItemDto.quantity) {
       throw new BadRequestException('Insufficient stock available');
     }
@@ -549,20 +557,32 @@ export class CartService {
       return this.getCart(userId);
     }
 
+    const mergeErrors: string[] = [];
     for (const line of guestCart.items) {
-      await this.addItem(userId, {
-        productId: line.productId,
-        quantity: line.quantity,
-        variationOptions: (line.variationOptions as Record<string, string>) || undefined,
-      });
+      try {
+        await this.addItem(userId, {
+          productId: line.productId,
+          quantity: line.quantity,
+          variationOptions: (line.variationOptions as Record<string, string>) || undefined,
+        });
+      } catch (err: any) {
+        mergeErrors.push(`${line.productId}: ${err?.message ?? err}`);
+      }
     }
 
-    await this.prisma.cart.delete({ where: { id: guestCart.id } });
+    await this.prisma.cart.delete({ where: { id: guestCart.id } }).catch(() => undefined);
+
+    if (mergeErrors.length) {
+      this.logger.warn(`Guest cart merge partial failures: ${mergeErrors.join('; ')}`);
+    }
 
     return this.getCart(userId);
   }
 
-  async recalculateCart(cartId: string): Promise<Cart> {
+  async recalculateCart(
+    cartId: string,
+    options?: { userMutated?: boolean },
+  ): Promise<Cart> {
     const cart = await this.prisma.cart.findUnique({
       where: { id: cartId },
       include: {
@@ -727,14 +747,16 @@ export class CartService {
         );
         discount = new Decimal(promotionResult.discount);
         promotionFreeShipping = promotionResult.freeShipping;
-      } catch (error) {
-        // Log error but don't fail cart calculation
-        console.error('Error applying promotions:', error);
+      } catch (error: any) {
+        this.logger.warn(`Error applying promotions: ${error?.message ?? error}`);
       }
     }
 
     // Clamp discount so it cannot exceed subtotal
     discount = Decimal.min(discount, subtotal);
+
+    // Round accumulated tax to 2 decimal places to avoid per-line rounding drift
+    tax = new Decimal(tax.toFixed(2));
 
     // Calculate total with floor at zero
     const total = Decimal.max(subtotal.add(tax).sub(discount).add(shipping), new Decimal(0));
@@ -749,7 +771,7 @@ export class CartService {
         total,
         currency: cart.items[0]?.product.currency || 'USD',
         promotionFreeShipping,
-        ...(cart.userId ? { abandonedEmailSentAt: null } : {}),
+        ...(cart.userId && options?.userMutated ? { abandonedEmailSentAt: null } : {}),
       },
       include: {
         items: {

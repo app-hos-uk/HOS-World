@@ -516,6 +516,7 @@ export class ApiClient {
     shippingCost?: number;
     referralCode?: string;
     visitorId?: string;
+    idempotencyKey?: string;
   }): Promise<ApiResponse<Order>> {
     return this.request<ApiResponse<Order>>('/orders', {
       method: 'POST',

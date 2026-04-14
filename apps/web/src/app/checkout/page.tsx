@@ -34,6 +34,8 @@ export default function CheckoutPage() {
   const [shippingCost, setShippingCost] = useState<number>(0);
   const [taxAmount, setTaxAmount] = useState<number>(0);
   const [loading, setLoading] = useState(true);
+  const [calculatingShipping, setCalculatingShipping] = useState(false);
+  const [calculatingTax, setCalculatingTax] = useState(false);
   const [creatingOrder, setCreatingOrder] = useState(false);
   const [stockIssues, setStockIssues] = useState<StockIssue[]>([]);
   /**1=Address, 2=Shipping, 3=Review items, 4=Confirm & place order */
@@ -60,12 +62,15 @@ export default function CheckoutPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [shippingAddressId, cart]);
 
-  /** Promotion-based free shipping overrides quoted carrier rates. */
+  /** Promotion-based free shipping overrides quoted carrier rates; re-quote when it is cleared. */
   useEffect(() => {
     if (cart?.promotionFreeShipping) {
       setShippingCost(0);
+    } else if (shippingAddressId && cart?.items?.length) {
+      void calculateShipping();
     }
-  }, [cart?.promotionFreeShipping, cart?.id]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [cart?.promotionFreeShipping, cart?.id, shippingAddressId]);
 
   useEffect(() => {
     if (cart && shippingAddressId) {
@@ -169,6 +174,7 @@ export default function CheckoutPage() {
   const calculateShipping = async () => {
     if (!shippingAddressId || !cart?.items?.length) return;
 
+    setCalculatingShipping(true);
     try {
       const address = addresses.find((a: any) => a.id === shippingAddressId);
       if (!address) {
@@ -194,8 +200,18 @@ export default function CheckoutPage() {
       if (response?.data) {
         setShippingOptions(response.data);
         if (response.data.length > 0 && !selectedShippingMethod) {
-          setSelectedShippingMethod(response.data[0].id);
+          setSelectedShippingMethod(response.data[0].method?.id || response.data[0].id);
           setShippingCost(response.data[0].rate || 0);
+        } else if (response.data.length > 0 && selectedShippingMethod) {
+          const stillValid = response.data.find(
+            (o: any) => (o.method?.id || o.id) === selectedShippingMethod,
+          );
+          if (stillValid) {
+            setShippingCost(stillValid.rate || 0);
+          } else {
+            setSelectedShippingMethod(response.data[0].method?.id || response.data[0].id);
+            setShippingCost(response.data[0].rate || 0);
+          }
         } else if (response.data.length === 0) {
           // No shipping options available - set cost to 0
           setShippingCost(0);
@@ -203,25 +219,26 @@ export default function CheckoutPage() {
       }
     } catch (error: any) {
       console.error('Error calculating shipping:', error);
-      // Set shipping cost to 0 if calculation fails (shipping might not be configured)
       setShippingCost(0);
       setShippingOptions([]);
-      // Don't show error toast - shipping might not be configured
+    } finally {
+      setCalculatingShipping(false);
     }
   };
 
   const calculateTax = async () => {
     if (!cart?.items?.length || !shippingAddressId) return;
 
+    setCalculatingTax(true);
     try {
       const address = addresses.find((a: any) => a.id === shippingAddressId);
       if (!address) return;
 
-      const taxPromises = cart.items
-        .filter((item: any) => item.product?.taxClassId)
-        .map((item: any) =>
-          apiClient.calculateTax({
-            amount: item.price * item.quantity,
+      const taxPromises = cart.items.map((item: any) => {
+        const lineTotal = item.price * item.quantity;
+        if (item.product?.taxClassId) {
+          return apiClient.calculateTax({
+            amount: lineTotal,
             taxClassId: item.product.taxClassId,
             location: {
               country: address.country,
@@ -229,18 +246,28 @@ export default function CheckoutPage() {
               city: address.city,
               postalCode: address.postalCode,
             },
-          })
-        );
+          }).then((res: any) => res?.data?.tax || 0);
+        }
+        const taxRate = item.product?.taxRate || 0;
+        return Promise.resolve(lineTotal * taxRate);
+      });
 
       const taxResults = await Promise.allSettled(taxPromises);
-      const totalTax = taxResults.reduce(
-        (sum, result) => sum + (result.status === 'fulfilled' ? (result.value?.data?.tax || 0) : 0),
-        0
-      );
+      const totalTax = taxResults.reduce((sum: number, result, idx) => {
+        if (result.status === 'fulfilled') {
+          return sum + (result.value || 0);
+        }
+        const item = cart.items[idx];
+        const lineTotal = item.price * item.quantity;
+        const fallback = lineTotal * (item.product?.taxRate || 0);
+        return sum + fallback;
+      }, 0);
 
-      setTaxAmount(totalTax);
+      setTaxAmount(Number(totalTax.toFixed(2)));
     } catch (error: any) {
       console.error('Error calculating tax:', error);
+    } finally {
+      setCalculatingTax(false);
     }
   };
 
@@ -254,6 +281,9 @@ export default function CheckoutPage() {
   };
 
   const isSubmittingRef = useRef(false);
+  const idempotencyKeyRef = useRef<string>(
+    typeof crypto !== 'undefined' ? crypto.randomUUID() : `${Date.now()}-${Math.random()}`,
+  );
 
   const goNextStep = () => {
     if (checkoutStep === 1 && !shippingAddressId) {
@@ -275,8 +305,15 @@ export default function CheckoutPage() {
     setCheckoutStep((s) => Math.max(1, s - 1));
   };
 
+  const isCalculating = calculatingShipping || calculatingTax;
+
   const handleCreateOrder = async () => {
     if (isSubmittingRef.current) return;
+
+    if (isCalculating) {
+      toast.error('Please wait for shipping and tax calculations to finish');
+      return;
+    }
 
     if (!shippingAddressId) {
       toast.error('Please select a shipping address');
@@ -318,13 +355,15 @@ export default function CheckoutPage() {
         shippingAddressId,
         billingAddressId: billingAddressId || shippingAddressId,
         shippingMethodId: selectedShippingMethod || undefined,
-        shippingCost: effectiveShipping || undefined,
+        shippingCost: effectiveShipping ?? undefined,
         referralCode,
         visitorId,
+        idempotencyKey: idempotencyKeyRef.current,
       });
 
       if (orderResponse?.data) {
-        // Refresh cart context to clear the header cart badge (cart is cleared on backend)
+        idempotencyKeyRef.current =
+          typeof crypto !== 'undefined' ? crypto.randomUUID() : `${Date.now()}-${Math.random()}`;
         await refreshCart();
         toast.success('Order created successfully!');
         router.push(`/payment?orderId=${orderResponse.data.id}`);
@@ -496,19 +535,23 @@ export default function CheckoutPage() {
               <section aria-label="Shipping Method" className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 sm:p-6">
                 <h2 className="text-lg font-semibold mb-4">Shipping Method</h2>
                 <div className="space-y-3">
-                  {shippingOptions.map((option: any) => (
+                  {shippingOptions.map((option: any) => {
+                    const methodId = option.method?.id || option.id;
+                    const methodName = option.method?.name || option.name;
+                    const methodDesc = option.method?.description || option.description;
+                    return (
                     <label
-                      key={option.id}
+                      key={methodId}
                       className={`flex items-center justify-between p-3 border rounded-lg cursor-pointer hover:bg-gray-50 ${
-                        selectedShippingMethod === option.id ? 'border-purple-500 bg-purple-50' : 'border-gray-200'
+                        selectedShippingMethod === methodId ? 'border-purple-500 bg-purple-50' : 'border-gray-200'
                       }`}
                     >
                       <div className="flex items-center">
                         <input
                           type="radio"
                           name="shippingMethod"
-                          value={option.id}
-                          checked={selectedShippingMethod === option.id}
+                          value={methodId}
+                          checked={selectedShippingMethod === methodId}
                           onChange={(e) => {
                             setSelectedShippingMethod(e.target.value);
                             setShippingCost(option.rate || 0);
@@ -516,15 +559,16 @@ export default function CheckoutPage() {
                           className="mr-3"
                         />
                         <div>
-                          <p className="font-medium">{option.name}</p>
-                          {option.description && (
-                            <p className="text-sm text-gray-600">{option.description}</p>
+                          <p className="font-medium">{methodName}</p>
+                          {methodDesc && (
+                            <p className="text-sm text-gray-600">{methodDesc}</p>
                           )}
                         </div>
                       </div>
                       <p className="font-semibold">{formatPrice(option.rate || 0)}</p>
                     </label>
-                  ))}
+                    );
+                  })}
                 </div>
               </section>
             )}

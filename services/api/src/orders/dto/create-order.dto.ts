@@ -1,4 +1,4 @@
-import { IsString, IsUUID, IsOptional, IsNumber, Min } from 'class-validator';
+import { IsString, IsUUID, IsOptional, IsNumber, Min, MaxLength } from 'class-validator';
 
 export class CreateOrderDto {
   @IsUUID()
@@ -27,4 +27,9 @@ export class CreateOrderDto {
   @IsNumber()
   @Min(0)
   shippingCost?: number;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(128)
+  idempotencyKey?: string;
 }

@@ -46,6 +46,7 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
           firstName: true,
           lastName: true,
           role: true,
+          isActive: true,
           permissionRoleId: true,
           avatar: true,
           createdAt: true,
@@ -73,6 +74,10 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
 
       if (!user) {
         throw new UnauthorizedException('User not found');
+      }
+
+      if (!user.isActive) {
+        throw new UnauthorizedException('Account has been deactivated');
       }
 
       return user;

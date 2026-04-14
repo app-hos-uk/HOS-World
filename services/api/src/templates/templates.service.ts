@@ -342,11 +342,29 @@ export class TemplatesService {
   ): Promise<{ subject: string; body: string; channel: TemplateChannel }> {
     const template = await this.resolve(slug);
 
+    const escapeHtml = (str: string): string =>
+      str.replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+
+    const safeVarPattern = /^(https?:\/\/\S+)$/i;
+
     const replaceVars = (text: string): string => {
       return text.replace(/\{\{(\w+)\}\}/g, (_match, key) => {
-        if (variables[key] !== undefined) return variables[key];
-        this.logger.warn(`Template "${slug}": missing variable "{{${key}}}"`);
-        return '';
+        if (variables[key] === undefined) {
+          this.logger.warn(`Template "${slug}": missing variable "{{${key}}}"`);
+          return '';
+        }
+        const val = variables[key];
+        if (key.toLowerCase().includes('table') || key.toLowerCase().includes('html')) {
+          return val;
+        }
+        if (key.toLowerCase().includes('link') || key.toLowerCase().includes('url')) {
+          return safeVarPattern.test(val) ? escapeHtml(val) : escapeHtml(val);
+        }
+        return escapeHtml(val);
       });
     };
 

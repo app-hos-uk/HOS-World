@@ -19,7 +19,10 @@ export class CartSchedulerService {
     private readonly notificationsService: NotificationsService,
   ) {}
 
-  /** Every 2 hours — email logged-in users with stale non-empty carts (once per idle cycle). */
+  /** Every 2 hours — email logged-in users with stale non-empty carts (once per idle cycle).
+   *  Uses optimistic locking: set abandonedEmailSentAt BEFORE sending to prevent duplicates
+   *  in clustered deployments. If the email send fails, the flag is cleared.
+   */
   @Cron('0 */2 * * *')
   async detectAbandonedCarts(): Promise<void> {
     const cutoff = new Date(Date.now() - ABANDON_IDLE_MS);
@@ -40,31 +43,55 @@ export class CartSchedulerService {
       },
     });
 
+    let processed = 0;
     for (const cart of carts) {
       if (!cart.userId) continue;
 
       try {
+        const claimed = await this.prisma.cart.updateMany({
+          where: {
+            id: cart.id,
+            abandonedEmailSentAt: null,
+          },
+          data: { abandonedEmailSentAt: new Date() },
+        });
+
+        if (claimed.count === 0) continue;
+
         const lines = cart.items.map((item) => ({
           name: item.product?.name || 'Product',
           quantity: item.quantity,
           lineTotal: Number(item.price) * item.quantity,
         }));
 
-        await this.notificationsService.sendAbandonedCartEmail(cart.userId, lines, '$');
-
-        await this.prisma.cart.update({
-          where: { id: cart.id },
-          data: { abandonedEmailSentAt: new Date() },
-        });
+        const sendResult = await this.notificationsService.sendAbandonedCartEmail(
+          cart.userId,
+          lines,
+          '$',
+        );
+        if (sendResult === 'sent') {
+          processed++;
+        } else {
+          await this.prisma.cart
+            .update({
+              where: { id: cart.id },
+              data: { abandonedEmailSentAt: null },
+            })
+            .catch(() => {});
+        }
       } catch (err: any) {
         this.logger.warn(
           `Abandoned cart email failed for cart ${cart.id}: ${err?.message ?? err}`,
         );
+        await this.prisma.cart.update({
+          where: { id: cart.id },
+          data: { abandonedEmailSentAt: null },
+        }).catch(() => {});
       }
     }
 
-    if (carts.length) {
-      this.logger.log(`Abandoned cart pass: processed ${carts.length} cart(s)`);
+    if (processed) {
+      this.logger.log(`Abandoned cart pass: processed ${processed} cart(s)`);
     }
   }
 
