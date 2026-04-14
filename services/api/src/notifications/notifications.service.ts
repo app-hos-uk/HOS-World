@@ -1,5 +1,6 @@
 import { Injectable, Logger, NotFoundException, OnModuleInit } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import type { Job } from 'bullmq';
 import { PrismaService } from '../database/prisma.service';
 import { QueueService, JobType } from '../queue/queue.service';
 import { TemplatesService } from '../templates/templates.service';
@@ -59,7 +60,7 @@ export class NotificationsService implements OnModuleInit {
   }
 
   onModuleInit() {
-    this.queueService.registerProcessor(JobType.EMAIL_NOTIFICATION, async (job) => {
+    this.queueService.registerProcessor(JobType.EMAIL_NOTIFICATION, async (job: Job) => {
       const { to, subject, html, notificationId } = job.data;
       const sent = await this.sendEmail(to, subject, html);
       if (notificationId) {
@@ -74,6 +75,15 @@ export class NotificationsService implements OnModuleInit {
         } catch (e) {
           this.logger.warn(`Could not update notification ${notificationId}: ${(e as Error)?.message}`);
         }
+      }
+      // sendEmail swallows SMTP errors and returns false so callers get a boolean; for queued mail we
+      // must fail the job so BullMQ retries (transient outages). Skip rethrow when email is globally
+      // disabled — retries would never succeed.
+      if (!sent && this.emailEnabled) {
+        const maxAttempts = job.opts?.attempts ?? 3;
+        throw new Error(
+          `Email send failed for ${to}: ${subject} (attempt ${job.attemptsMade}/${maxAttempts})`,
+        );
       }
     });
     this.logger.log('Registered EMAIL_NOTIFICATION processor with BullMQ');
