@@ -538,12 +538,29 @@ export class OrdersService {
     let rateApplied: Decimal;
     let rateSource: string;
 
-    // Campaign override: one rate for entire order
+    // Campaign override: commission only on items matching campaign productIds / categoryIds (or whole order if both empty)
     const campaign = influencer.campaigns?.[0];
     if (campaign?.overrideCommissionRate != null) {
+      const campaignProductIds = campaign.productIds || [];
+      const campaignCategoryIds = campaign.categoryIds || [];
+      const eligibleItems = order.items.filter((item) => {
+        if (!item.product) return false;
+        if (campaignProductIds.length > 0 && campaignProductIds.includes(item.product.id)) return true;
+        if (
+          campaignCategoryIds.length > 0 &&
+          item.product.categoryId &&
+          campaignCategoryIds.includes(item.product.categoryId)
+        )
+          return true;
+        return campaignProductIds.length === 0 && campaignCategoryIds.length === 0;
+      });
+      const eligibleTotal = eligibleItems.reduce(
+        (sum, item) => sum.plus(item.price.mul(item.quantity)),
+        new Decimal(0),
+      );
       rateApplied = campaign.overrideCommissionRate;
       rateSource = 'CAMPAIGN';
-      commissionAmount = order.total.mul(rateApplied);
+      commissionAmount = eligibleTotal.mul(rateApplied);
     } else if (Object.keys(categoryRates).length > 0 && order.items.length > 0) {
       // Weighted rate by item value: each line uses its category rate (or base), then sum commission per item
       let totalCommission = new Decimal(0);

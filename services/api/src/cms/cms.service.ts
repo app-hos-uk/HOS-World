@@ -433,4 +433,36 @@ export class CMSService {
       );
     }
   }
+
+  async getMedia(): Promise<ApiResponse<any[]>> {
+    try {
+      const data = await this.strapiRequest<any>('/upload/files');
+      return {
+        data: Array.isArray(data) ? data : data?.data ?? [],
+        message: 'Media retrieved successfully',
+      };
+    } catch (error: any) {
+      throw new HttpException(
+        error.message || 'Failed to fetch media',
+        error.status || HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
+
+  async deleteMedia(id: string): Promise<ApiResponse<null>> {
+    try {
+      await this.strapiRequest<any>(`/upload/files/${id}`, {
+        method: 'DELETE',
+      });
+      return {
+        data: null,
+        message: 'Media deleted successfully',
+      };
+    } catch (error: any) {
+      throw new HttpException(
+        error.message || 'Failed to delete media',
+        error.status || HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
 }

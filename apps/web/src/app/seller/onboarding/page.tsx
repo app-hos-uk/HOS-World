@@ -17,6 +17,13 @@ export default function SellerOnboardingPage() {
   const [currentStep, setCurrentStep] = useState<OnboardingStep>('store-info');
   const [loading, setLoading] = useState(false);
   const [sellerProfile, setSellerProfile] = useState<any>(null);
+  const [userRole, setUserRole] = useState<string | null>(null);
+  const [wholesalerB2b, setWholesalerB2b] = useState({
+    companyName: '',
+    vatNumber: '',
+    businessRegNumber: '',
+    businessType: '',
+  });
 
   // Form state
   const [storeInfo, setStoreInfo] = useState({
@@ -43,6 +50,27 @@ export default function SellerOnboardingPage() {
   useEffect(() => {
     checkExistingProfile();
     // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const res = await apiClient.getCurrentUser();
+        if (res?.data?.role) setUserRole(res.data.role);
+        const prof = await apiClient.getProfile();
+        const b2b = (prof?.data as any)?.customerProfile;
+        if (b2b) {
+          setWholesalerB2b({
+            companyName: b2b.companyName || '',
+            vatNumber: b2b.vatNumber || '',
+            businessRegNumber: b2b.businessRegNumber || '',
+            businessType: b2b.businessType || '',
+          });
+        }
+      } catch {
+        /* ignore */
+      }
+    })();
   }, []);
 
   const checkExistingProfile = async () => {
@@ -100,6 +128,11 @@ export default function SellerOnboardingPage() {
       return;
     }
 
+    if (userRole === 'WHOLESALER' && !wholesalerB2b.companyName?.trim()) {
+      toast.error('Company name is required for wholesaler accounts');
+      return;
+    }
+
     try {
       setLoading(true);
       await apiClient.updateSellerProfile({
@@ -107,6 +140,14 @@ export default function SellerOnboardingPage() {
         description: storeInfo.description,
         logo: storeInfo.logo,
       });
+      if (userRole === 'WHOLESALER') {
+        await apiClient.updateProfile({
+          companyName: wholesalerB2b.companyName || undefined,
+          vatNumber: wholesalerB2b.vatNumber || undefined,
+          businessRegNumber: wholesalerB2b.businessRegNumber || undefined,
+          businessType: wholesalerB2b.businessType || undefined,
+        });
+      }
       toast.success('Store information saved');
       setCurrentStep('location');
     } catch (err: any) {
@@ -263,6 +304,67 @@ export default function SellerOnboardingPage() {
                     />
                     <p className="text-xs text-gray-500 mt-1">You can upload a logo later</p>
                   </div>
+
+                  {userRole === 'WHOLESALER' && (
+                    <div className="space-y-4 border-t border-gray-200 pt-6">
+                      <h3 className="text-lg font-semibold text-gray-900">Business details (B2B)</h3>
+                      <p className="text-sm text-gray-600">
+                        Used for invoicing and wholesale verification.
+                      </p>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                          Company name <span className="text-red-500">*</span>
+                        </label>
+                        <input
+                          type="text"
+                          value={wholesalerB2b.companyName}
+                          onChange={(e) =>
+                            setWholesalerB2b({ ...wholesalerB2b, companyName: e.target.value })
+                          }
+                          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
+                          placeholder="Registered company name"
+                        />
+                      </div>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">VAT number</label>
+                          <input
+                            type="text"
+                            value={wholesalerB2b.vatNumber}
+                            onChange={(e) =>
+                              setWholesalerB2b({ ...wholesalerB2b, vatNumber: e.target.value })
+                            }
+                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">
+                            Business registration #
+                          </label>
+                          <input
+                            type="text"
+                            value={wholesalerB2b.businessRegNumber}
+                            onChange={(e) =>
+                              setWholesalerB2b({ ...wholesalerB2b, businessRegNumber: e.target.value })
+                            }
+                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
+                          />
+                        </div>
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Business type</label>
+                        <input
+                          type="text"
+                          value={wholesalerB2b.businessType}
+                          onChange={(e) =>
+                            setWholesalerB2b({ ...wholesalerB2b, businessType: e.target.value })
+                          }
+                          placeholder="e.g. DISTRIBUTOR, RETAIL"
+                          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
+                        />
+                      </div>
+                    </div>
+                  )}
 
                   <div className="flex justify-end">
                     <button

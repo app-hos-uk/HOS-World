@@ -20,6 +20,7 @@ import {
 } from '@nestjs/swagger';
 import { NewsletterService } from './newsletter.service';
 import { CreateNewsletterSubscriptionDto } from './dto/create-newsletter-subscription.dto';
+import { SendNewsletterCampaignDto } from './dto/send-newsletter-campaign.dto';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../common/guards/roles.guard';
 import { Roles } from '../common/decorators/roles.decorator';
@@ -142,6 +143,25 @@ export class NewsletterController {
     return {
       data: result,
       message: 'Subscriptions retrieved successfully',
+    };
+  }
+
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('ADMIN', 'MARKETING')
+  @Post('campaigns/send')
+  @ApiBearerAuth('JWT-auth')
+  @ApiOperation({
+    summary: 'Send newsletter campaign',
+    description:
+      'Queues HTML emails to all subscribed addresses (optional tag filter). Admin/Marketing only.',
+  })
+  @ApiBody({ type: SendNewsletterCampaignDto })
+  @SwaggerApiResponse({ status: 200, description: 'Emails queued' })
+  async sendCampaign(@Body() dto: SendNewsletterCampaignDto): Promise<ApiResponse<{ queued: number }>> {
+    const result = await this.newsletterService.sendCampaign(dto);
+    return {
+      data: result,
+      message: `Queued ${result.queued} newsletter email(s)`,
     };
   }
 }

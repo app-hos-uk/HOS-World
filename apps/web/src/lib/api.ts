@@ -115,4 +115,36 @@ export const apiClient = ApiClient.create({
   },
 });
 
+/** localStorage key for anonymous cart session (X-Guest-Session). */
+export const GUEST_CART_SESSION_KEY = 'hos_guest_cart_session';
+
+export function getOrCreateGuestCartSessionId(): string {
+  if (typeof window === 'undefined') return '';
+  let id = localStorage.getItem(GUEST_CART_SESSION_KEY);
+  if (!id || id.length < 8) {
+    id = crypto.randomUUID();
+    localStorage.setItem(GUEST_CART_SESSION_KEY, id);
+  }
+  return id;
+}
+
+export function clearGuestCartSessionId(): void {
+  if (typeof window !== 'undefined') {
+    localStorage.removeItem(GUEST_CART_SESSION_KEY);
+  }
+}
+
+/** Call after storing auth token to merge guest cart into user cart. */
+export async function mergeGuestCartAfterAuth(): Promise<void> {
+  if (typeof window === 'undefined') return;
+  const guestSid = localStorage.getItem(GUEST_CART_SESSION_KEY);
+  if (!guestSid) return;
+  try {
+    await apiClient.mergeGuestCart(guestSid);
+    localStorage.removeItem(GUEST_CART_SESSION_KEY);
+  } catch (e) {
+    console.warn('Guest cart merge failed – session kept for retry', e);
+  }
+}
+
 

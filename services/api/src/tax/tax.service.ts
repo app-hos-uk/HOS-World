@@ -1,9 +1,17 @@
-import { Injectable, NotFoundException, BadRequestException, Logger } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  BadRequestException,
+  Logger,
+  Optional,
+} from '@nestjs/common';
 import { PrismaService } from '../database/prisma.service';
 import { CreateTaxZoneDto } from './dto/create-tax-zone.dto';
 import { CreateTaxClassDto } from './dto/create-tax-class.dto';
 import { CreateTaxRateDto } from './dto/create-tax-rate.dto';
 import { Decimal } from '@prisma/client/runtime/library';
+import { TaxFactoryService } from './tax-factory.service';
+import type { TaxCalculationRequest } from './interfaces/tax-provider.interface';
 
 @Injectable()
 export class TaxService {
@@ -26,7 +34,10 @@ export class TaxService {
     this.taxRateCache.set(key, { data, expiresAt: Date.now() + this.CACHE_TTL_MS });
   }
 
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    @Optional() private readonly taxFactory?: TaxFactoryService,
+  ) {}
 
   /**
    * Create a tax zone
@@ -323,7 +334,7 @@ export class TaxService {
   }
 
   /**
-   * Calculate tax for a product/order
+   * Calculate tax for a product/order (Stripe Tax / Avalara / TaxJar when configured, else DB zones).
    */
   async calculateTax(
     amount: number,
@@ -347,7 +358,91 @@ export class TaxService {
     taxZone?: any;
     taxClass?: any;
   }> {
-    // Tax-exempt customers pay zero tax
+    if (options?.isTaxExempt) {
+      const totalWithShipping = amount + (options?.shippingAmount || 0);
+      return { amount, tax: 0, total: totalWithShipping, rate: 0, isInclusive: false };
+    }
+
+    const shippingAmount = options?.shippingAmount || 0;
+
+    if (this.taxFactory?.hasActiveProvider()) {
+      try {
+        const request: TaxCalculationRequest = {
+          transactionId: `est-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`,
+          transactionType: 'ESTIMATE',
+          transactionDate: new Date(),
+          currencyCode: 'USD',
+          fromAddress: {
+            street1: 'Fulfillment',
+            city: 'London',
+            postalCode: 'E1 6AN',
+            country: 'GB',
+          },
+          toAddress: {
+            street1: 'Customer',
+            city: location.city || 'Unknown',
+            state: location.state,
+            postalCode: location.postalCode || '00000',
+            country: location.country || 'US',
+          },
+          lineItems: [
+            {
+              id: 'line-1',
+              description: 'Line item',
+              quantity: 1,
+              unitPrice: amount,
+              amount,
+            },
+          ],
+          shippingAmount: shippingAmount > 0 ? shippingAmount : undefined,
+        };
+        const ext = await this.taxFactory.calculateTax(request);
+        const tax = ext.totalTaxAmount;
+        const total =
+          typeof ext.totalAmount === 'number' && !Number.isNaN(ext.totalAmount)
+            ? ext.totalAmount
+            : amount + tax + shippingAmount;
+        const rate = amount > 0 ? tax / amount : 0;
+        return {
+          amount,
+          tax: Number(tax.toFixed(2)),
+          total: Number(total.toFixed(2)),
+          rate,
+          isInclusive: false,
+        };
+      } catch (err: any) {
+        this.logger.warn(
+          `External tax provider failed, falling back to tax zones: ${err?.message || err}`,
+        );
+      }
+    }
+
+    return this.calculateTaxWithDatabaseZones(amount, taxClassId, location, options);
+  }
+
+  /** Zone + tax rate tables (legacy / fallback). */
+  private async calculateTaxWithDatabaseZones(
+    amount: number,
+    taxClassId: string,
+    location: {
+      country: string;
+      state?: string;
+      city?: string;
+      postalCode?: string;
+    },
+    options?: {
+      shippingAmount?: number;
+      isTaxExempt?: boolean;
+    },
+  ): Promise<{
+    amount: number;
+    tax: number;
+    total: number;
+    rate: number;
+    isInclusive: boolean;
+    taxZone?: any;
+    taxClass?: any;
+  }> {
     if (options?.isTaxExempt) {
       const totalWithShipping = amount + (options?.shippingAmount || 0);
       return { amount, tax: 0, total: totalWithShipping, rate: 0, isInclusive: false };
@@ -361,7 +456,6 @@ export class TaxService {
     );
 
     if (!taxZone) {
-      // No tax zone found - return zero tax
       return {
         amount,
         tax: 0,
@@ -371,7 +465,6 @@ export class TaxService {
       };
     }
 
-    // Find tax rate for zone and class (cached)
     const cacheKey = `${taxZone.id}:${taxClassId}`;
     let taxRate = this.getCachedTaxRate(cacheKey);
     if (taxRate === null) {
@@ -389,7 +482,6 @@ export class TaxService {
     }
 
     if (!taxRate) {
-      // No tax rate found - return zero tax
       return {
         amount,
         tax: 0,

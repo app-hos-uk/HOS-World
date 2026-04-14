@@ -61,6 +61,22 @@ export class UpdateProfileDto {
   @IsOptional()
   @IsDateString()
   anniversary?: string;
+
+  @IsOptional()
+  @IsString()
+  companyName?: string;
+
+  @IsOptional()
+  @IsString()
+  vatNumber?: string;
+
+  @IsOptional()
+  @IsString()
+  businessRegNumber?: string;
+
+  @IsOptional()
+  @IsString()
+  businessType?: string;
 }
 
 export class ChangePasswordDto {

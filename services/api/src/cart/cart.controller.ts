@@ -23,6 +23,7 @@ import {
 import { CartService } from './cart.service';
 import { AddToCartDto } from './dto/add-to-cart.dto';
 import { UpdateCartItemDto } from './dto/update-cart-item.dto';
+import { MergeGuestCartDto } from './dto/merge-guest-cart.dto';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import type { ApiResponse, Cart } from '@hos-marketplace/shared-types';
 
@@ -126,6 +127,26 @@ export class CartController {
     return {
       data: cart,
       message: 'Cart cleared successfully',
+    };
+  }
+
+  @Post('merge-guest')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({
+    summary: 'Merge guest cart into user cart',
+    description:
+      'After login, send the guest session id from X-Guest-Session used while browsing as guest.',
+  })
+  @ApiBody({ type: MergeGuestCartDto })
+  @SwaggerApiResponse({ status: 200, description: 'Guest cart merged successfully' })
+  async mergeGuestCart(
+    @Request() req: any,
+    @Body() body: MergeGuestCartDto,
+  ): Promise<ApiResponse<Cart>> {
+    const cart = await this.cartService.mergeGuestCart(body.guestSessionId, req.user.id);
+    return {
+      data: cart,
+      message: 'Guest cart merged successfully',
     };
   }
 }

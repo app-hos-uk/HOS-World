@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { apiClient, markLoginSuccess } from '@/lib/api';
+import { apiClient, markLoginSuccess, mergeGuestCartAfterAuth } from '@/lib/api';
 
 export function AuthCallbackClient() {
   const router = useRouter();
@@ -28,10 +28,10 @@ export function AuthCallbackClient() {
       }
     }
 
-    markLoginSuccess();
-
     (async () => {
       try {
+        await mergeGuestCartAfterAuth();
+        markLoginSuccess();
         const me = await apiClient.getCurrentUser();
         const role = me?.data?.role ? String(me.data.role).toUpperCase() : null;
 

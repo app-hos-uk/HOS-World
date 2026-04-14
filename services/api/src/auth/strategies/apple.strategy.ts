@@ -1,8 +1,9 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { PassportStrategy } from '@nestjs/passport';
 import { Strategy, VerifyCallback } from 'passport-apple';
 import { ConfigService } from '@nestjs/config';
 import { AuthService } from '../auth.service';
+import { verifyAppleIdToken } from '../utils/apple-id-token';
 
 @Injectable()
 export class AppleStrategy extends PassportStrategy(Strategy, 'apple') {
@@ -27,35 +28,27 @@ export class AppleStrategy extends PassportStrategy(Strategy, 'apple') {
     profile: any,
     done: VerifyCallback,
   ): Promise<any> {
-    // Apple sends user info in idToken JWT
-    // Decode and extract user information
-    const decoded = this.decodeIdToken(idToken);
+    const clientId = this.configService.get<string>('APPLE_CLIENT_ID');
+    if (!clientId) {
+      return done(new UnauthorizedException('Apple OAuth is not configured'), false);
+    }
 
-    const user = {
-      provider: 'apple',
-      providerId: decoded.sub,
-      email: decoded.email,
-      firstName: profile?.name?.firstName,
-      lastName: profile?.name?.lastName,
-      accessToken,
-      refreshToken,
-    };
+    try {
+      const decoded = await verifyAppleIdToken(idToken, clientId);
+      const user = {
+        provider: 'apple' as const,
+        providerId: String(decoded.sub),
+        email: decoded.email as string | undefined,
+        firstName: profile?.name?.firstName,
+        lastName: profile?.name?.lastName,
+        accessToken,
+        refreshToken,
+      };
 
-    const result = await this.authService.validateOrCreateOAuthUser(user);
-    done(null, result);
-  }
-
-  private decodeIdToken(idToken: string): any {
-    // Simple base64 decode (in production, verify JWT signature)
-    const base64Url = idToken.split('.')[1];
-    const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
-    const jsonPayload = decodeURIComponent(
-      Buffer.from(base64, 'base64')
-        .toString()
-        .split('')
-        .map((c) => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2))
-        .join(''),
-    );
-    return JSON.parse(jsonPayload);
+      const result = await this.authService.validateOrCreateOAuthUser(user);
+      done(null, result);
+    } catch (err: any) {
+      done(err instanceof Error ? err : new UnauthorizedException('Invalid Apple id_token'), false);
+    }
   }
 }

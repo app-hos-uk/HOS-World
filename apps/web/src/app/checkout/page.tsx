@@ -36,6 +36,17 @@ export default function CheckoutPage() {
   const [loading, setLoading] = useState(true);
   const [creatingOrder, setCreatingOrder] = useState(false);
   const [stockIssues, setStockIssues] = useState<StockIssue[]>([]);
+  /**1=Address, 2=Shipping, 3=Review items, 4=Confirm & place order */
+  const [checkoutStep, setCheckoutStep] = useState(1);
+  const checkoutSteps = useMemo(
+    () => [
+      { id: 1, label: 'Address' },
+      { id: 2, label: 'Shipping' },
+      { id: 3, label: 'Review' },
+      { id: 4, label: 'Confirm' },
+    ],
+    [],
+  );
 
   useEffect(() => {
     loadCheckoutData();
@@ -237,6 +248,26 @@ export default function CheckoutPage() {
 
   const isSubmittingRef = useRef(false);
 
+  const goNextStep = () => {
+    if (checkoutStep === 1 && !shippingAddressId) {
+      toast.error('Please select a shipping address');
+      return;
+    }
+    if (checkoutStep === 2 && shippingOptions.length > 0 && !selectedShippingMethod) {
+      toast.error('Please select a shipping method');
+      return;
+    }
+    if (checkoutStep === 3 && hasCriticalStockIssues) {
+      toast.error('Please resolve stock issues before continuing');
+      return;
+    }
+    setCheckoutStep((s) => Math.min(4, s + 1));
+  };
+
+  const goPrevStep = () => {
+    setCheckoutStep((s) => Math.max(1, s - 1));
+  };
+
   const handleCreateOrder = async () => {
     if (isSubmittingRef.current) return;
 
@@ -340,12 +371,45 @@ export default function CheckoutPage() {
     <div className="min-h-screen bg-white">
       <Header />
       <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 lg:py-12">
-        <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold mb-6 sm:mb-8 font-primary text-purple-900">Checkout</h1>
+        <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold mb-4 sm:mb-6 font-primary text-purple-900">Checkout</h1>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 sm:gap-8">
+        <nav aria-label="Checkout steps" className="mb-8">
+          <ol className="flex flex-wrap gap-2 sm:gap-4 items-center">
+            {checkoutSteps.map((s, idx) => (
+              <li key={s.id} className="flex items-center gap-2 text-sm">
+                <span
+                  className={`flex h-8 w-8 items-center justify-center rounded-full font-semibold ${
+                    checkoutStep === s.id
+                      ? 'bg-purple-700 text-white'
+                      : checkoutStep > s.id
+                        ? 'bg-green-500 text-white'
+                        : 'bg-gray-200 text-gray-600'
+                  }`}
+                >
+                  {s.id}
+                </span>
+                <span className={checkoutStep === s.id ? 'font-semibold text-purple-900' : 'text-gray-600'}>
+                  {s.label}
+                </span>
+                {idx < checkoutSteps.length - 1 && (
+                  <span className="hidden sm:inline text-gray-300 mx-1" aria-hidden>
+                    /
+                  </span>
+                )}
+              </li>
+            ))}
+          </ol>
+        </nav>
+
+        <div
+          className={`grid grid-cols-1 gap-6 sm:gap-8 ${
+            checkoutStep === 4 ? '' : 'lg:grid-cols-3'
+          }`}
+        >
           {/* Checkout Form */}
-          <div className="lg:col-span-2 space-y-6">
+          <div className={`space-y-6 ${checkoutStep === 4 ? 'hidden' : 'lg:col-span-2'}`}>
             {/* Shipping Address */}
+            {checkoutStep === 1 && (
             <section aria-label="Shipping Address" className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 sm:p-6">
               <h2 className="text-lg font-semibold mb-4">Shipping Address</h2>
               {addresses.length === 0 ? (
@@ -403,9 +467,10 @@ export default function CheckoutPage() {
                 </div>
               )}
             </section>
+            )}
 
             {/* Shipping Method */}
-            {shippingAddressId && shippingOptions.length > 0 && (
+            {checkoutStep === 2 && shippingAddressId && shippingOptions.length > 0 && (
               <section aria-label="Shipping Method" className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 sm:p-6">
                 <h2 className="text-lg font-semibold mb-4">Shipping Method</h2>
                 <div className="space-y-3">
@@ -441,8 +506,15 @@ export default function CheckoutPage() {
                 </div>
               </section>
             )}
+            {checkoutStep === 2 && shippingAddressId && shippingOptions.length === 0 && (
+              <section className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 sm:p-6">
+                <h2 className="text-lg font-semibold mb-2">Shipping Method</h2>
+                <p className="text-sm text-gray-600">No shipping options are required or available for this order. Continue to review.</p>
+              </section>
+            )}
 
             {/* Order Items */}
+            {checkoutStep === 3 && (
             <section aria-label="Order Items" className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 sm:p-6">
               <h2 className="text-lg font-semibold mb-4">Order Items</h2>
               
@@ -495,10 +567,31 @@ export default function CheckoutPage() {
                 })}
               </div>
             </section>
+            )}
+
+            {checkoutStep < 4 && (
+              <div className="flex flex-wrap gap-3 justify-between pt-2">
+                <button
+                  type="button"
+                  onClick={goPrevStep}
+                  disabled={checkoutStep === 1}
+                  className="px-5 py-2.5 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed"
+                >
+                  Back
+                </button>
+                <button
+                  type="button"
+                  onClick={goNextStep}
+                  className="px-5 py-2.5 bg-purple-700 text-white rounded-lg hover:bg-purple-600 font-medium"
+                >
+                  {checkoutStep === 3 ? 'Continue to confirm' : 'Continue'}
+                </button>
+              </div>
+            )}
           </div>
 
           {/* Order Review & Summary */}
-          <div className="lg:col-span-1">
+          <div className={checkoutStep === 4 ? 'max-w-lg mx-auto w-full lg:col-span-3' : 'lg:col-span-1'}>
             <section aria-label="Order Review" className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 sm:p-6 sticky top-4">
               <h2 className="text-lg font-semibold mb-4">Order Review</h2>
 
@@ -611,12 +704,34 @@ export default function CheckoutPage() {
                 )}
               </div>
 
+              {checkoutStep === 4 && (
+                <button
+                  type="button"
+                  onClick={goPrevStep}
+                  className="w-full mb-3 px-6 py-2.5 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50"
+                >
+                  Back to review
+                </button>
+              )}
+
               <button
                 onClick={handleCreateOrder}
-                disabled={creatingOrder || !shippingAddressId || (shippingOptions.length > 0 && !selectedShippingMethod) || hasCriticalStockIssues}
+                disabled={
+                  creatingOrder ||
+                  checkoutStep !== 4 ||
+                  !shippingAddressId ||
+                  (shippingOptions.length > 0 && !selectedShippingMethod) ||
+                  hasCriticalStockIssues
+                }
                 className="w-full px-6 py-3 bg-gradient-to-r from-purple-700 to-indigo-700 hover:from-purple-600 hover:to-indigo-600 text-white font-semibold rounded-lg transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                {creatingOrder ? 'Creating Order...' : hasCriticalStockIssues ? 'Stock Issues - Update Cart' : 'Place Order'}
+                {checkoutStep !== 4
+                  ? 'Complete steps above to place order'
+                  : creatingOrder
+                    ? 'Creating Order...'
+                    : hasCriticalStockIssues
+                      ? 'Stock Issues - Update Cart'
+                      : 'Place Order'}
               </button>
               
               {hasCriticalStockIssues && (

@@ -32,6 +32,21 @@ import type { ApiResponse } from '@hos-marketplace/shared-types';
 export class GiftCardsController {
   constructor(private readonly giftCardsService: GiftCardsService) {}
 
+  @Public()
+  @Get('catalog')
+  @ApiOperation({
+    summary: 'Gift card amount catalog',
+    description: 'Returns preset gift card denominations configured for the platform.',
+  })
+  @SwaggerApiResponse({ status: 200, description: 'Catalog retrieved successfully' })
+  async getCatalog(): Promise<ApiResponse<{ currency: string; amounts: number[] }>> {
+    const catalog = this.giftCardsService.getCatalog();
+    return {
+      data: catalog,
+      message: 'Gift card catalog retrieved successfully',
+    };
+  }
+
   @UseGuards(JwtAuthGuard)
   @Post()
   @ApiBearerAuth('JWT-auth')

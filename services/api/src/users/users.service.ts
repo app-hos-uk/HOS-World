@@ -30,6 +30,14 @@ export class UsersService {
         whatsappNumber: true,
         preferredCommunicationMethod: true,
         currencyPreference: true,
+        customerProfile: {
+          select: {
+            companyName: true,
+            vatNumber: true,
+            businessRegNumber: true,
+            businessType: true,
+          },
+        },
       },
     });
 
@@ -107,6 +115,42 @@ export class UsersService {
         : null;
     }
 
+    const b2bUpdate: {
+      companyName?: string;
+      vatNumber?: string;
+      businessRegNumber?: string;
+      businessType?: string;
+    } = {};
+    if (updateProfileDto.companyName !== undefined) {
+      b2bUpdate.companyName = updateProfileDto.companyName;
+    }
+    if (updateProfileDto.vatNumber !== undefined) {
+      b2bUpdate.vatNumber = updateProfileDto.vatNumber;
+    }
+    if (updateProfileDto.businessRegNumber !== undefined) {
+      b2bUpdate.businessRegNumber = updateProfileDto.businessRegNumber;
+    }
+    if (updateProfileDto.businessType !== undefined) {
+      b2bUpdate.businessType = updateProfileDto.businessType;
+    }
+
+    if (Object.keys(b2bUpdate).length > 0) {
+      const u = await this.prisma.user.findUnique({
+        where: { id: userId },
+        select: { country: true, currencyPreference: true },
+      });
+      await this.prisma.customer.upsert({
+        where: { userId },
+        create: {
+          userId,
+          country: u?.country,
+          currencyPreference: u?.currencyPreference || 'USD',
+          ...b2bUpdate,
+        },
+        update: b2bUpdate,
+      });
+    }
+
     const updated = await this.prisma.user.update({
       where: { id: userId },
       data: updateData,
@@ -126,6 +170,14 @@ export class UsersService {
         whatsappNumber: true,
         preferredCommunicationMethod: true,
         currencyPreference: true,
+        customerProfile: {
+          select: {
+            companyName: true,
+            vatNumber: true,
+            businessRegNumber: true,
+            businessType: true,
+          },
+        },
       },
     });
 
@@ -142,7 +194,12 @@ export class UsersService {
       throw new NotFoundException('User not found');
     }
 
-    // Verify current password
+    if (!user.password) {
+      throw new BadRequestException(
+        'Your account uses social login and has no password set. Use your OAuth provider to sign in.',
+      );
+    }
+
     const isCurrentPasswordValid = await bcrypt.compare(
       changePasswordDto.currentPassword,
       user.password,

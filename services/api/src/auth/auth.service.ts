@@ -253,6 +253,36 @@ export class AuthService {
           logisticsOption: registerDto.logisticsOption || 'HOS_LOGISTICS',
         },
       });
+
+      // All sellers get a Customer record (needed for customer groups, loyalty, B2B fields, etc.)
+      await this.prisma.customer.upsert({
+        where: { userId: user.id },
+        create: {
+          userId: user.id,
+          country: registerDto.country,
+          currencyPreference,
+          ...(registerDto.role === 'wholesaler' && {
+            companyName: registerDto.companyName,
+            vatNumber: registerDto.vatNumber,
+            businessRegNumber: registerDto.businessRegNumber,
+            businessType: registerDto.businessType,
+          }),
+        },
+        update: {
+          country: registerDto.country,
+          currencyPreference,
+          ...(registerDto.role === 'wholesaler' && {
+            ...(registerDto.companyName !== undefined && { companyName: registerDto.companyName }),
+            ...(registerDto.vatNumber !== undefined && { vatNumber: registerDto.vatNumber }),
+            ...(registerDto.businessRegNumber !== undefined && {
+              businessRegNumber: registerDto.businessRegNumber,
+            }),
+            ...(registerDto.businessType !== undefined && {
+              businessType: registerDto.businessType,
+            }),
+          }),
+        },
+      });
     }
 
     // Create tenant membership for new user (default to platform tenant)
@@ -885,9 +915,13 @@ export class AuthService {
 
   // OAuth methods (delegate to OAuth service)
   async validateOrCreateOAuthUser(oauthData: any): Promise<any> {
-    // Import OAuth service dynamically to avoid circular dependency
     const { AuthOAuthService } = await import('./auth.service.oauth');
-    const oauthService = new AuthOAuthService(this.prisma, this.jwtService, this.configService);
+    const oauthService = new AuthOAuthService(
+      this.prisma,
+      this.jwtService,
+      this.configService,
+      (user) => this.generateTokens(user),
+    );
     return oauthService.validateOrCreateOAuthUser(oauthData);
   }
 
@@ -919,7 +953,7 @@ export class AuthService {
       data: {
         resetToken: resetTokenHash,
         resetTokenExpiry: resetExpiry,
-      } as any,
+      },
     });
 
     const frontendUrl = this.configService.get<string>('FRONTEND_URL') || 'http://localhost:3000';
@@ -956,8 +990,8 @@ export class AuthService {
       where: {
         resetToken: tokenHash,
         resetTokenExpiry: { gte: new Date() },
-      } as any,
-      orderBy: { resetTokenExpiry: 'desc' } as any,
+      },
+      orderBy: { resetTokenExpiry: 'desc' },
     });
 
     if (!user) {
@@ -971,7 +1005,7 @@ export class AuthService {
         password: hashedPassword,
         resetToken: null,
         resetTokenExpiry: null,
-      } as any,
+      },
     });
 
     await this.revokeAllTokens(user.id);

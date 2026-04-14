@@ -412,4 +412,25 @@ export class CMSController {
   async publishBlogPost(@Param('id') id: string): Promise<ApiResponse<any>> {
     return this.cmsService.publishBlogPost(id);
   }
+
+  @Get('media')
+  @ApiOperation({
+    summary: 'List CMS media (Strapi upload library)',
+    description: 'Returns files from Strapi upload. CMS Editor/Admin access required.',
+  })
+  @SwaggerApiResponse({ status: 200, description: 'Media retrieved successfully' })
+  async getMedia(): Promise<ApiResponse<any[]>> {
+    return this.cmsService.getMedia();
+  }
+
+  @Delete('media/:id')
+  @ApiOperation({
+    summary: 'Delete CMS media file',
+    description: 'Deletes a file from Strapi upload by id. CMS Editor/Admin access required.',
+  })
+  @ApiParam({ name: 'id', description: 'Strapi upload file id', type: String })
+  @SwaggerApiResponse({ status: 200, description: 'Media deleted successfully' })
+  async deleteMedia(@Param('id') id: string): Promise<ApiResponse<null>> {
+    return this.cmsService.deleteMedia(id);
+  }
 }

@@ -117,6 +117,10 @@ model User {
   failedLoginAttempts Int       @default(0)
   lockedUntil         DateTime?
 
+  // Password reset (hashed token + expiry)
+  resetToken       String?
+  resetTokenExpiry DateTime?
+
   // Newsletter
   newsletterSubscriptions NewsletterSubscription[]
 
@@ -668,9 +672,10 @@ model VolumePricing {
 
 // Cart model
 model Cart {
-  id         String     @id @default(uuid())
-  userId     String?    @unique
-  items      CartItem[]
+  id String     @id @default(uuid())
+  userId         String?    @unique
+  guestSessionId String?    @unique
+  items          CartItem[]
   total      Decimal    @default(0) @db.Decimal(10, 2)
   subtotal   Decimal    @default(0) @db.Decimal(10, 2)
   tax        Decimal    @default(0) @db.Decimal(10, 2)

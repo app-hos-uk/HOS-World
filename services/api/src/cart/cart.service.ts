@@ -286,6 +286,282 @@ export class CartService {
     return this.recalculateCart(cart.id);
   }
 
+  private assertGuestSession(guestSessionId: string | undefined): string {
+    const id = guestSessionId?.trim();
+    if (!id || id.length < 8 || id.length > 128) {
+      throw new BadRequestException('Valid X-Guest-Session header is required');
+    }
+    return id;
+  }
+
+  async getGuestCart(guestSessionId: string): Promise<Cart> {
+    const sid = this.assertGuestSession(guestSessionId);
+    let cart = await this.prisma.cart.findUnique({
+      where: { guestSessionId: sid },
+      include: {
+        items: {
+          include: {
+            product: {
+              include: {
+                images: {
+                  orderBy: { order: 'asc' },
+                  take: 1,
+                },
+                seller: {
+                  select: {
+                    id: true,
+                    storeName: true,
+                    slug: true,
+                  },
+                },
+              },
+            },
+          },
+          orderBy: { id: 'desc' },
+        },
+      },
+    });
+
+    if (!cart) {
+      cart = await this.prisma.cart.create({
+        data: {
+          guestSessionId: sid,
+          userId: null,
+        },
+        include: {
+          items: {
+            include: {
+              product: {
+                include: {
+                  images: {
+                    orderBy: { order: 'asc' },
+                    take: 1,
+                  },
+                  seller: {
+                    select: {
+                      id: true,
+                      storeName: true,
+                      slug: true,
+                    },
+                  },
+                },
+              },
+            },
+            orderBy: { id: 'desc' },
+          },
+        },
+      });
+    }
+
+    return this.mapToCartType(cart);
+  }
+
+  async addGuestItem(guestSessionId: string, addToCartDto: AddToCartDto): Promise<Cart> {
+    const sid = this.assertGuestSession(guestSessionId);
+    const product = await this.prisma.product.findUnique({
+      where: { id: addToCartDto.productId },
+      include: {
+        images: {
+          orderBy: { order: 'asc' },
+          take: 1,
+        },
+      },
+    });
+
+    if (!product) {
+      throw new NotFoundException('Product not found');
+    }
+
+    if (product.status !== 'ACTIVE') {
+      throw new BadRequestException('Product is not available');
+    }
+
+    if (product.stock < addToCartDto.quantity) {
+      throw new BadRequestException('Insufficient stock available');
+    }
+
+    let cart = await this.prisma.cart.findUnique({
+      where: { guestSessionId: sid },
+      include: { items: true },
+    });
+
+    if (!cart) {
+      cart = await this.prisma.cart.create({
+        data: {
+          guestSessionId: sid,
+          userId: null,
+        },
+        include: { items: true },
+      });
+    }
+
+    if (cart.userId) {
+      throw new BadRequestException('Invalid guest cart');
+    }
+
+    const MAX_CART_ITEMS = 50;
+    if (cart.items.length >= MAX_CART_ITEMS) {
+      const hasMatchingItem = cart.items.some((item) => item.productId === addToCartDto.productId);
+      if (!hasMatchingItem) {
+        throw new BadRequestException(
+          `Cart cannot contain more than ${MAX_CART_ITEMS} distinct items`,
+        );
+      }
+    }
+
+    const existingItem = cart.items.find((item) => {
+      if (item.productId !== addToCartDto.productId) return false;
+      const itemVariations = item.variationOptions as Record<string, string> | null;
+      const newVariations = addToCartDto.variationOptions || {};
+
+      if (!itemVariations && !addToCartDto.variationOptions) return true;
+      if (!itemVariations || !addToCartDto.variationOptions) return false;
+
+      const itemKeys = Object.keys(itemVariations).sort().join(',');
+      const newKeys = Object.keys(newVariations).sort().join(',');
+      if (itemKeys !== newKeys) return false;
+
+      return Object.keys(itemVariations).every((key) => itemVariations[key] === newVariations[key]);
+    });
+
+    if (existingItem) {
+      const newQuantity = existingItem.quantity + addToCartDto.quantity;
+      if (newQuantity > product.stock) {
+        throw new BadRequestException('Insufficient stock available');
+      }
+
+      await this.prisma.cartItem.update({
+        where: { id: existingItem.id },
+        data: {
+          quantity: newQuantity,
+          price: product.price,
+        },
+      });
+    } else {
+      await this.prisma.cartItem.create({
+        data: {
+          cartId: cart.id,
+          productId: product.id,
+          quantity: addToCartDto.quantity,
+          variationOptions: addToCartDto.variationOptions || {},
+          price: product.price,
+        },
+      });
+    }
+
+    return this.recalculateCart(cart.id);
+  }
+
+  async updateGuestItem(
+    guestSessionId: string,
+    itemId: string,
+    updateItemDto: UpdateCartItemDto,
+  ): Promise<Cart> {
+    const sid = this.assertGuestSession(guestSessionId);
+    const item = await this.prisma.cartItem.findUnique({
+      where: { id: itemId },
+      include: {
+        cart: true,
+        product: true,
+      },
+    });
+
+    if (!item) {
+      throw new NotFoundException('Cart item not found');
+    }
+
+    if (item.cart.guestSessionId !== sid) {
+      throw new ForbiddenException('You do not have permission to update this item');
+    }
+
+    if (item.product.stock < updateItemDto.quantity) {
+      throw new BadRequestException('Insufficient stock available');
+    }
+
+    await this.prisma.cartItem.update({
+      where: { id: itemId },
+      data: {
+        quantity: updateItemDto.quantity,
+        price: item.product.price,
+      },
+    });
+
+    return this.recalculateCart(item.cartId);
+  }
+
+  async removeGuestItem(guestSessionId: string, itemId: string): Promise<Cart> {
+    const sid = this.assertGuestSession(guestSessionId);
+    const item = await this.prisma.cartItem.findUnique({
+      where: { id: itemId },
+      include: { cart: true },
+    });
+
+    if (!item) {
+      throw new NotFoundException('Cart item not found');
+    }
+
+    if (item.cart.guestSessionId !== sid) {
+      throw new ForbiddenException('You do not have permission to remove this item');
+    }
+
+    await this.prisma.cartItem.delete({
+      where: { id: itemId },
+    });
+
+    return this.recalculateCart(item.cartId);
+  }
+
+  async clearGuestCart(guestSessionId: string): Promise<Cart> {
+    const sid = this.assertGuestSession(guestSessionId);
+    const cart = await this.prisma.cart.findUnique({
+      where: { guestSessionId: sid },
+    });
+
+    if (!cart) {
+      throw new NotFoundException('Cart not found');
+    }
+
+    await this.prisma.cartItem.deleteMany({
+      where: { cartId: cart.id },
+    });
+
+    return this.recalculateCart(cart.id);
+  }
+
+  /**
+   * Merge guest cart lines into the authenticated user's cart, then delete the guest cart.
+   */
+  async mergeGuestCart(guestSessionId: string, userId: string): Promise<Cart> {
+    const sid = guestSessionId?.trim();
+    if (!sid) {
+      return this.getCart(userId);
+    }
+
+    const guestCart = await this.prisma.cart.findUnique({
+      where: { guestSessionId: sid },
+      include: { items: true },
+    });
+
+    if (!guestCart || guestCart.items.length === 0) {
+      if (guestCart) {
+        await this.prisma.cart.delete({ where: { id: guestCart.id } }).catch(() => undefined);
+      }
+      return this.getCart(userId);
+    }
+
+    for (const line of guestCart.items) {
+      await this.addItem(userId, {
+        productId: line.productId,
+        quantity: line.quantity,
+        variationOptions: (line.variationOptions as Record<string, string>) || undefined,
+      });
+    }
+
+    await this.prisma.cart.delete({ where: { id: guestCart.id } });
+
+    return this.getCart(userId);
+  }
+
   async recalculateCart(cartId: string): Promise<Cart> {
     const cart = await this.prisma.cart.findUnique({
       where: { id: cartId },

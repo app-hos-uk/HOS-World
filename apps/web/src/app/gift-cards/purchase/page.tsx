@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { RouteGuard } from '@/components/RouteGuard';
 import { Header } from '@/components/Header';
@@ -10,12 +10,14 @@ import { useToast } from '@/hooks/useToast';
 import { useCurrency } from '@/contexts/CurrencyContext';
 import Link from 'next/link';
 
-const GIFT_CARD_AMOUNTS = [25, 50, 100, 250, 500];
+const DEFAULT_AMOUNTS = [25, 50, 100, 250, 500];
 
 export default function PurchaseGiftCardPage() {
   const router = useRouter();
   const toast = useToast();
   const { formatPrice } = useCurrency();
+  const [catalogAmounts, setCatalogAmounts] = useState<number[]>(DEFAULT_AMOUNTS);
+  const [catalogCurrency, setCatalogCurrency] = useState('USD');
   const [loading, setLoading] = useState(false);
   const [showConfirmation, setShowConfirmation] = useState(false);
   const [formData, setFormData] = useState({
@@ -28,6 +30,28 @@ export default function PurchaseGiftCardPage() {
     message: '',
     expiresAt: '',
   });
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const res = await apiClient.getGiftCardCatalog();
+        if (cancelled || !res?.data?.amounts?.length) return;
+        setCatalogAmounts(res.data.amounts);
+        setCatalogCurrency(res.data.currency || 'USD');
+        setFormData((prev) => ({
+          ...prev,
+          amount: res.data!.amounts.includes(prev.amount) ? prev.amount : res.data!.amounts[0],
+          currency: res.data!.currency || prev.currency,
+        }));
+      } catch {
+        /* keep defaults */
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   const handleRequestConfirmation = (e: React.FormEvent) => {
     e.preventDefault();
@@ -140,7 +164,7 @@ export default function PurchaseGiftCardPage() {
                     Amount *
                   </label>
                   <div className="grid grid-cols-3 sm:grid-cols-5 gap-3 mb-3">
-                    {GIFT_CARD_AMOUNTS.map((amount) => (
+                    {catalogAmounts.map((amount) => (
                       <button
                         key={amount}
                         type="button"

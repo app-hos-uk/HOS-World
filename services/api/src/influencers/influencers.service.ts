@@ -221,7 +221,9 @@ export class InfluencersService {
     return {
       data: links.map((link) => ({
         ...link,
-        referralUrl: `/products/${link.product.slug}?ref=${influencer.referralCode}`,
+        referralUrl: link.customSlug
+          ? `/i/${link.customSlug}?product=${link.product.slug}&ref=${influencer.referralCode}`
+          : `/products/${link.product.slug}?ref=${influencer.referralCode}`,
       })),
       pagination: {
         total,
@@ -288,7 +290,9 @@ export class InfluencersService {
 
     return {
       ...link,
-      referralUrl: `/products/${link.product.slug}?ref=${influencer.referralCode}`,
+      referralUrl: link.customSlug
+        ? `/i/${link.customSlug}?product=${link.product.slug}&ref=${influencer.referralCode}`
+        : `/products/${link.product.slug}?ref=${influencer.referralCode}`,
     };
   }
 

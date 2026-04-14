@@ -1,4 +1,5 @@
-import { Controller, Get, Post, Param, UseGuards, Request } from '@nestjs/common';
+import { Controller, Get, Post, Param, UseGuards, Request, Res } from '@nestjs/common';
+import type { Response } from 'express';
 import {
   ApiTags,
   ApiOperation,
@@ -30,6 +31,26 @@ export class DigitalProductsController {
       data: products,
       message: 'Digital products retrieved successfully',
     };
+  }
+
+  @Get(':id/file')
+  @ApiOperation({
+    summary: 'Download digital product file',
+    description:
+      'Redirects to a time-limited signed URL for the asset. Call POST .../download first to register the download.',
+  })
+  @ApiParam({ name: 'id', description: 'Digital product composite id (orderId-productId)', type: String })
+  @SwaggerApiResponse({ status: 302, description: 'Redirect to file URL' })
+  @SwaggerApiResponse({ status: 401, description: 'Unauthorized' })
+  @SwaggerApiResponse({ status: 403, description: 'Download not allowed' })
+  @SwaggerApiResponse({ status: 404, description: 'Product or file not found' })
+  async serveFile(
+    @Param('id') id: string,
+    @Request() req: any,
+    @Res() res: Response,
+  ): Promise<void> {
+    const url = await this.digitalProductsService.getSignedFileRedirectUrl(id, req.user.id);
+    res.redirect(302, url);
   }
 
   @Get(':id')

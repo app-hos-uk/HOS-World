@@ -1,5 +1,6 @@
 import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/common';
 import { PrismaService } from '../database/prisma.service';
+import { StorageService } from '../storage/storage.service';
 
 export interface DigitalProduct {
   id: string;
@@ -30,7 +31,10 @@ export class DigitalProductsService {
   private readonly MAX_DOWNLOADS = 10;
   private readonly EXPIRY_DAYS = 365;
 
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private readonly storageService: StorageService,
+  ) {}
 
   /**
    * Get all digital products purchased by a user
@@ -101,6 +105,7 @@ export class DigitalProductsService {
           id: `${order.id}-${item.product.id}`,
           name: item.product.name,
           description: item.product.description || undefined,
+          fileUrl: item.product.images?.[0]?.url || undefined,
           fileName: `${item.product.name.replace(/[^a-zA-Z0-9]/g, '_')}.pdf`,
           fileType: 'PDF Document',
           downloadCount,
@@ -234,13 +239,76 @@ export class DigitalProductsService {
       },
     });
 
-    // In production, generate a signed URL from storage service
     return {
       downloadUrl: `/api/digital-products/${id}/file`,
       fileName: product.fileName,
       expiresIn: 3600,
       remainingDownloads: this.MAX_DOWNLOADS - product.downloadCount - 1,
     };
+  }
+
+  /**
+   * Resolve a redirect URL for GET :id/file.
+   * Also increments the download counter so the endpoint cannot bypass limits.
+   */
+  async getSignedFileRedirectUrl(compositeId: string, userId: string): Promise<string> {
+    const digital = await this.getDigitalProduct(compositeId, userId);
+    if (digital.status === 'expired') {
+      throw new ForbiddenException('Download link has expired');
+    }
+    if (digital.status === 'limit_reached') {
+      throw new ForbiddenException('Maximum download limit reached');
+    }
+
+    await this.prisma.activityLog.create({
+      data: {
+        user: { connect: { id: userId } },
+        action: 'DIGITAL_PRODUCT_DOWNLOAD',
+        entityType: 'Product',
+        entityId: digital.productId,
+        description: `Downloaded digital product (file redirect): ${digital.name}`,
+        metadata: {
+          productId: digital.productId,
+          orderId: digital.orderId,
+          downloadNumber: digital.downloadCount + 1,
+        },
+      },
+    });
+
+    // 1. Check if the OrderItem's variationOptions contains a downloadUrl (extensible JSON field)
+    const orderItem = await this.prisma.orderItem.findFirst({
+      where: {
+        orderId: digital.orderId,
+        productId: digital.productId,
+      },
+      select: { variationOptions: true },
+    });
+    const opts = orderItem?.variationOptions as Record<string, string> | null;
+    if (opts?.downloadUrl) {
+      return this.storageService.getSignedUrl(opts.downloadUrl, 3600);
+    }
+
+    // 2. Fall back to the first product image URL (no dedicated file field in schema)
+    const product = await this.prisma.product.findUnique({
+      where: { id: digital.productId },
+      include: {
+        images: {
+          orderBy: { order: 'asc' },
+          take: 1,
+          select: { url: true },
+        },
+      },
+    });
+
+    const rawUrl = product?.images?.[0]?.url;
+    if (!rawUrl) {
+      throw new NotFoundException(
+        'No downloadable file is configured for this product. ' +
+          'Set a downloadUrl in the order item variationOptions or add a product image.',
+      );
+    }
+
+    return this.storageService.getSignedUrl(rawUrl, 3600);
   }
 
   /**

@@ -84,4 +84,21 @@ export class RegisterDto {
 
   @IsOptional()
   dataProcessingConsent?: Record<string, boolean>; // Optional granular preferences
+
+  /** B2B / wholesaler registration (optional) */
+  @IsOptional()
+  @IsString()
+  companyName?: string;
+
+  @IsOptional()
+  @IsString()
+  vatNumber?: string;
+
+  @IsOptional()
+  @IsString()
+  businessRegNumber?: string;
+
+  @IsOptional()
+  @IsString()
+  businessType?: string;
 }

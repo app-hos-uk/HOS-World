@@ -8,6 +8,7 @@ import {
   DeleteObjectCommand,
   GetObjectCommand,
 } from '@aws-sdk/client-s3';
+import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import { Upload } from '@aws-sdk/lib-storage';
 
 export enum StorageProvider {
@@ -516,6 +517,95 @@ export class StorageService {
         this.logger.error(`Error deleting local file ${url}: ${error.message}`);
         // Don't throw - allow deletion to fail silently in some cases
       }
+    }
+  }
+
+  /**
+   * Time-limited URL for private objects, or the original URL for public / non-S3 providers.
+   */
+  async getSignedUrl(urlOrKey: string, expiresInSeconds: number = 3600): Promise<string> {
+    if (!urlOrKey?.trim()) {
+      throw new BadRequestException('File reference is required');
+    }
+    const trimmed = urlOrKey.trim();
+
+    if (this.provider === StorageProvider.LOCAL) {
+      if (trimmed.startsWith('http://') || trimmed.startsWith('https://')) {
+        return trimmed;
+      }
+      const base =
+        this.configService.get<string>('APP_URL') ||
+        this.configService.get<string>('API_PUBLIC_URL') ||
+        '';
+      if (base) {
+        const path = trimmed.startsWith('/') ? trimmed : `/${trimmed}`;
+        return `${base.replace(/\/$/, '')}${path}`;
+      }
+      return trimmed;
+    }
+
+    if (this.provider === StorageProvider.CLOUDINARY) {
+      return trimmed;
+    }
+
+    if (this.provider === StorageProvider.S3 && this.s3Client) {
+      const bucket = this.configService.get<string>('AWS_S3_BUCKET');
+      if (!bucket) {
+        this.logger.warn('AWS_S3_BUCKET not set; returning raw URL');
+        return trimmed;
+      }
+      const key = this.resolveS3ObjectKey(trimmed, bucket);
+      const command = new GetObjectCommand({ Bucket: bucket, Key: key });
+      return getSignedUrl(this.s3Client as any, command, { expiresIn: expiresInSeconds });
+    }
+
+    if (this.provider === StorageProvider.MINIO && this.minioClient) {
+      const bucket = this.configService.get<string>('MINIO_BUCKET');
+      if (!bucket) {
+        this.logger.warn('MINIO_BUCKET not set; returning raw URL');
+        return trimmed;
+      }
+      const key = this.resolveMinioObjectKey(trimmed, bucket);
+      const command = new GetObjectCommand({ Bucket: bucket, Key: key });
+      return getSignedUrl(this.minioClient as any, command, { expiresIn: expiresInSeconds });
+    }
+
+    return trimmed;
+  }
+
+  private resolveS3ObjectKey(urlOrKey: string, bucket: string): string {
+    if (!urlOrKey.startsWith('http://') && !urlOrKey.startsWith('https://')) {
+      return urlOrKey;
+    }
+    try {
+      const u = new URL(urlOrKey);
+      const host = u.hostname;
+      const path = u.pathname.replace(/^\//, '');
+      if (host.startsWith(`${bucket}.`)) {
+        return path;
+      }
+      if (path.startsWith(`${bucket}/`)) {
+        return path.slice(bucket.length + 1);
+      }
+      return path;
+    } catch {
+      return urlOrKey;
+    }
+  }
+
+  private resolveMinioObjectKey(urlOrKey: string, bucket: string): string {
+    if (!urlOrKey.startsWith('http://') && !urlOrKey.startsWith('https://')) {
+      return urlOrKey;
+    }
+    try {
+      const u = new URL(urlOrKey);
+      const path = u.pathname.replace(/^\//, '');
+      if (path.startsWith(`${bucket}/`)) {
+        return path.slice(bucket.length + 1);
+      }
+      return path;
+    } catch {
+      return urlOrKey;
     }
   }
 }

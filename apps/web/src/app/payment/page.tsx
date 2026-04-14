@@ -4,11 +4,125 @@ import { Header } from '@/components/Header';
 import { Footer } from '@/components/Footer';
 import { RouteGuard } from '@/components/RouteGuard';
 import { useState, useEffect, useRef, Suspense } from 'react';
+import { loadStripe } from '@stripe/stripe-js';
+import { Elements, CardElement, useStripe, useElements } from '@stripe/react-stripe-js';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { useCurrency } from '@/contexts/CurrencyContext';
 import { apiClient } from '@/lib/api';
 import { useToast } from '@/hooks/useToast';
 import Link from 'next/link';
+
+const stripePublishableKey = process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY || '';
+const stripePromise = stripePublishableKey ? loadStripe(stripePublishableKey) : null;
+
+function StripeCardCheckout({
+  order,
+  clientSecret,
+  paymentIntentId,
+  displayTotal,
+  setProcessing,
+  setPaymentError,
+  onClearStripe,
+  isPaymentSubmittingRef,
+}: {
+  order: any;
+  clientSecret: string;
+  paymentIntentId: string;
+  displayTotal: string;
+  setProcessing: (v: boolean) => void;
+  setPaymentError: (v: string | null) => void;
+  onClearStripe: () => void;
+  isPaymentSubmittingRef: React.MutableRefObject<boolean>;
+}) {
+  const stripe = useStripe();
+  const elements = useElements();
+  const toast = useToast();
+  const router = useRouter();
+
+  const handleConfirm = async () => {
+    if (isPaymentSubmittingRef.current) return;
+    if (!stripe || !elements) {
+      toast.error('Stripe is still loading. Please wait.');
+      return;
+    }
+    const card = elements.getElement(CardElement);
+    if (!card) {
+      toast.error('Card field not ready');
+      return;
+    }
+    try {
+      isPaymentSubmittingRef.current = true;
+      setProcessing(true);
+      setPaymentError(null);
+      const { error, paymentIntent } = await stripe.confirmCardPayment(clientSecret, {
+        payment_method: { card },
+      });
+      if (error) {
+        setPaymentError(error.message || 'Card payment failed');
+        toast.error(error.message || 'Card payment failed');
+        return;
+      }
+      if (paymentIntent?.status !== 'succeeded') {
+        const msg = `Payment status: ${paymentIntent?.status || 'unknown'}`;
+        setPaymentError(msg);
+        toast.error(msg);
+        return;
+      }
+      const confirmResponse = await apiClient.confirmPayment({
+        orderId: order.id,
+        paymentIntentId,
+      });
+      if (confirmResponse?.data) {
+        toast.success('Payment successful!');
+        onClearStripe();
+        router.push(`/orders/${order.id}`);
+      } else {
+        throw new Error('Payment confirmation failed');
+      }
+    } catch (confirmErr: any) {
+      console.error('Payment confirmation error:', confirmErr);
+      const errorMessage =
+        confirmErr.message || 'Payment confirmation failed. Please try again or contact support.';
+      setPaymentError(errorMessage);
+      toast.error(errorMessage);
+    } finally {
+      setProcessing(false);
+      isPaymentSubmittingRef.current = false;
+    }
+  };
+
+  return (
+    <div className="mb-4 p-4 border border-purple-200 bg-purple-50 rounded-lg">
+      <h3 className="text-sm font-semibold text-purple-900 mb-3">Card details</h3>
+      <div className="p-3 bg-white rounded-lg border border-gray-200">
+        <CardElement
+          options={{
+            style: {
+              base: {
+                fontSize: '16px',
+                color: '#1f2937',
+                '::placeholder': { color: '#9ca3af' },
+              },
+            },
+          }}
+        />
+      </div>
+      <button
+        type="button"
+        onClick={handleConfirm}
+        disabled={!stripe}
+        className="w-full mt-4 bg-purple-600 text-white py-2.5 sm:py-3 text-sm sm:text-base rounded-lg font-medium hover:bg-purple-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+      >
+        {`Pay ${displayTotal}`}
+      </button>
+      {!stripePublishableKey && (
+        <p className="text-xs text-amber-700 mt-2">
+          Set NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY to enable Stripe.js in production.
+        </p>
+      )}
+    </div>
+  );
+}
 
 function PaymentContent() {
   const searchParams = useSearchParams();
@@ -191,7 +305,6 @@ function PaymentForm({ order }: { order: any }) {
   const [processing, setProcessing] = useState(false);
   const [stripeClientSecret, setStripeClientSecret] = useState<string | null>(null);
   const [stripePaymentIntentId, setStripePaymentIntentId] = useState<string | null>(null);
-  const [cardDetails, setCardDetails] = useState({ number: '', expiry: '', cvc: '' });
   const [paymentError, setPaymentError] = useState<string | null>(null);
   const isPaymentSubmittingRef = useRef(false);
   const router = useRouter();
@@ -443,7 +556,6 @@ function PaymentForm({ order }: { order: any }) {
             if (response.data.clientSecret) {
               setStripeClientSecret(response.data.clientSecret);
               setStripePaymentIntentId(response.data.paymentIntentId);
-              setCardDetails({ number: '', expiry: '', cvc: '' });
               setProcessing(false);
               return;
             } else {
@@ -489,68 +601,6 @@ function PaymentForm({ order }: { order: any }) {
     }
   };
 
-  const handleStripeConfirm = async () => {
-    if (isPaymentSubmittingRef.current) return;
-    if (!cardDetails.number || !cardDetails.expiry || !cardDetails.cvc) {
-      toast.error('Please fill in all card details');
-      return;
-    }
-
-    if (cardDetails.number.replace(/\s/g, '').length < 16) {
-      toast.error('Please enter a valid card number');
-      return;
-    }
-
-    if (!/^\d{2}\s?\/\s?\d{2}$/.test(cardDetails.expiry.trim())) {
-      toast.error('Please enter a valid expiry date (MM/YY)');
-      return;
-    }
-
-    if (cardDetails.cvc.length < 3) {
-      toast.error('Please enter a valid CVC');
-      return;
-    }
-
-    try {
-      isPaymentSubmittingRef.current = true;
-      setProcessing(true);
-      const confirmResponse = await apiClient.confirmPayment({
-        orderId: order.id,
-        paymentIntentId: stripePaymentIntentId!,
-      });
-      if (confirmResponse?.data) {
-        toast.success('Payment successful!');
-        setStripeClientSecret(null);
-        setStripePaymentIntentId(null);
-        router.push(`/orders/${order.id}`);
-        return;
-      } else {
-        throw new Error('Payment confirmation failed');
-      }
-    } catch (confirmErr: any) {
-      console.error('Payment confirmation error:', confirmErr);
-      const errorMessage = confirmErr.message || 'Payment confirmation failed. Please try again or contact support.';
-      setPaymentError(errorMessage);
-      toast.error(errorMessage);
-    } finally {
-      setProcessing(false);
-      isPaymentSubmittingRef.current = false;
-    }
-  };
-
-  const formatCardNumber = (value: string) => {
-    const digits = value.replace(/\D/g, '').slice(0, 16);
-    return digits.replace(/(\d{4})(?=\d)/g, '$1 ');
-  };
-
-  const formatExpiry = (value: string) => {
-    const digits = value.replace(/\D/g, '').slice(0, 4);
-    if (digits.length >= 3) {
-      return digits.slice(0, 2) + '/' + digits.slice(2);
-    }
-    return digits;
-  };
-
   const getProviderDisplayName = (provider: string) => {
     const names: Record<string, string> = {
       stripe: 'Credit/Debit Card (Stripe)',
@@ -561,7 +611,7 @@ function PaymentForm({ order }: { order: any }) {
 
   const getProviderDescription = (provider: string) => {
     const descriptions: Record<string, string> = {
-      stripe: 'Card payment will be processed securely through Stripe. You will be redirected to complete the payment.',
+      stripe: 'Card payment will be processed securely through Stripe.',
       'gift-card': 'Use a gift card to pay for your order.',
     };
     return descriptions[provider] || `Pay securely with ${provider}.`;
@@ -698,57 +748,27 @@ function PaymentForm({ order }: { order: any }) {
         </div>
       )}
 
-      {/* Stripe Card Details Form */}
-      {stripeClientSecret && selectedProvider === 'stripe' && (
-        <div className="mb-4 p-4 border border-purple-200 bg-purple-50 rounded-lg">
-          <h3 className="text-sm font-semibold text-purple-900 mb-3">Enter Card Details</h3>
-          <div className="space-y-3">
-            <div>
-              <label className="block text-xs font-medium text-gray-600 mb-1">Card Number</label>
-              <input
-                type="text"
-                value={cardDetails.number}
-                onChange={(e) => setCardDetails(prev => ({ ...prev, number: formatCardNumber(e.target.value) }))}
-                placeholder="4242 4242 4242 4242"
-                maxLength={19}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 text-sm font-mono"
-                disabled={processing}
-              />
-            </div>
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <label className="block text-xs font-medium text-gray-600 mb-1">Expiry Date</label>
-                <input
-                  type="text"
-                  value={cardDetails.expiry}
-                  onChange={(e) => setCardDetails(prev => ({ ...prev, expiry: formatExpiry(e.target.value) }))}
-                  placeholder="MM/YY"
-                  maxLength={5}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 text-sm font-mono"
-                  disabled={processing}
-                />
-              </div>
-              <div>
-                <label className="block text-xs font-medium text-gray-600 mb-1">CVC</label>
-                <input
-                  type="text"
-                  value={cardDetails.cvc}
-                  onChange={(e) => setCardDetails(prev => ({ ...prev, cvc: e.target.value.replace(/\D/g, '').slice(0, 4) }))}
-                  placeholder="123"
-                  maxLength={4}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 text-sm font-mono"
-                  disabled={processing}
-                />
-              </div>
-            </div>
-          </div>
-          <button
-            onClick={handleStripeConfirm}
-            disabled={processing || !cardDetails.number || !cardDetails.expiry || !cardDetails.cvc}
-            className="w-full mt-4 bg-purple-600 text-white py-2.5 sm:py-3 text-sm sm:text-base rounded-lg font-medium hover:bg-purple-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            {processing ? 'Processing Payment...' : `Pay ${formatPrice(calculateTotal(), order?.currency || 'USD')}`}
-          </button>
+      {stripeClientSecret && selectedProvider === 'stripe' && stripePromise && (
+        <Elements stripe={stripePromise} options={{ clientSecret: stripeClientSecret }}>
+          <StripeCardCheckout
+            order={order}
+            clientSecret={stripeClientSecret}
+            paymentIntentId={stripePaymentIntentId!}
+            displayTotal={formatPrice(calculateTotal(), order?.currency || 'USD')}
+            setProcessing={setProcessing}
+            setPaymentError={setPaymentError}
+            onClearStripe={() => {
+              setStripeClientSecret(null);
+              setStripePaymentIntentId(null);
+            }}
+            isPaymentSubmittingRef={isPaymentSubmittingRef}
+          />
+        </Elements>
+      )}
+      {stripeClientSecret && selectedProvider === 'stripe' && !stripePromise && (
+        <div className="mb-4 p-4 bg-amber-50 border border-amber-200 rounded-lg text-sm text-amber-900">
+          Add <code className="font-mono">NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY</code> to your environment to
+          collect card payments with Stripe Elements.
         </div>
       )}
 
@@ -769,7 +789,6 @@ function PaymentForm({ order }: { order: any }) {
               setPaymentError(null);
               setStripeClientSecret(null);
               setStripePaymentIntentId(null);
-              setCardDetails({ number: '', expiry: '', cvc: '' });
             }}
             className="w-full mt-3 px-4 py-2.5 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors font-medium text-sm"
           >

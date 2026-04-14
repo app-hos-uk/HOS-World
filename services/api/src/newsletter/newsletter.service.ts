@@ -1,10 +1,15 @@
 import { Injectable, ConflictException, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../database/prisma.service';
 import { CreateNewsletterSubscriptionDto } from './dto/create-newsletter-subscription.dto';
+import { SendNewsletterCampaignDto } from './dto/send-newsletter-campaign.dto';
+import { NotificationsService } from '../notifications/notifications.service';
 
 @Injectable()
 export class NewsletterService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private readonly notificationsService: NotificationsService,
+  ) {}
 
   async subscribe(dto: CreateNewsletterSubscriptionDto, userId?: string): Promise<any> {
     const existing = await this.prisma.newsletterSubscription.findUnique({
@@ -113,5 +118,31 @@ export class NewsletterService {
       select: { email: true },
     });
     return subscriptions.map((s) => s.email);
+  }
+
+  /**
+   * Queue a bulk campaign to all subscribed emails (optional JSON tags filter).
+   */
+  async sendCampaign(dto: SendNewsletterCampaignDto): Promise<{ queued: number }> {
+    const subs = await this.prisma.newsletterSubscription.findMany({
+      where: { status: 'subscribed' },
+      select: { email: true, tags: true },
+    });
+
+    const filtered =
+      dto.tagKey != null && dto.tagKey !== '' && dto.tagValue !== undefined
+        ? subs.filter((s) => {
+            const tags = (s.tags as Record<string, unknown> | null) || {};
+            return tags[dto.tagKey!] === dto.tagValue;
+          })
+        : subs;
+
+    let queued = 0;
+    for (const { email } of filtered) {
+      await this.notificationsService.queueNotification(email, dto.subject, dto.body);
+      queued++;
+    }
+
+    return { queued };
   }
 }

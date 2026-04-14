@@ -2,7 +2,7 @@
 
 import { useEffect, useState, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
-import { apiClient, markLoginSuccess } from '@/lib/api';
+import { apiClient, markLoginSuccess, mergeGuestCartAfterAuth } from '@/lib/api';
 import { useToast } from '@/hooks/useToast';
 
 type InvitationType = 'seller' | 'influencer';
@@ -161,6 +161,7 @@ function AcceptInvitationForm() {
           if (infResponse.data.refreshToken) {
             localStorage.setItem('refresh_token', infResponse.data.refreshToken);
           }
+          await mergeGuestCartAfterAuth();
           markLoginSuccess();
           toast.success('Account created successfully! Redirecting to dashboard...');
           setTimeout(() => {
@@ -191,6 +192,7 @@ function AcceptInvitationForm() {
           if (response.data.refreshToken) {
             localStorage.setItem('refresh_token', response.data.refreshToken);
           }
+          await mergeGuestCartAfterAuth();
           markLoginSuccess();
           toast.success('Account created successfully! Redirecting to dashboard...');
           setTimeout(() => {

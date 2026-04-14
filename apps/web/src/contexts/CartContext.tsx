@@ -1,7 +1,7 @@
 'use client';
 
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
-import { apiClient } from '@/lib/api';
+import { apiClient, getOrCreateGuestCartSessionId } from '@/lib/api';
 import { useAuth } from './AuthContext';
 
 interface CartItem {
@@ -47,22 +47,31 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(false);
 
   const fetchCart = useCallback(async () => {
-    if (!isAuthenticated) {
-      setCart(null);
-      return;
-    }
-
     try {
       setLoading(true);
+      if (!isAuthenticated) {
+        const sid = getOrCreateGuestCartSessionId();
+        if (!sid) {
+          setCart(null);
+          return;
+        }
+        const response = await apiClient.getGuestCart(sid);
+        if (response?.data) {
+          setCart(response.data as Cart);
+        } else {
+          setCart(null);
+        }
+        return;
+      }
+
       const response = await apiClient.getCart();
       if (response?.data) {
-        setCart(response.data);
+        setCart(response.data as Cart);
       } else {
         setCart(null);
       }
     } catch (error: any) {
       console.error('Error fetching cart:', error);
-      // Don't show error toast here - cart might not exist yet
       setCart(null);
     } finally {
       setLoading(false);
@@ -77,39 +86,51 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     await fetchCart();
   }, [fetchCart]);
 
-  const syncCart = useCallback((cart: Cart | null) => {
-    setCart(cart);
+  const syncCart = useCallback((next: Cart | null) => {
+    setCart(next);
   }, []);
 
-  const addToCart = useCallback(async (productId: string, quantity: number = 1, variationOptions?: Record<string, string>) => {
-    try {
+  const addToCart = useCallback(
+    async (productId: string, quantity: number = 1, variationOptions?: Record<string, string>) => {
+      if (!isAuthenticated) {
+        const sid = getOrCreateGuestCartSessionId();
+        await apiClient.addToGuestCart(sid, productId, quantity, variationOptions);
+        await fetchCart();
+        return;
+      }
       await apiClient.addToCart(productId, quantity, variationOptions);
-      // Refresh cart after adding
       await fetchCart();
-    } catch (error) {
-      throw error;
-    }
-  }, [fetchCart]);
+    },
+    [fetchCart, isAuthenticated],
+  );
 
-  const removeFromCart = useCallback(async (itemId: string) => {
-    try {
+  const removeFromCart = useCallback(
+    async (itemId: string) => {
+      if (!isAuthenticated) {
+        const sid = getOrCreateGuestCartSessionId();
+        await apiClient.removeGuestCartItem(sid, itemId);
+        await fetchCart();
+        return;
+      }
       await apiClient.removeCartItem(itemId);
-      // Refresh cart after removing
       await fetchCart();
-    } catch (error) {
-      throw error;
-    }
-  }, [fetchCart]);
+    },
+    [fetchCart, isAuthenticated],
+  );
 
-  const updateCartItem = useCallback(async (itemId: string, quantity: number) => {
-    try {
+  const updateCartItem = useCallback(
+    async (itemId: string, quantity: number) => {
+      if (!isAuthenticated) {
+        const sid = getOrCreateGuestCartSessionId();
+        await apiClient.updateGuestCartItem(sid, itemId, quantity);
+        await fetchCart();
+        return;
+      }
       await apiClient.updateCartItem(itemId, quantity);
-      // Refresh cart after updating
       await fetchCart();
-    } catch (error) {
-      throw error;
-    }
-  }, [fetchCart]);
+    },
+    [fetchCart, isAuthenticated],
+  );
 
   const cartItemCount = cart?.items?.reduce((sum, item) => sum + item.quantity, 0) || 0;
 

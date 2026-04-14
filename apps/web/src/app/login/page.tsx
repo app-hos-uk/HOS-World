@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
-import { apiClient, markLoginSuccess } from '@/lib/api';
+import { apiClient, markLoginSuccess, mergeGuestCartAfterAuth } from '@/lib/api';
 import { CharacterSelector } from '@/components/CharacterSelector';
 import { FandomQuiz } from '@/components/FandomQuiz';
 import { getPublicApiBaseUrl } from '@/lib/apiBaseUrl';
@@ -165,6 +165,8 @@ export default function LoginPage() {
         throw new Error('Failed to save authentication token');
       }
 
+      await mergeGuestCartAfterAuth();
+
       // Mark login success to prevent onUnauthorized redirects
       markLoginSuccess();
 
@@ -297,6 +299,8 @@ export default function LoginPage() {
         console.error('Failed to save token:', e);
         throw new Error('Failed to save authentication token');
       }
+
+      await mergeGuestCartAfterAuth();
 
       // CRITICAL: Mark login success to prevent onUnauthorized redirects
       markLoginSuccess();

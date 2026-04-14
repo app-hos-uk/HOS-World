@@ -1,5 +1,5 @@
 // OAuth methods for AuthService
-import { Injectable, ConflictException, NotImplementedException } from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import { PrismaService } from '../database/prisma.service';
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
@@ -16,25 +16,34 @@ interface OAuthUserData {
   refreshToken?: string;
 }
 
+export type OAuthTokenGenerator = (user: {
+  id: string;
+  email: string;
+  role: string;
+  permissionRoleId?: string | null;
+}) => Promise<{ accessToken: string; refreshToken: string }>;
+
 @Injectable()
 export class AuthOAuthService {
   constructor(
     private prisma: PrismaService,
-    private jwtService: JwtService,
-    private configService: ConfigService,
+    private _jwtService: JwtService,
+    private _configService: ConfigService,
+    private generateTokensForUser: OAuthTokenGenerator,
   ) {}
 
   /**
    * Validate or create user from OAuth provider
    */
   async validateOrCreateOAuthUser(oauthData: OAuthUserData): Promise<AuthResponse> {
-    // OAuthAccount model not in schema - feature disabled
-    throw new NotImplementedException(
-      'OAuth authentication is not available. OAuthAccount model is not in the database schema.',
-    );
+    const email = oauthData.email?.toLowerCase().trim();
+    if (!email) {
+      throw new BadRequestException(
+        'OAuth provider did not return an email. Grant email permission or use a provider that supplies email.',
+      );
+    }
 
-    // Check if OAuth account already exists
-    /* const existingOAuth = await this.prisma.oAuthAccount.findUnique({
+    const existingOAuth = await this.prisma.oAuthAccount.findUnique({
       where: {
         provider_providerId: {
           provider: oauthData.provider,
@@ -45,7 +54,6 @@ export class AuthOAuthService {
     });
 
     if (existingOAuth) {
-      // Update access token if provided
       if (oauthData.accessToken) {
         await this.prisma.oAuthAccount.update({
           where: { id: existingOAuth.id },
@@ -57,8 +65,7 @@ export class AuthOAuthService {
         });
       }
 
-      // Generate tokens for existing user
-      const tokens = await this.generateTokens(existingOAuth.user);
+      const tokens = await this.generateTokensForUser(existingOAuth.user);
       return {
         user: this.mapToUser(existingOAuth.user),
         token: tokens.accessToken,
@@ -66,14 +73,12 @@ export class AuthOAuthService {
       };
     }
 
-    // Check if user with email already exists
     const existingUser = await this.prisma.user.findUnique({
-      where: { email: oauthData.email },
+      where: { email },
     });
 
     let user;
     if (existingUser) {
-      // Link OAuth account to existing user
       await this.prisma.oAuthAccount.create({
         data: {
           provider: oauthData.provider,
@@ -83,16 +88,18 @@ export class AuthOAuthService {
           refreshToken: oauthData.refreshToken,
         },
       });
-      user = existingUser;
+      user = await this.prisma.user.findUnique({ where: { id: existingUser.id } });
+      if (!user) {
+        throw new BadRequestException('Failed to load user after OAuth link');
+      }
     } else {
-      // Create new user with OAuth account
       user = await this.prisma.user.create({
         data: {
-          email: oauthData.email,
+          email,
           firstName: oauthData.firstName,
           lastName: oauthData.lastName,
           avatar: oauthData.avatar,
-          password: '', // OAuth users don't have passwords
+          password: null,
           role: 'CUSTOMER',
           oAuthAccounts: {
             create: {
@@ -102,67 +109,41 @@ export class AuthOAuthService {
               refreshToken: oauthData.refreshToken,
             },
           },
-          customer: {
-            create: {},
+          customerProfile: {
+            create: {
+              currencyPreference: 'USD',
+            },
           },
         },
       });
     }
 
-    const tokens = await this.generateTokens(user);
+    const tokens = await this.generateTokensForUser(user);
     return {
       user: this.mapToUser(user),
       token: tokens.accessToken,
       refreshToken: tokens.refreshToken,
     };
-    */ // End of commented OAuth code
   }
 
-  /**
-   * Unlink OAuth account from user
-   */
-  async unlinkOAuthAccount(userId: string, provider: string): Promise<void> {
-    throw new NotImplementedException(
-      'OAuth authentication is not available. OAuthAccount model is not in the database schema.',
-    );
-  }
-
-  /**
-   * Get linked OAuth accounts for user
-   */
-  async getLinkedAccounts(userId: string) {
-    throw new NotImplementedException(
-      'OAuth authentication is not available. OAuthAccount model is not in the database schema.',
-    );
-  }
-
-  private async generateTokens(user: any): Promise<{ accessToken: string; refreshToken: string }> {
-    const payload = {
-      sub: user.id,
-      email: user.email,
-      role: user.role,
-    };
-
-    const accessToken = this.jwtService.sign(payload, {
-      expiresIn: this.configService.get<string>('JWT_EXPIRES_IN') || '7d',
-    });
-
-    const refreshToken = this.jwtService.sign(payload, {
-      expiresIn: '30d',
-    });
-
-    return { accessToken, refreshToken };
-  }
-
-  private mapToUser(user: any): User {
-    // Map to User type (loyaltyPoints is only on Customer, not base User)
+  private mapToUser(user: {
+    id: string;
+    email: string;
+    firstName?: string | null;
+    lastName?: string | null;
+    phone?: string | null;
+    role: string;
+    avatar?: string | null;
+    createdAt: Date;
+    updatedAt: Date;
+  }): User {
     return {
       id: user.id,
       email: user.email,
       firstName: user.firstName || undefined,
       lastName: user.lastName || undefined,
       phone: user.phone || undefined,
-      role: user.role,
+      role: user.role as User['role'],
       avatar: user.avatar || undefined,
       createdAt: user.createdAt instanceof Date ? user.createdAt : new Date(user.createdAt),
       updatedAt: user.updatedAt instanceof Date ? user.updatedAt : new Date(user.updatedAt),

@@ -5,6 +5,7 @@ import {
   ForbiddenException,
   NotImplementedException,
 } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../database/prisma.service';
 import { Prisma } from '@prisma/client';
 import { CreateGiftCardDto } from './dto/create-gift-card.dto';
@@ -12,7 +13,27 @@ import { RedeemGiftCardDto } from './dto/redeem-gift-card.dto';
 
 @Injectable()
 export class GiftCardsService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private readonly configService: ConfigService,
+  ) {}
+
+  /**
+   * Preset purchase amounts (override with GIFT_CARD_CATALOG_AMOUNTS="25,50,100" env).
+   */
+  getCatalog(): { currency: string; amounts: number[] } {
+    const raw =
+      this.configService.get<string>('GIFT_CARD_CATALOG_AMOUNTS') || '25,50,100,250,500';
+    const amounts = raw
+      .split(/[,;\s]+/)
+      .map((s) => parseFloat(s.trim()))
+      .filter((n) => !Number.isNaN(n) && n > 0);
+    const currency = this.configService.get<string>('GIFT_CARD_DEFAULT_CURRENCY') || 'USD';
+    return {
+      currency,
+      amounts: amounts.length ? amounts : [25, 50, 100, 250, 500],
+    };
+  }
 
   // GiftCard model is now in schema - no need for throwNotImplemented
 

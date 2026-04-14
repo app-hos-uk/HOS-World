@@ -415,6 +415,60 @@ export class ApiClient {
     });
   }
 
+  /** Merge anonymous cart into the authenticated user's cart (call after login). */
+  async mergeGuestCart(guestSessionId: string): Promise<ApiResponse<Cart>> {
+    return this.request<ApiResponse<Cart>>('/cart/merge-guest', {
+      method: 'POST',
+      body: JSON.stringify({ guestSessionId }),
+    });
+  }
+
+  // Guest cart (X-Guest-Session header)
+  async getGuestCart(guestSessionId: string): Promise<ApiResponse<Cart>> {
+    return this.request<ApiResponse<Cart>>('/cart/guest', {
+      headers: { 'X-Guest-Session': guestSessionId },
+    });
+  }
+
+  async addToGuestCart(
+    guestSessionId: string,
+    productId: string,
+    quantity: number,
+    variationOptions?: Record<string, string>,
+  ): Promise<ApiResponse<Cart>> {
+    return this.request<ApiResponse<Cart>>('/cart/guest/items', {
+      method: 'POST',
+      headers: { 'X-Guest-Session': guestSessionId },
+      body: JSON.stringify({ productId, quantity, variationOptions }),
+    });
+  }
+
+  async updateGuestCartItem(
+    guestSessionId: string,
+    itemId: string,
+    quantity: number,
+  ): Promise<ApiResponse<Cart>> {
+    return this.request<ApiResponse<Cart>>(`/cart/guest/items/${itemId}`, {
+      method: 'PATCH',
+      headers: { 'X-Guest-Session': guestSessionId },
+      body: JSON.stringify({ quantity }),
+    });
+  }
+
+  async removeGuestCartItem(guestSessionId: string, itemId: string): Promise<ApiResponse<Cart>> {
+    return this.request<ApiResponse<Cart>>(`/cart/guest/items/${itemId}`, {
+      method: 'DELETE',
+      headers: { 'X-Guest-Session': guestSessionId },
+    });
+  }
+
+  async clearGuestCart(guestSessionId: string): Promise<ApiResponse<Cart>> {
+    return this.request<ApiResponse<Cart>>('/cart/guest/clear', {
+      method: 'DELETE',
+      headers: { 'X-Guest-Session': guestSessionId },
+    });
+  }
+
   // Orders endpoints
   async getOrders(params?: { page?: number; limit?: number; status?: string }): Promise<ApiResponse<Order[]>> {
     const search = new URLSearchParams();
@@ -1583,6 +1637,10 @@ export class ApiClient {
     whatsappNumber?: string;
     preferredCommunicationMethod?: 'EMAIL' | 'SMS' | 'WHATSAPP' | 'PHONE';
     currencyPreference?: string;
+    companyName?: string;
+    vatNumber?: string;
+    businessRegNumber?: string;
+    businessType?: string;
   }): Promise<ApiResponse<any>> {
     return this.request<ApiResponse<any>>('/users/profile', {
       method: 'PUT',
@@ -2479,11 +2537,9 @@ export class ApiClient {
 
   // CMS Media - Uses uploads endpoint
   async getCMSMedia(): Promise<ApiResponse<any[]>> {
-    // Note: There's no dedicated media list endpoint in the backend
-    // This would need to be implemented or use a different approach
-    // For now, return empty array with a note that this needs backend implementation
-    console.warn('getCMSMedia: Backend endpoint /cms/media does not exist. This method needs backend implementation.');
-    return { data: [], message: 'Media endpoint not implemented in backend' };
+    return this.request<ApiResponse<any[]>>('/cms/media', {
+      method: 'GET',
+    });
   }
 
   async uploadCMSMedia(formData: FormData): Promise<ApiResponse<any>> {
@@ -2647,6 +2703,12 @@ export class ApiClient {
   }
 
   // Gift Cards
+  async getGiftCardCatalog(): Promise<ApiResponse<{ currency: string; amounts: number[] }>> {
+    return this.request<ApiResponse<{ currency: string; amounts: number[] }>>('/gift-cards/catalog', {
+      method: 'GET',
+    });
+  }
+
   async createGiftCard(data: {
     type: 'digital' | 'physical';
     amount: number;
