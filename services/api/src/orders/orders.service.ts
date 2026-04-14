@@ -485,6 +485,84 @@ export class OrdersService {
   }
 
   /**
+   * Pick the best active campaign with an override rate for this order (most specific match wins).
+   */
+  private pickBestCampaignForOrder(
+    campaigns: Array<{
+      id: string;
+      startDate: Date;
+      overrideCommissionRate: Decimal | null;
+      productIds: string[];
+      categoryIds: string[];
+    }>,
+    items: Array<{
+      product: { id: string; categoryId: string | null; brand: string | null } | null;
+      price: Decimal;
+      quantity: number;
+    }>,
+  ): { campaign: (typeof campaigns)[0] | null; eligibleTotal: Decimal } {
+    const withOverride = campaigns.filter((c) => c.overrideCommissionRate != null);
+    if (withOverride.length === 0) {
+      return { campaign: null, eligibleTotal: new Decimal(0) };
+    }
+
+    type Row = {
+      campaign: (typeof campaigns)[0];
+      eligibleTotal: Decimal;
+      score: number;
+    };
+    const rows: Row[] = [];
+
+    for (const c of withOverride) {
+      const pids = c.productIds || [];
+      const cids = c.categoryIds || [];
+      const eligibleItems = items.filter((item) => {
+        if (!item.product) return false;
+        if (pids.length > 0 && pids.includes(item.product.id)) return true;
+        if (cids.length > 0 && item.product.categoryId && cids.includes(item.product.categoryId)) return true;
+        return pids.length === 0 && cids.length === 0;
+      });
+      const eligibleTotal = eligibleItems.reduce(
+        (sum, item) => sum.plus(item.price.mul(item.quantity)),
+        new Decimal(0),
+      );
+      if (eligibleTotal.lte(0)) continue;
+
+      const matchedByProduct =
+        pids.length > 0 && eligibleItems.some((i) => i.product && pids.includes(i.product.id));
+      const matchedByCategory =
+        cids.length > 0 &&
+        eligibleItems.some((i) => i.product?.categoryId && cids.includes(i.product.categoryId));
+
+      let score = 0;
+      if (matchedByProduct) {
+        const distinct = new Set(
+          eligibleItems.filter((i) => i.product && pids.includes(i.product.id)).map((i) => i.product!.id),
+        ).size;
+        score = 1000 + distinct;
+      } else if (matchedByCategory) {
+        score = 500;
+      } else {
+        score = 100;
+      }
+      rows.push({ campaign: c, eligibleTotal, score });
+    }
+
+    if (rows.length === 0) {
+      return { campaign: null, eligibleTotal: new Decimal(0) };
+    }
+
+    rows.sort((a, b) => {
+      if (b.score !== a.score) return b.score - a.score;
+      const cmp = b.eligibleTotal.comparedTo(a.eligibleTotal);
+      if (cmp !== 0) return cmp;
+      return b.campaign.startDate.getTime() - a.campaign.startDate.getTime();
+    });
+
+    return { campaign: rows[0].campaign, eligibleTotal: rows[0].eligibleTotal };
+  }
+
+  /**
    * Process referral conversion - creates commission for influencer
    */
   private async processReferralConversion(
@@ -503,6 +581,7 @@ export class OrdersService {
             startDate: { lte: new Date() },
             endDate: { gte: new Date() },
           },
+          orderBy: { startDate: 'desc' },
         },
       },
     });
@@ -519,7 +598,7 @@ export class OrdersService {
         items: {
           include: {
             product: {
-              select: { id: true, categoryId: true },
+              select: { id: true, categoryId: true, brand: true },
             },
           },
         },
@@ -530,52 +609,96 @@ export class OrdersService {
       return;
     }
 
-    // Commission: Campaign override (single rate for whole order) > per-item weighted category/base rates.
-    // Prisma returns Decimal for @db.Decimal - use directly; category rates from JSON are numbers.
+    // Commission: best-matching campaign override > per-item weighted category/base rates.
     const baseRate: Decimal = influencer.baseCommissionRate;
     const categoryRates = (influencer.categoryCommissions as Record<string, number>) || {};
     let commissionAmount: Decimal;
     let rateApplied: Decimal;
     let rateSource: string;
+    let campaignForAttribution: {
+      id: string;
+      overrideCommissionRate: Decimal | null;
+    } | null = null;
+    let campaignAttributedSales = new Decimal(0);
 
-    // Campaign override: commission only on items matching campaign productIds / categoryIds (or whole order if both empty)
-    const campaign = influencer.campaigns?.[0];
-    if (campaign?.overrideCommissionRate != null) {
-      const campaignProductIds = campaign.productIds || [];
-      const campaignCategoryIds = campaign.categoryIds || [];
-      const eligibleItems = order.items.filter((item) => {
-        if (!item.product) return false;
-        if (campaignProductIds.length > 0 && campaignProductIds.includes(item.product.id)) return true;
-        if (
-          campaignCategoryIds.length > 0 &&
-          item.product.categoryId &&
-          campaignCategoryIds.includes(item.product.categoryId)
-        )
-          return true;
-        return campaignProductIds.length === 0 && campaignCategoryIds.length === 0;
-      });
-      const eligibleTotal = eligibleItems.reduce(
-        (sum, item) => sum.plus(item.price.mul(item.quantity)),
-        new Decimal(0),
-      );
+    const { campaign, eligibleTotal } = this.pickBestCampaignForOrder(influencer.campaigns, order.items);
+
+    if (campaign?.overrideCommissionRate != null && eligibleTotal.gt(0)) {
       rateApplied = campaign.overrideCommissionRate;
       rateSource = 'CAMPAIGN';
       commissionAmount = eligibleTotal.mul(rateApplied);
-    } else if (Object.keys(categoryRates).length > 0 && order.items.length > 0) {
-      // Weighted rate by item value: each line uses its category rate (or base), then sum commission per item
+      campaignForAttribution = campaign;
+      campaignAttributedSales = eligibleTotal;
+    } else if (order.items.length > 0) {
+      const rules = await this.prisma.influencerCommissionRule.findMany({
+        where: { influencerId: influencer.id, isActive: true },
+        orderBy: [{ priority: 'desc' }, { createdAt: 'asc' }],
+      });
+
       let totalCommission = new Decimal(0);
-      let usedCategoryRate = false;
+      let usedRule = false;
+      let usedCategoryJson = false;
+
       for (const item of order.items) {
         const itemTotal = item.price.mul(item.quantity);
-        const categoryId = item.product?.categoryId;
-        const categoryRate = categoryId ? categoryRates[categoryId] : undefined;
-        const itemRate = categoryRate !== undefined ? new Decimal(categoryRate) : baseRate;
-        if (categoryRate !== undefined) usedCategoryRate = true;
+        const product = item.product;
+        let itemRate: Decimal | null = null;
+
+        if (product && rules.length > 0) {
+          const brandLower = product.brand?.trim().toLowerCase();
+          for (const r of rules) {
+            if (r.productId && r.productId === product.id) {
+              itemRate = new Decimal(r.commissionRate.toString());
+              usedRule = true;
+              break;
+            }
+          }
+          if (!itemRate) {
+            for (const r of rules) {
+              if (
+                r.brandName?.trim() &&
+                brandLower &&
+                r.brandName.trim().toLowerCase() === brandLower
+              ) {
+                itemRate = new Decimal(r.commissionRate.toString());
+                usedRule = true;
+                break;
+              }
+            }
+          }
+          if (!itemRate) {
+            for (const r of rules) {
+              if (r.categoryId && product.categoryId && r.categoryId === product.categoryId) {
+                itemRate = new Decimal(r.commissionRate.toString());
+                usedRule = true;
+                break;
+              }
+            }
+          }
+        }
+
+        if (itemRate == null) {
+          const categoryId = product?.categoryId;
+          const categoryRate = categoryId ? categoryRates[categoryId] : undefined;
+          if (categoryRate !== undefined) {
+            itemRate = new Decimal(categoryRate);
+            usedCategoryJson = true;
+          } else {
+            itemRate = baseRate;
+          }
+        }
+
         totalCommission = totalCommission.plus(itemTotal.mul(itemRate));
       }
+
       commissionAmount = totalCommission;
-      rateSource = usedCategoryRate ? 'CATEGORY' : 'BASE';
-      // Effective rate for display/storage: total commission / order total
+      if (usedRule) {
+        rateSource = 'RULE';
+      } else if (usedCategoryJson) {
+        rateSource = 'CATEGORY';
+      } else {
+        rateSource = 'BASE';
+      }
       rateApplied = order.total.gt(0) ? commissionAmount.div(order.total) : baseRate;
     } else {
       rateApplied = baseRate;
@@ -598,6 +721,7 @@ export class OrdersService {
         orderTotal: order.total,
         convertedAt: new Date(),
         expiresAt,
+        campaignId: campaignForAttribution?.id,
       },
     });
 
@@ -625,6 +749,20 @@ export class OrdersService {
         totalCommission: { increment: commissionAmount },
       },
     });
+
+    if (campaignForAttribution?.id) {
+      try {
+        await this.prisma.influencerCampaign.update({
+          where: { id: campaignForAttribution.id },
+          data: {
+            totalConversions: { increment: 1 },
+            totalSales: { increment: campaignAttributedSales },
+          },
+        });
+      } catch (e: any) {
+        this.logger.warn(`Failed to update campaign stats for ${campaignForAttribution.id}: ${e?.message}`);
+      }
+    }
 
     // Convert to Number only for logging display
     const ratePercent = rateApplied.mul(100).toNumber();

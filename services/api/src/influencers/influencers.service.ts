@@ -489,4 +489,87 @@ export class InfluencersService {
       storefront: influencer.storefront,
     };
   }
+
+  // --- Commission rules (per product / category / brand) ---
+
+  async listCommissionRules(influencerId: string) {
+    await this.ensureInfluencerExists(influencerId);
+    return this.prisma.influencerCommissionRule.findMany({
+      where: { influencerId },
+      orderBy: [{ priority: 'desc' }, { createdAt: 'asc' }],
+    });
+  }
+
+  async createCommissionRule(
+    influencerId: string,
+    body: {
+      productId?: string;
+      categoryId?: string;
+      brandName?: string;
+      commissionRate: number;
+      priority?: number;
+      isActive?: boolean;
+    },
+  ) {
+    await this.ensureInfluencerExists(influencerId);
+
+    const hasProduct = !!body.productId;
+    const hasCategory = !!body.categoryId;
+    const hasBrand = !!(body.brandName && body.brandName.trim());
+    const n = [hasProduct, hasCategory, hasBrand].filter(Boolean).length;
+    if (n !== 1) {
+      throw new BadRequestException('Set exactly one of productId, categoryId, or brandName');
+    }
+
+    return this.prisma.influencerCommissionRule.create({
+      data: {
+        influencerId,
+        productId: hasProduct ? body.productId : null,
+        categoryId: hasCategory ? body.categoryId : null,
+        brandName: hasBrand ? body.brandName!.trim() : null,
+        commissionRate: body.commissionRate,
+        priority: body.priority ?? 0,
+        isActive: body.isActive ?? true,
+      },
+    });
+  }
+
+  async updateCommissionRule(
+    influencerId: string,
+    ruleId: string,
+    body: { commissionRate?: number; priority?: number; isActive?: boolean },
+  ) {
+    const rule = await this.prisma.influencerCommissionRule.findFirst({
+      where: { id: ruleId, influencerId },
+    });
+    if (!rule) {
+      throw new NotFoundException('Commission rule not found');
+    }
+    return this.prisma.influencerCommissionRule.update({
+      where: { id: ruleId },
+      data: {
+        ...(body.commissionRate !== undefined ? { commissionRate: body.commissionRate } : {}),
+        ...(body.priority !== undefined ? { priority: body.priority } : {}),
+        ...(body.isActive !== undefined ? { isActive: body.isActive } : {}),
+      },
+    });
+  }
+
+  async deleteCommissionRule(influencerId: string, ruleId: string) {
+    const rule = await this.prisma.influencerCommissionRule.findFirst({
+      where: { id: ruleId, influencerId },
+    });
+    if (!rule) {
+      throw new NotFoundException('Commission rule not found');
+    }
+    await this.prisma.influencerCommissionRule.delete({ where: { id: ruleId } });
+    return { message: 'Commission rule deleted' };
+  }
+
+  private async ensureInfluencerExists(id: string) {
+    const inf = await this.prisma.influencer.findUnique({ where: { id }, select: { id: true } });
+    if (!inf) {
+      throw new NotFoundException('Influencer not found');
+    }
+  }
 }

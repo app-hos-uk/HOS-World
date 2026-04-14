@@ -1,6 +1,9 @@
 import { Injectable, NotFoundException, Logger } from '@nestjs/common';
 import { PrismaService } from '../database/prisma.service';
 
+/** Same visitor + influencer, unconverted, within this window → refresh row, do not double-count clicks */
+const REFERRAL_DEDUP_WINDOW_MS = 15 * 60 * 1000;
+
 @Injectable()
 export class ReferralsService {
   private readonly logger = new Logger(ReferralsService.name);
@@ -26,11 +29,44 @@ export class ReferralsService {
       return null; // Silent fail for invalid codes
     }
 
-    // Calculate expiry based on cookie duration
     const expiresAt = new Date();
     expiresAt.setDate(expiresAt.getDate() + influencer.cookieDuration);
 
-    // Create or update referral record
+    if (dto.visitorId) {
+      const existing = await this.prisma.referral.findFirst({
+        where: {
+          influencerId: influencer.id,
+          visitorId: dto.visitorId,
+          convertedAt: null,
+        },
+        orderBy: { createdAt: 'desc' },
+      });
+
+      if (existing && Date.now() - existing.createdAt.getTime() < REFERRAL_DEDUP_WINDOW_MS) {
+        const updated = await this.prisma.referral.update({
+          where: { id: existing.id },
+          data: {
+            landingPage: dto.landingPage ?? existing.landingPage,
+            productId: dto.productId ?? existing.productId,
+            campaignId: dto.campaignId ?? existing.campaignId,
+            utmParams: dto.utmParams ?? existing.utmParams,
+            expiresAt,
+          },
+        });
+
+        this.logger.debug(
+          `Referral deduped for influencer ${influencer.id} visitor ${dto.visitorId} (no click increment)`,
+        );
+
+        return {
+          referralId: updated.id,
+          expiresAt,
+          cookieDuration: influencer.cookieDuration,
+          deduped: true,
+        };
+      }
+    }
+
     const referral = await this.prisma.referral.create({
       data: {
         influencerId: influencer.id,
@@ -43,11 +79,22 @@ export class ReferralsService {
       },
     });
 
-    // Increment click counter
     await this.prisma.influencer.update({
       where: { id: influencer.id },
       data: { totalClicks: { increment: 1 } },
     });
+
+    if (dto.campaignId) {
+      const camp = await this.prisma.influencerCampaign.findFirst({
+        where: { id: dto.campaignId, influencerId: influencer.id },
+      });
+      if (camp) {
+        await this.prisma.influencerCampaign.update({
+          where: { id: camp.id },
+          data: { totalClicks: { increment: 1 } },
+        });
+      }
+    }
 
     this.logger.log(`Referral tracked for influencer ${influencer.id}`);
 
@@ -55,6 +102,7 @@ export class ReferralsService {
       referralId: referral.id,
       expiresAt,
       cookieDuration: influencer.cookieDuration,
+      deduped: false,
     };
   }
 

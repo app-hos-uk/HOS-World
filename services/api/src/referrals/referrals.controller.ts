@@ -1,4 +1,5 @@
 import { Controller, Get, Post, Body, Query, UseGuards, Request } from '@nestjs/common';
+import { Throttle } from '@nestjs/throttler';
 import {
   ApiTags,
   ApiOperation,
@@ -19,6 +20,7 @@ export class ReferralsController {
   constructor(private readonly referralsService: ReferralsService) {}
 
   @Public()
+  @Throttle({ default: { limit: 60, ttl: 60000 } })
   @Post('track')
   @ApiOperation({
     summary: 'Track referral click',

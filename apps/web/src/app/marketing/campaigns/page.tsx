@@ -7,33 +7,49 @@ import { apiClient } from '@/lib/api';
 
 type CampaignStatus = 'DRAFT' | 'ACTIVE' | 'PAUSED' | 'COMPLETED';
 
+interface InfluencerOption {
+  id: string;
+  displayName: string;
+  referralCode: string;
+}
+
 interface Campaign {
   id: string;
   name: string;
   description?: string;
-  status: CampaignStatus;
+  influencerId: string;
+  influencer?: {
+    displayName: string;
+    referralCode: string;
+  };
   startDate: string;
   endDate: string;
-  budget: number;
+  overrideCommissionRate?: number | string | null;
+  totalClicks?: number;
+  totalConversions?: number;
+  totalSales?: number | string | null;
+  status: CampaignStatus;
   createdAt: string;
-  updatedAt: string;
+  updatedAt?: string;
 }
 
 interface CampaignFormData {
+  influencerId: string;
   name: string;
   description: string;
   startDate: string;
   endDate: string;
-  budget: string;
+  overrideCommissionPercent: string;
   status: CampaignStatus;
 }
 
 const emptyForm: CampaignFormData = {
+  influencerId: '',
   name: '',
   description: '',
   startDate: '',
   endDate: '',
-  budget: '',
+  overrideCommissionPercent: '',
   status: 'DRAFT',
 };
 
@@ -54,6 +70,7 @@ const FILTER_TABS: { label: string; value: CampaignStatus | 'ALL' }[] = [
 
 export default function MarketingCampaignsPage() {
   const [campaigns, setCampaigns] = useState<Campaign[]>([]);
+  const [influencers, setInfluencers] = useState<InfluencerOption[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [statusFilter, setStatusFilter] = useState<CampaignStatus | 'ALL'>('ALL');
@@ -73,12 +90,10 @@ export default function MarketingCampaignsPage() {
         setLoading(true);
         setError(null);
       }
-      const response = await apiClient.getMarketingCampaigns();
-      if (response?.data) {
-        setCampaigns(Array.isArray(response.data) ? response.data : []);
-      } else if (showLoading) {
-        setError('Failed to load campaigns');
-      }
+      const response = await apiClient.getMarketingCampaigns({ limit: 200 });
+      const raw = response?.data;
+      const list = Array.isArray(raw) ? raw : raw?.data ?? [];
+      setCampaigns(Array.isArray(list) ? list : []);
     } catch (err: any) {
       console.error('Error fetching campaigns:', err);
       if (showLoading) setError(err?.message || 'Failed to load campaigns');
@@ -87,9 +102,21 @@ export default function MarketingCampaignsPage() {
     }
   }, []);
 
+  const fetchInfluencers = useCallback(async () => {
+    try {
+      const res = await apiClient.getInfluencers({ status: 'ACTIVE', limit: 200 });
+      const raw = res?.data;
+      const list = Array.isArray(raw) ? raw : [];
+      setInfluencers(list);
+    } catch (e) {
+      console.error('Failed to load influencers', e);
+    }
+  }, []);
+
   useEffect(() => {
     fetchCampaigns(true);
-  }, [fetchCampaigns]);
+    fetchInfluencers();
+  }, [fetchCampaigns, fetchInfluencers]);
 
   useEffect(() => {
     const onVisibilityChange = () => {
@@ -117,12 +144,18 @@ export default function MarketingCampaignsPage() {
 
   const openEditModal = (campaign: Campaign) => {
     setEditingCampaign(campaign);
+    const rate = campaign.overrideCommissionRate;
+    const pct =
+      rate != null && rate !== ''
+        ? String((Number(rate) * 100).toFixed(2)).replace(/\.?0+$/, '')
+        : '';
     setFormData({
+      influencerId: campaign.influencerId,
       name: campaign.name,
       description: campaign.description || '',
       startDate: campaign.startDate ? campaign.startDate.slice(0, 10) : '',
       endDate: campaign.endDate ? campaign.endDate.slice(0, 10) : '',
-      budget: String(campaign.budget ?? ''),
+      overrideCommissionPercent: pct,
       status: campaign.status,
     });
     setFormError(null);
@@ -157,27 +190,43 @@ export default function MarketingCampaignsPage() {
       setFormError('End date must be after start date');
       return;
     }
-    if (!formData.budget || Number(formData.budget) < 0) {
-      setFormError('Budget must be a positive number');
+    if (!editingCampaign && !formData.influencerId) {
+      setFormError('Please select an influencer');
       return;
     }
 
     try {
       setActionLoading(true);
       setFormError(null);
-      const payload = {
-        name: formData.name.trim(),
-        description: formData.description.trim(),
-        startDate: formData.startDate,
-        endDate: formData.endDate,
-        budget: Number(formData.budget),
-        status: formData.status,
-      };
+
+      const pctTrim = formData.overrideCommissionPercent.trim();
+      const parsedRate = pctTrim ? parseFloat(formData.overrideCommissionPercent) / 100 : null;
+      if (pctTrim && (parsedRate == null || Number.isNaN(parsedRate))) {
+        setFormError('Override commission must be a valid number');
+        return;
+      }
 
       if (editingCampaign) {
-        await apiClient.updateMarketingCampaign(editingCampaign.id, payload);
+        await apiClient.updateMarketingCampaign(editingCampaign.id, {
+          name: formData.name.trim(),
+          description: formData.description.trim() || undefined,
+          startDate: formData.startDate,
+          endDate: formData.endDate,
+          status: formData.status,
+          overrideCommissionRate: pctTrim ? parsedRate! : null,
+        });
       } else {
-        await apiClient.createMarketingCampaign(payload);
+        await apiClient.createMarketingCampaign({
+          influencerId: formData.influencerId,
+          name: formData.name.trim(),
+          description: formData.description.trim() || undefined,
+          startDate: formData.startDate,
+          endDate: formData.endDate,
+          status: formData.status,
+          ...(pctTrim && parsedRate != null && !Number.isNaN(parsedRate)
+            ? { overrideCommissionRate: parsedRate }
+            : {}),
+        });
       }
 
       closeModal();
@@ -205,9 +254,9 @@ export default function MarketingCampaignsPage() {
   };
 
   const menuItems = [
-    { title: 'Dashboard', href: '/marketing/dashboard', icon: '📊' },
-    { title: 'Marketing Materials', href: '/marketing/materials', icon: '📢' },
-    { title: 'Campaigns', href: '/marketing/campaigns', icon: '📣' },
+    { title: 'Dashboard', href: '/marketing/dashboard', icon: '\u{1F4CA}' },
+    { title: 'Marketing Materials', href: '/marketing/materials', icon: '\u{1F4E2}' },
+    { title: 'Campaigns', href: '/marketing/campaigns', icon: '\u{1F4E3}' },
   ];
 
   return (
@@ -220,8 +269,10 @@ export default function MarketingCampaignsPage() {
       >
         <div className="mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
-            <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold">Campaigns</h1>
-            <p className="text-gray-600 mt-2">Create and manage marketing campaigns</p>
+            <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold">Influencer campaigns</h1>
+            <p className="text-gray-600 mt-2">
+              Create and manage commission campaigns tied to influencers (same as admin influencer campaigns).
+            </p>
           </div>
           <button
             onClick={openCreateModal}
@@ -231,7 +282,6 @@ export default function MarketingCampaignsPage() {
           </button>
         </div>
 
-        {/* Status filter tabs */}
         <div className="mb-6 flex gap-2 border-b overflow-x-auto">
           {FILTER_TABS.map((tab) => (
             <button
@@ -268,7 +318,7 @@ export default function MarketingCampaignsPage() {
 
         {!loading && !error && filteredCampaigns.length === 0 && (
           <div className="bg-white border border-gray-200 rounded-lg p-8 text-center">
-            <div className="text-4xl mb-3">📣</div>
+            <div className="text-4xl mb-3">{'\u{1F4E3}'}</div>
             <p className="text-gray-500 text-lg">
               {statusFilter === 'ALL'
                 ? 'No campaigns yet'
@@ -276,7 +326,7 @@ export default function MarketingCampaignsPage() {
             </p>
             <p className="text-gray-400 text-sm mt-1">
               {statusFilter === 'ALL'
-                ? 'Create your first campaign to get started'
+                ? 'Create a campaign and assign an influencer'
                 : 'Try selecting a different status filter'}
             </p>
             {statusFilter === 'ALL' && (
@@ -296,12 +346,27 @@ export default function MarketingCampaignsPage() {
               <table className="w-full text-left">
                 <thead className="bg-gray-50 border-b">
                   <tr>
-                    <th className="px-4 py-3 text-xs font-semibold text-gray-600 uppercase tracking-wider">Name</th>
-                    <th className="px-4 py-3 text-xs font-semibold text-gray-600 uppercase tracking-wider">Status</th>
-                    <th className="px-4 py-3 text-xs font-semibold text-gray-600 uppercase tracking-wider">Start Date</th>
-                    <th className="px-4 py-3 text-xs font-semibold text-gray-600 uppercase tracking-wider">End Date</th>
-                    <th className="px-4 py-3 text-xs font-semibold text-gray-600 uppercase tracking-wider">Budget</th>
-                    <th className="px-4 py-3 text-xs font-semibold text-gray-600 uppercase tracking-wider text-right">Actions</th>
+                    <th className="px-4 py-3 text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                      Name / Influencer
+                    </th>
+                    <th className="px-4 py-3 text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                      Status
+                    </th>
+                    <th className="px-4 py-3 text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                      Dates
+                    </th>
+                    <th className="px-4 py-3 text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                      Clicks
+                    </th>
+                    <th className="px-4 py-3 text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                      Conv.
+                    </th>
+                    <th className="px-4 py-3 text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                      Sales
+                    </th>
+                    <th className="px-4 py-3 text-xs font-semibold text-gray-600 uppercase tracking-wider text-right">
+                      Actions
+                    </th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-100">
@@ -309,23 +374,32 @@ export default function MarketingCampaignsPage() {
                     <tr key={campaign.id} className="hover:bg-gray-50 transition-colors">
                       <td className="px-4 py-3">
                         <p className="font-medium text-gray-900">{campaign.name}</p>
+                        <p className="text-xs text-gray-500 mt-0.5">
+                          {campaign.influencer?.displayName ?? '—'} ({campaign.influencer?.referralCode ?? '—'})
+                        </p>
                         {campaign.description && (
-                          <p className="text-xs text-gray-500 mt-0.5 line-clamp-1">{campaign.description}</p>
+                          <p className="text-xs text-gray-400 mt-0.5 line-clamp-1">{campaign.description}</p>
                         )}
                       </td>
                       <td className="px-4 py-3">
-                        <span className={`inline-block px-2 py-1 text-xs font-semibold rounded ${STATUS_COLORS[campaign.status]}`}>
+                        <span
+                          className={`inline-block px-2 py-1 text-xs font-semibold rounded ${STATUS_COLORS[campaign.status]}`}
+                        >
                           {campaign.status}
                         </span>
                       </td>
                       <td className="px-4 py-3 text-sm text-gray-600">
-                        {campaign.startDate ? new Date(campaign.startDate).toLocaleDateString() : '—'}
-                      </td>
-                      <td className="px-4 py-3 text-sm text-gray-600">
+                        {campaign.startDate ? new Date(campaign.startDate).toLocaleDateString() : '—'} –{' '}
                         {campaign.endDate ? new Date(campaign.endDate).toLocaleDateString() : '—'}
                       </td>
+                      <td className="px-4 py-3 text-sm text-gray-900">{campaign.totalClicks ?? 0}</td>
+                      <td className="px-4 py-3 text-sm text-gray-900">{campaign.totalConversions ?? 0}</td>
                       <td className="px-4 py-3 text-sm font-medium text-gray-900">
-                        ${Number(campaign.budget ?? 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                        $
+                        {Number(campaign.totalSales ?? 0).toLocaleString(undefined, {
+                          minimumFractionDigits: 2,
+                          maximumFractionDigits: 2,
+                        })}
                       </td>
                       <td className="px-4 py-3 text-right">
                         <div className="flex items-center justify-end gap-2">
@@ -370,7 +444,6 @@ export default function MarketingCampaignsPage() {
           </div>
         )}
 
-        {/* Create / Edit Modal */}
         {showModal && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
             <div className="bg-white rounded-lg max-w-lg w-full max-h-[90vh] overflow-y-auto">
@@ -379,10 +452,7 @@ export default function MarketingCampaignsPage() {
                   <h2 className="text-2xl font-bold">
                     {editingCampaign ? 'Edit Campaign' : 'Create Campaign'}
                   </h2>
-                  <button
-                    onClick={closeModal}
-                    className="text-gray-500 hover:text-gray-700"
-                  >
+                  <button onClick={closeModal} className="text-gray-500 hover:text-gray-700">
                     <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                     </svg>
@@ -396,6 +466,35 @@ export default function MarketingCampaignsPage() {
                 )}
 
                 <div className="space-y-4">
+                  {!editingCampaign && (
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Influencer <span className="text-red-500">*</span>
+                      </label>
+                      <select
+                        value={formData.influencerId}
+                        onChange={(e) => handleFormChange('influencerId', e.target.value)}
+                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                      >
+                        <option value="">Select influencer…</option>
+                        {influencers.map((inf) => (
+                          <option key={inf.id} value={inf.id}>
+                            {inf.displayName} ({inf.referralCode})
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                  )}
+
+                  {editingCampaign && (
+                    <div className="text-sm text-gray-600 bg-gray-50 rounded-lg p-3">
+                      <span className="font-medium">Influencer:</span>{' '}
+                      {editingCampaign.influencer?.displayName ?? editingCampaign.influencerId} (
+                      {editingCampaign.influencer?.referralCode ?? '—'})
+                      <p className="text-xs text-gray-500 mt-1">Influencer cannot be changed after creation.</p>
+                    </div>
+                  )}
+
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
                       Campaign Name <span className="text-red-500">*</span>
@@ -416,7 +515,7 @@ export default function MarketingCampaignsPage() {
                       onChange={(e) => handleFormChange('description', e.target.value)}
                       rows={3}
                       className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent resize-none"
-                      placeholder="Brief description of the campaign..."
+                      placeholder="Brief description…"
                     />
                   </div>
 
@@ -447,24 +546,26 @@ export default function MarketingCampaignsPage() {
 
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Budget ($) <span className="text-red-500">*</span>
+                      Override commission (%)
                     </label>
                     <input
                       type="number"
                       min="0"
+                      max="100"
                       step="0.01"
-                      value={formData.budget}
-                      onChange={(e) => handleFormChange('budget', e.target.value)}
+                      value={formData.overrideCommissionPercent}
+                      onChange={(e) => handleFormChange('overrideCommissionPercent', e.target.value)}
                       className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-                      placeholder="0.00"
+                      placeholder="Leave empty to use influencer default / rules"
                     />
+                    <p className="text-xs text-gray-500 mt-1">Applied to eligible order lines during this campaign window.</p>
                   </div>
 
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">Status</label>
                     <select
                       value={formData.status}
-                      onChange={(e) => handleFormChange('status', e.target.value)}
+                      onChange={(e) => handleFormChange('status', e.target.value as CampaignStatus)}
                       className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
                     >
                       <option value="DRAFT">Draft</option>

@@ -421,6 +421,7 @@ model Product {
   taxRate         Decimal       @default(0) @db.Decimal(5, 4)
   stock           Int           @default(0)
   fandom          String?
+  brand           String? // Brand label for influencer commission matching (optional)
   category        String? // Keep for backward compatibility during migration
   tags            String[] // Keep for backward compatibility during migration
   categoryId      String? // New: relation to Category
@@ -457,8 +458,9 @@ model Product {
   bundleItems        ProductBundleItem[]     @relation("ProductBundles")
   bundledIn          ProductBundleItem[]     @relation("ProductBundledIn")
   volumePricing      VolumePricing[]
-  influencerLinks    InfluencerProductLink[]
-  vendorProducts     VendorProduct[]
+  influencerLinks           InfluencerProductLink[]
+  vendorProducts            VendorProduct[]
+  influencerCommissionRules InfluencerCommissionRule[]
 
   // SEO
   metaTitle       String?
@@ -1923,6 +1925,7 @@ model Category {
   isActive    Boolean     @default(true)
   products    Product[]
   attributes  Attribute[] // Category-specific attributes
+  influencerCommissionRules InfluencerCommissionRule[]
   createdAt   DateTime    @default(now())
   updatedAt   DateTime    @updatedAt
 
@@ -2572,8 +2575,9 @@ model Influencer {
   referrals    Referral[]
   commissions  InfluencerCommission[]
   payouts      InfluencerPayout[]
-  campaigns    InfluencerCampaign[]
-  productLinks InfluencerProductLink[]
+  campaigns       InfluencerCampaign[]
+  productLinks    InfluencerProductLink[]
+  commissionRules InfluencerCommissionRule[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -2581,6 +2585,30 @@ model Influencer {
   @@index([referralCode])
   @@index([status])
   @@map("influencers")
+}
+
+// Granular per-influencer commission (product, category, or brand scope)
+model InfluencerCommissionRule {
+  id           String     @id @default(uuid())
+  influencerId String
+  influencer   Influencer @relation(fields: [influencerId], references: [id], onDelete: Cascade)
+
+  productId  String?
+  product    Product?  @relation(fields: [productId], references: [id], onDelete: SetNull)
+  categoryId String?
+  category   Category? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  brandName  String? // Case-insensitive match against Product.brand in application logic
+
+  commissionRate Decimal @db.Decimal(5, 4)
+  isActive       Boolean @default(true)
+  priority       Int     @default(0) // Higher wins when multiple rules match
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([influencerId])
+  @@index([influencerId, isActive])
+  @@map("influencer_commission_rules")
 }
 
 enum InfluencerStatus {

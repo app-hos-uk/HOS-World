@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { apiClient } from '@/lib/api';
 import { useToast } from '@/hooks/useToast';
 import { AdminLayout } from '@/components/AdminLayout';
@@ -42,6 +42,9 @@ export default function AdminInfluencerCampaignsPage() {
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [statusFilter, setStatusFilter] = useState('');
   const [creating, setCreating] = useState(false);
+  const [analyticsOpen, setAnalyticsOpen] = useState(false);
+  const [analyticsLoading, setAnalyticsLoading] = useState(false);
+  const [analyticsData, setAnalyticsData] = useState<any>(null);
   const [form, setForm] = useState({
     influencerId: '',
     name: '',
@@ -109,6 +112,26 @@ export default function AdminInfluencerCampaignsPage() {
     } catch (err: any) {
       toast.error(err.message || 'Failed to update campaign');
     }
+  };
+
+  const openAnalytics = async (campaignId: string) => {
+    setAnalyticsOpen(true);
+    setAnalyticsLoading(true);
+    setAnalyticsData(null);
+    try {
+      const res = await apiClient.getCampaignAnalytics(campaignId);
+      setAnalyticsData(res?.data ?? null);
+    } catch (err: any) {
+      toast.error(err?.message || 'Failed to load campaign analytics');
+      setAnalyticsOpen(false);
+    } finally {
+      setAnalyticsLoading(false);
+    }
+  };
+
+  const closeAnalytics = () => {
+    setAnalyticsOpen(false);
+    setAnalyticsData(null);
   };
 
   const handleDelete = async (id: string) => {
@@ -220,8 +243,8 @@ export default function AdminInfluencerCampaignsPage() {
                         {formatDate(campaign.startDate)} - {formatDate(campaign.endDate)}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-purple-600">
-                        {campaign.overrideCommissionRate
-                          ? `${(campaign.overrideCommissionRate * 100).toFixed(0)}%`
+                        {campaign.overrideCommissionRate != null
+                          ? `${(Number(campaign.overrideCommissionRate) * 100).toFixed(1)}%`
                           : 'Default'}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
@@ -234,7 +257,14 @@ export default function AdminInfluencerCampaignsPage() {
                         </span>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="flex gap-2">
+                        <div className="flex flex-wrap gap-2">
+                          <button
+                            type="button"
+                            onClick={() => openAnalytics(campaign.id)}
+                            className="text-purple-600 hover:text-purple-800 text-sm font-medium"
+                          >
+                            Results
+                          </button>
                           {campaign.status === 'ACTIVE' && (
                             <button
                               onClick={() => handleUpdateStatus(campaign.id, 'PAUSED')}
@@ -266,6 +296,102 @@ export default function AdminInfluencerCampaignsPage() {
             </div>
           )}
         </div>
+
+        {/* Analytics modal */}
+        {analyticsOpen && (
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4 overflow-y-auto">
+            <div className="bg-white rounded-xl max-w-3xl w-full max-h-[90vh] overflow-y-auto my-8">
+              <div className="p-6 border-b flex justify-between items-center sticky top-0 bg-white">
+                <h2 className="text-xl font-semibold text-gray-900">Campaign results</h2>
+                <button
+                  type="button"
+                  onClick={closeAnalytics}
+                  className="text-gray-500 hover:text-gray-700 text-2xl leading-none px-2"
+                  aria-label="Close"
+                >
+                  &times;
+                </button>
+              </div>
+              <div className="p-6 space-y-6">
+                {analyticsLoading && (
+                  <div className="py-12 text-center text-gray-500">Loading analytics…</div>
+                )}
+                {!analyticsLoading && analyticsData && (
+                  <>
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                      <div className="bg-gray-50 rounded-lg p-4">
+                        <p className="text-xs text-gray-500 uppercase">Conversions</p>
+                        <p className="text-2xl font-bold text-gray-900">{analyticsData.summary?.conversions ?? 0}</p>
+                      </div>
+                      <div className="bg-gray-50 rounded-lg p-4">
+                        <p className="text-xs text-gray-500 uppercase">Sales attributed</p>
+                        <p className="text-2xl font-bold text-green-700">
+                          {formatCurrency(analyticsData.summary?.totalSalesAttributed ?? 0)}
+                        </p>
+                      </div>
+                      <div className="bg-gray-50 rounded-lg p-4">
+                        <p className="text-xs text-gray-500 uppercase">Commission (all)</p>
+                        <p className="text-2xl font-bold text-purple-700">
+                          {formatCurrency(analyticsData.summary?.totalCommissionAll ?? 0)}
+                        </p>
+                      </div>
+                      <div className="bg-gray-50 rounded-lg p-4">
+                        <p className="text-xs text-gray-500 uppercase">Pending commission</p>
+                        <p className="text-2xl font-bold text-amber-700">
+                          {formatCurrency(analyticsData.summary?.totalCommissionPending ?? 0)}
+                        </p>
+                      </div>
+                    </div>
+                    <div>
+                      <h3 className="font-semibold text-gray-900 mb-2">Daily conversions</h3>
+                      {analyticsData.timeSeries?.length ? (
+                        <div className="border rounded-lg overflow-hidden max-h-48 overflow-y-auto">
+                          <table className="w-full text-sm">
+                            <thead className="bg-gray-50">
+                              <tr>
+                                <th className="px-3 py-2 text-left">Date</th>
+                                <th className="px-3 py-2 text-right">Conversions</th>
+                                <th className="px-3 py-2 text-right">Sales</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {analyticsData.timeSeries.map((row: any) => (
+                                <tr key={row.date} className="border-t">
+                                  <td className="px-3 py-2">{row.date}</td>
+                                  <td className="px-3 py-2 text-right">{row.conversions}</td>
+                                  <td className="px-3 py-2 text-right">{formatCurrency(row.sales)}</td>
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
+                        </div>
+                      ) : (
+                        <p className="text-sm text-gray-500">No conversion data yet for this campaign.</p>
+                      )}
+                    </div>
+                    <div>
+                      <h3 className="font-semibold text-gray-900 mb-2">Top products (by revenue)</h3>
+                      {analyticsData.topProducts?.length ? (
+                        <ul className="border rounded-lg divide-y text-sm">
+                          {analyticsData.topProducts.map((p: any) => (
+                            <li key={p.productId} className="px-3 py-2 flex justify-between gap-2">
+                              <span className="truncate">{p.name}</span>
+                              <span className="text-gray-600 whitespace-nowrap">
+                                {formatCurrency(p.revenue)} · {p.units} units
+                              </span>
+                            </li>
+                          ))}
+                        </ul>
+                      ) : (
+                        <p className="text-sm text-gray-500">No product breakdown yet.</p>
+                      )}
+                    </div>
+                  </>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Create Modal */}
         {showCreateModal && (

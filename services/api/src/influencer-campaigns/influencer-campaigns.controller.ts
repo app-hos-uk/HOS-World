@@ -96,6 +96,21 @@ export class InfluencerCampaignsController {
 
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('ADMIN', 'MARKETING')
+  @Get('admin/influencer-campaigns/:id/analytics')
+  @ApiBearerAuth('JWT-auth')
+  @ApiOperation({ summary: 'Campaign performance analytics' })
+  @ApiParam({ name: 'id', description: 'Campaign UUID' })
+  @SwaggerApiResponse({ status: 200, description: 'Analytics retrieved successfully' })
+  async getAnalytics(@Param('id', ParseUUIDPipe) id: string): Promise<ApiResponse<any>> {
+    const data = await this.campaignsService.getAnalytics(id);
+    return {
+      data,
+      message: 'Campaign analytics retrieved successfully',
+    };
+  }
+
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('ADMIN', 'MARKETING')
   @Get('admin/influencer-campaigns/:id')
   @ApiBearerAuth('JWT-auth')
   @ApiOperation({ summary: 'Get campaign by ID' })
@@ -126,6 +141,7 @@ export class InfluencerCampaignsController {
       overrideCommissionRate?: number;
       productIds?: string[];
       categoryIds?: string[];
+      status?: 'DRAFT' | 'ACTIVE' | 'PAUSED' | 'COMPLETED';
     },
   ): Promise<ApiResponse<any>> {
     const campaign = await this.campaignsService.create({
@@ -137,6 +153,7 @@ export class InfluencerCampaignsController {
       overrideCommissionRate: body.overrideCommissionRate,
       productIds: body.productIds,
       categoryIds: body.categoryIds,
+      status: body.status,
     });
     return {
       data: campaign,
@@ -159,7 +176,8 @@ export class InfluencerCampaignsController {
       description?: string;
       startDate?: string;
       endDate?: string;
-      overrideCommissionRate?: number;
+      /** Omit to leave unchanged; send `null` to clear campaign override */
+      overrideCommissionRate?: number | null;
       productIds?: string[];
       categoryIds?: string[];
       status?: string;
@@ -170,7 +188,8 @@ export class InfluencerCampaignsController {
       description: body.description,
       startDate: body.startDate ? new Date(body.startDate) : undefined,
       endDate: body.endDate ? new Date(body.endDate) : undefined,
-      overrideCommissionRate: body.overrideCommissionRate,
+      overrideCommissionRate:
+        body.overrideCommissionRate === undefined ? undefined : body.overrideCommissionRate,
       productIds: body.productIds,
       categoryIds: body.categoryIds,
       status: body.status,
@@ -182,7 +201,7 @@ export class InfluencerCampaignsController {
   }
 
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles('ADMIN')
+  @Roles('ADMIN', 'MARKETING')
   @Delete('admin/influencer-campaigns/:id')
   @ApiBearerAuth('JWT-auth')
   @ApiOperation({ summary: 'Delete campaign' })

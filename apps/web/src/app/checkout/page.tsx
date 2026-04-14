@@ -295,12 +295,25 @@ export default function CheckoutPage() {
     try {
       isSubmittingRef.current = true;
       setCreatingOrder(true);
+      let referralCode: string | undefined;
+      let visitorId: string | undefined;
+      if (typeof window !== 'undefined') {
+        const code = localStorage.getItem('referral_code');
+        const exp = localStorage.getItem('referral_expires');
+        if (code && exp && Date.now() <= parseInt(exp, 10)) {
+          referralCode = code;
+          visitorId = localStorage.getItem('visitor_id') || undefined;
+        }
+      }
+
       const orderResponse = await apiClient.createOrder({
         shippingAddressId,
         billingAddressId: billingAddressId || shippingAddressId,
         shippingMethodId: selectedShippingMethod || undefined,
         shippingCost: shippingCost || undefined,
-      } as any);
+        referralCode,
+        visitorId,
+      });
 
       if (orderResponse?.data) {
         // Refresh cart context to clear the header cart badge (cart is cleared on backend)

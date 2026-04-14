@@ -27,6 +27,7 @@ import {
   UpdateInfluencerCommissionDto,
   CreateProductLinkDto,
 } from './dto/update-influencer.dto';
+import { CreateCommissionRuleDto, UpdateCommissionRuleDto } from './dto/commission-rule.dto';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../common/guards/roles.guard';
 import { Roles } from '../common/decorators/roles.decorator';
@@ -210,6 +211,66 @@ export class InfluencersController {
 
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('ADMIN', 'MARKETING')
+  @Get('admin/influencers/:id/commission-rules')
+  @ApiBearerAuth('JWT-auth')
+  @ApiOperation({ summary: 'List commission rules for an influencer' })
+  @ApiParam({ name: 'id', description: 'Influencer UUID' })
+  @SwaggerApiResponse({ status: 200, description: 'Rules retrieved' })
+  async listCommissionRules(@Param('id', ParseUUIDPipe) id: string): Promise<ApiResponse<any>> {
+    const data = await this.influencersService.listCommissionRules(id);
+    return { data, message: 'Commission rules retrieved successfully' };
+  }
+
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('ADMIN', 'MARKETING')
+  @Post('admin/influencers/:id/commission-rules')
+  @ApiBearerAuth('JWT-auth')
+  @ApiOperation({ summary: 'Create a commission rule (product, category, or brand scope)' })
+  @ApiParam({ name: 'id', description: 'Influencer UUID' })
+  @SwaggerApiResponse({ status: 201, description: 'Rule created' })
+  async createCommissionRule(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() dto: CreateCommissionRuleDto,
+  ): Promise<ApiResponse<any>> {
+    const data = await this.influencersService.createCommissionRule(id, dto);
+    return { data, message: 'Commission rule created successfully' };
+  }
+
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('ADMIN', 'MARKETING')
+  @Put('admin/influencers/:id/commission-rules/:ruleId')
+  @ApiBearerAuth('JWT-auth')
+  @ApiOperation({ summary: 'Update a commission rule' })
+  @ApiParam({ name: 'id', description: 'Influencer UUID' })
+  @ApiParam({ name: 'ruleId', description: 'Rule UUID' })
+  @SwaggerApiResponse({ status: 200, description: 'Rule updated' })
+  async updateCommissionRule(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Param('ruleId', ParseUUIDPipe) ruleId: string,
+    @Body() dto: UpdateCommissionRuleDto,
+  ): Promise<ApiResponse<any>> {
+    const data = await this.influencersService.updateCommissionRule(id, ruleId, dto);
+    return { data, message: 'Commission rule updated successfully' };
+  }
+
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('ADMIN', 'MARKETING')
+  @Delete('admin/influencers/:id/commission-rules/:ruleId')
+  @ApiBearerAuth('JWT-auth')
+  @ApiOperation({ summary: 'Delete a commission rule' })
+  @ApiParam({ name: 'id', description: 'Influencer UUID' })
+  @ApiParam({ name: 'ruleId', description: 'Rule UUID' })
+  @SwaggerApiResponse({ status: 200, description: 'Rule deleted' })
+  async deleteCommissionRule(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Param('ruleId', ParseUUIDPipe) ruleId: string,
+  ): Promise<ApiResponse<any>> {
+    const data = await this.influencersService.deleteCommissionRule(id, ruleId);
+    return { data, message: data.message };
+  }
+
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('ADMIN', 'MARKETING')
   @Get('admin/influencers/:id')
   @ApiBearerAuth('JWT-auth')
   @ApiOperation({
@@ -227,12 +288,12 @@ export class InfluencersController {
   }
 
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles('ADMIN')
+  @Roles('ADMIN', 'MARKETING')
   @Put('admin/influencers/:id')
   @ApiBearerAuth('JWT-auth')
   @ApiOperation({
     summary: 'Update influencer',
-    description: 'Update influencer details. Admin access required.',
+    description: 'Update influencer profile fields, status, and tier. Admin and marketing access.',
   })
   @ApiParam({ name: 'id', description: 'Influencer UUID' })
   @SwaggerApiResponse({ status: 200, description: 'Influencer updated successfully' })
@@ -248,7 +309,7 @@ export class InfluencersController {
   }
 
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles('ADMIN')
+  @Roles('ADMIN', 'MARKETING')
   @Put('admin/influencers/:id/commission')
   @ApiBearerAuth('JWT-auth')
   @ApiOperation({

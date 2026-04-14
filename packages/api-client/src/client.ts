@@ -512,6 +512,10 @@ export class ApiClient {
     shippingAddressId: string;
     billingAddressId?: string;
     paymentMethod?: string;
+    shippingMethodId?: string;
+    shippingCost?: number;
+    referralCode?: string;
+    visitorId?: string;
   }): Promise<ApiResponse<Order>> {
     return this.request<ApiResponse<Order>>('/orders', {
       method: 'POST',
@@ -4007,6 +4011,47 @@ export class ApiClient {
     });
   }
 
+  async getInfluencerCommissionRules(influencerId: string): Promise<ApiResponse<any[]>> {
+    return this.request<ApiResponse<any[]>>(`/admin/influencers/${influencerId}/commission-rules`, {
+      method: 'GET',
+    });
+  }
+
+  async createInfluencerCommissionRule(
+    influencerId: string,
+    data: {
+      productId?: string;
+      categoryId?: string;
+      brandName?: string;
+      commissionRate: number;
+      priority?: number;
+      isActive?: boolean;
+    },
+  ): Promise<ApiResponse<any>> {
+    return this.request<ApiResponse<any>>(`/admin/influencers/${influencerId}/commission-rules`, {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async updateInfluencerCommissionRule(
+    influencerId: string,
+    ruleId: string,
+    data: { commissionRate?: number; priority?: number; isActive?: boolean },
+  ): Promise<ApiResponse<any>> {
+    return this.request<ApiResponse<any>>(
+      `/admin/influencers/${influencerId}/commission-rules/${ruleId}`,
+      { method: 'PUT', body: JSON.stringify(data) },
+    );
+  }
+
+  async deleteInfluencerCommissionRule(influencerId: string, ruleId: string): Promise<ApiResponse<any>> {
+    return this.request<ApiResponse<any>>(
+      `/admin/influencers/${influencerId}/commission-rules/${ruleId}`,
+      { method: 'DELETE' },
+    );
+  }
+
   // Admin Commissions
   async getAdminCommissions(options?: {
     page?: number;
@@ -4100,6 +4145,12 @@ export class ApiClient {
     return this.request<ApiResponse<any>>(`/admin/influencer-campaigns/${id}`);
   }
 
+  async getCampaignAnalytics(id: string): Promise<ApiResponse<any>> {
+    return this.request<ApiResponse<any>>(`/admin/influencer-campaigns/${id}/analytics`, {
+      method: 'GET',
+    });
+  }
+
   async createCampaign(data: {
     influencerId: string;
     name: string;
@@ -4109,6 +4160,7 @@ export class ApiClient {
     overrideCommissionRate?: number;
     productIds?: string[];
     categoryIds?: string[];
+    status?: 'DRAFT' | 'ACTIVE' | 'PAUSED' | 'COMPLETED';
   }): Promise<ApiResponse<any>> {
     return this.request<ApiResponse<any>>('/admin/influencer-campaigns', {
       method: 'POST',
@@ -4325,8 +4377,12 @@ export class ApiClient {
   }
 
   // ===== Marketing: Campaigns =====
-  async getMarketingCampaigns(): Promise<ApiResponse<any>> {
-    return this.request<ApiResponse<any>>('/admin/influencer-campaigns', { method: 'GET' });
+  async getMarketingCampaigns(options?: { limit?: number; status?: string }): Promise<ApiResponse<any>> {
+    const queryParams = new URLSearchParams();
+    if (options?.limit) queryParams.append('limit', options.limit.toString());
+    if (options?.status) queryParams.append('status', options.status);
+    const query = queryParams.toString();
+    return this.request<ApiResponse<any>>(`/admin/influencer-campaigns${query ? `?${query}` : ''}`, { method: 'GET' });
   }
 
   async createMarketingCampaign(data: any): Promise<ApiResponse<any>> {
