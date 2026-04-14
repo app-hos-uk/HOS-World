@@ -158,10 +158,10 @@ export default function AdminSubmissionsPage() {
       underReview: countByStatus(['UNDER_REVIEW']),
       procurementApproved: countByStatus(['PROCUREMENT_APPROVED']),
       procurementRejected: countByStatus(['PROCUREMENT_REJECTED']),
-      catalogCompleted: countByStatus(['CATALOG_PENDING', 'CATALOG_COMPLETED']),
-      marketingCompleted: countByStatus(['MARKETING_PENDING', 'MARKETING_COMPLETED']),
+      catalogCompleted: countByStatus(['CATALOG_COMPLETED']),
+      marketingCompleted: countByStatus(['MARKETING_COMPLETED']),
       contentCompleted: countByStatus(['CONTENT_COMPLETED']),
-      financeApproved: countByStatus(['FINANCE_PENDING', 'FINANCE_APPROVED']),
+      financeApproved: countByStatus(['FINANCE_APPROVED']),
       published: countByStatus(['PUBLISHED']),
       rejected: countByStatus(['REJECTED', 'FC_REJECTED']),
     });
