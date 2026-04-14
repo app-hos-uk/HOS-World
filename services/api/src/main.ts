@@ -206,7 +206,7 @@ async function bootstrap() {
             );
             res.setHeader(
               'Access-Control-Allow-Headers',
-              'Content-Type, Authorization, X-Requested-With, Accept, Origin, X-API-Key, Access-Control-Request-Method, Access-Control-Request-Headers',
+              'Content-Type, Authorization, X-Requested-With, Accept, Origin, X-API-Key, X-Guest-Session, Access-Control-Request-Method, Access-Control-Request-Headers',
             );
             // Only set credentials when origin is specific; wildcard + credentials is invalid per CORS spec
             if (allowedOrigin !== '*') {
@@ -338,6 +338,7 @@ async function bootstrap() {
         'Access-Control-Request-Method',
         'Access-Control-Request-Headers',
         'X-API-Key',
+        'X-Guest-Session',
       ],
       exposedHeaders: ['Authorization', 'Content-Type'],
       preflightContinue: false,
