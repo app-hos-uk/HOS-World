@@ -60,6 +60,13 @@ export default function CheckoutPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [shippingAddressId, cart]);
 
+  /** Promotion-based free shipping overrides quoted carrier rates. */
+  useEffect(() => {
+    if (cart?.promotionFreeShipping) {
+      setShippingCost(0);
+    }
+  }, [cart?.promotionFreeShipping, cart?.id]);
+
   useEffect(() => {
     if (cart && shippingAddressId) {
       calculateTax();
@@ -306,11 +313,12 @@ export default function CheckoutPage() {
         }
       }
 
+      const effectiveShipping = cart.promotionFreeShipping ? 0 : shippingCost;
       const orderResponse = await apiClient.createOrder({
         shippingAddressId,
         billingAddressId: billingAddressId || shippingAddressId,
         shippingMethodId: selectedShippingMethod || undefined,
-        shippingCost: shippingCost || undefined,
+        shippingCost: effectiveShipping || undefined,
         referralCode,
         visitorId,
       });
@@ -377,7 +385,8 @@ export default function CheckoutPage() {
 
   const subtotal = cart.items.reduce((sum: number, item: any) => sum + (item.price * item.quantity), 0);
   const discount = cart.discount || 0;
-  const total = subtotal - discount + shippingCost + taxAmount;
+  const effectiveShippingCost = cart.promotionFreeShipping ? 0 : shippingCost;
+  const total = subtotal - discount + effectiveShippingCost + taxAmount;
 
   return (
     <RouteGuard allowedRoles={['CUSTOMER', 'SELLER', 'B2C_SELLER', 'WHOLESALER', 'ADMIN', 'INFLUENCER']}>
@@ -658,7 +667,7 @@ export default function CheckoutPage() {
 
                 <div className="flex justify-between text-sm">
                   <span className="text-gray-600">Shipping</span>
-                  <span>{shippingCost > 0 ? formatPrice(shippingCost) : 'Free'}</span>
+                  <span>{effectiveShippingCost > 0 ? formatPrice(effectiveShippingCost) : 'Free'}</span>
                 </div>
 
                 <div className="flex justify-between text-sm">

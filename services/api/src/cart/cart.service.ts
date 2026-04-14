@@ -710,8 +710,9 @@ export class CartService {
     let discount = new Decimal(0);
     const shipping = new Decimal(0);
     const cartSubtotal = Number(subtotal);
+    let promotionFreeShipping = false;
 
-    if (this.promotionsService && cart.userId) {
+    if (this.promotionsService && cart.userId && cart.items.length > 0) {
       try {
         const promotionResult = await this.promotionsService.applyPromotionsToCart(
           cartId,
@@ -720,10 +721,12 @@ export class CartService {
             productId: item.productId,
             price: Number(item.price),
             quantity: item.quantity,
+            categoryId: item.product.categoryId,
           })),
           cart.couponCode || undefined,
         );
         discount = new Decimal(promotionResult.discount);
+        promotionFreeShipping = promotionResult.freeShipping;
       } catch (error) {
         // Log error but don't fail cart calculation
         console.error('Error applying promotions:', error);
@@ -745,6 +748,8 @@ export class CartService {
         shipping,
         total,
         currency: cart.items[0]?.product.currency || 'USD',
+        promotionFreeShipping,
+        ...(cart.userId ? { abandonedEmailSentAt: null } : {}),
       },
       include: {
         items: {
@@ -791,6 +796,7 @@ export class CartService {
       discount: cart.discount != null ? Number(cart.discount) : 0,
       couponCode: cart.couponCode || undefined,
       shipping: cart.shipping != null ? Number(cart.shipping) : 0,
+      promotionFreeShipping: cart.promotionFreeShipping === true,
       currency: cart.currency,
       createdAt: cart.createdAt,
       updatedAt: cart.updatedAt,

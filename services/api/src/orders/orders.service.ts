@@ -457,7 +457,16 @@ export class OrdersService {
       await tx.cartItem.deleteMany({ where: { cartId: cart.id } });
       await tx.cart.update({
         where: { id: cart.id },
-        data: { subtotal: 0, tax: 0, total: 0 },
+        data: {
+          subtotal: 0,
+          tax: 0,
+          total: 0,
+          discount: 0,
+          shipping: 0,
+          couponCode: null,
+          promotionFreeShipping: false,
+          abandonedEmailSentAt: null,
+        },
       });
 
       return parentOrder;
@@ -709,22 +718,51 @@ export class OrdersService {
 
     const orderTotal = order.total;
 
-    // Create referral record
-    const expiresAt = new Date();
-    expiresAt.setDate(expiresAt.getDate() + influencer.cookieDuration);
+    // Try to find the existing tracked (unconverted) referral for this visitor+influencer
+    // so we preserve click history, landing page, UTM params, etc.
+    let referral: { id: string } | null = null;
 
-    const referral = await this.prisma.referral.create({
-      data: {
-        influencerId: influencer.id,
-        visitorId,
-        userId,
-        orderId,
-        orderTotal: order.total,
-        convertedAt: new Date(),
-        expiresAt,
-        campaignId: campaignForAttribution?.id,
-      },
-    });
+    if (visitorId) {
+      const existing = await this.prisma.referral.findFirst({
+        where: {
+          influencerId: influencer.id,
+          visitorId,
+          convertedAt: null,
+        },
+        orderBy: { createdAt: 'desc' },
+      });
+
+      if (existing) {
+        referral = await this.prisma.referral.update({
+          where: { id: existing.id },
+          data: {
+            userId,
+            orderId,
+            orderTotal: order.total,
+            convertedAt: new Date(),
+            campaignId: campaignForAttribution?.id ?? existing.campaignId,
+          },
+        });
+      }
+    }
+
+    if (!referral) {
+      const expiresAt = new Date();
+      expiresAt.setDate(expiresAt.getDate() + influencer.cookieDuration);
+
+      referral = await this.prisma.referral.create({
+        data: {
+          influencerId: influencer.id,
+          visitorId,
+          userId,
+          orderId,
+          orderTotal: order.total,
+          convertedAt: new Date(),
+          expiresAt,
+          campaignId: campaignForAttribution?.id,
+        },
+      });
+    }
 
     // Create commission
     await this.prisma.influencerCommission.create({

@@ -17,6 +17,7 @@ const VALID_NOTIFICATION_TYPES = new Set([
   'RETURN_APPROVED',
   'REVIEW_REMINDER',
   'WISHLIST_SALE',
+  'CART_ABANDONED',
   'SUBMISSION_RESUBMITTED',
   'SUBMISSION_APPROVED',
   'SUBMISSION_REJECTED',
@@ -196,6 +197,66 @@ export class NotificationsService implements OnModuleInit {
     });
 
     await this.queueNotification(order.user.email, rendered.subject, rendered.body, notification.id);
+  }
+
+  /**
+   * Abandoned cart recovery — logged-in customers only (scheduler supplies userId + lines).
+   */
+  async sendAbandonedCartEmail(
+    userId: string,
+    lines: { name: string; quantity: number; lineTotal: number }[],
+    currencySymbol = '$',
+  ): Promise<void> {
+    if (!lines.length) {
+      return;
+    }
+
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: { email: true, firstName: true, lastName: true },
+    });
+
+    if (!user?.email) {
+      this.logger.warn(`Abandoned cart email skipped: no email for user ${userId}`);
+      return;
+    }
+
+    const customerName =
+      [user.firstName, user.lastName].filter(Boolean).join(' ') || 'Customer';
+
+    const itemsTable = `<table><thead><tr><th>Product</th><th>Qty</th><th>Line total</th></tr></thead><tbody>${lines
+      .map(
+        (l) =>
+          `<tr><td>${l.name}</td><td>${l.quantity}</td><td>${currencySymbol}${l.lineTotal.toFixed(2)}</td></tr>`,
+      )
+      .join('')}</tbody></table>`;
+
+    const cartTotalNum = lines.reduce((s, l) => s + l.lineTotal, 0);
+    const cartTotal = `${currencySymbol}${cartTotalNum.toFixed(2)}`;
+
+    const baseUrl =
+      this.configService.get<string>('FRONTEND_URL')?.replace(/\/$/, '') || 'http://localhost:3000';
+    const cartLink = `${baseUrl}/cart`;
+
+    const rendered = await this.templatesService.render('abandoned_cart', {
+      customerName,
+      itemsTable,
+      cartTotal,
+      cartLink,
+    });
+
+    const notification = await this.prisma.notification.create({
+      data: {
+        userId,
+        type: 'CART_ABANDONED' as any,
+        subject: rendered.subject,
+        content: 'Reminder: you have items waiting in your cart.',
+        email: user.email,
+        status: 'PENDING' as any,
+      },
+    });
+
+    await this.queueNotification(user.email, rendered.subject, rendered.body, notification.id);
   }
 
   async sendOrderShipped(orderId: string, trackingCode: string, carrier = 'USPS'): Promise<void> {

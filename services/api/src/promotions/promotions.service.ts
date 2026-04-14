@@ -195,8 +195,14 @@ export class PromotionsService {
 
   /**
    * Validate and apply coupon to cart
+   * @param cartItems Optional line items for product/category/min-qty and targeted discount validation
    */
-  async validateCoupon(code: string, userId: string, cartValue: number) {
+  async validateCoupon(
+    code: string,
+    userId: string,
+    cartValue: number,
+    cartItems: CartItemForPromotion[] = [],
+  ) {
     const coupon = await this.prisma.coupon.findUnique({
       where: { code: code.toUpperCase() },
       include: {
@@ -250,41 +256,113 @@ export class PromotionsService {
       throw new BadRequestException('Promotion has expired');
     }
 
-    // Check conditions
-    const conditions = promotion.conditions as PromotionConditions;
-    if (conditions.cartValue) {
-      if (conditions.cartValue.min && cartValue < conditions.cartValue.min) {
-        throw new BadRequestException(`Minimum cart value of ${conditions.cartValue.min} required`);
-      }
-      if (conditions.cartValue.max && cartValue > conditions.cartValue.max) {
-        throw new BadRequestException(`Maximum cart value of ${conditions.cartValue.max} exceeded`);
-      }
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: { customerGroupId: true },
+    });
+
+    if (
+      !this.promotionConditionsMet(
+        promotion as PromotionWithDetails,
+        cartItems,
+        cartValue,
+        user?.customerGroupId ?? null,
+      )
+    ) {
+      throw new BadRequestException('Promotion conditions are not met for this cart');
     }
 
     return {
       coupon,
       promotion,
-      discount: this.calculateDiscount(promotion as PromotionWithDetails, cartValue),
+      discount: this.calculateDiscount(
+        promotion as PromotionWithDetails,
+        cartValue,
+        cartItems,
+      ),
     };
   }
 
   /**
-   * Calculate discount amount based on promotion
+   * Calculate discount amount based on promotion (shipping promos return 0 discount here).
    */
-  private calculateDiscount(promotion: PromotionWithDetails, cartValue: number): Decimal {
+  private calculateDiscount(
+    promotion: PromotionWithDetails,
+    cartValue: number,
+    cartItems: CartItemForPromotion[],
+  ): Decimal {
     const actions = promotion.actions as PromotionActions;
+    const conditions = promotion.conditions as PromotionConditions;
 
     switch (promotion.type) {
-      case PromotionType.PERCENTAGE_DISCOUNT:
+      case PromotionType.PERCENTAGE_DISCOUNT: {
         const percentage = actions.percentage || 0;
         return new Decimal(cartValue).mul(percentage).div(100);
+      }
 
-      case PromotionType.FIXED_DISCOUNT:
+      case PromotionType.FIXED_DISCOUNT: {
         const fixedAmount = actions.fixedAmount || 0;
         return new Decimal(Math.min(fixedAmount, cartValue));
+      }
+
+      case PromotionType.CART_DISCOUNT: {
+        if (actions.percentage != null && actions.percentage > 0) {
+          return new Decimal(cartValue).mul(actions.percentage).div(100);
+        }
+        const fixedAmt = actions.fixedAmount || 0;
+        return new Decimal(Math.min(fixedAmt, cartValue));
+      }
+
+      case PromotionType.PRODUCT_DISCOUNT: {
+        const productIds = conditions.productIds;
+        if (!productIds?.length) {
+          return new Decimal(0);
+        }
+        const eligibleSubtotal = cartItems
+          .filter((i) => productIds.includes(i.productId))
+          .reduce((sum, i) => sum + Number(i.price) * i.quantity, 0);
+        if (eligibleSubtotal <= 0) return new Decimal(0);
+        if (actions.percentage != null && actions.percentage > 0) {
+          return new Decimal(eligibleSubtotal).mul(actions.percentage).div(100);
+        }
+        const fixedAmt = actions.fixedAmount || 0;
+        return new Decimal(Math.min(fixedAmt, eligibleSubtotal));
+      }
+
+      case PromotionType.BUY_X_GET_Y: {
+        const x = actions.buyQuantity ?? 0;
+        const y = actions.getQuantity ?? 0;
+        if (x <= 0 || y <= 0) return new Decimal(0);
+
+        let units: CartItemForPromotion[] = cartItems;
+        if (conditions.productIds?.length) {
+          const set = new Set(conditions.productIds);
+          units = cartItems.filter((i) => set.has(i.productId));
+        }
+
+        const unitPrices: number[] = [];
+        for (const item of units) {
+          const p = Number(item.price);
+          for (let q = 0; q < item.quantity; q++) {
+            unitPrices.push(p);
+          }
+        }
+        if (unitPrices.length < x + y) return new Decimal(0);
+
+        unitPrices.sort((a, b) => a - b);
+        const bundle = x + y;
+        const bundles = Math.floor(unitPrices.length / bundle);
+        const freeSlots = bundles * y;
+        if (freeSlots <= 0) return new Decimal(0);
+
+        let discount = 0;
+        for (let i = 0; i < freeSlots; i++) {
+          discount += unitPrices[i];
+        }
+        return new Decimal(discount);
+      }
 
       case PromotionType.FREE_SHIPPING:
-        // Free shipping is handled separately
         return new Decimal(0);
 
       default:
@@ -292,11 +370,110 @@ export class PromotionsService {
     }
   }
 
+  private promotionConditionsMet(
+    promotion: PromotionWithDetails,
+    cartItems: CartItemForPromotion[],
+    cartSubtotal: number,
+    userCustomerGroupId: string | null,
+  ): boolean {
+    const conditions = promotion.conditions as PromotionConditions;
+
+    if (conditions.cartValue) {
+      if (conditions.cartValue.min && cartSubtotal < conditions.cartValue.min) {
+        return false;
+      }
+      if (conditions.cartValue.max && cartSubtotal > conditions.cartValue.max) {
+        return false;
+      }
+    }
+
+    if (conditions.customerGroupId) {
+      if (userCustomerGroupId !== conditions.customerGroupId) {
+        return false;
+      }
+    }
+
+    if (conditions.productIds && conditions.productIds.length > 0) {
+      const cartProductIds = cartItems.map((item) => item.productId);
+      const hasRequiredProduct = conditions.productIds.some((id: string) =>
+        cartProductIds.includes(id),
+      );
+      if (!hasRequiredProduct) {
+        return false;
+      }
+    }
+
+    if (conditions.categoryIds && conditions.categoryIds.length > 0) {
+      const hasCategory = cartItems.some(
+        (item) => item.categoryId && conditions.categoryIds!.includes(item.categoryId),
+      );
+      if (!hasCategory) {
+        return false;
+      }
+    }
+
+    if (conditions.minQuantity) {
+      const totalQuantity = cartItems.reduce((sum, item) => sum + item.quantity, 0);
+      if (totalQuantity < conditions.minQuantity) {
+        return false;
+      }
+    }
+
+    return true;
+  }
+
+  private canApplyAutomaticPromotion(
+    promotion: PromotionWithDetails,
+    couponPromotionId: string | null,
+    couponBlocksAutomatic: boolean,
+    applied: AppliedPromotion[],
+  ): boolean {
+    if (couponBlocksAutomatic) {
+      return false;
+    }
+    if (couponPromotionId && promotion.id === couponPromotionId) {
+      return false;
+    }
+
+    const hasExclusiveApplied = applied.some((p) => p.isStackable === false);
+
+    if (!promotion.isStackable) {
+      if (applied.length === 0) {
+        return true;
+      }
+      return !hasExclusiveApplied;
+    }
+
+    if (hasExclusiveApplied) {
+      return false;
+    }
+    return true;
+  }
+
+  private buildAppliedPromotionEntry(
+    promotion: PromotionWithDetails,
+    kind: 'coupon' | 'promotion',
+    couponCode: string | undefined,
+    discount: Decimal,
+  ): AppliedPromotion {
+    const grantsFs = promotion.type === PromotionType.FREE_SHIPPING;
+    return {
+      type: kind,
+      id: promotion.id,
+      code: couponCode,
+      name: promotion.name,
+      discount: Number(discount),
+      isStackable: promotion.isStackable,
+      promotionType: promotion.type,
+      grantsFreeShipping: grantsFs,
+    };
+  }
+
   /**
    * Apply promotions to cart
    */
   async applyPromotionsToCart(
-    cartId: string,
+    _cartId: string,
     userId: string,
     cartItems: CartItemForPromotion[],
     couponCode?: string,
@@ -308,98 +485,72 @@ export class PromotionsService {
 
     let totalDiscount = new Decimal(0);
     const appliedPromotions: AppliedPromotion[] = [];
+    let couponPromotionId: string | null = null;
+    let couponBlocksAutomatic = false;
 
-    // Apply coupon if provided
     if (couponCode) {
       try {
-        const couponResult = await this.validateCoupon(couponCode, userId, cartSubtotal);
-        const discount = this.calculateDiscount(
-          couponResult.promotion as PromotionWithDetails,
-          cartSubtotal,
+        const couponResult = await this.validateCoupon(couponCode, userId, cartSubtotal, cartItems);
+        const promotion = couponResult.promotion as PromotionWithDetails;
+        couponPromotionId = promotion.id;
+        couponBlocksAutomatic = !promotion.isStackable;
+
+        const discount = this.calculateDiscount(promotion, cartSubtotal, cartItems);
+        const grantsFs = promotion.type === PromotionType.FREE_SHIPPING;
+        if (!grantsFs) {
+          totalDiscount = totalDiscount.add(discount);
+        }
+        appliedPromotions.push(
+          this.buildAppliedPromotionEntry(promotion, 'coupon', couponCode, discount),
         );
-        totalDiscount = totalDiscount.add(discount);
-        appliedPromotions.push({
-          type: 'coupon',
-          code: couponCode,
-          discount: Number(discount),
-        });
-      } catch (error) {
+      } catch (error: any) {
         this.logger.warn(`Failed to apply coupon ${couponCode}: ${error.message}`);
       }
     }
 
-    // Apply automatic promotions
+    const userForPromotions = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: { customerGroupId: true },
+    });
+    const customerGroupId = userForPromotions?.customerGroupId ?? null;
+
     const promotions = await this.findAll();
     for (const promotion of promotions) {
-      // Skip if already applied via coupon
-      if (couponCode && appliedPromotions.some((p) => p.code === couponCode)) {
+      if (
+        !this.canApplyAutomaticPromotion(
+          promotion as PromotionWithDetails,
+          couponPromotionId,
+          couponBlocksAutomatic,
+          appliedPromotions,
+        )
+      ) {
         continue;
       }
 
-      // Check if promotion applies
-      if (
-        this.promotionApplies(promotion as PromotionWithDetails, cartItems, cartSubtotal, userId)
-      ) {
-        const discount = this.calculateDiscount(promotion as PromotionWithDetails, cartSubtotal);
-        if (discount.gt(0)) {
-          totalDiscount = totalDiscount.add(discount);
-          appliedPromotions.push({
-            type: 'promotion',
-            id: promotion.id,
-            name: promotion.name,
-            discount: Number(discount),
-          });
-        }
+      const promo = promotion as PromotionWithDetails;
+
+      if (!this.promotionConditionsMet(promo, cartItems, cartSubtotal, customerGroupId)) {
+        continue;
       }
+
+      const discount = this.calculateDiscount(promo, cartSubtotal, cartItems);
+      const grantsFs = promo.type === PromotionType.FREE_SHIPPING;
+      if (!grantsFs && !discount.gt(0)) {
+        continue;
+      }
+      if (!grantsFs) {
+        totalDiscount = totalDiscount.add(discount);
+      }
+      appliedPromotions.push(this.buildAppliedPromotionEntry(promo, 'promotion', undefined, discount));
     }
+
+    const freeShipping = appliedPromotions.some((p) => p.grantsFreeShipping);
 
     return {
       discount: Number(totalDiscount),
       appliedPromotions,
+      freeShipping,
     };
-  }
-
-  /**
-   * Check if promotion applies to cart
-   */
-  private promotionApplies(
-    promotion: PromotionWithDetails,
-    cartItems: CartItemForPromotion[],
-    cartSubtotal: number,
-    userId: string,
-  ): boolean {
-    const conditions = promotion.conditions as PromotionConditions;
-
-    // Check cart value
-    if (conditions.cartValue) {
-      if (conditions.cartValue.min && cartSubtotal < conditions.cartValue.min) {
-        return false;
-      }
-      if (conditions.cartValue.max && cartSubtotal > conditions.cartValue.max) {
-        return false;
-      }
-    }
-
-    // Check product IDs
-    if (conditions.productIds && conditions.productIds.length > 0) {
-      const cartProductIds = cartItems.map((item) => item.productId);
-      const hasRequiredProduct = conditions.productIds.some((id: string) =>
-        cartProductIds.includes(id),
-      );
-      if (!hasRequiredProduct) {
-        return false;
-      }
-    }
-
-    // Check minimum quantity
-    if (conditions.minQuantity) {
-      const totalQuantity = cartItems.reduce((sum, item) => sum + item.quantity, 0);
-      if (totalQuantity < conditions.minQuantity) {
-        return false;
-      }
-    }
-
-    return true;
   }
 
   /**
@@ -473,7 +624,14 @@ export class PromotionsService {
       0,
     );
 
-    const result = await this.validateCoupon(couponCode, userId, cartSubtotal);
+    const cartItems: CartItemForPromotion[] = cart.items.map((item) => ({
+      productId: item.productId,
+      price: Number(item.price),
+      quantity: item.quantity,
+      categoryId: item.product.categoryId,
+    }));
+
+    const result = await this.validateCoupon(couponCode, userId, cartSubtotal, cartItems);
 
     // Update cart with coupon
     await this.prisma.cart.update({

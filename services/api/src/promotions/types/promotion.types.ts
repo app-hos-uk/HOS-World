@@ -58,6 +58,8 @@ export interface CartItemForPromotion {
   productId: string;
   price: number;
   quantity: number;
+  /** Set from Product.categoryId when evaluating category-based rules */
+  categoryId?: string | null;
 }
 
 /**
@@ -69,6 +71,10 @@ export interface AppliedPromotion {
   code?: string;
   name?: string;
   discount: number;
+  isStackable?: boolean;
+  promotionType?: PromotionType;
+  /** When true, shipping should be treated as free for this cart/checkout */
+  grantsFreeShipping?: boolean;
 }
 
 /**
@@ -77,4 +83,6 @@ export interface AppliedPromotion {
 export interface PromotionApplicationResult {
   discount: number;
   appliedPromotions: AppliedPromotion[];
+  /** True if any applied coupon/promotion grants free shipping */
+  freeShipping: boolean;
 }

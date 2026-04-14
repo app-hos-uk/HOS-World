@@ -686,6 +686,8 @@ model Cart {
   currency   String     @default("USD")
   couponCode String? // Applied coupon code
   coupon     Coupon?    @relation(fields: [couponCode], references: [code], onDelete: SetNull)
+  abandonedEmailSentAt DateTime? // Last time abandoned-cart recovery email was sent
+  promotionFreeShipping  Boolean   @default(false) // True when an active promotion grants free shipping
   createdAt  DateTime   @default(now())
   updatedAt  DateTime   @updatedAt
   users      User[]
@@ -1069,6 +1071,7 @@ enum NotificationType {
   RETURN_APPROVED
   REVIEW_REMINDER
   WISHLIST_SALE
+  CART_ABANDONED
   // Submission workflow notifications
   SUBMISSION_APPROVED
   SUBMISSION_REJECTED

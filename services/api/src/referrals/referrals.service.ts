@@ -43,6 +43,10 @@ export class ReferralsService {
       });
 
       if (existing && Date.now() - existing.createdAt.getTime() < REFERRAL_DEDUP_WINDOW_MS) {
+        const campaignChanged =
+          dto.campaignId != null &&
+          dto.campaignId !== existing.campaignId;
+
         const updated = await this.prisma.referral.update({
           where: { id: existing.id },
           data: {
@@ -53,6 +57,18 @@ export class ReferralsService {
             expiresAt,
           },
         });
+
+        if (campaignChanged && dto.campaignId) {
+          const camp = await this.prisma.influencerCampaign.findFirst({
+            where: { id: dto.campaignId, influencerId: influencer.id },
+          });
+          if (camp) {
+            await this.prisma.influencerCampaign.update({
+              where: { id: camp.id },
+              data: { totalClicks: { increment: 1 } },
+            });
+          }
+        }
 
         this.logger.debug(
           `Referral deduped for influencer ${influencer.id} visitor ${dto.visitorId} (no click increment)`,

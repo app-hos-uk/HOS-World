@@ -166,12 +166,23 @@ export class PromotionsController {
   @SwaggerApiResponse({ status: 404, description: 'Coupon not found' })
   async validateCoupon(
     @Request() req: any,
-    @Body() body: { code: string; cartValue: number },
+    @Body()
+    body: {
+      code: string;
+      cartValue: number;
+      cartItems?: Array<{
+        productId: string;
+        price: number;
+        quantity: number;
+        categoryId?: string | null;
+      }>;
+    },
   ): Promise<ApiResponse<any>> {
     const result = await this.promotionsService.validateCoupon(
       body.code,
       req.user.id,
       body.cartValue,
+      body.cartItems ?? [],
     );
     return {
       data: result,

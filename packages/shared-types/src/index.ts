@@ -185,6 +185,8 @@ export interface Cart {
   discount?: number;
   couponCode?: string;
   shipping?: number;
+  /** True when a promotion or coupon grants free shipping (checkout should zero shipping). */
+  promotionFreeShipping?: boolean;
   currency: string;
   createdAt: Date;
   updatedAt: Date;

@@ -99,6 +99,38 @@ const BUILT_IN_TEMPLATES: TemplateDefinition[] = [
 </div></body></html>`,
   },
   {
+    slug: 'abandoned_cart',
+    channel: 'EMAIL',
+    subject: 'You left something in your cart',
+    description: 'Sent when a logged-in customer has items in cart but has not checked out for a while.',
+    variables: ['customerName', 'itemsTable', 'cartTotal', 'cartLink'],
+    body: `<!DOCTYPE html>
+<html><head><style>
+  body{font-family:Arial,sans-serif;line-height:1.6;color:#333}
+  .container{max-width:600px;margin:0 auto;padding:20px}
+  .header{background:#553c9a;color:#fff;padding:20px;text-align:center}
+  .content{padding:20px;background:#f7fafc}
+  table{width:100%;border-collapse:collapse;margin:20px 0}
+  th,td{padding:12px;text-align:left;border-bottom:1px solid #ddd}
+  th{background:#e2e8f0}
+  .cta{display:inline-block;padding:12px 24px;background:#553c9a;color:#fff;text-decoration:none;border-radius:6px;margin:16px 0}
+  .total{font-size:18px;font-weight:bold;text-align:right;margin-top:12px}
+  .footer{text-align:center;padding:20px;color:#718096;font-size:12px}
+</style></head><body>
+<div class="container">
+  <div class="header"><h1>Your cart is waiting</h1></div>
+  <div class="content">
+    <h2>Hi {{customerName}},</h2>
+    <p>You still have items saved in your cart. Complete your order whenever you are ready.</p>
+    {{itemsTable}}
+    <div class="total">Cart subtotal: {{cartTotal}}</div>
+    <p><a class="cta" href="{{cartLink}}">Return to cart</a></p>
+    <p style="word-break:break-all;color:#4299e1;">{{cartLink}}</p>
+  </div>
+  <div class="footer"><p>House of Spells Marketplace</p></div>
+</div></body></html>`,
+  },
+  {
     slug: 'seller_invitation',
     channel: 'EMAIL',
     subject: "You've been invited to join House of Spells as a {{sellerTypeName}}",

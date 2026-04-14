@@ -1,5 +1,6 @@
 import { MiddlewareConsumer, Module, NestModule } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
+import { ScheduleModule } from '@nestjs/schedule';
 import { APP_GUARD } from '@nestjs/core';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
@@ -101,6 +102,7 @@ import { CorrelationIdMiddleware } from './common/middleware/correlation-id.midd
       validate: validateEnvironmentVariables,
     }),
     LoggerModule,
+    ScheduleModule.forRoot(),
     DatabaseModule,
     CacheModule,
     RateLimitModule,
