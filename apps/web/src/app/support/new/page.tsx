@@ -202,7 +202,7 @@ export default function SubmitTicketPage() {
                   value={formData.orderId}
                   onChange={(e) => setFormData({ ...formData, orderId: e.target.value })}
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
-                  placeholder="If related to a specific order"
+                  placeholder="Enter order ID or order number (e.g., ORD-20260414-XXXX)"
                 />
               </div>
 

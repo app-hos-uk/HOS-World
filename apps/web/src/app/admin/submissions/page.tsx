@@ -77,6 +77,7 @@ interface Stats {
   submitted: number;
   underReview: number;
   procurementApproved: number;
+  procurementRejected: number;
   catalogCompleted: number;
   marketingCompleted: number;
   contentCompleted: number;
@@ -90,9 +91,15 @@ const STATUSES = [
   { value: 'UNDER_REVIEW', label: 'Under Review', color: 'bg-yellow-100 text-yellow-800', chartColor: '#fbbf24' },
   { value: 'PROCUREMENT_APPROVED', label: 'Procurement Approved', color: 'bg-blue-100 text-blue-800', chartColor: '#3b82f6' },
   { value: 'PROCUREMENT_REJECTED', label: 'Procurement Rejected', color: 'bg-red-100 text-red-800', chartColor: '#ef4444' },
+  { value: 'SHIPPED_TO_FC', label: 'Shipped to FC', color: 'bg-orange-100 text-orange-800', chartColor: '#f97316' },
+  { value: 'FC_ACCEPTED', label: 'FC Accepted', color: 'bg-teal-100 text-teal-800', chartColor: '#14b8a6' },
+  { value: 'FC_REJECTED', label: 'FC Rejected', color: 'bg-red-100 text-red-800', chartColor: '#dc2626' },
+  { value: 'CATALOG_PENDING', label: 'Catalog Pending', color: 'bg-indigo-50 text-indigo-600', chartColor: '#818cf8' },
   { value: 'CATALOG_COMPLETED', label: 'Catalog Completed', color: 'bg-indigo-100 text-indigo-800', chartColor: '#6366f1' },
+  { value: 'MARKETING_PENDING', label: 'Marketing Pending', color: 'bg-purple-50 text-purple-600', chartColor: '#a78bfa' },
   { value: 'MARKETING_COMPLETED', label: 'Marketing Completed', color: 'bg-purple-100 text-purple-800', chartColor: '#8b5cf6' },
   { value: 'CONTENT_COMPLETED', label: 'Content Completed', color: 'bg-green-100 text-green-800', chartColor: '#10b981' },
+  { value: 'FINANCE_PENDING', label: 'Finance Pending', color: 'bg-cyan-50 text-cyan-600', chartColor: '#22d3ee' },
   { value: 'FINANCE_APPROVED', label: 'Finance Approved', color: 'bg-cyan-100 text-cyan-800', chartColor: '#06b6d4' },
   { value: 'PUBLISHED', label: 'Published', color: 'bg-green-100 text-green-800', chartColor: '#10b981' },
   { value: 'REJECTED', label: 'Rejected', color: 'bg-red-100 text-red-800', chartColor: '#ef4444' },
@@ -143,17 +150,20 @@ export default function AdminSubmissionsPage() {
   }, []);
 
   const calculateStats = (submissionList: Submission[]) => {
+    const countByStatus = (statuses: string[]) =>
+      submissionList.filter(s => statuses.includes(s.status)).length;
     setStats({
       total: submissionList.length,
-      submitted: submissionList.filter(s => s.status === 'SUBMITTED').length,
-      underReview: submissionList.filter(s => s.status === 'UNDER_REVIEW').length,
-      procurementApproved: submissionList.filter(s => s.status === 'PROCUREMENT_APPROVED').length,
-      catalogCompleted: submissionList.filter(s => s.status === 'CATALOG_COMPLETED').length,
-      marketingCompleted: submissionList.filter(s => s.status === 'MARKETING_COMPLETED').length,
-      contentCompleted: submissionList.filter(s => s.status === 'CONTENT_COMPLETED').length,
-      financeApproved: submissionList.filter(s => s.status === 'FINANCE_APPROVED').length,
-      published: submissionList.filter(s => s.status === 'PUBLISHED').length,
-      rejected: submissionList.filter(s => s.status === 'REJECTED').length,
+      submitted: countByStatus(['SUBMITTED']),
+      underReview: countByStatus(['UNDER_REVIEW']),
+      procurementApproved: countByStatus(['PROCUREMENT_APPROVED']),
+      procurementRejected: countByStatus(['PROCUREMENT_REJECTED']),
+      catalogCompleted: countByStatus(['CATALOG_PENDING', 'CATALOG_COMPLETED']),
+      marketingCompleted: countByStatus(['MARKETING_PENDING', 'MARKETING_COMPLETED']),
+      contentCompleted: countByStatus(['CONTENT_COMPLETED']),
+      financeApproved: countByStatus(['FINANCE_PENDING', 'FINANCE_APPROVED']),
+      published: countByStatus(['PUBLISHED']),
+      rejected: countByStatus(['REJECTED', 'FC_REJECTED']),
     });
   };
 
@@ -374,6 +384,13 @@ export default function AdminSubmissionsPage() {
               >
                 <p className="text-xs text-gray-500">Procurement</p>
                 <p className="text-xl font-bold text-blue-600">{stats.procurementApproved}</p>
+              </button>
+              <button
+                onClick={() => setStatusFilter('PROCUREMENT_REJECTED')}
+                className={`bg-white rounded-lg shadow p-3 text-left hover:shadow-md ${statusFilter === 'PROCUREMENT_REJECTED' ? 'ring-2 ring-purple-500' : ''}`}
+              >
+                <p className="text-xs text-gray-500">Proc. Rejected</p>
+                <p className="text-xl font-bold text-red-600">{stats.procurementRejected}</p>
               </button>
               <button
                 onClick={() => setStatusFilter('CATALOG_COMPLETED')}

@@ -4283,7 +4283,7 @@ export class ApiClient {
   async addTicketMessage(ticketId: string, message: string): Promise<ApiResponse<any>> {
     return this.request<ApiResponse<any>>(`/support/tickets/${ticketId}/messages`, {
       method: 'POST',
-      body: JSON.stringify({ message }),
+      body: JSON.stringify({ content: message }),
     });
   }
 

@@ -164,6 +164,30 @@ export class TicketsController {
   }
 
   @UseGuards(JwtAuthGuard)
+  @Get('my')
+  @ApiBearerAuth('JWT-auth')
+  @ApiOperation({
+    summary: 'Get my tickets',
+    description: 'Retrieves all support tickets belonging to the currently authenticated user.',
+  })
+  @ApiQuery({ name: 'status', required: false, type: String, description: 'Filter by status' })
+  @SwaggerApiResponse({ status: 200, description: 'Tickets retrieved successfully' })
+  @SwaggerApiResponse({ status: 401, description: 'Unauthorized' })
+  async getMyTickets(
+    @Request() req: any,
+    @Query('status') status?: string,
+  ): Promise<ApiResponse<any>> {
+    const result = await this.ticketsService.getTickets({
+      userId: req.user?.id,
+      status: status as any,
+    });
+    return {
+      data: result,
+      message: 'Tickets retrieved successfully',
+    };
+  }
+
+  @UseGuards(JwtAuthGuard)
   @Get(':id')
   @ApiBearerAuth('JWT-auth')
   @ApiOperation({

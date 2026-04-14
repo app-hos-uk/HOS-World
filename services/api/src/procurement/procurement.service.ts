@@ -22,7 +22,7 @@ export class ProcurementService {
     private notificationsService: NotificationsService,
   ) {}
 
-  async findAll(status?: ProductSubmissionStatus | string, skip = 0, take = 100) {
+  async findAll(status?: ProductSubmissionStatus | string, skip = 0, take = 500) {
     const where: any = {};
 
     // Only filter by status when explicitly provided (for procurement review queue).

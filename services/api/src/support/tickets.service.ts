@@ -75,7 +75,19 @@ export class TicketsService {
     };
     if (data.userId) createData.userId = data.userId;
     if (data.sellerId) createData.sellerId = data.sellerId;
-    if (data.orderId) createData.orderId = data.orderId;
+    if (data.orderId) {
+      const order = await this.prisma.order.findUnique({ where: { id: data.orderId }, select: { id: true } });
+      if (!order) {
+        const orderByNumber = await this.prisma.order.findFirst({ where: { orderNumber: data.orderId }, select: { id: true } });
+        if (orderByNumber) {
+          createData.orderId = orderByNumber.id;
+        } else {
+          throw new BadRequestException(`Order not found: "${data.orderId}". Please use a valid Order ID or Order Number.`);
+        }
+      } else {
+        createData.orderId = data.orderId;
+      }
+    }
 
     const ticket = await this.prisma.supportTicket.create({
       data: createData,
