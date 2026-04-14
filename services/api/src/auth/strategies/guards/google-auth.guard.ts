@@ -1,21 +1,29 @@
-import { Injectable, ExecutionContext } from '@nestjs/common';
+import { Injectable, ExecutionContext, NotImplementedException } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
-import { Reflector } from '@nestjs/core';
 
 @Injectable()
 export class GoogleAuthGuard extends AuthGuard('google') {
-  constructor(private reflector: Reflector) {
-    super();
-  }
-
   canActivate(context: ExecutionContext) {
-    // Check if Google OAuth is configured by checking if strategy exists
-    // If not configured, allow request to pass (OAuth endpoints will return 501)
     try {
-      return super.canActivate(context);
-    } catch (error) {
-      // Strategy not registered - OAuth not configured
-      return true; // Allow request, controller should handle missing OAuth
+      const result = super.canActivate(context);
+      if (result instanceof Promise) {
+        return result.catch((err) => {
+          if (err?.message?.includes('Unknown authentication strategy')) {
+            throw new NotImplementedException(
+              'Google login is not configured. Set GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET.',
+            );
+          }
+          throw err;
+        });
+      }
+      return result;
+    } catch (err: any) {
+      if (err?.message?.includes('Unknown authentication strategy')) {
+        throw new NotImplementedException(
+          'Google login is not configured. Set GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET.',
+        );
+      }
+      throw err;
     }
   }
 }

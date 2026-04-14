@@ -1,14 +1,29 @@
-import { Injectable, ExecutionContext } from '@nestjs/common';
+import { Injectable, ExecutionContext, NotImplementedException } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 
 @Injectable()
 export class FacebookAuthGuard extends AuthGuard('facebook') {
   canActivate(context: ExecutionContext) {
     try {
-      return super.canActivate(context);
-    } catch (error) {
-      // Strategy not registered - OAuth not configured
-      return true; // Allow request, controller should handle missing OAuth
+      const result = super.canActivate(context);
+      if (result instanceof Promise) {
+        return result.catch((err) => {
+          if (err?.message?.includes('Unknown authentication strategy')) {
+            throw new NotImplementedException(
+              'Facebook login is not configured. Set FACEBOOK_APP_ID and FACEBOOK_APP_SECRET.',
+            );
+          }
+          throw err;
+        });
+      }
+      return result;
+    } catch (err: any) {
+      if (err?.message?.includes('Unknown authentication strategy')) {
+        throw new NotImplementedException(
+          'Facebook login is not configured. Set FACEBOOK_APP_ID and FACEBOOK_APP_SECRET.',
+        );
+      }
+      throw err;
     }
   }
 }
