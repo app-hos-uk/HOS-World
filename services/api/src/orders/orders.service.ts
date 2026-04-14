@@ -563,6 +563,29 @@ export class OrdersService {
   }
 
   /**
+   * Whether a commission rule applies to this line item. Rules are stored with exactly one scope
+   * (product, category, or brand). Match is evaluated in isolation so callers can pick the best
+   * rule by iterating rules already ordered by priority (desc).
+   */
+  private commissionRuleMatchesProduct(
+    r: { productId: string | null; categoryId: string | null; brandName: string | null },
+    product: { id: string; categoryId: string | null; brand: string | null },
+  ): boolean {
+    if (r.productId) {
+      return r.productId === product.id;
+    }
+    if (r.categoryId) {
+      return !!(product.categoryId && r.categoryId === product.categoryId);
+    }
+    const bn = r.brandName?.trim();
+    if (bn) {
+      const bl = product.brand?.trim().toLowerCase();
+      return !!bl && bn.toLowerCase() === bl;
+    }
+    return false;
+  }
+
+  /**
    * Process referral conversion - creates commission for influencer
    */
   private async processReferralConversion(
@@ -644,35 +667,13 @@ export class OrdersService {
         const product = item.product;
         let itemRate: Decimal | null = null;
 
+        // Rules are ordered by priority desc, then createdAt asc — first match wins across all scopes
         if (product && rules.length > 0) {
-          const brandLower = product.brand?.trim().toLowerCase();
           for (const r of rules) {
-            if (r.productId && r.productId === product.id) {
+            if (this.commissionRuleMatchesProduct(r, product)) {
               itemRate = new Decimal(r.commissionRate.toString());
               usedRule = true;
               break;
-            }
-          }
-          if (!itemRate) {
-            for (const r of rules) {
-              if (
-                r.brandName?.trim() &&
-                brandLower &&
-                r.brandName.trim().toLowerCase() === brandLower
-              ) {
-                itemRate = new Decimal(r.commissionRate.toString());
-                usedRule = true;
-                break;
-              }
-            }
-          }
-          if (!itemRate) {
-            for (const r of rules) {
-              if (r.categoryId && product.categoryId && r.categoryId === product.categoryId) {
-                itemRate = new Decimal(r.commissionRate.toString());
-                usedRule = true;
-                break;
-              }
             }
           }
         }
