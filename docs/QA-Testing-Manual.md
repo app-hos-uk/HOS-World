@@ -5,7 +5,7 @@
 > **Environment:**
 > - **Web:** https://hos-marketplaceweb-production.up.railway.app
 > - **API:** https://hos-marketplaceapi-production.up.railway.app/api
-> - **API Docs:** https://hos-marketplaceapi-production.up.railway.app/api/docs
+> - **API Docs:** https://hos-marketplaceapi-production.up.railway.app/api/docs-{SWAGGER_DOCS_TOKEN} (set `SWAGGER_DOCS_TOKEN` env var on Railway to enable)
 
 ---
 

@@ -427,17 +427,22 @@ async function bootstrap() {
     const swaggerConfig = configBuilder.build();
     const document = SwaggerModule.createDocument(app, swaggerConfig);
 
-    if (!isProduction) {
-      SwaggerModule.setup('api/docs', app, document, {
+    const swaggerDocsToken = process.env.SWAGGER_DOCS_TOKEN;
+    const swaggerPath = isProduction && swaggerDocsToken
+      ? `api/docs-${swaggerDocsToken}`
+      : 'api/docs';
+
+    if (!isProduction || swaggerDocsToken) {
+      SwaggerModule.setup(swaggerPath, app, document, {
         swaggerOptions: {
           persistAuthorization: true,
           tagsSorter: 'alpha',
           operationsSorter: 'alpha',
         },
       });
-      logger.info('Swagger documentation available at /api/docs', 'Bootstrap');
+      logger.info(`Swagger documentation available at /${swaggerPath}`, 'Bootstrap');
     } else {
-      logger.info('Swagger documentation disabled in production', 'Bootstrap');
+      logger.info('Swagger documentation disabled in production (set SWAGGER_DOCS_TOKEN to enable)', 'Bootstrap');
     }
 
     // Bull Board dashboard for monitoring queues (non-production only)
