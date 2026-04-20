@@ -36,8 +36,9 @@ export default function AdminJourneyEditPage() {
           setStepsJson(JSON.stringify(j.steps, null, 2));
         }
       })
+      .catch((e: unknown) => toast.error(e instanceof Error ? e.message : 'Failed to load journey'))
       .finally(() => setLoading(false));
-  }, [id]);
+  }, [id, toast]);
 
   useEffect(() => {
     load();

@@ -29,8 +29,9 @@ export default function AdminEventDetailPage() {
     apiClient
       .adminGetEvent(id)
       .then((r) => setData(r.data))
+      .catch((e: unknown) => toast.error(e instanceof Error ? e.message : 'Failed to load event'))
       .finally(() => setLoading(false));
-  }, [id]);
+  }, [id, toast]);
 
   useEffect(() => {
     load();

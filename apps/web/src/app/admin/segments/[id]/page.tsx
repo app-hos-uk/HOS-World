@@ -32,16 +32,20 @@ export default function AdminSegmentDetailPage() {
       .catch((e: any) => toast.error(e?.message || 'Failed'));
   }, [id, toast]);
 
-  const loadMembers = useCallback(() => {
-    apiClient
-      .adminGetSegmentMembers(id, { page: memberPage, limit: 20, search: search || undefined })
-      .then((r) => {
-        const d = r.data as { items?: any[]; total?: number };
-        setMembers(d?.items || []);
-        setMemberTotal(d?.total ?? 0);
-      })
-      .catch((e: any) => toast.error(e?.message || 'Failed'));
-  }, [id, memberPage, search, toast]);
+  const loadMembers = useCallback(
+    (pageOverride?: number) => {
+      const page = pageOverride ?? memberPage;
+      apiClient
+        .adminGetSegmentMembers(id, { page, limit: 20, search: search || undefined })
+        .then((r) => {
+          const d = r.data as { items?: any[]; total?: number };
+          setMembers(d?.items || []);
+          setMemberTotal(d?.total ?? 0);
+        })
+        .catch((e: any) => toast.error(e?.message || 'Failed'));
+    },
+    [id, memberPage, search, toast],
+  );
 
   useEffect(() => {
     loadSeg();
@@ -185,7 +189,7 @@ export default function AdminSegmentDetailPage() {
                   className="text-sm text-indigo-600"
                   onClick={() => {
                     setMemberPage(1);
-                    loadMembers();
+                    loadMembers(1);
                   }}
                 >
                   Search

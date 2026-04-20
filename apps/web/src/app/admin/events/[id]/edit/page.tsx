@@ -34,8 +34,9 @@ export default function AdminEventEditPage() {
           setAttendancePoints(ev.attendancePoints ?? 100);
         }
       })
+      .catch((e: unknown) => toast.error(e instanceof Error ? e.message : 'Failed to load event'))
       .finally(() => setLoading(false));
-  }, [id]);
+  }, [id, toast]);
 
   useEffect(() => {
     load();

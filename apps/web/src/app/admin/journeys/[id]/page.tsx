@@ -26,8 +26,9 @@ export default function AdminJourneyDetailPage() {
     apiClient
       .adminGetJourney(id)
       .then((r) => setData(r.data))
+      .catch((e: unknown) => toast.error(e instanceof Error ? e.message : 'Failed to load journey'))
       .finally(() => setLoading(false));
-  }, [id]);
+  }, [id, toast]);
 
   const loadEnrollments = useCallback(() => {
     if (!id) return;
