@@ -9,11 +9,13 @@ import { apiClient } from '@/lib/api';
 export default function AdminMessagingStatsPage() {
   const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
 
   useEffect(() => {
     apiClient
       .adminGetMessagingStats()
       .then((r) => setData(r.data))
+      .catch((e: unknown) => setError(e instanceof Error ? e.message : 'Failed to load stats'))
       .finally(() => setLoading(false));
   }, []);
 
@@ -29,7 +31,9 @@ export default function AdminMessagingStatsPage() {
               Message logs
             </Link>
           </div>
-          {loading ? (
+          {error ? (
+            <p className="text-red-600 text-sm">{error}</p>
+          ) : loading ? (
             <p className="text-gray-500">Loading…</p>
           ) : (
             <>

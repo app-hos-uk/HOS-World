@@ -8,11 +8,15 @@ import { apiClient } from '@/lib/api';
 
 export default function AdminBrandPartnershipsDashboardPage() {
   const [data, setData] = useState<Record<string, unknown> | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
 
   useEffect(() => {
-    apiClient.adminGetBrandPartnershipDashboard().then((r) => {
-      setData((r.data as Record<string, unknown>) || null);
-    });
+    apiClient
+      .adminGetBrandPartnershipDashboard()
+      .then((r) => setData((r.data as Record<string, unknown>) || null))
+      .catch((e: unknown) => setError(e instanceof Error ? e.message : 'Failed to load dashboard'))
+      .finally(() => setLoading(false));
   }, []);
 
   return (
@@ -23,7 +27,11 @@ export default function AdminBrandPartnershipsDashboardPage() {
             ← Partners
           </Link>
           <h1 className="text-2xl font-semibold text-gray-900 mb-6">Brand partnerships</h1>
-          {data ? (
+          {error ? (
+            <p className="text-red-600 text-sm">{error}</p>
+          ) : loading ? (
+            <p className="text-gray-500">Loading…</p>
+          ) : data ? (
             <div className="grid grid-cols-2 md:grid-cols-3 gap-4 text-sm">
               <div className="border rounded-lg p-4 bg-white shadow-sm">
                 <p className="text-gray-500">Partnerships</p>
@@ -52,7 +60,7 @@ export default function AdminBrandPartnershipsDashboardPage() {
               </div>
             </div>
           ) : (
-            <p className="text-gray-500">Loading…</p>
+            <p className="text-gray-500">No data available.</p>
           )}
         </div>
       </AdminLayout>
