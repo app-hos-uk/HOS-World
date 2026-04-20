@@ -1,5 +1,9 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
+import { LoyaltyTxType } from '@prisma/client';
 import { PrismaService } from '../database/prisma.service';
+import { LoyaltyWalletService } from '../loyalty/services/wallet.service';
+import { LoyaltyTierEngine } from '../loyalty/engines/tier.engine';
 
 export interface LeaderboardEntry {
   rank: number;
@@ -21,7 +25,14 @@ export interface LeaderboardResponse {
 
 @Injectable()
 export class GamificationService {
-  constructor(private prisma: PrismaService) {}
+  private readonly logger = new Logger(GamificationService.name);
+
+  constructor(
+    private prisma: PrismaService,
+    private config: ConfigService,
+    private loyaltyWallet: LoyaltyWalletService,
+    private loyaltyTiers: LoyaltyTierEngine,
+  ) {}
 
   /**
    * Get leaderboard with rankings based on user points
@@ -189,7 +200,30 @@ export class GamificationService {
       },
     });
 
-    // Log the activity
+    if (this.config.get<string>('LOYALTY_ENABLED') === 'true' && points > 0) {
+      const membership = await this.prisma.loyaltyMembership.findUnique({
+        where: { userId },
+      });
+      if (membership) {
+        try {
+          await this.prisma.$transaction(async (tx) => {
+            await this.loyaltyWallet.applyDelta(tx, membership.id, points, LoyaltyTxType.EARN, {
+              source: 'GAMIFICATION',
+              channel: 'WEB',
+              description: reason,
+            });
+            await tx.loyaltyMembership.update({
+              where: { id: membership.id },
+              data: { totalPointsEarned: { increment: points } },
+            });
+          });
+          await this.loyaltyTiers.recalculateTier(membership.id);
+        } catch (e) {
+          this.logger.warn(`Gamification→loyalty bridge failed: ${(e as Error).message}`);
+        }
+      }
+    }
+
     await this.prisma.activityLog.create({
       data: {
         user: { connect: { id: userId } },

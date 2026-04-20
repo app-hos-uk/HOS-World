@@ -575,6 +575,11 @@ export class AuthService {
         });
       }
 
+      await this.prisma.user.update({
+        where: { id: user.id },
+        data: { lastLoginAt: new Date() },
+      });
+
       // Remove password and lockout fields from response
       const { password, failedLoginAttempts, lockedUntil, ...userWithoutPassword } = user;
 

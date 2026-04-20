@@ -6,6 +6,7 @@ import {
   Inject,
   Optional,
   Logger,
+  forwardRef,
 } from '@nestjs/common';
 import { PrismaService } from '../database/prisma.service';
 import { PromotionsService } from '../promotions/promotions.service';
@@ -16,6 +17,7 @@ import { AddToCartDto } from './dto/add-to-cart.dto';
 import { UpdateCartItemDto } from './dto/update-cart-item.dto';
 import type { Cart, CartItem, Product } from '@hos-marketplace/shared-types';
 import { Decimal } from '@prisma/client/runtime/library';
+import { LoyaltyService } from '../loyalty/loyalty.service';
 
 // Valid product status values for the shared types Product interface
 type ValidProductStatus = 'draft' | 'active' | 'inactive' | 'out_of_stock';
@@ -56,6 +58,7 @@ export class CartService {
     @Optional() @Inject(PromotionsService) private promotionsService?: PromotionsService,
     @Optional() @Inject(ShippingService) private shippingService?: ShippingService,
     @Optional() @Inject(TaxService) private taxService?: TaxService,
+    @Optional() @Inject(forwardRef(() => LoyaltyService)) private loyaltyService?: LoyaltyService,
   ) {}
 
   async getCart(userId: string): Promise<Cart> {
@@ -286,6 +289,19 @@ export class CartService {
     await this.prisma.cartItem.deleteMany({
       where: { cartId: cart.id },
     });
+
+    if (this.loyaltyService) {
+      await this.loyaltyService.clearCartLoyaltyState(cart.id);
+    } else {
+      await this.prisma.cart.update({
+        where: { id: cart.id },
+        data: {
+          pendingLoyaltyPoints: null,
+          pendingLoyaltyOptionId: null,
+          loyaltyDiscountAmount: new Decimal(0),
+        },
+      });
+    }
 
     return this.recalculateCart(cart.id, { userMutated: true });
   }
@@ -755,6 +771,10 @@ export class CartService {
     // Clamp discount so it cannot exceed subtotal
     discount = Decimal.min(discount, subtotal);
 
+    const loyaltyDiscount = new Decimal(cart.loyaltyDiscountAmount || 0);
+    discount = discount.add(loyaltyDiscount);
+    discount = Decimal.min(discount, subtotal.add(tax).add(shipping));
+
     // Round accumulated tax to 2 decimal places to avoid per-line rounding drift
     tax = new Decimal(tax.toFixed(2));
 
@@ -822,7 +842,48 @@ export class CartService {
       currency: cart.currency,
       createdAt: cart.createdAt,
       updatedAt: cart.updatedAt,
+      pendingLoyaltyPoints: cart.pendingLoyaltyPoints ?? undefined,
+      pendingLoyaltyOptionId: cart.pendingLoyaltyOptionId ?? undefined,
+      loyaltyDiscountAmount:
+        cart.loyaltyDiscountAmount != null ? Number(cart.loyaltyDiscountAmount) : undefined,
     };
+  }
+
+  async applyLoyaltyReward(userId: string, optionId: string): Promise<Cart> {
+    if (!this.loyaltyService) {
+      throw new BadRequestException('Loyalty is not available');
+    }
+    const { points, discount } = await this.loyaltyService.validateCartRedemption(userId, optionId);
+    const cartRow = await this.prisma.cart.findUnique({ where: { userId } });
+    if (!cartRow) throw new NotFoundException('Cart not found');
+
+    await this.prisma.cart.update({
+      where: { id: cartRow.id },
+      data: {
+        pendingLoyaltyPoints: points,
+        pendingLoyaltyOptionId: optionId,
+        loyaltyDiscountAmount: discount,
+      },
+    });
+    return this.recalculateCart(cartRow.id, { userMutated: true });
+  }
+
+  async removeLoyaltyReward(userId: string): Promise<Cart> {
+    const cartRow = await this.prisma.cart.findUnique({ where: { userId } });
+    if (!cartRow) throw new NotFoundException('Cart not found');
+    if (this.loyaltyService) {
+      await this.loyaltyService.clearCartLoyaltyState(cartRow.id);
+    } else {
+      await this.prisma.cart.update({
+        where: { id: cartRow.id },
+        data: {
+          pendingLoyaltyPoints: null,
+          pendingLoyaltyOptionId: null,
+          loyaltyDiscountAmount: new Decimal(0),
+        },
+      });
+    }
+    return this.recalculateCart(cartRow.id, { userMutated: true });
   }
 
   private mapToProductType(product: any): Product {

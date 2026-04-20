@@ -1,7 +1,7 @@
 import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../database/prisma.service';
 
-export type TemplateChannel = 'EMAIL' | 'WHATSAPP' | 'SMS' | 'IN_APP';
+export type TemplateChannel = 'EMAIL' | 'WHATSAPP' | 'SMS' | 'IN_APP' | 'PUSH';
 
 export interface TemplateDefinition {
   slug: string;
@@ -315,6 +315,197 @@ const BUILT_IN_TEMPLATES: TemplateDefinition[] = [
     description: 'In-app notification when a product submission is rejected.',
     variables: ['productName', 'reason'],
     body: `Your product "{{productName}}" was not approved. Reason: {{reason}}`,
+  },
+
+  // ─── Phase 4 — Marketing journeys ─────────────────────────────────────
+  {
+    slug: 'welcome_loyalty',
+    channel: 'EMAIL',
+    subject: 'Welcome to The Enchanted Circle',
+    variables: ['firstName', 'tierName'],
+    body: `<p>Hi {{firstName}}, welcome to The Enchanted Circle! You're starting as {{tierName}}.</p>`,
+  },
+  {
+    slug: 'welcome_explore',
+    channel: 'EMAIL',
+    subject: 'Discover Your First Quest',
+    variables: ['firstName'],
+    body: `<p>Hi {{firstName}}, explore quests and quizzes to earn bonus points this week.</p>`,
+  },
+  {
+    slug: 'welcome_first_purchase',
+    channel: 'EMAIL',
+    subject: 'Your First Enchanted Purchase Awaits',
+    variables: ['firstName'],
+    body: `<p>{{firstName}}, enjoy 10% off your first order with code ENCHANTED10.</p>`,
+  },
+  {
+    slug: 'whatsapp_welcome_quiz',
+    channel: 'WHATSAPP',
+    variables: ['firstName'],
+    body: `Hi {{firstName}}! Take your first fandom quiz in the app and earn points.`,
+  },
+  {
+    slug: 'post_purchase_thankyou',
+    channel: 'EMAIL',
+    subject: 'Thanks for Your Order!',
+    variables: ['orderNumber', 'loyaltyPointsEarned', 'firstName'],
+    body: `<p>Thanks {{firstName}}! Order {{orderNumber}} is confirmed. You earned {{loyaltyPointsEarned}} points.</p>`,
+  },
+  {
+    slug: 'post_purchase_review',
+    channel: 'EMAIL',
+    subject: 'How Was Your Purchase?',
+    variables: ['productName', 'firstName'],
+    body: `<p>Hi {{firstName}}, how was {{productName}}? Leave a review for 25 points.</p>`,
+  },
+  {
+    slug: 'tier_upgrade_congrats',
+    channel: 'EMAIL',
+    subject: 'Congratulations on Your New Tier!',
+    variables: ['newTier', 'oldTier', 'firstName'],
+    body: `<p>{{firstName}}, you've moved from {{oldTier}} to {{newTier}}! Enjoy new perks.</p>`,
+  },
+  {
+    slug: 'tier_upgrade_push',
+    channel: 'PUSH',
+    subject: 'Tier upgrade!',
+    variables: ['newTier'],
+    body: `Congratulations! You're now {{newTier}}.`,
+  },
+  {
+    slug: 'tier_upgrade_benefits',
+    channel: 'EMAIL',
+    subject: 'Your New Tier Benefits',
+    variables: ['newTier', 'firstName'],
+    body: `<p>{{firstName}}, don't miss your {{newTier}} member benefits.</p>`,
+  },
+  {
+    slug: 'birthday_greeting',
+    channel: 'EMAIL',
+    subject: 'Happy Birthday!',
+    variables: ['firstName', 'bonusPoints'],
+    body: `<p>Happy Birthday {{firstName}}! {{bonusPoints}} bonus points are waiting in your wallet.</p>`,
+  },
+  {
+    slug: 'whatsapp_birthday',
+    channel: 'WHATSAPP',
+    variables: ['firstName'],
+    body: `Happy Birthday {{firstName}} from House of Spells!`,
+  },
+  {
+    slug: 'birthday_reminder',
+    channel: 'EMAIL',
+    subject: 'Your Birthday Bonus Expires Soon',
+    variables: ['firstName'],
+    body: `<p>{{firstName}}, redeem your birthday bonus before it expires.</p>`,
+  },
+  {
+    slug: 'abandoned_cart_reminder',
+    channel: 'EMAIL',
+    subject: 'You Left Something Enchanted Behind',
+    variables: ['firstName', 'cartTotal'],
+    body: `<p>{{firstName}}, your cart ({{cartTotal}}) is waiting. Complete checkout anytime.</p>`,
+  },
+  {
+    slug: 'abandoned_cart_incentive',
+    channel: 'EMAIL',
+    subject: 'Complete Your Order for Double Points',
+    variables: ['firstName'],
+    body: `<p>{{firstName}}, finish your order this weekend and earn double points.</p>`,
+  },
+  {
+    slug: 'abandoned_cart_final',
+    channel: 'EMAIL',
+    subject: 'Last Chance — Items May Sell Out',
+    variables: ['firstName'],
+    body: `<p>Last reminder {{firstName}} — your cart items may not stay in stock.</p>`,
+  },
+  {
+    slug: 'winback_miss_you',
+    channel: 'EMAIL',
+    subject: 'We Miss You!',
+    variables: ['firstName'],
+    body: `<p>We miss you {{firstName}}! Here's what's new at House of Spells.</p>`,
+  },
+  {
+    slug: 'winback_incentive',
+    channel: 'EMAIL',
+    subject: 'Come Back for 2x Points',
+    variables: ['firstName'],
+    body: `<p>{{firstName}}, come back this weekend for 2x points on qualifying purchases.</p>`,
+  },
+  {
+    slug: 'winback_final',
+    channel: 'EMAIL',
+    subject: 'Your Points Are Waiting',
+    variables: ['firstName'],
+    body: `<p>{{firstName}}, your Enchanted Circle points are waiting — don't let them expire.</p>`,
+  },
+  {
+    slug: 'points_expiry_30d',
+    channel: 'EMAIL',
+    subject: 'Points Expiring Soon',
+    variables: ['expiringPoints', 'expiryDate'],
+    body: `<p>{{expiringPoints}} points expire on {{expiryDate}}. Use them on your next order.</p>`,
+  },
+  {
+    slug: 'points_expiry_14d',
+    channel: 'EMAIL',
+    subject: '14 Days Left to Use Your Points',
+    variables: ['expiringPoints'],
+    body: `<p>Only 14 days left to use {{expiringPoints}} points.</p>`,
+  },
+  {
+    slug: 'points_expiry_final',
+    channel: 'EMAIL',
+    subject: 'Last 4 Days — Use Your Points Now',
+    variables: ['expiringPoints'],
+    body: `<p>Last call: {{expiringPoints}} points expire in 4 days.</p>`,
+  },
+
+  // ─── Phase 5 — Events & experiences ───────────────────────────────────
+  {
+    slug: 'event_rsvp_confirmation',
+    channel: 'EMAIL',
+    subject: 'Your RSVP is Confirmed!',
+    variables: ['firstName', 'eventTitle', 'ticketCode', 'startsAt', 'unsubscribeUrl'],
+    body: `<p>Hi {{firstName}}, you're confirmed for <strong>{{eventTitle}}</strong>.</p><p>Ticket code: <strong>{{ticketCode}}</strong></p><p>Starts: {{startsAt}}</p><p><a href="{{unsubscribeUrl}}">Unsubscribe</a></p>`,
+  },
+  {
+    slug: 'event_reminder_24h',
+    channel: 'EMAIL',
+    subject: 'Tomorrow: {{eventTitle}}',
+    variables: ['firstName', 'eventTitle', 'startsAt', 'unsubscribeUrl'],
+    body: `<p>Hi {{firstName}}, reminder: {{eventTitle}} is tomorrow ({{startsAt}}).</p><p><a href="{{unsubscribeUrl}}">Unsubscribe</a></p>`,
+  },
+  {
+    slug: 'event_starting_soon',
+    channel: 'PUSH',
+    subject: 'Starting soon',
+    variables: ['eventTitle', 'unsubscribeUrl'],
+    body: `Starting soon: {{eventTitle}}`,
+  },
+  {
+    slug: 'event_thankyou',
+    channel: 'EMAIL',
+    subject: 'Thanks for Attending {{eventTitle}}!',
+    variables: ['firstName', 'eventTitle', 'unsubscribeUrl'],
+    body: `<p>Hi {{firstName}}, thanks for joining {{eventTitle}}!</p><p><a href="{{unsubscribeUrl}}">Unsubscribe</a></p>`,
+  },
+  {
+    slug: 'event_cancelled_notice',
+    channel: 'EMAIL',
+    subject: 'Event Cancelled: {{eventTitle}}',
+    variables: ['firstName', 'eventTitle', 'reason', 'unsubscribeUrl'],
+    body: `<p>Hi {{firstName}}, {{eventTitle}} has been cancelled. {{reason}}</p><p><a href="{{unsubscribeUrl}}">Unsubscribe</a></p>`,
+  },
+  {
+    slug: 'event_waitlist_promoted',
+    channel: 'EMAIL',
+    subject: "You're In! {{eventTitle}}",
+    variables: ['firstName', 'eventTitle', 'ticketCode', 'startsAt', 'unsubscribeUrl'],
+    body: `<p>Great news {{firstName}} — you're confirmed for {{eventTitle}}!</p><p>Ticket: {{ticketCode}}</p><p>{{startsAt}}</p><p><a href="{{unsubscribeUrl}}">Unsubscribe</a></p>`,
   },
 ];
 

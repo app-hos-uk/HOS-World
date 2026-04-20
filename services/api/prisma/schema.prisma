@@ -76,6 +76,7 @@ model User {
   userQuests         UserQuest[]
   collections        Collection[]
   sharedItems        SharedItem[]
+  quizAttempts       FandomQuizAttempt[]
 
   // GDPR Relations
   gdprConsentLogs GDPRConsentLog[]
@@ -116,6 +117,9 @@ model User {
   influencerProfile     Influencer?
   influencerInvitations InfluencerInvitation[] @relation("InfluencerInvitedBy")
 
+  // Enchanted Circle loyalty
+  loyaltyMembership LoyaltyMembership?
+
   // Account Lockout
   failedLoginAttempts Int       @default(0)
   lockedUntil         DateTime?
@@ -126,6 +130,23 @@ model User {
 
   // Newsletter
   newsletterSubscriptions NewsletterSubscription[]
+
+  // Phase 4: marketing automation
+  lastLoginAt           DateTime?
+  journeyEnrollments    JourneyEnrollment[]
+  messageLogs           MessageLog[]
+  pushSubscriptions     PushSubscription[]
+
+  // Phase 5: events & experiences
+  eventRsvps       EventRSVP[]
+  eventAttendances EventAttendance[]
+
+  // Phase 6: segmentation
+  segmentMemberships SegmentMembership[]
+
+  // Phase 7: Ambassador programme
+  ambassadorProfile AmbassadorProfile?
+  ugcSubmissions    UGCSubmission[]
 
   // Soft delete
   deletedAt DateTime?
@@ -189,19 +210,48 @@ model TenantUser {
   @@map("tenant_users")
 }
 
-// Store model - Will be fully implemented in Phase 2
-// Placeholder to resolve Tenant relations
 model Store {
-  id        String   @id @default(uuid())
-  tenantId  String
-  tenant    Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  name      String   @default("Store") // Placeholder, will be expanded in Phase 2
+  id       String @id @default(uuid())
+  tenantId String
+  tenant   Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  sellerId String?
+  seller   Seller? @relation(fields: [sellerId], references: [id], onDelete: Cascade)
+
+  name         String  @default("Store")
+  code         String  @unique
+  storeType    String  @default("STANDARD") // FLAGSHIP, STANDARD, POP_UP, CONCESSION
+  address      String?
+  city         String?
+  state        String?
+  country      String  @default("GB")
+  postalCode   String?
+  latitude     Float?
+  longitude    Float?
+  timezone     String  @default("Europe/London")
+  currency     String  @default("GBP")
+  contactEmail String?
+  contactPhone String?
+  managerName  String?
+  operatingHours Json?
+  isActive     Boolean  @default(true)
+  openedAt     DateTime?
+
+  externalStoreId String?
+
+  configs         Config[]         @relation("StoreConfigs")
+  posConnection   POSConnection?
+  productChannels ProductChannel[]
+  posSales        POSSale[]
+  events          Event[]
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  configs Config[] @relation("StoreConfigs")
-
   @@index([tenantId])
+  @@index([sellerId])
+  @@index([country])
+  @@index([code])
   @@map("stores")
 }
 
@@ -347,6 +397,13 @@ model Seller {
   returnPolicies        ReturnPolicy[]
   vendorLedgerEntries   VendorLedgerEntry[]
 
+  stores           Store[]
+  posConnections   POSConnection[]
+
+  loyaltyEnabled      Boolean  @default(false)
+  loyaltyEarnRate     Decimal? @db.Decimal(5, 4)
+  loyaltyFundingModel String   @default("SELLER_FUNDED") // SELLER_FUNDED or PLATFORM_FUNDED
+
   // Soft delete
   deletedAt DateTime?
 
@@ -464,6 +521,9 @@ model Product {
   influencerLinks           InfluencerProductLink[]
   vendorProducts            VendorProduct[]
   influencerCommissionRules InfluencerCommissionRule[]
+  channels                  ProductChannel[]
+  posSaleItems              POSSaleItem[]
+  ugcSubmissions            UGCSubmission[]
 
   // SEO
   metaTitle       String?
@@ -691,6 +751,11 @@ model Cart {
   coupon     Coupon?    @relation(fields: [couponCode], references: [code], onDelete: SetNull)
   abandonedEmailSentAt DateTime? // Last time abandoned-cart recovery email was sent
   promotionFreeShipping  Boolean   @default(false) // True when an active promotion grants free shipping
+
+  pendingLoyaltyPoints    Int?
+  pendingLoyaltyOptionId  String?
+  loyaltyDiscountAmount   Decimal @default(0) @db.Decimal(10, 2)
+
   createdAt  DateTime   @default(now())
   updatedAt  DateTime   @updatedAt
   users      User[]
@@ -798,6 +863,12 @@ model Order {
   stockReservations    StockReservation[]
   referral             Referral?
   vendorLedgerEntries  VendorLedgerEntry[]
+
+  loyaltyPointsEarned      Int      @default(0)
+  loyaltyPointsRedeemed    Int      @default(0)
+  loyaltyDiscountAmount    Decimal? @db.Decimal(10, 2)
+  loyaltyRedemptionChannel String? // MARKETPLACE_CHECKOUT or HOS_OUTLET_POS
+
   createdAt            DateTime              @default(now())
   updatedAt            DateTime              @updatedAt
 
@@ -1089,6 +1160,14 @@ enum NotificationType {
   FINANCE_APPROVED
   FINANCE_REJECTED
   PRODUCT_PUBLISHED
+  LOYALTY_POINTS_EARNED
+  LOYALTY_TIER_UPGRADE
+  LOYALTY_TIER_DOWNGRADE
+  LOYALTY_POINTS_EXPIRING
+  LOYALTY_REDEMPTION
+  LOYALTY_WELCOME
+  EVENT_INVITATION
+  EVENT_REMINDER
 }
 
 enum NotificationStatus {
@@ -1102,6 +1181,7 @@ enum NotificationStatus {
 enum SellerType {
   WHOLESALER
   B2C_SELLER
+  PLATFORM_RETAIL
 }
 
 enum ProductSubmissionStatus {
@@ -1389,6 +1469,9 @@ model Fandom {
   // Relations
   characters Character[]
   quests     Quest[]
+  quizzes    FandomQuiz[]
+  events     Event[]
+  ugcSubmissions UGCSubmission[]
 
   @@map("fandoms")
 }
@@ -1512,17 +1595,56 @@ model Collection {
 
 // Shared Item model (Phase 6)
 model SharedItem {
-  id        String   @id @default(uuid())
-  userId    String
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  type      String
-  itemId    String
-  content   Json
-  platform  String?
-  views     Int      @default(0)
-  createdAt DateTime @default(now())
+  id                   String   @id @default(uuid())
+  userId               String
+  user                 User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type                 String
+  itemId               String
+  content              Json
+  platform             String?
+  views                Int      @default(0)
+  loyaltyPointsAwarded Int      @default(0)
+  createdAt            DateTime @default(now())
 
   @@map("shared_items")
+}
+
+model FandomQuiz {
+  id           String   @id @default(uuid())
+  fandomId     String
+  fandom       Fandom   @relation(fields: [fandomId], references: [id], onDelete: Restrict)
+  title        String
+  description  String?  @db.Text
+  questions    Json
+  pointsReward Int      @default(25)
+  difficulty   String   @default("EASY")
+  isActive     Boolean  @default(true)
+  startsAt     DateTime?
+  endsAt       DateTime?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  attempts FandomQuizAttempt[]
+
+  @@index([fandomId])
+  @@index([isActive])
+  @@map("fandom_quizzes")
+}
+
+model FandomQuizAttempt {
+  id             String     @id @default(uuid())
+  quizId         String
+  quiz           FandomQuiz @relation(fields: [quizId], references: [id], onDelete: Cascade)
+  userId         String
+  user           User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  score          Int
+  totalQuestions Int
+  pointsAwarded  Int        @default(0)
+  completedAt    DateTime   @default(now())
+
+  @@index([userId])
+  @@index([quizId, userId])
+  @@map("fandom_quiz_attempts")
 }
 
 // Currency Exchange Rate model
@@ -2813,6 +2935,8 @@ model InfluencerCommission {
   // Notes (for manual adjustments)
   notes String? @db.Text
 
+  metadata Json?
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -2886,4 +3010,650 @@ model NewsletterSubscription {
   @@index([status])
   @@index([userId])
   @@map("newsletter_subscriptions")
+}
+
+// === ENCHANTED CIRCLE — Loyalty (Phase 1) ===
+
+model LoyaltyTier {
+  id               String   @id @default(uuid())
+  name             String   @unique
+  slug             String   @unique
+  level            Int      @unique
+  pointsThreshold  Int
+  multiplier       Decimal  @db.Decimal(3, 2)
+  spendWeight      Decimal  @default(0.50) @db.Decimal(3, 2)
+  frequencyWeight  Decimal  @default(0.25) @db.Decimal(3, 2)
+  engagementWeight Decimal  @default(0.25) @db.Decimal(3, 2)
+  benefits         Json
+  icon             String?
+  color            String?
+  inviteOnly       Boolean  @default(false)
+  maxMembers       Int?
+  isActive         Boolean  @default(true)
+  members          LoyaltyMembership[]
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  @@map("loyalty_tiers")
+}
+
+model LoyaltyMembership {
+  id                  String   @id @default(uuid())
+  userId              String   @unique
+  user                User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tierId              String
+  tier                LoyaltyTier @relation(fields: [tierId], references: [id])
+  totalPointsEarned   Int      @default(0)
+  currentBalance      Int      @default(0)
+  totalPointsRedeemed Int      @default(0)
+  compositeScore      Decimal  @default(0) @db.Decimal(10, 2)
+  totalSpend          Decimal  @default(0) @db.Decimal(10, 2)
+  purchaseCount       Int      @default(0)
+  engagementCount     Int      @default(0)
+  tierExpiresAt       DateTime?
+  cardNumber          String?  @unique
+  enrolledAt          DateTime @default(now())
+  enrollmentChannel   String   @default("WEB")
+  preferredCurrency   String   @default("GBP")
+  regionCode          String   @default("GB")
+  fandomProfile       Json?
+  optInEmail          Boolean  @default(true)
+  optInSms            Boolean  @default(false)
+  optInWhatsApp       Boolean  @default(false)
+  optInPush           Boolean  @default(false)
+  birthday            DateTime?
+  lastActivityAt      DateTime?
+  transactions        LoyaltyTransaction[]
+  redemptions         LoyaltyRedemption[]
+  referralsGiven      LoyaltyReferral[] @relation("LoyaltyReferrer")
+  referralsReceived   LoyaltyReferral[] @relation("LoyaltyReferee")
+  ambassadorProfile   AmbassadorProfile?
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+
+  @@index([tierId])
+  @@index([cardNumber])
+  @@index([totalPointsEarned])
+  @@index([compositeScore])
+  @@map("loyalty_memberships")
+}
+
+model LoyaltyTransaction {
+  id            String            @id @default(uuid())
+  membershipId  String
+  membership    LoyaltyMembership @relation(fields: [membershipId], references: [id], onDelete: Cascade)
+  type          LoyaltyTxType
+  points        Int
+  balanceBefore Int
+  balanceAfter  Int
+  source        String
+  sourceId      String?
+  channel       String
+  storeId       String?
+  sellerId      String?
+  description   String?
+  earnRuleId    String?
+  campaignId    String?
+  expiresAt     DateTime?
+  metadata      Json?
+  createdAt     DateTime @default(now())
+
+  @@index([membershipId])
+  @@index([type])
+  @@index([source])
+  @@index([channel])
+  @@index([createdAt])
+  @@index([expiresAt])
+  @@map("loyalty_transactions")
+}
+
+enum LoyaltyTxType {
+  EARN
+  BURN
+  EXPIRE
+  ADJUST
+  BONUS
+  TRANSFER
+}
+
+model LoyaltyEarnRule {
+  id              String    @id @default(uuid())
+  name            String
+  action          String    @unique
+  pointsAmount    Int
+  pointsType      String    @default("FIXED")
+  multiplierStack Boolean   @default(true)
+  maxPerDay       Int?
+  maxPerMonth     Int?
+  maxPerUser      Int?
+  conditions      Json?
+  regionCodes     String[]  @default([])
+  isActive        Boolean   @default(true)
+  startsAt        DateTime?
+  endsAt          DateTime?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  @@map("loyalty_earn_rules")
+}
+
+model LoyaltyRedemptionOption {
+  id           String    @id @default(uuid())
+  name         String
+  type         String
+  pointsCost   Int
+  value        Decimal?  @db.Decimal(10, 2)
+  description  String?   @db.Text
+  image        String?
+  stock        Int?
+  regionCodes  String[]  @default([])
+  channels     String[]  @default([])
+  isActive     Boolean   @default(true)
+  startsAt     DateTime?
+  endsAt       DateTime?
+  redemptions  LoyaltyRedemption[]
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  @@map("loyalty_redemption_options")
+}
+
+model LoyaltyRedemption {
+  id           String                 @id @default(uuid())
+  membershipId String
+  membership   LoyaltyMembership      @relation(fields: [membershipId], references: [id], onDelete: Cascade)
+  optionId     String
+  option       LoyaltyRedemptionOption @relation(fields: [optionId], references: [id])
+  pointsSpent  Int
+  status       String                 @default("COMPLETED")
+  couponCode   String?
+  channel      String
+  storeId      String?
+  orderId      String?
+  metadata     Json?
+  createdAt    DateTime               @default(now())
+
+  @@index([membershipId])
+  @@index([channel])
+  @@map("loyalty_redemptions")
+}
+
+model LoyaltyReferral {
+  id               String             @id @default(uuid())
+  referrerId       String
+  referrer         LoyaltyMembership  @relation("LoyaltyReferrer", fields: [referrerId], references: [id])
+  refereeId        String?
+  referee          LoyaltyMembership? @relation("LoyaltyReferee", fields: [refereeId], references: [id])
+  referralCode     String             @unique
+  status           String             @default("PENDING")
+  referrerPoints   Int                @default(500)
+  refereePoints    Int                @default(200)
+  convertedAt      DateTime?
+  convertedOrderId String?
+  expiresAt        DateTime
+  createdAt        DateTime           @default(now())
+
+  @@index([referralCode])
+  @@map("loyalty_referrals")
+}
+
+// === Phase 7: Ambassador programme ===
+
+model AmbassadorProfile {
+  id                   String   @id @default(uuid())
+  userId               String   @unique
+  user                 User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  membershipId         String   @unique
+  membership           LoyaltyMembership @relation(fields: [membershipId], references: [id], onDelete: Cascade)
+  status               String   @default("ACTIVE")
+  tier                 String   @default("ADVOCATE")
+  referralCode         String   @unique
+  displayName          String?
+  bio                  String?  @db.Text
+  profileImage         String?
+  socialLinks          Json?
+  totalReferralSignups Int      @default(0)
+  totalReferralRevenue Decimal  @default(0) @db.Decimal(10, 2)
+  totalUgcSubmissions  Int      @default(0)
+  totalUgcApproved     Int      @default(0)
+  totalPointsEarnedAsAmb Int    @default(0)
+  commissionAsPoints   Boolean  @default(true)
+  commissionPointsRate Decimal @default(1.5) @db.Decimal(3, 2)
+  unlockedAt           DateTime @default(now())
+  lastActiveAt         DateTime?
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
+
+  ugcSubmissions   UGCSubmission[]
+  achievements     AmbassadorAchievement[]
+
+  @@index([status])
+  @@index([tier])
+  @@index([userId])
+  @@map("ambassador_profiles")
+}
+
+model UGCSubmission {
+  id            String            @id @default(uuid())
+  ambassadorId  String
+  ambassador    AmbassadorProfile @relation(fields: [ambassadorId], references: [id], onDelete: Cascade)
+  userId        String
+  user          User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type          String
+  title         String?
+  description   String?           @db.Text
+  mediaUrls     String[]          @default([])
+  socialUrl     String?
+  platform      String?
+  productId     String?
+  product       Product?          @relation(fields: [productId], references: [id], onDelete: SetNull)
+  fandomId      String?
+  fandom        Fandom?           @relation(fields: [fandomId], references: [id], onDelete: SetNull)
+  status        String            @default("PENDING")
+  pointsAwarded Int               @default(0)
+  reviewedBy    String?
+  reviewedAt    DateTime?
+  reviewNotes   String?           @db.Text
+  featuredAt    DateTime?
+  metadata      Json?
+  createdAt     DateTime          @default(now())
+  updatedAt     DateTime          @updatedAt
+
+  @@index([ambassadorId])
+  @@index([userId])
+  @@index([status])
+  @@index([type])
+  @@index([productId])
+  @@map("ugc_submissions")
+}
+
+model AmbassadorAchievement {
+  id              String            @id @default(uuid())
+  ambassadorId    String
+  ambassador      AmbassadorProfile @relation(fields: [ambassadorId], references: [id], onDelete: Cascade)
+  achievementSlug String
+  name            String
+  description     String?
+  icon            String?
+  pointsAwarded   Int               @default(0)
+  unlockedAt      DateTime          @default(now())
+
+  @@unique([ambassadorId, achievementSlug])
+  @@index([ambassadorId])
+  @@map("ambassador_achievements")
+}
+
+model LoyaltyBonusCampaign {
+  id           String    @id @default(uuid())
+  name         String
+  description  String?   @db.Text
+  type         String
+  multiplier   Decimal?  @db.Decimal(3, 2)
+  bonusPoints  Int?
+  conditions   Json?
+  regionCodes  String[]  @default([])
+  channelCodes String[]  @default([])
+  isActive     Boolean   @default(true)
+  startsAt     DateTime
+  endsAt       DateTime
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  @@index([isActive, startsAt, endsAt])
+  @@map("loyalty_bonus_campaigns")
+}
+
+model ProductChannel {
+  id             String    @id @default(uuid())
+  productId      String
+  product        Product   @relation(fields: [productId], references: [id], onDelete: Cascade)
+  channelType    String
+  storeId        String?
+  store          Store?    @relation(fields: [storeId], references: [id], onDelete: Cascade)
+  currency       String
+  sellingPrice   Decimal   @db.Decimal(10, 2)
+  costPrice      Decimal?  @db.Decimal(10, 2)
+  compareAtPrice Decimal?  @db.Decimal(10, 2)
+  marginPercent  Decimal?  @db.Decimal(5, 4)
+  batchReference String?
+  effectiveFrom  DateTime  @default(now())
+  effectiveUntil DateTime?
+  isActive       Boolean   @default(true)
+  assignedBy     String?
+  notes          String?   @db.Text
+
+  @@unique([productId, channelType, storeId, currency, effectiveFrom])
+  @@index([productId])
+  @@index([channelType])
+  @@index([storeId])
+  @@index([isActive])
+  @@map("product_channels")
+}
+
+model POSConnection {
+  id                 String    @id @default(uuid())
+  sellerId           String
+  seller             Seller    @relation(fields: [sellerId], references: [id], onDelete: Cascade)
+  storeId            String    @unique
+  store              Store     @relation(fields: [storeId], references: [id], onDelete: Cascade)
+  provider           String
+  credentials        String
+  externalOutletId   String?
+  externalRegisterId String?
+  webhookSecret      String?
+  autoSyncProducts   Boolean   @default(true)
+  autoSyncInventory  Boolean   @default(true)
+  syncIntervalMinutes Int      @default(60)
+  isActive           Boolean   @default(true)
+  lastSyncedAt       DateTime?
+  syncStatus         String    @default("NEVER_SYNCED")
+  syncError          String?   @db.Text
+  settings           Json?
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
+
+  @@unique([sellerId, storeId])
+  @@index([provider])
+  @@index([isActive])
+  @@map("pos_connections")
+}
+
+model POSSale {
+  id                    String        @id @default(uuid())
+  storeId               String
+  store                 Store         @relation(fields: [storeId], references: [id], onDelete: Cascade)
+  externalSaleId        String
+  externalInvoice       String?
+  provider              String
+  saleDate              DateTime
+  customerId            String?
+  customerEmail         String?
+  totalAmount           Decimal       @db.Decimal(10, 2)
+  currency              String        @default("GBP")
+  taxAmount             Decimal       @default(0) @db.Decimal(10, 2)
+  discountAmount        Decimal       @default(0) @db.Decimal(10, 2)
+  loyaltyPointsEarned   Int           @default(0)
+  loyaltyPointsRedeemed Int           @default(0)
+  items                 POSSaleItem[]
+  status                String        @default("IMPORTED")
+  rawPayload            Json?
+  importedAt            DateTime      @default(now())
+  processedAt           DateTime?
+
+  @@unique([provider, externalSaleId])
+  @@index([storeId])
+  @@index([customerId])
+  @@index([saleDate])
+  @@map("pos_sales")
+}
+
+model POSSaleItem {
+  id                String   @id @default(uuid())
+  saleId            String
+  sale              POSSale  @relation(fields: [saleId], references: [id], onDelete: Cascade)
+  productId         String?
+  product           Product? @relation(fields: [productId], references: [id], onDelete: SetNull)
+  externalProductId String?
+  sku               String?
+  name              String
+  quantity          Int
+  unitPrice         Decimal  @db.Decimal(10, 2)
+  totalPrice        Decimal  @db.Decimal(10, 2)
+  taxAmount         Decimal  @default(0) @db.Decimal(10, 2)
+
+  @@index([saleId])
+  @@index([productId])
+  @@map("pos_sale_items")
+}
+
+model ExternalEntityMapping {
+  id           String    @id @default(uuid())
+  provider     String
+  entityType   String
+  internalId   String
+  externalId   String
+  storeId      String?
+  metadata     Json?
+  lastSyncedAt DateTime?
+  syncStatus   String    @default("SYNCED")
+  syncError    String?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  @@unique([provider, entityType, internalId, storeId])
+  @@unique([provider, entityType, externalId, storeId])
+  @@index([provider, entityType])
+  @@index([syncStatus])
+  @@map("external_entity_mappings")
+}
+
+// === Phase 4 — Marketing automation ===
+
+model MarketingJourney {
+  id                 String   @id @default(uuid())
+  slug               String   @unique
+  name               String
+  description        String?  @db.Text
+  triggerEvent       String
+  triggerConditions  Json?
+  steps              Json
+  isActive           Boolean  @default(true)
+  regionCodes        String[] @default([])
+  channelCodes       String[] @default([])
+  segmentId          String?
+  segment            AudienceSegment? @relation(fields: [segmentId], references: [id], onDelete: SetNull)
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+
+  enrollments JourneyEnrollment[]
+
+  @@index([triggerEvent])
+  @@index([isActive])
+  @@index([segmentId])
+  @@map("marketing_journeys")
+}
+
+model AudienceSegment {
+  id              String    @id @default(uuid())
+  slug            String    @unique
+  name            String
+  description     String?   @db.Text
+  type            String    @default("DYNAMIC")
+  status          String    @default("ACTIVE")
+  rules           Json
+  memberCount     Int       @default(0)
+  lastEvaluatedAt DateTime?
+  refreshCron     String?
+  isTemplate      Boolean   @default(false)
+  templateSlug    String?   @unique
+  createdBy       String?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  members  SegmentMembership[]
+  journeys MarketingJourney[]
+
+  @@index([status])
+  @@index([type])
+  @@index([isTemplate])
+  @@map("audience_segments")
+}
+
+model SegmentMembership {
+  id        String          @id @default(uuid())
+  segmentId String
+  segment   AudienceSegment @relation(fields: [segmentId], references: [id], onDelete: Cascade)
+  userId    String
+  user      User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  joinedAt  DateTime        @default(now())
+  metadata  Json?
+
+  @@unique([segmentId, userId])
+  @@index([userId])
+  @@index([segmentId])
+  @@map("segment_memberships")
+}
+
+model JourneyEnrollment {
+  id          String   @id @default(uuid())
+  journeyId   String
+  journey     MarketingJourney @relation(fields: [journeyId], references: [id], onDelete: Cascade)
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  currentStep Int      @default(0)
+  status      String   @default("ACTIVE")
+  startedAt   DateTime @default(now())
+  completedAt DateTime?
+  lastStepAt  DateTime?
+  nextStepAt  DateTime?
+  metadata    Json?
+
+  @@unique([journeyId, userId])
+  @@index([userId])
+  @@index([status, nextStepAt])
+  @@map("journey_enrollments")
+}
+
+model MessageLog {
+  id            String    @id @default(uuid())
+  userId        String
+  user          User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  channel       String
+  templateSlug  String?
+  subject       String?
+  status        String    @default("QUEUED")
+  journeyId     String?
+  enrollmentId  String?
+  providerRef   String?
+  error         String?   @db.Text
+  sentAt        DateTime?
+  deliveredAt   DateTime?
+  openedAt      DateTime?
+  clickedAt     DateTime?
+  metadata      Json?
+  createdAt     DateTime  @default(now())
+
+  @@index([userId])
+  @@index([channel, status])
+  @@index([journeyId])
+  @@index([createdAt])
+  @@map("message_logs")
+}
+
+model PushSubscription {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  endpoint  String   @db.Text
+  keys      Json
+  platform  String   @default("WEB")
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId])
+  @@index([isActive])
+  @@map("push_subscriptions")
+}
+
+// === Phase 5 — Event & experience management ===
+
+model Event {
+  id               String    @id @default(uuid())
+  title            String
+  slug             String    @unique
+  description      String?   @db.Text
+  shortDescription String?
+  type             String    @default("IN_STORE")
+  status           String    @default("DRAFT")
+  imageUrl         String?
+  bannerUrl        String?
+
+  storeId      String?
+  store        Store?  @relation(fields: [storeId], references: [id], onDelete: SetNull)
+  venueName    String?
+  venueAddress String?
+
+  virtualUrl      String?
+  virtualPlatform String?
+
+  startsAt    DateTime
+  endsAt      DateTime
+  timezone    String    @default("Europe/London")
+  doorsOpenAt DateTime?
+
+  capacity       Int?
+  isPublic       Boolean  @default(true)
+  minTierLevel   Int      @default(0)
+  allowedTierIds String[] @default([])
+  requiresTicket Boolean  @default(false)
+  ticketPrice    Decimal? @db.Decimal(10, 2)
+  ticketCurrency String   @default("GBP")
+
+  attendancePoints Int     @default(100)
+  earnRuleAction   String?
+
+  fandomId String?
+  fandom   Fandom?  @relation(fields: [fandomId], references: [id], onDelete: SetNull)
+  tags     String[] @default([])
+
+  hostName String?
+  hostBio  String?  @db.Text
+  agenda   Json?
+  metadata Json?
+
+  createdBy String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  rsvps       EventRSVP[]
+  attendances EventAttendance[]
+
+  @@index([storeId])
+  @@index([fandomId])
+  @@index([status])
+  @@index([startsAt])
+  @@index([type])
+  @@index([minTierLevel])
+  @@map("events")
+}
+
+model EventRSVP {
+  id          String    @id @default(uuid())
+  eventId     String
+  event       Event     @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  userId      String
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  status      String    @default("CONFIRMED")
+  guestCount  Int       @default(0)
+  ticketCode  String?   @unique
+  notes       String?
+  rsvpAt      DateTime  @default(now())
+  cancelledAt DateTime?
+  metadata    Json?
+
+  @@unique([eventId, userId])
+  @@index([userId])
+  @@index([status])
+  @@index([ticketCode])
+  @@map("event_rsvps")
+}
+
+model EventAttendance {
+  id            String   @id @default(uuid())
+  eventId       String
+  event         Event    @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  userId        String
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  checkedInAt   DateTime @default(now())
+  checkedInBy   String?
+  method        String   @default("QR_SCAN")
+  pointsAwarded Int      @default(0)
+  transactionId String?
+  metadata      Json?
+
+  @@unique([eventId, userId])
+  @@index([userId])
+  @@index([eventId])
+  @@map("event_attendances")
 }

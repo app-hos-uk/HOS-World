@@ -190,6 +190,10 @@ export interface Cart {
   currency: string;
   createdAt: Date;
   updatedAt: Date;
+  /** Enchanted Circle — pending checkout redemption */
+  pendingLoyaltyPoints?: number;
+  pendingLoyaltyOptionId?: string;
+  loyaltyDiscountAmount?: number;
 }
 
 export interface CartItem {

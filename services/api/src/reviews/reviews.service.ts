@@ -4,8 +4,13 @@ import {
   ConflictException,
   ForbiddenException,
   BadRequestException,
+  Logger,
+  Inject,
+  forwardRef,
 } from '@nestjs/common';
 import { PrismaService } from '../database/prisma.service';
+import { ReviewStatus } from '@prisma/client';
+import { LoyaltyListener } from '../loyalty/listeners/loyalty.listener';
 import { CreateReviewDto } from './dto/create-review.dto';
 import { UpdateReviewDto } from './dto/update-review.dto';
 
@@ -32,7 +37,13 @@ interface Review {
 
 @Injectable()
 export class ReviewsService {
-  constructor(private prisma: PrismaService) {}
+  private readonly logger = new Logger(ReviewsService.name);
+
+  constructor(
+    private prisma: PrismaService,
+    @Inject(forwardRef(() => LoyaltyListener))
+    private loyaltyListener: LoyaltyListener,
+  ) {}
 
   async create(
     userId: string,
@@ -98,6 +109,12 @@ export class ReviewsService {
 
     // Update product rating
     await this.updateProductRating(productId);
+
+    if (review.status === ReviewStatus.APPROVED) {
+      this.loyaltyListener.onReviewSubmitted(userId, review.id).catch((e) => {
+        this.logger.warn(`Loyalty review earn: ${(e as Error).message}`);
+      });
+    }
 
     return this.mapToReviewType(review);
   }

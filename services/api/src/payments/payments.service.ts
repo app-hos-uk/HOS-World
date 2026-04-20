@@ -5,6 +5,8 @@ import {
   ForbiddenException,
   Logger,
   Optional,
+  Inject,
+  forwardRef,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../database/prisma.service';
@@ -14,6 +16,9 @@ import { PaymentProviderService } from './payment-provider.service';
 import { StripeConnectService } from './stripe-connect/stripe-connect.service';
 import { VendorLedgerService } from '../vendor-ledger/vendor-ledger.service';
 import { NotificationsService } from '../notifications/notifications.service';
+import { LoyaltyService } from '../loyalty/loyalty.service';
+import { PosInventorySyncService } from '../pos/sync/inventory-sync.service';
+import { MarketingEventBus } from '../journeys/marketing-event.bus';
 
 @Injectable()
 export class PaymentsService {
@@ -28,6 +33,12 @@ export class PaymentsService {
     @Optional() private stripeConnectService?: StripeConnectService,
     @Optional() private vendorLedgerService?: VendorLedgerService,
     @Optional() private notificationsService?: NotificationsService,
+    @Optional() @Inject(forwardRef(() => LoyaltyService)) private loyaltyService?: LoyaltyService,
+    @Optional()
+    @Inject(forwardRef(() => PosInventorySyncService))
+    private posInventorySync?: PosInventorySyncService,
+    @Optional() @Inject(forwardRef(() => MarketingEventBus))
+    private marketingBus?: MarketingEventBus,
   ) {
     this.logger.log('PaymentsService initialized with payment provider framework');
   }
@@ -342,6 +353,61 @@ export class PaymentsService {
         this.logger.warn(`Failed to send order confirmation for ${order.id}: ${err?.message}`);
       }
     }
+
+    if (this.loyaltyService && this.configService.get<string>('LOYALTY_ENABLED') === 'true') {
+      try {
+        const rootOrderId = order.parentOrderId || order.id;
+        await this.loyaltyService.processOrderComplete(rootOrderId);
+      } catch (err: any) {
+        this.logger.warn(`Loyalty earn failed after payment for ${order.id}: ${err?.message ?? err}`);
+      }
+    }
+
+    try {
+      await this.markAbandonedCartRecovery(order.userId);
+    } catch (e: any) {
+      this.logger.warn(`Abandoned cart recovery failed for ${order.id}: ${e?.message ?? e}`);
+    }
+
+    if (this.marketingBus) {
+      try {
+        const rootId = order.parentOrderId || order.id;
+        const enriched = await this.prisma.order.findUnique({
+          where: { id: order.id },
+          include: {
+            items: { include: { product: true }, take: 1 },
+          },
+        });
+        const lt = await this.prisma.loyaltyTransaction.findFirst({
+          where: {
+            membership: { userId: order.userId },
+            source: 'PURCHASE',
+            sourceId: rootId,
+          },
+          orderBy: { createdAt: 'desc' },
+        });
+        void this.marketingBus
+          .emit('ORDER_PAID', order.userId, {
+            orderId: rootId,
+            orderNumber: enriched?.orderNumber ?? order.orderNumber,
+            totalAmount: String(enriched?.total ?? order.total),
+            loyaltyPointsEarned: lt?.points ?? 0,
+            productName: enriched?.items?.[0]?.product?.name ?? 'your purchase',
+          })
+          .catch(() => {});
+      } catch (e: any) {
+        this.logger.warn(`Marketing ORDER_PAID hook failed: ${e?.message ?? e}`);
+      }
+    }
+
+    if (this.posInventorySync && this.configService.get<string>('POS_ENABLED') === 'true') {
+      try {
+        const rootOrderId = order.parentOrderId || order.id;
+        await this.posInventorySync.syncOnlineOrderToPos(rootOrderId);
+      } catch (err: any) {
+        this.logger.warn(`POS inventory sync after payment failed for ${order.id}: ${err?.message ?? err}`);
+      }
+    }
   }
 
   async handleWebhook(
@@ -423,6 +489,23 @@ export class PaymentsService {
     });
 
     this.logger.log(`Payment failed for order ${order.id} via webhook`);
+  }
+
+  private async markAbandonedCartRecovery(userId: string): Promise<void> {
+    const journey = await this.prisma.marketingJourney.findUnique({
+      where: { slug: 'abandoned-cart' },
+    });
+    if (!journey) return;
+    const rows = await this.prisma.journeyEnrollment.findMany({
+      where: { userId, journeyId: journey.id, status: 'ACTIVE' },
+    });
+    for (const e of rows) {
+      const meta = { ...((e.metadata as object) || {}), cartRecovered: true };
+      await this.prisma.journeyEnrollment.update({
+        where: { id: e.id },
+        data: { metadata: meta as object },
+      });
+    }
   }
 
   /**

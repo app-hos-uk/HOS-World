@@ -24,6 +24,7 @@ import { CartService } from './cart.service';
 import { AddToCartDto } from './dto/add-to-cart.dto';
 import { UpdateCartItemDto } from './dto/update-cart-item.dto';
 import { MergeGuestCartDto } from './dto/merge-guest-cart.dto';
+import { ApplyCartLoyaltyDto } from '../loyalty/dto/apply-cart-loyalty.dto';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import type { ApiResponse, Cart } from '@hos-marketplace/shared-types';
 
@@ -128,6 +129,26 @@ export class CartController {
       data: cart,
       message: 'Cart cleared successfully',
     };
+  }
+
+  @Post('loyalty')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Apply loyalty reward to cart (checkout discount)' })
+  @ApiBody({ type: ApplyCartLoyaltyDto })
+  async applyLoyalty(
+    @Request() req: any,
+    @Body() body: ApplyCartLoyaltyDto,
+  ): Promise<ApiResponse<Cart>> {
+    const cart = await this.cartService.applyLoyaltyReward(req.user.id, body.optionId);
+    return { data: cart, message: 'Loyalty reward applied' };
+  }
+
+  @Delete('loyalty')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Remove loyalty reward from cart' })
+  async removeLoyalty(@Request() req: any): Promise<ApiResponse<Cart>> {
+    const cart = await this.cartService.removeLoyaltyReward(req.user.id);
+    return { data: cart, message: 'Loyalty reward removed' };
   }
 
   @Post('merge-guest')

@@ -1,4 +1,6 @@
-import { Module } from '@nestjs/common';
+import { Module, forwardRef } from '@nestjs/common';
+import { LoyaltyModule } from '../loyalty/loyalty.module';
+import { AmbassadorModule } from '../ambassador/ambassador.module';
 import { ConfigModule } from '@nestjs/config';
 import { OrdersController } from './orders.controller';
 import { OrdersService } from './orders.service';
@@ -18,6 +20,8 @@ import { PromotionsModule } from '../promotions/promotions.module';
     PaymentProviderModule,
     ShippingModule,
     PromotionsModule,
+    forwardRef(() => LoyaltyModule),
+    forwardRef(() => AmbassadorModule),
   ],
   controllers: [OrdersController],
   providers: [OrdersService],

@@ -1,14 +1,16 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
-import { useRouter } from 'next/navigation';
+import { useState, useEffect, useRef, Suspense } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { apiClient, markLoginSuccess, mergeGuestCartAfterAuth } from '@/lib/api';
+import { stashReferralFromQuery } from '@/lib/referralAttribution';
 import { CharacterSelector } from '@/components/CharacterSelector';
 import { FandomQuiz } from '@/components/FandomQuiz';
 import { getPublicApiBaseUrl } from '@/lib/apiBaseUrl';
 
-export default function LoginPage() {
+function LoginPageInner() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [step, setStep] = useState<'login' | 'character' | 'quiz' | 'forgot-password'>('login');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -52,6 +54,17 @@ export default function LoginPage() {
   useEffect(() => {
     setIsMounted(true);
   }, []);
+
+  // Referral landing → /register?ref= → /login?register=1&ref= ; persist for loyalty enroll
+  useEffect(() => {
+    if (!isMounted) return;
+    const refParam = searchParams.get('ref');
+    if (refParam) stashReferralFromQuery(refParam);
+    const wantRegister = searchParams.get('register');
+    if (wantRegister === '1' || wantRegister === 'true') {
+      setIsLogin(false);
+    }
+  }, [isMounted, searchParams]);
 
   // Detect country on mount (for registration)
   useEffect(() => {
@@ -928,3 +941,16 @@ export default function LoginPage() {
   );
 }
 
+export default function LoginPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-screen flex items-center justify-center bg-gray-50 text-gray-600 text-sm">
+          Loading…
+        </div>
+      }
+    >
+      <LoginPageInner />
+    </Suspense>
+  );
+}

@@ -30,6 +30,14 @@ const VALID_NOTIFICATION_TYPES = new Set([
   'PRODUCT_APPROVED',
   'PRODUCT_REJECTED',
   'PRODUCT_PUBLISHED',
+  'LOYALTY_POINTS_EARNED',
+  'LOYALTY_TIER_UPGRADE',
+  'LOYALTY_TIER_DOWNGRADE',
+  'LOYALTY_POINTS_EXPIRING',
+  'LOYALTY_REDEMPTION',
+  'LOYALTY_WELCOME',
+  'EVENT_INVITATION',
+  'EVENT_REMINDER',
   'SETTLEMENT_COMPLETED',
   'SYSTEM',
   'GENERAL',
@@ -151,12 +159,17 @@ export class NotificationsService implements OnModuleInit {
   async sendSellerInvitation(
     email: string,
     data: {
-      sellerType: 'WHOLESALER' | 'B2C_SELLER';
+      sellerType: 'WHOLESALER' | 'B2C_SELLER' | 'PLATFORM_RETAIL';
       invitationLink: string;
       message?: string;
     },
   ): Promise<void> {
-    const sellerTypeName = data.sellerType === 'WHOLESALER' ? 'Wholesaler' : 'B2C Seller';
+    const sellerTypeName =
+      data.sellerType === 'WHOLESALER'
+        ? 'Wholesaler'
+        : data.sellerType === 'PLATFORM_RETAIL'
+          ? 'Platform Retail'
+          : 'B2C Seller';
 
     const rendered = await this.templatesService.render('seller_invitation', {
       sellerTypeName,

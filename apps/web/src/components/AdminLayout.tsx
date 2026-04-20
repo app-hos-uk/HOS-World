@@ -84,6 +84,40 @@ const menuItems: MenuItem[] = [
     href: '/admin/promotions',
   },
   {
+    title: 'Marketing automation',
+    icon: '✨',
+    children: [
+      { title: 'Journeys', href: '/admin/journeys', icon: '🗺️' },
+      { title: 'Message logs', href: '/admin/messaging', icon: '📨' },
+      { title: 'Messaging stats', href: '/admin/messaging/stats', icon: '📈' },
+    ],
+  },
+  {
+    title: 'Events',
+    icon: '🎪',
+    children: [
+      { title: 'All events', href: '/admin/events', icon: '📅' },
+      { title: 'Create event', href: '/admin/events/new', icon: '➕' },
+    ],
+  },
+  {
+    title: 'Audiences',
+    icon: '🎯',
+    children: [
+      { title: 'Segments', href: '/admin/segments', icon: '👥' },
+      { title: 'Create segment', href: '/admin/segments/new', icon: '➕' },
+    ],
+  },
+  {
+    title: 'Ambassadors',
+    icon: '🌟',
+    children: [
+      { title: 'All ambassadors', href: '/admin/ambassadors', icon: '👑' },
+      { title: 'UGC review', href: '/admin/ambassadors/ugc', icon: '📸' },
+      { title: 'Dashboard', href: '/admin/ambassadors/dashboard', icon: '📊' },
+    ],
+  },
+  {
     title: 'Support',
     icon: '🎧',
     children: [
@@ -96,6 +130,8 @@ const menuItems: MenuItem[] = [
     children: [
       { title: 'Activity Logs', href: '/admin/activity', icon: '📝' },
       { title: 'Discrepancies', href: '/admin/discrepancies', icon: '⚠️' },
+      { title: 'POS Integration', href: '/admin/pos', icon: '🏪' },
+      { title: 'Fandom Quizzes', href: '/admin/quiz', icon: '🧙' },
       { title: 'Privacy Audit Log', href: '/admin/privacy-audit', icon: '🔒' },
       { title: 'Notification Templates', href: '/admin/templates', icon: '📋' },
       { title: 'WhatsApp', href: '/admin/whatsapp', icon: '💬' },
