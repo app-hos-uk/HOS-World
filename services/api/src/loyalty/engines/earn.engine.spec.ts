@@ -1,6 +1,11 @@
 import { LoyaltyEarnEngine } from './earn.engine';
 import { Decimal } from '@prisma/client/runtime/library';
 
+const mockBrandPartnerships = {
+  applyBrandOrderBoostInTx: jest.fn().mockResolvedValue({ brandPoints: 0 }),
+  reconcileAfterOrder: jest.fn(),
+};
+
 describe('LoyaltyEarnEngine', () => {
   describe('processOrderComplete', () => {
     it('skips when loyalty is disabled', async () => {
@@ -13,6 +18,7 @@ describe('LoyaltyEarnEngine', () => {
         null as any,
         null as any,
         null as any,
+        mockBrandPartnerships as any,
       );
       await engine.processOrderComplete('order-1');
       expect(mockConfig.get).toHaveBeenCalledWith('LOYALTY_ENABLED');
@@ -49,6 +55,7 @@ describe('LoyaltyEarnEngine', () => {
         null as any,
         null as any,
         null as any,
+        mockBrandPartnerships as any,
       );
       await engine.processOrderComplete('order-1');
       expect(mockPrisma.loyaltyMembership.findUnique).toHaveBeenCalled();
@@ -85,6 +92,7 @@ describe('LoyaltyEarnEngine', () => {
         null as any,
         null as any,
         null as any,
+        mockBrandPartnerships as any,
       );
       await engine.processOrderComplete('order-1');
       expect(mockPrisma.loyaltyMembership.findUnique).not.toHaveBeenCalled();

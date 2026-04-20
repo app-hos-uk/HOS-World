@@ -206,7 +206,13 @@ export class SegmentationService {
       where,
       select: {
         id: true,
-        _count: { select: { eventAttendances: true, quizAttempts: true } },
+        _count: {
+          select: {
+            eventAttendances: true,
+            quizAttempts: true,
+            brandCampaignRedemptions: true,
+          },
+        },
       },
     });
     if (!countRules.length) {
@@ -219,6 +225,7 @@ export class SegmentationService {
             {
               eventAttendances: r._count.eventAttendances,
               quizAttempts: r._count.quizAttempts,
+              brandRedemptions: r._count.brandCampaignRedemptions,
             },
             cr,
           ),
@@ -303,7 +310,13 @@ export class SegmentationService {
             where,
             select: {
               id: true,
-              _count: { select: { eventAttendances: true, quizAttempts: true } },
+              _count: {
+                select: {
+                  eventAttendances: true,
+                  quizAttempts: true,
+                  brandCampaignRedemptions: true,
+                },
+              },
             },
           })
         ).filter((r) =>
@@ -312,6 +325,7 @@ export class SegmentationService {
               {
                 eventAttendances: r._count.eventAttendances,
                 quizAttempts: r._count.quizAttempts,
+                brandRedemptions: r._count.brandCampaignRedemptions,
               },
               cr,
             ),
@@ -328,7 +342,13 @@ export class SegmentationService {
         email: true,
         firstName: true,
         country: true,
-        _count: { select: { eventAttendances: true, quizAttempts: true } },
+        _count: {
+          select: {
+            eventAttendances: true,
+            quizAttempts: true,
+            brandCampaignRedemptions: true,
+          },
+        },
         loyaltyMembership: { select: { tier: { select: { name: true } } } },
       },
     });
@@ -339,6 +359,7 @@ export class SegmentationService {
               {
                 eventAttendances: r._count.eventAttendances,
                 quizAttempts: r._count.quizAttempts,
+                brandRedemptions: r._count.brandCampaignRedemptions,
               },
               cr,
             ),
@@ -453,6 +474,7 @@ export class SegmentationService {
       'comms.': 'Communication',
       'events.': 'Events',
       'quiz.': 'Quiz',
+      'brand.': 'Brand partnerships',
     };
     const dims = [
       'tier.slug',
@@ -482,6 +504,13 @@ export class SegmentationService {
       'events.attendanceCount',
       'events.hasAttended',
       'quiz.completedCount',
+      'ambassador.status',
+      'ambassador.tier',
+      'ambassador.referralSignups',
+      'ambassador.ugcApproved',
+      'ambassador.isAmbassador',
+      'brand.activeCampaignCount',
+      'brand.hasRedeemed',
     ];
     return dims.map((dimension) => {
       const prefix = Object.keys(categories).find((k) => dimension.startsWith(k)) || '';

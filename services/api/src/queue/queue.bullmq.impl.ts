@@ -34,6 +34,9 @@ export enum JobType {
   SEGMENT_REFRESH_ALL = 'segmentation:refresh-all',
   AMBASSADOR_TIER_REVIEW = 'ambassador:tier-review',
   AMBASSADOR_ACHIEVEMENT_CHECK = 'ambassador:achievement-check',
+  BRAND_CAMPAIGN_ACTIVATE = 'brand:campaign-activate',
+  BRAND_CAMPAIGN_EXPIRE = 'brand:campaign-expire',
+  BRAND_CAMPAIGN_REPORT = 'brand:campaign-report',
 }
 
 export interface JobOptions {

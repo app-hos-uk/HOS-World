@@ -56,7 +56,8 @@ export function RuleBuilder({
           if (!cur.groups) cur.groups = [];
           cur.groups[idx] = next;
         } else {
-          cur = cur.groups![idx];
+          if (!cur.groups?.[idx]) return;
+          cur = cur.groups[idx];
         }
       }
       onChange(clone);

@@ -67,6 +67,8 @@ export const SEGMENT_DIMENSIONS: Record<
   'ambassador.referralSignups': { operators: ['gt', 'gte', 'lt', 'lte', 'between'] },
   'ambassador.ugcApproved': { operators: ['gt', 'gte', 'lt', 'lte', 'between'] },
   'ambassador.isAmbassador': { operators: ['eq'] },
+  'brand.activeCampaignCount': { operators: ['gt', 'gte', 'lt', 'lte', 'eq'] },
+  'brand.hasRedeemed': { operators: ['eq'] },
 };
 
 function subDays(days: number): Date {
@@ -163,13 +165,18 @@ function applyArrayFavoritesOp(
 
 export type CountRule =
   | { dimension: 'events.attendanceCount'; operator: RuleOperator; value: number }
-  | { dimension: 'quiz.completedCount'; operator: RuleOperator; value: number };
+  | { dimension: 'quiz.completedCount'; operator: RuleOperator; value: number }
+  | { dimension: 'brand.activeCampaignCount'; operator: RuleOperator; value: number };
 
 /** Pulls relation-count rules (not expressible as Prisma UserWhereInput in v6) for post-filtering. */
 export function extractCountRules(group: SegmentRuleGroup): CountRule[] {
   const out: CountRule[] = [];
   for (const r of group.rules) {
-    if (r.dimension === 'events.attendanceCount' || r.dimension === 'quiz.completedCount') {
+    if (
+      r.dimension === 'events.attendanceCount' ||
+      r.dimension === 'quiz.completedCount' ||
+      r.dimension === 'brand.activeCampaignCount'
+    ) {
       out.push({
         dimension: r.dimension,
         operator: r.operator,
@@ -186,7 +193,10 @@ export function extractCountRules(group: SegmentRuleGroup): CountRule[] {
 /** Removes count dimensions so the remainder can be translated to Prisma. */
 export function stripCountRulesFromGroup(group: SegmentRuleGroup): SegmentRuleGroup {
   const rules = group.rules.filter(
-    (r) => r.dimension !== 'events.attendanceCount' && r.dimension !== 'quiz.completedCount',
+    (r) =>
+      r.dimension !== 'events.attendanceCount' &&
+      r.dimension !== 'quiz.completedCount' &&
+      r.dimension !== 'brand.activeCampaignCount',
   );
   const groups = (group.groups ?? []).map(stripCountRulesFromGroup).filter(nonEmptyGroup);
   return { operator: group.operator, rules, groups: groups.length ? groups : undefined };
@@ -197,11 +207,15 @@ function nonEmptyGroup(g: SegmentRuleGroup): boolean {
 }
 
 export function countRuleMatches(
-  counts: { eventAttendances: number; quizAttempts: number },
+  counts: { eventAttendances: number; quizAttempts: number; brandRedemptions: number },
   rule: CountRule,
 ): boolean {
   const n =
-    rule.dimension === 'events.attendanceCount' ? counts.eventAttendances : counts.quizAttempts;
+    rule.dimension === 'events.attendanceCount'
+      ? counts.eventAttendances
+      : rule.dimension === 'quiz.completedCount'
+        ? counts.quizAttempts
+        : counts.brandRedemptions;
   const v = rule.value;
   switch (rule.operator) {
     case 'eq':
@@ -374,6 +388,7 @@ function dimensionToWhere(rule: SegmentRule): Prisma.UserWhereInput {
       return { loyaltyMembership: { optInPush: Boolean(value) } };
     case 'events.attendanceCount':
     case 'quiz.completedCount':
+    case 'brand.activeCampaignCount':
       throw new BadRequestException(
         `${dimension} is handled via post-filter — use stripCountRulesFromGroup + extractCountRules`,
       );
@@ -412,6 +427,13 @@ function dimensionToWhere(rule: SegmentRule): Prisma.UserWhereInput {
       return Boolean(value)
         ? { ambassadorProfile: { isNot: null } }
         : { ambassadorProfile: { is: null } };
+    case 'brand.hasRedeemed':
+      if (operator !== 'eq') {
+        throw new BadRequestException('brand.hasRedeemed supports eq only');
+      }
+      return Boolean(value)
+        ? { brandCampaignRedemptions: { some: {} } }
+        : { brandCampaignRedemptions: { none: {} } };
     default:
       throw new BadRequestException(`Unknown segment dimension: ${dimension}`);
   }
@@ -456,7 +478,12 @@ export function buildSegmentUserWhere(rules: SegmentRuleGroup): Prisma.UserWhere
 
 function groupContainsCountRule(group: SegmentRuleGroup): boolean {
   for (const r of group.rules) {
-    if (r.dimension === 'events.attendanceCount' || r.dimension === 'quiz.completedCount') return true;
+    if (
+      r.dimension === 'events.attendanceCount' ||
+      r.dimension === 'quiz.completedCount' ||
+      r.dimension === 'brand.activeCampaignCount'
+    )
+      return true;
   }
   for (const g of group.groups ?? []) {
     if (groupContainsCountRule(g)) return true;
@@ -471,7 +498,7 @@ export function assertSafeCountComposition(group: SegmentRuleGroup): void {
   }
   if (group.operator === 'OR' && groupContainsCountRule(group)) {
     throw new BadRequestException(
-      'events.attendanceCount and quiz.completedCount cannot be used inside OR groups',
+      'events.attendanceCount, quiz.completedCount, and brand.activeCampaignCount cannot be used inside OR groups',
     );
   }
 }

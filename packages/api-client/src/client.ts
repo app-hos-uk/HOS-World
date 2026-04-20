@@ -557,6 +557,17 @@ export class ApiClient {
     );
   }
 
+  async getActiveBrandCampaigns(): Promise<ApiResponse<unknown>> {
+    return this.request<ApiResponse<unknown>>('/loyalty/brand-campaigns');
+  }
+
+  async getBrandCampaignProducts(campaignId: string, limit?: number): Promise<ApiResponse<unknown>> {
+    const q = limit != null ? `?limit=${encodeURIComponent(String(limit))}` : '';
+    return this.request<ApiResponse<unknown>>(
+      `/loyalty/brand-campaigns/${encodeURIComponent(campaignId)}/products${q}`,
+    );
+  }
+
   async getLoyaltyCard(): Promise<ApiResponse<unknown>> {
     return this.request<ApiResponse<unknown>>('/loyalty/card');
   }
@@ -989,6 +1000,136 @@ export class ApiClient {
     if (params?.limit != null) q.set('limit', String(params.limit));
     const qs = q.toString();
     return this.request<ApiResponse<unknown>>(`/admin/ambassadors/leaderboard${qs ? `?${qs}` : ''}`);
+  }
+
+  async adminGetBrandPartnershipDashboard(): Promise<ApiResponse<unknown>> {
+    return this.request<ApiResponse<unknown>>('/admin/brand-partnerships/dashboard');
+  }
+
+  async adminListBrandPartnerships(params?: {
+    status?: string;
+    page?: number;
+    limit?: number;
+    search?: string;
+  }): Promise<ApiResponse<unknown>> {
+    const q = new URLSearchParams();
+    if (params?.status) q.set('status', params.status);
+    if (params?.page != null) q.set('page', String(params.page));
+    if (params?.limit != null) q.set('limit', String(params.limit));
+    if (params?.search) q.set('search', params.search);
+    const qs = q.toString();
+    return this.request<ApiResponse<unknown>>(`/admin/brand-partnerships${qs ? `?${qs}` : ''}`);
+  }
+
+  async adminCreateBrandPartnership(body: Record<string, unknown>): Promise<ApiResponse<unknown>> {
+    return this.request<ApiResponse<unknown>>('/admin/brand-partnerships', {
+      method: 'POST',
+      body: JSON.stringify(body),
+    });
+  }
+
+  async adminGetBrandPartnership(id: string): Promise<ApiResponse<unknown>> {
+    return this.request<ApiResponse<unknown>>(`/admin/brand-partnerships/${encodeURIComponent(id)}`);
+  }
+
+  async adminUpdateBrandPartnership(
+    id: string,
+    body: Record<string, unknown>,
+  ): Promise<ApiResponse<unknown>> {
+    return this.request<ApiResponse<unknown>>(`/admin/brand-partnerships/${encodeURIComponent(id)}`, {
+      method: 'PATCH',
+      body: JSON.stringify(body),
+    });
+  }
+
+  async adminArchiveBrandPartnership(id: string): Promise<ApiResponse<unknown>> {
+    return this.request<ApiResponse<unknown>>(
+      `/admin/brand-partnerships/${encodeURIComponent(id)}/archive`,
+      { method: 'POST' },
+    );
+  }
+
+  async adminGetBrandPartnershipReport(id: string): Promise<ApiResponse<unknown>> {
+    return this.request<ApiResponse<unknown>>(
+      `/admin/brand-partnerships/${encodeURIComponent(id)}/report`,
+    );
+  }
+
+  async adminCreateBrandCampaign(
+    partnershipId: string,
+    body: Record<string, unknown>,
+  ): Promise<ApiResponse<unknown>> {
+    return this.request<ApiResponse<unknown>>(
+      `/admin/brand-partnerships/${encodeURIComponent(partnershipId)}/campaigns`,
+      { method: 'POST', body: JSON.stringify(body) },
+    );
+  }
+
+  async adminListBrandCampaigns(params?: {
+    partnershipId?: string;
+    status?: string;
+    type?: string;
+    page?: number;
+    limit?: number;
+  }): Promise<ApiResponse<unknown>> {
+    const q = new URLSearchParams();
+    if (params?.partnershipId) q.set('partnershipId', params.partnershipId);
+    if (params?.status) q.set('status', params.status);
+    if (params?.type) q.set('type', params.type);
+    if (params?.page != null) q.set('page', String(params.page));
+    if (params?.limit != null) q.set('limit', String(params.limit));
+    const qs = q.toString();
+    return this.request<ApiResponse<unknown>>(`/admin/brand-partnerships/campaigns${qs ? `?${qs}` : ''}`);
+  }
+
+  async adminGetBrandCampaign(id: string): Promise<ApiResponse<unknown>> {
+    return this.request<ApiResponse<unknown>>(
+      `/admin/brand-partnerships/campaigns/${encodeURIComponent(id)}`,
+    );
+  }
+
+  async adminUpdateBrandCampaign(
+    id: string,
+    body: Record<string, unknown>,
+  ): Promise<ApiResponse<unknown>> {
+    return this.request<ApiResponse<unknown>>(
+      `/admin/brand-partnerships/campaigns/${encodeURIComponent(id)}`,
+      { method: 'PATCH', body: JSON.stringify(body) },
+    );
+  }
+
+  async adminActivateBrandCampaign(id: string): Promise<ApiResponse<unknown>> {
+    return this.request<ApiResponse<unknown>>(
+      `/admin/brand-partnerships/campaigns/${encodeURIComponent(id)}/activate`,
+      { method: 'POST' },
+    );
+  }
+
+  async adminPauseBrandCampaign(id: string): Promise<ApiResponse<unknown>> {
+    return this.request<ApiResponse<unknown>>(
+      `/admin/brand-partnerships/campaigns/${encodeURIComponent(id)}/pause`,
+      { method: 'POST' },
+    );
+  }
+
+  async adminCompleteBrandCampaign(id: string): Promise<ApiResponse<unknown>> {
+    return this.request<ApiResponse<unknown>>(
+      `/admin/brand-partnerships/campaigns/${encodeURIComponent(id)}/complete`,
+      { method: 'POST' },
+    );
+  }
+
+  async adminCancelBrandCampaign(id: string): Promise<ApiResponse<unknown>> {
+    return this.request<ApiResponse<unknown>>(
+      `/admin/brand-partnerships/campaigns/${encodeURIComponent(id)}/cancel`,
+      { method: 'POST' },
+    );
+  }
+
+  async adminGetBrandCampaignReport(id: string): Promise<ApiResponse<unknown>> {
+    return this.request<ApiResponse<unknown>>(
+      `/admin/brand-partnerships/campaigns/${encodeURIComponent(id)}/report`,
+    );
   }
 
   async listQuizzes(fandomId?: string): Promise<ApiResponse<unknown>> {

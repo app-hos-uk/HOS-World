@@ -11,6 +11,7 @@ export class LoyaltyCampaignService {
     return this.prisma.loyaltyBonusCampaign.findMany({
       where: {
         isActive: true,
+        brandCampaignId: null,
         startsAt: { lte: now },
         endsAt: { gte: now },
         AND: [
@@ -31,8 +32,10 @@ export class LoyaltyCampaignService {
       bonusPoints: number | null;
     }>,
     basePoints: number,
-  ): { points: number; campaignId?: string } {
-    if (!campaigns.length) return { points: Math.round(basePoints) };
+  ): { points: number; campaignId?: string; mult: number; bonus: number } {
+    if (!campaigns.length) {
+      return { points: Math.round(basePoints), mult: 1, bonus: 0 };
+    }
     let bestMult = 1;
     let bonus = 0;
     let campaignId: string | undefined;
@@ -45,6 +48,6 @@ export class LoyaltyCampaignService {
       if (c.bonusPoints) bonus += c.bonusPoints;
     }
     const scaled = basePoints * bestMult + bonus;
-    return { points: Math.max(0, Math.round(scaled)), campaignId };
+    return { points: Math.max(0, Math.round(scaled)), campaignId, mult: bestMult, bonus };
   }
 }

@@ -3,6 +3,7 @@ import {
   assertSafeCountComposition,
   buildSegmentUserWhere,
   buildWhereClause,
+  countRuleMatches,
   extractCountRules,
   stripCountRulesFromGroup,
   validateRuleGroup,
@@ -150,5 +151,53 @@ describe('rule-evaluator', () => {
     validateRuleGroup(g);
     const w = buildWhereClause(g);
     expect(w.AND?.[0]).toEqual({ ambassadorProfile: { isNot: null } });
+  });
+
+  it('extractCountRules includes brand.activeCampaignCount', () => {
+    const g: SegmentRuleGroup = {
+      operator: 'AND',
+      rules: [{ dimension: 'brand.activeCampaignCount', operator: 'gte', value: 2 }],
+    };
+    const c = extractCountRules(g);
+    expect(c).toEqual([
+      { dimension: 'brand.activeCampaignCount', operator: 'gte', value: 2 },
+    ]);
+  });
+
+  it('stripCountRulesFromGroup removes brand.activeCampaignCount', () => {
+    const g: SegmentRuleGroup = {
+      operator: 'AND',
+      rules: [
+        { dimension: 'tier.level', operator: 'gte', value: 1 },
+        { dimension: 'brand.activeCampaignCount', operator: 'gte', value: 1 },
+      ],
+    };
+    const s = stripCountRulesFromGroup(g);
+    expect(s.rules).toHaveLength(1);
+  });
+
+  it('brand.hasRedeemed builds where', () => {
+    const g: SegmentRuleGroup = {
+      operator: 'AND',
+      rules: [{ dimension: 'brand.hasRedeemed', operator: 'eq', value: true }],
+    };
+    validateRuleGroup(g);
+    const w = buildWhereClause(g);
+    expect(w.AND?.[0]).toEqual({ brandCampaignRedemptions: { some: {} } });
+  });
+
+  it('countRuleMatches brand.activeCampaignCount', () => {
+    expect(
+      countRuleMatches(
+        { eventAttendances: 0, quizAttempts: 0, brandRedemptions: 3 },
+        { dimension: 'brand.activeCampaignCount', operator: 'gte', value: 2 },
+      ),
+    ).toBe(true);
+    expect(
+      countRuleMatches(
+        { eventAttendances: 0, quizAttempts: 0, brandRedemptions: 1 },
+        { dimension: 'brand.activeCampaignCount', operator: 'eq', value: 2 },
+      ),
+    ).toBe(false);
   });
 });

@@ -21,6 +21,7 @@ import { FandomProfileService } from './services/fandom-profile.service';
 import { JourneyModule } from '../journeys/journey.module';
 import { SegmentationModule } from '../segmentation/segmentation.module';
 import { AmbassadorModule } from '../ambassador/ambassador.module';
+import { BrandPartnershipsModule } from '../brand-partnerships/brand-partnerships.module';
 
 @Module({
   imports: [
@@ -29,6 +30,7 @@ import { AmbassadorModule } from '../ambassador/ambassador.module';
     ConfigModule,
     forwardRef(() => JourneyModule),
     forwardRef(() => AmbassadorModule),
+    BrandPartnershipsModule,
     SegmentationModule,
     JwtModule.registerAsync({
       imports: [ConfigModule],

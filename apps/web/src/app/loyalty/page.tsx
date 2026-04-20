@@ -16,18 +16,22 @@ export default function LoyaltyDashboardPage() {
   const [membership, setMembership] = useState<any>(null);
   const [progress, setProgress] = useState<any>(null);
   const [fandomProfile, setFandomProfile] = useState<Record<string, number> | null>(null);
+  const [brandCampaigns, setBrandCampaigns] = useState<Record<string, unknown>[]>([]);
 
   const load = useCallback(async () => {
     setLoading(true);
     try {
-      const [m, p, f] = await Promise.all([
+      const [m, p, f, b] = await Promise.all([
         apiClient.getLoyaltyMembership().catch(() => null),
         apiClient.getLoyaltyTierProgress().catch(() => null),
         apiClient.getLoyaltyFandomProfile().catch(() => null),
+        apiClient.getActiveBrandCampaigns().catch(() => null),
       ]);
       setMembership(m?.data ?? null);
       setProgress(p?.data ?? null);
       setFandomProfile((f?.data as Record<string, number>) ?? null);
+      const bd = b?.data;
+      setBrandCampaigns(Array.isArray(bd) ? (bd as Record<string, unknown>[]) : []);
     } finally {
       setLoading(false);
     }
@@ -108,6 +112,35 @@ export default function LoyaltyDashboardPage() {
                   </div>
                 )}
               </div>
+              {brandCampaigns.length > 0 && (
+                <div className="rounded-lg border border-amber-900/40 bg-stone-900/50 p-6">
+                  <p className="text-sm text-amber-200/80 font-secondary mb-3">Brand promotions</p>
+                  <ul className="space-y-3 font-secondary text-sm">
+                    {brandCampaigns.map((c) => (
+                      <li
+                        key={String(c.id)}
+                        className="flex flex-col gap-1 border-b border-stone-800/80 pb-3 last:border-0 last:pb-0"
+                      >
+                        <span className="text-stone-100 font-medium">
+                          {String(c.name ?? 'Promotion')}
+                        </span>
+                        <span className="text-stone-500 text-xs">
+                          {String(c.type)} ·{' '}
+                          {c.multiplier != null ? `${c.multiplier}× points` : ''}
+                          {c.bonusPoints != null ? `+${c.bonusPoints} pts` : ''}
+                          {c.multiplier == null && c.bonusPoints == null ? 'Live offer' : ''}
+                        </span>
+                        {c.partner && typeof c.partner === 'object' && c.partner !== null && (
+                          <span className="text-amber-100/70 text-xs">
+                            Partner:{' '}
+                            {String((c.partner as Record<string, unknown>).name ?? '')}
+                          </span>
+                        )}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
               {fandomProfile && Object.keys(fandomProfile).length > 0 && (
                 <div className="rounded-lg border border-stone-800 bg-stone-900/50 p-6">
                   <p className="text-sm text-stone-500 font-secondary mb-3">Your fandom affinity</p>

@@ -118,6 +118,16 @@ const menuItems: MenuItem[] = [
     ],
   },
   {
+    title: 'Brand Partnerships',
+    icon: '🤝',
+    children: [
+      { title: 'Partners', href: '/admin/brand-partnerships', icon: '🏢' },
+      { title: 'Campaigns', href: '/admin/brand-partnerships/campaigns', icon: '📢' },
+      { title: 'New partner', href: '/admin/brand-partnerships/new', icon: '➕' },
+      { title: 'Dashboard', href: '/admin/brand-partnerships/dashboard', icon: '📊' },
+    ],
+  },
+  {
     title: 'Support',
     icon: '🎧',
     children: [
