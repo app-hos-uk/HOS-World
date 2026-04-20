@@ -1132,6 +1132,85 @@ export class ApiClient {
     );
   }
 
+  async adminGetLoyaltyHealth(): Promise<ApiResponse<unknown>> {
+    return this.request<ApiResponse<unknown>>('/admin/loyalty-analytics/health');
+  }
+
+  async adminGetLoyaltySnapshots(params?: { startDate?: string; endDate?: string }): Promise<ApiResponse<unknown>> {
+    const q = new URLSearchParams();
+    if (params?.startDate) q.set('startDate', params.startDate);
+    if (params?.endDate) q.set('endDate', params.endDate);
+    const qs = q.toString();
+    return this.request<ApiResponse<unknown>>(`/admin/loyalty-analytics/snapshots${qs ? `?${qs}` : ''}`);
+  }
+
+  async adminGetClvDistribution(): Promise<ApiResponse<unknown>> {
+    return this.request<ApiResponse<unknown>>('/admin/loyalty-analytics/clv/distribution');
+  }
+
+  async adminGetClvTop(limit?: number): Promise<ApiResponse<unknown>> {
+    const qs = limit != null ? `?limit=${limit}` : '';
+    return this.request<ApiResponse<unknown>>(`/admin/loyalty-analytics/clv/top${qs}`);
+  }
+
+  async adminGetChurnReport(): Promise<ApiResponse<unknown>> {
+    return this.request<ApiResponse<unknown>>('/admin/loyalty-analytics/clv/churn');
+  }
+
+  async adminGetCampaignAttribution(params?: {
+    startDate?: string; endDate?: string; type?: string; limit?: number;
+  }): Promise<ApiResponse<unknown>> {
+    const q = new URLSearchParams();
+    if (params?.startDate) q.set('startDate', params.startDate);
+    if (params?.endDate) q.set('endDate', params.endDate);
+    if (params?.type) q.set('type', params.type);
+    if (params?.limit != null) q.set('limit', String(params.limit));
+    const qs = q.toString();
+    return this.request<ApiResponse<unknown>>(`/admin/loyalty-analytics/attribution${qs ? `?${qs}` : ''}`);
+  }
+
+  async adminGetCampaignRoiTimeline(campaignId: string, days?: number): Promise<ApiResponse<unknown>> {
+    const qs = days != null ? `?days=${days}` : '';
+    return this.request<ApiResponse<unknown>>(
+      `/admin/loyalty-analytics/attribution/${encodeURIComponent(campaignId)}${qs}`,
+    );
+  }
+
+  async adminGetFandomTrends(days?: number): Promise<ApiResponse<unknown>> {
+    const qs = days != null ? `?days=${days}` : '';
+    return this.request<ApiResponse<unknown>>(`/admin/loyalty-analytics/fandom-trends${qs}`);
+  }
+
+  async adminGetTierAnalysis(): Promise<ApiResponse<unknown>> {
+    return this.request<ApiResponse<unknown>>('/admin/loyalty-analytics/tiers');
+  }
+
+  async adminGetChannelPerformance(days?: number): Promise<ApiResponse<unknown>> {
+    const qs = days != null ? `?days=${days}` : '';
+    return this.request<ApiResponse<unknown>>(`/admin/loyalty-analytics/channels${qs}`);
+  }
+
+  async adminGetCohortRetention(months?: number): Promise<ApiResponse<unknown>> {
+    const qs = months != null ? `?months=${months}` : '';
+    return this.request<ApiResponse<unknown>>(`/admin/loyalty-analytics/cohorts${qs}`);
+  }
+
+  async adminComputeSnapshot(date?: string): Promise<ApiResponse<unknown>> {
+    const qs = date ? `?date=${encodeURIComponent(date)}` : '';
+    return this.request<ApiResponse<unknown>>(`/admin/loyalty-analytics/snapshots/compute${qs}`, { method: 'POST' });
+  }
+
+  async adminRecomputeClv(): Promise<ApiResponse<unknown>> {
+    return this.request<ApiResponse<unknown>>('/admin/loyalty-analytics/clv/recompute', { method: 'POST' });
+  }
+
+  async adminExportLoyaltyReport(type: string, format?: string): Promise<ApiResponse<unknown>> {
+    const qs = format ? `?format=${encodeURIComponent(format)}` : '';
+    return this.request<ApiResponse<unknown>>(
+      `/admin/loyalty-analytics/export/${encodeURIComponent(type)}${qs}`,
+    );
+  }
+
   async listQuizzes(fandomId?: string): Promise<ApiResponse<unknown>> {
     const qs = fandomId ? `?fandomId=${encodeURIComponent(fandomId)}` : '';
     return this.request<ApiResponse<unknown>>(`/quiz${qs}`);

@@ -3071,6 +3071,15 @@ model LoyaltyMembership {
   referralsGiven      LoyaltyReferral[] @relation("LoyaltyReferrer")
   referralsReceived   LoyaltyReferral[] @relation("LoyaltyReferee")
   ambassadorProfile   AmbassadorProfile?
+
+  clvScore            Decimal?  @db.Decimal(10, 2)
+  clvUpdatedAt        DateTime?
+  predictedChurnRisk  Decimal?  @db.Decimal(5, 4)
+  firstPurchaseAt     DateTime?
+  lastPurchaseAt      DateTime?
+  avgOrderValue       Decimal?  @db.Decimal(10, 2)
+  purchaseFrequency   Decimal?  @db.Decimal(6, 4)
+
   createdAt           DateTime @default(now())
   updatedAt           DateTime @updatedAt
 
@@ -3393,6 +3402,55 @@ model BrandCampaignRedemption {
   @@index([userId])
   @@index([campaignId, userId])
   @@map("brand_campaign_redemptions")
+}
+
+model LoyaltyAnalyticsSnapshot {
+  id                   String   @id @default(uuid())
+  date                 DateTime @unique @db.Date
+  totalMembers         Int      @default(0)
+  activeMembers30d     Int      @default(0)
+  newEnrollments       Int      @default(0)
+  pointsIssued         Int      @default(0)
+  pointsRedeemed       Int      @default(0)
+  pointsExpired        Int      @default(0)
+  pointsLiability      Int      @default(0)
+  totalRevenueLoyalty   Decimal  @default(0) @db.Decimal(12, 2)
+  totalOrdersLoyalty    Int      @default(0)
+  avgOrderValueLoyalty  Decimal  @default(0) @db.Decimal(10, 2)
+  brandFundedPoints    Int      @default(0)
+  campaignPointsIssued Int      @default(0)
+  webOrders            Int      @default(0)
+  posOrders            Int      @default(0)
+  webRevenue           Decimal  @default(0) @db.Decimal(12, 2)
+  posRevenue           Decimal  @default(0) @db.Decimal(12, 2)
+  tierDistribution     Json?
+  topFandoms           Json?
+  metadata             Json?
+  createdAt            DateTime @default(now())
+
+  @@index([date])
+  @@map("loyalty_analytics_snapshots")
+}
+
+model CampaignAttribution {
+  id                String   @id @default(uuid())
+  campaignId        String
+  campaignType      String
+  campaignName      String
+  date              DateTime @db.Date
+  ordersInfluenced  Int      @default(0)
+  revenueInfluenced Decimal  @default(0) @db.Decimal(12, 2)
+  pointsAwarded     Int      @default(0)
+  pointsCost        Decimal  @default(0) @db.Decimal(10, 2)
+  uniqueUsers       Int      @default(0)
+  roi               Decimal? @db.Decimal(8, 4)
+  createdAt         DateTime @default(now())
+
+  @@unique([campaignId, date])
+  @@index([campaignId])
+  @@index([date])
+  @@index([campaignType])
+  @@map("campaign_attributions")
 }
 
 model ProductChannel {

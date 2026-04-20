@@ -128,6 +128,18 @@ const menuItems: MenuItem[] = [
     ],
   },
   {
+    title: 'Loyalty Analytics',
+    icon: '📈',
+    children: [
+      { title: 'Programme health', href: '/admin/loyalty-analytics', icon: '💡' },
+      { title: 'CLV report', href: '/admin/loyalty-analytics/clv', icon: '👤' },
+      { title: 'Campaign ROI', href: '/admin/loyalty-analytics/attribution', icon: '🎯' },
+      { title: 'Fandom trends', href: '/admin/loyalty-analytics/fandom-trends', icon: '⚡' },
+      { title: 'Tier analysis', href: '/admin/loyalty-analytics/tiers', icon: '🏆' },
+      { title: 'Channels', href: '/admin/loyalty-analytics/channels', icon: '📊' },
+    ],
+  },
+  {
     title: 'Support',
     icon: '🎧',
     children: [
