@@ -74,7 +74,11 @@ export default function AdminEventDetailPage() {
     </button>
   );
 
+  const [checkingIn, setCheckingIn] = useState(false);
+
   const staffCheckIn = async () => {
+    if (checkingIn) return;
+    setCheckingIn(true);
     try {
       await apiClient.adminCheckInEvent(id, {
         userId: checkUserId.trim() || undefined,
@@ -84,8 +88,10 @@ export default function AdminEventDetailPage() {
       setCheckUserId('');
       setCheckTicket('');
       load();
-    } catch (e: any) {
-      toast.error(e?.message || 'Failed');
+    } catch (e: unknown) {
+      toast.error(e instanceof Error ? e.message : 'Failed');
+    } finally {
+      setCheckingIn(false);
     }
   };
 
@@ -135,8 +141,8 @@ export default function AdminEventDetailPage() {
                           await apiClient.adminPublishEvent(id);
                           toast.success('Published');
                           load();
-                        } catch (e: any) {
-                          toast.error(e?.message || 'Failed');
+                        } catch (e: unknown) {
+                          toast.error(e instanceof Error ? e.message : 'Failed');
                         }
                       }}
                       className="rounded bg-green-600 text-white px-3 py-1.5"
@@ -150,8 +156,8 @@ export default function AdminEventDetailPage() {
                           await apiClient.adminCompleteEvent(id);
                           toast.success('Completed');
                           load();
-                        } catch (e: any) {
-                          toast.error(e?.message || 'Failed');
+                        } catch (e: unknown) {
+                          toast.error(e instanceof Error ? e.message : 'Failed');
                         }
                       }}
                       className="rounded bg-gray-700 text-white px-3 py-1.5"
@@ -175,10 +181,11 @@ export default function AdminEventDetailPage() {
                     />
                     <button
                       type="button"
+                      disabled={checkingIn}
                       onClick={staffCheckIn}
-                      className="rounded bg-indigo-600 text-white px-3 py-1.5 text-sm"
+                      className="rounded bg-indigo-600 text-white px-3 py-1.5 text-sm disabled:opacity-50"
                     >
-                      Check in
+                      {checkingIn ? 'Checking in…' : 'Check in'}
                     </button>
                   </div>
                 </div>

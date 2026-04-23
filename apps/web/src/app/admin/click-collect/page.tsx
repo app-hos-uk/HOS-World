@@ -22,8 +22,14 @@ export default function AdminClickCollectListPage() {
         storeId: storeId || undefined,
       })
       .then((r) => {
-        const d = r.data as Record<string, unknown>[] | { items?: unknown[] };
-        setRows(Array.isArray(d) ? d : ((d as { items?: Record<string, unknown>[] }).items ?? []));
+        const d = r.data;
+        if (Array.isArray(d)) {
+          setRows(d as Record<string, unknown>[]);
+        } else if (d && typeof d === 'object' && 'items' in d && Array.isArray((d as any).items)) {
+          setRows((d as any).items);
+        } else {
+          setRows([]);
+        }
       })
       .catch((e: unknown) => toast.error(e instanceof Error ? e.message : 'Request failed'))
       .finally(() => setLoading(false));

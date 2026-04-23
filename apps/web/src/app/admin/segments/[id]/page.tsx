@@ -29,22 +29,21 @@ export default function AdminSegmentDetailPage() {
     apiClient
       .adminGetSegment(id)
       .then((r) => setSeg(r.data))
-      .catch((e: any) => toast.error(e?.message || 'Failed'));
+      .catch((e: unknown) => toast.error(e instanceof Error ? e.message : 'Failed'));
   }, [id, toast]);
 
   const loadMembers = useCallback(
-    (pageOverride?: number) => {
-      const page = pageOverride ?? memberPage;
+    (page: number, searchTerm: string) => {
       apiClient
-        .adminGetSegmentMembers(id, { page, limit: 20, search: search || undefined })
+        .adminGetSegmentMembers(id, { page, limit: 20, search: searchTerm || undefined })
         .then((r) => {
           const d = r.data as { items?: any[]; total?: number };
           setMembers(d?.items || []);
           setMemberTotal(d?.total ?? 0);
         })
-        .catch((e: any) => toast.error(e?.message || 'Failed'));
+        .catch((e: unknown) => toast.error(e instanceof Error ? e.message : 'Failed'));
     },
-    [id, memberPage, search, toast],
+    [id, toast],
   );
 
   useEffect(() => {
@@ -52,16 +51,16 @@ export default function AdminSegmentDetailPage() {
   }, [loadSeg]);
 
   useEffect(() => {
-    if (tab === 'members') loadMembers();
-  }, [tab, loadMembers]);
+    if (tab === 'members') loadMembers(memberPage, search);
+  }, [tab, memberPage]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const refresh = async () => {
     try {
       await apiClient.adminRefreshSegment(id);
       toast.success('Refreshed');
       loadSeg();
-    } catch (e: any) {
-      toast.error(e?.message || 'Failed');
+    } catch (e: unknown) {
+      toast.error(e instanceof Error ? e.message : 'Failed');
     }
   };
 
@@ -71,8 +70,8 @@ export default function AdminSegmentDetailPage() {
       await apiClient.adminArchiveSegment(id);
       toast.success('Archived');
       loadSeg();
-    } catch (e: any) {
-      toast.error(e?.message || 'Failed');
+    } catch (e: unknown) {
+      toast.error(e instanceof Error ? e.message : 'Failed');
     }
   };
 
@@ -87,8 +86,8 @@ export default function AdminSegmentDetailPage() {
       });
       const d = r.data as any;
       toast.success(`Sent ${d?.sent ?? 0} (targeted ${d?.targeted ?? 0})`);
-    } catch (e: any) {
-      toast.error(e?.message || 'Failed');
+    } catch (e: unknown) {
+      toast.error(e instanceof Error ? e.message : 'Failed');
     }
   };
 
@@ -189,7 +188,7 @@ export default function AdminSegmentDetailPage() {
                   className="text-sm text-indigo-600"
                   onClick={() => {
                     setMemberPage(1);
-                    loadMembers(1);
+                    loadMembers(1, search);
                   }}
                 >
                   Search

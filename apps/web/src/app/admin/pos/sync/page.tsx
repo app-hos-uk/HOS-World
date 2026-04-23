@@ -17,7 +17,7 @@ export default function AdminPosSyncPage() {
       try {
         const res = await apiClient.getPosSyncLog();
         const data = (res as { data?: { mappings?: any[] } })?.data;
-        setMappings(Array.isArray(data?.mappings) ? data!.mappings! : []);
+        setMappings(Array.isArray(data?.mappings) ? data.mappings : []);
       } catch (e: unknown) {
         toast.error(e instanceof Error ? e.message : 'Failed to load sync log');
         setMappings([]);
