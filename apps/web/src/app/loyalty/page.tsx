@@ -130,12 +130,12 @@ export default function LoyaltyDashboardPage() {
                           {c.bonusPoints != null ? `+${c.bonusPoints} pts` : ''}
                           {c.multiplier == null && c.bonusPoints == null ? 'Live offer' : ''}
                         </span>
-                        {c.partner && typeof c.partner === 'object' && c.partner !== null && (
+                        {c.partner && typeof c.partner === 'object' && c.partner !== null ? (
                           <span className="text-amber-100/70 text-xs">
                             Partner:{' '}
                             {String((c.partner as Record<string, unknown>).name ?? '')}
                           </span>
-                        )}
+                        ) : null}
                       </li>
                     ))}
                   </ul>

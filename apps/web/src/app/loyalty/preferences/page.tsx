@@ -72,19 +72,19 @@ export default function LoyaltyPreferencesPage() {
             <p className="text-stone-500">Loading…</p>
           ) : (
             <div className="space-y-4 rounded-lg border border-stone-800 bg-stone-900/50 p-6">
-              {[
+              {([
                 ['Email', optInEmail, setOptInEmail],
                 ['SMS', optInSms, setOptInSms],
                 ['WhatsApp', optInWhatsApp, setOptInWhatsApp],
                 ['Push notifications', optInPush, setOptInPush],
-              ].map(([label, val, set]) => (
-                <label key={label as string} className="flex items-center justify-between gap-4 cursor-pointer">
+              ] as [string, boolean, (v: boolean) => void][]).map(([label, val, set]) => (
+                <label key={label} className="flex items-center justify-between gap-4 cursor-pointer">
                   <span className="font-secondary">{label}</span>
                   <input
                     type="checkbox"
                     className="h-4 w-4 accent-amber-600"
-                    checked={val as boolean}
-                    onChange={(e) => (set as (v: boolean) => void)(e.target.checked)}
+                    checked={val}
+                    onChange={(e) => set(e.target.checked)}
                   />
                 </label>
               ))}
