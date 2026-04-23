@@ -3,22 +3,41 @@
 import { useCallback, useEffect, useState } from 'react';
 import { apiClient } from '@/lib/api';
 
+export type SegmentRule = { _key: string; dimension: string; operator: string; value: unknown };
+
 export type SegmentRuleGroup = {
+  _key: string;
   operator: 'AND' | 'OR';
-  rules: { dimension: string; operator: string; value: unknown }[];
+  rules: SegmentRule[];
   groups?: SegmentRuleGroup[];
 };
 
 type DimMeta = { dimension: string; category: string; operators: string[] };
 
-const defaultRule = () => ({
+let _seq = 0;
+function uid(): string {
+  return `r${Date.now()}-${++_seq}`;
+}
+
+const defaultRule = (): SegmentRule => ({
+  _key: uid(),
   dimension: 'tier.level',
   operator: 'gte',
   value: 1 as unknown,
 });
 
 export function emptyGroup(): SegmentRuleGroup {
-  return { operator: 'AND', rules: [defaultRule()] };
+  return { _key: uid(), operator: 'AND', rules: [defaultRule()] };
+}
+
+/** Assign _key to rules/groups loaded from the API that lack them. */
+export function hydrateKeys(g: any): SegmentRuleGroup {
+  return {
+    ...g,
+    _key: g._key || uid(),
+    rules: (g.rules ?? []).map((r: any) => ({ ...r, _key: r._key || uid() })),
+    groups: g.groups?.map((sub: any) => hydrateKeys(sub)),
+  };
 }
 
 export function RuleBuilder({
@@ -90,7 +109,7 @@ export function RuleBuilder({
           const meta = dimensions.find((d) => d.dimension === rule.dimension);
           const ops = meta?.operators?.length ? meta.operators : ['eq'];
           return (
-            <div key={i} className="flex flex-wrap gap-2 items-center text-sm">
+            <div key={rule._key} className="flex flex-wrap gap-2 items-center text-sm">
               <select
                 className="border rounded px-2 py-1 min-w-[160px]"
                 value={rule.dimension}
@@ -99,7 +118,7 @@ export function RuleBuilder({
                   const m = dimensions.find((x) => x.dimension === d);
                   const nextOp = m?.operators[0] ?? 'eq';
                   const nextRules = [...g.rules];
-                  nextRules[i] = { dimension: d, operator: nextOp, value: '' };
+                  nextRules[i] = { ...rule, dimension: d, operator: nextOp, value: '' };
                   setG({ ...g, rules: nextRules });
                 }}
               >
@@ -173,7 +192,7 @@ export function RuleBuilder({
             onClick={() =>
               setG({
                 ...g,
-                groups: [...(g.groups ?? []), { operator: 'AND', rules: [defaultRule()] }],
+                groups: [...(g.groups ?? []), { _key: uid(), operator: 'AND', rules: [defaultRule()] }],
               })
             }
           >
@@ -181,7 +200,7 @@ export function RuleBuilder({
           </button>
         </div>
         {(g.groups ?? []).map((sub, idx) => (
-          <div key={idx} className="relative">
+          <div key={sub._key} className="relative">
             <button
               type="button"
               className="absolute right-0 top-0 text-xs text-gray-500"

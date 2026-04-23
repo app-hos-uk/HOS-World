@@ -7,7 +7,7 @@ import { RouteGuard } from '@/components/RouteGuard';
 import { AdminLayout } from '@/components/AdminLayout';
 import { apiClient } from '@/lib/api';
 import { useToast } from '@/hooks/useToast';
-import { RuleBuilder, type SegmentRuleGroup } from '../../RuleBuilder';
+import { RuleBuilder, hydrateKeys, type SegmentRuleGroup } from '../../RuleBuilder';
 
 export default function AdminSegmentEditPage() {
   const params = useParams();
@@ -27,7 +27,7 @@ export default function AdminSegmentEditPage() {
         const s = r.data as any;
         setName(s.name);
         setDescription(s.description || '');
-        setRules(s.rules as SegmentRuleGroup);
+        setRules(hydrateKeys(s.rules));
       })
       .catch((e: any) => toast.error(e?.message || 'Failed'));
   }, [id, toast]);

@@ -6,7 +6,16 @@ import { AdminLayout } from '@/components/AdminLayout';
 import { apiClient } from '@/lib/api';
 import { useToast } from '@/hooks/useToast';
 
-type QuizQuestion = { question: string; options: string[]; correctIndex: number };
+type QuizQuestion = { _key: string; question: string; options: string[]; correctIndex: number };
+
+let _qSeq = 0;
+function quid(): string {
+  return `q${Date.now()}-${++_qSeq}`;
+}
+
+function newQuestion(): QuizQuestion {
+  return { _key: quid(), question: '', options: ['', '', '', ''], correctIndex: 0 };
+}
 
 export default function AdminQuizPage() {
   const toast = useToast();
@@ -21,9 +30,7 @@ export default function AdminQuizPage() {
   const [formDifficulty, setFormDifficulty] = useState('EASY');
   const [formPoints, setFormPoints] = useState(25);
   const [formActive, setFormActive] = useState(true);
-  const [formQuestions, setFormQuestions] = useState<QuizQuestion[]>([
-    { question: '', options: ['', '', '', ''], correctIndex: 0 },
-  ]);
+  const [formQuestions, setFormQuestions] = useState<QuizQuestion[]>([newQuestion()]);
   const [saving, setSaving] = useState(false);
 
   const load = useCallback(() => {
@@ -46,7 +53,7 @@ export default function AdminQuizPage() {
     setFormDifficulty('EASY');
     setFormPoints(25);
     setFormActive(true);
-    setFormQuestions([{ question: '', options: ['', '', '', ''], correctIndex: 0 }]);
+    setFormQuestions([newQuestion()]);
   };
 
   const openEdit = (q: any) => {
@@ -56,19 +63,20 @@ export default function AdminQuizPage() {
     setFormDifficulty(q.difficulty || 'EASY');
     setFormPoints(q.pointsReward ?? 25);
     setFormActive(q.isActive ?? true);
-    const qs = Array.isArray(q.questions)
+    const qs: QuizQuestion[] = Array.isArray(q.questions)
       ? q.questions.map((qq: any) => ({
+          _key: quid(),
           question: qq.question || '',
           options: Array.isArray(qq.options) ? [...qq.options] : ['', '', '', ''],
           correctIndex: qq.correctIndex ?? 0,
         }))
-      : [{ question: '', options: ['', '', '', ''], correctIndex: 0 }];
+      : [newQuestion()];
     setFormQuestions(qs);
     setShowForm(true);
   };
 
   const addQuestion = () => {
-    setFormQuestions((prev) => [...prev, { question: '', options: ['', '', '', ''], correctIndex: 0 }]);
+    setFormQuestions((prev) => [...prev, newQuestion()]);
   };
 
   const removeQuestion = (idx: number) => {
@@ -110,7 +118,7 @@ export default function AdminQuizPage() {
         difficulty: formDifficulty,
         pointsReward: formPoints,
         isActive: formActive,
-        questions: formQuestions,
+        questions: formQuestions.map(({ _key, ...rest }) => rest),
       };
       if (editingId) {
         await apiClient.adminUpdateQuiz(editingId, body);
@@ -188,7 +196,7 @@ export default function AdminQuizPage() {
 
               <div className="space-y-4">
                 {formQuestions.map((q, qi) => (
-                  <div key={qi} className="rounded border border-stone-700 p-3 space-y-2 bg-stone-800/40">
+                  <div key={q._key} className="rounded border border-stone-700 p-3 space-y-2 bg-stone-800/40">
                     <div className="flex items-center justify-between">
                       <span className="text-xs text-stone-500">Question {qi + 1}</span>
                       {formQuestions.length > 1 && (
@@ -211,7 +219,7 @@ export default function AdminQuizPage() {
                       <div key={oi} className="flex items-center gap-2">
                         <input
                           type="radio"
-                          name={`correct-${qi}`}
+                          name={`correct-${q._key}`}
                           checked={q.correctIndex === oi}
                           onChange={() => updateQuestion(qi, 'correctIndex', oi)}
                           title="Mark as correct"
