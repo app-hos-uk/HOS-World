@@ -24,7 +24,9 @@ export default function AdminBrandCampaignDetailPage() {
     apiClient
       .adminGetBrandCampaignReport(id)
       .then((r) => setReport((r.data as Record<string, unknown>) || null))
-      .catch(() => {});
+      .catch((e: unknown) =>
+        toast.error(e instanceof Error ? e.message : 'Failed to load report'),
+      );
   }, [id, toast]);
 
   useEffect(() => {
