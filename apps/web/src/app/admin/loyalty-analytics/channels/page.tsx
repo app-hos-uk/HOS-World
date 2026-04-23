@@ -9,12 +9,13 @@ import { apiClient } from '@/lib/api';
 export default function ChannelPerformancePage() {
   const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
 
   useEffect(() => {
     apiClient
       .adminGetChannelPerformance(30)
       .then((r) => setData(r.data))
-      .catch(() => {})
+      .catch((e: unknown) => setError(e instanceof Error ? e.message : 'Failed to load channel data'))
       .finally(() => setLoading(false));
   }, []);
 
@@ -34,7 +35,7 @@ export default function ChannelPerformancePage() {
         <div className="p-6 max-w-4xl mx-auto space-y-4">
           <Link href="/admin/loyalty-analytics" className="text-sm text-violet-700">← Health</Link>
           <h1 className="text-2xl font-semibold text-gray-900">Channel performance (30d)</h1>
-          {loading ? <p className="text-gray-500">Loading…</p> : data ? (
+          {loading ? <p className="text-gray-500">Loading…</p> : error ? <p className="text-red-600 text-sm">{error}</p> : data ? (
             <div className="grid md:grid-cols-2 gap-4">
               {ch('Web (online)', data.web)}
               {ch('POS (in-store)', data.pos)}

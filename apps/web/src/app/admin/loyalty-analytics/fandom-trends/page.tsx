@@ -9,12 +9,13 @@ import { apiClient } from '@/lib/api';
 export default function FandomTrendsPage() {
   const [data, setData] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
 
   useEffect(() => {
     apiClient
       .adminGetFandomTrends(30)
       .then((r) => setData(Array.isArray(r.data) ? r.data : []))
-      .catch(() => {})
+      .catch((e: unknown) => setError(e instanceof Error ? e.message : 'Failed to load fandom trends'))
       .finally(() => setLoading(false));
   }, []);
 
@@ -24,7 +25,7 @@ export default function FandomTrendsPage() {
         <div className="p-6 max-w-5xl mx-auto space-y-4">
           <Link href="/admin/loyalty-analytics" className="text-sm text-violet-700">← Health</Link>
           <h1 className="text-2xl font-semibold text-gray-900">Fandom trends (30d)</h1>
-          {loading ? <p className="text-gray-500">Loading…</p> : (
+          {loading ? <p className="text-gray-500">Loading…</p> : error ? <p className="text-red-600 text-sm">{error}</p> : (
             <table className="min-w-full text-sm border rounded bg-white">
               <thead className="bg-gray-50"><tr>
                 <th className="text-left px-3 py-2">Fandom</th>

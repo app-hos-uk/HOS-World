@@ -9,12 +9,13 @@ import { apiClient } from '@/lib/api';
 export default function AttributionPage() {
   const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
 
   useEffect(() => {
     apiClient
       .adminGetCampaignAttribution({ limit: 50 })
       .then((r) => setData(r.data))
-      .catch(() => {})
+      .catch((e: unknown) => setError(e instanceof Error ? e.message : 'Failed to load attribution data'))
       .finally(() => setLoading(false));
   }, []);
 
@@ -27,7 +28,7 @@ export default function AttributionPage() {
         <div className="p-6 max-w-5xl mx-auto space-y-4">
           <Link href="/admin/loyalty-analytics" className="text-sm text-violet-700">← Health</Link>
           <h1 className="text-2xl font-semibold text-gray-900">Campaign ROI</h1>
-          {loading ? <p className="text-gray-500">Loading…</p> : (
+          {loading ? <p className="text-gray-500">Loading…</p> : error ? <p className="text-red-600 text-sm">{error}</p> : (
             <>
               {totals && (
                 <div className="grid grid-cols-2 md:grid-cols-5 gap-3 text-sm">

@@ -11,16 +11,28 @@ export default function ClvReportPage() {
   const [top, setTop] = useState<any[]>([]);
   const [churn, setChurn] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [errors, setErrors] = useState<string[]>([]);
 
   useEffect(() => {
+    const errs: string[] = [];
     Promise.all([
-      apiClient.adminGetClvDistribution().catch(() => null),
-      apiClient.adminGetClvTop(30).catch(() => null),
-      apiClient.adminGetChurnReport().catch(() => null),
+      apiClient.adminGetClvDistribution().catch((e: unknown) => {
+        errs.push(e instanceof Error ? e.message : 'Failed to load CLV distribution');
+        return null;
+      }),
+      apiClient.adminGetClvTop(30).catch((e: unknown) => {
+        errs.push(e instanceof Error ? e.message : 'Failed to load top members');
+        return null;
+      }),
+      apiClient.adminGetChurnReport().catch((e: unknown) => {
+        errs.push(e instanceof Error ? e.message : 'Failed to load churn report');
+        return null;
+      }),
     ]).then(([d, t, c]) => {
       setDist(Array.isArray(d?.data) ? d.data : []);
       setTop(Array.isArray(t?.data) ? t.data : []);
       setChurn(c?.data ?? null);
+      if (errs.length) setErrors(errs);
       setLoading(false);
     });
   }, []);
@@ -33,6 +45,11 @@ export default function ClvReportPage() {
           <h1 className="text-2xl font-semibold text-gray-900">CLV report</h1>
           {loading ? <p className="text-gray-500">Loading…</p> : (
             <>
+              {errors.length > 0 && (
+                <div className="rounded border border-red-200 bg-red-50 p-3 text-sm text-red-700 space-y-1">
+                  {errors.map((e, i) => <p key={i}>{e}</p>)}
+                </div>
+              )}
               <div>
                 <h2 className="text-lg font-medium mb-2">Distribution</h2>
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm">
