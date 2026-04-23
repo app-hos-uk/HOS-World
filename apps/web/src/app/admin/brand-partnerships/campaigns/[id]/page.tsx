@@ -20,7 +20,7 @@ export default function AdminBrandCampaignDetailPage() {
     apiClient
       .adminGetBrandCampaign(id)
       .then((r) => setRow((r.data as Record<string, unknown>) || null))
-      .catch((e: Error) => toast.error(e.message));
+      .catch((e: unknown) => toast.error(e instanceof Error ? e.message : 'Request failed'));
     apiClient
       .adminGetBrandCampaignReport(id)
       .then((r) => setReport((r.data as Record<string, unknown>) || null))

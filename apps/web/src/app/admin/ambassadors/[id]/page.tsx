@@ -19,7 +19,7 @@ export default function AdminAmbassadorDetailPage() {
     apiClient
       .adminGetAmbassador(id)
       .then((r) => setRow((r.data as Record<string, unknown>) || null))
-      .catch((e: Error) => toast.error(e.message));
+      .catch((e: unknown) => toast.error(e instanceof Error ? e.message : 'Request failed'));
   }, [id, toast]);
 
   const suspend = async () => {

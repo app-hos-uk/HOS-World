@@ -20,7 +20,7 @@ export default function AdminStoresPage() {
         const d = r.data as Record<string, unknown>[] | undefined;
         setRows(Array.isArray(d) ? d : []);
       })
-      .catch((e: Error) => toast.error(e.message))
+      .catch((e: unknown) => toast.error(e instanceof Error ? e.message : 'Request failed'))
       .finally(() => setLoading(false));
   }, [toast]);
 

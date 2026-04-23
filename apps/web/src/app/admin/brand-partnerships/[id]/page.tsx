@@ -20,7 +20,7 @@ export default function AdminBrandPartnershipDetailPage() {
     apiClient
       .adminGetBrandPartnership(id)
       .then((r) => setRow((r.data as Record<string, unknown>) || null))
-      .catch((e: Error) => toast.error(e.message));
+      .catch((e: unknown) => toast.error(e instanceof Error ? e.message : 'Request failed'));
     apiClient
       .adminGetBrandPartnershipReport(id)
       .then((r) => setReport((r.data as Record<string, unknown>) || null))
