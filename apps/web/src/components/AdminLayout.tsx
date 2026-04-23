@@ -140,6 +140,27 @@ const menuItems: MenuItem[] = [
     ],
   },
   {
+    title: 'Click & Collect',
+    icon: '🏪',
+    children: [{ title: 'Orders', href: '/admin/click-collect', icon: '📦' }],
+  },
+  {
+    title: 'Product Campaigns',
+    icon: '🎪',
+    children: [
+      { title: 'All campaigns', href: '/admin/product-campaigns', icon: '📋' },
+      { title: 'New campaign', href: '/admin/product-campaigns/new', icon: '➕' },
+    ],
+  },
+  {
+    title: 'Stores',
+    icon: '🏬',
+    children: [
+      { title: 'All stores', href: '/admin/stores', icon: '📍' },
+      { title: 'New store', href: '/admin/stores/new', icon: '➕' },
+    ],
+  },
+  {
     title: 'Support',
     icon: '🎧',
     children: [

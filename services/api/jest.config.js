@@ -2,6 +2,7 @@ module.exports = {
   moduleFileExtensions: ['js', 'json', 'ts'],
   rootDir: 'src',
   testRegex: '.*\\.spec\\.ts$',
+  testPathIgnorePatterns: ['/node_modules/', '/dist/', '/src/integration/'],
   // pnpm: resolve modules from package and workspace root
   moduleDirectories: ['node_modules', '<rootDir>/../../node_modules'],
   transform: {

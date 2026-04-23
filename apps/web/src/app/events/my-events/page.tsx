@@ -31,6 +31,7 @@ export default function MyEventsPage() {
   }, [load]);
 
   const now = Date.now();
+  const upcomingRsvps = rsvps.filter((x) => x.event && new Date(x.event.startsAt).getTime() >= now);
 
   return (
     <RouteGuard allowedRoles={['CUSTOMER']}>
@@ -47,12 +48,10 @@ export default function MyEventsPage() {
             <>
               <h2 className="text-sm uppercase tracking-wide text-stone-500 mb-2">Upcoming RSVPs</h2>
               <ul className="space-y-3 mb-10">
-                {rsvps.filter((x) => x.event && new Date(x.event.startsAt).getTime() >= now).length === 0 ? (
+                {upcomingRsvps.length === 0 ? (
                   <li className="text-stone-500 text-sm">None</li>
                 ) : (
-                  rsvps
-                    .filter((x) => x.event && new Date(x.event.startsAt).getTime() >= now)
-                    .map((x) => (
+                  upcomingRsvps.map((x) => (
                       <li key={x.id} className="border border-stone-800 rounded-lg p-3">
                         <Link href={`/events/${x.event.slug}`} className="text-amber-200 hover:underline">
                           {x.event.title}

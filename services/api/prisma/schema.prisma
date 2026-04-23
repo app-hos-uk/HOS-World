@@ -248,6 +248,12 @@ model Store {
   posSales        POSSale[]
   events          Event[]
 
+  defaultRegionCode  String   @default("GB")
+  loyaltyRedeemValue Decimal  @default(0.01) @db.Decimal(8, 6)
+
+  clickCollectOrders   ClickCollectOrder[]
+  onboardingChecklist  StoreOnboardingChecklist?
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -866,6 +872,8 @@ model Order {
   stockReservations    StockReservation[]
   referral             Referral?
   vendorLedgerEntries  VendorLedgerEntry[]
+
+  clickCollect ClickCollectOrder?
 
   loyaltyPointsEarned      Int      @default(0)
   loyaltyPointsRedeemed    Int      @default(0)
@@ -3806,4 +3814,70 @@ model EventAttendance {
   @@index([userId])
   @@index([eventId])
   @@map("event_attendances")
+}
+
+model ClickCollectOrder {
+  id              String    @id @default(uuid())
+  orderId         String    @unique
+  order           Order     @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  storeId         String
+  store           Store     @relation(fields: [storeId], references: [id])
+  status          String    @default("PENDING")
+  estimatedReady  DateTime?
+  readyAt         DateTime?
+  collectedAt     DateTime?
+  collectedBy     String?
+  notifiedAt      DateTime?
+  reminderNotifiedAt DateTime?
+  expiresAt       DateTime?
+  notes           String?   @db.Text
+  /// True once C&C loyalty bonus has been credited (initial earn or deferred after payment).
+  ccLoyaltyBonusApplied Boolean @default(false)
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  @@index([storeId])
+  @@index([status])
+  @@index([orderId])
+  @@map("click_collect_orders")
+}
+
+model ProductCampaign {
+  id               String    @id @default(uuid())
+  name             String
+  slug             String    @unique
+  description      String?   @db.Text
+  type             String    @default("BONUS_POINTS")
+  status           String    @default("DRAFT")
+  startsAt         DateTime
+  endsAt           DateTime
+  productIds       String[]  @default([])
+  categoryIds      String[]  @default([])
+  fandomFilter     String[]  @default([])
+  bonusPoints      Int?
+  minTierLevel     Int       @default(0)
+  regionCodes      String[]  @default([])
+  maxRedemptions   Int?
+  totalRedemptions Int       @default(0)
+  metadata         Json?
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+
+  @@index([status])
+  @@index([startsAt, endsAt])
+  @@map("product_campaigns")
+}
+
+model StoreOnboardingChecklist {
+  id          String    @id @default(uuid())
+  storeId     String    @unique
+  store       Store     @relation(fields: [storeId], references: [id], onDelete: Cascade)
+  steps       Json
+  status      String    @default("IN_PROGRESS")
+  startedAt   DateTime  @default(now())
+  completedAt DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@map("store_onboarding_checklists")
 }

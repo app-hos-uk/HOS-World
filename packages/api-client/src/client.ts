@@ -1211,6 +1211,167 @@ export class ApiClient {
     );
   }
 
+  async createClickCollect(body: Record<string, unknown>): Promise<ApiResponse<unknown>> {
+    return this.request<ApiResponse<unknown>>('/click-collect', {
+      method: 'POST',
+      body: JSON.stringify(body),
+    });
+  }
+
+  async getMyClickCollectOrders(): Promise<ApiResponse<unknown>> {
+    return this.request<ApiResponse<unknown>>('/click-collect/my-orders');
+  }
+
+  async getClickCollectStores(
+    productIds: string[],
+    opts?: { verifyInventory?: boolean },
+  ): Promise<ApiResponse<unknown>> {
+    const sp = new URLSearchParams();
+    if (productIds.length > 0) sp.set('productIds', productIds.join(','));
+    if (opts?.verifyInventory) sp.set('verifyInventory', 'true');
+    const qs = sp.toString() ? `?${sp.toString()}` : '';
+    return this.request<ApiResponse<unknown>>(`/click-collect/stores${qs}`);
+  }
+
+  async adminListClickCollect(params?: {
+    storeId?: string;
+    status?: string;
+  }): Promise<ApiResponse<unknown>> {
+    const sp = new URLSearchParams();
+    if (params?.storeId) sp.set('storeId', params.storeId);
+    if (params?.status) sp.set('status', params.status);
+    const qs = sp.toString() ? `?${sp}` : '';
+    return this.request<ApiResponse<unknown>>(`/admin/click-collect${qs}`);
+  }
+
+  async adminGetClickCollect(id: string): Promise<ApiResponse<unknown>> {
+    return this.request<ApiResponse<unknown>>(`/admin/click-collect/${id}`);
+  }
+
+  async adminMarkCCPreparing(id: string): Promise<ApiResponse<unknown>> {
+    return this.request<ApiResponse<unknown>>(`/admin/click-collect/${id}/preparing`, {
+      method: 'POST',
+    });
+  }
+
+  async adminMarkCCReady(id: string): Promise<ApiResponse<unknown>> {
+    return this.request<ApiResponse<unknown>>(`/admin/click-collect/${id}/ready`, {
+      method: 'POST',
+    });
+  }
+
+  async adminMarkCCCollected(id: string): Promise<ApiResponse<unknown>> {
+    return this.request<ApiResponse<unknown>>(`/admin/click-collect/${id}/collected`, {
+      method: 'POST',
+    });
+  }
+
+  async adminCancelCC(id: string): Promise<ApiResponse<unknown>> {
+    return this.request<ApiResponse<unknown>>(`/admin/click-collect/${id}/cancel`, {
+      method: 'POST',
+    });
+  }
+
+  async adminListProductCampaigns(params?: { status?: string }): Promise<ApiResponse<unknown>> {
+    const qs = params?.status ? `?status=${encodeURIComponent(params.status)}` : '';
+    return this.request<ApiResponse<unknown>>(`/admin/product-campaigns${qs}`);
+  }
+
+  async adminCreateProductCampaign(body: Record<string, unknown>): Promise<ApiResponse<unknown>> {
+    return this.request<ApiResponse<unknown>>('/admin/product-campaigns', {
+      method: 'POST',
+      body: JSON.stringify(body),
+    });
+  }
+
+  async adminGetProductCampaign(id: string): Promise<ApiResponse<unknown>> {
+    return this.request<ApiResponse<unknown>>(`/admin/product-campaigns/${id}`);
+  }
+
+  async adminUpdateProductCampaign(
+    id: string,
+    body: Record<string, unknown>,
+  ): Promise<ApiResponse<unknown>> {
+    return this.request<ApiResponse<unknown>>(`/admin/product-campaigns/${id}`, {
+      method: 'PATCH',
+      body: JSON.stringify(body),
+    });
+  }
+
+  async adminActivateProductCampaign(id: string): Promise<ApiResponse<unknown>> {
+    return this.request<ApiResponse<unknown>>(`/admin/product-campaigns/${id}/activate`, {
+      method: 'POST',
+    });
+  }
+
+  async adminCompleteProductCampaign(id: string): Promise<ApiResponse<unknown>> {
+    return this.request<ApiResponse<unknown>>(`/admin/product-campaigns/${id}/complete`, {
+      method: 'POST',
+    });
+  }
+
+  async adminCancelProductCampaign(id: string): Promise<ApiResponse<unknown>> {
+    return this.request<ApiResponse<unknown>>(`/admin/product-campaigns/${id}/cancel`, {
+      method: 'POST',
+    });
+  }
+
+  async adminListStores(): Promise<ApiResponse<unknown>> {
+    return this.request<ApiResponse<unknown>>('/admin/stores');
+  }
+
+  async adminCreateStore(body: Record<string, unknown>): Promise<ApiResponse<unknown>> {
+    return this.request<ApiResponse<unknown>>('/admin/stores', {
+      method: 'POST',
+      body: JSON.stringify(body),
+    });
+  }
+
+  async adminGetStore(id: string): Promise<ApiResponse<unknown>> {
+    return this.request<ApiResponse<unknown>>(`/admin/stores/${id}`);
+  }
+
+  async adminUpdateStore(id: string, body: Record<string, unknown>): Promise<ApiResponse<unknown>> {
+    return this.request<ApiResponse<unknown>>(`/admin/stores/${id}`, {
+      method: 'PATCH',
+      body: JSON.stringify(body),
+    });
+  }
+
+  async adminActivateStore(id: string): Promise<ApiResponse<unknown>> {
+    return this.request<ApiResponse<unknown>>(`/admin/stores/${id}/activate`, { method: 'POST' });
+  }
+
+  async adminDeactivateStore(id: string): Promise<ApiResponse<unknown>> {
+    return this.request<ApiResponse<unknown>>(`/admin/stores/${id}/deactivate`, { method: 'POST' });
+  }
+
+  async adminCompleteOnboardingStep(
+    storeId: string,
+    step: string,
+  ): Promise<ApiResponse<unknown>> {
+    return this.request<ApiResponse<unknown>>(`/admin/stores/${storeId}/onboarding/step`, {
+      method: 'POST',
+      body: JSON.stringify({ step }),
+    });
+  }
+
+  async adminCompleteOnboarding(storeId: string): Promise<ApiResponse<unknown>> {
+    return this.request<ApiResponse<unknown>>(`/admin/stores/${storeId}/onboarding/complete`, {
+      method: 'POST',
+    });
+  }
+
+  async adminGetCurrencies(): Promise<ApiResponse<unknown>> {
+    return this.request<ApiResponse<unknown>>('/admin/global/currencies');
+  }
+
+  async adminRefreshCurrencies(): Promise<ApiResponse<unknown>> {
+    return this.request<ApiResponse<unknown>>('/admin/global/currencies/refresh', {
+      method: 'POST',
+    });
+  }
+
   async listQuizzes(fandomId?: string): Promise<ApiResponse<unknown>> {
     const qs = fandomId ? `?fandomId=${encodeURIComponent(fandomId)}` : '';
     return this.request<ApiResponse<unknown>>(`/quiz${qs}`);

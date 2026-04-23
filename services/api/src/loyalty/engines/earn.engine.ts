@@ -7,6 +7,7 @@ import { LoyaltyWalletService } from '../services/wallet.service';
 import { LoyaltyCampaignService } from '../services/campaign.service';
 import { LoyaltyTierEngine } from './tier.engine';
 import { BrandPartnershipsService } from '../../brand-partnerships/brand-partnerships.service';
+import { ProductCampaignsService } from '../../product-campaigns/product-campaigns.service';
 
 @Injectable()
 export class LoyaltyEarnEngine {
@@ -19,6 +20,7 @@ export class LoyaltyEarnEngine {
     private campaigns: LoyaltyCampaignService,
     private tiers: LoyaltyTierEngine,
     private brandPartnerships: BrandPartnershipsService,
+    private productCampaigns: ProductCampaignsService,
   ) {}
 
   /**
@@ -69,6 +71,189 @@ export class LoyaltyEarnEngine {
     });
   }
 
+  /**
+   * Split product-campaign (and optional C&C) points into one wallet line per campaign for attribution.
+   * Rounding drift is absorbed by the last slice so the sum matches `productFinal`.
+   */
+  private async applyProductCampaignWalletSlices(
+    tx: Prisma.TransactionClient,
+    membershipId: string,
+    productBoost: {
+      breakdown: Array<{ campaignId: string; name: string; bonus: number }>;
+      primaryCampaignId?: string;
+      primaryCampaignName?: string;
+    },
+    productFinal: number,
+    tierMult: number,
+    ccBonusRaw: number,
+    common: {
+      sourceId: string;
+      channel: string;
+      sellerId?: string;
+      earnRuleId?: string;
+      storeId?: string;
+      orderNumber?: string;
+      externalSaleId?: string;
+    },
+  ): Promise<void> {
+    if (productFinal <= 0) return;
+
+    const slices: Array<{
+      pts: number;
+      campaignId?: string;
+      description: string;
+      metadata: Prisma.InputJsonValue;
+    }> = [];
+
+    for (const row of productBoost.breakdown) {
+      const pts = Math.max(0, Math.round(row.bonus * tierMult));
+      if (pts <= 0) continue;
+      slices.push({
+        pts,
+        campaignId: row.campaignId,
+        description: `Product campaign: ${row.name}`.trim(),
+        metadata: {
+          ...(common.orderNumber ? { orderNumber: common.orderNumber } : {}),
+          ...(common.externalSaleId ? { externalSaleId: common.externalSaleId } : {}),
+          breakdown: productBoost.breakdown,
+          slice: { campaignId: row.campaignId, name: row.name, bonus: row.bonus },
+        } as Prisma.InputJsonValue,
+      });
+    }
+
+    if (ccBonusRaw > 0) {
+      const pts = Math.max(0, Math.round(ccBonusRaw * tierMult));
+      if (pts > 0) {
+        slices.push({
+          pts,
+          description: 'Click & collect bonus',
+          metadata: {
+            ...(common.orderNumber ? { orderNumber: common.orderNumber } : {}),
+            ccBonus: ccBonusRaw,
+          } as Prisma.InputJsonValue,
+        });
+      }
+    }
+
+    if (!slices.length) {
+      slices.push({
+        pts: productFinal,
+        campaignId: productBoost.primaryCampaignId,
+        description: productBoost.primaryCampaignName
+          ? `Product campaign: ${productBoost.primaryCampaignName}`.trim()
+          : 'Product campaign',
+        metadata: {
+          ...(common.orderNumber ? { orderNumber: common.orderNumber } : {}),
+          ...(common.externalSaleId ? { externalSaleId: common.externalSaleId } : {}),
+          breakdown: productBoost.breakdown,
+        } as Prisma.InputJsonValue,
+      });
+    }
+
+    const sumPre = slices.reduce((s, x) => s + x.pts, 0);
+    const drift = productFinal - sumPre;
+    if (slices.length && drift !== 0) {
+      slices[slices.length - 1].pts += drift;
+    }
+
+    for (const s of slices) {
+      if (s.pts <= 0) continue;
+      await this.wallet.applyDelta(tx, membershipId, s.pts, LoyaltyTxType.EARN, {
+        source: 'PRODUCT_CAMPAIGN',
+        sourceId: common.sourceId,
+        channel: common.channel,
+        storeId: common.storeId ?? null,
+        sellerId: common.sellerId ?? null,
+        earnRuleId: common.earnRuleId ?? undefined,
+        campaignId: s.campaignId ?? null,
+        description: s.description,
+        metadata: s.metadata,
+      });
+    }
+  }
+
+  /**
+   * When payment credited loyalty before click & collect existed, apply configured C&C bonus once.
+   */
+  async applyDeferredClickCollectBonus(orderId: string): Promise<void> {
+    if (this.config.get<string>('LOYALTY_ENABLED') !== 'true') {
+      return;
+    }
+    if (this.config.get<string>('CC_BONUS_POINTS', '0') === '0') {
+      return;
+    }
+    const ccRaw = Number(this.config.get('CC_BONUS_POINTS', 0));
+    if (!Number.isFinite(ccRaw) || ccRaw <= 0) return;
+
+    const order = await this.prisma.order.findFirst({
+      where: { id: orderId, parentOrderId: null },
+      include: {
+        clickCollect: { select: { id: true, ccLoyaltyBonusApplied: true } },
+      },
+    });
+    if (!order?.userId || !order.clickCollect || order.clickCollect.ccLoyaltyBonusApplied) {
+      return;
+    }
+    if (order.loyaltyPointsEarned <= 0) return;
+
+    const membership = await this.prisma.loyaltyMembership.findUnique({
+      where: { userId: order.userId },
+      include: { tier: true },
+    });
+    if (!membership) return;
+
+    const purchaseRule = await this.prisma.loyaltyEarnRule.findUnique({
+      where: { action: 'PURCHASE' },
+    });
+    const applyTierMult = purchaseRule?.multiplierStack !== false;
+    const tierMult =
+      applyTierMult && membership.tier?.multiplier ? membership.tier.multiplier.toNumber() : 1;
+
+    const pts = Math.max(0, Math.round(ccRaw * tierMult));
+    if (pts <= 0) {
+      await this.prisma.clickCollectOrder.update({
+        where: { id: order.clickCollect.id },
+        data: { ccLoyaltyBonusApplied: true },
+      });
+      return;
+    }
+
+    try {
+      await this.prisma.$transaction(async (tx) => {
+        await this.wallet.applyDelta(tx, membership.id, pts, LoyaltyTxType.EARN, {
+          source: 'PRODUCT_CAMPAIGN',
+          sourceId: order.id,
+          channel: 'WEB',
+          earnRuleId: purchaseRule?.id ?? undefined,
+          description: 'Click & collect bonus (deferred)',
+          metadata: {
+            orderNumber: order.orderNumber,
+            ccBonus: ccRaw,
+            deferredClickCollect: true,
+          } as Prisma.InputJsonValue,
+        });
+        await tx.loyaltyMembership.update({
+          where: { id: membership.id },
+          data: { totalPointsEarned: { increment: pts } },
+        });
+        await tx.order.update({
+          where: { id: order.id },
+          data: { loyaltyPointsEarned: { increment: pts } },
+        });
+        await tx.clickCollectOrder.update({
+          where: { id: order.clickCollect!.id },
+          data: { ccLoyaltyBonusApplied: true },
+        });
+      });
+      await this.tiers.recalculateTier(membership.id);
+    } catch (e) {
+      this.logger.error(
+        `Deferred click & collect bonus failed for order ${orderId}`,
+        (e as Error)?.stack ?? String(e),
+      );
+    }
+  }
+
   async processOrderComplete(orderId: string): Promise<void> {
     if (this.config.get<string>('LOYALTY_ENABLED') !== 'true') {
       return;
@@ -83,6 +268,7 @@ export class LoyaltyEarnEngine {
           },
         },
         user: true,
+        clickCollect: { select: { id: true, ccLoyaltyBonusApplied: true } },
       },
     });
 
@@ -109,6 +295,7 @@ export class LoyaltyEarnEngine {
       brand?: string | null;
       categoryId?: string | null;
       lineBase: number;
+      quantity: number;
     }> = [];
 
     for (const line of order.items) {
@@ -139,6 +326,7 @@ export class LoyaltyEarnEngine {
         brand: p.brand,
         categoryId: p.categoryId,
         lineBase: pts.toNumber(),
+        quantity: line.quantity,
       });
     }
 
@@ -161,6 +349,12 @@ export class LoyaltyEarnEngine {
 
     const tierLevel = membership.tier?.level ?? 0;
     const orderTotalNum = new Decimal(order.subtotal).toNumber();
+    const ccBonus =
+      order.clickCollect &&
+      !order.clickCollect.ccLoyaltyBonusApplied &&
+      this.config.get<string>('CC_BONUS_POINTS', '0') !== '0'
+        ? Number(this.config.get('CC_BONUS_POINTS', 0))
+        : 0;
 
     const primarySellerId = sellerIds.length === 1 ? sellerIds[0] : undefined;
 
@@ -183,10 +377,24 @@ export class LoyaltyEarnEngine {
         const brandDelta = brandBoost.brandPoints;
         brandCampaignId = brandBoost.campaignId;
 
-        const totalPre = campPoints + brandDelta;
+        const productBoost = await this.productCampaigns.applyProductCampaignBonusInTx(tx, {
+          tierLevel,
+          regionCode: region,
+          lines: lines.map((l) => ({
+            productId: l.productId,
+            fandom: l.fandom,
+            categoryId: l.categoryId,
+            quantity: l.quantity ?? 1,
+          })),
+        });
+
+        const productDelta = productBoost.points + ccBonus;
+
+        const totalPre = campPoints + brandDelta + productDelta;
         totalFinal = Math.max(0, Math.round(totalPre * tierMult));
         const internalFinal = Math.max(0, Math.round(campPoints * tierMult));
-        const brandFinal = Math.max(0, totalFinal - internalFinal);
+        const productFinal = Math.max(0, Math.round(productDelta * tierMult));
+        const brandFinal = Math.max(0, totalFinal - internalFinal - productFinal);
 
         if (totalFinal === 0) {
           return;
@@ -226,6 +434,31 @@ export class LoyaltyEarnEngine {
           });
         }
 
+        if (productFinal > 0 && (productBoost.points > 0 || ccBonus > 0)) {
+          await this.applyProductCampaignWalletSlices(
+            tx,
+            membership.id,
+            productBoost,
+            productFinal,
+            tierMult,
+            ccBonus,
+            {
+              sourceId: order.id,
+              channel: 'WEB',
+              sellerId: primarySellerId,
+              earnRuleId: purchaseRule?.id ?? undefined,
+              orderNumber: order.orderNumber,
+            },
+          );
+        }
+
+        if (ccBonus > 0 && order.clickCollect?.id) {
+          await tx.clickCollectOrder.update({
+            where: { id: order.clickCollect.id },
+            data: { ccLoyaltyBonusApplied: true },
+          });
+        }
+
         await tx.loyaltyMembership.update({
           where: { id: membership.id },
           data: {
@@ -253,7 +486,10 @@ export class LoyaltyEarnEngine {
       await this.attachReferralFirstOrder(order.userId, order.id);
       await this.tiers.recalculateTier(membership.id);
     } catch (e) {
-      this.logger.warn(`Loyalty earn failed for order ${order.id}: ${(e as Error).message}`);
+      this.logger.error(
+        `Loyalty earn failed for order ${order.id}: ${(e as Error).message}`,
+        (e as Error)?.stack,
+      );
     }
   }
 
@@ -292,6 +528,7 @@ export class LoyaltyEarnEngine {
       brand?: string | null;
       categoryId?: string | null;
       lineBase: number;
+      quantity: number;
     }> = [];
 
     for (const line of sale.items) {
@@ -322,6 +559,7 @@ export class LoyaltyEarnEngine {
         brand: p.brand,
         categoryId: p.categoryId,
         lineBase: pts.toNumber(),
+        quantity: line.quantity,
       });
     }
 
@@ -370,10 +608,24 @@ export class LoyaltyEarnEngine {
         const brandDelta = brandBoost.brandPoints;
         brandCampaignId = brandBoost.campaignId;
 
-        const totalPre = campPoints + brandDelta;
+        const productBoost = await this.productCampaigns.applyProductCampaignBonusInTx(tx, {
+          tierLevel,
+          regionCode: region,
+          lines: lines.map((l) => ({
+            productId: l.productId,
+            fandom: l.fandom,
+            categoryId: l.categoryId,
+            quantity: l.quantity ?? 1,
+          })),
+        });
+
+        const productDelta = productBoost.points;
+
+        const totalPre = campPoints + brandDelta + productDelta;
         totalFinal = Math.max(0, Math.round(totalPre * tierMult));
         const internalFinal = Math.max(0, Math.round(campPoints * tierMult));
-        const brandFinal = Math.max(0, totalFinal - internalFinal);
+        const productFinal = Math.max(0, Math.round(productDelta * tierMult));
+        const brandFinal = Math.max(0, totalFinal - internalFinal - productFinal);
 
         if (totalFinal === 0) {
           return;
@@ -415,6 +667,25 @@ export class LoyaltyEarnEngine {
           });
         }
 
+        if (productFinal > 0 && productBoost.breakdown.length > 0) {
+          await this.applyProductCampaignWalletSlices(
+            tx,
+            membership.id,
+            productBoost,
+            productFinal,
+            tierMult,
+            0,
+            {
+              sourceId: sale.id,
+              channel: 'HOS_OUTLET_POS',
+              storeId: sale.storeId,
+              sellerId: primarySellerId,
+              earnRuleId: purchaseRule?.id ?? undefined,
+              externalSaleId: sale.externalSaleId ?? undefined,
+            },
+          );
+        }
+
         await tx.loyaltyMembership.update({
           where: { id: membership.id },
           data: {
@@ -441,7 +712,10 @@ export class LoyaltyEarnEngine {
       await this.brandPartnerships.reconcileAfterOrder(brandCampaignId);
       await this.tiers.recalculateTier(membership.id);
     } catch (e) {
-      this.logger.warn(`Loyalty earn failed for POS sale ${sale.id}: ${(e as Error).message}`);
+      this.logger.error(
+        `Loyalty earn failed for POS sale ${sale.id}: ${(e as Error).message}`,
+        (e as Error)?.stack,
+      );
     }
   }
 }

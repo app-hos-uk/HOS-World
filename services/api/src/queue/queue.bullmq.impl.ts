@@ -40,6 +40,10 @@ export enum JobType {
   LOYALTY_ANALYTICS_SNAPSHOT = 'loyalty:analytics-snapshot',
   LOYALTY_CLV_RECOMPUTE = 'loyalty:clv-recompute',
   CAMPAIGN_ATTRIBUTION_COMPUTE = 'loyalty:campaign-attribution',
+  CLICK_COLLECT_EXPIRY = 'cc:expiry',
+  CLICK_COLLECT_REMINDER = 'cc:reminder',
+  PRODUCT_CAMPAIGN_ACTIVATE = 'product-campaign:activate',
+  PRODUCT_CAMPAIGN_EXPIRE = 'product-campaign:expire',
 }
 
 export interface JobOptions {

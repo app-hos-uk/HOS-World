@@ -22,6 +22,7 @@ import { JourneyModule } from '../journeys/journey.module';
 import { SegmentationModule } from '../segmentation/segmentation.module';
 import { AmbassadorModule } from '../ambassador/ambassador.module';
 import { BrandPartnershipsModule } from '../brand-partnerships/brand-partnerships.module';
+import { ProductCampaignsModule } from '../product-campaigns/product-campaigns.module';
 
 @Module({
   imports: [
@@ -31,6 +32,7 @@ import { BrandPartnershipsModule } from '../brand-partnerships/brand-partnership
     forwardRef(() => JourneyModule),
     forwardRef(() => AmbassadorModule),
     BrandPartnershipsModule,
+    ProductCampaignsModule,
     SegmentationModule,
     JwtModule.registerAsync({
       imports: [ConfigModule],

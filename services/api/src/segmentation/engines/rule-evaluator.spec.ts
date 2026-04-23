@@ -5,6 +5,7 @@ import {
   buildWhereClause,
   countRuleMatches,
   extractCountRules,
+  extractTouristRule,
   stripCountRulesFromGroup,
   validateRuleGroup,
   type SegmentRuleGroup,
@@ -199,5 +200,18 @@ describe('rule-evaluator', () => {
         { dimension: 'brand.activeCampaignCount', operator: 'eq', value: 2 },
       ),
     ).toBe(false);
+  });
+
+  it('extractTouristRule reads geo.isTourist', () => {
+    const g: SegmentRuleGroup = {
+      operator: 'AND',
+      rules: [
+        { dimension: 'tier.level', operator: 'gte', value: 1 },
+        { dimension: 'geo.isTourist', operator: 'eq', value: true },
+      ],
+    };
+    expect(extractTouristRule(g)).toBe(true);
+    const stripped = stripCountRulesFromGroup(g);
+    expect(stripped.rules.some((r) => r.dimension === 'geo.isTourist')).toBe(false);
   });
 });

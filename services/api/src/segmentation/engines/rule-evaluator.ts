@@ -49,6 +49,7 @@ export const SEGMENT_DIMENSIONS: Record<
   'geo.country': { operators: ['eq', 'neq', 'in', 'not_in'] },
   'geo.regionCode': { operators: ['eq', 'neq', 'in', 'not_in'] },
   'geo.city': { operators: ['eq', 'in'] },
+  'geo.isTourist': { operators: ['eq'] },
   'fandom.favorites': { operators: ['contains', 'not_contains', 'is_empty', 'is_not_empty'] },
   'fandom.affinity': { operators: ['gt', 'gte', 'lt', 'lte'] },
   'user.role': { operators: ['eq', 'in'] },
@@ -169,6 +170,29 @@ export type CountRule =
   | { dimension: 'brand.activeCampaignCount'; operator: RuleOperator; value: number };
 
 /** Pulls relation-count rules (not expressible as Prisma UserWhereInput in v6) for post-filtering. */
+/** geo.isTourist must be post-filtered (requires latest purchase region). */
+export function extractTouristRule(group: SegmentRuleGroup): boolean | null {
+  let found: boolean | null = null;
+  for (const r of group.rules) {
+    if (r.dimension === 'geo.isTourist') {
+      if (r.operator !== 'eq') {
+        throw new BadRequestException('geo.isTourist only supports eq');
+      }
+      found = Boolean(r.value);
+    }
+  }
+  for (const g of group.groups ?? []) {
+    const inner = extractTouristRule(g);
+    if (inner !== null) {
+      if (found !== null && found !== inner) {
+        throw new BadRequestException('Conflicting geo.isTourist rules');
+      }
+      found = inner;
+    }
+  }
+  return found;
+}
+
 export function extractCountRules(group: SegmentRuleGroup): CountRule[] {
   const out: CountRule[] = [];
   for (const r of group.rules) {
@@ -196,7 +220,8 @@ export function stripCountRulesFromGroup(group: SegmentRuleGroup): SegmentRuleGr
     (r) =>
       r.dimension !== 'events.attendanceCount' &&
       r.dimension !== 'quiz.completedCount' &&
-      r.dimension !== 'brand.activeCampaignCount',
+      r.dimension !== 'brand.activeCampaignCount' &&
+      r.dimension !== 'geo.isTourist',
   );
   const groups = (group.groups ?? []).map(stripCountRulesFromGroup).filter(nonEmptyGroup);
   return { operator: group.operator, rules, groups: groups.length ? groups : undefined };
@@ -389,6 +414,7 @@ function dimensionToWhere(rule: SegmentRule): Prisma.UserWhereInput {
     case 'events.attendanceCount':
     case 'quiz.completedCount':
     case 'brand.activeCampaignCount':
+    case 'geo.isTourist':
       throw new BadRequestException(
         `${dimension} is handled via post-filter — use stripCountRulesFromGroup + extractCountRules`,
       );
@@ -481,7 +507,8 @@ function groupContainsCountRule(group: SegmentRuleGroup): boolean {
     if (
       r.dimension === 'events.attendanceCount' ||
       r.dimension === 'quiz.completedCount' ||
-      r.dimension === 'brand.activeCampaignCount'
+      r.dimension === 'brand.activeCampaignCount' ||
+      r.dimension === 'geo.isTourist'
     )
       return true;
   }
@@ -498,7 +525,7 @@ export function assertSafeCountComposition(group: SegmentRuleGroup): void {
   }
   if (group.operator === 'OR' && groupContainsCountRule(group)) {
     throw new BadRequestException(
-      'events.attendanceCount, quiz.completedCount, and brand.activeCampaignCount cannot be used inside OR groups',
+      'events.attendanceCount, quiz.completedCount, brand.activeCampaignCount, and geo.isTourist cannot be used inside OR groups',
     );
   }
 }

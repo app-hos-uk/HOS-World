@@ -14,6 +14,9 @@ describe('LoyaltyAnalyticsService', () => {
       findMany: jest.fn().mockResolvedValue([{ id: 'm1' }]),
       findUnique: jest.fn().mockResolvedValue(membership),
       aggregate: jest.fn().mockResolvedValue({ _sum: { currentBalance: 5000 }, _avg: { clvScore: new Decimal(100), predictedChurnRisk: new Decimal(0.2) }, _count: 10 }),
+      groupBy: jest
+        .fn()
+        .mockResolvedValue([{ regionCode: 'GB', _sum: { currentBalance: 1000 } }]),
       update: jest.fn().mockResolvedValue({}),
     },
     loyaltyTransaction: {
@@ -115,6 +118,7 @@ describe('LoyaltyAnalyticsService', () => {
     const r: any = await service.getProgrammeHealth();
     expect(r.totalMembers).toBeDefined();
     expect(r.pointsLiability).toBeDefined();
+    expect(Array.isArray(r.liabilityByRegion)).toBe(true);
   });
 
   it('getChannelPerformance returns web and pos', async () => {

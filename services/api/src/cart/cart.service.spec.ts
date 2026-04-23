@@ -210,6 +210,7 @@ describe('CartService - Phase 1 Tests', () => {
           id: 'product-id',
           price: 99.99,
           stock: 100,
+          status: 'ACTIVE',
         },
       };
 

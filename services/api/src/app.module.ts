@@ -83,6 +83,8 @@ import { SegmentationModule } from './segmentation/segmentation.module';
 import { AmbassadorModule } from './ambassador/ambassador.module';
 import { BrandPartnershipsModule } from './brand-partnerships/brand-partnerships.module';
 import { LoyaltyAnalyticsModule } from './loyalty-analytics/loyalty-analytics.module';
+import { StoreAdminModule } from './stores/store-admin.module';
+import { ClickCollectModule } from './click-collect/click-collect.module';
 import { IntegrationsModule } from './integrations/integrations.module';
 import { GamificationModule } from './gamification/gamification.module';
 import { DigitalProductsModule } from './digital-products/digital-products.module';
@@ -205,6 +207,8 @@ import { CorrelationIdMiddleware } from './common/middleware/correlation-id.midd
     AmbassadorModule,
     BrandPartnershipsModule,
     LoyaltyAnalyticsModule,
+    StoreAdminModule,
+    ClickCollectModule,
   ],
   controllers: [AppController],
   providers: [

@@ -41,6 +41,7 @@
     "db:seed-ambassadors": "ts-node prisma/seeds/ambassador-seed.ts",
     "db:seed-brand-partnerships": "ts-node prisma/seeds/brand-partnership-seed.ts",
     "db:seed-analytics": "ts-node prisma/seeds/analytics-seed.ts",
+    "db:seed-phase10": "ts-node prisma/seeds/phase10-seed.ts",
     "db:create-team-users": "ts-node src/database/create-team-users.ts",
     "db:verify-admin": "ts-node src/database/verify-admin.ts",
     "db:fix-admin": "ts-node src/database/fix-admin-now.ts",

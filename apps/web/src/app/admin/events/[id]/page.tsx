@@ -39,18 +39,27 @@ export default function AdminEventDetailPage() {
 
   useEffect(() => {
     if (!id || tab !== 'rsvps') return;
-    apiClient.adminGetEventRsvps(id).then((r) => setRsvps((r.data as any[]) || []));
-  }, [id, tab]);
+    apiClient
+      .adminGetEventRsvps(id)
+      .then((r) => setRsvps((r.data as any[]) || []))
+      .catch((e: unknown) => toast.error(e instanceof Error ? e.message : 'Failed to load RSVPs'));
+  }, [id, tab, toast]);
 
   useEffect(() => {
     if (!id || tab !== 'attendance') return;
-    apiClient.adminGetEventAttendances(id).then((r) => setAtt((r.data as any[]) || []));
-  }, [id, tab]);
+    apiClient
+      .adminGetEventAttendances(id)
+      .then((r) => setAtt((r.data as any[]) || []))
+      .catch((e: unknown) => toast.error(e instanceof Error ? e.message : 'Failed to load attendance'));
+  }, [id, tab, toast]);
 
   useEffect(() => {
     if (!id || tab !== 'stats') return;
-    apiClient.adminGetEventStats(id).then((r) => setStats(r.data));
-  }, [id, tab]);
+    apiClient
+      .adminGetEventStats(id)
+      .then((r) => setStats(r.data))
+      .catch((e: unknown) => toast.error(e instanceof Error ? e.message : 'Failed to load stats'));
+  }, [id, tab, toast]);
 
   const event = data?.event;
   const tabBtn = (t: Tab, label: string) => (

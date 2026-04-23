@@ -11,6 +11,7 @@ import {
   buildSegmentUserWhere,
   countRuleMatches,
   extractCountRules,
+  extractTouristRule,
   SEGMENT_DIMENSIONS,
   validateRuleGroup,
   type CountRule,
@@ -26,6 +27,16 @@ function slugify(name: string): string {
     .replace(/^-|-$/g, '')
     .slice(0, 80);
   return s || 'segment';
+}
+
+/** Collapse common country aliases so e.g. UK vs GB does not false-flag tourists. */
+function normalizeGeoRegion(code: string | null | undefined): string | null {
+  if (code == null) return null;
+  const raw = String(code).trim().toUpperCase();
+  if (!raw) return null;
+  if (raw === 'UK' || raw === 'GBR') return 'GB';
+  if (raw.length === 2) return raw;
+  return raw;
 }
 
 export type PreviewUser = {
@@ -199,9 +210,83 @@ export class SegmentationService {
     });
   }
 
+  private async resolveTouristFlags(userIds: string[]): Promise<Map<string, boolean>> {
+    const out = new Map<string, boolean>();
+    if (!userIds.length) return out;
+
+    const users = await this.prisma.user.findMany({
+      where: { id: { in: userIds } },
+      select: { id: true, country: true },
+    });
+
+    const orders = await this.prisma.order.findMany({
+      where: {
+        userId: { in: userIds },
+        parentOrderId: null,
+        status: { not: 'CANCELLED' },
+      },
+      orderBy: { createdAt: 'desc' },
+      select: {
+        userId: true,
+        createdAt: true,
+        shippingAddress: { select: { country: true } },
+        clickCollect: { select: { store: { select: { defaultRegionCode: true } } } },
+      },
+    });
+    const latestOrder = new Map<string, { at: Date; region: string | null }>();
+    for (const o of orders) {
+      if (latestOrder.has(o.userId)) continue;
+      const region =
+        o.clickCollect?.store?.defaultRegionCode || o.shippingAddress?.country || null;
+      latestOrder.set(o.userId, {
+        at: o.createdAt,
+        region: normalizeGeoRegion(region ? String(region) : null),
+      });
+    }
+
+    const sales = await this.prisma.pOSSale.findMany({
+      where: { customerId: { in: userIds } },
+      orderBy: { saleDate: 'desc' },
+      select: {
+        customerId: true,
+        saleDate: true,
+        store: { select: { defaultRegionCode: true } },
+      },
+    });
+    const latestSale = new Map<string, { at: Date; region: string | null }>();
+    for (const s of sales) {
+      if (!s.customerId || latestSale.has(s.customerId)) continue;
+      latestSale.set(s.customerId, {
+        at: s.saleDate,
+        region: normalizeGeoRegion(s.store?.defaultRegionCode ?? null),
+      });
+    }
+
+    for (const u of users) {
+      const o = latestOrder.get(u.id);
+      const s = latestSale.get(u.id);
+      let purchaseRegion: string | null = null;
+      if (o && s) {
+        purchaseRegion = s.at.getTime() > o.at.getTime() ? s.region : o.region;
+      } else {
+        purchaseRegion = o?.region ?? s?.region ?? null;
+      }
+      const userGeoNorm = normalizeGeoRegion(u.country) ?? '';
+      const isTourist =
+        !!purchaseRegion &&
+        !!userGeoNorm &&
+        userGeoNorm.length > 0 &&
+        purchaseRegion.length > 0 &&
+        userGeoNorm !== purchaseRegion;
+      out.set(u.id, isTourist);
+    }
+    return out;
+  }
+
   private async resolveMatchingUserIds(rules: SegmentRuleGroup): Promise<string[]> {
     const where = buildSegmentUserWhere(rules);
     const countRules = extractCountRules(rules);
+    const touristWant = extractTouristRule(rules);
     const rows = await this.prisma.user.findMany({
       where,
       select: {
@@ -215,23 +300,28 @@ export class SegmentationService {
         },
       },
     });
-    if (!countRules.length) {
-      return rows.map((r) => r.id);
-    }
-    return rows
-      .filter((r) =>
-        countRules.every((cr: CountRule) =>
-          countRuleMatches(
-            {
-              eventAttendances: r._count.eventAttendances,
-              quizAttempts: r._count.quizAttempts,
-              brandRedemptions: r._count.brandCampaignRedemptions,
-            },
-            cr,
+    let ids = rows.map((r) => r.id);
+    if (countRules.length) {
+      ids = rows
+        .filter((r) =>
+          countRules.every((cr: CountRule) =>
+            countRuleMatches(
+              {
+                eventAttendances: r._count.eventAttendances,
+                quizAttempts: r._count.quizAttempts,
+                brandRedemptions: r._count.brandCampaignRedemptions,
+              },
+              cr,
+            ),
           ),
-        ),
-      )
-      .map((r) => r.id);
+        )
+        .map((r) => r.id);
+    }
+    if (touristWant !== null) {
+      const flags = await this.resolveTouristFlags(ids);
+      ids = ids.filter((id) => flags.get(id) === touristWant);
+    }
+    return ids;
   }
 
   async evaluateSegment(segmentId: string): Promise<{ added: number; removed: number; total: number }> {
@@ -300,80 +390,32 @@ export class SegmentationService {
 
   async previewSegment(rules: SegmentRuleGroup): Promise<{ count: number; sampleUsers: PreviewUser[] }> {
     this.validateRules(rules);
-    const where = buildSegmentUserWhere(rules);
-    const countRules = extractCountRules(rules);
     const previewLimit = this.config.get<number>('SEGMENT_PREVIEW_LIMIT', 10);
-
-    const count = countRules.length
-      ? (
-          await this.prisma.user.findMany({
-            where,
-            select: {
-              id: true,
-              _count: {
-                select: {
-                  eventAttendances: true,
-                  quizAttempts: true,
-                  brandCampaignRedemptions: true,
-                },
-              },
-            },
-          })
-        ).filter((r) =>
-          countRules.every((cr: CountRule) =>
-            countRuleMatches(
-              {
-                eventAttendances: r._count.eventAttendances,
-                quizAttempts: r._count.quizAttempts,
-                brandRedemptions: r._count.brandCampaignRedemptions,
-              },
-              cr,
-            ),
-          ),
-        ).length
-      : await this.prisma.user.count({ where });
-
+    const matched = await this.resolveMatchingUserIds(rules);
+    const count = matched.length;
+    const idSet = new Set(matched);
+    const take = Math.min(500, Math.max(previewLimit * 20, previewLimit));
     const candidates = await this.prisma.user.findMany({
-      where,
-      take: 50,
+      where: { id: { in: matched.slice(0, take) } },
       orderBy: { createdAt: 'desc' },
       select: {
         id: true,
         email: true,
         firstName: true,
         country: true,
-        _count: {
-          select: {
-            eventAttendances: true,
-            quizAttempts: true,
-            brandCampaignRedemptions: true,
-          },
-        },
         loyaltyMembership: { select: { tier: { select: { name: true } } } },
       },
     });
-    const filtered = countRules.length
-      ? candidates.filter((r) =>
-          countRules.every((cr: CountRule) =>
-            countRuleMatches(
-              {
-                eventAttendances: r._count.eventAttendances,
-                quizAttempts: r._count.quizAttempts,
-                brandRedemptions: r._count.brandCampaignRedemptions,
-              },
-              cr,
-            ),
-          ),
-        )
-      : candidates;
-
-    const sampleUsers: PreviewUser[] = filtered.slice(0, previewLimit).map((u) => ({
-      id: u.id,
-      email: u.email,
-      firstName: u.firstName,
-      tier: u.loyaltyMembership?.tier?.name ?? null,
-      country: u.country ?? null,
-    }));
+    const sampleUsers: PreviewUser[] = candidates
+      .filter((u) => idSet.has(u.id))
+      .slice(0, previewLimit)
+      .map((u) => ({
+        id: u.id,
+        email: u.email,
+        firstName: u.firstName,
+        tier: u.loyaltyMembership?.tier?.name ?? null,
+        country: u.country ?? null,
+      }));
 
     return { count, sampleUsers };
   }
@@ -491,6 +533,7 @@ export class SegmentationService {
       'geo.country',
       'geo.regionCode',
       'geo.city',
+      'geo.isTourist',
       'fandom.favorites',
       'fandom.affinity',
       'user.role',

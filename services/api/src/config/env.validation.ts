@@ -78,6 +78,14 @@ interface EnvSchema {
   LOYALTY_CLV_RECOMPUTE_CRON?: string;
   LOYALTY_CLV_BATCH_SIZE?: string;
   CAMPAIGN_ATTRIBUTION_CRON?: string;
+  CC_EXPIRY_HOURS?: string;
+  CC_BONUS_POINTS?: string;
+  CC_REMINDER_HOURS_BEFORE?: string;
+  PRODUCT_CAMPAIGN_ACTIVATE_CRON?: string;
+  PRODUCT_CAMPAIGN_EXPIRE_CRON?: string;
+  CC_EXPIRY_CRON?: string;
+  CC_REMINDER_CRON?: string;
+  GLOBAL_SUPPORTED_CURRENCIES?: string;
 }
 
 const required: (keyof EnvSchema)[] = ['DATABASE_URL', 'JWT_SECRET', 'JWT_REFRESH_SECRET'];

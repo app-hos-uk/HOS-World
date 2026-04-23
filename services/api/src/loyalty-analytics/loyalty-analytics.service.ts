@@ -564,6 +564,19 @@ export class LoyaltyAnalyticsService {
 
     const liability = liabilityAgg._sum.currentBalance ?? 0;
 
+    const byRegion = await this.prisma.loyaltyMembership.groupBy({
+      by: ['regionCode'],
+      _sum: { currentBalance: true },
+    });
+    const liabilityByRegion = byRegion.map((r) => {
+      const pts = r._sum.currentBalance ?? 0;
+      return {
+        region: r.regionCode ?? 'UNSET',
+        totalPoints: pts,
+        estimatedCost: Math.round(pts * redeemValue * 100) / 100,
+      };
+    });
+
     const [earned30, redeemed30] = await Promise.all([
       this.prisma.loyaltyTransaction.aggregate({
         where: { type: { in: ['EARN', 'BONUS'] }, createdAt: { gte: daysAgo(30) } },
@@ -617,6 +630,7 @@ export class LoyaltyAnalyticsService {
       activeLast90d: active90,
       enrollmentTrend: enrollmentMonths,
       pointsLiability: { total: liability, estimatedCost: Math.round(liability * redeemValue * 100) / 100 },
+      liabilityByRegion,
       pointsVelocity: { issuedLast30d, redeemedLast30d, netChange: issuedLast30d - redeemedLast30d },
       revenueImpact: {
         memberRevenue: Math.round(memberRev * 100) / 100,
