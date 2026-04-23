@@ -27,7 +27,7 @@ export default function AmbassadorProfileEditPage() {
         setCommissionAsPoints(Boolean(p.commissionAsPoints ?? true));
         setTier(String(p.tier ?? ''));
       })
-      .catch((e: Error) => setErr(e.message));
+      .catch((e: unknown) => setErr(e instanceof Error ? e.message : 'Request failed'));
   }, []);
 
   async function save(e: React.FormEvent) {

@@ -30,7 +30,7 @@ export default function AmbassadorHubPage() {
     apiClient
       .getAmbassadorEligibility()
       .then((r) => setEligibility((r.data as Record<string, unknown>) || null))
-      .catch((e: Error) => setError(e.message))
+      .catch((e: unknown) => setError(e instanceof Error ? e.message : 'Request failed'))
       .finally(() => setLoading(false));
   }, []);
 
