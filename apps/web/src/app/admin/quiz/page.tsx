@@ -8,9 +8,8 @@ import { useToast } from '@/hooks/useToast';
 
 type QuizQuestion = { _key: string; question: string; options: string[]; correctIndex: number };
 
-let _qSeq = 0;
 function quid(): string {
-  return `q${Date.now()}-${++_qSeq}`;
+  return crypto.randomUUID();
 }
 
 function newQuestion(): QuizQuestion {

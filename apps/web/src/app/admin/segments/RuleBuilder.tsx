@@ -14,9 +14,8 @@ export type SegmentRuleGroup = {
 
 type DimMeta = { dimension: string; category: string; operators: string[] };
 
-let _seq = 0;
 function uid(): string {
-  return `r${Date.now()}-${++_seq}`;
+  return crypto.randomUUID();
 }
 
 const defaultRule = (): SegmentRule => ({
