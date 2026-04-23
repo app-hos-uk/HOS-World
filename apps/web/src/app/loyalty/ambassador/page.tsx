@@ -207,8 +207,8 @@ export default function AmbassadorHubPage() {
                     <p className="text-stone-500 text-xs mb-2">Recent activity</p>
                     <ul className="space-y-2 text-stone-300">
                       {((dashboard.recentActivity as Record<string, unknown>[]) || []).slice(0, 8).map(
-                        (a, i) => (
-                          <li key={i}>
+                        (a) => (
+                          <li key={`${String(a.type)}-${String(a.date)}`}>
                             {String(a.description)} —{' '}
                             <span className="text-amber-200/90">{String(a.pointsEarned)}</span> pts
                           </li>
@@ -280,13 +280,13 @@ export default function AmbassadorHubPage() {
                     ))}
                   </div>
                   <ol className="space-y-2">
-                    {leaderboard.map((row, i) => (
+                    {leaderboard.map((row) => (
                       <li
-                        key={i}
+                        key={String((row as { userId?: string }).userId)}
                         className="flex justify-between border-b border-stone-800/80 py-2"
                       >
                         <span>
-                          {String((row as { rank?: number }).rank ?? i + 1)}.{' '}
+                          {String((row as { rank?: number }).rank)}.{' '}
                           {String((row as { displayName?: string }).displayName)}
                         </span>
                         <span className="text-amber-200">{String((row as { points?: number }).points)}</span>

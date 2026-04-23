@@ -41,8 +41,8 @@ export default function AdminMessagingStatsPage() {
                 Since {data?.since ? new Date(data.since).toLocaleString() : '—'}
               </p>
               <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
-                {rows.map((r: any, i: number) => (
-                  <div key={i} className="rounded-lg border border-gray-200 p-4 bg-white shadow-sm">
+                {rows.map((r: any) => (
+                  <div key={`${r.channel}-${r.status}`} className="rounded-lg border border-gray-200 p-4 bg-white shadow-sm">
                     <p className="text-xs text-gray-500 uppercase">{r.channel}</p>
                     <p className="text-lg font-semibold">{r.status}</p>
                     <p className="text-2xl text-indigo-600">{r._count?._all ?? '—'}</p>

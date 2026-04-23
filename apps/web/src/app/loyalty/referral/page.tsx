@@ -78,8 +78,8 @@ export default function LoyaltyReferralPage() {
                 <div className="pt-2 border-t border-stone-800">
                   <p className="text-stone-500 text-sm mb-2">Recent</p>
                   <ul className="text-sm space-y-1">
-                    {info!.recentReferrals.map((r, i) => (
-                      <li key={i} className="flex justify-between gap-2">
+                    {info!.recentReferrals.map((r) => (
+                      <li key={`${r.name}-${r.date}`} className="flex justify-between gap-2">
                         <span>{r.name}</span>
                         <span className="text-stone-500">
                           {r.status}
