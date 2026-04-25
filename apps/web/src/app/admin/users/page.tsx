@@ -618,7 +618,7 @@ export default function AdminUsersPage() {
           {error && (
             <div className="bg-red-50 border border-red-200 rounded-lg p-4">
               <p className="text-red-800">Error: {error}</p>
-              <button onClick={fetchUsers} className="mt-2 text-red-600 hover:text-red-800 text-sm">Retry</button>
+              <button onClick={() => { fetchUsers(1); fetchStats(); }} className="mt-2 text-red-600 hover:text-red-800 text-sm">Retry</button>
             </div>
           )}
 
