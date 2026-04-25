@@ -28,7 +28,9 @@ export default function AdminStoreNewPage() {
         const t = first?.tenant as Record<string, string> | undefined;
         if (t?.id) setTenantId(t.id);
       })
-      .catch(() => {});
+      .catch((e: unknown) => {
+        console.error('adminListStores failed:', e instanceof Error ? e.message : e);
+      });
   }, []);
 
   const save = async () => {

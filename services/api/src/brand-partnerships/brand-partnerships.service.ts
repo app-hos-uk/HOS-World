@@ -3,7 +3,7 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { ProductStatus, type BrandCampaign, type BrandPartnership, type Prisma } from '@prisma/client';
+import { Prisma, ProductStatus, type BrandCampaign, type BrandPartnership } from '@prisma/client';
 import { Decimal } from '@prisma/client/runtime/library';
 import { PrismaService } from '../database/prisma.service';
 import { SegmentationService } from '../segmentation/segmentation.service';
@@ -576,22 +576,53 @@ export class BrandPartnershipsService {
     const primary = eligible.find((c) => c.id === primaryId);
     if (!primary) return { brandPoints: 0 };
 
+    // Lock campaign + partnership so concurrent order completions cannot
+    // overspend point budgets (read-budget + increment is not safe otherwise).
+    await tx.$executeRaw(
+      Prisma.sql`SELECT 1 FROM brand_campaigns WHERE id = ${primaryId}::uuid FOR UPDATE`,
+    );
+    await tx.$executeRaw(
+      Prisma.sql`SELECT 1 FROM brand_partnerships WHERE id = ${primary.partnershipId}::uuid FOR UPDATE`,
+    );
+    const primaryRow = await tx.brandCampaign.findUnique({
+      where: { id: primaryId },
+      include: { partnership: true },
+    });
+    if (!primaryRow) return { brandPoints: 0 };
+    if (primaryRow.status !== 'ACTIVE') return { brandPoints: 0 };
+    const at = new Date();
+    if (at < primaryRow.startsAt || at > primaryRow.endsAt) {
+      return { brandPoints: 0 };
+    }
+    const pship = primaryRow.partnership;
+    if (pship.status !== 'ACTIVE' || at < pship.contractStart || at > pship.contractEnd) {
+      return { brandPoints: 0 };
+    }
+    if (!new Decimal(pship.spentBudget).lt(pship.totalBudget)) {
+      return { brandPoints: 0 };
+    }
+    if (
+      primaryRow.totalPointsBudget != null &&
+      primaryRow.totalPointsAwarded >= primaryRow.totalPointsBudget
+    ) {
+      return { brandPoints: 0 };
+    }
+
     const userAwarded = await tx.brandCampaignRedemption.aggregate({
       where: { campaignId: primaryId, userId: args.userId },
       _sum: { pointsAwarded: true },
     });
     const prevUser = userAwarded._sum.pointsAwarded ?? 0;
-    if (primary.maxPointsPerUser != null) {
-      const room = Math.max(0, primary.maxPointsPerUser - prevUser);
+    if (primaryRow.maxPointsPerUser != null) {
+      const room = Math.max(0, primaryRow.maxPointsPerUser - prevUser);
       brandRaw = Math.min(brandRaw, room);
     }
 
-    if (primary.totalPointsBudget != null) {
-      const roomCamp = Math.max(0, primary.totalPointsBudget - primary.totalPointsAwarded);
+    if (primaryRow.totalPointsBudget != null) {
+      const roomCamp = Math.max(0, primaryRow.totalPointsBudget - primaryRow.totalPointsAwarded);
       brandRaw = Math.min(brandRaw, roomCamp);
     }
 
-    const pship = primary.partnership;
     const pRoom = new Decimal(pship.totalBudget).sub(pship.spentBudget).toNumber();
     const budgetRoomPoints = Math.max(0, Math.floor(pRoom));
     brandRaw = Math.min(brandRaw, budgetRoomPoints);
@@ -632,8 +663,8 @@ export class BrandPartnershipsService {
 
     return {
       brandPoints: brandRaw,
-      campaignId: primary.id,
-      campaignName: primary.name,
+      campaignId: primaryRow.id,
+      campaignName: primaryRow.name,
       partnerName: pship.name,
       brandMultiplier: bestMult > 1 ? bestMult : undefined,
     };

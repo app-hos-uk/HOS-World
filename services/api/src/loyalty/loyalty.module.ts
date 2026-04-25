@@ -36,9 +36,13 @@ import { ProductCampaignsModule } from '../product-campaigns/product-campaigns.m
     SegmentationModule,
     JwtModule.registerAsync({
       imports: [ConfigModule],
-      useFactory: (config: ConfigService) => ({
-        secret: config.get<string>('JWT_SECRET') || 'dev-insecure-placeholder',
-      }),
+      useFactory: (config: ConfigService) => {
+        const secret = config.get<string>('JWT_SECRET');
+        if (!secret) {
+          throw new Error('JWT_SECRET environment variable is required');
+        }
+        return { secret };
+      },
       inject: [ConfigService],
     }),
   ],

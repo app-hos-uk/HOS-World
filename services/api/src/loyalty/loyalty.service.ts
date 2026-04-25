@@ -6,6 +6,7 @@ import {
   Inject,
   forwardRef,
   Optional,
+  Logger,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { Prisma, UserRole, LoyaltyTxType } from '@prisma/client';
@@ -26,6 +27,8 @@ import { MarketingEventBus } from '../journeys/marketing-event.bus';
 
 @Injectable()
 export class LoyaltyService {
+  private readonly logger = new Logger(LoyaltyService.name);
+
   constructor(
     private prisma: PrismaService,
     private config: ConfigService,
@@ -78,17 +81,23 @@ export class LoyaltyService {
       include: { tier: true },
     });
 
-    this.events.onWelcome(userId, initiate.name).catch(() => {});
+    this.events.onWelcome(userId, initiate.name).catch((e: unknown) => {
+      this.logger.warn(`Welcome event failed for ${userId}: ${e instanceof Error ? e.message : 'unknown'}`);
+    });
 
     void this.marketingBus
       ?.emit('LOYALTY_WELCOME', userId, {
         tierName: initiate.name,
         firstName: user.firstName || '',
       })
-      .catch(() => {});
+      .catch((e: unknown) => {
+        this.logger.warn(`Marketing welcome event failed for ${userId}: ${e instanceof Error ? e.message : 'unknown'}`);
+      });
 
     if (this.config.get<string>('POS_ENABLED') === 'true') {
-      void this.queue.addJob(JobType.POS_CUSTOMER_SYNC, { userId }).catch(() => {});
+      void this.queue.addJob(JobType.POS_CUSTOMER_SYNC, { userId }).catch((e: unknown) => {
+        this.logger.warn(`POS sync job enqueue failed for ${userId}: ${e instanceof Error ? e.message : 'unknown'}`);
+      });
     }
 
     const ref = dto?.referralCode?.trim();
@@ -118,7 +127,11 @@ export class LoyaltyService {
     };
   }
 
-  async updatePreferences(userId: string, dto: LoyaltyPreferencesDto) {
+  async updatePreferences(
+    userId: string,
+    dto: LoyaltyPreferencesDto,
+    audit?: { ipAddress?: string | null; userAgent?: string | null },
+  ) {
     this.assertEnabled();
     const m = await this.prisma.loyaltyMembership.findUnique({ where: { userId } });
     if (!m) throw new NotFoundException('Not enrolled');
@@ -132,23 +145,40 @@ export class LoyaltyService {
     if (dto.optInSms !== undefined) data.optInSms = dto.optInSms;
     if (dto.optInWhatsApp !== undefined) data.optInWhatsApp = dto.optInWhatsApp;
     if (dto.optInPush !== undefined) data.optInPush = dto.optInPush;
-    if (Object.keys(data).length === 0) return this.getPreferences(userId);
-    const updated = await this.prisma.loyaltyMembership.update({
-      where: { userId },
-      data,
-    });
-    const granted =
-      updated.optInEmail ||
-      updated.optInSms ||
-      updated.optInWhatsApp ||
-      updated.optInPush;
-    await this.prisma.gDPRConsentLog.create({
-      data: {
-        userId,
-        consentType: 'MARKETING',
-        granted,
-        grantedAt: new Date(),
-      },
+    if (Object.keys(data).length === 0) {
+      throw new BadRequestException(
+        'At least one of optInEmail, optInSms, optInWhatsApp, or optInPush must be provided',
+      );
+    }
+    const ip = audit?.ipAddress?.trim() || null;
+    const ua = audit?.userAgent?.trim() || null;
+    const now = new Date();
+    const consentRows: Array<{
+      userId: string;
+      consentType: string;
+      granted: boolean;
+      grantedAt: Date;
+      ipAddress: string | null;
+      userAgent: string | null;
+    }> = [];
+    if (dto.optInEmail !== undefined) {
+      consentRows.push({ userId, consentType: 'LOYALTY_MARKETING_EMAIL', granted: dto.optInEmail, grantedAt: now, ipAddress: ip, userAgent: ua });
+    }
+    if (dto.optInSms !== undefined) {
+      consentRows.push({ userId, consentType: 'LOYALTY_MARKETING_SMS', granted: dto.optInSms, grantedAt: now, ipAddress: ip, userAgent: ua });
+    }
+    if (dto.optInWhatsApp !== undefined) {
+      consentRows.push({ userId, consentType: 'LOYALTY_MARKETING_WHATSAPP', granted: dto.optInWhatsApp, grantedAt: now, ipAddress: ip, userAgent: ua });
+    }
+    if (dto.optInPush !== undefined) {
+      consentRows.push({ userId, consentType: 'LOYALTY_MARKETING_PUSH', granted: dto.optInPush, grantedAt: now, ipAddress: ip, userAgent: ua });
+    }
+    const updated = await this.prisma.$transaction(async (tx) => {
+      const result = await tx.loyaltyMembership.update({ where: { userId }, data });
+      if (consentRows.length) {
+        await tx.gDPRConsentLog.createMany({ data: consentRows });
+      }
+      return result;
     });
     return {
       optInEmail: updated.optInEmail,

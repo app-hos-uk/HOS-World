@@ -37,7 +37,10 @@ export class LoyaltyStaffAuthGuard implements CanActivate {
     try {
       const secret = this.config.get<string>('JWT_SECRET');
       if (!secret) throw new UnauthorizedException('JWT not configured');
-      const payload = await this.jwt.verifyAsync(auth.slice(7), { algorithms: ['HS256'] });
+      const payload = await this.jwt.verifyAsync(auth.slice(7), {
+        secret,
+        algorithms: ['HS256'],
+      });
       if (payload.type && payload.type !== 'access') {
         throw new UnauthorizedException('Invalid token');
       }

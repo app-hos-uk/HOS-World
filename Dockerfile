@@ -32,9 +32,9 @@ RUN cd packages/shared-types && pnpm build \
     && cd ../utils && pnpm build \
     && cd ../api-client && pnpm build \
     && cd ../theme-system && pnpm build \
-    && cd ../cms-client && (pnpm build || true) \
+    && cd ../cms-client && pnpm build \
     && cd ../../services/api && pnpm db:generate \
-    && (pnpm build || true) \
+    && pnpm build \
     && test -f dist/main.js
 
 # ── Layer 4: Strip build tools & dev artifacts to shrink image ──
@@ -51,4 +51,4 @@ RUN chown -R appuser:nodejs /app
 WORKDIR /app/services/api
 USER appuser
 EXPOSE 3001
-CMD ["sh", "-c", "npx prisma migrate resolve --applied 20260219100000_convert_gbp_to_usd 2>/dev/null || true; npx prisma migrate deploy || echo 'WARN: migrate deploy had issues, continuing anyway'; exec node dist/main.js"]
+CMD ["sh", "-c", "npx prisma migrate resolve --applied 20260219100000_convert_gbp_to_usd 2>/dev/null || true; npx prisma migrate deploy && exec node dist/main.js"]

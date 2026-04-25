@@ -129,6 +129,9 @@ COPY --from=base /app/packages ./packages
 # Set working directory to web app
 WORKDIR /app/apps/web
 
+# Non-root runtime (align with base stage ownership; Next.js works as uid 1000 "node" user)
+USER node
+
 EXPOSE 3000
 
 ENV NODE_ENV=production

@@ -1,5 +1,6 @@
 import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import * as bcrypt from 'bcrypt';
+import { BCRYPT_PASSWORD_ROUNDS } from '../config/bcrypt-cost';
 import { PrismaService } from '../database/prisma.service';
 import { UpdateProfileDto, ChangePasswordDto } from './dto/update-profile.dto';
 import type { User } from '@hos-marketplace/shared-types';
@@ -210,8 +211,7 @@ export class UsersService {
     }
 
     // Hash new password
-    const saltRounds = 10;
-    const hashedPassword = await bcrypt.hash(changePasswordDto.newPassword, saltRounds);
+    const hashedPassword = await bcrypt.hash(changePasswordDto.newPassword, BCRYPT_PASSWORD_ROUNDS);
 
     // Update password
     await this.prisma.user.update({

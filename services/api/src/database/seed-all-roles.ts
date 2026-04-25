@@ -1,5 +1,6 @@
 import { PrismaClient, UserRole, SellerType } from '@prisma/client';
 import * as bcrypt from 'bcrypt';
+import { BCRYPT_PASSWORD_ROUNDS } from '../config/bcrypt-cost';
 import { slugify } from '@hos-marketplace/utils';
 
 const prisma = new PrismaClient();
@@ -86,9 +87,8 @@ const mockUsers = [
 ];
 
 async function seedAllRoles() {
-  const saltRounds = 10;
   const defaultPassword = 'Test123!';
-  const hashedPassword = await bcrypt.hash(defaultPassword, saltRounds);
+  const hashedPassword = await bcrypt.hash(defaultPassword, BCRYPT_PASSWORD_ROUNDS);
 
   console.log('🌱 Starting to seed mock users for all roles...\n');
 

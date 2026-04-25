@@ -7,26 +7,34 @@ export class FandomProfileService {
 
   constructor(private prisma: PrismaService) {}
 
-  /** Weighted raw scores before normalization (spec §7.2). */
+  /** Weighted raw scores before normalization (spec §7.2). Uses DB aggregates. */
   async computeProfile(userId: string): Promise<Record<string, number>> {
     const scores: Record<string, number> = {};
 
-    const orderItems = await this.prisma.orderItem.findMany({
-      where: { order: { userId, paymentStatus: 'PAID' } },
-      include: { product: { select: { fandom: true } } },
-    });
-    for (const item of orderItems) {
-      const f = item.product?.fandom?.trim();
-      if (f) scores[f] = (scores[f] || 0) + 4;
+    const orderScores: Array<{ fandom: string; score: number }> = await this.prisma.$queryRaw`
+      SELECT TRIM(p.fandom) AS fandom, COUNT(*)::int * 4 AS score
+      FROM order_items oi
+      JOIN orders o ON oi."orderId" = o.id
+      JOIN products p ON oi."productId" = p.id
+      WHERE o."userId" = ${userId}::uuid
+        AND o."paymentStatus" = 'PAID'
+        AND p.fandom IS NOT NULL AND TRIM(p.fandom) <> ''
+      GROUP BY TRIM(p.fandom)
+    `;
+    for (const row of orderScores) {
+      scores[row.fandom] = (scores[row.fandom] || 0) + Number(row.score);
     }
 
-    const wishlistItems = await this.prisma.wishlistItem.findMany({
-      where: { userId },
-      include: { product: { select: { fandom: true } } },
-    });
-    for (const item of wishlistItems) {
-      const f = item.product?.fandom?.trim();
-      if (f) scores[f] = (scores[f] || 0) + 1.5;
+    const wishlistScores: Array<{ fandom: string; score: number }> = await this.prisma.$queryRaw`
+      SELECT TRIM(p.fandom) AS fandom, COUNT(*)::float * 1.5 AS score
+      FROM wishlist_items wi
+      JOIN products p ON wi."productId" = p.id
+      WHERE wi."userId" = ${userId}::uuid
+        AND p.fandom IS NOT NULL AND TRIM(p.fandom) <> ''
+      GROUP BY TRIM(p.fandom)
+    `;
+    for (const row of wishlistScores) {
+      scores[row.fandom] = (scores[row.fandom] || 0) + Number(row.score);
     }
 
     const user = await this.prisma.user.findUnique({
@@ -38,22 +46,31 @@ export class FandomProfileService {
       if (key) scores[key] = (scores[key] || 0) + 2;
     }
 
-    const quizAttempts = await this.prisma.fandomQuizAttempt.findMany({
-      where: { userId },
-      include: { quiz: { include: { fandom: { select: { name: true } } } } },
-    });
-    for (const a of quizAttempts) {
-      const name = a.quiz.fandom?.name?.trim();
-      if (name) scores[name] = (scores[name] || 0) + 1;
+    const quizScores: Array<{ fandom: string; score: number }> = await this.prisma.$queryRaw`
+      SELECT TRIM(f.name) AS fandom, COUNT(*)::int AS score
+      FROM fandom_quiz_attempts fqa
+      JOIN fandom_quizzes fq ON fqa."quizId" = fq.id
+      JOIN fandoms f ON fq."fandomId" = f.id
+      WHERE fqa."userId" = ${userId}::uuid
+        AND f.name IS NOT NULL AND TRIM(f.name) <> ''
+      GROUP BY TRIM(f.name)
+    `;
+    for (const row of quizScores) {
+      scores[row.fandom] = (scores[row.fandom] || 0) + Number(row.score);
     }
 
-    const quests = await this.prisma.userQuest.findMany({
-      where: { userId, status: 'COMPLETED' },
-      include: { quest: { include: { fandom: { select: { name: true } } } } },
-    });
-    for (const uq of quests) {
-      const name = uq.quest.fandom?.name?.trim();
-      if (name) scores[name] = (scores[name] || 0) + 1;
+    const questScores: Array<{ fandom: string; score: number }> = await this.prisma.$queryRaw`
+      SELECT TRIM(f.name) AS fandom, COUNT(*)::int AS score
+      FROM user_quests uq
+      JOIN quests q ON uq."questId" = q.id
+      JOIN fandoms f ON q."fandomId" = f.id
+      WHERE uq."userId" = ${userId}::uuid
+        AND uq.status = 'COMPLETED'
+        AND f.name IS NOT NULL AND TRIM(f.name) <> ''
+      GROUP BY TRIM(f.name)
+    `;
+    for (const row of questScores) {
+      scores[row.fandom] = (scores[row.fandom] || 0) + Number(row.score);
     }
 
     const maxScore = Math.max(...Object.values(scores), 1);
@@ -73,18 +90,32 @@ export class FandomProfileService {
   }
 
   async batchUpdateProfiles(): Promise<number> {
-    const memberships = await this.prisma.loyaltyMembership.findMany({
-      select: { userId: true },
-    });
+    const chunkSize = 50;
+    let cursor: string | undefined;
     let updated = 0;
-    for (const m of memberships) {
-      try {
-        await this.updateMemberProfile(m.userId);
-        updated++;
-      } catch (e) {
-        this.logger.warn(`Fandom profile failed for ${m.userId}: ${(e as Error).message}`);
+
+    for (;;) {
+      const memberships = await this.prisma.loyaltyMembership.findMany({
+        select: { id: true, userId: true },
+        take: chunkSize,
+        ...(cursor ? { skip: 1, cursor: { id: cursor } } : {}),
+        orderBy: { id: 'asc' },
+      });
+      if (memberships.length === 0) break;
+
+      for (const m of memberships) {
+        try {
+          await this.updateMemberProfile(m.userId);
+          updated++;
+        } catch (e) {
+          this.logger.warn(`Fandom profile failed for ${m.userId}: ${(e as Error).message}`);
+        }
       }
+
+      cursor = memberships[memberships.length - 1].id;
+      if (memberships.length < chunkSize) break;
     }
+
     return updated;
   }
 }

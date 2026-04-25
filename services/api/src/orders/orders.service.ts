@@ -102,30 +102,44 @@ export class OrdersService {
       }
     }
 
-    // Get user's cart with product tax classes
-    const cart = await this.prisma.cart.findUnique({
-      where: { userId },
-      include: {
-        items: {
-          include: {
-            product: {
-              include: {
-                seller: true,
-                taxClass: {
-                  select: {
-                    id: true,
-                    name: true,
-                  },
+    // Get user's cart with product tax classes — refresh line prices from catalog before charging.
+    const cartInclude = {
+      items: {
+        include: {
+          product: {
+            include: {
+              seller: true,
+              taxClass: {
+                select: {
+                  id: true,
+                  name: true,
                 },
               },
             },
           },
         },
       },
+    };
+
+    let cart = await this.prisma.cart.findUnique({
+      where: { userId },
+      include: cartInclude,
     });
 
     if (!cart || cart.items.length === 0) {
       throw new BadRequestException('Cart is empty');
+    }
+
+    if (this.cartService) {
+      await this.cartService.recalculateCart(cart.id);
+      const refreshed = await this.prisma.cart.findUnique({
+        where: { userId },
+        include: cartInclude,
+      });
+      if (!refreshed || refreshed.items.length === 0) {
+        throw new BadRequestException('Cart is empty');
+      }
+      cart = refreshed;
     }
 
     let appliedPromotionResult: PromotionApplicationResult | null = null;
@@ -961,7 +975,11 @@ export class OrdersService {
 
     void this.ambassadorService
       ?.incrementInfluencerReferralRevenue(influencer.userId, orderTotal)
-      .catch(() => {});
+      .catch((e: unknown) => {
+        this.logger.warn(
+          `Ambassador referral revenue increment failed for influencer ${influencer.id}: ${e instanceof Error ? e.message : 'unknown'}`,
+        );
+      });
 
     // Convert to Number only for logging display
     const ratePercent = rateApplied.mul(100).toNumber();

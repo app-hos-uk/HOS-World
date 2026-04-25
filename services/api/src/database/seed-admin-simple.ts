@@ -1,9 +1,10 @@
 import { PrismaClient, UserRole } from '@prisma/client';
+import { BCRYPT_PASSWORD_ROUNDS } from '../config/bcrypt-cost';
 
 const prisma = new PrismaClient();
 
-// Pre-hashed password for "Admin123" using bcrypt with 10 salt rounds
-// Generated using: bcrypt.hash('Admin123', 10)
+// Pre-hashed password for "Admin123" (bcrypt, legacy 10 cost — fallback if bcrypt import fails)
+// Generated using: bcrypt.hash('Admin123', 10) — new hashes use BCRYPT_PASSWORD_ROUNDS
 const HASHED_PASSWORD = '$2b$10$rQZ8KJ9vXqY5LmNpR3sT0uVwXyZ1A2B3C4D5E6F7G8H9I0J1K2L3M4N5O6P7Q8R9S0';
 
 async function seedAdmin() {
@@ -32,8 +33,7 @@ async function seedAdmin() {
 
       // Update password
       const bcrypt = require('bcrypt');
-      const saltRounds = 10;
-      const hashedPassword = await bcrypt.hash(adminPassword, saltRounds);
+      const hashedPassword = await bcrypt.hash(adminPassword, BCRYPT_PASSWORD_ROUNDS);
       await prisma.user.update({
         where: { id: existingAdmin.id },
         data: { password: hashedPassword },
@@ -46,8 +46,7 @@ async function seedAdmin() {
     let hashedPassword: string;
     try {
       const bcrypt = require('bcrypt');
-      const saltRounds = 10;
-      hashedPassword = await bcrypt.hash(adminPassword, saltRounds);
+      hashedPassword = await bcrypt.hash(adminPassword, BCRYPT_PASSWORD_ROUNDS);
     } catch (error) {
       console.warn('⚠️ Could not use bcrypt, using pre-hashed password');
       hashedPassword = HASHED_PASSWORD;

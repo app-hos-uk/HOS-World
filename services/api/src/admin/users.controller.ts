@@ -9,27 +9,9 @@ import {
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../common/guards/roles.guard';
 import { Roles } from '../common/decorators/roles.decorator';
+import { Prisma } from '@prisma/client';
 import { PrismaService } from '../database/prisma.service';
 import type { ApiResponse, PaginatedResponse } from '@hos-marketplace/shared-types';
-
-const ROLE_PRIORITY: Record<string, number> = {
-  ADMIN: 0,
-  PROCUREMENT: 1,
-  FULFILLMENT: 2,
-  CATALOG: 3,
-  MARKETING: 4,
-  FINANCE: 5,
-  CMS_EDITOR: 6,
-  B2C_SELLER: 7,
-  SELLER: 8,
-  WHOLESALER: 9,
-  INFLUENCER: 10,
-  CUSTOMER: 11,
-};
-
-function rolePriority(role: string): number {
-  return ROLE_PRIORITY[role] ?? 99;
-}
 
 @ApiTags('admin')
 @ApiBearerAuth('JWT-auth')
@@ -60,51 +42,74 @@ export class AdminUsersController {
     @Query('role') role?: string,
     @Query('status') status?: string,
   ): Promise<ApiResponse<PaginatedResponse<any>>> {
-    const take = Math.min(limit, 100);
+    const safePage = Math.max(1, page);
+    const take = Math.max(1, Math.min(limit, 100));
+    const skip = (safePage - 1) * take;
 
-    const where: any = {};
-    if (search) {
-      where.OR = [
-        { email: { contains: search, mode: 'insensitive' } },
-        { firstName: { contains: search, mode: 'insensitive' } },
-        { lastName: { contains: search, mode: 'insensitive' } },
-      ];
+    const whereParts: Prisma.Sql[] = [];
+    if (search?.trim()) {
+      const term = `%${search.trim()}%`;
+      whereParts.push(
+        Prisma.sql`(u.email ILIKE ${term} OR u."firstName" ILIKE ${term} OR u."lastName" ILIKE ${term})`,
+      );
     }
-    if (role) {
-      where.role = role;
+    if (role?.trim()) {
+      whereParts.push(Prisma.sql`u.role = ${role.trim()}::"UserRole"`);
     }
     if (status === 'active') {
-      where.isActive = true;
+      whereParts.push(Prisma.sql`u."isActive" = true`);
     } else if (status === 'inactive') {
-      where.isActive = false;
+      whereParts.push(Prisma.sql`u."isActive" = false`);
     }
 
-    const [allFiltered, total] = await Promise.all([
-      this.prisma.user.findMany({
-        where,
-        select: {
-          id: true,
-          email: true,
-          firstName: true,
-          lastName: true,
-          role: true,
-          isActive: true,
-          avatar: true,
-          createdAt: true,
-          updatedAt: true,
-        },
-      }),
-      this.prisma.user.count({ where }),
+    const whereSql =
+      whereParts.length > 0 ? Prisma.join(whereParts, ' AND ') : Prisma.sql`TRUE`;
+
+    // Role hierarchy: admin / internal roles first, then marketplace roles (matches ROLE_PRIORITY).
+    const [rows, countResult] = await Promise.all([
+      this.prisma.$queryRaw<
+        {
+          id: string;
+          email: string;
+          firstName: string | null;
+          lastName: string | null;
+          role: string;
+          isActive: boolean;
+          avatar: string | null;
+          createdAt: Date;
+          updatedAt: Date;
+        }[]
+      >`
+        SELECT u.id, u.email, u."firstName", u."lastName", u.role, u."isActive", u.avatar, u."createdAt", u."updatedAt"
+        FROM users u
+        WHERE ${whereSql}
+        ORDER BY
+          CASE u.role::text
+            WHEN 'ADMIN' THEN 0
+            WHEN 'PROCUREMENT' THEN 1
+            WHEN 'FULFILLMENT' THEN 2
+            WHEN 'CATALOG' THEN 3
+            WHEN 'MARKETING' THEN 4
+            WHEN 'FINANCE' THEN 5
+            WHEN 'SALES' THEN 5.5
+            WHEN 'CMS_EDITOR' THEN 6
+            WHEN 'B2C_SELLER' THEN 7
+            WHEN 'SELLER' THEN 8
+            WHEN 'WHOLESALER' THEN 9
+            WHEN 'INFLUENCER' THEN 10
+            WHEN 'CUSTOMER' THEN 11
+            ELSE 99
+          END ASC,
+          u."createdAt" DESC
+        LIMIT ${take} OFFSET ${skip}
+      `,
+      this.prisma.$queryRaw<{ c: bigint }[]>`
+        SELECT COUNT(*)::bigint AS c FROM users u WHERE ${whereSql}
+      `,
     ]);
 
-    allFiltered.sort((a, b) => {
-      const rp = rolePriority(a.role) - rolePriority(b.role);
-      if (rp !== 0) return rp;
-      return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
-    });
-
-    const skip = (page - 1) * take;
-    const users = allFiltered.slice(skip, skip + take);
+    const total = Number(countResult[0]?.c ?? 0);
+    const users = rows;
 
     return {
       data: {

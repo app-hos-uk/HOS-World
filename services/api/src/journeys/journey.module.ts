@@ -18,10 +18,13 @@ import { JourneyAdminController, MessagingAdminController } from './journey-admi
     MessagingModule,
     JwtModule.registerAsync({
       imports: [ConfigModule],
-      useFactory: (config: ConfigService) => ({
-        secret: config.get<string>('JWT_SECRET') || 'your-secret-key',
-        signOptions: { expiresIn: '30d' },
-      }),
+      useFactory: (config: ConfigService) => {
+        const secret = config.get<string>('JWT_SECRET');
+        if (!secret) {
+          throw new Error('JWT_SECRET environment variable is required');
+        }
+        return { secret, signOptions: { expiresIn: '30d' } };
+      },
       inject: [ConfigService],
     }),
   ],

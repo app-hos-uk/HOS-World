@@ -2,10 +2,8 @@ import { Injectable } from '@nestjs/common';
 import { LoyaltyTxType, Prisma } from '@prisma/client';
 import { SegmentationService } from '../../segmentation/segmentation.service';
 
-export type LoyaltyPrismaTx = {
-  loyaltyMembership: Prisma.LoyaltyMembershipDelegate;
-  loyaltyTransaction: Prisma.LoyaltyTransactionDelegate;
-};
+/** Prisma transaction client; wallet also needs raw SQL for row locks. */
+export type LoyaltyPrismaTx = Prisma.TransactionClient;
 
 @Injectable()
 export class LoyaltyWalletService {
@@ -29,6 +27,12 @@ export class LoyaltyWalletService {
       metadata?: Prisma.InputJsonValue | null;
     },
   ): Promise<{ balanceBefore: number; balanceAfter: number }> {
+    // Serialize balance changes for this membership to prevent lost updates
+    // (concurrent debits/ credits reading the same balance before write).
+    await tx.$executeRaw(
+      Prisma.sql`SELECT 1 FROM loyalty_memberships WHERE id = ${membershipId}::uuid FOR UPDATE`,
+    );
+
     const membership = await tx.loyaltyMembership.findUnique({
       where: { id: membershipId },
     });

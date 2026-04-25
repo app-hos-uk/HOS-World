@@ -26,9 +26,13 @@ import { SegmentationModule } from '../segmentation/segmentation.module';
     JwtModule.registerAsync({
       imports: [ConfigModule],
       inject: [ConfigService],
-      useFactory: (config: ConfigService) => ({
-        secret: config.get<string>('JWT_SECRET') || 'your-secret-key',
-      }),
+      useFactory: (config: ConfigService) => {
+        const secret = config.get<string>('JWT_SECRET');
+        if (!secret) {
+          throw new Error('JWT_SECRET environment variable is required');
+        }
+        return { secret };
+      },
     }),
   ],
   controllers: [EventsController, EventsAdminController],

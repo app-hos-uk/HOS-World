@@ -106,7 +106,9 @@ export class MonitoringService implements OnModuleInit {
       return;
     }
 
-    this.logger.log('New Relic APM enabled');
+    this.logger.warn(
+      'New Relic package is not wired here; load the official `newrelic` agent from your process entry to enable APM.',
+    );
   }
 
   /**
@@ -119,7 +121,9 @@ export class MonitoringService implements OnModuleInit {
       return;
     }
 
-    this.logger.log('Datadog APM enabled');
+    this.logger.warn(
+      'Datadog tracer is not wired here; use `dd-trace` init in your process entry to enable APM.',
+    );
   }
 
   /**

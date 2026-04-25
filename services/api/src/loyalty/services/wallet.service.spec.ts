@@ -8,6 +8,7 @@ describe('LoyaltyWalletService', () => {
   it('credits and debits balance atomically in tx', async () => {
     let balance = 100;
     const tx = {
+      $executeRaw: jest.fn().mockResolvedValue(undefined),
       loyaltyMembership: {
         findUnique: jest
           .fn()
@@ -38,6 +39,7 @@ describe('LoyaltyWalletService', () => {
 
   it('rejects debit below zero', async () => {
     const tx = {
+      $executeRaw: jest.fn().mockResolvedValue(undefined),
       loyaltyMembership: {
         findUnique: jest.fn().mockResolvedValue({ id: 'm1', userId: 'u1', currentBalance: 10 }),
       },

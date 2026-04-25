@@ -1,6 +1,18 @@
+const withBundleAnalyzer = require('@next/bundle-analyzer')({
+  enabled: process.env.ANALYZE === 'true',
+});
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true, // Re-enabled after fixing useEffect dependencies
+  experimental: {
+    optimizePackageImports: [
+      '@heroicons/react',
+      'recharts',
+      '@headlessui/react',
+      '@tanstack/react-query',
+    ],
+  },
   transpilePackages: [
     '@hos-marketplace/shared-types',
     '@hos-marketplace/theme-system',
@@ -51,6 +63,6 @@ const nextConfig = {
   },
 };
 
-module.exports = nextConfig;
+module.exports = withBundleAnalyzer(nextConfig);
 
 

@@ -18,6 +18,7 @@ export default function AmbassadorHubPage() {
   const [achievements, setAchievements] = useState<Record<string, unknown>[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [tabDataError, setTabDataError] = useState<string | null>(null);
   const [enrollName, setEnrollName] = useState('');
   const [enrollBio, setEnrollBio] = useState('');
   const [ugcType, setUgcType] = useState('PHOTO');
@@ -36,11 +37,14 @@ export default function AmbassadorHubPage() {
 
   useEffect(() => {
     if (!enrolled) return;
+    setTabDataError(null);
     if (tab === 'dashboard') {
       apiClient
         .getAmbassadorDashboard()
         .then((r) => setDashboard((r.data as Record<string, unknown>) || null))
-        .catch(() => {});
+        .catch((e: unknown) =>
+          setTabDataError(e instanceof Error ? e.message : 'Failed to load dashboard'),
+        );
     }
     if (tab === 'ugc') {
       apiClient
@@ -49,19 +53,25 @@ export default function AmbassadorHubPage() {
           const d = r.data as { items?: Record<string, unknown>[] };
           setUgcList(d?.items ?? []);
         })
-        .catch(() => {});
+        .catch((e: unknown) =>
+          setTabDataError(e instanceof Error ? e.message : 'Failed to load UGC'),
+        );
     }
     if (tab === 'leaderboard') {
       apiClient
         .getAmbassadorLeaderboard({ period: lbPeriod })
         .then((r) => setLeaderboard((r.data as Record<string, unknown>[]) || []))
-        .catch(() => {});
+        .catch((e: unknown) =>
+          setTabDataError(e instanceof Error ? e.message : 'Failed to load leaderboard'),
+        );
     }
     if (tab === 'achievements') {
       apiClient
         .getAmbassadorAchievements()
         .then((r) => setAchievements((r.data as Record<string, unknown>[]) || []))
-        .catch(() => {});
+        .catch((e: unknown) =>
+          setTabDataError(e instanceof Error ? e.message : 'Failed to load achievements'),
+        );
     }
   }, [enrolled, tab, lbPeriod]);
 
@@ -170,6 +180,7 @@ export default function AmbassadorHubPage() {
               </div>
 
               {error && <p className="text-red-400 text-sm mb-4">{error}</p>}
+              {tabDataError && <p className="text-red-400 text-sm mb-4">{tabDataError}</p>}
 
               {tab === 'dashboard' && dashboard && (
                 <div className="space-y-6 font-secondary text-sm">

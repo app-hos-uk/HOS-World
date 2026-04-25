@@ -6,8 +6,11 @@ import {
   Post,
   Body,
   Param,
+  Query,
   UseGuards,
   ParseUUIDPipe,
+  DefaultValuePipe,
+  ParseIntPipe,
 } from '@nestjs/common';
 import {
   ApiTags,
@@ -384,10 +387,13 @@ export class AdminController {
   @SwaggerApiResponse({ status: 200, description: 'Sellers retrieved successfully' })
   @SwaggerApiResponse({ status: 401, description: 'Unauthorized' })
   @SwaggerApiResponse({ status: 403, description: 'Forbidden - Admin access required' })
-  async getAllSellers(): Promise<ApiResponse<any[]>> {
-    const sellers = await this.adminService.getAllSellers();
+  async getAllSellers(
+    @Query('page', new DefaultValuePipe(1), ParseIntPipe) page: number = 1,
+    @Query('limit', new DefaultValuePipe(50), ParseIntPipe) limit: number = 50,
+  ): Promise<ApiResponse<{ data: unknown[]; pagination: { page: number; limit: number; total: number; totalPages: number } }>> {
+    const result = await this.adminService.getAllSellers({ page, limit });
     return {
-      data: sellers,
+      data: result,
       message: 'Sellers retrieved successfully',
     };
   }

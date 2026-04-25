@@ -22,8 +22,10 @@ const SAMPLE_PASSWORDS = {
   customer: 'Test123!',
 };
 
+const BCRYPT_PASSWORD_ROUNDS = Math.min(15, Math.max(10, parseInt(process.env.BCRYPT_SALT_ROUNDS || '12', 10) || 12));
+
 async function hashPassword(password: string): Promise<string> {
-  return bcrypt.hash(password, 10);
+  return bcrypt.hash(password, BCRYPT_PASSWORD_ROUNDS);
 }
 
 async function seedSampleData() {

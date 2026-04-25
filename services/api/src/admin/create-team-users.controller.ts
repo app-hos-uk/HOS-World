@@ -6,6 +6,7 @@ import { PrismaService } from '../database/prisma.service';
 import { UserRole } from '@prisma/client';
 import type { ApiResponse } from '@hos-marketplace/shared-types';
 import * as bcrypt from 'bcrypt';
+import { BCRYPT_PASSWORD_ROUNDS } from '../config/bcrypt-cost';
 import { randomBytes } from 'crypto';
 
 const teamUsers = [
@@ -81,8 +82,7 @@ export class CreateTeamUsersController {
 
     // Generate password hash for "Test123!"
     const password = 'Test123!';
-    const saltRounds = 10;
-    const passwordHash = await bcrypt.hash(password, saltRounds);
+    const passwordHash = await bcrypt.hash(password, BCRYPT_PASSWORD_ROUNDS);
 
     const results = [];
 
@@ -143,8 +143,7 @@ export class CreateTeamUsersController {
 
     // Generate password hash for "Test123!"
     const password = 'Test123!';
-    const saltRounds = 10;
-    const passwordHash = await bcrypt.hash(password, saltRounds);
+    const passwordHash = await bcrypt.hash(password, BCRYPT_PASSWORD_ROUNDS);
 
     const businessUsers = [
       {
@@ -315,7 +314,7 @@ export class CreateTeamUsersController {
 
     const email = 'influencer@hos.test';
     const password = 'Test!123';
-    const passwordHash = await bcrypt.hash(password, 10);
+    const passwordHash = await bcrypt.hash(password, BCRYPT_PASSWORD_ROUNDS);
     const displayName = 'Test Influencer';
 
     const existingUser = await this.prisma.user.findUnique({

@@ -6,10 +6,12 @@ import {
   Body,
   Query,
   Request,
+  Req,
   UseGuards,
   DefaultValuePipe,
   ParseIntPipe,
 } from '@nestjs/common';
+import type { Request as ExpressRequest } from 'express';
 import {
   ApiBearerAuth,
   ApiOperation,
@@ -65,10 +67,13 @@ export class LoyaltyController {
   @Roles('CUSTOMER')
   @ApiOperation({ summary: 'Update marketing channel opt-ins' })
   async patchPreferences(
-    @Request() req: { user: { id: string } },
+    @Req() req: ExpressRequest & { user: { id: string } },
     @Body() body: LoyaltyPreferencesDto,
   ): Promise<ApiResponse<unknown>> {
-    const data = await this.loyalty.updatePreferences(req.user.id, body);
+    const data = await this.loyalty.updatePreferences(req.user.id, body, {
+      ipAddress: (req.ip || req.socket?.remoteAddress || undefined) as string | undefined,
+      userAgent: (req.headers['user-agent'] as string | undefined) || undefined,
+    });
     return { data, message: 'Updated' };
   }
 

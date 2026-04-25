@@ -5,7 +5,7 @@ import { CreateInventoryLocationDto } from './dto/create-inventory-location.dto'
 import { ReserveStockDto } from './dto/reserve-stock.dto';
 import { CreateStockTransferDto } from './dto/create-stock-transfer.dto';
 import { CreateStockMovementDto, MovementType } from './dto/create-stock-movement.dto';
-import { ReservationStatus, TransferStatus } from '@prisma/client';
+import { Prisma, ReservationStatus, TransferStatus } from '@prisma/client';
 
 @Injectable()
 export class InventoryService {
@@ -201,6 +201,12 @@ export class InventoryService {
       : new Date(Date.now() + 24 * 60 * 60 * 1000);
 
     return this.prisma.$transaction(async (tx) => {
+      // Row lock prevents two concurrent requests from each passing an availability
+      // check and overselling the last units (lost update on reservations).
+      await tx.$executeRaw(
+        Prisma.sql`SELECT 1 FROM inventory_locations WHERE id = ${reserveDto.inventoryLocationId}::uuid FOR UPDATE`,
+      );
+
       const location = await tx.inventoryLocation.findUnique({
         where: { id: reserveDto.inventoryLocationId },
         include: {
@@ -260,82 +266,87 @@ export class InventoryService {
    * Confirm reservation (convert to order)
    */
   async confirmReservation(reservationId: string, orderId: string) {
-    const reservation = await this.prisma.stockReservation.findUnique({
-      where: { id: reservationId },
-      include: {
-        inventoryLocation: true,
-      },
+    return this.prisma.$transaction(async (tx) => {
+      await tx.$executeRaw(
+        Prisma.sql`SELECT 1 FROM stock_reservations WHERE id = ${reservationId}::uuid FOR UPDATE`,
+      );
+
+      const reservation = await tx.stockReservation.findUnique({
+        where: { id: reservationId },
+        include: { inventoryLocation: true },
+      });
+
+      if (!reservation) {
+        throw new NotFoundException('Reservation not found');
+      }
+
+      if (reservation.status !== 'ACTIVE') {
+        throw new BadRequestException('Reservation is not active');
+      }
+
+      if (reservation.expiresAt && reservation.expiresAt < new Date()) {
+        throw new BadRequestException('Reservation has expired and cannot be confirmed');
+      }
+
+      await tx.$executeRaw(
+        Prisma.sql`SELECT 1 FROM inventory_locations WHERE id = ${reservation.inventoryLocationId}::uuid FOR UPDATE`,
+      );
+
+      await tx.stockReservation.update({
+        where: { id: reservationId },
+        data: { status: 'CONFIRMED', orderId },
+      });
+
+      await tx.inventoryLocation.update({
+        where: { id: reservation.inventoryLocationId },
+        data: {
+          quantity: { decrement: reservation.quantity },
+          reserved: { decrement: reservation.quantity },
+        },
+      });
+
+      return reservation;
     });
-
-    if (!reservation) {
-      throw new NotFoundException('Reservation not found');
-    }
-
-    if (reservation.status !== 'ACTIVE') {
-      throw new BadRequestException('Reservation is not active');
-    }
-
-    if (reservation.expiresAt && reservation.expiresAt < new Date()) {
-      throw new BadRequestException('Reservation has expired and cannot be confirmed');
-    }
-
-    // Update reservation status and link to order
-    await this.prisma.stockReservation.update({
-      where: { id: reservationId },
-      data: {
-        status: 'CONFIRMED',
-        orderId,
-      },
-    });
-
-    // Deduct from inventory
-    await this.prisma.inventoryLocation.update({
-      where: { id: reservation.inventoryLocationId },
-      data: {
-        quantity: { decrement: reservation.quantity },
-        reserved: { decrement: reservation.quantity },
-      },
-    });
-
-    return reservation;
   }
 
   /**
    * Cancel reservation
    */
   async cancelReservation(reservationId: string) {
-    const reservation = await this.prisma.stockReservation.findUnique({
-      where: { id: reservationId },
-      include: {
-        inventoryLocation: true,
-      },
+    return this.prisma.$transaction(async (tx) => {
+      await tx.$executeRaw(
+        Prisma.sql`SELECT 1 FROM stock_reservations WHERE id = ${reservationId}::uuid FOR UPDATE`,
+      );
+
+      const reservation = await tx.stockReservation.findUnique({
+        where: { id: reservationId },
+        include: { inventoryLocation: true },
+      });
+
+      if (!reservation) {
+        throw new NotFoundException('Reservation not found');
+      }
+
+      if (reservation.status !== 'ACTIVE') {
+        throw new BadRequestException('Reservation cannot be cancelled');
+      }
+
+      await tx.$executeRaw(
+        Prisma.sql`SELECT 1 FROM inventory_locations WHERE id = ${reservation.inventoryLocationId}::uuid FOR UPDATE`,
+      );
+
+      await tx.stockReservation.update({
+        where: { id: reservationId },
+        data: { status: 'CANCELLED' },
+      });
+
+      await tx.inventoryLocation.update({
+        where: { id: reservation.inventoryLocationId },
+        data: { reserved: { decrement: reservation.quantity } },
+      });
+
+      return reservation;
     });
-
-    if (!reservation) {
-      throw new NotFoundException('Reservation not found');
-    }
-
-    if (reservation.status !== 'ACTIVE') {
-      throw new BadRequestException('Reservation cannot be cancelled');
-    }
-
-    // Update reservation status
-    await this.prisma.stockReservation.update({
-      where: { id: reservationId },
-      data: {
-        status: 'CANCELLED',
-      },
-    });
-
-    // Release reserved stock
-    await this.prisma.inventoryLocation.update({
-      where: { id: reservation.inventoryLocationId },
-      data: {
-        reserved: { decrement: reservation.quantity },
-      },
-    });
-
-    return reservation;
   }
 
   /**

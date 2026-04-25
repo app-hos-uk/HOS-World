@@ -1,5 +1,6 @@
 import { PrismaClient, UserRole } from '@prisma/client';
 import * as bcrypt from 'bcrypt';
+import { BCRYPT_PASSWORD_ROUNDS } from '../config/bcrypt-cost';
 
 const prisma = new PrismaClient();
 
@@ -23,8 +24,7 @@ async function seedAdmin() {
         console.log(`✅ Updated existing user to ADMIN: ${adminEmail}`);
       } else {
         // Update password if needed
-        const saltRounds = 10;
-        const hashedPassword = await bcrypt.hash(adminPassword, saltRounds);
+        const hashedPassword = await bcrypt.hash(adminPassword, BCRYPT_PASSWORD_ROUNDS);
         await prisma.user.update({
           where: { id: existingAdmin.id },
           data: { password: hashedPassword },
@@ -35,8 +35,7 @@ async function seedAdmin() {
     }
 
     // Hash password
-    const saltRounds = 10;
-    const hashedPassword = await bcrypt.hash(adminPassword, saltRounds);
+    const hashedPassword = await bcrypt.hash(adminPassword, BCRYPT_PASSWORD_ROUNDS);
 
     // Create admin user
     const admin = await prisma.user.create({

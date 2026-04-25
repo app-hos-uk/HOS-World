@@ -88,14 +88,23 @@ export class LoyaltyListener {
       const referrerPoints = this.config.get<number>('LOYALTY_REFERRAL_REFERRER_BONUS', 200);
 
       await this.prisma.$transaction(async (tx) => {
-        await tx.loyaltyReferral.update({
-          where: { id: referral.id },
+        // Only the first successful claim should award points; concurrent
+        // signups with the same code must not double-pay.
+        const claimed = await tx.loyaltyReferral.updateMany({
+          where: {
+            id: referral.id,
+            status: 'PENDING',
+            refereeId: null,
+          },
           data: {
             refereeId: refereeMembership.id,
             status: 'CONVERTED',
             convertedAt: new Date(),
           },
         });
+        if (claimed.count !== 1) {
+          return;
+        }
 
         await this.wallet.applyDelta(tx, refereeMembership.id, refereePoints, LoyaltyTxType.BONUS, {
           source: 'REFERRAL_BONUS',

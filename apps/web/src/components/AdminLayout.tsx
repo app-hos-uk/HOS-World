@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import { AdminBreadcrumbs } from '@/components/Breadcrumbs';
+import { ErrorBoundary } from '@/components/ErrorBoundary';
 
 interface AdminLayoutProps {
   children: React.ReactNode;
@@ -585,7 +586,9 @@ export function AdminLayout({ children }: AdminLayoutProps) {
         </div>
 
         {/* Page Content */}
-        <main className="p-4 sm:p-6 lg:p-8 bg-gray-50/30 min-h-[calc(100vh-7rem)]">{children}</main>
+        <main className="p-4 sm:p-6 lg:p-8 bg-gray-50/30 min-h-[calc(100vh-7rem)]">
+          <ErrorBoundary>{children}</ErrorBoundary>
+        </main>
       </div>
     </div>
   );

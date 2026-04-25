@@ -220,34 +220,39 @@ export class AmbassadorService {
 
     const maxWeek = Number(this.config.get<string>('AMBASSADOR_UGC_MAX_PER_WEEK', '5'));
     const weekStart = startOfIsoWeekLocal();
-    const weekCount = await this.prisma.uGCSubmission.count({
-      where: { ambassadorId: profile.id, createdAt: { gte: weekStart } },
-    });
-    if (weekCount >= maxWeek) {
-      throw new BadRequestException(`Maximum ${maxWeek} UGC submissions per week`);
-    }
 
-    const sub = await this.prisma.uGCSubmission.create({
-      data: {
-        ambassadorId: profile.id,
-        userId,
-        type: dto.type,
-        title: dto.title,
-        description: dto.description,
-        mediaUrls: dto.mediaUrls ?? [],
-        socialUrl: dto.socialUrl,
-        platform: dto.platform,
-        productId: dto.productId,
-        fandomId: dto.fandomId,
-      },
-    });
+    return this.prisma.$transaction(async (tx) => {
+      const weekCount = await tx.uGCSubmission.count({
+        where: { ambassadorId: profile.id, createdAt: { gte: weekStart } },
+      });
+      if (weekCount >= maxWeek) {
+        throw new BadRequestException(`Maximum ${maxWeek} UGC submissions per week`);
+      }
 
-    await this.prisma.ambassadorProfile.update({
-      where: { id: profile.id },
-      data: { totalUgcSubmissions: { increment: 1 }, lastActiveAt: new Date() },
+      const sub = await tx.uGCSubmission.create({
+        data: {
+          ambassadorId: profile.id,
+          userId,
+          type: dto.type,
+          title: dto.title,
+          description: dto.description,
+          mediaUrls: dto.mediaUrls ?? [],
+          socialUrl: dto.socialUrl,
+          platform: dto.platform,
+          productId: dto.productId,
+          fandomId: dto.fandomId,
+        },
+      });
+
+      await tx.ambassadorProfile.update({
+        where: { id: profile.id },
+        data: { totalUgcSubmissions: { increment: 1 }, lastActiveAt: new Date() },
+      });
+      return sub;
+    }).then((sub) => {
+      void this.segmentation.touchActivity(userId);
+      return sub;
     });
-    void this.segmentation.touchActivity(userId);
-    return sub;
   }
 
   async listOwnUgc(
@@ -803,35 +808,47 @@ export class AmbassadorService {
 
   async runDailyTierGuardsAndProgression(): Promise<void> {
     const min = this.minTierLevel();
-    const profiles = await this.prisma.ambassadorProfile.findMany({
-      include: { membership: { include: { tier: true } } },
-    });
+    const chunkSize = 100;
+    let cursor: string | undefined;
 
-    for (const p of profiles) {
-      const level = p.membership.tier.level;
-      const slug = p.membership.tier.slug;
+    for (;;) {
+      const profiles = await this.prisma.ambassadorProfile.findMany({
+        take: chunkSize,
+        orderBy: { id: 'asc' },
+        ...(cursor ? { skip: 1, cursor: { id: cursor } } : {}),
+        include: { membership: { include: { tier: true } } },
+      });
+      if (profiles.length === 0) break;
 
-      if (level >= 6 || slug === 'council-of-realms') {
-        if (p.status === 'ACTIVE') {
+      for (const p of profiles) {
+        const level = p.membership.tier.level;
+        const slug = p.membership.tier.slug;
+
+        if (level >= 6 || slug === 'council-of-realms') {
+          if (p.status === 'ACTIVE') {
+            await this.prisma.ambassadorProfile.update({
+              where: { id: p.id },
+              data: { status: 'GRADUATED' },
+            });
+          }
+          continue;
+        }
+
+        if (level < min && p.status === 'ACTIVE') {
           await this.prisma.ambassadorProfile.update({
             where: { id: p.id },
-            data: { status: 'GRADUATED' },
+            data: { status: 'SUSPENDED' },
           });
+          continue;
         }
-        continue;
+
+        if (p.status === 'ACTIVE') {
+          await this.checkTierProgression(p.id);
+        }
       }
 
-      if (level < min && p.status === 'ACTIVE') {
-        await this.prisma.ambassadorProfile.update({
-          where: { id: p.id },
-          data: { status: 'SUSPENDED' },
-        });
-        continue;
-      }
-
-      if (p.status === 'ACTIVE') {
-        await this.checkTierProgression(p.id);
-      }
+      cursor = profiles[profiles.length - 1]!.id;
+      if (profiles.length < chunkSize) break;
     }
   }
 

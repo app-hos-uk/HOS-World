@@ -8,6 +8,7 @@
     "start": "next start -H 0.0.0.0",
     "lint": "next lint",
     "type-check": "tsc --noEmit",
+    "analyze": "ANALYZE=true next build",
     "clean": "rm -rf .next dist",
     "test:e2e": "playwright test",
     "test:e2e:ui": "playwright test --ui",
@@ -37,6 +38,7 @@
     "recharts": "^2.10.3"
   },
   "devDependencies": {
+    "@next/bundle-analyzer": "14.2.35",
     "@playwright/test": "^1.57.0",
     "@types/node": "^20.10.6",
     "@types/react": "^18.2.46",

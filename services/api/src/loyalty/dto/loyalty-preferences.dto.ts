@@ -1,5 +1,6 @@
 import { IsBoolean, IsOptional } from 'class-validator';
 
+/** PATCH body: at least one field must be present (enforced in LoyaltyService.updatePreferences). */
 export class LoyaltyPreferencesDto {
   @IsOptional()
   @IsBoolean()

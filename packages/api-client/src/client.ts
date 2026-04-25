@@ -49,6 +49,26 @@ export class ApiClient {
     return new ApiClient(config);
   }
 
+  /** fetch() with AbortController timeout (avoids hanging uploads/exports/refresh). */
+  private async fetchWithTimeout(
+    url: string,
+    init: RequestInit,
+    timeoutMs: number,
+  ): Promise<Response> {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+    try {
+      return await fetch(url, { ...init, signal: controller.signal });
+    } catch (e: unknown) {
+      if (e instanceof Error && e.name === 'AbortError') {
+        throw new Error(`Request timed out: ${url}`);
+      }
+      throw e;
+    } finally {
+      clearTimeout(timeoutId);
+    }
+  }
+
   private async request<T>(
     endpoint: string,
     options: RequestInit = {}
@@ -204,12 +224,16 @@ export class ApiClient {
         if (legacyToken) {
           body.refreshToken = legacyToken;
         }
-        const res = await fetch(`${this.baseUrl}/auth/refresh`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          credentials: 'include',
-          body: JSON.stringify(body),
-        });
+        const res = await this.fetchWithTimeout(
+          `${this.baseUrl}/auth/refresh`,
+          {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'include',
+            body: JSON.stringify(body),
+          },
+          15000,
+        );
         if (!res.ok) return false;
         const json = await res.json();
         const token = json?.data?.token;
@@ -2318,8 +2342,12 @@ export class ApiClient {
   }
 
   // Admin - Sellers
-  async getAdminSellers(): Promise<ApiResponse<any[]>> {
-    return this.request<ApiResponse<any[]>>('/admin/sellers', {
+  async getAdminSellers(params?: { page?: number; limit?: number }): Promise<ApiResponse<any>> {
+    const qs = new URLSearchParams();
+    if (params?.page != null) qs.set('page', String(params.page));
+    if (params?.limit != null) qs.set('limit', String(params.limit));
+    const q = qs.toString();
+    return this.request<ApiResponse<any>>(`/admin/sellers${q ? `?${q}` : ''}`, {
       method: 'GET',
     });
   }
@@ -3695,11 +3723,15 @@ export class ApiClient {
     const url = `${this.baseUrl}/uploads/single`;
 
     try {
-      const response = await fetch(url, {
-        method: 'POST',
-        headers,
-        body: formData,
-      });
+      const response = await this.fetchWithTimeout(
+        url,
+        {
+          method: 'POST',
+          headers,
+          body: formData,
+        },
+        120000,
+      );
 
       if (response.status === 401) {
         this.onUnauthorized();
@@ -3778,7 +3810,11 @@ export class ApiClient {
     formData.append('folder', folder);
 
     const url = `${this.baseUrl}/uploads/single`;
-    const response = await fetch(url, { method: 'POST', headers, body: formData });
+    const response = await this.fetchWithTimeout(
+      url,
+      { method: 'POST', headers, body: formData },
+      120000,
+    );
 
     if (response.status === 401) {
       this.onUnauthorized();
@@ -3808,7 +3844,11 @@ export class ApiClient {
     formData.append('folder', folder);
 
     const url = `${this.baseUrl}/uploads/multiple`;
-    const response = await fetch(url, { method: 'POST', headers, body: formData });
+    const response = await this.fetchWithTimeout(
+      url,
+      { method: 'POST', headers, body: formData },
+      180000,
+    );
 
     if (response.status === 401) {
       this.onUnauthorized();
@@ -4720,10 +4760,14 @@ export class ApiClient {
     const baseUrl = this.baseUrl || '';
     const url = `${baseUrl}/analytics/export/${format}?${query}`;
 
-    const response = await fetch(url, {
-      method: 'GET',
-      headers,
-    });
+    const response = await this.fetchWithTimeout(
+      url,
+      {
+        method: 'GET',
+        headers,
+      },
+      120000,
+    );
 
     if (!response.ok) {
       throw new Error(`Export failed: ${response.statusText}`);
@@ -5649,10 +5693,14 @@ export class ApiClient {
     const token = this.getToken();
     const headers: Record<string, string> = {};
     if (token) headers['Authorization'] = `Bearer ${token}`;
-    const response = await fetch(`${this.baseUrl}/invoices/order/${orderId}`, {
-      method: 'GET',
-      headers,
-    });
+    const response = await this.fetchWithTimeout(
+      `${this.baseUrl}/invoices/order/${orderId}`,
+      {
+        method: 'GET',
+        headers,
+      },
+      60000,
+    );
     if (!response.ok) throw new Error('Failed to download invoice');
     return response.blob();
   }
