@@ -6,6 +6,7 @@ function makeMocks() {
     loyaltyReferral: {
       findFirst: jest.fn(),
       update: jest.fn(),
+      updateMany: jest.fn().mockResolvedValue({ count: 1 }),
     },
     loyaltyMembership: {
       findUnique: jest.fn(),

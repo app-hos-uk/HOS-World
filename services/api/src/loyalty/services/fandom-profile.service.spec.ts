@@ -2,21 +2,18 @@ import { FandomProfileService } from './fandom-profile.service';
 
 describe('FandomProfileService', () => {
   it('normalizes scores to 0–1', async () => {
+    const queryRawResults = [
+      [{ fandom: 'Harry Potter', score: 8 }],
+      [{ fandom: 'Anime', score: 1.5 }],
+      [],
+      [],
+    ];
+    let callIdx = 0;
     const prisma: any = {
-      orderItem: {
-        findMany: jest.fn().mockResolvedValue([
-          { product: { fandom: 'Harry Potter' } },
-          { product: { fandom: 'Harry Potter' } },
-        ]),
-      },
-      wishlistItem: {
-        findMany: jest.fn().mockResolvedValue([{ product: { fandom: 'Anime' } }]),
-      },
+      $queryRaw: jest.fn().mockImplementation(() => Promise.resolve(queryRawResults[callIdx++] ?? [])),
       user: {
         findUnique: jest.fn().mockResolvedValue({ favoriteFandoms: ['DC'] }),
       },
-      fandomQuizAttempt: { findMany: jest.fn().mockResolvedValue([]) },
-      userQuest: { findMany: jest.fn().mockResolvedValue([]) },
       loyaltyMembership: { updateMany: jest.fn() },
     };
     const svc = new FandomProfileService(prisma);
@@ -28,11 +25,8 @@ describe('FandomProfileService', () => {
 
   it('updateMemberProfile writes JSON', async () => {
     const prisma: any = {
-      orderItem: { findMany: jest.fn().mockResolvedValue([]) },
-      wishlistItem: { findMany: jest.fn().mockResolvedValue([]) },
+      $queryRaw: jest.fn().mockResolvedValue([]),
       user: { findUnique: jest.fn().mockResolvedValue({ favoriteFandoms: [] }) },
-      fandomQuizAttempt: { findMany: jest.fn().mockResolvedValue([]) },
-      userQuest: { findMany: jest.fn().mockResolvedValue([]) },
       loyaltyMembership: { updateMany: jest.fn() },
     };
     const svc = new FandomProfileService(prisma);
