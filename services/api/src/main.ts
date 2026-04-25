@@ -255,31 +255,12 @@ async function bootstrap() {
       );
 
       // CSRF protection: verify Origin header on state-changing requests
+      // Reuses the top-level isOriginAllowed() so CORS and CSRF share a single source of truth.
       app.use((req: any, res: any, next: any) => {
         if (['GET', 'HEAD', 'OPTIONS'].includes(req.method)) return next();
         const origin = req.headers['origin'];
         if (!origin) return next();
-        const allowedOrigins = (process.env.CORS_ALLOWED_ORIGINS || frontendUrl)
-          .split(',')
-          .map((o: string) => o.trim());
-        const localOrigins = ['http://localhost:3000', 'http://localhost:3001'];
-        const all = [...allowedOrigins, ...localOrigins];
-        const railwayOrigins = (process.env.CORS_RAILWAY_ORIGINS || '')
-          .split(',')
-          .map((o) => o.trim().replace(/\/+$/, ''))
-          .filter(Boolean);
-        const defaultRailway = [
-          'https://hos-marketplaceweb-production.up.railway.app',
-          'https://hos-marketplaceapi-production.up.railway.app',
-        ];
-        const railwayAllow = [...defaultRailway, ...railwayOrigins];
-        if (
-          all.some((o: string) => origin === o) ||
-          /^https:\/\/hos-world-web[a-z0-9-]*\.vercel\.app$/.test(origin) ||
-          railwayAllow.some((o) => o && (origin === o || origin.startsWith(o + '/')))
-        ) {
-          return next();
-        }
+        if (isOriginAllowed(origin) !== null) return next();
         logger.warn(`CSRF: Blocked state-changing request from origin ${origin}`, 'Security');
         return res.status(403).json({ error: 'Forbidden: origin not allowed' });
       });
