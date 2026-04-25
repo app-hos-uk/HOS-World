@@ -126,68 +126,59 @@ export default function AdminUsersPage() {
     isActive: true,
   });
 
-  // Calculate stats from user list - pure function to avoid closure issues
-  // Returns stats object; caller is responsible for setting state
-  const calculateUserStats = (userList: User[]) => {
-    // Calculate current month boundary in UTC so it aligns with server-side ISO timestamps.
-    // Using Date.UTC avoids local-timezone offsets that would shift the month boundary.
-    const now = new Date();
-    const firstOfMonth = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1));
-    
-    const sellerRoles = ['SELLER', 'B2C_SELLER', 'WHOLESALER'];
-    const teamRoles = ['PROCUREMENT', 'FULFILLMENT', 'CATALOG', 'MARKETING', 'FINANCE', 'CMS_EDITOR'];
-    
-    return {
-      total: userList.length,
-      admins: userList.filter(u => u.role === 'ADMIN').length,
-      sellers: userList.filter(u => sellerRoles.includes(u.role)).length,
-      customers: userList.filter(u => u.role === 'CUSTOMER').length,
-      influencers: userList.filter(u => u.role === 'INFLUENCER').length,
-      teamMembers: userList.filter(u => teamRoles.includes(u.role)).length,
-      newThisMonth: userList.filter(u => new Date(u.createdAt) >= firstOfMonth).length,
-      active: userList.filter(u => u.isActive !== false).length,
-      inactive: userList.filter(u => u.isActive === false).length,
-    };
-  };
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalUsers, setTotalUsers] = useState(0);
+  const PAGE_SIZE = 50;
 
-  const fetchUsers = useCallback(async () => {
+  const fetchUsers = useCallback(async (page = 1) => {
     try {
       setLoading(true);
       setError(null);
-      const response = await apiClient.getUsers();
-      
-      // Handle both paginated response { data: { data: users, pagination } } 
-      // and flat array response { data: users }
+      const response = await apiClient.getUsers({ page, limit: PAGE_SIZE });
+
       let userList: User[] = [];
       if (response?.data) {
         if (Array.isArray(response.data)) {
           userList = response.data;
         } else if ((response.data as any)?.data && Array.isArray((response.data as any).data)) {
-          // Paginated response format
           userList = (response.data as any).data;
+          const pagination = (response.data as any).pagination;
+          if (pagination) {
+            setTotalPages(pagination.totalPages ?? 1);
+            setTotalUsers(pagination.total ?? userList.length);
+          }
         }
       }
-      
-      // Always update both users and stats
+
       setUsers(userList);
-      setStats(calculateUserStats(userList));
-    } catch (err: any) {
+      setCurrentPage(page);
+    } catch (err: unknown) {
       console.error('Error fetching users:', err);
-      setError(err.message || 'Failed to load users');
+      setError(err instanceof Error ? err.message : 'Failed to load users');
       setUsers([]);
-      setStats(calculateUserStats([])); // Reset stats on error
     } finally {
       setLoading(false);
     }
-  }, []); // No dependencies needed - calculateUserStats is a pure function
+  }, []);
+
+  const fetchStats = useCallback(async () => {
+    try {
+      const res = await apiClient.getUserStats();
+      if (res?.data) setStats(res.data as Stats);
+    } catch {
+      setStats(null);
+    }
+  }, []);
 
   useEffect(() => {
-    fetchUsers();
+    fetchUsers(1);
+    fetchStats();
     apiClient
       .listPermissionRoles()
       .then((res) => setPermissionRoles(res?.data || []))
       .catch(() => setPermissionRoles([]));
-  }, [fetchUsers]);
+  }, [fetchUsers, fetchStats]);
 
   // Filtered and sorted users
   const filteredUsers = useMemo(() => {
@@ -247,9 +238,16 @@ export default function AdminUsersPage() {
         case 'date':
           comparison = new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
           break;
-        case 'role':
-          comparison = a.role.localeCompare(b.role);
+        case 'role': {
+          const ROLE_ORDER: Record<string, number> = {
+            ADMIN: 0, PROCUREMENT: 1, FULFILLMENT: 2, CATALOG: 3,
+            MARKETING: 4, FINANCE: 5, CMS_EDITOR: 6,
+            B2C_SELLER: 7, SELLER: 8, WHOLESALER: 9,
+            INFLUENCER: 10, CUSTOMER: 11,
+          };
+          comparison = (ROLE_ORDER[a.role] ?? 99) - (ROLE_ORDER[b.role] ?? 99);
           break;
+        }
       }
       return sortOrder === 'asc' ? comparison : -comparison;
     });
@@ -288,7 +286,8 @@ export default function AdminUsersPage() {
         }
       );
       setShowEditModal(false);
-      await fetchUsers();
+      await fetchUsers(currentPage);
+      fetchStats();
     } catch (err: any) {
       console.error('Error updating user:', err);
     } finally {
@@ -370,7 +369,8 @@ export default function AdminUsersPage() {
         department: '',
         employeeId: '',
       });
-      await fetchUsers();
+      await fetchUsers(currentPage);
+      fetchStats();
     } catch (err: any) {
       console.error('Error creating user:', err);
       toast.error(err.message || 'Failed to create user');
@@ -399,7 +399,8 @@ export default function AdminUsersPage() {
         }
       );
       setShowDeleteModal(false);
-      await fetchUsers();
+      await fetchUsers(currentPage);
+      fetchStats();
     } catch (err: any) {
       console.error('Error deleting user:', err);
     } finally {
@@ -416,7 +417,8 @@ export default function AdminUsersPage() {
       const response = await apiClient.toggleUserStatus(user.id);
       const updatedUser = response.data;
       toast.success(updatedUser?.isActive ? 'User activated' : 'User deactivated');
-      await fetchUsers();
+      await fetchUsers(currentPage);
+      fetchStats();
     } catch (err: any) {
       toast.error(err.message || 'Failed to toggle user status');
     }
@@ -466,7 +468,8 @@ export default function AdminUsersPage() {
 
     toast.success(`Successfully ${action === 'delete' ? 'deleted' : action === 'activate' ? 'activated' : 'deactivated'} ${success} users`);
     setSelectedUsers(new Set());
-    fetchUsers();
+    fetchUsers(currentPage);
+    fetchStats();
   };
 
   const toggleSelection = (id: string) => {
@@ -730,7 +733,7 @@ export default function AdminUsersPage() {
           {!loading && filteredUsers.length > 0 && (
             <div className="bg-white rounded-lg shadow overflow-hidden">
               <div className="p-4 border-b flex justify-between items-center">
-                <h2 className="font-semibold">Users ({filteredUsers.length})</h2>
+                <h2 className="font-semibold">Users ({totalUsers})</h2>
                 <button onClick={selectAll} className="text-sm text-purple-600 hover:text-purple-800">
                   {selectedUsers.size === filteredUsers.length ? 'Deselect All' : 'Select All'}
                 </button>
@@ -847,6 +850,31 @@ export default function AdminUsersPage() {
                   />
                 </table>
               </div>
+              {totalPages > 1 && (
+                <div className="flex items-center justify-between px-4 py-3 border-t text-sm">
+                  <span className="text-gray-500">
+                    Page {currentPage} of {totalPages} ({totalUsers} total)
+                  </span>
+                  <div className="flex gap-2">
+                    <button
+                      type="button"
+                      disabled={currentPage <= 1}
+                      onClick={() => fetchUsers(currentPage - 1)}
+                      className="px-3 py-1 rounded border text-gray-700 disabled:opacity-40"
+                    >
+                      Previous
+                    </button>
+                    <button
+                      type="button"
+                      disabled={currentPage >= totalPages}
+                      onClick={() => fetchUsers(currentPage + 1)}
+                      className="px-3 py-1 rounded border text-gray-700 disabled:opacity-40"
+                    >
+                      Next
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
           )}
 

@@ -12,6 +12,25 @@ import { Roles } from '../common/decorators/roles.decorator';
 import { PrismaService } from '../database/prisma.service';
 import type { ApiResponse, PaginatedResponse } from '@hos-marketplace/shared-types';
 
+const ROLE_PRIORITY: Record<string, number> = {
+  ADMIN: 0,
+  PROCUREMENT: 1,
+  FULFILLMENT: 2,
+  CATALOG: 3,
+  MARKETING: 4,
+  FINANCE: 5,
+  CMS_EDITOR: 6,
+  B2C_SELLER: 7,
+  SELLER: 8,
+  WHOLESALER: 9,
+  INFLUENCER: 10,
+  CUSTOMER: 11,
+};
+
+function rolePriority(role: string): number {
+  return ROLE_PRIORITY[role] ?? 99;
+}
+
 @ApiTags('admin')
 @ApiBearerAuth('JWT-auth')
 @Controller('admin')
@@ -24,38 +43,24 @@ export class AdminUsersController {
   @ApiOperation({
     summary: 'Get all users (Admin only)',
     description:
-      'Retrieves a paginated list of all users. Supports search and role filtering. Admin access required.',
+      'Retrieves a paginated list of all users sorted by role hierarchy (Admin first). Supports search, role, and status filtering.',
   })
-  @ApiQuery({
-    name: 'page',
-    required: false,
-    type: Number,
-    description: 'Page number (default: 1)',
-  })
-  @ApiQuery({
-    name: 'limit',
-    required: false,
-    type: Number,
-    description: 'Items per page (default: 20, max: 100)',
-  })
-  @ApiQuery({
-    name: 'search',
-    required: false,
-    type: String,
-    description: 'Search by email, first name, or last name',
-  })
+  @ApiQuery({ name: 'page', required: false, type: Number, description: 'Page number (default: 1)' })
+  @ApiQuery({ name: 'limit', required: false, type: Number, description: 'Items per page (default: 50, max: 100)' })
+  @ApiQuery({ name: 'search', required: false, type: String, description: 'Search by email, first name, or last name' })
   @ApiQuery({ name: 'role', required: false, type: String, description: 'Filter by user role' })
+  @ApiQuery({ name: 'status', required: false, type: String, description: 'Filter by status: active | inactive' })
   @SwaggerApiResponse({ status: 200, description: 'Users retrieved successfully' })
   @SwaggerApiResponse({ status: 401, description: 'Unauthorized' })
   @SwaggerApiResponse({ status: 403, description: 'Forbidden - Admin access required' })
   async getAllUsers(
     @Query('page', new DefaultValuePipe(1), ParseIntPipe) page: number = 1,
-    @Query('limit', new DefaultValuePipe(20), ParseIntPipe) limit: number = 20,
+    @Query('limit', new DefaultValuePipe(50), ParseIntPipe) limit: number = 50,
     @Query('search') search?: string,
     @Query('role') role?: string,
+    @Query('status') status?: string,
   ): Promise<ApiResponse<PaginatedResponse<any>>> {
-    const skip = (page - 1) * limit;
-    const take = Math.min(limit, 100); // Max 100 per page
+    const take = Math.min(limit, 100);
 
     const where: any = {};
     if (search) {
@@ -68,8 +73,13 @@ export class AdminUsersController {
     if (role) {
       where.role = role;
     }
+    if (status === 'active') {
+      where.isActive = true;
+    } else if (status === 'inactive') {
+      where.isActive = false;
+    }
 
-    const [users, total] = await Promise.all([
+    const [allFiltered, total] = await Promise.all([
       this.prisma.user.findMany({
         where,
         select: {
@@ -83,14 +93,18 @@ export class AdminUsersController {
           createdAt: true,
           updatedAt: true,
         },
-        orderBy: {
-          createdAt: 'desc',
-        },
-        skip,
-        take,
       }),
       this.prisma.user.count({ where }),
     ]);
+
+    allFiltered.sort((a, b) => {
+      const rp = rolePriority(a.role) - rolePriority(b.role);
+      if (rp !== 0) return rp;
+      return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+    });
+
+    const skip = (page - 1) * take;
+    const users = allFiltered.slice(skip, skip + take);
 
     return {
       data: {

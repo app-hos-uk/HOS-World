@@ -12,28 +12,33 @@ export class AdminService {
   // These are emergency/owner accounts for platform recovery.
   private readonly protectedAdminEmails = new Set(['app@houseofspells.co.uk', 'mail@jsabu.com']);
 
-  async getAllUsers() {
-    return this.prisma.user.findMany({
-      select: {
-        id: true,
-        email: true,
-        firstName: true,
-        lastName: true,
-        role: true,
-        isActive: true,
-        avatar: true,
-        createdAt: true,
-        updatedAt: true,
-        sellerProfile: {
-          select: {
-            storeName: true,
-          },
-        },
-      },
-      orderBy: {
-        createdAt: 'desc',
-      },
-    });
+  async getUserStats() {
+    const sellerRoles = ['SELLER', 'B2C_SELLER', 'WHOLESALER'];
+    const teamRoles = ['PROCUREMENT', 'FULFILLMENT', 'CATALOG', 'MARKETING', 'FINANCE', 'CMS_EDITOR'];
+
+    const [total, byRole, inactive, newThisMonth] = await Promise.all([
+      this.prisma.user.count(),
+      this.prisma.user.groupBy({ by: ['role'], _count: true }),
+      this.prisma.user.count({ where: { isActive: false } }),
+      this.prisma.user.count({
+        where: { createdAt: { gte: new Date(new Date().getFullYear(), new Date().getMonth(), 1) } },
+      }),
+    ]);
+
+    const roleMap: Record<string, number> = {};
+    for (const r of byRole) roleMap[r.role] = r._count;
+
+    return {
+      total,
+      admins: roleMap['ADMIN'] ?? 0,
+      sellers: sellerRoles.reduce((s, r) => s + (roleMap[r] ?? 0), 0),
+      customers: roleMap['CUSTOMER'] ?? 0,
+      influencers: roleMap['INFLUENCER'] ?? 0,
+      teamMembers: teamRoles.reduce((s, r) => s + (roleMap[r] ?? 0), 0),
+      newThisMonth,
+      active: total - inactive,
+      inactive,
+    };
   }
 
   async createUser(data: {

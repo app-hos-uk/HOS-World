@@ -2073,8 +2073,21 @@ export class ApiClient {
     });
   }
 
-  async getUsers(): Promise<ApiResponse<any[]>> {
-    return this.request<ApiResponse<any[]>>('/admin/users', {
+  async getUsers(params?: { page?: number; limit?: number; search?: string; role?: string; status?: string }): Promise<ApiResponse<any>> {
+    const qs = new URLSearchParams();
+    if (params?.page) qs.set('page', String(params.page));
+    if (params?.limit) qs.set('limit', String(params.limit));
+    if (params?.search) qs.set('search', params.search);
+    if (params?.role) qs.set('role', params.role);
+    if (params?.status) qs.set('status', params.status);
+    const query = qs.toString();
+    return this.request<ApiResponse<any>>(`/admin/users${query ? `?${query}` : ''}`, {
+      method: 'GET',
+    });
+  }
+
+  async getUserStats(): Promise<ApiResponse<any>> {
+    return this.request<ApiResponse<any>>('/admin/users/stats', {
       method: 'GET',
     });
   }
