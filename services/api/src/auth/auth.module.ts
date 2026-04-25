@@ -23,11 +23,11 @@ const logger = new Logger('AuthModule');
       imports: [ConfigModule],
       useFactory: async (configService: ConfigService) => {
         const secret = configService.get<string>('JWT_SECRET');
-        if (!secret && configService.get<string>('NODE_ENV') === 'production') {
-          throw new Error('JWT_SECRET environment variable is required in production');
+        if (!secret) {
+          throw new Error('JWT_SECRET environment variable is required');
         }
         return {
-          secret: secret || 'your-secret-key',
+          secret,
           signOptions: {
             expiresIn: configService.get<string>('JWT_EXPIRES_IN') || '7d',
             algorithm: 'HS256' as const,

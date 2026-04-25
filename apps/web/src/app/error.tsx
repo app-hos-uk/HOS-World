@@ -38,7 +38,7 @@ export default function GlobalError({
         </h1>
 
         <p className="text-gray-600 font-[family-name:var(--font-lora)]">
-          {error.message || 'An unexpected error occurred. Please try again.'}
+          An unexpected error occurred. Please try again.
         </p>
 
         {error.digest && (

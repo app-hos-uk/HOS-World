@@ -2,6 +2,7 @@ const { PrismaClient, UserRole } = require('@prisma/client');
 const bcrypt = require('bcrypt');
 
 const prisma = new PrismaClient();
+const BCRYPT_PASSWORD_ROUNDS = Math.min(15, Math.max(10, parseInt(process.env.BCRYPT_SALT_ROUNDS || '12', 10) || 12));
 
 async function createJabuAdmin() {
   const email = 'mail@jsabu.com';
@@ -32,7 +33,7 @@ async function createJabuAdmin() {
       }
       
       // Update password
-      const hashedPassword = await bcrypt.hash(password, 10);
+      const hashedPassword = await bcrypt.hash(password, BCRYPT_PASSWORD_ROUNDS);
       await prisma.user.update({
         where: { id: existingUser.id },
         data: { password: hashedPassword },
@@ -43,7 +44,7 @@ async function createJabuAdmin() {
     }
     
     // Create new admin user
-    const hashedPassword = await bcrypt.hash(password, 10);
+    const hashedPassword = await bcrypt.hash(password, BCRYPT_PASSWORD_ROUNDS);
     const admin = await prisma.user.create({
       data: {
         email,

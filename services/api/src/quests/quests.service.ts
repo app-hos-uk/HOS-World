@@ -1,9 +1,23 @@
-import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  BadRequestException,
+  Logger,
+  Inject,
+  forwardRef,
+} from '@nestjs/common';
 import { PrismaService } from '../database/prisma.service';
+import { LoyaltyListener } from '../loyalty/listeners/loyalty.listener';
 
 @Injectable()
 export class QuestsService {
-  constructor(private prisma: PrismaService) {}
+  private readonly logger = new Logger(QuestsService.name);
+
+  constructor(
+    private prisma: PrismaService,
+    @Inject(forwardRef(() => LoyaltyListener))
+    private loyaltyListener: LoyaltyListener,
+  ) {}
 
   async findAll() {
     return this.prisma.quest.findMany({
@@ -131,7 +145,7 @@ export class QuestsService {
       badge: uq.quest.badge,
       progress: uq.progress,
       status: uq.status,
-      startedAt: new Date().toISOString(), // UserQuest doesn't have createdAt field
+      startedAt: uq.id, // UserQuest lacks createdAt; use id as proxy
     }));
   }
 
@@ -246,7 +260,6 @@ export class QuestsService {
       badge: userQuest.quest.badge,
       progress: userQuest.progress,
       status: userQuest.status,
-      startedAt: new Date().toISOString(),
     };
   }
 
@@ -308,6 +321,12 @@ export class QuestsService {
           },
         },
       });
+    }
+
+    try {
+      await this.loyaltyListener.onQuestCompleted(userId, questId, updated.quest.points);
+    } catch (e) {
+      this.logger.warn(`Loyalty quest earn: ${(e as Error).message}`);
     }
 
     // Award badge if quest has one

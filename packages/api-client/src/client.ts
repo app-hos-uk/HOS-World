@@ -49,6 +49,26 @@ export class ApiClient {
     return new ApiClient(config);
   }
 
+  /** fetch() with AbortController timeout (avoids hanging uploads/exports/refresh). */
+  private async fetchWithTimeout(
+    url: string,
+    init: RequestInit,
+    timeoutMs: number,
+  ): Promise<Response> {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+    try {
+      return await fetch(url, { ...init, signal: controller.signal });
+    } catch (e: unknown) {
+      if (e instanceof Error && e.name === 'AbortError') {
+        throw new Error(`Request timed out: ${url}`);
+      }
+      throw e;
+    } finally {
+      clearTimeout(timeoutId);
+    }
+  }
+
   private async request<T>(
     endpoint: string,
     options: RequestInit = {}
@@ -204,12 +224,16 @@ export class ApiClient {
         if (legacyToken) {
           body.refreshToken = legacyToken;
         }
-        const res = await fetch(`${this.baseUrl}/auth/refresh`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          credentials: 'include',
-          body: JSON.stringify(body),
-        });
+        const res = await this.fetchWithTimeout(
+          `${this.baseUrl}/auth/refresh`,
+          {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'include',
+            body: JSON.stringify(body),
+          },
+          15000,
+        );
         if (!res.ok) return false;
         const json = await res.json();
         const token = json?.data?.token;
@@ -420,6 +444,1018 @@ export class ApiClient {
     return this.request<ApiResponse<Cart>>('/cart/merge-guest', {
       method: 'POST',
       body: JSON.stringify({ guestSessionId }),
+    });
+  }
+
+  async applyCartLoyaltyReward(optionId: string): Promise<ApiResponse<Cart>> {
+    return this.request<ApiResponse<Cart>>('/cart/loyalty', {
+      method: 'POST',
+      body: JSON.stringify({ optionId }),
+    });
+  }
+
+  async removeCartLoyaltyReward(): Promise<ApiResponse<Cart>> {
+    return this.request<ApiResponse<Cart>>('/cart/loyalty', { method: 'DELETE' });
+  }
+
+  // Enchanted Circle — loyalty
+  async enrollLoyalty(body?: {
+    regionCode?: string;
+    preferredCurrency?: string;
+    enrollmentChannel?: string;
+    referralCode?: string;
+  }): Promise<ApiResponse<unknown>> {
+    return this.request<ApiResponse<unknown>>('/loyalty/enroll', {
+      method: 'POST',
+      body: JSON.stringify(body || {}),
+    });
+  }
+
+  async getLoyaltyMembership(): Promise<ApiResponse<unknown>> {
+    return this.request<ApiResponse<unknown>>('/loyalty/membership');
+  }
+
+  async getLoyaltyTransactions(params?: { page?: number; limit?: number }): Promise<ApiResponse<unknown>> {
+    const q = new URLSearchParams();
+    if (params?.page != null) q.set('page', String(params.page));
+    if (params?.limit != null) q.set('limit', String(params.limit));
+    const qs = q.toString();
+    return this.request<ApiResponse<unknown>>(`/loyalty/transactions${qs ? `?${qs}` : ''}`);
+  }
+
+  async getLoyaltyTierProgress(): Promise<ApiResponse<unknown>> {
+    return this.request<ApiResponse<unknown>>('/loyalty/tier-progress');
+  }
+
+  async getRedemptionOptions(region?: string): Promise<ApiResponse<unknown>> {
+    const qs = region ? `?region=${encodeURIComponent(region)}` : '';
+    return this.request<ApiResponse<unknown>>(`/loyalty/redemption-options${qs}`);
+  }
+
+  async redeemLoyaltyPoints(body: {
+    points: number;
+    channel: string;
+    optionId?: string;
+    storeId?: string;
+  }): Promise<ApiResponse<unknown>> {
+    return this.request<ApiResponse<unknown>>('/loyalty/redeem', {
+      method: 'POST',
+      body: JSON.stringify(body),
+    });
+  }
+
+  async getLoyaltyReferralInfo(): Promise<ApiResponse<unknown>> {
+    return this.request<ApiResponse<unknown>>('/loyalty/referral');
+  }
+
+  async generateLoyaltyReferralCode(): Promise<ApiResponse<unknown>> {
+    return this.request<ApiResponse<unknown>>('/loyalty/referral/generate', { method: 'POST' });
+  }
+
+  // ── Phase 7: Ambassador (customer) ──
+  async getAmbassadorEligibility(): Promise<ApiResponse<unknown>> {
+    return this.request<ApiResponse<unknown>>('/loyalty/ambassador/eligibility');
+  }
+
+  async enrollAmbassador(body: Record<string, unknown>): Promise<ApiResponse<unknown>> {
+    return this.request<ApiResponse<unknown>>('/loyalty/ambassador/enroll', {
+      method: 'POST',
+      body: JSON.stringify(body),
+    });
+  }
+
+  async getAmbassadorProfile(): Promise<ApiResponse<unknown>> {
+    return this.request<ApiResponse<unknown>>('/loyalty/ambassador/profile');
+  }
+
+  async updateAmbassadorProfile(body: Record<string, unknown>): Promise<ApiResponse<unknown>> {
+    return this.request<ApiResponse<unknown>>('/loyalty/ambassador/profile', {
+      method: 'PATCH',
+      body: JSON.stringify(body),
+    });
+  }
+
+  async submitAmbassadorUgc(body: Record<string, unknown>): Promise<ApiResponse<unknown>> {
+    return this.request<ApiResponse<unknown>>('/loyalty/ambassador/ugc', {
+      method: 'POST',
+      body: JSON.stringify(body),
+    });
+  }
+
+  async listAmbassadorUgc(params?: {
+    status?: string;
+    page?: number;
+    limit?: number;
+  }): Promise<ApiResponse<unknown>> {
+    const q = new URLSearchParams();
+    if (params?.status) q.set('status', params.status);
+    if (params?.page != null) q.set('page', String(params.page));
+    if (params?.limit != null) q.set('limit', String(params.limit));
+    const qs = q.toString();
+    return this.request<ApiResponse<unknown>>(`/loyalty/ambassador/ugc${qs ? `?${qs}` : ''}`);
+  }
+
+  async getAmbassadorDashboard(): Promise<ApiResponse<unknown>> {
+    return this.request<ApiResponse<unknown>>('/loyalty/ambassador/dashboard');
+  }
+
+  async getAmbassadorLeaderboard(params?: {
+    period?: string;
+    limit?: number;
+  }): Promise<ApiResponse<unknown>> {
+    const q = new URLSearchParams();
+    if (params?.period) q.set('period', params.period);
+    if (params?.limit != null) q.set('limit', String(params.limit));
+    const qs = q.toString();
+    return this.request<ApiResponse<unknown>>(`/loyalty/ambassador/leaderboard${qs ? `?${qs}` : ''}`);
+  }
+
+  async getAmbassadorAchievements(): Promise<ApiResponse<unknown>> {
+    return this.request<ApiResponse<unknown>>('/loyalty/ambassador/achievements');
+  }
+
+  async convertAmbassadorCommission(commissionId: string): Promise<ApiResponse<unknown>> {
+    return this.request<ApiResponse<unknown>>(
+      `/loyalty/ambassador/convert-commission/${encodeURIComponent(commissionId)}`,
+      { method: 'POST' },
+    );
+  }
+
+  async getActiveBrandCampaigns(): Promise<ApiResponse<unknown>> {
+    return this.request<ApiResponse<unknown>>('/loyalty/brand-campaigns');
+  }
+
+  async getBrandCampaignProducts(campaignId: string, limit?: number): Promise<ApiResponse<unknown>> {
+    const q = limit != null ? `?limit=${encodeURIComponent(String(limit))}` : '';
+    return this.request<ApiResponse<unknown>>(
+      `/loyalty/brand-campaigns/${encodeURIComponent(campaignId)}/products${q}`,
+    );
+  }
+
+  async getLoyaltyCard(): Promise<ApiResponse<unknown>> {
+    return this.request<ApiResponse<unknown>>('/loyalty/card');
+  }
+
+  async loyaltyCheckIn(storeId: string): Promise<ApiResponse<unknown>> {
+    return this.request<ApiResponse<unknown>>('/loyalty/check-in', {
+      method: 'POST',
+      body: JSON.stringify({ storeId }),
+    });
+  }
+
+  async getLoyaltyFandomProfile(): Promise<ApiResponse<Record<string, number>>> {
+    return this.request<ApiResponse<Record<string, number>>>('/loyalty/fandom-profile');
+  }
+
+  async getLoyaltyPreferences(): Promise<ApiResponse<unknown>> {
+    return this.request<ApiResponse<unknown>>('/loyalty/preferences');
+  }
+
+  async updateLoyaltyPreferences(body: {
+    optInEmail?: boolean;
+    optInSms?: boolean;
+    optInWhatsApp?: boolean;
+    optInPush?: boolean;
+  }): Promise<ApiResponse<unknown>> {
+    return this.request<ApiResponse<unknown>>('/loyalty/preferences', {
+      method: 'PATCH',
+      body: JSON.stringify(body),
+    });
+  }
+
+  async subscribePush(body: {
+    endpoint: string;
+    keys: { p256dh?: string; auth?: string };
+    platform?: string;
+  }): Promise<ApiResponse<unknown>> {
+    return this.request<ApiResponse<unknown>>('/messaging/push/subscribe', {
+      method: 'POST',
+      body: JSON.stringify(body),
+    });
+  }
+
+  async unsubscribePush(endpoint?: string): Promise<ApiResponse<unknown>> {
+    const qs = endpoint ? `?endpoint=${encodeURIComponent(endpoint)}` : '';
+    return this.request<ApiResponse<unknown>>(`/messaging/push/unsubscribe${qs}`, {
+      method: 'DELETE',
+    });
+  }
+
+  async getMessageHistory(params?: { page?: number; limit?: number }): Promise<ApiResponse<unknown>> {
+    const q = new URLSearchParams();
+    if (params?.page != null) q.set('page', String(params.page));
+    if (params?.limit != null) q.set('limit', String(params.limit));
+    const qs = q.toString();
+    return this.request<ApiResponse<unknown>>(`/messaging/history${qs ? `?${qs}` : ''}`);
+  }
+
+  async getMessagingUnsubscribe(token: string): Promise<ApiResponse<unknown>> {
+    return this.request<ApiResponse<unknown>>(
+      `/messaging/unsubscribe?token=${encodeURIComponent(token)}`,
+    );
+  }
+
+  async adminListJourneys(): Promise<ApiResponse<unknown>> {
+    return this.request<ApiResponse<unknown>>('/admin/journeys');
+  }
+
+  async adminGetJourney(id: string): Promise<ApiResponse<unknown>> {
+    return this.request<ApiResponse<unknown>>(`/admin/journeys/${id}`);
+  }
+
+  async adminCreateJourney(body: Record<string, unknown>): Promise<ApiResponse<unknown>> {
+    return this.request<ApiResponse<unknown>>('/admin/journeys', {
+      method: 'POST',
+      body: JSON.stringify(body),
+    });
+  }
+
+  async adminUpdateJourney(id: string, body: Record<string, unknown>): Promise<ApiResponse<unknown>> {
+    return this.request<ApiResponse<unknown>>(`/admin/journeys/${id}`, {
+      method: 'PATCH',
+      body: JSON.stringify(body),
+    });
+  }
+
+  async adminDeleteJourney(id: string): Promise<ApiResponse<unknown>> {
+    return this.request<ApiResponse<unknown>>(`/admin/journeys/${id}`, { method: 'DELETE' });
+  }
+
+  async adminGetJourneyEnrollments(id: string): Promise<ApiResponse<unknown>> {
+    return this.request<ApiResponse<unknown>>(`/admin/journeys/${id}/enrollments`);
+  }
+
+  async adminTriggerJourney(
+    id: string,
+    body: { userId?: string; segment?: Record<string, unknown> },
+  ): Promise<ApiResponse<unknown>> {
+    return this.request<ApiResponse<unknown>>(`/admin/journeys/${id}/trigger`, {
+      method: 'POST',
+      body: JSON.stringify(body),
+    });
+  }
+
+  async adminGetMessageLogs(params?: Record<string, string>): Promise<ApiResponse<unknown>> {
+    const q = new URLSearchParams(params || {});
+    const qs = q.toString();
+    return this.request<ApiResponse<unknown>>(`/admin/messaging/logs${qs ? `?${qs}` : ''}`);
+  }
+
+  async adminGetMessagingStats(): Promise<ApiResponse<unknown>> {
+    return this.request<ApiResponse<unknown>>('/admin/messaging/stats');
+  }
+
+  async adminMessagingBroadcast(body: {
+    channels: string[];
+    templateSlug: string;
+    subject?: string;
+    segment?: { tierSlug?: string; regionCode?: string };
+    templateVars?: Record<string, string>;
+  }): Promise<ApiResponse<unknown>> {
+    return this.request<ApiResponse<unknown>>('/admin/messaging/broadcast', {
+      method: 'POST',
+      body: JSON.stringify(body),
+    });
+  }
+
+  // ── Phase 5: Events (customer) ──
+  async getEvents(params?: {
+    storeId?: string;
+    fandomId?: string;
+    type?: string;
+    page?: number;
+    limit?: number;
+  }): Promise<ApiResponse<unknown>> {
+    const q = new URLSearchParams();
+    if (params?.storeId) q.set('storeId', params.storeId);
+    if (params?.fandomId) q.set('fandomId', params.fandomId);
+    if (params?.type) q.set('type', params.type);
+    if (params?.page != null) q.set('page', String(params.page));
+    if (params?.limit != null) q.set('limit', String(params.limit));
+    const qs = q.toString();
+    return this.request<ApiResponse<unknown>>(`/events${qs ? `?${qs}` : ''}`);
+  }
+
+  async getEventBySlug(slug: string): Promise<ApiResponse<unknown>> {
+    return this.request<ApiResponse<unknown>>(`/events/${encodeURIComponent(slug)}`);
+  }
+
+  async rsvpEvent(
+    eventId: string,
+    body?: { guestCount?: number; notes?: string },
+  ): Promise<ApiResponse<unknown>> {
+    return this.request<ApiResponse<unknown>>(`/events/${eventId}/rsvp`, {
+      method: 'POST',
+      body: JSON.stringify(body || {}),
+    });
+  }
+
+  async cancelEventRsvp(eventId: string): Promise<ApiResponse<unknown>> {
+    return this.request<ApiResponse<unknown>>(`/events/${eventId}/rsvp`, { method: 'DELETE' });
+  }
+
+  async checkInEvent(
+    eventId: string,
+    body?: { ticketCode?: string; method?: string },
+  ): Promise<ApiResponse<unknown>> {
+    return this.request<ApiResponse<unknown>>(`/events/${eventId}/check-in`, {
+      method: 'POST',
+      body: JSON.stringify(body || {}),
+    });
+  }
+
+  async getMyEventRsvps(): Promise<ApiResponse<unknown>> {
+    return this.request<ApiResponse<unknown>>('/events/my/rsvps');
+  }
+
+  async getMyEventAttendances(): Promise<ApiResponse<unknown>> {
+    return this.request<ApiResponse<unknown>>('/events/my/attendances');
+  }
+
+  // ── Phase 5: Events (admin) ──
+  async adminListEvents(params?: {
+    status?: string;
+    storeId?: string;
+    page?: number;
+    limit?: number;
+  }): Promise<ApiResponse<unknown>> {
+    const q = new URLSearchParams();
+    if (params?.status) q.set('status', params.status);
+    if (params?.storeId) q.set('storeId', params.storeId);
+    if (params?.page != null) q.set('page', String(params.page));
+    if (params?.limit != null) q.set('limit', String(params.limit));
+    const qs = q.toString();
+    return this.request<ApiResponse<unknown>>(`/admin/events${qs ? `?${qs}` : ''}`);
+  }
+
+  async adminGetEvent(id: string): Promise<ApiResponse<unknown>> {
+    return this.request<ApiResponse<unknown>>(`/admin/events/${id}`);
+  }
+
+  async adminCreateEvent(body: Record<string, unknown>): Promise<ApiResponse<unknown>> {
+    return this.request<ApiResponse<unknown>>('/admin/events', {
+      method: 'POST',
+      body: JSON.stringify(body),
+    });
+  }
+
+  async adminUpdateEvent(id: string, body: Record<string, unknown>): Promise<ApiResponse<unknown>> {
+    return this.request<ApiResponse<unknown>>(`/admin/events/${id}`, {
+      method: 'PATCH',
+      body: JSON.stringify(body),
+    });
+  }
+
+  async adminPublishEvent(id: string): Promise<ApiResponse<unknown>> {
+    return this.request<ApiResponse<unknown>>(`/admin/events/${id}/publish`, { method: 'POST' });
+  }
+
+  async adminCancelEvent(id: string, body?: { reason?: string }): Promise<ApiResponse<unknown>> {
+    return this.request<ApiResponse<unknown>>(`/admin/events/${id}/cancel`, {
+      method: 'POST',
+      body: JSON.stringify(body || {}),
+    });
+  }
+
+  async adminCompleteEvent(id: string): Promise<ApiResponse<unknown>> {
+    return this.request<ApiResponse<unknown>>(`/admin/events/${id}/complete`, { method: 'POST' });
+  }
+
+  async adminDeleteEvent(id: string): Promise<ApiResponse<unknown>> {
+    return this.request<ApiResponse<unknown>>(`/admin/events/${id}`, { method: 'DELETE' });
+  }
+
+  async adminGetEventRsvps(id: string): Promise<ApiResponse<unknown>> {
+    return this.request<ApiResponse<unknown>>(`/admin/events/${id}/rsvps`);
+  }
+
+  async adminGetEventAttendances(id: string): Promise<ApiResponse<unknown>> {
+    return this.request<ApiResponse<unknown>>(`/admin/events/${id}/attendances`);
+  }
+
+  async adminCheckInEvent(
+    id: string,
+    body: { userId?: string; ticketCode?: string },
+  ): Promise<ApiResponse<unknown>> {
+    return this.request<ApiResponse<unknown>>(`/admin/events/${id}/check-in`, {
+      method: 'POST',
+      body: JSON.stringify(body),
+    });
+  }
+
+  async adminGetEventStats(id: string): Promise<ApiResponse<unknown>> {
+    return this.request<ApiResponse<unknown>>(`/admin/events/${id}/stats`);
+  }
+
+  async adminInviteToEvent(
+    id: string,
+    body: {
+      tierIds?: string[];
+      minTierLevel?: number;
+      fandomId?: string;
+      limit?: number;
+      segmentId?: string;
+    },
+  ): Promise<ApiResponse<unknown>> {
+    return this.request<ApiResponse<unknown>>(`/admin/events/${id}/invite`, {
+      method: 'POST',
+      body: JSON.stringify(body),
+    });
+  }
+
+  // ── Phase 6: Segmentation (admin) ──
+  async adminListSegments(params?: {
+    status?: string;
+    type?: string;
+    page?: number;
+    limit?: number;
+  }): Promise<ApiResponse<unknown>> {
+    const q = new URLSearchParams();
+    if (params?.status) q.set('status', params.status);
+    if (params?.type) q.set('type', params.type);
+    if (params?.page != null) q.set('page', String(params.page));
+    if (params?.limit != null) q.set('limit', String(params.limit));
+    const qs = q.toString();
+    return this.request<ApiResponse<unknown>>(`/admin/segments${qs ? `?${qs}` : ''}`);
+  }
+
+  async adminGetSegment(id: string): Promise<ApiResponse<unknown>> {
+    return this.request<ApiResponse<unknown>>(`/admin/segments/${id}`);
+  }
+
+  async adminGetSegmentTemplates(): Promise<ApiResponse<unknown>> {
+    return this.request<ApiResponse<unknown>>('/admin/segments/templates');
+  }
+
+  async adminCreateSegment(body: Record<string, unknown>): Promise<ApiResponse<unknown>> {
+    return this.request<ApiResponse<unknown>>('/admin/segments', {
+      method: 'POST',
+      body: JSON.stringify(body),
+    });
+  }
+
+  async adminUpdateSegment(id: string, body: Record<string, unknown>): Promise<ApiResponse<unknown>> {
+    return this.request<ApiResponse<unknown>>(`/admin/segments/${id}`, {
+      method: 'PATCH',
+      body: JSON.stringify(body),
+    });
+  }
+
+  async adminArchiveSegment(id: string): Promise<ApiResponse<unknown>> {
+    return this.request<ApiResponse<unknown>>(`/admin/segments/${id}/archive`, { method: 'POST' });
+  }
+
+  async adminDeleteSegment(id: string): Promise<ApiResponse<unknown>> {
+    return this.request<ApiResponse<unknown>>(`/admin/segments/${id}`, { method: 'DELETE' });
+  }
+
+  async adminRefreshSegment(id: string): Promise<ApiResponse<unknown>> {
+    return this.request<ApiResponse<unknown>>(`/admin/segments/${id}/refresh`, { method: 'POST' });
+  }
+
+  async adminRefreshAllSegments(): Promise<ApiResponse<unknown>> {
+    return this.request<ApiResponse<unknown>>('/admin/segments/refresh-all', { method: 'POST' });
+  }
+
+  async adminPreviewSegment(body: { rules: unknown }): Promise<ApiResponse<unknown>> {
+    return this.request<ApiResponse<unknown>>('/admin/segments/preview', {
+      method: 'POST',
+      body: JSON.stringify(body),
+    });
+  }
+
+  async adminGetSegmentMembers(
+    id: string,
+    params?: { page?: number; limit?: number; search?: string },
+  ): Promise<ApiResponse<unknown>> {
+    const q = new URLSearchParams();
+    if (params?.page != null) q.set('page', String(params.page));
+    if (params?.limit != null) q.set('limit', String(params.limit));
+    if (params?.search) q.set('search', params.search);
+    const qs = q.toString();
+    return this.request<ApiResponse<unknown>>(`/admin/segments/${id}/members${qs ? `?${qs}` : ''}`);
+  }
+
+  async adminBroadcastToSegment(
+    id: string,
+    body: {
+      channels: string[];
+      templateSlug: string;
+      subject?: string;
+      templateVars?: Record<string, string>;
+      limit?: number;
+    },
+  ): Promise<ApiResponse<unknown>> {
+    return this.request<ApiResponse<unknown>>(`/admin/segments/${id}/broadcast`, {
+      method: 'POST',
+      body: JSON.stringify(body),
+    });
+  }
+
+  async adminGetSegmentDimensions(): Promise<ApiResponse<unknown>> {
+    return this.request<ApiResponse<unknown>>('/admin/segments/dimensions');
+  }
+
+  // ── Phase 7: Ambassador (admin) ──
+  async adminListAmbassadors(params?: {
+    status?: string;
+    tier?: string;
+    page?: number;
+    limit?: number;
+    search?: string;
+  }): Promise<ApiResponse<unknown>> {
+    const q = new URLSearchParams();
+    if (params?.status) q.set('status', params.status);
+    if (params?.tier) q.set('tier', params.tier);
+    if (params?.page != null) q.set('page', String(params.page));
+    if (params?.limit != null) q.set('limit', String(params.limit));
+    if (params?.search) q.set('search', params.search);
+    const qs = q.toString();
+    return this.request<ApiResponse<unknown>>(`/admin/ambassadors${qs ? `?${qs}` : ''}`);
+  }
+
+  async adminGetAmbassadorDashboard(): Promise<ApiResponse<unknown>> {
+    return this.request<ApiResponse<unknown>>('/admin/ambassadors/dashboard');
+  }
+
+  async adminGetAmbassador(id: string): Promise<ApiResponse<unknown>> {
+    return this.request<ApiResponse<unknown>>(`/admin/ambassadors/${id}`);
+  }
+
+  async adminSuspendAmbassador(id: string): Promise<ApiResponse<unknown>> {
+    return this.request<ApiResponse<unknown>>(`/admin/ambassadors/${id}/suspend`, { method: 'POST' });
+  }
+
+  async adminReactivateAmbassador(id: string): Promise<ApiResponse<unknown>> {
+    return this.request<ApiResponse<unknown>>(`/admin/ambassadors/${id}/reactivate`, { method: 'POST' });
+  }
+
+  async adminListAmbassadorUgc(params?: {
+    status?: string;
+    type?: string;
+    page?: number;
+    limit?: number;
+  }): Promise<ApiResponse<unknown>> {
+    const q = new URLSearchParams();
+    if (params?.status) q.set('status', params.status);
+    if (params?.type) q.set('type', params.type);
+    if (params?.page != null) q.set('page', String(params.page));
+    if (params?.limit != null) q.set('limit', String(params.limit));
+    const qs = q.toString();
+    return this.request<ApiResponse<unknown>>(`/admin/ambassadors/ugc${qs ? `?${qs}` : ''}`);
+  }
+
+  async adminReviewAmbassadorUgc(
+    id: string,
+    body: { status: string; reviewNotes?: string },
+  ): Promise<ApiResponse<unknown>> {
+    return this.request<ApiResponse<unknown>>(`/admin/ambassadors/ugc/${id}/review`, {
+      method: 'POST',
+      body: JSON.stringify(body),
+    });
+  }
+
+  async adminGetAmbassadorLeaderboard(params?: {
+    period?: string;
+    limit?: number;
+  }): Promise<ApiResponse<unknown>> {
+    const q = new URLSearchParams();
+    if (params?.period) q.set('period', params.period);
+    if (params?.limit != null) q.set('limit', String(params.limit));
+    const qs = q.toString();
+    return this.request<ApiResponse<unknown>>(`/admin/ambassadors/leaderboard${qs ? `?${qs}` : ''}`);
+  }
+
+  async adminGetBrandPartnershipDashboard(): Promise<ApiResponse<unknown>> {
+    return this.request<ApiResponse<unknown>>('/admin/brand-partnerships/dashboard');
+  }
+
+  async adminListBrandPartnerships(params?: {
+    status?: string;
+    page?: number;
+    limit?: number;
+    search?: string;
+  }): Promise<ApiResponse<unknown>> {
+    const q = new URLSearchParams();
+    if (params?.status) q.set('status', params.status);
+    if (params?.page != null) q.set('page', String(params.page));
+    if (params?.limit != null) q.set('limit', String(params.limit));
+    if (params?.search) q.set('search', params.search);
+    const qs = q.toString();
+    return this.request<ApiResponse<unknown>>(`/admin/brand-partnerships${qs ? `?${qs}` : ''}`);
+  }
+
+  async adminCreateBrandPartnership(body: Record<string, unknown>): Promise<ApiResponse<unknown>> {
+    return this.request<ApiResponse<unknown>>('/admin/brand-partnerships', {
+      method: 'POST',
+      body: JSON.stringify(body),
+    });
+  }
+
+  async adminGetBrandPartnership(id: string): Promise<ApiResponse<unknown>> {
+    return this.request<ApiResponse<unknown>>(`/admin/brand-partnerships/${encodeURIComponent(id)}`);
+  }
+
+  async adminUpdateBrandPartnership(
+    id: string,
+    body: Record<string, unknown>,
+  ): Promise<ApiResponse<unknown>> {
+    return this.request<ApiResponse<unknown>>(`/admin/brand-partnerships/${encodeURIComponent(id)}`, {
+      method: 'PATCH',
+      body: JSON.stringify(body),
+    });
+  }
+
+  async adminArchiveBrandPartnership(id: string): Promise<ApiResponse<unknown>> {
+    return this.request<ApiResponse<unknown>>(
+      `/admin/brand-partnerships/${encodeURIComponent(id)}/archive`,
+      { method: 'POST' },
+    );
+  }
+
+  async adminGetBrandPartnershipReport(id: string): Promise<ApiResponse<unknown>> {
+    return this.request<ApiResponse<unknown>>(
+      `/admin/brand-partnerships/${encodeURIComponent(id)}/report`,
+    );
+  }
+
+  async adminCreateBrandCampaign(
+    partnershipId: string,
+    body: Record<string, unknown>,
+  ): Promise<ApiResponse<unknown>> {
+    return this.request<ApiResponse<unknown>>(
+      `/admin/brand-partnerships/${encodeURIComponent(partnershipId)}/campaigns`,
+      { method: 'POST', body: JSON.stringify(body) },
+    );
+  }
+
+  async adminListBrandCampaigns(params?: {
+    partnershipId?: string;
+    status?: string;
+    type?: string;
+    page?: number;
+    limit?: number;
+  }): Promise<ApiResponse<unknown>> {
+    const q = new URLSearchParams();
+    if (params?.partnershipId) q.set('partnershipId', params.partnershipId);
+    if (params?.status) q.set('status', params.status);
+    if (params?.type) q.set('type', params.type);
+    if (params?.page != null) q.set('page', String(params.page));
+    if (params?.limit != null) q.set('limit', String(params.limit));
+    const qs = q.toString();
+    return this.request<ApiResponse<unknown>>(`/admin/brand-partnerships/campaigns${qs ? `?${qs}` : ''}`);
+  }
+
+  async adminGetBrandCampaign(id: string): Promise<ApiResponse<unknown>> {
+    return this.request<ApiResponse<unknown>>(
+      `/admin/brand-partnerships/campaigns/${encodeURIComponent(id)}`,
+    );
+  }
+
+  async adminUpdateBrandCampaign(
+    id: string,
+    body: Record<string, unknown>,
+  ): Promise<ApiResponse<unknown>> {
+    return this.request<ApiResponse<unknown>>(
+      `/admin/brand-partnerships/campaigns/${encodeURIComponent(id)}`,
+      { method: 'PATCH', body: JSON.stringify(body) },
+    );
+  }
+
+  async adminActivateBrandCampaign(id: string): Promise<ApiResponse<unknown>> {
+    return this.request<ApiResponse<unknown>>(
+      `/admin/brand-partnerships/campaigns/${encodeURIComponent(id)}/activate`,
+      { method: 'POST' },
+    );
+  }
+
+  async adminPauseBrandCampaign(id: string): Promise<ApiResponse<unknown>> {
+    return this.request<ApiResponse<unknown>>(
+      `/admin/brand-partnerships/campaigns/${encodeURIComponent(id)}/pause`,
+      { method: 'POST' },
+    );
+  }
+
+  async adminCompleteBrandCampaign(id: string): Promise<ApiResponse<unknown>> {
+    return this.request<ApiResponse<unknown>>(
+      `/admin/brand-partnerships/campaigns/${encodeURIComponent(id)}/complete`,
+      { method: 'POST' },
+    );
+  }
+
+  async adminCancelBrandCampaign(id: string): Promise<ApiResponse<unknown>> {
+    return this.request<ApiResponse<unknown>>(
+      `/admin/brand-partnerships/campaigns/${encodeURIComponent(id)}/cancel`,
+      { method: 'POST' },
+    );
+  }
+
+  async adminGetBrandCampaignReport(id: string): Promise<ApiResponse<unknown>> {
+    return this.request<ApiResponse<unknown>>(
+      `/admin/brand-partnerships/campaigns/${encodeURIComponent(id)}/report`,
+    );
+  }
+
+  async adminGetLoyaltyHealth(): Promise<ApiResponse<unknown>> {
+    return this.request<ApiResponse<unknown>>('/admin/loyalty-analytics/health');
+  }
+
+  async adminGetLoyaltySnapshots(params?: { startDate?: string; endDate?: string }): Promise<ApiResponse<unknown>> {
+    const q = new URLSearchParams();
+    if (params?.startDate) q.set('startDate', params.startDate);
+    if (params?.endDate) q.set('endDate', params.endDate);
+    const qs = q.toString();
+    return this.request<ApiResponse<unknown>>(`/admin/loyalty-analytics/snapshots${qs ? `?${qs}` : ''}`);
+  }
+
+  async adminGetClvDistribution(): Promise<ApiResponse<unknown>> {
+    return this.request<ApiResponse<unknown>>('/admin/loyalty-analytics/clv/distribution');
+  }
+
+  async adminGetClvTop(limit?: number): Promise<ApiResponse<unknown>> {
+    const qs = limit != null ? `?limit=${limit}` : '';
+    return this.request<ApiResponse<unknown>>(`/admin/loyalty-analytics/clv/top${qs}`);
+  }
+
+  async adminGetChurnReport(): Promise<ApiResponse<unknown>> {
+    return this.request<ApiResponse<unknown>>('/admin/loyalty-analytics/clv/churn');
+  }
+
+  async adminGetCampaignAttribution(params?: {
+    startDate?: string; endDate?: string; type?: string; limit?: number;
+  }): Promise<ApiResponse<unknown>> {
+    const q = new URLSearchParams();
+    if (params?.startDate) q.set('startDate', params.startDate);
+    if (params?.endDate) q.set('endDate', params.endDate);
+    if (params?.type) q.set('type', params.type);
+    if (params?.limit != null) q.set('limit', String(params.limit));
+    const qs = q.toString();
+    return this.request<ApiResponse<unknown>>(`/admin/loyalty-analytics/attribution${qs ? `?${qs}` : ''}`);
+  }
+
+  async adminGetCampaignRoiTimeline(campaignId: string, days?: number): Promise<ApiResponse<unknown>> {
+    const qs = days != null ? `?days=${days}` : '';
+    return this.request<ApiResponse<unknown>>(
+      `/admin/loyalty-analytics/attribution/${encodeURIComponent(campaignId)}${qs}`,
+    );
+  }
+
+  async adminGetFandomTrends(days?: number): Promise<ApiResponse<unknown>> {
+    const qs = days != null ? `?days=${days}` : '';
+    return this.request<ApiResponse<unknown>>(`/admin/loyalty-analytics/fandom-trends${qs}`);
+  }
+
+  async adminGetTierAnalysis(): Promise<ApiResponse<unknown>> {
+    return this.request<ApiResponse<unknown>>('/admin/loyalty-analytics/tiers');
+  }
+
+  async adminGetChannelPerformance(days?: number): Promise<ApiResponse<unknown>> {
+    const qs = days != null ? `?days=${days}` : '';
+    return this.request<ApiResponse<unknown>>(`/admin/loyalty-analytics/channels${qs}`);
+  }
+
+  async adminGetCohortRetention(months?: number): Promise<ApiResponse<unknown>> {
+    const qs = months != null ? `?months=${months}` : '';
+    return this.request<ApiResponse<unknown>>(`/admin/loyalty-analytics/cohorts${qs}`);
+  }
+
+  async adminComputeSnapshot(date?: string): Promise<ApiResponse<unknown>> {
+    const qs = date ? `?date=${encodeURIComponent(date)}` : '';
+    return this.request<ApiResponse<unknown>>(`/admin/loyalty-analytics/snapshots/compute${qs}`, { method: 'POST' });
+  }
+
+  async adminRecomputeClv(): Promise<ApiResponse<unknown>> {
+    return this.request<ApiResponse<unknown>>('/admin/loyalty-analytics/clv/recompute', { method: 'POST' });
+  }
+
+  async adminExportLoyaltyReport(type: string, format?: string): Promise<ApiResponse<unknown>> {
+    const qs = format ? `?format=${encodeURIComponent(format)}` : '';
+    return this.request<ApiResponse<unknown>>(
+      `/admin/loyalty-analytics/export/${encodeURIComponent(type)}${qs}`,
+    );
+  }
+
+  async createClickCollect(body: Record<string, unknown>): Promise<ApiResponse<unknown>> {
+    return this.request<ApiResponse<unknown>>('/click-collect', {
+      method: 'POST',
+      body: JSON.stringify(body),
+    });
+  }
+
+  async getMyClickCollectOrders(): Promise<ApiResponse<unknown>> {
+    return this.request<ApiResponse<unknown>>('/click-collect/my-orders');
+  }
+
+  async getClickCollectStores(
+    productIds: string[],
+    opts?: { verifyInventory?: boolean },
+  ): Promise<ApiResponse<unknown>> {
+    const sp = new URLSearchParams();
+    if (productIds.length > 0) sp.set('productIds', productIds.join(','));
+    if (opts?.verifyInventory) sp.set('verifyInventory', 'true');
+    const qs = sp.toString() ? `?${sp.toString()}` : '';
+    return this.request<ApiResponse<unknown>>(`/click-collect/stores${qs}`);
+  }
+
+  async adminListClickCollect(params?: {
+    storeId?: string;
+    status?: string;
+  }): Promise<ApiResponse<unknown>> {
+    const sp = new URLSearchParams();
+    if (params?.storeId) sp.set('storeId', params.storeId);
+    if (params?.status) sp.set('status', params.status);
+    const qs = sp.toString() ? `?${sp}` : '';
+    return this.request<ApiResponse<unknown>>(`/admin/click-collect${qs}`);
+  }
+
+  async adminGetClickCollect(id: string): Promise<ApiResponse<unknown>> {
+    return this.request<ApiResponse<unknown>>(`/admin/click-collect/${id}`);
+  }
+
+  async adminMarkCCPreparing(id: string): Promise<ApiResponse<unknown>> {
+    return this.request<ApiResponse<unknown>>(`/admin/click-collect/${id}/preparing`, {
+      method: 'POST',
+    });
+  }
+
+  async adminMarkCCReady(id: string): Promise<ApiResponse<unknown>> {
+    return this.request<ApiResponse<unknown>>(`/admin/click-collect/${id}/ready`, {
+      method: 'POST',
+    });
+  }
+
+  async adminMarkCCCollected(id: string): Promise<ApiResponse<unknown>> {
+    return this.request<ApiResponse<unknown>>(`/admin/click-collect/${id}/collected`, {
+      method: 'POST',
+    });
+  }
+
+  async adminCancelCC(id: string): Promise<ApiResponse<unknown>> {
+    return this.request<ApiResponse<unknown>>(`/admin/click-collect/${id}/cancel`, {
+      method: 'POST',
+    });
+  }
+
+  async adminListProductCampaigns(params?: { status?: string }): Promise<ApiResponse<unknown>> {
+    const qs = params?.status ? `?status=${encodeURIComponent(params.status)}` : '';
+    return this.request<ApiResponse<unknown>>(`/admin/product-campaigns${qs}`);
+  }
+
+  async adminCreateProductCampaign(body: Record<string, unknown>): Promise<ApiResponse<unknown>> {
+    return this.request<ApiResponse<unknown>>('/admin/product-campaigns', {
+      method: 'POST',
+      body: JSON.stringify(body),
+    });
+  }
+
+  async adminGetProductCampaign(id: string): Promise<ApiResponse<unknown>> {
+    return this.request<ApiResponse<unknown>>(`/admin/product-campaigns/${id}`);
+  }
+
+  async adminUpdateProductCampaign(
+    id: string,
+    body: Record<string, unknown>,
+  ): Promise<ApiResponse<unknown>> {
+    return this.request<ApiResponse<unknown>>(`/admin/product-campaigns/${id}`, {
+      method: 'PATCH',
+      body: JSON.stringify(body),
+    });
+  }
+
+  async adminActivateProductCampaign(id: string): Promise<ApiResponse<unknown>> {
+    return this.request<ApiResponse<unknown>>(`/admin/product-campaigns/${id}/activate`, {
+      method: 'POST',
+    });
+  }
+
+  async adminCompleteProductCampaign(id: string): Promise<ApiResponse<unknown>> {
+    return this.request<ApiResponse<unknown>>(`/admin/product-campaigns/${id}/complete`, {
+      method: 'POST',
+    });
+  }
+
+  async adminCancelProductCampaign(id: string): Promise<ApiResponse<unknown>> {
+    return this.request<ApiResponse<unknown>>(`/admin/product-campaigns/${id}/cancel`, {
+      method: 'POST',
+    });
+  }
+
+  async adminListStores(): Promise<ApiResponse<unknown>> {
+    return this.request<ApiResponse<unknown>>('/admin/stores');
+  }
+
+  async adminCreateStore(body: Record<string, unknown>): Promise<ApiResponse<unknown>> {
+    return this.request<ApiResponse<unknown>>('/admin/stores', {
+      method: 'POST',
+      body: JSON.stringify(body),
+    });
+  }
+
+  async adminGetStore(id: string): Promise<ApiResponse<unknown>> {
+    return this.request<ApiResponse<unknown>>(`/admin/stores/${id}`);
+  }
+
+  async adminUpdateStore(id: string, body: Record<string, unknown>): Promise<ApiResponse<unknown>> {
+    return this.request<ApiResponse<unknown>>(`/admin/stores/${id}`, {
+      method: 'PATCH',
+      body: JSON.stringify(body),
+    });
+  }
+
+  async adminActivateStore(id: string): Promise<ApiResponse<unknown>> {
+    return this.request<ApiResponse<unknown>>(`/admin/stores/${id}/activate`, { method: 'POST' });
+  }
+
+  async adminDeactivateStore(id: string): Promise<ApiResponse<unknown>> {
+    return this.request<ApiResponse<unknown>>(`/admin/stores/${id}/deactivate`, { method: 'POST' });
+  }
+
+  async adminCompleteOnboardingStep(
+    storeId: string,
+    step: string,
+  ): Promise<ApiResponse<unknown>> {
+    return this.request<ApiResponse<unknown>>(`/admin/stores/${storeId}/onboarding/step`, {
+      method: 'POST',
+      body: JSON.stringify({ step }),
+    });
+  }
+
+  async adminCompleteOnboarding(storeId: string): Promise<ApiResponse<unknown>> {
+    return this.request<ApiResponse<unknown>>(`/admin/stores/${storeId}/onboarding/complete`, {
+      method: 'POST',
+    });
+  }
+
+  async adminGetCurrencies(): Promise<ApiResponse<unknown>> {
+    return this.request<ApiResponse<unknown>>('/admin/global/currencies');
+  }
+
+  async adminRefreshCurrencies(): Promise<ApiResponse<unknown>> {
+    return this.request<ApiResponse<unknown>>('/admin/global/currencies/refresh', {
+      method: 'POST',
+    });
+  }
+
+  async listQuizzes(fandomId?: string): Promise<ApiResponse<unknown>> {
+    const qs = fandomId ? `?fandomId=${encodeURIComponent(fandomId)}` : '';
+    return this.request<ApiResponse<unknown>>(`/quiz${qs}`);
+  }
+
+  async getQuiz(quizId: string): Promise<ApiResponse<unknown>> {
+    return this.request<ApiResponse<unknown>>(`/quiz/${quizId}`);
+  }
+
+  async submitQuiz(quizId: string, answers: number[]): Promise<ApiResponse<unknown>> {
+    return this.request<ApiResponse<unknown>>(`/quiz/${quizId}/submit`, {
+      method: 'POST',
+      body: JSON.stringify({ answers }),
+    });
+  }
+
+  async getQuizHistory(): Promise<ApiResponse<unknown>> {
+    return this.request<ApiResponse<unknown>>('/quiz/history');
+  }
+
+  async adminListQuizzes(): Promise<ApiResponse<unknown>> {
+    return this.request<ApiResponse<unknown>>('/admin/quiz');
+  }
+
+  async adminCreateQuiz(body: Record<string, unknown>): Promise<ApiResponse<unknown>> {
+    return this.request<ApiResponse<unknown>>('/admin/quiz', {
+      method: 'POST',
+      body: JSON.stringify(body),
+    });
+  }
+
+  async adminUpdateQuiz(quizId: string, body: Record<string, unknown>): Promise<ApiResponse<unknown>> {
+    return this.request<ApiResponse<unknown>>(`/admin/quiz/${quizId}`, {
+      method: 'PUT',
+      body: JSON.stringify(body),
+    });
+  }
+
+  async adminDeactivateQuiz(quizId: string): Promise<ApiResponse<unknown>> {
+    return this.request<ApiResponse<unknown>>(`/admin/quiz/${quizId}`, { method: 'DELETE' });
+  }
+
+  async adminQuizAttempts(quizId: string): Promise<ApiResponse<unknown>> {
+    return this.request<ApiResponse<unknown>>(`/admin/quiz/${quizId}/attempts`);
+  }
+
+  async adminRecomputeFandomProfiles(): Promise<ApiResponse<{ count: number }>> {
+    return this.request<ApiResponse<{ count: number }>>('/admin/loyalty/fandom-profiles/recompute', {
+      method: 'POST',
+    });
+  }
+
+  async lookupLoyaltyMember(
+    body: { email?: string; phone?: string; cardNumber?: string },
+    apiKey: string,
+  ): Promise<ApiResponse<unknown>> {
+    return this.request<ApiResponse<unknown>>('/loyalty/lookup', {
+      method: 'POST',
+      headers: { 'x-api-key': apiKey },
+      body: JSON.stringify(body),
     });
   }
 
@@ -1061,8 +2097,21 @@ export class ApiClient {
     });
   }
 
-  async getUsers(): Promise<ApiResponse<any[]>> {
-    return this.request<ApiResponse<any[]>>('/admin/users', {
+  async getUsers(params?: { page?: number; limit?: number; search?: string; role?: string; status?: string }): Promise<ApiResponse<any>> {
+    const qs = new URLSearchParams();
+    if (params?.page) qs.set('page', String(params.page));
+    if (params?.limit) qs.set('limit', String(params.limit));
+    if (params?.search) qs.set('search', params.search);
+    if (params?.role) qs.set('role', params.role);
+    if (params?.status) qs.set('status', params.status);
+    const query = qs.toString();
+    return this.request<ApiResponse<any>>(`/admin/users${query ? `?${query}` : ''}`, {
+      method: 'GET',
+    });
+  }
+
+  async getUserStats(): Promise<ApiResponse<any>> {
+    return this.request<ApiResponse<any>>('/admin/users/stats', {
       method: 'GET',
     });
   }
@@ -1293,8 +2342,12 @@ export class ApiClient {
   }
 
   // Admin - Sellers
-  async getAdminSellers(): Promise<ApiResponse<any[]>> {
-    return this.request<ApiResponse<any[]>>('/admin/sellers', {
+  async getAdminSellers(params?: { page?: number; limit?: number }): Promise<ApiResponse<any>> {
+    const qs = new URLSearchParams();
+    if (params?.page != null) qs.set('page', String(params.page));
+    if (params?.limit != null) qs.set('limit', String(params.limit));
+    const q = qs.toString();
+    return this.request<ApiResponse<any>>(`/admin/sellers${q ? `?${q}` : ''}`, {
       method: 'GET',
     });
   }
@@ -2045,6 +3098,114 @@ export class ApiClient {
     return this.request<ApiResponse<any[]>>(`/discrepancies${query ? `?${query}` : ''}`);
   }
 
+  // Admin — POS (Phase 2)
+  async getPosConnections(): Promise<ApiResponse<any[]>> {
+    return this.request<ApiResponse<any[]>>('/admin/pos/connections');
+  }
+
+  async createPosConnection(data: {
+    storeId: string;
+    provider: string;
+    credentials: Record<string, unknown>;
+    externalOutletId?: string;
+    externalRegisterId?: string;
+    webhookSecret?: string;
+    autoSyncProducts?: boolean;
+    autoSyncInventory?: boolean;
+    syncIntervalMinutes?: number;
+  }): Promise<ApiResponse<any>> {
+    return this.request<ApiResponse<any>>('/admin/pos/connections', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async updatePosConnection(
+    id: string,
+    data: Partial<{
+      credentials: Record<string, unknown>;
+      externalOutletId: string;
+      externalRegisterId: string;
+      webhookSecret: string;
+      autoSyncProducts: boolean;
+      autoSyncInventory: boolean;
+      isActive: boolean;
+      syncIntervalMinutes: number;
+    }>,
+  ): Promise<ApiResponse<any>> {
+    return this.request<ApiResponse<any>>(`/admin/pos/connections/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async deletePosConnection(id: string): Promise<ApiResponse<null>> {
+    return this.request<ApiResponse<null>>(`/admin/pos/connections/${id}`, { method: 'DELETE' });
+  }
+
+  async testPosConnection(id: string): Promise<ApiResponse<{ success: boolean; outlets?: any[]; error?: string }>> {
+    return this.request<ApiResponse<{ success: boolean; outlets?: any[]; error?: string }>>(
+      `/admin/pos/connections/${id}/test`,
+      { method: 'POST' },
+    );
+  }
+
+  async getPosOutlets(connectionId: string): Promise<ApiResponse<any[]>> {
+    return this.request<ApiResponse<any[]>>(`/admin/pos/connections/${connectionId}/outlets`);
+  }
+
+  async triggerPosProductSync(connectionId: string): Promise<ApiResponse<{ jobId: string }>> {
+    return this.request<ApiResponse<{ jobId: string }>>(
+      `/admin/pos/connections/${connectionId}/sync/products`,
+      { method: 'POST' },
+    );
+  }
+
+  async triggerPosInventorySync(connectionId: string): Promise<ApiResponse<{ jobId: string }>> {
+    return this.request<ApiResponse<{ jobId: string }>>(
+      `/admin/pos/connections/${connectionId}/sync/inventory`,
+      { method: 'POST' },
+    );
+  }
+
+  async triggerPosCustomerSync(connectionId: string): Promise<ApiResponse<{ queued: number }>> {
+    return this.request<ApiResponse<{ queued: number }>>(
+      `/admin/pos/connections/${connectionId}/sync/customers`,
+      { method: 'POST' },
+    );
+  }
+
+  async getPosSales(filters?: {
+    storeId?: string;
+    status?: string;
+    dateFrom?: string;
+    dateTo?: string;
+    page?: number;
+    limit?: number;
+  }): Promise<ApiResponse<any>> {
+    const params = new URLSearchParams();
+    if (filters?.storeId) params.append('storeId', filters.storeId);
+    if (filters?.status) params.append('status', filters.status);
+    if (filters?.dateFrom) params.append('dateFrom', filters.dateFrom);
+    if (filters?.dateTo) params.append('dateTo', filters.dateTo);
+    if (filters?.page != null) params.append('page', String(filters.page));
+    if (filters?.limit != null) params.append('limit', String(filters.limit));
+    const q = params.toString();
+    return this.request<ApiResponse<any>>(`/admin/pos/sales${q ? `?${q}` : ''}`);
+  }
+
+  async getPosSale(id: string): Promise<ApiResponse<any>> {
+    return this.request<ApiResponse<any>>(`/admin/pos/sales/${id}`);
+  }
+
+  async getPosSyncLog(): Promise<ApiResponse<any>> {
+    return this.request<ApiResponse<any>>('/admin/pos/sync-log');
+  }
+
+  async getPosDiscrepancies(): Promise<ApiResponse<any>> {
+    return this.request<ApiResponse<any>>('/admin/pos/discrepancies');
+  }
+
   // WhatsApp
   async getWhatsAppConversations(): Promise<ApiResponse<any[]>> {
     return this.request<ApiResponse<any[]>>('/whatsapp/conversations');
@@ -2562,11 +3723,15 @@ export class ApiClient {
     const url = `${this.baseUrl}/uploads/single`;
 
     try {
-      const response = await fetch(url, {
-        method: 'POST',
-        headers,
-        body: formData,
-      });
+      const response = await this.fetchWithTimeout(
+        url,
+        {
+          method: 'POST',
+          headers,
+          body: formData,
+        },
+        120000,
+      );
 
       if (response.status === 401) {
         this.onUnauthorized();
@@ -2645,7 +3810,11 @@ export class ApiClient {
     formData.append('folder', folder);
 
     const url = `${this.baseUrl}/uploads/single`;
-    const response = await fetch(url, { method: 'POST', headers, body: formData });
+    const response = await this.fetchWithTimeout(
+      url,
+      { method: 'POST', headers, body: formData },
+      120000,
+    );
 
     if (response.status === 401) {
       this.onUnauthorized();
@@ -2675,7 +3844,11 @@ export class ApiClient {
     formData.append('folder', folder);
 
     const url = `${this.baseUrl}/uploads/multiple`;
-    const response = await fetch(url, { method: 'POST', headers, body: formData });
+    const response = await this.fetchWithTimeout(
+      url,
+      { method: 'POST', headers, body: formData },
+      180000,
+    );
 
     if (response.status === 401) {
       this.onUnauthorized();
@@ -3587,10 +4760,14 @@ export class ApiClient {
     const baseUrl = this.baseUrl || '';
     const url = `${baseUrl}/analytics/export/${format}?${query}`;
 
-    const response = await fetch(url, {
-      method: 'GET',
-      headers,
-    });
+    const response = await this.fetchWithTimeout(
+      url,
+      {
+        method: 'GET',
+        headers,
+      },
+      120000,
+    );
 
     if (!response.ok) {
       throw new Error(`Export failed: ${response.statusText}`);
@@ -4516,10 +5693,14 @@ export class ApiClient {
     const token = this.getToken();
     const headers: Record<string, string> = {};
     if (token) headers['Authorization'] = `Bearer ${token}`;
-    const response = await fetch(`${this.baseUrl}/invoices/order/${orderId}`, {
-      method: 'GET',
-      headers,
-    });
+    const response = await this.fetchWithTimeout(
+      `${this.baseUrl}/invoices/order/${orderId}`,
+      {
+        method: 'GET',
+        headers,
+      },
+      60000,
+    );
     if (!response.ok) throw new Error('Failed to download invoice');
     return response.blob();
   }

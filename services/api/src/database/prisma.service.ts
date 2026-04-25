@@ -26,25 +26,27 @@ export class PrismaService extends PrismaClient implements OnModuleInit, OnModul
   }
 
   async onModuleInit() {
-    this.connectWithRetry()
-      .then(async () => {
-        this.logger.log('Database connected successfully', 'PrismaService');
+    try {
+      await this.connectWithRetry();
+      this.logger.log('Database connected successfully', 'PrismaService');
 
-        if (process.env.NODE_ENV === 'production' && process.env.SYNC_DB_SCHEMA !== 'false') {
-          this.syncDatabaseSchema().catch((error: any) => {
-            this.logger.warn(
-              `Database schema sync failed: ${error?.message || 'Unknown error'}`,
-              'PrismaService',
-            );
-          });
-        }
-      })
-      .catch((error: any) => {
-        this.logger.error(
-          `Database connection failed after retries: ${error?.message || 'Unknown error'}`,
-          'PrismaService',
-        );
-      });
+      if (process.env.NODE_ENV === 'production' && process.env.SYNC_DB_SCHEMA !== 'false') {
+        this.syncDatabaseSchema().catch((error: unknown) => {
+          const msg = error instanceof Error ? error.message : 'Unknown error';
+          this.logger.warn(`Database schema sync failed: ${msg}`, 'PrismaService');
+        });
+      }
+    } catch (error: unknown) {
+      const msg = error instanceof Error ? error.message : 'Unknown error';
+      this.logger.error(
+        `Database connection failed after retries: ${msg}`,
+        'PrismaService',
+      );
+      if (process.env.NODE_ENV === 'production') {
+        process.exit(1);
+      }
+      throw error;
+    }
   }
 
   private async connectWithRetry(maxRetries = 5, initialDelay = 1000): Promise<void> {
@@ -53,13 +55,14 @@ export class PrismaService extends PrismaClient implements OnModuleInit, OnModul
         await this.$connect();
         this.logger.log(`Database connected on attempt ${attempt}`, 'PrismaService');
         return;
-      } catch (error: any) {
+      } catch (error: unknown) {
         if (attempt === maxRetries) {
           throw error;
         }
         const delay = initialDelay * Math.pow(2, attempt - 1);
+        const msg = error instanceof Error ? error.message : 'Unknown error';
         this.logger.warn(
-          `Database connection attempt ${attempt} failed, retrying in ${delay}ms: ${error?.message || 'Unknown error'}`,
+          `Database connection attempt ${attempt} failed, retrying in ${delay}ms: ${msg}`,
           'PrismaService',
         );
         await new Promise((resolve) => setTimeout(resolve, delay));
@@ -84,16 +87,14 @@ export class PrismaService extends PrismaClient implements OnModuleInit, OnModul
       if (stdout) this.logger.log(stdout);
       if (stderr && !stderr.includes('Warning')) this.logger.warn(stderr);
       this.logger.log('Database migrations applied successfully');
-    } catch (error: any) {
-      if (
-        error.message?.includes('No pending migrations') ||
-        error.message?.includes('already applied')
-      ) {
+    } catch (error: unknown) {
+      const msg = error instanceof Error ? error.message : String(error);
+      if (msg.includes('No pending migrations') || msg.includes('already applied')) {
         this.logger.log('Database is up to date - no pending migrations');
-      } else if (error.message?.includes('P3005') || error.message?.includes('not empty')) {
+      } else if (msg.includes('P3005') || msg.includes('not empty')) {
         this.logger.warn('Database needs baselining. Run migration SQL manually.');
       } else {
-        this.logger.warn('Migration check completed with warnings:', error.message);
+        this.logger.warn('Migration check completed with warnings:', msg);
       }
     }
   }

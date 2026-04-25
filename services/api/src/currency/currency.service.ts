@@ -3,13 +3,15 @@ import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../database/prisma.service';
 import { CacheService } from '../cache/cache.service';
 
+const DEFAULT_SUPPORTED = ['GBP', 'USD', 'EUR', 'AED', 'JPY', 'AUD', 'CAD', 'SGD'];
+
 @Injectable()
 export class CurrencyService {
   private readonly logger = new Logger(CurrencyService.name);
   private readonly apiKey: string;
   private readonly baseUrl = 'https://api.exchangerate-api.com/v4/latest';
   private readonly baseCurrency = 'USD';
-  private readonly supportedCurrencies = ['USD', 'EUR', 'AED'];
+  private readonly supportedCurrencies: string[];
   private readonly cacheKeyPrefix = 'currency_rate:';
   private readonly cacheDuration = 3600; // 1 hour in seconds
 
@@ -19,6 +21,17 @@ export class CurrencyService {
     private configService: ConfigService,
   ) {
     this.apiKey = this.configService.get<string>('EXCHANGE_RATE_API_KEY') || '';
+    const raw = this.configService.get<string>('GLOBAL_SUPPORTED_CURRENCIES', '');
+    const parsed = raw
+      .split(',')
+      .map((c) => c.trim().toUpperCase())
+      .filter(Boolean);
+    const list = parsed.length ? parsed : [...DEFAULT_SUPPORTED];
+    this.supportedCurrencies = [...new Set([this.baseCurrency, ...list])];
+  }
+
+  getSupportedCurrencies(): string[] {
+    return [...this.supportedCurrencies];
   }
 
   /**
@@ -179,8 +192,13 @@ export class CurrencyService {
    */
   private getDefaultRate(targetCurrency: string): number {
     const defaultRates: Record<string, number> = {
+      GBP: 0.79,
       EUR: 0.92,
       AED: 3.67,
+      JPY: 149.5,
+      AUD: 1.53,
+      CAD: 1.36,
+      SGD: 1.34,
     };
 
     return defaultRates[targetCurrency] || 1;

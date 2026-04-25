@@ -4,6 +4,7 @@ import { AdminService } from './admin.service';
 import { PrismaService } from '../database/prisma.service';
 import { UserRole } from '@prisma/client';
 import * as bcrypt from 'bcrypt';
+import { BCRYPT_PASSWORD_ROUNDS } from '../config/bcrypt-cost';
 
 jest.mock('bcrypt');
 
@@ -62,34 +63,6 @@ describe('AdminService', () => {
     jest.clearAllMocks();
   });
 
-  describe('getAllUsers', () => {
-    it('should return all users', async () => {
-      const mockUsers = [
-        {
-          id: 'user-1',
-          email: 'user1@example.com',
-          firstName: 'User',
-          lastName: 'One',
-          role: UserRole.CUSTOMER,
-        },
-        {
-          id: 'user-2',
-          email: 'user2@example.com',
-          firstName: 'User',
-          lastName: 'Two',
-          role: UserRole.SELLER,
-        },
-      ];
-
-      mockPrismaService.user.findMany.mockResolvedValue(mockUsers);
-
-      const result = await service.getAllUsers();
-
-      expect(mockPrismaService.user.findMany).toHaveBeenCalled();
-      expect(result).toEqual(mockUsers);
-    });
-  });
-
   describe('createUser', () => {
     const createUserData = {
       email: 'newuser@example.com',
@@ -118,7 +91,7 @@ describe('AdminService', () => {
       expect(mockPrismaService.user.findUnique).toHaveBeenCalledWith({
         where: { email: createUserData.email.toLowerCase().trim() },
       });
-      expect(bcrypt.hash).toHaveBeenCalledWith(createUserData.password, 10);
+      expect(bcrypt.hash).toHaveBeenCalledWith(createUserData.password, BCRYPT_PASSWORD_ROUNDS);
       expect(mockPrismaService.user.create).toHaveBeenCalled();
       expect(result).toHaveProperty('id');
     });

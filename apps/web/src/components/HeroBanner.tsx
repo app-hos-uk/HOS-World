@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import Link from 'next/link';
 import { ChevronLeftIcon, ChevronRightIcon } from '@heroicons/react/24/outline';
 
@@ -88,6 +88,24 @@ export function HeroBanner({
 }: HeroBannerProps) {
   const [currentSlide, setCurrentSlide] = useState(0);
   const [isAnimating, setIsAnimating] = useState(false);
+  const timeoutIdsRef = useRef<Set<ReturnType<typeof setTimeout>>>(new Set());
+
+  const schedule = useCallback((fn: () => void, delayMs: number) => {
+    const id = setTimeout(() => {
+      timeoutIdsRef.current.delete(id);
+      fn();
+    }, delayMs);
+    timeoutIdsRef.current.add(id);
+    return id;
+  }, []);
+
+  useEffect(
+    () => () => {
+      timeoutIdsRef.current.forEach(clearTimeout);
+      timeoutIdsRef.current.clear();
+    },
+    [],
+  );
 
   useEffect(() => {
     if (!autoPlay) return;
@@ -95,7 +113,7 @@ export function HeroBanner({
     const interval = setInterval(() => {
       setCurrentSlide((prev) => {
         setIsAnimating(true);
-        setTimeout(() => {
+        schedule(() => {
           setIsAnimating(false);
         }, 300);
         return (prev + 1) % slides.length;
@@ -103,11 +121,11 @@ export function HeroBanner({
     }, autoPlayInterval);
 
     return () => clearInterval(interval);
-  }, [autoPlay, autoPlayInterval, slides.length]);
+  }, [autoPlay, autoPlayInterval, slides.length, schedule]);
 
   const nextSlide = () => {
     setIsAnimating(true);
-    setTimeout(() => {
+    schedule(() => {
       setCurrentSlide((prev) => (prev + 1) % slides.length);
       setIsAnimating(false);
     }, 300);
@@ -115,7 +133,7 @@ export function HeroBanner({
 
   const prevSlide = () => {
     setIsAnimating(true);
-    setTimeout(() => {
+    schedule(() => {
       setCurrentSlide((prev) => (prev - 1 + slides.length) % slides.length);
       setIsAnimating(false);
     }, 300);
@@ -124,7 +142,7 @@ export function HeroBanner({
   const goToSlide = (index: number) => {
     if (index === currentSlide) return;
     setIsAnimating(true);
-    setTimeout(() => {
+    schedule(() => {
       setCurrentSlide(index);
       setIsAnimating(false);
     }, 300);

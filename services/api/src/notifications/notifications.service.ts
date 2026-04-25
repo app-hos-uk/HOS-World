@@ -1,5 +1,6 @@
 import { Injectable, Logger, NotFoundException, OnModuleInit } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import type { Job } from 'bullmq';
 import { PrismaService } from '../database/prisma.service';
 import { QueueService, JobType } from '../queue/queue.service';
 import { TemplatesService } from '../templates/templates.service';
@@ -29,6 +30,14 @@ const VALID_NOTIFICATION_TYPES = new Set([
   'PRODUCT_APPROVED',
   'PRODUCT_REJECTED',
   'PRODUCT_PUBLISHED',
+  'LOYALTY_POINTS_EARNED',
+  'LOYALTY_TIER_UPGRADE',
+  'LOYALTY_TIER_DOWNGRADE',
+  'LOYALTY_POINTS_EXPIRING',
+  'LOYALTY_REDEMPTION',
+  'LOYALTY_WELCOME',
+  'EVENT_INVITATION',
+  'EVENT_REMINDER',
   'SETTLEMENT_COMPLETED',
   'SYSTEM',
   'GENERAL',
@@ -59,7 +68,7 @@ export class NotificationsService implements OnModuleInit {
   }
 
   onModuleInit() {
-    this.queueService.registerProcessor(JobType.EMAIL_NOTIFICATION, async (job) => {
+    this.queueService.registerProcessor(JobType.EMAIL_NOTIFICATION, async (job: Job) => {
       const { to, subject, html, notificationId } = job.data;
       const sent = await this.sendEmail(to, subject, html);
       if (notificationId) {
@@ -74,6 +83,15 @@ export class NotificationsService implements OnModuleInit {
         } catch (e) {
           this.logger.warn(`Could not update notification ${notificationId}: ${(e as Error)?.message}`);
         }
+      }
+      // sendEmail swallows SMTP errors and returns false so callers get a boolean; for queued mail we
+      // must fail the job so BullMQ retries (transient outages). Skip rethrow when email is globally
+      // disabled — retries would never succeed.
+      if (!sent && this.emailEnabled) {
+        const maxAttempts = job.opts?.attempts ?? 3;
+        throw new Error(
+          `Email send failed for ${to}: ${subject} (attempt ${job.attemptsMade}/${maxAttempts})`,
+        );
       }
     });
     this.logger.log('Registered EMAIL_NOTIFICATION processor with BullMQ');
@@ -141,12 +159,17 @@ export class NotificationsService implements OnModuleInit {
   async sendSellerInvitation(
     email: string,
     data: {
-      sellerType: 'WHOLESALER' | 'B2C_SELLER';
+      sellerType: 'WHOLESALER' | 'B2C_SELLER' | 'PLATFORM_RETAIL';
       invitationLink: string;
       message?: string;
     },
   ): Promise<void> {
-    const sellerTypeName = data.sellerType === 'WHOLESALER' ? 'Wholesaler' : 'B2C Seller';
+    const sellerTypeName =
+      data.sellerType === 'WHOLESALER'
+        ? 'Wholesaler'
+        : data.sellerType === 'PLATFORM_RETAIL'
+          ? 'Platform Retail'
+          : 'B2C Seller';
 
     const rendered = await this.templatesService.render('seller_invitation', {
       sellerTypeName,

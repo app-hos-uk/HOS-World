@@ -1,10 +1,17 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, Logger, Inject, forwardRef } from '@nestjs/common';
 import { PrismaService } from '../database/prisma.service';
 import { ShareItemDto } from './dto/share-item.dto';
+import { LoyaltyListener } from '../loyalty/listeners/loyalty.listener';
 
 @Injectable()
 export class SocialSharingService {
-  constructor(private prisma: PrismaService) {}
+  private readonly logger = new Logger(SocialSharingService.name);
+
+  constructor(
+    private prisma: PrismaService,
+    @Inject(forwardRef(() => LoyaltyListener))
+    private loyaltyListener: LoyaltyListener,
+  ) {}
 
   async shareItem(userId: string, dto: ShareItemDto): Promise<any> {
     // Get the item being shared based on type
@@ -94,7 +101,19 @@ export class SocialSharingService {
       },
     });
 
-    return sharedItem;
+    const platform = dto.platform || 'unknown';
+    const pts = await this.loyaltyListener.onSocialShare(userId, platform).catch((e) => {
+      this.logger.warn(`Loyalty social share: ${(e as Error).message}`);
+      return 0;
+    });
+    if (pts > 0) {
+      await this.prisma.sharedItem.update({
+        where: { id: sharedItem.id },
+        data: { loyaltyPointsAwarded: pts },
+      });
+    }
+
+    return { ...sharedItem, loyaltyPointsAwarded: pts };
   }
 
   async getSharedItems(userId?: string, limit: number = 20): Promise<any[]> {

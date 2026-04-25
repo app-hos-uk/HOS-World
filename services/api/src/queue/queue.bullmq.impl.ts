@@ -13,6 +13,37 @@ export enum JobType {
   INVENTORY_SYNC = 'inventory-sync',
   ANALYTICS_UPDATE = 'analytics-update',
   BULK_IMPORT = 'bulk-import',
+  LOYALTY_TIER_REVIEW = 'loyalty:tier-review',
+  LOYALTY_POINTS_EXPIRY = 'loyalty:points-expiry',
+  LOYALTY_BIRTHDAY_BONUS = 'loyalty:birthday-bonus',
+  FANDOM_PROFILE_RECOMPUTE = 'loyalty:fandom-profile-recompute',
+  POS_PRODUCT_SYNC = 'pos:product-sync',
+  POS_INVENTORY_SYNC = 'pos:inventory-sync',
+  POS_SALE_IMPORT = 'pos:sale-import',
+  POS_NIGHTLY_RECON = 'pos:nightly-reconciliation',
+  POS_CUSTOMER_SYNC = 'pos:customer-sync',
+  POS_SALES_POLL = 'pos:sales-poll',
+  JOURNEY_STEP_PROCESS = 'marketing:journey-step-process',
+  ABANDONED_CART_SCAN = 'marketing:abandoned-cart-scan',
+  INACTIVITY_SCAN = 'marketing:inactivity-scan',
+  MESSAGE_SEND = 'marketing:message-send',
+  MARKETING_POINTS_EXPIRY_WARNING = 'marketing:points-expiry-warning',
+  EVENT_REMINDER = 'events:reminder',
+  EVENT_ATTENDANCE_RECONCILE = 'events:attendance-reconcile',
+  SEGMENT_REFRESH = 'segmentation:refresh',
+  SEGMENT_REFRESH_ALL = 'segmentation:refresh-all',
+  AMBASSADOR_TIER_REVIEW = 'ambassador:tier-review',
+  AMBASSADOR_ACHIEVEMENT_CHECK = 'ambassador:achievement-check',
+  BRAND_CAMPAIGN_ACTIVATE = 'brand:campaign-activate',
+  BRAND_CAMPAIGN_EXPIRE = 'brand:campaign-expire',
+  BRAND_CAMPAIGN_REPORT = 'brand:campaign-report',
+  LOYALTY_ANALYTICS_SNAPSHOT = 'loyalty:analytics-snapshot',
+  LOYALTY_CLV_RECOMPUTE = 'loyalty:clv-recompute',
+  CAMPAIGN_ATTRIBUTION_COMPUTE = 'loyalty:campaign-attribution',
+  CLICK_COLLECT_EXPIRY = 'cc:expiry',
+  CLICK_COLLECT_REMINDER = 'cc:reminder',
+  PRODUCT_CAMPAIGN_ACTIVATE = 'product-campaign:activate',
+  PRODUCT_CAMPAIGN_EXPIRE = 'product-campaign:expire',
 }
 
 export interface JobOptions {
@@ -185,5 +216,18 @@ export class QueueService implements OnModuleInit, OnModuleDestroy {
 
   async queueBulkImport(payload: any) {
     return this.addJob(JobType.BULK_IMPORT, payload);
+  }
+
+  async addRepeatable(
+    jobType: JobType,
+    payload: any,
+    pattern: string,
+  ): Promise<void> {
+    await this.queue.add(jobType, payload, {
+      repeat: { pattern },
+      removeOnComplete: { age: 86_400 },
+      removeOnFail: { age: 604_800 },
+    });
+    this.logger.log(`Registered repeatable job ${jobType} with pattern ${pattern}`);
   }
 }

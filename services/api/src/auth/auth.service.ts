@@ -9,6 +9,7 @@ import {
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 import * as bcrypt from 'bcrypt';
+import { BCRYPT_PASSWORD_ROUNDS } from '../config/bcrypt-cost';
 import { PrismaService } from '../database/prisma.service';
 import { GeolocationService } from '../geolocation/geolocation.service';
 import { NotificationsService } from '../notifications/notifications.service';
@@ -151,8 +152,7 @@ export class AuthService {
     }
 
     // Hash password
-    const saltRounds = 10;
-    const hashedPassword = await bcrypt.hash(registerDto.password, saltRounds);
+    const hashedPassword = await bcrypt.hash(registerDto.password, BCRYPT_PASSWORD_ROUNDS);
 
     // Determine currency preference based on country
     const countryCode = this.getCountryCode(registerDto.country);
@@ -217,8 +217,10 @@ export class AuthService {
             });
           }
         }
-      } catch (e) {
-        // Swallow – registration should succeed even if logging fails
+      } catch (e: unknown) {
+        this.logger.warn(
+          `GDPR consent logging failed during registration: ${e instanceof Error ? e.message : 'unknown'}`,
+        );
       }
     }
 
@@ -393,8 +395,7 @@ export class AuthService {
     }
 
     // Hash password
-    const saltRounds = 10;
-    const hashedPassword = await bcrypt.hash(registerDto.password, saltRounds);
+    const hashedPassword = await bcrypt.hash(registerDto.password, BCRYPT_PASSWORD_ROUNDS);
 
     // Determine currency preference based on country
     const countryCode = this.getCountryCode(registerDto.country);
@@ -457,8 +458,10 @@ export class AuthService {
             });
           }
         }
-      } catch (e) {
-        // Swallow – account creation should succeed even if logging fails
+      } catch (e: unknown) {
+        this.logger.warn(
+          `GDPR consent logging failed during invitation acceptance: ${e instanceof Error ? e.message : 'unknown'}`,
+        );
       }
     }
 
@@ -575,6 +578,11 @@ export class AuthService {
         });
       }
 
+      await this.prisma.user.update({
+        where: { id: user.id },
+        data: { lastLoginAt: new Date() },
+      });
+
       // Remove password and lockout fields from response
       const { password, failedLoginAttempts, lockedUntil, ...userWithoutPassword } = user;
 
@@ -626,10 +634,9 @@ export class AuthService {
       );
 
       const refreshTokenTTL = this.configService.get<string>('REFRESH_TOKEN_TTL') || '30d';
-      const refreshSecret = this.configService.get<string>('JWT_REFRESH_SECRET')
-        || this.configService.get<string>('JWT_SECRET');
+      const refreshSecret = this.configService.get<string>('JWT_REFRESH_SECRET');
       if (!refreshSecret) {
-        throw new Error('JWT_REFRESH_SECRET or JWT_SECRET must be configured');
+        throw new Error('JWT_REFRESH_SECRET must be configured');
       }
       const refreshToken = this.jwtService.sign(
         { ...basePayload, type: 'refresh' },
@@ -716,8 +723,7 @@ export class AuthService {
       throw new UnauthorizedException('Invalid or expired token');
     }
 
-    const refreshSecret = this.configService.get<string>('JWT_REFRESH_SECRET')
-      || this.configService.get<string>('JWT_SECRET');
+    const refreshSecret = this.configService.get<string>('JWT_REFRESH_SECRET');
     if (!refreshSecret) {
       throw new UnauthorizedException('Token refresh is unavailable due to misconfiguration');
     }
@@ -1009,7 +1015,7 @@ export class AuthService {
       throw new BadRequestException('Invalid or expired reset token');
     }
 
-    const hashedPassword = await bcrypt.hash(newPassword, 10);
+    const hashedPassword = await bcrypt.hash(newPassword, BCRYPT_PASSWORD_ROUNDS);
     await this.prisma.user.update({
       where: { id: user.id },
       data: {
@@ -1042,7 +1048,7 @@ export class AuthService {
       throw new BadRequestException('Current password is incorrect');
     }
 
-    const hashedPassword = await bcrypt.hash(newPassword, 10);
+    const hashedPassword = await bcrypt.hash(newPassword, BCRYPT_PASSWORD_ROUNDS);
     await this.prisma.user.update({
       where: { id: userId },
       data: { password: hashedPassword },

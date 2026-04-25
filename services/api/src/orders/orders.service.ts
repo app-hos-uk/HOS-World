@@ -6,6 +6,7 @@ import {
   Inject,
   Optional,
   Logger,
+  forwardRef,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../database/prisma.service';
@@ -19,6 +20,8 @@ import { AddOrderNoteDto } from './dto/add-order-note.dto';
 import { PaymentProviderService } from '../payments/payment-provider.service';
 import { ShippingService } from '../shipping/shipping.service';
 import { PromotionsService } from '../promotions/promotions.service';
+import { LoyaltyService } from '../loyalty/loyalty.service';
+import { AmbassadorService } from '../ambassador/ambassador.service';
 import type { PromotionApplicationResult } from '../promotions/types/promotion.types';
 import type { Order, OrderStatus, PaymentStatus } from '@hos-marketplace/shared-types';
 import {
@@ -64,6 +67,8 @@ export class OrdersService {
     @Optional() private paymentProviderService?: PaymentProviderService,
     @Optional() private shippingService?: ShippingService,
     @Optional() private promotionsService?: PromotionsService,
+    @Optional() @Inject(forwardRef(() => LoyaltyService)) private loyaltyService?: LoyaltyService,
+    @Optional() @Inject(forwardRef(() => AmbassadorService)) private ambassadorService?: AmbassadorService,
   ) {
     this.defaultCommissionRate = this.configService.get<number>('DEFAULT_COMMISSION_RATE', 0.1);
   }
@@ -97,30 +102,44 @@ export class OrdersService {
       }
     }
 
-    // Get user's cart with product tax classes
-    const cart = await this.prisma.cart.findUnique({
-      where: { userId },
-      include: {
-        items: {
-          include: {
-            product: {
-              include: {
-                seller: true,
-                taxClass: {
-                  select: {
-                    id: true,
-                    name: true,
-                  },
+    // Get user's cart with product tax classes — refresh line prices from catalog before charging.
+    const cartInclude = {
+      items: {
+        include: {
+          product: {
+            include: {
+              seller: true,
+              taxClass: {
+                select: {
+                  id: true,
+                  name: true,
                 },
               },
             },
           },
         },
       },
+    };
+
+    let cart = await this.prisma.cart.findUnique({
+      where: { userId },
+      include: cartInclude,
     });
 
     if (!cart || cart.items.length === 0) {
       throw new BadRequestException('Cart is empty');
+    }
+
+    if (this.cartService) {
+      await this.cartService.recalculateCart(cart.id);
+      const refreshed = await this.prisma.cart.findUnique({
+        where: { userId },
+        include: cartInclude,
+      });
+      if (!refreshed || refreshed.items.length === 0) {
+        throw new BadRequestException('Cart is empty');
+      }
+      cart = refreshed;
     }
 
     let appliedPromotionResult: PromotionApplicationResult | null = null;
@@ -516,6 +535,25 @@ export class OrdersService {
         }
       }
 
+      const pendingLoyaltyPoints = cart.pendingLoyaltyPoints || 0;
+      const pendingLoyaltyOptionId = cart.pendingLoyaltyOptionId || null;
+      const loyaltyDisc = cart.loyaltyDiscountAmount || new Decimal(0);
+      if (
+        pendingLoyaltyPoints > 0 &&
+        this.loyaltyService &&
+        process.env.LOYALTY_ENABLED === 'true' &&
+        process.env.LOYALTY_REDEMPTION_AT_CHECKOUT === 'true'
+      ) {
+        await this.loyaltyService.finalizeCheckoutRedemption(
+          tx,
+          userId,
+          parentOrder.id,
+          pendingLoyaltyPoints,
+          pendingLoyaltyOptionId,
+          loyaltyDisc,
+        );
+      }
+
       // Decrement stock for all items (both Product.stock and VendorProduct.vendorStock)
       for (const group of vendorGroups) {
         for (const item of group.items) {
@@ -556,6 +594,9 @@ export class OrdersService {
           couponCode: null,
           promotionFreeShipping: false,
           abandonedEmailSentAt: null,
+          pendingLoyaltyPoints: null,
+          pendingLoyaltyOptionId: null,
+          loyaltyDiscountAmount: new Decimal(0),
         },
       });
 
@@ -931,6 +972,14 @@ export class OrdersService {
         });
       }
     });
+
+    void this.ambassadorService
+      ?.incrementInfluencerReferralRevenue(influencer.userId, orderTotal)
+      .catch((e: unknown) => {
+        this.logger.warn(
+          `Ambassador referral revenue increment failed for influencer ${influencer.id}: ${e instanceof Error ? e.message : 'unknown'}`,
+        );
+      });
 
     // Convert to Number only for logging display
     const ratePercent = rateApplied.mul(100).toNumber();

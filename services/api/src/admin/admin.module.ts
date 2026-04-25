@@ -27,14 +27,16 @@ const coreControllers = [
   AdminProductsController,
 ];
 
-const migrationControllers = migrationControllersEnabled
-  ? [
-      MigrationController,
-      MigrationFeaturesController,
-      MigrationTaxonomyController,
-      MigrationTaxonomyDataController,
-    ]
-  : [];
+// Never register HTTP migration runners in production (defense in depth vs raw SQL).
+const migrationControllers =
+  !isProduction && migrationControllersEnabled
+    ? [
+        MigrationController,
+        MigrationFeaturesController,
+        MigrationTaxonomyController,
+        MigrationTaxonomyDataController,
+      ]
+    : [];
 
 @Module({
   imports: [DatabaseModule, ConfigModule, NotificationsModule, ProductsModule],

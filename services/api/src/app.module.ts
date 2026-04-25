@@ -73,6 +73,18 @@ import { APP_INTERCEPTOR } from '@nestjs/core';
 import { MonitoringInterceptor } from './monitoring/monitoring.interceptor';
 import { ActivityInterceptor } from './common/interceptors/activity.interceptor';
 import { TemplatesModule } from './templates/templates.module';
+import { LoyaltyModule } from './loyalty/loyalty.module';
+import { QuizModule } from './quiz/quiz.module';
+import { ChannelsModule } from './channels/channels.module';
+import { PosModule } from './pos/pos.module';
+import { JourneyModule } from './journeys/journey.module';
+import { EventsModule } from './events/events.module';
+import { SegmentationModule } from './segmentation/segmentation.module';
+import { AmbassadorModule } from './ambassador/ambassador.module';
+import { BrandPartnershipsModule } from './brand-partnerships/brand-partnerships.module';
+import { LoyaltyAnalyticsModule } from './loyalty-analytics/loyalty-analytics.module';
+import { StoreAdminModule } from './stores/store-admin.module';
+import { ClickCollectModule } from './click-collect/click-collect.module';
 import { IntegrationsModule } from './integrations/integrations.module';
 import { GamificationModule } from './gamification/gamification.module';
 import { DigitalProductsModule } from './digital-products/digital-products.module';
@@ -185,6 +197,18 @@ import { CorrelationIdMiddleware } from './common/middleware/correlation-id.midd
     InvoicesModule,
     // Templates
     TemplatesModule,
+    LoyaltyModule,
+    QuizModule,
+    ChannelsModule,
+    PosModule,
+    JourneyModule,
+    EventsModule,
+    SegmentationModule,
+    AmbassadorModule,
+    BrandPartnershipsModule,
+    LoyaltyAnalyticsModule,
+    StoreAdminModule,
+    ClickCollectModule,
   ],
   controllers: [AppController],
   providers: [

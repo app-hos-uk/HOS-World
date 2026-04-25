@@ -31,6 +31,17 @@
     "db:studio": "prisma studio",
     "db:seed-admin": "ts-node src/database/create-admin.ts",
     "db:seed-all-roles": "ts-node src/database/seed-all-roles.ts",
+    "db:seed-loyalty": "ts-node prisma/seeds/loyalty-seed.ts",
+    "db:seed-pos": "ts-node prisma/seeds/pos-seed.ts",
+    "db:seed-quiz": "ts-node prisma/seeds/quiz-seed.ts",
+    "db:seed-journeys": "ts-node prisma/seeds/journey-seed.ts",
+    "db:seed-events": "ts-node prisma/seeds/event-seed.ts",
+    "db:seed-marketing-templates": "ts-node prisma/seeds/marketing-template-seed.ts",
+    "db:seed-segments": "ts-node prisma/seeds/segment-seed.ts",
+    "db:seed-ambassadors": "ts-node prisma/seeds/ambassador-seed.ts",
+    "db:seed-brand-partnerships": "ts-node prisma/seeds/brand-partnership-seed.ts",
+    "db:seed-analytics": "ts-node prisma/seeds/analytics-seed.ts",
+    "db:seed-phase10": "ts-node prisma/seeds/phase10-seed.ts",
     "db:create-team-users": "ts-node src/database/create-team-users.ts",
     "db:verify-admin": "ts-node src/database/verify-admin.ts",
     "db:fix-admin": "ts-node src/database/fix-admin-now.ts",
@@ -99,7 +110,8 @@
     "reflect-metadata": "^0.1.14",
     "rxjs": "^7.8.1",
     "stripe": "^14.9.0",
-    "twilio": "^5.4.0"
+    "twilio": "^5.4.0",
+    "web-push": "^3.6.7"
   },
   "devDependencies": {
     "@jest/test-sequencer": "^29.7.0",

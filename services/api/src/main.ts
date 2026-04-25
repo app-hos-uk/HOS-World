@@ -87,11 +87,17 @@ async function bootstrap() {
   const normalizeOrigin = (o: string) => (o || '').trim().replace(/\/+$/, '') || null;
   const isProduction = process.env.NODE_ENV === 'production';
 
+  const envExtraOrigins = [
+    ...(process.env.CORS_RAILWAY_ORIGINS || '').split(','),
+    ...(process.env.CORS_ALLOWED_ORIGINS || '').split(','),
+  ].filter((s) => s.trim());
+
   let allowedOrigins: string[] = [
     process.env.FRONTEND_URL,
     'https://hos-marketplaceweb-production.up.railway.app',
     'https://hos-marketplace-web.vercel.app',
     'https://hos-world-web.vercel.app',
+    ...envExtraOrigins,
     ...(isProduction ? [] : ['http://localhost:3000', 'http://localhost:3001']),
   ]
     .filter(Boolean)
@@ -258,10 +264,19 @@ async function bootstrap() {
           .map((o: string) => o.trim());
         const localOrigins = ['http://localhost:3000', 'http://localhost:3001'];
         const all = [...allowedOrigins, ...localOrigins];
+        const railwayOrigins = (process.env.CORS_RAILWAY_ORIGINS || '')
+          .split(',')
+          .map((o) => o.trim().replace(/\/+$/, ''))
+          .filter(Boolean);
+        const defaultRailway = [
+          'https://hos-marketplaceweb-production.up.railway.app',
+          'https://hos-marketplaceapi-production.up.railway.app',
+        ];
+        const railwayAllow = [...defaultRailway, ...railwayOrigins];
         if (
           all.some((o: string) => origin === o) ||
           /^https:\/\/hos-world-web[a-z0-9-]*\.vercel\.app$/.test(origin) ||
-          origin.includes('.up.railway.app')
+          railwayAllow.some((o) => o && (origin === o || origin.startsWith(o + '/')))
         ) {
           return next();
         }

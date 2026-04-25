@@ -41,6 +41,7 @@ describe('OrdersService - Phase 1 Tests', () => {
     },
     vendorProduct: {
       findFirst: jest.fn().mockResolvedValue(null),
+      findMany: jest.fn().mockResolvedValue([]),
       update: jest.fn().mockResolvedValue({}),
     },
     $transaction: jest.fn((callback) => {

@@ -1,12 +1,25 @@
-import { Injectable, NotFoundException, BadRequestException, Logger } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  BadRequestException,
+  Logger,
+  Inject,
+  Optional,
+  forwardRef,
+} from '@nestjs/common';
 import { PrismaService } from '../database/prisma.service';
 import { Decimal } from '@prisma/client/runtime/library';
+import { AmbassadorService } from '../ambassador/ambassador.service';
 
 @Injectable()
 export class InfluencerCommissionsService {
   private readonly logger = new Logger(InfluencerCommissionsService.name);
 
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    @Optional() @Inject(forwardRef(() => AmbassadorService))
+    private ambassador?: AmbassadorService,
+  ) {}
 
   /**
    * Calculate commission rate based on priority: Campaign > Category > Base
@@ -234,13 +247,17 @@ export class InfluencerCommissionsService {
       throw new NotFoundException('Commission not found');
     }
 
-    return this.prisma.influencerCommission.update({
+    const updated = await this.prisma.influencerCommission.update({
       where: { id },
       data: {
         status: status as any,
         notes: notes || commission.notes,
       },
     });
+    if (status === 'APPROVED') {
+      void this.ambassador?.tryAutoConvertCommission(id);
+    }
+    return updated;
   }
 
   /**

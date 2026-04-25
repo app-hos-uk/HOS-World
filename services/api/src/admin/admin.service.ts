@@ -1,39 +1,47 @@
-import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException, Logger } from '@nestjs/common';
 import { PrismaService } from '../database/prisma.service';
 import * as bcrypt from 'bcrypt';
+import { BCRYPT_PASSWORD_ROUNDS } from '../config/bcrypt-cost';
 import { randomBytes } from 'crypto';
 import { UserRole } from '@prisma/client';
 
 @Injectable()
 export class AdminService {
+  private readonly logger = new Logger(AdminService.name);
+
   constructor(private prisma: PrismaService) {}
 
   // Hard-protected admin accounts that must never be modified/deleted by other users.
   // These are emergency/owner accounts for platform recovery.
   private readonly protectedAdminEmails = new Set(['app@houseofspells.co.uk', 'mail@jsabu.com']);
 
-  async getAllUsers() {
-    return this.prisma.user.findMany({
-      select: {
-        id: true,
-        email: true,
-        firstName: true,
-        lastName: true,
-        role: true,
-        isActive: true,
-        avatar: true,
-        createdAt: true,
-        updatedAt: true,
-        sellerProfile: {
-          select: {
-            storeName: true,
-          },
-        },
-      },
-      orderBy: {
-        createdAt: 'desc',
-      },
-    });
+  async getUserStats() {
+    const sellerRoles = ['SELLER', 'B2C_SELLER', 'WHOLESALER'];
+    const teamRoles = ['PROCUREMENT', 'FULFILLMENT', 'CATALOG', 'MARKETING', 'FINANCE', 'CMS_EDITOR'];
+
+    const [total, byRole, inactive, newThisMonth] = await Promise.all([
+      this.prisma.user.count(),
+      this.prisma.user.groupBy({ by: ['role'], _count: true }),
+      this.prisma.user.count({ where: { isActive: false } }),
+      this.prisma.user.count({
+        where: { createdAt: { gte: new Date(new Date().getFullYear(), new Date().getMonth(), 1) } },
+      }),
+    ]);
+
+    const roleMap: Record<string, number> = {};
+    for (const r of byRole) roleMap[r.role] = r._count;
+
+    return {
+      total,
+      admins: roleMap['ADMIN'] ?? 0,
+      sellers: sellerRoles.reduce((s, r) => s + (roleMap[r] ?? 0), 0),
+      customers: roleMap['CUSTOMER'] ?? 0,
+      influencers: roleMap['INFLUENCER'] ?? 0,
+      teamMembers: teamRoles.reduce((s, r) => s + (roleMap[r] ?? 0), 0),
+      newThisMonth,
+      active: total - inactive,
+      inactive,
+    };
   }
 
   async createUser(data: {
@@ -71,7 +79,7 @@ export class AdminService {
       throw new BadRequestException('storeName is required for seller roles');
     }
 
-    const hashedPassword = await bcrypt.hash(data.password, 10);
+    const hashedPassword = await bcrypt.hash(data.password, BCRYPT_PASSWORD_ROUNDS);
 
     let permissionRoleId: string | undefined;
     if (data.permissionRoleName) {
@@ -617,7 +625,7 @@ export class AdminService {
       );
     }
 
-    const hashedPassword = await bcrypt.hash(newPassword, 10);
+    const hashedPassword = await bcrypt.hash(newPassword, BCRYPT_PASSWORD_ROUNDS);
 
     await this.prisma.user.update({
       where: { id: userId },
@@ -724,71 +732,98 @@ export class AdminService {
         settings: validSettings,
         note: 'Settings are stored in activity log. For production, consider creating a SystemSettings model for persistent storage.',
       };
-    } catch (error: any) {
-      throw new Error(`Failed to update system settings: ${error?.message}`);
+    } catch (error: unknown) {
+      const msg = error instanceof Error ? error.message : 'unknown';
+      this.logger.error(`Failed to update system settings: ${msg}`);
+      throw new BadRequestException('Failed to update system settings. Please try again.');
     }
   }
 
   // Duplicate methods removed - using Prisma-based implementations above (lines 252-294)
 
-  async getAllSellers() {
-    const sellers = await this.prisma.seller.findMany({
-      include: {
-        user: {
+  async getAllSellers(options?: { page?: number; limit?: number }): Promise<{
+    data: Array<Record<string, unknown>>;
+    pagination: { page: number; limit: number; total: number; totalPages: number };
+  }> {
+    const take = Math.max(1, Math.min(options?.limit ?? 50, 100));
+    const page = Math.max(1, options?.page ?? 1);
+    const skip = (page - 1) * take;
+
+    const [sellers, total] = await Promise.all([
+      this.prisma.seller.findMany({
+        take,
+        skip,
+        include: {
+          user: {
+            select: {
+              id: true,
+              email: true,
+              firstName: true,
+              lastName: true,
+              phone: true,
+              role: true,
+              avatar: true,
+              createdAt: true,
+            },
+          },
+          _count: {
+            select: {
+              products: true,
+            },
+          },
+        },
+        orderBy: {
+          createdAt: 'desc',
+        },
+      }),
+      this.prisma.seller.count(),
+    ]);
+
+    const addressIds = [
+      ...new Set(
+        sellers.map((s) => s.warehouseAddressId).filter((id): id is string => Boolean(id)),
+      ),
+    ];
+    const addressRows = addressIds.length
+      ? await this.prisma.address.findMany({
+          where: { id: { in: addressIds } },
           select: {
             id: true,
-            email: true,
-            firstName: true,
-            lastName: true,
+            street: true,
+            city: true,
+            state: true,
+            postalCode: true,
+            country: true,
             phone: true,
-            role: true,
-            avatar: true,
-            createdAt: true,
           },
-        },
-        _count: {
-          select: {
-            products: true,
-          },
-        },
-      },
-      orderBy: {
-        createdAt: 'desc',
-      },
+        })
+      : [];
+    const byAddressId = new Map(addressRows.map((a) => [a.id, a]));
+
+    const sellersWithAddresses = sellers.map((seller) => {
+      const warehouseAddress = seller.warehouseAddressId
+        ? byAddressId.get(seller.warehouseAddressId) ?? null
+        : null;
+      return {
+        ...seller,
+        warehouseAddress,
+        totalProducts: seller._count?.products || 0,
+      };
     });
 
-    // Fetch warehouse addresses if warehouseAddressId exists
-    const sellersWithAddresses = await Promise.all(
-      sellers.map(async (seller) => {
-        let warehouseAddress = null;
-        if (seller.warehouseAddressId) {
-          try {
-            warehouseAddress = await this.prisma.address.findUnique({
-              where: { id: seller.warehouseAddressId },
-              select: {
-                street: true,
-                city: true,
-                state: true,
-                postalCode: true,
-                country: true,
-                phone: true,
-              },
-            });
-          } catch {
-            // Address not found or error - ignore
-          }
-        }
-        return {
-          ...seller,
-          warehouseAddress,
-          totalProducts: seller._count?.products || 0,
-        };
-      }),
-    );
-
-    return sellersWithAddresses.map(
+    const stripped = sellersWithAddresses.map(
       ({ accountNumberEnc, sortCodeEnc, stripeConnectAccountId, ...rest }) => rest,
     );
+
+    return {
+      data: stripped,
+      pagination: {
+        page,
+        limit: take,
+        total,
+        totalPages: Math.ceil(total / take) || 1,
+      },
+    };
   }
 
   async suspendSeller(sellerId: string) {

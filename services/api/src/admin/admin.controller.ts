@@ -6,8 +6,11 @@ import {
   Post,
   Body,
   Param,
+  Query,
   UseGuards,
   ParseUUIDPipe,
+  DefaultValuePipe,
+  ParseIntPipe,
 } from '@nestjs/common';
 import {
   ApiTags,
@@ -50,20 +53,15 @@ export class AdminController {
     };
   }
 
-  @Get('users')
+  @Get('users/stats')
   @ApiOperation({
-    summary: 'Get all users',
-    description: 'Retrieves all users in the system. Admin access required.',
+    summary: 'Get user statistics',
+    description: 'Returns aggregate counts by role, status, and recent activity. Admin access required.',
   })
-  @SwaggerApiResponse({ status: 200, description: 'Users retrieved successfully' })
-  @SwaggerApiResponse({ status: 401, description: 'Unauthorized' })
-  @SwaggerApiResponse({ status: 403, description: 'Forbidden - Admin access required' })
-  async getAllUsers(): Promise<ApiResponse<any[]>> {
-    const users = await this.adminService.getAllUsers();
-    return {
-      data: users,
-      message: 'Users retrieved successfully',
-    };
+  @SwaggerApiResponse({ status: 200, description: 'Stats retrieved successfully' })
+  async getUserStats(): Promise<ApiResponse<any>> {
+    const stats = await this.adminService.getUserStats();
+    return { data: stats, message: 'Stats retrieved successfully' };
   }
 
   @Post('users')
@@ -389,10 +387,13 @@ export class AdminController {
   @SwaggerApiResponse({ status: 200, description: 'Sellers retrieved successfully' })
   @SwaggerApiResponse({ status: 401, description: 'Unauthorized' })
   @SwaggerApiResponse({ status: 403, description: 'Forbidden - Admin access required' })
-  async getAllSellers(): Promise<ApiResponse<any[]>> {
-    const sellers = await this.adminService.getAllSellers();
+  async getAllSellers(
+    @Query('page', new DefaultValuePipe(1), ParseIntPipe) page: number = 1,
+    @Query('limit', new DefaultValuePipe(50), ParseIntPipe) limit: number = 50,
+  ): Promise<ApiResponse<{ data: unknown[]; pagination: { page: number; limit: number; total: number; totalPages: number } }>> {
+    const result = await this.adminService.getAllSellers({ page, limit });
     return {
-      data: sellers,
+      data: result,
       message: 'Sellers retrieved successfully',
     };
   }

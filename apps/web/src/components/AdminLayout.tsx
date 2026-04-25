@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import { AdminBreadcrumbs } from '@/components/Breadcrumbs';
+import { ErrorBoundary } from '@/components/ErrorBoundary';
 
 interface AdminLayoutProps {
   children: React.ReactNode;
@@ -84,6 +85,83 @@ const menuItems: MenuItem[] = [
     href: '/admin/promotions',
   },
   {
+    title: 'Marketing automation',
+    icon: '✨',
+    children: [
+      { title: 'Journeys', href: '/admin/journeys', icon: '🗺️' },
+      { title: 'Message logs', href: '/admin/messaging', icon: '📨' },
+      { title: 'Messaging stats', href: '/admin/messaging/stats', icon: '📈' },
+    ],
+  },
+  {
+    title: 'Events',
+    icon: '🎪',
+    children: [
+      { title: 'All events', href: '/admin/events', icon: '📅' },
+      { title: 'Create event', href: '/admin/events/new', icon: '➕' },
+    ],
+  },
+  {
+    title: 'Audiences',
+    icon: '🎯',
+    children: [
+      { title: 'Segments', href: '/admin/segments', icon: '👥' },
+      { title: 'Create segment', href: '/admin/segments/new', icon: '➕' },
+    ],
+  },
+  {
+    title: 'Ambassadors',
+    icon: '🌟',
+    children: [
+      { title: 'All ambassadors', href: '/admin/ambassadors', icon: '👑' },
+      { title: 'UGC review', href: '/admin/ambassadors/ugc', icon: '📸' },
+      { title: 'Dashboard', href: '/admin/ambassadors/dashboard', icon: '📊' },
+    ],
+  },
+  {
+    title: 'Brand Partnerships',
+    icon: '🤝',
+    children: [
+      { title: 'Partners', href: '/admin/brand-partnerships', icon: '🏢' },
+      { title: 'Campaigns', href: '/admin/brand-partnerships/campaigns', icon: '📢' },
+      { title: 'New partner', href: '/admin/brand-partnerships/new', icon: '➕' },
+      { title: 'Dashboard', href: '/admin/brand-partnerships/dashboard', icon: '📊' },
+    ],
+  },
+  {
+    title: 'Loyalty Analytics',
+    icon: '📈',
+    children: [
+      { title: 'Programme health', href: '/admin/loyalty-analytics', icon: '💡' },
+      { title: 'CLV report', href: '/admin/loyalty-analytics/clv', icon: '👤' },
+      { title: 'Campaign ROI', href: '/admin/loyalty-analytics/attribution', icon: '🎯' },
+      { title: 'Fandom trends', href: '/admin/loyalty-analytics/fandom-trends', icon: '⚡' },
+      { title: 'Tier analysis', href: '/admin/loyalty-analytics/tiers', icon: '🏆' },
+      { title: 'Channels', href: '/admin/loyalty-analytics/channels', icon: '📊' },
+    ],
+  },
+  {
+    title: 'Click & Collect',
+    icon: '🏪',
+    children: [{ title: 'Orders', href: '/admin/click-collect', icon: '📦' }],
+  },
+  {
+    title: 'Product Campaigns',
+    icon: '🎪',
+    children: [
+      { title: 'All campaigns', href: '/admin/product-campaigns', icon: '📋' },
+      { title: 'New campaign', href: '/admin/product-campaigns/new', icon: '➕' },
+    ],
+  },
+  {
+    title: 'Stores',
+    icon: '🏬',
+    children: [
+      { title: 'All stores', href: '/admin/stores', icon: '📍' },
+      { title: 'New store', href: '/admin/stores/new', icon: '➕' },
+    ],
+  },
+  {
     title: 'Support',
     icon: '🎧',
     children: [
@@ -96,6 +174,8 @@ const menuItems: MenuItem[] = [
     children: [
       { title: 'Activity Logs', href: '/admin/activity', icon: '📝' },
       { title: 'Discrepancies', href: '/admin/discrepancies', icon: '⚠️' },
+      { title: 'POS Integration', href: '/admin/pos', icon: '🏪' },
+      { title: 'Fandom Quizzes', href: '/admin/quiz', icon: '🧙' },
       { title: 'Privacy Audit Log', href: '/admin/privacy-audit', icon: '🔒' },
       { title: 'Notification Templates', href: '/admin/templates', icon: '📋' },
       { title: 'WhatsApp', href: '/admin/whatsapp', icon: '💬' },
@@ -506,7 +586,9 @@ export function AdminLayout({ children }: AdminLayoutProps) {
         </div>
 
         {/* Page Content */}
-        <main className="p-4 sm:p-6 lg:p-8 bg-gray-50/30 min-h-[calc(100vh-7rem)]">{children}</main>
+        <main className="p-4 sm:p-6 lg:p-8 bg-gray-50/30 min-h-[calc(100vh-7rem)]">
+          <ErrorBoundary>{children}</ErrorBoundary>
+        </main>
       </div>
     </div>
   );

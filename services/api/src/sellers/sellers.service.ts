@@ -7,7 +7,7 @@ import {
 } from '@nestjs/common';
 import { PrismaService } from '../database/prisma.service';
 import { UpdateSellerDto } from './dto/update-seller.dto';
-import { SellerType, LogisticsOption } from '@prisma/client';
+import { SellerType, LogisticsOption, Prisma } from '@prisma/client';
 import { slugify } from '@hos-marketplace/utils';
 
 @Injectable()
@@ -381,7 +381,8 @@ export class SellersService {
     }
 
     const bcrypt = await import('bcrypt');
-    const hashedPassword = await bcrypt.hash(applicationData.password, 10);
+    const { BCRYPT_PASSWORD_ROUNDS } = await import('../config/bcrypt-cost');
+    const hashedPassword = await bcrypt.hash(applicationData.password, BCRYPT_PASSWORD_ROUNDS);
 
     const baseSlug = slugify(applicationData.storeName);
     let slug = baseSlug;
@@ -391,46 +392,53 @@ export class SellersService {
       counter++;
     }
 
-    const result = await this.prisma.$transaction(async (tx) => {
-      const user = await tx.user.create({
-        data: {
-          email: applicationData.email,
-          password: hashedPassword,
-          firstName: applicationData.firstName,
-          lastName: applicationData.lastName,
-          role: 'SELLER',
-          country: applicationData.country,
-        },
-      });
+    try {
+      const result = await this.prisma.$transaction(async (tx) => {
+        const user = await tx.user.create({
+          data: {
+            email: applicationData.email,
+            password: hashedPassword,
+            firstName: applicationData.firstName,
+            lastName: applicationData.lastName,
+            role: 'SELLER',
+            country: applicationData.country,
+          },
+        });
 
-      const seller = await tx.seller.create({
-        data: {
+        const seller = await tx.seller.create({
+          data: {
+            userId: user.id,
+            storeName: applicationData.storeName,
+            slug,
+            description: applicationData.description,
+            country: applicationData.country,
+            city: applicationData.city,
+            legalBusinessName: applicationData.legalBusinessName,
+            companyName: applicationData.companyName,
+            vatNumber: applicationData.vatNumber,
+            taxId: applicationData.taxId,
+            applicationNotes: applicationData.applicationNotes,
+            vendorStatus: 'PENDING',
+          },
+        });
+
+        return {
           userId: user.id,
-          storeName: applicationData.storeName,
-          slug,
-          description: applicationData.description,
-          country: applicationData.country,
-          city: applicationData.city,
-          legalBusinessName: applicationData.legalBusinessName,
-          companyName: applicationData.companyName,
-          vatNumber: applicationData.vatNumber,
-          taxId: applicationData.taxId,
-          applicationNotes: applicationData.applicationNotes,
-          vendorStatus: 'PENDING',
-        },
+          sellerId: seller.id,
+          storeName: seller.storeName,
+          slug: seller.slug,
+          vendorStatus: seller.vendorStatus,
+          message: 'Vendor application submitted. Your application is under review.',
+        };
       });
 
-      return {
-        userId: user.id,
-        sellerId: seller.id,
-        storeName: seller.storeName,
-        slug: seller.slug,
-        vendorStatus: seller.vendorStatus,
-        message: 'Vendor application submitted. Your application is under review.',
-      };
-    });
-
-    return result;
+      return result;
+    } catch (error: unknown) {
+      if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {
+        throw new BadRequestException('An account with this email already exists.');
+      }
+      throw error;
+    }
   }
 
   // === Vendor Management Methods ===

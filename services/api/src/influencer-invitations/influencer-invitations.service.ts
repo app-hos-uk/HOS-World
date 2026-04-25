@@ -186,7 +186,8 @@ export class InfluencerInvitationsService {
       if (!user) {
         // Create new user
         const bcrypt = await import('bcrypt');
-        const hashedPassword = await bcrypt.hash(userData.password, 10);
+        const { BCRYPT_PASSWORD_ROUNDS } = await import('../config/bcrypt-cost');
+        const hashedPassword = await bcrypt.hash(userData.password, BCRYPT_PASSWORD_ROUNDS);
 
         user = await tx.user.create({
           data: {

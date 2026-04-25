@@ -1,4 +1,5 @@
 import { Module, forwardRef } from '@nestjs/common';
+import { LoyaltyModule } from '../loyalty/loyalty.module';
 import { CartController } from './cart.controller';
 import { GuestCartController } from './guest-cart.controller';
 import { CartService } from './cart.service';
@@ -12,6 +13,7 @@ import { NotificationsModule } from '../notifications/notifications.module';
   imports: [
     forwardRef(() => PromotionsModule),
     forwardRef(() => ShippingModule),
+    forwardRef(() => LoyaltyModule),
     TaxModule,
     NotificationsModule,
   ],

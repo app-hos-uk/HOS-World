@@ -33,7 +33,7 @@ jobs:
       - uses: actions/checkout@v4
       # Use current Railway CLI — third-party docker action bundled CLI ~3.11 and returned "Unauthorized" with project tokens
       - name: Install Railway CLI
-        run: npm install -g @railway/cli@latest
+        run: npm install -g @railway/cli@4.42.1
       - name: Deploy API
         env:
           RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
@@ -51,7 +51,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Install Railway CLI
-        run: npm install -g @railway/cli@latest
+        run: npm install -g @railway/cli@4.42.1
       - name: Deploy Web
         env:
           RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}

@@ -93,7 +93,10 @@ export default function AdminSellersPage() {
   const [showDetailModal, setShowDetailModal] = useState(false);
   const [selectedSeller, setSelectedSeller] = useState<Seller | null>(null);
   const [actionLoading, setActionLoading] = useState(false);
-  
+  const [sellersPage, setSellersPage] = useState(1);
+  const [sellersTotal, setSellersTotal] = useState(0);
+  const sellersLimit = 50;
+
   // Invite form
   const [inviteForm, setInviteForm] = useState({
     email: '',
@@ -105,10 +108,22 @@ export default function AdminSellersPage() {
     try {
       setLoading(true);
       setError(null);
-      const response = await apiClient.getAdminSellers();
-      
-      const raw = response?.data;
-      const sellerData = Array.isArray(raw) ? raw : [];
+      const response = await apiClient.getAdminSellers({ page: sellersPage, limit: sellersLimit });
+
+      const raw = response?.data as
+        | { data?: unknown[]; pagination?: { total?: number } }
+        | unknown[]
+        | undefined;
+      const payload = raw && !Array.isArray(raw) && 'data' in raw ? raw : null;
+      const sellerData = Array.isArray(raw)
+        ? raw
+        : Array.isArray(payload?.data)
+          ? payload.data
+          : [];
+      const pTotal = payload?.pagination?.total;
+      if (pTotal != null) {
+        setSellersTotal(pTotal);
+      }
       
       // Map seller profile data to the Seller interface expected by the UI
       const mappedSellers = sellerData.map((seller: any) => ({
@@ -143,7 +158,7 @@ export default function AdminSellersPage() {
       }));
       
       setSellers(mappedSellers);
-      calculateStats(mappedSellers);
+      calculateStats(mappedSellers, typeof pTotal === 'number' ? pTotal : undefined);
     } catch (err: any) {
       console.error('Error fetching sellers:', err);
       setError(err.message || 'Failed to load sellers');
@@ -152,7 +167,7 @@ export default function AdminSellersPage() {
       setLoading(false);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [sellersPage]);
 
   const fetchInvitations = useCallback(async () => {
     try {
@@ -165,14 +180,15 @@ export default function AdminSellersPage() {
     }
   }, []);
 
-  const calculateStats = (sellerList: Seller[]) => {
+  const calculateStats = (sellerList: Seller[], totalFromServer?: number) => {
     const now = new Date();
     const firstOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
     
     const totalProducts = sellerList.reduce((sum, s) => sum + (s.totalProducts || 0), 0);
-    
+    const totalCount = totalFromServer ?? (sellersTotal > 0 ? sellersTotal : sellerList.length);
+
     setStats({
-      totalSellers: sellerList.length,
+      totalSellers: totalCount,
       b2cSellers: sellerList.filter(s => s.role === 'B2C_SELLER').length,
       wholesalers: sellerList.filter(s => s.role === 'WHOLESALER').length,
       activeSellers: sellerList.filter(s => s.isActive !== false).length,
@@ -672,6 +688,31 @@ export default function AdminSellersPage() {
                       </tbody>
                     </table>
                   </div>
+                  {sellersTotal > sellersLimit && (
+                    <div className="flex flex-wrap items-center justify-between gap-2 px-4 py-3 border-t border-gray-100 bg-gray-50">
+                      <button
+                        type="button"
+                        disabled={sellersPage <= 1 || loading}
+                        onClick={() => setSellersPage((p) => Math.max(1, p - 1))}
+                        className="px-3 py-1.5 text-sm rounded-lg border border-gray-300 bg-white text-gray-700 disabled:opacity-50"
+                      >
+                        Previous
+                      </button>
+                      <span className="text-sm text-gray-600">
+                        Page {sellersPage} of {Math.max(1, Math.ceil(sellersTotal / sellersLimit))}
+                        {' · '}
+                        {sellersTotal} total
+                      </span>
+                      <button
+                        type="button"
+                        disabled={loading || sellersPage * sellersLimit >= sellersTotal}
+                        onClick={() => setSellersPage((p) => p + 1)}
+                        className="px-3 py-1.5 text-sm rounded-lg border border-gray-300 bg-white text-gray-700 disabled:opacity-50"
+                      >
+                        Next
+                      </button>
+                    </div>
+                  )}
                 </div>
               )}
             </>
