@@ -5,6 +5,8 @@ import { RouteGuard } from '@/components/RouteGuard';
 import { CMSLayout } from '@/components/CMSLayout';
 import { apiClient } from '@/lib/api';
 import Link from 'next/link';
+import { CmsPortalErrorBanner } from '@/components/CmsPortalErrorBanner';
+import { cmsLoadingErrorMessage } from '@/lib/cmsPortalFeedback';
 
 interface DashboardStats {
   totalPages: number;
@@ -68,9 +70,9 @@ export default function CMSDashboardPage() {
         activeBanners: activeBanners.length,
         publishedPosts: blogPosts.filter((p: any) => p.publishedAt).length,
       });
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Error loading CMS dashboard:', err);
-      setError(err.message || 'Failed to load dashboard data');
+      setError(cmsLoadingErrorMessage(err));
     } finally {
       setLoading(false);
     }
@@ -96,11 +98,7 @@ export default function CMSDashboardPage() {
             <h1 className="text-2xl font-bold text-gray-900">CMS Dashboard</h1>
           </div>
 
-          {error && (
-            <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-              <p className="text-red-800">Error: {error}</p>
-            </div>
-          )}
+          <CmsPortalErrorBanner message={error} />
 
           {/* Statistics Cards */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -208,7 +206,7 @@ export default function CMSDashboardPage() {
             <div className="text-sm text-gray-500">
               <p>Recent content updates will appear here.</p>
               <p className="mt-2">
-                Connect to Strapi CMS to view detailed activity logs.
+                Connect the external content service to view detailed activity logs.
               </p>
             </div>
           </div>

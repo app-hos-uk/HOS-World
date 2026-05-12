@@ -22,6 +22,24 @@ export class InfluencersService {
     private storefrontsService: InfluencerStorefrontsService,
   ) {}
 
+  /** Ensures each social link value is a valid http(s) URL when non-empty. */
+  private assertSocialLinksUrls(socialLinks: Record<string, string> | undefined | null) {
+    if (!socialLinks || typeof socialLinks !== 'object') return;
+    for (const [key, raw] of Object.entries(socialLinks)) {
+      if (raw == null || String(raw).trim() === '') continue;
+      const t = String(raw).trim();
+      try {
+        const u = new URL(t);
+        if (u.protocol !== 'http:' && u.protocol !== 'https:') {
+          throw new BadRequestException(`Social link "${key}" must use http:// or https://`);
+        }
+      } catch (e) {
+        if (e instanceof BadRequestException) throw e;
+        throw new BadRequestException(`Social link "${key}" must be a valid URL`);
+      }
+    }
+  }
+
   // ============================================
   // INFLUENCER SELF-SERVICE
   // ============================================
@@ -71,6 +89,8 @@ export class InfluencersService {
    * Update influencer profile
    */
   async update(userId: string, dto: UpdateInfluencerDto) {
+    this.assertSocialLinksUrls(dto.socialLinks);
+
     const influencer = await this.prisma.influencer.findUnique({
       where: { userId },
     });
@@ -410,6 +430,8 @@ export class InfluencersService {
    * Update influencer (admin)
    */
   async adminUpdate(id: string, dto: UpdateInfluencerDto & { status?: string; tier?: string }) {
+    this.assertSocialLinksUrls(dto.socialLinks);
+
     const influencer = await this.prisma.influencer.findUnique({
       where: { id },
     });

@@ -64,9 +64,19 @@ interface Stats {
   wholesalers: number;
   activeSellers: number;
   inactiveSellers: number;
-  pendingInvitations: number;
   newThisMonth: number;
   avgProductsPerSeller: number;
+}
+
+/** API / serialization may vary casing — keep counts aligned with badges in the invitations table */
+function invitationStatusNormalized(status: string | undefined): string {
+  return String(status ?? '')
+    .trim()
+    .toUpperCase();
+}
+
+function isInvitationPending(inv: Invitation): boolean {
+  return invitationStatusNormalized(inv.status) === 'PENDING';
 }
 
 const COLORS = ['#8b5cf6', '#3b82f6', '#10b981', '#f59e0b', '#ef4444'];
@@ -193,7 +203,6 @@ export default function AdminSellersPage() {
       wholesalers: sellerList.filter(s => s.role === 'WHOLESALER').length,
       activeSellers: sellerList.filter(s => s.isActive !== false).length,
       inactiveSellers: sellerList.filter(s => s.isActive === false).length,
-      pendingInvitations: invitations.filter(i => i.status === 'PENDING').length,
       newThisMonth: sellerList.filter(s => new Date(s.createdAt) >= firstOfMonth).length,
       avgProductsPerSeller: sellerList.length > 0 ? Math.round(totalProducts / sellerList.length) : 0,
     });
@@ -204,13 +213,11 @@ export default function AdminSellersPage() {
     fetchInvitations();
   }, [fetchSellers, fetchInvitations]);
 
-  // Recalculate stats when invitations change
-  useEffect(() => {
-    if (sellers.length > 0) {
-      calculateStats(sellers);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [invitations]);
+  /** Always derived from invitations state — never coupled to seller fetch lifecycle (fixes stale card counts) */
+  const pendingInvitationsCount = useMemo(
+    () => invitations.filter(isInvitationPending).length,
+    [invitations],
+  );
 
   // Filtered and sorted sellers
   const filteredSellers = useMemo(() => {
@@ -375,7 +382,12 @@ export default function AdminSellersPage() {
 
   const tabs = [
     { id: 'sellers', label: 'Active Sellers', count: sellers.length },
-    { id: 'invitations', label: 'Invitations', count: invitations.length },
+    {
+      id: 'invitations',
+      label: 'Invitations',
+      count: invitations.length,
+      pendingCount: pendingInvitationsCount,
+    },
   ];
 
   return (
@@ -442,7 +454,7 @@ export default function AdminSellersPage() {
                 className={`bg-white rounded-lg shadow p-3 text-left hover:shadow-md ${activeTab === 'invitations' ? 'ring-2 ring-purple-500' : ''}`}
               >
                 <p className="text-xs text-gray-500">Pending Invites</p>
-                <p className="text-xl font-bold text-yellow-600">{stats.pendingInvitations}</p>
+                <p className="text-xl font-bold text-yellow-600">{pendingInvitationsCount}</p>
               </button>
               <div className="bg-white rounded-lg shadow p-3">
                 <p className="text-xs text-gray-500">New This Month</p>
@@ -491,7 +503,7 @@ export default function AdminSellersPage() {
                   </div>
                   <div className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
                     <span className="text-gray-600">Pending Invitations</span>
-                    <span className="text-xl font-bold text-yellow-600">{invitations.filter(i => i.status === 'PENDING').length}</span>
+                    <span className="text-xl font-bold text-yellow-600">{pendingInvitationsCount}</span>
                   </div>
                   <div className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
                     <span className="text-gray-600">Accepted This Month</span>
@@ -499,7 +511,9 @@ export default function AdminSellersPage() {
                   </div>
                   <div className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
                     <span className="text-gray-600">Expired Invitations</span>
-                    <span className="text-xl font-bold text-red-600">{invitations.filter(i => i.status === 'EXPIRED').length}</span>
+                    <span className="text-xl font-bold text-red-600">
+                      {invitations.filter((i) => invitationStatusNormalized(i.status) === 'EXPIRED').length}
+                    </span>
                   </div>
                 </div>
               </div>
@@ -516,7 +530,7 @@ export default function AdminSellersPage() {
           {/* Tabs */}
           <div className="border-b border-gray-200">
             <nav className="-mb-px flex space-x-8">
-              {tabs.map((tab) => (
+              {tabs.map((tab: { id: string; label: string; count: number; pendingCount?: number }) => (
                 <button
                   key={tab.id}
                   onClick={() => setActiveTab(tab.id as any)}
@@ -526,7 +540,9 @@ export default function AdminSellersPage() {
                       : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
                   }`}
                 >
-                  {tab.label} ({tab.count})
+                  {tab.id === 'invitations'
+                    ? `${tab.label} (${tab.count}${tab.pendingCount != null ? ` · ${tab.pendingCount} pending` : ''})`
+                    : `${tab.label} (${tab.count})`}
                 </button>
               ))}
             </nav>
@@ -722,7 +738,12 @@ export default function AdminSellersPage() {
           {activeTab === 'invitations' && (
             <div className="bg-white rounded-lg shadow overflow-hidden">
               <div className="p-4 border-b flex justify-between items-center">
-                <h2 className="text-lg font-semibold">Pending Invitations</h2>
+                <div>
+                  <h2 className="text-lg font-semibold">Seller invitations</h2>
+                  <p className="text-xs text-gray-500 mt-0.5">
+                    {pendingInvitationsCount} pending · {invitations.length} total
+                  </p>
+                </div>
                 <button
                   onClick={() => setShowInviteForm(true)}
                   className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 text-sm"
@@ -756,12 +777,17 @@ export default function AdminSellersPage() {
                           <td className="px-6 py-4 whitespace-nowrap text-sm">{getRoleBadge(inv.sellerType)}</td>
                           <td className="px-6 py-4 whitespace-nowrap">
                             <span className={`px-2 py-1 text-xs rounded-full ${
-                              inv.status === 'PENDING' ? 'bg-yellow-100 text-yellow-800' :
-                              inv.status === 'ACCEPTED' ? 'bg-green-100 text-green-800' :
-                              inv.status === 'EXPIRED' ? 'bg-red-100 text-red-800' :
-                              'bg-gray-100 text-gray-800'
+                              invitationStatusNormalized(inv.status) === 'PENDING'
+                                ? 'bg-yellow-100 text-yellow-800'
+                                : invitationStatusNormalized(inv.status) === 'ACCEPTED'
+                                  ? 'bg-green-100 text-green-800'
+                                  : invitationStatusNormalized(inv.status) === 'EXPIRED'
+                                    ? 'bg-red-100 text-red-800'
+                                    : invitationStatusNormalized(inv.status) === 'CANCELLED'
+                                      ? 'bg-gray-100 text-gray-700'
+                                      : 'bg-gray-100 text-gray-800'
                             }`}>
-                              {inv.status}
+                              {invitationStatusNormalized(inv.status)}
                             </span>
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
@@ -771,7 +797,7 @@ export default function AdminSellersPage() {
                             {inv.expiresAt ? new Date(inv.expiresAt).toLocaleDateString() : 'N/A'}
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap text-right text-sm">
-                            {inv.status === 'PENDING' && (
+                            {isInvitationPending(inv) && (
                               <>
                                 <button
                                   onClick={() => handleResendInvitation(inv.id)}

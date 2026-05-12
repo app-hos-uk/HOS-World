@@ -11,7 +11,21 @@ import { useCurrency } from '@/contexts/CurrencyContext';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar, PieChart, Pie, Cell } from 'recharts';
+import {
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+  BarChart,
+  Bar,
+  PieChart,
+  Pie,
+  Cell,
+  Legend,
+} from 'recharts';
 
 interface DashboardStats {
   totalOrders: number;
@@ -89,13 +103,19 @@ export default function CustomerDashboardPage() {
         .filter((o) => ['DELIVERED', 'COMPLETED'].includes(o.status?.toUpperCase()))
         .reduce((sum, o) => sum + (Number(o.total) || 0), 0);
 
-      // Fetch wishlist
-      const wishlistResponse = await apiClient.getWishlist().catch(() => ({ data: [] }));
+      // Fetch wishlist — request a separate count call for the true total
+      const wishlistResponse = await apiClient.getWishlist({ limit: 8 }).catch(() => ({ data: [] }));
       const wishlistData = wishlistResponse?.data as any;
-      const wishlistArray: any[] = Array.isArray(wishlistData) 
-        ? wishlistData 
+      const wishlistArray: any[] = Array.isArray(wishlistData)
+        ? wishlistData
         : (wishlistData?.products || []);
-      const wishlistItems = wishlistArray.length;
+      let paginationTotal: number | undefined;
+      if (wishlistData && typeof wishlistData === 'object' && wishlistData.pagination?.total != null) {
+        paginationTotal = Number(wishlistData.pagination.total);
+      } else if (wishlistData && typeof wishlistData === 'object' && wishlistData.total != null) {
+        paginationTotal = Number(wishlistData.total);
+      }
+      const wishlistItemsCount = paginationTotal ?? wishlistArray.length;
       setRecentWishlist(wishlistArray.slice(0, 4));
 
       // Fetch cart
@@ -147,7 +167,7 @@ export default function CustomerDashboardPage() {
         pendingOrders,
         completedOrders,
         totalSpent,
-        wishlistItems,
+        wishlistItems: wishlistItemsCount,
         cartItems,
       });
 
@@ -695,42 +715,60 @@ export default function CustomerDashboardPage() {
                 )}
               </div>
 
-              {/* Order Status Breakdown */}
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
-                  <h3 className="text-lg font-semibold text-gray-900 mb-4">Order Status Breakdown</h3>
+              {/* Order Status Breakdown — legend + fixed chart box avoids slice-label overflow misalignment */}
+              <div className="grid grid-cols-1 gap-6 lg:grid-cols-2 lg:items-stretch">
+                <div className="flex min-h-[320px] flex-col rounded-xl border border-gray-100 bg-white p-6 shadow-sm">
+                  <h3 className="mb-4 text-lg font-semibold text-gray-900">Order Status Breakdown</h3>
                   {spendingAnalytics.categoryBreakdown.length > 0 ? (
-                    <div className="h-48">
-                      <ResponsiveContainer width="100%" height="100%">
-                        <PieChart>
-                          <Pie
-                            data={spendingAnalytics.categoryBreakdown}
-                            cx="50%"
-                            cy="50%"
-                            innerRadius={40}
-                            outerRadius={70}
-                            paddingAngle={5}
-                            dataKey="value"
-                            label={({ name, value }) => `${name}: ${value}`}
-                          >
-                            {spendingAnalytics.categoryBreakdown.map((entry, index) => (
-                              <Cell key={`cell-${index}`} fill={entry.color} />
-                            ))}
-                          </Pie>
-                          <Tooltip />
-                        </PieChart>
-                      </ResponsiveContainer>
+                    <div className="flex min-h-0 flex-1 flex-col justify-center">
+                      <div className="mx-auto h-[260px] w-full max-w-md">
+                        <ResponsiveContainer width="100%" height="100%">
+                          <PieChart margin={{ top: 8, right: 8, left: 8, bottom: 8 }}>
+                            <Pie
+                              data={spendingAnalytics.categoryBreakdown}
+                              cx="50%"
+                              cy="45%"
+                              innerRadius="42%"
+                              outerRadius="72%"
+                              paddingAngle={4}
+                              dataKey="value"
+                              nameKey="name"
+                              labelLine={false}
+                            >
+                              {spendingAnalytics.categoryBreakdown.map((entry, index) => (
+                                <Cell key={`cell-${index}`} fill={entry.color} />
+                              ))}
+                            </Pie>
+                            <Tooltip />
+                            <Legend
+                              verticalAlign="bottom"
+                              align="center"
+                              layout="horizontal"
+                              wrapperStyle={{ paddingTop: 8 }}
+                              formatter={(value, entry) => {
+                                const v = (entry?.payload as { value?: number })?.value;
+                                return (
+                                  <span className="text-xs text-gray-700">
+                                    {value}
+                                    {typeof v === 'number' ? ` (${v})` : ''}
+                                  </span>
+                                );
+                              }}
+                            />
+                          </PieChart>
+                        </ResponsiveContainer>
+                      </div>
                     </div>
                   ) : (
-                    <div className="text-center py-12 text-gray-500">
+                    <div className="flex flex-1 items-center justify-center py-12 text-gray-500">
                       <p>No order data yet</p>
                     </div>
                   )}
                 </div>
 
-                <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
-                  <h3 className="text-lg font-semibold text-gray-900 mb-4">Shopping Insights</h3>
-                  <div className="space-y-4">
+                <div className="flex min-h-[320px] flex-col rounded-xl border border-gray-100 bg-white p-6 shadow-sm">
+                  <h3 className="mb-4 text-lg font-semibold text-gray-900">Shopping Insights</h3>
+                  <div className="flex flex-1 flex-col justify-center space-y-4">
                     <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
                       <span className="text-gray-600">Favorite Category</span>
                       <span className="font-semibold text-gray-900">🧙 Wizarding Items</span>

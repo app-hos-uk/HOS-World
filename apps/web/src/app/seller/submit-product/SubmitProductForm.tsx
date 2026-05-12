@@ -29,7 +29,21 @@ interface Variation {
   options: VariationOption[];
 }
 
-export function SubmitProductForm() {
+/** Loose URL validation for remote product images */
+function isValidHttpProductImageUrl(urlString: string): boolean {
+  const s = urlString.trim();
+  if (!s) return false;
+  try {
+    const u = new URL(s);
+    if (u.protocol !== 'http:' && u.protocol !== 'https:') return false;
+    if (!u.hostname) return false;
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+export function SubmitProductForm({ editSubmissionId }: { editSubmissionId?: string }) {
   const router = useRouter();
   const { user, effectiveRole } = useAuth();
   const toast = useToast();
@@ -154,6 +168,85 @@ export function SubmitProductForm() {
   });
   const [newOptionName, setNewOptionName] = useState('');
   const [newOptionValue, setNewOptionValue] = useState('');
+  const submitFeedbackRef = useRef<HTMLDivElement | null>(null);
+  const [editLoading, setEditLoading] = useState(false);
+
+  useEffect(() => {
+    if (error && submitFeedbackRef.current) {
+      submitFeedbackRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  }, [error]);
+
+  useEffect(() => {
+    if (!editSubmissionId) return;
+    let cancelled = false;
+    (async () => {
+      try {
+        setEditLoading(true);
+        setError('');
+        const res = await apiClient.getSubmission(editSubmissionId);
+        const sub = res?.data;
+        if (!sub || cancelled) return;
+        const pd = sub.productData || {};
+        setFormData({
+          name: pd.name ?? '',
+          description: pd.description ?? '',
+          sku: pd.sku ?? '',
+          barcode: pd.barcode ?? '',
+          ean: pd.ean ?? '',
+          price: pd.price != null ? String(pd.price) : '',
+          tradePrice: pd.tradePrice != null ? String(pd.tradePrice) : '',
+          rrp: pd.rrp != null ? String(pd.rrp) : '',
+          currency: pd.currency ?? 'USD',
+          taxRate: pd.taxRate != null ? String(pd.taxRate) : '0',
+          stock: pd.stock != null ? String(pd.stock) : '',
+          quantity: pd.quantity != null ? String(pd.quantity) : '',
+          fandom: pd.fandom ?? '',
+          categoryId: pd.categoryId ?? '',
+          tags: Array.isArray(pd.tags) ? pd.tags.join(', ') : '',
+        });
+        const imgList = Array.isArray(pd.images) ? pd.images : [];
+        setImages(
+          imgList
+            .map((img: unknown, i: number) =>
+              typeof img === 'string'
+                ? { url: img, alt: '', order: i }
+                : {
+                    url: String((img as { url?: string }).url || ''),
+                    alt: (img as { alt?: string }).alt || '',
+                    order: (img as { order?: number }).order ?? i,
+                  },
+            )
+            .filter((x: ImageUpload) => x.url),
+        );
+        const vars = Array.isArray(pd.variations) ? pd.variations : [];
+        setVariations(
+          vars.map((v: Record<string, unknown>) => ({
+            name: String(v.name || ''),
+            options: Array.isArray(v.options)
+              ? v.options.map((o: unknown) =>
+                  typeof o === 'object' && o !== null && 'name' in o && 'value' in o
+                    ? {
+                        name: String((o as { name?: string }).name),
+                        value: String((o as { value?: string }).value),
+                      }
+                    : { name: 'Option', value: String(o) },
+                )
+              : [],
+          })),
+        );
+        setActiveTab('submit');
+      } catch (e: unknown) {
+        const msg = e instanceof Error ? e.message : 'Failed to load submission';
+        if (!cancelled) setError(msg);
+      } finally {
+        if (!cancelled) setEditLoading(false);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [editSubmissionId]);
 
   const runDuplicateCheck = useCallback(async (data: typeof formData) => {
     const hasIdentifier = data.name.trim().length >= 3 || data.sku.trim() || data.barcode.trim() || data.ean.trim();
@@ -194,17 +287,24 @@ export function SubmitProductForm() {
   };
 
   const addImage = () => {
-    if (newImageUrl.trim()) {
-      setImages([
-        ...images,
-        {
-          url: newImageUrl.trim(),
-          alt: '',
-          order: images.length,
-        },
-      ]);
-      setNewImageUrl('');
+    const trimmed = newImageUrl.trim();
+    if (!trimmed) return;
+    if (!isValidHttpProductImageUrl(trimmed)) {
+      const msg = 'Enter a valid image URL (must start with http:// or https://)';
+      setError(msg);
+      toast.error(msg);
+      return;
     }
+    setError('');
+    setImages([
+      ...images,
+      {
+        url: trimmed,
+        alt: '',
+        order: images.length,
+      },
+    ]);
+    setNewImageUrl('');
   };
 
   const uploadImages = async (files: FileList | null) => {
@@ -214,18 +314,24 @@ export function SubmitProductForm() {
     const maxSizeBytes = 10 * 1024 * 1024; // 10MB (matches backend multer limit)
 
     const fileArr = Array.from(files);
-    const limited = fileArr.slice(0, 4);
     if (fileArr.length > 4) {
-      setError('You can upload up to 4 images at a time');
+      const msg = 'You can upload up to 4 images at a time';
+      setError(msg);
+      toast.error(msg);
       return;
     }
-    for (const f of fileArr) {
+    const limited = fileArr.slice(0, 4);
+    for (const f of limited) {
       if (!allowedTypes.includes(f.type)) {
-        setError('Only JPEG, PNG, GIF, and WebP images are allowed');
+        const msg = 'Only JPEG, PNG, GIF, and WebP images are allowed';
+        setError(msg);
+        toast.error(msg);
         return;
       }
       if (f.size > maxSizeBytes) {
-        setError('Max image size is 10MB');
+        const msg = 'Max image size is 10MB';
+        setError(msg);
+        toast.error(msg);
         return;
       }
     }
@@ -245,8 +351,10 @@ export function SubmitProductForm() {
           order: prev.length + idx,
         })),
       ]);
-    } catch (err: any) {
-      setError(err.message || 'Failed to upload image');
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'Failed to upload image';
+      setError(msg);
+      toast.error(msg);
     } finally {
       setUploadingImages(false);
     }
@@ -337,6 +445,32 @@ export function SubmitProductForm() {
       return;
     }
 
+    for (const img of images) {
+      if (!isValidHttpProductImageUrl(img.url)) {
+        setError('Every product image must use a valid http(s) URL');
+        setLoading(false);
+        submittingRef.current = false;
+        return;
+      }
+    }
+
+    const variationRows =
+      currentVariation.name.trim() && currentVariation.options.length > 0
+        ? [...variations, { ...currentVariation }]
+        : variations;
+
+    const normalizedVariations =
+      variationRows.length > 0
+        ? variationRows
+            .map((v) => ({
+              name: v.name.trim(),
+              options: v.options
+                .map((o) => ({ name: o.name.trim(), value: o.value.trim() }))
+                .filter((o) => o.name.length > 0 && o.value.length > 0),
+            }))
+            .filter((v) => v.name.length > 0 && v.options.length > 0)
+        : undefined;
+
     try {
       const submissionData = {
         name: formData.name.trim(),
@@ -349,8 +483,8 @@ export function SubmitProductForm() {
         rrp: formData.rrp ? parseFloat(formData.rrp) : undefined,
         currency: formData.currency,
         taxRate: formData.taxRate ? parseFloat(formData.taxRate) : undefined,
-        stock: parseInt(formData.stock),
-        quantity: formData.quantity ? parseInt(formData.quantity) : undefined,
+        stock: parseInt(formData.stock, 10),
+        quantity: formData.quantity ? parseInt(formData.quantity, 10) : undefined,
         fandom: formData.fandom || undefined,
         categoryId: formData.categoryId || undefined,
         tags: formData.tags
@@ -359,26 +493,37 @@ export function SubmitProductForm() {
           .filter((tag) => tag.length > 0),
         images: images,
         variations:
-          variations.length > 0
-            ? variations.map((v) => ({
-                name: v.name,
-                options: v.options,
-              }))
-            : undefined,
+          normalizedVariations && normalizedVariations.length > 0 ? normalizedVariations : undefined,
       };
 
-      const response = await apiClient.createSubmission(submissionData);
-
-      if (response?.data) {
-        setSuccess(true);
-        toast.success('Product submitted for review!');
-        const role = effectiveRole || user?.role;
-        const redirectPath = role === 'WHOLESALER' ? '/wholesaler/submissions' : '/seller/submissions';
-        setTimeout(() => {
-          router.push(redirectPath);
-        }, 2000);
+      if (editSubmissionId) {
+        const response = await apiClient.updateSubmission(editSubmissionId, {
+          productData: submissionData as Record<string, unknown>,
+        });
+        if (response?.data) {
+          setSuccess(true);
+          toast.success('Changes saved.');
+          const roleAfterSave = effectiveRole || user?.role;
+          const submitViewBase =
+            roleAfterSave === 'WHOLESALER' ? '/wholesaler/submit-product' : '/seller/submit-product';
+          router.push(`${submitViewBase}?id=${editSubmissionId}`);
+        } else {
+          throw new Error('Failed to update submission');
+        }
       } else {
-        throw new Error('Failed to create submission');
+        const response = await apiClient.createSubmission(submissionData);
+
+        if (response?.data) {
+          setSuccess(true);
+          toast.success('Product submitted for review!');
+          const role = effectiveRole || user?.role;
+          const redirectPath = role === 'WHOLESALER' ? '/wholesaler/submissions' : '/seller/submissions';
+          setTimeout(() => {
+            router.push(redirectPath);
+          }, 2000);
+        } else {
+          throw new Error('Failed to create submission');
+        }
       }
     } catch (err: any) {
       console.error('Submission error:', err);
@@ -405,7 +550,7 @@ export function SubmitProductForm() {
         <div className="max-w-4xl mx-auto">
           <div className="mb-6">
             <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold">
-              Submit Product
+              {editSubmissionId ? 'Edit product submission' : 'Submit Product'}
             </h1>
             <p className="text-gray-600 mt-2">Browse existing catalog or submit a new product for review</p>
           </div>
@@ -652,16 +797,28 @@ export function SubmitProductForm() {
             {/* Submit New Product Tab */}
             {activeTab === 'submit' && (
             <>
+            {editSubmissionId && editLoading && (
+              <div className="flex flex-col items-center justify-center py-16 text-gray-600">
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600 mb-4" />
+                <p className="text-sm">Loading submission…</p>
+              </div>
+            )}
+
+            {(!editSubmissionId || !editLoading) && (
+            <>
 
             {success && (
               <div className="mb-6 p-4 bg-green-100 border border-green-400 text-green-700 rounded-lg">
-                <p className="font-semibold">Product submitted successfully!</p>
-                <p className="text-sm mt-1">Redirecting to My Submissions…</p>
+                <p className="font-semibold">{editSubmissionId ? 'Submission updated!' : 'Product submitted successfully!'}</p>
+                <p className="text-sm mt-1">{editSubmissionId ? 'Redirecting…' : 'Redirecting to My Submissions…'}</p>
               </div>
             )}
 
             {error && (
-              <div className="mb-6 p-4 bg-red-100 border border-red-400 text-red-700 rounded-lg">
+              <div
+                ref={submitFeedbackRef}
+                className="sticky top-20 z-40 mb-6 scroll-mt-24 p-4 bg-red-100 border border-red-400 text-red-700 rounded-lg shadow-md"
+              >
                 <p className="font-semibold">Error</p>
                 <p className="text-sm mt-1">{error}</p>
               </div>
@@ -1037,6 +1194,12 @@ export function SubmitProductForm() {
                 <h2 className="text-xl font-semibold mb-4 sm:mb-6">
                   Product Images <span className="text-red-500">*</span>
                 </h2>
+                {error &&
+                  /upload|image|URL|JPEG|PNG|GIF|WebP|10MB|size/i.test(error) && (
+                    <div className="mb-4 p-3 bg-red-50 border border-red-200 text-red-800 rounded-lg text-sm">
+                      {error}
+                    </div>
+                  )}
                 <div className="space-y-4">
                   <div className="p-4 border border-gray-200 rounded-lg bg-gray-50">
                     <div className="flex items-center justify-between gap-3 flex-wrap">
@@ -1224,6 +1387,12 @@ export function SubmitProductForm() {
               </div>
 
               {/* Submit Button */}
+              <div className="flex flex-col gap-3">
+                {error && !/upload|image|URL|JPEG|PNG|GIF|WebP|10MB|size/i.test(error) && (
+                  <div className="p-3 bg-red-50 border border-red-200 text-red-800 rounded-lg text-sm">
+                    {error}
+                  </div>
+                )}
               <div className="flex gap-4">
                 <button
                   type="button"
@@ -1237,10 +1406,13 @@ export function SubmitProductForm() {
                   disabled={loading}
                   className="flex-1 px-6 py-3 bg-purple-600 text-white rounded-lg font-semibold hover:bg-purple-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  {loading ? 'Submitting...' : 'Submit Product'}
+                  {loading ? (editSubmissionId ? 'Saving…' : 'Submitting…') : editSubmissionId ? 'Save changes' : 'Submit Product'}
                 </button>
               </div>
+              </div>
             </form>
+            </>
+            )}
             </>
             )}
         </div>

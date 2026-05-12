@@ -19,12 +19,17 @@ export class AdminService {
     const sellerRoles = ['SELLER', 'B2C_SELLER', 'WHOLESALER'];
     const teamRoles = ['PROCUREMENT', 'FULFILLMENT', 'CATALOG', 'MARKETING', 'FINANCE', 'CMS_EDITOR'];
 
+    const notDeleted = { deletedAt: null } as const;
+
     const [total, byRole, inactive, newThisMonth] = await Promise.all([
-      this.prisma.user.count(),
-      this.prisma.user.groupBy({ by: ['role'], _count: true }),
-      this.prisma.user.count({ where: { isActive: false } }),
+      this.prisma.user.count({ where: notDeleted }),
+      this.prisma.user.groupBy({ by: ['role'], where: notDeleted, _count: true }),
+      this.prisma.user.count({ where: { ...notDeleted, isActive: false } }),
       this.prisma.user.count({
-        where: { createdAt: { gte: new Date(new Date().getFullYear(), new Date().getMonth(), 1) } },
+        where: {
+          ...notDeleted,
+          createdAt: { gte: new Date(new Date().getFullYear(), new Date().getMonth(), 1) },
+        },
       }),
     ]);
 

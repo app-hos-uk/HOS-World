@@ -5,8 +5,12 @@ import { RouteGuard } from '@/components/RouteGuard';
 import { CMSLayout } from '@/components/CMSLayout';
 import Image from 'next/image';
 import { apiClient } from '@/lib/api';
+import { useToast } from '@/hooks/useToast';
+import { CmsPortalErrorBanner } from '@/components/CmsPortalErrorBanner';
+import { cmsActionToastMessage, cmsLoadingErrorMessage } from '@/lib/cmsPortalFeedback';
 
 export default function CMSMediaPage() {
+  const toast = useToast();
   const [media, setMedia] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -24,9 +28,9 @@ export default function CMSMediaPage() {
       if (response?.data) {
         setMedia(Array.isArray(response.data) ? response.data : []);
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Error fetching media:', err);
-      setError(err.message || 'Failed to load media');
+      setError(cmsLoadingErrorMessage(err));
     } finally {
       setLoading(false);
     }
@@ -45,9 +49,9 @@ export default function CMSMediaPage() {
       if (response?.data) {
         await fetchMedia();
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Error uploading media:', err);
-      alert(err.message || 'Failed to upload media');
+      toast.error(cmsActionToastMessage(err, 'Failed to upload media'));
     } finally {
       setUploading(false);
     }
@@ -74,17 +78,17 @@ export default function CMSMediaPage() {
             </label>
           </div>
 
-          {error && (
-            <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-              <p className="text-red-800">Error: {error}</p>
+          {error ? (
+            <CmsPortalErrorBanner message={error}>
               <button
+                type="button"
                 onClick={fetchMedia}
-                className="mt-2 px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700"
+                className="inline-flex rounded-md bg-purple-600 px-4 py-2 text-sm font-medium text-white hover:bg-purple-700"
               >
-                Retry
+                Retry loading
               </button>
-            </div>
-          )}
+            </CmsPortalErrorBanner>
+          ) : null}
 
           {loading ? (
             <div className="flex items-center justify-center h-64">

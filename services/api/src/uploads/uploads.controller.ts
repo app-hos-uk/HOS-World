@@ -43,16 +43,31 @@ import { StorageProvider } from '../storage/storage.service';
 import { BadRequestException } from '@nestjs/common';
 
 const ALLOWED_FILE_EXTENSIONS = ['.jpg', '.jpeg', '.png', '.gif', '.webp', '.svg', '.pdf'];
-const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
+/** Must match uploads.service.ts and storefront copy (seller product images: up to 10MB each). */
+const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
+
+const IMAGE_MIME_WHITELIST = [
+  'image/jpeg',
+  'image/jpg',
+  'image/png',
+  'image/gif',
+  'image/webp',
+  'image/svg+xml',
+  'application/pdf',
+];
 
 function fileFilter(req: any, file: Express.Multer.File, cb: Function) {
-  const ext = extname(file.originalname).toLowerCase();
-  if (ALLOWED_FILE_EXTENSIONS.includes(ext)) {
+  const ext = extname(file.originalname || '').toLowerCase();
+  const extOk = ALLOWED_FILE_EXTENSIONS.includes(ext);
+  /** Cameras often send images with missing or uncommon extensions; trust MIME after multer probes. */
+  const mimeOk = IMAGE_MIME_WHITELIST.includes(file.mimetype);
+
+  if (extOk && mimeOk) {
     cb(null, true);
   } else {
     cb(
       new BadRequestException(
-        `File type ${ext} is not allowed. Allowed: ${ALLOWED_FILE_EXTENSIONS.join(', ')}`,
+        `File type (${ext || 'unknown ext'} / ${file.mimetype}) is not allowed. Allowed: ${ALLOWED_FILE_EXTENSIONS.join(', ')} or matching image MIME types.`,
       ),
       false,
     );
@@ -86,9 +101,18 @@ function createStorage() {
       cb(null, destPath);
     },
     filename: (req, file, cb) => {
-      const ext = extname(file.originalname).toLowerCase();
-      const filename = `${randomUUID()}${ext}`;
-      cb(null, filename);
+      let ext = extname(file.originalname || '').toLowerCase();
+      if (!ext) {
+        const m = file.mimetype;
+        if (m === 'image/jpeg' || m === 'image/jpg') ext = '.jpg';
+        else if (m === 'image/png') ext = '.png';
+        else if (m === 'image/gif') ext = '.gif';
+        else if (m === 'image/webp') ext = '.webp';
+        else if (m === 'image/svg+xml') ext = '.svg';
+        else if (m === 'application/pdf') ext = '.pdf';
+        else ext = '';
+      }
+      cb(null, `${randomUUID()}${ext}`);
     },
   });
 }

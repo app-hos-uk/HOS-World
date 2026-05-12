@@ -5,6 +5,8 @@ import { RouteGuard } from '@/components/RouteGuard';
 import { CMSLayout } from '@/components/CMSLayout';
 import { apiClient } from '@/lib/api';
 import { useToast } from '@/hooks/useToast';
+import { CmsPortalErrorBanner } from '@/components/CmsPortalErrorBanner';
+import { cmsActionToastMessage, cmsLoadingErrorMessage } from '@/lib/cmsPortalFeedback';
 
 export default function CMSSettingsPage() {
   const toast = useToast();
@@ -25,9 +27,9 @@ export default function CMSSettingsPage() {
       if (response?.data) {
         setSettings(response.data);
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Error fetching settings:', err);
-      setError(err.message || 'Failed to load settings');
+      setError(cmsLoadingErrorMessage(err));
     } finally {
       setLoading(false);
     }
@@ -42,10 +44,11 @@ export default function CMSSettingsPage() {
         toast.success('Settings saved successfully');
         setSettings(response.data);
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Error saving settings:', err);
-      setError(err.message || 'Failed to save settings');
-      toast.error('Failed to save settings');
+      const msg = cmsActionToastMessage(err, 'Failed to save settings');
+      setError(msg);
+      toast.error(msg);
     } finally {
       setSaving(false);
     }
@@ -76,11 +79,7 @@ export default function CMSSettingsPage() {
             </button>
           </div>
 
-          {error && (
-            <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-              <p className="text-red-800">Error: {error}</p>
-            </div>
-          )}
+          <CmsPortalErrorBanner message={error} showSettingsLink={false} />
 
           {loading ? (
             <div className="flex items-center justify-center h-64">

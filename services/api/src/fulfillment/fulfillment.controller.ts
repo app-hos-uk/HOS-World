@@ -140,7 +140,7 @@ export class FulfillmentController {
   }
 
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles('ADMIN')
+  @Roles('ADMIN', 'FULFILLMENT')
   @Delete('centers/:id')
   @ApiBearerAuth('JWT-auth')
   @ApiOperation({

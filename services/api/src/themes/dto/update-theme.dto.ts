@@ -1,9 +1,18 @@
-import { IsString, IsOptional, IsObject, IsBoolean } from 'class-validator';
+import { IsString, IsOptional, IsObject, IsBoolean, IsEnum } from 'class-validator';
+import { ThemeType } from './create-theme.dto';
 
 export class UpdateThemeDto {
   @IsOptional()
   @IsString()
   name?: string;
+
+  @IsOptional()
+  @IsString()
+  description?: string;
+
+  @IsOptional()
+  @IsEnum(ThemeType)
+  type?: ThemeType;
 
   @IsOptional()
   @IsObject()

@@ -6,6 +6,8 @@ import { RouteGuard } from '@/components/RouteGuard';
 import { CMSLayout } from '@/components/CMSLayout';
 import { apiClient } from '@/lib/api';
 import { useToast } from '@/hooks/useToast';
+import { CmsPortalErrorBanner } from '@/components/CmsPortalErrorBanner';
+import { cmsActionToastMessage, cmsLoadingErrorMessage } from '@/lib/cmsPortalFeedback';
 
 export default function CMSBannersPage() {
   const toast = useToast();
@@ -43,7 +45,7 @@ export default function CMSBannersPage() {
       }
     } catch (err: any) {
       console.error('Error loading banners:', err);
-      setError(err.message || 'Failed to load banners');
+      setError(cmsLoadingErrorMessage(err));
       setBanners([]);
     } finally {
       setLoading(false);
@@ -68,7 +70,7 @@ export default function CMSBannersPage() {
       });
       loadBanners();
     } catch (err: any) {
-      toast.error(err.message || 'Failed to create banner');
+      toast.error(cmsActionToastMessage(err, 'Failed to create banner'));
     } finally {
       setCreatingBanner(false);
     }
@@ -80,7 +82,7 @@ export default function CMSBannersPage() {
       toast.success(`Banner ${!currentActive ? 'activated' : 'deactivated'} successfully`);
       loadBanners();
     } catch (err: any) {
-      toast.error(err.message || 'Failed to update banner');
+      toast.error(cmsActionToastMessage(err, 'Failed to update banner'));
     }
   };
 
@@ -115,7 +117,7 @@ export default function CMSBannersPage() {
       });
       loadBanners();
     } catch (err: any) {
-      toast.error(err.message || 'Failed to update banner');
+      toast.error(cmsActionToastMessage(err, 'Failed to update banner'));
     } finally {
       setUpdatingBanner(false);
     }
@@ -128,7 +130,7 @@ export default function CMSBannersPage() {
       toast.success('Banner deleted successfully');
       loadBanners();
     } catch (err: any) {
-      toast.error(err.message || 'Failed to delete banner');
+      toast.error(cmsActionToastMessage(err, 'Failed to delete banner'));
     }
   };
 
@@ -158,11 +160,7 @@ export default function CMSBannersPage() {
             </button>
           </div>
 
-          {error && (
-            <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-              <p className="text-red-800">Error: {error}</p>
-            </div>
-          )}
+          <CmsPortalErrorBanner message={error} />
 
           {/* Filter */}
           <div className="bg-white rounded-lg shadow p-4">

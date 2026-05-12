@@ -1,7 +1,6 @@
 'use client';
 
 import { Header } from '@/components/Header';
-import { SearchBar } from '@/components/SearchBar';
 import { HeroBanner } from '@/components/HeroBanner';
 import { BannerCarousel } from '@/components/BannerCarousel';
 import { FeatureBanner } from '@/components/FeatureBanner';
@@ -72,12 +71,7 @@ export default function HomePage() {
       />
       <Header />
       <main>
-        {/* Search bar at the very top */}
-        <div className="w-full bg-white border-b border-purple-100">
-          <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-3 sm:py-4">
-            <SearchBar />
-          </div>
-        </div>
+        {/* Primary search lives in Header (guests/customers); avoid duplicate field here */}
 
         {/* Hero Banner with Auto-play */}
         <HeroBanner

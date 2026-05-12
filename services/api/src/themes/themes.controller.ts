@@ -86,23 +86,6 @@ export class ThemesController {
     };
   }
 
-  @Public()
-  @Get(':id')
-  @ApiOperation({
-    summary: 'Get theme by ID',
-    description: 'Retrieves a specific theme by ID. Public endpoint, no authentication required.',
-  })
-  @ApiParam({ name: 'id', description: 'Theme UUID', type: String })
-  @SwaggerApiResponse({ status: 200, description: 'Theme retrieved successfully' })
-  @SwaggerApiResponse({ status: 404, description: 'Theme not found' })
-  async findOne(@Param('id', ParseUUIDPipe) id: string): Promise<ApiResponse<any>> {
-    const theme = await this.themesService.findOne(id);
-    return {
-      data: theme,
-      message: 'Theme retrieved successfully',
-    };
-  }
-
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('ADMIN')
   @Put(':id')
@@ -147,6 +130,27 @@ export class ThemesController {
     return {
       data: { message: 'Theme deleted successfully' },
       message: 'Theme deleted successfully',
+    };
+  }
+
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('ADMIN')
+  @Post(':id/duplicate')
+  @ApiBearerAuth('JWT-auth')
+  @ApiOperation({
+    summary: 'Duplicate theme (Admin only)',
+    description: 'Creates an inactive copy of an existing theme. Admin access required.',
+  })
+  @ApiParam({ name: 'id', description: 'Theme UUID to duplicate', type: String })
+  @SwaggerApiResponse({ status: 201, description: 'Theme duplicated successfully' })
+  @SwaggerApiResponse({ status: 401, description: 'Unauthorized' })
+  @SwaggerApiResponse({ status: 403, description: 'Forbidden - Admin access required' })
+  @SwaggerApiResponse({ status: 404, description: 'Theme not found' })
+  async duplicate(@Param('id', ParseUUIDPipe) id: string): Promise<ApiResponse<any>> {
+    const theme = await this.themesService.duplicate(id);
+    return {
+      data: theme,
+      message: 'Theme duplicated successfully',
     };
   }
 
@@ -209,6 +213,23 @@ export class ThemesController {
     return {
       data: theme,
       message: 'Seller theme updated successfully',
+    };
+  }
+
+  @Public()
+  @Get(':id')
+  @ApiOperation({
+    summary: 'Get theme by ID',
+    description: 'Retrieves a specific theme by ID. Public endpoint, no authentication required.',
+  })
+  @ApiParam({ name: 'id', description: 'Theme UUID', type: String })
+  @SwaggerApiResponse({ status: 200, description: 'Theme retrieved successfully' })
+  @SwaggerApiResponse({ status: 404, description: 'Theme not found' })
+  async findOne(@Param('id', ParseUUIDPipe) id: string): Promise<ApiResponse<any>> {
+    const theme = await this.themesService.findOne(id);
+    return {
+      data: theme,
+      message: 'Theme retrieved successfully',
     };
   }
 

@@ -27,6 +27,41 @@ interface WishlistItem {
   };
 }
 
+/** API GET /wishlist returns `{ products: Product[] }`; map to rows the UI expects */
+function normalizeWishlistProducts(products: unknown[]): WishlistItem[] {
+  if (!Array.isArray(products)) return [];
+  return products
+    .filter(
+      (p): p is { id: unknown } =>
+        !!p && typeof p === 'object' && 'id' in p && (p as { id: unknown }).id != null,
+    )
+    .map((pRaw) => {
+      const p = pRaw as Record<string, unknown>;
+      const id = String(p.id);
+      return {
+        id,
+        productId: id,
+        product: {
+          id,
+          name: typeof p.name === 'string' ? p.name : 'Product',
+          price: typeof p.price === 'number' ? p.price : Number(p.price) || 0,
+          currency: typeof p.currency === 'string' ? p.currency : undefined,
+          stock: p.stock != null ? Number(p.stock) : undefined,
+          status: typeof p.status === 'string' ? p.status : undefined,
+          images: Array.isArray(p.images) ? (p.images as Array<{ url: string } | string>) : undefined,
+          originalPrice:
+            p.rrp != null ? Number(p.rrp) : p.originalPrice != null ? Number(p.originalPrice) : undefined,
+          discount:
+            p.discountPercentage != null
+              ? Number(p.discountPercentage)
+              : p.discount != null
+                ? Number(p.discount)
+                : undefined,
+        },
+      };
+    });
+}
+
 export default function WishlistPage() {
   const toast = useToast();
   const { formatPrice } = useCurrency();
@@ -44,11 +79,11 @@ export default function WishlistPage() {
   const fetchWishlist = async () => {
     try {
       setLoading(true);
-      const response = await apiClient.getWishlist();
+      const response = await apiClient.getWishlist({ limit: 100 });
       if (response?.data) {
-        const data = response.data;
-        const items = Array.isArray(data) ? data : (data as any)?.products || [];
-        setWishlistItems(items);
+        const data = response.data as { products?: unknown[] } | unknown[];
+        const raw = Array.isArray(data) ? data : data.products ?? [];
+        setWishlistItems(normalizeWishlistProducts(raw));
       }
     } catch (err: any) {
       console.error('Error fetching wishlist:', err);
@@ -68,9 +103,8 @@ export default function WishlistPage() {
         return items.sort((a, b) => (b.product?.price || 0) - (a.product?.price || 0));
       case 'newest':
       default:
-        return items.sort((a, b) => 
-          new Date(b.addedAt || 0).getTime() - new Date(a.addedAt || 0).getTime()
-        );
+        // API already returns newest first; preserve order unless user sorts by price
+        return items;
     }
   }, [wishlistItems, sortBy]);
 
@@ -123,10 +157,12 @@ export default function WishlistPage() {
     }
 
     let successCount = 0;
+    const movedProductIds = new Set<string>();
     for (const item of inStockItems) {
       try {
         await apiClient.addToCart(item.productId, 1);
         await apiClient.removeFromWishlist(item.productId);
+        movedProductIds.add(item.productId);
         successCount++;
       } catch (err) {
         console.error(`Failed to add ${item.product?.name} to cart:`, err);
@@ -134,7 +170,7 @@ export default function WishlistPage() {
     }
 
     if (successCount > 0) {
-      setWishlistItems(items => items.filter(item => (item.product?.stock || 0) <= 0));
+      setWishlistItems((items) => items.filter((row) => !movedProductIds.has(row.productId)));
       toast.success(`Added ${successCount} item${successCount !== 1 ? 's' : ''} to cart!`);
     }
   };

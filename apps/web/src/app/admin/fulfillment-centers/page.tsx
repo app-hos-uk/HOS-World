@@ -6,6 +6,21 @@ import { AdminLayout } from '@/components/AdminLayout';
 import { apiClient } from '@/lib/api';
 import { useToast } from '@/hooks/useToast';
 import { Dialog, Transition } from '@headlessui/react';
+import { validateFulfillmentCenterFields } from '@/lib/fulfillmentCenterFormValidation';
+
+const emptyForm = () => ({
+  name: '',
+  address: '',
+  city: '',
+  country: '',
+  postalCode: '',
+  contactEmail: '',
+  contactPhone: '',
+  latitude: '',
+  longitude: '',
+  capacity: '',
+  isActive: true,
+});
 
 export default function AdminFulfillmentCentersPage() {
   const toast = useToast();
@@ -13,19 +28,9 @@ export default function AdminFulfillmentCentersPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [formData, setFormData] = useState({
-    name: '',
-    address: '',
-    city: '',
-    country: '',
-    postalCode: '',
-    contactEmail: '',
-    contactPhone: '',
-    latitude: '',
-    longitude: '',
-    capacity: '',
-    isActive: true,
-  });
+  const [editingCenter, setEditingCenter] = useState<any | null>(null);
+  const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
+  const [formData, setFormData] = useState(emptyForm);
   const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
@@ -57,45 +62,104 @@ export default function AdminFulfillmentCentersPage() {
     }
   };
 
+  const openAddModal = () => {
+    setEditingCenter(null);
+    setFormData(emptyForm());
+    setIsModalOpen(true);
+  };
+
+  const openEditModal = (center: any) => {
+    setEditingCenter(center);
+    setFormData({
+      name: center.name ?? '',
+      address: center.address ?? '',
+      city: center.city ?? '',
+      country: center.country ?? '',
+      postalCode: center.postalCode ?? '',
+      contactEmail: center.contactEmail ?? '',
+      contactPhone: center.contactPhone ?? '',
+      latitude: center.latitude != null ? String(center.latitude) : '',
+      longitude: center.longitude != null ? String(center.longitude) : '',
+      capacity: center.capacity != null ? String(center.capacity) : '',
+      isActive: center.isActive !== false,
+    });
+    setIsModalOpen(true);
+  };
+
+  const closeModal = () => {
+    setIsModalOpen(false);
+    setEditingCenter(null);
+    setFormData(emptyForm());
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!formData.address.trim()) {
+      toast.error('Address is required');
+      return;
+    }
+    const fieldErr = validateFulfillmentCenterFields({
+      name: formData.name,
+      city: formData.city,
+      country: formData.country,
+      postalCode: formData.postalCode,
+      contactPhone: formData.contactPhone,
+    });
+    if (fieldErr) {
+      toast.error(fieldErr);
+      return;
+    }
+
     setSubmitting(true);
     try {
-      const response = await apiClient.createFulfillmentCenter({
-        name: formData.name,
-        address: formData.address,
-        city: formData.city,
-        country: formData.country,
-        postalCode: formData.postalCode || undefined,
-        contactEmail: formData.contactEmail || undefined,
-        contactPhone: formData.contactPhone || undefined,
+      const payload = {
+        name: formData.name.trim(),
+        address: formData.address.trim(),
+        city: formData.city.trim(),
+        country: formData.country.trim(),
+        postalCode: formData.postalCode.trim() || undefined,
+        contactEmail: formData.contactEmail.trim() || undefined,
+        contactPhone: formData.contactPhone.trim() || undefined,
         latitude: formData.latitude ? parseFloat(formData.latitude) : undefined,
         longitude: formData.longitude ? parseFloat(formData.longitude) : undefined,
         capacity: formData.capacity ? parseInt(formData.capacity, 10) : undefined,
         isActive: formData.isActive,
-      });
+      };
+
+      let response: any;
+      if (editingCenter?.id) {
+        response = await apiClient.updateFulfillmentCenter(editingCenter.id, payload);
+      } else {
+        response = await apiClient.createFulfillmentCenter(payload);
+      }
+
       if (response?.data) {
-        toast.success('Fulfillment center created successfully!');
-        setIsModalOpen(false);
-        setFormData({
-          name: '',
-          address: '',
-          city: '',
-          country: '',
-          postalCode: '',
-          contactEmail: '',
-          contactPhone: '',
-          latitude: '',
-          longitude: '',
-          capacity: '',
-          isActive: true,
-        });
+        toast.success(
+          editingCenter
+            ? 'Fulfillment center updated successfully!'
+            : 'Fulfillment center created successfully!',
+        );
+        closeModal();
         fetchCenters();
       } else {
-        toast.error(response.message || 'Failed to create fulfillment center');
+        toast.error(response?.message || 'Operation failed');
       }
     } catch (err: any) {
-      toast.error(err.message || 'Failed to create fulfillment center');
+      toast.error(err.message || 'Operation failed');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const handleDelete = async (id: string) => {
+    try {
+      setSubmitting(true);
+      await apiClient.deleteFulfillmentCenter(id);
+      toast.success('Fulfillment center deleted');
+      setDeleteConfirmId(null);
+      fetchCenters();
+    } catch (err: any) {
+      toast.error(err.message || 'Failed to delete fulfillment center');
     } finally {
       setSubmitting(false);
     }
@@ -138,7 +202,8 @@ export default function AdminFulfillmentCentersPage() {
           <div className="flex items-center justify-between">
             <h1 className="text-2xl font-bold text-gray-900">Fulfillment Centers</h1>
             <button
-              onClick={() => setIsModalOpen(true)}
+              type="button"
+              onClick={openAddModal}
               className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700"
             >
               Add Center
@@ -224,8 +289,40 @@ export default function AdminFulfillmentCentersPage() {
                         </span>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm">
-                        <button className="text-purple-600 hover:text-purple-900 mr-3">Edit</button>
-                        <button className="text-red-600 hover:text-red-900">Delete</button>
+                        <button
+                          type="button"
+                          onClick={() => openEditModal(center)}
+                          className="text-purple-600 hover:text-purple-900 mr-3"
+                        >
+                          Edit
+                        </button>
+                        {deleteConfirmId === center.id ? (
+                          <span className="inline-flex items-center gap-2">
+                            <button
+                              type="button"
+                              onClick={() => handleDelete(center.id)}
+                              disabled={submitting}
+                              className="text-white bg-red-600 px-2 py-1 rounded text-xs hover:bg-red-700 disabled:opacity-50"
+                            >
+                              Confirm delete
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => setDeleteConfirmId(null)}
+                              className="text-gray-600 text-xs hover:text-gray-900"
+                            >
+                              Cancel
+                            </button>
+                          </span>
+                        ) : (
+                          <button
+                            type="button"
+                            onClick={() => setDeleteConfirmId(center.id)}
+                            className="text-red-600 hover:text-red-900"
+                          >
+                            Delete
+                          </button>
+                        )}
                       </td>
                     </tr>
                   ))
@@ -237,7 +334,7 @@ export default function AdminFulfillmentCentersPage() {
 
         {/* Add Center Modal */}
         <Transition appear show={isModalOpen} as={Fragment}>
-          <Dialog as="div" className="relative z-10" onClose={() => setIsModalOpen(false)}>
+          <Dialog as="div" className="relative z-10" onClose={closeModal}>
             <Transition.Child
               as={Fragment}
               enter="ease-out duration-300"
@@ -263,7 +360,7 @@ export default function AdminFulfillmentCentersPage() {
                 >
                   <Dialog.Panel className="w-full max-w-lg transform overflow-hidden rounded-2xl bg-white p-6 text-left align-middle shadow-xl transition-all max-h-[90vh] overflow-y-auto">
                     <Dialog.Title as="h3" className="text-lg font-medium leading-6 text-gray-900 mb-4">
-                      Add Fulfillment Center
+                      {editingCenter ? 'Edit Fulfillment Center' : 'Add Fulfillment Center'}
                     </Dialog.Title>
                     <form onSubmit={handleSubmit} className="space-y-4">
                       <div>
@@ -383,7 +480,7 @@ export default function AdminFulfillmentCentersPage() {
                       <div className="flex justify-end gap-3 mt-6">
                         <button
                           type="button"
-                          onClick={() => setIsModalOpen(false)}
+                          onClick={closeModal}
                           className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200"
                         >
                           Cancel
@@ -393,7 +490,7 @@ export default function AdminFulfillmentCentersPage() {
                           disabled={submitting}
                           className="px-4 py-2 text-sm font-medium text-white bg-purple-600 rounded-lg hover:bg-purple-700 disabled:opacity-50"
                         >
-                          {submitting ? 'Creating...' : 'Create Center'}
+                          {submitting ? 'Saving...' : editingCenter ? 'Save changes' : 'Create Center'}
                         </button>
                       </div>
                     </form>

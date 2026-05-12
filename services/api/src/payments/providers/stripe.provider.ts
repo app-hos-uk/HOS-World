@@ -47,9 +47,10 @@ export class StripeProvider implements PaymentProvider {
 
     return this.circuitBreaker.execute(async () => {
       try {
+        const amountCents = Math.round(params.amount * 100);
         const paymentIntent = await this.stripe!.paymentIntents.create(
         {
-          amount: Math.round(params.amount * 100),
+          amount: amountCents,
           currency: params.currency.toLowerCase(),
           metadata: {
             orderId: params.orderId,
@@ -60,7 +61,9 @@ export class StripeProvider implements PaymentProvider {
           },
         },
         {
-          idempotencyKey: `order-${params.orderId}`,
+          // Include amount so a new intent is created when the payable total changes
+          // (e.g. after gift card partial redemption). Same key still dedupes true retries.
+          idempotencyKey: `order-${params.orderId}-${amountCents}`,
         },
       );
 
@@ -287,9 +290,10 @@ export class StripeProvider implements PaymentProvider {
   }): Promise<PaymentIntentResult> {
     if (!this.stripe) throw new Error('Stripe provider is not available');
 
+    const amountCents = Math.round(params.amount * 100);
     const paymentIntent = await this.stripe.paymentIntents.create(
       {
-        amount: Math.round(params.amount * 100),
+        amount: amountCents,
         currency: params.currency.toLowerCase(),
         application_fee_amount: Math.round(params.applicationFeeAmount * 100),
         transfer_data: {
@@ -301,7 +305,9 @@ export class StripeProvider implements PaymentProvider {
         },
         automatic_payment_methods: { enabled: true },
       },
-      { idempotencyKey: `order-split-${params.orderId}` },
+      {
+        idempotencyKey: `order-split-${params.orderId}-${amountCents}-${Math.round(params.applicationFeeAmount * 100)}`,
+      },
     );
 
     return {

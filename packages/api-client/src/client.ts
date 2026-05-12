@@ -206,6 +206,29 @@ export class ApiClient {
     }
   }
 
+  /**
+   * Support list endpoints return `{ data: { tickets, pagination } }`.
+   * Some gateways or legacy handlers omit the outer `data` key; without this,
+   * `res.data` is undefined and callers see an empty ticket list.
+   */
+  private normalizeSupportTicketsListResponse(res: any): ApiResponse<any[]> {
+    if (!res || typeof res !== 'object') {
+      return { data: [], message: '' };
+    }
+    const raw = res as Record<string, unknown>;
+    const inner = raw.data !== undefined && raw.data !== null ? raw.data : raw;
+    if (Array.isArray(inner)) {
+      return { ...res, data: inner };
+    }
+    if (inner && typeof inner === 'object' && Array.isArray((inner as { tickets?: unknown }).tickets)) {
+      return { ...res, data: (inner as { tickets: any[] }).tickets };
+    }
+    if (Array.isArray((raw as { tickets?: unknown }).tickets)) {
+      return { ...res, data: (raw as { tickets: any[] }).tickets };
+    }
+    return { ...res, data: [] };
+  }
+
   private async tryRefreshToken(): Promise<boolean> {
     if (typeof window === 'undefined') return false;
     if (!this.baseUrl) return false;
@@ -1073,6 +1096,13 @@ export class ApiClient {
     );
   }
 
+  async adminRestoreBrandPartnership(id: string): Promise<ApiResponse<unknown>> {
+    return this.request<ApiResponse<unknown>>(
+      `/admin/brand-partnerships/${encodeURIComponent(id)}/restore`,
+      { method: 'POST' },
+    );
+  }
+
   async adminGetBrandPartnershipReport(id: string): Promise<ApiResponse<unknown>> {
     return this.request<ApiResponse<unknown>>(
       `/admin/brand-partnerships/${encodeURIComponent(id)}/report`,
@@ -1716,9 +1746,11 @@ export class ApiClient {
     quantity?: number;
     fandom?: string;
     category?: string;
+    categoryId?: string;
     tags?: string[];
     images: Array<{ url: string; alt?: string; order?: number }>;
-    variations?: Array<{ name: string; options: any[] }>;
+    variations?: Array<{ name: string; options: Array<{ name: string; value: string }> }>;
+    shortDescription?: string;
   }): Promise<ApiResponse<any>> {
     return this.request<ApiResponse<any>>('/submissions', {
       method: 'POST',
@@ -1736,6 +1768,29 @@ export class ApiClient {
   async getSubmission(id: string): Promise<ApiResponse<any>> {
     return this.request<ApiResponse<any>>(`/submissions/${id}`, {
       method: 'GET',
+    });
+  }
+
+  async updateSubmission(
+    id: string,
+    data: {
+      productData?: Record<string, unknown>;
+      procurementNotes?: string;
+      catalogNotes?: string;
+      marketingNotes?: string;
+      financeNotes?: string;
+      selectedQuantity?: number;
+    },
+  ): Promise<ApiResponse<any>> {
+    return this.request<ApiResponse<any>>(`/submissions/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async deleteSubmission(id: string): Promise<ApiResponse<{ message: string }>> {
+    return this.request<ApiResponse<{ message: string }>>(`/submissions/${id}`, {
+      method: 'DELETE',
     });
   }
 
@@ -2097,13 +2152,21 @@ export class ApiClient {
     });
   }
 
-  async getUsers(params?: { page?: number; limit?: number; search?: string; role?: string; status?: string }): Promise<ApiResponse<any>> {
+  async getUsers(params?: {
+    page?: number;
+    limit?: number;
+    search?: string;
+    role?: string;
+    status?: string;
+    newThisMonth?: boolean;
+  }): Promise<ApiResponse<any>> {
     const qs = new URLSearchParams();
     if (params?.page) qs.set('page', String(params.page));
     if (params?.limit) qs.set('limit', String(params.limit));
     if (params?.search) qs.set('search', params.search);
     if (params?.role) qs.set('role', params.role);
     if (params?.status) qs.set('status', params.status);
+    if (params?.newThisMonth) qs.set('newThisMonth', 'true');
     const query = qs.toString();
     return this.request<ApiResponse<any>>(`/admin/users${query ? `?${query}` : ''}`, {
       method: 'GET',
@@ -2252,6 +2315,12 @@ export class ApiClient {
   async deleteTheme(id: string): Promise<ApiResponse<{ message: string }>> {
     return this.request<ApiResponse<{ message: string }>>(`/themes/${id}`, {
       method: 'DELETE',
+    });
+  }
+
+  async duplicateTheme(id: string): Promise<ApiResponse<any>> {
+    return this.request<ApiResponse<any>>(`/themes/${id}/duplicate`, {
+      method: 'POST',
     });
   }
 
@@ -2695,6 +2764,8 @@ export class ApiClient {
     whatsappNumber?: string;
     preferredCommunicationMethod?: 'EMAIL' | 'SMS' | 'WHATSAPP' | 'PHONE';
     currencyPreference?: string;
+    birthday?: string;
+    anniversary?: string;
     companyName?: string;
     vatNumber?: string;
     businessRegNumber?: string;
@@ -2960,13 +3031,23 @@ export class ApiClient {
   }
 
   // Support - Tickets
-  async getSupportTickets(filters?: { status?: string; assignedTo?: string; priority?: string }): Promise<ApiResponse<any[]>> {
+  /** Backend returns `{ data: { tickets, pagination } }`; normalize so `data` is the ticket array. */
+  async getSupportTickets(filters?: {
+    status?: string;
+    assignedTo?: string;
+    priority?: string;
+    page?: number;
+    limit?: number;
+  }): Promise<ApiResponse<any[]>> {
     const params = new URLSearchParams();
     if (filters?.status) params.append('status', filters.status);
     if (filters?.assignedTo) params.append('assignedTo', filters.assignedTo);
     if (filters?.priority) params.append('priority', filters.priority);
+    if (filters?.page != null) params.append('page', String(filters.page));
+    if (filters?.limit != null) params.append('limit', String(filters.limit));
     const query = params.toString();
-    return this.request<ApiResponse<any[]>>(`/support/tickets${query ? `?${query}` : ''}`);
+    const res = await this.request<ApiResponse<any>>(`/support/tickets${query ? `?${query}` : ''}`);
+    return this.normalizeSupportTicketsListResponse(res);
   }
 
   async getSupportTicket(id: string): Promise<ApiResponse<any>> {
@@ -3903,7 +3984,8 @@ export class ApiClient {
   }
 
   async validateGiftCard(code: string): Promise<ApiResponse<any>> {
-    return this.request<ApiResponse<any>>(`/gift-cards/validate/${code}`, {
+    const safe = encodeURIComponent(code.trim());
+    return this.request<ApiResponse<any>>(`/gift-cards/validate/${safe}`, {
       method: 'GET',
     });
   }
@@ -4527,8 +4609,12 @@ export class ApiClient {
     });
   }
 
-  async getWishlist(): Promise<ApiResponse<any[]>> {
-    return this.request<ApiResponse<any[]>>('/wishlist');
+  async getWishlist(params?: { page?: number; limit?: number }): Promise<ApiResponse<any[]>> {
+    const qs = new URLSearchParams();
+    if (params?.page != null) qs.set('page', String(params.page));
+    if (params?.limit != null) qs.set('limit', String(params.limit));
+    const suffix = qs.toString() ? `?${qs.toString()}` : '';
+    return this.request<ApiResponse<any[]>>(`/wishlist${suffix}`);
   }
 
   async checkWishlistStatus(productId: string): Promise<ApiResponse<{ inWishlist: boolean }>> {
@@ -4536,8 +4622,24 @@ export class ApiClient {
   }
 
   // Reviews
-  async getProductReviews(productId: string): Promise<ApiResponse<any[]>> {
-    return this.request<ApiResponse<any[]>>(`/reviews/products/${productId}`);
+  /** Backend returns `{ reviews, pagination }` inside `data`; normalize so `data` is the review array. */
+  async getProductReviews(
+    productId: string,
+    params?: { page?: number; limit?: number },
+  ): Promise<ApiResponse<any[]>> {
+    const qs = new URLSearchParams();
+    if (params?.page != null) qs.set('page', String(params.page));
+    if (params?.limit != null) qs.set('limit', String(params.limit));
+    const suffix = qs.toString() ? `?${qs.toString()}` : '';
+    const res = await this.request<ApiResponse<any>>(`/reviews/products/${encodeURIComponent(productId)}${suffix}`);
+    const payload = res.data;
+    if (payload && typeof payload === 'object' && Array.isArray((payload as any).reviews)) {
+      return { ...res, data: (payload as any).reviews };
+    }
+    if (Array.isArray(payload)) {
+      return res as ApiResponse<any[]>;
+    }
+    return { ...res, data: [] };
   }
 
   async createReview(productId: string, data: { rating: number; title: string; comment: string }): Promise<ApiResponse<any>> {
@@ -5422,7 +5524,8 @@ export class ApiClient {
 
   // ===== Meilisearch / Search =====
   async searchProducts(query: string, filters?: {
-    categoryId?: string; category?: string; fandom?: string; sellerId?: string;
+    categoryId?: string; category?: string; categories?: string[];
+    fandom?: string; fandoms?: string[]; sellerId?: string;
     minPrice?: number; maxPrice?: number; minRating?: number; inStock?: boolean;
     tags?: string[]; sort?: string; page?: number; limit?: number;
   }): Promise<ApiResponse<any>> {
@@ -5430,8 +5533,16 @@ export class ApiClient {
     if (query) params.append('q', query);
     if (filters) {
       if (filters.categoryId) params.append('categoryId', filters.categoryId);
-      if (filters.category) params.append('category', filters.category);
-      if (filters.fandom) params.append('fandom', filters.fandom);
+      if (filters.categories?.length) {
+        filters.categories.forEach((c) => params.append('category', c));
+      } else if (filters.category) {
+        params.append('category', filters.category);
+      }
+      if (filters.fandoms?.length) {
+        filters.fandoms.forEach((f) => params.append('fandom', f));
+      } else if (filters.fandom) {
+        params.append('fandom', filters.fandom);
+      }
       if (filters.sellerId) params.append('sellerId', filters.sellerId);
       if (filters.minPrice !== undefined) params.append('minPrice', String(filters.minPrice));
       if (filters.maxPrice !== undefined) params.append('maxPrice', String(filters.maxPrice));
@@ -5501,9 +5612,14 @@ export class ApiClient {
   }
 
   // ===== Support: Tickets =====
-  async getMyTickets(status?: string): Promise<ApiResponse<any>> {
-    const qs = status ? `?status=${status}` : '';
-    return this.request<ApiResponse<any>>(`/support/tickets/my${qs}`, { method: 'GET' });
+  async getMyTickets(filters?: { status?: string; page?: number; limit?: number }): Promise<ApiResponse<any>> {
+    const params = new URLSearchParams();
+    if (filters?.status) params.set('status', filters.status);
+    if (filters?.page != null) params.set('page', String(filters.page));
+    if (filters?.limit != null) params.set('limit', String(filters.limit));
+    const qs = params.toString();
+    const res = await this.request<ApiResponse<any>>(`/support/tickets/my${qs ? `?${qs}` : ''}`, { method: 'GET' });
+    return this.normalizeSupportTicketsListResponse(res);
   }
 
   async getTicketById(id: string): Promise<ApiResponse<any>> {

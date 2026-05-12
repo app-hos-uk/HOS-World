@@ -27,6 +27,10 @@ function getStatusBadgeClass(status: string): string {
   }
 }
 
+function canSellerEditSubmissionStatus(status: string): boolean {
+  return ['SUBMITTED', 'UNDER_REVIEW', 'PROCUREMENT_REJECTED'].includes(status);
+}
+
 export function SubmissionViewMode({ submissionId }: { submissionId: string }) {
   const { user, effectiveRole } = useAuth();
   const [submission, setSubmission] = useState<any>(null);
@@ -77,9 +81,21 @@ export function SubmissionViewMode({ submissionId }: { submissionId: string }) {
             >
               ← Back to Submissions
             </Link>
-            <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold">
-              Submission Details
-            </h1>
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold">Submission Details</h1>
+              {submission && canSellerEditSubmissionStatus(submission.status) && (
+                <Link
+                  href={
+                    isWholesaler
+                      ? `/wholesaler/submit-product?edit=${submissionId}`
+                      : `/seller/submit-product?edit=${submissionId}`
+                  }
+                  className="px-4 py-2 bg-purple-600 text-white text-sm font-medium rounded-lg hover:bg-purple-700 shrink-0"
+                >
+                  Edit submission
+                </Link>
+              )}
+            </div>
           </div>
 
           {loading && (

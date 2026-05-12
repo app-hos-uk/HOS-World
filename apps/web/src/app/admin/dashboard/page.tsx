@@ -115,15 +115,7 @@ export default function AdminDashboardPage() {
     (s) => s.status === 'SUBMITTED' || s.status === 'UNDER_REVIEW'
   )?._count || 0;
 
-  // Mock data for charts when real data is not available
-  const salesTrendData = dashboardData?.salesTrends || [
-    { period: 'Jan', revenue: 4000, orders: 24 },
-    { period: 'Feb', revenue: 3000, orders: 18 },
-    { period: 'Mar', revenue: 5000, orders: 32 },
-    { period: 'Apr', revenue: 4500, orders: 28 },
-    { period: 'May', revenue: 6000, orders: 40 },
-    { period: 'Jun', revenue: 5500, orders: 36 },
-  ];
+  const salesTrendData = dashboardData?.salesTrends ?? [];
 
   const orderStatusData = dashboardData?.ordersByStatus?.map(item => ({
     name: item.status,
@@ -239,43 +231,54 @@ export default function AdminDashboardPage() {
             {/* Charts Row */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               {/* Revenue Trend Chart */}
-              <ChartCard title="Revenue Trend" subtitle="Last 6 months performance">
-                <ResponsiveContainer width="100%" height="100%">
-                  <LineChart data={salesTrendData}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#f3f4f6" />
-                    <XAxis 
-                      dataKey="period" 
-                      stroke="#9ca3af" 
-                      fontSize={12}
-                      tickLine={false}
-                      axisLine={false}
-                    />
-                    <YAxis 
-                      stroke="#9ca3af" 
-                      fontSize={12}
-                      tickLine={false}
-                      axisLine={false}
-                      tickFormatter={(value) => `$${value / 1000}k`}
-                    />
-                    <Tooltip 
-                      contentStyle={{ 
-                        backgroundColor: '#fff', 
-                        border: '1px solid #e5e7eb', 
-                        borderRadius: '12px',
-                        boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)'
-                      }}
-                      formatter={(value: number) => [`$${value.toLocaleString()}`, 'Revenue']}
-                    />
-                    <Line 
-                      type="monotone" 
-                      dataKey="revenue" 
-                      stroke="#a855f7" 
-                      strokeWidth={2.5}
-                      dot={{ fill: '#a855f7', strokeWidth: 2, r: 4 }}
-                      activeDot={{ r: 6, stroke: '#a855f7', strokeWidth: 2 }}
-                    />
-                  </LineChart>
-                </ResponsiveContainer>
+              <ChartCard title="Revenue Trend" subtitle="Rolling six months ending this calendar month">
+                {salesTrendData.length > 0 ? (
+                  <ResponsiveContainer width="100%" height="100%">
+                    <LineChart data={salesTrendData}>
+                      <CartesianGrid strokeDasharray="3 3" stroke="#f3f4f6" />
+                      <XAxis 
+                        dataKey="period" 
+                        stroke="#9ca3af" 
+                        fontSize={12}
+                        tickLine={false}
+                        axisLine={false}
+                      />
+                      <YAxis 
+                        stroke="#9ca3af" 
+                        fontSize={12}
+                        tickLine={false}
+                        axisLine={false}
+                        tickFormatter={(value: number) =>
+                          Math.abs(value) >= 1000
+                            ? `$${(value / 1000).toLocaleString(undefined, { maximumFractionDigits: 1 })}k`
+                            : `$${value}`
+                        }
+                      />
+                      <Tooltip 
+                        contentStyle={{ 
+                          backgroundColor: '#fff', 
+                          border: '1px solid #e5e7eb', 
+                          borderRadius: '12px',
+                          boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)'
+                        }}
+                        formatter={(value: number) => [`$${value.toLocaleString()}`, 'Revenue']}
+                      />
+                      <Line 
+                        type="monotone" 
+                        dataKey="revenue" 
+                        stroke="#a855f7" 
+                        strokeWidth={2.5}
+                        dot={{ fill: '#a855f7', strokeWidth: 2, r: 4 }}
+                        activeDot={{ r: 6, stroke: '#a855f7', strokeWidth: 2 }}
+                      />
+                    </LineChart>
+                  </ResponsiveContainer>
+                ) : (
+                  <div className="flex h-full flex-col items-center justify-center px-4 text-center text-gray-500">
+                    <p className="text-sm font-medium text-gray-700">No trend data loaded</p>
+                    <p className="mt-1 text-xs text-gray-500">Refresh after the dashboard reconnects.</p>
+                  </div>
+                )}
               </ChartCard>
 
               {/* Order Status Pie Chart */}
@@ -316,37 +319,50 @@ export default function AdminDashboardPage() {
               {/* Top Products Bar Chart */}
               <ChartCard title="Top Selling Products" subtitle="By number of sales">
                 <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={topProductsData} layout="vertical">
-                    <CartesianGrid strokeDasharray="3 3" stroke="#f3f4f6" horizontal={true} vertical={false} />
-                    <XAxis 
-                      type="number" 
-                      stroke="#9ca3af" 
+                  <BarChart
+                    data={topProductsData}
+                    margin={{ top: 10, right: 12, left: 8, bottom: 56 }}
+                  >
+                    <CartesianGrid strokeDasharray="3 3" stroke="#f3f4f6" vertical={false} />
+                    <XAxis
+                      dataKey="name"
+                      type="category"
+                      stroke="#9ca3af"
+                      fontSize={10}
+                      tickLine={false}
+                      axisLine={false}
+                      interval={0}
+                      height={56}
+                      tickFormatter={(name: string) =>
+                        name.length > 14 ? `${name.slice(0, 12)}…` : name
+                      }
+                      angle={-30}
+                      textAnchor="end"
+                    />
+                    <YAxis
+                      type="number"
+                      stroke="#9ca3af"
                       fontSize={12}
                       tickLine={false}
                       axisLine={false}
+                      domain={[0, 'dataMax']}
+                      allowDecimals={false}
                     />
-                    <YAxis 
-                      dataKey="name" 
-                      type="category" 
-                      width={100} 
-                      stroke="#9ca3af" 
-                      fontSize={11}
-                      tickLine={false}
-                      axisLine={false}
-                    />
-                    <Tooltip 
-                      contentStyle={{ 
-                        backgroundColor: '#fff', 
-                        border: '1px solid #e5e7eb', 
+                    <Tooltip
+                      formatter={(value: number) => [`${value}`, 'Sales']}
+                      contentStyle={{
+                        backgroundColor: '#fff',
+                        border: '1px solid #e5e7eb',
                         borderRadius: '12px',
-                        boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)'
+                        boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)',
                       }}
                     />
-                    <Bar 
-                      dataKey="sales" 
-                      fill="#a855f7" 
-                      radius={[0, 6, 6, 0]} 
+                    <Bar
+                      dataKey="sales"
+                      fill="#a855f7"
+                      radius={[6, 6, 0, 0]}
                       name="Sales"
+                      maxBarSize={48}
                     />
                   </BarChart>
                 </ResponsiveContainer>
@@ -365,7 +381,12 @@ export default function AdminDashboardPage() {
                         icon={<span className="text-sm">📝</span>}
                         iconBg="bg-purple-100"
                         title={activity.seller?.storeName || activity.user?.email || 'System Activity'}
-                        subtitle={activity.status || activity.action}
+                        subtitle={
+                          typeof activity.description === 'string' && activity.description.trim()
+                            ? `${(activity.description as string).length > 100 ? `${(activity.description as string).slice(0, 100)}…` : activity.description}`
+                            : `${activity.status || ''}${activity.status && activity.action ? ' · ' : ''}${activity.action || ''}`.trim() ||
+                              '—'
+                        }
                         timestamp={activity.createdAt ? new Date(activity.createdAt).toLocaleString() : 'Recently'}
                       />
                     ))}

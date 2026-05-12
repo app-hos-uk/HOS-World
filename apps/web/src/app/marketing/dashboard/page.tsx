@@ -145,7 +145,7 @@ export default function MarketingDashboardPage() {
                   <div className="text-4xl">📢</div>
                 </div>
                 <Link
-                  href="/marketing/materials?tab=library"
+                  href="/marketing/campaigns?status=ACTIVE"
                   className="text-sm text-blue-600 hover:text-blue-700 mt-2 inline-block"
                 >
                   View campaigns →

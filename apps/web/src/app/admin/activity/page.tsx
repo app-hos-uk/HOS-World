@@ -98,6 +98,9 @@ export default function AdminActivityPage() {
         const responseData = response.data as any;
         if (Array.isArray(responseData)) {
           logData = responseData;
+        } else if (responseData?.logs && Array.isArray(responseData.logs)) {
+          // GET /activity/logs returns { logs, pagination }
+          logData = responseData.logs;
         } else if (responseData && typeof responseData === 'object' && 'data' in responseData && Array.isArray(responseData.data)) {
           logData = responseData.data;
         }

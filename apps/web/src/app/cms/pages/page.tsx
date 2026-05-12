@@ -7,6 +7,8 @@ import { CMSLayout } from '@/components/CMSLayout';
 import { apiClient } from '@/lib/api';
 import { useToast } from '@/hooks/useToast';
 import Link from 'next/link';
+import { CmsPortalErrorBanner } from '@/components/CmsPortalErrorBanner';
+import { cmsActionToastMessage, cmsLoadingErrorMessage } from '@/lib/cmsPortalFeedback';
 
 function CMSPagesContent() {
   const searchParams = useSearchParams();
@@ -83,7 +85,7 @@ function CMSPagesContent() {
       }
     } catch (err: any) {
       console.error('Error loading pages:', err);
-      setError(err.message || 'Failed to load pages');
+      setError(cmsLoadingErrorMessage(err));
       setPages([]);
     } finally {
       setLoading(false);
@@ -108,7 +110,7 @@ function CMSPagesContent() {
       });
       loadPages();
     } catch (err: any) {
-      toast.error(err.message || 'Failed to create page');
+      toast.error(cmsActionToastMessage(err, 'Failed to create page'));
     } finally {
       setCreatingPage(false);
     }
@@ -134,7 +136,7 @@ function CMSPagesContent() {
       loadPages();
       window.history.replaceState({}, '', '/cms/pages');
     } catch (err: any) {
-      toast.error(err.message || 'Failed to update page');
+      toast.error(cmsActionToastMessage(err, 'Failed to update page'));
     } finally {
       setUpdatingPage(false);
     }
@@ -166,11 +168,7 @@ function CMSPagesContent() {
             </button>
           </div>
 
-          {error && (
-            <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-              <p className="text-red-800">Error: {error}</p>
-            </div>
-          )}
+          <CmsPortalErrorBanner message={error} />
 
           {showEditForm && editingPageId && (
             <div className="bg-white rounded-lg shadow p-6">
@@ -373,12 +371,17 @@ function CMSPagesContent() {
                 <div className="text-center py-8 text-gray-500">
                   <p>No pages found.</p>
                   <p className="text-sm mt-2">
-                    Pages are managed through Strapi CMS. Connect to Strapi to view and manage pages.
+                    Pages are stored in your external CMS. Once it is linked, listings will appear here.
                   </p>
                   <div className="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
                     <p className="text-sm text-blue-800">
-                      <strong>Note:</strong> To manage pages, ensure Strapi CMS is configured and
-                      the <code className="bg-blue-100 px-1 rounded">NEXT_PUBLIC_CMS_URL</code> environment variable is set.
+                      <strong>Note:</strong> Ask an administrator to configure the CMS connection for the API
+                      (<code className="bg-blue-100 px-1 rounded text-xs">CMS / environment</code>). You can review
+                      labels under{' '}
+                      <Link href="/cms/settings" className="underline font-medium">
+                        CMS Settings
+                      </Link>
+                      .
                     </p>
                   </div>
                 </div>
@@ -412,7 +415,7 @@ function CMSPagesContent() {
                                 }
                                 loadPages();
                               } catch (err: any) {
-                                toast.error(err.message || 'Failed to update publish status');
+                                toast.error(cmsActionToastMessage(err, 'Failed to update publish status'));
                               }
                             }}
                             className={`px-3 py-1 text-sm rounded ${
@@ -437,7 +440,7 @@ function CMSPagesContent() {
                                 toast.success('Page deleted successfully');
                                 loadPages();
                               } catch (err: any) {
-                                toast.error(err.message || 'Failed to delete page');
+                                toast.error(cmsActionToastMessage(err, 'Failed to delete page'));
                               }
                             }}
                             className="px-3 py-1 text-sm bg-red-600 text-white rounded hover:bg-red-700"

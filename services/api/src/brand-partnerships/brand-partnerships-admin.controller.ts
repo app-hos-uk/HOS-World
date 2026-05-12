@@ -166,6 +166,13 @@ export class BrandPartnershipsAdminController {
     return { data, message: 'OK' };
   }
 
+  @Post(':id/restore')
+  @ApiOperation({ summary: 'Restore archived partnership back to active' })
+  async restore(@Param('id', ParseUUIDPipe) id: string): Promise<ApiResponse<unknown>> {
+    const data = await this.brand.restorePartnership(id);
+    return { data, message: 'Partnership restored successfully' };
+  }
+
   @Get(':id')
   @ApiOperation({ summary: 'Partnership detail' })
   async get(@Param('id', ParseUUIDPipe) id: string): Promise<ApiResponse<unknown>> {

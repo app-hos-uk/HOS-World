@@ -8,6 +8,7 @@ import { apiClient } from '@/lib/api';
 import { getSellerMenuItems } from '@/lib/sellerMenu';
 import { useToast } from '@/hooks/useToast';
 import { SafeImage } from '@/components/SafeImage';
+import { isValidHttpPublicUrl } from '@/lib/httpUrlValidation';
 
 interface Theme {
   id: string;
@@ -114,19 +115,22 @@ export default function SellerThemesPage() {
   const fetchCurrentTheme = useCallback(async () => {
     try {
       const response = await apiClient.getSellerTheme();
-      if (response?.data) {
-        setCurrentTheme(response.data);
-        if (response.data.customSettings) {
+      const payload = response?.data;
+      if (payload) {
+        setCurrentTheme(payload);
+        const settings = payload.customSettings;
+        if (settings) {
           setCustomForm({
-            customLogoUrl: response.data.customSettings.customLogoUrl || '',
-            customFaviconUrl: response.data.customSettings.customFaviconUrl || '',
+            customLogoUrl: settings.customLogoUrl || '',
+            customFaviconUrl: settings.customFaviconUrl || '',
           });
         }
       }
     } catch (err: any) {
       console.error('Error fetching current theme:', err);
+      toast.error(err?.message || 'Could not load your active theme');
     }
-  }, []);
+  }, [toast]);
 
   useEffect(() => {
     fetchThemes();
@@ -163,18 +167,24 @@ export default function SellerThemesPage() {
   const handleInstallTheme = async (theme: Theme) => {
     try {
       setActionLoading(true);
-      await toast.promise(
-        apiClient.updateSellerTheme({ themeId: theme.id }),
-        {
-          loading: 'Installing theme...',
-          success: `${theme.name} installed successfully!`,
-          error: (err: any) => err.message || 'Failed to install theme',
+      const res = await apiClient.updateSellerTheme({ themeId: theme.id });
+      const payload = res?.data;
+      if (payload) {
+        setCurrentTheme(payload);
+        const settings = payload.customSettings;
+        if (settings) {
+          setCustomForm({
+            customLogoUrl: settings.customLogoUrl || '',
+            customFaviconUrl: settings.customFaviconUrl || '',
+          });
         }
-      );
-      await fetchCurrentTheme();
+      }
+      toast.success(`${theme.name} installed successfully!`);
       setPreviewTheme(null);
+      await fetchCurrentTheme();
     } catch (err: any) {
       console.error('Error installing theme:', err);
+      toast.error(err?.message || 'Failed to install theme');
     } finally {
       setActionLoading(false);
     }
@@ -187,24 +197,29 @@ export default function SellerThemesPage() {
 
   const handleSaveCustomization = async () => {
     if (!customizingTheme) return;
+    const logo = customForm.customLogoUrl.trim();
+    const fav = customForm.customFaviconUrl.trim();
+    if (logo && !isValidHttpPublicUrl(logo)) {
+      toast.error('Logo URL must be a valid https (or localhost http) URL with a real hostname, e.g. https://cdn.example.com/logo.png');
+      return;
+    }
+    if (fav && !isValidHttpPublicUrl(fav)) {
+      toast.error('Favicon URL must be a valid https (or localhost http) URL with a real hostname');
+      return;
+    }
     try {
       setActionLoading(true);
-      await toast.promise(
-        apiClient.updateSellerTheme({
-          themeId: customizingTheme.id,
-          customLogoUrl: customForm.customLogoUrl || undefined,
-          customFaviconUrl: customForm.customFaviconUrl || undefined,
-        }),
-        {
-          loading: 'Saving customization...',
-          success: 'Customization saved!',
-          error: (err: any) => err.message || 'Failed to save',
-        }
-      );
+      await apiClient.updateSellerTheme({
+        themeId: customizingTheme.id,
+        customLogoUrl: logo || undefined,
+        customFaviconUrl: fav || undefined,
+      });
+      toast.success('Customization saved!');
       setShowCustomizeModal(false);
       await fetchCurrentTheme();
     } catch (err: any) {
       console.error('Error saving customization:', err);
+      toast.error(err?.message || 'Failed to save');
     } finally {
       setActionLoading(false);
     }
@@ -660,14 +675,16 @@ export default function SellerThemesPage() {
                     <label className="block text-sm font-medium text-gray-700 mb-1.5">Custom Logo URL</label>
                     <input
                       type="url"
+                      inputMode="url"
+                      autoComplete="url"
                       value={customForm.customLogoUrl}
                       onChange={(e) => setCustomForm(prev => ({ ...prev, customLogoUrl: e.target.value }))}
                       placeholder="https://your-brand.com/logo.png"
                       className="w-full px-4 py-2.5 border border-gray-300 rounded-lg text-sm focus:ring-purple-500 focus:border-purple-500"
                     />
-                    {customForm.customLogoUrl && (
+                    {customForm.customLogoUrl.trim() && isValidHttpPublicUrl(customForm.customLogoUrl.trim()) && (
                       <div className="mt-2 p-2 bg-gray-50 rounded-lg">
-                        <SafeImage src={customForm.customLogoUrl} alt="Logo preview" width={120} height={40} className="object-contain" />
+                        <SafeImage src={customForm.customLogoUrl.trim()} alt="Logo preview" width={120} height={40} className="object-contain" />
                       </div>
                     )}
                   </div>
@@ -676,11 +693,18 @@ export default function SellerThemesPage() {
                     <label className="block text-sm font-medium text-gray-700 mb-1.5">Custom Favicon URL</label>
                     <input
                       type="url"
+                      inputMode="url"
+                      autoComplete="url"
                       value={customForm.customFaviconUrl}
                       onChange={(e) => setCustomForm(prev => ({ ...prev, customFaviconUrl: e.target.value }))}
                       placeholder="https://your-brand.com/favicon.ico"
                       className="w-full px-4 py-2.5 border border-gray-300 rounded-lg text-sm focus:ring-purple-500 focus:border-purple-500"
                     />
+                    {customForm.customFaviconUrl.trim() && isValidHttpPublicUrl(customForm.customFaviconUrl.trim()) && (
+                      <p className="mt-1.5 text-xs text-gray-500 break-all">
+                        Preview: <span className="font-mono">{customForm.customFaviconUrl.trim()}</span>
+                      </p>
+                    )}
                   </div>
                 </div>
 

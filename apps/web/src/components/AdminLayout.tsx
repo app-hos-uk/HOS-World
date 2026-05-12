@@ -228,6 +228,42 @@ const menuItems: MenuItem[] = [
   },
 ];
 
+/**
+ * Team roles sometimes use `/admin/*` tooling with AdminLayout. They must not see full admin navigation
+ * (e.g. Admin Dashboard); only destinations allowed by RouteGuard elsewhere.
+ */
+const TEAM_ADMIN_SHELL_MENUS: Record<string, MenuItem[]> = {
+  CATALOG: [
+    { title: 'Catalog Dashboard', href: '/catalog/dashboard', icon: '📊' },
+    { title: 'Catalog workflow', href: '/catalog/entries', icon: '📝' },
+    {
+      title: 'Cross-seller duplicates',
+      href: '/procurement/submissions?view=cross-seller',
+      icon: '🔄',
+    },
+    { title: 'Vendor Products', href: '/admin/vendor-products', icon: '📋' },
+    { title: 'Create Product', href: '/admin/products/create', icon: '➕' },
+  ],
+  PROCUREMENT: [
+    { title: 'Procurement Dashboard', href: '/procurement/dashboard', icon: '📊' },
+    { title: 'Review Submissions', href: '/procurement/submissions', icon: '✅' },
+    { title: 'Admin Submissions', href: '/admin/submissions', icon: '📦' },
+    { title: 'Vendor Products', href: '/admin/vendor-products', icon: '📋' },
+  ],
+  MARKETING: [
+    { title: 'Marketing Dashboard', href: '/marketing/dashboard', icon: '📊' },
+    { title: 'Materials', href: '/marketing/materials', icon: '📢' },
+    { title: 'Campaigns', href: '/marketing/campaigns', icon: '🎯' },
+    { title: 'Admin marketing', href: '/admin/marketing', icon: '📣' },
+    { title: 'Influencer commissions', href: '/admin/influencers/commissions', icon: '💸' },
+  ],
+  FINANCE: [
+    { title: 'Finance Dashboard', href: '/finance/dashboard', icon: '📊' },
+    { title: 'Pricing workflow', href: '/finance/pricing', icon: '💵' },
+    { title: 'Product pricing', href: '/admin/products/pricing', icon: '💰' },
+  ],
+};
+
 export function AdminLayout({ children }: AdminLayoutProps) {
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [expandedMenus, setExpandedMenus] = useState<Set<string>>(new Set());
@@ -237,6 +273,14 @@ export function AdminLayout({ children }: AdminLayoutProps) {
   const router = useRouter();
   const { logout, user } = useAuth();
   const blurTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  const visibleMenuItems = useMemo((): MenuItem[] => {
+    const role = String(user?.role ?? '').toUpperCase();
+    if (role === 'ADMIN') return menuItems;
+    const teamNav = TEAM_ADMIN_SHELL_MENUS[role];
+    if (teamNav) return teamNav;
+    return [{ title: 'Dashboard', href: '/admin/dashboard', icon: '📊' }];
+  }, [user?.role]);
 
   // Cleanup blur timeout on unmount
   useEffect(() => {
@@ -256,28 +300,28 @@ export function AdminLayout({ children }: AdminLayoutProps) {
     }
   }, [pathname]);
 
-  // Flatten menu items for search
+  // Flatten visible menu items for search (team shells only search their subset)
   const flattenedMenuItems = useMemo(() => {
     const items: { title: string; href: string; icon: string; parent?: string }[] = [];
-    menuItems.forEach((item) => {
+    visibleMenuItems.forEach((item) => {
       if (item.href) {
         items.push({ title: item.title, href: item.href, icon: item.icon });
       }
       if (item.children) {
         item.children.forEach((child) => {
           if (child.href) {
-            items.push({ 
-              title: child.title, 
-              href: child.href, 
+            items.push({
+              title: child.title,
+              href: child.href,
               icon: child.icon,
-              parent: item.title 
+              parent: item.title,
             });
           }
         });
       }
     });
     return items;
-  }, []);
+  }, [visibleMenuItems]);
 
   // Filter menu items based on search
   const searchResults = useMemo(() => {
@@ -331,14 +375,14 @@ export function AdminLayout({ children }: AdminLayoutProps) {
   // Auto-expand menus when their children are active
   useEffect(() => {
     const activeMenus = new Set<string>();
-    menuItems.forEach((item) => {
+    visibleMenuItems.forEach((item) => {
       if (item.children && isParentActive(item)) {
         activeMenus.add(item.title);
       }
     });
     setExpandedMenus(activeMenus);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [pathname]);
+  }, [pathname, visibleMenuItems]);
 
   const toggleMenu = (title: string) => {
     const newExpanded = new Set(expandedMenus);
@@ -435,7 +479,7 @@ export function AdminLayout({ children }: AdminLayoutProps) {
           {/* Navigation */}
           <nav className="flex-1 overflow-y-auto px-2 py-4">
             <ul className="space-y-1">
-              {menuItems.map((item) => {
+              {visibleMenuItems.map((item) => {
                 const hasChildren = item.children && item.children.length > 0;
                 const isExpanded = expandedMenus.has(item.title);
                 const parentActive = isParentActive(item);
@@ -581,7 +625,7 @@ export function AdminLayout({ children }: AdminLayoutProps) {
         </div>
 
         {/* Breadcrumbs */}
-        <div className="px-4 sm:px-6 lg:px-8 py-2.5 bg-gray-50/50 border-b border-gray-100">
+        <div className="px-4 sm:px-6 lg:px-8 py-2.5 bg-gray-50/50">
           <AdminBreadcrumbs />
         </div>
 

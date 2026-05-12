@@ -10,6 +10,7 @@ import type {
   InfluencerStorefront,
   PublicStorefrontProduct,
 } from '@hos-marketplace/api-client';
+import { GoogleFontLink } from '@/components/GoogleFontLink';
 
 export default function InfluencerStorefrontPage() {
   const params = useParams();
@@ -151,13 +152,16 @@ export default function InfluencerStorefrontPage() {
   const styles = {
     backgroundColor: storefront?.backgroundColor || '#FFFFFF',
     color: storefront?.textColor || '#1F2937',
-    fontFamily: storefront?.fontFamily || 'Inter',
+    fontFamily: `"${storefront?.fontFamily || 'Inter'}", system-ui, sans-serif`,
     '--primary-color': storefront?.primaryColor || '#7C3AED',
     '--secondary-color': storefront?.secondaryColor || '#F3E8FF',
   } as React.CSSProperties;
 
+  const layoutType = storefront?.layoutType || 'grid';
+
   return (
     <div className="min-h-screen" style={styles}>
+      <GoogleFontLink family={storefront?.fontFamily} />
       {/* Banner */}
       {storefront?.showBanner !== false && (
         <div 
@@ -239,12 +243,90 @@ export default function InfluencerStorefrontPage() {
         {featuredProducts.length > 0 && (
           <div className="mt-12 pb-12">
             <h2 className="text-2xl font-bold mb-6">My Picks</h2>
+            {layoutType === 'list' ? (
+              <ul className="flex flex-col gap-4 max-w-4xl mx-auto list-none p-0 m-0">
+                {featuredProducts.map((product) => (
+                  <li key={product.id}>
+                    <Link
+                      href={`/products/${product.slug}?ref=${influencer.referralCode}`}
+                      className="group flex flex-row gap-4 sm:gap-6 rounded-xl overflow-hidden shadow-sm hover:shadow-lg transition-shadow text-left items-stretch"
+                      style={{ backgroundColor: storefront?.secondaryColor || '#F3E8FF' }}
+                    >
+                      <div className="relative w-[7.5rem] sm:w-44 h-[7rem] sm:h-44 flex-shrink-0">
+                        {product.images?.[0] ? (
+                          <Image
+                            src={product.images[0].url}
+                            alt={product.name}
+                            fill
+                            className="object-cover group-hover:scale-105 transition-transform duration-300"
+                            sizes="(max-width: 640px) 120px, 176px"
+                          />
+                        ) : (
+                          <div className="absolute inset-0 flex items-center justify-center bg-gray-200">
+                            <svg className="w-10 h-10 sm:w-12 sm:h-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                            </svg>
+                          </div>
+                        )}
+                      </div>
+                      <div className="flex flex-col justify-center py-4 pr-4 sm:pr-6 min-w-0 flex-1">
+                        <h3 className="font-semibold text-base sm:text-lg line-clamp-3 leading-snug group-hover:opacity-90">
+                          {product.name}
+                        </h3>
+                        <p className="font-bold mt-2 text-lg" style={{ color: storefront?.primaryColor || '#7C3AED' }}>
+                          {formatCurrency(product.price)}
+                        </p>
+                      </div>
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            ) : layoutType === 'masonry' ? (
+              <div
+                className="columns-2 md:columns-3 gap-4 space-y-4"
+                style={{ columnGap: '1rem' }}
+              >
+                {featuredProducts.map((product, idx) => (
+                  <div key={product.id} className="break-inside-avoid mb-4">
+                    <Link
+                      href={`/products/${product.slug}?ref=${influencer.referralCode}`}
+                      className="group rounded-xl overflow-hidden shadow-sm hover:shadow-lg transition-shadow block"
+                      style={{ backgroundColor: storefront?.secondaryColor || '#F3E8FF' }}
+                    >
+                      <div
+                        className={`relative overflow-hidden w-full ${
+                          idx % 3 === 1 ? 'aspect-[4/5]' : 'aspect-square'
+                        }`}
+                      >
+                        {product.images?.[0] ? (
+                          <Image
+                            src={product.images[0].url}
+                            alt={product.name}
+                            fill
+                            className="object-cover group-hover:scale-105 transition-transform duration-300"
+                            sizes="(max-width: 768px) 50vw, 33vw"
+                          />
+                        ) : (
+                          <div className="absolute inset-0 flex items-center justify-center bg-gray-200">
+                            <svg className="w-12 h-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                            </svg>
+                          </div>
+                        )}
+                      </div>
+                      <div className="p-4">
+                        <h3 className="font-medium line-clamp-2">{product.name}</h3>
+                        <p className="font-bold mt-1" style={{ color: storefront?.primaryColor || '#7C3AED' }}>
+                          {formatCurrency(product.price)}
+                        </p>
+                      </div>
+                    </Link>
+                  </div>
+                ))}
+              </div>
+            ) : (
             <div className={`grid gap-6 ${
-              storefront?.layoutType === 'list' 
-                ? 'grid-cols-1' 
-                : storefront?.layoutType === 'masonry'
-                ? 'grid-cols-2 md:grid-cols-3'
-                : 'grid-cols-2 md:grid-cols-3 lg:grid-cols-4'
+              'grid-cols-2 md:grid-cols-3 lg:grid-cols-4'
             }`}>
               {featuredProducts.map((product) => (
                 <Link
@@ -279,6 +361,7 @@ export default function InfluencerStorefrontPage() {
                 </Link>
               ))}
             </div>
+            )}
           </div>
         )}
 

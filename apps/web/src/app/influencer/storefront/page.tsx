@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { apiClient } from '@/lib/api';
 import { useToast } from '@/hooks/useToast';
+import { GoogleFontLink } from '@/components/GoogleFontLink';
 
 interface Storefront {
   id: string;
@@ -110,6 +111,7 @@ export default function InfluencerStorefrontPage() {
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <GoogleFontLink family={storefront.fontFamily} />
         {/* Header */}
         <div className="flex items-center justify-between mb-8">
           <div>
@@ -333,11 +335,11 @@ export default function InfluencerStorefrontPage() {
             <div className="sticky top-8">
               <h3 className="text-lg font-semibold text-gray-900 mb-4">Preview</h3>
               <div
-                className="rounded-xl overflow-hidden shadow-lg"
+                className="rounded-xl overflow-hidden shadow-lg border border-gray-100"
                 style={{
                   backgroundColor: storefront.backgroundColor,
                   color: storefront.textColor,
-                  fontFamily: storefront.fontFamily,
+                  fontFamily: `"${storefront.fontFamily}", system-ui, sans-serif`,
                 }}
               >
                 {/* Mini Preview */}
@@ -363,15 +365,49 @@ export default function InfluencerStorefrontPage() {
                       {profile?.bio || 'Your bio will appear here...'}
                     </p>
                   )}
-                  <div className="grid grid-cols-2 gap-2">
-                    {[1, 2].map((i) => (
-                      <div
-                        key={i}
-                        className="aspect-square rounded-lg"
-                        style={{ backgroundColor: storefront.secondaryColor }}
-                      />
-                    ))}
-                  </div>
+                  {storefront.layoutType === 'list' ? (
+                    <div className="flex flex-col gap-2">
+                      {[1, 2].map((i) => (
+                        <div
+                          key={i}
+                          className="flex flex-row gap-3 rounded-lg border border-black/5 p-2 items-center"
+                          style={{ backgroundColor: `${storefront.secondaryColor}cc` }}
+                        >
+                          <div
+                            className="w-14 h-14 rounded-md flex-shrink-0"
+                            style={{ backgroundColor: storefront.secondaryColor }}
+                          />
+                          <div className="flex-1 min-w-0 text-left">
+                            <p className="text-xs font-semibold truncate">Product {i}</p>
+                            <p className="text-[10px] opacity-70">$19.99</p>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  ) : storefront.layoutType === 'masonry' ? (
+                    <div className="columns-2 gap-2 space-y-2">
+                      {[1, 2, 3].map((i) => (
+                        <div
+                          key={i}
+                          className="break-inside-avoid rounded-lg mb-2 last:mb-0"
+                          style={{
+                            backgroundColor: storefront.secondaryColor,
+                            minHeight: i === 2 ? '4.5rem' : '3rem',
+                          }}
+                        />
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="grid grid-cols-2 gap-2">
+                      {[1, 2].map((i) => (
+                        <div
+                          key={i}
+                          className="aspect-square rounded-lg"
+                          style={{ backgroundColor: storefront.secondaryColor }}
+                        />
+                      ))}
+                    </div>
+                  )}
                 </div>
               </div>
             </div>

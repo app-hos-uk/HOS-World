@@ -7,13 +7,14 @@ import { SubmissionViewMode } from './SubmissionViewMode';
 
 function SubmitProductContent() {
   const searchParams = useSearchParams();
-  const submissionId = searchParams.get('id');
+  const viewId = searchParams.get('id');
+  const editId = searchParams.get('edit');
 
-  if (submissionId) {
-    return <SubmissionViewMode submissionId={submissionId} />;
+  if (viewId) {
+    return <SubmissionViewMode submissionId={viewId} />;
   }
 
-  return <SubmitProductForm />;
+  return <SubmitProductForm editSubmissionId={editId || undefined} />;
 }
 
 export default function SubmitProductPage() {

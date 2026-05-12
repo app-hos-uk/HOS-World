@@ -1,13 +1,15 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef, Suspense } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { RouteGuard } from '@/components/RouteGuard';
 import { DashboardLayout } from '@/components/DashboardLayout';
 import Image from 'next/image';
 import { apiClient } from '@/lib/api';
 import { useToast } from '@/hooks/useToast';
 
-export default function MarketingMaterialsPage() {
+function MarketingMaterialsPageContent() {
+  const searchParams = useSearchParams();
   const [pendingSubmissions, setPendingSubmissions] = useState<any[]>([]);
   const [materials, setMaterials] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -17,14 +19,38 @@ export default function MarketingMaterialsPage() {
   const [showModal, setShowModal] = useState(false);
   const [actionLoading, setActionLoading] = useState(false);
   const [markingCompleteId, setMarkingCompleteId] = useState<string | null>(null);
+  const submissionDeepLinkHandled = useRef(false);
 
-  // Form state
   const [materialType, setMaterialType] = useState<string>('BANNER');
   const [materialUrl, setMaterialUrl] = useState('');
   const [uploadingMaterial, setUploadingMaterial] = useState(false);
   const toast = useToast();
 
   const marketingFileInputId = 'marketing-material-upload';
+
+  useEffect(() => {
+    const tab = searchParams.get('tab');
+    if (tab === 'library') {
+      setActiveTab('library');
+    } else if (tab === 'pending') {
+      setActiveTab('pending');
+    } else if (searchParams.get('submission')) {
+      setActiveTab('pending');
+    }
+  }, [searchParams]);
+
+  useEffect(() => {
+    if (submissionDeepLinkHandled.current || loading || activeTab !== 'pending') return;
+    const sid = searchParams.get('submission');
+    if (!sid) return;
+    const sub = pendingSubmissions.find((s) => s.id === sid);
+    if (!sub) return;
+    submissionDeepLinkHandled.current = true;
+    setSelectedSubmission(sub);
+    setMaterialType('BANNER');
+    setMaterialUrl('');
+    setShowModal(true);
+  }, [loading, pendingSubmissions, activeTab, searchParams]);
 
   useEffect(() => {
     if (activeTab === 'pending') {
@@ -170,7 +196,6 @@ export default function MarketingMaterialsPage() {
   ];
 
   return (
-    <RouteGuard allowedRoles={['MARKETING', 'ADMIN']} showAccessDenied={true}>
       <DashboardLayout
         role="MARKETING"
         menuItems={menuItems}
@@ -453,6 +478,21 @@ export default function MarketingMaterialsPage() {
             </div>
           )}
       </DashboardLayout>
+  );
+}
+
+export default function MarketingMaterialsPage() {
+  return (
+    <RouteGuard allowedRoles={['MARKETING', 'ADMIN']} showAccessDenied={true}>
+      <Suspense
+        fallback={
+          <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600" aria-hidden />
+          </div>
+        }
+      >
+        <MarketingMaterialsPageContent />
+      </Suspense>
     </RouteGuard>
   );
 }

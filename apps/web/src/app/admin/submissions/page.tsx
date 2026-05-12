@@ -105,8 +105,6 @@ const STATUSES = [
   { value: 'REJECTED', label: 'Rejected', color: 'bg-red-100 text-red-800', chartColor: '#ef4444' },
 ];
 
-const COLORS = ['#9ca3af', '#fbbf24', '#3b82f6', '#6366f1', '#8b5cf6', '#06b6d4', '#10b981', '#ef4444'];
-
 export default function AdminSubmissionsPage() {
   const toast = useToast();
   const [submissions, setSubmissions] = useState<Submission[]>([]);
@@ -243,13 +241,17 @@ export default function AdminSubmissionsPage() {
     return filtered;
   }, [submissions, searchTerm, statusFilter, dateFilter, sortBy, sortOrder]);
 
-  // Chart data
+  // Chart data: non-empty slices only; colors match STATUSES (no rotated palette drift)
   const chartData = useMemo(() => {
-    return STATUSES.map(s => ({
+    return STATUSES.map((s) => ({
       name: s.label,
-      value: submissions.filter(sub => sub.status === s.value).length,
-    })).filter(d => d.value > 0);
+      status: s.value,
+      value: submissions.filter((sub) => sub.status === s.value).length,
+      fill: s.chartColor,
+    })).filter((d) => d.value > 0);
   }, [submissions]);
+
+  const chartTotal = useMemo(() => chartData.reduce((sum, d) => sum + d.value, 0), [chartData]);
 
   const handleViewDetails = (submission: Submission) => {
     setSelectedSubmission(submission);
@@ -440,27 +442,63 @@ export default function AdminSubmissionsPage() {
           {/* Chart */}
           {chartData.length > 0 && (
             <div className="bg-white rounded-lg shadow p-6">
-              <h3 className="text-lg font-semibold mb-4">Submissions by Status</h3>
-              <div className="h-64">
-                <ResponsiveContainer width="100%" height="100%">
-                  <PieChart>
-                    <Pie
-                      data={chartData}
-                      cx="50%"
-                      cy="50%"
-                      labelLine={false}
-                      label={({ name, percent }) => `${name} (${(percent * 100).toFixed(0)}%)`}
-                      outerRadius={80}
-                      fill="#8884d8"
-                      dataKey="value"
-                    >
-                      {chartData.map((entry, index) => (
-                        <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                      ))}
-                    </Pie>
-                    <Tooltip />
-                  </PieChart>
-                </ResponsiveContainer>
+              <h3 className="text-lg font-semibold mb-2">Submissions by Status</h3>
+              <p className="text-xs text-gray-500 mb-4">
+                Labels are listed below the chart — hover slices for counts and percentages.
+              </p>
+              <div className="flex flex-col gap-6">
+                <div className="mx-auto h-56 w-full max-w-xs sm:h-64 sm:max-w-md">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <PieChart margin={{ top: 8, right: 8, bottom: 8, left: 8 }}>
+                      <Pie
+                        data={chartData}
+                        cx="50%"
+                        cy="50%"
+                        nameKey="name"
+                        dataKey="value"
+                        innerRadius={52}
+                        outerRadius={88}
+                        paddingAngle={chartData.length > 1 ? 1 : 0}
+                        stroke="#fff"
+                        strokeWidth={1}
+                        isAnimationActive={chartData.length <= 16}
+                        label={false}
+                      >
+                        {chartData.map((entry) => (
+                          <Cell key={entry.status} fill={entry.fill} />
+                        ))}
+                      </Pie>
+                      <Tooltip
+                        formatter={(value: number | string) => {
+                          const v = Number(value);
+                          const pct = chartTotal ? ((v / chartTotal) * 100).toFixed(1) : '0';
+                          return [`${v} (${pct}% of total)`, 'Submissions'];
+                        }}
+                      />
+                    </PieChart>
+                  </ResponsiveContainer>
+                </div>
+                <ul className="grid grid-cols-1 gap-x-6 gap-y-2 sm:grid-cols-2 lg:grid-cols-3 text-sm">
+                  {chartData.map((d) => {
+                    const pct = chartTotal ? ((d.value / chartTotal) * 100).toFixed(1) : '0';
+                    return (
+                      <li key={d.status} className="flex min-w-0 items-start gap-2">
+                        <span
+                          className="mt-1.5 h-2.5 w-2.5 shrink-0 rounded-sm"
+                          style={{ backgroundColor: d.fill }}
+                          aria-hidden
+                        />
+                        <span className="min-w-0 leading-snug">
+                          <span className="font-medium text-gray-900">{d.name}</span>
+                          <span className="ml-1.5 tabular-nums text-gray-600">
+                            {d.value}
+                            <span className="text-gray-400"> ({pct}%)</span>
+                          </span>
+                        </span>
+                      </li>
+                    );
+                  })}
+                </ul>
               </div>
             </div>
           )}

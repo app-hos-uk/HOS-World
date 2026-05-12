@@ -12,10 +12,11 @@ interface Ticket {
   subject: string;
   description?: string;
   priority: 'LOW' | 'MEDIUM' | 'HIGH' | 'URGENT';
-  status: 'OPEN' | 'ASSIGNED' | 'IN_PROGRESS' | 'WAITING' | 'RESOLVED' | 'CLOSED';
+  status: 'OPEN' | 'ASSIGNED' | 'IN_PROGRESS' | 'WAITING_CUSTOMER' | 'RESOLVED' | 'CLOSED';
   category?: string;
   user?: { email: string; firstName?: string; lastName?: string };
-  assignedTo?: { email: string; firstName?: string; lastName?: string };
+  /** Support agent user (matches API `assignedAgent` relation) */
+  assignedAgent?: { email: string; firstName?: string; lastName?: string };
   messages?: TicketMessage[];
   createdAt: string;
   updatedAt?: string;
@@ -33,7 +34,7 @@ const STATUS_COLORS: Record<string, string> = {
   OPEN: 'bg-blue-100 text-blue-800',
   ASSIGNED: 'bg-indigo-100 text-indigo-800',
   IN_PROGRESS: 'bg-purple-100 text-purple-800',
-  WAITING: 'bg-yellow-100 text-yellow-800',
+  WAITING_CUSTOMER: 'bg-yellow-100 text-yellow-800',
   RESOLVED: 'bg-green-100 text-green-800',
   CLOSED: 'bg-gray-100 text-gray-800',
 };
@@ -45,7 +46,15 @@ const PRIORITY_COLORS: Record<string, string> = {
   URGENT: 'bg-red-100 text-red-800',
 };
 
-const TICKET_STATUSES = ['OPEN', 'ASSIGNED', 'IN_PROGRESS', 'WAITING', 'RESOLVED', 'CLOSED'];
+const TICKET_STATUSES = ['OPEN', 'ASSIGNED', 'IN_PROGRESS', 'WAITING_CUSTOMER', 'RESOLVED', 'CLOSED'] as const;
+const STATUS_LABELS: Record<string, string> = {
+  OPEN: 'Open',
+  ASSIGNED: 'Assigned',
+  IN_PROGRESS: 'In Progress',
+  WAITING_CUSTOMER: 'Waiting on Customer',
+  RESOLVED: 'Resolved',
+  CLOSED: 'Closed',
+};
 const TICKET_PRIORITIES = ['LOW', 'MEDIUM', 'HIGH', 'URGENT'];
 
 export default function AdminSupportPage() {
@@ -81,16 +90,20 @@ export default function AdminSupportPage() {
 
   const fetchStats = useCallback(async () => {
     try {
-      // Always fetch ALL tickets to calculate accurate stats
-      const response = await apiClient.getSupportTickets({});
+      const response = await apiClient.getSupportTickets({ page: 1, limit: 10000 });
       let allTickets: Ticket[] = [];
-      
+
       if (response && 'data' in response) {
-        const responseData = response.data as any;
+        const responseData = response.data as unknown;
         if (Array.isArray(responseData)) {
           allTickets = responseData;
-        } else if (responseData && typeof responseData === 'object' && 'data' in responseData && Array.isArray(responseData.data)) {
-          allTickets = responseData.data;
+        } else if (
+          responseData &&
+          typeof responseData === 'object' &&
+          'tickets' in responseData &&
+          Array.isArray((responseData as { tickets: Ticket[] }).tickets)
+        ) {
+          allTickets = (responseData as { tickets: Ticket[] }).tickets;
         }
       }
       
@@ -98,7 +111,7 @@ export default function AdminSupportPage() {
       setStats({
         total: allTickets.length,
         open: allTickets.filter(t => t.status === 'OPEN').length,
-        inProgress: allTickets.filter(t => ['ASSIGNED', 'IN_PROGRESS', 'WAITING'].includes(t.status)).length,
+        inProgress: allTickets.filter(t => ['ASSIGNED', 'IN_PROGRESS', 'WAITING_CUSTOMER'].includes(t.status)).length,
         resolved: allTickets.filter(t => ['RESOLVED', 'CLOSED'].includes(t.status)).length,
         urgent: allTickets.filter(t => t.priority === 'URGENT').length,
       });
@@ -119,21 +132,30 @@ export default function AdminSupportPage() {
         filterValue === 'open' ? 'OPEN' : 
         filterValue === 'assigned' ? 'ASSIGNED' : undefined;
       
-      const response = await apiClient.getSupportTickets({ status: statusFilter });
+      const response = await apiClient.getSupportTickets({
+        status: statusFilter,
+        page: 1,
+        limit: 10000,
+      });
       let ticketData: Ticket[] = [];
-      
+
       if (response && 'data' in response) {
-        const responseData = response.data as any;
+        const responseData = response.data as unknown;
         if (Array.isArray(responseData)) {
           ticketData = responseData;
-        } else if (responseData && typeof responseData === 'object' && 'data' in responseData && Array.isArray(responseData.data)) {
-          ticketData = responseData.data;
+        } else if (
+          responseData &&
+          typeof responseData === 'object' &&
+          'tickets' in responseData &&
+          Array.isArray((responseData as { tickets: Ticket[] }).tickets)
+        ) {
+          ticketData = (responseData as { tickets: Ticket[] }).tickets;
         }
       }
       
       // Apply client-side filtering for multi-status and priority filters
       if (filterValue === 'inprogress') {
-        ticketData = ticketData.filter(t => ['ASSIGNED', 'IN_PROGRESS', 'WAITING'].includes(t.status));
+        ticketData = ticketData.filter(t => ['ASSIGNED', 'IN_PROGRESS', 'WAITING_CUSTOMER'].includes(t.status));
       } else if (filterValue === 'resolved') {
         ticketData = ticketData.filter(t => ['RESOLVED', 'CLOSED'].includes(t.status));
       } else if (filterValue === 'urgent') {
@@ -416,7 +438,7 @@ export default function AdminSupportPage() {
                             }`}
                           >
                             {TICKET_STATUSES.map((s) => (
-                              <option key={s} value={s}>{s}</option>
+                              <option key={s} value={s}>{STATUS_LABELS[s] || s}</option>
                             ))}
                           </select>
                         </td>
@@ -483,13 +505,13 @@ export default function AdminSupportPage() {
                       <h3 className="text-sm font-medium text-gray-500 mb-1">Created</h3>
                       <p className="text-gray-900">{formatDate(selectedTicket.createdAt)}</p>
                     </div>
-                    {selectedTicket.assignedTo && (
+                    {selectedTicket.assignedAgent && (
                       <div className="bg-gray-50 rounded-lg p-4">
                         <h3 className="text-sm font-medium text-gray-500 mb-1">Assigned To</h3>
                         <p className="text-gray-900">
-                          {selectedTicket.assignedTo.firstName || ''} {selectedTicket.assignedTo.lastName || ''}
+                          {selectedTicket.assignedAgent.firstName || ''} {selectedTicket.assignedAgent.lastName || ''}
                         </p>
-                        <p className="text-sm text-gray-500">{selectedTicket.assignedTo.email}</p>
+                        <p className="text-sm text-gray-500">{selectedTicket.assignedAgent.email}</p>
                       </div>
                     )}
                   </div>
@@ -504,7 +526,7 @@ export default function AdminSupportPage() {
                         className="px-3 py-2 border border-gray-300 rounded-lg"
                       >
                         {TICKET_STATUSES.map((s) => (
-                          <option key={s} value={s}>{s}</option>
+                          <option key={s} value={s}>{STATUS_LABELS[s] || s}</option>
                         ))}
                       </select>
                     </div>

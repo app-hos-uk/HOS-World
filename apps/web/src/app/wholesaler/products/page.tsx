@@ -41,17 +41,25 @@ export default function WholesalerProductsPage() {
     <RouteGuard allowedRoles={['WHOLESALER', 'ADMIN']} showAccessDenied={true}>
       <DashboardLayout role="WHOLESALER" menuItems={menuItems} title="Wholesaler">
         <div className="mb-6">
-          <div className="flex items-center justify-between">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
             <div>
               <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold">My Products</h1>
               <p className="text-gray-600 mt-2">Manage your wholesale product listings</p>
             </div>
-            <Link
-              href="/wholesaler/submit-product"
-              className="px-6 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors font-medium"
-            >
-              + Add Bulk Product
-            </Link>
+            <div className="flex flex-wrap gap-2 sm:gap-3">
+              <Link
+                href="/wholesaler/bulk"
+                className="inline-flex items-center justify-center px-5 py-3 border-2 border-purple-600 text-purple-700 rounded-lg hover:bg-purple-50 transition-colors font-medium"
+              >
+                Bulk upload (CSV)
+              </Link>
+              <Link
+                href="/wholesaler/submit-product"
+                className="inline-flex items-center justify-center px-6 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors font-medium"
+              >
+                + Add product
+              </Link>
+            </div>
           </div>
         </div>
 
@@ -78,12 +86,20 @@ export default function WholesalerProductsPage() {
             {products.length === 0 ? (
               <div className="text-center py-12">
                 <p className="text-gray-500 mb-4">No products found</p>
-                <Link
-                  href="/wholesaler/submit-product"
-                  className="text-purple-600 hover:text-purple-700 font-medium"
-                >
-                  Submit your first bulk product →
-                </Link>
+                <div className="flex flex-wrap gap-3 justify-center">
+                  <Link
+                    href="/wholesaler/bulk"
+                    className="text-purple-700 font-medium border border-purple-300 rounded-lg px-4 py-2 hover:bg-purple-50"
+                  >
+                    Bulk upload (CSV) →
+                  </Link>
+                  <Link
+                    href="/wholesaler/submit-product"
+                    className="text-purple-600 hover:text-purple-700 font-medium"
+                  >
+                    Add a single product →
+                  </Link>
+                </div>
               </div>
             ) : (
               <div className="overflow-x-auto">

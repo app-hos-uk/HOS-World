@@ -6,6 +6,7 @@ import {
   IsEnum,
   IsBoolean,
   Matches,
+  MaxLength,
 } from 'class-validator';
 
 export enum RegisterRole {
@@ -47,10 +48,18 @@ export class RegisterDto {
 
   @IsOptional()
   @IsString()
+  @MaxLength(50)
+  @Matches(/^[\p{L}\s\-'.]+$/u, {
+    message: 'First name must contain only letters, spaces, hyphens, or apostrophes',
+  })
   firstName?: string;
 
   @IsOptional()
   @IsString()
+  @MaxLength(50)
+  @Matches(/^[\p{L}\s\-'.]+$/u, {
+    message: 'Last name must contain only letters, spaces, hyphens, or apostrophes',
+  })
   lastName?: string;
 
   @IsEnum(RegisterRole)
@@ -74,6 +83,9 @@ export class RegisterDto {
 
   @IsOptional()
   @IsString()
+  @Matches(/^\+?[\d\s\-()]+$/, {
+    message: 'WhatsApp number must contain only digits, spaces, hyphens, parentheses, and an optional leading +',
+  })
   whatsappNumber?: string;
 
   @IsEnum(CommunicationMethod)

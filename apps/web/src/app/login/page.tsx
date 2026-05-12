@@ -225,14 +225,15 @@ function LoginPageInner() {
       }
     } catch (err: any) {
       console.error('[LOGIN] Login error:', err);
-      console.error('[LOGIN] Error details:', {
-        message: err.message,
-        stack: err.stack,
-        name: err.name,
-      });
-      setError(err.message || 'Login failed. Please check your credentials.');
+      const msg = err.message || '';
+      let displayError: string;
+      if (msg.toLowerCase().includes('too many requests') || msg.toLowerCase().includes('throttl')) {
+        displayError = 'Too many login attempts. Please wait a minute and try again.';
+      } else {
+        displayError = msg || 'Login failed. Please check your credentials.';
+      }
+      setError(displayError);
       setLoading(false);
-      // Reset flags on error so user can try again
       isRedirecting.current = false;
       hasCheckedAuth.current = false;
       authCheckInProgress.current = false;
@@ -243,6 +244,27 @@ function LoginPageInner() {
     e.preventDefault();
     setError('');
     setLoading(true);
+
+    // Validate name fields: no numeric characters allowed
+    const nameRegex = /^[\p{L}\s\-'.]+$/u;
+    if (firstName && !nameRegex.test(firstName)) {
+      setError('First name must contain only letters, spaces, hyphens, or apostrophes');
+      setLoading(false);
+      return;
+    }
+    if (lastName && !nameRegex.test(lastName)) {
+      setError('Last name must contain only letters, spaces, hyphens, or apostrophes');
+      setLoading(false);
+      return;
+    }
+
+    // Validate WhatsApp number: only digits, spaces, hyphens, parentheses, and optional leading +
+    const phoneRegex = /^\+?[\d\s\-()]+$/;
+    if (whatsappNumber && !phoneRegex.test(whatsappNumber)) {
+      setError('WhatsApp number must contain only digits, spaces, hyphens, and an optional leading +');
+      setLoading(false);
+      return;
+    }
 
     // Validate required fields
     if (!country) {
@@ -346,9 +368,15 @@ function LoginPageInner() {
         }
       }
     } catch (err: any) {
-      setError(err.message || 'Registration failed. Please try again.');
+      const msg = err.message || '';
+      let displayError: string;
+      if (msg.toLowerCase().includes('too many requests') || msg.toLowerCase().includes('throttl')) {
+        displayError = 'Too many registration attempts. Please wait a minute and try again.';
+      } else {
+        displayError = msg || 'Registration failed. Please try again.';
+      }
+      setError(displayError);
       setLoading(false);
-      // Reset flags on error so user can try again
       isRedirecting.current = false;
       hasCheckedAuth.current = false;
       authCheckInProgress.current = false;
@@ -620,7 +648,13 @@ function LoginPageInner() {
                         name="given-name"
                         autoComplete="given-name"
                         value={firstName}
-                        onChange={(e) => setFirstName(e.target.value)}
+                        onChange={(e) => {
+                          const val = e.target.value;
+                          if (val === '' || /^[A-Za-z\s\-'.]+$/.test(val)) {
+                            setFirstName(val);
+                          }
+                        }}
+                        maxLength={50}
                         className="w-full px-4 py-2.5 bg-white border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 text-gray-900 placeholder-gray-500 text-base"
                         placeholder="John"
                         style={{ backgroundColor: '#ffffff', color: '#111827' }}
@@ -636,7 +670,13 @@ function LoginPageInner() {
                         name="family-name"
                         autoComplete="family-name"
                         value={lastName}
-                        onChange={(e) => setLastName(e.target.value)}
+                        onChange={(e) => {
+                          const val = e.target.value;
+                          if (val === '' || /^[A-Za-z\s\-'.]+$/.test(val)) {
+                            setLastName(val);
+                          }
+                        }}
+                        maxLength={50}
                         className="w-full px-4 py-2.5 bg-white border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 text-gray-900 placeholder-gray-500 text-base"
                         placeholder="Doe"
                         style={{ backgroundColor: '#ffffff', color: '#111827' }}
@@ -742,7 +782,12 @@ function LoginPageInner() {
                       name="tel"
                       autoComplete="tel"
                       value={whatsappNumber}
-                      onChange={(e) => setWhatsappNumber(e.target.value)}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        if (val === '' || /^\+?[\d\s\-()]*$/.test(val)) {
+                          setWhatsappNumber(val);
+                        }
+                      }}
                       className="w-full px-4 py-2.5 bg-white border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 text-gray-900 placeholder-gray-500 text-base"
                       placeholder="+1 555 123 4567"
                       style={{ backgroundColor: '#ffffff', color: '#111827' }}

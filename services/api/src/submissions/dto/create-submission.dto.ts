@@ -24,6 +24,16 @@ export class ProductImageSubmissionDto {
   order?: number;
 }
 
+export class ProductVariationOptionSubmissionDto {
+  @IsString()
+  @IsNotEmpty()
+  name: string;
+
+  @IsString()
+  @IsNotEmpty()
+  value: string;
+}
+
 export class ProductVariationSubmissionDto {
   @IsString()
   @IsNotEmpty()
@@ -31,8 +41,8 @@ export class ProductVariationSubmissionDto {
 
   @IsArray()
   @ValidateNested({ each: true })
-  @Type(() => Object)
-  options: any[];
+  @Type(() => ProductVariationOptionSubmissionDto)
+  options: ProductVariationOptionSubmissionDto[];
 }
 
 export class CreateSubmissionDto {

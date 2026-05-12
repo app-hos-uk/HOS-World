@@ -13,8 +13,10 @@ export interface MeiliSearchResult {
 
 export interface SearchFilters {
   category?: string;
+  categories?: string[];
   categoryId?: string;
   fandom?: string;
+  fandoms?: string[];
   sellerId?: string;
   minPrice?: number;
   maxPrice?: number;
@@ -26,6 +28,8 @@ export interface SearchFilters {
   page?: number;
   limit?: number;
   sort?: string;
+  /** When set, search only product title and SKU (reduces irrelevant hits from long descriptions). */
+  searchNameAndSkuOnly?: boolean;
 }
 
 @Injectable()
@@ -474,10 +478,20 @@ export class MeilisearchService implements OnModuleInit, OnModuleDestroy {
     if (filters.categoryId) {
       filterConditions.push(`categoryId = "${this.sanitizeFilterValue(filters.categoryId)}"`);
     }
-    if (filters.category) {
+    if (filters.categories && filters.categories.length > 0) {
+      const parts = filters.categories
+        .map((c) => `category = "${this.sanitizeFilterValue(c)}"`)
+        .join(' OR ');
+      filterConditions.push(`(${parts})`);
+    } else if (filters.category) {
       filterConditions.push(`category = "${this.sanitizeFilterValue(filters.category)}"`);
     }
-    if (filters.fandom) {
+    if (filters.fandoms && filters.fandoms.length > 0) {
+      const parts = filters.fandoms
+        .map((f) => `fandom = "${this.sanitizeFilterValue(f)}"`)
+        .join(' OR ');
+      filterConditions.push(`(${parts})`);
+    } else if (filters.fandom) {
       filterConditions.push(`fandom = "${this.sanitizeFilterValue(filters.fandom)}"`);
     }
     if (filters.sellerId) {
@@ -513,7 +527,12 @@ export class MeilisearchService implements OnModuleInit, OnModuleDestroy {
       highlightPostTag: '</mark>',
       cropLength: 50,
       showMatchesPosition: true,
-      matchingStrategy: 'last', // Return results even if not all words match
+      // Require every query term to match somewhere (name, description, etc.).
+      // "last" only requires the final token — e.g. "harry potter wand" would match anything containing "wand".
+      matchingStrategy: 'all',
+      ...(filters.searchNameAndSkuOnly && query?.trim()
+        ? { attributesToSearchOn: ['name', 'sku'] }
+        : {}),
     };
 
     // Add sorting
@@ -538,7 +557,7 @@ export class MeilisearchService implements OnModuleInit, OnModuleDestroy {
 
       return {
         hits: result.hits,
-        total: result.estimatedTotalHits || result.hits.length,
+        total: result.estimatedTotalHits ?? result.totalHits ?? result.hits.length,
         processingTimeMs: result.processingTimeMs,
         facetDistribution: result.facetDistribution,
         query: result.query,
@@ -562,10 +581,11 @@ export class MeilisearchService implements OnModuleInit, OnModuleDestroy {
     try {
       const result = await this.productsIndex!.search(prefix, {
         limit: limit * 2,
+        filter: 'isActive = true',
         attributesToRetrieve: ['name', 'category', 'fandom'],
         attributesToHighlight: [],
         showMatchesPosition: false,
-        matchingStrategy: 'last',
+        matchingStrategy: 'all',
       });
 
       const names = result.hits.map((hit: any) => hit.name as string);
@@ -712,16 +732,42 @@ export class MeilisearchService implements OnModuleInit, OnModuleDestroy {
     }
 
     if (query && query.trim()) {
-      where.OR = [
-        { name: { contains: query, mode: 'insensitive' } },
-        { description: { contains: query, mode: 'insensitive' } },
-        { sku: { contains: query, mode: 'insensitive' } },
-      ];
+      const q = query.trim();
+      const tokens = q.split(/\s+/).filter((t) => t.length >= 2);
+      const tokenClause = (t: string) =>
+        filters.searchNameAndSkuOnly
+          ? {
+              OR: [
+                { name: { contains: t, mode: 'insensitive' as const } },
+                { sku: { contains: t, mode: 'insensitive' as const } },
+              ],
+            }
+          : {
+              OR: [
+                { name: { contains: t, mode: 'insensitive' as const } },
+                { description: { contains: t, mode: 'insensitive' as const } },
+                { sku: { contains: t, mode: 'insensitive' as const } },
+              ],
+            };
+      if (tokens.length > 1) {
+        where.AND = tokens.map(tokenClause);
+      } else {
+        const needle = tokens.length === 1 ? tokens[0]! : q;
+        where.OR = tokenClause(needle).OR;
+      }
     }
 
     if (filters.categoryId) where.categoryId = filters.categoryId;
-    if (filters.category) where.category = filters.category;
-    if (filters.fandom) where.fandom = filters.fandom;
+    if (filters.categories?.length) {
+      where.category = { in: filters.categories };
+    } else if (filters.category) {
+      where.category = filters.category;
+    }
+    if (filters.fandoms?.length) {
+      where.fandom = { in: filters.fandoms };
+    } else if (filters.fandom) {
+      where.fandom = filters.fandom;
+    }
     if (filters.sellerId) where.sellerId = filters.sellerId;
     if (filters.minPrice !== undefined || filters.maxPrice !== undefined) {
       where.price = {};
@@ -729,6 +775,9 @@ export class MeilisearchService implements OnModuleInit, OnModuleDestroy {
       if (filters.maxPrice !== undefined) where.price.lte = filters.maxPrice;
     }
     if (filters.inStock) where.stock = { gt: 0 };
+    if (filters.minRating !== undefined) {
+      where.averageRating = { gte: filters.minRating };
+    }
 
     const [products, total] = await Promise.all([
       this.prisma.product.findMany({

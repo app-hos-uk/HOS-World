@@ -21,7 +21,6 @@ import {
 import { WishlistService } from './wishlist.service';
 import { ProductsService } from '../products/products.service';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
-import { Public } from '../common/decorators/public.decorator';
 import { isUuid } from '../common/utils/uuid';
 import type { ApiResponse } from '@hos-marketplace/shared-types';
 
@@ -118,26 +117,19 @@ export class WishlistController {
     };
   }
 
-  @Public()
   @Get('products/:productId/check')
   @ApiOperation({
     summary: 'Check if product is in wishlist',
     description:
-      "Checks if a product is in the user's wishlist. Public endpoint, returns false if not authenticated.",
+      "Checks whether the authenticated user's wishlist contains the product. Requires a valid JWT (same as other wishlist routes).",
   })
   @ApiParam({ name: 'productId', description: 'Product UUID or slug', type: String })
   @SwaggerApiResponse({ status: 200, description: 'Wishlist status retrieved' })
+  @SwaggerApiResponse({ status: 401, description: 'Unauthorized' })
   async checkInWishlist(
     @Request() req: any,
     @Param('productId') productIdOrSlug: string,
   ): Promise<ApiResponse<{ inWishlist: boolean }>> {
-    if (!req.user) {
-      return {
-        data: { inWishlist: false },
-        message: 'Not authenticated',
-      };
-    }
-
     const productId = await this.resolveProductId(productIdOrSlug);
     const inWishlist = await this.wishlistService.isInWishlist(req.user.id, productId);
     return {

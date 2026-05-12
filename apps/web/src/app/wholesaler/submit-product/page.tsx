@@ -10,8 +10,12 @@ function WholesalerSubmitProductRedirect() {
 
   useEffect(() => {
     const id = searchParams.get('id');
-    const target = id ? `/seller/submit-product?id=${id}` : '/seller/submit-product';
-    router.replace(target);
+    const edit = searchParams.get('edit');
+    const qs = new URLSearchParams();
+    if (id) qs.set('id', id);
+    if (edit) qs.set('edit', edit);
+    const suffix = qs.toString();
+    router.replace(suffix ? `/seller/submit-product?${suffix}` : '/seller/submit-product');
   }, [router, searchParams]);
 
   return (

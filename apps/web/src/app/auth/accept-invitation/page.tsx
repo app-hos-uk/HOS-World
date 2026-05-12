@@ -110,6 +110,22 @@ function AcceptInvitationForm() {
     e.preventDefault();
     setError(null);
 
+    const nameRegex = /^[\p{L}\s\-'.]+$/u;
+    if (formData.firstName && !nameRegex.test(formData.firstName)) {
+      setError('First name must contain only letters, spaces, hyphens, or apostrophes');
+      return;
+    }
+    if (formData.lastName && !nameRegex.test(formData.lastName)) {
+      setError('Last name must contain only letters, spaces, hyphens, or apostrophes');
+      return;
+    }
+
+    const phoneRegex = /^\+?[\d\s\-()]+$/;
+    if (formData.whatsappNumber && !phoneRegex.test(formData.whatsappNumber)) {
+      setError('WhatsApp number must contain only digits, spaces, hyphens, and an optional leading +');
+      return;
+    }
+
     if (formData.password !== formData.confirmPassword) {
       setError('Passwords do not match');
       return;
@@ -326,8 +342,14 @@ function AcceptInvitationForm() {
                   name="firstName"
                   type="text"
                   required
+                  maxLength={50}
                   value={formData.firstName}
-                  onChange={(e) => setFormData({ ...formData, firstName: e.target.value })}
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    if (val === '' || /^[A-Za-z\s\-'.]+$/.test(val)) {
+                      setFormData({ ...formData, firstName: val });
+                    }
+                  }}
                   className="mt-1 appearance-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-lg focus:outline-none focus:ring-purple-500 focus:border-purple-500 focus:z-10 sm:text-sm"
                   placeholder="First name"
                 />
@@ -342,8 +364,14 @@ function AcceptInvitationForm() {
                   name="lastName"
                   type="text"
                   required
+                  maxLength={50}
                   value={formData.lastName}
-                  onChange={(e) => setFormData({ ...formData, lastName: e.target.value })}
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    if (val === '' || /^[A-Za-z\s\-'.]+$/.test(val)) {
+                      setFormData({ ...formData, lastName: val });
+                    }
+                  }}
                   className="mt-1 appearance-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-lg focus:outline-none focus:ring-purple-500 focus:border-purple-500 focus:z-10 sm:text-sm"
                   placeholder="Last name"
                 />
@@ -377,7 +405,12 @@ function AcceptInvitationForm() {
                     name="whatsappNumber"
                     type="tel"
                     value={formData.whatsappNumber}
-                    onChange={(e) => setFormData({ ...formData, whatsappNumber: e.target.value })}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      if (val === '' || /^\+?[\d\s\-()]*$/.test(val)) {
+                        setFormData({ ...formData, whatsappNumber: val });
+                      }
+                    }}
                     className="mt-1 appearance-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-lg focus:outline-none focus:ring-purple-500 focus:border-purple-500 focus:z-10 sm:text-sm"
                     placeholder="+1 555 123 4567"
                   />

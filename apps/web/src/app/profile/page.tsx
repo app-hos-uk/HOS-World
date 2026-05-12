@@ -11,6 +11,12 @@ import { useToast } from '@/hooks/useToast';
 import { useCurrency } from '@/contexts/CurrencyContext';
 import Link from 'next/link';
 import Image from 'next/image';
+import {
+  sanitizeLatinPersonName,
+  sanitizeLatinCityOrState,
+  sanitizeTelInput,
+  sanitizePostalCode,
+} from '@/lib/profileFieldSanitize';
 
 interface GamificationStats {
   points: number;
@@ -155,11 +161,11 @@ function ProfilePageContent() {
       if (profileRes?.data) {
         setProfile(profileRes.data);
         setFormData({
-          firstName: profileRes.data.firstName || '',
-          lastName: profileRes.data.lastName || '',
-          phone: profileRes.data.phone || '',
+          firstName: sanitizeLatinPersonName(profileRes.data.firstName || ''),
+          lastName: sanitizeLatinPersonName(profileRes.data.lastName || ''),
+          phone: sanitizeTelInput(profileRes.data.phone || ''),
           country: profileRes.data.country || '',
-          whatsappNumber: profileRes.data.whatsappNumber || '',
+          whatsappNumber: sanitizeTelInput(profileRes.data.whatsappNumber || ''),
           preferredCommunicationMethod: profileRes.data.preferredCommunicationMethod || 'EMAIL',
           currencyPreference: profileRes.data.currencyPreference || 'USD',
           birthday: profileRes.data.birthday ? new Date(profileRes.data.birthday).toISOString().split('T')[0] : '',
@@ -776,7 +782,12 @@ function ProfilePageContent() {
                           <input
                             type="text"
                             value={addressForm.firstName}
-                            onChange={(e) => setAddressForm({ ...addressForm, firstName: e.target.value })}
+                            onChange={(e) =>
+                              setAddressForm({
+                                ...addressForm,
+                                firstName: sanitizeLatinPersonName(e.target.value),
+                              })
+                            }
                             className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
                             placeholder="Recipient first name"
                             required
@@ -787,7 +798,12 @@ function ProfilePageContent() {
                           <input
                             type="text"
                             value={addressForm.lastName}
-                            onChange={(e) => setAddressForm({ ...addressForm, lastName: e.target.value })}
+                            onChange={(e) =>
+                              setAddressForm({
+                                ...addressForm,
+                                lastName: sanitizeLatinPersonName(e.target.value),
+                              })
+                            }
                             className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
                             placeholder="Recipient last name"
                             required
@@ -798,7 +814,9 @@ function ProfilePageContent() {
                           <input
                             type="tel"
                             value={addressForm.phone}
-                            onChange={(e) => setAddressForm({ ...addressForm, phone: e.target.value })}
+                            onChange={(e) =>
+                              setAddressForm({ ...addressForm, phone: sanitizeTelInput(e.target.value) })
+                            }
                             className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
                             placeholder="+1 555 123 4567"
                           />
@@ -823,7 +841,12 @@ function ProfilePageContent() {
                           <input
                             type="text"
                             value={addressForm.city}
-                            onChange={(e) => setAddressForm({ ...addressForm, city: e.target.value })}
+                            onChange={(e) =>
+                              setAddressForm({
+                                ...addressForm,
+                                city: sanitizeLatinCityOrState(e.target.value),
+                              })
+                            }
                             className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
                             required
                           />
@@ -833,7 +856,12 @@ function ProfilePageContent() {
                           <input
                             type="text"
                             value={addressForm.state}
-                            onChange={(e) => setAddressForm({ ...addressForm, state: e.target.value })}
+                            onChange={(e) =>
+                              setAddressForm({
+                                ...addressForm,
+                                state: sanitizeLatinCityOrState(e.target.value),
+                              })
+                            }
                             className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
                           />
                         </div>
@@ -842,7 +870,13 @@ function ProfilePageContent() {
                           <input
                             type="text"
                             value={addressForm.postalCode}
-                            onChange={(e) => setAddressForm({ ...addressForm, postalCode: e.target.value })}
+                            onChange={(e) =>
+                              setAddressForm({
+                                ...addressForm,
+                                postalCode: sanitizePostalCode(e.target.value),
+                              })
+                            }
+                            inputMode="numeric"
                             className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
                             required
                           />
@@ -1038,7 +1072,9 @@ function ProfilePageContent() {
                           <input
                             type="text"
                             value={editing ? formData.firstName : (profile?.firstName || '')}
-                            onChange={(e) => setFormData({ ...formData, firstName: e.target.value })}
+                            onChange={(e) =>
+                              setFormData({ ...formData, firstName: sanitizeLatinPersonName(e.target.value) })
+                            }
                             disabled={!editing}
                             className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-white disabled:bg-gray-100"
                           />
@@ -1048,7 +1084,9 @@ function ProfilePageContent() {
                           <input
                             type="text"
                             value={editing ? formData.lastName : (profile?.lastName || '')}
-                            onChange={(e) => setFormData({ ...formData, lastName: e.target.value })}
+                            onChange={(e) =>
+                              setFormData({ ...formData, lastName: sanitizeLatinPersonName(e.target.value) })
+                            }
                             disabled={!editing}
                             className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-white disabled:bg-gray-100"
                           />
@@ -1059,7 +1097,7 @@ function ProfilePageContent() {
                         <input
                           type="tel"
                           value={editing ? formData.phone : (profile?.phone || '')}
-                          onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                          onChange={(e) => setFormData({ ...formData, phone: sanitizeTelInput(e.target.value) })}
                           disabled={!editing}
                           className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-white disabled:bg-gray-100"
                         />
@@ -1098,7 +1136,9 @@ function ProfilePageContent() {
                         <input
                           type="tel"
                           value={editing ? formData.whatsappNumber : (profile?.whatsappNumber || '')}
-                          onChange={(e) => setFormData({ ...formData, whatsappNumber: e.target.value })}
+                          onChange={(e) =>
+                            setFormData({ ...formData, whatsappNumber: sanitizeTelInput(e.target.value) })
+                          }
                           disabled={!editing}
                           placeholder="+1 555 123 4567"
                           className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-white disabled:bg-gray-100"
@@ -1177,11 +1217,11 @@ function ProfilePageContent() {
                               setEditing(false);
                               // Reset form data
                               setFormData({
-                                firstName: profile?.firstName || '',
-                                lastName: profile?.lastName || '',
-                                phone: profile?.phone || '',
+                                firstName: sanitizeLatinPersonName(profile?.firstName || ''),
+                                lastName: sanitizeLatinPersonName(profile?.lastName || ''),
+                                phone: sanitizeTelInput(profile?.phone || ''),
                                 country: profile?.country || '',
-                                whatsappNumber: profile?.whatsappNumber || '',
+                                whatsappNumber: sanitizeTelInput(profile?.whatsappNumber || ''),
                                 preferredCommunicationMethod: profile?.preferredCommunicationMethod || 'EMAIL',
                                 currencyPreference: profile?.currencyPreference || 'USD',
                                 birthday: profile?.birthday ? new Date(profile.birthday).toISOString().split('T')[0] : '',

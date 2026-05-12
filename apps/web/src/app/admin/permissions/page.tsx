@@ -18,7 +18,8 @@ interface RolePermissions {
 }
 
 const PERMISSIONS: Permission[] = [
-  // Product Management
+  // Product Management (ids must match `permissionCatalog` in services/api/src/admin/admin.service.ts)
+  { id: 'products.view', name: 'View Products', description: 'View product catalog and details', category: 'Products' },
   { id: 'products.create', name: 'Create Products', description: 'Create new products', category: 'Products' },
   { id: 'products.edit', name: 'Edit Products', description: 'Edit existing products', category: 'Products' },
   { id: 'products.delete', name: 'Delete Products', description: 'Delete products', category: 'Products' },
@@ -67,6 +68,8 @@ export default function AdminPermissionsPage() {
   const [newRoleName, setNewRoleName] = useState('');
   const [creatingRole, setCreatingRole] = useState(false);
 
+  const currentPermissions = rolePermissions[selectedRole] || [];
+
   const permissionsByCategory = useMemo(() => {
     return PERMISSIONS.reduce((acc, perm) => {
       if (!acc[perm.category]) {
@@ -77,7 +80,18 @@ export default function AdminPermissionsPage() {
     }, {} as Record<string, Permission[]>);
   }, []);
 
-  const currentPermissions = rolePermissions[selectedRole] || [];
+  const catalogIdSet = useMemo(() => new Set(PERMISSIONS.map((p) => p.id)), []);
+
+  /** Granted permissions that appear in this UI (excludes unknown ids from older API data). */
+  const grantedInMatrixCount = useMemo(() => {
+    const uniq = [...new Set(currentPermissions)];
+    return uniq.filter((id) => catalogIdSet.has(id)).length;
+  }, [currentPermissions, catalogIdSet]);
+
+  const unknownGrantedIds = useMemo(() => {
+    const uniq = [...new Set(currentPermissions)];
+    return uniq.filter((id) => !catalogIdSet.has(id));
+  }, [currentPermissions, catalogIdSet]);
 
   useEffect(() => {
     (async () => {
@@ -197,7 +211,14 @@ export default function AdminPermissionsPage() {
                 <div>
                   <h2 className="text-xl font-bold">{selectedRole} Permissions</h2>
                   <p className="text-sm text-gray-600 mt-1">
-                    {currentPermissions.length} of {PERMISSIONS.length} permissions granted
+                    {grantedInMatrixCount} of {PERMISSIONS.length} permissions granted
+                    {unknownGrantedIds.length > 0 && (
+                      <span className="text-amber-700">
+                        {' '}
+                        (+ {unknownGrantedIds.length} legacy / unknown id{unknownGrantedIds.length !== 1 ? 's' : ''}{' '}
+                        not shown below)
+                      </span>
+                    )}
                   </p>
                 </div>
                 <button

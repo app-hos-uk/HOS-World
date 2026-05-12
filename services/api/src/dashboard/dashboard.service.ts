@@ -531,54 +531,35 @@ export class DashboardService {
       take: 50,
     });
 
-    const materials = await this.prisma.marketingMaterial.findMany({
-      orderBy: { createdAt: 'desc' },
-      take: 50,
-      include: {
-        submission: {
-          include: {
-            seller: {
-              select: {
-                storeName: true,
+    const startOfToday = new Date(new Date().setHours(0, 0, 0, 0));
+
+    const [materials, materialsCreated, activeCampaigns, totalMaterials] = await Promise.all([
+      this.prisma.marketingMaterial.findMany({
+        orderBy: { createdAt: 'desc' },
+        take: 50,
+        include: {
+          submission: {
+            include: {
+              seller: {
+                select: {
+                  storeName: true,
+                },
               },
             },
           },
         },
-      },
-    });
-
-    const materialsCreated = await this.prisma.marketingMaterial.count({
-      where: {
-        createdAt: {
-          gte: new Date(new Date().setHours(0, 0, 0, 0)),
+      }),
+      this.prisma.marketingMaterial.count({
+        where: {
+          createdAt: { gte: startOfToday },
         },
-      },
-    });
-
-    // Count active campaigns (marketing materials with active status or recent activity)
-    const activeCampaigns = await this.prisma.marketingMaterial.count({
-      where: {
-        OR: [
-          {
-            createdAt: {
-              gte: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000), // Created in last 30 days
-            },
-          },
-          {
-            submission: {
-              status: {
-                in: [
-                  'MARKETING_COMPLETED',
-                  'CONTENT_COMPLETED' as any,
-                  'FINANCE_PENDING',
-                  'PUBLISHED',
-                ],
-              },
-            },
-          },
-        ],
-      },
-    });
+      }),
+      // Align with marketing "Campaigns" UI: influencer campaigns with status ACTIVE
+      this.prisma.influencerCampaign.count({
+        where: { status: 'ACTIVE' },
+      }),
+      this.prisma.marketingMaterial.count(),
+    ]);
 
     return {
       pendingSubmissions: pending,
@@ -587,7 +568,7 @@ export class DashboardService {
       materialsLibrary: materials,
       materialsCreated,
       activeCampaigns,
-      totalMaterials: materials.length,
+      totalMaterials,
       totalPending: pending.length,
     };
   }
@@ -680,6 +661,49 @@ export class DashboardService {
     };
   }
 
+  /**
+   * Six calendar months ending in the current month (no future months).
+   * Revenue matches admin headline total: parent orders only, excluding cancelled/refunded.
+   */
+  private async buildAdminSalesTrendsLastSixMonths(): Promise<
+    Array<{ period: string; revenue: number; orders: number }>
+  > {
+    const now = new Date();
+    const monthStarts: Date[] = [];
+    for (let i = 5; i >= 0; i--) {
+      monthStarts.push(new Date(now.getFullYear(), now.getMonth() - i, 1));
+    }
+
+    const rows = await Promise.all(
+      monthStarts.map((monthStart) => {
+        const isCurrentMonth =
+          monthStart.getFullYear() === now.getFullYear() && monthStart.getMonth() === now.getMonth();
+        const rangeEnd = isCurrentMonth
+          ? now
+          : new Date(monthStart.getFullYear(), monthStart.getMonth() + 1, 0, 23, 59, 59, 999);
+
+        return this.prisma.order
+          .aggregate({
+            where: {
+              parentOrderId: null,
+              deletedAt: null,
+              status: { notIn: ['CANCELLED', 'REFUNDED'] },
+              createdAt: { gte: monthStart, lte: rangeEnd },
+            },
+            _sum: { total: true },
+            _count: true,
+          })
+          .then((r) => ({
+            period: monthStart.toLocaleString('en-US', { month: 'short', year: '2-digit' }),
+            revenue: Number(r._sum.total ?? 0),
+            orders: r._count,
+          }));
+      }),
+    );
+
+    return rows;
+  }
+
   // Admin Dashboard
   async getAdminDashboard() {
     const [
@@ -692,9 +716,10 @@ export class DashboardService {
       submissionsByStatus,
       ordersByStatus,
       revenueResult,
+      salesTrends,
     ] = await Promise.all([
-      this.prisma.product.count(),
-      this.prisma.order.count({ where: { parentOrderId: null } }),
+      this.prisma.product.count({ where: { deletedAt: null } }),
+      this.prisma.order.count({ where: { parentOrderId: null, deletedAt: null } }),
       this.prisma.productSubmission.count(),
       this.prisma.seller.count(),
       this.prisma.customer.count(),
@@ -705,31 +730,54 @@ export class DashboardService {
       }),
       this.prisma.order.groupBy({
         by: ['status'],
-        where: { parentOrderId: null },
+        where: { parentOrderId: null, deletedAt: null },
         _count: true,
       }),
       this.prisma.order.aggregate({
         where: {
           parentOrderId: null,
+          deletedAt: null,
           status: { notIn: ['CANCELLED', 'REFUNDED'] },
         },
         _sum: { total: true },
       }),
+      this.buildAdminSalesTrendsLastSixMonths(),
     ]);
 
     const totalRevenue = Number(revenueResult._sum?.total || 0);
 
-    const recentActivity = await this.prisma.productSubmission.findMany({
-      orderBy: { updatedAt: 'desc' },
-      take: 20,
+    // Align with Admin → Activity (ActivityLog); submissions are surfaced under Submissions, not Activity
+    const recentActivityLogs = await this.prisma.activityLog.findMany({
+      orderBy: { createdAt: 'desc' },
+      take: 15,
       include: {
+        user: {
+          select: {
+            id: true,
+            email: true,
+            firstName: true,
+            lastName: true,
+          },
+        },
         seller: {
           select: {
+            id: true,
             storeName: true,
           },
         },
       },
     });
+
+    const recentActivity = recentActivityLogs.map((log) => ({
+      id: log.id,
+      createdAt: log.createdAt,
+      updatedAt: log.createdAt,
+      status: log.action,
+      action: log.entityType,
+      description: log.description,
+      seller: log.seller,
+      user: log.user,
+    }));
 
     return {
       statistics: {
@@ -743,6 +791,7 @@ export class DashboardService {
       },
       submissionsByStatus,
       ordersByStatus,
+      salesTrends,
       recentActivity,
     };
   }

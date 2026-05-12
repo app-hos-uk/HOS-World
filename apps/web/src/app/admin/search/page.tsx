@@ -35,6 +35,8 @@ export default function AdminSearchPage() {
   const [searchResults, setSearchResults] = useState<SearchResult[]>([]);
   const [searchCount, setSearchCount] = useState<number | null>(null);
   const [searching, setSearching] = useState(false);
+  const [searchPage, setSearchPage] = useState(1);
+  const SEARCH_PAGE_SIZE = 20;
 
   const [confirmAction, setConfirmAction] = useState<'sync' | 'rebuild' | null>(null);
 
@@ -90,15 +92,24 @@ export default function AdminSearchPage() {
     }
   };
 
-  const handleSearch = async () => {
+  const handleSearch = async (page: number = 1) => {
     if (!searchQuery.trim()) return;
     try {
       setSearching(true);
-      const response = await apiClient.searchProducts(searchQuery.trim());
-      const data = response?.data;
-      const hits = data?.hits || data?.data || data?.products || [];
-      setSearchResults(Array.isArray(hits) ? hits.slice(0, 10) : []);
-      setSearchCount(data?.totalHits ?? data?.total ?? (Array.isArray(hits) ? hits.length : 0));
+      const q = searchQuery.trim();
+      const response = await apiClient.searchProducts(q, {
+        page,
+        limit: SEARCH_PAGE_SIZE,
+      });
+      const data = response?.data as any;
+      const hits = data?.products || data?.hits || data?.data || [];
+      setSearchResults(Array.isArray(hits) ? hits : []);
+      const total =
+        data?.total ??
+        data?.totalHits ??
+        (Array.isArray(hits) ? hits.length : 0);
+      setSearchCount(Number(total) || 0);
+      setSearchPage(page);
     } catch (err: any) {
       setSearchResults([]);
       setSearchCount(0);
@@ -249,12 +260,13 @@ export default function AdminSearchPage() {
                 type="text"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
-                placeholder="Enter search query..."
+                onKeyDown={(e) => e.key === 'Enter' && handleSearch(1)}
+                placeholder="Enter search query (leave empty for all products, paginated)"
                 className="flex-1 px-4 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
               />
               <button
-                onClick={handleSearch}
+                type="button"
+                onClick={() => handleSearch(1)}
                 disabled={searching || !searchQuery.trim()}
                 className="px-5 py-2.5 text-sm font-medium text-white bg-purple-600 rounded-lg hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
               >
@@ -267,12 +279,16 @@ export default function AdminSearchPage() {
               <div className="mt-4">
                 <p className="text-sm text-gray-600 mb-3">
                   Found <span className="font-semibold text-gray-900">{searchCount}</span> result{searchCount !== 1 ? 's' : ''}
-                  {searchResults.length > 0 && searchCount > searchResults.length && (
-                    <span className="text-gray-500"> (showing first {searchResults.length})</span>
+                  {searchCount > 0 && (
+                    <span className="text-gray-500">
+                      {' '}
+                      (page {searchPage} of {Math.max(1, Math.ceil(searchCount / SEARCH_PAGE_SIZE))}, {SEARCH_PAGE_SIZE} per page)
+                    </span>
                   )}
                 </p>
 
                 {searchResults.length > 0 && (
+                  <>
                   <div className="overflow-x-auto border border-gray-200 rounded-lg">
                     <table className="min-w-full divide-y divide-gray-200">
                       <thead className="bg-gray-50">
@@ -299,6 +315,34 @@ export default function AdminSearchPage() {
                       </tbody>
                     </table>
                   </div>
+                  {(() => {
+                    const totalPages = Math.max(1, Math.ceil(searchCount / SEARCH_PAGE_SIZE));
+                    if (totalPages <= 1) return null;
+                    return (
+                      <div className="mt-4 flex items-center justify-center gap-2">
+                        <button
+                          type="button"
+                          onClick={() => handleSearch(searchPage - 1)}
+                          disabled={searching || searchPage <= 1}
+                          className="px-3 py-2 text-sm border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed"
+                        >
+                          Previous
+                        </button>
+                        <span className="text-sm text-gray-600">
+                          Page {searchPage} / {totalPages}
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => handleSearch(searchPage + 1)}
+                          disabled={searching || searchPage >= totalPages}
+                          className="px-3 py-2 text-sm border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed"
+                        >
+                          Next
+                        </button>
+                      </div>
+                    );
+                  })()}
+                  </>
                 )}
               </div>
             )}
