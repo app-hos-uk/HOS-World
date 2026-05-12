@@ -15,6 +15,17 @@ import Link from 'next/link';
 const stripePublishableKey = process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY || '';
 const stripePromise = stripePublishableKey ? loadStripe(stripePublishableKey) : null;
 
+/** Allowed characters match server-generated codes (no I, O, 0, 1); max length 19 (XXXX-XXXX-XXXX-XXXX) */
+const GIFT_CARD_ALLOWED_CHAR = /^[A-HJ-NP-Z2-9-]$/;
+const GIFT_CARD_FULL_PATTERN = /^[A-HJ-NP-Z2-9]{4}-[A-HJ-NP-Z2-9]{4}-[A-HJ-NP-Z2-9]{4}-[A-HJ-NP-Z2-9]{4}$/;
+
+function sanitizeGiftCardInput(value: string): string {
+  return [...value.toUpperCase()]
+    .filter((c) => GIFT_CARD_ALLOWED_CHAR.test(c))
+    .join('')
+    .slice(0, 19);
+}
+
 function StripeCardCheckout({
   order,
   clientSecret,
@@ -322,19 +333,17 @@ function PaymentForm({ order }: { order: any }) {
       const response = await apiClient.getPaymentProviders();
       if (response?.data && response.data.length > 0) {
         setAvailableProviders(response.data);
-        // Default to first available provider
         setSelectedProvider(response.data[0]);
       } else {
-        // Fallback to default providers if API doesn't return any
-        setAvailableProviders(['stripe']);
-        setSelectedProvider('stripe');
-        toast.error('No payment providers available. Using default options.');
+        setAvailableProviders([]);
+        setSelectedProvider('');
+        toast.error('No payment methods are available. Please contact support.');
       }
     } catch (err: any) {
       console.error('Error loading payment providers:', err);
-      setAvailableProviders(['stripe']);
-      setSelectedProvider('stripe');
-      toast.error('Failed to load payment providers. Using default options.');
+      setAvailableProviders([]);
+      setSelectedProvider('');
+      toast.error(err?.message || 'Failed to load payment methods. Please refresh or contact support.');
     } finally {
       setLoadingProviders(false);
     }
@@ -347,6 +356,10 @@ function PaymentForm({ order }: { order: any }) {
     }
 
     const normalizedCode = giftCardCode.trim().toUpperCase();
+    if (!GIFT_CARD_FULL_PATTERN.test(normalizedCode)) {
+      toast.error('Enter code as XXXX-XXXX-XXXX-XXXX using only letters (except I,O) and digits 2-9.');
+      return;
+    }
 
     // Check if this gift card code has already been redeemed for this order
     // Use array includes() instead of Set.has() for immutability compatibility
@@ -539,6 +552,13 @@ function PaymentForm({ order }: { order: any }) {
 
       // Create payment intent for remaining amount (if any)
       if (finalAmount > 0) {
+        if (selectedProvider === 'stripe' && !stripePublishableKey.trim()) {
+          toast.error(
+            'Card payment is unavailable (missing Stripe configuration). Contact support or use another payment method.',
+          );
+          setProcessing(false);
+          return;
+        }
         try {
           const response = await apiClient.createPaymentIntent({
             orderId: order.id,
@@ -680,8 +700,11 @@ function PaymentForm({ order }: { order: any }) {
           <input
             type="text"
             value={giftCardCode}
-            onChange={(e) => setGiftCardCode(e.target.value.toUpperCase().replace(/[^A-Z0-9-]/g, ''))}
+            onChange={(e) => setGiftCardCode(sanitizeGiftCardInput(e.target.value))}
             placeholder="XXXX-XXXX-XXXX-XXXX"
+            maxLength={19}
+            inputMode="text"
+            autoComplete="off"
             className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
             disabled={giftCardApplied || validatingGiftCard}
           />
@@ -749,7 +772,11 @@ function PaymentForm({ order }: { order: any }) {
       )}
 
       {stripeClientSecret && selectedProvider === 'stripe' && stripePromise && (
-        <Elements stripe={stripePromise} options={{ clientSecret: stripeClientSecret }}>
+        <Elements
+          key={stripePaymentIntentId || stripeClientSecret}
+          stripe={stripePromise}
+          options={{ clientSecret: stripeClientSecret }}
+        >
           <StripeCardCheckout
             order={order}
             clientSecret={stripeClientSecret}

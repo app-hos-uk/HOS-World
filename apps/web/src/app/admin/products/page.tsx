@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, useMemo, useCallback, useRef, Suspense } from 'react';
+import { useEffect, useState, useMemo, useCallback, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { RouteGuard } from '@/components/RouteGuard';
 import { AdminLayout } from '@/components/AdminLayout';
@@ -14,7 +14,6 @@ import { getPublicApiBaseUrl } from '@/lib/apiBaseUrl';
 import { useCurrency } from '@/contexts/CurrencyContext';
 import { DataExport } from '@/components/DataExport';
 import { SafeImage } from '@/components/SafeImage';
-import { VirtualizedTableBody } from '@/components/VirtualizedTableBody';
 import Link from 'next/link';
 
 interface Product {
@@ -78,8 +77,6 @@ function AdminProductsContent() {
   const [categories, setCategories] = useState<any[]>([]);
   const [publishNow, setPublishNow] = useState(true);
   const [selectedProducts, setSelectedProducts] = useState<Set<string>>(new Set());
-  const tableScrollRef = useRef<HTMLDivElement>(null);
-
   // Read seller filter from URL query param
   const sellerFilterFromUrl = searchParams.get('seller') || '';
   
@@ -140,10 +137,12 @@ function AdminProductsContent() {
         limit: 100,
         sellerId: sellerFilterFromUrl || undefined,
       });
-      const list = response?.data?.products || response?.data?.data || response?.data || [];
+      const payload = response?.data;
+      const list = payload?.products || payload?.data || payload || [];
       const productList = Array.isArray(list) ? list : [];
+      const totalFromApi = typeof payload?.pagination?.total === 'number' ? payload.pagination.total : undefined;
       setProducts(productList);
-      calculateStats(productList);
+      calculateStats(productList, totalFromApi);
     } catch (err: any) {
       console.error('Error fetching products:', err);
       setError(err.message || 'Failed to load products');
@@ -192,7 +191,7 @@ function AdminProductsContent() {
     }
   }, []);
 
-  const calculateStats = (productList: Product[]) => {
+  const calculateStats = (productList: Product[], totalFromApi?: number) => {
     const active = productList.filter(p => p.status === 'ACTIVE');
     const draft = productList.filter(p => p.status === 'DRAFT');
     const outOfStock = productList.filter(p => p.stock === 0);
@@ -203,7 +202,7 @@ function AdminProductsContent() {
     const avgPrice = productList.length > 0 ? priceSum / productList.length : 0;
 
     setStats({
-      totalProducts: productList.length,
+      totalProducts: typeof totalFromApi === 'number' ? totalFromApi : productList.length,
       activeProducts: active.length,
       draftProducts: draft.length,
       outOfStock: outOfStock.length,
@@ -700,9 +699,23 @@ function AdminProductsContent() {
   ];
 
   const getStockBadge = (stock: number) => {
-    if (stock === 0) return <span className="px-2 py-0.5 text-xs rounded bg-red-100 text-red-700">Out</span>;
-    if (stock <= 10) return <span className="px-2 py-0.5 text-xs rounded bg-yellow-100 text-yellow-700">Low</span>;
-    return <span className="px-2 py-0.5 text-xs rounded bg-green-100 text-green-700">{stock}</span>;
+    if (stock === 0)
+      return (
+        <span className="inline-flex min-w-[3.25rem] justify-center px-2 py-0.5 text-xs rounded bg-red-100 text-red-700 tabular-nums">
+          Out
+        </span>
+      );
+    if (stock <= 10)
+      return (
+        <span className="inline-flex min-w-[3.25rem] justify-center px-2 py-0.5 text-xs rounded bg-yellow-100 text-yellow-700 tabular-nums">
+          Low
+        </span>
+      );
+    return (
+      <span className="inline-flex min-w-[3.25rem] justify-center px-2 py-0.5 text-xs rounded bg-green-100 text-green-700 tabular-nums">
+        {stock}
+      </span>
+    );
   };
 
   if (loading && products.length === 0) {
@@ -924,11 +937,20 @@ function AdminProductsContent() {
                 Select All Visible
               </button>
             </div>
-            <div ref={tableScrollRef} className="overflow-auto max-h-[500px] overflow-x-auto">
-              <table className="min-w-full divide-y divide-gray-200">
+            <div className="overflow-auto max-h-[500px] overflow-x-auto">
+              <table className="w-full min-w-[900px] table-fixed border-collapse divide-y divide-gray-200">
+                <colgroup>
+                  <col style={{ width: '2.75rem' }} />
+                  <col />
+                  <col style={{ width: '7rem' }} />
+                  <col style={{ width: '5.5rem' }} />
+                  <col style={{ width: '6.5rem' }} />
+                  <col style={{ width: '6.5rem' }} />
+                  <col style={{ width: '10rem' }} />
+                </colgroup>
                 <thead className="bg-gray-50 sticky top-0 z-10">
                   <tr>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                    <th scope="col" className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase align-middle">
                       <input
                         type="checkbox"
                         checked={selectedProducts.size === filteredProducts.length && filteredProducts.length > 0}
@@ -937,12 +959,24 @@ function AdminProductsContent() {
                         aria-label="Select all products"
                       />
                     </th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Product</th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Price</th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Stock</th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Created</th>
-                    <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">Actions</th>
+                    <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase align-middle">
+                      Product
+                    </th>
+                    <th scope="col" className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase align-middle">
+                      Price
+                    </th>
+                    <th scope="col" className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase align-middle">
+                      Stock
+                    </th>
+                    <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase align-middle">
+                      Status
+                    </th>
+                    <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase align-middle whitespace-nowrap">
+                      Created
+                    </th>
+                    <th scope="col" className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase align-middle">
+                      Actions
+                    </th>
                   </tr>
                 </thead>
                 {filteredProducts.length === 0 ? (
@@ -954,13 +988,13 @@ function AdminProductsContent() {
                     </tr>
                   </tbody>
                 ) : (
-                  <VirtualizedTableBody
-                    items={filteredProducts}
-                    scrollRef={tableScrollRef}
-                    getRowClassName={(product) => `hover:bg-gray-50 ${selectedProducts.has(product.id) ? 'bg-purple-50' : ''}`}
-                    renderRow={(product) => (
-                      <>
-                        <td className="px-4 py-3">
+                  <tbody className="bg-white divide-y divide-gray-200">
+                    {filteredProducts.map((product) => (
+                      <tr
+                        key={product.id}
+                        className={`hover:bg-gray-50 ${selectedProducts.has(product.id) ? 'bg-purple-50' : ''}`}
+                      >
+                        <td className="px-3 py-3 align-middle">
                           <input
                             type="checkbox"
                             checked={selectedProducts.has(product.id)}
@@ -969,55 +1003,79 @@ function AdminProductsContent() {
                             aria-label={`Select ${product.name}`}
                           />
                         </td>
-                        <td className="px-4 py-3">
-                          <div className="flex items-center gap-3">
+                        <td className="px-4 py-3 align-middle min-w-0">
+                          <div className="flex items-center gap-3 min-w-0">
                             {product.images?.[0]?.url ? (
-                              <SafeImage src={product.images[0].url} alt={product.name} width={40} height={40} className="rounded object-cover" fallback="📦" />
+                              <SafeImage
+                                src={product.images[0].url}
+                                alt={product.name}
+                                width={40}
+                                height={40}
+                                className="h-10 w-10 shrink-0 rounded object-cover"
+                                fallback="📦"
+                              />
                             ) : (
-                              <div className="w-10 h-10 rounded bg-gray-200 flex items-center justify-center text-gray-400">📦</div>
+                              <div className="h-10 w-10 shrink-0 rounded bg-gray-200 flex items-center justify-center text-gray-400 text-sm">
+                                📦
+                              </div>
                             )}
-                            <div>
-                              <div className="text-sm font-medium text-gray-900 truncate max-w-[200px]">
+                            <div className="min-w-0 flex-1">
+                              <div className="text-sm font-medium text-gray-900 truncate">
                                 {product.isFeatured && <span className="text-yellow-500 mr-1">★</span>}
                                 {product.name}
                               </div>
-                              <div className="text-xs text-gray-500">{product.sku || product.slug}</div>
+                              <div className="text-xs text-gray-500 truncate">{product.sku || product.slug}</div>
                             </div>
                           </div>
                         </td>
-                        <td className="px-4 py-3 text-sm text-gray-900">
+                        <td className="px-4 py-3 align-middle text-right text-sm text-gray-900 tabular-nums whitespace-nowrap">
                           {formatPrice(product.price)}
                         </td>
-                        <td className="px-4 py-3">
-                          {getStockBadge(product.stock)}
-                        </td>
-                        <td className="px-4 py-3">
-                          <span className={`px-2 py-0.5 text-xs rounded ${
-                            product.status === 'ACTIVE' ? 'bg-green-100 text-green-700' :
-                            product.status === 'DRAFT' ? 'bg-yellow-100 text-yellow-700' :
-                            'bg-gray-100 text-gray-700'
-                          }`}>
+                        <td className="px-4 py-3 align-middle text-center">{getStockBadge(product.stock)}</td>
+                        <td className="px-4 py-3 align-middle">
+                          <span
+                            className={`inline-flex max-w-full px-2 py-0.5 text-xs rounded truncate ${
+                              product.status === 'ACTIVE'
+                                ? 'bg-green-100 text-green-700'
+                                : product.status === 'DRAFT'
+                                  ? 'bg-yellow-100 text-yellow-700'
+                                  : 'bg-gray-100 text-gray-700'
+                            }`}
+                          >
                             {product.status}
                           </span>
                         </td>
-                        <td className="px-4 py-3 text-sm text-gray-500">
+                        <td className="px-4 py-3 align-middle text-sm text-gray-500 whitespace-nowrap tabular-nums">
                           {new Date(product.createdAt).toLocaleDateString()}
                         </td>
-                        <td className="px-4 py-3 text-right">
-                          <div className="flex justify-end gap-1 items-center">
-                            <button onClick={() => handleEdit(product)} className="px-2 py-1 text-sm text-purple-600 hover:bg-purple-50 rounded">
+                        <td className="px-4 py-3 align-middle text-right">
+                          <div className="flex flex-wrap justify-end gap-1 items-center">
+                            <button
+                              type="button"
+                              onClick={() => handleEdit(product)}
+                              className="px-2 py-1 text-sm text-purple-600 hover:bg-purple-50 rounded whitespace-nowrap"
+                            >
                               Edit
                             </button>
-                            <button onClick={() => handleDuplicateProduct(product)} className="px-2 py-1 text-sm text-gray-600 hover:bg-gray-50 rounded" title="Duplicate">
+                            <button
+                              type="button"
+                              onClick={() => handleDuplicateProduct(product)}
+                              className="px-2 py-1 text-sm text-gray-600 hover:bg-gray-50 rounded shrink-0"
+                              title="Duplicate"
+                            >
                               📋
                             </button>
                             <select
                               value={product.status}
-                              onChange={(e) => handleStatusChange(product, e.target.value as 'ACTIVE' | 'INACTIVE' | 'DRAFT' | 'OUT_OF_STOCK')}
-                              className={`px-2 py-1 text-xs border rounded cursor-pointer font-medium ${
-                                product.status === 'ACTIVE' ? 'border-green-300 text-green-700 bg-green-50' :
-                                product.status === 'DRAFT' ? 'border-yellow-300 text-yellow-700 bg-yellow-50' :
-                                'border-gray-300 text-gray-700 bg-gray-50'
+                              onChange={(e) =>
+                                handleStatusChange(product, e.target.value as 'ACTIVE' | 'INACTIVE' | 'DRAFT' | 'OUT_OF_STOCK')
+                              }
+                              className={`max-w-full px-2 py-1 text-xs border rounded cursor-pointer font-medium ${
+                                product.status === 'ACTIVE'
+                                  ? 'border-green-300 text-green-700 bg-green-50'
+                                  : product.status === 'DRAFT'
+                                    ? 'border-yellow-300 text-yellow-700 bg-yellow-50'
+                                    : 'border-gray-300 text-gray-700 bg-gray-50'
                               }`}
                               title="Change status"
                             >
@@ -1025,14 +1083,18 @@ function AdminProductsContent() {
                               <option value="DRAFT">Draft</option>
                               <option value="INACTIVE">Inactive</option>
                             </select>
-                            <button onClick={() => handleDeleteClick(product)} className="px-2 py-1 text-sm text-red-600 hover:bg-red-50 rounded">
+                            <button
+                              type="button"
+                              onClick={() => handleDeleteClick(product)}
+                              className="px-2 py-1 text-sm text-red-600 hover:bg-red-50 rounded whitespace-nowrap"
+                            >
                               Delete
                             </button>
                           </div>
                         </td>
-                      </>
-                    )}
-                  />
+                      </tr>
+                    ))}
+                  </tbody>
                 )}
               </table>
             </div>

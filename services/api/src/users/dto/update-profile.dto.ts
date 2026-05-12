@@ -5,7 +5,9 @@ import {
   IsEnum,
   IsDateString,
   MinLength,
+  MaxLength,
   Matches,
+  ValidateIf,
 } from 'class-validator';
 
 export enum CommunicationMethod {
@@ -17,15 +19,31 @@ export enum CommunicationMethod {
 
 export class UpdateProfileDto {
   @IsOptional()
+  @ValidateIf((_o: UpdateProfileDto, v: unknown) => typeof v === 'string' && v.trim().length > 0)
   @IsString()
+  @MaxLength(50)
+  @Matches(/^[\p{L}\s\-'.]+$/u, {
+    message: 'First name must contain only letters, spaces, hyphens, or apostrophes',
+  })
   firstName?: string;
 
   @IsOptional()
+  @ValidateIf((_o: UpdateProfileDto, v: unknown) => typeof v === 'string' && v.trim().length > 0)
   @IsString()
+  @MaxLength(50)
+  @Matches(/^[\p{L}\s\-'.]+$/u, {
+    message: 'Last name must contain only letters, spaces, hyphens, or apostrophes',
+  })
   lastName?: string;
 
   @IsOptional()
+  @ValidateIf((_o: UpdateProfileDto, v: unknown) => typeof v === 'string' && v.trim().length > 0)
   @IsString()
+  @MaxLength(32)
+  @Matches(/^\+?[\d\s()-]+$/, {
+    message:
+      'Phone must contain only digits, spaces, hyphens, parentheses, and an optional leading +',
+  })
   phone?: string;
 
   @IsOptional()
@@ -42,7 +60,12 @@ export class UpdateProfileDto {
   country?: string;
 
   @IsOptional()
+  @ValidateIf((_o: UpdateProfileDto, v: unknown) => typeof v === 'string' && v.trim().length > 0)
   @IsString()
+  @MaxLength(32)
+  @Matches(/^\+?[\d\s()-]+$/, {
+    message: 'WhatsApp number must contain only digits, spaces, hyphens, parentheses, and an optional leading +',
+  })
   whatsappNumber?: string;
 
   @IsOptional()
@@ -55,10 +78,12 @@ export class UpdateProfileDto {
 
   // Marketing dates (optional for personalized campaigns)
   @IsOptional()
+  @ValidateIf((_o: UpdateProfileDto, v: unknown) => typeof v === 'string' && v.trim().length > 0)
   @IsDateString()
   birthday?: string;
 
   @IsOptional()
+  @ValidateIf((_o: UpdateProfileDto, v: unknown) => typeof v === 'string' && v.trim().length > 0)
   @IsDateString()
   anniversary?: string;
 

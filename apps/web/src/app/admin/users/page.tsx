@@ -131,36 +131,68 @@ export default function AdminUsersPage() {
   const [totalUsers, setTotalUsers] = useState(0);
   const PAGE_SIZE = 50;
 
-  const fetchUsers = useCallback(async (page = 1) => {
-    try {
-      setLoading(true);
-      setError(null);
-      const response = await apiClient.getUsers({ page, limit: PAGE_SIZE });
+  const fetchUsers = useCallback(
+    async (page = 1) => {
+      try {
+        setLoading(true);
+        setError(null);
 
-      let userList: User[] = [];
-      if (response?.data) {
-        if (Array.isArray(response.data)) {
-          userList = response.data;
-        } else if ((response.data as any)?.data && Array.isArray((response.data as any).data)) {
-          userList = (response.data as any).data;
-          const pagination = (response.data as any).pagination;
-          if (pagination) {
-            setTotalPages(pagination.totalPages ?? 1);
-            setTotalUsers(pagination.total ?? userList.length);
+        const params: Parameters<typeof apiClient.getUsers>[0] = {
+          page,
+          limit: PAGE_SIZE,
+        };
+        const q = searchTerm.trim();
+        if (q) params.search = q;
+        if (roleFilter !== 'ALL') params.role = roleFilter;
+        if (statusFilter === 'ACTIVE') params.status = 'active';
+        else if (statusFilter === 'INACTIVE') params.status = 'inactive';
+        if (showNewThisMonth) params.newThisMonth = true;
+
+        const response = await apiClient.getUsers(params);
+
+        let userList: User[] = [];
+        let paginationMeta: { total: number; totalPages: number } | null = null;
+
+        if (response?.data) {
+          if (Array.isArray(response.data)) {
+            userList = response.data;
+          } else if ((response.data as any)?.data && Array.isArray((response.data as any).data)) {
+            userList = (response.data as any).data;
+            const pagination = (response.data as any).pagination;
+            if (pagination) {
+              paginationMeta = {
+                total: pagination.total ?? userList.length,
+                totalPages: Math.max(1, pagination.totalPages ?? 1),
+              };
+            }
           }
         }
-      }
 
-      setUsers(userList);
-      setCurrentPage(page);
-    } catch (err: unknown) {
-      console.error('Error fetching users:', err);
-      setError(err instanceof Error ? err.message : 'Failed to load users');
-      setUsers([]);
-    } finally {
-      setLoading(false);
-    }
-  }, []);
+        if (paginationMeta) {
+          const { totalPages: tp, total: tu } = paginationMeta;
+          if (page > tp) {
+            await fetchUsers(tp);
+            return;
+          }
+          setTotalPages(tp);
+          setTotalUsers(tu);
+        } else {
+          setTotalPages(1);
+          setTotalUsers(userList.length);
+        }
+
+        setUsers(userList);
+        setCurrentPage(page);
+      } catch (err: unknown) {
+        console.error('Error fetching users:', err);
+        setError(err instanceof Error ? err.message : 'Failed to load users');
+        setUsers([]);
+      } finally {
+        setLoading(false);
+      }
+    },
+    [searchTerm, roleFilter, statusFilter, showNewThisMonth],
+  );
 
   const fetchStats = useCallback(async () => {
     try {
@@ -172,57 +204,33 @@ export default function AdminUsersPage() {
   }, []);
 
   useEffect(() => {
-    fetchUsers(1);
     fetchStats();
-    apiClient
+    void apiClient
       .listPermissionRoles()
       .then((res) => setPermissionRoles(res?.data || []))
       .catch(() => setPermissionRoles([]));
-  }, [fetchUsers, fetchStats]);
+  }, [fetchStats]);
 
-  // Filtered and sorted users
+  useEffect(() => {
+    const id = setTimeout(
+      () => {
+        void fetchUsers(1);
+      },
+      searchTerm.trim().length > 0 ? 300 : 0,
+    );
+    return () => clearTimeout(id);
+  }, [searchTerm, roleFilter, statusFilter, showNewThisMonth, fetchUsers]);
+
+  // Search, role, active/inactive, and new-this-month are applied server-side so totals and
+  // pagination match the table. Email verified / unverified filters are client-only (not on list API).
+  // All server-side dependencies are listed so the memo invalidates when they change.
   const filteredUsers = useMemo(() => {
     let filtered = Array.isArray(users) ? [...users] : [];
 
-    // Search
-    if (searchTerm) {
-      const term = searchTerm.toLowerCase();
-      filtered = filtered.filter(user =>
-        user.email.toLowerCase().includes(term) ||
-        `${user.firstName} ${user.lastName}`.toLowerCase().includes(term) ||
-        user.storeName?.toLowerCase().includes(term)
-      );
-    }
-
-    // Role filter
-    if (roleFilter !== 'ALL') {
-      if (roleFilter === 'SELLERS') {
-        filtered = filtered.filter(u => ['SELLER', 'B2C_SELLER', 'WHOLESALER'].includes(u.role));
-      } else if (roleFilter === 'TEAM') {
-        filtered = filtered.filter(u => ['PROCUREMENT', 'FULFILLMENT', 'CATALOG', 'MARKETING', 'FINANCE', 'CMS_EDITOR'].includes(u.role));
-      } else {
-        filtered = filtered.filter(u => u.role === roleFilter);
-      }
-    }
-
-    // Status filter
-    if (statusFilter !== 'ALL') {
-      if (statusFilter === 'ACTIVE') {
-        filtered = filtered.filter(u => u.isActive !== false);
-      } else if (statusFilter === 'INACTIVE') {
-        filtered = filtered.filter(u => u.isActive === false);
-      } else if (statusFilter === 'VERIFIED') {
-        filtered = filtered.filter(u => u.emailVerified === true);
-      } else if (statusFilter === 'UNVERIFIED') {
-        filtered = filtered.filter(u => u.emailVerified !== true);
-      }
-    }
-
-    // New this month filter — use UTC boundary to match server-side ISO timestamps
-    if (showNewThisMonth) {
-      const now = new Date();
-      const firstOfMonth = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1));
-      filtered = filtered.filter(u => new Date(u.createdAt) >= firstOfMonth);
+    if (statusFilter === 'VERIFIED') {
+      filtered = filtered.filter(u => u.emailVerified === true);
+    } else if (statusFilter === 'UNVERIFIED') {
+      filtered = filtered.filter(u => u.emailVerified !== true);
     }
 
     // Sort
@@ -253,7 +261,7 @@ export default function AdminUsersPage() {
     });
 
     return filtered;
-  }, [users, searchTerm, roleFilter, statusFilter, showNewThisMonth, sortBy, sortOrder]);
+  }, [users, statusFilter, sortBy, sortOrder, searchTerm, roleFilter, showNewThisMonth]);
 
   const handleViewDetails = (user: User) => {
     setSelectedUser(user);
@@ -287,7 +295,7 @@ export default function AdminUsersPage() {
       );
       setShowEditModal(false);
       await fetchUsers(currentPage);
-      fetchStats();
+      await fetchStats();
     } catch (err: any) {
       console.error('Error updating user:', err);
     } finally {
@@ -370,7 +378,7 @@ export default function AdminUsersPage() {
         employeeId: '',
       });
       await fetchUsers(currentPage);
-      fetchStats();
+      await fetchStats();
     } catch (err: any) {
       console.error('Error creating user:', err);
       toast.error(err.message || 'Failed to create user');
@@ -400,7 +408,7 @@ export default function AdminUsersPage() {
       );
       setShowDeleteModal(false);
       await fetchUsers(currentPage);
-      fetchStats();
+      await fetchStats();
     } catch (err: any) {
       console.error('Error deleting user:', err);
     } finally {
@@ -418,7 +426,7 @@ export default function AdminUsersPage() {
       const updatedUser = response.data;
       toast.success(updatedUser?.isActive ? 'User activated' : 'User deactivated');
       await fetchUsers(currentPage);
-      fetchStats();
+      await fetchStats();
     } catch (err: any) {
       toast.error(err.message || 'Failed to toggle user status');
     }
@@ -468,8 +476,8 @@ export default function AdminUsersPage() {
 
     toast.success(`Successfully ${action === 'delete' ? 'deleted' : action === 'activate' ? 'activated' : 'deactivated'} ${success} users`);
     setSelectedUsers(new Set());
-    fetchUsers(currentPage);
-    fetchStats();
+    await fetchUsers(currentPage);
+    await fetchStats();
   };
 
   const toggleSelection = (id: string) => {
@@ -517,6 +525,10 @@ export default function AdminUsersPage() {
     { key: 'createdAt', header: 'Created', format: (v: string) => v ? new Date(v).toLocaleDateString() : '' },
     { key: 'lastLoginAt', header: 'Last Login', format: (v: string) => v ? new Date(v).toLocaleDateString() : 'Never' },
   ];
+
+  const tableUsesEmailVerifiedFilter = statusFilter === 'VERIFIED' || statusFilter === 'UNVERIFIED';
+  const displayedListCount = tableUsesEmailVerifiedFilter ? filteredUsers.length : totalUsers;
+  const showPagination = !tableUsesEmailVerifiedFilter && totalPages > 1;
 
   return (
     <RouteGuard allowedRoles={['ADMIN']} showAccessDenied={true}>
@@ -732,9 +744,16 @@ export default function AdminUsersPage() {
           {/* Users Table */}
           {!loading && filteredUsers.length > 0 && (
             <div className="bg-white rounded-lg shadow overflow-hidden">
-              <div className="p-4 border-b flex justify-between items-center">
-                <h2 className="font-semibold">Users ({totalUsers})</h2>
-                <button onClick={selectAll} className="text-sm text-purple-600 hover:text-purple-800">
+              <div className="p-4 border-b flex justify-between items-start gap-4">
+                <div>
+                  <h2 className="font-semibold">Users ({displayedListCount})</h2>
+                  {tableUsesEmailVerifiedFilter && (
+                    <p className="text-xs text-gray-500 mt-0.5">
+                      Email verification is filtered on the loaded page only; totals above reflect the full directory.
+                    </p>
+                  )}
+                </div>
+                <button onClick={selectAll} className="text-sm text-purple-600 hover:text-purple-800 shrink-0">
                   {selectedUsers.size === filteredUsers.length ? 'Deselect All' : 'Select All'}
                 </button>
               </div>
@@ -850,10 +869,10 @@ export default function AdminUsersPage() {
                   />
                 </table>
               </div>
-              {totalPages > 1 && (
+              {showPagination && (
                 <div className="flex items-center justify-between px-4 py-3 border-t text-sm">
                   <span className="text-gray-500">
-                    Page {currentPage} of {totalPages} ({totalUsers} total)
+                    Page {currentPage} of {totalPages} ({totalUsers} matching)
                   </span>
                   <div className="flex gap-2">
                     <button

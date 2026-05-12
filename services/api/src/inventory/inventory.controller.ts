@@ -10,7 +10,7 @@ import {
 import { InventoryService } from './inventory.service';
 import { WarehouseRoutingService } from './warehouse-routing.service';
 import { GeocodingService } from './geocoding.service';
-import { CreateWarehouseDto } from './dto/create-warehouse.dto';
+import { CreateWarehouseDto, UpdateWarehouseDto } from './dto/create-warehouse.dto';
 import { CreateInventoryLocationDto } from './dto/create-inventory-location.dto';
 import { ReserveStockDto } from './dto/reserve-stock.dto';
 import { CreateStockTransferDto } from './dto/create-stock-transfer.dto';
@@ -607,7 +607,7 @@ export class InventoryController {
   @SwaggerApiResponse({ status: 404, description: 'Warehouse not found' })
   async updateWarehouse(
     @Param('id') id: string,
-    @Body() updateDto: Partial<CreateWarehouseDto>,
+    @Body() updateDto: UpdateWarehouseDto,
   ): Promise<ApiResponse<any>> {
     const warehouse = await this.inventoryService.updateWarehouse(id, updateDto);
     return {

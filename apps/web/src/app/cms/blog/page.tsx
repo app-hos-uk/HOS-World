@@ -6,6 +6,8 @@ import { CMSLayout } from '@/components/CMSLayout';
 import Image from 'next/image';
 import { apiClient } from '@/lib/api';
 import { useToast } from '@/hooks/useToast';
+import { CmsPortalErrorBanner } from '@/components/CmsPortalErrorBanner';
+import { cmsActionToastMessage, cmsLoadingErrorMessage } from '@/lib/cmsPortalFeedback';
 
 export default function CMSBlogPage() {
   const toast = useToast();
@@ -40,9 +42,9 @@ export default function CMSBlogPage() {
       } else {
         setPosts([]);
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Error loading blog posts:', err);
-      setError(err.message || 'Failed to load blog posts');
+      setError(cmsLoadingErrorMessage(err));
       setPosts([]);
     } finally {
       setLoading(false);
@@ -66,8 +68,8 @@ export default function CMSBlogPage() {
         author: '',
       });
       loadBlogPosts();
-    } catch (err: any) {
-      toast.error(err.message || 'Failed to create blog post');
+    } catch (err: unknown) {
+      toast.error(cmsActionToastMessage(err, 'Failed to create blog post'));
     } finally {
       setCreatingPost(false);
     }
@@ -105,8 +107,8 @@ export default function CMSBlogPage() {
         author: '',
       });
       loadBlogPosts();
-    } catch (err: any) {
-      toast.error(err.message || 'Failed to update blog post');
+    } catch (err: unknown) {
+      toast.error(cmsActionToastMessage(err, 'Failed to update blog post'));
     } finally {
       setUpdatingPost(false);
     }
@@ -120,8 +122,8 @@ export default function CMSBlogPage() {
       await apiClient.deleteCMSBlogPost(post.id);
       toast.success('Blog post deleted successfully');
       loadBlogPosts();
-    } catch (err: any) {
-      toast.error(err.message || 'Failed to delete blog post');
+    } catch (err: unknown) {
+      toast.error(cmsActionToastMessage(err, 'Failed to delete blog post'));
     }
   };
 
@@ -135,8 +137,8 @@ export default function CMSBlogPage() {
         toast.success('Blog post published');
       }
       loadBlogPosts();
-    } catch (err: any) {
-      toast.error(err.message || 'Failed to update publish status');
+    } catch (err: unknown) {
+      toast.error(cmsActionToastMessage(err, 'Failed to update publish status'));
     }
   };
 
@@ -166,11 +168,7 @@ export default function CMSBlogPage() {
             </button>
           </div>
 
-          {error && (
-            <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-              <p className="text-red-800">Error: {error}</p>
-            </div>
-          )}
+          <CmsPortalErrorBanner message={error} />
 
           {showEditForm && editingPostId && (
             <div className="bg-white rounded-lg shadow p-6">

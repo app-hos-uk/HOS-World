@@ -1048,6 +1048,10 @@ export class AuthService {
       throw new BadRequestException('Current password is incorrect');
     }
 
+    if (newPassword === currentPassword) {
+      throw new BadRequestException('New password must be different from your current password');
+    }
+
     const hashedPassword = await bcrypt.hash(newPassword, BCRYPT_PASSWORD_ROUNDS);
     await this.prisma.user.update({
       where: { id: userId },

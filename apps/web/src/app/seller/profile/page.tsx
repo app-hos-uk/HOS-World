@@ -8,6 +8,14 @@ import { apiClient } from '@/lib/api';
 import { getSellerMenuItems } from '@/lib/sellerMenu';
 import { useToast } from '@/hooks/useToast';
 import { SafeImage } from '@/components/SafeImage';
+import {
+  optionalLabelRequiresLettersOk,
+  optionalPhoneOk,
+  optionalPostalCodeOk,
+  sanitizeOpsPhoneInput,
+  sanitizePostalInput,
+  SELLER_PROFILE_HINTS,
+} from '@/lib/sellerProfileFieldValidation';
 
 interface SellerProfile {
   id: string;
@@ -138,6 +146,14 @@ export default function SellerProfilePage() {
   };
 
   const handleSaveBusinessInfo = async () => {
+    if (!optionalLabelRequiresLettersOk(businessForm.legalBusinessName)) {
+      toast.error(SELLER_PROFILE_HINTS.labelLetters('Legal business name'));
+      return;
+    }
+    if (!optionalLabelRequiresLettersOk(businessForm.city)) {
+      toast.error(SELLER_PROFILE_HINTS.labelLetters('City'));
+      return;
+    }
     try {
       setSaving(true);
       await apiClient.updateSellerProfile(businessForm);
@@ -152,6 +168,14 @@ export default function SellerProfilePage() {
   };
 
   const handleSaveBankDetails = async () => {
+    if (bankForm.bankName.trim() && !optionalLabelRequiresLettersOk(bankForm.bankName)) {
+      toast.error(SELLER_PROFILE_HINTS.labelLetters('Bank name'));
+      return;
+    }
+    if (bankForm.accountHolder.trim() && !optionalLabelRequiresLettersOk(bankForm.accountHolder)) {
+      toast.error(SELLER_PROFILE_HINTS.labelLetters('Account holder name'));
+      return;
+    }
     try {
       setSaving(true);
       // Only send if user entered new values
@@ -174,6 +198,14 @@ export default function SellerProfilePage() {
   };
 
   const handleSaveOpsContact = async () => {
+    if (!optionalLabelRequiresLettersOk(opsForm.opsContactName)) {
+      toast.error(SELLER_PROFILE_HINTS.labelLetters('Contact name'));
+      return;
+    }
+    if (!optionalPhoneOk(opsForm.opsContactPhone)) {
+      toast.error(SELLER_PROFILE_HINTS.phone);
+      return;
+    }
     try {
       setSaving(true);
       await apiClient.updateSellerProfile(opsForm);
@@ -187,6 +219,18 @@ export default function SellerProfilePage() {
   };
 
   const handleSaveWarehouse = async () => {
+    if (!optionalLabelRequiresLettersOk(warehouseForm.city)) {
+      toast.error(SELLER_PROFILE_HINTS.labelLetters('City'));
+      return;
+    }
+    if (!optionalLabelRequiresLettersOk(warehouseForm.state)) {
+      toast.error(SELLER_PROFILE_HINTS.labelLetters('State'));
+      return;
+    }
+    if (!optionalPostalCodeOk(warehouseForm.postalCode)) {
+      toast.error(SELLER_PROFILE_HINTS.postal);
+      return;
+    }
     try {
       setSaving(true);
       await apiClient.updateSellerProfile({ warehouseAddress: warehouseForm });
@@ -508,8 +552,15 @@ export default function SellerProfilePage() {
                       <label className="block text-sm font-medium text-gray-700 mb-1">Contact Phone</label>
                       <input
                         type="tel"
+                        inputMode="tel"
+                        autoComplete="tel"
                         value={opsForm.opsContactPhone}
-                        onChange={(e) => setOpsForm({ ...opsForm, opsContactPhone: e.target.value })}
+                        onChange={(e) =>
+                          setOpsForm({
+                            ...opsForm,
+                            opsContactPhone: sanitizeOpsPhoneInput(e.target.value),
+                          })
+                        }
                         placeholder="+1 555 123 4567"
                         className="w-full px-4 py-2 border border-gray-300 rounded-lg"
                       />
@@ -569,8 +620,15 @@ export default function SellerProfilePage() {
                       <label className="block text-sm font-medium text-gray-700 mb-1">Postal Code</label>
                       <input
                         type="text"
+                        inputMode="text"
+                        autoComplete="postal-code"
                         value={warehouseForm.postalCode}
-                        onChange={(e) => setWarehouseForm({ ...warehouseForm, postalCode: e.target.value })}
+                        onChange={(e) =>
+                          setWarehouseForm({
+                            ...warehouseForm,
+                            postalCode: sanitizePostalInput(e.target.value),
+                          })
+                        }
                         className="w-full px-4 py-2 border border-gray-300 rounded-lg"
                       />
                     </div>

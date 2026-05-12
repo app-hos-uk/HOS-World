@@ -671,7 +671,9 @@ export class AdminProductsService {
     page?: number;
     limit?: number;
   }) {
-    const where: any = {};
+    const where: any = {
+      deletedAt: null,
+    };
 
     if (filters?.sellerId) {
       where.sellerId = filters.sellerId;

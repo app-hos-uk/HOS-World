@@ -38,6 +38,7 @@ function extractOrdersFromApiResponse(res: unknown): {
 interface Order {
   id: string;
   orderNumber?: string;
+  parentOrderId?: string | null;
   user?: { email: string; firstName?: string; lastName?: string };
   customer?: { email: string };
   total: number;
@@ -159,15 +160,18 @@ export default function AdminOrdersPage() {
 
       setOrders(orderList);
 
+      // Checkout-level orders only (exclude multi-vendor child rows) — matches admin dashboard & revenue math
+      const checkoutOrders = orderList.filter((o) => !o.parentOrderId);
+
       const st = (o: Order) => normalizeOrderStatus(o.status);
 
-      const pendingCount = orderList.filter((o) => st(o) === 'pending').length;
-      const confirmedCount = orderList.filter((o) => st(o) === 'confirmed').length;
-      const processingCount = orderList.filter((o) => st(o) === 'processing').length;
-      const shippedCount = orderList.filter((o) => st(o) === 'shipped').length;
-      const completedCount = orderList.filter((o) => st(o) === 'delivered').length;
-      const cancelledCount = orderList.filter((o) => ['cancelled', 'refunded'].includes(st(o))).length;
-      const totalRevenue = orderList
+      const pendingCount = checkoutOrders.filter((o) => st(o) === 'pending').length;
+      const confirmedCount = checkoutOrders.filter((o) => st(o) === 'confirmed').length;
+      const processingCount = checkoutOrders.filter((o) => st(o) === 'processing').length;
+      const shippedCount = checkoutOrders.filter((o) => st(o) === 'shipped').length;
+      const completedCount = checkoutOrders.filter((o) => st(o) === 'delivered').length;
+      const cancelledCount = checkoutOrders.filter((o) => ['cancelled', 'refunded'].includes(st(o))).length;
+      const totalRevenue = checkoutOrders
         .filter((o) => !['cancelled', 'refunded'].includes(st(o)))
         .reduce((sum: number, o: Order) => sum + (Number(o.total) || 0), 0);
 

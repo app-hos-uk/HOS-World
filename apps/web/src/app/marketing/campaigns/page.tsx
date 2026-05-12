@@ -1,6 +1,7 @@
 'use client';
 
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, Suspense } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { RouteGuard } from '@/components/RouteGuard';
 import { DashboardLayout } from '@/components/DashboardLayout';
 import { apiClient } from '@/lib/api';
@@ -68,7 +69,8 @@ const FILTER_TABS: { label: string; value: CampaignStatus | 'ALL' }[] = [
   { label: 'Completed', value: 'COMPLETED' },
 ];
 
-export default function MarketingCampaignsPage() {
+function MarketingCampaignsPageContent() {
+  const searchParams = useSearchParams();
   const [campaigns, setCampaigns] = useState<Campaign[]>([]);
   const [influencers, setInfluencers] = useState<InfluencerOption[]>([]);
   const [loading, setLoading] = useState(true);
@@ -83,6 +85,20 @@ export default function MarketingCampaignsPage() {
 
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
   const [deleteLoading, setDeleteLoading] = useState(false);
+
+  useEffect(() => {
+    const raw = searchParams.get('status');
+    const s = raw?.toUpperCase();
+    if (
+      s === 'ALL' ||
+      s === 'DRAFT' ||
+      s === 'ACTIVE' ||
+      s === 'PAUSED' ||
+      s === 'COMPLETED'
+    ) {
+      setStatusFilter(s as CampaignStatus | 'ALL');
+    }
+  }, [searchParams]);
 
   const fetchCampaigns = useCallback(async (showLoading = true) => {
     try {
@@ -260,7 +276,6 @@ export default function MarketingCampaignsPage() {
   ];
 
   return (
-    <RouteGuard allowedRoles={['MARKETING', 'ADMIN']} showAccessDenied={true}>
       <DashboardLayout
         role="MARKETING"
         menuItems={menuItems}
@@ -601,6 +616,21 @@ export default function MarketingCampaignsPage() {
           </div>
         )}
       </DashboardLayout>
+  );
+}
+
+export default function MarketingCampaignsPage() {
+  return (
+    <RouteGuard allowedRoles={['MARKETING', 'ADMIN']} showAccessDenied={true}>
+      <Suspense
+        fallback={
+          <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600" aria-hidden />
+          </div>
+        }
+      >
+        <MarketingCampaignsPageContent />
+      </Suspense>
     </RouteGuard>
   );
 }

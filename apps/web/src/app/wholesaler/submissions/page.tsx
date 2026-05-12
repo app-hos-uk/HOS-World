@@ -5,13 +5,23 @@ import { RouteGuard } from '@/components/RouteGuard';
 import { DashboardLayout } from '@/components/DashboardLayout';
 import { apiClient } from '@/lib/api';
 import { getSellerMenuItems } from '@/lib/sellerMenu';
+import { useToast } from '@/hooks/useToast';
 import Link from 'next/link';
+
+function canSellerEditSubmission(status: string): boolean {
+  return ['SUBMITTED', 'UNDER_REVIEW', 'PROCUREMENT_REJECTED'].includes(status);
+}
+
+function canSellerDeleteSubmission(status: string): boolean {
+  return ['SUBMITTED', 'UNDER_REVIEW', 'PROCUREMENT_REJECTED', 'REJECTED'].includes(status);
+}
 
 export default function WholesalerSubmissionsPage() {
   const [submissions, setSubmissions] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [statusFilter, setStatusFilter] = useState<string>('');
+  const toast = useToast();
 
   const menuItems = getSellerMenuItems(true);
 
@@ -170,12 +180,48 @@ export default function WholesalerSubmissionsPage() {
                           {new Date(submission.createdAt).toLocaleDateString()}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                          <Link
-                            href={`/wholesaler/submit-product?id=${submission.id}`}
-                            className="text-purple-600 hover:text-purple-900"
-                          >
-                            View
-                          </Link>
+                          <div className="flex flex-wrap items-center gap-3">
+                            <Link
+                              href={`/wholesaler/submit-product?id=${submission.id}`}
+                              className="text-purple-600 hover:text-purple-900"
+                            >
+                              View
+                            </Link>
+                            {canSellerEditSubmission(submission.status) && (
+                              <Link
+                                href={`/wholesaler/submit-product?edit=${submission.id}`}
+                                className="text-gray-700 hover:text-gray-900"
+                              >
+                                Edit
+                              </Link>
+                            )}
+                            {canSellerDeleteSubmission(submission.status) && (
+                              <button
+                                type="button"
+                                onClick={async () => {
+                                  if (
+                                    !window.confirm(
+                                      'Remove this submission? This cannot be undone.',
+                                    )
+                                  ) {
+                                    return;
+                                  }
+                                  try {
+                                    await apiClient.deleteSubmission(submission.id);
+                                    toast.success('Submission deleted');
+                                    fetchSubmissions();
+                                  } catch (err: unknown) {
+                                    const msg =
+                                      err instanceof Error ? err.message : 'Failed to delete submission';
+                                    toast.error(msg);
+                                  }
+                                }}
+                                className="text-red-600 hover:text-red-800"
+                              >
+                                Delete
+                              </button>
+                            )}
+                          </div>
                         </td>
                       </tr>
                     ))}

@@ -5,13 +5,17 @@ import { RouteGuard } from '@/components/RouteGuard';
 import { DashboardLayout } from '@/components/DashboardLayout';
 import { apiClient } from '@/lib/api';
 import toast from 'react-hot-toast';
+import { validateFulfillmentCenterFields } from '@/lib/fulfillmentCenterFormValidation';
 
 interface FulfillmentCenter {
   id: string;
   name: string;
   address: string;
-  status: 'ACTIVE' | 'INACTIVE';
-  capacity: number;
+  city?: string;
+  country?: string;
+  status?: 'ACTIVE' | 'INACTIVE';
+  isActive?: boolean;
+  capacity: number | null;
   createdAt?: string;
   updatedAt?: string;
 }
@@ -49,11 +53,14 @@ export default function FulfillmentCentersPage() {
         setError(null);
       }
       const response = await apiClient.getFulfillmentCenters();
-      if (response?.data) {
-        setCenters(response.data);
-      } else if (showLoading) {
-        setError('Failed to load fulfillment centers');
+      const raw = response?.data as any;
+      let list: FulfillmentCenter[] = [];
+      if (Array.isArray(raw)) {
+        list = raw;
+      } else if (raw && typeof raw === 'object' && Array.isArray(raw.data)) {
+        list = raw.data;
       }
+      setCenters(list);
     } catch (err: any) {
       console.error('Error fetching fulfillment centers:', err);
       if (showLoading) setError(err.message || 'Failed to load fulfillment centers');
@@ -74,7 +81,13 @@ export default function FulfillmentCentersPage() {
 
   const openEditModal = (center: FulfillmentCenter) => {
     setEditingCenter(center);
-    setFormData({ name: center.name, address: center.address, city: (center as any).city || '', country: (center as any).country || '', capacity: center.capacity });
+    setFormData({
+      name: center.name,
+      address: center.address,
+      city: (center as any).city || '',
+      country: (center as any).country || '',
+      capacity: center.capacity ?? 0,
+    });
     setShowModal(true);
   };
 
@@ -92,6 +105,15 @@ export default function FulfillmentCentersPage() {
     }
     if (formData.capacity < 0) {
       toast.error('Capacity must be a positive number');
+      return;
+    }
+    const fieldErr = validateFulfillmentCenterFields({
+      name: formData.name,
+      city: formData.city,
+      country: formData.country,
+    });
+    if (fieldErr) {
+      toast.error(fieldErr);
       return;
     }
 
@@ -130,7 +152,9 @@ export default function FulfillmentCentersPage() {
   };
 
   const handleToggleStatus = async (center: FulfillmentCenter) => {
-    const newActive = center.status !== 'ACTIVE';
+    const currentActive =
+      center.isActive !== undefined ? center.isActive === true : center.status === 'ACTIVE';
+    const newActive = !currentActive;
     try {
       await apiClient.updateFulfillmentCenter(center.id, { isActive: newActive });
       toast.success(`Center ${newActive ? 'activated' : 'deactivated'}`);
@@ -199,7 +223,10 @@ export default function FulfillmentCentersPage() {
 
         {!loading && !error && centers.length > 0 && (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {centers.map((center) => (
+            {centers.map((center) => {
+              const isActive =
+                center.isActive !== undefined ? center.isActive !== false : center.status === 'ACTIVE';
+              return (
               <div
                 key={center.id}
                 className="bg-white border border-gray-200 rounded-lg p-6 shadow-sm hover:shadow-md transition-shadow"
@@ -208,12 +235,12 @@ export default function FulfillmentCentersPage() {
                   <h3 className="text-lg font-semibold text-gray-900 flex-1 mr-2">{center.name}</h3>
                   <span
                     className={`px-2 py-1 text-xs font-medium rounded-full ${
-                      center.status === 'ACTIVE'
+                      isActive
                         ? 'bg-green-100 text-green-800'
                         : 'bg-gray-100 text-gray-600'
                     }`}
                   >
-                    {center.status}
+                    {isActive ? 'ACTIVE' : 'INACTIVE'}
                   </span>
                 </div>
 
@@ -224,7 +251,7 @@ export default function FulfillmentCentersPage() {
                   </div>
                   <div className="flex items-center gap-2 text-sm text-gray-600">
                     <span className="shrink-0">📦</span>
-                    <span>Capacity: {center.capacity.toLocaleString()}</span>
+                    <span>Capacity: {(center.capacity ?? 0).toLocaleString()}</span>
                   </div>
                   {center.createdAt && (
                     <div className="flex items-center gap-2 text-xs text-gray-400">
@@ -237,12 +264,12 @@ export default function FulfillmentCentersPage() {
                   <button
                     onClick={() => handleToggleStatus(center)}
                     className={`px-3 py-1.5 text-xs font-medium rounded-lg transition-colors ${
-                      center.status === 'ACTIVE'
+                      isActive
                         ? 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                         : 'bg-green-100 text-green-700 hover:bg-green-200'
                     }`}
                   >
-                    {center.status === 'ACTIVE' ? 'Deactivate' : 'Activate'}
+                    {isActive ? 'Deactivate' : 'Activate'}
                   </button>
                   <button
                     onClick={() => openEditModal(center)}
@@ -276,7 +303,8 @@ export default function FulfillmentCentersPage() {
                   )}
                 </div>
               </div>
-            ))}
+            );
+            })}
           </div>
         )}
 

@@ -79,8 +79,13 @@ export default function AdminReviewsPage() {
       setLoading(true);
       setError(null);
       
-      const response = await apiClient.getProductReviews(productId);
-      const reviewList = Array.isArray(response?.data) ? response.data : [];
+      const response = await apiClient.getProductReviews(productId, { page: 1, limit: 500 });
+      const rawList = Array.isArray(response?.data) ? response.data : [];
+      const reviewList: Review[] = rawList.map((r: any) => ({
+        ...r,
+        isVerifiedPurchase: r.isVerifiedPurchase ?? r.verified,
+        helpfulCount: r.helpfulCount ?? r.helpful ?? 0,
+      }));
       setReviews(reviewList);
       
       // Calculate stats

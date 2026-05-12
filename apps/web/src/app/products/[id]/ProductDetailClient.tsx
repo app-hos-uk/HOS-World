@@ -18,6 +18,16 @@ function isUuid(s: string): boolean {
   return UUID_REGEX.test(s);
 }
 
+/** Backend returns `{ reviews, pagination }` under `data`, not a bare array */
+function extractProductReviews(payload: unknown): any[] {
+  if (!payload) return [];
+  if (Array.isArray(payload)) return payload;
+  if (typeof payload === 'object' && payload !== null && Array.isArray((payload as { reviews?: unknown }).reviews)) {
+    return (payload as { reviews: any[] }).reviews;
+  }
+  return [];
+}
+
 export default function ProductDetailClient() {
   const params = useParams();
   const productIdOrSlug = params.id as string;
@@ -71,16 +81,19 @@ export default function ProductDetailClient() {
   }, [productIdOrSlug]);
 
   useEffect(() => {
+    setIsInWishlist(false);
+  }, [productIdOrSlug]);
+
+  useEffect(() => {
     if (!product?.id) return;
     let cancelled = false;
     const fetchReviews = async () => {
       try {
         setReviewsLoading(true);
         const response = await apiClient.getProductReviews(product.id);
-        if (!cancelled && response?.data && Array.isArray(response.data)) {
-          setReviews(response.data);
-        } else if (!cancelled) {
-          setReviews([]);
+        if (!cancelled) {
+          const list = extractProductReviews(response?.data);
+          setReviews(list);
         }
       } catch (err: any) {
         if (!cancelled) {
@@ -210,9 +223,7 @@ export default function ProductDetailClient() {
       setReviewForm({ rating: 5, comment: '', title: '' });
       // Refresh reviews
       const reviewsResponse = await apiClient.getProductReviews(product.id);
-      if (reviewsResponse?.data && Array.isArray(reviewsResponse.data)) {
-        setReviews(reviewsResponse.data);
-      }
+      setReviews(extractProductReviews(reviewsResponse?.data));
       // Refresh product to update rating
       const productResponse = isUuid(productIdOrSlug)
         ? await apiClient.getProduct(productIdOrSlug)

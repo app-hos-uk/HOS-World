@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { useTheme } from '@hos-marketplace/theme-system';
-import { useState } from 'react';
+import { useState, Suspense } from 'react';
 import { usePathname } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import { useCart } from '@/contexts/CartContext';
@@ -175,7 +175,9 @@ export function Header() {
                 >
                   Fandoms
                 </Link>
-                <SearchBar compact />
+                <Suspense fallback={<div className="w-full max-w-xs lg:max-w-sm h-9 bg-gray-50 border border-gray-200 rounded-lg animate-pulse" aria-hidden />}>
+                  <SearchBar compact />
+                </Suspense>
               </>
             )}
             {/* Wishlist, My Orders, Cart: always visible for CUSTOMER (storefront and dashboard) so nav works */}
@@ -183,16 +185,22 @@ export function Header() {
               <>
                 <Link 
                   href="/wishlist" 
-                  className="text-sm lg:text-base text-purple-700 hover:text-amber-600 font-medium font-secondary transition-colors duration-300"
+                  className="inline-flex items-center gap-1.5 text-sm lg:text-base text-purple-700 hover:text-amber-600 font-medium font-secondary transition-colors duration-300"
                   title="Wishlist"
                 >
-                  ❤️ Wishlist
+                  <span className="text-base leading-none w-6 flex justify-center shrink-0" aria-hidden>
+                    ❤️
+                  </span>
+                  <span>Wishlist</span>
                 </Link>
                 <Link 
                   href="/orders" 
-                  className="text-sm lg:text-base text-purple-700 hover:text-amber-600 font-medium font-secondary transition-colors duration-300"
+                  className="inline-flex items-center gap-1.5 text-sm lg:text-base text-purple-700 hover:text-amber-600 font-medium font-secondary transition-colors duration-300"
                 >
-                  My Orders
+                  <span className="text-base leading-none w-6 flex justify-center shrink-0" aria-hidden>
+                    📋
+                  </span>
+                  <span>My Orders</span>
                 </Link>
                 <Link 
                   href="/cart" 
@@ -315,7 +323,9 @@ export function Header() {
               {isCustomerRole && (
                 <>
                   <div className="px-2 py-2">
-                    <SearchBar compact />
+                    <Suspense fallback={<div className="w-full h-9 bg-gray-50 border border-gray-200 rounded-lg animate-pulse" aria-hidden />}>
+                      <SearchBar compact />
+                    </Suspense>
                   </div>
                   <Link 
                     href="/products" 
@@ -339,16 +349,18 @@ export function Header() {
                   <Link 
                     href="/wishlist" 
                     onClick={() => setIsMobileMenuOpen(false)}
-                    className="text-base text-purple-700 hover:text-amber-600 font-medium font-secondary transition-colors duration-300 py-2 px-2 rounded-lg hover:bg-purple-50"
+                    className="inline-flex items-center gap-2 text-base text-purple-700 hover:text-amber-600 font-medium font-secondary transition-colors duration-300 py-2 px-2 rounded-lg hover:bg-purple-50"
                   >
-                    ❤️ Wishlist
+                    <span className="w-6 flex justify-center shrink-0" aria-hidden>❤️</span>
+                    <span>Wishlist</span>
                   </Link>
                   <Link 
                     href="/orders" 
                     onClick={() => setIsMobileMenuOpen(false)}
-                    className="text-base text-purple-700 hover:text-amber-600 font-medium font-secondary transition-colors duration-300 py-2 px-2 rounded-lg hover:bg-purple-50"
+                    className="inline-flex items-center gap-2 text-base text-purple-700 hover:text-amber-600 font-medium font-secondary transition-colors duration-300 py-2 px-2 rounded-lg hover:bg-purple-50"
                   >
-                    My Orders
+                    <span className="w-6 flex justify-center shrink-0" aria-hidden>📋</span>
+                    <span>My Orders</span>
                   </Link>
                   <Link 
                     href="/cart" 

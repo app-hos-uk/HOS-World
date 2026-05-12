@@ -237,19 +237,27 @@ export default function WholesalerDashboardPage() {
             </div>
 
             <div className="mt-6 bg-white border rounded-lg p-6 shadow-sm">
-              <div className="flex items-center justify-between">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                 <div>
-                  <h3 className="text-lg font-semibold mb-1">Wholesale Operations</h3>
+                  <h3 className="text-lg font-semibold mb-1">Wholesale operations</h3>
                   <p className="text-gray-600">
-                    Manage bulk product submissions and wholesale orders
+                    Submit one product for review, or import many at once from a CSV file.
                   </p>
                 </div>
-                <Link
-                  href="/wholesaler/submit-product"
-                  className="px-6 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors font-medium"
-                >
-                  Submit Bulk Product
-                </Link>
+                <div className="flex flex-wrap gap-2 shrink-0">
+                  <Link
+                    href="/wholesaler/bulk"
+                    className="px-6 py-3 border-2 border-purple-600 text-purple-700 rounded-lg hover:bg-purple-50 transition-colors font-medium text-center"
+                  >
+                    Bulk upload (CSV)
+                  </Link>
+                  <Link
+                    href="/wholesaler/submit-product"
+                    className="px-6 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors font-medium text-center"
+                  >
+                    Submit single product
+                  </Link>
+                </div>
               </div>
             </div>
           </>

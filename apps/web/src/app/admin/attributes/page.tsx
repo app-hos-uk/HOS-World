@@ -177,12 +177,14 @@ export default function AdminAttributesPage() {
   const fetchAttributeValues = async (attributeId: string) => {
     try {
       const response = await apiClient.getAttributeValues(attributeId);
-      if (response?.data) {
-        const updated = attributes.map((attr) =>
-          attr.id === attributeId ? { ...attr, values: response.data } : attr
+      const list = Array.isArray(response?.data) ? response.data : [];
+      setAttributes((prev) => {
+        const next = prev.map((attr) =>
+          attr.id === attributeId ? { ...attr, values: list } : attr
         );
-        setAttributes(updated);
-      }
+        calculateStats(next);
+        return next;
+      });
     } catch (err: any) {
       console.error('Error fetching attribute values:', err);
     }

@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { useRouter } from 'next/navigation';
+import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { useTheme } from '@hos-marketplace/theme-system';
 import { apiClient } from '@/lib/api';
 
@@ -52,6 +52,10 @@ interface SearchBarProps {
 }
 
 export function SearchBar({ compact = false }: SearchBarProps) {
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const productsUrlQuery = pathname === '/products' ? (searchParams.get('q') ?? '') : '';
+
   const [query, setQuery] = useState('');
   const [results, setResults] = useState<InstantProduct[]>([]);
   const [suggestions, setSuggestions] = useState<string[]>([]);
@@ -79,6 +83,27 @@ export function SearchBar({ compact = false }: SearchBarProps) {
   const totalItems = showingRecent
     ? recentSearches.length
     : displayedSuggestionsCount + results.length + (query.trim().length >= 2 ? 1 : 0);
+
+  useEffect(() => {
+    if (pathname === '/products') {
+      setQuery(productsUrlQuery);
+    }
+  }, [pathname, productsUrlQuery]);
+
+  const replaceProductsSearch = useCallback(
+    (nextQuery: string | null) => {
+      const params = new URLSearchParams(searchParams.toString());
+      params.delete('page');
+      if (nextQuery && nextQuery.trim()) {
+        params.set('q', nextQuery.trim());
+      } else {
+        params.delete('q');
+      }
+      const qs = params.toString();
+      router.replace(`/products${qs ? `?${qs}` : ''}`, { scroll: false });
+    },
+    [router, searchParams],
+  );
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -155,12 +180,23 @@ export function SearchBar({ compact = false }: SearchBarProps) {
   }, [query]);
 
   const navigateToSearch = useCallback((term: string) => {
-    if (!term.trim()) return;
-    saveRecentSearch(term.trim());
+    const t = term.trim();
+    if (!t) {
+      if (pathname === '/products') {
+        setShowDropdown(false);
+        replaceProductsSearch(null);
+      }
+      return;
+    }
+    saveRecentSearch(t);
     setShowDropdown(false);
-    setQuery(term.trim());
-    router.push(`/products?q=${encodeURIComponent(term.trim())}`);
-  }, [router]);
+    setQuery(t);
+    if (pathname === '/products') {
+      replaceProductsSearch(t);
+    } else {
+      router.push(`/products?q=${encodeURIComponent(t)}`);
+    }
+  }, [router, pathname, replaceProductsSearch]);
 
   const navigateToProduct = useCallback((id: string) => {
     setShowDropdown(false);
@@ -241,6 +277,9 @@ export function SearchBar({ compact = false }: SearchBarProps) {
               const sanitized = e.target.value.replace(/[<>]/g, '');
               setQuery(sanitized);
               setHighlightIndex(-1);
+              if (pathname === '/products' && !sanitized.trim()) {
+                replaceProductsSearch(null);
+              }
             }}
             onFocus={handleFocus}
             onKeyDown={handleKeyDown}

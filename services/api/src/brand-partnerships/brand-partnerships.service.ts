@@ -134,6 +134,17 @@ export class BrandPartnershipsService {
     });
   }
 
+  async restorePartnership(id: string): Promise<BrandPartnership> {
+    const p = await this.ensurePartnership(id);
+    if (p.status !== 'ARCHIVED') {
+      throw new BadRequestException('Only ARCHIVED partnerships can be restored');
+    }
+    return this.prisma.brandPartnership.update({
+      where: { id },
+      data: { status: 'ACTIVE' },
+    });
+  }
+
   // ── Campaign CRUD ──
 
   async createCampaign(partnershipId: string, dto: CreateBrandCampaignDto): Promise<BrandCampaign> {

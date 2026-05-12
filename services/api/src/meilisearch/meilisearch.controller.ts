@@ -3,12 +3,14 @@ import {
   Get,
   Post,
   Query,
+  Req,
   ParseIntPipe,
   DefaultValuePipe,
   UseGuards,
   HttpCode,
   HttpStatus,
 } from '@nestjs/common';
+import type { Request } from 'express';
 import {
   ApiTags,
   ApiOperation,
@@ -22,6 +24,19 @@ import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../common/guards/roles.guard';
 import { Roles } from '../common/decorators/roles.decorator';
 import type { ApiResponse } from '@hos-marketplace/shared-types';
+
+/** Collect repeated query keys (?fandom=a&fandom=b) correctly with Express typings */
+function repeatedQueryValues(query: Request['query'], key: string): string[] {
+  const raw = query[key];
+  if (raw === undefined) return [];
+  if (typeof raw === 'string') return raw.trim() ? [raw.trim()] : [];
+  if (Array.isArray(raw)) {
+    return raw
+      .filter((item): item is string => typeof item === 'string' && item.trim() !== '')
+      .map((s) => s.trim());
+  }
+  return [];
+}
 
 @ApiTags('meilisearch')
 @Controller('meilisearch')
@@ -89,10 +104,9 @@ export class MeilisearchController {
   })
   @SwaggerApiResponse({ status: 200, description: 'Search results returned successfully' })
   async search(
+    @Req() req: Request,
     @Query('q') query: string = '',
-    @Query('category') category?: string,
     @Query('categoryId') categoryId?: string,
-    @Query('fandom') fandom?: string,
     @Query('sellerId') sellerId?: string,
     @Query('minPrice') minPrice?: string,
     @Query('maxPrice') maxPrice?: string,
@@ -109,9 +123,21 @@ export class MeilisearchController {
       sort,
     };
 
-    if (category) filters.category = category;
+    const categories = repeatedQueryValues(req.query, 'category');
+    if (categories.length > 1) {
+      filters.categories = categories;
+    } else if (categories.length === 1) {
+      filters.category = categories[0];
+    }
+
+    const fandomsParam = repeatedQueryValues(req.query, 'fandom');
+    if (fandomsParam.length > 1) {
+      filters.fandoms = fandomsParam;
+    } else if (fandomsParam.length === 1) {
+      filters.fandom = fandomsParam[0];
+    }
+
     if (categoryId) filters.categoryId = categoryId;
-    if (fandom) filters.fandom = fandom;
     if (sellerId) filters.sellerId = sellerId;
     if (minPrice) filters.minPrice = parseFloat(minPrice);
     if (maxPrice) filters.maxPrice = parseFloat(maxPrice);

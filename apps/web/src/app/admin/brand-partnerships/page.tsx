@@ -44,6 +44,16 @@ export default function AdminBrandPartnershipsPage() {
     }
   };
 
+  const restore = async (id: string) => {
+    try {
+      await apiClient.adminRestoreBrandPartnership(id);
+      toast.success('Partnership restored to active');
+      load();
+    } catch (e: unknown) {
+      toast.error(e instanceof Error ? e.message : 'Failed to restore');
+    }
+  };
+
   return (
     <RouteGuard allowedRoles={['ADMIN']}>
       <AdminLayout>
@@ -129,6 +139,11 @@ export default function AdminBrandPartnershipsPage() {
                           {row.status !== 'ARCHIVED' && (
                             <button type="button" className="text-amber-700" onClick={() => archive(id)}>
                               Archive
+                            </button>
+                          )}
+                          {row.status === 'ARCHIVED' && (
+                            <button type="button" className="text-green-700" onClick={() => restore(id)}>
+                              Restore
                             </button>
                           )}
                         </td>

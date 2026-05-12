@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { apiClient } from '@/lib/api';
 import { useToast } from '@/hooks/useToast';
+import { validateInfluencerProfileUrls } from '@/lib/httpUrlValidation';
 
 const SOCIAL_PLATFORMS = [
   { key: 'instagram', label: 'Instagram', placeholder: 'https://instagram.com/username' },
@@ -13,6 +14,10 @@ const SOCIAL_PLATFORMS = [
   { key: 'twitter', label: 'Twitter / X', placeholder: 'https://x.com/username' },
   { key: 'website', label: 'Website', placeholder: 'https://yoursite.com' },
 ] as const;
+
+const SOCIAL_LABEL_BY_KEY: Record<string, string> = Object.fromEntries(
+  SOCIAL_PLATFORMS.map((p) => [p.key, p.label]),
+);
 
 interface Profile {
   id: string;
@@ -74,6 +79,16 @@ export default function InfluencerProfilePage() {
   };
 
   const handleSave = async () => {
+    const urlErr = validateInfluencerProfileUrls({
+      profileImage,
+      bannerImage,
+      socialLinks,
+      socialLabels: SOCIAL_LABEL_BY_KEY,
+    });
+    if (urlErr) {
+      toast.error(urlErr);
+      return;
+    }
     try {
       setSaving(true);
       await apiClient.updateMyInfluencerProfile({

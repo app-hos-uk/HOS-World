@@ -31,6 +31,8 @@ export class UsersService {
         whatsappNumber: true,
         preferredCommunicationMethod: true,
         currencyPreference: true,
+        birthday: true,
+        anniversary: true,
         customerProfile: {
           select: {
             companyName: true,
@@ -106,14 +108,18 @@ export class UsersService {
       }
     }
 
-    // Marketing dates
+    // Marketing dates (empty / whitespace clears the field)
     if (updateProfileDto.birthday !== undefined) {
-      updateData.birthday = updateProfileDto.birthday ? new Date(updateProfileDto.birthday) : null;
+      const raw =
+        typeof updateProfileDto.birthday === 'string' ? updateProfileDto.birthday.trim() : '';
+      updateData.birthday = raw.length > 0 ? new Date(raw) : null;
     }
     if (updateProfileDto.anniversary !== undefined) {
-      updateData.anniversary = updateProfileDto.anniversary
-        ? new Date(updateProfileDto.anniversary)
-        : null;
+      const raw =
+        typeof updateProfileDto.anniversary === 'string'
+          ? updateProfileDto.anniversary.trim()
+          : '';
+      updateData.anniversary = raw.length > 0 ? new Date(raw) : null;
     }
 
     const b2bUpdate: {
@@ -171,6 +177,8 @@ export class UsersService {
         whatsappNumber: true,
         preferredCommunicationMethod: true,
         currencyPreference: true,
+        birthday: true,
+        anniversary: true,
         customerProfile: {
           select: {
             companyName: true,
@@ -208,6 +216,10 @@ export class UsersService {
 
     if (!isCurrentPasswordValid) {
       throw new BadRequestException('Current password is incorrect');
+    }
+
+    if (changePasswordDto.newPassword === changePasswordDto.currentPassword) {
+      throw new BadRequestException('New password must be different from your current password');
     }
 
     // Hash new password

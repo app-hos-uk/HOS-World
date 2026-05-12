@@ -11,12 +11,29 @@ import { Prisma } from '@prisma/client';
 import { CreateGiftCardDto } from './dto/create-gift-card.dto';
 import { RedeemGiftCardDto } from './dto/redeem-gift-card.dto';
 
+/** Matches codes from generateCode(): XXXX-XXXX-XXXX-XXXX, charset without I,O,0,1 */
+const GIFT_CARD_CODE_REGEX = /^[A-HJ-NP-Z2-9]{4}-[A-HJ-NP-Z2-9]{4}-[A-HJ-NP-Z2-9]{4}-[A-HJ-NP-Z2-9]{4}$/;
+
 @Injectable()
 export class GiftCardsService {
   constructor(
     private prisma: PrismaService,
     private readonly configService: ConfigService,
   ) {}
+
+  private parseGiftCardCode(raw: string): string {
+    let decoded = (raw ?? '').trim();
+    try {
+      decoded = decodeURIComponent(decoded);
+    } catch {
+      throw new BadRequestException('Invalid gift card code format');
+    }
+    const code = decoded.trim().toUpperCase();
+    if (code.length !== 19 || !GIFT_CARD_CODE_REGEX.test(code)) {
+      throw new BadRequestException('Invalid gift card code format');
+    }
+    return code;
+  }
 
   /**
    * Preset purchase amounts (override with GIFT_CARD_CATALOG_AMOUNTS="25,50,100" env).
@@ -120,8 +137,9 @@ export class GiftCardsService {
    * Validate gift card code
    */
   async validate(code: string): Promise<any> {
+    const normalized = this.parseGiftCardCode(code);
     const giftCard = await (this.prisma as any).giftCard.findUnique({
-      where: { code: code.toUpperCase() },
+      where: { code: normalized },
     });
 
     if (!giftCard) {
@@ -161,10 +179,12 @@ export class GiftCardsService {
       throw new BadRequestException('Redemption amount must be greater than zero');
     }
 
+    const normalizedCode = this.parseGiftCardCode(dto.code);
+
     // Use transaction with Serializable isolation to prevent race conditions on balance
     return this.prisma.$transaction(async (tx) => {
       const giftCard = await (tx as any).giftCard.findUnique({
-        where: { code: dto.code.toUpperCase() },
+        where: { code: normalizedCode },
       });
 
       if (!giftCard) {

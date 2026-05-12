@@ -1,4 +1,4 @@
-import { IsOptional, IsString, IsNumber, Min, Max, IsObject } from 'class-validator';
+import { IsOptional, IsString, IsNumber, Min, Max, IsObject, IsUrl, ValidateIf } from 'class-validator';
 import { ApiPropertyOptional } from '@nestjs/swagger';
 
 export class UpdateInfluencerDto {
@@ -14,12 +14,14 @@ export class UpdateInfluencerDto {
 
   @ApiPropertyOptional({ description: 'Profile image URL' })
   @IsOptional()
-  @IsString()
+  @ValidateIf((_, v) => v != null && String(v).trim() !== '')
+  @IsUrl({ protocols: ['http', 'https'], require_protocol: true })
   profileImage?: string;
 
   @ApiPropertyOptional({ description: 'Banner image URL' })
   @IsOptional()
-  @IsString()
+  @ValidateIf((_, v) => v != null && String(v).trim() !== '')
+  @IsUrl({ protocols: ['http', 'https'], require_protocol: true })
   bannerImage?: string;
 
   @ApiPropertyOptional({

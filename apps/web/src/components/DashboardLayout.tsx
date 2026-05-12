@@ -4,12 +4,22 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
+import type { SellerMenuItem } from '@/lib/sellerMenu';
 
-interface MenuItem {
-  title: string;
-  href: string;
-  icon: string;
-  badge?: number;
+/** Sidebar «Admin Dashboard» shortcuts are suppressed on these team shells (`/finance`, `/marketing`, …). */
+const TEAM_SHELL_ROLES = new Set([
+  'PROCUREMENT',
+  'FULFILLMENT',
+  'CATALOG',
+  'MARKETING',
+  'FINANCE',
+  'CMS_EDITOR',
+]);
+
+type MenuItem = SellerMenuItem & { badge?: number };
+
+function pathnameMatchesAny(pathname: string | null, paths: string[]): boolean {
+  return paths.some((p) => pathname === p || pathname?.startsWith(p + '/') === true);
 }
 
 interface DashboardLayoutProps {
@@ -19,7 +29,7 @@ interface DashboardLayoutProps {
   title: string;
   /** Link for "Back to Dashboard" in sidebar footer. Defaults to first menu item href. */
   dashboardHref?: string;
-  /** Optional link to show in sidebar footer (e.g. "Admin Dashboard" for procurement/catalog). */
+  /** Shown only for real ADMIN accounts outside ops shells (see TEAM_SHELL_ROLES). */
   backToHref?: { title: string; href: string };
 }
 
@@ -27,11 +37,23 @@ export function DashboardLayout({ children, role, menuItems, title, dashboardHre
   const dashboardLink = dashboardHref ?? menuItems[0]?.href;
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const pathname = usePathname();
-  const { logout, user } = useAuth();
+  const { logout, user, impersonatedRole } = useAuth();
 
-  const isActive = (href: string) => {
-    return pathname === href || pathname?.startsWith(href + '/');
-  };
+  const layoutRole = role.toUpperCase();
+  const isTeamOpsShell = TEAM_SHELL_ROLES.has(layoutRole);
+
+  /** Real account role — not impersonation view (Fulfillment-only users never see `/admin` shortcuts). */
+  const accountRole = String(user?.role ?? '').toUpperCase();
+  const adminBackHref =
+    backToHref &&
+    accountRole === 'ADMIN' &&
+    !impersonatedRole &&
+    !isTeamOpsShell
+      ? backToHref
+      : undefined;
+
+  const isMenuActive = (item: MenuItem) =>
+    pathnameMatchesAny(pathname, [item.href, ...(item.activePathnames ?? [])]);
 
   const handleLogout = async () => {
     await logout();
@@ -65,7 +87,7 @@ export function DashboardLayout({ children, role, menuItems, title, dashboardHre
                   <Link
                     href={item.href}
                     className={`flex items-center justify-between gap-2 px-3 py-2 text-sm font-medium rounded-lg transition-colors ${
-                      isActive(item.href)
+                      isMenuActive(item)
                         ? 'bg-purple-100 text-purple-700'
                         : 'text-gray-700 hover:bg-gray-100'
                     }`}
@@ -87,13 +109,13 @@ export function DashboardLayout({ children, role, menuItems, title, dashboardHre
 
           {/* Footer: Admin link when provided; role Dashboard only if not already first nav item (avoids 3x "Dashboard") */}
           <div className="border-t border-gray-200 p-4 space-y-1">
-            {backToHref && (
+            {adminBackHref && (
               <Link
-                href={backToHref.href}
+                href={adminBackHref.href}
                 className="flex items-center gap-2 px-3 py-2 text-sm text-gray-600 hover:bg-gray-100 rounded-lg transition-colors font-medium"
               >
                 <span>←</span>
-                <span>{backToHref.title}</span>
+                <span>{adminBackHref.title}</span>
               </Link>
             )}
             {dashboardLink && dashboardLink !== menuItems[0]?.href && (
@@ -129,12 +151,12 @@ export function DashboardLayout({ children, role, menuItems, title, dashboardHre
               >
                 ☰
               </button>
-              {backToHref && (
+              {adminBackHref && (
                 <Link
-                  href={backToHref.href}
+                  href={adminBackHref.href}
                   className="text-sm font-medium text-gray-600 hover:text-gray-800 hidden sm:inline"
                 >
-                  ← {backToHref.title}
+                  ← {adminBackHref.title}
                 </Link>
               )}
               {dashboardLink && dashboardLink !== menuItems[0]?.href && (

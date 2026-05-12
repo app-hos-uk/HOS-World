@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException, BadRequestException, Logger } from '@nestjs/common';
 import { PrismaService } from '../database/prisma.service';
-import { CreateWarehouseDto } from './dto/create-warehouse.dto';
+import { CreateWarehouseDto, UpdateWarehouseDto } from './dto/create-warehouse.dto';
 import { CreateInventoryLocationDto } from './dto/create-inventory-location.dto';
 import { ReserveStockDto } from './dto/reserve-stock.dto';
 import { CreateStockTransferDto } from './dto/create-stock-transfer.dto';
@@ -1116,7 +1116,7 @@ export class InventoryService {
    * Update a warehouse
    * Only updates fields that are explicitly provided (not undefined)
    */
-  async updateWarehouse(id: string, updateDto: Partial<CreateWarehouseDto>) {
+  async updateWarehouse(id: string, updateDto: UpdateWarehouseDto) {
     const warehouse = await this.prisma.warehouse.findUnique({
       where: { id },
     });

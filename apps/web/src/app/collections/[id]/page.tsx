@@ -191,35 +191,35 @@ export default function CollectionDetailPage() {
           </div>
 
           <div className="bg-white border border-gray-200 rounded-lg p-6 mb-6">
-            <div className="flex justify-between items-start mb-4">
-              <div className="flex-1">
+            <div className="flex flex-col gap-4 sm:flex-row sm:justify-between sm:items-start sm:gap-6 mb-4">
+              <div className="w-full min-w-0 flex-1 space-y-2">
                 {editing ? (
                   <input
                     type="text"
                     value={formData.name}
                     onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg mb-2 text-2xl font-bold"
+                    className="block w-full max-w-full px-4 py-2 border border-gray-300 rounded-lg text-2xl font-bold box-border"
                   />
                 ) : (
-                  <h1 className="text-3xl font-bold mb-2">{collection.name}</h1>
+                  <h1 className="text-3xl font-bold mb-2 break-words">{collection.name}</h1>
                 )}
                 {editing ? (
                   <textarea
                     value={formData.description}
                     onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg mb-2"
+                    className="block w-full max-w-full px-4 py-2 border border-gray-300 rounded-lg box-border"
                     rows={3}
                     placeholder="Description..."
                   />
                 ) : (
                   collection.description && (
-                    <p className="text-gray-600 mb-4">{collection.description}</p>
+                    <p className="text-gray-600 mb-4 break-words">{collection.description}</p>
                   )
                 )}
-                <div className="flex items-center gap-4 text-sm text-gray-600">
+                <div className="flex flex-wrap items-center gap-4 text-sm text-gray-600">
                   <span>{collection.itemCount} items</span>
                   <span
-                    className={`px-2 py-1 rounded text-xs ${
+                    className={`px-2 py-1 rounded text-xs shrink-0 ${
                       collection.isPublic
                         ? 'bg-green-100 text-green-800'
                         : 'bg-gray-100 text-gray-800'
@@ -230,17 +230,19 @@ export default function CollectionDetailPage() {
                 </div>
               </div>
               {isOwner && (
-                <div className="flex gap-2">
+                <div className="flex flex-wrap gap-2 shrink-0 sm:justify-end sm:pt-1">
                   {editing ? (
                     <>
                       <button
                         onClick={handleUpdateCollection}
                         disabled={saving}
-                        className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors font-medium disabled:opacity-50"
+                        type="button"
+                        className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors font-medium disabled:opacity-50 whitespace-nowrap"
                       >
                         {saving ? 'Saving...' : 'Save'}
                       </button>
                       <button
+                        type="button"
                         onClick={() => {
                           setEditing(false);
                           setFormData({
@@ -249,7 +251,7 @@ export default function CollectionDetailPage() {
                             isPublic: collection.isPublic,
                           });
                         }}
-                        className="px-4 py-2 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300 transition-colors font-medium"
+                        className="px-4 py-2 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300 transition-colors font-medium whitespace-nowrap"
                       >
                         Cancel
                       </button>
@@ -257,14 +259,16 @@ export default function CollectionDetailPage() {
                   ) : (
                     <>
                       <button
+                        type="button"
                         onClick={() => setEditing(true)}
-                        className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors font-medium"
+                        className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors font-medium whitespace-nowrap"
                       >
                         Edit
                       </button>
                       <button
+                        type="button"
                         onClick={handleDeleteCollection}
-                        className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors font-medium"
+                        className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors font-medium whitespace-nowrap"
                       >
                         Delete
                       </button>

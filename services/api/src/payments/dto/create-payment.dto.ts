@@ -11,7 +11,7 @@ export class CreatePaymentDto {
 
   @IsOptional()
   @IsNumber()
-  @Min(0)
+  @Min(0.01)
   amount?: number;
 
   @IsOptional()

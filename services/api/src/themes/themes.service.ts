@@ -20,6 +20,11 @@ interface Theme {
   version: number;
   createdAt: Date;
   updatedAt: Date;
+  description?: string;
+  versionString?: string;
+  previewImages?: string[];
+  metadata?: Record<string, unknown>;
+  assets?: unknown;
 }
 
 @Injectable()
@@ -102,13 +107,19 @@ export class ThemesService {
       throw new NotFoundException('Theme not found');
     }
 
+    const data: Record<string, unknown> = {
+      version: theme.version + 1,
+    };
+
+    if (updateThemeDto.name !== undefined) data.name = updateThemeDto.name;
+    if (updateThemeDto.description !== undefined) data.description = updateThemeDto.description;
+    if (updateThemeDto.type !== undefined) data.type = updateThemeDto.type;
+    if (updateThemeDto.isActive !== undefined) data.isActive = updateThemeDto.isActive;
+    if (updateThemeDto.config !== undefined) data.config = updateThemeDto.config as object;
+
     const updated = await this.prisma.theme.update({
       where: { id },
-      data: {
-        ...updateThemeDto,
-        config: updateThemeDto.config ? (updateThemeDto.config as any) : undefined,
-        version: theme.version + 1,
-      },
+      data: data as any,
     });
 
     return this.mapToThemeType(updated);
@@ -126,6 +137,38 @@ export class ThemesService {
     await this.prisma.theme.delete({
       where: { id },
     });
+  }
+
+  /** Clone a theme row for admin duplication (inactive copy). */
+  async duplicate(id: string): Promise<Theme> {
+    const src = await this.prisma.theme.findUnique({
+      where: { id },
+    });
+
+    if (!src) {
+      throw new NotFoundException('Theme not found');
+    }
+
+    const copy = await this.prisma.theme.create({
+      data: {
+        name: `${src.name} (Copy)`,
+        type: src.type,
+        sellerId: null,
+        config: src.config as object,
+        isActive: false,
+        version: 1,
+        versionString: src.versionString,
+        description: src.description,
+        previewImages: Array.isArray(src.previewImages) ? [...src.previewImages] : [],
+        assets: (src.assets as object) ?? undefined,
+        metadata: (src.metadata as object) ?? undefined,
+        storageUrl: src.storageUrl,
+        uploadedBy: src.uploadedBy,
+        uploadedAt: src.uploadedAt,
+      },
+    });
+
+    return this.mapToThemeType(copy);
   }
 
   // Seller Theme Customization
@@ -186,8 +229,18 @@ export class ThemesService {
         throw new NotFoundException('Theme not found');
       }
 
-      if (theme.type !== 'SELLER' && theme.sellerId !== seller.id) {
-        throw new ForbiddenException('Theme does not belong to this seller');
+      const typeNorm = String(theme.type).toUpperCase();
+      const isMarketplaceSellerTheme = typeNorm === 'SELLER' && theme.sellerId == null;
+      const isPlatformHosTheme = typeNorm === 'HOS' && theme.sellerId == null;
+      const isOwnSellerTheme =
+        theme.sellerId != null &&
+        typeof theme.sellerId === 'string' &&
+        theme.sellerId === seller.id;
+
+      if (!isMarketplaceSellerTheme && !isPlatformHosTheme && !isOwnSellerTheme) {
+        throw new ForbiddenException(
+          'This theme cannot be assigned to your store. Use a marketplace seller theme, platform default, or your own theme copy.',
+        );
       }
     }
 
@@ -219,6 +272,12 @@ export class ThemesService {
         },
       });
     }
+
+    /** Keep Seller.themeId in sync — some flows read this field instead of SellerThemeSettings. */
+    await this.prisma.seller.update({
+      where: { id: seller.id },
+      data: { themeId: themeSettings.themeId },
+    });
 
     return this.getSellerTheme(sellerId);
   }
@@ -330,16 +389,22 @@ export class ThemesService {
   }
 
   private mapToThemeType(theme: any): Theme {
+    const typeStr = typeof theme.type === 'string' ? theme.type : String(theme.type ?? '');
     return {
       id: theme.id,
       name: theme.name,
-      type: theme.type.toLowerCase(),
+      type: typeStr.toLowerCase(),
       sellerId: theme.sellerId || undefined,
       config: theme.config,
       isActive: theme.isActive,
       version: theme.version,
       createdAt: theme.createdAt,
       updatedAt: theme.updatedAt,
+      description: theme.description ?? undefined,
+      versionString: theme.versionString ?? undefined,
+      previewImages: Array.isArray(theme.previewImages) ? theme.previewImages : [],
+      metadata: theme.metadata && typeof theme.metadata === 'object' ? theme.metadata : undefined,
+      assets: theme.assets ?? undefined,
     };
   }
 }

@@ -17,6 +17,18 @@ function parseStatusParam(value: string | null): CatalogStatusTab | null {
   return VALID_STATUS_PARAMS.includes(value as CatalogStatusTab) ? (value as CatalogStatusTab) : null;
 }
 
+/** Matches API catalog entry rules: absolute http(s) URL only */
+function isValidCatalogImageUrl(value: string): boolean {
+  const s = value.trim();
+  if (!s) return false;
+  try {
+    const u = new URL(s);
+    return u.protocol === 'http:' || u.protocol === 'https:';
+  } catch {
+    return false;
+  }
+}
+
 export default function CatalogEntriesPage() {
   return (
     <Suspense fallback={<div className="flex items-center justify-center min-h-screen"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-600" /></div>}>
@@ -141,8 +153,14 @@ function CatalogEntriesContent() {
   };
 
   const addImage = () => {
-    if (newImageUrl.trim() && !images.includes(newImageUrl.trim())) {
-      setImages([...images, newImageUrl.trim()]);
+    const trimmed = newImageUrl.trim();
+    if (!trimmed) return;
+    if (!isValidCatalogImageUrl(trimmed)) {
+      toast.error('Enter a valid URL starting with http:// or https://');
+      return;
+    }
+    if (!images.includes(trimmed)) {
+      setImages([...images, trimmed]);
       setNewImageUrl('');
     }
   };
@@ -187,6 +205,12 @@ function CatalogEntriesContent() {
   const handleSubmit = async () => {
     if (!selectedSubmission || !title.trim() || !description.trim() || images.length === 0) {
       toast.error('Title, description, and at least one image are required');
+      return;
+    }
+
+    const badImage = images.find((u) => !isValidCatalogImageUrl(u));
+    if (badImage !== undefined) {
+      toast.error('Remove or replace invalid image URLs (must start with http:// or https://)');
       return;
     }
 

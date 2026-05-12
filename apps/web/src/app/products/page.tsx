@@ -174,8 +174,8 @@ function ProductsContent() {
           page: state.page,
           limit: ITEMS_PER_PAGE,
         };
-        if (state.categories.length === 1) filters.category = state.categories[0];
-        if (state.fandoms.length === 1) filters.fandom = state.fandoms[0];
+        if (state.categories.length) filters.categories = state.categories;
+        if (state.fandoms.length) filters.fandoms = state.fandoms;
         if (state.minPrice) filters.minPrice = Number(state.minPrice);
         if (state.maxPrice) filters.maxPrice = Number(state.maxPrice);
         if (state.rating > 0) filters.minRating = state.rating;
@@ -189,8 +189,13 @@ function ProductsContent() {
         if (response?.data) {
           const data = response.data as any;
           setProducts(data.products || []);
-          setTotalHits(data.total || 0);
-          setTotalPages(data.totalPages || 1);
+          const total = Number(data.total) || 0;
+          setTotalHits(total);
+          const fromTotal = Math.max(1, Math.ceil(total / ITEMS_PER_PAGE));
+          const fromApi = Number(data.totalPages);
+          setTotalPages(
+            Number.isFinite(fromApi) && fromApi > 0 ? Math.max(fromApi, fromTotal) : fromTotal,
+          );
           setProcessingTimeMs(data.processingTimeMs || 0);
           setFacets(data.facets || {});
         }
@@ -210,8 +215,13 @@ function ProductsContent() {
           if (fallback?.data) {
             const d = fallback.data as any;
             setProducts(d.items || d.data || []);
-            setTotalHits(d.total || 0);
-            setTotalPages(d.totalPages || Math.ceil((d.total || 0) / ITEMS_PER_PAGE) || 1);
+            const fbTotal = Number(d.total) || 0;
+            setTotalHits(fbTotal);
+            const fbPages = Math.max(1, Math.ceil(fbTotal / ITEMS_PER_PAGE));
+            const fbApi = Number(d.totalPages);
+            setTotalPages(
+              Number.isFinite(fbApi) && fbApi > 0 ? Math.max(fbApi, fbPages) : fbPages,
+            );
             setProcessingTimeMs(0);
             setFacets({});
           }
@@ -250,8 +260,14 @@ function ProductsContent() {
       pages.push(1);
       let start = Math.max(2, state.page - 1);
       let end = Math.min(totalPages - 1, state.page + 1);
-      if (state.page <= 3) { start = 2; end = 5; }
-      if (state.page >= totalPages - 2) { start = totalPages - 4; end = totalPages - 1; }
+      if (state.page <= 3) {
+        start = 2;
+        end = 5;
+      }
+      if (state.page >= totalPages - 2) {
+        start = totalPages - 4;
+        end = totalPages - 1;
+      }
       if (start > 2) pages.push(-1); // ellipsis
       for (let i = start; i <= end; i++) pages.push(i);
       if (end < totalPages - 1) pages.push(-2); // ellipsis
@@ -382,6 +398,8 @@ function ProductsContent() {
     </div>
   );
 
+  const showInitialSkeleton = loading && products.length === 0;
+
   const activeFilterChips = (
     <div className="flex flex-wrap gap-2">
       {state.categories.map(c => (
@@ -470,14 +488,14 @@ function ProductsContent() {
             {/* Toolbar: sort, result count, search time */}
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
               <div className="flex items-center gap-3 text-sm text-gray-600">
-                {!loading && totalHits > 0 && (
+                {(!loading || products.length > 0) && totalHits > 0 ? (
                   <span>
                     Showing {startIndex}-{endIndex} of {totalHits.toLocaleString()} results
                     {processingTimeMs > 0 && (
                       <span className="text-gray-400 ml-1">in {processingTimeMs}ms</span>
                     )}
                   </span>
-                )}
+                ) : null}
               </div>
               <select
                 value={state.sort}
@@ -496,7 +514,7 @@ function ProductsContent() {
             )}
 
             {/* Product grid */}
-            {loading ? (
+            {showInitialSkeleton ? (
               <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4">
                 {Array.from({ length: 8 }).map((_, i) => (
                   <div key={i} className="bg-white rounded-lg border border-gray-200 overflow-hidden animate-pulse">
@@ -517,6 +535,7 @@ function ProductsContent() {
                 <p className="text-gray-500 mb-4">Try adjusting your filters or search query</p>
                 {activeFilterCount > 0 && (
                   <button
+                    type="button"
                     onClick={clearAllFilters}
                     className="text-purple-600 hover:text-purple-800 font-medium text-sm"
                   >
@@ -526,13 +545,29 @@ function ProductsContent() {
               </div>
             ) : (
               <>
-                <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4">
+                <div className="relative">
+                  {loading && products.length > 0 && (
+                    <div
+                      className="absolute inset-0 z-[5] rounded-lg bg-white/50 flex justify-center pt-14 min-h-[200px]"
+                      aria-busy="true"
+                      aria-label="Loading products"
+                    >
+                      <div className="h-11 w-11 animate-spin rounded-full border-2 border-purple-200 border-t-purple-600 shrink-0" />
+                    </div>
+                  )}
+                  <div
+                    className={`grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4 ${loading && products.length > 0 ? 'opacity-60 pointer-events-none' : ''}`}
+                  >
                   {products.map((product) => {
                     const highlighted = product._formatted;
                     return (
-                      <Link key={product.id} href={`/products/${product.id}`} className="group">
-                        <div className="bg-white border border-gray-200 rounded-lg overflow-hidden hover:shadow-lg hover:border-purple-200 transition-all duration-200">
-                          <div className="aspect-square bg-gray-100 relative overflow-hidden">
+                      <Link
+                        key={product.id}
+                        href={`/products/${product.id}`}
+                        className="group flex h-full min-h-0"
+                      >
+                        <div className="bg-white border border-gray-200 rounded-lg overflow-hidden hover:shadow-lg hover:border-purple-200 transition-all duration-200 flex flex-col h-full w-full min-h-[280px] sm:min-h-[300px]">
+                          <div className="aspect-square bg-gray-100 relative overflow-hidden shrink-0">
                             {product.images && product.images[0] ? (
                               <SafeImage
                                 src={product.images[0].url}
@@ -554,40 +589,44 @@ function ProductsContent() {
                               </div>
                             )}
                           </div>
-                          <div className="p-3 sm:p-4">
+                          <div className="p-3 sm:p-4 flex flex-col flex-1 gap-2 min-h-0 justify-between">
                             <h3
-                              className="font-semibold text-gray-900 group-hover:text-purple-600 transition-colors text-sm sm:text-base line-clamp-2"
+                              className="font-semibold text-gray-900 group-hover:text-purple-600 transition-colors text-sm sm:text-base line-clamp-2 min-h-[2.5rem] leading-snug"
                               dangerouslySetInnerHTML={{
                                 __html: sanitizeHighlight(highlighted?.name || product.name),
                               }}
                             />
-                            <div className="mt-2 flex items-center justify-between gap-2">
-                              <span className="text-base sm:text-lg font-bold text-purple-900">
-                                {formatPrice(Number(product.price))}
-                              </span>
-                              {product.averageRating > 0 && (
-                                <div className="flex items-center gap-1 text-xs text-gray-500">
-                                  <svg className="w-3.5 h-3.5 text-yellow-400" fill="currentColor" viewBox="0 0 20 20">
-                                    <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-                                  </svg>
-                                  {Number(product.averageRating).toFixed(1)}
-                                </div>
+                            <div className="mt-auto flex flex-col gap-2">
+                              <div className="flex items-center justify-between gap-2">
+                                <span className="text-base sm:text-lg font-bold text-purple-900">
+                                  {formatPrice(Number(product.price))}
+                                </span>
+                                {product.averageRating > 0 && (
+                                  <div className="flex items-center gap-1 text-xs text-gray-500 shrink-0">
+                                    <svg className="w-3.5 h-3.5 text-yellow-400" fill="currentColor" viewBox="0 0 20 20">
+                                      <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                                    </svg>
+                                    {Number(product.averageRating).toFixed(1)}
+                                  </div>
+                                )}
+                              </div>
+                              {product.fandom && (
+                                <p className="text-xs text-gray-500 truncate min-h-[1rem]">{product.fandom}</p>
                               )}
                             </div>
-                            {product.fandom && (
-                              <p className="text-xs text-gray-500 mt-1 truncate">{product.fandom}</p>
-                            )}
                           </div>
                         </div>
                       </Link>
                     );
                   })}
+                  </div>
                 </div>
 
                 {/* Pagination */}
-                {totalPages > 1 && (
+                {(totalPages > 1 || state.page > 1) && totalHits > 0 && (
                   <nav className="mt-8 flex items-center justify-center gap-1" aria-label="Pagination">
                     <button
+                      type="button"
                       onClick={() => updateState({ page: state.page - 1 })}
                       disabled={state.page === 1}
                       className="px-3 py-2 text-sm border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
@@ -600,6 +639,7 @@ function ProductsContent() {
                       ) : (
                         <button
                           key={p}
+                          type="button"
                           onClick={() => updateState({ page: p })}
                           className={`px-3 py-2 text-sm rounded-lg transition-colors ${
                             p === state.page
@@ -612,6 +652,7 @@ function ProductsContent() {
                       )
                     )}
                     <button
+                      type="button"
                       onClick={() => updateState({ page: state.page + 1 })}
                       disabled={state.page === totalPages}
                       className="px-3 py-2 text-sm border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"

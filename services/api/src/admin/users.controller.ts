@@ -32,6 +32,12 @@ export class AdminUsersController {
   @ApiQuery({ name: 'search', required: false, type: String, description: 'Search by email, first name, or last name' })
   @ApiQuery({ name: 'role', required: false, type: String, description: 'Filter by user role' })
   @ApiQuery({ name: 'status', required: false, type: String, description: 'Filter by status: active | inactive' })
+  @ApiQuery({
+    name: 'newThisMonth',
+    required: false,
+    type: String,
+    description: 'If true/1, only users created in the current calendar month',
+  })
   @SwaggerApiResponse({ status: 200, description: 'Users retrieved successfully' })
   @SwaggerApiResponse({ status: 401, description: 'Unauthorized' })
   @SwaggerApiResponse({ status: 403, description: 'Forbidden - Admin access required' })
@@ -41,29 +47,50 @@ export class AdminUsersController {
     @Query('search') search?: string,
     @Query('role') role?: string,
     @Query('status') status?: string,
+    @Query('newThisMonth') newThisMonth?: string,
   ): Promise<ApiResponse<PaginatedResponse<any>>> {
     const safePage = Math.max(1, page);
     const take = Math.max(1, Math.min(limit, 100));
     const skip = (safePage - 1) * take;
 
     const whereParts: Prisma.Sql[] = [];
+    // Exclude soft-deleted users (match stats / Prisma defaults for admin views)
+    whereParts.push(Prisma.sql`u."deletedAt" IS NULL`);
     if (search?.trim()) {
       const term = `%${search.trim()}%`;
       whereParts.push(
-        Prisma.sql`(u.email ILIKE ${term} OR u."firstName" ILIKE ${term} OR u."lastName" ILIKE ${term})`,
+        Prisma.sql`(u.email ILIKE ${term} OR u."firstName" ILIKE ${term} OR u."lastName" ILIKE ${term} OR s."storeName" ILIKE ${term})`,
       );
     }
     if (role?.trim()) {
-      whereParts.push(Prisma.sql`u.role = ${role.trim()}::"UserRole"`);
+      const r = role.trim();
+      if (r === 'SELLERS') {
+        whereParts.push(
+          Prisma.sql`u.role IN ('SELLER'::"UserRole", 'B2C_SELLER'::"UserRole", 'WHOLESALER'::"UserRole")`,
+        );
+      } else if (r === 'TEAM') {
+        whereParts.push(
+          Prisma.sql`u.role IN ('PROCUREMENT'::"UserRole", 'FULFILLMENT'::"UserRole", 'CATALOG'::"UserRole", 'MARKETING'::"UserRole", 'FINANCE'::"UserRole", 'CMS_EDITOR'::"UserRole")`,
+        );
+      } else {
+        whereParts.push(Prisma.sql`u.role = ${r}::"UserRole"`);
+      }
     }
     if (status === 'active') {
       whereParts.push(Prisma.sql`u."isActive" = true`);
     } else if (status === 'inactive') {
       whereParts.push(Prisma.sql`u."isActive" = false`);
     }
+    if (newThisMonth === 'true' || newThisMonth === '1') {
+      whereParts.push(Prisma.sql`u."createdAt" >= date_trunc('month', CURRENT_TIMESTAMP)`);
+    }
 
-    const whereSql =
-      whereParts.length > 0 ? Prisma.join(whereParts, ' AND ') : Prisma.sql`TRUE`;
+    const needsSellerJoin = Boolean(search?.trim());
+    const fromClause = needsSellerJoin
+      ? Prisma.sql`FROM users u LEFT JOIN sellers s ON s."userId" = u.id`
+      : Prisma.sql`FROM users u`;
+
+    const whereSql = Prisma.join(whereParts, ' AND ');
 
     // Role hierarchy: admin / internal roles first, then marketplace roles (matches ROLE_PRIORITY).
     const [rows, countResult] = await Promise.all([
@@ -80,8 +107,8 @@ export class AdminUsersController {
           updatedAt: Date;
         }[]
       >`
-        SELECT u.id, u.email, u."firstName", u."lastName", u.role, u."isActive", u.avatar, u."createdAt", u."updatedAt"
-        FROM users u
+        SELECT DISTINCT u.id, u.email, u."firstName", u."lastName", u.role, u."isActive", u.avatar, u."createdAt", u."updatedAt"
+        ${fromClause}
         WHERE ${whereSql}
         ORDER BY
           CASE u.role::text
@@ -104,7 +131,7 @@ export class AdminUsersController {
         LIMIT ${take} OFFSET ${skip}
       `,
       this.prisma.$queryRaw<{ c: bigint }[]>`
-        SELECT COUNT(*)::bigint AS c FROM users u WHERE ${whereSql}
+        SELECT COUNT(DISTINCT u.id)::bigint AS c ${fromClause} WHERE ${whereSql}
       `,
     ]);
 
@@ -115,10 +142,10 @@ export class AdminUsersController {
       data: {
         data: users,
         pagination: {
-          page,
+          page: safePage,
           limit: take,
           total,
-          totalPages: Math.ceil(total / take),
+          totalPages: Math.max(1, Math.ceil(total / take)),
         },
       },
       message: 'Users retrieved successfully',

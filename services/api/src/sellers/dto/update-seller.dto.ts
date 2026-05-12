@@ -3,12 +3,16 @@ import {
   IsString,
   IsEnum,
   IsBoolean,
-  IsUrl,
   IsEmail,
   ValidateNested,
 } from 'class-validator';
 import { Type } from 'class-transformer';
 import { SellerType, LogisticsOption } from '@prisma/client';
+import {
+  OptionalLabelRequiresLetters,
+  OptionalOperationsPhone,
+  OptionalPostalCodeMixed,
+} from '../../common/validators/seller-profile-fields.validator';
 
 class WarehouseAddressDto {
   @IsOptional()
@@ -17,14 +21,17 @@ class WarehouseAddressDto {
 
   @IsOptional()
   @IsString()
+  @OptionalLabelRequiresLetters()
   city?: string;
 
   @IsOptional()
   @IsString()
+  @OptionalLabelRequiresLetters()
   state?: string;
 
   @IsOptional()
   @IsString()
+  @OptionalPostalCodeMixed()
   postalCode?: string;
 
   @IsOptional()
@@ -51,6 +58,7 @@ export class UpdateSellerDto {
 
   @IsOptional()
   @IsString()
+  @OptionalLabelRequiresLetters()
   city?: string;
 
   @IsOptional()
@@ -84,6 +92,7 @@ export class UpdateSellerDto {
   // Business compliance fields
   @IsOptional()
   @IsString()
+  @OptionalLabelRequiresLetters()
   legalBusinessName?: string;
 
   @IsOptional()
@@ -97,10 +106,12 @@ export class UpdateSellerDto {
   // Bank details
   @IsOptional()
   @IsString()
+  @OptionalLabelRequiresLetters()
   bankName?: string;
 
   @IsOptional()
   @IsString()
+  @OptionalLabelRequiresLetters()
   accountHolder?: string;
 
   @IsOptional()
@@ -114,6 +125,7 @@ export class UpdateSellerDto {
   // Operations contact
   @IsOptional()
   @IsString()
+  @OptionalLabelRequiresLetters()
   opsContactName?: string;
 
   @IsOptional()
@@ -122,6 +134,7 @@ export class UpdateSellerDto {
 
   @IsOptional()
   @IsString()
+  @OptionalOperationsPhone()
   opsContactPhone?: string;
 
   // Warehouse address

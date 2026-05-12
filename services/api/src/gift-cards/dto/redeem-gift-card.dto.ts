@@ -1,7 +1,8 @@
-import { IsString, IsNumber, IsOptional, Min } from 'class-validator';
+import { IsString, IsNumber, IsOptional, Min, MaxLength } from 'class-validator';
 
 export class RedeemGiftCardDto {
   @IsString()
+  @MaxLength(64)
   code: string;
 
   @IsNumber()

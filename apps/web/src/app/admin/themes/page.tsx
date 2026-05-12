@@ -91,7 +91,12 @@ export default function AdminThemesPage() {
       setLoading(true);
       const response = await apiClient.getThemes();
       if (response?.data) {
-        const themeList = Array.isArray(response.data) ? response.data : [];
+        const raw = response.data as unknown;
+        const themeList = Array.isArray(raw)
+          ? raw
+          : raw && typeof raw === 'object' && Array.isArray((raw as { data?: unknown }).data)
+            ? (raw as { data: Theme[] }).data
+            : [];
         setThemes(themeList);
         calculateStats(themeList);
       }
@@ -228,10 +233,15 @@ export default function AdminThemesPage() {
 
   const handleEdit = (theme: Theme) => {
     setSelectedTheme(theme);
+    const rawType = (theme.type || 'SELLER').toString().toUpperCase();
+    const VALID_THEME_TYPES: Theme['type'][] = ['HOS', 'SELLER', 'CUSTOMER'];
+    const normalizedType: Theme['type'] = VALID_THEME_TYPES.includes(rawType as Theme['type'])
+      ? (rawType as Theme['type'])
+      : 'SELLER';
     setEditForm({
       name: theme.name,
       description: theme.description || '',
-      type: theme.type,
+      type: normalizedType,
     });
     setShowEditModal(true);
   };
@@ -242,9 +252,9 @@ export default function AdminThemesPage() {
     try {
       setActionLoading(true);
       await apiClient.updateTheme(selectedTheme.id, {
-        name: editForm.name,
-        description: editForm.description || undefined,
-        type: editForm.type,
+        name: editForm.name.trim(),
+        description: editForm.description?.trim() || undefined,
+        type: editForm.type.toUpperCase() as 'HOS' | 'SELLER' | 'CUSTOMER',
       });
       toast.success('Theme updated successfully');
       setShowEditModal(false);
@@ -257,8 +267,16 @@ export default function AdminThemesPage() {
   };
 
   const handleDuplicate = async (theme: Theme) => {
-    // TODO: Implement theme duplication when backend supports it
-    toast.error('Theme duplication is not yet supported by the API');
+    try {
+      await toast.promise(apiClient.duplicateTheme(theme.id), {
+        loading: 'Duplicating theme...',
+        success: 'Theme duplicated successfully',
+        error: (err: Error & { message?: string }) => err.message || 'Failed to duplicate theme',
+      });
+      await fetchThemes();
+    } catch (err: any) {
+      console.error('Error duplicating theme:', err);
+    }
   };
 
   const handleToggleActive = async (theme: Theme) => {
@@ -268,8 +286,8 @@ export default function AdminThemesPage() {
         {
           loading: `${theme.isActive ? 'Deactivating' : 'Activating'} theme...`,
           success: `Theme ${theme.isActive ? 'deactivated' : 'activated'} successfully`,
-          error: (err) => err.message || 'Failed to update theme',
-        }
+          error: (err: Error & { message?: string }) => err.message || 'Failed to update theme',
+        },
       );
       await fetchThemes();
     } catch (err: any) {
@@ -288,8 +306,8 @@ export default function AdminThemesPage() {
         {
           loading: 'Deleting theme...',
           success: 'Theme deleted successfully',
-          error: (err) => err.message || 'Failed to delete theme',
-        }
+          error: (err: Error & { message?: string }) => err.message || 'Failed to delete theme',
+        },
       );
       await fetchThemes();
     } catch (err: any) {
@@ -522,19 +540,24 @@ export default function AdminThemesPage() {
                   <option value="type-asc">Type A-Z</option>
                 </select>
               </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Bulk Actions</label>
+              <div className="md:col-span-2">
+                <label className="block text-sm font-medium text-gray-700 mb-1">Bulk actions</label>
+                <p className="text-xs text-gray-500 mb-2">
+                  Select themes using the checkboxes in the top-left corner of each card, then activate or deactivate in bulk.
+                </p>
                 <div className="flex gap-2">
                   <button
+                    type="button"
                     onClick={() => handleBulkAction('activate')}
-                    disabled={selectedThemes.size === 0 || actionLoading}
+                    disabled={selectedThemes.size === 0 || actionLoading || filteredThemes.length === 0}
                     className="flex-1 px-3 py-2 text-sm bg-green-100 text-green-700 rounded-lg hover:bg-green-200 disabled:opacity-50"
                   >
                     Activate
                   </button>
                   <button
+                    type="button"
                     onClick={() => handleBulkAction('deactivate')}
-                    disabled={selectedThemes.size === 0 || actionLoading}
+                    disabled={selectedThemes.size === 0 || actionLoading || filteredThemes.length === 0}
                     className="flex-1 px-3 py-2 text-sm bg-yellow-100 text-yellow-700 rounded-lg hover:bg-yellow-200 disabled:opacity-50"
                   >
                     Deactivate
@@ -582,7 +605,7 @@ export default function AdminThemesPage() {
               {filteredThemes.map((theme) => (
                 <div
                   key={theme.id}
-                  className={`bg-white border rounded-lg overflow-hidden hover:shadow-lg transition-all ${
+                  className={`relative bg-white border rounded-lg overflow-hidden hover:shadow-lg transition-all ${
                     selectedThemes.has(theme.id) ? 'ring-2 ring-purple-500 border-purple-500' : 'border-gray-200'
                   }`}
                 >
@@ -592,6 +615,7 @@ export default function AdminThemesPage() {
                       type="checkbox"
                       checked={selectedThemes.has(theme.id)}
                       onChange={() => toggleSelection(theme.id)}
+                      aria-label={`Select theme ${theme.name}`}
                       className="h-4 w-4 text-purple-600 rounded border-gray-300"
                     />
                   </div>
@@ -633,30 +657,35 @@ export default function AdminThemesPage() {
 
                     <div className="flex flex-wrap items-center gap-2 mt-4 pt-4 border-t border-gray-200">
                       <button
+                        type="button"
                         onClick={() => handlePreview(theme)}
                         className="px-3 py-1.5 text-sm bg-gray-100 text-gray-700 rounded hover:bg-gray-200"
                       >
                         Preview
                       </button>
                       <button
+                        type="button"
                         onClick={() => handleEdit(theme)}
                         className="px-3 py-1.5 text-sm bg-purple-100 text-purple-700 rounded hover:bg-purple-200"
                       >
                         Edit
                       </button>
                       <button
+                        type="button"
                         onClick={() => handleDuplicate(theme)}
                         className="px-3 py-1.5 text-sm bg-blue-100 text-blue-700 rounded hover:bg-blue-200"
                       >
                         Duplicate
                       </button>
                       <button
+                        type="button"
                         onClick={() => handleToggleActive(theme)}
                         className={`px-3 py-1.5 text-sm rounded ${theme.isActive ? 'bg-yellow-100 text-yellow-700 hover:bg-yellow-200' : 'bg-green-100 text-green-700 hover:bg-green-200'}`}
                       >
                         {theme.isActive ? 'Deactivate' : 'Activate'}
                       </button>
                       <button
+                        type="button"
                         onClick={() => handleDelete(theme)}
                         className="px-3 py-1.5 text-sm bg-red-100 text-red-700 rounded hover:bg-red-200"
                       >

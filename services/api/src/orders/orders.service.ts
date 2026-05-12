@@ -998,7 +998,9 @@ export class OrdersService {
     const limit = Math.min(500, Math.max(1, opts?.limit ?? 20));
     const skip = (page - 1) * limit;
 
-    const where: any = {};
+    const where: any = {
+      deletedAt: null,
+    };
 
     if (opts?.status) {
       where.status = opts.status.toUpperCase();
@@ -1035,6 +1037,9 @@ export class OrdersService {
           pagination: { page: 1, limit, total: 0, totalPages: 0 },
         };
       }
+    } else {
+      // Admin and other staff listing all marketplace orders — one logical checkout per row (aligned with dashboard).
+      where.parentOrderId = null;
     }
 
     const [orders, total] = await Promise.all([

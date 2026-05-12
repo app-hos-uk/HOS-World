@@ -25,6 +25,10 @@ export default function ChangePasswordPage() {
       toast.error('New passwords do not match');
       return;
     }
+    if (formData.currentPassword === formData.newPassword) {
+      toast.error('New password must be different from your current password');
+      return;
+    }
     if (formData.newPassword.length < 8) {
       toast.error('Password must be at least 8 characters');
       return;

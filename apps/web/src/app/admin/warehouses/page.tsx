@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState, Fragment } from 'react';
+import { validateWarehouseForm } from '@/lib/warehouseFormValidation';
 import Link from 'next/link';
 import { RouteGuard } from '@/components/RouteGuard';
 import { AdminLayout } from '@/components/AdminLayout';
@@ -80,6 +81,27 @@ export default function AdminWarehousesPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    const v = validateWarehouseForm({
+      name: formData.name,
+      city: formData.city,
+      state: formData.state,
+      country: formData.country,
+      postalCode: formData.postalCode,
+      contactPhone: formData.contactPhone,
+      managerName: formData.managerName,
+    });
+    if (v) {
+      toast.error(v);
+      return;
+    }
+    if (!formData.code.trim()) {
+      toast.error('Warehouse code is required');
+      return;
+    }
+    if (!formData.address.trim()) {
+      toast.error('Address is required');
+      return;
+    }
     try {
       setSubmitting(true);
       const payload = {

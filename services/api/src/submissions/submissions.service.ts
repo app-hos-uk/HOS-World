@@ -336,8 +336,14 @@ export class SubmissionsService {
       throw new ForbiddenException('You do not have permission to delete this submission');
     }
 
-    // Only allow deletion if status is SUBMITTED or REJECTED
-    if (submission.status !== 'SUBMITTED' && submission.status !== 'REJECTED') {
+    // Sellers may withdraw or remove submissions that have not progressed past review
+    const deletableStatuses: ProductSubmissionStatus[] = [
+      'SUBMITTED',
+      'UNDER_REVIEW',
+      'PROCUREMENT_REJECTED',
+      'REJECTED',
+    ];
+    if (!deletableStatuses.includes(submission.status)) {
       throw new BadRequestException('Submission cannot be deleted in its current status');
     }
 
@@ -593,6 +599,7 @@ export class SubmissionsService {
       page: opts.page,
       limit: opts.limit,
       includeInactive: true,
+      searchNameAndSkuOnly: Boolean(opts.search?.trim()),
     });
 
     const hitIds = meiliResult.hits.map((h: any) => h.id);

@@ -339,8 +339,8 @@ export default function AdminTagsPage() {
     setShowCreateForm(true);
   };
 
-  const resetForm = () => {
-    setShowCreateForm(false);
+  /** Clear fields + edit mode only (does not close the panel — used when opening “Add Tag”). */
+  const resetFormFields = () => {
     setEditingTag(null);
     setFormData({
       name: '',
@@ -350,6 +350,11 @@ export default function AdminTagsPage() {
       isActive: true,
       color: '',
     });
+  };
+
+  const resetForm = () => {
+    setShowCreateForm(false);
+    resetFormFields();
   };
 
   const toggleTagSelection = (id: string) => {
@@ -443,10 +448,10 @@ export default function AdminTagsPage() {
                 Bulk Create
               </button>
               <button
+                type="button"
                 onClick={() => {
+                  resetFormFields();
                   setShowCreateForm(true);
-                  setEditingTag(null);
-                  resetForm();
                 }}
                 className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700"
               >

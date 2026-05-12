@@ -5,8 +5,24 @@ import {
   IsArray,
   IsObject,
   IsUrl,
-  IsEnum,
+  ValidateNested,
 } from 'class-validator';
+import { Type } from 'class-transformer';
+
+/** http(s) only with explicit protocol — matches typical CDN / image hosting URLs */
+const CATALOG_HTTP_URL = {
+  protocols: ['http', 'https'] as ('http' | 'https')[],
+  require_protocol: true,
+};
+
+export class CatalogMarketingMaterialDto {
+  @IsString()
+  @IsNotEmpty()
+  type: string;
+
+  @IsUrl(CATALOG_HTTP_URL)
+  url: string;
+}
 
 export class CreateCatalogEntryDto {
   @IsString()
@@ -28,12 +44,14 @@ export class CreateCatalogEntryDto {
 
   @IsOptional()
   @IsArray()
-  @IsString({ each: true })
+  @IsUrl(CATALOG_HTTP_URL, { each: true })
   images?: string[];
 
   @IsOptional()
   @IsArray()
-  marketingMaterials?: Array<{ type: string; url: string }>;
+  @ValidateNested({ each: true })
+  @Type(() => CatalogMarketingMaterialDto)
+  marketingMaterials?: CatalogMarketingMaterialDto[];
 }
 
 export class UpdateCatalogEntryDto {
@@ -56,10 +74,12 @@ export class UpdateCatalogEntryDto {
 
   @IsOptional()
   @IsArray()
-  @IsString({ each: true })
+  @IsUrl(CATALOG_HTTP_URL, { each: true })
   images?: string[];
 
   @IsOptional()
   @IsArray()
-  marketingMaterials?: Array<{ type: string; url: string }>;
+  @ValidateNested({ each: true })
+  @Type(() => CatalogMarketingMaterialDto)
+  marketingMaterials?: CatalogMarketingMaterialDto[];
 }

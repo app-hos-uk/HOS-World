@@ -125,18 +125,14 @@ export function HeroBanner({
 
   const nextSlide = () => {
     setIsAnimating(true);
-    schedule(() => {
-      setCurrentSlide((prev) => (prev + 1) % slides.length);
-      setIsAnimating(false);
-    }, 300);
+    setCurrentSlide((prev) => (prev + 1) % slides.length);
+    schedule(() => setIsAnimating(false), 300);
   };
 
   const prevSlide = () => {
     setIsAnimating(true);
-    schedule(() => {
-      setCurrentSlide((prev) => (prev - 1 + slides.length) % slides.length);
-      setIsAnimating(false);
-    }, 300);
+    setCurrentSlide((prev) => (prev - 1 + slides.length) % slides.length);
+    schedule(() => setIsAnimating(false), 300);
   };
 
   const goToSlide = (index: number) => {
@@ -180,10 +176,10 @@ export function HeroBanner({
         <div className="absolute inset-0 bg-gradient-to-br from-amber-500/10 via-transparent to-amber-500/10" />
       </div>
 
-      {/* Content */}
-      <div className="relative z-10 h-full flex items-center">
-        <div className="container mx-auto px-4 sm:px-6 md:px-8">
-          <div className="max-w-2xl">
+      {/* Content — pointer-events: non-interactive layer except CTAs */}
+      <div className="relative z-10 h-full flex items-center pointer-events-none">
+        <div className="container mx-auto px-4 sm:px-6 md:px-8 pointer-events-none">
+          <div className="max-w-2xl pointer-events-auto">
             {/* Fandom Badge - Purple with gold accent */}
             {currentSlideData.fandom && (
               <div className="mb-3 sm:mb-4 inline-block">
@@ -222,19 +218,27 @@ export function HeroBanner({
         </div>
       </div>
 
-      {/* Navigation Arrows - Purple with gold accent */}
+      {/* Navigation */}
       {showArrows && (
         <>
           <button
-            onClick={prevSlide}
-            className="absolute left-2 sm:left-4 top-1/2 -translate-y-1/2 z-20 p-2 sm:p-3 bg-purple-800/80 hover:bg-purple-700/90 backdrop-blur-sm rounded-full text-white transition-all duration-300 hover:scale-110 border border-amber-400/30 shadow-lg"
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              prevSlide();
+            }}
+            className="absolute left-2 sm:left-4 top-1/2 -translate-y-1/2 z-30 pointer-events-auto p-2 sm:p-3 bg-purple-800/80 hover:bg-purple-700/90 backdrop-blur-sm rounded-full text-white transition-all duration-300 hover:scale-110 border border-amber-400/30 shadow-lg"
             aria-label="Previous slide"
           >
             <ChevronLeftIcon className="w-4 h-4 sm:w-6 sm:h-6" />
           </button>
           <button
-            onClick={nextSlide}
-            className="absolute right-2 sm:right-4 top-1/2 -translate-y-1/2 z-20 p-2 sm:p-3 bg-purple-800/80 hover:bg-purple-700/90 backdrop-blur-sm rounded-full text-white transition-all duration-300 hover:scale-110 border border-amber-400/30 shadow-lg"
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              nextSlide();
+            }}
+            className="absolute right-2 sm:right-4 top-1/2 -translate-y-1/2 z-30 pointer-events-auto p-2 sm:p-3 bg-purple-800/80 hover:bg-purple-700/90 backdrop-blur-sm rounded-full text-white transition-all duration-300 hover:scale-110 border border-amber-400/30 shadow-lg"
             aria-label="Next slide"
           >
             <ChevronRightIcon className="w-4 h-4 sm:w-6 sm:h-6" />
@@ -242,30 +246,36 @@ export function HeroBanner({
         </>
       )}
 
-      {/* Indicators - Purple with gold active */}
-      {showIndicators && (
-        <div className="absolute bottom-4 sm:bottom-6 left-1/2 -translate-x-1/2 z-20 flex space-x-2">
-          {slides.map((_, index) => (
-            <button
-              key={index}
-              onClick={() => goToSlide(index)}
-              className={`h-2 rounded-full transition-all duration-300 ${
-                index === currentSlide
-                  ? 'w-8 bg-gradient-to-r from-amber-500 to-amber-400 shadow-lg'
-                  : 'w-2 bg-purple-300/50 hover:bg-purple-300/70'
-              }`}
-              aria-label={`Go to slide ${index + 1}`}
-            />
-          ))}
+      {/* Indicators + scroll hint stacked so they don't overlap */}
+      {(showIndicators || showArrows) && (
+        <div className="absolute bottom-3 sm:bottom-5 left-0 right-0 z-20 flex flex-col items-center gap-3 pointer-events-none">
+          {showIndicators && (
+            <div className="flex gap-2 pointer-events-auto">
+              {slides.map((_, index) => (
+                <button
+                  key={index}
+                  type="button"
+                  onClick={() => goToSlide(index)}
+                  className={`h-2 rounded-full transition-all duration-300 ${
+                    index === currentSlide
+                      ? 'w-8 bg-gradient-to-r from-amber-500 to-amber-400 shadow-lg'
+                      : 'w-2 bg-purple-300/50 hover:bg-purple-300/70'
+                  }`}
+                  aria-label={`Go to slide ${index + 1}`}
+                />
+              ))}
+            </div>
+          )}
+          <div className="flex flex-col items-center gap-1.5 pointer-events-none" aria-hidden="true">
+            <span className="text-[10px] sm:text-xs font-semibold uppercase tracking-[0.18em] text-amber-200/95 drop-shadow-sm">
+              Discover more
+            </span>
+            <div className="animate-bounce w-6 h-10 border-2 border-amber-400/50 rounded-full flex justify-center shrink-0">
+              <div className="w-1 h-3 bg-amber-400 rounded-full mt-2 animate-pulse" />
+            </div>
+          </div>
         </div>
       )}
-
-      {/* Scroll Indicator - Gold */}
-      <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-20 animate-bounce">
-        <div className="w-6 h-10 border-2 border-amber-400/50 rounded-full flex justify-center">
-          <div className="w-1 h-3 bg-amber-400 rounded-full mt-2 animate-pulse" />
-        </div>
-      </div>
     </div>
   );
 }
