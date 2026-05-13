@@ -107,7 +107,7 @@ export class AdminUsersController {
           updatedAt: Date;
         }[]
       >`
-        SELECT DISTINCT u.id, u.email, u."firstName", u."lastName", u.role, u."isActive", u.avatar, u."createdAt", u."updatedAt"
+        SELECT u.id, u.email, u."firstName", u."lastName", u.role, u."isActive", u.avatar, u."createdAt", u."updatedAt"
         ${fromClause}
         WHERE ${whereSql}
         ORDER BY
