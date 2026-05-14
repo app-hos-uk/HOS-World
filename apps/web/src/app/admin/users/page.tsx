@@ -894,7 +894,7 @@ export default function AdminUsersPage() {
                             >
                               Edit
                             </button>
-                            {isSuperAdmin && user.email !== currentUser?.email && (
+                            {isSuperAdmin && (
                               <button
                                 onClick={() => handleResetPassword(user)}
                                 className="px-2 py-1 text-sm text-orange-600 hover:bg-orange-50 rounded"
