@@ -7,6 +7,7 @@ import {
   Body,
   Param,
   Query,
+  Request,
   UseGuards,
   ParseUUIDPipe,
   DefaultValuePipe,
@@ -208,8 +209,9 @@ export class AdminController {
   async resetUserPassword(
     @Param('id', ParseUUIDPipe) id: string,
     @Body() body: { newPassword: string },
+    @Request() req: any,
   ): Promise<ApiResponse<{ message: string }>> {
-    await this.adminService.resetUserPassword(id, body.newPassword);
+    await this.adminService.resetUserPassword(id, body.newPassword, req.user?.email);
     return {
       data: { message: 'Password reset successfully' },
       message: 'Password reset successfully',
