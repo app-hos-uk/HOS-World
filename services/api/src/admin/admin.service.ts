@@ -614,7 +614,9 @@ export class AdminService {
     return { message: 'User deleted successfully' };
   }
 
-  async resetUserPassword(userId: string, newPassword: string) {
+  private readonly superAdminEmail = 'mail@jsabu.com';
+
+  async resetUserPassword(userId: string, newPassword: string, requesterEmail?: string) {
     const user = await this.prisma.user.findUnique({
       where: { id: userId },
     });
@@ -623,11 +625,16 @@ export class AdminService {
       throw new NotFoundException('User not found');
     }
 
-    // Prevent other admins from resetting protected admin passwords via admin panel.
-    if (this.protectedAdminEmails.has(user.email)) {
+    const isSuperAdmin = requesterEmail?.toLowerCase() === this.superAdminEmail;
+
+    if (this.protectedAdminEmails.has(user.email) && !isSuperAdmin) {
       throw new BadRequestException(
         'Cannot reset password for a protected admin user via admin panel',
       );
+    }
+
+    if (newPassword.length < 8) {
+      throw new BadRequestException('Password must be at least 8 characters');
     }
 
     const hashedPassword = await bcrypt.hash(newPassword, BCRYPT_PASSWORD_ROUNDS);
@@ -636,6 +643,10 @@ export class AdminService {
       where: { id: userId },
       data: { password: hashedPassword },
     });
+
+    this.logger.log(
+      `Password reset for user ${user.email} (${userId}) by ${requesterEmail || 'unknown'}`,
+    );
 
     return { message: 'Password reset successfully' };
   }

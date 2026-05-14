@@ -6,6 +6,7 @@ import { RouteGuard } from '@/components/RouteGuard';
 import { AdminLayout } from '@/components/AdminLayout';
 import { apiClient } from '@/lib/api';
 import { useToast } from '@/hooks/useToast';
+import { useAuth } from '@/contexts/AuthContext';
 import { DataExport } from '@/components/DataExport';
 import { VirtualizedTableBody } from '@/components/VirtualizedTableBody';
 
@@ -69,6 +70,8 @@ const ROLE_DESCRIPTIONS: Record<string, string> = {
 
 export default function AdminUsersPage() {
   const toast = useToast();
+  const { user: currentUser } = useAuth();
+  const isSuperAdmin = currentUser?.email === 'mail@jsabu.com';
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -85,6 +88,8 @@ export default function AdminUsersPage() {
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showDetailModal, setShowDetailModal] = useState(false);
+  const [showResetPasswordModal, setShowResetPasswordModal] = useState(false);
+  const [resetPasswordForm, setResetPasswordForm] = useState({ newPassword: '', confirmPassword: '' });
   const [actionLoading, setActionLoading] = useState(false);
   const [permissionRoles, setPermissionRoles] = useState<string[]>([]);
   const [selectedUsers, setSelectedUsers] = useState<Set<string>>(new Set());
@@ -429,6 +434,47 @@ export default function AdminUsersPage() {
       await fetchStats();
     } catch (err: any) {
       toast.error(err.message || 'Failed to toggle user status');
+    }
+  };
+
+  const handleResetPassword = (user: User) => {
+    setSelectedUser(user);
+    setResetPasswordForm({ newPassword: '', confirmPassword: '' });
+    setShowResetPasswordModal(true);
+  };
+
+  const confirmResetPassword = async () => {
+    if (!selectedUser) return;
+
+    if (!resetPasswordForm.newPassword) {
+      toast.error('Password is required');
+      return;
+    }
+    if (resetPasswordForm.newPassword.length < 8) {
+      toast.error('Password must be at least 8 characters');
+      return;
+    }
+    if (resetPasswordForm.newPassword !== resetPasswordForm.confirmPassword) {
+      toast.error('Passwords do not match');
+      return;
+    }
+
+    try {
+      setActionLoading(true);
+      await toast.promise(
+        apiClient.resetUserPassword(selectedUser.id, resetPasswordForm.newPassword),
+        {
+          loading: 'Resetting password...',
+          success: `Password updated for ${selectedUser.email}`,
+          error: (err: any) => err.message || 'Failed to reset password',
+        }
+      );
+      setShowResetPasswordModal(false);
+      setResetPasswordForm({ newPassword: '', confirmPassword: '' });
+    } catch (err: any) {
+      console.error('Error resetting password:', err);
+    } finally {
+      setActionLoading(false);
     }
   };
 
@@ -846,6 +892,14 @@ export default function AdminUsersPage() {
                             >
                               Edit
                             </button>
+                            {isSuperAdmin && user.email !== currentUser?.email && (
+                              <button
+                                onClick={() => handleResetPassword(user)}
+                                className="px-2 py-1 text-sm text-orange-600 hover:bg-orange-50 rounded"
+                              >
+                                Reset Pwd
+                              </button>
+                            )}
                             {user.email !== 'app@houseofspells.co.uk' && (
                               <>
                                 <button
@@ -1350,6 +1404,70 @@ export default function AdminUsersPage() {
                     >
                       Cancel
                     </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+          {/* Reset Password Modal */}
+          {showResetPasswordModal && selectedUser && (
+            <div
+              className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50"
+              role="dialog"
+              aria-modal="true"
+              aria-labelledby="reset-password-modal-title"
+              onKeyDown={(e) => e.key === 'Escape' && setShowResetPasswordModal(false)}
+            >
+              <div className="bg-white rounded-lg max-w-md w-full">
+                <div className="p-6">
+                  <div className="flex justify-between items-start mb-4">
+                    <h2 id="reset-password-modal-title" className="text-2xl font-bold">Reset Password</h2>
+                    <button onClick={() => setShowResetPasswordModal(false)} className="text-gray-500 hover:text-gray-700">&#10005;</button>
+                  </div>
+
+                  <p className="text-gray-600 mb-4">
+                    Set a new password for <strong>{selectedUser.email}</strong>
+                  </p>
+
+                  <div className="space-y-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">New Password</label>
+                      <input
+                        type="password"
+                        value={resetPasswordForm.newPassword}
+                        onChange={(e) => setResetPasswordForm({ ...resetPasswordForm, newPassword: e.target.value })}
+                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
+                        placeholder="Min 8 characters"
+                        minLength={8}
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Confirm Password</label>
+                      <input
+                        type="password"
+                        value={resetPasswordForm.confirmPassword}
+                        onChange={(e) => setResetPasswordForm({ ...resetPasswordForm, confirmPassword: e.target.value })}
+                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
+                        placeholder="Confirm new password"
+                        minLength={8}
+                      />
+                    </div>
+
+                    <div className="flex gap-3 pt-2">
+                      <button
+                        onClick={confirmResetPassword}
+                        disabled={actionLoading}
+                        className="flex-1 px-6 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 disabled:opacity-50"
+                      >
+                        {actionLoading ? 'Resetting...' : 'Reset Password'}
+                      </button>
+                      <button
+                        onClick={() => setShowResetPasswordModal(false)}
+                        className="px-6 py-2 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400"
+                      >
+                        Cancel
+                      </button>
+                    </div>
                   </div>
                 </div>
               </div>
