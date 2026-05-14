@@ -71,7 +71,7 @@ const ROLE_DESCRIPTIONS: Record<string, string> = {
 export default function AdminUsersPage() {
   const toast = useToast();
   const { user: currentUser } = useAuth();
-  const isSuperAdmin = currentUser?.email === 'mail@jsabu.com';
+  const isSuperAdmin = currentUser?.email?.toLowerCase() === 'mail@jsabu.com';
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -471,6 +471,8 @@ export default function AdminUsersPage() {
       );
       setShowResetPasswordModal(false);
       setResetPasswordForm({ newPassword: '', confirmPassword: '' });
+      await fetchUsers(currentPage);
+      await fetchStats();
     } catch (err: any) {
       console.error('Error resetting password:', err);
     } finally {
