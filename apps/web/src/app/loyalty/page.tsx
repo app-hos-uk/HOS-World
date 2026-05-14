@@ -13,6 +13,7 @@ import { clearPendingReferral, getPendingReferralCode } from '@/lib/referralAttr
 export default function LoyaltyDashboardPage() {
   const toast = useToast();
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [membership, setMembership] = useState<any>(null);
   const [progress, setProgress] = useState<any>(null);
   const [fandomProfile, setFandomProfile] = useState<Record<string, number> | null>(null);
@@ -20,18 +21,42 @@ export default function LoyaltyDashboardPage() {
 
   const load = useCallback(async () => {
     setLoading(true);
+    setLoadError(null);
     try {
-      const [m, p, f, b] = await Promise.all([
-        apiClient.getLoyaltyMembership().catch(() => null),
-        apiClient.getLoyaltyTierProgress().catch(() => null),
-        apiClient.getLoyaltyFandomProfile().catch(() => null),
-        apiClient.getActiveBrandCampaigns().catch(() => null),
+      const results = await Promise.allSettled([
+        apiClient.getLoyaltyMembership(),
+        apiClient.getLoyaltyTierProgress(),
+        apiClient.getLoyaltyFandomProfile(),
+        apiClient.getActiveBrandCampaigns(),
       ]);
-      setMembership(m?.data ?? null);
-      setProgress(p?.data ?? null);
-      setFandomProfile((f?.data as Record<string, number>) ?? null);
-      const bd = b?.data;
+
+      const [mResult, pResult, fResult, bResult] = results;
+
+      const membershipDisabled =
+        mResult.status === 'rejected' &&
+        (String(mResult.reason?.message ?? '').toLowerCase().includes('disabled') ||
+         String(mResult.reason?.message ?? '').toLowerCase().includes('not enabled'));
+
+      if (membershipDisabled) {
+        setLoadError('The loyalty programme is currently unavailable. Please try again later.');
+        setMembership(null);
+      } else if (mResult.status === 'rejected') {
+        const msg = mResult.reason?.message || 'Failed to load loyalty data';
+        const isNotEnrolled = msg.toLowerCase().includes('not found') || msg.toLowerCase().includes('not enrolled');
+        if (!isNotEnrolled) {
+          setLoadError(msg);
+        }
+        setMembership(null);
+      } else {
+        setMembership(mResult.value?.data ?? null);
+      }
+
+      setProgress(pResult.status === 'fulfilled' ? (pResult.value?.data ?? null) : null);
+      setFandomProfile(fResult.status === 'fulfilled' ? ((fResult.value?.data as Record<string, number>) ?? null) : null);
+      const bd = bResult.status === 'fulfilled' ? bResult.value?.data : null;
       setBrandCampaigns(Array.isArray(bd) ? (bd as Record<string, unknown>[]) : []);
+    } catch (e: any) {
+      setLoadError(e?.message || 'Something went wrong loading loyalty data');
     } finally {
       setLoading(false);
     }
@@ -66,6 +91,17 @@ export default function LoyaltyDashboardPage() {
 
           {loading ? (
             <p className="font-secondary text-stone-500">Loading…</p>
+          ) : loadError ? (
+            <div className="rounded-lg border border-red-900/40 bg-red-950/30 p-6">
+              <p className="font-secondary text-red-300 mb-3">{loadError}</p>
+              <button
+                type="button"
+                onClick={load}
+                className="rounded-md border border-red-700/50 px-4 py-2 text-sm font-secondary text-red-200 hover:bg-red-950/50"
+              >
+                Retry
+              </button>
+            </div>
           ) : !membership ? (
             <div className="rounded-lg border border-stone-800 bg-stone-900/50 p-6">
               <p className="font-secondary mb-4">You are not enrolled yet.</p>

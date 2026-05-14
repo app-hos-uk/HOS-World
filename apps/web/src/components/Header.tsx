@@ -203,6 +203,16 @@ export function Header() {
                   <span>My Orders</span>
                 </Link>
                 <Link 
+                  href="/loyalty" 
+                  className="inline-flex items-center gap-1.5 text-sm lg:text-base text-purple-700 hover:text-amber-600 font-medium font-secondary transition-colors duration-300"
+                  title="Loyalty Programme"
+                >
+                  <span className="text-base leading-none w-6 flex justify-center shrink-0" aria-hidden>
+                    ✨
+                  </span>
+                  <span>Rewards</span>
+                </Link>
+                <Link 
                   href="/cart" 
                   className="relative text-sm lg:text-base text-purple-700 hover:text-amber-600 font-medium font-secondary transition-colors duration-300"
                 >
@@ -361,6 +371,14 @@ export function Header() {
                   >
                     <span className="w-6 flex justify-center shrink-0" aria-hidden>📋</span>
                     <span>My Orders</span>
+                  </Link>
+                  <Link 
+                    href="/loyalty" 
+                    onClick={() => setIsMobileMenuOpen(false)}
+                    className="inline-flex items-center gap-2 text-base text-purple-700 hover:text-amber-600 font-medium font-secondary transition-colors duration-300 py-2 px-2 rounded-lg hover:bg-purple-50"
+                  >
+                    <span className="w-6 flex justify-center shrink-0" aria-hidden>✨</span>
+                    <span>Rewards</span>
                   </Link>
                   <Link 
                     href="/cart" 

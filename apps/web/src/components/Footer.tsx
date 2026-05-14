@@ -122,6 +122,11 @@ export function Footer() {
                   Sellers
                 </Link>
               </li>
+              <li>
+                <Link href="/loyalty" className="hover:underline" style={{ color: theme.colors.text.secondary }}>
+                  Loyalty Programme
+                </Link>
+              </li>
             </ul>
           </nav>
 

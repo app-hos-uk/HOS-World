@@ -61,6 +61,8 @@ export default function CustomerDashboardPage() {
   const [profileStats, setProfileStats] = useState<any>(null);
   const [recentWishlist, setRecentWishlist] = useState<any[]>([]);
   const [recentActivity, setRecentActivity] = useState<any[]>([]);
+  const [loyaltyMembership, setLoyaltyMembership] = useState<any>(null);
+  const [loyaltyProgress, setLoyaltyProgress] = useState<any>(null);
   const [activeTab, setActiveTab] = useState<TabType>('overview');
 
   useEffect(() => {
@@ -127,6 +129,14 @@ export default function CustomerDashboardPage() {
       if (gamificationResponse?.data) {
         setProfileStats(gamificationResponse.data);
       }
+
+      // Fetch loyalty programme data
+      const [loyaltyRes, loyaltyProgressRes] = await Promise.all([
+        apiClient.getLoyaltyMembership().catch(() => null),
+        apiClient.getLoyaltyTierProgress().catch(() => null),
+      ]);
+      setLoyaltyMembership(loyaltyRes?.data ?? null);
+      setLoyaltyProgress(loyaltyProgressRes?.data ?? null);
 
       // Build recent activity from orders and wishlist
       const activity: any[] = [];
@@ -442,6 +452,64 @@ export default function CustomerDashboardPage() {
                   )}
                 </div>
 
+                {/* Loyalty Programme Card */}
+                <div className="bg-gradient-to-br from-amber-600 to-amber-800 rounded-xl p-6 text-white shadow-lg">
+                  <div className="flex items-center justify-between mb-4">
+                    <h2 className="text-lg font-semibold">The Enchanted Circle</h2>
+                    <Link href="/loyalty" className="text-amber-200 hover:text-white text-sm">
+                      View →
+                    </Link>
+                  </div>
+                  {loyaltyMembership ? (
+                    <div className="space-y-4">
+                      <div className="flex items-center gap-4">
+                        <div className="w-12 h-12 rounded-full bg-white/20 flex items-center justify-center text-2xl">
+                          ✨
+                        </div>
+                        <div>
+                          <p className="font-bold text-lg">{loyaltyMembership.tier?.name || 'Member'}</p>
+                          <p className="text-amber-200 text-sm">Loyalty Tier</p>
+                        </div>
+                      </div>
+                      <div className="grid grid-cols-2 gap-4 pt-4 border-t border-white/20">
+                        <div className="text-center">
+                          <p className="text-2xl font-bold">{(loyaltyMembership.currentBalance || 0).toLocaleString()}</p>
+                          <p className="text-xs text-amber-200">Points Balance</p>
+                        </div>
+                        <div className="text-center">
+                          <p className="text-2xl font-bold">{(loyaltyMembership.totalPointsEarned || 0).toLocaleString()}</p>
+                          <p className="text-xs text-amber-200">Lifetime Earned</p>
+                        </div>
+                      </div>
+                      {loyaltyProgress?.nextTier && (
+                        <div>
+                          <div className="flex justify-between text-xs mb-1">
+                            <span>Progress to {loyaltyProgress.nextTier.name}</span>
+                            <span>{loyaltyProgress.progressPercent ?? 0}%</span>
+                          </div>
+                          <div className="w-full bg-white/20 rounded-full h-2">
+                            <div
+                              className="bg-white h-2 rounded-full transition-all"
+                              style={{ width: `${loyaltyProgress.progressPercent ?? 0}%` }}
+                            />
+                          </div>
+                          <p className="text-xs text-amber-200 mt-1">{loyaltyProgress.pointsToNext ?? 0} points to go</p>
+                        </div>
+                      )}
+                    </div>
+                  ) : (
+                    <div className="text-center py-6">
+                      <p className="text-amber-200 mb-3">Join our loyalty programme to earn rewards!</p>
+                      <Link
+                        href="/loyalty"
+                        className="inline-block px-4 py-2 bg-white/20 hover:bg-white/30 rounded-lg text-sm font-medium"
+                      >
+                        Join Now
+                      </Link>
+                    </div>
+                  )}
+                </div>
+
                 {/* Wishlist Preview */}
                 <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
                   <div className="flex items-center justify-between mb-4">
@@ -516,6 +584,16 @@ export default function CustomerDashboardPage() {
                     <div>
                       <p className="font-semibold text-gray-900">Shopping Cart</p>
                       <p className="text-sm text-gray-500">{stats?.cartItems || 0} items ready to checkout</p>
+                    </div>
+                  </Link>
+                  <Link
+                    href="/loyalty"
+                    className="flex items-center gap-4 bg-white rounded-xl p-4 shadow-sm border border-gray-100 hover:shadow-md hover:border-amber-200 transition-all"
+                  >
+                    <div className="w-12 h-12 rounded-lg bg-amber-100 flex items-center justify-center text-2xl">✨</div>
+                    <div>
+                      <p className="font-semibold text-gray-900">Loyalty Rewards</p>
+                      <p className="text-sm text-gray-500">Earn points &amp; unlock rewards</p>
                     </div>
                   </Link>
                   <Link
