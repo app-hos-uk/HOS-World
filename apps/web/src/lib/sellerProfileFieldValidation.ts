@@ -42,3 +42,45 @@ export function sanitizeOpsPhoneInput(value: string): string {
 export function sanitizePostalInput(value: string): string {
   return value.replace(/[^\p{L}\p{N}\s\-]/gu, '');
 }
+
+/**
+ * Sanitize label fields (business name, city, bank name, account holder, contact name, state).
+ * Allows letters, numbers, spaces, hyphens, ampersands, periods, commas, and apostrophes.
+ * Prevents input from becoming numeric-only by blocking digit entry when no letters present.
+ */
+export function sanitizeLabelInput(value: string, prevValue: string = ''): string {
+  // Allow common label characters
+  const sanitized = value.replace(/[^\p{L}\p{N}\s\-&.,'']/gu, '');
+  // If result would be numeric-only and non-empty, reject the change
+  const trimmed = sanitized.trim();
+  if (trimmed.length > 0 && /^\p{Nd}+$/u.test(trimmed)) {
+    // Check if user is trying to add more digits to an already numeric-only string
+    // Allow if prev had letters (user is deleting), reject if adding digits to numeric
+    const prevTrimmed = prevValue.trim();
+    if (prevTrimmed.length === 0 || /^\p{Nd}+$/u.test(prevTrimmed)) {
+      // Prev was empty or numeric-only, don't allow more numeric-only
+      return prevValue;
+    }
+  }
+  return sanitized;
+}
+
+/**
+ * Check if a label value is currently invalid (for showing real-time warning).
+ * Returns true if the value is non-empty but numeric-only (missing letters).
+ */
+export function isLabelInvalid(value: string): boolean {
+  const t = value.trim();
+  if (!t.length) return false;
+  return /^\p{Nd}+$/u.test(t) || !(/\p{L}/u.test(t));
+}
+
+/**
+ * Check if postal code is currently invalid (for showing real-time warning).
+ * Returns true if non-empty but has no digits.
+ */
+export function isPostalInvalid(value: string): boolean {
+  const t = value.trim();
+  if (!t.length) return false;
+  return !/\p{Nd}/u.test(t);
+}

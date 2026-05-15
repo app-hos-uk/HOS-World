@@ -14,6 +14,9 @@ import {
   optionalPostalCodeOk,
   sanitizeOpsPhoneInput,
   sanitizePostalInput,
+  sanitizeLabelInput,
+  isLabelInvalid,
+  isPostalInvalid,
   SELLER_PROFILE_HINTS,
 } from '@/lib/sellerProfileFieldValidation';
 
@@ -360,11 +363,14 @@ export default function SellerProfilePage() {
                       <input
                         type="text"
                         value={businessForm.legalBusinessName}
-                        onChange={(e) => setBusinessForm({ ...businessForm, legalBusinessName: e.target.value })}
+                        onChange={(e) => setBusinessForm({ ...businessForm, legalBusinessName: sanitizeLabelInput(e.target.value, businessForm.legalBusinessName) })}
                         disabled={!editing}
                         placeholder="Registered company name"
-                        className="w-full px-4 py-2 border border-gray-300 rounded-lg disabled:bg-gray-100"
+                        className={`w-full px-4 py-2 border rounded-lg disabled:bg-gray-100 ${isLabelInvalid(businessForm.legalBusinessName) ? 'border-red-300 focus:border-red-500 focus:ring-red-200' : 'border-gray-300'}`}
                       />
+                      {isLabelInvalid(businessForm.legalBusinessName) && (
+                        <p className="text-xs text-red-600 mt-1">Must include at least one letter</p>
+                      )}
                     </div>
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">Trading Name</label>
@@ -407,10 +413,13 @@ export default function SellerProfilePage() {
                       <input
                         type="text"
                         value={businessForm.city}
-                        onChange={(e) => setBusinessForm({ ...businessForm, city: e.target.value })}
+                        onChange={(e) => setBusinessForm({ ...businessForm, city: sanitizeLabelInput(e.target.value, businessForm.city) })}
                         disabled={!editing}
-                        className="w-full px-4 py-2 border border-gray-300 rounded-lg disabled:bg-gray-100"
+                        className={`w-full px-4 py-2 border rounded-lg disabled:bg-gray-100 ${isLabelInvalid(businessForm.city) ? 'border-red-300 focus:border-red-500 focus:ring-red-200' : 'border-gray-300'}`}
                       />
+                      {isLabelInvalid(businessForm.city) && (
+                        <p className="text-xs text-red-600 mt-1">Must include at least one letter</p>
+                      )}
                     </div>
                     <div className="md:col-span-2">
                       <label className="block text-sm font-medium text-gray-700 mb-1">Store Description</label>
@@ -470,20 +479,26 @@ export default function SellerProfilePage() {
                       <input
                         type="text"
                         value={bankForm.bankName}
-                        onChange={(e) => setBankForm({ ...bankForm, bankName: e.target.value })}
+                        onChange={(e) => setBankForm({ ...bankForm, bankName: sanitizeLabelInput(e.target.value, bankForm.bankName) })}
                         placeholder="e.g., Barclays, HSBC"
-                        className="w-full px-4 py-2 border border-gray-300 rounded-lg"
+                        className={`w-full px-4 py-2 border rounded-lg ${isLabelInvalid(bankForm.bankName) ? 'border-red-300 focus:border-red-500 focus:ring-red-200' : 'border-gray-300'}`}
                       />
+                      {isLabelInvalid(bankForm.bankName) && (
+                        <p className="text-xs text-red-600 mt-1">Must include at least one letter</p>
+                      )}
                     </div>
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">Account Holder Name</label>
                       <input
                         type="text"
                         value={bankForm.accountHolder}
-                        onChange={(e) => setBankForm({ ...bankForm, accountHolder: e.target.value })}
+                        onChange={(e) => setBankForm({ ...bankForm, accountHolder: sanitizeLabelInput(e.target.value, bankForm.accountHolder) })}
                         placeholder="Name on the account"
-                        className="w-full px-4 py-2 border border-gray-300 rounded-lg"
+                        className={`w-full px-4 py-2 border rounded-lg ${isLabelInvalid(bankForm.accountHolder) ? 'border-red-300 focus:border-red-500 focus:ring-red-200' : 'border-gray-300'}`}
                       />
+                      {isLabelInvalid(bankForm.accountHolder) && (
+                        <p className="text-xs text-red-600 mt-1">Must include at least one letter</p>
+                      )}
                     </div>
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">Account Number</label>
@@ -533,10 +548,13 @@ export default function SellerProfilePage() {
                       <input
                         type="text"
                         value={opsForm.opsContactName}
-                        onChange={(e) => setOpsForm({ ...opsForm, opsContactName: e.target.value })}
+                        onChange={(e) => setOpsForm({ ...opsForm, opsContactName: sanitizeLabelInput(e.target.value, opsForm.opsContactName) })}
                         placeholder="Operations manager name"
-                        className="w-full px-4 py-2 border border-gray-300 rounded-lg"
+                        className={`w-full px-4 py-2 border rounded-lg ${isLabelInvalid(opsForm.opsContactName) ? 'border-red-300 focus:border-red-500 focus:ring-red-200' : 'border-gray-300'}`}
                       />
+                      {isLabelInvalid(opsForm.opsContactName) && (
+                        <p className="text-xs text-red-600 mt-1">Must include at least one letter</p>
+                      )}
                     </div>
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">Contact Email</label>
@@ -603,18 +621,24 @@ export default function SellerProfilePage() {
                       <input
                         type="text"
                         value={warehouseForm.city}
-                        onChange={(e) => setWarehouseForm({ ...warehouseForm, city: e.target.value })}
-                        className="w-full px-4 py-2 border border-gray-300 rounded-lg"
+                        onChange={(e) => setWarehouseForm({ ...warehouseForm, city: sanitizeLabelInput(e.target.value, warehouseForm.city) })}
+                        className={`w-full px-4 py-2 border rounded-lg ${isLabelInvalid(warehouseForm.city) ? 'border-red-300 focus:border-red-500 focus:ring-red-200' : 'border-gray-300'}`}
                       />
+                      {isLabelInvalid(warehouseForm.city) && (
+                        <p className="text-xs text-red-600 mt-1">Must include at least one letter</p>
+                      )}
                     </div>
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">State/Province</label>
                       <input
                         type="text"
                         value={warehouseForm.state}
-                        onChange={(e) => setWarehouseForm({ ...warehouseForm, state: e.target.value })}
-                        className="w-full px-4 py-2 border border-gray-300 rounded-lg"
+                        onChange={(e) => setWarehouseForm({ ...warehouseForm, state: sanitizeLabelInput(e.target.value, warehouseForm.state) })}
+                        className={`w-full px-4 py-2 border rounded-lg ${isLabelInvalid(warehouseForm.state) ? 'border-red-300 focus:border-red-500 focus:ring-red-200' : 'border-gray-300'}`}
                       />
+                      {isLabelInvalid(warehouseForm.state) && (
+                        <p className="text-xs text-red-600 mt-1">Must include at least one letter</p>
+                      )}
                     </div>
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">Postal Code</label>
@@ -629,8 +653,11 @@ export default function SellerProfilePage() {
                             postalCode: sanitizePostalInput(e.target.value),
                           })
                         }
-                        className="w-full px-4 py-2 border border-gray-300 rounded-lg"
+                        className={`w-full px-4 py-2 border rounded-lg ${isPostalInvalid(warehouseForm.postalCode) ? 'border-red-300 focus:border-red-500 focus:ring-red-200' : 'border-gray-300'}`}
                       />
+                      {isPostalInvalid(warehouseForm.postalCode) && (
+                        <p className="text-xs text-red-600 mt-1">Must include at least one digit</p>
+                      )}
                     </div>
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">Country</label>
