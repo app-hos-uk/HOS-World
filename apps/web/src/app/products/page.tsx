@@ -131,8 +131,9 @@ function ProductsContent() {
     setState(parseSearchParams(searchParams));
   }, [searchParams]);
 
-  const updateState = useCallback((updates: Partial<SearchState>) => {
+  const updateState = useCallback((updatesOrFn: Partial<SearchState> | ((prev: SearchState) => Partial<SearchState>)) => {
     setState(prev => {
+      const updates = typeof updatesOrFn === 'function' ? updatesOrFn(prev) : updatesOrFn;
       const next = { ...prev, ...updates };
       // Reset to page 1 when any filter changes (except page itself)
       if (!('page' in updates)) {
@@ -241,11 +242,13 @@ function ProductsContent() {
   }, [state]);
 
   const toggleArrayFilter = (key: 'categories' | 'fandoms', value: string) => {
-    const current = state[key];
-    const next = current.includes(value)
-      ? current.filter(v => v !== value)
-      : [...current, value];
-    updateState({ [key]: next });
+    updateState(prev => {
+      const current = prev[key];
+      const next = current.includes(value)
+        ? current.filter(v => v !== value)
+        : [...current, value];
+      return { [key]: next };
+    });
   };
 
   const startIndex = (state.page - 1) * ITEMS_PER_PAGE + 1;
