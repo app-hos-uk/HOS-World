@@ -321,7 +321,9 @@ export default function AdminDashboardPage() {
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart
                     data={topProductsData}
+                    layout="horizontal"
                     margin={{ top: 10, right: 12, left: 8, bottom: 56 }}
+                    barCategoryGap="20%"
                   >
                     <CartesianGrid strokeDasharray="3 3" stroke="#f3f4f6" vertical={false} />
                     <XAxis
@@ -330,7 +332,7 @@ export default function AdminDashboardPage() {
                       stroke="#9ca3af"
                       fontSize={10}
                       tickLine={false}
-                      axisLine={false}
+                      axisLine={{ stroke: '#e5e7eb' }}
                       interval={0}
                       height={56}
                       tickFormatter={(name: string) =>
@@ -344,9 +346,10 @@ export default function AdminDashboardPage() {
                       stroke="#9ca3af"
                       fontSize={12}
                       tickLine={false}
-                      axisLine={false}
-                      domain={[0, 'dataMax']}
+                      axisLine={{ stroke: '#e5e7eb' }}
+                      domain={[0, 'auto']}
                       allowDecimals={false}
+                      width={40}
                     />
                     <Tooltip
                       formatter={(value: number) => [`${value}`, 'Sales']}
@@ -363,6 +366,7 @@ export default function AdminDashboardPage() {
                       radius={[6, 6, 0, 0]}
                       name="Sales"
                       maxBarSize={48}
+                      isAnimationActive={false}
                     />
                   </BarChart>
                 </ResponsiveContainer>

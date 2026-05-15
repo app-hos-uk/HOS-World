@@ -7,6 +7,12 @@ import { apiClient } from '@/lib/api';
 import { useToast } from '@/hooks/useToast';
 import { Dialog, Transition } from '@headlessui/react';
 import { validateFulfillmentCenterFields } from '@/lib/fulfillmentCenterFormValidation';
+import {
+  sanitizeLabelInput,
+  sanitizePostalInput,
+  isLabelInvalid,
+  isPostalInvalid,
+} from '@/lib/sellerProfileFieldValidation';
 
 const emptyForm = () => ({
   name: '',
@@ -369,9 +375,12 @@ export default function AdminFulfillmentCentersPage() {
                           type="text"
                           required
                           value={formData.name}
-                          onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                          className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-purple-500 focus:border-purple-500"
+                          onChange={(e) => setFormData({ ...formData, name: sanitizeLabelInput(e.target.value, formData.name) })}
+                          className={`mt-1 block w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-purple-500 focus:border-purple-500 ${isLabelInvalid(formData.name) ? 'border-red-300' : 'border-gray-300'}`}
                         />
+                        {isLabelInvalid(formData.name) && (
+                          <p className="text-xs text-red-600 mt-1">Must include at least one letter</p>
+                        )}
                       </div>
                       <div>
                         <label className="block text-sm font-medium text-gray-700">Address *</label>
@@ -390,9 +399,12 @@ export default function AdminFulfillmentCentersPage() {
                             type="text"
                             required
                             value={formData.city}
-                            onChange={(e) => setFormData({ ...formData, city: e.target.value })}
-                            className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-purple-500 focus:border-purple-500"
+                            onChange={(e) => setFormData({ ...formData, city: sanitizeLabelInput(e.target.value, formData.city) })}
+                            className={`mt-1 block w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-purple-500 focus:border-purple-500 ${isLabelInvalid(formData.city) ? 'border-red-300' : 'border-gray-300'}`}
                           />
+                          {isLabelInvalid(formData.city) && (
+                            <p className="text-xs text-red-600 mt-1">Must include at least one letter</p>
+                          )}
                         </div>
                         <div>
                           <label className="block text-sm font-medium text-gray-700">Country *</label>
@@ -400,9 +412,12 @@ export default function AdminFulfillmentCentersPage() {
                             type="text"
                             required
                             value={formData.country}
-                            onChange={(e) => setFormData({ ...formData, country: e.target.value })}
-                            className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-purple-500 focus:border-purple-500"
+                            onChange={(e) => setFormData({ ...formData, country: sanitizeLabelInput(e.target.value, formData.country) })}
+                            className={`mt-1 block w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-purple-500 focus:border-purple-500 ${isLabelInvalid(formData.country) ? 'border-red-300' : 'border-gray-300'}`}
                           />
+                          {isLabelInvalid(formData.country) && (
+                            <p className="text-xs text-red-600 mt-1">Must include at least one letter</p>
+                          )}
                         </div>
                       </div>
                       <div>
@@ -410,9 +425,12 @@ export default function AdminFulfillmentCentersPage() {
                         <input
                           type="text"
                           value={formData.postalCode}
-                          onChange={(e) => setFormData({ ...formData, postalCode: e.target.value })}
-                          className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-purple-500 focus:border-purple-500"
+                          onChange={(e) => setFormData({ ...formData, postalCode: sanitizePostalInput(e.target.value) })}
+                          className={`mt-1 block w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-purple-500 focus:border-purple-500 ${isPostalInvalid(formData.postalCode) ? 'border-red-300' : 'border-gray-300'}`}
                         />
+                        {isPostalInvalid(formData.postalCode) && (
+                          <p className="text-xs text-red-600 mt-1">Must include at least one digit</p>
+                        )}
                       </div>
                       <div className="grid grid-cols-2 gap-4">
                         <div>
