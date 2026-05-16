@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import { Cinzel, Lora, Inter } from 'next/font/google';
+import { Analytics } from '@vercel/analytics/next';
 import { ThemeProviderWrapper } from '@/components/ThemeProviderWrapper';
 import { AuthProviderWrapper } from '@/components/AuthProviderWrapper';
 import { QueryProvider } from '@/components/QueryProvider';
@@ -92,6 +93,7 @@ export default function RootLayout({
             </CurrencyProvider>
           </AuthProviderWrapper>
         </QueryProvider>
+        <Analytics />
       </body>
     </html>
   );
