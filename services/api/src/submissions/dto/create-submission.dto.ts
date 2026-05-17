@@ -40,8 +40,8 @@ export class ProductVariationSubmissionDto {
   name: string;
 
   @IsArray()
-  @ValidateNested({ each: true })
   @Type(() => ProductVariationOptionSubmissionDto)
+  @ValidateNested({ each: true })
   options: ProductVariationOptionSubmissionDto[];
 }
 
@@ -118,14 +118,14 @@ export class CreateSubmissionDto {
 
   @IsOptional()
   @IsArray()
-  @ValidateNested({ each: true })
   @Type(() => ProductImageSubmissionDto)
+  @ValidateNested({ each: true })
   images?: ProductImageSubmissionDto[];
 
   @IsOptional()
   @IsArray()
-  @ValidateNested({ each: true })
   @Type(() => ProductVariationSubmissionDto)
+  @ValidateNested({ each: true })
   variations?: ProductVariationSubmissionDto[];
 
   @IsOptional()

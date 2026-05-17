@@ -8,6 +8,9 @@ import { AdminLayout } from '@/components/AdminLayout';
 import { apiClient } from '@/lib/api';
 import { useToast } from '@/hooks/useToast';
 
+const containsLetter = (str: string) => /[a-zA-Z]/.test(str);
+const sanitizeNameInput = (value: string) => value.replace(/[^a-zA-Z\s\-'.&]/g, '');
+
 export default function AdminBrandPartnershipNewPage() {
   const router = useRouter();
   const toast = useToast();
@@ -20,9 +23,20 @@ export default function AdminBrandPartnershipNewPage() {
   const [totalBudget, setTotalBudget] = useState('10000');
   const [saving, setSaving] = useState(false);
 
+  const nameError = name.trim() && !containsLetter(name) ? 'Name must contain at least one letter' : '';
+  const contactNameError = contactName.trim() && !containsLetter(contactName) ? 'Contact name must contain at least one letter' : '';
+
   const save = async () => {
     if (!name.trim() || !contractStart || !contractEnd) {
       toast.error('Name and contract dates required');
+      return;
+    }
+    if (!containsLetter(name)) {
+      toast.error('Name must contain at least one letter');
+      return;
+    }
+    if (contactName.trim() && !containsLetter(contactName)) {
+      toast.error('Contact name must contain at least one letter');
       return;
     }
     setSaving(true);
@@ -55,20 +69,24 @@ export default function AdminBrandPartnershipNewPage() {
           </Link>
           <h1 className="text-2xl font-semibold text-gray-900">New brand partner</h1>
           <label className="block text-sm">
-            <span className="text-gray-700">Name</span>
+            <span className="text-gray-700">Name <span className="text-red-500">*</span></span>
             <input
-              className="mt-1 w-full border rounded px-3 py-2"
+              className={`mt-1 w-full border rounded px-3 py-2 ${nameError ? 'border-red-300 focus:border-red-500' : 'border-gray-300'}`}
               value={name}
-              onChange={(e) => setName(e.target.value)}
+              onChange={(e) => setName(sanitizeNameInput(e.target.value))}
+              placeholder="Enter brand/partner name"
             />
+            {nameError && <p className="text-xs text-red-600 mt-1">{nameError}</p>}
           </label>
           <label className="block text-sm">
             <span className="text-gray-700">Contact name</span>
             <input
-              className="mt-1 w-full border rounded px-3 py-2"
+              className={`mt-1 w-full border rounded px-3 py-2 ${contactNameError ? 'border-red-300 focus:border-red-500' : 'border-gray-300'}`}
               value={contactName}
-              onChange={(e) => setContactName(e.target.value)}
+              onChange={(e) => setContactName(sanitizeNameInput(e.target.value))}
+              placeholder="Enter contact person's name"
             />
+            {contactNameError && <p className="text-xs text-red-600 mt-1">{contactNameError}</p>}
           </label>
           <label className="block text-sm">
             <span className="text-gray-700">Contact email</span>

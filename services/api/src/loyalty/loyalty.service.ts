@@ -24,6 +24,7 @@ import { LoyaltyListener } from './listeners/loyalty.listener';
 import { EnrollLoyaltyDto } from './dto/enroll.dto';
 import { LoyaltyPreferencesDto } from './dto/loyalty-preferences.dto';
 import { MarketingEventBus } from '../journeys/marketing-event.bus';
+import { isTruthy } from '../common/utils/config';
 
 @Injectable()
 export class LoyaltyService {
@@ -45,9 +46,13 @@ export class LoyaltyService {
   ) {}
 
   assertEnabled(): void {
-    if (this.config.get<string>('LOYALTY_ENABLED') !== 'true') {
+    if (!isTruthy(this.config.get<string>('LOYALTY_ENABLED'))) {
       throw new BadRequestException('Loyalty programme is not enabled');
     }
+  }
+
+  isEnabled(): boolean {
+    return isTruthy(this.config.get<string>('LOYALTY_ENABLED'));
   }
 
   async enroll(userId: string, dto?: EnrollLoyaltyDto) {

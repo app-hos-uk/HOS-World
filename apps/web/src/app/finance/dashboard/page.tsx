@@ -188,27 +188,26 @@ export default function FinanceDashboardPage() {
                     {dashboardData.pricingApprovals.slice(0, 10).map((approval: any) => (
                       <Link
                         key={approval.id}
-                        href={`/finance/pricing?submission=${approval.submissionId}`}
+                        href={`/finance/pricing?submission=${approval.id}`}
                         className="block p-3 border rounded-lg hover:bg-gray-50 transition-colors"
                       >
                         <div className="flex items-start justify-between">
                           <div className="flex-1">
                             <p className="font-medium text-gray-900">
-                              {approval.submission?.catalogEntry?.title ||
-                                approval.submission?.product?.name ||
-                                approval.submission?.productData?.name ||
+                              {approval.catalogEntry?.title ||
+                                approval.product?.name ||
+                                approval.productData?.name ||
                                 'Untitled Product'}
                             </p>
                             <p className="text-sm text-gray-500 mt-1">
-                              {approval.submission?.seller?.storeName || 'Unknown Seller'}
+                              {approval.seller?.storeName || 'Unknown Seller'}
                             </p>
                             <div className="flex gap-4 mt-2 text-xs text-gray-500">
-                              {approval.submission?.productData?.price && (
+                              {approval.productData?.price && (
                                 <span>
-                                  Price: ${parseFloat(approval.submission.productData.price).toFixed(2)}
+                                  Price: ${parseFloat(approval.productData.price).toFixed(2)}
                                 </span>
                               )}
-                              {approval.margin && <span>Margin: {approval.margin}%</span>}
                             </div>
                           </div>
                           <span className="px-2 py-1 text-xs font-medium bg-yellow-100 text-yellow-800 rounded">
@@ -227,7 +226,15 @@ export default function FinanceDashboardPage() {
               </div>
 
               <div className="bg-white border rounded-lg p-6 shadow-sm">
-                <h2 className="text-xl font-semibold mb-4">Pricing History</h2>
+                <div className="flex items-center justify-between mb-4">
+                  <h2 className="text-xl font-semibold">Pricing History</h2>
+                  <Link
+                    href="/finance/pricing?view=history"
+                    className="text-sm text-purple-600 hover:text-purple-700"
+                  >
+                    View all →
+                  </Link>
+                </div>
                 {dashboardData?.pricingHistory && dashboardData.pricingHistory.length > 0 ? (
                   <div className="space-y-3 max-h-96 overflow-y-auto">
                     {dashboardData.pricingHistory.slice(0, 10).map((item: any) => (
@@ -238,13 +245,13 @@ export default function FinanceDashboardPage() {
                         <div className="flex items-start justify-between">
                           <div className="flex-1">
                             <p className="font-medium text-gray-900">
-                              {item.submission?.catalogEntry?.title || 'Unknown Product'}
+                              {item.product?.name || 'Unknown Product'}
                             </p>
                             <p className="text-sm text-gray-500 mt-1">
-                              Margin: {item.margin}% | Visibility: {item.visibilityLevel}
+                              Margin: {((Number(item.hosMargin) || 0) * 100).toFixed(1)}% | Visibility: {item.visibilityLevel || 'STANDARD'}
                             </p>
                             <p className="text-xs text-gray-400 mt-1">
-                              {new Date(item.financeApprovedAt || item.createdAt).toLocaleString()}
+                              {new Date(item.approvedAt || item.createdAt).toLocaleString()}
                             </p>
                           </div>
                           <span className="px-2 py-1 text-xs font-medium bg-green-100 text-green-800 rounded">

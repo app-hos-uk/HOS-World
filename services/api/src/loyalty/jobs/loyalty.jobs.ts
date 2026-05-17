@@ -8,6 +8,7 @@ import { LoyaltyTierEngine } from '../engines/tier.engine';
 import { LoyaltyWalletService } from '../services/wallet.service';
 import { FandomProfileService } from '../services/fandom-profile.service';
 import { MarketingEventBus } from '../../journeys/marketing-event.bus';
+import { isTruthy } from '../../common/utils/config';
 
 @Injectable()
 export class LoyaltyJobsService implements OnModuleInit {
@@ -25,8 +26,8 @@ export class LoyaltyJobsService implements OnModuleInit {
   ) {}
 
   async onModuleInit() {
-    if (this.config.get<string>('LOYALTY_ENABLED') !== 'true') {
-      this.logger.log('Loyalty jobs skipped (LOYALTY_ENABLED != true)');
+    if (!isTruthy(this.config.get<string>('LOYALTY_ENABLED'))) {
+      this.logger.log('Loyalty jobs skipped (LOYALTY_ENABLED not set to true/1/yes)');
       return;
     }
 

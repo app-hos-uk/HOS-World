@@ -148,6 +148,8 @@ export interface Product {
   category?: string;
   tags?: string[];
   status: 'draft' | 'active' | 'inactive' | 'out_of_stock';
+  averageRating?: number;
+  reviewCount?: number;
   createdAt: Date;
   updatedAt: Date;
 }

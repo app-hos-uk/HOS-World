@@ -99,10 +99,10 @@ export default function CustomerDashboardPage() {
         ['PENDING', 'PROCESSING', 'SHIPPED'].includes(o.status?.toUpperCase())
       ).length;
       const completedOrders = orders.filter((o) => 
-        ['DELIVERED', 'COMPLETED'].includes(o.status?.toUpperCase())
+        ['DELIVERED', 'COMPLETED', 'PAID'].includes(o.status?.toUpperCase())
       ).length;
       const totalSpent = orders
-        .filter((o) => ['DELIVERED', 'COMPLETED'].includes(o.status?.toUpperCase()))
+        .filter((o) => ['DELIVERED', 'COMPLETED', 'PAID'].includes(o.status?.toUpperCase()))
         .reduce((sum, o) => sum + (Number(o.total) || 0), 0);
 
       // Fetch wishlist — request a separate count call for the true total
@@ -309,10 +309,12 @@ export default function CustomerDashboardPage() {
           {/* Header */}
           <div className="mb-6 sm:mb-8">
             <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-gray-900 mb-2">
-              Welcome back{user?.firstName ? `, ${user.firstName}` : ''}! ✨
+              {stats?.totalOrders === 0 ? 'Welcome' : 'Welcome back'}{user?.firstName ? `, ${user.firstName}` : ''}! ✨
             </h1>
             <p className="text-gray-600 text-sm sm:text-base">
-              Manage your orders, track shipments, and explore your shopping journey
+              {stats?.totalOrders === 0
+                ? 'Start your magical shopping journey with us'
+                : 'Manage your orders, track shipments, and explore your shopping journey'}
             </p>
           </div>
 

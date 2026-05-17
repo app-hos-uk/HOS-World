@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState, useRef } from 'react';
-import { useParams } from 'next/navigation';
+import { useParams, useRouter } from 'next/navigation';
 import { Header } from '@/components/Header';
 import { Footer } from '@/components/Footer';
 import { SocialShare } from '@/components/SocialShare';
@@ -30,6 +30,7 @@ function extractProductReviews(payload: unknown): any[] {
 
 export default function ProductDetailClient() {
   const params = useParams();
+  const router = useRouter();
   const productIdOrSlug = params.id as string;
   const toast = useToast();
   const { formatPrice } = useCurrency();
@@ -51,6 +52,22 @@ export default function ProductDetailClient() {
   const [reviewForm, setReviewForm] = useState({ rating: 5, comment: '', title: '' });
   /** Selected variation per dimension (e.g. { Size: 'M', Color: 'Red' }) for add-to-cart */
   const [selectedVariations, setSelectedVariations] = useState<Record<string, string>>({});
+  /** Track if user has navigation history to go back to */
+  const [canGoBack, setCanGoBack] = useState(false);
+
+  useEffect(() => {
+    if (typeof window !== 'undefined' && window.history.length > 1) {
+      setCanGoBack(true);
+    }
+  }, []);
+
+  const handleGoBack = () => {
+    if (canGoBack) {
+      router.back();
+    } else {
+      router.push('/products');
+    }
+  };
 
   // Resolve product by UUID or slug, then load reviews/wishlist using product.id
   useEffect(() => {
@@ -259,9 +276,12 @@ export default function ProductDetailClient() {
         <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 lg:py-12">
           <div className="text-center py-12">
             <p className="text-gray-600">Product not found</p>
-            <Link href="/products" className="text-purple-600 hover:text-purple-800 mt-4 inline-block">
-              ← Back to Products
-            </Link>
+            <button
+              onClick={handleGoBack}
+              className="text-purple-600 hover:text-purple-800 mt-4 inline-block"
+            >
+              ← Go Back
+            </button>
           </div>
         </main>
         <Footer />
@@ -274,9 +294,13 @@ export default function ProductDetailClient() {
       <Header />
       <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 lg:py-12">
         <div className="mb-6">
-          <Link href="/products" className="text-purple-600 hover:text-purple-800 mb-4 inline-block">
-            ← Back to Products
-          </Link>
+          <button
+            onClick={handleGoBack}
+            className="text-purple-600 hover:text-purple-800 mb-4 inline-flex items-center gap-1 hover:gap-2 transition-all"
+          >
+            <span>←</span>
+            <span>Go Back</span>
+          </button>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">

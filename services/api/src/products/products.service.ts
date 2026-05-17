@@ -958,6 +958,8 @@ export class ProductsService {
       category: product.category || undefined, // Backward compatibility
       tags: product.tags || [], // Backward compatibility
       status: product.status as ProductStatus,
+      averageRating: product.averageRating ?? 0,
+      reviewCount: product.reviewCount ?? 0,
       createdAt: product.createdAt,
       updatedAt: product.updatedAt,
     };

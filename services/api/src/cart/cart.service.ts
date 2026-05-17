@@ -212,6 +212,18 @@ export class CartService {
       });
     }
 
+    // Remove product from wishlist if it exists (fire and forget)
+    this.prisma.wishlistItem
+      .deleteMany({
+        where: {
+          userId,
+          productId: addToCartDto.productId,
+        },
+      })
+      .catch((err) => {
+        this.logger.warn(`Failed to remove product from wishlist after adding to cart: ${err.message}`);
+      });
+
     // Recalculate cart totals
     return this.recalculateCart(cart.id, { userMutated: true });
   }

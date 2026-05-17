@@ -257,6 +257,24 @@ export class FinanceService {
     return updated;
   }
 
+  async getAllPricingHistory(limit = 50) {
+    const pricingRecords = await this.prisma.productPricing.findMany({
+      take: limit,
+      orderBy: { approvedAt: 'desc' },
+      include: {
+        product: {
+          select: {
+            id: true,
+            name: true,
+            slug: true,
+          },
+        },
+      },
+    });
+
+    return pricingRecords;
+  }
+
   async getPricingHistory(submissionId: string) {
     const submission = await this.prisma.productSubmission.findUnique({
       where: { id: submissionId },

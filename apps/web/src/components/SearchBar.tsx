@@ -258,11 +258,11 @@ export function SearchBar({ compact = false }: SearchBarProps) {
   const shouldShowDropdown = showDropdown && (showingRecent || showingResults || filteredSuggestions.length > 0 || (searchError !== null && query.trim().length >= 2));
 
   return (
-    <div ref={searchRef} className={compact ? "relative w-full max-w-xs lg:max-w-sm" : "w-full max-w-2xl mx-auto relative"}>
+    <div ref={searchRef} className={compact ? "relative w-full min-w-[200px] max-w-sm lg:max-w-md" : "w-full max-w-2xl mx-auto relative"}>
       <form onSubmit={handleSubmit}>
         <div className="relative">
           <svg
-            className={`absolute left-3 top-1/2 -translate-y-1/2 ${compact ? 'w-3.5 h-3.5' : 'w-4 h-4'} text-gray-400 pointer-events-none`}
+            className={`absolute left-3 top-1/2 -translate-y-1/2 ${compact ? 'w-4 h-4' : 'w-4 h-4'} text-gray-400 pointer-events-none`}
             fill="none"
             stroke="currentColor"
             viewBox="0 0 24 24"
@@ -283,9 +283,9 @@ export function SearchBar({ compact = false }: SearchBarProps) {
             }}
             onFocus={handleFocus}
             onKeyDown={handleKeyDown}
-            placeholder={compact ? "Search..." : "Search products, fandoms, sellers..."}
+            placeholder={compact ? "Search products..." : "Search products, fandoms, sellers..."}
             className={compact
-              ? "w-full pl-9 pr-3 py-1.5 text-sm rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500 bg-gray-50"
+              ? "w-full pl-10 pr-3 py-2 text-sm rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500 bg-white"
               : "w-full px-3 sm:px-4 py-2 sm:py-3 pl-9 sm:pl-10 pr-20 sm:pr-24 text-sm sm:text-base rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-accent"
             }
             style={compact ? undefined : {

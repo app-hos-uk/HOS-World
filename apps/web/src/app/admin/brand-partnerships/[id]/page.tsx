@@ -66,8 +66,69 @@ export default function AdminBrandPartnershipDetailPage() {
               </div>
               {report && (
                 <div className="border rounded-lg p-4 bg-white text-sm">
-                  <p className="font-medium mb-2">Report snapshot</p>
-                  <pre className="text-xs overflow-auto max-h-48">{JSON.stringify(report, null, 2)}</pre>
+                  <p className="font-medium mb-3">Report Snapshot</p>
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                    <div className="bg-purple-50 rounded-lg p-3">
+                      <p className="text-xs text-gray-500">Total Campaigns</p>
+                      <p className="text-xl font-semibold text-purple-700">
+                        {report.totalCampaigns ?? report.campaignCount ?? 0}
+                      </p>
+                    </div>
+                    <div className="bg-green-50 rounded-lg p-3">
+                      <p className="text-xs text-gray-500">Total Revenue</p>
+                      <p className="text-xl font-semibold text-green-700">
+                        ${Number(report.totalRevenue ?? report.revenue ?? 0).toLocaleString()}
+                      </p>
+                    </div>
+                    <div className="bg-blue-50 rounded-lg p-3">
+                      <p className="text-xs text-gray-500">Total Orders</p>
+                      <p className="text-xl font-semibold text-blue-700">
+                        {report.totalOrders ?? report.orders ?? 0}
+                      </p>
+                    </div>
+                    <div className="bg-amber-50 rounded-lg p-3">
+                      <p className="text-xs text-gray-500">Conversion Rate</p>
+                      <p className="text-xl font-semibold text-amber-700">
+                        {Number(report.conversionRate ?? 0).toFixed(1)}%
+                      </p>
+                    </div>
+                  </div>
+                  {(report.impressions != null || report.clicks != null) && (
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mt-4">
+                      {report.impressions != null && (
+                        <div className="bg-gray-50 rounded-lg p-3">
+                          <p className="text-xs text-gray-500">Impressions</p>
+                          <p className="text-lg font-semibold text-gray-700">
+                            {Number(report.impressions).toLocaleString()}
+                          </p>
+                        </div>
+                      )}
+                      {report.clicks != null && (
+                        <div className="bg-gray-50 rounded-lg p-3">
+                          <p className="text-xs text-gray-500">Clicks</p>
+                          <p className="text-lg font-semibold text-gray-700">
+                            {Number(report.clicks).toLocaleString()}
+                          </p>
+                        </div>
+                      )}
+                      {report.ctr != null && (
+                        <div className="bg-gray-50 rounded-lg p-3">
+                          <p className="text-xs text-gray-500">CTR</p>
+                          <p className="text-lg font-semibold text-gray-700">
+                            {Number(report.ctr).toFixed(2)}%
+                          </p>
+                        </div>
+                      )}
+                      {report.avgOrderValue != null && (
+                        <div className="bg-gray-50 rounded-lg p-3">
+                          <p className="text-xs text-gray-500">Avg Order Value</p>
+                          <p className="text-lg font-semibold text-gray-700">
+                            ${Number(report.avgOrderValue).toFixed(2)}
+                          </p>
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </div>
               )}
               <div>

@@ -29,6 +29,7 @@ import {
   PaymentStatus as PrismaPaymentStatus,
 } from '@prisma/client';
 import { Decimal } from '@prisma/client/runtime/library';
+import { isTruthy } from '../common/utils/config';
 
 @Injectable()
 export class OrdersService {
@@ -541,8 +542,8 @@ export class OrdersService {
       if (
         pendingLoyaltyPoints > 0 &&
         this.loyaltyService &&
-        process.env.LOYALTY_ENABLED === 'true' &&
-        process.env.LOYALTY_REDEMPTION_AT_CHECKOUT === 'true'
+        isTruthy(process.env.LOYALTY_ENABLED) &&
+        isTruthy(process.env.LOYALTY_REDEMPTION_AT_CHECKOUT)
       ) {
         await this.loyaltyService.finalizeCheckoutRedemption(
           tx,

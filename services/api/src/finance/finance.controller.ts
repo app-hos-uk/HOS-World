@@ -162,11 +162,30 @@ export class FinanceController {
     };
   }
 
+  @Get('pricing-history')
+  @ApiOperation({
+    summary: 'Get all pricing history',
+    description:
+      'Retrieves all approved pricing records. Finance/Admin access required.',
+  })
+  @SwaggerApiResponse({ status: 200, description: 'Pricing history retrieved successfully' })
+  @SwaggerApiResponse({ status: 401, description: 'Unauthorized' })
+  @SwaggerApiResponse({ status: 403, description: 'Forbidden - Finance/Admin access required' })
+  async getAllPricingHistory(
+    @Query('limit') limit?: string,
+  ): Promise<ApiResponse<any>> {
+    const history = await this.financeService.getAllPricingHistory(limit ? parseInt(limit) : 50);
+    return {
+      data: history,
+      message: 'Pricing history retrieved successfully',
+    };
+  }
+
   @Get('pricing-history/:submissionId')
   @ApiOperation({
-    summary: 'Get pricing history',
+    summary: 'Get pricing history for submission',
     description:
-      'Retrieves pricing history for a product submission. Finance/Admin access required.',
+      'Retrieves pricing history for a specific product submission. Finance/Admin access required.',
   })
   @ApiParam({ name: 'submissionId', description: 'Submission UUID', type: String })
   @SwaggerApiResponse({ status: 200, description: 'Pricing history retrieved successfully' })

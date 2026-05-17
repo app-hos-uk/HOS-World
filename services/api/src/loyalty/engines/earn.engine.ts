@@ -8,6 +8,7 @@ import { LoyaltyCampaignService } from '../services/campaign.service';
 import { LoyaltyTierEngine } from './tier.engine';
 import { BrandPartnershipsService } from '../../brand-partnerships/brand-partnerships.service';
 import { ProductCampaignsService } from '../../product-campaigns/product-campaigns.service';
+import { isTruthy } from '../../common/utils/config';
 
 @Injectable()
 export class LoyaltyEarnEngine {
@@ -176,7 +177,7 @@ export class LoyaltyEarnEngine {
    * When payment credited loyalty before click & collect existed, apply configured C&C bonus once.
    */
   async applyDeferredClickCollectBonus(orderId: string): Promise<void> {
-    if (this.config.get<string>('LOYALTY_ENABLED') !== 'true') {
+    if (!isTruthy(this.config.get<string>('LOYALTY_ENABLED'))) {
       return;
     }
     if (this.config.get<string>('CC_BONUS_POINTS', '0') === '0') {
@@ -255,7 +256,7 @@ export class LoyaltyEarnEngine {
   }
 
   async processOrderComplete(orderId: string): Promise<void> {
-    if (this.config.get<string>('LOYALTY_ENABLED') !== 'true') {
+    if (!isTruthy(this.config.get<string>('LOYALTY_ENABLED'))) {
       return;
     }
 
@@ -494,7 +495,7 @@ export class LoyaltyEarnEngine {
   }
 
   async processPosSale(posSaleId: string): Promise<void> {
-    if (this.config.get<string>('LOYALTY_ENABLED') !== 'true') {
+    if (!isTruthy(this.config.get<string>('LOYALTY_ENABLED'))) {
       return;
     }
 

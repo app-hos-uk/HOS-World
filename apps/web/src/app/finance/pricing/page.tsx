@@ -1,13 +1,19 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { RouteGuard } from '@/components/RouteGuard';
 import { DashboardLayout } from '@/components/DashboardLayout';
 import { apiClient } from '@/lib/api';
 import { useToast } from '@/hooks/useToast';
 
 export default function FinancePricingPage() {
+  const searchParams = useSearchParams();
+  const viewParam = searchParams.get('view');
+  const submissionParam = searchParams.get('submission');
+  const [activeTab, setActiveTab] = useState<'pending' | 'history'>(viewParam === 'history' ? 'history' : 'pending');
   const [pendingSubmissions, setPendingSubmissions] = useState<any[]>([]);
+  const [pricingHistory, setPricingHistory] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [selectedSubmission, setSelectedSubmission] = useState<any | null>(null);
@@ -23,14 +29,26 @@ export default function FinancePricingPage() {
   const toast = useToast();
 
   useEffect(() => {
-    fetchPending();
+    fetchData();
   }, []);
+
+  // Auto-open a specific submission when navigating from the dashboard
+  useEffect(() => {
+    if (!loading && submissionParam && pendingSubmissions.length > 0) {
+      const match = pendingSubmissions.find((s) => s.id === submissionParam);
+      if (match) {
+        setActiveTab('pending');
+        handleViewDetails(match);
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [loading, submissionParam, pendingSubmissions]);
 
   useEffect(() => {
     const onVisibilityChange = () => {
-      if (document.visibilityState === 'visible') fetchPending();
+      if (document.visibilityState === 'visible') fetchData();
     };
-    const interval = setInterval(fetchPending, 60_000);
+    const interval = setInterval(fetchData, 60_000);
     document.addEventListener('visibilitychange', onVisibilityChange);
     return () => {
       clearInterval(interval);
@@ -39,17 +57,23 @@ export default function FinancePricingPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const fetchPending = async () => {
+  const fetchData = async () => {
     try {
       setLoading(true);
       setError(null);
-      const response = await apiClient.getFinancePending();
-      if (response?.data) {
-        setPendingSubmissions(response.data);
+      const [pendingResponse, historyResponse] = await Promise.all([
+        apiClient.getFinancePending(),
+        apiClient.getFinancePricingHistory(),
+      ]);
+      if (pendingResponse?.data) {
+        setPendingSubmissions(pendingResponse.data);
+      }
+      if (historyResponse?.data) {
+        setPricingHistory(historyResponse.data);
       }
     } catch (err: any) {
-      console.error('Error fetching pending:', err);
-      setError(err.message || 'Failed to load pending approvals');
+      console.error('Error fetching data:', err);
+      setError(err.message || 'Failed to load data');
     } finally {
       setLoading(false);
     }
@@ -87,7 +111,7 @@ export default function FinancePricingPage() {
       setActionType(null);
       setMargin('');
       setNotes('');
-      await fetchPending();
+      await fetchData();
     } catch (err: any) {
       console.error('Error setting pricing:', err);
       toast.error(err.message || 'Failed to set pricing');
@@ -108,7 +132,7 @@ export default function FinancePricingPage() {
       setSelectedSubmission(null);
       setNotes('');
       toast.success('Pricing approved — product ready for publishing');
-      await fetchPending();
+      await fetchData();
     } catch (err: any) {
       console.error('Error approving:', err);
       toast.error(err.message || 'Failed to approve pricing');
@@ -132,7 +156,7 @@ export default function FinancePricingPage() {
       setSelectedSubmission(null);
       setRejectReason('');
       toast.success('Pricing rejected');
-      await fetchPending();
+      await fetchData();
     } catch (err: any) {
       console.error('Error rejecting:', err);
       toast.error(err.message || 'Failed to reject pricing');
@@ -158,8 +182,34 @@ export default function FinancePricingPage() {
         backToHref={{ title: 'Admin Dashboard', href: '/admin/dashboard' }}
       >
         <div className="mb-6">
-          <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold">Pricing Approvals</h1>
-          <p className="text-gray-600 mt-2">Review and approve product pricing</p>
+          <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold">Pricing Management</h1>
+          <p className="text-gray-600 mt-2">Review pending approvals and view pricing history</p>
+        </div>
+
+        {/* Tab Switcher */}
+        <div className="mb-6 flex gap-1 bg-gray-100 rounded-lg p-1">
+          <button
+            type="button"
+            onClick={() => setActiveTab('pending')}
+            className={`flex-1 py-2.5 px-4 rounded-md text-sm font-medium transition-all ${
+              activeTab === 'pending'
+                ? 'bg-white text-purple-700 shadow-sm'
+                : 'text-gray-600 hover:text-gray-900'
+            }`}
+          >
+            Pending Approvals {pendingSubmissions.length > 0 && `(${pendingSubmissions.length})`}
+          </button>
+          <button
+            type="button"
+            onClick={() => setActiveTab('history')}
+            className={`flex-1 py-2.5 px-4 rounded-md text-sm font-medium transition-all ${
+              activeTab === 'history'
+                ? 'bg-white text-purple-700 shadow-sm'
+                : 'text-gray-600 hover:text-gray-900'
+            }`}
+          >
+            Pricing History {pricingHistory.length > 0 && `(${pricingHistory.length})`}
+          </button>
         </div>
 
           {error && (
@@ -175,13 +225,15 @@ export default function FinancePricingPage() {
             </div>
           )}
 
-          {!loading && pendingSubmissions.length === 0 && (
+          {/* Pending Approvals Tab */}
+          {!loading && activeTab === 'pending' && pendingSubmissions.length === 0 && (
             <div className="bg-white border border-gray-200 rounded-lg p-8 text-center">
               <p className="text-gray-500 text-lg">No pending pricing approvals</p>
+              <p className="text-sm text-gray-400 mt-2">Products ready for pricing will appear here</p>
             </div>
           )}
 
-          {!loading && pendingSubmissions.length > 0 && (
+          {!loading && activeTab === 'pending' && pendingSubmissions.length > 0 && (
             <div className="space-y-4">
               {pendingSubmissions.map((submission) => {
                 const productData = submission.productData || {};
@@ -233,6 +285,55 @@ export default function FinancePricingPage() {
                   </div>
                 );
               })}
+            </div>
+          )}
+
+          {/* Pricing History Tab */}
+          {!loading && activeTab === 'history' && pricingHistory.length === 0 && (
+            <div className="bg-white border border-gray-200 rounded-lg p-8 text-center">
+              <p className="text-gray-500 text-lg">No pricing history</p>
+              <p className="text-sm text-gray-400 mt-2">Approved pricing decisions will appear here</p>
+            </div>
+          )}
+
+          {!loading && activeTab === 'history' && pricingHistory.length > 0 && (
+            <div className="space-y-4">
+              {pricingHistory.map((item: any) => (
+                <div
+                  key={item.id}
+                  className="bg-white border border-gray-200 rounded-lg p-6"
+                >
+                  <div className="flex flex-col sm:flex-row justify-between gap-4">
+                    <div className="flex-1">
+                      <h3 className="text-lg font-semibold text-gray-900">
+                        {item.product?.name || 'Unknown Product'}
+                      </h3>
+                      <div className="flex flex-wrap gap-4 mt-2 text-sm text-gray-600">
+                        <span>
+                          <strong>Base Price:</strong> ${Number(item.basePrice || 0).toFixed(2)}
+                        </span>
+                        <span>
+                          <strong>Final Price:</strong> ${Number(item.finalPrice || 0).toFixed(2)}
+                        </span>
+                        <span>
+                          <strong>Margin:</strong> {((Number(item.hosMargin) || 0) * 100).toFixed(1)}%
+                        </span>
+                        <span>
+                          <strong>Visibility:</strong> {item.visibilityLevel || 'STANDARD'}
+                        </span>
+                      </div>
+                      <p className="text-xs text-gray-400 mt-2">
+                        Approved: {item.approvedAt ? new Date(item.approvedAt).toLocaleString() : 'N/A'}
+                      </p>
+                    </div>
+                    <div className="flex items-start">
+                      <span className="px-3 py-1 text-xs font-medium bg-green-100 text-green-800 rounded">
+                        APPROVED
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              ))}
             </div>
           )}
 

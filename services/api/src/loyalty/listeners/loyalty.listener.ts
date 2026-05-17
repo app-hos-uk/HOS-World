@@ -6,6 +6,7 @@ import { LoyaltyTxType, Prisma } from '@prisma/client';
 import { ConfigService } from '@nestjs/config';
 import { SegmentationService } from '../../segmentation/segmentation.service';
 import { AmbassadorService } from '../../ambassador/ambassador.service';
+import { isTruthy } from '../../common/utils/config';
 
 const PHOTO_IN_REVIEW = /\bhttps?:\/\/\S+\.(jpg|jpeg|png|gif|webp)(\?\S*)?\b/i;
 
@@ -67,7 +68,7 @@ export class LoyaltyListener {
    * Apply referral signup bonuses. Requires an existing loyalty membership (call after enroll).
    */
   async onUserRegistered(userId: string, referralCode?: string): Promise<void> {
-    if (this.config.get<string>('LOYALTY_ENABLED') !== 'true') return;
+    if (!isTruthy(this.config.get<string>('LOYALTY_ENABLED'))) return;
     const code = referralCode?.trim();
     if (!code) return;
 
@@ -145,7 +146,7 @@ export class LoyaltyListener {
    * @returns Points awarded (0 if skipped).
    */
   async onReviewSubmitted(userId: string, reviewId: string): Promise<number> {
-    if (this.config.get<string>('LOYALTY_ENABLED') !== 'true') return 0;
+    if (!isTruthy(this.config.get<string>('LOYALTY_ENABLED'))) return 0;
 
     const membership = await this.prisma.loyaltyMembership.findUnique({ where: { userId } });
     if (!membership) return 0;
@@ -204,7 +205,7 @@ export class LoyaltyListener {
    * @returns Points awarded (0 if skipped / over daily cap).
    */
   async onSocialShare(userId: string, platform: string): Promise<number> {
-    if (this.config.get<string>('LOYALTY_ENABLED') !== 'true') return 0;
+    if (!isTruthy(this.config.get<string>('LOYALTY_ENABLED'))) return 0;
 
     const membership = await this.prisma.loyaltyMembership.findUnique({ where: { userId } });
     if (!membership) return 0;
@@ -242,7 +243,7 @@ export class LoyaltyListener {
   }
 
   async onQuestCompleted(userId: string, questId: string, questPoints: number): Promise<number> {
-    if (this.config.get<string>('LOYALTY_ENABLED') !== 'true') return 0;
+    if (!isTruthy(this.config.get<string>('LOYALTY_ENABLED'))) return 0;
 
     const membership = await this.prisma.loyaltyMembership.findUnique({ where: { userId } });
     if (!membership) return 0;
@@ -286,7 +287,7 @@ export class LoyaltyListener {
   }
 
   async onQuizCompleted(userId: string, quizId: string, points: number): Promise<number> {
-    if (this.config.get<string>('LOYALTY_ENABLED') !== 'true') return 0;
+    if (!isTruthy(this.config.get<string>('LOYALTY_ENABLED'))) return 0;
     if (points <= 0) return 0;
 
     const membership = await this.prisma.loyaltyMembership.findUnique({ where: { userId } });

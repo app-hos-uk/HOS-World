@@ -175,7 +175,7 @@ export function Header() {
                 >
                   Fandoms
                 </Link>
-                <Suspense fallback={<div className="w-full max-w-xs lg:max-w-sm h-9 bg-gray-50 border border-gray-200 rounded-lg animate-pulse" aria-hidden />}>
+                <Suspense fallback={<div className="w-full min-w-[200px] max-w-sm lg:max-w-md h-10 bg-gray-50 border border-gray-200 rounded-lg animate-pulse" aria-hidden />}>
                   <SearchBar compact />
                 </Suspense>
               </>
@@ -226,19 +226,31 @@ export function Header() {
                 {!isDashboardPage && <CurrencySelector />}
               </>
             )}
-            {/* Cart for guests (when on storefront) */}
+            {/* Loyalty & Cart for guests (when on storefront) */}
             {isCustomerRole && !isAuthenticated && !isDashboardPage && (
-              <Link 
-                href="/cart" 
-                className="relative text-sm lg:text-base text-purple-700 hover:text-amber-600 font-medium font-secondary transition-colors duration-300"
-              >
-                Cart
-                {cartItemCount > 0 && (
-                  <span className="absolute -top-2 -right-2 bg-red-600 text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center">
-                    {cartItemCount > 99 ? '99+' : cartItemCount}
+              <>
+                <Link 
+                  href="/loyalty" 
+                  className="inline-flex items-center gap-1.5 text-sm lg:text-base text-purple-700 hover:text-amber-600 font-medium font-secondary transition-colors duration-300"
+                  title="Loyalty Programme"
+                >
+                  <span className="text-base leading-none w-6 flex justify-center shrink-0" aria-hidden>
+                    ✨
                   </span>
-                )}
-              </Link>
+                  <span>Rewards</span>
+                </Link>
+                <Link 
+                  href="/cart" 
+                  className="relative text-sm lg:text-base text-purple-700 hover:text-amber-600 font-medium font-secondary transition-colors duration-300"
+                >
+                  Cart
+                  {cartItemCount > 0 && (
+                    <span className="absolute -top-2 -right-2 bg-red-600 text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center">
+                      {cartItemCount > 99 ? '99+' : cartItemCount}
+                    </span>
+                  )}
+                </Link>
+              </>
             )}
 
             {/* Role-specific quick links for non-customer roles */}
@@ -399,20 +411,30 @@ export function Header() {
                   )}
                 </>
               )}
-              {/* Cart for guests on storefront */}
+              {/* Loyalty & Cart for guests on storefront */}
               {isCustomerRole && !isAuthenticated && !isDashboardPage && (
-                <Link 
-                  href="/cart" 
-                  onClick={() => setIsMobileMenuOpen(false)}
-                  className="relative text-base text-purple-700 hover:text-amber-600 font-medium font-secondary transition-colors duration-300 py-2 px-2 rounded-lg hover:bg-purple-50"
-                >
-                  Cart
-                  {cartItemCount > 0 && (
-                    <span className="ml-2 bg-red-600 text-white text-xs font-bold rounded-full px-2 py-0.5">
-                      {cartItemCount > 99 ? '99+' : cartItemCount}
-                    </span>
-                  )}
-                </Link>
+                <>
+                  <Link 
+                    href="/loyalty" 
+                    onClick={() => setIsMobileMenuOpen(false)}
+                    className="inline-flex items-center gap-2 text-base text-purple-700 hover:text-amber-600 font-medium font-secondary transition-colors duration-300 py-2 px-2 rounded-lg hover:bg-purple-50"
+                  >
+                    <span className="w-6 flex justify-center shrink-0" aria-hidden>✨</span>
+                    <span>Rewards</span>
+                  </Link>
+                  <Link 
+                    href="/cart" 
+                    onClick={() => setIsMobileMenuOpen(false)}
+                    className="relative text-base text-purple-700 hover:text-amber-600 font-medium font-secondary transition-colors duration-300 py-2 px-2 rounded-lg hover:bg-purple-50"
+                  >
+                    Cart
+                    {cartItemCount > 0 && (
+                      <span className="ml-2 bg-red-600 text-white text-xs font-bold rounded-full px-2 py-0.5">
+                        {cartItemCount > 99 ? '99+' : cartItemCount}
+                      </span>
+                    )}
+                  </Link>
+                </>
               )}
 
               {/* Role-specific quick links for non-customer roles */}

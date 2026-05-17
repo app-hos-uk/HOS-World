@@ -10,11 +10,17 @@ async function fetchProduct(idOrSlug: string) {
     const endpoint = isUuid
       ? `${API_BASE}/api/products/${idOrSlug}`
       : `${API_BASE}/api/products/slug/${idOrSlug}`;
-    const res = await fetch(endpoint, { next: { revalidate: 300 } });
+    const res = await fetch(endpoint, { 
+      next: { revalidate: 60 },
+      headers: {
+        'Accept': 'application/json',
+      },
+    });
     if (!res.ok) return null;
     const json = await res.json();
     return json?.data || null;
-  } catch {
+  } catch (error) {
+    console.error('Failed to fetch product for metadata:', error);
     return null;
   }
 }
@@ -22,12 +28,12 @@ async function fetchProduct(idOrSlug: string) {
 export async function generateMetadata({
   params,
 }: {
-  params: { id: string };
+  params: Promise<{ id: string }>;
 }): Promise<Metadata> {
-  const { id } = params;
+  const { id } = await params;
   const product = await fetchProduct(id);
   if (!product) {
-    return { title: 'Product Not Found' };
+    return { title: 'House of Spells | Product' };
   }
 
   const title = product.name || 'Product';

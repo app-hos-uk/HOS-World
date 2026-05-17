@@ -91,6 +91,68 @@ export default function WholesalerBulkProductsPage() {
 
   const menuItems = getSellerMenuItems(true);
 
+  const handleDownloadSampleCSV = () => {
+    const sampleHeaders = ['name', 'description', 'sku', 'price', 'stock', 'currency', 'category', 'fandom', 'tags', 'images', 'status'];
+    const sampleRows = [
+      [
+        'Harry Potter Wand Replica',
+        'Authentic replica of Harry Potter\'s wand from the movie series. Made with high-quality materials.',
+        'HP-WAND-001',
+        '49.99',
+        '100',
+        'USD',
+        'Collectibles',
+        'harry-potter',
+        'wand|replica|collectible',
+        'https://example.com/images/wand1.jpg|https://example.com/images/wand2.jpg',
+        'ACTIVE',
+      ],
+      [
+        'Hogwarts House Scarf - Gryffindor',
+        'Official Gryffindor house scarf in maroon and gold. 100% acrylic, warm and comfortable.',
+        'HP-SCARF-GRY',
+        '29.99',
+        '250',
+        'USD',
+        'Apparel',
+        'harry-potter',
+        'scarf|gryffindor|apparel',
+        'https://example.com/images/scarf1.jpg',
+        'ACTIVE',
+      ],
+      [
+        'Lord of the Rings Ring Replica',
+        'The One Ring replica with Elvish inscription. Gold-plated stainless steel.',
+        'LOTR-RING-001',
+        '34.99',
+        '75',
+        'USD',
+        'Jewelry',
+        'lord-of-the-rings',
+        'ring|replica|jewelry',
+        'https://example.com/images/ring1.jpg|https://example.com/images/ring2.jpg',
+        'ACTIVE',
+      ],
+    ];
+
+    const csvContent = [
+      sampleHeaders.join(','),
+      ...sampleRows.map(row => row.map(cell => `"${cell.replace(/"/g, '""')}"`).join(',')),
+    ].join('\n');
+
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'wholesale-products-sample.csv';
+    document.body.appendChild(a);
+    a.click();
+    window.URL.revokeObjectURL(url);
+    document.body.removeChild(a);
+
+    toast.success('Sample CSV downloaded!');
+  };
+
   const handleExport = async () => {
     try {
       setExportLoading(true);
@@ -343,14 +405,60 @@ export default function WholesalerBulkProductsPage() {
         )}
 
         <div className="mt-6 bg-blue-50 border border-blue-200 rounded-lg p-6">
-          <h3 className="text-lg font-semibold mb-4">CSV Format Instructions</h3>
-          <ul className="list-disc list-inside space-y-2 text-sm text-gray-700">
-            <li>Required columns: name, price, description, stock</li>
-            <li>Optional columns: category, sku, images (comma-separated URLs)</li>
-            <li>First row should contain column headers</li>
-            <li>Export your products first to see the correct format</li>
-            <li>Make sure to save as CSV (UTF-8 encoding)</li>
-          </ul>
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-4">
+            <h3 className="text-lg font-semibold">CSV Format Instructions</h3>
+            <button
+              onClick={handleDownloadSampleCSV}
+              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium text-sm flex items-center gap-2"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+              </svg>
+              Download Sample CSV
+            </button>
+          </div>
+          
+          <div className="space-y-4">
+            <div>
+              <h4 className="font-medium text-gray-900 mb-2">Required Columns:</h4>
+              <ul className="list-disc list-inside space-y-1 text-sm text-gray-700">
+                <li><code className="bg-blue-100 px-1 rounded">name</code> - Product name (required for each row)</li>
+                <li><code className="bg-blue-100 px-1 rounded">price</code> - Product price (number, e.g., 49.99)</li>
+                <li><code className="bg-blue-100 px-1 rounded">description</code> - Product description</li>
+                <li><code className="bg-blue-100 px-1 rounded">stock</code> - Available quantity (number)</li>
+              </ul>
+            </div>
+
+            <div>
+              <h4 className="font-medium text-gray-900 mb-2">Optional Columns:</h4>
+              <ul className="list-disc list-inside space-y-1 text-sm text-gray-700">
+                <li><code className="bg-blue-100 px-1 rounded">sku</code> - Product SKU/identifier</li>
+                <li><code className="bg-blue-100 px-1 rounded">currency</code> - Currency code (USD, GBP, EUR)</li>
+                <li><code className="bg-blue-100 px-1 rounded">category</code> - Product category</li>
+                <li><code className="bg-blue-100 px-1 rounded">fandom</code> - Fandom slug (e.g., harry-potter, lord-of-the-rings)</li>
+                <li><code className="bg-blue-100 px-1 rounded">tags</code> - Tags separated by pipe | (e.g., wand|replica|collectible)</li>
+                <li><code className="bg-blue-100 px-1 rounded">images</code> - Image URLs separated by pipe | (e.g., url1|url2)</li>
+                <li><code className="bg-blue-100 px-1 rounded">status</code> - ACTIVE, DRAFT, or INACTIVE</li>
+              </ul>
+            </div>
+
+            <div className="bg-white rounded-lg p-4 border border-blue-200">
+              <h4 className="font-medium text-gray-900 mb-2">Example Row:</h4>
+              <div className="text-xs font-mono bg-gray-100 p-3 rounded overflow-x-auto whitespace-nowrap">
+                &quot;Harry Potter Wand&quot;,&quot;Authentic wand replica&quot;,&quot;HP-001&quot;,&quot;49.99&quot;,&quot;100&quot;,&quot;USD&quot;,&quot;Collectibles&quot;,&quot;harry-potter&quot;,&quot;wand|replica&quot;,&quot;https://example.com/image.jpg&quot;,&quot;ACTIVE&quot;
+              </div>
+            </div>
+
+            <div className="text-sm text-gray-600">
+              <strong>Tips:</strong>
+              <ul className="list-disc list-inside mt-1 space-y-1">
+                <li>First row must contain column headers</li>
+                <li>Save file as CSV with UTF-8 encoding</li>
+                <li>Wrap values containing commas in double quotes</li>
+                <li>Download the sample CSV above for a ready-to-use template</li>
+              </ul>
+            </div>
+          </div>
         </div>
       </DashboardLayout>
     </RouteGuard>

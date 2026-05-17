@@ -2139,7 +2139,14 @@ export class ApiClient {
     });
   }
 
-  async getFinancePricingHistory(submissionId: string): Promise<ApiResponse<any>> {
+  async getFinancePricingHistory(limit?: number): Promise<ApiResponse<any>> {
+    const query = limit ? `?limit=${limit}` : '';
+    return this.request<ApiResponse<any>>(`/finance/pricing-history${query}`, {
+      method: 'GET',
+    });
+  }
+
+  async getFinancePricingHistoryForSubmission(submissionId: string): Promise<ApiResponse<any>> {
     return this.request<ApiResponse<any>>(`/finance/pricing-history/${submissionId}`, {
       method: 'GET',
     });
