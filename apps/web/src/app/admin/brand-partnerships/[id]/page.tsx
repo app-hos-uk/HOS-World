@@ -71,7 +71,7 @@ export default function AdminBrandPartnershipDetailPage() {
                     <div className="bg-purple-50 rounded-lg p-3">
                       <p className="text-xs text-gray-500">Total Campaigns</p>
                       <p className="text-xl font-semibold text-purple-700">
-                        {report.totalCampaigns ?? report.campaignCount ?? 0}
+                        {Number(report.totalCampaigns ?? report.campaignCount ?? 0)}
                       </p>
                     </div>
                     <div className="bg-green-50 rounded-lg p-3">
@@ -83,7 +83,7 @@ export default function AdminBrandPartnershipDetailPage() {
                     <div className="bg-blue-50 rounded-lg p-3">
                       <p className="text-xs text-gray-500">Total Orders</p>
                       <p className="text-xl font-semibold text-blue-700">
-                        {report.totalOrders ?? report.orders ?? 0}
+                        {Number(report.totalOrders ?? report.orders ?? 0)}
                       </p>
                     </div>
                     <div className="bg-amber-50 rounded-lg p-3">
