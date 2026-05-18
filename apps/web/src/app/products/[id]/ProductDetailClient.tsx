@@ -307,17 +307,17 @@ export default function ProductDetailClient() {
           {/* Product Images */}
           <div>
             {product.images && product.images.length > 0 ? (
-              <div className="relative w-full h-96 mb-4">
+              <div className="relative w-full aspect-square mb-4 bg-gray-50 rounded-lg overflow-hidden">
                 <SafeImage
                   src={typeof product.images[0] === 'string' ? product.images[0] : product.images[0]?.url || product.images[0]}
                   alt={product.name}
                   fill
                   sizes="(max-width: 768px) 100vw, 50vw"
-                  className="object-cover rounded-lg"
+                  className="object-contain rounded-lg"
                 />
               </div>
             ) : (
-              <div className="w-full h-96 bg-gray-200 rounded-lg flex items-center justify-center">
+              <div className="w-full aspect-square bg-gray-100 rounded-lg flex items-center justify-center">
                 <span className="text-gray-400">No Image</span>
               </div>
             )}
