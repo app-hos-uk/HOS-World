@@ -134,7 +134,6 @@ export default function WishlistPage() {
     setAddingToCart(productId);
     try {
       await apiClient.addToCart(productId, 1);
-      await apiClient.removeFromWishlist(productId);
       setWishlistItems(items => items.filter(item => item.productId !== productId));
       toast.success('Added to cart!');
     } catch (err: any) {
@@ -161,7 +160,6 @@ export default function WishlistPage() {
     for (const item of inStockItems) {
       try {
         await apiClient.addToCart(item.productId, 1);
-        await apiClient.removeFromWishlist(item.productId);
         movedProductIds.add(item.productId);
         successCount++;
       } catch (err) {
