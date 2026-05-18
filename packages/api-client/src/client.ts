@@ -1478,6 +1478,119 @@ export class ApiClient {
     });
   }
 
+  // Admin Loyalty Management CRUD
+  async adminGetLoyaltyDashboard(): Promise<ApiResponse<unknown>> {
+    return this.request<ApiResponse<unknown>>('/admin/loyalty/dashboard');
+  }
+
+  async adminGetLoyaltyTiers(): Promise<ApiResponse<unknown>> {
+    return this.request<ApiResponse<unknown>>('/admin/loyalty/tiers');
+  }
+
+  async adminGetLoyaltyTier(id: string): Promise<ApiResponse<unknown>> {
+    return this.request<ApiResponse<unknown>>(`/admin/loyalty/tiers/${id}`);
+  }
+
+  async adminUpdateLoyaltyTier(id: string, data: Record<string, unknown>): Promise<ApiResponse<unknown>> {
+    return this.request<ApiResponse<unknown>>(`/admin/loyalty/tiers/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async adminGetLoyaltyEarnRules(): Promise<ApiResponse<unknown>> {
+    return this.request<ApiResponse<unknown>>('/admin/loyalty/earn-rules');
+  }
+
+  async adminCreateLoyaltyEarnRule(data: Record<string, unknown>): Promise<ApiResponse<unknown>> {
+    return this.request<ApiResponse<unknown>>('/admin/loyalty/earn-rules', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async adminUpdateLoyaltyEarnRule(id: string, data: Record<string, unknown>): Promise<ApiResponse<unknown>> {
+    return this.request<ApiResponse<unknown>>(`/admin/loyalty/earn-rules/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async adminDeleteLoyaltyEarnRule(id: string): Promise<ApiResponse<unknown>> {
+    return this.request<ApiResponse<unknown>>(`/admin/loyalty/earn-rules/${id}`, {
+      method: 'DELETE',
+    });
+  }
+
+  async adminGetLoyaltyRedemptionOptions(): Promise<ApiResponse<unknown>> {
+    return this.request<ApiResponse<unknown>>('/admin/loyalty/redemption-options');
+  }
+
+  async adminCreateLoyaltyRedemptionOption(data: Record<string, unknown>): Promise<ApiResponse<unknown>> {
+    return this.request<ApiResponse<unknown>>('/admin/loyalty/redemption-options', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async adminUpdateLoyaltyRedemptionOption(id: string, data: Record<string, unknown>): Promise<ApiResponse<unknown>> {
+    return this.request<ApiResponse<unknown>>(`/admin/loyalty/redemption-options/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async adminDeleteLoyaltyRedemptionOption(id: string): Promise<ApiResponse<unknown>> {
+    return this.request<ApiResponse<unknown>>(`/admin/loyalty/redemption-options/${id}`, {
+      method: 'DELETE',
+    });
+  }
+
+  async adminGetLoyaltyCampaigns(): Promise<ApiResponse<unknown>> {
+    return this.request<ApiResponse<unknown>>('/admin/loyalty/campaigns');
+  }
+
+  async adminCreateLoyaltyCampaign(data: Record<string, unknown>): Promise<ApiResponse<unknown>> {
+    return this.request<ApiResponse<unknown>>('/admin/loyalty/campaigns', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async adminUpdateLoyaltyCampaign(id: string, data: Record<string, unknown>): Promise<ApiResponse<unknown>> {
+    return this.request<ApiResponse<unknown>>(`/admin/loyalty/campaigns/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async adminDeleteLoyaltyCampaign(id: string): Promise<ApiResponse<unknown>> {
+    return this.request<ApiResponse<unknown>>(`/admin/loyalty/campaigns/${id}`, {
+      method: 'DELETE',
+    });
+  }
+
+  async adminGetLoyaltyMembers(q?: string): Promise<ApiResponse<unknown>> {
+    const qs = q ? `?q=${encodeURIComponent(q)}` : '';
+    return this.request<ApiResponse<unknown>>(`/admin/loyalty/members${qs}`);
+  }
+
+  async adminGetLoyaltyMember(userId: string): Promise<ApiResponse<unknown>> {
+    return this.request<ApiResponse<unknown>>(`/admin/loyalty/members/${userId}`);
+  }
+
+  async adminAdjustLoyaltyPoints(userId: string, pointsDelta: number, reason: string): Promise<ApiResponse<unknown>> {
+    return this.request<ApiResponse<unknown>>('/admin/loyalty/adjust', {
+      method: 'POST',
+      body: JSON.stringify({ userId, pointsDelta, reason }),
+    });
+  }
+
+  async adminGetLoyaltyTransactions(membershipId?: string): Promise<ApiResponse<unknown>> {
+    const qs = membershipId ? `?membershipId=${membershipId}` : '';
+    return this.request<ApiResponse<unknown>>(`/admin/loyalty/transactions${qs}`);
+  }
+
   async lookupLoyaltyMember(
     body: { email?: string; phone?: string; cardNumber?: string },
     apiKey: string,

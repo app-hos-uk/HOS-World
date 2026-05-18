@@ -129,6 +129,19 @@ const menuItems: MenuItem[] = [
     ],
   },
   {
+    title: 'Loyalty Management',
+    icon: '💎',
+    children: [
+      { title: 'Overview', href: '/admin/loyalty', icon: '📊' },
+      { title: 'Tiers', href: '/admin/loyalty/tiers', icon: '🏆' },
+      { title: 'Earn Rules', href: '/admin/loyalty/earn-rules', icon: '⚡' },
+      { title: 'Redemption Options', href: '/admin/loyalty/redemption-options', icon: '🎁' },
+      { title: 'Bonus Campaigns', href: '/admin/loyalty/campaigns', icon: '🎯' },
+      { title: 'Members', href: '/admin/loyalty/members', icon: '👥' },
+      { title: 'Transactions', href: '/admin/loyalty/transactions', icon: '💳' },
+    ],
+  },
+  {
     title: 'Loyalty Analytics',
     icon: '📈',
     children: [
@@ -256,11 +269,17 @@ const TEAM_ADMIN_SHELL_MENUS: Record<string, MenuItem[]> = {
     { title: 'Campaigns', href: '/marketing/campaigns', icon: '🎯' },
     { title: 'Admin marketing', href: '/admin/marketing', icon: '📣' },
     { title: 'Influencer commissions', href: '/admin/influencers/commissions', icon: '💸' },
+    { title: 'Loyalty Campaigns', href: '/admin/loyalty/campaigns', icon: '🎯' },
+    { title: 'Loyalty Earn Rules', href: '/admin/loyalty/earn-rules', icon: '⚡' },
+    { title: 'Loyalty Analytics', href: '/admin/loyalty-analytics', icon: '📈' },
   ],
   FINANCE: [
     { title: 'Finance Dashboard', href: '/finance/dashboard', icon: '📊' },
     { title: 'Pricing workflow', href: '/finance/pricing', icon: '💵' },
     { title: 'Product pricing', href: '/admin/products/pricing', icon: '💰' },
+    { title: 'Loyalty Overview', href: '/admin/loyalty', icon: '💎' },
+    { title: 'Redemption Options', href: '/admin/loyalty/redemption-options', icon: '🎁' },
+    { title: 'Loyalty Transactions', href: '/admin/loyalty/transactions', icon: '💳' },
   ],
 };
 
