@@ -129,7 +129,7 @@ function StripeCardCheckout({
         {`Pay ${displayTotal}`}
       </button>
       {!stripePublishableKey && (
-        <p className="text-xs text-amber-700 mt-2">
+        <p className="text-xs text-amber-400 mt-2">
           Set NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY to enable Stripe.js in production.
         </p>
       )}
@@ -201,7 +201,7 @@ function PaymentContent() {
         <Header />
         <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 lg:py-12">
           <div className="max-w-2xl mx-auto text-center">
-            <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold mb-4 text-red-600">Order Not Found</h1>
+            <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold mb-4 text-red-400">Order Not Found</h1>
             <p className="text-hos-text-secondary mb-6">{error || 'The order you are looking for does not exist or has been removed.'}</p>
             <div className="flex gap-4 justify-center">
               <Link
@@ -266,7 +266,7 @@ function PaymentContent() {
               <span>{formatPrice(order.subtotal || 0, order.currency || 'USD')}</span>
             </div>
             {(order.discount || order.discountAmount) > 0 && (
-              <div className="flex justify-between mb-2 text-green-600">
+              <div className="flex justify-between mb-2 text-green-400">
                 <span>Discount</span>
                 <span>-{formatPrice(order.discount || order.discountAmount, order.currency || 'USD')}</span>
               </div>
@@ -733,8 +733,8 @@ function PaymentForm({ order }: { order: any }) {
           )}
         </div>
         {giftCardApplied && giftCardBalance !== null && (
-          <div className="mt-2 p-2 bg-green-50 border border-green-200 rounded">
-            <p className="text-sm text-green-800">
+          <div className="mt-2 p-2 bg-green-500/10 border border-green-500/30 rounded">
+            <p className="text-sm text-green-300">
               Gift card applied: {formatPrice(giftCardBalance, order.currency || 'USD')} available
             </p>
           </div>
@@ -749,13 +749,13 @@ function PaymentForm({ order }: { order: any }) {
             <span>{formatPrice(order.total, order.currency || 'USD')}</span>
           </div>
           {giftCardRedeemedAmount > 0 && (
-            <div className="flex justify-between text-sm mb-2 text-green-700">
+            <div className="flex justify-between text-sm mb-2 text-green-400">
               <span>Previously Redeemed Gift Cards:</span>
               <span>-{formatPrice(giftCardRedeemedAmount, order.currency || 'USD')}</span>
             </div>
           )}
           {giftCardApplied && giftCardBalance !== null && giftCardBalance !== undefined && giftCardBalance > 0 && (
-            <div className="flex justify-between text-sm mb-2 text-green-700">
+            <div className="flex justify-between text-sm mb-2 text-green-400">
               <span>Gift Card Applied (Not Yet Redeemed):</span>
               <span>-{formatPrice(Math.min(giftCardBalance, Math.max(0, (order.total || 0) - giftCardRedeemedAmount)), order.currency || 'USD')}</span>
             </div>
@@ -768,8 +768,8 @@ function PaymentForm({ order }: { order: any }) {
       )}
 
       {availableProviders.length === 0 && !loadingProviders && (
-        <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-lg">
-          <p className="text-sm text-red-600 text-center font-medium">
+        <div className="mb-4 p-4 bg-red-500/10 border border-red-500/30 rounded-lg">
+          <p className="text-sm text-red-400 text-center font-medium">
             No payment methods available. Please contact support or refresh the page.
           </p>
         </div>
@@ -797,7 +797,7 @@ function PaymentForm({ order }: { order: any }) {
         </Elements>
       )}
       {stripeClientSecret && selectedProvider === 'stripe' && !stripePromise && (
-        <div className="mb-4 p-4 bg-amber-50 border border-amber-200 rounded-lg text-sm text-amber-900">
+        <div className="mb-4 p-4 bg-amber-500/10 border border-amber-500/30 rounded-lg text-sm text-amber-300">
           Add <code className="font-mono">NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY</code> to your environment to
           collect card payments with Stripe Elements.
         </div>
@@ -805,14 +805,14 @@ function PaymentForm({ order }: { order: any }) {
 
       {/* Payment Error with Retry */}
       {paymentError && (
-        <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-lg">
+        <div className="mb-4 p-4 bg-red-500/10 border border-red-500/30 rounded-lg">
           <div className="flex items-start gap-3">
             <svg className="w-5 h-5 text-red-500 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
               <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
             </svg>
             <div className="flex-1">
-              <p className="text-sm font-medium text-red-800">Payment Failed</p>
-              <p className="text-sm text-red-600 mt-1">{paymentError}</p>
+              <p className="text-sm font-medium text-red-300">Payment Failed</p>
+              <p className="text-sm text-red-400 mt-1">{paymentError}</p>
             </div>
           </div>
           <button

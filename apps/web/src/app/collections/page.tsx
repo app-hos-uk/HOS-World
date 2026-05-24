@@ -132,7 +132,7 @@ export default function CollectionsPage() {
                     <span
                       className={`px-2 py-1 rounded text-xs ${
                         collection.isPublic
-                          ? 'bg-green-100 text-green-800'
+                          ? 'bg-green-500/15 text-green-300'
                           : 'bg-hos-bg-tertiary text-white'
                       }`}
                     >

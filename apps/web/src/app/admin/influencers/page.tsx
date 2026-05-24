@@ -74,8 +74,8 @@ export default function AdminInfluencersPage() {
 
   const getStatusBadge = (status: string) => {
     const styles: Record<string, string> = {
-      ACTIVE: 'bg-green-100 text-green-800',
-      SUSPENDED: 'bg-red-100 text-red-800',
+      ACTIVE: 'bg-green-500/15 text-green-300',
+      SUSPENDED: 'bg-red-500/15 text-red-300',
       INACTIVE: 'bg-hos-bg-tertiary text-white',
     };
     return styles[status] || 'bg-hos-bg-tertiary text-white';
@@ -84,9 +84,9 @@ export default function AdminInfluencersPage() {
   const getTierBadge = (tier: string) => {
     const styles: Record<string, string> = {
       PLATINUM: 'bg-hos-surface text-white',
-      GOLD: 'bg-yellow-100 text-yellow-800',
+      GOLD: 'bg-yellow-500/15 text-yellow-300',
       SILVER: 'bg-hos-bg-tertiary text-white',
-      BRONZE: 'bg-orange-100 text-orange-800',
+      BRONZE: 'bg-orange-500/15 text-orange-300',
     };
     return styles[tier] || 'bg-hos-bg-tertiary text-white';
   };
@@ -156,7 +156,7 @@ export default function AdminInfluencersPage() {
           </div>
           <div className="bg-hos-bg-secondary rounded-lg p-4 shadow-sm">
             <p className="text-sm text-hos-text-muted">Active</p>
-            <p className="text-2xl font-bold text-green-600">
+            <p className="text-2xl font-bold text-green-400">
               {influencers.filter(i => i.status === 'ACTIVE').length}
             </p>
           </div>

@@ -49,7 +49,7 @@ export default function AdminBrandCampaignDetailPage() {
     <RouteGuard allowedRoles={['ADMIN']}>
       <AdminLayout>
         <div className="p-6 max-w-4xl mx-auto space-y-4">
-          <Link href="/admin/brand-partnerships/campaigns" className="text-sm text-violet-700">
+          <Link href="/admin/brand-partnerships/campaigns" className="text-sm text-violet-400">
             ← Campaigns
           </Link>
           {row ? (

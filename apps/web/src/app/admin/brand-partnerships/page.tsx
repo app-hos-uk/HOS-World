@@ -67,7 +67,7 @@ export default function AdminBrandPartnershipsPage() {
               >
                 New partner
               </Link>
-              <Link href="/admin/brand-partnerships/dashboard" className="text-sm text-violet-700 py-2">
+              <Link href="/admin/brand-partnerships/dashboard" className="text-sm text-violet-400 py-2">
                 Dashboard →
               </Link>
             </div>
@@ -120,7 +120,7 @@ export default function AdminBrandPartnershipsPage() {
                     return (
                       <tr key={id} className="border-t">
                         <td className="p-2">
-                          <Link href={`/admin/brand-partnerships/${id}`} className="text-violet-700">
+                          <Link href={`/admin/brand-partnerships/${id}`} className="text-violet-400">
                             {String(row.name)}
                           </Link>
                         </td>
@@ -133,16 +133,16 @@ export default function AdminBrandPartnershipsPage() {
                           – {row.contractEnd ? new Date(String(row.contractEnd)).toLocaleDateString() : '—'}
                         </td>
                         <td className="p-2 space-x-2">
-                          <Link href={`/admin/brand-partnerships/${id}`} className="text-violet-600">
+                          <Link href={`/admin/brand-partnerships/${id}`} className="text-violet-400">
                             View
                           </Link>
                           {row.status !== 'ARCHIVED' && (
-                            <button type="button" className="text-amber-700" onClick={() => archive(id)}>
+                            <button type="button" className="text-amber-400" onClick={() => archive(id)}>
                               Archive
                             </button>
                           )}
                           {row.status === 'ARCHIVED' && (
-                            <button type="button" className="text-green-700" onClick={() => restore(id)}>
+                            <button type="button" className="text-green-400" onClick={() => restore(id)}>
                               Restore
                             </button>
                           )}

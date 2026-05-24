@@ -26,9 +26,9 @@ export default function AttributionPage() {
     <RouteGuard allowedRoles={['ADMIN']}>
       <AdminLayout>
         <div className="p-6 max-w-5xl mx-auto space-y-4">
-          <Link href="/admin/loyalty-analytics" className="text-sm text-violet-700">← Health</Link>
+          <Link href="/admin/loyalty-analytics" className="text-sm text-violet-400">← Health</Link>
           <h1 className="text-2xl font-semibold text-white">Campaign ROI</h1>
-          {loading ? <p className="text-hos-text-muted">Loading…</p> : error ? <p className="text-red-600 text-sm">{error}</p> : (
+          {loading ? <p className="text-hos-text-muted">Loading…</p> : error ? <p className="text-red-400 text-sm">{error}</p> : (
             <>
               {totals && (
                 <div className="grid grid-cols-2 md:grid-cols-5 gap-3 text-sm">

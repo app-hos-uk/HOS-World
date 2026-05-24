@@ -257,8 +257,8 @@ export default function PriceManagementPage() {
           )}
 
           {error && (
-            <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-              <p className="text-red-800">Error: {error}</p>
+            <div className="bg-red-500/10 border border-red-500/30 rounded-lg p-4">
+              <p className="text-red-300">Error: {error}</p>
               <button
                 onClick={fetchProducts}
                 className="mt-2 px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700"
@@ -328,9 +328,9 @@ export default function PriceManagementPage() {
                           <span
                             className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
                               product.status === 'ACTIVE'
-                                ? 'bg-green-100 text-green-800'
+                                ? 'bg-green-500/15 text-green-300'
                                 : product.status === 'DRAFT'
-                                ? 'bg-yellow-100 text-yellow-800'
+                                ? 'bg-yellow-500/15 text-yellow-300'
                                 : 'bg-hos-bg-tertiary text-white'
                             }`}
                           >
@@ -348,7 +348,7 @@ export default function PriceManagementPage() {
                             {product.status === 'DRAFT' && product.price > 0 && (
                               <button
                                 onClick={() => handleActivateProduct(product)}
-                                className="text-green-600 hover:text-green-900 px-2 py-1 rounded hover:bg-green-50 transition-colors"
+                                className="text-green-400 hover:text-green-300 px-2 py-1 rounded hover:bg-green-500/10 transition-colors"
                               >
                                 Activate
                               </button>

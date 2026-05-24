@@ -452,7 +452,7 @@ export default function CheckoutPage() {
                     checkoutStep === s.id
                       ? 'bg-hos-gold text-[#1a1406]'
                       : checkoutStep > s.id
-                        ? 'bg-green-500 text-white'
+                        ? 'bg-green-500/10 text-white'
                         : 'bg-hos-bg-tertiary text-hos-text-secondary'
                   }`}
                 >
@@ -595,12 +595,12 @@ export default function CheckoutPage() {
               
               {/* Stock Issues Warning Banner */}
               {hasCriticalStockIssues && (
-                <div role="alert" className="bg-red-50 border border-red-200 rounded-lg p-4 mb-4">
+                <div role="alert" className="bg-red-500/10 border border-red-500/30 rounded-lg p-4 mb-4">
                   <div className="flex items-start gap-3">
                     <span className="text-red-500 text-xl" aria-hidden="true">⚠️</span>
                     <div>
-                      <p className="font-medium text-red-800">Stock Issues Detected</p>
-                      <p className="text-sm text-red-600 mt-1">
+                      <p className="font-medium text-red-300">Stock Issues Detected</p>
+                      <p className="text-sm text-red-400 mt-1">
                         Some items in your cart have stock availability issues. 
                         Please <Link href="/cart" className="underline font-medium">return to your cart</Link> to update quantities.
                       </p>
@@ -616,7 +616,7 @@ export default function CheckoutPage() {
                     <div 
                       key={item.id} 
                       className={`flex justify-between items-start py-3 border-b last:border-b-0 ${
-                        stockIssue && stockIssue.type !== 'low_stock' ? 'bg-red-50 -mx-2 px-2 rounded' : ''
+                        stockIssue && stockIssue.type !== 'low_stock' ? 'bg-red-500/10 -mx-2 px-2 rounded' : ''
                       }`}
                     >
                       <div className="flex-1">
@@ -626,9 +626,9 @@ export default function CheckoutPage() {
                         {/* Stock Warning */}
                         {stockIssue && (
                           <p className={`text-xs mt-1 ${
-                            stockIssue.type === 'out_of_stock' ? 'text-red-600 font-medium' :
-                            stockIssue.type === 'insufficient' ? 'text-orange-600 font-medium' :
-                            'text-yellow-600'
+                            stockIssue.type === 'out_of_stock' ? 'text-red-400 font-medium' :
+                            stockIssue.type === 'insufficient' ? 'text-orange-400 font-medium' :
+                            'text-yellow-400'
                           }`}>
                             {stockIssue.type === 'out_of_stock' && '❌ Out of Stock'}
                             {stockIssue.type === 'insufficient' && `⚠️ Only ${stockIssue.available} available (you requested ${stockIssue.requested})`}
@@ -712,7 +712,7 @@ export default function CheckoutPage() {
                 </div>
 
                 {discount > 0 && (
-                  <div className="flex justify-between text-sm text-green-600">
+                  <div className="flex justify-between text-sm text-green-400">
                     <span>Discount</span>
                     <span>-{formatPrice(discount)}</span>
                   </div>
@@ -810,7 +810,7 @@ export default function CheckoutPage() {
               </button>
               
               {hasCriticalStockIssues && (
-                <p role="alert" className="text-center mt-2 text-sm text-red-600">
+                <p role="alert" className="text-center mt-2 text-sm text-red-400">
                   Please resolve stock issues to continue
                 </p>
               )}

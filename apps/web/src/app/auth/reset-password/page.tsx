@@ -20,7 +20,7 @@ function ResetPasswordForm() {
     return (
       <div className="min-h-screen bg-gradient-to-br from-hos-bg to-hos-bg-secondary flex items-center justify-center p-4">
         <div className="max-w-md w-full bg-hos-bg-secondary rounded-xl shadow-lg p-8 text-center">
-          <h1 className="text-xl font-bold text-red-600 mb-2">Invalid Reset Link</h1>
+          <h1 className="text-xl font-bold text-red-400 mb-2">Invalid Reset Link</h1>
           <p className="text-hos-text-secondary mb-6">This password reset link is invalid or has expired.</p>
           <Link href="/login" className="text-hos-gold hover:text-hos-gold-hover font-medium">
             Back to Login
@@ -57,8 +57,8 @@ function ResetPasswordForm() {
     return (
       <div className="min-h-screen bg-gradient-to-br from-hos-bg to-hos-bg-secondary flex items-center justify-center p-4">
         <div className="max-w-md w-full bg-hos-bg-secondary rounded-xl shadow-lg p-8 text-center">
-          <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
-            <svg className="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <div className="w-16 h-16 bg-green-500/15 rounded-full flex items-center justify-center mx-auto mb-4">
+            <svg className="w-8 h-8 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
             </svg>
           </div>

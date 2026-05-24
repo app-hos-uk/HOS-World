@@ -233,9 +233,9 @@ export default function IntegrationsPage() {
   const getStatusColor = (testStatus?: string) => {
     switch (testStatus) {
       case 'SUCCESS':
-        return 'bg-green-100 text-green-800';
+        return 'bg-green-500/15 text-green-300';
       case 'FAILED':
-        return 'bg-red-100 text-red-800';
+        return 'bg-red-500/15 text-red-300';
       default:
         return 'bg-hos-bg-tertiary text-white';
     }
@@ -343,7 +343,7 @@ export default function IntegrationsPage() {
                               <span
                                 className={`px-2 py-1 text-xs rounded ${
                                   integration.isTestMode
-                                    ? 'bg-yellow-100 text-yellow-800'
+                                    ? 'bg-yellow-500/15 text-yellow-300'
                                     : 'bg-hos-gold/20 text-hos-gold'
                                 }`}
                               >
@@ -352,7 +352,7 @@ export default function IntegrationsPage() {
                               <span
                                 className={`px-2 py-1 text-xs rounded ${
                                   integration.isActive
-                                    ? 'bg-green-100 text-green-800'
+                                    ? 'bg-green-500/15 text-green-300'
                                     : 'bg-hos-bg-tertiary text-hos-text-secondary'
                                 }`}
                               >
@@ -378,8 +378,8 @@ export default function IntegrationsPage() {
                                 onClick={() => handleToggleActive(integration)}
                                 className={`flex-1 px-3 py-1.5 text-sm rounded ${
                                   integration.isActive
-                                    ? 'bg-orange-100 hover:bg-orange-200 text-orange-700'
-                                    : 'bg-green-100 hover:bg-green-200 text-green-700'
+                                    ? 'bg-orange-500/15 hover:bg-orange-200 text-orange-400'
+                                    : 'bg-green-500/15 hover:bg-green-200 text-green-400'
                                 }`}
                               >
                                 {integration.isActive ? 'Disable' : 'Enable'}
@@ -388,7 +388,7 @@ export default function IntegrationsPage() {
                                 onClick={() =>
                                   handleDeleteIntegration(integration.id, integration.displayName)
                                 }
-                                className="px-3 py-1.5 text-sm bg-red-100 hover:bg-red-200 text-red-700 rounded"
+                                className="px-3 py-1.5 text-sm bg-red-500/15 hover:bg-red-200 text-red-400 rounded"
                               >
                                 Delete
                               </button>

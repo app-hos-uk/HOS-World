@@ -181,7 +181,7 @@ export function AttributeEditor({
                   <button
                     type="button"
                     onClick={() => removeAttribute(attribute.id)}
-                    className="text-sm text-red-600 hover:text-red-800"
+                    className="text-sm text-red-400 hover:text-red-300"
                   >
                     Remove
                   </button>

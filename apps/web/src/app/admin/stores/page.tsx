@@ -58,7 +58,7 @@ export default function AdminStoresPage() {
                     return (
                       <tr key={id} className="border-t">
                         <td className="p-2">
-                          <Link href={`/admin/stores/${id}`} className="text-violet-700">
+                          <Link href={`/admin/stores/${id}`} className="text-violet-400">
                             {String(r.name)}
                           </Link>
                         </td>

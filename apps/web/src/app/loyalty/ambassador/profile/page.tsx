@@ -95,7 +95,7 @@ export default function AmbassadorProfileEditPage() {
             </label>
             <button
               type="submit"
-              className="rounded bg-amber-600 hover:bg-amber-500 text-stone-950 px-4 py-2"
+              className="rounded bg-amber-600 hover:bg-amber-600 text-stone-950 px-4 py-2"
             >
               Save
             </button>

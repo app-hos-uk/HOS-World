@@ -65,7 +65,7 @@ export default function AdminStoreDetailPage() {
     <RouteGuard allowedRoles={['ADMIN']}>
       <AdminLayout>
         <div className="p-6 max-w-3xl mx-auto space-y-6">
-          <Link href="/admin/stores" className="text-sm text-violet-700">
+          <Link href="/admin/stores" className="text-sm text-violet-400">
             ← Stores
           </Link>
           {row ? (
@@ -98,13 +98,13 @@ export default function AdminStoreDetailPage() {
                       <span>
                         {s.label}
                         {s.completedAt ? (
-                          <span className="text-emerald-600 text-xs ml-2">done</span>
+                          <span className="text-emerald-400 text-xs ml-2">done</span>
                         ) : null}
                       </span>
                       {!s.completedAt && (
                         <button
                           type="button"
-                          className="text-xs text-violet-700"
+                          className="text-xs text-violet-400"
                           onClick={() => completeStep(s.key)}
                         >
                           Mark done

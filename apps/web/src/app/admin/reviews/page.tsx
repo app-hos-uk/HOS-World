@@ -223,8 +223,8 @@ export default function AdminReviewsPage() {
               )}
 
               {error && (
-                <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-                  <p className="text-red-800">Error: {error}</p>
+                <div className="bg-red-500/10 border border-red-500/30 rounded-lg p-4">
+                  <p className="text-red-300">Error: {error}</p>
                   <button
                     onClick={() => selectedProduct && fetchReviews(selectedProduct)}
                     className="mt-2 px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700"
@@ -264,7 +264,7 @@ export default function AdminReviewsPage() {
                               <div className="flex items-center gap-3 mb-2">
                                 <div className="flex">{renderStars(review.rating)}</div>
                                 {review.isVerifiedPurchase && (
-                                  <span className="px-2 py-0.5 bg-green-100 text-green-800 text-xs rounded-full">
+                                  <span className="px-2 py-0.5 bg-green-500/15 text-green-300 text-xs rounded-full">
                                     Verified Purchase
                                   </span>
                                 )}
@@ -291,7 +291,7 @@ export default function AdminReviewsPage() {
                             </div>
                             <button
                               onClick={() => handleDeleteReview(review.id)}
-                              className="ml-4 px-3 py-1.5 text-sm text-red-600 hover:bg-red-50 rounded transition-colors"
+                              className="ml-4 px-3 py-1.5 text-sm text-red-400 hover:bg-red-500/10 rounded transition-colors"
                             >
                               Delete
                             </button>

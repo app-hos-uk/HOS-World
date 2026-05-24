@@ -539,7 +539,7 @@ export function AdminLayout({ children }: AdminLayoutProps) {
                                     <span>{child.icon}</span>
                                     <span>{child.title}</span>
                                     {child.badge && (
-                                      <span className="ml-auto bg-red-500 text-white text-xs px-2 py-0.5 rounded-full">
+                                      <span className="ml-auto bg-red-500/10 text-white text-xs px-2 py-0.5 rounded-full">
                                         {child.badge}
                                       </span>
                                     )}
@@ -567,7 +567,7 @@ export function AdminLayout({ children }: AdminLayoutProps) {
                         <span>{item.icon}</span>
                         <span>{item.title}</span>
                         {item.badge && (
-                          <span className="ml-auto bg-red-500 text-white text-xs px-2 py-0.5 rounded-full">
+                          <span className="ml-auto bg-red-500/10 text-white text-xs px-2 py-0.5 rounded-full">
                             {item.badge}
                           </span>
                         )}
@@ -635,7 +635,7 @@ export function AdminLayout({ children }: AdminLayoutProps) {
               )}
               <button
                 onClick={handleLogout}
-                className="px-3 py-1.5 text-sm text-red-600 hover:text-red-700 hover:bg-red-50 rounded-lg transition-colors font-medium"
+                className="px-3 py-1.5 text-sm text-red-400 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-colors font-medium"
               >
                 Logout
               </button>

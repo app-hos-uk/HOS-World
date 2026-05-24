@@ -218,8 +218,8 @@ export default function ShippingIntegrationsPage() {
 
   const getStatusColor = (testStatus?: string) => {
     switch (testStatus) {
-      case 'SUCCESS': return 'text-green-600 bg-green-100';
-      case 'FAILED': return 'text-red-600 bg-red-100';
+      case 'SUCCESS': return 'text-green-400 bg-green-500/15';
+      case 'FAILED': return 'text-red-400 bg-red-500/15';
       default: return 'text-hos-text-secondary bg-hos-bg-tertiary';
     }
   };
@@ -265,7 +265,7 @@ export default function ShippingIntegrationsPage() {
                   key={provider}
                   className={`bg-hos-bg-secondary border rounded-lg overflow-hidden ${
                     isConfigured && integration.isActive
-                      ? 'border-green-300 shadow-md'
+                      ? 'border-green-500/40 shadow-md'
                       : 'border-hos-border'
                   }`}
                 >
@@ -290,7 +290,7 @@ export default function ShippingIntegrationsPage() {
                           <span
                             className={`px-2 py-1 text-xs rounded ${
                               integration.isTestMode
-                                ? 'bg-yellow-100 text-yellow-800'
+                                ? 'bg-yellow-500/15 text-yellow-300'
                                 : 'bg-hos-gold/20 text-hos-gold'
                             }`}
                           >
@@ -299,7 +299,7 @@ export default function ShippingIntegrationsPage() {
                           <span
                             className={`px-2 py-1 text-xs rounded ${
                               integration.isActive
-                                ? 'bg-green-100 text-green-800'
+                                ? 'bg-green-500/15 text-green-300'
                                 : 'bg-hos-bg-tertiary text-hos-text-secondary'
                             }`}
                           >
@@ -331,8 +331,8 @@ export default function ShippingIntegrationsPage() {
                             onClick={() => handleToggleActive(integration)}
                             className={`px-3 py-2 text-sm rounded ${
                               integration.isActive
-                                ? 'bg-orange-100 hover:bg-orange-200 text-orange-700'
-                                : 'bg-green-100 hover:bg-green-200 text-green-700'
+                                ? 'bg-orange-500/15 hover:bg-orange-200 text-orange-400'
+                                : 'bg-green-500/15 hover:bg-green-200 text-green-400'
                             }`}
                           >
                             {integration.isActive ? 'Disable' : 'Enable'}
@@ -513,7 +513,7 @@ export default function ShippingIntegrationsPage() {
                             <button
                               type="button"
                               onClick={() => handleDeleteIntegration(editingIntegration.id, editingIntegration.displayName)}
-                              className="px-4 py-2 text-red-600 hover:bg-red-50 rounded-lg"
+                              className="px-4 py-2 text-red-400 hover:bg-red-500/10 rounded-lg"
                             >
                               Delete
                             </button>

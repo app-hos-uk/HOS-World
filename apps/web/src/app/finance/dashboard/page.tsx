@@ -93,7 +93,7 @@ export default function FinanceDashboardPage() {
         )}
 
         {error && (
-          <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded mb-6">
+          <div className="bg-red-500/10 border border-red-500/30 text-red-400 px-4 py-3 rounded mb-6">
             Error: {error}
           </div>
         )}
@@ -121,7 +121,7 @@ export default function FinanceDashboardPage() {
                 <div className="flex items-center justify-between">
                   <div>
                     <h3 className="text-sm font-medium text-hos-text-secondary mb-1">Total Revenue</h3>
-                    <p className="text-3xl font-bold text-green-600">
+                    <p className="text-3xl font-bold text-green-400">
                       ${totalRevenue.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                     </p>
                   </div>
@@ -129,7 +129,7 @@ export default function FinanceDashboardPage() {
                 </div>
                 <Link
                   href="/finance/reports/revenue"
-                  className="text-sm text-green-600 hover:text-green-700 mt-2 inline-block"
+                  className="text-sm text-green-400 hover:text-green-400 mt-2 inline-block"
                 >
                   View reports →
                 </Link>
@@ -157,7 +157,7 @@ export default function FinanceDashboardPage() {
                 <div className="flex items-center justify-between">
                   <div>
                     <h3 className="text-sm font-medium text-hos-text-secondary mb-1">Payouts Pending</h3>
-                    <p className="text-3xl font-bold text-orange-600">
+                    <p className="text-3xl font-bold text-orange-400">
                       ${payoutsPending.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                     </p>
                   </div>
@@ -165,7 +165,7 @@ export default function FinanceDashboardPage() {
                 </div>
                 <Link
                   href="/finance/payouts"
-                  className="text-sm text-orange-600 hover:text-orange-700 mt-2 inline-block"
+                  className="text-sm text-orange-400 hover:text-orange-400 mt-2 inline-block"
                 >
                   Process payouts →
                 </Link>
@@ -210,7 +210,7 @@ export default function FinanceDashboardPage() {
                               )}
                             </div>
                           </div>
-                          <span className="px-2 py-1 text-xs font-medium bg-yellow-100 text-yellow-800 rounded">
+                          <span className="px-2 py-1 text-xs font-medium bg-yellow-500/15 text-yellow-300 rounded">
                             PENDING
                           </span>
                         </div>
@@ -254,7 +254,7 @@ export default function FinanceDashboardPage() {
                               {new Date(item.approvedAt || item.createdAt).toLocaleString()}
                             </p>
                           </div>
-                          <span className="px-2 py-1 text-xs font-medium bg-green-100 text-green-800 rounded">
+                          <span className="px-2 py-1 text-xs font-medium bg-green-500/15 text-green-300 rounded">
                             APPROVED
                           </span>
                         </div>

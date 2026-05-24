@@ -125,7 +125,7 @@ export function FileUpload({
                   />
                   <button
                     onClick={() => handleRemove(index)}
-                    className="absolute top-2 right-2 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                    className="absolute top-2 right-2 bg-red-500/10 text-white rounded-full w-6 h-6 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
                   >
                     ×
                   </button>
@@ -136,7 +136,7 @@ export function FileUpload({
                     <p className="text-sm text-hos-text-secondary">File uploaded</p>
                     <button
                       onClick={() => handleRemove(index)}
-                      className="mt-2 text-sm text-red-600 hover:text-red-800"
+                      className="mt-2 text-sm text-red-400 hover:text-red-300"
                     >
                       Remove
                     </button>

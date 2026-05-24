@@ -134,7 +134,7 @@ export default function QuizPlayPage() {
                 type="button"
                 onClick={submit}
                 disabled={answers.some((a) => a < 0)}
-                className="rounded-md bg-amber-600 px-4 py-2 text-stone-950 font-medium hover:bg-amber-500 disabled:opacity-40 disabled:cursor-not-allowed"
+                className="rounded-md bg-amber-600 px-4 py-2 text-stone-950 font-medium hover:bg-amber-600 disabled:opacity-40 disabled:cursor-not-allowed"
               >
                 Submit
               </button>

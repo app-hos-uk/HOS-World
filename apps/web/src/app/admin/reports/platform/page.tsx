@@ -191,9 +191,9 @@ export default function AdminPlatformMetricsPage() {
           </div>
 
           {error && (
-            <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-              <p className="text-red-800">Error: {error}</p>
-              <button onClick={fetchMetrics} className="mt-2 text-sm text-red-600 underline hover:text-red-800">
+            <div className="bg-red-500/10 border border-red-500/30 rounded-lg p-4">
+              <p className="text-red-300">Error: {error}</p>
+              <button onClick={fetchMetrics} className="mt-2 text-sm text-red-400 underline hover:text-red-300">
                 Retry
               </button>
             </div>
@@ -215,7 +215,7 @@ export default function AdminPlatformMetricsPage() {
             </div>
             <div className="bg-hos-bg-secondary rounded-lg shadow p-6">
               <h3 className="text-sm font-medium text-hos-text-muted">Total Revenue</h3>
-              <p className="text-3xl font-bold text-green-600 mt-2">
+              <p className="text-3xl font-bold text-green-400 mt-2">
                 ${Number(metrics?.totalRevenue || 0).toFixed(2)}
               </p>
             </div>
@@ -404,7 +404,7 @@ export default function AdminPlatformMetricsPage() {
                         <tr key={row.label} className="hover:bg-hos-bg-tertiary">
                           <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-white">{row.label}</td>
                           <td className="px-6 py-4 whitespace-nowrap text-sm text-hos-text-secondary text-right">{row.count}</td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-green-600 font-medium text-right">${row.revenue.toFixed(2)}</td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-green-400 font-medium text-right">${row.revenue.toFixed(2)}</td>
                           <td className="px-6 py-4 whitespace-nowrap text-sm text-hos-text-muted text-right">${avg.toFixed(2)}</td>
                         </tr>
                       );

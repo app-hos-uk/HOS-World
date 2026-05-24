@@ -114,10 +114,10 @@ export default function AdminInfluencerInvitationsPage() {
 
   const getStatusBadge = (status: string) => {
     const styles: Record<string, string> = {
-      PENDING: 'bg-yellow-100 text-yellow-800',
-      ACCEPTED: 'bg-green-100 text-green-800',
+      PENDING: 'bg-yellow-500/15 text-yellow-300',
+      ACCEPTED: 'bg-green-500/15 text-green-300',
       EXPIRED: 'bg-hos-bg-tertiary text-white',
-      CANCELLED: 'bg-red-100 text-red-800',
+      CANCELLED: 'bg-red-500/15 text-red-300',
     };
     return styles[status] || 'bg-hos-bg-tertiary text-white';
   };
@@ -219,7 +219,7 @@ export default function AdminInfluencerInvitationsPage() {
                             </button>
                             <button
                               onClick={() => handleCancel(invitation.id)}
-                              className="text-red-600 hover:text-red-800 text-sm font-medium"
+                              className="text-red-400 hover:text-red-300 text-sm font-medium"
                             >
                               Cancel
                             </button>

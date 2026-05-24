@@ -225,11 +225,11 @@ function ProcurementSubmissionsContent() {
       case 'SUBMITTED':
         return 'bg-hos-gold/20 text-hos-gold';
       case 'UNDER_REVIEW':
-        return 'bg-yellow-100 text-yellow-800';
+        return 'bg-yellow-500/15 text-yellow-300';
       case 'PROCUREMENT_APPROVED':
-        return 'bg-green-100 text-green-800';
+        return 'bg-green-500/15 text-green-300';
       case 'PROCUREMENT_REJECTED':
-        return 'bg-red-100 text-red-800';
+        return 'bg-red-500/15 text-red-300';
       default:
         return 'bg-hos-bg-tertiary text-white';
     }
@@ -249,7 +249,7 @@ function ProcurementSubmissionsContent() {
         </div>
 
           {error && (
-            <div className="mb-6 p-4 bg-red-100 border border-red-400 text-red-700 rounded-lg">
+            <div className="mb-6 p-4 bg-red-500/15 border border-red-400 text-red-400 rounded-lg">
               <p className="font-semibold">Error</p>
               <p className="text-sm mt-1">{error}</p>
             </div>
@@ -300,37 +300,37 @@ function ProcurementSubmissionsContent() {
                   {duplicateGroups.map((group) => (
                     <div
                       key={group.groupId}
-                      className="bg-amber-50 border border-amber-200 rounded-lg p-6"
+                      className="bg-amber-500/10 border border-amber-500/30 rounded-lg p-6"
                     >
                       <div className="flex flex-wrap gap-2 mb-3">
                         {group.matchReasons.map((r) => (
-                          <span key={r} className="px-2 py-0.5 bg-amber-200 text-amber-900 rounded text-xs font-medium">
+                          <span key={r} className="px-2 py-0.5 bg-amber-200 text-amber-300 rounded text-xs font-medium">
                             {r}
                           </span>
                         ))}
                       </div>
                       <div className="flex items-center justify-between mb-3">
-                        <p className="text-sm font-medium text-amber-900">
+                        <p className="text-sm font-medium text-amber-300">
                           Same product from {group.submissions.length} seller(s) — approve one, reject others
                         </p>
                         <button
                           onClick={() => setExpandedGroupId(expandedGroupId === group.groupId ? null : group.groupId)}
-                          className="px-3 py-1.5 text-xs bg-hos-bg-secondary border border-amber-300 text-amber-800 rounded-lg hover:bg-amber-100 font-medium"
+                          className="px-3 py-1.5 text-xs bg-hos-bg-secondary border border-amber-500/40 text-amber-300 rounded-lg hover:bg-amber-500/15 font-medium"
                         >
                           {expandedGroupId === group.groupId ? 'Hide Comparison' : 'Compare All'}
                         </button>
                       </div>
 
                       {expandedGroupId === group.groupId && (
-                        <div className="mb-4 overflow-x-auto border border-amber-200 rounded-lg bg-hos-bg-secondary">
+                        <div className="mb-4 overflow-x-auto border border-amber-500/30 rounded-lg bg-hos-bg-secondary">
                           <table className="w-full text-sm">
                             <thead>
-                              <tr className="bg-amber-50">
-                                <th className="px-3 py-2 text-left text-xs font-semibold text-amber-800 border-r border-amber-200 w-24">Field</th>
+                              <tr className="bg-amber-500/10">
+                                <th className="px-3 py-2 text-left text-xs font-semibold text-amber-300 border-r border-amber-500/30 w-24">Field</th>
                                 {group.submissions.map((s) => (
-                                  <th key={s.id} className={`px-3 py-2 text-left text-xs font-semibold border-r last:border-r-0 border-amber-200 ${s.id === group.suggestedPrimaryId ? 'text-green-800 bg-green-50' : 'text-hos-text-secondary'}`}>
+                                  <th key={s.id} className={`px-3 py-2 text-left text-xs font-semibold border-r last:border-r-0 border-amber-500/30 ${s.id === group.suggestedPrimaryId ? 'text-green-300 bg-green-500/10' : 'text-hos-text-secondary'}`}>
                                     {s.sellerStoreName}
-                                    {s.id === group.suggestedPrimaryId && <span className="ml-1 text-[10px] bg-green-200 text-green-900 px-1 rounded">Primary</span>}
+                                    {s.id === group.suggestedPrimaryId && <span className="ml-1 text-[10px] bg-green-200 text-green-300 px-1 rounded">Primary</span>}
                                   </th>
                                 ))}
                               </tr>
@@ -347,7 +347,7 @@ function ProcurementSubmissionsContent() {
                                   <tr key={field}>
                                     <td className="px-3 py-2 font-medium text-hos-text-secondary border-r border-hos-border capitalize">{field}</td>
                                     {vals.map((v, i) => (
-                                      <td key={i} className={`px-3 py-2 border-r last:border-r-0 border-hos-border ${allSame && v !== '—' ? 'bg-green-50 text-green-800' : !allSame && v !== '—' ? 'bg-amber-50 text-amber-800' : 'text-hos-text-muted'}`}>
+                                      <td key={i} className={`px-3 py-2 border-r last:border-r-0 border-hos-border ${allSame && v !== '—' ? 'bg-green-500/10 text-green-300' : !allSame && v !== '—' ? 'bg-amber-500/10 text-amber-300' : 'text-hos-text-muted'}`}>
                                         {v}
                                       </td>
                                     ))}
@@ -395,7 +395,7 @@ function ProcurementSubmissionsContent() {
                                 View
                               </button>
                               {sub.id === group.suggestedPrimaryId && (
-                                <span className="px-2 py-1 text-xs bg-green-100 text-green-800 rounded">Suggested</span>
+                                <span className="px-2 py-1 text-xs bg-green-500/15 text-green-300 rounded">Suggested</span>
                               )}
                               {(sub.status === 'SUBMITTED' || sub.status === 'UNDER_REVIEW') && (
                                 <>
@@ -553,20 +553,20 @@ function ProcurementSubmissionsContent() {
                           const isHigh = score >= 90;
                           return (
                             <div
-                              className={`mt-3 p-3 rounded cursor-pointer ${isHigh ? 'bg-red-50 border border-red-300' : 'bg-orange-50 border border-orange-200'}`}
+                              className={`mt-3 p-3 rounded cursor-pointer ${isHigh ? 'bg-red-500/10 border border-red-500/40' : 'bg-orange-500/10 border border-orange-500/30'}`}
                               onClick={() => handleViewDetails(submission.id)}
                             >
                               <div className="flex items-center justify-between">
                                 <div className="flex-1 min-w-0">
-                                  <p className={`text-sm font-medium ${isHigh ? 'text-red-800' : 'text-orange-800'}`}>
+                                  <p className={`text-sm font-medium ${isHigh ? 'text-red-300' : 'text-orange-300'}`}>
                                     {submission.duplicateProducts.length} duplicate(s) found
                                   </p>
-                                  <p className={`text-xs mt-0.5 truncate ${isHigh ? 'text-red-600' : 'text-orange-600'}`}>
+                                  <p className={`text-xs mt-0.5 truncate ${isHigh ? 'text-red-400' : 'text-orange-400'}`}>
                                     Top match: &ldquo;{topMatch.existingProduct?.name}&rdquo;
                                     {topMatch.existingProduct?.sku ? ` (SKU: ${topMatch.existingProduct.sku})` : ''}
                                   </p>
                                 </div>
-                                <span className={`ml-3 shrink-0 px-2 py-1 rounded text-xs font-bold ${isHigh ? 'bg-red-200 text-red-900' : 'bg-orange-200 text-orange-900'}`}>
+                                <span className={`ml-3 shrink-0 px-2 py-1 rounded text-xs font-bold ${isHigh ? 'bg-red-200 text-red-300' : 'bg-orange-200 text-orange-300'}`}>
                                   {score}% match
                                 </span>
                               </div>
@@ -735,12 +735,12 @@ function ProcurementSubmissionsContent() {
                         )}
 
                       {selectedSubmission.duplicateProducts && selectedSubmission.duplicateProducts.length > 0 && (
-                        <div className="border border-orange-300 rounded-lg overflow-hidden">
-                          <div className="bg-orange-50 px-4 py-3 border-b border-orange-200">
-                            <h4 className="font-semibold text-orange-900">
+                        <div className="border border-orange-500/40 rounded-lg overflow-hidden">
+                          <div className="bg-orange-500/10 px-4 py-3 border-b border-orange-500/30">
+                            <h4 className="font-semibold text-orange-300">
                               {selectedSubmission.duplicateProducts.length} Similar Product(s) Found
                             </h4>
-                            <p className="text-xs text-orange-700 mt-0.5">Compare the submitted product against existing catalogue matches</p>
+                            <p className="text-xs text-orange-400 mt-0.5">Compare the submitted product against existing catalogue matches</p>
                           </div>
                           <div className="divide-y divide-orange-100">
                             {selectedSubmission.duplicateProducts.map((dup: any) => {
@@ -771,11 +771,11 @@ function ProcurementSubmissionsContent() {
                                     </div>
                                     <div className="flex flex-col items-end gap-2 shrink-0">
                                       <div className="text-right">
-                                        <span className={`inline-block px-2 py-1 rounded text-xs font-bold ${isHigh ? 'bg-red-100 text-red-800' : 'bg-orange-100 text-orange-800'}`}>
+                                        <span className={`inline-block px-2 py-1 rounded text-xs font-bold ${isHigh ? 'bg-red-500/15 text-red-300' : 'bg-orange-500/15 text-orange-300'}`}>
                                           {score}% match
                                         </span>
                                         <div className="w-20 h-1.5 bg-hos-bg-tertiary rounded-full mt-1">
-                                          <div className={`h-full rounded-full ${isHigh ? 'bg-red-500' : score >= 80 ? 'bg-orange-400' : 'bg-yellow-400'}`} style={{ width: `${score}%` }} />
+                                          <div className={`h-full rounded-full ${isHigh ? 'bg-red-500/10' : score >= 80 ? 'bg-orange-400' : 'bg-yellow-400'}`} style={{ width: `${score}%` }} />
                                         </div>
                                       </div>
                                       <button
@@ -824,29 +824,29 @@ function ProcurementSubmissionsContent() {
                     <div className="space-y-4">
                       {selectedSubmission.duplicateProducts && selectedSubmission.duplicateProducts.length > 0 &&
                         selectedSubmission.duplicateProducts.some((d: any) => (d.similarityScore ?? 0) >= 90) && (
-                        <div className="p-4 border border-red-300 rounded-lg bg-red-50">
+                        <div className="p-4 border border-red-500/40 rounded-lg bg-red-500/10">
                           <label className="flex items-start gap-3 cursor-pointer">
                             <input
                               type="checkbox"
                               checked={acknowledgeDuplicates}
                               onChange={(e) => setAcknowledgeDuplicates(e.target.checked)}
-                              className="mt-0.5 h-4 w-4 rounded border-red-300 text-red-600 focus:ring-red-500"
+                              className="mt-0.5 h-4 w-4 rounded border-red-500/40 text-red-400 focus:ring-red-500/50"
                             />
                             <div>
-                              <span className="text-sm font-semibold text-red-900">I acknowledge this product has high-similarity duplicates</span>
-                              <p className="text-xs text-red-700 mt-0.5">This submission matches existing products with 90%+ similarity. Check this box and provide a reason to proceed with approval.</p>
+                              <span className="text-sm font-semibold text-red-300">I acknowledge this product has high-similarity duplicates</span>
+                              <p className="text-xs text-red-400 mt-0.5">This submission matches existing products with 90%+ similarity. Check this box and provide a reason to proceed with approval.</p>
                             </div>
                           </label>
                           {acknowledgeDuplicates && (
                             <div className="mt-3">
-                              <label className="block text-sm font-medium text-red-800 mb-1">
+                              <label className="block text-sm font-medium text-red-300 mb-1">
                                 Reason for approving despite duplicate <span className="text-red-500">*</span>
                               </label>
                               <textarea
                                 value={duplicateAcknowledgementNote}
                                 onChange={(e) => setDuplicateAcknowledgementNote(e.target.value)}
                                 rows={2}
-                                className="w-full px-3 py-2 border border-red-300 rounded-lg focus:ring-2 focus:ring-red-500 text-sm"
+                                className="w-full px-3 py-2 border border-red-500/40 rounded-lg focus:ring-2 focus:ring-red-500/50 text-sm"
                                 placeholder="e.g., Different variant, different seller region, verified distinct product..."
                               />
                             </div>
@@ -961,7 +961,7 @@ function ProcurementSubmissionsContent() {
                       <span className="inline-block px-3 py-1 bg-hos-gold/20 text-hos-gold rounded-full text-sm font-semibold mb-3">Submitted Product</span>
                     </div>
                     <div className="text-center">
-                      <span className="inline-block px-3 py-1 bg-green-100 text-green-800 rounded-full text-sm font-semibold mb-3">Existing Product</span>
+                      <span className="inline-block px-3 py-1 bg-green-500/15 text-green-300 rounded-full text-sm font-semibold mb-3">Existing Product</span>
                     </div>
                   </div>
 
@@ -987,10 +987,10 @@ function ProcurementSubmissionsContent() {
                           return (
                             <div key={f.label} className={`grid grid-cols-[120px_1fr_1fr] ${i % 2 === 0 ? 'bg-hos-bg-secondary' : 'bg-hos-bg-secondary'}`}>
                               <div className="px-4 py-3 font-medium text-sm text-hos-text-secondary border-r border-hos-border">{f.label}</div>
-                              <div className={`px-4 py-3 text-sm border-r border-hos-border ${match ? 'bg-green-50 text-green-800' : bothEmpty ? '' : f.subVal !== '—' && f.exVal !== '—' && f.subVal !== f.exVal ? 'bg-amber-50 text-amber-800' : ''}`}>
+                              <div className={`px-4 py-3 text-sm border-r border-hos-border ${match ? 'bg-green-500/10 text-green-300' : bothEmpty ? '' : f.subVal !== '—' && f.exVal !== '—' && f.subVal !== f.exVal ? 'bg-amber-500/10 text-amber-300' : ''}`}>
                                 {f.subVal}
                               </div>
-                              <div className={`px-4 py-3 text-sm ${match ? 'bg-green-50 text-green-800' : bothEmpty ? '' : f.subVal !== '—' && f.exVal !== '—' && f.subVal !== f.exVal ? 'bg-amber-50 text-amber-800' : ''}`}>
+                              <div className={`px-4 py-3 text-sm ${match ? 'bg-green-500/10 text-green-300' : bothEmpty ? '' : f.subVal !== '—' && f.exVal !== '—' && f.subVal !== f.exVal ? 'bg-amber-500/10 text-amber-300' : ''}`}>
                                 {f.exVal}
                               </div>
                             </div>

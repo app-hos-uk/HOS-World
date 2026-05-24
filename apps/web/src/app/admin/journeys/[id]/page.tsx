@@ -88,7 +88,7 @@ export default function AdminJourneyDetailPage() {
           {loading ? (
             <p className="text-hos-text-muted">Loading…</p>
           ) : !journey ? (
-            <p className="text-red-600">Not found</p>
+            <p className="text-red-400">Not found</p>
           ) : (
             <>
               <h1 className="text-2xl font-semibold text-white">{journey.name}</h1>
@@ -171,7 +171,7 @@ export default function AdminJourneyDetailPage() {
                               <span
                                 className={`inline-block px-2 py-0.5 rounded-full text-xs font-medium ${
                                   e.status === 'ACTIVE'
-                                    ? 'bg-green-100 text-green-700'
+                                    ? 'bg-green-500/15 text-green-400'
                                     : e.status === 'COMPLETED'
                                       ? 'bg-hos-gold/20 text-hos-gold'
                                       : 'bg-hos-bg-tertiary text-hos-text-secondary'

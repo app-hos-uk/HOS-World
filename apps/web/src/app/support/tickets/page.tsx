@@ -83,9 +83,9 @@ export default function SupportTicketsPage() {
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'OPEN': return 'bg-yellow-100 text-yellow-800';
+      case 'OPEN': return 'bg-yellow-500/15 text-yellow-300';
       case 'IN_PROGRESS': return 'bg-hos-gold/20 text-hos-gold';
-      case 'RESOLVED': return 'bg-green-100 text-green-800';
+      case 'RESOLVED': return 'bg-green-500/15 text-green-300';
       case 'CLOSED': return 'bg-hos-bg-tertiary text-white';
       default: return 'bg-hos-bg-tertiary text-white';
     }

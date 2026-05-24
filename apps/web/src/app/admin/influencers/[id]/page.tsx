@@ -139,8 +139,8 @@ export default function InfluencerDetailPage() {
 
   const getStatusBadge = (status: string) => {
     const styles: Record<string, string> = {
-      ACTIVE: 'bg-green-100 text-green-800',
-      SUSPENDED: 'bg-red-100 text-red-800',
+      ACTIVE: 'bg-green-500/15 text-green-300',
+      SUSPENDED: 'bg-red-500/15 text-red-300',
       INACTIVE: 'bg-hos-bg-tertiary text-white',
     };
     return styles[status] || 'bg-hos-bg-tertiary text-white';
@@ -149,9 +149,9 @@ export default function InfluencerDetailPage() {
   const getTierBadge = (tier: string) => {
     const styles: Record<string, string> = {
       PLATINUM: 'bg-hos-surface text-white',
-      GOLD: 'bg-yellow-100 text-yellow-800',
+      GOLD: 'bg-yellow-500/15 text-yellow-300',
       SILVER: 'bg-hos-bg-tertiary text-white',
-      BRONZE: 'bg-orange-100 text-orange-800',
+      BRONZE: 'bg-orange-500/15 text-orange-300',
     };
     return styles[tier] || 'bg-hos-bg-tertiary text-white';
   };
@@ -236,7 +236,7 @@ export default function InfluencerDetailPage() {
             </div>
             <div className="bg-hos-bg-secondary rounded-lg shadow-sm p-4">
               <p className="text-sm text-hos-text-muted">Conversions</p>
-              <p className="text-2xl font-bold text-green-600">{influencer.totalConversions}</p>
+              <p className="text-2xl font-bold text-green-400">{influencer.totalConversions}</p>
             </div>
             <div className="bg-hos-bg-secondary rounded-lg shadow-sm p-4">
               <p className="text-sm text-hos-text-muted">Conversion Rate</p>
@@ -252,7 +252,7 @@ export default function InfluencerDetailPage() {
             </div>
             <div className="bg-hos-bg-secondary rounded-lg shadow-sm p-4">
               <p className="text-sm text-hos-text-muted">Commission Rate</p>
-              <p className="text-2xl font-bold text-amber-600">
+              <p className="text-2xl font-bold text-amber-400">
                 {influencer.baseCommissionRate != null
                   ? `${(Number(influencer.baseCommissionRate) * 100).toFixed(1)}%`
                   : influencer.commissionRate != null

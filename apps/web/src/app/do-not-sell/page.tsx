@@ -122,8 +122,8 @@ export default function DoNotSellPage() {
             role="alert"
             className={`mt-6 p-4 rounded-lg ${
               status === 'success'
-                ? 'bg-green-50 text-green-800 border border-green-200'
-                : 'bg-red-50 text-red-800 border border-red-200'
+                ? 'bg-green-500/10 text-green-300 border border-green-500/30'
+                : 'bg-red-500/10 text-red-300 border border-red-500/30'
             }`}
           >
             {message}

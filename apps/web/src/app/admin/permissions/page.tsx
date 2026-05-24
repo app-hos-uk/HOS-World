@@ -213,7 +213,7 @@ export default function AdminPermissionsPage() {
                   <p className="text-sm text-hos-text-secondary mt-1">
                     {grantedInMatrixCount} of {PERMISSIONS.length} permissions granted
                     {unknownGrantedIds.length > 0 && (
-                      <span className="text-amber-700">
+                      <span className="text-amber-400">
                         {' '}
                         (+ {unknownGrantedIds.length} legacy / unknown id{unknownGrantedIds.length !== 1 ? 's' : ''}{' '}
                         not shown below)

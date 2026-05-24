@@ -158,7 +158,7 @@ export default function AdminInventoryAnalyticsPage() {
             </div>
             <div className="bg-hos-bg-secondary rounded-lg shadow p-6">
               <h3 className="text-sm font-medium text-hos-text-muted">Low Stock Items</h3>
-              <p className="text-3xl font-bold text-red-600 mt-2">{data?.lowStockItems || 0}</p>
+              <p className="text-3xl font-bold text-red-400 mt-2">{data?.lowStockItems || 0}</p>
             </div>
           </div>
 
@@ -198,8 +198,8 @@ export default function AdminInventoryAnalyticsPage() {
           )}
 
           {error && (
-            <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-              <p className="text-red-800">Error: {error}</p>
+            <div className="bg-red-500/10 border border-red-500/30 rounded-lg p-4">
+              <p className="text-red-300">Error: {error}</p>
             </div>
           )}
         </div>

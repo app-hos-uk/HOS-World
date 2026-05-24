@@ -308,9 +308,9 @@ export default function InfluencerDashboardPage() {
           <div className="flex items-center gap-4">
             <span className={`px-3 py-1 rounded-full text-sm font-medium ${
               profile?.tier === 'PLATINUM' ? 'bg-hos-surface text-white' :
-              profile?.tier === 'GOLD' ? 'bg-yellow-100 text-yellow-800' :
+              profile?.tier === 'GOLD' ? 'bg-yellow-500/15 text-yellow-300' :
               profile?.tier === 'SILVER' ? 'bg-hos-bg-tertiary text-white' :
-              'bg-orange-100 text-orange-800'
+              'bg-orange-500/15 text-orange-300'
             }`}>
               {profile?.tier} Tier
             </span>
@@ -370,7 +370,7 @@ export default function InfluencerDashboardPage() {
                   {analytics?.totalClicks?.toLocaleString() || 0}
                 </p>
                 {weeklyGrowth.clicks !== 0 && (
-                  <p className={`text-sm mt-1 flex items-center gap-1 ${weeklyGrowth.clicks > 0 ? 'text-green-600' : 'text-red-600'}`}>
+                  <p className={`text-sm mt-1 flex items-center gap-1 ${weeklyGrowth.clicks > 0 ? 'text-green-400' : 'text-red-400'}`}>
                     {weeklyGrowth.clicks > 0 ? (
                       <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
@@ -399,11 +399,11 @@ export default function InfluencerDashboardPage() {
                 <p className="text-3xl font-bold text-white mt-1">
                   {analytics?.totalConversions?.toLocaleString() || 0}
                 </p>
-                <p className="text-green-600 text-sm mt-1">
+                <p className="text-green-400 text-sm mt-1">
                   {analytics?.conversionRate}% rate
                 </p>
                 {weeklyGrowth.conversions !== 0 && (
-                  <p className={`text-sm mt-1 flex items-center gap-1 ${weeklyGrowth.conversions > 0 ? 'text-green-600' : 'text-red-600'}`}>
+                  <p className={`text-sm mt-1 flex items-center gap-1 ${weeklyGrowth.conversions > 0 ? 'text-green-400' : 'text-red-400'}`}>
                     {weeklyGrowth.conversions > 0 ? (
                       <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
@@ -417,8 +417,8 @@ export default function InfluencerDashboardPage() {
                   </p>
                 )}
               </div>
-              <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
-                <svg className="w-6 h-6 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <div className="w-12 h-12 bg-green-500/15 rounded-lg flex items-center justify-center">
+                <svg className="w-6 h-6 text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
               </div>
@@ -449,8 +449,8 @@ export default function InfluencerDashboardPage() {
                   {formatCurrency(analytics?.totalCommission || 0)}
                 </p>
               </div>
-              <div className="w-12 h-12 bg-yellow-100 rounded-lg flex items-center justify-center">
-                <svg className="w-6 h-6 text-yellow-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <div className="w-12 h-12 bg-yellow-500/15 rounded-lg flex items-center justify-center">
+                <svg className="w-6 h-6 text-yellow-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
               </div>
@@ -465,9 +465,9 @@ export default function InfluencerDashboardPage() {
             <div className="flex items-center gap-2">
               <span className={`px-3 py-1 rounded-full text-sm font-medium ${
                 profile?.tier === 'PLATINUM' ? 'bg-hos-surface text-white' :
-                profile?.tier === 'GOLD' ? 'bg-yellow-100 text-yellow-800' :
+                profile?.tier === 'GOLD' ? 'bg-yellow-500/15 text-yellow-300' :
                 profile?.tier === 'SILVER' ? 'bg-hos-bg-tertiary text-white' :
-                'bg-orange-100 text-orange-800'
+                'bg-orange-500/15 text-orange-300'
               }`}>
                 {profile?.tier || 'BRONZE'}
               </span>
@@ -478,9 +478,9 @@ export default function InfluencerDashboardPage() {
                   </svg>
                   <span className={`px-3 py-1 rounded-full text-sm font-medium ${
                     tierProgress.nextTier === 'PLATINUM' ? 'bg-hos-surface text-white' :
-                    tierProgress.nextTier === 'GOLD' ? 'bg-yellow-100 text-yellow-800' :
+                    tierProgress.nextTier === 'GOLD' ? 'bg-yellow-500/15 text-yellow-300' :
                     tierProgress.nextTier === 'SILVER' ? 'bg-hos-bg-tertiary text-white' :
-                    'bg-orange-100 text-orange-800'
+                    'bg-orange-500/15 text-orange-300'
                   }`}>
                     {tierProgress.nextTier}
                   </span>
@@ -527,7 +527,7 @@ export default function InfluencerDashboardPage() {
                 {weeklyGrowth.clicks !== 0 && (
                   <div className="flex items-center gap-1">
                     <span className="text-hos-text-muted">Clicks:</span>
-                    <span className={weeklyGrowth.clicks > 0 ? 'text-green-600' : 'text-red-600'}>
+                    <span className={weeklyGrowth.clicks > 0 ? 'text-green-400' : 'text-red-400'}>
                       {weeklyGrowth.clicks > 0 ? '↑' : '↓'} {Math.abs(weeklyGrowth.clicks)}%
                     </span>
                   </div>
@@ -535,7 +535,7 @@ export default function InfluencerDashboardPage() {
                 {weeklyGrowth.conversions !== 0 && (
                   <div className="flex items-center gap-1">
                     <span className="text-hos-text-muted">Conversions:</span>
-                    <span className={weeklyGrowth.conversions > 0 ? 'text-green-600' : 'text-red-600'}>
+                    <span className={weeklyGrowth.conversions > 0 ? 'text-green-400' : 'text-red-400'}>
                       {weeklyGrowth.conversions > 0 ? '↑' : '↓'} {Math.abs(weeklyGrowth.conversions)}%
                     </span>
                   </div>
@@ -619,7 +619,7 @@ export default function InfluencerDashboardPage() {
                   </p>
                   <p className="text-xs text-hos-text-muted mt-1">{achievement.description}</p>
                   {isEarned && (
-                    <div className="absolute -top-1 -right-1 w-5 h-5 bg-green-500 rounded-full flex items-center justify-center">
+                    <div className="absolute -top-1 -right-1 w-5 h-5 bg-green-500/10 rounded-full flex items-center justify-center">
                       <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
                       </svg>
@@ -638,13 +638,13 @@ export default function InfluencerDashboardPage() {
             <div className="space-y-4">
               <div className="flex items-center justify-between">
                 <span className="text-hos-text-secondary">Pending</span>
-                <span className="font-semibold text-yellow-600">
+                <span className="font-semibold text-yellow-400">
                   {formatCurrency(analytics?.pendingCommission || 0)}
                 </span>
               </div>
               <div className="flex items-center justify-between">
                 <span className="text-hos-text-secondary">Approved</span>
-                <span className="font-semibold text-green-600">
+                <span className="font-semibold text-green-400">
                   {formatCurrency(analytics?.approvedCommission || 0)}
                 </span>
               </div>

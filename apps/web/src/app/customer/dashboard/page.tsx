@@ -255,16 +255,16 @@ export default function CustomerDashboardPage() {
   const getStatusColor = (status: string) => {
     switch (status?.toUpperCase()) {
       case 'PENDING':
-        return 'bg-yellow-100 text-yellow-800';
+        return 'bg-yellow-500/15 text-yellow-300';
       case 'PROCESSING':
         return 'bg-hos-gold/20 text-hos-gold';
       case 'SHIPPED':
         return 'bg-hos-gold/20 text-hos-gold';
       case 'DELIVERED':
       case 'COMPLETED':
-        return 'bg-green-100 text-green-800';
+        return 'bg-green-500/15 text-green-300';
       case 'CANCELLED':
-        return 'bg-red-100 text-red-800';
+        return 'bg-red-500/15 text-red-300';
       default:
         return 'bg-hos-bg-tertiary text-white';
     }
@@ -319,8 +319,8 @@ export default function CustomerDashboardPage() {
           </div>
 
           {error && (
-            <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-6">
-              <p className="text-red-800 text-sm">{error}</p>
+            <div className="bg-red-500/10 border border-red-500/30 rounded-lg p-4 mb-6">
+              <p className="text-red-300 text-sm">{error}</p>
             </div>
           )}
 
@@ -359,12 +359,12 @@ export default function CustomerDashboardPage() {
                 </div>
                 <div className="bg-hos-bg-secondary rounded-xl p-4 shadow-sm border border-hos-border">
                   <div className="text-3xl mb-2">⏳</div>
-                  <p className="text-2xl font-bold text-amber-600">{stats?.pendingOrders || 0}</p>
+                  <p className="text-2xl font-bold text-amber-400">{stats?.pendingOrders || 0}</p>
                   <p className="text-xs text-hos-text-muted">In Progress</p>
                 </div>
                 <div className="bg-hos-bg-secondary rounded-xl p-4 shadow-sm border border-hos-border">
                   <div className="text-3xl mb-2">✅</div>
-                  <p className="text-2xl font-bold text-green-600">{stats?.completedOrders || 0}</p>
+                  <p className="text-2xl font-bold text-green-400">{stats?.completedOrders || 0}</p>
                   <p className="text-xs text-hos-text-muted">Completed</p>
                 </div>
                 <div className="bg-hos-bg-secondary rounded-xl p-4 shadow-sm border border-hos-border">
@@ -374,7 +374,7 @@ export default function CustomerDashboardPage() {
                 </div>
                 <div className="bg-hos-bg-secondary rounded-xl p-4 shadow-sm border border-hos-border">
                   <div className="text-3xl mb-2">❤️</div>
-                  <p className="text-2xl font-bold text-pink-600">{stats?.wishlistItems || 0}</p>
+                  <p className="text-2xl font-bold text-pink-400">{stats?.wishlistItems || 0}</p>
                   <p className="text-xs text-hos-text-muted">Wishlist</p>
                 </div>
                 <div className="bg-hos-bg-secondary rounded-xl p-4 shadow-sm border border-hos-border">
@@ -582,7 +582,7 @@ export default function CustomerDashboardPage() {
                     href="/cart"
                     className="flex items-center gap-4 bg-hos-bg-secondary rounded-xl p-4 shadow-sm border border-hos-border hover:shadow-md hover:border-hos-border-accent transition-all"
                   >
-                    <div className="w-12 h-12 rounded-lg bg-amber-100 flex items-center justify-center text-2xl">🛒</div>
+                    <div className="w-12 h-12 rounded-lg bg-amber-500/15 flex items-center justify-center text-2xl">🛒</div>
                     <div>
                       <p className="font-semibold text-white">Shopping Cart</p>
                       <p className="text-sm text-hos-text-muted">{stats?.cartItems || 0} items ready to checkout</p>
@@ -590,9 +590,9 @@ export default function CustomerDashboardPage() {
                   </Link>
                   <Link
                     href="/loyalty"
-                    className="flex items-center gap-4 bg-hos-bg-secondary rounded-xl p-4 shadow-sm border border-hos-border hover:shadow-md hover:border-amber-200 transition-all"
+                    className="flex items-center gap-4 bg-hos-bg-secondary rounded-xl p-4 shadow-sm border border-hos-border hover:shadow-md hover:border-amber-500/30 transition-all"
                   >
-                    <div className="w-12 h-12 rounded-lg bg-amber-100 flex items-center justify-center text-2xl">✨</div>
+                    <div className="w-12 h-12 rounded-lg bg-amber-500/15 flex items-center justify-center text-2xl">✨</div>
                     <div>
                       <p className="font-semibold text-white">Loyalty Rewards</p>
                       <p className="text-sm text-hos-text-muted">Earn points &amp; unlock rewards</p>
@@ -602,7 +602,7 @@ export default function CustomerDashboardPage() {
                     href="/products"
                     className="flex items-center gap-4 bg-hos-bg-secondary rounded-xl p-4 shadow-sm border border-hos-border hover:shadow-md hover:border-hos-border-accent transition-all"
                   >
-                    <div className="w-12 h-12 rounded-lg bg-green-100 flex items-center justify-center text-2xl">🔮</div>
+                    <div className="w-12 h-12 rounded-lg bg-green-500/15 flex items-center justify-center text-2xl">🔮</div>
                     <div>
                       <p className="font-semibold text-white">Browse Products</p>
                       <p className="text-sm text-hos-text-muted">Discover magical items</p>
@@ -672,12 +672,12 @@ export default function CustomerDashboardPage() {
                   <p className="text-3xl font-bold text-white">{stats?.totalOrders || 0}</p>
                   <p className="text-sm text-hos-text-muted">Total Orders</p>
                 </div>
-                <div className="bg-hos-bg-secondary rounded-xl p-6 shadow-sm border border-yellow-200 text-center">
-                  <p className="text-3xl font-bold text-yellow-600">{stats?.pendingOrders || 0}</p>
+                <div className="bg-hos-bg-secondary rounded-xl p-6 shadow-sm border border-yellow-500/30 text-center">
+                  <p className="text-3xl font-bold text-yellow-400">{stats?.pendingOrders || 0}</p>
                   <p className="text-sm text-hos-text-muted">Pending</p>
                 </div>
-                <div className="bg-hos-bg-secondary rounded-xl p-6 shadow-sm border border-green-200 text-center">
-                  <p className="text-3xl font-bold text-green-600">{stats?.completedOrders || 0}</p>
+                <div className="bg-hos-bg-secondary rounded-xl p-6 shadow-sm border border-green-500/30 text-center">
+                  <p className="text-3xl font-bold text-green-400">{stats?.completedOrders || 0}</p>
                   <p className="text-sm text-hos-text-muted">Completed</p>
                 </div>
                 <div className="bg-hos-bg-secondary rounded-xl p-6 shadow-sm border border-hos-border-accent text-center">
@@ -863,7 +863,7 @@ export default function CustomerDashboardPage() {
                     </div>
                     <div className="flex items-center justify-between p-3 bg-hos-bg-secondary rounded-lg">
                       <span className="text-hos-text-secondary">Completion Rate</span>
-                      <span className="font-semibold text-green-600">
+                      <span className="font-semibold text-green-400">
                         {stats?.totalOrders
                           ? Math.round((stats.completedOrders / stats.totalOrders) * 100)
                           : 0}%

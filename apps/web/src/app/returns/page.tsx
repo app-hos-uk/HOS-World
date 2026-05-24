@@ -207,12 +207,12 @@ export default function ReturnsPage() {
 
   const getStatusColor = (status: string) => {
     const colors: Record<string, string> = {
-      pending: 'bg-yellow-100 text-yellow-800',
-      approved: 'bg-green-100 text-green-800',
-      rejected: 'bg-red-100 text-red-800',
+      pending: 'bg-yellow-500/15 text-yellow-300',
+      approved: 'bg-green-500/15 text-green-300',
+      rejected: 'bg-red-500/15 text-red-300',
       processing: 'bg-hos-gold/20 text-hos-gold',
       completed: 'bg-hos-gold/20 text-hos-gold',
-      refunded: 'bg-green-100 text-green-800',
+      refunded: 'bg-green-500/15 text-green-300',
     };
     return colors[(status || '').toLowerCase()] || 'bg-hos-bg-tertiary text-white';
   };
@@ -294,7 +294,7 @@ export default function ReturnsPage() {
                       </p>
                       <span className={`inline-block px-2 py-1 text-xs font-medium rounded-full ${
                         (order.status || '').toLowerCase() === 'delivered'
-                          ? 'bg-green-100 text-green-800'
+                          ? 'bg-green-500/15 text-green-300'
                           : 'bg-hos-bg-tertiary text-white'
                       }`}>
                         {order.status}
@@ -384,7 +384,7 @@ export default function ReturnsPage() {
                       {returnRequest.refundAmount && (
                         <div>
                           <p className="text-sm font-medium text-hos-text-secondary">Refund Amount:</p>
-                          <p className="text-lg font-semibold text-green-600">
+                          <p className="text-lg font-semibold text-green-400">
                             {formatPrice(returnRequest.refundAmount, order?.currency || 'USD')}
                           </p>
                         </div>

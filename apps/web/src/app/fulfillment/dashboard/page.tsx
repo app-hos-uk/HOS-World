@@ -86,7 +86,7 @@ export default function FulfillmentDashboardPage() {
         )}
 
         {error && (
-          <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded mb-6">
+          <div className="bg-red-500/10 border border-red-500/30 text-red-400 px-4 py-3 rounded mb-6">
             Error: {error}
           </div>
         )}
@@ -114,13 +114,13 @@ export default function FulfillmentDashboardPage() {
                 <div className="flex items-center justify-between">
                   <div>
                     <h3 className="text-sm font-medium text-hos-text-secondary mb-1">Pending Verification</h3>
-                    <p className="text-3xl font-bold text-yellow-600">{pendingVerification.toLocaleString()}</p>
+                    <p className="text-3xl font-bold text-yellow-400">{pendingVerification.toLocaleString()}</p>
                   </div>
                   <div className="text-4xl">⏳</div>
                 </div>
                 <Link
                   href="/fulfillment/shipments?status=PENDING"
-                  className="text-sm text-yellow-600 hover:text-yellow-700 mt-2 inline-block"
+                  className="text-sm text-yellow-400 hover:text-yellow-400 mt-2 inline-block"
                 >
                   Verify now →
                 </Link>
@@ -130,13 +130,13 @@ export default function FulfillmentDashboardPage() {
                 <div className="flex items-center justify-between">
                   <div>
                     <h3 className="text-sm font-medium text-hos-text-secondary mb-1">Verified Today</h3>
-                    <p className="text-3xl font-bold text-green-600">{verifiedToday.toLocaleString()}</p>
+                    <p className="text-3xl font-bold text-green-400">{verifiedToday.toLocaleString()}</p>
                   </div>
                   <div className="text-4xl">✅</div>
                 </div>
                 <Link
                   href="/fulfillment/shipments?status=VERIFIED"
-                  className="text-sm text-green-600 hover:text-green-700 mt-2 inline-block"
+                  className="text-sm text-green-400 hover:text-green-400 mt-2 inline-block"
                 >
                   View all →
                 </Link>
@@ -146,13 +146,13 @@ export default function FulfillmentDashboardPage() {
                 <div className="flex items-center justify-between">
                   <div>
                     <h3 className="text-sm font-medium text-hos-text-secondary mb-1">Rejected</h3>
-                    <p className="text-3xl font-bold text-red-600">{rejectedCount.toLocaleString()}</p>
+                    <p className="text-3xl font-bold text-red-400">{rejectedCount.toLocaleString()}</p>
                   </div>
                   <div className="text-4xl">❌</div>
                 </div>
                 <Link
                   href="/fulfillment/shipments?status=REJECTED"
-                  className="text-sm text-red-600 hover:text-red-700 mt-2 inline-block"
+                  className="text-sm text-red-400 hover:text-red-400 mt-2 inline-block"
                 >
                   View all →
                 </Link>
@@ -195,10 +195,10 @@ export default function FulfillmentDashboardPage() {
                           <span
                             className={`px-2 py-1 text-xs font-medium rounded ${
                               shipment.status === 'VERIFIED'
-                                ? 'bg-green-100 text-green-800'
+                                ? 'bg-green-500/15 text-green-300'
                                 : shipment.status === 'REJECTED'
-                                  ? 'bg-red-100 text-red-800'
-                                  : 'bg-yellow-100 text-yellow-800'
+                                  ? 'bg-red-500/15 text-red-300'
+                                  : 'bg-yellow-500/15 text-yellow-300'
                             }`}
                           >
                             {shipment.status}

@@ -167,15 +167,15 @@ export default function MigrationFeaturesPage() {
           {result && (
             <div className="bg-hos-bg-secondary rounded-lg shadow p-6 mb-6">
               <h2 className="text-xl font-bold mb-4">Migration Result</h2>
-              <div className={`p-4 rounded mb-4 ${result.success ? 'bg-green-50 border border-green-200' : 'bg-red-50 border border-red-200'}`}>
-                <p className={`font-semibold ${result.success ? 'text-green-800' : 'text-red-800'}`}>
+              <div className={`p-4 rounded mb-4 ${result.success ? 'bg-green-500/10 border border-green-500/30' : 'bg-red-500/10 border border-red-500/30'}`}>
+                <p className={`font-semibold ${result.success ? 'text-green-300' : 'text-red-300'}`}>
                   {result.success ? '✅ Success' : '❌ Failed'}
                 </p>
-                <p className={result.success ? 'text-green-700' : 'text-red-700'}>
+                <p className={result.success ? 'text-green-400' : 'text-red-400'}>
                   {result.message}
                 </p>
                 {result.error && (
-                  <p className="text-red-600 mt-2 text-sm">{result.error}</p>
+                  <p className="text-red-400 mt-2 text-sm">{result.error}</p>
                 )}
               </div>
 
@@ -196,7 +196,7 @@ export default function MigrationFeaturesPage() {
                   <div className="grid grid-cols-2 gap-2">
                     {Object.entries(result.verification).map(([key, value]) => (
                       <div key={key} className="flex items-center gap-2">
-                        <span className={value ? 'text-green-600' : 'text-red-600'}>
+                        <span className={value ? 'text-green-400' : 'text-red-400'}>
                           {value ? '✅' : '❌'}
                         </span>
                         <span className="text-sm text-hos-text-secondary">{key}</span>
@@ -215,16 +215,16 @@ export default function MigrationFeaturesPage() {
                         key={index}
                         className={`p-2 mb-2 rounded text-sm ${
                           detail.status === 'success'
-                            ? 'bg-green-50 border border-green-200'
-                            : 'bg-red-50 border border-red-200'
+                            ? 'bg-green-500/10 border border-green-500/30'
+                            : 'bg-red-500/10 border border-red-500/30'
                         }`}
                       >
                         <p className="font-mono text-xs mb-1">{detail.statement}</p>
-                        <p className={detail.status === 'success' ? 'text-green-700' : 'text-red-700'}>
+                        <p className={detail.status === 'success' ? 'text-green-400' : 'text-red-400'}>
                           Status: {detail.status}
                         </p>
                         {detail.error && (
-                          <p className="text-red-600 text-xs mt-1">{detail.error}</p>
+                          <p className="text-red-400 text-xs mt-1">{detail.error}</p>
                         )}
                       </div>
                     ))}
@@ -242,13 +242,13 @@ export default function MigrationFeaturesPage() {
                   <div key={key} className="flex items-center gap-2">
                     {typeof value === 'boolean' ? (
                       <>
-                        <span className={value ? 'text-green-600' : 'text-red-600'}>
+                        <span className={value ? 'text-green-400' : 'text-red-400'}>
                           {value ? '✅' : '❌'}
                         </span>
                         <span className="text-sm text-hos-text-secondary">{key}</span>
                       </>
                     ) : (
-                      <span className="text-red-600 text-sm">{key}: {String(value)}</span>
+                      <span className="text-red-400 text-sm">{key}: {String(value)}</span>
                     )}
                   </div>
                 ))}

@@ -83,7 +83,7 @@ export default function AdminClickCollectListPage() {
                 return (
                   <li key={id} className="border rounded-lg p-3 bg-hos-bg-secondary flex justify-between gap-2">
                     <div>
-                      <Link href={`/admin/click-collect/${id}`} className="text-violet-700 font-medium">
+                      <Link href={`/admin/click-collect/${id}`} className="text-violet-400 font-medium">
                         {ord?.orderNumber ?? id.slice(0, 8)}
                       </Link>
                       <p className="text-hos-text-muted text-xs">

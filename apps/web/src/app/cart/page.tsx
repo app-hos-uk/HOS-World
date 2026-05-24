@@ -350,10 +350,10 @@ export default function CartPage() {
                       {/* Stock Availability */}
                       {stockWarning && (
                         <p className={`text-xs mb-2 ${
-                          stockWarning.type === 'error' ? 'text-red-600 font-medium' :
-                          stockWarning.type === 'warning' ? 'text-orange-600' :
-                          stockWarning.type === 'success' ? 'text-green-600' :
-                          'text-yellow-600'
+                          stockWarning.type === 'error' ? 'text-red-400 font-medium' :
+                          stockWarning.type === 'warning' ? 'text-orange-400' :
+                          stockWarning.type === 'success' ? 'text-green-400' :
+                          'text-yellow-400'
                         }`}>
                           {stockWarning.type === 'success' ? '✓' : '⚠️'} {stockWarning.text}
                         </p>
@@ -406,7 +406,7 @@ export default function CartPage() {
                           <button
                             onClick={() => handleRemoveItem(item.id)}
                             disabled={removingItemId === item.id}
-                            className="text-red-600 hover:text-red-700 text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                            className="text-red-400 hover:text-red-400 text-sm disabled:opacity-50 disabled:cursor-not-allowed"
                           >
                             Remove
                           </button>
@@ -439,7 +439,7 @@ export default function CartPage() {
                 />
                 {cart.couponCode ? (
                   <div className="flex items-center gap-2">
-                    <span className="text-green-600 font-medium">Applied: {cart.couponCode}</span>
+                    <span className="text-green-400 font-medium">Applied: {cart.couponCode}</span>
                     <button
                       onClick={handleRemoveCoupon}
                       disabled={removingCoupon}
@@ -481,7 +481,7 @@ export default function CartPage() {
                 </div>
                 
                 {discount > 0 && (
-                  <div className="flex justify-between text-green-600">
+                  <div className="flex justify-between text-green-400">
                     <span>Discount {cart.couponCode ? `(${cart.couponCode})` : ''}</span>
                     <span className="font-semibold">-{formatPrice(discount)}</span>
                   </div>
@@ -502,8 +502,8 @@ export default function CartPage() {
               </div>
 
               {discount > 0 && (
-                <div className="bg-green-50 border border-green-200 rounded-lg p-3 mb-4">
-                  <p className="text-sm text-green-800">
+                <div className="bg-green-500/10 border border-green-500/30 rounded-lg p-3 mb-4">
+                  <p className="text-sm text-green-300">
                     <span className="font-semibold">You saved {formatPrice(discount)}</span>
                     {cart.couponCode && ` with coupon ${cart.couponCode}`}!
                   </p>
@@ -518,8 +518,8 @@ export default function CartPage() {
               </div>
 
               {cartStats.lowStockItems > 0 && (
-                <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3 mb-4">
-                  <p className="text-sm text-yellow-800">
+                <div className="bg-yellow-500/10 border border-yellow-500/30 rounded-lg p-3 mb-4">
+                  <p className="text-sm text-yellow-300">
                     ⚠️ {cartStats.lowStockItems} item{cartStats.lowStockItems !== 1 ? 's' : ''} in your cart {cartStats.lowStockItems !== 1 ? 'have' : 'has'} limited stock
                   </p>
                 </div>

@@ -166,13 +166,13 @@ export default function SellerProductsPage() {
   }, [productRows, searchTerm, statusFilter, sortBy]);
 
   const getStatusColor = (status: string, stock: number) => {
-    if (stock <= 0) return 'bg-red-100 text-red-800';
+    if (stock <= 0) return 'bg-red-500/15 text-red-300';
     switch (status) {
-      case 'ACTIVE': return 'bg-green-100 text-green-800';
+      case 'ACTIVE': return 'bg-green-500/15 text-green-300';
       case 'INACTIVE': return 'bg-hos-bg-tertiary text-white';
       case 'PENDING':
       case 'PENDING_REVIEW':
-      case 'DRAFT': return 'bg-yellow-100 text-yellow-800';
+      case 'DRAFT': return 'bg-yellow-500/15 text-yellow-300';
       default: return 'bg-hos-bg-tertiary text-white';
     }
   };
@@ -222,7 +222,7 @@ export default function SellerProductsPage() {
               className={`bg-hos-bg-secondary rounded-lg shadow p-4 text-left ${statusFilter === 'ACTIVE' ? 'ring-2 ring-hos-gold/50' : ''}`}
             >
               <h3 className="text-xs font-medium text-hos-text-muted uppercase">Active</h3>
-              <p className="text-2xl font-bold text-green-600 mt-1">{stats.active}</p>
+              <p className="text-2xl font-bold text-green-400 mt-1">{stats.active}</p>
             </button>
             <button
               onClick={() => setStatusFilter('INACTIVE')}
@@ -236,25 +236,25 @@ export default function SellerProductsPage() {
               className={`bg-hos-bg-secondary rounded-lg shadow p-4 text-left ${statusFilter === 'PENDING' ? 'ring-2 ring-hos-gold/50' : ''}`}
             >
               <h3 className="text-xs font-medium text-hos-text-muted uppercase">Pending</h3>
-              <p className="text-2xl font-bold text-yellow-600 mt-1">{stats.pending}</p>
+              <p className="text-2xl font-bold text-yellow-400 mt-1">{stats.pending}</p>
             </button>
             <button
               onClick={() => setStatusFilter('OUT_OF_STOCK')}
               className={`bg-hos-bg-secondary rounded-lg shadow p-4 text-left ${statusFilter === 'OUT_OF_STOCK' ? 'ring-2 ring-hos-gold/50' : ''}`}
             >
               <h3 className="text-xs font-medium text-hos-text-muted uppercase">Out of Stock</h3>
-              <p className="text-2xl font-bold text-red-600 mt-1">{stats.outOfStock}</p>
+              <p className="text-2xl font-bold text-red-400 mt-1">{stats.outOfStock}</p>
             </button>
             <button
               onClick={() => setStatusFilter('LOW_STOCK')}
               className={`bg-hos-bg-secondary rounded-lg shadow p-4 text-left ${statusFilter === 'LOW_STOCK' ? 'ring-2 ring-hos-gold/50' : ''}`}
             >
               <h3 className="text-xs font-medium text-hos-text-muted uppercase">Low Stock</h3>
-              <p className="text-2xl font-bold text-orange-600 mt-1">{stats.lowStock}</p>
+              <p className="text-2xl font-bold text-orange-400 mt-1">{stats.lowStock}</p>
             </button>
             <div className="bg-hos-bg-secondary rounded-lg shadow p-4">
               <h3 className="text-xs font-medium text-hos-text-muted uppercase">Inventory Value</h3>
-              <p className="text-xl font-bold text-green-600 mt-1">${stats.totalValue.toFixed(2)}</p>
+              <p className="text-xl font-bold text-green-400 mt-1">${stats.totalValue.toFixed(2)}</p>
             </div>
           </div>
 
@@ -288,7 +288,7 @@ export default function SellerProductsPage() {
 
           {/* Error State */}
           {error && (
-            <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded">
+            <div className="bg-red-500/10 border border-red-500/30 text-red-400 px-4 py-3 rounded">
               Error: {error}
               <button
                 onClick={fetchProducts}
@@ -358,7 +358,7 @@ export default function SellerProductsPage() {
                             </div>
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap">
-                            <span className={`px-2 py-1 text-xs font-medium rounded-full ${product._isSubmission ? 'bg-amber-100 text-amber-800' : getStatusColor(product.status, product.stock || 0)}`}>
+                            <span className={`px-2 py-1 text-xs font-medium rounded-full ${product._isSubmission ? 'bg-amber-500/15 text-amber-300' : getStatusColor(product.status, product.stock || 0)}`}>
                               {product._isSubmission ? 'Pending review' : getDisplayStatus(product.status, product.stock || 0)}
                             </span>
                           </td>
@@ -367,14 +367,14 @@ export default function SellerProductsPage() {
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap">
                             <span className={`text-sm font-medium ${
-                              (product.stock || 0) <= 0 ? 'text-red-600' :
-                              product.stock <= 5 ? 'text-orange-600' :
+                              (product.stock || 0) <= 0 ? 'text-red-400' :
+                              product.stock <= 5 ? 'text-orange-400' :
                               'text-white'
                             }`}>
                               {product.stock || 0}
                             </span>
                             {(product.stock || 0) <= 5 && product.stock > 0 && (
-                              <span className="ml-2 text-xs text-orange-600">(Low)</span>
+                              <span className="ml-2 text-xs text-orange-400">(Low)</span>
                             )}
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap text-sm text-hos-text-muted">

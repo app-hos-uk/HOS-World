@@ -412,7 +412,7 @@ export default function InfluencerCommissionSettingsPage() {
                             <button
                               type="button"
                               onClick={() => removeRule(r.id)}
-                              className="text-red-600 hover:underline"
+                              className="text-red-400 hover:underline"
                             >
                               Delete
                             </button>

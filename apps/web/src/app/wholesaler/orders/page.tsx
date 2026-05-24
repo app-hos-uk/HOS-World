@@ -69,7 +69,7 @@ export default function WholesalerOrdersPage() {
         )}
 
         {error && (
-          <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded mb-6">
+          <div className="bg-red-500/10 border border-red-500/30 text-red-400 px-4 py-3 rounded mb-6">
             Error: {error}
             <button
               onClick={fetchOrders}
@@ -131,11 +131,11 @@ export default function WholesalerOrdersPage() {
                             className={`px-2 py-1 text-xs font-medium rounded-full ${
                               (() => {
                                 const s = (order.status || '').toLowerCase();
-                                if (s === 'pending') return 'bg-yellow-100 text-yellow-800';
+                                if (s === 'pending') return 'bg-yellow-500/15 text-yellow-300';
                                 if (['confirmed', 'processing', 'accepted'].includes(s)) return 'bg-hos-gold/20 text-hos-gold';
                                 if (['fulfilled', 'shipped'].includes(s)) return 'bg-hos-gold/20 text-hos-gold';
-                                if (s === 'delivered') return 'bg-green-100 text-green-800';
-                                if (['cancelled', 'refunded'].includes(s)) return 'bg-red-100 text-red-800';
+                                if (s === 'delivered') return 'bg-green-500/15 text-green-300';
+                                if (['cancelled', 'refunded'].includes(s)) return 'bg-red-500/15 text-red-300';
                                 return 'bg-hos-bg-tertiary text-white';
                               })()
                             }`}

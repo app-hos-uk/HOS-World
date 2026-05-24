@@ -135,11 +135,11 @@ export default function FandomDetailPage({ params }: FandomDetailPageProps) {
       <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 lg:py-12">
         {/* Breadcrumb */}
         <nav className="mb-4 sm:mb-6 text-xs sm:text-sm">
-          <Link href="/" className="text-hos-gold-hover hover:text-amber-600 font-secondary">
+          <Link href="/" className="text-hos-gold-hover hover:text-amber-400 font-secondary">
             Home
           </Link>
           <span className="mx-1 sm:mx-2 text-hos-text-muted">/</span>
-          <Link href="/fandoms" className="text-hos-gold-hover hover:text-amber-600 font-secondary">
+          <Link href="/fandoms" className="text-hos-gold-hover hover:text-amber-400 font-secondary">
             Fandoms
           </Link>
           <span className="mx-1 sm:mx-2 text-hos-text-muted">/</span>
@@ -192,7 +192,7 @@ export default function FandomDetailPage({ params }: FandomDetailPageProps) {
         <div className="mt-6 sm:mt-8">
           <Link
             href="/fandoms"
-            className="inline-flex items-center text-sm sm:text-base text-hos-gold-hover hover:text-amber-600 font-medium font-secondary transition-colors"
+            className="inline-flex items-center text-sm sm:text-base text-hos-gold-hover hover:text-amber-400 font-medium font-secondary transition-colors"
           >
             ← Back to All Fandoms
           </Link>

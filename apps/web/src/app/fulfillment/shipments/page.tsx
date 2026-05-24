@@ -83,11 +83,11 @@ export default function FulfillmentShipmentsPage() {
   const getStatusBadgeColor = (status: string) => {
     switch (status) {
       case 'PENDING':
-        return 'bg-yellow-100 text-yellow-800';
+        return 'bg-yellow-500/15 text-yellow-300';
       case 'VERIFIED':
-        return 'bg-green-100 text-green-800';
+        return 'bg-green-500/15 text-green-300';
       case 'REJECTED':
-        return 'bg-red-100 text-red-800';
+        return 'bg-red-500/15 text-red-300';
       case 'IN_TRANSIT':
         return 'bg-hos-gold/20 text-hos-gold';
       default:
@@ -109,7 +109,7 @@ export default function FulfillmentShipmentsPage() {
         </div>
 
           {error && (
-            <div className="mb-6 p-4 bg-red-100 border border-red-400 text-red-700 rounded-lg">
+            <div className="mb-6 p-4 bg-red-500/15 border border-red-400 text-red-400 rounded-lg">
               <p className="font-semibold">Error</p>
               <p className="text-sm mt-1">{error}</p>
             </div>

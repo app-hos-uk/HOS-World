@@ -150,7 +150,7 @@ export default function KBArticlePage() {
                       disabled={markedHelpful || helpfulSubmitting}
                       className={`inline-flex items-center gap-2 px-5 py-2.5 rounded-lg font-medium transition-colors ${
                         markedHelpful
-                          ? 'bg-green-100 text-green-700 cursor-default'
+                          ? 'bg-green-500/15 text-green-400 cursor-default'
                           : 'bg-hos-gold text-[#1a1406] hover:bg-hos-gold-hover disabled:opacity-50'
                       }`}
                     >

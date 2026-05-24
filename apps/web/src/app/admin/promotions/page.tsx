@@ -426,7 +426,7 @@ export default function AdminPromotionsPage() {
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <span className={`px-2 py-1 text-xs font-semibold rounded-full ${
-                          promo.status === 'ACTIVE' ? 'bg-green-100 text-green-800' : 'bg-hos-bg-tertiary text-white'
+                          promo.status === 'ACTIVE' ? 'bg-green-500/15 text-green-300' : 'bg-hos-bg-tertiary text-white'
                         }`}>
                           {promo.status}
                         </span>
@@ -438,7 +438,7 @@ export default function AdminPromotionsPage() {
                       <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                         <button
                           onClick={() => handleDeletePromotion(promo.id)}
-                          className="text-red-600 hover:text-red-900 transition-colors"
+                          className="text-red-400 hover:text-red-300 transition-colors"
                         >
                           Delete
                         </button>

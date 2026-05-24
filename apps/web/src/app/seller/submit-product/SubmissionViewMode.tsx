@@ -16,14 +16,14 @@ function getStatusBadgeClass(status: string): string {
     case 'CATALOG_COMPLETED':
     case 'MARKETING_COMPLETED':
     case 'CONTENT_COMPLETED':
-      return 'bg-green-100 text-green-800';
+      return 'bg-green-500/15 text-green-300';
     case 'PROCUREMENT_REJECTED':
-      return 'bg-red-100 text-red-800';
+      return 'bg-red-500/15 text-red-300';
     case 'UNDER_REVIEW':
       return 'bg-hos-gold/20 text-hos-gold';
     case 'SUBMITTED':
     default:
-      return 'bg-yellow-100 text-yellow-800';
+      return 'bg-yellow-500/15 text-yellow-300';
   }
 }
 
@@ -105,7 +105,7 @@ export function SubmissionViewMode({ submissionId }: { submissionId: string }) {
           )}
 
           {error && (
-            <div className="mb-6 p-4 bg-red-100 border border-red-400 text-red-700 rounded-lg">
+            <div className="mb-6 p-4 bg-red-500/15 border border-red-400 text-red-400 rounded-lg">
               <p className="font-semibold">Error</p>
               <p className="text-sm mt-1">{error}</p>
             </div>
@@ -146,9 +146,9 @@ export function SubmissionViewMode({ submissionId }: { submissionId: string }) {
                     </div>
                   )}
                   {submission.rejectionReason && (
-                    <div className="p-3 bg-red-50 rounded-lg">
-                      <p className="text-sm font-medium text-red-700 mb-1">Rejection Reason:</p>
-                      <p className="text-sm text-red-700">{submission.rejectionReason}</p>
+                    <div className="p-3 bg-red-500/10 rounded-lg">
+                      <p className="text-sm font-medium text-red-400 mb-1">Rejection Reason:</p>
+                      <p className="text-sm text-red-400">{submission.rejectionReason}</p>
                     </div>
                   )}
                 </div>

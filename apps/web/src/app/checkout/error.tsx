@@ -17,9 +17,9 @@ export default function CheckoutError({
   return (
     <div className="min-h-[60vh] flex items-center justify-center px-4">
       <div className="max-w-md w-full text-center space-y-6">
-        <div className="mx-auto w-14 h-14 rounded-full bg-red-100 flex items-center justify-center">
+        <div className="mx-auto w-14 h-14 rounded-full bg-red-500/15 flex items-center justify-center">
           <svg
-            className="w-7 h-7 text-red-600"
+            className="w-7 h-7 text-red-400"
             fill="none"
             viewBox="0 0 24 24"
             stroke="currentColor"

@@ -87,9 +87,9 @@ export default function AdminLoyaltyCampaignsPage() {
   const getStatus = (c: any) => {
     const now = new Date();
     if (!c.isActive) return { label: 'Inactive', cls: 'bg-hos-bg-tertiary text-hos-text-secondary' };
-    if (c.endsAt && new Date(c.endsAt) < now) return { label: 'Ended', cls: 'bg-red-100 text-red-700' };
+    if (c.endsAt && new Date(c.endsAt) < now) return { label: 'Ended', cls: 'bg-red-500/15 text-red-400' };
     if (c.startsAt && new Date(c.startsAt) > now) return { label: 'Scheduled', cls: 'bg-hos-gold/20 text-hos-gold' };
-    return { label: 'Active', cls: 'bg-green-100 text-green-700' };
+    return { label: 'Active', cls: 'bg-green-500/15 text-green-400' };
   };
 
   return (
@@ -168,7 +168,7 @@ export default function AdminLoyaltyCampaignsPage() {
                     </div>
                     <div className="flex gap-2 shrink-0">
                       <button onClick={() => startEdit(c)} className="text-sm text-hos-gold hover:text-hos-gold-hover font-medium">Edit</button>
-                      <button onClick={() => handleDelete(c.id)} className="text-sm text-red-600 hover:text-red-800 font-medium">Delete</button>
+                      <button onClick={() => handleDelete(c.id)} className="text-sm text-red-400 hover:text-red-300 font-medium">Delete</button>
                     </div>
                   </div>
                 </div>

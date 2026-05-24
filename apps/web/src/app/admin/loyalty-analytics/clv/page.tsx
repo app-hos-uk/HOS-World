@@ -41,12 +41,12 @@ export default function ClvReportPage() {
     <RouteGuard allowedRoles={['ADMIN']}>
       <AdminLayout>
         <div className="p-6 max-w-5xl mx-auto space-y-6">
-          <Link href="/admin/loyalty-analytics" className="text-sm text-violet-700">← Health</Link>
+          <Link href="/admin/loyalty-analytics" className="text-sm text-violet-400">← Health</Link>
           <h1 className="text-2xl font-semibold text-white">CLV report</h1>
           {loading ? <p className="text-hos-text-muted">Loading…</p> : (
             <>
               {errors.length > 0 && (
-                <div className="rounded border border-red-200 bg-red-50 p-3 text-sm text-red-700 space-y-1">
+                <div className="rounded border border-red-500/30 bg-red-500/10 p-3 text-sm text-red-400 space-y-1">
                   {errors.map((e, i) => <p key={i}>{e}</p>)}
                 </div>
               )}
@@ -89,9 +89,9 @@ export default function ClvReportPage() {
                 <div>
                   <h2 className="text-lg font-medium mb-2">Churn risk</h2>
                   <div className="grid grid-cols-3 gap-3 text-sm mb-3">
-                    <div className="border rounded p-3 bg-hos-bg-secondary"><p className="text-hos-text-muted">Healthy</p><p className="text-xl font-semibold text-emerald-600">{churn.healthy}</p></div>
-                    <div className="border rounded p-3 bg-hos-bg-secondary"><p className="text-hos-text-muted">At risk</p><p className="text-xl font-semibold text-amber-600">{churn.atRisk}</p></div>
-                    <div className="border rounded p-3 bg-hos-bg-secondary"><p className="text-hos-text-muted">Churned</p><p className="text-xl font-semibold text-red-600">{churn.churned}</p></div>
+                    <div className="border rounded p-3 bg-hos-bg-secondary"><p className="text-hos-text-muted">Healthy</p><p className="text-xl font-semibold text-emerald-400">{churn.healthy}</p></div>
+                    <div className="border rounded p-3 bg-hos-bg-secondary"><p className="text-hos-text-muted">At risk</p><p className="text-xl font-semibold text-amber-400">{churn.atRisk}</p></div>
+                    <div className="border rounded p-3 bg-hos-bg-secondary"><p className="text-hos-text-muted">Churned</p><p className="text-xl font-semibold text-red-400">{churn.churned}</p></div>
                   </div>
                 </div>
               )}

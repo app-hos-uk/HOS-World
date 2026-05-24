@@ -41,16 +41,16 @@ interface Stats {
 }
 
 const ACTION_COLORS: Record<string, string> = {
-  CREATE: 'bg-green-100 text-green-800',
+  CREATE: 'bg-green-500/15 text-green-300',
   UPDATE: 'bg-hos-gold/20 text-hos-gold',
-  DELETE: 'bg-red-100 text-red-800',
+  DELETE: 'bg-red-500/15 text-red-300',
   LOGIN: 'bg-hos-gold/20 text-hos-gold',
   LOGOUT: 'bg-hos-bg-tertiary text-white',
-  VIEW: 'bg-cyan-100 text-cyan-800',
-  EXPORT: 'bg-yellow-100 text-yellow-800',
+  VIEW: 'bg-cyan-500/15 text-cyan-300',
+  EXPORT: 'bg-yellow-500/15 text-yellow-300',
   IMPORT: 'bg-hos-gold/20 text-hos-gold',
-  APPROVE: 'bg-emerald-100 text-emerald-800',
-  REJECT: 'bg-orange-100 text-orange-800',
+  APPROVE: 'bg-emerald-500/15 text-emerald-300',
+  REJECT: 'bg-orange-500/15 text-orange-300',
 };
 
 const ENTITY_ICONS: Record<string, string> = {
@@ -300,7 +300,7 @@ export default function AdminActivityPage() {
               </div>
               <div className="bg-hos-bg-secondary rounded-lg shadow p-4">
                 <p className="text-sm text-hos-text-muted">Unique Actions</p>
-                <p className="text-2xl font-bold text-green-600">{Object.keys(stats.byAction).length}</p>
+                <p className="text-2xl font-bold text-green-400">{Object.keys(stats.byAction).length}</p>
               </div>
             </div>
           )}
@@ -334,9 +334,9 @@ export default function AdminActivityPage() {
           )}
 
           {error && (
-            <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-              <p className="text-red-800">Error: {error}</p>
-              <button onClick={fetchLogs} className="mt-2 text-red-600 hover:text-red-800 text-sm">Retry</button>
+            <div className="bg-red-500/10 border border-red-500/30 rounded-lg p-4">
+              <p className="text-red-300">Error: {error}</p>
+              <button onClick={fetchLogs} className="mt-2 text-red-400 hover:text-red-300 text-sm">Retry</button>
             </div>
           )}
 

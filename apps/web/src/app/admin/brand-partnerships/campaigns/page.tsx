@@ -33,7 +33,7 @@ export default function AdminBrandCampaignsListPage() {
     <RouteGuard allowedRoles={['ADMIN']}>
       <AdminLayout>
         <div className="p-6 max-w-6xl mx-auto">
-          <Link href="/admin/brand-partnerships" className="text-sm text-violet-700 mb-4 inline-block">
+          <Link href="/admin/brand-partnerships" className="text-sm text-violet-400 mb-4 inline-block">
             ← Partners
           </Link>
           <h1 className="text-2xl font-semibold text-white mb-4">Brand campaigns</h1>
@@ -69,7 +69,7 @@ export default function AdminBrandCampaignsListPage() {
                 return (
                   <li key={id} className="border rounded-lg p-3 bg-hos-bg-secondary flex justify-between gap-2">
                     <div>
-                      <Link href={`/admin/brand-partnerships/campaigns/${id}`} className="text-violet-700 font-medium">
+                      <Link href={`/admin/brand-partnerships/campaigns/${id}`} className="text-violet-400 font-medium">
                         {String(r.name)}
                       </Link>
                       <p className="text-hos-text-muted text-xs">

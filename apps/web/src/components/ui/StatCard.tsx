@@ -59,7 +59,7 @@ export function StatCard({
       
       {trend && (
         <p className={`text-xs mt-1.5 flex items-center gap-1 ${
-          trend.isPositive !== false ? 'text-green-600' : 'text-red-600'
+          trend.isPositive !== false ? 'text-green-400' : 'text-red-400'
         }`}>
           <span>{trend.isPositive !== false ? '↑' : '↓'}</span>
           <span>{trend.value > 0 ? '+' : ''}{trend.value}%</span>

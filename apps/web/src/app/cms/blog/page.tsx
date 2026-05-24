@@ -410,11 +410,11 @@ export default function CMSBlogPage() {
                             )}
                           </div>
                           {post.publishedAt ? (
-                            <span className="inline-block mt-2 text-xs bg-green-100 text-green-800 px-2 py-1 rounded">
+                            <span className="inline-block mt-2 text-xs bg-green-500/15 text-green-300 px-2 py-1 rounded">
                               Published
                             </span>
                           ) : (
-                            <span className="inline-block mt-2 text-xs bg-yellow-100 text-yellow-800 px-2 py-1 rounded">
+                            <span className="inline-block mt-2 text-xs bg-yellow-500/15 text-yellow-300 px-2 py-1 rounded">
                               Draft
                             </span>
                           )}
@@ -424,7 +424,7 @@ export default function CMSBlogPage() {
                             onClick={() => handleTogglePublish(post)}
                             className={`px-3 py-1 text-sm rounded ${
                               post.publishedAt
-                                ? 'bg-yellow-500 text-white hover:bg-yellow-600'
+                                ? 'bg-yellow-500/10 text-white hover:bg-yellow-600'
                                 : 'bg-green-600 text-white hover:bg-green-700'
                             }`}
                           >

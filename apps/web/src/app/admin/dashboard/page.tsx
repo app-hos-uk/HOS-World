@@ -50,12 +50,12 @@ interface AdminDashboardData {
 const COLORS = ['#a855f7', '#06b6d4', '#10b981', '#f59e0b', '#ef4444', '#ec4899'];
 
 const quickActions = [
-  { title: 'Create Product', href: '/admin/products/create', icon: '➕', bgColor: 'bg-hos-gold/10', iconColor: 'text-hos-gold' },
-  { title: 'View Orders', href: '/admin/orders', icon: '🛒', bgColor: 'bg-hos-gold/10', iconColor: 'text-hos-gold' },
-  { title: 'Submissions', href: '/admin/submissions', icon: '📋', bgColor: 'bg-amber-50', iconColor: 'text-amber-600' },
-  { title: 'Invite Seller', href: '/admin/sellers', icon: '👤', bgColor: 'bg-emerald-50', iconColor: 'text-emerald-600' },
-  { title: 'View Reports', href: '/admin/reports/sales', icon: '📊', bgColor: 'bg-hos-gold/10', iconColor: 'text-hos-gold' },
-  { title: 'Settings', href: '/admin/settings', icon: '⚙️', bgColor: 'bg-hos-bg-secondary', iconColor: 'text-hos-text-secondary' },
+  { title: 'Create Product', href: '/admin/products/create', icon: '➕', bgColor: 'bg-hos-gold/10 hover:bg-hos-gold/15', iconColor: 'text-hos-gold' },
+  { title: 'View Orders', href: '/admin/orders', icon: '🛒', bgColor: 'bg-hos-gold/10 hover:bg-hos-gold/15', iconColor: 'text-hos-gold' },
+  { title: 'Submissions', href: '/admin/submissions', icon: '📋', bgColor: 'bg-amber-500/10 hover:bg-amber-500/15', iconColor: 'text-amber-400' },
+  { title: 'Invite Seller', href: '/admin/sellers', icon: '👤', bgColor: 'bg-emerald-500/10 hover:bg-emerald-500/15', iconColor: 'text-emerald-400' },
+  { title: 'View Reports', href: '/admin/reports/sales', icon: '📊', bgColor: 'bg-hos-gold/10 hover:bg-hos-gold/15', iconColor: 'text-hos-gold' },
+  { title: 'Settings', href: '/admin/settings', icon: '⚙️', bgColor: 'bg-hos-bg-secondary hover:bg-hos-bg-tertiary', iconColor: 'text-hos-text-secondary' },
 ];
 
 export default function AdminDashboardPage() {
@@ -161,7 +161,7 @@ export default function AdminDashboardPage() {
         )}
 
         {error && (
-          <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-xl mb-6">
+          <div className="bg-red-500/10 border border-red-500/30 text-red-300 px-4 py-3 rounded-xl mb-6">
             <p className="font-medium">Error loading dashboard</p>
             <p className="text-sm mt-1">{error}</p>
           </div>
@@ -191,7 +191,7 @@ export default function AdminDashboardPage() {
                 label="Total Revenue"
                 value={`$${(stats.totalRevenue || 0).toLocaleString()}`}
                 icon={<span className="text-lg">💰</span>}
-                iconBgColor="bg-green-50"
+                iconBgColor="bg-green-500/10"
                 trend={{ value: 12, label: 'vs last month', isPositive: true }}
               />
               <StatCard
@@ -210,7 +210,7 @@ export default function AdminDashboardPage() {
                 label="Total Sellers"
                 value={stats.totalSellers}
                 icon={<span className="text-lg">🏪</span>}
-                iconBgColor="bg-amber-50"
+                iconBgColor="bg-amber-500/10"
               />
               <StatCard
                 label="Total Users"
@@ -222,8 +222,8 @@ export default function AdminDashboardPage() {
                 label="Pending Approvals"
                 value={pendingApprovals}
                 icon={<span className="text-lg">⏳</span>}
-                iconBgColor="bg-orange-50"
-                valueColor={pendingApprovals > 0 ? 'text-orange-600' : 'text-white'}
+                iconBgColor="bg-orange-500/10"
+                valueColor={pendingApprovals > 0 ? 'text-orange-400' : 'text-white'}
                 onClick={pendingApprovals > 0 ? () => window.location.href = '/admin/submissions' : undefined}
               />
             </div>

@@ -83,15 +83,15 @@ const ORDER_STATUSES = [
 ] as const;
 
 const STATUS_COLORS: Record<string, string> = {
-  pending: 'bg-yellow-100 text-yellow-800',
-  accepted: 'bg-cyan-100 text-cyan-800',
-  rejected: 'bg-orange-100 text-orange-800',
+  pending: 'bg-yellow-500/15 text-yellow-300',
+  accepted: 'bg-cyan-500/15 text-cyan-300',
+  rejected: 'bg-orange-500/15 text-orange-300',
   confirmed: 'bg-hos-gold/20 text-hos-gold',
   processing: 'bg-hos-gold/20 text-hos-gold',
-  fulfilled: 'bg-violet-100 text-violet-800',
+  fulfilled: 'bg-violet-500/15 text-violet-300',
   shipped: 'bg-hos-gold/20 text-hos-gold',
-  delivered: 'bg-green-100 text-green-800',
-  cancelled: 'bg-red-100 text-red-800',
+  delivered: 'bg-green-500/15 text-green-300',
+  cancelled: 'bg-red-500/15 text-red-300',
   refunded: 'bg-hos-bg-tertiary text-white',
 };
 
@@ -305,7 +305,7 @@ export default function AdminOrdersPage() {
             </div>
             <div className="bg-hos-bg-secondary rounded-lg shadow p-4">
               <h3 className="text-xs font-medium text-hos-text-muted uppercase">Revenue</h3>
-              <p className="text-2xl font-bold text-green-600 mt-1">${stats.totalRevenue.toFixed(2)}</p>
+              <p className="text-2xl font-bold text-green-400 mt-1">${stats.totalRevenue.toFixed(2)}</p>
             </div>
             <button
               type="button"
@@ -313,7 +313,7 @@ export default function AdminOrdersPage() {
               className={`bg-hos-bg-secondary rounded-lg shadow p-4 text-left ${statusFilter === 'pending' ? 'ring-2 ring-hos-gold/50' : ''}`}
             >
               <h3 className="text-xs font-medium text-hos-text-muted uppercase">Pending</h3>
-              <p className="text-2xl font-bold text-yellow-600 mt-1">{stats.pending}</p>
+              <p className="text-2xl font-bold text-yellow-400 mt-1">{stats.pending}</p>
             </button>
             <button
               type="button"
@@ -321,7 +321,7 @@ export default function AdminOrdersPage() {
               className={`bg-hos-bg-secondary rounded-lg shadow p-4 text-left ${statusFilter === 'confirmed' ? 'ring-2 ring-hos-gold/50' : ''}`}
             >
               <h3 className="text-xs font-medium text-hos-text-muted uppercase">Confirmed</h3>
-              <p className="text-2xl font-bold text-sky-600 mt-1">{stats.confirmed}</p>
+              <p className="text-2xl font-bold text-sky-400 mt-1">{stats.confirmed}</p>
             </button>
             <button
               type="button"
@@ -346,7 +346,7 @@ export default function AdminOrdersPage() {
               className={`bg-hos-bg-secondary rounded-lg shadow p-4 text-left ${statusFilter === 'COMPLETED' ? 'ring-2 ring-hos-gold/50' : ''}`}
             >
               <h3 className="text-xs font-medium text-hos-text-muted uppercase">Completed</h3>
-              <p className="text-2xl font-bold text-green-600 mt-1">{stats.completed}</p>
+              <p className="text-2xl font-bold text-green-400 mt-1">{stats.completed}</p>
             </button>
             <button
               type="button"
@@ -354,7 +354,7 @@ export default function AdminOrdersPage() {
               className={`bg-hos-bg-secondary rounded-lg shadow p-4 text-left ${statusFilter === 'CANCELLED' ? 'ring-2 ring-hos-gold/50' : ''}`}
             >
               <h3 className="text-xs font-medium text-hos-text-muted uppercase">Cancelled</h3>
-              <p className="text-2xl font-bold text-red-600 mt-1">{stats.cancelled}</p>
+              <p className="text-2xl font-bold text-red-400 mt-1">{stats.cancelled}</p>
             </button>
           </div>
 
@@ -434,8 +434,8 @@ export default function AdminOrdersPage() {
           )}
 
           {error && (
-            <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-              <p className="text-red-800">Error: {error}</p>
+            <div className="bg-red-500/10 border border-red-500/30 rounded-lg p-4">
+              <p className="text-red-300">Error: {error}</p>
               <button
                 onClick={fetchOrders}
                 className="mt-2 px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700"
@@ -752,7 +752,7 @@ export default function AdminOrdersPage() {
                         </div>
                       )}
                       {selectedOrder.discount !== undefined && selectedOrder.discount > 0 && (
-                        <div className="flex justify-between text-green-600">
+                        <div className="flex justify-between text-green-400">
                           <span>Discount:</span>
                           <span>-${Number(selectedOrder.discount).toFixed(2)}</span>
                         </div>

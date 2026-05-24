@@ -156,16 +156,16 @@ export default function AdminSettingsPage() {
 
           <Link
             href="/admin/settings/integrations/tax"
-            className="group bg-gradient-to-br from-green-50 to-green-100 border border-green-200 rounded-lg p-5 hover:shadow-md transition-all"
+            className="group bg-gradient-to-br from-green-50 to-green-100 border border-green-500/30 rounded-lg p-5 hover:shadow-md transition-all"
           >
             <div className="flex items-center gap-3 mb-2">
               <span className="text-2xl">📊</span>
-              <h3 className="font-semibold text-white group-hover:text-green-700">Tax Services</h3>
+              <h3 className="font-semibold text-white group-hover:text-green-400">Tax Services</h3>
             </div>
             <p className="text-sm text-hos-text-secondary">
               Avalara, TaxJar - Automated tax calculation and compliance
             </p>
-            <span className="inline-flex items-center mt-3 text-sm text-green-600 font-medium group-hover:gap-2 transition-all">
+            <span className="inline-flex items-center mt-3 text-sm text-green-400 font-medium group-hover:gap-2 transition-all">
               Configure Tax
               <svg className="w-4 h-4 ml-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />

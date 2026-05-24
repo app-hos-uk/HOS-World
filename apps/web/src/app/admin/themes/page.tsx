@@ -371,7 +371,7 @@ export default function AdminThemesPage() {
     switch (type) {
       case 'HOS': return 'bg-hos-gold/20 text-hos-gold';
       case 'SELLER': return 'bg-hos-gold/20 text-hos-gold';
-      case 'CUSTOMER': return 'bg-green-100 text-green-800';
+      case 'CUSTOMER': return 'bg-green-500/15 text-green-300';
       default: return 'bg-hos-bg-tertiary text-white';
     }
   };
@@ -436,14 +436,14 @@ export default function AdminThemesPage() {
                 className={`bg-hos-bg-secondary rounded-lg shadow p-4 text-left hover:shadow-md transition-shadow ${filter === 'CUSTOMER' ? 'ring-2 ring-hos-gold/50' : ''}`}
               >
                 <p className="text-sm text-hos-text-muted">Customer Themes</p>
-                <p className="text-2xl font-bold text-green-600">{stats.customer}</p>
+                <p className="text-2xl font-bold text-green-400">{stats.customer}</p>
               </button>
               <button
                 onClick={() => { setFilter('ALL'); setStatusFilter('ACTIVE'); }}
                 className={`bg-hos-bg-secondary rounded-lg shadow p-4 text-left hover:shadow-md transition-shadow ${statusFilter === 'ACTIVE' ? 'ring-2 ring-hos-gold/50' : ''}`}
               >
                 <p className="text-sm text-hos-text-muted">Active</p>
-                <p className="text-2xl font-bold text-emerald-600">{stats.active}</p>
+                <p className="text-2xl font-bold text-emerald-400">{stats.active}</p>
               </button>
               <button
                 onClick={() => { setFilter('ALL'); setStatusFilter('INACTIVE'); }}
@@ -550,7 +550,7 @@ export default function AdminThemesPage() {
                     type="button"
                     onClick={() => handleBulkAction('activate')}
                     disabled={selectedThemes.size === 0 || actionLoading || filteredThemes.length === 0}
-                    className="flex-1 px-3 py-2 text-sm bg-green-100 text-green-700 rounded-lg hover:bg-green-200 disabled:opacity-50"
+                    className="flex-1 px-3 py-2 text-sm bg-green-500/15 text-green-400 rounded-lg hover:bg-green-200 disabled:opacity-50"
                   >
                     Activate
                   </button>
@@ -558,7 +558,7 @@ export default function AdminThemesPage() {
                     type="button"
                     onClick={() => handleBulkAction('deactivate')}
                     disabled={selectedThemes.size === 0 || actionLoading || filteredThemes.length === 0}
-                    className="flex-1 px-3 py-2 text-sm bg-yellow-100 text-yellow-700 rounded-lg hover:bg-yellow-200 disabled:opacity-50"
+                    className="flex-1 px-3 py-2 text-sm bg-yellow-500/15 text-yellow-400 rounded-lg hover:bg-yellow-200 disabled:opacity-50"
                   >
                     Deactivate
                   </button>
@@ -636,7 +636,7 @@ export default function AdminThemesPage() {
                       <span className={`px-2 py-1 text-xs font-medium rounded ${getTypeBadgeColor(theme.type)}`}>
                         {theme.type}
                       </span>
-                      <span className={`px-2 py-1 text-xs font-medium rounded ${theme.isActive ? 'bg-green-100 text-green-800' : 'bg-hos-bg-tertiary text-white'}`}>
+                      <span className={`px-2 py-1 text-xs font-medium rounded ${theme.isActive ? 'bg-green-500/15 text-green-300' : 'bg-hos-bg-tertiary text-white'}`}>
                         {theme.isActive ? 'Active' : 'Inactive'}
                       </span>
                     </div>
@@ -680,14 +680,14 @@ export default function AdminThemesPage() {
                       <button
                         type="button"
                         onClick={() => handleToggleActive(theme)}
-                        className={`px-3 py-1.5 text-sm rounded ${theme.isActive ? 'bg-yellow-100 text-yellow-700 hover:bg-yellow-200' : 'bg-green-100 text-green-700 hover:bg-green-200'}`}
+                        className={`px-3 py-1.5 text-sm rounded ${theme.isActive ? 'bg-yellow-500/15 text-yellow-400 hover:bg-yellow-200' : 'bg-green-500/15 text-green-400 hover:bg-green-200'}`}
                       >
                         {theme.isActive ? 'Deactivate' : 'Activate'}
                       </button>
                       <button
                         type="button"
                         onClick={() => handleDelete(theme)}
-                        className="px-3 py-1.5 text-sm bg-red-100 text-red-700 rounded hover:bg-red-200"
+                        className="px-3 py-1.5 text-sm bg-red-500/15 text-red-400 rounded hover:bg-red-200"
                       >
                         Delete
                       </button>

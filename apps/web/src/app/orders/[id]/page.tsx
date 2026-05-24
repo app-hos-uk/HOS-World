@@ -113,7 +113,7 @@ export default function OrderDetailPage() {
   const getStatusColor = (status: string) => {
     switch (status?.toUpperCase()) {
       case 'PENDING':
-        return 'bg-yellow-100 text-yellow-800';
+        return 'bg-yellow-500/15 text-yellow-300';
       case 'CONFIRMED':
       case 'PROCESSING':
         return 'bg-hos-gold/20 text-hos-gold';
@@ -122,10 +122,10 @@ export default function OrderDetailPage() {
         return 'bg-hos-gold/20 text-hos-gold';
       case 'DELIVERED':
       case 'COMPLETED':
-        return 'bg-green-100 text-green-800';
+        return 'bg-green-500/15 text-green-300';
       case 'CANCELLED':
       case 'REFUNDED':
-        return 'bg-red-100 text-red-800';
+        return 'bg-red-500/15 text-red-300';
       default:
         return 'bg-hos-bg-tertiary text-white';
     }
@@ -174,10 +174,10 @@ export default function OrderDetailPage() {
         <div className="min-h-screen bg-hos-bg-secondary">
           <Header />
           <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 lg:py-12">
-            <div className="bg-red-50 border border-red-200 rounded-lg p-6 text-center">
+            <div className="bg-red-500/10 border border-red-500/30 rounded-lg p-6 text-center">
               <div className="text-4xl mb-4">❌</div>
-              <h1 className="text-xl font-bold text-red-900 mb-2">Order Not Found</h1>
-              <p className="text-red-700 mb-4">{error || 'The order you are looking for does not exist.'}</p>
+              <h1 className="text-xl font-bold text-red-300 mb-2">Order Not Found</h1>
+              <p className="text-red-400 mb-4">{error || 'The order you are looking for does not exist.'}</p>
               <Link
                 href="/orders"
                 className="inline-block px-6 py-2 bg-hos-gold text-[#1a1406] rounded-lg hover:bg-hos-gold-hover transition-colors"
@@ -357,7 +357,7 @@ export default function OrderDetailPage() {
                     </div>
                   )}
                   {(order.discount || order.discountAmount) ? (
-                    <div className="flex justify-between text-sm text-green-600">
+                    <div className="flex justify-between text-sm text-green-400">
                       <span>Discount</span>
                       <span>-{formatPrice(order.discount || order.discountAmount || 0, order.currency || 'USD')}</span>
                     </div>
@@ -484,7 +484,7 @@ export default function OrderDetailPage() {
                           toast.error(err.message || 'Failed to cancel order');
                         }
                       }}
-                      className="w-full px-4 py-2 border border-red-300 text-red-700 rounded-lg hover:bg-red-50 font-medium transition-colors"
+                      className="w-full px-4 py-2 border border-red-500/40 text-red-400 rounded-lg hover:bg-red-500/10 font-medium transition-colors"
                     >
                       Cancel Order
                     </button>

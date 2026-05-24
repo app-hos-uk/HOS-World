@@ -96,7 +96,7 @@ export default function MarketingDashboardPage() {
         )}
 
         {error && (
-          <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded mb-6">
+          <div className="bg-red-500/10 border border-red-500/30 text-red-400 px-4 py-3 rounded mb-6">
             Error: {error}
           </div>
         )}
@@ -124,13 +124,13 @@ export default function MarketingDashboardPage() {
                 <div className="flex items-center justify-between">
                   <div>
                     <h3 className="text-sm font-medium text-hos-text-secondary mb-1">Materials Created</h3>
-                    <p className="text-3xl font-bold text-green-600">{materialsCreated.toLocaleString()}</p>
+                    <p className="text-3xl font-bold text-green-400">{materialsCreated.toLocaleString()}</p>
                   </div>
                   <div className="text-4xl">✅</div>
                 </div>
                 <Link
                   href="/marketing/materials?tab=library"
-                  className="text-sm text-green-600 hover:text-green-700 mt-2 inline-block"
+                  className="text-sm text-green-400 hover:text-green-400 mt-2 inline-block"
                 >
                   View library →
                 </Link>

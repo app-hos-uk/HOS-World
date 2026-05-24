@@ -484,7 +484,7 @@ function LoginPageInner() {
 
             {resetSuccess ? (
               <div className="text-center space-y-4">
-                <div className="p-4 bg-green-100 text-green-700 rounded-lg">
+                <div className="p-4 bg-green-500/15 text-green-400 rounded-lg">
                   <p className="font-semibold">Email sent!</p>
                   <p className="text-sm mt-1">
                     If an account exists with that email, you&apos;ll receive password reset instructions.
@@ -500,7 +500,7 @@ function LoginPageInner() {
 
                 <div aria-live="polite" aria-atomic="true">
                   {error && (
-                    <div role="alert" className="mb-4 p-3 bg-red-100 text-red-700 rounded-lg text-sm">
+                    <div role="alert" className="mb-4 p-3 bg-red-500/15 text-red-400 rounded-lg text-sm">
                       {error}
                     </div>
                   )}
@@ -521,7 +521,7 @@ function LoginPageInner() {
                       required
                       className="w-full px-4 py-2.5 bg-hos-bg-secondary border-2 border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50 focus:border-hos-gold text-white placeholder-hos-text-muted text-base"
                       placeholder="your.email@example.com"
-                      style={{ backgroundColor: '#ffffff', color: '#111827' }}
+                      
                     />
                   </div>
 
@@ -560,13 +560,17 @@ function LoginPageInner() {
 
             <div aria-live="polite" aria-atomic="true">
               {error && (
-                <div role="alert" className="mb-4 p-3 bg-red-100 text-red-700 rounded-lg text-sm">
+                <div role="alert" className="mb-4 p-3 bg-red-500/15 text-red-400 rounded-lg text-sm">
                   {error}
                 </div>
               )}
             </div>
 
-            <form onSubmit={isLogin ? handleLogin : handleRegister} className="space-y-4">
+            <form
+              onSubmit={isLogin ? handleLogin : handleRegister}
+              className="space-y-4"
+              autoComplete="off"
+            >
               <div>
                 <label htmlFor="email" className="block text-sm font-medium text-hos-text-secondary mb-1">
                   Email
@@ -574,14 +578,16 @@ function LoginPageInner() {
                 <input
                   id="email"
                   type="email"
-                  name="email"
-                  autoComplete="email"
+                  name={isLogin ? 'login-email' : 'email'}
+                  autoComplete={isLogin ? 'off' : 'email'}
+                  readOnly={isLogin}
+                  onFocus={isLogin ? (e) => e.currentTarget.removeAttribute('readonly') : undefined}
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   required
                   className="w-full px-4 py-2.5 bg-hos-bg-secondary border-2 border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50 focus:border-hos-gold text-white placeholder-hos-text-muted text-base"
                   placeholder="your.email@example.com"
-                  style={{ backgroundColor: '#ffffff', color: '#111827' }}
+                  
                 />
               </div>
 
@@ -604,15 +610,17 @@ function LoginPageInner() {
                   <input
                     id="password"
                     type={showPassword ? 'text' : 'password'}
-                    name="password"
-                    autoComplete={isLogin ? 'current-password' : 'new-password'}
+                    name={isLogin ? 'login-password' : 'password'}
+                    autoComplete={isLogin ? 'off' : 'new-password'}
+                    readOnly={isLogin}
+                    onFocus={isLogin ? (e) => e.currentTarget.removeAttribute('readonly') : undefined}
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     required
                     minLength={8}
                     className="w-full px-4 py-2.5 pr-10 bg-hos-bg-secondary border-2 border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50 focus:border-hos-gold text-white placeholder-hos-text-muted text-base"
                     placeholder="••••••••"
-                    style={{ backgroundColor: '#ffffff', color: '#111827' }}
+                    
                   />
                   <button
                     type="button"
@@ -657,7 +665,7 @@ function LoginPageInner() {
                         maxLength={50}
                         className="w-full px-4 py-2.5 bg-hos-bg-secondary border-2 border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50 focus:border-hos-gold text-white placeholder-hos-text-muted text-base"
                         placeholder="John"
-                        style={{ backgroundColor: '#ffffff', color: '#111827' }}
+                        
                       />
                     </div>
                     <div>
@@ -679,7 +687,7 @@ function LoginPageInner() {
                         maxLength={50}
                         className="w-full px-4 py-2.5 bg-hos-bg-secondary border-2 border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50 focus:border-hos-gold text-white placeholder-hos-text-muted text-base"
                         placeholder="Doe"
-                        style={{ backgroundColor: '#ffffff', color: '#111827' }}
+                        
                       />
                     </div>
                   </div>
@@ -741,7 +749,7 @@ function LoginPageInner() {
                         }}
                         required
                         className="w-full px-4 py-2.5 bg-hos-bg-secondary border-2 border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50 focus:border-hos-gold text-white text-base"
-                        style={{ backgroundColor: '#ffffff', color: '#111827' }}
+                        
                       >
                         <option value="">Select your country</option>
                         <option value="United States">United States</option>
@@ -790,7 +798,7 @@ function LoginPageInner() {
                       }}
                       className="w-full px-4 py-2.5 bg-hos-bg-secondary border-2 border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50 focus:border-hos-gold text-white placeholder-hos-text-muted text-base"
                       placeholder="+1 555 123 4567"
-                      style={{ backgroundColor: '#ffffff', color: '#111827' }}
+                      
                     />
                     <p className="mt-1 text-xs text-hos-text-muted">
                       Include country code (e.g., +1 for US)
@@ -808,7 +816,7 @@ function LoginPageInner() {
                       onChange={(e) => setPreferredCommunicationMethod(e.target.value as any)}
                       required
                       className="w-full px-4 py-2.5 bg-hos-bg-secondary border-2 border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50 focus:border-hos-gold text-white text-base"
-                      style={{ backgroundColor: '#ffffff', color: '#111827' }}
+                      
                     >
                       <option value="EMAIL">Email</option>
                       <option value="SMS">SMS</option>

@@ -33,7 +33,7 @@ export default function LoyaltyAnalyticsPage() {
         <div className="p-6 max-w-5xl mx-auto space-y-6">
           <h1 className="text-2xl font-semibold text-white">Program health</h1>
           {error ? (
-            <p className="text-red-600 text-sm">{error}</p>
+            <p className="text-red-400 text-sm">{error}</p>
           ) : loading ? (
             <p className="text-hos-text-muted">Loading…</p>
           ) : d ? (
@@ -62,11 +62,11 @@ export default function LoyaltyAnalyticsPage() {
                 </div>
               </div>
               <div className="flex flex-wrap gap-3 text-sm">
-                <Link href="/admin/loyalty-analytics/clv" className="text-violet-700">CLV report →</Link>
-                <Link href="/admin/loyalty-analytics/attribution" className="text-violet-700">Campaign ROI →</Link>
-                <Link href="/admin/loyalty-analytics/fandom-trends" className="text-violet-700">Fandom trends →</Link>
-                <Link href="/admin/loyalty-analytics/tiers" className="text-violet-700">Tier analysis →</Link>
-                <Link href="/admin/loyalty-analytics/channels" className="text-violet-700">Channels →</Link>
+                <Link href="/admin/loyalty-analytics/clv" className="text-violet-400">CLV report →</Link>
+                <Link href="/admin/loyalty-analytics/attribution" className="text-violet-400">Campaign ROI →</Link>
+                <Link href="/admin/loyalty-analytics/fandom-trends" className="text-violet-400">Fandom trends →</Link>
+                <Link href="/admin/loyalty-analytics/tiers" className="text-violet-400">Tier analysis →</Link>
+                <Link href="/admin/loyalty-analytics/channels" className="text-violet-400">Channels →</Link>
               </div>
             </>
           ) : (

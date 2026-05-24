@@ -297,7 +297,7 @@ export default function NotificationsPage() {
                         <button
                           onClick={() => handleDelete(notification.id)}
                           disabled={actionLoading === `delete-${notification.id}`}
-                          className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-red-600 bg-red-50 rounded-md hover:bg-red-100 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                          className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-red-400 bg-red-500/10 rounded-md hover:bg-red-500/15 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                         >
                           {actionLoading === `delete-${notification.id}` ? (
                             <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-red-600" />

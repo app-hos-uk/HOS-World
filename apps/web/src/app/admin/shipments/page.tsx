@@ -44,13 +44,13 @@ interface Stats {
 }
 
 const STATUSES = [
-  { value: 'PENDING', label: 'Pending', color: 'bg-yellow-100 text-yellow-800' },
+  { value: 'PENDING', label: 'Pending', color: 'bg-yellow-500/15 text-yellow-300' },
   { value: 'PICKED', label: 'Picked', color: 'bg-hos-gold/20 text-hos-gold' },
   { value: 'PACKED', label: 'Packed', color: 'bg-hos-gold/20 text-hos-gold' },
   { value: 'IN_TRANSIT', label: 'In Transit', color: 'bg-hos-gold/20 text-hos-gold' },
-  { value: 'OUT_FOR_DELIVERY', label: 'Out for Delivery', color: 'bg-cyan-100 text-cyan-800' },
-  { value: 'DELIVERED', label: 'Delivered', color: 'bg-green-100 text-green-800' },
-  { value: 'FAILED', label: 'Failed', color: 'bg-red-100 text-red-800' },
+  { value: 'OUT_FOR_DELIVERY', label: 'Out for Delivery', color: 'bg-cyan-500/15 text-cyan-300' },
+  { value: 'DELIVERED', label: 'Delivered', color: 'bg-green-500/15 text-green-300' },
+  { value: 'FAILED', label: 'Failed', color: 'bg-red-500/15 text-red-300' },
   { value: 'RETURNED', label: 'Returned', color: 'bg-hos-bg-tertiary text-white' },
 ];
 
@@ -288,7 +288,7 @@ export default function AdminShipmentsPage() {
                 className={`bg-hos-bg-secondary rounded-lg shadow p-3 text-left hover:shadow-md ${statusFilter === 'PENDING' ? 'ring-2 ring-hos-gold/50' : ''}`}
               >
                 <p className="text-xs text-hos-text-muted">Pending</p>
-                <p className="text-xl font-bold text-yellow-600">{stats.pending}</p>
+                <p className="text-xl font-bold text-yellow-400">{stats.pending}</p>
               </button>
               <button
                 onClick={() => setStatusFilter('IN_TRANSIT')}
@@ -302,21 +302,21 @@ export default function AdminShipmentsPage() {
                 className={`bg-hos-bg-secondary rounded-lg shadow p-3 text-left hover:shadow-md ${statusFilter === 'OUT_FOR_DELIVERY' ? 'ring-2 ring-hos-gold/50' : ''}`}
               >
                 <p className="text-xs text-hos-text-muted">Out for Delivery</p>
-                <p className="text-xl font-bold text-cyan-600">{stats.outForDelivery}</p>
+                <p className="text-xl font-bold text-cyan-400">{stats.outForDelivery}</p>
               </button>
               <button
                 onClick={() => setStatusFilter('DELIVERED')}
                 className={`bg-hos-bg-secondary rounded-lg shadow p-3 text-left hover:shadow-md ${statusFilter === 'DELIVERED' ? 'ring-2 ring-hos-gold/50' : ''}`}
               >
                 <p className="text-xs text-hos-text-muted">Delivered</p>
-                <p className="text-xl font-bold text-green-600">{stats.delivered}</p>
+                <p className="text-xl font-bold text-green-400">{stats.delivered}</p>
               </button>
               <button
                 onClick={() => setStatusFilter('FAILED')}
                 className={`bg-hos-bg-secondary rounded-lg shadow p-3 text-left hover:shadow-md ${statusFilter === 'FAILED' ? 'ring-2 ring-hos-gold/50' : ''}`}
               >
                 <p className="text-xs text-hos-text-muted">Failed</p>
-                <p className="text-xl font-bold text-red-600">{stats.failed}</p>
+                <p className="text-xl font-bold text-red-400">{stats.failed}</p>
               </button>
               <button
                 onClick={() => setStatusFilter('RETURNED')}
@@ -349,9 +349,9 @@ export default function AdminShipmentsPage() {
           </div>
 
           {error && (
-            <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-              <p className="text-red-800">Error: {error}</p>
-              <button onClick={fetchShipments} className="mt-2 text-red-600 hover:text-red-800 text-sm">Retry</button>
+            <div className="bg-red-500/10 border border-red-500/30 rounded-lg p-4">
+              <p className="text-red-300">Error: {error}</p>
+              <button onClick={fetchShipments} className="mt-2 text-red-400 hover:text-red-300 text-sm">Retry</button>
             </div>
           )}
 
@@ -563,7 +563,7 @@ export default function AdminShipmentsPage() {
                       {selectedShipment.actualDelivery && (
                         <div>
                           <p className="text-sm text-hos-text-muted">Delivered</p>
-                          <p className="font-medium text-green-600">{new Date(selectedShipment.actualDelivery).toLocaleString()}</p>
+                          <p className="font-medium text-green-400">{new Date(selectedShipment.actualDelivery).toLocaleString()}</p>
                         </div>
                       )}
                       {selectedShipment.weight && (

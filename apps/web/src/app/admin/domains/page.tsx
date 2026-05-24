@@ -354,11 +354,11 @@ export default function AdminDomainsPage() {
   const getSSLBadge = (status?: string) => {
     switch (status) {
       case 'VALID':
-        return <span className="px-2 py-0.5 text-xs rounded bg-green-100 text-green-800">✓ SSL Valid</span>;
+        return <span className="px-2 py-0.5 text-xs rounded bg-green-500/15 text-green-300">✓ SSL Valid</span>;
       case 'PENDING':
-        return <span className="px-2 py-0.5 text-xs rounded bg-yellow-100 text-yellow-800">⏳ SSL Pending</span>;
+        return <span className="px-2 py-0.5 text-xs rounded bg-yellow-500/15 text-yellow-300">⏳ SSL Pending</span>;
       case 'EXPIRED':
-        return <span className="px-2 py-0.5 text-xs rounded bg-red-100 text-red-800">✗ SSL Expired</span>;
+        return <span className="px-2 py-0.5 text-xs rounded bg-red-500/15 text-red-300">✗ SSL Expired</span>;
       default:
         return null;
     }
@@ -367,9 +367,9 @@ export default function AdminDomainsPage() {
   const getDNSBadge = (verified?: boolean, hasCustomDomain?: boolean) => {
     if (!hasCustomDomain) return null;
     if (verified) {
-      return <span className="px-2 py-0.5 text-xs rounded bg-green-100 text-green-800">✓ DNS Verified</span>;
+      return <span className="px-2 py-0.5 text-xs rounded bg-green-500/15 text-green-300">✓ DNS Verified</span>;
     }
-    return <span className="px-2 py-0.5 text-xs rounded bg-yellow-100 text-yellow-800">⏳ DNS Pending</span>;
+    return <span className="px-2 py-0.5 text-xs rounded bg-yellow-500/15 text-yellow-300">⏳ DNS Pending</span>;
   };
 
   const exportColumns = [
@@ -418,25 +418,25 @@ export default function AdminDomainsPage() {
                 className={`bg-hos-bg-secondary rounded-lg shadow p-4 text-left hover:shadow-md transition-shadow ${statusFilter === 'CUSTOM' ? 'ring-2 ring-hos-gold/50' : ''}`}
               >
                 <p className="text-sm text-hos-text-muted">Custom Domain</p>
-                <p className="text-2xl font-bold text-green-600">{stats.withCustomDomain}</p>
+                <p className="text-2xl font-bold text-green-400">{stats.withCustomDomain}</p>
               </button>
               <button
                 onClick={() => setStatusFilter('PENDING')}
                 className={`bg-hos-bg-secondary rounded-lg shadow p-4 text-left hover:shadow-md transition-shadow ${statusFilter === 'PENDING' ? 'ring-2 ring-hos-gold/50' : ''}`}
               >
                 <p className="text-sm text-hos-text-muted">Pending DNS</p>
-                <p className="text-2xl font-bold text-yellow-600">{stats.pendingVerification}</p>
+                <p className="text-2xl font-bold text-yellow-400">{stats.pendingVerification}</p>
               </button>
               <button
                 onClick={() => setStatusFilter('NONE')}
                 className={`bg-hos-bg-secondary rounded-lg shadow p-4 text-left hover:shadow-md transition-shadow ${statusFilter === 'NONE' ? 'ring-2 ring-hos-gold/50' : ''}`}
               >
                 <p className="text-sm text-hos-text-muted">No Domain</p>
-                <p className="text-2xl font-bold text-red-600">{stats.noDomain}</p>
+                <p className="text-2xl font-bold text-red-400">{stats.noDomain}</p>
               </button>
               <div className="bg-hos-bg-secondary rounded-lg shadow p-4">
                 <p className="text-sm text-hos-text-muted">SSL Valid</p>
-                <p className="text-2xl font-bold text-emerald-600">{stats.sslValid}</p>
+                <p className="text-2xl font-bold text-emerald-400">{stats.sslValid}</p>
               </div>
               <div className="bg-hos-bg-secondary rounded-lg shadow p-4">
                 <p className="text-sm text-hos-text-muted">Packages</p>
@@ -636,7 +636,7 @@ export default function AdminDomainsPage() {
                                 </button>
                                 <button
                                   onClick={() => handleRemoveDomain(seller, 'subdomain')}
-                                  className="text-xs text-red-600 hover:text-red-800"
+                                  className="text-xs text-red-400 hover:text-red-300"
                                 >
                                   Remove
                                 </button>
@@ -657,7 +657,7 @@ export default function AdminDomainsPage() {
                               <p className="text-sm font-medium text-white">{seller.customDomain}</p>
                               <div className="flex items-center gap-2 mt-1">
                                 {seller.domainPackagePurchased && (
-                                  <span className="text-xs text-green-600">✓ Package</span>
+                                  <span className="text-xs text-green-400">✓ Package</span>
                                 )}
                                 <button
                                   onClick={() => {
@@ -674,7 +674,7 @@ export default function AdminDomainsPage() {
                                 </button>
                                 <button
                                   onClick={() => handleRemoveDomain(seller, 'custom')}
-                                  className="text-xs text-red-600 hover:text-red-800"
+                                  className="text-xs text-red-400 hover:text-red-300"
                                 >
                                   Remove
                                 </button>
@@ -718,7 +718,7 @@ export default function AdminDomainsPage() {
                                 <button
                                   onClick={() => handleVerifyDNS(seller)}
                                   disabled={actionLoading}
-                                  className="px-2 py-1 text-sm text-green-600 hover:bg-green-50 rounded disabled:opacity-50"
+                                  className="px-2 py-1 text-sm text-green-400 hover:bg-green-500/10 rounded disabled:opacity-50"
                                 >
                                   Verify
                                 </button>
@@ -903,11 +903,11 @@ export default function AdminDomainsPage() {
                       )}
                     </div>
 
-                    <div className="bg-green-50 p-4 rounded-lg">
+                    <div className="bg-green-500/10 p-4 rounded-lg">
                       <h3 className="font-semibold mb-2">Custom Domain</h3>
                       {selectedSeller.customDomain ? (
                         <div>
-                          <p className="font-mono text-green-800">{selectedSeller.customDomain}</p>
+                          <p className="font-mono text-green-300">{selectedSeller.customDomain}</p>
                           <div className="flex items-center gap-2 mt-2">
                             {getDNSBadge(selectedSeller.dnsVerified, true)}
                             {getSSLBadge(selectedSeller.sslStatus)}
@@ -919,7 +919,7 @@ export default function AdminDomainsPage() {
                             href={`https://${selectedSeller.customDomain}`}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="text-sm text-green-600 hover:underline mt-2 inline-block"
+                            className="text-sm text-green-400 hover:underline mt-2 inline-block"
                           >
                             Open in new tab →
                           </a>
@@ -958,8 +958,8 @@ export default function AdminDomainsPage() {
                   </div>
 
                   <div className="space-y-4">
-                    <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
-                      <p className="text-sm text-yellow-800">
+                    <div className="bg-yellow-500/10 border border-yellow-500/30 rounded-lg p-4">
+                      <p className="text-sm text-yellow-300">
                         <strong>Important:</strong> DNS changes may take up to 48 hours to propagate globally.
                       </p>
                     </div>

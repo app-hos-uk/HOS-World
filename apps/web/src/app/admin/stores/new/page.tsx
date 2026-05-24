@@ -63,7 +63,7 @@ export default function AdminStoreNewPage() {
     <RouteGuard allowedRoles={['ADMIN']}>
       <AdminLayout>
         <div className="p-6 max-w-lg mx-auto space-y-4">
-          <Link href="/admin/stores" className="text-sm text-violet-700">
+          <Link href="/admin/stores" className="text-sm text-violet-400">
             ← Stores
           </Link>
           <h1 className="text-2xl font-semibold text-white">New store</h1>

@@ -243,11 +243,11 @@ export default function SellerThemesPage() {
               <span className="px-3 py-1.5 bg-hos-gold/10 text-hos-gold-hover rounded-full font-medium">
                 {themeStats.total} Themes
               </span>
-              <span className="px-3 py-1.5 bg-green-50 text-green-700 rounded-full font-medium">
+              <span className="px-3 py-1.5 bg-green-500/10 text-green-400 rounded-full font-medium">
                 {themeStats.free} Free
               </span>
               {themeStats.premium > 0 && (
-                <span className="px-3 py-1.5 bg-amber-50 text-amber-700 rounded-full font-medium">
+                <span className="px-3 py-1.5 bg-amber-500/10 text-amber-400 rounded-full font-medium">
                   {themeStats.premium} Premium
                 </span>
               )}
@@ -305,7 +305,7 @@ export default function SellerThemesPage() {
                 placeholder="Search themes by name, fandom, or keyword..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-10 pr-4 py-2.5 border border-hos-border rounded-lg text-sm focus:ring-hos-gold/50 focus:border-hos-gold"
+                className="w-full pl-10 pr-4 py-2.5 border border-hos-border rounded-lg text-sm bg-hos-bg-secondary text-white placeholder-hos-text-muted focus:ring-hos-gold/50 focus:border-hos-gold"
               />
             </div>
 
@@ -428,11 +428,11 @@ export default function SellerThemesPage() {
                         </span>
                       )}
                       {isPaid ? (
-                        <span className="px-2 py-0.5 text-xs font-semibold bg-amber-500 text-white rounded-md shadow-sm">
+                        <span className="px-2 py-0.5 text-xs font-semibold bg-amber-500/10 text-white rounded-md shadow-sm">
                           ${price || 'Premium'}
                         </span>
                       ) : (
-                        <span className="px-2 py-0.5 text-xs font-semibold bg-green-500 text-white rounded-md shadow-sm">
+                        <span className="px-2 py-0.5 text-xs font-semibold bg-green-500/10 text-white rounded-md shadow-sm">
                           Free
                         </span>
                       )}

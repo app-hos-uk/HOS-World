@@ -316,15 +316,15 @@ export default function ProductCreationPage() {
 
           {/* Success Banner */}
           {lastCreatedProduct && (
-            <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+            <div className="bg-green-500/10 border border-green-500/30 rounded-lg p-4">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
-                  <span className="text-green-600 text-xl">✓</span>
+                  <span className="text-green-400 text-xl">✓</span>
                   <div>
-                    <p className="font-medium text-green-800">
+                    <p className="font-medium text-green-300">
                       Product &ldquo;{lastCreatedProduct}&rdquo; created successfully!
                     </p>
-                    <p className="text-sm text-green-600">
+                    <p className="text-sm text-green-400">
                       Form has been reset. You can add another product or view all products.
                     </p>
                   </div>
@@ -332,7 +332,7 @@ export default function ProductCreationPage() {
                 <div className="flex gap-2">
                   <button
                     onClick={() => setLastCreatedProduct(null)}
-                    className="px-3 py-1.5 text-sm text-green-700 hover:text-green-900"
+                    className="px-3 py-1.5 text-sm text-green-400 hover:text-green-300"
                   >
                     Dismiss
                   </button>
@@ -532,7 +532,7 @@ export default function ProductCreationPage() {
                             <button
                               type="button"
                               onClick={() => removeVariation(varIdx)}
-                              className="text-red-600 hover:text-red-800 text-sm"
+                              className="text-red-400 hover:text-red-300 text-sm"
                             >
                               Remove
                             </button>
@@ -617,13 +617,13 @@ export default function ProductCreationPage() {
                               {opt.imageUrl && (
                                 <span className="inline-flex items-center gap-1">
                                   <SafeImage src={opt.imageUrl} alt="" width={32} height={32} className="object-cover rounded" />
-                                  <button type="button" onClick={() => updateVariationOption(optIdx, 'imageUrl', undefined)} className="text-red-600 text-xs">Clear</button>
+                                  <button type="button" onClick={() => updateVariationOption(optIdx, 'imageUrl', undefined)} className="text-red-400 text-xs">Clear</button>
                                 </span>
                               )}
                               <button
                                 type="button"
                                 onClick={() => removeVariationOption(optIdx)}
-                                className="text-red-600 hover:text-red-800 text-xs"
+                                className="text-red-400 hover:text-red-300 text-xs"
                               >
                                 Remove
                               </button>
@@ -775,7 +775,7 @@ export default function ProductCreationPage() {
                           <button
                             type="button"
                             onClick={() => removeImage(idx)}
-                            className="px-3 py-1 text-red-600 hover:text-red-800 text-sm"
+                            className="px-3 py-1 text-red-400 hover:text-red-300 text-sm"
                           >
                             Remove
                           </button>
@@ -801,10 +801,10 @@ export default function ProductCreationPage() {
                     { label: 'SEO description', ok: !!formData.metaDescription.trim(), required: false },
                   ].map((check) => (
                     <div key={check.label} className="flex items-center gap-2 text-sm">
-                      <span className={check.ok ? 'text-green-600' : check.required ? 'text-red-500' : 'text-amber-500'}>
+                      <span className={check.ok ? 'text-green-400' : check.required ? 'text-red-500' : 'text-amber-500'}>
                         {check.ok ? '✓' : check.required ? '✗' : '○'}
                       </span>
-                      <span className={check.ok ? 'text-hos-text-secondary' : check.required ? 'text-red-700' : 'text-amber-700'}>
+                      <span className={check.ok ? 'text-hos-text-secondary' : check.required ? 'text-red-400' : 'text-amber-400'}>
                         {check.label}{check.required ? '' : ' (recommended)'}
                       </span>
                     </div>
@@ -819,7 +819,7 @@ export default function ProductCreationPage() {
                   ].filter(Boolean).length;
                   if (missingCount > 0) {
                     return (
-                      <p className="text-xs text-red-600 mt-2">
+                      <p className="text-xs text-red-400 mt-2">
                         {missingCount} required item{missingCount > 1 ? 's' : ''} missing — fix before creating.
                       </p>
                     );

@@ -34,16 +34,16 @@ const STATUS_COLORS: Record<string, string> = {
   OPEN: 'bg-hos-gold/20 text-hos-gold',
   ASSIGNED: 'bg-hos-gold/20 text-hos-gold',
   IN_PROGRESS: 'bg-hos-gold/20 text-hos-gold',
-  WAITING_CUSTOMER: 'bg-yellow-100 text-yellow-800',
-  RESOLVED: 'bg-green-100 text-green-800',
+  WAITING_CUSTOMER: 'bg-yellow-500/15 text-yellow-300',
+  RESOLVED: 'bg-green-500/15 text-green-300',
   CLOSED: 'bg-hos-bg-tertiary text-white',
 };
 
 const PRIORITY_COLORS: Record<string, string> = {
   LOW: 'bg-hos-bg-tertiary text-white',
-  MEDIUM: 'bg-yellow-100 text-yellow-800',
-  HIGH: 'bg-orange-100 text-orange-800',
-  URGENT: 'bg-red-100 text-red-800',
+  MEDIUM: 'bg-yellow-500/15 text-yellow-300',
+  HIGH: 'bg-orange-500/15 text-orange-300',
+  URGENT: 'bg-red-500/15 text-red-300',
 };
 
 const TICKET_STATUSES = ['OPEN', 'ASSIGNED', 'IN_PROGRESS', 'WAITING_CUSTOMER', 'RESOLVED', 'CLOSED'] as const;
@@ -359,14 +359,14 @@ export default function AdminSupportPage() {
               className={`bg-hos-bg-secondary rounded-lg shadow p-4 text-left ${filter === 'resolved' ? 'ring-2 ring-hos-gold/50' : ''}`}
             >
               <h3 className="text-xs font-medium text-hos-text-muted uppercase">Resolved</h3>
-              <p className="text-2xl font-bold text-green-600 mt-1">{stats.resolved}</p>
+              <p className="text-2xl font-bold text-green-400 mt-1">{stats.resolved}</p>
             </button>
             <button
               onClick={() => setFilter('urgent')}
               className={`bg-hos-bg-secondary rounded-lg shadow p-4 text-left ${filter === 'urgent' ? 'ring-2 ring-hos-gold/50' : ''}`}
             >
               <h3 className="text-xs font-medium text-hos-text-muted uppercase">Urgent</h3>
-              <p className="text-2xl font-bold text-red-600 mt-1">{stats.urgent}</p>
+              <p className="text-2xl font-bold text-red-400 mt-1">{stats.urgent}</p>
             </button>
           </div>
 

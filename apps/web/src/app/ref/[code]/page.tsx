@@ -29,7 +29,7 @@ export default async function ReferralLandingPage({
       <div className="flex flex-wrap gap-3 justify-center">
         <Link
           href={`/register?ref=${encodeURIComponent(code)}`}
-          className="rounded-md bg-amber-600 px-5 py-2.5 text-stone-950 font-secondary font-medium hover:bg-amber-500"
+          className="rounded-md bg-amber-600 px-5 py-2.5 text-stone-950 font-secondary font-medium hover:bg-amber-600"
         >
           Sign up
         </Link>

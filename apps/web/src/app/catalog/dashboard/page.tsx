@@ -96,7 +96,7 @@ export default function CatalogDashboardPage() {
         )}
 
         {error && (
-          <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded mb-6">
+          <div className="bg-red-500/10 border border-red-500/30 text-red-400 px-4 py-3 rounded mb-6">
             Error: {error}
           </div>
         )}
@@ -124,13 +124,13 @@ export default function CatalogDashboardPage() {
                 <div className="flex items-center justify-between">
                   <div>
                     <h3 className="text-sm font-medium text-hos-text-secondary mb-1">In Progress</h3>
-                    <p className="text-3xl font-bold text-yellow-600">{inProgressCount.toLocaleString()}</p>
+                    <p className="text-3xl font-bold text-yellow-400">{inProgressCount.toLocaleString()}</p>
                   </div>
                   <div className="text-4xl">⏳</div>
                 </div>
                 <Link
                   href="/catalog/entries?status=in_progress"
-                  className="text-sm text-yellow-600 hover:text-yellow-700 mt-2 inline-block"
+                  className="text-sm text-yellow-400 hover:text-yellow-400 mt-2 inline-block"
                 >
                   Continue work →
                 </Link>
@@ -140,7 +140,7 @@ export default function CatalogDashboardPage() {
                 <div className="flex items-center justify-between">
                   <div>
                     <h3 className="text-sm font-medium text-hos-text-secondary mb-1">Completed</h3>
-                    <p className="text-3xl font-bold text-green-600">{totalCompleted.toLocaleString()}</p>
+                    <p className="text-3xl font-bold text-green-400">{totalCompleted.toLocaleString()}</p>
                     {completedToday > 0 && (
                       <p className="text-xs text-hos-text-muted mt-1">{completedToday} today</p>
                     )}
@@ -149,7 +149,7 @@ export default function CatalogDashboardPage() {
                 </div>
                 <Link
                   href="/catalog/entries?status=completed"
-                  className="text-sm text-green-600 hover:text-green-700 mt-2 inline-block"
+                  className="text-sm text-green-400 hover:text-green-400 mt-2 inline-block"
                 >
                   View all →
                 </Link>
@@ -243,7 +243,7 @@ export default function CatalogDashboardPage() {
                   </Link>
                   <Link
                     href="/procurement/submissions?view=cross-seller"
-                    className="block p-4 border-2 border-dashed border-amber-300 rounded-lg hover:border-amber-500 hover:bg-amber-50 transition-colors text-center"
+                    className="block p-4 border-2 border-dashed border-amber-500/40 rounded-lg hover:border-amber-500 hover:bg-amber-500/10 transition-colors text-center"
                   >
                     <div className="text-2xl mb-2">🔄</div>
                     <p className="font-medium">Same product from multiple sellers</p>

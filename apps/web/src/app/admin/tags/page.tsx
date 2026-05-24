@@ -39,10 +39,10 @@ const TAG_CATEGORIES = [
 
 const CATEGORY_COLORS: Record<string, string> = {
   THEME: 'bg-hos-gold/20 text-hos-gold border-hos-border-accent',
-  OCCASION: 'bg-pink-100 text-pink-800 border-pink-200',
+  OCCASION: 'bg-pink-500/15 text-pink-300 border-pink-500/30',
   STYLE: 'bg-hos-gold/20 text-hos-gold border-hos-border-accent',
-  CHARACTER: 'bg-green-100 text-green-800 border-green-200',
-  FANDOM: 'bg-yellow-100 text-yellow-800 border-yellow-200',
+  CHARACTER: 'bg-green-500/15 text-green-300 border-green-500/30',
+  FANDOM: 'bg-yellow-500/15 text-yellow-300 border-yellow-500/30',
   CUSTOM: 'bg-hos-bg-tertiary text-white border-hos-border',
 };
 
@@ -469,7 +469,7 @@ export default function AdminTagsPage() {
               </div>
               <div className="bg-hos-bg-secondary rounded-lg shadow p-4">
                 <p className="text-sm text-hos-text-secondary">Active</p>
-                <p className="text-2xl font-bold text-green-600">{stats.activeTags}</p>
+                <p className="text-2xl font-bold text-green-400">{stats.activeTags}</p>
               </div>
               <div className="bg-hos-bg-secondary rounded-lg shadow p-4">
                 <p className="text-sm text-hos-text-secondary">Inactive</p>
@@ -481,12 +481,12 @@ export default function AdminTagsPage() {
               </div>
               <div className="bg-hos-bg-secondary rounded-lg shadow p-4">
                 <p className="text-sm text-hos-text-secondary">Unused Tags</p>
-                <p className="text-2xl font-bold text-orange-600">{stats.unusedTags}</p>
+                <p className="text-2xl font-bold text-orange-400">{stats.unusedTags}</p>
               </div>
               {stats.mostUsedTag && (
                 <div className="bg-hos-bg-secondary rounded-lg shadow p-4 col-span-2">
                   <p className="text-sm text-hos-text-secondary">Most Used</p>
-                  <p className="text-lg font-bold text-pink-600 truncate">{stats.mostUsedTag.name}</p>
+                  <p className="text-lg font-bold text-pink-400 truncate">{stats.mostUsedTag.name}</p>
                   <p className="text-xs text-hos-text-muted">{stats.mostUsedTag.count} products</p>
                 </div>
               )}
@@ -518,9 +518,9 @@ export default function AdminTagsPage() {
           )}
 
           {error && (
-            <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-              <p className="text-red-800">Error: {error}</p>
-              <button onClick={fetchTags} className="mt-2 text-red-600 hover:text-red-800 text-sm">
+            <div className="bg-red-500/10 border border-red-500/30 rounded-lg p-4">
+              <p className="text-red-300">Error: {error}</p>
+              <button onClick={fetchTags} className="mt-2 text-red-400 hover:text-red-300 text-sm">
                 Retry
               </button>
             </div>
@@ -562,7 +562,7 @@ export default function AdminTagsPage() {
                   <span className="text-sm text-hos-text-secondary">{selectedTags.size} selected</span>
                   <button
                     onClick={() => handleBulkToggleActive(true)}
-                    className="px-3 py-1 text-sm bg-green-100 text-green-700 rounded hover:bg-green-200"
+                    className="px-3 py-1 text-sm bg-green-500/15 text-green-400 rounded hover:bg-green-200"
                   >
                     Activate
                   </button>
@@ -581,7 +581,7 @@ export default function AdminTagsPage() {
                   </button>
                   <button
                     onClick={handleBulkDelete}
-                    className="px-3 py-1 text-sm bg-red-100 text-red-700 rounded hover:bg-red-200"
+                    className="px-3 py-1 text-sm bg-red-500/15 text-red-400 rounded hover:bg-red-200"
                   >
                     Delete
                   </button>

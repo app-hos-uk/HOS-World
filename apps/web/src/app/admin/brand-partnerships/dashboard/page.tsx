@@ -23,12 +23,12 @@ export default function AdminBrandPartnershipsDashboardPage() {
     <RouteGuard allowedRoles={['ADMIN']}>
       <AdminLayout>
         <div className="p-6 max-w-5xl mx-auto">
-          <Link href="/admin/brand-partnerships" className="text-sm text-violet-700 mb-4 inline-block">
+          <Link href="/admin/brand-partnerships" className="text-sm text-violet-400 mb-4 inline-block">
             ← Partners
           </Link>
           <h1 className="text-2xl font-semibold text-white mb-6">Brand partnerships</h1>
           {error ? (
-            <p className="text-red-600 text-sm">{error}</p>
+            <p className="text-red-400 text-sm">{error}</p>
           ) : loading ? (
             <p className="text-hos-text-muted">Loading…</p>
           ) : data ? (

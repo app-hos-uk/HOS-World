@@ -48,7 +48,7 @@ export default function AdminAmbassadorDetailPage() {
     <RouteGuard allowedRoles={['ADMIN']}>
       <AdminLayout>
         <div className="p-6 max-w-4xl mx-auto">
-          <Link href="/admin/ambassadors" className="text-sm text-violet-700 mb-4 inline-block">
+          <Link href="/admin/ambassadors" className="text-sm text-violet-400 mb-4 inline-block">
             ← Back
           </Link>
           {row ? (
@@ -66,7 +66,7 @@ export default function AdminAmbassadorDetailPage() {
                   {row.status === 'ACTIVE' ? (
                     <button
                       type="button"
-                      className="text-sm px-3 py-1 rounded border border-amber-600 text-amber-800"
+                      className="text-sm px-3 py-1 rounded border border-amber-600 text-amber-300"
                       onClick={suspend}
                     >
                       Suspend
@@ -74,7 +74,7 @@ export default function AdminAmbassadorDetailPage() {
                   ) : (
                     <button
                       type="button"
-                      className="text-sm px-3 py-1 rounded border border-emerald-600 text-emerald-800"
+                      className="text-sm px-3 py-1 rounded border border-emerald-600 text-emerald-300"
                       onClick={reactivate}
                     >
                       Reactivate

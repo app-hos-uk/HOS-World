@@ -143,13 +143,13 @@ export default function AdminLoyaltyEarnRulesPage() {
                     <td className="px-4 py-3">{rule.pointsAwarded}</td>
                     <td className="px-4 py-3 text-hos-text-secondary">{rule.description || '—'}</td>
                     <td className="px-4 py-3">
-                      <span className={`px-2 py-0.5 text-xs font-medium rounded-full ${rule.isActive !== false ? 'bg-green-100 text-green-700' : 'bg-hos-bg-tertiary text-hos-text-secondary'}`}>
+                      <span className={`px-2 py-0.5 text-xs font-medium rounded-full ${rule.isActive !== false ? 'bg-green-500/15 text-green-400' : 'bg-hos-bg-tertiary text-hos-text-secondary'}`}>
                         {rule.isActive !== false ? 'Active' : 'Inactive'}
                       </span>
                     </td>
                     <td className="px-4 py-3 text-right">
                       <button onClick={() => startEdit(rule)} className="text-hos-gold hover:text-hos-gold-hover font-medium mr-3">Edit</button>
-                      <button onClick={() => handleDelete(rule.id)} className="text-red-600 hover:text-red-800 font-medium">Delete</button>
+                      <button onClick={() => handleDelete(rule.id)} className="text-red-400 hover:text-red-300 font-medium">Delete</button>
                     </td>
                   </tr>
                 ))}

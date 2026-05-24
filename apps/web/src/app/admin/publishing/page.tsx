@@ -140,7 +140,7 @@ export default function PublishingDashboardPage() {
         )}
 
         {error && (
-          <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg mb-6">
+          <div className="bg-red-500/10 border border-red-500/30 text-red-400 px-4 py-3 rounded-lg mb-6">
             {error}
           </div>
         )}
@@ -203,7 +203,7 @@ export default function PublishingDashboardPage() {
                         <p className="text-sm text-hos-text-muted mt-0.5">{seller}</p>
                         <div className="flex flex-wrap gap-3 mt-2 text-xs text-hos-text-muted">
                           {price && <span>Price: ${parseFloat(price).toFixed(2)}</span>}
-                          <span className="px-2 py-0.5 bg-green-100 text-green-800 rounded font-medium">
+                          <span className="px-2 py-0.5 bg-green-500/15 text-green-300 rounded font-medium">
                             FINANCE APPROVED
                           </span>
                           {submission.financeApprovedAt && (

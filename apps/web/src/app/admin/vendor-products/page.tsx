@@ -48,12 +48,12 @@ interface VendorProduct {
 
 const STATUS_CONFIG: Record<string, { label: string; color: string; bg: string }> = {
   DRAFT: { label: 'Draft', color: 'text-hos-text-secondary', bg: 'bg-hos-bg-tertiary' },
-  PENDING_APPROVAL: { label: 'Pending', color: 'text-yellow-700', bg: 'bg-yellow-100' },
+  PENDING_APPROVAL: { label: 'Pending', color: 'text-yellow-400', bg: 'bg-yellow-500/15' },
   APPROVED: { label: 'Approved', color: 'text-hos-gold', bg: 'bg-hos-gold/20' },
-  REJECTED: { label: 'Rejected', color: 'text-red-700', bg: 'bg-red-100' },
-  ACTIVE: { label: 'Active', color: 'text-green-700', bg: 'bg-green-100' },
+  REJECTED: { label: 'Rejected', color: 'text-red-400', bg: 'bg-red-500/15' },
+  ACTIVE: { label: 'Active', color: 'text-green-400', bg: 'bg-green-500/15' },
   INACTIVE: { label: 'Inactive', color: 'text-hos-text-secondary', bg: 'bg-hos-bg-tertiary' },
-  OUT_OF_STOCK: { label: 'Out of Stock', color: 'text-orange-700', bg: 'bg-orange-100' },
+  OUT_OF_STOCK: { label: 'Out of Stock', color: 'text-orange-400', bg: 'bg-orange-500/15' },
 };
 
 function StatusBadge({ status }: { status: string }) {
@@ -195,10 +195,10 @@ function VendorProductsContent() {
       <div className="grid grid-cols-2 sm:grid-cols-5 gap-4">
         {[
           { label: 'Total', value: stats.total, onClick: () => setStatusFilter('ALL'), active: statusFilter === 'ALL', color: 'bg-hos-bg-secondary border-hos-border' },
-          { label: 'Pending Review', value: stats.pending, onClick: () => setStatusFilter('PENDING_APPROVAL'), active: statusFilter === 'PENDING_APPROVAL', color: 'bg-yellow-50 border-yellow-200' },
+          { label: 'Pending Review', value: stats.pending, onClick: () => setStatusFilter('PENDING_APPROVAL'), active: statusFilter === 'PENDING_APPROVAL', color: 'bg-yellow-500/10 border-yellow-500/30' },
           { label: 'Approved', value: stats.approved, onClick: () => setStatusFilter('APPROVED'), active: statusFilter === 'APPROVED', color: 'bg-hos-gold/10 border-hos-border-accent' },
-          { label: 'Active', value: stats.active, onClick: () => setStatusFilter('ACTIVE'), active: statusFilter === 'ACTIVE', color: 'bg-green-50 border-green-200' },
-          { label: 'Rejected', value: stats.rejected, onClick: () => setStatusFilter('REJECTED'), active: statusFilter === 'REJECTED', color: 'bg-red-50 border-red-200' },
+          { label: 'Active', value: stats.active, onClick: () => setStatusFilter('ACTIVE'), active: statusFilter === 'ACTIVE', color: 'bg-green-500/10 border-green-500/30' },
+          { label: 'Rejected', value: stats.rejected, onClick: () => setStatusFilter('REJECTED'), active: statusFilter === 'REJECTED', color: 'bg-red-500/10 border-red-500/30' },
         ].map(card => (
           <button
             key={card.label}
@@ -222,7 +222,7 @@ function VendorProductsContent() {
             placeholder="Search by product name, vendor, SKU..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-10 pr-4 py-2.5 border border-hos-border rounded-lg text-sm focus:ring-hos-gold/50 focus:border-hos-gold"
+            className="w-full pl-10 pr-4 py-2.5 border border-hos-border rounded-lg text-sm bg-hos-bg-secondary text-white placeholder-hos-text-muted focus:ring-hos-gold/50 focus:border-hos-gold"
           />
         </div>
         <select
@@ -313,7 +313,7 @@ function VendorProductsContent() {
                       {listing.platformPrice ? formatPrice(Number(listing.platformPrice)) : '—'}
                     </td>
                     <td className="px-4 py-3 text-right">
-                      <span className={`text-sm font-medium ${listing.vendorStock <= listing.lowStockThreshold ? 'text-orange-600' : 'text-white'}`}>
+                      <span className={`text-sm font-medium ${listing.vendorStock <= listing.lowStockThreshold ? 'text-orange-400' : 'text-white'}`}>
                         {listing.vendorStock}
                       </span>
                     </td>
@@ -350,7 +350,7 @@ function VendorProductsContent() {
                           </button>
                         )}
                         {listing.status === 'ACTIVE' && (
-                          <span className="text-xs text-green-600 font-medium">Live</span>
+                          <span className="text-xs text-green-400 font-medium">Live</span>
                         )}
                         {listing.status === 'REJECTED' && (
                           <span className="text-xs text-red-500 italic truncate max-w-[120px]" title={listing.rejectionReason || ''}>
@@ -428,7 +428,7 @@ function VendorProductsContent() {
             {selectedListing.rejectionReason && (
               <div>
                 <h4 className="text-xs font-medium text-hos-text-muted uppercase mb-2">Rejection Reason</h4>
-                <p className="text-sm text-red-600 bg-red-50 p-3 rounded-lg">{selectedListing.rejectionReason}</p>
+                <p className="text-sm text-red-400 bg-red-500/10 p-3 rounded-lg">{selectedListing.rejectionReason}</p>
               </div>
             )}
           </div>

@@ -39,7 +39,7 @@ export default function AdminBrandPartnershipDetailPage() {
     <RouteGuard allowedRoles={['ADMIN']}>
       <AdminLayout>
         <div className="p-6 max-w-5xl mx-auto space-y-6">
-          <Link href="/admin/brand-partnerships" className="text-sm text-violet-700">
+          <Link href="/admin/brand-partnerships" className="text-sm text-violet-400">
             ← All partners
           </Link>
           {row ? (
@@ -74,9 +74,9 @@ export default function AdminBrandPartnershipDetailPage() {
                         {Number(report.totalCampaigns ?? report.campaignCount ?? 0)}
                       </p>
                     </div>
-                    <div className="bg-green-50 rounded-lg p-3">
+                    <div className="bg-green-500/10 rounded-lg p-3">
                       <p className="text-xs text-hos-text-muted">Total Revenue</p>
-                      <p className="text-xl font-semibold text-green-700">
+                      <p className="text-xl font-semibold text-green-400">
                         ${Number(report.totalRevenue ?? report.revenue ?? 0).toLocaleString()}
                       </p>
                     </div>
@@ -86,9 +86,9 @@ export default function AdminBrandPartnershipDetailPage() {
                         {Number(report.totalOrders ?? report.orders ?? 0)}
                       </p>
                     </div>
-                    <div className="bg-amber-50 rounded-lg p-3">
+                    <div className="bg-amber-500/10 rounded-lg p-3">
                       <p className="text-xs text-hos-text-muted">Conversion Rate</p>
-                      <p className="text-xl font-semibold text-amber-700">
+                      <p className="text-xl font-semibold text-amber-400">
                         {Number(report.conversionRate ?? 0).toFixed(1)}%
                       </p>
                     </div>
@@ -140,7 +140,7 @@ export default function AdminBrandPartnershipDetailPage() {
                       <span className="text-hos-text-muted text-xs">{String(c.status)}</span>
                       <Link
                         href={`/admin/brand-partnerships/campaigns/${String(c.id)}`}
-                        className="text-violet-600 text-sm"
+                        className="text-violet-400 text-sm"
                       >
                         Open
                       </Link>

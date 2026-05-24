@@ -60,10 +60,10 @@ export default function PrivacyAuditPage() {
 
   const getTypeBadgeColor = (type: string) => {
     switch (type) {
-      case 'DO_NOT_SELL': return 'bg-orange-100 text-orange-800';
+      case 'DO_NOT_SELL': return 'bg-orange-500/15 text-orange-300';
       case 'MARKETING': return 'bg-hos-gold/20 text-hos-gold';
       case 'ANALYTICS': return 'bg-hos-gold/20 text-hos-gold';
-      case 'ESSENTIAL': return 'bg-green-100 text-green-800';
+      case 'ESSENTIAL': return 'bg-green-500/15 text-green-300';
       default: return 'bg-hos-bg-tertiary text-white';
     }
   };
@@ -85,7 +85,7 @@ export default function PrivacyAuditPage() {
             <div className="text-sm text-hos-text-secondary">Total Events</div>
           </div>
           <div className="bg-hos-bg-secondary rounded-xl border p-4">
-            <div className="text-2xl font-bold text-orange-600">
+            <div className="text-2xl font-bold text-orange-400">
               {logs.filter((l) => l.consentType === 'DO_NOT_SELL' && l.granted).length}
             </div>
             <div className="text-sm text-hos-text-secondary">Do Not Sell Opt-Outs</div>
@@ -97,7 +97,7 @@ export default function PrivacyAuditPage() {
             <div className="text-sm text-hos-text-secondary">Marketing Changes</div>
           </div>
           <div className="bg-hos-bg-secondary rounded-xl border p-4">
-            <div className="text-2xl font-bold text-green-600">
+            <div className="text-2xl font-bold text-green-400">
               {logs.filter((l) => l.granted).length}
             </div>
             <div className="text-sm text-hos-text-secondary">Grants (This Page)</div>
@@ -161,7 +161,7 @@ export default function PrivacyAuditPage() {
                         </span>
                       </td>
                       <td className="px-4 py-3">
-                        <span className={`inline-block px-2 py-0.5 rounded-full text-xs font-medium ${entry.granted ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
+                        <span className={`inline-block px-2 py-0.5 rounded-full text-xs font-medium ${entry.granted ? 'bg-green-500/15 text-green-400' : 'bg-red-500/15 text-red-400'}`}>
                           {entry.granted ? 'Granted' : 'Revoked'}
                         </span>
                       </td>

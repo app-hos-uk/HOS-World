@@ -375,7 +375,7 @@ export default function ProductDetailClient() {
                 {formatPrice(product.price, product.currency || 'USD')}
               </div>
               {product.stock !== undefined && (
-                <p className={`text-sm ${product.stock > 0 ? 'text-green-600' : 'text-red-600'}`}>
+                <p className={`text-sm ${product.stock > 0 ? 'text-green-400' : 'text-red-400'}`}>
                   {product.stock > 0 ? `In Stock (${product.stock} available)` : 'Out of Stock'}
                 </p>
               )}
@@ -457,7 +457,7 @@ export default function ProductDetailClient() {
                 onClick={handleToggleWishlist}
                 className={`group relative px-6 py-3 border rounded-lg font-medium transition-all duration-300 ${
                   isInWishlist
-                    ? 'border-red-300 bg-red-50 text-red-600 hover:bg-red-100'
+                    ? 'border-red-500/40 bg-red-500/10 text-red-400 hover:bg-red-500/15'
                     : 'border-hos-border hover:bg-hos-bg-tertiary'
                 } ${wishlistAnimating ? 'scale-110' : 'scale-100'}`}
                 title={isInWishlist ? 'Remove from wishlist' : 'Add to wishlist'}

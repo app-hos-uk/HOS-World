@@ -69,7 +69,7 @@ export default function WholesalerDashboardPage() {
         )}
 
         {error && (
-          <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded mb-6">
+          <div className="bg-red-500/10 border border-red-500/30 text-red-400 px-4 py-3 rounded mb-6">
             Error: {error}
           </div>
         )}
@@ -81,7 +81,7 @@ export default function WholesalerDashboardPage() {
                 <div className="flex items-center justify-between">
                   <div>
                     <h3 className="text-sm font-medium text-hos-text-secondary mb-1">Total Sales</h3>
-                    <p className="text-3xl font-bold text-green-600">
+                    <p className="text-3xl font-bold text-green-400">
                       ${dashboardData?.totalSales?.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) || '0.00'}
                     </p>
                   </div>
@@ -89,7 +89,7 @@ export default function WholesalerDashboardPage() {
                 </div>
                 <Link
                   href="/wholesaler/orders"
-                  className="text-sm text-green-600 hover:text-green-700 mt-2 inline-block"
+                  className="text-sm text-green-400 hover:text-green-400 mt-2 inline-block"
                 >
                   View orders →
                 </Link>
@@ -135,7 +135,7 @@ export default function WholesalerDashboardPage() {
                 <div className="flex items-center justify-between">
                   <div>
                     <h3 className="text-sm font-medium text-hos-text-secondary mb-1">Pending Approvals</h3>
-                    <p className="text-3xl font-bold text-orange-600">
+                    <p className="text-3xl font-bold text-orange-400">
                       {pendingApprovals.toLocaleString()}
                     </p>
                   </div>
@@ -143,7 +143,7 @@ export default function WholesalerDashboardPage() {
                 </div>
                 <Link
                   href="/wholesaler/submissions"
-                  className="text-sm text-orange-600 hover:text-orange-700 mt-2 inline-block"
+                  className="text-sm text-orange-400 hover:text-orange-400 mt-2 inline-block"
                 >
                   View submissions →
                 </Link>
@@ -184,10 +184,10 @@ export default function WholesalerDashboardPage() {
                           <span
                             className={`px-2 py-1 text-xs font-medium rounded ${
                               submission.status === 'PROCUREMENT_APPROVED'
-                                ? 'bg-green-100 text-green-800'
+                                ? 'bg-green-500/15 text-green-300'
                                 : submission.status === 'PROCUREMENT_REJECTED'
-                                  ? 'bg-red-100 text-red-800'
-                                  : 'bg-yellow-100 text-yellow-800'
+                                  ? 'bg-red-500/15 text-red-300'
+                                  : 'bg-yellow-500/15 text-yellow-300'
                             }`}
                           >
                             {submission.status}
@@ -222,7 +222,7 @@ export default function WholesalerDashboardPage() {
                   </div>
                   <div className="flex items-center justify-between p-3 bg-hos-bg-secondary rounded-lg">
                     <span className="text-sm font-medium text-hos-text-secondary">Total Units Sold</span>
-                    <span className="text-lg font-bold text-green-600">
+                    <span className="text-lg font-bold text-green-400">
                       {dashboardData?.totalUnitsSold?.toLocaleString() || '0'} units
                     </span>
                   </div>

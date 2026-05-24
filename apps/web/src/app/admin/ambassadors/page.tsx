@@ -95,7 +95,7 @@ export default function AdminAmbassadorsPage() {
             >
               Apply
             </button>
-            <Link href="/admin/ambassadors/dashboard" className="text-sm text-violet-700 ml-auto">
+            <Link href="/admin/ambassadors/dashboard" className="text-sm text-violet-400 ml-auto">
               Program dashboard →
             </Link>
           </div>
@@ -126,7 +126,7 @@ export default function AdminAmbassadorsPage() {
                     return (
                       <tr key={id} className="border-t">
                         <td className="p-2">
-                          <Link href={`/admin/ambassadors/${id}`} className="text-violet-700">
+                          <Link href={`/admin/ambassadors/${id}`} className="text-violet-400">
                             {String(name)}
                           </Link>
                         </td>
@@ -138,7 +138,7 @@ export default function AdminAmbassadorsPage() {
                           {row.status === 'ACTIVE' ? (
                             <button
                               type="button"
-                              className="text-amber-700"
+                              className="text-amber-400"
                               onClick={() => suspend(id)}
                             >
                               Suspend
@@ -146,7 +146,7 @@ export default function AdminAmbassadorsPage() {
                           ) : (
                             <button
                               type="button"
-                              className="text-emerald-700"
+                              className="text-emerald-400"
                               onClick={() => reactivate(id)}
                             >
                               Reactivate

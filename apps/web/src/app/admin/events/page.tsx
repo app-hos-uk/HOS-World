@@ -80,7 +80,7 @@ export default function AdminEventsPage() {
                           <button
                             type="button"
                             onClick={() => publish(e.id)}
-                            className="text-green-600 hover:underline"
+                            className="text-green-400 hover:underline"
                           >
                             Publish
                           </button>

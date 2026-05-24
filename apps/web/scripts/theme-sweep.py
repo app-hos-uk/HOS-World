@@ -163,11 +163,71 @@ REPLACEMENTS = [
     (r"focus:ring-blue-500", "focus:ring-hos-gold/50"),
 ]
 
+# Semantic status colors (light → dark-theme translucent)
+SEMANTIC_COLORS = [
+    "amber", "emerald", "green", "orange", "red", "yellow", "blue", "pink",
+    "purple", "teal", "cyan", "lime", "sky", "violet", "rose", "fuchsia",
+]
+
+for color in SEMANTIC_COLORS:
+    # Use regex boundaries so bg-amber-50 does not match inside bg-amber-500
+    REPLACEMENTS.extend([
+        (rf"(?<![\w/])hover:bg-{color}-100(?![\w/])", f"hover:bg-{color}-500/15"),
+        (rf"(?<![\w/])hover:bg-{color}-50(?![\w/])", f"hover:bg-{color}-500/10"),
+        (rf"(?<![\w/])active:bg-{color}-100(?![\w/])", f"active:bg-{color}-500/15"),
+        (rf"(?<![\w/])bg-{color}-100(?![\w/])", f"bg-{color}-500/15"),
+        (rf"(?<![\w/])bg-{color}-50(?![\w/])", f"bg-{color}-500/10"),
+        (rf"(?<![\w/])border-{color}-300(?![\w/])", f"border-{color}-500/40"),
+        (rf"(?<![\w/])border-{color}-200(?![\w/])", f"border-{color}-500/30"),
+        (rf"(?<![\w/])hover:border-{color}-300(?![\w/])", f"hover:border-{color}-500/40"),
+        (rf"(?<![\w/])hover:border-{color}-200(?![\w/])", f"hover:border-{color}-500/30"),
+        (rf"(?<![\w/])text-{color}-900(?![\w/])", f"text-{color}-300"),
+        (rf"(?<![\w/])text-{color}-800(?![\w/])", f"text-{color}-300"),
+        (rf"(?<![\w/])text-{color}-700(?![\w/])", f"text-{color}-400"),
+        (rf"(?<![\w/])text-{color}-600(?![\w/])", f"text-{color}-400"),
+        (rf"(?<![\w/])hover:text-{color}-900(?![\w/])", f"hover:text-{color}-300"),
+        (rf"(?<![\w/])hover:text-{color}-800(?![\w/])", f"hover:text-{color}-300"),
+        (rf"(?<![\w/])hover:text-{color}-700(?![\w/])", f"hover:text-{color}-400"),
+        (rf"(?<![\w/])hover:text-{color}-600(?![\w/])", f"hover:text-{color}-400"),
+    ])
+
+REPLACEMENTS.extend([
+    # Login/auth inline white overrides
+    (r"style={{ backgroundColor: '#ffffff', color: '#111827' }}", ""),
+    (r"style={{ backgroundColor: '#ffffff', color: '#111827' }} ", ""),
+    # Search inputs missing dark bg
+    (
+        'className="w-full pl-10 pr-4 py-2.5 border border-hos-border rounded-lg text-sm focus:ring-hos-gold/50 focus:border-hos-gold"',
+        'className="w-full pl-10 pr-4 py-2.5 border border-hos-border rounded-lg text-sm bg-hos-bg-secondary text-white placeholder-hos-text-muted focus:ring-hos-gold/50 focus:border-hos-gold"',
+    ),
+    # Error/success banners
+    (r"text-green-600", "text-green-400"),
+    (r"text-red-600", "text-red-400"),
+    (r"text-orange-600", "text-orange-400"),
+    (r"text-yellow-600", "text-yellow-400"),
+    (r"hover:text-red-800", "hover:text-red-300"),
+    (r"hover:text-red-600", "hover:text-red-400"),
+    (r"hover:text-green-800", "hover:text-green-300"),
+    (r"hover:text-green-600", "hover:text-green-400"),
+    (r"hover:text-orange-800", "hover:text-orange-300"),
+    (r"hover:text-yellow-800", "hover:text-yellow-300"),
+    (r"hover:text-yellow-600", "hover:text-yellow-400"),
+    (r"border-red-300", "border-red-500/40"),
+    (r"border-green-300", "border-green-500/40"),
+    (r"border-amber-300", "border-amber-500/40"),
+    (r"border-orange-300", "border-orange-500/40"),
+    (r"border-yellow-300", "border-yellow-500/40"),
+    (r"focus:ring-red-500", "focus:ring-red-500/50"),
+])
+
 def process_file(path: Path) -> bool:
     content = path.read_text(encoding="utf-8")
     original = content
     for pattern, replacement in REPLACEMENTS:
-        content = content.replace(pattern, replacement)
+        if pattern.startswith("(?<") or pattern.startswith("("):
+            content = re.sub(pattern, replacement, content)
+        else:
+            content = content.replace(pattern, replacement)
     if content != original:
         path.write_text(content, encoding="utf-8")
         return True
@@ -176,7 +236,7 @@ def process_file(path: Path) -> bool:
 
 def main():
     changed = []
-    for path in sorted(ROOT.rglob("*.tsx")):
+    for path in sorted(list(ROOT.rglob("*.tsx")) + list(ROOT.rglob("*.css"))):
         if process_file(path):
             changed.append(str(path.relative_to(ROOT.parent)))
     print(f"Updated {len(changed)} files")

@@ -64,29 +64,29 @@ export default function AdminBrandPartnershipNewPage() {
     <RouteGuard allowedRoles={['ADMIN']}>
       <AdminLayout>
         <div className="p-6 max-w-xl mx-auto space-y-4">
-          <Link href="/admin/brand-partnerships" className="text-violet-700 text-sm">
+          <Link href="/admin/brand-partnerships" className="text-violet-400 text-sm">
             ← Back
           </Link>
           <h1 className="text-2xl font-semibold text-white">New brand partner</h1>
           <label className="block text-sm">
             <span className="text-hos-text-secondary">Name <span className="text-red-500">*</span></span>
             <input
-              className={`mt-1 w-full border rounded px-3 py-2 ${nameError ? 'border-red-300 focus:border-red-500' : 'border-hos-border'}`}
+              className={`mt-1 w-full border rounded px-3 py-2 ${nameError ? 'border-red-500/40 focus:border-red-500' : 'border-hos-border'}`}
               value={name}
               onChange={(e) => setName(sanitizeNameInput(e.target.value))}
               placeholder="Enter brand/partner name"
             />
-            {nameError && <p className="text-xs text-red-600 mt-1">{nameError}</p>}
+            {nameError && <p className="text-xs text-red-400 mt-1">{nameError}</p>}
           </label>
           <label className="block text-sm">
             <span className="text-hos-text-secondary">Contact name</span>
             <input
-              className={`mt-1 w-full border rounded px-3 py-2 ${contactNameError ? 'border-red-300 focus:border-red-500' : 'border-hos-border'}`}
+              className={`mt-1 w-full border rounded px-3 py-2 ${contactNameError ? 'border-red-500/40 focus:border-red-500' : 'border-hos-border'}`}
               value={contactName}
               onChange={(e) => setContactName(sanitizeNameInput(e.target.value))}
               placeholder="Enter contact person's name"
             />
-            {contactNameError && <p className="text-xs text-red-600 mt-1">{contactNameError}</p>}
+            {contactNameError && <p className="text-xs text-red-400 mt-1">{contactNameError}</p>}
           </label>
           <label className="block text-sm">
             <span className="text-hos-text-secondary">Contact email</span>

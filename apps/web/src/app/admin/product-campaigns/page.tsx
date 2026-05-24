@@ -70,7 +70,7 @@ export default function AdminProductCampaignsPage() {
                 const cid = String(r.id);
                 return (
                   <li key={cid} className="border rounded-lg p-3 bg-hos-bg-secondary">
-                    <Link href={`/admin/product-campaigns/${cid}`} className="text-violet-700 font-medium">
+                    <Link href={`/admin/product-campaigns/${cid}`} className="text-violet-400 font-medium">
                       {String(r.name)}
                     </Link>
                     <p className="text-hos-text-muted text-xs">

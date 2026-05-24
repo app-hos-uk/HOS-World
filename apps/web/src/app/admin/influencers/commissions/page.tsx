@@ -88,10 +88,10 @@ export default function AdminInfluencerCommissionsPage() {
 
   const getStatusBadge = (status: string) => {
     const styles: Record<string, string> = {
-      PENDING: 'bg-yellow-100 text-yellow-800',
-      APPROVED: 'bg-green-100 text-green-800',
+      PENDING: 'bg-yellow-500/15 text-yellow-300',
+      APPROVED: 'bg-green-500/15 text-green-300',
       PAID: 'bg-hos-gold/20 text-hos-gold',
-      CANCELLED: 'bg-red-100 text-red-800',
+      CANCELLED: 'bg-red-500/15 text-red-300',
       ADJUSTED: 'bg-hos-gold/20 text-hos-gold',
     };
     return styles[status] || 'bg-hos-bg-tertiary text-white';
@@ -121,11 +121,11 @@ export default function AdminInfluencerCommissionsPage() {
           </div>
           <div className="bg-hos-bg-secondary rounded-lg p-4 shadow-sm">
             <p className="text-sm text-hos-text-muted">Pending Approval</p>
-            <p className="text-2xl font-bold text-yellow-600">{formatCurrency(pendingTotal)}</p>
+            <p className="text-2xl font-bold text-yellow-400">{formatCurrency(pendingTotal)}</p>
           </div>
           <div className="bg-hos-bg-secondary rounded-lg p-4 shadow-sm">
             <p className="text-sm text-hos-text-muted">Ready for Payout</p>
-            <p className="text-2xl font-bold text-green-600">{formatCurrency(approvedTotal)}</p>
+            <p className="text-2xl font-bold text-green-400">{formatCurrency(approvedTotal)}</p>
           </div>
         </div>
 
@@ -186,7 +186,7 @@ export default function AdminInfluencerCommissionsPage() {
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-hos-text-muted">
                         {(commission.rateApplied * 100).toFixed(0)}% ({commission.rateSource})
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm font-semibold text-green-600">
+                      <td className="px-6 py-4 whitespace-nowrap text-sm font-semibold text-green-400">
                         {formatCurrency(commission.amount, commission.currency)}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
@@ -199,13 +199,13 @@ export default function AdminInfluencerCommissionsPage() {
                           <div className="flex gap-2">
                             <button
                               onClick={() => handleApprove(commission.id)}
-                              className="text-green-600 hover:text-green-800 text-sm font-medium"
+                              className="text-green-400 hover:text-green-300 text-sm font-medium"
                             >
                               Approve
                             </button>
                             <button
                               onClick={() => handleUpdateStatus(commission.id, 'CANCELLED')}
-                              className="text-red-600 hover:text-red-800 text-sm font-medium"
+                              className="text-red-400 hover:text-red-300 text-sm font-medium"
                             >
                               Cancel
                             </button>

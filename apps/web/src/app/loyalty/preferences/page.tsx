@@ -92,7 +92,7 @@ export default function LoyaltyPreferencesPage() {
                 type="button"
                 disabled={saving}
                 onClick={save}
-                className="mt-4 w-full rounded-md bg-amber-600 px-4 py-2 text-stone-950 font-medium hover:bg-amber-500 disabled:opacity-50"
+                className="mt-4 w-full rounded-md bg-amber-600 px-4 py-2 text-stone-950 font-medium hover:bg-amber-600 disabled:opacity-50"
               >
                 {saving ? 'Saving…' : 'Save'}
               </button>

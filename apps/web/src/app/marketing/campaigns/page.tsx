@@ -56,8 +56,8 @@ const emptyForm: CampaignFormData = {
 
 const STATUS_COLORS: Record<CampaignStatus, string> = {
   DRAFT: 'bg-hos-bg-tertiary text-white',
-  ACTIVE: 'bg-green-100 text-green-800',
-  PAUSED: 'bg-yellow-100 text-yellow-800',
+  ACTIVE: 'bg-green-500/15 text-green-300',
+  PAUSED: 'bg-yellow-500/15 text-yellow-300',
   COMPLETED: 'bg-hos-gold/20 text-hos-gold',
 };
 
@@ -319,7 +319,7 @@ function MarketingCampaignsPageContent() {
         </div>
 
         {error && (
-          <div className="mb-6 p-4 bg-red-100 border border-red-400 text-red-700 rounded-lg">
+          <div className="mb-6 p-4 bg-red-500/15 border border-red-400 text-red-400 rounded-lg">
             <p className="font-semibold">Error</p>
             <p className="text-sm mt-1">{error}</p>
           </div>
@@ -444,7 +444,7 @@ function MarketingCampaignsPageContent() {
                           ) : (
                             <button
                               onClick={() => setDeleteConfirmId(campaign.id)}
-                              className="px-3 py-1.5 text-xs font-medium text-red-700 bg-red-50 border border-red-200 rounded-lg hover:bg-red-100 transition-colors"
+                              className="px-3 py-1.5 text-xs font-medium text-red-400 bg-red-500/10 border border-red-500/30 rounded-lg hover:bg-red-500/15 transition-colors"
                             >
                               Delete
                             </button>
@@ -475,7 +475,7 @@ function MarketingCampaignsPageContent() {
                 </div>
 
                 {formError && (
-                  <div className="mb-4 p-3 bg-red-50 border border-red-200 text-red-700 rounded-lg text-sm">
+                  <div className="mb-4 p-3 bg-red-500/10 border border-red-500/30 text-red-400 rounded-lg text-sm">
                     {formError}
                   </div>
                 )}

@@ -166,7 +166,7 @@ export function RuleBuilder({
               />
               <button
                 type="button"
-                className="text-red-600 text-xs"
+                className="text-red-400 text-xs"
                 onClick={() => {
                   const nextRules = g.rules.filter((_, j) => j !== i);
                   setG({ ...g, rules: nextRules.length ? nextRules : [defaultRule()] });

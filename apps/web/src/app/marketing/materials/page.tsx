@@ -232,7 +232,7 @@ function MarketingMaterialsPageContent() {
           </div>
 
           {error && (
-            <div className="mb-6 p-4 bg-red-100 border border-red-400 text-red-700 rounded-lg">
+            <div className="mb-6 p-4 bg-red-500/15 border border-red-400 text-red-400 rounded-lg">
               <p className="font-semibold">Error</p>
               <p className="text-sm mt-1">{error}</p>
             </div>
@@ -277,7 +277,7 @@ function MarketingMaterialsPageContent() {
                           {productData.description || 'No description'}
                         </p>
                         {submission.marketingMaterials?.length > 0 && (
-                          <p className="text-xs text-green-600 mt-2 font-medium">
+                          <p className="text-xs text-green-400 mt-2 font-medium">
                             {submission.marketingMaterials.length} material(s) added
                           </p>
                         )}

@@ -24,9 +24,9 @@ const variantStyles: Record<BadgeVariant, string> = {
 
 const dotColors: Record<BadgeVariant, string> = {
   primary: 'bg-hos-gold',
-  success: 'bg-green-500',
-  warning: 'bg-yellow-500',
-  error: 'bg-red-500',
+  success: 'bg-green-500/10',
+  warning: 'bg-yellow-500/10',
+  error: 'bg-red-500/10',
   info: 'bg-hos-gold',
   gray: 'bg-hos-text-muted',
 };

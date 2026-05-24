@@ -145,9 +145,9 @@ export default function AdminInfluencerPayoutsPage() {
 
   const getStatusBadge = (status: string) => {
     const styles: Record<string, string> = {
-      PENDING: 'bg-yellow-100 text-yellow-800',
-      PAID: 'bg-green-100 text-green-800',
-      CANCELLED: 'bg-red-100 text-red-800',
+      PENDING: 'bg-yellow-500/15 text-yellow-300',
+      PAID: 'bg-green-500/15 text-green-300',
+      CANCELLED: 'bg-red-500/15 text-red-300',
     };
     return styles[status] || 'bg-hos-bg-tertiary text-white';
   };
@@ -223,7 +223,7 @@ export default function AdminInfluencerPayoutsPage() {
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-hos-text-muted">
                         {payout._count.commissions} commissions
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm font-semibold text-green-600">
+                      <td className="px-6 py-4 whitespace-nowrap text-sm font-semibold text-green-400">
                         {formatCurrency(payout.totalAmount, payout.currency)}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
@@ -241,13 +241,13 @@ export default function AdminInfluencerPayoutsPage() {
                           <div className="flex gap-2">
                             <button
                               onClick={() => setShowPayModal(payout)}
-                              className="text-green-600 hover:text-green-800 text-sm font-medium"
+                              className="text-green-400 hover:text-green-300 text-sm font-medium"
                             >
                               Mark Paid
                             </button>
                             <button
                               onClick={() => handleCancel(payout.id)}
-                              className="text-red-600 hover:text-red-800 text-sm font-medium"
+                              className="text-red-400 hover:text-red-300 text-sm font-medium"
                             >
                               Cancel
                             </button>

@@ -333,10 +333,10 @@ export default function AdminSettlementsPage() {
 
   const getStatusBadge = (status: string) => {
     const styles: Record<string, string> = {
-      PENDING: 'bg-yellow-100 text-yellow-800',
+      PENDING: 'bg-yellow-500/15 text-yellow-300',
       PROCESSING: 'bg-hos-gold/20 text-hos-gold',
-      PAID: 'bg-green-100 text-green-800',
-      FAILED: 'bg-red-100 text-red-800',
+      PAID: 'bg-green-500/15 text-green-300',
+      FAILED: 'bg-red-500/15 text-red-300',
       CANCELLED: 'bg-hos-bg-tertiary text-white',
     };
     return <span className={`px-2 py-0.5 text-xs rounded-full ${styles[status] || 'bg-hos-bg-tertiary text-white'}`}>{status}</span>;
@@ -391,7 +391,7 @@ export default function AdminSettlementsPage() {
             <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4">
               <div className="bg-hos-bg-secondary rounded-lg shadow p-4">
                 <p className="text-sm text-hos-text-secondary">Pending</p>
-                <p className="text-2xl font-bold text-yellow-600">{stats.pendingCount}</p>
+                <p className="text-2xl font-bold text-yellow-400">{stats.pendingCount}</p>
                 <p className="text-xs text-hos-text-muted">{formatPrice(stats.pendingAmount)}</p>
               </div>
               <div className="bg-hos-bg-secondary rounded-lg shadow p-4">
@@ -401,12 +401,12 @@ export default function AdminSettlementsPage() {
               </div>
               <div className="bg-hos-bg-secondary rounded-lg shadow p-4">
                 <p className="text-sm text-hos-text-secondary">Paid This Month</p>
-                <p className="text-2xl font-bold text-green-600">{stats.paidThisMonth}</p>
+                <p className="text-2xl font-bold text-green-400">{stats.paidThisMonth}</p>
                 <p className="text-xs text-hos-text-muted">{formatPrice(stats.paidThisMonthAmount)}</p>
               </div>
               <div className="bg-hos-bg-secondary rounded-lg shadow p-4">
                 <p className="text-sm text-hos-text-secondary">Failed</p>
-                <p className="text-2xl font-bold text-red-600">{stats.failedCount}</p>
+                <p className="text-2xl font-bold text-red-400">{stats.failedCount}</p>
               </div>
               <div className="bg-hos-bg-secondary rounded-lg shadow p-4">
                 <p className="text-sm text-hos-text-secondary">Platform Fees (Total)</p>
@@ -432,9 +432,9 @@ export default function AdminSettlementsPage() {
           </div>
 
           {error && (
-            <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-              <p className="text-red-800">Error: {error}</p>
-              <button onClick={fetchSettlements} className="mt-2 text-red-600 hover:text-red-800 text-sm">Retry</button>
+            <div className="bg-red-500/10 border border-red-500/30 rounded-lg p-4">
+              <p className="text-red-300">Error: {error}</p>
+              <button onClick={fetchSettlements} className="mt-2 text-red-400 hover:text-red-300 text-sm">Retry</button>
             </div>
           )}
 
@@ -565,8 +565,8 @@ export default function AdminSettlementsPage() {
                         </td>
                         <td className="px-4 py-3 text-sm text-hos-text-secondary">{settlement.ordersCount}</td>
                         <td className="px-4 py-3 text-sm text-white">{formatPrice(settlement.amount)}</td>
-                        <td className="px-4 py-3 text-sm text-red-600">-{formatPrice(settlement.platformFee)}</td>
-                        <td className="px-4 py-3 text-sm font-medium text-green-600">{formatPrice(settlement.netAmount)}</td>
+                        <td className="px-4 py-3 text-sm text-red-400">-{formatPrice(settlement.platformFee)}</td>
+                        <td className="px-4 py-3 text-sm font-medium text-green-400">{formatPrice(settlement.netAmount)}</td>
                         <td className="px-4 py-3">{getStatusBadge(settlement.status)}</td>
                         <td className="px-4 py-3 text-right">
                           <div className="flex justify-end gap-1">
@@ -641,11 +641,11 @@ export default function AdminSettlementsPage() {
                       </div>
                       <div>
                         <p className="text-sm text-hos-text-muted">Platform Fee</p>
-                        <p className="font-medium text-red-600">-{formatPrice(selectedSettlement.platformFee)}</p>
+                        <p className="font-medium text-red-400">-{formatPrice(selectedSettlement.platformFee)}</p>
                       </div>
                       <div>
                         <p className="text-sm text-hos-text-muted">Net Amount</p>
-                        <p className="text-xl font-bold text-green-600">{formatPrice(selectedSettlement.netAmount)}</p>
+                        <p className="text-xl font-bold text-green-400">{formatPrice(selectedSettlement.netAmount)}</p>
                       </div>
                       <div>
                         <p className="text-sm text-hos-text-muted">Status</p>

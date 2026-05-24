@@ -137,9 +137,9 @@ export default function AdminSearchPage() {
           <h1 className="text-2xl font-bold text-white">Search Management</h1>
 
           {error && (
-            <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-              <p className="text-red-800">Error: {error}</p>
-              <button onClick={fetchStats} className="mt-2 text-sm text-red-600 underline hover:text-red-800">
+            <div className="bg-red-500/10 border border-red-500/30 rounded-lg p-4">
+              <p className="text-red-300">Error: {error}</p>
+              <button onClick={fetchStats} className="mt-2 text-sm text-red-400 underline hover:text-red-300">
                 Retry
               </button>
             </div>
@@ -149,8 +149,8 @@ export default function AdminSearchPage() {
             <div
               className={`rounded-lg p-4 border ${
                 actionMessage.type === 'success'
-                  ? 'bg-green-50 border-green-200 text-green-800'
-                  : 'bg-red-50 border-red-200 text-red-800'
+                  ? 'bg-green-500/10 border-green-500/30 text-green-300'
+                  : 'bg-red-500/10 border-red-500/30 text-red-300'
               }`}
             >
               {actionMessage.text}
@@ -164,10 +164,10 @@ export default function AdminSearchPage() {
               <div className="mt-3 flex items-center gap-2">
                 <span
                   className={`inline-block w-3 h-3 rounded-full ${
-                    healthy ? 'bg-green-500' : 'bg-red-500'
+                    healthy ? 'bg-green-500/10' : 'bg-red-500/10'
                   }`}
                 />
-                <span className={`text-lg font-semibold ${healthy ? 'text-green-700' : 'text-red-700'}`}>
+                <span className={`text-lg font-semibold ${healthy ? 'text-green-400' : 'text-red-400'}`}>
                   {healthy ? 'Healthy' : 'Unreachable'}
                 </span>
               </div>

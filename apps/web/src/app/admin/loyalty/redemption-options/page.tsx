@@ -145,7 +145,7 @@ export default function AdminLoyaltyRedemptionPage() {
               <div key={opt.id} className="bg-hos-bg-secondary border rounded-lg p-5">
                 <div className="flex items-start justify-between mb-3">
                   <h3 className="font-semibold text-white">{opt.name}</h3>
-                  <span className={`px-2 py-0.5 text-xs font-medium rounded-full ${opt.isActive !== false ? 'bg-green-100 text-green-700' : 'bg-hos-bg-tertiary text-hos-text-secondary'}`}>
+                  <span className={`px-2 py-0.5 text-xs font-medium rounded-full ${opt.isActive !== false ? 'bg-green-500/15 text-green-400' : 'bg-hos-bg-tertiary text-hos-text-secondary'}`}>
                     {opt.isActive !== false ? 'Active' : 'Inactive'}
                   </span>
                 </div>
@@ -156,7 +156,7 @@ export default function AdminLoyaltyRedemptionPage() {
                 </div>
                 <div className="flex gap-2 mt-4 pt-3 border-t">
                   <button onClick={() => startEdit(opt)} className="text-sm text-hos-gold hover:text-hos-gold-hover font-medium">Edit</button>
-                  <button onClick={() => handleDelete(opt.id)} className="text-sm text-red-600 hover:text-red-800 font-medium">Delete</button>
+                  <button onClick={() => handleDelete(opt.id)} className="text-sm text-red-400 hover:text-red-300 font-medium">Delete</button>
                 </div>
               </div>
             ))}

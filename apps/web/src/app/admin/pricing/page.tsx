@@ -331,9 +331,9 @@ export default function AdminPricingPage() {
   };
 
   const getStockBadge = (stock: number) => {
-    if (stock === 0) return <span className="px-2 py-0.5 text-xs rounded bg-red-100 text-red-700">Out of Stock</span>;
-    if (stock <= 10) return <span className="px-2 py-0.5 text-xs rounded bg-yellow-100 text-yellow-700">Low Stock</span>;
-    return <span className="px-2 py-0.5 text-xs rounded bg-green-100 text-green-700">In Stock</span>;
+    if (stock === 0) return <span className="px-2 py-0.5 text-xs rounded bg-red-500/15 text-red-400">Out of Stock</span>;
+    if (stock <= 10) return <span className="px-2 py-0.5 text-xs rounded bg-yellow-500/15 text-yellow-400">Low Stock</span>;
+    return <span className="px-2 py-0.5 text-xs rounded bg-green-500/15 text-green-400">In Stock</span>;
   };
 
   const getMarginBadge = (margin?: number) => {
@@ -403,24 +403,24 @@ export default function AdminPricingPage() {
               </div>
               <div className="bg-hos-bg-secondary rounded-lg shadow p-4">
                 <p className="text-sm text-hos-text-secondary">Revenue Potential</p>
-                <p className="text-2xl font-bold text-green-600">{formatPrice(stats.totalRevenuePotential)}</p>
+                <p className="text-2xl font-bold text-green-400">{formatPrice(stats.totalRevenuePotential)}</p>
                 <p className="text-xs text-hos-text-muted">If all stock sold</p>
               </div>
               <div className="bg-hos-bg-secondary rounded-lg shadow p-4">
                 <p className="text-sm text-hos-text-secondary">Stock Alerts</p>
                 <div className="flex items-center gap-2 mt-1">
-                  <span className="text-lg font-bold text-red-600">{stats.outOfStockCount}</span>
+                  <span className="text-lg font-bold text-red-400">{stats.outOfStockCount}</span>
                   <span className="text-xs text-hos-text-muted">out</span>
-                  <span className="text-lg font-bold text-yellow-600">{stats.lowStockCount}</span>
+                  <span className="text-lg font-bold text-yellow-400">{stats.lowStockCount}</span>
                   <span className="text-xs text-hos-text-muted">low</span>
                 </div>
               </div>
               <div className="bg-hos-bg-secondary rounded-lg shadow p-4">
                 <p className="text-sm text-hos-text-secondary">Needs Attention</p>
                 <div className="flex items-center gap-2 mt-1">
-                  <span className="text-lg font-bold text-orange-600">{stats.noTaxRateCount}</span>
+                  <span className="text-lg font-bold text-orange-400">{stats.noTaxRateCount}</span>
                   <span className="text-xs text-hos-text-muted">no tax</span>
-                  <span className="text-lg font-bold text-pink-600">{stats.belowRrpCount}</span>
+                  <span className="text-lg font-bold text-pink-400">{stats.belowRrpCount}</span>
                   <span className="text-xs text-hos-text-muted">&lt;RRP</span>
                 </div>
               </div>
@@ -428,9 +428,9 @@ export default function AdminPricingPage() {
           )}
 
           {error && (
-            <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-              <p className="text-red-800">Error: {error}</p>
-              <button onClick={fetchProducts} className="mt-2 text-red-600 hover:text-red-800 text-sm">
+            <div className="bg-red-500/10 border border-red-500/30 rounded-lg p-4">
+              <p className="text-red-300">Error: {error}</p>
+              <button onClick={fetchProducts} className="mt-2 text-red-400 hover:text-red-300 text-sm">
                 Retry
               </button>
             </div>
@@ -606,8 +606,8 @@ export default function AdminPricingPage() {
                         <td className="px-4 py-3">
                           {product.margin !== undefined ? (
                             <span className={`text-sm font-medium ${
-                              product.margin >= 30 ? 'text-green-600' :
-                              product.margin >= 15 ? 'text-yellow-600' : 'text-red-600'
+                              product.margin >= 30 ? 'text-green-400' :
+                              product.margin >= 15 ? 'text-yellow-400' : 'text-red-400'
                             }`}>
                               {product.margin.toFixed(1)}%
                             </span>
@@ -636,8 +636,8 @@ export default function AdminPricingPage() {
                         </td>
                         <td className="px-4 py-3">
                           <span className={`px-2 py-0.5 text-xs rounded ${
-                            product.status === 'ACTIVE' ? 'bg-green-100 text-green-700' :
-                            product.status === 'DRAFT' ? 'bg-yellow-100 text-yellow-700' :
+                            product.status === 'ACTIVE' ? 'bg-green-500/15 text-green-400' :
+                            product.status === 'DRAFT' ? 'bg-yellow-500/15 text-yellow-400' :
                             'bg-hos-bg-tertiary text-hos-text-secondary'
                           }`}>
                             {product.status}

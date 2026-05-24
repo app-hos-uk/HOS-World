@@ -86,7 +86,7 @@ export default function ProcurementDashboardPage() {
         )}
 
         {error && (
-          <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded mb-6">
+          <div className="bg-red-500/10 border border-red-500/30 text-red-400 px-4 py-3 rounded mb-6">
             Error: {error}
           </div>
         )}
@@ -114,13 +114,13 @@ export default function ProcurementDashboardPage() {
                 <div className="flex items-center justify-between">
                   <div>
                     <h3 className="text-sm font-medium text-hos-text-secondary mb-1">Duplicate Alerts</h3>
-                    <p className="text-3xl font-bold text-orange-600">{duplicatesCount.toLocaleString()}</p>
+                    <p className="text-3xl font-bold text-orange-400">{duplicatesCount.toLocaleString()}</p>
                   </div>
                   <div className="text-4xl">⚠️</div>
                 </div>
                 <Link
                   href="/procurement/submissions?view=cross-seller"
-                  className="text-sm text-orange-600 hover:text-orange-700 mt-2 inline-block"
+                  className="text-sm text-orange-400 hover:text-orange-400 mt-2 inline-block"
                 >
                   Review duplicates →
                 </Link>
@@ -130,13 +130,13 @@ export default function ProcurementDashboardPage() {
                 <div className="flex items-center justify-between">
                   <div>
                     <h3 className="text-sm font-medium text-hos-text-secondary mb-1">Under Review</h3>
-                    <p className="text-3xl font-bold text-yellow-600">{underReview.toLocaleString()}</p>
+                    <p className="text-3xl font-bold text-yellow-400">{underReview.toLocaleString()}</p>
                   </div>
                   <div className="text-4xl">🔍</div>
                 </div>
                 <Link
                   href="/procurement/submissions?status=UNDER_REVIEW"
-                  className="text-sm text-yellow-600 hover:text-yellow-700 mt-2 inline-block"
+                  className="text-sm text-yellow-400 hover:text-yellow-400 mt-2 inline-block"
                 >
                   View all →
                 </Link>
@@ -146,13 +146,13 @@ export default function ProcurementDashboardPage() {
                 <div className="flex items-center justify-between">
                   <div>
                     <h3 className="text-sm font-medium text-hos-text-secondary mb-1">Approved Today</h3>
-                    <p className="text-3xl font-bold text-green-600">{approvedCount.toLocaleString()}</p>
+                    <p className="text-3xl font-bold text-green-400">{approvedCount.toLocaleString()}</p>
                   </div>
                   <div className="text-4xl">✅</div>
                 </div>
                 <Link
                   href="/procurement/submissions?status=PROCUREMENT_APPROVED"
-                  className="text-sm text-green-600 hover:text-green-700 mt-2 inline-block"
+                  className="text-sm text-green-400 hover:text-green-400 mt-2 inline-block"
                 >
                   View all →
                 </Link>
@@ -210,7 +210,7 @@ export default function ProcurementDashboardPage() {
                   <h2 className="text-xl font-semibold">Duplicate Detection</h2>
                   <Link
                     href="/procurement/submissions?duplicates=true"
-                    className="text-sm text-orange-600 hover:text-orange-700"
+                    className="text-sm text-orange-400 hover:text-orange-400"
                   >
                     View all →
                   </Link>
@@ -220,17 +220,17 @@ export default function ProcurementDashboardPage() {
                     {dashboardData.duplicateAlerts.slice(0, 10).map((alert: any) => (
                       <div
                         key={alert.id}
-                        className="p-3 border border-orange-200 bg-orange-50 rounded-lg"
+                        className="p-3 border border-orange-500/30 bg-orange-500/10 rounded-lg"
                       >
                         <div className="flex items-start justify-between">
                           <div className="flex-1">
-                            <p className="font-medium text-orange-900">
+                            <p className="font-medium text-orange-300">
                               Similarity: {alert.similarityScore}%
                             </p>
-                            <p className="text-sm text-orange-700 mt-1">
+                            <p className="text-sm text-orange-400 mt-1">
                               {alert.submission?.productData?.name || 'Unknown Product'}
                             </p>
-                            <p className="text-xs text-orange-600 mt-1">
+                            <p className="text-xs text-orange-400 mt-1">
                               {alert.submission?.seller?.storeName || 'Unknown Seller'}
                             </p>
                           </div>

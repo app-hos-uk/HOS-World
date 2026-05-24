@@ -202,7 +202,7 @@ export default function FulfillmentCentersPage() {
         )}
 
         {error && (
-          <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded mb-6">
+          <div className="bg-red-500/10 border border-red-500/30 text-red-400 px-4 py-3 rounded mb-6">
             Error: {error}
           </div>
         )}
@@ -236,7 +236,7 @@ export default function FulfillmentCentersPage() {
                   <span
                     className={`px-2 py-1 text-xs font-medium rounded-full ${
                       isActive
-                        ? 'bg-green-100 text-green-800'
+                        ? 'bg-green-500/15 text-green-300'
                         : 'bg-hos-bg-tertiary text-hos-text-secondary'
                     }`}
                   >
@@ -266,7 +266,7 @@ export default function FulfillmentCentersPage() {
                     className={`px-3 py-1.5 text-xs font-medium rounded-lg transition-colors ${
                       isActive
                         ? 'bg-hos-bg-tertiary text-hos-text-secondary hover:bg-hos-bg-tertiary'
-                        : 'bg-green-100 text-green-700 hover:bg-green-200'
+                        : 'bg-green-500/15 text-green-400 hover:bg-green-200'
                     }`}
                   >
                     {isActive ? 'Deactivate' : 'Activate'}
@@ -296,7 +296,7 @@ export default function FulfillmentCentersPage() {
                   ) : (
                     <button
                       onClick={() => setDeleteConfirmId(center.id)}
-                      className="px-3 py-1.5 text-xs font-medium rounded-lg bg-red-100 text-red-700 hover:bg-red-200 transition-colors"
+                      className="px-3 py-1.5 text-xs font-medium rounded-lg bg-red-500/15 text-red-400 hover:bg-red-200 transition-colors"
                     >
                       Delete
                     </button>

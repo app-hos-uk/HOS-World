@@ -68,10 +68,10 @@ export default function InfluencerEarningsPage() {
 
   const getStatusBadge = (status: string) => {
     const styles: Record<string, string> = {
-      PENDING: 'bg-yellow-100 text-yellow-800',
-      APPROVED: 'bg-green-100 text-green-800',
+      PENDING: 'bg-yellow-500/15 text-yellow-300',
+      APPROVED: 'bg-green-500/15 text-green-300',
       PAID: 'bg-hos-gold/20 text-hos-gold',
-      CANCELLED: 'bg-red-100 text-red-800',
+      CANCELLED: 'bg-red-500/15 text-red-300',
       ADJUSTED: 'bg-hos-gold/20 text-hos-gold',
     };
     return styles[status] || 'bg-hos-bg-tertiary text-white';
@@ -99,14 +99,14 @@ export default function InfluencerEarningsPage() {
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
           <div className="bg-hos-bg-secondary rounded-xl p-6 shadow-sm">
             <p className="text-hos-text-muted text-sm">Pending</p>
-            <p className="text-2xl font-bold text-yellow-600 mt-1">
+            <p className="text-2xl font-bold text-yellow-400 mt-1">
               {formatCurrency(earnings?.pending || 0)}
             </p>
             <p className="text-xs text-hos-text-muted mt-1">Awaiting order completion</p>
           </div>
           <div className="bg-hos-bg-secondary rounded-xl p-6 shadow-sm">
             <p className="text-hos-text-muted text-sm">Available</p>
-            <p className="text-2xl font-bold text-green-600 mt-1">
+            <p className="text-2xl font-bold text-green-400 mt-1">
               {formatCurrency(earnings?.available || 0)}
             </p>
             <p className="text-xs text-hos-text-muted mt-1">Ready for payout</p>
@@ -192,7 +192,7 @@ export default function InfluencerEarningsPage() {
                           </span>
                         </span>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm font-semibold text-green-600">
+                      <td className="px-6 py-4 whitespace-nowrap text-sm font-semibold text-green-400">
                         {formatCurrency(commission.amount, commission.currency)}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">

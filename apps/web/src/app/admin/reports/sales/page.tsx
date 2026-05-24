@@ -159,7 +159,7 @@ export default function AdminSalesReportsPage() {
               </p>
               {data?.growthRate && (
                 <p
-                  className={`text-sm mt-1 ${data.growthRate >= 0 ? 'text-green-600' : 'text-red-600'}`}
+                  className={`text-sm mt-1 ${data.growthRate >= 0 ? 'text-green-400' : 'text-red-400'}`}
                 >
                   {data.growthRate >= 0 ? '+' : ''}
                   {data.growthRate.toFixed(2)}% vs previous period
@@ -187,7 +187,7 @@ export default function AdminSalesReportsPage() {
             <div className="bg-hos-bg-secondary rounded-lg shadow p-6">
               <h3 className="text-sm font-medium text-hos-text-muted">Growth Rate</h3>
               <p
-                className={`text-3xl font-bold mt-2 ${data?.growthRate >= 0 ? 'text-green-600' : 'text-red-600'}`}
+                className={`text-3xl font-bold mt-2 ${data?.growthRate >= 0 ? 'text-green-400' : 'text-red-400'}`}
               >
                 {data?.growthRate ? `${data.growthRate >= 0 ? '+' : ''}${data.growthRate.toFixed(2)}%` : '0%'}
               </p>
@@ -219,7 +219,7 @@ export default function AdminSalesReportsPage() {
                 <div>
                   <h3 className="text-sm font-medium text-hos-text-muted">Growth</h3>
                   <p
-                    className={`text-2xl font-bold mt-1 ${data.periodComparison.growth.revenue >= 0 ? 'text-green-600' : 'text-red-600'}`}
+                    className={`text-2xl font-bold mt-1 ${data.periodComparison.growth.revenue >= 0 ? 'text-green-400' : 'text-red-400'}`}
                   >
                     {data.periodComparison.growth.revenue >= 0 ? '+' : ''}
                     {data.periodComparison.growth.revenue.toFixed(2)}%
@@ -326,8 +326,8 @@ export default function AdminSalesReportsPage() {
           )}
 
           {error && (
-            <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-              <p className="text-red-800">Error: {error}</p>
+            <div className="bg-red-500/10 border border-red-500/30 rounded-lg p-4">
+              <p className="text-red-300">Error: {error}</p>
             </div>
           )}
         </div>

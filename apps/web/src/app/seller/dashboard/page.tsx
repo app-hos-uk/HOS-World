@@ -114,7 +114,7 @@ export default function SellerDashboardPage() {
         )}
 
         {error && (
-          <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded mb-6 flex items-center justify-between">
+          <div className="bg-red-500/10 border border-red-500/30 text-red-400 px-4 py-3 rounded mb-6 flex items-center justify-between">
             <span>Error: {error}</span>
             <button
               onClick={() => fetchDashboardData(true)}
@@ -132,7 +132,7 @@ export default function SellerDashboardPage() {
                 <div className="flex items-center justify-between">
                   <div>
                     <h3 className="text-sm font-medium text-hos-text-secondary mb-1">Total Sales</h3>
-                    <p className="text-3xl font-bold text-green-600">
+                    <p className="text-3xl font-bold text-green-400">
                       {formatPrice(Number(dashboardData?.totalSales) || 0)}
                     </p>
                   </div>
@@ -140,7 +140,7 @@ export default function SellerDashboardPage() {
                 </div>
                 <Link
                   href="/seller/orders"
-                  className="text-sm text-green-600 hover:text-green-700 mt-2 inline-block"
+                  className="text-sm text-green-400 hover:text-green-400 mt-2 inline-block"
                 >
                   View orders →
                 </Link>
@@ -186,7 +186,7 @@ export default function SellerDashboardPage() {
                 <div className="flex items-center justify-between">
                   <div>
                     <h3 className="text-sm font-medium text-hos-text-secondary mb-1">Pending Approvals</h3>
-                    <p className="text-3xl font-bold text-orange-600">
+                    <p className="text-3xl font-bold text-orange-400">
                       {pendingApprovals.toLocaleString()}
                     </p>
                   </div>
@@ -194,7 +194,7 @@ export default function SellerDashboardPage() {
                 </div>
                 <Link
                   href="/seller/submissions"
-                  className="text-sm text-orange-600 hover:text-orange-700 mt-2 inline-block"
+                  className="text-sm text-orange-400 hover:text-orange-400 mt-2 inline-block"
                 >
                   View submissions →
                 </Link>
@@ -235,10 +235,10 @@ export default function SellerDashboardPage() {
                           <span
                             className={`px-2 py-1 text-xs font-medium rounded ${
                               ['PROCUREMENT_APPROVED', 'FINANCE_APPROVED', 'PUBLISHED', 'CATALOG_COMPLETED'].includes(submission.status)
-                                ? 'bg-green-100 text-green-800'
+                                ? 'bg-green-500/15 text-green-300'
                                 : ['PROCUREMENT_REJECTED', 'FINANCE_REJECTED', 'REJECTED'].includes(submission.status)
-                                  ? 'bg-red-100 text-red-800'
-                                  : 'bg-yellow-100 text-yellow-800'
+                                  ? 'bg-red-500/15 text-red-300'
+                                  : 'bg-yellow-500/15 text-yellow-300'
                             }`}
                           >
                             {submission.status?.replace(/_/g, ' ')}
@@ -293,9 +293,9 @@ export default function SellerDashboardPage() {
                           <span
                             className={`px-2 py-1 text-xs font-medium rounded ${
                               (order.status || '').toUpperCase() === 'DELIVERED'
-                                ? 'bg-green-100 text-green-800'
+                                ? 'bg-green-500/15 text-green-300'
                                 : (order.status || '').toUpperCase() === 'CANCELLED'
-                                  ? 'bg-red-100 text-red-800'
+                                  ? 'bg-red-500/15 text-red-300'
                                   : 'bg-hos-gold/20 text-hos-gold'
                             }`}
                           >

@@ -32,7 +32,7 @@ export default function AdminMessagingStatsPage() {
             </Link>
           </div>
           {error ? (
-            <p className="text-red-600 text-sm">{error}</p>
+            <p className="text-red-400 text-sm">{error}</p>
           ) : loading ? (
             <p className="text-hos-text-muted">Loading…</p>
           ) : (

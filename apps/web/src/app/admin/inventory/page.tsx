@@ -145,14 +145,14 @@ export default function AdminInventoryDashboardPage() {
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'COMPLETED':
-        return 'bg-green-100 text-green-800';
+        return 'bg-green-500/15 text-green-300';
       case 'PENDING':
-        return 'bg-yellow-100 text-yellow-800';
+        return 'bg-yellow-500/15 text-yellow-300';
       case 'IN_TRANSIT':
         return 'bg-hos-gold/20 text-hos-gold';
       case 'CANCELLED':
       case 'REJECTED':
-        return 'bg-red-100 text-red-800';
+        return 'bg-red-500/15 text-red-300';
       default:
         return 'bg-hos-bg-tertiary text-white';
     }
@@ -161,11 +161,11 @@ export default function AdminInventoryDashboardPage() {
   const getMovementTypeColor = (type: string) => {
     switch (type) {
       case 'IN':
-        return 'text-green-600';
+        return 'text-green-400';
       case 'OUT':
-        return 'text-red-600';
+        return 'text-red-400';
       case 'ADJUST':
-        return 'text-orange-600';
+        return 'text-orange-400';
       default:
         return 'text-hos-text-secondary';
     }
@@ -195,11 +195,11 @@ export default function AdminInventoryDashboardPage() {
                 </div>
                 <div className="bg-hos-bg-secondary rounded-lg shadow p-4">
                   <div className="text-sm text-hos-text-secondary mb-1">Active Warehouses</div>
-                  <div className="text-2xl font-bold text-green-600">{stats?.activeWarehouses || 0}</div>
+                  <div className="text-2xl font-bold text-green-400">{stats?.activeWarehouses || 0}</div>
                 </div>
                 <div className="bg-hos-bg-secondary rounded-lg shadow p-4">
                   <div className="text-sm text-hos-text-secondary mb-1">Pending Transfers</div>
-                  <div className="text-2xl font-bold text-yellow-600">{stats?.pendingTransfers || 0}</div>
+                  <div className="text-2xl font-bold text-yellow-400">{stats?.pendingTransfers || 0}</div>
                 </div>
                 <div className="bg-hos-bg-secondary rounded-lg shadow p-4">
                   <div className="text-sm text-hos-text-secondary mb-1">Total Products</div>
@@ -207,7 +207,7 @@ export default function AdminInventoryDashboardPage() {
                 </div>
                 <div className="bg-hos-bg-secondary rounded-lg shadow p-4">
                   <div className="text-sm text-hos-text-secondary mb-1">Low Stock Items</div>
-                  <div className="text-2xl font-bold text-red-600">{(stats?.lowStockProducts ?? 0).toLocaleString()}</div>
+                  <div className="text-2xl font-bold text-red-400">{(stats?.lowStockProducts ?? 0).toLocaleString()}</div>
                 </div>
                 <div className="bg-hos-bg-secondary rounded-lg shadow p-4">
                   <div className="text-sm text-hos-text-secondary mb-1">Total Stock Value</div>

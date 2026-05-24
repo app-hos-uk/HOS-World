@@ -256,11 +256,11 @@ export default function WholesalerProfilePage() {
             </div>
             <div className="flex items-center gap-2">
               {profile?.verified ? (
-                <span className="px-3 py-1 bg-green-100 text-green-800 rounded-full text-sm font-medium">
+                <span className="px-3 py-1 bg-green-500/15 text-green-300 rounded-full text-sm font-medium">
                   ✓ Verified Wholesaler
                 </span>
               ) : (
-                <span className="px-3 py-1 bg-yellow-100 text-yellow-800 rounded-full text-sm font-medium">
+                <span className="px-3 py-1 bg-yellow-500/15 text-yellow-300 rounded-full text-sm font-medium">
                   Pending Verification
                 </span>
               )}
@@ -341,10 +341,10 @@ export default function WholesalerProfilePage() {
                         onChange={(e) => setBusinessForm({ ...businessForm, legalBusinessName: sanitizeLabelInput(e.target.value, businessForm.legalBusinessName) })}
                         disabled={!editing}
                         placeholder="Registered company name"
-                        className={`w-full px-4 py-2 border rounded-lg disabled:bg-hos-bg-tertiary ${isLabelInvalid(businessForm.legalBusinessName) ? 'border-red-300 focus:border-red-500 focus:ring-red-200' : 'border-hos-border'}`}
+                        className={`w-full px-4 py-2 border rounded-lg disabled:bg-hos-bg-tertiary ${isLabelInvalid(businessForm.legalBusinessName) ? 'border-red-500/40 focus:border-red-500 focus:ring-red-200' : 'border-hos-border'}`}
                       />
                       {isLabelInvalid(businessForm.legalBusinessName) && (
-                        <p className="text-xs text-red-600 mt-1">Must include at least one letter</p>
+                        <p className="text-xs text-red-400 mt-1">Must include at least one letter</p>
                       )}
                     </div>
                     <div>
@@ -390,10 +390,10 @@ export default function WholesalerProfilePage() {
                         value={businessForm.city}
                         onChange={(e) => setBusinessForm({ ...businessForm, city: sanitizeLabelInput(e.target.value, businessForm.city) })}
                         disabled={!editing}
-                        className={`w-full px-4 py-2 border rounded-lg disabled:bg-hos-bg-tertiary ${isLabelInvalid(businessForm.city) ? 'border-red-300 focus:border-red-500 focus:ring-red-200' : 'border-hos-border'}`}
+                        className={`w-full px-4 py-2 border rounded-lg disabled:bg-hos-bg-tertiary ${isLabelInvalid(businessForm.city) ? 'border-red-500/40 focus:border-red-500 focus:ring-red-200' : 'border-hos-border'}`}
                       />
                       {isLabelInvalid(businessForm.city) && (
-                        <p className="text-xs text-red-600 mt-1">Must include at least one letter</p>
+                        <p className="text-xs text-red-400 mt-1">Must include at least one letter</p>
                       )}
                     </div>
                     <div className="md:col-span-2">
@@ -440,8 +440,8 @@ export default function WholesalerProfilePage() {
                   </div>
 
                   {profile?.accountNumberLast4 && (
-                    <div className="bg-green-50 border border-green-200 rounded-lg p-4">
-                      <p className="text-green-800 text-sm">
+                    <div className="bg-green-500/10 border border-green-500/30 rounded-lg p-4">
+                      <p className="text-green-300 text-sm">
                         ✓ Bank account ending in ****{profile.accountNumberLast4} is configured
                       </p>
                     </div>
@@ -455,10 +455,10 @@ export default function WholesalerProfilePage() {
                         value={bankForm.bankName}
                         onChange={(e) => setBankForm({ ...bankForm, bankName: sanitizeLabelInput(e.target.value, bankForm.bankName) })}
                         placeholder="e.g., Barclays, HSBC"
-                        className={`w-full px-4 py-2 border rounded-lg ${isLabelInvalid(bankForm.bankName) ? 'border-red-300 focus:border-red-500 focus:ring-red-200' : 'border-hos-border'}`}
+                        className={`w-full px-4 py-2 border rounded-lg ${isLabelInvalid(bankForm.bankName) ? 'border-red-500/40 focus:border-red-500 focus:ring-red-200' : 'border-hos-border'}`}
                       />
                       {isLabelInvalid(bankForm.bankName) && (
-                        <p className="text-xs text-red-600 mt-1">Must include at least one letter</p>
+                        <p className="text-xs text-red-400 mt-1">Must include at least one letter</p>
                       )}
                     </div>
                     <div>
@@ -468,10 +468,10 @@ export default function WholesalerProfilePage() {
                         value={bankForm.accountHolder}
                         onChange={(e) => setBankForm({ ...bankForm, accountHolder: sanitizeLabelInput(e.target.value, bankForm.accountHolder) })}
                         placeholder="Name on the account"
-                        className={`w-full px-4 py-2 border rounded-lg ${isLabelInvalid(bankForm.accountHolder) ? 'border-red-300 focus:border-red-500 focus:ring-red-200' : 'border-hos-border'}`}
+                        className={`w-full px-4 py-2 border rounded-lg ${isLabelInvalid(bankForm.accountHolder) ? 'border-red-500/40 focus:border-red-500 focus:ring-red-200' : 'border-hos-border'}`}
                       />
                       {isLabelInvalid(bankForm.accountHolder) && (
-                        <p className="text-xs text-red-600 mt-1">Must include at least one letter</p>
+                        <p className="text-xs text-red-400 mt-1">Must include at least one letter</p>
                       )}
                     </div>
                     <div>
@@ -523,10 +523,10 @@ export default function WholesalerProfilePage() {
                         value={opsForm.opsContactName}
                         onChange={(e) => setOpsForm({ ...opsForm, opsContactName: sanitizeLabelInput(e.target.value, opsForm.opsContactName) })}
                         placeholder="Operations manager name"
-                        className={`w-full px-4 py-2 border rounded-lg ${isLabelInvalid(opsForm.opsContactName) ? 'border-red-300 focus:border-red-500 focus:ring-red-200' : 'border-hos-border'}`}
+                        className={`w-full px-4 py-2 border rounded-lg ${isLabelInvalid(opsForm.opsContactName) ? 'border-red-500/40 focus:border-red-500 focus:ring-red-200' : 'border-hos-border'}`}
                       />
                       {isLabelInvalid(opsForm.opsContactName) && (
-                        <p className="text-xs text-red-600 mt-1">Must include at least one letter</p>
+                        <p className="text-xs text-red-400 mt-1">Must include at least one letter</p>
                       )}
                     </div>
                     <div>
@@ -594,10 +594,10 @@ export default function WholesalerProfilePage() {
                         type="text"
                         value={warehouseForm.city}
                         onChange={(e) => setWarehouseForm({ ...warehouseForm, city: sanitizeLabelInput(e.target.value, warehouseForm.city) })}
-                        className={`w-full px-4 py-2 border rounded-lg ${isLabelInvalid(warehouseForm.city) ? 'border-red-300 focus:border-red-500 focus:ring-red-200' : 'border-hos-border'}`}
+                        className={`w-full px-4 py-2 border rounded-lg ${isLabelInvalid(warehouseForm.city) ? 'border-red-500/40 focus:border-red-500 focus:ring-red-200' : 'border-hos-border'}`}
                       />
                       {isLabelInvalid(warehouseForm.city) && (
-                        <p className="text-xs text-red-600 mt-1">Must include at least one letter</p>
+                        <p className="text-xs text-red-400 mt-1">Must include at least one letter</p>
                       )}
                     </div>
                     <div>
@@ -606,10 +606,10 @@ export default function WholesalerProfilePage() {
                         type="text"
                         value={warehouseForm.state}
                         onChange={(e) => setWarehouseForm({ ...warehouseForm, state: sanitizeLabelInput(e.target.value, warehouseForm.state) })}
-                        className={`w-full px-4 py-2 border rounded-lg ${isLabelInvalid(warehouseForm.state) ? 'border-red-300 focus:border-red-500 focus:ring-red-200' : 'border-hos-border'}`}
+                        className={`w-full px-4 py-2 border rounded-lg ${isLabelInvalid(warehouseForm.state) ? 'border-red-500/40 focus:border-red-500 focus:ring-red-200' : 'border-hos-border'}`}
                       />
                       {isLabelInvalid(warehouseForm.state) && (
-                        <p className="text-xs text-red-600 mt-1">Must include at least one letter</p>
+                        <p className="text-xs text-red-400 mt-1">Must include at least one letter</p>
                       )}
                     </div>
                     <div>
@@ -625,10 +625,10 @@ export default function WholesalerProfilePage() {
                             postalCode: sanitizePostalInput(e.target.value),
                           })
                         }
-                        className={`w-full px-4 py-2 border rounded-lg ${isPostalInvalid(warehouseForm.postalCode) ? 'border-red-300 focus:border-red-500 focus:ring-red-200' : 'border-hos-border'}`}
+                        className={`w-full px-4 py-2 border rounded-lg ${isPostalInvalid(warehouseForm.postalCode) ? 'border-red-500/40 focus:border-red-500 focus:ring-red-200' : 'border-hos-border'}`}
                       />
                       {isPostalInvalid(warehouseForm.postalCode) && (
-                        <p className="text-xs text-red-600 mt-1">Must include at least one digit</p>
+                        <p className="text-xs text-red-400 mt-1">Must include at least one digit</p>
                       )}
                     </div>
                     <div>

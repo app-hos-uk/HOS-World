@@ -9,10 +9,10 @@ import toast from 'react-hot-toast';
 type PayoutStatus = 'ALL' | 'PENDING' | 'PROCESSING' | 'PAID' | 'FAILED';
 
 const STATUS_STYLES: Record<string, string> = {
-  PENDING: 'bg-yellow-100 text-yellow-800',
+  PENDING: 'bg-yellow-500/15 text-yellow-300',
   PROCESSING: 'bg-hos-gold/20 text-hos-gold',
-  PAID: 'bg-green-100 text-green-800',
-  FAILED: 'bg-red-100 text-red-800',
+  PAID: 'bg-green-500/15 text-green-300',
+  FAILED: 'bg-red-500/15 text-red-300',
 };
 
 export default function FinancePayoutsPage() {
@@ -189,7 +189,7 @@ export default function FinancePayoutsPage() {
         </div>
 
         {error && (
-          <div className="mb-6 p-4 bg-red-100 border border-red-400 text-red-700 rounded-lg">
+          <div className="mb-6 p-4 bg-red-500/15 border border-red-400 text-red-400 rounded-lg">
             <p className="font-semibold">Error</p>
             <p className="text-sm mt-1">{error}</p>
           </div>

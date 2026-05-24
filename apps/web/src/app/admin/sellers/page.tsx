@@ -342,7 +342,7 @@ export default function AdminSellersPage() {
   const getRoleBadge = (role: string) => {
     const styles: Record<string, string> = {
       B2C_SELLER: 'bg-hos-gold/20 text-hos-gold',
-      WHOLESALER: 'bg-green-100 text-green-800',
+      WHOLESALER: 'bg-green-500/15 text-green-300',
       SELLER: 'bg-hos-bg-tertiary text-white',
     };
     const labels: Record<string, string> = {
@@ -433,28 +433,28 @@ export default function AdminSellersPage() {
                 className={`bg-hos-bg-secondary rounded-lg shadow p-3 text-left hover:shadow-md ${typeFilter === 'WHOLESALER' ? 'ring-2 ring-hos-gold/50' : ''}`}
               >
                 <p className="text-xs text-hos-text-muted">Wholesalers</p>
-                <p className="text-xl font-bold text-green-600">{stats.wholesalers}</p>
+                <p className="text-xl font-bold text-green-400">{stats.wholesalers}</p>
               </button>
               <button
                 onClick={() => setStatusFilter('ACTIVE')}
                 className={`bg-hos-bg-secondary rounded-lg shadow p-3 text-left hover:shadow-md ${statusFilter === 'ACTIVE' ? 'ring-2 ring-hos-gold/50' : ''}`}
               >
                 <p className="text-xs text-hos-text-muted">Active</p>
-                <p className="text-xl font-bold text-green-600">{stats.activeSellers}</p>
+                <p className="text-xl font-bold text-green-400">{stats.activeSellers}</p>
               </button>
               <button
                 onClick={() => setStatusFilter('INACTIVE')}
                 className={`bg-hos-bg-secondary rounded-lg shadow p-3 text-left hover:shadow-md ${statusFilter === 'INACTIVE' ? 'ring-2 ring-hos-gold/50' : ''}`}
               >
                 <p className="text-xs text-hos-text-muted">Inactive</p>
-                <p className="text-xl font-bold text-red-600">{stats.inactiveSellers}</p>
+                <p className="text-xl font-bold text-red-400">{stats.inactiveSellers}</p>
               </button>
               <button
                 onClick={() => setActiveTab('invitations')}
                 className={`bg-hos-bg-secondary rounded-lg shadow p-3 text-left hover:shadow-md ${activeTab === 'invitations' ? 'ring-2 ring-hos-gold/50' : ''}`}
               >
                 <p className="text-xs text-hos-text-muted">Pending Invites</p>
-                <p className="text-xl font-bold text-yellow-600">{pendingInvitationsCount}</p>
+                <p className="text-xl font-bold text-yellow-400">{pendingInvitationsCount}</p>
               </button>
               <div className="bg-hos-bg-secondary rounded-lg shadow p-3">
                 <p className="text-xs text-hos-text-muted">New This Month</p>
@@ -499,11 +499,11 @@ export default function AdminSellersPage() {
                 <div className="space-y-4">
                   <div className="flex justify-between items-center p-3 bg-hos-bg-secondary rounded-lg">
                     <span className="text-hos-text-secondary">Total Active Sellers</span>
-                    <span className="text-xl font-bold text-green-600">{stats?.activeSellers || 0}</span>
+                    <span className="text-xl font-bold text-green-400">{stats?.activeSellers || 0}</span>
                   </div>
                   <div className="flex justify-between items-center p-3 bg-hos-bg-secondary rounded-lg">
                     <span className="text-hos-text-secondary">Pending Invitations</span>
-                    <span className="text-xl font-bold text-yellow-600">{pendingInvitationsCount}</span>
+                    <span className="text-xl font-bold text-yellow-400">{pendingInvitationsCount}</span>
                   </div>
                   <div className="flex justify-between items-center p-3 bg-hos-bg-secondary rounded-lg">
                     <span className="text-hos-text-secondary">Accepted This Month</span>
@@ -511,7 +511,7 @@ export default function AdminSellersPage() {
                   </div>
                   <div className="flex justify-between items-center p-3 bg-hos-bg-secondary rounded-lg">
                     <span className="text-hos-text-secondary">Expired Invitations</span>
-                    <span className="text-xl font-bold text-red-600">
+                    <span className="text-xl font-bold text-red-400">
                       {invitations.filter((i) => invitationStatusNormalized(i.status) === 'EXPIRED').length}
                     </span>
                   </div>
@@ -521,9 +521,9 @@ export default function AdminSellersPage() {
           )}
 
           {error && (
-            <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-              <p className="text-red-800">Error: {error}</p>
-              <button onClick={fetchSellers} className="mt-2 text-red-600 hover:text-red-800 text-sm">Retry</button>
+            <div className="bg-red-500/10 border border-red-500/30 rounded-lg p-4">
+              <p className="text-red-300">Error: {error}</p>
+              <button onClick={fetchSellers} className="mt-2 text-red-400 hover:text-red-300 text-sm">Retry</button>
             </div>
           )}
 
@@ -665,7 +665,7 @@ export default function AdminSellersPage() {
                               <td className="px-4 py-3">{getRoleBadge(seller.role)}</td>
                               <td className="px-4 py-3">
                                 <div className="flex flex-col gap-1">
-                                  <span className={`px-2 py-0.5 text-xs rounded-full w-fit ${seller.isActive !== false ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
+                                  <span className={`px-2 py-0.5 text-xs rounded-full w-fit ${seller.isActive !== false ? 'bg-green-500/15 text-green-300' : 'bg-red-500/15 text-red-300'}`}>
                                     {seller.isActive !== false ? 'Active' : 'Inactive'}
                                   </span>
                                   {seller.emailVerified && (
@@ -692,7 +692,7 @@ export default function AdminSellersPage() {
                                   <button
                                     onClick={() => handleToggleStatus(seller)}
                                     disabled={actionLoading}
-                                    className={`px-2 py-1 text-sm rounded ${seller.isActive !== false ? 'text-yellow-600 hover:bg-yellow-50' : 'text-green-600 hover:bg-green-50'}`}
+                                    className={`px-2 py-1 text-sm rounded ${seller.isActive !== false ? 'text-yellow-400 hover:bg-yellow-500/10' : 'text-green-400 hover:bg-green-500/10'}`}
                                   >
                                     {seller.isActive !== false ? 'Suspend' : 'Activate'}
                                   </button>
@@ -778,11 +778,11 @@ export default function AdminSellersPage() {
                           <td className="px-6 py-4 whitespace-nowrap">
                             <span className={`px-2 py-1 text-xs rounded-full ${
                               invitationStatusNormalized(inv.status) === 'PENDING'
-                                ? 'bg-yellow-100 text-yellow-800'
+                                ? 'bg-yellow-500/15 text-yellow-300'
                                 : invitationStatusNormalized(inv.status) === 'ACCEPTED'
-                                  ? 'bg-green-100 text-green-800'
+                                  ? 'bg-green-500/15 text-green-300'
                                   : invitationStatusNormalized(inv.status) === 'EXPIRED'
-                                    ? 'bg-red-100 text-red-800'
+                                    ? 'bg-red-500/15 text-red-300'
                                     : invitationStatusNormalized(inv.status) === 'CANCELLED'
                                       ? 'bg-hos-bg-tertiary text-hos-text-secondary'
                                       : 'bg-hos-bg-tertiary text-white'
@@ -807,7 +807,7 @@ export default function AdminSellersPage() {
                                 </button>
                                 <button
                                   onClick={() => handleCancelInvitation(inv.id)}
-                                  className="text-red-600 hover:text-red-800"
+                                  className="text-red-400 hover:text-red-300"
                                 >
                                   Cancel
                                 </button>
@@ -919,7 +919,7 @@ export default function AdminSellersPage() {
                         <p className="text-hos-text-muted">{selectedSeller.email}</p>
                         <div className="flex items-center gap-2 mt-2">
                           {getRoleBadge(selectedSeller.role)}
-                          <span className={`px-2 py-0.5 text-xs rounded-full ${selectedSeller.isActive !== false ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
+                          <span className={`px-2 py-0.5 text-xs rounded-full ${selectedSeller.isActive !== false ? 'bg-green-500/15 text-green-300' : 'bg-red-500/15 text-red-300'}`}>
                             {selectedSeller.isActive !== false ? 'Active' : 'Inactive'}
                           </span>
                         </div>
@@ -968,11 +968,11 @@ export default function AdminSellersPage() {
                         <p className="text-sm text-hos-text-muted">Orders</p>
                       </div>
                       <div className="bg-hos-bg-secondary rounded-lg p-4 text-center">
-                        <p className="text-2xl font-bold text-green-600">{formatPrice(selectedSeller.totalRevenue || 0)}</p>
+                        <p className="text-2xl font-bold text-green-400">{formatPrice(selectedSeller.totalRevenue || 0)}</p>
                         <p className="text-sm text-hos-text-muted">Revenue</p>
                       </div>
                       <div className="bg-hos-bg-secondary rounded-lg p-4 text-center">
-                        <p className="text-2xl font-bold text-yellow-600">{selectedSeller.rating?.toFixed(1) || 'N/A'}</p>
+                        <p className="text-2xl font-bold text-yellow-400">{selectedSeller.rating?.toFixed(1) || 'N/A'}</p>
                         <p className="text-sm text-hos-text-muted">Rating</p>
                       </div>
                     </div>
@@ -1029,7 +1029,7 @@ export default function AdminSellersPage() {
                       <button
                         onClick={() => { setShowDetailModal(false); handleToggleStatus(selectedSeller); }}
                         disabled={actionLoading}
-                        className={`px-4 py-2 rounded-lg ${selectedSeller.isActive !== false ? 'bg-yellow-100 text-yellow-700 hover:bg-yellow-200' : 'bg-green-100 text-green-700 hover:bg-green-200'}`}
+                        className={`px-4 py-2 rounded-lg ${selectedSeller.isActive !== false ? 'bg-yellow-500/15 text-yellow-400 hover:bg-yellow-200' : 'bg-green-500/15 text-green-400 hover:bg-green-200'}`}
                       >
                         {selectedSeller.isActive !== false ? 'Suspend Seller' : 'Activate Seller'}
                       </button>

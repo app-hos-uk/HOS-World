@@ -190,9 +190,9 @@ export default function WishlistPage() {
 
   const getStockStatus = (stock?: number) => {
     if (stock === undefined) return null;
-    if (stock <= 0) return { text: 'Out of Stock', class: 'bg-red-100 text-red-800' };
-    if (stock <= 5) return { text: `Only ${stock} left`, class: 'bg-orange-100 text-orange-800' };
-    return { text: 'In Stock', class: 'bg-green-100 text-green-800' };
+    if (stock <= 0) return { text: 'Out of Stock', class: 'bg-red-500/15 text-red-300' };
+    if (stock <= 5) return { text: `Only ${stock} left`, class: 'bg-orange-500/15 text-orange-300' };
+    return { text: 'In Stock', class: 'bg-green-500/15 text-green-300' };
   };
 
   return (
@@ -239,15 +239,15 @@ export default function WishlistPage() {
               </div>
               <div className="bg-hos-bg-secondary rounded-lg shadow p-4">
                 <h3 className="text-xs font-medium text-hos-text-muted uppercase">In Stock</h3>
-                <p className="text-xl font-bold text-green-600 mt-1">{stats.inStock}</p>
+                <p className="text-xl font-bold text-green-400 mt-1">{stats.inStock}</p>
               </div>
               <div className="bg-hos-bg-secondary rounded-lg shadow p-4">
                 <h3 className="text-xs font-medium text-hos-text-muted uppercase">Out of Stock</h3>
-                <p className="text-xl font-bold text-red-600 mt-1">{stats.outOfStock}</p>
+                <p className="text-xl font-bold text-red-400 mt-1">{stats.outOfStock}</p>
               </div>
               <div className="bg-hos-bg-secondary rounded-lg shadow p-4">
                 <h3 className="text-xs font-medium text-hos-text-muted uppercase">On Sale</h3>
-                <p className="text-xl font-bold text-orange-600 mt-1">{stats.onSale}</p>
+                <p className="text-xl font-bold text-orange-400 mt-1">{stats.onSale}</p>
               </div>
             </div>
           )}
@@ -363,7 +363,7 @@ export default function WishlistPage() {
                         <button
                           onClick={() => handleRemoveFromWishlist(item.productId)}
                           disabled={isRemoving}
-                          className="px-3 py-2 border border-hos-border rounded-lg hover:bg-red-50 hover:border-red-300 transition-colors text-sm flex items-center justify-center"
+                          className="px-3 py-2 border border-hos-border rounded-lg hover:bg-red-500/10 hover:border-red-500/40 transition-colors text-sm flex items-center justify-center"
                           title="Remove from wishlist"
                         >
                           {isRemoving ? (

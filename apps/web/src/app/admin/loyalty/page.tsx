@@ -37,10 +37,10 @@ export default function AdminLoyaltyDashboardPage() {
 
   const colorMap: Record<string, string> = {
     purple: 'bg-hos-gold/10 text-hos-gold-hover',
-    amber: 'bg-amber-50 text-amber-700',
+    amber: 'bg-amber-500/10 text-amber-400',
     blue: 'bg-hos-gold/10 text-hos-gold',
-    green: 'bg-green-50 text-green-700',
-    rose: 'bg-rose-50 text-rose-700',
+    green: 'bg-green-500/10 text-green-400',
+    rose: 'bg-rose-500/10 text-rose-400',
     indigo: 'bg-hos-gold/10 text-hos-gold',
   };
 

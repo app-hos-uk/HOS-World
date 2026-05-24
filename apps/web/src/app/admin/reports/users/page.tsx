@@ -152,7 +152,7 @@ export default function AdminCustomerAnalyticsPage() {
             </div>
             <div className="bg-hos-bg-secondary rounded-lg shadow p-6">
               <h3 className="text-sm font-medium text-hos-text-muted">New Customers</h3>
-              <p className="text-3xl font-bold text-green-600 mt-2">{data?.newCustomers || 0}</p>
+              <p className="text-3xl font-bold text-green-400 mt-2">{data?.newCustomers || 0}</p>
             </div>
             <div className="bg-hos-bg-secondary rounded-lg shadow p-6">
               <h3 className="text-sm font-medium text-hos-text-muted">Returning Customers</h3>
@@ -185,7 +185,7 @@ export default function AdminCustomerAnalyticsPage() {
             </div>
             <div className="bg-hos-bg-secondary rounded-lg shadow p-6">
               <h3 className="text-sm font-medium text-hos-text-muted mb-2">Churn Rate</h3>
-              <p className="text-4xl font-bold text-red-600">
+              <p className="text-4xl font-bold text-red-400">
                 {data?.churnRate ? `${data.churnRate.toFixed(1)}%` : '0%'}
               </p>
               <p className="text-sm text-hos-text-muted mt-2">
@@ -194,7 +194,7 @@ export default function AdminCustomerAnalyticsPage() {
             </div>
             <div className="bg-hos-bg-secondary rounded-lg shadow p-6">
               <h3 className="text-sm font-medium text-hos-text-muted mb-2">Retention Rate</h3>
-              <p className="text-4xl font-bold text-green-600">
+              <p className="text-4xl font-bold text-green-400">
                 {data?.retentionRate ? `${data.retentionRate.toFixed(1)}%` : '0%'}
               </p>
               <p className="text-sm text-hos-text-muted mt-2">
@@ -248,8 +248,8 @@ export default function AdminCustomerAnalyticsPage() {
           )}
 
           {error && (
-            <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-              <p className="text-red-800">Error: {error}</p>
+            <div className="bg-red-500/10 border border-red-500/30 rounded-lg p-4">
+              <p className="text-red-300">Error: {error}</p>
             </div>
           )}
         </div>

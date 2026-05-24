@@ -213,7 +213,7 @@ export default function FinancePricingPage() {
         </div>
 
           {error && (
-            <div className="mb-6 p-4 bg-red-100 border border-red-400 text-red-700 rounded-lg">
+            <div className="mb-6 p-4 bg-red-500/15 border border-red-400 text-red-400 rounded-lg">
               <p className="font-semibold">Error</p>
               <p className="text-sm mt-1">{error}</p>
             </div>
@@ -327,7 +327,7 @@ export default function FinancePricingPage() {
                       </p>
                     </div>
                     <div className="flex items-start">
-                      <span className="px-3 py-1 text-xs font-medium bg-green-100 text-green-800 rounded">
+                      <span className="px-3 py-1 text-xs font-medium bg-green-500/15 text-green-300 rounded">
                         APPROVED
                       </span>
                     </div>

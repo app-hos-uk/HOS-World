@@ -88,21 +88,21 @@ interface Stats {
 
 const STATUSES = [
   { value: 'SUBMITTED', label: 'Submitted', color: 'bg-hos-bg-tertiary text-white', chartColor: '#9ca3af' },
-  { value: 'UNDER_REVIEW', label: 'Under Review', color: 'bg-yellow-100 text-yellow-800', chartColor: '#fbbf24' },
+  { value: 'UNDER_REVIEW', label: 'Under Review', color: 'bg-yellow-500/15 text-yellow-300', chartColor: '#fbbf24' },
   { value: 'PROCUREMENT_APPROVED', label: 'Procurement Approved', color: 'bg-hos-gold/20 text-hos-gold', chartColor: '#3b82f6' },
-  { value: 'PROCUREMENT_REJECTED', label: 'Procurement Rejected', color: 'bg-red-100 text-red-800', chartColor: '#ef4444' },
-  { value: 'SHIPPED_TO_FC', label: 'Shipped to FC', color: 'bg-orange-100 text-orange-800', chartColor: '#f97316' },
-  { value: 'FC_ACCEPTED', label: 'FC Accepted', color: 'bg-teal-100 text-teal-800', chartColor: '#14b8a6' },
-  { value: 'FC_REJECTED', label: 'FC Rejected', color: 'bg-red-100 text-red-800', chartColor: '#dc2626' },
+  { value: 'PROCUREMENT_REJECTED', label: 'Procurement Rejected', color: 'bg-red-500/15 text-red-300', chartColor: '#ef4444' },
+  { value: 'SHIPPED_TO_FC', label: 'Shipped to FC', color: 'bg-orange-500/15 text-orange-300', chartColor: '#f97316' },
+  { value: 'FC_ACCEPTED', label: 'FC Accepted', color: 'bg-teal-500/15 text-teal-300', chartColor: '#14b8a6' },
+  { value: 'FC_REJECTED', label: 'FC Rejected', color: 'bg-red-500/15 text-red-300', chartColor: '#dc2626' },
   { value: 'CATALOG_PENDING', label: 'Catalog Pending', color: 'bg-hos-gold/10 text-hos-gold', chartColor: '#818cf8' },
   { value: 'CATALOG_COMPLETED', label: 'Catalog Completed', color: 'bg-hos-gold/20 text-hos-gold', chartColor: '#6366f1' },
   { value: 'MARKETING_PENDING', label: 'Marketing Pending', color: 'bg-hos-gold/10 text-hos-gold', chartColor: '#a78bfa' },
   { value: 'MARKETING_COMPLETED', label: 'Marketing Completed', color: 'bg-hos-gold/20 text-hos-gold', chartColor: '#8b5cf6' },
-  { value: 'CONTENT_COMPLETED', label: 'Content Completed', color: 'bg-green-100 text-green-800', chartColor: '#10b981' },
-  { value: 'FINANCE_PENDING', label: 'Finance Pending', color: 'bg-cyan-50 text-cyan-600', chartColor: '#22d3ee' },
-  { value: 'FINANCE_APPROVED', label: 'Finance Approved', color: 'bg-cyan-100 text-cyan-800', chartColor: '#06b6d4' },
-  { value: 'PUBLISHED', label: 'Published', color: 'bg-green-100 text-green-800', chartColor: '#10b981' },
-  { value: 'REJECTED', label: 'Rejected', color: 'bg-red-100 text-red-800', chartColor: '#ef4444' },
+  { value: 'CONTENT_COMPLETED', label: 'Content Completed', color: 'bg-green-500/15 text-green-300', chartColor: '#10b981' },
+  { value: 'FINANCE_PENDING', label: 'Finance Pending', color: 'bg-cyan-500/10 text-cyan-400', chartColor: '#22d3ee' },
+  { value: 'FINANCE_APPROVED', label: 'Finance Approved', color: 'bg-cyan-500/15 text-cyan-300', chartColor: '#06b6d4' },
+  { value: 'PUBLISHED', label: 'Published', color: 'bg-green-500/15 text-green-300', chartColor: '#10b981' },
+  { value: 'REJECTED', label: 'Rejected', color: 'bg-red-500/15 text-red-300', chartColor: '#ef4444' },
 ];
 
 export default function AdminSubmissionsPage() {
@@ -378,7 +378,7 @@ export default function AdminSubmissionsPage() {
                 className={`bg-hos-bg-secondary rounded-lg shadow p-3 text-left hover:shadow-md ${statusFilter === 'UNDER_REVIEW' ? 'ring-2 ring-hos-gold/50' : ''}`}
               >
                 <p className="text-xs text-hos-text-muted">Review</p>
-                <p className="text-xl font-bold text-yellow-600">{stats.underReview}</p>
+                <p className="text-xl font-bold text-yellow-400">{stats.underReview}</p>
               </button>
               <button
                 onClick={() => setStatusFilter('PROCUREMENT_APPROVED')}
@@ -392,7 +392,7 @@ export default function AdminSubmissionsPage() {
                 className={`bg-hos-bg-secondary rounded-lg shadow p-3 text-left hover:shadow-md ${statusFilter === 'PROCUREMENT_REJECTED' ? 'ring-2 ring-hos-gold/50' : ''}`}
               >
                 <p className="text-xs text-hos-text-muted">Proc. Rejected</p>
-                <p className="text-xl font-bold text-red-600">{stats.procurementRejected}</p>
+                <p className="text-xl font-bold text-red-400">{stats.procurementRejected}</p>
               </button>
               <button
                 onClick={() => setStatusFilter('CATALOG_COMPLETED')}
@@ -413,28 +413,28 @@ export default function AdminSubmissionsPage() {
                 className={`bg-hos-bg-secondary rounded-lg shadow p-3 text-left hover:shadow-md ${statusFilter === 'CONTENT_COMPLETED' ? 'ring-2 ring-hos-gold/50' : ''}`}
               >
                 <p className="text-xs text-hos-text-muted">Content</p>
-                <p className="text-xl font-bold text-green-600">{stats.contentCompleted}</p>
+                <p className="text-xl font-bold text-green-400">{stats.contentCompleted}</p>
               </button>
               <button
                 onClick={() => setStatusFilter('FINANCE_APPROVED')}
                 className={`bg-hos-bg-secondary rounded-lg shadow p-3 text-left hover:shadow-md ${statusFilter === 'FINANCE_APPROVED' ? 'ring-2 ring-hos-gold/50' : ''}`}
               >
                 <p className="text-xs text-hos-text-muted">Finance</p>
-                <p className="text-xl font-bold text-cyan-600">{stats.financeApproved}</p>
+                <p className="text-xl font-bold text-cyan-400">{stats.financeApproved}</p>
               </button>
               <button
                 onClick={() => setStatusFilter('PUBLISHED')}
                 className={`bg-hos-bg-secondary rounded-lg shadow p-3 text-left hover:shadow-md ${statusFilter === 'PUBLISHED' ? 'ring-2 ring-hos-gold/50' : ''}`}
               >
                 <p className="text-xs text-hos-text-muted">Published</p>
-                <p className="text-xl font-bold text-green-600">{stats.published}</p>
+                <p className="text-xl font-bold text-green-400">{stats.published}</p>
               </button>
               <button
                 onClick={() => setStatusFilter('REJECTED')}
                 className={`bg-hos-bg-secondary rounded-lg shadow p-3 text-left hover:shadow-md ${statusFilter === 'REJECTED' ? 'ring-2 ring-hos-gold/50' : ''}`}
               >
                 <p className="text-xs text-hos-text-muted">Rejected</p>
-                <p className="text-xl font-bold text-red-600">{stats.rejected}</p>
+                <p className="text-xl font-bold text-red-400">{stats.rejected}</p>
               </button>
             </div>
           )}
@@ -504,9 +504,9 @@ export default function AdminSubmissionsPage() {
           )}
 
           {error && (
-            <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-              <p className="text-red-800">Error: {error}</p>
-              <button onClick={fetchSubmissions} className="mt-2 text-red-600 hover:text-red-800 text-sm">Retry</button>
+            <div className="bg-red-500/10 border border-red-500/30 rounded-lg p-4">
+              <p className="text-red-300">Error: {error}</p>
+              <button onClick={fetchSubmissions} className="mt-2 text-red-400 hover:text-red-300 text-sm">Retry</button>
             </div>
           )}
 
@@ -628,8 +628,8 @@ export default function AdminSubmissionsPage() {
                                   {submission.duplicateProducts && submission.duplicateProducts.length > 0 && (
                                     <span className={`inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[10px] font-semibold ${
                                       submission.procurementNotes?.includes('[Duplicate acknowledged]')
-                                        ? 'bg-amber-100 text-amber-800'
-                                        : 'bg-red-100 text-red-700'
+                                        ? 'bg-amber-500/15 text-amber-300'
+                                        : 'bg-red-500/15 text-red-400'
                                     }`}>
                                       {submission.duplicateProducts.length} dup{submission.duplicateProducts.length > 1 ? 's' : ''}
                                       {submission.procurementNotes?.includes('[Duplicate acknowledged]') && ' (ack)'}
@@ -664,13 +664,13 @@ export default function AdminSubmissionsPage() {
                                 <>
                                   <button
                                     onClick={() => handleAction(submission, 'approve')}
-                                    className="px-2 py-1 text-sm text-green-600 hover:bg-green-50 rounded"
+                                    className="px-2 py-1 text-sm text-green-400 hover:bg-green-500/10 rounded"
                                   >
                                     Approve
                                   </button>
                                   <button
                                     onClick={() => handleAction(submission, 'reject')}
-                                    className="px-2 py-1 text-sm text-red-600 hover:bg-red-50 rounded"
+                                    className="px-2 py-1 text-sm text-red-400 hover:bg-red-500/10 rounded"
                                   >
                                     Reject
                                   </button>
@@ -721,7 +721,7 @@ export default function AdminSubmissionsPage() {
                           return (
                             <div key={step} className="flex flex-col items-center flex-1">
                               <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium ${
-                                isCompleted ? 'bg-green-500 text-white' : isCurrent ? 'bg-hos-gold text-[#1a1406]' : 'bg-hos-bg-tertiary text-hos-text-muted'
+                                isCompleted ? 'bg-green-500/10 text-white' : isCurrent ? 'bg-hos-gold text-[#1a1406]' : 'bg-hos-bg-tertiary text-hos-text-muted'
                               }`}>
                                 {isCompleted ? '✓' : index + 1}
                               </div>
@@ -731,10 +731,10 @@ export default function AdminSubmissionsPage() {
                         })}
                       </div>
                       {selectedSubmission.status === 'REJECTED' && (
-                        <div className="mt-3 p-3 bg-red-50 rounded-lg">
-                          <p className="text-sm text-red-800 font-medium">Rejected</p>
+                        <div className="mt-3 p-3 bg-red-500/10 rounded-lg">
+                          <p className="text-sm text-red-300 font-medium">Rejected</p>
                           {selectedSubmission.rejectionReason && (
-                            <p className="text-sm text-red-600 mt-1">{selectedSubmission.rejectionReason}</p>
+                            <p className="text-sm text-red-400 mt-1">{selectedSubmission.rejectionReason}</p>
                           )}
                         </div>
                       )}
@@ -819,8 +819,8 @@ export default function AdminSubmissionsPage() {
                           Duplicate Detection
                           <span className={`px-2 py-0.5 rounded text-xs font-bold ${
                             selectedSubmission.procurementNotes?.includes('[Duplicate acknowledged]')
-                              ? 'bg-amber-100 text-amber-800'
-                              : 'bg-red-100 text-red-700'
+                              ? 'bg-amber-500/15 text-amber-300'
+                              : 'bg-red-500/15 text-red-400'
                           }`}>
                             {selectedSubmission.duplicateProducts.length} match{selectedSubmission.duplicateProducts.length > 1 ? 'es' : ''}
                           </span>
@@ -843,7 +843,7 @@ export default function AdminSubmissionsPage() {
                                 </div>
                                 <div className="ml-3 shrink-0 text-right">
                                   <span className={`inline-block px-2 py-1 rounded text-xs font-bold ${
-                                    score >= 90 ? 'bg-red-100 text-red-800' : score >= 80 ? 'bg-orange-100 text-orange-800' : 'bg-yellow-100 text-yellow-800'
+                                    score >= 90 ? 'bg-red-500/15 text-red-300' : score >= 80 ? 'bg-orange-500/15 text-orange-300' : 'bg-yellow-500/15 text-yellow-300'
                                   }`}>
                                     {score}%
                                   </span>
@@ -853,9 +853,9 @@ export default function AdminSubmissionsPage() {
                           })}
                         </div>
                         {selectedSubmission.procurementNotes?.includes('[Duplicate acknowledged]') && (
-                          <div className="mt-3 p-3 bg-amber-50 border border-amber-200 rounded-lg">
-                            <p className="text-sm font-semibold text-amber-900">Approved with Duplicate Acknowledgement</p>
-                            <p className="text-xs text-amber-700 mt-1">
+                          <div className="mt-3 p-3 bg-amber-500/10 border border-amber-500/30 rounded-lg">
+                            <p className="text-sm font-semibold text-amber-300">Approved with Duplicate Acknowledgement</p>
+                            <p className="text-xs text-amber-400 mt-1">
                               {selectedSubmission.procurementNotes
                                 .split('\n\n')
                                 .filter((part: string) => part.startsWith('[Duplicate acknowledged]'))
@@ -863,7 +863,7 @@ export default function AdminSubmissionsPage() {
                                 .join('; ') || 'No reason provided'}
                             </p>
                             {selectedSubmission.procurementApprovedAt && (
-                              <p className="text-xs text-amber-600 mt-1">
+                              <p className="text-xs text-amber-400 mt-1">
                                 Approved at: {new Date(selectedSubmission.procurementApprovedAt).toLocaleString()}
                               </p>
                             )}
@@ -908,7 +908,7 @@ export default function AdminSubmissionsPage() {
                             <div className="p-2 bg-hos-gold/10 rounded">
                               <p className="text-hos-gold font-medium">Procurement:</p>
                               {selectedSubmission.procurementNotes.split('\n\n').map((part: string, i: number) => (
-                                <p key={i} className={`mt-0.5 ${part.startsWith('[Duplicate acknowledged]') ? 'text-amber-700 font-medium' : 'text-hos-gold'}`}>
+                                <p key={i} className={`mt-0.5 ${part.startsWith('[Duplicate acknowledged]') ? 'text-amber-400 font-medium' : 'text-hos-gold'}`}>
                                   {part}
                                 </p>
                               ))}
@@ -927,9 +927,9 @@ export default function AdminSubmissionsPage() {
                             </div>
                           )}
                           {selectedSubmission.financeNotes && (
-                            <div className="p-2 bg-cyan-50 rounded">
-                              <p className="text-cyan-800 font-medium">Finance:</p>
-                              <p className="text-cyan-700">{selectedSubmission.financeNotes}</p>
+                            <div className="p-2 bg-cyan-500/10 rounded">
+                              <p className="text-cyan-300 font-medium">Finance:</p>
+                              <p className="text-cyan-400">{selectedSubmission.financeNotes}</p>
                             </div>
                           )}
                         </div>

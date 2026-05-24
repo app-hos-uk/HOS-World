@@ -71,9 +71,9 @@ export default function AdminDiscrepanciesPage() {
                         <td className="px-6 py-4 whitespace-nowrap text-sm">{disc.type}</td>
                         <td className="px-6 py-4 whitespace-nowrap">
                           <span className={`px-2 py-1 text-xs rounded-full ${
-                            disc.severity === 'CRITICAL' ? 'bg-red-100 text-red-800' :
-                            disc.severity === 'HIGH' ? 'bg-orange-100 text-orange-800' :
-                            disc.severity === 'MEDIUM' ? 'bg-yellow-100 text-yellow-800' :
+                            disc.severity === 'CRITICAL' ? 'bg-red-500/15 text-red-300' :
+                            disc.severity === 'HIGH' ? 'bg-orange-500/15 text-orange-300' :
+                            disc.severity === 'MEDIUM' ? 'bg-yellow-500/15 text-yellow-300' :
                             'bg-hos-bg-tertiary text-white'
                           }`}>
                             {disc.severity}
@@ -81,7 +81,7 @@ export default function AdminDiscrepanciesPage() {
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
                           <span className={`px-2 py-1 text-xs rounded-full ${
-                            disc.status === 'RESOLVED' ? 'bg-green-100 text-green-800' :
+                            disc.status === 'RESOLVED' ? 'bg-green-500/15 text-green-300' :
                             disc.status === 'OPEN' ? 'bg-hos-gold/20 text-hos-gold' :
                             'bg-hos-bg-tertiary text-white'
                           }`}>

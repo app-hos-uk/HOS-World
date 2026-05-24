@@ -147,7 +147,7 @@ export default function AmbassadorHubPage() {
                   </div>
                   <button
                     type="submit"
-                    className="rounded bg-amber-600 hover:bg-amber-500 text-stone-950 px-4 py-2 text-sm font-medium"
+                    className="rounded bg-amber-600 hover:bg-amber-600 text-stone-950 px-4 py-2 text-sm font-medium"
                   >
                     Join as ambassador
                   </button>
@@ -255,7 +255,7 @@ export default function AmbassadorHubPage() {
                     </div>
                     <button
                       type="submit"
-                      className="rounded bg-amber-600 hover:bg-amber-500 text-stone-950 px-3 py-1.5 text-sm"
+                      className="rounded bg-amber-600 hover:bg-amber-600 text-stone-950 px-3 py-1.5 text-sm"
                     >
                       Submit
                     </button>

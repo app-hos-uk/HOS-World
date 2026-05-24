@@ -450,7 +450,7 @@ export default function CMSBannersPage() {
                           </span>
                         </div>
                         {banner.active ? (
-                          <span className="text-xs bg-green-100 text-green-800 px-2 py-0.5 rounded">
+                          <span className="text-xs bg-green-500/15 text-green-300 px-2 py-0.5 rounded">
                             Active
                           </span>
                         ) : (

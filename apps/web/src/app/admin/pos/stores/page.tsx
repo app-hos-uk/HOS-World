@@ -18,10 +18,10 @@ export default function AdminPosStoresPage() {
             <strong>code</strong> to your webhook path and set <strong>externalOutletId</strong> on the
             POS connection after fetching outlets from the provider (Test → Outlets API).
           </p>
-          <div className="rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">
+          <div className="rounded-lg border border-amber-500/30 bg-amber-500/10 p-4 text-sm text-amber-300">
             Use <strong>POST /admin/pos/connections/:id/outlets</strong> from the API client or Swagger
             to list Lightspeed outlets, then update the connection with the correct{' '}
-            <code className="rounded bg-amber-100 px-1">externalOutletId</code>.
+            <code className="rounded bg-amber-500/15 px-1">externalOutletId</code>.
           </div>
         </div>
       </AdminLayout>

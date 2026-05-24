@@ -115,7 +115,7 @@ export default function AdminPosConnectionsPage() {
                         <td className="px-4 py-3 text-sm">{c.provider}</td>
                         <td className="px-4 py-3 text-sm">
                           {c.isActive ? (
-                            <span className="text-green-700">Active</span>
+                            <span className="text-green-400">Active</span>
                           ) : (
                             <span className="text-hos-text-muted">Inactive</span>
                           )}

@@ -101,7 +101,7 @@ export function FandomSelector({
             {required && <span className="text-red-500 ml-1">*</span>}
           </label>
         )}
-        <div className="text-sm text-red-600">{error}</div>
+        <div className="text-sm text-red-400">{error}</div>
       </div>
     );
   }

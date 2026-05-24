@@ -17,14 +17,14 @@ function maskCode(code: string): string {
 function getStatusStyle(status: string): { bg: string; text: string; label: string } {
   switch (status?.toUpperCase()) {
     case 'ACTIVE':
-      return { bg: 'bg-green-100', text: 'text-green-800', label: 'Active' };
+      return { bg: 'bg-green-500/15', text: 'text-green-300', label: 'Active' };
     case 'USED':
     case 'REDEEMED':
       return { bg: 'bg-hos-bg-tertiary', text: 'text-hos-text-secondary', label: 'Used' };
     case 'EXPIRED':
-      return { bg: 'bg-red-100', text: 'text-red-700', label: 'Expired' };
+      return { bg: 'bg-red-500/15', text: 'text-red-400', label: 'Expired' };
     case 'DISABLED':
-      return { bg: 'bg-yellow-100', text: 'text-yellow-700', label: 'Disabled' };
+      return { bg: 'bg-yellow-500/15', text: 'text-yellow-400', label: 'Disabled' };
     default:
       return { bg: 'bg-hos-bg-tertiary', text: 'text-hos-text-secondary', label: status || 'Unknown' };
   }
@@ -97,12 +97,12 @@ export default function GiftCardsPage() {
 
             {/* Error State */}
             {!loading && error && (
-              <div className="bg-red-50 border border-red-200 rounded-lg p-6 text-center">
+              <div className="bg-red-500/10 border border-red-500/30 rounded-lg p-6 text-center">
                 <svg className="w-12 h-12 text-red-400 mx-auto mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 9v2m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
-                <p className="text-red-800 font-medium mb-1">Failed to load gift cards</p>
-                <p className="text-sm text-red-600 mb-4">{error}</p>
+                <p className="text-red-300 font-medium mb-1">Failed to load gift cards</p>
+                <p className="text-sm text-red-400 mb-4">{error}</p>
                 <button
                   onClick={fetchGiftCards}
                   className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors text-sm font-medium"

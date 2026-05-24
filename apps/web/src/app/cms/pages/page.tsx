@@ -397,7 +397,7 @@ function CMSPagesContent() {
                           <h3 className="text-lg font-medium text-white">{page.title}</h3>
                           <p className="text-sm text-hos-text-muted mt-1">Slug: /{page.slug}</p>
                           {page.publishedAt && (
-                            <span className="inline-block mt-2 text-xs bg-green-100 text-green-800 px-2 py-1 rounded">
+                            <span className="inline-block mt-2 text-xs bg-green-500/15 text-green-300 px-2 py-1 rounded">
                               Published
                             </span>
                           )}
@@ -420,7 +420,7 @@ function CMSPagesContent() {
                             }}
                             className={`px-3 py-1 text-sm rounded ${
                               page.publishedAt
-                                ? 'bg-yellow-500 text-white hover:bg-yellow-600'
+                                ? 'bg-yellow-500/10 text-white hover:bg-yellow-600'
                                 : 'bg-green-600 text-white hover:bg-green-700'
                             }`}
                           >

@@ -227,15 +227,15 @@ export default function SellerOrdersPage() {
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'pending': return 'bg-yellow-100 text-yellow-800';
+      case 'pending': return 'bg-yellow-500/15 text-yellow-300';
       case 'accepted':
       case 'confirmed':
       case 'processing': return 'bg-hos-gold/20 text-hos-gold';
       case 'fulfilled':
       case 'shipped': return 'bg-hos-gold/20 text-hos-gold';
-      case 'delivered': return 'bg-green-100 text-green-800';
+      case 'delivered': return 'bg-green-500/15 text-green-300';
       case 'cancelled':
-      case 'refunded': return 'bg-red-100 text-red-800';
+      case 'refunded': return 'bg-red-500/15 text-red-300';
       default: return 'bg-hos-bg-tertiary text-white';
     }
   };
@@ -266,7 +266,7 @@ export default function SellerOrdersPage() {
               className={`bg-hos-bg-secondary rounded-lg shadow p-4 text-left ${statusFilter === 'PENDING' ? 'ring-2 ring-hos-gold/50' : ''}`}
             >
               <h3 className="text-xs font-medium text-hos-text-muted uppercase">Pending</h3>
-              <p className="text-2xl font-bold text-yellow-600 mt-1">{stats.pending}</p>
+              <p className="text-2xl font-bold text-yellow-400 mt-1">{stats.pending}</p>
             </button>
             <button
               onClick={() => setStatusFilter('PROCESSING')}
@@ -287,18 +287,18 @@ export default function SellerOrdersPage() {
               className={`bg-hos-bg-secondary rounded-lg shadow p-4 text-left ${statusFilter === 'DELIVERED' ? 'ring-2 ring-hos-gold/50' : ''}`}
             >
               <h3 className="text-xs font-medium text-hos-text-muted uppercase">Delivered</h3>
-              <p className="text-2xl font-bold text-green-600 mt-1">{stats.delivered}</p>
+              <p className="text-2xl font-bold text-green-400 mt-1">{stats.delivered}</p>
             </button>
             <button
               onClick={() => setStatusFilter('CANCELLED')}
               className={`bg-hos-bg-secondary rounded-lg shadow p-4 text-left ${statusFilter === 'CANCELLED' ? 'ring-2 ring-hos-gold/50' : ''}`}
             >
               <h3 className="text-xs font-medium text-hos-text-muted uppercase">Cancelled</h3>
-              <p className="text-2xl font-bold text-red-600 mt-1">{stats.cancelled}</p>
+              <p className="text-2xl font-bold text-red-400 mt-1">{stats.cancelled}</p>
             </button>
             <div className="bg-hos-bg-secondary rounded-lg shadow p-4">
               <h3 className="text-xs font-medium text-hos-text-muted uppercase">Revenue</h3>
-              <p className="text-2xl font-bold text-green-600 mt-1">${stats.totalRevenue.toFixed(2)}</p>
+              <p className="text-2xl font-bold text-green-400 mt-1">${stats.totalRevenue.toFixed(2)}</p>
             </div>
           </div>
 
@@ -315,7 +315,7 @@ export default function SellerOrdersPage() {
 
           {/* Error State */}
           {error && (
-            <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded">
+            <div className="bg-red-500/10 border border-red-500/30 text-red-400 px-4 py-3 rounded">
               Error: {error}
               <button
                 onClick={() => fetchOrders(statusFilter)}

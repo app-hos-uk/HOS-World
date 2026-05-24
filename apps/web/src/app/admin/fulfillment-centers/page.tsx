@@ -187,8 +187,8 @@ export default function AdminFulfillmentCentersPage() {
     return (
       <RouteGuard allowedRoles={['ADMIN']}>
         <AdminLayout>
-          <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-            <p className="text-red-800">Error: {error}</p>
+          <div className="bg-red-500/10 border border-red-500/30 rounded-lg p-4">
+            <p className="text-red-300">Error: {error}</p>
             <button
               onClick={fetchCenters}
               className="mt-2 px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700"
@@ -287,7 +287,7 @@ export default function AdminFulfillmentCentersPage() {
                         <span
                           className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
                             center.isActive !== false
-                              ? 'bg-green-100 text-green-800'
+                              ? 'bg-green-500/15 text-green-300'
                               : 'bg-hos-bg-tertiary text-white'
                           }`}
                         >
@@ -324,7 +324,7 @@ export default function AdminFulfillmentCentersPage() {
                           <button
                             type="button"
                             onClick={() => setDeleteConfirmId(center.id)}
-                            className="text-red-600 hover:text-red-900"
+                            className="text-red-400 hover:text-red-300"
                           >
                             Delete
                           </button>
@@ -376,10 +376,10 @@ export default function AdminFulfillmentCentersPage() {
                           required
                           value={formData.name}
                           onChange={(e) => setFormData({ ...formData, name: sanitizeLabelInput(e.target.value, formData.name) })}
-                          className={`mt-1 block w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-hos-gold/50 focus:border-hos-gold ${isLabelInvalid(formData.name) ? 'border-red-300' : 'border-hos-border'}`}
+                          className={`mt-1 block w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-hos-gold/50 focus:border-hos-gold ${isLabelInvalid(formData.name) ? 'border-red-500/40' : 'border-hos-border'}`}
                         />
                         {isLabelInvalid(formData.name) && (
-                          <p className="text-xs text-red-600 mt-1">Must include at least one letter</p>
+                          <p className="text-xs text-red-400 mt-1">Must include at least one letter</p>
                         )}
                       </div>
                       <div>
@@ -400,10 +400,10 @@ export default function AdminFulfillmentCentersPage() {
                             required
                             value={formData.city}
                             onChange={(e) => setFormData({ ...formData, city: sanitizeLabelInput(e.target.value, formData.city) })}
-                            className={`mt-1 block w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-hos-gold/50 focus:border-hos-gold ${isLabelInvalid(formData.city) ? 'border-red-300' : 'border-hos-border'}`}
+                            className={`mt-1 block w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-hos-gold/50 focus:border-hos-gold ${isLabelInvalid(formData.city) ? 'border-red-500/40' : 'border-hos-border'}`}
                           />
                           {isLabelInvalid(formData.city) && (
-                            <p className="text-xs text-red-600 mt-1">Must include at least one letter</p>
+                            <p className="text-xs text-red-400 mt-1">Must include at least one letter</p>
                           )}
                         </div>
                         <div>
@@ -413,10 +413,10 @@ export default function AdminFulfillmentCentersPage() {
                             required
                             value={formData.country}
                             onChange={(e) => setFormData({ ...formData, country: sanitizeLabelInput(e.target.value, formData.country) })}
-                            className={`mt-1 block w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-hos-gold/50 focus:border-hos-gold ${isLabelInvalid(formData.country) ? 'border-red-300' : 'border-hos-border'}`}
+                            className={`mt-1 block w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-hos-gold/50 focus:border-hos-gold ${isLabelInvalid(formData.country) ? 'border-red-500/40' : 'border-hos-border'}`}
                           />
                           {isLabelInvalid(formData.country) && (
-                            <p className="text-xs text-red-600 mt-1">Must include at least one letter</p>
+                            <p className="text-xs text-red-400 mt-1">Must include at least one letter</p>
                           )}
                         </div>
                       </div>
@@ -426,10 +426,10 @@ export default function AdminFulfillmentCentersPage() {
                           type="text"
                           value={formData.postalCode}
                           onChange={(e) => setFormData({ ...formData, postalCode: sanitizePostalInput(e.target.value) })}
-                          className={`mt-1 block w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-hos-gold/50 focus:border-hos-gold ${isPostalInvalid(formData.postalCode) ? 'border-red-300' : 'border-hos-border'}`}
+                          className={`mt-1 block w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-hos-gold/50 focus:border-hos-gold ${isPostalInvalid(formData.postalCode) ? 'border-red-500/40' : 'border-hos-border'}`}
                         />
                         {isPostalInvalid(formData.postalCode) && (
-                          <p className="text-xs text-red-600 mt-1">Must include at least one digit</p>
+                          <p className="text-xs text-red-400 mt-1">Must include at least one digit</p>
                         )}
                       </div>
                       <div className="grid grid-cols-2 gap-4">

@@ -77,8 +77,8 @@ export default function SubmitTicketPage() {
         <Header />
         <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-12">
           <div className="max-w-md mx-auto text-center">
-            <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
-              <svg className="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div className="w-16 h-16 bg-green-500/15 rounded-full flex items-center justify-center mx-auto mb-6">
+              <svg className="w-8 h-8 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
               </svg>
             </div>
@@ -132,8 +132,8 @@ export default function SubmitTicketPage() {
             </p>
 
             {!user && (
-              <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 mb-6">
-                <p className="text-sm text-amber-800">
+              <div className="bg-amber-500/10 border border-amber-500/30 rounded-lg p-4 mb-6">
+                <p className="text-sm text-amber-300">
                   <strong>Note:</strong> You need to be{' '}
                   <Link href="/login" className="underline font-medium">logged in</Link>{' '}
                   to submit a support ticket.

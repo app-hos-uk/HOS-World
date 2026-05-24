@@ -237,10 +237,10 @@ export default function AdminMediaLibraryPage() {
 
           {/* Error State */}
           {!loading && error && (
-            <div className="bg-red-50 border border-red-200 rounded-lg p-6 text-center">
+            <div className="bg-red-500/10 border border-red-500/30 rounded-lg p-6 text-center">
               <div className="text-4xl mb-3">⚠️</div>
-              <p className="text-red-700 font-medium mb-2">Failed to load media</p>
-              <p className="text-red-600 text-sm mb-4">{error}</p>
+              <p className="text-red-400 font-medium mb-2">Failed to load media</p>
+              <p className="text-red-400 text-sm mb-4">{error}</p>
               <button
                 onClick={() => fetchAssets()}
                 className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700"
@@ -331,7 +331,7 @@ export default function AdminMediaLibraryPage() {
                       </button>
                       <button
                         onClick={() => handleDelete(asset)}
-                        className="px-2 py-1 text-[10px] bg-red-50 text-red-600 rounded hover:bg-red-100 transition-colors"
+                        className="px-2 py-1 text-[10px] bg-red-500/10 text-red-400 rounded hover:bg-red-500/15 transition-colors"
                         title="Delete"
                       >
                         Delete
@@ -480,7 +480,7 @@ export default function AdminMediaLibraryPage() {
                         setPreviewAsset(null);
                         handleDelete(previewAsset);
                       }}
-                      className="px-4 py-2 bg-red-100 text-red-700 rounded-lg hover:bg-red-200 text-sm ml-auto"
+                      className="px-4 py-2 bg-red-500/15 text-red-400 rounded-lg hover:bg-red-200 text-sm ml-auto"
                     >
                       Delete
                     </button>

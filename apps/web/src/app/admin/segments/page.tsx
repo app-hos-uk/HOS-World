@@ -98,7 +98,7 @@ export default function AdminSegmentsPage() {
                       <td className="px-4 py-2 font-medium">
                         {s.name}
                         {s.isTemplate && (
-                          <span className="ml-2 text-xs bg-amber-100 text-amber-800 px-1.5 py-0.5 rounded">
+                          <span className="ml-2 text-xs bg-amber-500/15 text-amber-300 px-1.5 py-0.5 rounded">
                             Template
                           </span>
                         )}
@@ -127,7 +127,7 @@ export default function AdminSegmentsPage() {
                             </button>
                             <button
                               type="button"
-                              className="text-red-600 hover:underline"
+                              className="text-red-400 hover:underline"
                               onClick={() => archiveOne(s.id)}
                             >
                               Archive

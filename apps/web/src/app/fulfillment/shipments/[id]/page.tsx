@@ -84,17 +84,17 @@ export default function ShipmentDetailPage() {
     switch (status?.toUpperCase()) {
       case 'PENDING':
       case 'CREATED':
-        return 'bg-yellow-100 text-yellow-800';
+        return 'bg-yellow-500/15 text-yellow-300';
       case 'PROCESSING':
       case 'IN_TRANSIT':
         return 'bg-hos-gold/20 text-hos-gold';
       case 'SHIPPED':
       case 'VERIFIED':
-        return 'bg-green-100 text-green-800';
+        return 'bg-green-500/15 text-green-300';
       case 'DELIVERED':
-        return 'bg-emerald-100 text-emerald-800';
+        return 'bg-emerald-500/15 text-emerald-300';
       case 'REJECTED':
-        return 'bg-red-100 text-red-800';
+        return 'bg-red-500/15 text-red-300';
       default:
         return 'bg-hos-bg-tertiary text-white';
     }
@@ -128,7 +128,7 @@ export default function ShipmentDetailPage() {
         )}
 
         {error && (
-          <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded mb-6">
+          <div className="bg-red-500/10 border border-red-500/30 text-red-400 px-4 py-3 rounded mb-6">
             Error: {error}
           </div>
         )}
@@ -188,7 +188,7 @@ export default function ShipmentDetailPage() {
 
             {/* Verification Form */}
             {showVerifyForm && (
-              <div className="bg-hos-bg-secondary border-2 border-green-200 rounded-lg p-6 shadow-sm">
+              <div className="bg-hos-bg-secondary border-2 border-green-500/30 rounded-lg p-6 shadow-sm">
                 <h3 className="text-lg font-semibold mb-4">Verify This Shipment</h3>
                 <div className="space-y-4">
                   <div>

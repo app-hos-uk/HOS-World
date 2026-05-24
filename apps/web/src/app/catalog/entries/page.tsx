@@ -281,7 +281,7 @@ function CatalogEntriesContent() {
               onClick={() => setActiveTab('in_progress')}
               className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
                 activeTab === 'in_progress'
-                  ? 'bg-hos-bg-secondary text-yellow-700 shadow-sm'
+                  ? 'bg-hos-bg-secondary text-yellow-400 shadow-sm'
                   : 'text-hos-text-secondary hover:text-white'
               }`}
             >
@@ -291,7 +291,7 @@ function CatalogEntriesContent() {
               onClick={() => setActiveTab('completed')}
               className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
                 activeTab === 'completed'
-                  ? 'bg-hos-bg-secondary text-green-700 shadow-sm'
+                  ? 'bg-hos-bg-secondary text-green-400 shadow-sm'
                   : 'text-hos-text-secondary hover:text-white'
               }`}
             >
@@ -300,7 +300,7 @@ function CatalogEntriesContent() {
           </div>
 
           {error && (
-            <div className="mb-6 p-4 bg-red-100 border border-red-400 text-red-700 rounded-lg">
+            <div className="mb-6 p-4 bg-red-500/15 border border-red-400 text-red-400 rounded-lg">
               <p className="font-semibold">Error</p>
               <p className="text-sm mt-1">{error}</p>
             </div>
@@ -411,7 +411,7 @@ function CatalogEntriesContent() {
                           )}
                         </div>
                         <div className="mt-2">
-                          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
+                          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-500/15 text-yellow-300">
                             In progress
                           </span>
                         </div>
@@ -464,7 +464,7 @@ function CatalogEntriesContent() {
                           )}
                         </div>
                         <div className="mt-2">
-                          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-500/15 text-green-300">
                             {typeof submission?.status === 'string' ? submission.status : 'COMPLETED'}
                           </span>
                         </div>

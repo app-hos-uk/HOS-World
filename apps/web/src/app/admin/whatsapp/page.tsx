@@ -70,9 +70,9 @@ export default function AdminWhatsAppPage() {
                         <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">{conv.phoneNumber}</td>
                         <td className="px-6 py-4 whitespace-nowrap">
                           <span className={`px-2 py-1 text-xs rounded-full ${
-                            conv.status === 'ACTIVE' ? 'bg-green-100 text-green-800' :
+                            conv.status === 'ACTIVE' ? 'bg-green-500/15 text-green-300' :
                             conv.status === 'ARCHIVED' ? 'bg-hos-bg-tertiary text-white' :
-                            'bg-red-100 text-red-800'
+                            'bg-red-500/15 text-red-300'
                           }`}>
                             {conv.status}
                           </span>

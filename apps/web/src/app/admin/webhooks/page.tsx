@@ -311,7 +311,7 @@ export default function WebhooksPage() {
         )}
 
         {error && (
-          <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg mb-6">
+          <div className="bg-red-500/10 border border-red-500/30 text-red-400 px-4 py-3 rounded-lg mb-6">
             {error}
           </div>
         )}
@@ -361,7 +361,7 @@ export default function WebhooksPage() {
                   <div className="p-4 flex items-start gap-3">
                     <div
                       className={`mt-1 w-3 h-3 rounded-full flex-shrink-0 ${
-                        webhook.isActive ? 'bg-green-500' : 'bg-hos-bg-tertiary'
+                        webhook.isActive ? 'bg-green-500/10' : 'bg-hos-bg-tertiary'
                       }`}
                     />
                     <div className="flex-1 min-w-0">
@@ -393,7 +393,7 @@ export default function WebhooksPage() {
                         onClick={() => handleToggleActive(webhook)}
                         className={`px-3 py-1 text-xs font-medium rounded-lg ${
                           webhook.isActive
-                            ? 'bg-green-100 text-green-800 hover:bg-green-200'
+                            ? 'bg-green-500/15 text-green-300 hover:bg-green-200'
                             : 'bg-hos-bg-tertiary text-hos-text-secondary hover:bg-hos-bg-tertiary'
                         }`}
                       >
@@ -414,7 +414,7 @@ export default function WebhooksPage() {
                       </button>
                       <button
                         onClick={() => handleDelete(webhook.id)}
-                        className="px-3 py-1 text-xs font-medium bg-red-100 text-red-700 rounded-lg hover:bg-red-200"
+                        className="px-3 py-1 text-xs font-medium bg-red-500/15 text-red-400 rounded-lg hover:bg-red-200"
                       >
                         Delete
                       </button>
@@ -439,10 +439,10 @@ export default function WebhooksPage() {
                                   <span
                                     className={`w-2 h-2 rounded-full ${
                                       delivery.status === 'SUCCESS'
-                                        ? 'bg-green-500'
+                                        ? 'bg-green-500/10'
                                         : delivery.status === 'FAILED'
-                                          ? 'bg-red-500'
-                                          : 'bg-yellow-500'
+                                          ? 'bg-red-500/10'
+                                          : 'bg-yellow-500/10'
                                     }`}
                                   />
                                   <span className="text-sm font-medium">
@@ -462,7 +462,7 @@ export default function WebhooksPage() {
                               {delivery.status === 'FAILED' && (
                                 <button
                                   onClick={() => handleRetryDelivery(delivery.id, webhook.id)}
-                                  className="px-2 py-1 text-xs bg-amber-100 text-amber-700 rounded hover:bg-amber-200"
+                                  className="px-2 py-1 text-xs bg-amber-500/15 text-amber-400 rounded hover:bg-amber-200"
                                 >
                                   Retry
                                 </button>

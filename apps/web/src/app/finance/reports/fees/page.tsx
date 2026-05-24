@@ -122,7 +122,7 @@ export default function FinanceFeesPage() {
         </div>
 
         {error && (
-          <div className="mb-6 p-4 bg-red-100 border border-red-400 text-red-700 rounded-lg">
+          <div className="mb-6 p-4 bg-red-500/15 border border-red-400 text-red-400 rounded-lg">
             <p className="font-semibold">Error</p>
             <p className="text-sm mt-1">{error}</p>
           </div>
@@ -169,7 +169,7 @@ export default function FinanceFeesPage() {
                 <div className="flex items-center justify-between">
                   <div>
                     <h3 className="text-sm font-medium text-hos-text-secondary mb-1">Transaction Count</h3>
-                    <p className="text-3xl font-bold text-green-600">
+                    <p className="text-3xl font-bold text-green-400">
                       {totalTransactions.toLocaleString()}
                     </p>
                   </div>

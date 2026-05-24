@@ -66,7 +66,7 @@ export default function AdminBrandCampaignNewPage() {
     <RouteGuard allowedRoles={['ADMIN']}>
       <AdminLayout>
         <div className="p-6 max-w-xl mx-auto space-y-4">
-          <Link href={`/admin/brand-partnerships/${partnershipId}`} className="text-violet-700 text-sm">
+          <Link href={`/admin/brand-partnerships/${partnershipId}`} className="text-violet-400 text-sm">
             ← Partner
           </Link>
           <h1 className="text-2xl font-semibold text-white">New brand campaign</h1>

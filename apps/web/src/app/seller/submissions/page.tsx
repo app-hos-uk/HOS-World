@@ -89,7 +89,7 @@ export default function SellerSubmissionsPage() {
         )}
 
         {error && (
-          <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded mb-6">
+          <div className="bg-red-500/10 border border-red-500/30 text-red-400 px-4 py-3 rounded mb-6">
             Error: {error}
             <button
               onClick={fetchSubmissions}
@@ -150,10 +150,10 @@ export default function SellerSubmissionsPage() {
                               submission.status === 'CATALOG_COMPLETED' ||
                               submission.status === 'MARKETING_COMPLETED' ||
                               submission.status === 'CONTENT_COMPLETED'
-                                ? 'bg-green-100 text-green-800'
+                                ? 'bg-green-500/15 text-green-300'
                                 : submission.status === 'PROCUREMENT_REJECTED'
-                                  ? 'bg-red-100 text-red-800'
-                                  : 'bg-yellow-100 text-yellow-800'
+                                  ? 'bg-red-500/15 text-red-300'
+                                  : 'bg-yellow-500/15 text-yellow-300'
                             }`}
                           >
                             {submission.status === 'CONTENT_COMPLETED'
@@ -205,7 +205,7 @@ export default function SellerSubmissionsPage() {
                                     toast.error(msg);
                                   }
                                 }}
-                                className="text-red-600 hover:text-red-800"
+                                className="text-red-400 hover:text-red-300"
                               >
                                 Delete
                               </button>

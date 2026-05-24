@@ -62,7 +62,7 @@ export default function AdminMessagingLogsPage() {
               <option value="SKIPPED_CONSENT">SKIPPED_CONSENT</option>
             </select>
           </div>
-          {error && <p className="text-red-600 mb-4">{error}</p>}
+          {error && <p className="text-red-400 mb-4">{error}</p>}
           {loading ? (
             <p className="text-hos-text-muted">Loading…</p>
           ) : (

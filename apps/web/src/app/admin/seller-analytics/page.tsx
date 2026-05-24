@@ -238,8 +238,8 @@ export default function AdminSellerAnalyticsPage() {
           )}
 
           {error && (
-            <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-              <p className="text-red-800">Error: {error}</p>
+            <div className="bg-red-500/10 border border-red-500/30 rounded-lg p-4">
+              <p className="text-red-300">Error: {error}</p>
               <button
                 onClick={fetchAnalytics}
                 className="mt-2 px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700"
@@ -267,7 +267,7 @@ export default function AdminSellerAnalyticsPage() {
                     <h3 className="text-sm font-medium text-hos-text-muted">Active Sellers</h3>
                     <span className="text-2xl">✅</span>
                   </div>
-                  <p className="text-3xl font-bold text-green-600 mt-2">
+                  <p className="text-3xl font-bold text-green-400 mt-2">
                     {analytics.activeSellers}
                   </p>
                 </div>
@@ -276,7 +276,7 @@ export default function AdminSellerAnalyticsPage() {
                     <h3 className="text-sm font-medium text-hos-text-muted">Pending Verification</h3>
                     <span className="text-2xl">⏳</span>
                   </div>
-                  <p className="text-3xl font-bold text-yellow-600 mt-2">
+                  <p className="text-3xl font-bold text-yellow-400 mt-2">
                     {analytics.pendingSellers}
                   </p>
                 </div>
@@ -433,7 +433,7 @@ export default function AdminSellerAnalyticsPage() {
                                 seller.role === 'WHOLESALER' 
                                   ? 'bg-hos-gold/20 text-hos-gold' 
                                   : seller.role === 'B2C_SELLER'
-                                  ? 'bg-green-100 text-green-800'
+                                  ? 'bg-green-500/15 text-green-300'
                                   : 'bg-hos-bg-tertiary text-white'
                               }`}>
                                 {seller.role.replace('_', ' ')}
@@ -442,8 +442,8 @@ export default function AdminSellerAnalyticsPage() {
                             <td className="px-6 py-4 whitespace-nowrap">
                               <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
                                 seller.isVerified 
-                                  ? 'bg-green-100 text-green-800' 
-                                  : 'bg-yellow-100 text-yellow-800'
+                                  ? 'bg-green-500/15 text-green-300' 
+                                  : 'bg-yellow-500/15 text-yellow-300'
                               }`}>
                                 {seller.isVerified ? 'Verified' : 'Pending'}
                               </span>

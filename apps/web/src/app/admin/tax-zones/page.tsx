@@ -274,7 +274,7 @@ export default function AdminTaxZonesPage() {
           </div>
 
           {error && (
-            <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded mb-4">
+            <div className="bg-red-500/10 border border-red-500/30 text-red-400 px-4 py-3 rounded mb-4">
               {error}
             </div>
           )}
@@ -308,7 +308,7 @@ export default function AdminTaxZonesPage() {
                           <span
                             className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
                               zone.isActive
-                                ? 'bg-green-100 text-green-800'
+                                ? 'bg-green-500/15 text-green-300'
                                 : 'bg-hos-bg-tertiary text-white'
                             }`}
                           >
@@ -328,7 +328,7 @@ export default function AdminTaxZonesPage() {
                           </button>
                           <button
                             onClick={() => handleDeleteZone(zone.id)}
-                            className="text-sm text-red-600 hover:text-red-900"
+                            className="text-sm text-red-400 hover:text-red-300"
                           >
                             Delete
                           </button>
@@ -374,7 +374,7 @@ export default function AdminTaxZonesPage() {
                                   <span
                                     className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
                                       rate.isActive
-                                        ? 'bg-green-100 text-green-800'
+                                        ? 'bg-green-500/15 text-green-300'
                                         : 'bg-hos-bg-tertiary text-white'
                                     }`}
                                   >
@@ -384,7 +384,7 @@ export default function AdminTaxZonesPage() {
                                 <td className="px-4 py-2 text-sm">
                                   <button
                                     onClick={() => handleDeleteRate(rate.id)}
-                                    className="text-red-600 hover:text-red-900"
+                                    className="text-red-400 hover:text-red-300"
                                   >
                                     Delete
                                   </button>

@@ -678,7 +678,7 @@ export function SubmitProductForm({ editSubmissionId }: { editSubmissionId?: str
                           </div>
                           <div className="mt-3 flex gap-2">
                             {product.alreadyListed ? (
-                              <span className="flex-1 text-center py-1.5 bg-green-50 text-green-700 rounded-lg text-xs font-medium border border-green-200">
+                              <span className="flex-1 text-center py-1.5 bg-green-500/10 text-green-400 rounded-lg text-xs font-medium border border-green-500/30">
                                 Already Listed (${Number(product.myListing?.vendorPrice || 0).toFixed(2)})
                               </span>
                             ) : (
@@ -808,7 +808,7 @@ export function SubmitProductForm({ editSubmissionId }: { editSubmissionId?: str
             <>
 
             {success && (
-              <div className="mb-6 p-4 bg-green-100 border border-green-400 text-green-700 rounded-lg">
+              <div className="mb-6 p-4 bg-green-500/15 border border-green-400 text-green-400 rounded-lg">
                 <p className="font-semibold">{editSubmissionId ? 'Submission updated!' : 'Product submitted successfully!'}</p>
                 <p className="text-sm mt-1">{editSubmissionId ? 'Redirecting…' : 'Redirecting to My Submissions…'}</p>
               </div>
@@ -817,7 +817,7 @@ export function SubmitProductForm({ editSubmissionId }: { editSubmissionId?: str
             {error && (
               <div
                 ref={submitFeedbackRef}
-                className="sticky top-20 z-40 mb-6 scroll-mt-24 p-4 bg-red-100 border border-red-400 text-red-700 rounded-lg shadow-md"
+                className="sticky top-20 z-40 mb-6 scroll-mt-24 p-4 bg-red-500/15 border border-red-400 text-red-400 rounded-lg shadow-md"
               >
                 <p className="font-semibold">Error</p>
                 <p className="text-sm mt-1">{error}</p>
@@ -825,54 +825,54 @@ export function SubmitProductForm({ editSubmissionId }: { editSubmissionId?: str
             )}
 
             {duplicateWarnings && (
-              <div className="mb-6 border border-amber-300 rounded-lg overflow-hidden">
-                <div className="bg-amber-50 px-4 py-3 border-b border-amber-200">
-                  <h3 className="font-semibold text-amber-900">Potential Duplicates Detected</h3>
-                  <p className="text-xs text-amber-700 mt-0.5">Review matches below. If a product already exists, use &ldquo;Browse Catalog&rdquo; tab to list it as your vendor product instead.</p>
+              <div className="mb-6 border border-amber-500/40 rounded-lg overflow-hidden">
+                <div className="bg-amber-500/10 px-4 py-3 border-b border-amber-500/30">
+                  <h3 className="font-semibold text-amber-300">Potential Duplicates Detected</h3>
+                  <p className="text-xs text-amber-400 mt-0.5">Review matches below. If a product already exists, use &ldquo;Browse Catalog&rdquo; tab to list it as your vendor product instead.</p>
                 </div>
                 <div className="p-4 space-y-3 bg-hos-bg-secondary">
                   {duplicateWarnings.sellerActiveMatches?.length > 0 && (
                     <div>
-                      <p className="text-sm font-semibold text-red-800 mb-1.5">Your Active Products</p>
-                      <p className="text-xs text-red-600 mb-2">You already have these products listed. Consider updating stock/price instead of submitting again.</p>
+                      <p className="text-sm font-semibold text-red-300 mb-1.5">Your Active Products</p>
+                      <p className="text-xs text-red-400 mb-2">You already have these products listed. Consider updating stock/price instead of submitting again.</p>
                       {duplicateWarnings.sellerActiveMatches.slice(0, 3).map((m: any) => (
-                        <div key={m.id} className="flex items-center justify-between p-2.5 bg-red-50 rounded-lg mb-1.5 border border-red-200">
+                        <div key={m.id} className="flex items-center justify-between p-2.5 bg-red-500/10 rounded-lg mb-1.5 border border-red-500/30">
                           <div className="min-w-0">
                             <p className="text-sm font-medium text-white truncate">{m.name}</p>
                             <p className="text-xs text-hos-text-muted">{m.sku ? `SKU: ${m.sku}` : ''} {m.reasons?.[0] || ''}</p>
                           </div>
-                          <span className="ml-2 shrink-0 px-2 py-0.5 bg-red-200 text-red-900 rounded text-xs font-bold">{m.similarityScore}%</span>
+                          <span className="ml-2 shrink-0 px-2 py-0.5 bg-red-200 text-red-300 rounded text-xs font-bold">{m.similarityScore}%</span>
                         </div>
                       ))}
                     </div>
                   )}
                   {duplicateWarnings.sellerPendingMatches?.length > 0 && (
                     <div>
-                      <p className="text-sm font-semibold text-orange-800 mb-1.5">Your Pending Submissions</p>
-                      <p className="text-xs text-orange-600 mb-2">You already have pending submissions for similar products.</p>
+                      <p className="text-sm font-semibold text-orange-300 mb-1.5">Your Pending Submissions</p>
+                      <p className="text-xs text-orange-400 mb-2">You already have pending submissions for similar products.</p>
                       {duplicateWarnings.sellerPendingMatches.slice(0, 3).map((m: any) => (
-                        <div key={m.id} className="flex items-center justify-between p-2.5 bg-orange-50 rounded-lg mb-1.5 border border-orange-200">
+                        <div key={m.id} className="flex items-center justify-between p-2.5 bg-orange-500/10 rounded-lg mb-1.5 border border-orange-500/30">
                           <div className="min-w-0">
                             <p className="text-sm font-medium text-white truncate">{m.name}</p>
                             <p className="text-xs text-hos-text-muted">Status: {m.status?.replace(/_/g, ' ')} &middot; {m.reasons?.[0] || ''}</p>
                           </div>
-                          <span className="ml-2 shrink-0 px-2 py-0.5 bg-orange-200 text-orange-900 rounded text-xs font-bold">{m.similarityScore}%</span>
+                          <span className="ml-2 shrink-0 px-2 py-0.5 bg-orange-200 text-orange-300 rounded text-xs font-bold">{m.similarityScore}%</span>
                         </div>
                       ))}
                     </div>
                   )}
                   {duplicateWarnings.catalogueMatches?.length > 0 && (
                     <div>
-                      <p className="text-sm font-semibold text-amber-800 mb-1.5">Existing Catalogue Products</p>
-                      <p className="text-xs text-amber-600 mb-2">Similar products already exist. Consider using &ldquo;Browse Catalog&rdquo; to list them as vendor products instead.</p>
+                      <p className="text-sm font-semibold text-amber-300 mb-1.5">Existing Catalogue Products</p>
+                      <p className="text-xs text-amber-400 mb-2">Similar products already exist. Consider using &ldquo;Browse Catalog&rdquo; to list them as vendor products instead.</p>
                       {duplicateWarnings.catalogueMatches.slice(0, 3).map((m: any) => (
-                        <div key={m.id} className="flex items-center justify-between p-2.5 bg-amber-50 rounded-lg mb-1.5 border border-amber-200">
+                        <div key={m.id} className="flex items-center justify-between p-2.5 bg-amber-500/10 rounded-lg mb-1.5 border border-amber-500/30">
                           <div className="min-w-0">
                             <p className="text-sm font-medium text-white truncate">{m.name}</p>
                             <p className="text-xs text-hos-text-muted">{m.sku ? `SKU: ${m.sku}` : ''} {m.reasons?.[0] || ''}</p>
                           </div>
                           <div className="flex items-center gap-2 ml-2 shrink-0">
-                            <span className="px-2 py-0.5 bg-amber-200 text-amber-900 rounded text-xs font-bold">{m.similarityScore}%</span>
+                            <span className="px-2 py-0.5 bg-amber-200 text-amber-300 rounded text-xs font-bold">{m.similarityScore}%</span>
                             <button
                               type="button"
                               onClick={() => {
@@ -1196,7 +1196,7 @@ export function SubmitProductForm({ editSubmissionId }: { editSubmissionId?: str
                 </h2>
                 {error &&
                   /upload|image|URL|JPEG|PNG|GIF|WebP|10MB|size/i.test(error) && (
-                    <div className="mb-4 p-3 bg-red-50 border border-red-200 text-red-800 rounded-lg text-sm">
+                    <div className="mb-4 p-3 bg-red-500/10 border border-red-500/30 text-red-300 rounded-lg text-sm">
                       {error}
                     </div>
                   )}
@@ -1274,7 +1274,7 @@ export function SubmitProductForm({ editSubmissionId }: { editSubmissionId?: str
                           <button
                             type="button"
                             onClick={() => removeImage(index)}
-                            className="px-3 py-1 text-red-600 hover:text-red-800 text-sm"
+                            className="px-3 py-1 text-red-400 hover:text-red-300 text-sm"
                           >
                             Remove
                           </button>
@@ -1339,7 +1339,7 @@ export function SubmitProductForm({ editSubmissionId }: { editSubmissionId?: str
                               <button
                                 type="button"
                                 onClick={() => removeVariationOption(idx)}
-                                className="text-red-600 hover:text-red-800 text-sm"
+                                className="text-red-400 hover:text-red-300 text-sm"
                               >
                                 Remove
                               </button>
@@ -1375,7 +1375,7 @@ export function SubmitProductForm({ editSubmissionId }: { editSubmissionId?: str
                           <button
                             type="button"
                             onClick={() => removeVariation(index)}
-                            className="px-3 py-1 text-red-600 hover:text-red-800 text-sm"
+                            className="px-3 py-1 text-red-400 hover:text-red-300 text-sm"
                           >
                             Remove
                           </button>
@@ -1389,7 +1389,7 @@ export function SubmitProductForm({ editSubmissionId }: { editSubmissionId?: str
               {/* Submit Button */}
               <div className="flex flex-col gap-3">
                 {error && !/upload|image|URL|JPEG|PNG|GIF|WebP|10MB|size/i.test(error) && (
-                  <div className="p-3 bg-red-50 border border-red-200 text-red-800 rounded-lg text-sm">
+                  <div className="p-3 bg-red-500/10 border border-red-500/30 text-red-300 rounded-lg text-sm">
                     {error}
                   </div>
                 )}

@@ -246,7 +246,7 @@ export default function AdminFinancePage() {
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                     <div className="bg-hos-bg-secondary rounded-lg shadow p-6">
                       <h3 className="text-sm font-medium text-hos-text-muted mb-1">Total Revenue</h3>
-                      <p className="text-3xl font-bold text-green-600">${metrics.totalRevenue.toFixed(2)}</p>
+                      <p className="text-3xl font-bold text-green-400">${metrics.totalRevenue.toFixed(2)}</p>
                       <p className="text-xs text-hos-text-muted mt-1">{metrics.transactionCount} transactions</p>
                     </div>
                     <div className="bg-hos-bg-secondary rounded-lg shadow p-6">
@@ -261,7 +261,7 @@ export default function AdminFinancePage() {
                     </div>
                     <div className="bg-hos-bg-secondary rounded-lg shadow p-6">
                       <h3 className="text-sm font-medium text-hos-text-muted mb-1">Pending</h3>
-                      <p className="text-3xl font-bold text-yellow-600">${metrics.pendingAmount.toFixed(2)}</p>
+                      <p className="text-3xl font-bold text-yellow-400">${metrics.pendingAmount.toFixed(2)}</p>
                       <p className="text-xs text-hos-text-muted mt-1">Awaiting settlement</p>
                     </div>
                   </div>
@@ -273,7 +273,7 @@ export default function AdminFinancePage() {
                     </div>
                     <div className="bg-hos-bg-secondary rounded-lg shadow p-4">
                       <h3 className="text-sm font-medium text-hos-text-muted">Total Refunds</h3>
-                      <p className="text-xl font-bold text-red-600 mt-1">${metrics.totalRefunds.toFixed(2)}</p>
+                      <p className="text-xl font-bold text-red-400 mt-1">${metrics.totalRefunds.toFixed(2)}</p>
                     </div>
                     <div className="bg-hos-bg-secondary rounded-lg shadow p-4">
                       <h3 className="text-sm font-medium text-hos-text-muted">Avg Transaction</h3>
@@ -402,9 +402,9 @@ export default function AdminFinancePage() {
                             </td>
                             <td className="px-6 py-4 whitespace-nowrap">
                               <span className={`px-2 py-1 text-xs rounded-full ${
-                                tx.status === 'COMPLETED' ? 'bg-green-100 text-green-800' :
-                                tx.status === 'PENDING' ? 'bg-yellow-100 text-yellow-800' :
-                                'bg-red-100 text-red-800'
+                                tx.status === 'COMPLETED' ? 'bg-green-500/15 text-green-300' :
+                                tx.status === 'PENDING' ? 'bg-yellow-500/15 text-yellow-300' :
+                                'bg-red-500/15 text-red-300'
                               }`}>
                                 {tx.status}
                               </span>
@@ -480,9 +480,9 @@ export default function AdminFinancePage() {
                             </td>
                             <td className="px-6 py-4 whitespace-nowrap">
                               <span className={`px-2 py-1 text-xs rounded-full ${
-                                payout.status === 'PAID' ? 'bg-green-100 text-green-800' :
-                                payout.status === 'PENDING' ? 'bg-yellow-100 text-yellow-800' :
-                                'bg-red-100 text-red-800'
+                                payout.status === 'PAID' ? 'bg-green-500/15 text-green-300' :
+                                payout.status === 'PENDING' ? 'bg-yellow-500/15 text-yellow-300' :
+                                'bg-red-500/15 text-red-300'
                               }`}>
                                 {payout.status}
                               </span>
@@ -536,9 +536,9 @@ export default function AdminFinancePage() {
                             </td>
                             <td className="px-6 py-4 whitespace-nowrap">
                               <span className={`px-2 py-1 text-xs rounded-full ${
-                                refund.status === 'COMPLETED' ? 'bg-green-100 text-green-800' :
-                                refund.status === 'PENDING' ? 'bg-yellow-100 text-yellow-800' :
-                                'bg-red-100 text-red-800'
+                                refund.status === 'COMPLETED' ? 'bg-green-500/15 text-green-300' :
+                                refund.status === 'PENDING' ? 'bg-yellow-500/15 text-yellow-300' :
+                                'bg-red-500/15 text-red-300'
                               }`}>
                                 {refund.status}
                               </span>
@@ -628,9 +628,9 @@ function RevenueReportsTab() {
                 {reportData.totalRevenue ? `$${Number(reportData.totalRevenue).toFixed(2)}` : 'N/A'}
               </div>
             </div>
-            <div className="bg-green-50 rounded-lg p-4">
+            <div className="bg-green-500/10 rounded-lg p-4">
               <div className="text-sm text-hos-text-secondary">Platform Fees</div>
-              <div className="text-2xl font-bold text-green-900">
+              <div className="text-2xl font-bold text-green-300">
                 {reportData.platformFees ? `$${Number(reportData.platformFees).toFixed(2)}` : 'N/A'}
               </div>
             </div>

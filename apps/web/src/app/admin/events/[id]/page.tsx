@@ -115,7 +115,7 @@ export default function AdminEventDetailPage() {
           {loading ? (
             <p className="text-hos-text-muted">Loading…</p>
           ) : !event ? (
-            <p className="text-red-600">Not found</p>
+            <p className="text-red-400">Not found</p>
           ) : (
             <>
               <h1 className="text-2xl font-semibold text-white">{event.title}</h1>

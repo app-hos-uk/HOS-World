@@ -136,7 +136,7 @@ export function RoleSwitcher() {
         className={`
           px-4 py-2 rounded-lg font-medium text-sm transition-colors
           ${isImpersonating
-            ? 'bg-amber-500 text-white hover:bg-amber-600 border-2 border-amber-600'
+            ? 'bg-amber-500/10 text-white hover:bg-amber-600 border-2 border-amber-600'
             : 'bg-hos-gold text-[#1a1406] hover:bg-hos-gold-hover'
           }
         `}
@@ -182,7 +182,7 @@ export function RoleSwitcher() {
                   onClick={() => handleRoleSwitch(null)}
                   className="w-full text-left px-3 py-2 text-sm text-hos-text-secondary hover:bg-hos-gold/10 rounded-lg transition-colors flex items-center gap-2"
                 >
-                  <svg className="w-4 h-4 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg className="w-4 h-4 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                   </svg>
                   Reset to Admin
@@ -200,7 +200,7 @@ export function RoleSwitcher() {
                       className={`
                         w-full text-left px-3 py-2 text-sm rounded-lg transition-colors flex items-center justify-between
                         ${isActive
-                          ? 'bg-amber-100 text-amber-900 font-semibold'
+                          ? 'bg-amber-500/15 text-amber-300 font-semibold'
                           : 'text-hos-text-secondary hover:bg-hos-gold/10'
                         }
                       `}

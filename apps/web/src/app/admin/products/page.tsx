@@ -701,18 +701,18 @@ function AdminProductsContent() {
   const getStockBadge = (stock: number) => {
     if (stock === 0)
       return (
-        <span className="inline-flex min-w-[3.25rem] justify-center px-2 py-0.5 text-xs rounded bg-red-100 text-red-700 tabular-nums">
+        <span className="inline-flex min-w-[3.25rem] justify-center px-2 py-0.5 text-xs rounded bg-red-500/15 text-red-400 tabular-nums">
           Out
         </span>
       );
     if (stock <= 10)
       return (
-        <span className="inline-flex min-w-[3.25rem] justify-center px-2 py-0.5 text-xs rounded bg-yellow-100 text-yellow-700 tabular-nums">
+        <span className="inline-flex min-w-[3.25rem] justify-center px-2 py-0.5 text-xs rounded bg-yellow-500/15 text-yellow-400 tabular-nums">
           Low
         </span>
       );
     return (
-      <span className="inline-flex min-w-[3.25rem] justify-center px-2 py-0.5 text-xs rounded bg-green-100 text-green-700 tabular-nums">
+      <span className="inline-flex min-w-[3.25rem] justify-center px-2 py-0.5 text-xs rounded bg-green-500/15 text-green-400 tabular-nums">
         {stock}
       </span>
     );
@@ -788,28 +788,28 @@ function AdminProductsContent() {
                 className={`bg-hos-bg-secondary rounded-lg shadow p-4 text-left hover:ring-2 hover:ring-green-300 transition ${statusFilter === 'ACTIVE' && stockFilter === 'ALL' ? 'ring-2 ring-green-500' : ''}`}
               >
                 <p className="text-sm text-hos-text-secondary">Active</p>
-                <p className="text-2xl font-bold text-green-600">{stats.activeProducts}</p>
+                <p className="text-2xl font-bold text-green-400">{stats.activeProducts}</p>
               </button>
               <button
                 onClick={() => { setStatusFilter('DRAFT'); setStockFilter('ALL'); }}
                 className={`bg-hos-bg-secondary rounded-lg shadow p-4 text-left hover:ring-2 hover:ring-yellow-300 transition ${statusFilter === 'DRAFT' && stockFilter === 'ALL' ? 'ring-2 ring-yellow-500' : ''}`}
               >
                 <p className="text-sm text-hos-text-secondary">Draft</p>
-                <p className="text-2xl font-bold text-yellow-600">{stats.draftProducts}</p>
+                <p className="text-2xl font-bold text-yellow-400">{stats.draftProducts}</p>
               </button>
               <button
                 onClick={() => { setStatusFilter('ALL'); setStockFilter('OUT'); }}
                 className={`bg-hos-bg-secondary rounded-lg shadow p-4 text-left hover:ring-2 hover:ring-red-300 transition ${stockFilter === 'OUT' && statusFilter === 'ALL' ? 'ring-2 ring-red-500' : ''}`}
               >
                 <p className="text-sm text-hos-text-secondary">Out of Stock</p>
-                <p className="text-2xl font-bold text-red-600">{stats.outOfStock}</p>
+                <p className="text-2xl font-bold text-red-400">{stats.outOfStock}</p>
               </button>
               <button
                 onClick={() => { setStatusFilter('ALL'); setStockFilter('LOW'); }}
                 className={`bg-hos-bg-secondary rounded-lg shadow p-4 text-left hover:ring-2 hover:ring-orange-300 transition ${stockFilter === 'LOW' && statusFilter === 'ALL' ? 'ring-2 ring-orange-500' : ''}`}
               >
                 <p className="text-sm text-hos-text-secondary">Low Stock</p>
-                <p className="text-2xl font-bold text-orange-600">{stats.lowStock}</p>
+                <p className="text-2xl font-bold text-orange-400">{stats.lowStock}</p>
               </button>
               <div className="bg-hos-bg-secondary rounded-lg shadow p-4">
                 <p className="text-sm text-hos-text-secondary">Platform</p>
@@ -821,15 +821,15 @@ function AdminProductsContent() {
               </div>
               <div className="bg-hos-bg-secondary rounded-lg shadow p-4">
                 <p className="text-sm text-hos-text-secondary">Avg Price</p>
-                <p className="text-xl font-bold text-pink-600">{formatPrice(stats.avgPrice)}</p>
+                <p className="text-xl font-bold text-pink-400">{formatPrice(stats.avgPrice)}</p>
               </div>
             </div>
           )}
 
           {error && (
-            <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-              <p className="text-red-800">Error: {error}</p>
-              <button onClick={fetchProducts} className="mt-2 text-red-600 hover:text-red-800 text-sm">Retry</button>
+            <div className="bg-red-500/10 border border-red-500/30 rounded-lg p-4">
+              <p className="text-red-300">Error: {error}</p>
+              <button onClick={fetchProducts} className="mt-2 text-red-400 hover:text-red-300 text-sm">Retry</button>
             </div>
           )}
 
@@ -1036,9 +1036,9 @@ function AdminProductsContent() {
                           <span
                             className={`inline-flex max-w-full px-2 py-0.5 text-xs rounded truncate ${
                               product.status === 'ACTIVE'
-                                ? 'bg-green-100 text-green-700'
+                                ? 'bg-green-500/15 text-green-400'
                                 : product.status === 'DRAFT'
-                                  ? 'bg-yellow-100 text-yellow-700'
+                                  ? 'bg-yellow-500/15 text-yellow-400'
                                   : 'bg-hos-bg-tertiary text-hos-text-secondary'
                             }`}
                           >
@@ -1072,9 +1072,9 @@ function AdminProductsContent() {
                               }
                               className={`max-w-full px-2 py-1 text-xs border rounded cursor-pointer font-medium ${
                                 product.status === 'ACTIVE'
-                                  ? 'border-green-300 text-green-700 bg-green-50'
+                                  ? 'border-green-500/40 text-green-400 bg-green-500/10'
                                   : product.status === 'DRAFT'
-                                    ? 'border-yellow-300 text-yellow-700 bg-yellow-50'
+                                    ? 'border-yellow-500/40 text-yellow-400 bg-yellow-500/10'
                                     : 'border-hos-border text-hos-text-secondary bg-hos-bg-secondary'
                               }`}
                               title="Change status"
@@ -1086,7 +1086,7 @@ function AdminProductsContent() {
                             <button
                               type="button"
                               onClick={() => handleDeleteClick(product)}
-                              className="px-2 py-1 text-sm text-red-600 hover:bg-red-50 rounded whitespace-nowrap"
+                              className="px-2 py-1 text-sm text-red-400 hover:bg-red-500/10 rounded whitespace-nowrap"
                             >
                               Delete
                             </button>
@@ -1128,14 +1128,14 @@ function AdminProductsContent() {
                         <div>
                           <label className="block text-sm font-medium text-hos-text-secondary mb-1">Price *</label>
                           {editingProduct?.productType === 'VARIANT' && formData.variations.length > 0 && (
-                            <p className="text-xs text-amber-600 mb-1">For variable products, set price per variation option in the Variations section below (or when creating). Base price here is fallback.</p>
+                            <p className="text-xs text-amber-400 mb-1">For variable products, set price per variation option in the Variations section below (or when creating). Base price here is fallback.</p>
                           )}
                           <input type="number" step="0.01" required value={formData.price} onChange={(e) => setFormData(prev => ({ ...prev, price: e.target.value }))} className="w-full px-3 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50" />
                         </div>
                         <div>
                           <label className="block text-sm font-medium text-hos-text-secondary mb-1">Stock *</label>
                           {editingProduct?.productType === 'VARIANT' && formData.variations.length > 0 && (
-                            <p className="text-xs text-amber-600 mb-1">For variable products, set stock per variation option in the Variations section below.</p>
+                            <p className="text-xs text-amber-400 mb-1">For variable products, set stock per variation option in the Variations section below.</p>
                           )}
                           <input type="number" required value={formData.stock} onChange={(e) => setFormData(prev => ({ ...prev, stock: e.target.value }))} className="w-full px-3 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50" />
                         </div>
@@ -1166,7 +1166,7 @@ function AdminProductsContent() {
                             <div key={varIdx} className="bg-hos-bg-secondary rounded-lg p-4 border border-hos-border">
                               <div className="flex items-center justify-between mb-2">
                                 <label className="block text-sm font-medium text-hos-text-secondary">Dimension name</label>
-                                <button type="button" onClick={() => setFormData(prev => ({ ...prev, variations: prev.variations.filter((_, i) => i !== varIdx) }))} className="text-red-600 hover:text-red-800 text-xs">Remove dimension</button>
+                                <button type="button" onClick={() => setFormData(prev => ({ ...prev, variations: prev.variations.filter((_, i) => i !== varIdx) }))} className="text-red-400 hover:text-red-300 text-xs">Remove dimension</button>
                               </div>
                               <input type="text" value={variation.name} onChange={(e) => setFormData(prev => ({ ...prev, variations: prev.variations.map((v, i) => i === varIdx ? { ...v, name: e.target.value } : v) }))} className="w-full px-3 py-2 border border-hos-border rounded-lg text-sm mb-3" placeholder="e.g. Size, Color" />
                               <p className="text-xs font-medium text-hos-text-secondary mb-2">Options (value, optional price, optional stock)</p>
@@ -1180,7 +1180,7 @@ function AdminProductsContent() {
                                       <input type="text" value={val} onChange={(e) => updateVariationOption(varIdx, optIdx, 'value', e.target.value)} className="w-28 px-2 py-1.5 border border-hos-border rounded text-sm" placeholder="Value" />
                                       <input type="number" step="0.01" value={price} onChange={(e) => updateVariationOption(varIdx, optIdx, 'price', e.target.value)} className="w-20 px-2 py-1.5 border border-hos-border rounded text-sm" placeholder="Price" />
                                       <input type="number" value={stock} onChange={(e) => updateVariationOption(varIdx, optIdx, 'stock', e.target.value)} className="w-16 px-2 py-1.5 border border-hos-border rounded text-sm" placeholder="Stock" />
-                                      <button type="button" onClick={() => removeVariationOption(varIdx, optIdx)} className="text-red-600 hover:text-red-800 text-sm">×</button>
+                                      <button type="button" onClick={() => removeVariationOption(varIdx, optIdx)} className="text-red-400 hover:text-red-300 text-sm">×</button>
                                     </div>
                                   );
                                 })}
@@ -1247,7 +1247,7 @@ function AdminProductsContent() {
                             <div key={idx} className={`relative ${img.isPrimary ? 'ring-2 ring-hos-gold/50' : ''}`}>
                               <SafeImage src={img.url} alt={img.alt || `Product image ${idx + 1}`} width={64} height={64} className="object-cover rounded" />
                               {img.isPrimary && <span className="absolute -top-1 -right-1 bg-hos-gold text-[#1a1406] text-xs px-1 rounded">★</span>}
-                              <button type="button" onClick={() => removeImage(idx)} className="absolute -bottom-1 -right-1 bg-red-500 text-white text-xs w-5 h-5 rounded-full">×</button>
+                              <button type="button" onClick={() => removeImage(idx)} className="absolute -bottom-1 -right-1 bg-red-500/10 text-white text-xs w-5 h-5 rounded-full">×</button>
                             </div>
                           ))}
                         </div>
@@ -1310,10 +1310,10 @@ function AdminProductsContent() {
                           { label: 'SKU assigned', ok: !!(editingProduct?.sku), optional: true },
                         ].map((check) => (
                           <div key={check.label} className="flex items-center gap-2 text-sm">
-                            <span className={check.ok ? 'text-green-600' : check.optional ? 'text-amber-500' : 'text-red-500'}>
+                            <span className={check.ok ? 'text-green-400' : check.optional ? 'text-amber-500' : 'text-red-500'}>
                               {check.ok ? '✓' : check.optional ? '○' : '✗'}
                             </span>
-                            <span className={check.ok ? 'text-hos-text-secondary' : check.optional ? 'text-amber-700' : 'text-red-700'}>
+                            <span className={check.ok ? 'text-hos-text-secondary' : check.optional ? 'text-amber-400' : 'text-red-400'}>
                               {check.label}{check.optional ? ' (recommended)' : ' *'}
                             </span>
                           </div>
@@ -1328,7 +1328,7 @@ function AdminProductsContent() {
                           ].filter(Boolean).length;
                           if (requiredMissing > 0 && publishNow) {
                             return (
-                              <div className="mt-2 p-2 bg-red-50 border border-red-200 rounded text-xs text-red-700">
+                              <div className="mt-2 p-2 bg-red-500/10 border border-red-500/30 rounded text-xs text-red-400">
                                 {requiredMissing} required item{requiredMissing > 1 ? 's' : ''} missing. The product cannot be published until all required items are complete.
                               </div>
                             );
@@ -1377,8 +1377,8 @@ function AdminProductsContent() {
                 <h2 id="delete-product-modal-title" className="text-2xl font-bold mb-4">Delete Product</h2>
                 {deleteError ? (
                   <>
-                    <div className="mb-4 p-4 bg-amber-50 border border-amber-200 rounded-lg">
-                      <p className="text-amber-800 text-sm">{deleteError}</p>
+                    <div className="mb-4 p-4 bg-amber-500/10 border border-amber-500/30 rounded-lg">
+                      <p className="text-amber-300 text-sm">{deleteError}</p>
                     </div>
                     <p className="text-hos-text-secondary mb-4">
                       Use <strong>Set to Inactive</strong> to hide the product from the marketplace while keeping order history intact.

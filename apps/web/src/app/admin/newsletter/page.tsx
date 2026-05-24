@@ -94,7 +94,7 @@ export default function AdminNewsletterPage() {
           </div>
 
           {error && (
-            <div className="rounded-md bg-red-50 p-4 text-sm text-red-700">
+            <div className="rounded-md bg-red-500/10 p-4 text-sm text-red-400">
               {error}
             </div>
           )}
@@ -137,7 +137,7 @@ export default function AdminNewsletterPage() {
                             <span
                               className={`inline-flex rounded-full px-2 py-0.5 text-xs font-medium ${
                                 sub.status === 'subscribed'
-                                  ? 'bg-green-100 text-green-800'
+                                  ? 'bg-green-500/15 text-green-300'
                                   : 'bg-hos-bg-tertiary text-white'
                               }`}
                             >

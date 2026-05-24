@@ -123,7 +123,7 @@ export default function ReturnDetailPage() {
                 {returnRequest.refundAmount != null && (
                   <div>
                     <dt className="text-sm font-medium text-hos-text-muted">Refund Amount</dt>
-                    <dd className="mt-1 text-lg font-semibold text-green-600">
+                    <dd className="mt-1 text-lg font-semibold text-green-400">
                       {formatPrice(Number(returnRequest.refundAmount), returnRequest.currency || 'USD')}
                     </dd>
                   </div>

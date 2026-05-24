@@ -59,9 +59,9 @@ export default function AdminLoyaltyTransactionsPage() {
                       </td>
                       <td className="px-4 py-3">
                         <span className={`px-2 py-0.5 text-xs font-medium rounded-full ${
-                          tx.type === 'EARN' ? 'bg-green-100 text-green-700' :
-                          tx.type === 'BURN' || tx.type === 'REDEEM' ? 'bg-red-100 text-red-700' :
-                          tx.type === 'ADJUST' ? 'bg-amber-100 text-amber-700' :
+                          tx.type === 'EARN' ? 'bg-green-500/15 text-green-400' :
+                          tx.type === 'BURN' || tx.type === 'REDEEM' ? 'bg-red-500/15 text-red-400' :
+                          tx.type === 'ADJUST' ? 'bg-amber-500/15 text-amber-400' :
                           tx.type === 'EXPIRE' ? 'bg-hos-bg-tertiary text-hos-text-secondary' :
                           'bg-hos-gold/20 text-hos-gold'
                         }`}>
@@ -69,7 +69,7 @@ export default function AdminLoyaltyTransactionsPage() {
                         </span>
                       </td>
                       <td className="px-4 py-3 text-hos-text-secondary">{tx.action || '—'}</td>
-                      <td className={`px-4 py-3 text-right font-semibold ${tx.points > 0 ? 'text-green-600' : tx.points < 0 ? 'text-red-600' : 'text-hos-text-secondary'}`}>
+                      <td className={`px-4 py-3 text-right font-semibold ${tx.points > 0 ? 'text-green-400' : tx.points < 0 ? 'text-red-400' : 'text-hos-text-secondary'}`}>
                         {tx.points > 0 ? '+' : ''}{tx.points}
                       </td>
                       <td className="px-4 py-3 text-right text-hos-text-secondary">{tx.balanceAfter != null ? Number(tx.balanceAfter).toLocaleString() : '—'}</td>

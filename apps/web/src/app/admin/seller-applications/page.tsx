@@ -107,13 +107,13 @@ export default function AdminSellerApplicationsPage() {
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'PENDING':
-        return 'bg-yellow-100 text-yellow-800';
+        return 'bg-yellow-500/15 text-yellow-300';
       case 'ACCEPTED':
-        return 'bg-green-100 text-green-800';
+        return 'bg-green-500/15 text-green-300';
       case 'EXPIRED':
         return 'bg-hos-bg-tertiary text-white';
       case 'CANCELLED':
-        return 'bg-red-100 text-red-800';
+        return 'bg-red-500/15 text-red-300';
       default:
         return 'bg-hos-bg-tertiary text-white';
     }
@@ -156,7 +156,7 @@ export default function AdminSellerApplicationsPage() {
               }`}
             >
               <h3 className="text-xs font-medium text-hos-text-muted uppercase">Pending</h3>
-              <p className="text-2xl font-bold text-yellow-600 mt-1">{stats.pending}</p>
+              <p className="text-2xl font-bold text-yellow-400 mt-1">{stats.pending}</p>
             </button>
             <button
               onClick={() => setStatusFilter(statusFilter === 'ACCEPTED' ? '' : 'ACCEPTED')}
@@ -165,7 +165,7 @@ export default function AdminSellerApplicationsPage() {
               }`}
             >
               <h3 className="text-xs font-medium text-hos-text-muted uppercase">Accepted</h3>
-              <p className="text-2xl font-bold text-green-600 mt-1">{stats.accepted}</p>
+              <p className="text-2xl font-bold text-green-400 mt-1">{stats.accepted}</p>
             </button>
             <button
               onClick={() => setStatusFilter(statusFilter === 'EXPIRED' ? '' : 'EXPIRED')}
@@ -185,8 +185,8 @@ export default function AdminSellerApplicationsPage() {
           )}
 
           {error && (
-            <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-              <p className="text-red-800">Error: {error}</p>
+            <div className="bg-red-500/10 border border-red-500/30 rounded-lg p-4">
+              <p className="text-red-300">Error: {error}</p>
               <button
                 onClick={fetchInvitations}
                 className="mt-2 px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700"
@@ -285,7 +285,7 @@ export default function AdminSellerApplicationsPage() {
                                 </button>
                                 <button
                                   onClick={() => handleCancelInvitation(invitation.id)}
-                                  className="text-red-600 hover:text-red-900"
+                                  className="text-red-400 hover:text-red-300"
                                 >
                                   Cancel
                                 </button>

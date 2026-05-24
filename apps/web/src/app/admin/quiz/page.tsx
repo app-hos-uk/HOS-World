@@ -148,7 +148,7 @@ export default function AdminQuizPage() {
                 resetForm();
                 setShowForm(true);
               }}
-              className="rounded-md bg-amber-600 px-4 py-2 text-stone-950 font-medium text-sm hover:bg-amber-500"
+              className="rounded-md bg-amber-600 px-4 py-2 text-stone-950 font-medium text-sm hover:bg-amber-600"
             >
               + New quiz
             </button>
@@ -247,7 +247,7 @@ export default function AdminQuizPage() {
                   type="button"
                   onClick={handleSave}
                   disabled={saving}
-                  className="rounded-md bg-amber-600 px-4 py-2 text-stone-950 font-medium text-sm hover:bg-amber-500 disabled:opacity-40"
+                  className="rounded-md bg-amber-600 px-4 py-2 text-stone-950 font-medium text-sm hover:bg-amber-600 disabled:opacity-40"
                 >
                   {saving ? 'Saving…' : editingId ? 'Update' : 'Create'}
                 </button>

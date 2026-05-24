@@ -43,7 +43,7 @@ export default function AdminAmbassadorUgcPage() {
     <RouteGuard allowedRoles={['ADMIN']}>
       <AdminLayout>
         <div className="p-6 max-w-5xl mx-auto">
-          <Link href="/admin/ambassadors" className="text-sm text-violet-700 mb-4 inline-block">
+          <Link href="/admin/ambassadors" className="text-sm text-violet-400 mb-4 inline-block">
             ← Ambassadors
           </Link>
           <h1 className="text-2xl font-semibold text-white mb-4">UGC review</h1>

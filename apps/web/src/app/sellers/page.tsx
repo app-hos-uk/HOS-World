@@ -95,7 +95,7 @@ export default function SellersPage() {
                   )}
                   <div className="flex items-center justify-center gap-2 mt-2">
                     {seller.verified && (
-                      <span className="text-xs text-green-600 bg-green-50 px-2 py-0.5 rounded-full">Verified</span>
+                      <span className="text-xs text-green-400 bg-green-500/10 px-2 py-0.5 rounded-full">Verified</span>
                     )}
                     {seller.totalProducts > 0 && (
                       <span className="text-xs text-hos-gold bg-hos-gold/10 px-2 py-0.5 rounded-full">

@@ -547,17 +547,17 @@ export default function AdminUsersPage() {
 
   const getRoleBadgeColor = (role: string) => {
     const colors: Record<string, string> = {
-      ADMIN: 'bg-red-100 text-red-800',
+      ADMIN: 'bg-red-500/15 text-red-300',
       SELLER: 'bg-hos-gold/20 text-hos-gold',
       B2C_SELLER: 'bg-hos-gold/20 text-hos-gold',
-      WHOLESALER: 'bg-green-100 text-green-800',
+      WHOLESALER: 'bg-green-500/15 text-green-300',
       CUSTOMER: 'bg-hos-bg-tertiary text-white',
       PROCUREMENT: 'bg-hos-gold/20 text-hos-gold',
-      FULFILLMENT: 'bg-yellow-100 text-yellow-800',
+      FULFILLMENT: 'bg-yellow-500/15 text-yellow-300',
       CATALOG: 'bg-hos-gold/20 text-hos-gold',
-      MARKETING: 'bg-pink-100 text-pink-800',
-      FINANCE: 'bg-emerald-100 text-emerald-800',
-      CMS_EDITOR: 'bg-cyan-100 text-cyan-800',
+      MARKETING: 'bg-pink-500/15 text-pink-300',
+      FINANCE: 'bg-emerald-500/15 text-emerald-300',
+      CMS_EDITOR: 'bg-cyan-500/15 text-cyan-300',
     };
     return colors[role] || 'bg-hos-bg-tertiary text-white';
   };
@@ -614,7 +614,7 @@ export default function AdminUsersPage() {
                 className={`bg-hos-bg-secondary rounded-lg shadow p-3 text-left hover:shadow-md transition-shadow ${roleFilter === 'ADMIN' && !showNewThisMonth ? 'ring-2 ring-hos-gold/50' : ''}`}
               >
                 <p className="text-xs text-hos-text-muted">Admins</p>
-                <p className="text-xl font-bold text-red-600">{stats.admins}</p>
+                <p className="text-xl font-bold text-red-400">{stats.admins}</p>
               </button>
               <button
                 onClick={() => { setRoleFilter('SELLERS'); setShowNewThisMonth(false); }}
@@ -642,7 +642,7 @@ export default function AdminUsersPage() {
                 className={`bg-hos-bg-secondary rounded-lg shadow p-3 text-left hover:shadow-md transition-shadow ${roleFilter === 'INFLUENCER' && !showNewThisMonth ? 'ring-2 ring-hos-gold/50' : ''}`}
               >
                 <p className="text-xs text-hos-text-muted">Influencers</p>
-                <p className="text-xl font-bold text-amber-600">{stats.influencers}</p>
+                <p className="text-xl font-bold text-amber-400">{stats.influencers}</p>
               </button>
               <button
                 onClick={() => {
@@ -656,29 +656,29 @@ export default function AdminUsersPage() {
                 className={`bg-hos-bg-secondary rounded-lg shadow p-3 text-left hover:shadow-md transition-shadow ${showNewThisMonth ? 'ring-2 ring-green-500' : ''}`}
               >
                 <p className="text-xs text-hos-text-muted">New This Month</p>
-                <p className="text-xl font-bold text-green-600">{stats.newThisMonth}</p>
+                <p className="text-xl font-bold text-green-400">{stats.newThisMonth}</p>
               </button>
               <button
                 onClick={() => { setStatusFilter('ACTIVE'); setShowNewThisMonth(false); }}
                 className={`bg-hos-bg-secondary rounded-lg shadow p-3 text-left hover:shadow-md transition-shadow ${statusFilter === 'ACTIVE' && !showNewThisMonth ? 'ring-2 ring-hos-gold/50' : ''}`}
               >
                 <p className="text-xs text-hos-text-muted">Active</p>
-                <p className="text-xl font-bold text-green-600">{stats.active}</p>
+                <p className="text-xl font-bold text-green-400">{stats.active}</p>
               </button>
               <button
                 onClick={() => { setStatusFilter('INACTIVE'); setShowNewThisMonth(false); }}
                 className={`bg-hos-bg-secondary rounded-lg shadow p-3 text-left hover:shadow-md transition-shadow ${statusFilter === 'INACTIVE' && !showNewThisMonth ? 'ring-2 ring-hos-gold/50' : ''}`}
               >
                 <p className="text-xs text-hos-text-muted">Inactive</p>
-                <p className="text-xl font-bold text-red-600">{stats.inactive}</p>
+                <p className="text-xl font-bold text-red-400">{stats.inactive}</p>
               </button>
             </div>
           )}
 
           {error && (
-            <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-              <p className="text-red-800">Error: {error}</p>
-              <button onClick={() => { fetchUsers(1); fetchStats(); }} className="mt-2 text-red-600 hover:text-red-800 text-sm">Retry</button>
+            <div className="bg-red-500/10 border border-red-500/30 rounded-lg p-4">
+              <p className="text-red-300">Error: {error}</p>
+              <button onClick={() => { fetchUsers(1); fetchStats(); }} className="mt-2 text-red-400 hover:text-red-300 text-sm">Retry</button>
             </div>
           )}
 
@@ -751,19 +751,19 @@ export default function AdminUsersPage() {
                 <span className="text-sm text-hos-text-secondary">{selectedUsers.size} selected</span>
                 <button
                   onClick={() => handleBulkAction('activate')}
-                  className="px-3 py-1 text-sm bg-green-100 text-green-700 rounded hover:bg-green-200"
+                  className="px-3 py-1 text-sm bg-green-500/15 text-green-400 rounded hover:bg-green-200"
                 >
                   Activate
                 </button>
                 <button
                   onClick={() => handleBulkAction('deactivate')}
-                  className="px-3 py-1 text-sm bg-yellow-100 text-yellow-700 rounded hover:bg-yellow-200"
+                  className="px-3 py-1 text-sm bg-yellow-500/15 text-yellow-400 rounded hover:bg-yellow-200"
                 >
                   Deactivate
                 </button>
                 <button
                   onClick={() => handleBulkAction('delete')}
-                  className="px-3 py-1 text-sm bg-red-100 text-red-700 rounded hover:bg-red-200"
+                  className="px-3 py-1 text-sm bg-red-500/15 text-red-400 rounded hover:bg-red-200"
                 >
                   Delete
                 </button>
@@ -869,7 +869,7 @@ export default function AdminUsersPage() {
                         </td>
                         <td className="px-4 py-3">
                           <div className="flex flex-col gap-1">
-                            <span className={`px-2 py-0.5 text-xs rounded-full w-fit ${user.isActive !== false ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
+                            <span className={`px-2 py-0.5 text-xs rounded-full w-fit ${user.isActive !== false ? 'bg-green-500/15 text-green-300' : 'bg-red-500/15 text-red-300'}`}>
                               {user.isActive !== false ? 'Active' : 'Inactive'}
                             </span>
                             {user.emailVerified && (
@@ -897,7 +897,7 @@ export default function AdminUsersPage() {
                             {isSuperAdmin && (
                               <button
                                 onClick={() => handleResetPassword(user)}
-                                className="px-2 py-1 text-sm text-orange-600 hover:bg-orange-50 rounded"
+                                className="px-2 py-1 text-sm text-orange-400 hover:bg-orange-500/10 rounded"
                               >
                                 Reset Pwd
                               </button>
@@ -906,13 +906,13 @@ export default function AdminUsersPage() {
                               <>
                                 <button
                                   onClick={() => handleToggleStatus(user)}
-                                  className={`px-2 py-1 text-sm rounded ${user.isActive !== false ? 'text-yellow-600 hover:bg-yellow-50' : 'text-green-600 hover:bg-green-50'}`}
+                                  className={`px-2 py-1 text-sm rounded ${user.isActive !== false ? 'text-yellow-400 hover:bg-yellow-500/10' : 'text-green-400 hover:bg-green-500/10'}`}
                                 >
                                   {user.isActive !== false ? 'Deactivate' : 'Activate'}
                                 </button>
                                 <button
                                   onClick={() => handleDelete(user)}
-                                  className="px-2 py-1 text-sm text-red-600 hover:bg-red-50 rounded"
+                                  className="px-2 py-1 text-sm text-red-400 hover:bg-red-500/10 rounded"
                                 >
                                   Delete
                                 </button>
@@ -1000,7 +1000,7 @@ export default function AdminUsersPage() {
                       </div>
                       <div>
                         <p className="text-sm text-hos-text-muted">Status</p>
-                        <span className={`px-2 py-1 text-xs rounded-full ${selectedUser.isActive !== false ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
+                        <span className={`px-2 py-1 text-xs rounded-full ${selectedUser.isActive !== false ? 'bg-green-500/15 text-green-300' : 'bg-red-500/15 text-red-300'}`}>
                           {selectedUser.isActive !== false ? 'Active' : 'Inactive'}
                         </span>
                       </div>
@@ -1246,8 +1246,8 @@ export default function AdminUsersPage() {
 
                     {/* ADMIN specific fields */}
                     {createForm.role === 'ADMIN' && permissionRoles.length > 0 && (
-                      <div className="bg-red-50 p-4 rounded-lg space-y-4">
-                        <h4 className="text-sm font-semibold text-red-800">Admin Configuration</h4>
+                      <div className="bg-red-500/10 p-4 rounded-lg space-y-4">
+                        <h4 className="text-sm font-semibold text-red-300">Admin Configuration</h4>
                         <div>
                           <label className="block text-sm font-medium text-hos-text-secondary mb-1">Permission Role</label>
                           <select

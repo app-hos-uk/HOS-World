@@ -59,10 +59,10 @@ const MATERIAL_TYPES = [
 const TYPE_COLORS: Record<string, string> = {
   HERO_IMAGE: 'bg-hos-gold/20 text-hos-gold',
   LIFESTYLE: 'bg-hos-gold/20 text-hos-gold',
-  DETAIL: 'bg-green-100 text-green-800',
-  VIDEO: 'bg-red-100 text-red-800',
-  BANNER: 'bg-yellow-100 text-yellow-800',
-  SOCIAL: 'bg-pink-100 text-pink-800',
+  DETAIL: 'bg-green-500/15 text-green-300',
+  VIDEO: 'bg-red-500/15 text-red-300',
+  BANNER: 'bg-yellow-500/15 text-yellow-300',
+  SOCIAL: 'bg-pink-500/15 text-pink-300',
   OTHER: 'bg-hos-bg-tertiary text-white',
 };
 
@@ -273,12 +273,12 @@ export default function AdminMarketingPage() {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="bg-hos-bg-secondary rounded-lg shadow p-6">
               <h3 className="text-sm font-medium text-hos-text-muted mb-1">Pending Review</h3>
-              <p className="text-3xl font-bold text-yellow-600">{stats.pending}</p>
+              <p className="text-3xl font-bold text-yellow-400">{stats.pending}</p>
               <p className="text-xs text-hos-text-muted mt-1">Awaiting marketing materials</p>
             </div>
             <div className="bg-hos-bg-secondary rounded-lg shadow p-6">
               <h3 className="text-sm font-medium text-hos-text-muted mb-1">Completed</h3>
-              <p className="text-3xl font-bold text-green-600">{stats.completed}</p>
+              <p className="text-3xl font-bold text-green-400">{stats.completed}</p>
               <p className="text-xs text-hos-text-muted mt-1">Marketing finalized</p>
             </div>
             <div className="bg-hos-bg-secondary rounded-lg shadow p-6">
@@ -390,7 +390,7 @@ export default function AdminMarketingPage() {
                                     <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
                                       <button
                                         onClick={() => handleDeleteMaterial(material.id)}
-                                        className="text-red-500 hover:text-red-700 text-xs"
+                                        className="text-red-500 hover:text-red-400 text-xs"
                                       >
                                         ✕
                                       </button>
@@ -498,7 +498,7 @@ export default function AdminMarketingPage() {
                                 </button>
                                 <button
                                   onClick={() => handleDeleteMaterial(material.id)}
-                                  className="text-red-600 hover:text-red-900"
+                                  className="text-red-400 hover:text-red-300"
                                 >
                                   Delete
                                 </button>

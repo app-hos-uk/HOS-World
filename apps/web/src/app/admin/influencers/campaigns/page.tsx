@@ -164,8 +164,8 @@ export default function AdminInfluencerCampaignsPage() {
   const getStatusBadge = (status: string) => {
     const styles: Record<string, string> = {
       DRAFT: 'bg-hos-bg-tertiary text-white',
-      ACTIVE: 'bg-green-100 text-green-800',
-      PAUSED: 'bg-yellow-100 text-yellow-800',
+      ACTIVE: 'bg-green-500/15 text-green-300',
+      PAUSED: 'bg-yellow-500/15 text-yellow-300',
       COMPLETED: 'bg-hos-gold/20 text-hos-gold',
     };
     return styles[status] || 'bg-hos-bg-tertiary text-white';
@@ -249,7 +249,7 @@ export default function AdminInfluencerCampaignsPage() {
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-hos-text-muted">
                         <div>{campaign.totalClicks} clicks · {campaign.totalConversions} sales</div>
-                        <div className="text-green-600 font-medium">{formatCurrency(campaign.totalSales)}</div>
+                        <div className="text-green-400 font-medium">{formatCurrency(campaign.totalSales)}</div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <span className={`px-2.5 py-1 rounded-full text-xs font-medium ${getStatusBadge(campaign.status)}`}>
@@ -268,7 +268,7 @@ export default function AdminInfluencerCampaignsPage() {
                           {campaign.status === 'ACTIVE' && (
                             <button
                               onClick={() => handleUpdateStatus(campaign.id, 'PAUSED')}
-                              className="text-yellow-600 hover:text-yellow-800 text-sm font-medium"
+                              className="text-yellow-400 hover:text-yellow-300 text-sm font-medium"
                             >
                               Pause
                             </button>
@@ -276,14 +276,14 @@ export default function AdminInfluencerCampaignsPage() {
                           {campaign.status === 'PAUSED' && (
                             <button
                               onClick={() => handleUpdateStatus(campaign.id, 'ACTIVE')}
-                              className="text-green-600 hover:text-green-800 text-sm font-medium"
+                              className="text-green-400 hover:text-green-300 text-sm font-medium"
                             >
                               Resume
                             </button>
                           )}
                           <button
                             onClick={() => handleDelete(campaign.id)}
-                            className="text-red-600 hover:text-red-800 text-sm font-medium"
+                            className="text-red-400 hover:text-red-300 text-sm font-medium"
                           >
                             Delete
                           </button>
@@ -325,7 +325,7 @@ export default function AdminInfluencerCampaignsPage() {
                       </div>
                       <div className="bg-hos-bg-secondary rounded-lg p-4">
                         <p className="text-xs text-hos-text-muted uppercase">Sales attributed</p>
-                        <p className="text-2xl font-bold text-green-700">
+                        <p className="text-2xl font-bold text-green-400">
                           {formatCurrency(analyticsData.summary?.totalSalesAttributed ?? 0)}
                         </p>
                       </div>
@@ -337,7 +337,7 @@ export default function AdminInfluencerCampaignsPage() {
                       </div>
                       <div className="bg-hos-bg-secondary rounded-lg p-4">
                         <p className="text-xs text-hos-text-muted uppercase">Pending commission</p>
-                        <p className="text-2xl font-bold text-amber-700">
+                        <p className="text-2xl font-bold text-amber-400">
                           {formatCurrency(analyticsData.summary?.totalCommissionPending ?? 0)}
                         </p>
                       </div>

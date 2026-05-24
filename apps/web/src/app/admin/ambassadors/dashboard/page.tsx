@@ -23,12 +23,12 @@ export default function AdminAmbassadorDashboardPage() {
     <RouteGuard allowedRoles={['ADMIN']}>
       <AdminLayout>
         <div className="p-6 max-w-4xl mx-auto">
-          <Link href="/admin/ambassadors" className="text-sm text-violet-700 mb-4 inline-block">
+          <Link href="/admin/ambassadors" className="text-sm text-violet-400 mb-4 inline-block">
             ← All ambassadors
           </Link>
           <h1 className="text-2xl font-semibold text-white mb-6">Ambassador program</h1>
           {error ? (
-            <p className="text-red-600 text-sm">{error}</p>
+            <p className="text-red-400 text-sm">{error}</p>
           ) : loading ? (
             <p className="text-hos-text-muted">Loading…</p>
           ) : data ? (

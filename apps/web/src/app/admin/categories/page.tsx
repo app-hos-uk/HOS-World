@@ -475,7 +475,7 @@ export default function AdminCategoriesPage() {
               </button>
               <button
                 onClick={() => handleToggleActive(category)}
-                className={`p-1 rounded ${category.isActive ? 'text-green-600 hover:bg-green-50' : 'text-hos-text-muted hover:bg-hos-bg-tertiary'}`}
+                className={`p-1 rounded ${category.isActive ? 'text-green-400 hover:bg-green-500/10' : 'text-hos-text-muted hover:bg-hos-bg-tertiary'}`}
                 title={category.isActive ? 'Deactivate' : 'Activate'}
               >
                 {category.isActive ? '✓' : '○'}
@@ -626,7 +626,7 @@ export default function AdminCategoriesPage() {
               </div>
               <div className="bg-hos-bg-secondary rounded-lg shadow p-4">
                 <p className="text-sm text-hos-text-secondary">Active</p>
-                <p className="text-2xl font-bold text-green-600">{stats.activeCategories}</p>
+                <p className="text-2xl font-bold text-green-400">{stats.activeCategories}</p>
               </div>
               <div className="bg-hos-bg-secondary rounded-lg shadow p-4">
                 <p className="text-sm text-hos-text-secondary">Inactive</p>
@@ -634,7 +634,7 @@ export default function AdminCategoriesPage() {
               </div>
               <div className="bg-hos-bg-secondary rounded-lg shadow p-4">
                 <p className="text-sm text-hos-text-secondary">Products</p>
-                <p className="text-2xl font-bold text-orange-600">{stats.totalProducts}</p>
+                <p className="text-2xl font-bold text-orange-400">{stats.totalProducts}</p>
               </div>
               <div className="bg-hos-bg-secondary rounded-lg shadow p-4">
                 <p className="text-sm text-hos-text-secondary">Avg/Fandom</p>
@@ -642,15 +642,15 @@ export default function AdminCategoriesPage() {
               </div>
               <div className="bg-hos-bg-secondary rounded-lg shadow p-4">
                 <p className="text-sm text-hos-text-secondary">Max Depth</p>
-                <p className="text-2xl font-bold text-pink-600">{stats.maxDepth + 1}</p>
+                <p className="text-2xl font-bold text-pink-400">{stats.maxDepth + 1}</p>
               </div>
             </div>
           )}
 
           {error && (
-            <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-              <p className="text-red-800">Error: {error}</p>
-              <button onClick={fetchCategories} className="mt-2 text-red-600 hover:text-red-800 text-sm">
+            <div className="bg-red-500/10 border border-red-500/30 rounded-lg p-4">
+              <p className="text-red-300">Error: {error}</p>
+              <button onClick={fetchCategories} className="mt-2 text-red-400 hover:text-red-300 text-sm">
                 Retry
               </button>
             </div>

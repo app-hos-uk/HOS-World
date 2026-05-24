@@ -131,9 +131,9 @@ export default function QuestsPage() {
 
   const getDifficultyColor = (difficulty?: string) => {
     switch (difficulty) {
-      case 'EASY': return 'bg-green-100 text-green-800';
-      case 'MEDIUM': return 'bg-yellow-100 text-yellow-800';
-      case 'HARD': return 'bg-orange-100 text-orange-800';
+      case 'EASY': return 'bg-green-500/15 text-green-300';
+      case 'MEDIUM': return 'bg-yellow-500/15 text-yellow-300';
+      case 'HARD': return 'bg-orange-500/15 text-orange-300';
       case 'EPIC': return 'bg-hos-gold/20 text-hos-gold';
       default: return 'bg-hos-bg-tertiary text-white';
     }
@@ -171,7 +171,7 @@ export default function QuestsPage() {
                 ⭐ {quest.points} points
               </span>
               {quest.badge && (
-                <span className="px-2 py-1 bg-yellow-100 text-yellow-800 rounded text-xs">
+                <span className="px-2 py-1 bg-yellow-500/15 text-yellow-300 rounded text-xs">
                   🏅 {quest.badge.name}
                 </span>
               )}
@@ -255,11 +255,11 @@ export default function QuestsPage() {
             </div>
             <div className="bg-hos-bg-secondary rounded-lg shadow p-4">
               <h3 className="text-xs font-medium text-hos-text-muted uppercase">Badges Earned</h3>
-              <p className="text-2xl font-bold text-yellow-600 mt-1">{stats.badgesEarned}</p>
+              <p className="text-2xl font-bold text-yellow-400 mt-1">{stats.badgesEarned}</p>
             </div>
             <div className="bg-hos-bg-secondary rounded-lg shadow p-4">
               <h3 className="text-xs font-medium text-hos-text-muted uppercase">Completed</h3>
-              <p className="text-2xl font-bold text-green-600 mt-1">{stats.questsCompleted}</p>
+              <p className="text-2xl font-bold text-green-400 mt-1">{stats.questsCompleted}</p>
             </div>
             <div className="bg-hos-bg-secondary rounded-lg shadow p-4">
               <h3 className="text-xs font-medium text-hos-text-muted uppercase">In Progress</h3>
@@ -267,7 +267,7 @@ export default function QuestsPage() {
             </div>
             <div className="bg-hos-bg-secondary rounded-lg shadow p-4">
               <h3 className="text-xs font-medium text-hos-text-muted uppercase">Fandoms</h3>
-              <p className="text-2xl font-bold text-pink-600 mt-1">{stats.uniqueFandoms}</p>
+              <p className="text-2xl font-bold text-pink-400 mt-1">{stats.uniqueFandoms}</p>
             </div>
           </div>
 

@@ -284,8 +284,8 @@ export default function AdminReturnPoliciesPage() {
               </div>
             </div>
           ) : error ? (
-            <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-              <p className="text-red-800">{error}</p>
+            <div className="bg-red-500/10 border border-red-500/30 rounded-lg p-4">
+              <p className="text-red-300">{error}</p>
             </div>
           ) : policies.length === 0 ? (
             <div className="bg-hos-bg-secondary rounded-lg p-8 text-center">
@@ -347,7 +347,7 @@ export default function AdminReturnPoliciesPage() {
                           <span
                             className={`px-2 py-1 text-xs font-medium rounded-full ${
                               policy.isActive
-                                ? 'bg-green-100 text-green-800'
+                                ? 'bg-green-500/15 text-green-300'
                                 : 'bg-hos-bg-tertiary text-white'
                             }`}
                           >
@@ -364,7 +364,7 @@ export default function AdminReturnPoliciesPage() {
                             </button>
                             <button
                               onClick={() => handleDelete(policy)}
-                              className="text-red-600 hover:text-red-900"
+                              className="text-red-400 hover:text-red-300"
                             >
                               Delete
                             </button>

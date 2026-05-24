@@ -22,10 +22,10 @@ interface JobProgress {
 }
 
 const STATUS_CONFIG: Record<JobStatus, { label: string; color: string; bg: string; bar: string }> = {
-  queued: { label: 'Queued', color: 'text-yellow-800', bg: 'bg-yellow-100', bar: 'bg-yellow-500' },
+  queued: { label: 'Queued', color: 'text-yellow-300', bg: 'bg-yellow-500/15', bar: 'bg-yellow-500/10' },
   processing: { label: 'Processing', color: 'text-hos-gold', bg: 'bg-hos-gold/20', bar: 'bg-hos-gold/100' },
-  completed: { label: 'Completed', color: 'text-green-800', bg: 'bg-green-100', bar: 'bg-green-500' },
-  failed: { label: 'Failed', color: 'text-red-800', bg: 'bg-red-100', bar: 'bg-red-500' },
+  completed: { label: 'Completed', color: 'text-green-300', bg: 'bg-green-500/15', bar: 'bg-green-500/10' },
+  failed: { label: 'Failed', color: 'text-red-300', bg: 'bg-red-500/15', bar: 'bg-red-500/10' },
 };
 
 export default function SellerBulkProductsPage() {
@@ -374,9 +374,9 @@ export default function SellerBulkProductsPage() {
             </div>
 
             {jobProgress.status === 'failed' && jobProgress.errors && jobProgress.errors.length > 0 && (
-              <div className="mt-4 p-4 bg-red-50 border border-red-200 rounded-lg">
-                <h4 className="font-medium text-red-700 mb-2">Error Details:</h4>
-                <ul className="list-disc list-inside space-y-1 text-sm text-red-600">
+              <div className="mt-4 p-4 bg-red-500/10 border border-red-500/30 rounded-lg">
+                <h4 className="font-medium text-red-400 mb-2">Error Details:</h4>
+                <ul className="list-disc list-inside space-y-1 text-sm text-red-400">
                   {jobProgress.errors.slice(0, 10).map((error, index) => (
                     <li key={index}>{error}</li>
                   ))}
@@ -398,8 +398,8 @@ export default function SellerBulkProductsPage() {
               <p><span className="font-medium">Errors:</span> {importResults.errorCount || 0}</p>
               {importResults.errors && importResults.errors.length > 0 && (
                 <div className="mt-4">
-                  <h4 className="font-medium text-red-600 mb-2">Errors:</h4>
-                  <ul className="list-disc list-inside space-y-1 text-sm text-red-600">
+                  <h4 className="font-medium text-red-400 mb-2">Errors:</h4>
+                  <ul className="list-disc list-inside space-y-1 text-sm text-red-400">
                     {importResults.errors.slice(0, 10).map((error: string, index: number) => (
                       <li key={index}>{error}</li>
                     ))}

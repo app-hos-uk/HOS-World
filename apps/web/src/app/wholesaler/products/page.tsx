@@ -70,7 +70,7 @@ export default function WholesalerProductsPage() {
         )}
 
         {error && (
-          <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded mb-6">
+          <div className="bg-red-500/10 border border-red-500/30 text-red-400 px-4 py-3 rounded mb-6">
             Error: {error}
             <button
               onClick={fetchProducts}
@@ -150,10 +150,10 @@ export default function WholesalerProductsPage() {
                           <span
                             className={`px-2 py-1 text-xs font-medium rounded ${
                               product.status === 'ACTIVE'
-                                ? 'bg-green-100 text-green-800'
+                                ? 'bg-green-500/15 text-green-300'
                                 : product.status === 'INACTIVE'
                                   ? 'bg-hos-bg-tertiary text-white'
-                                  : 'bg-yellow-100 text-yellow-800'
+                                  : 'bg-yellow-500/15 text-yellow-300'
                             }`}
                           >
                             {product.status}

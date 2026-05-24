@@ -108,7 +108,7 @@ export default function LoyaltyDashboardPage() {
               <button
                 type="button"
                 onClick={enroll}
-                className="rounded-md bg-amber-600 px-4 py-2 text-stone-950 font-medium hover:bg-amber-500"
+                className="rounded-md bg-amber-600 px-4 py-2 text-stone-950 font-medium hover:bg-amber-600"
               >
                 Join the program
               </button>

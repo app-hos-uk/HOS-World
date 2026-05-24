@@ -230,7 +230,7 @@ export default function AdminWarehousesPage() {
           </div>
 
           {error && (
-            <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded mb-4">
+            <div className="bg-red-500/10 border border-red-500/30 text-red-400 px-4 py-3 rounded mb-4">
               {error}
             </div>
           )}
@@ -326,7 +326,7 @@ export default function AdminWarehousesPage() {
                           <span
                             className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
                               warehouse.isActive
-                                ? 'bg-green-100 text-green-800'
+                                ? 'bg-green-500/15 text-green-300'
                                 : 'bg-hos-bg-tertiary text-white'
                             }`}
                           >
@@ -348,7 +348,7 @@ export default function AdminWarehousesPage() {
                           </Link>
                           <button
                             onClick={() => handleDelete(warehouse.id)}
-                            className="text-red-600 hover:text-red-900"
+                            className="text-red-400 hover:text-red-300"
                           >
                             Delete
                           </button>
@@ -405,10 +405,10 @@ export default function AdminWarehousesPage() {
                             required
                             value={formData.name}
                             onChange={(e) => setFormData({ ...formData, name: sanitizeLabelInput(e.target.value, formData.name) })}
-                            className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-hos-gold/50 ${isLabelInvalid(formData.name) ? 'border-red-300' : 'border-hos-border'}`}
+                            className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-hos-gold/50 ${isLabelInvalid(formData.name) ? 'border-red-500/40' : 'border-hos-border'}`}
                           />
                           {isLabelInvalid(formData.name) && (
-                            <p className="text-xs text-red-600 mt-1">Must include at least one letter</p>
+                            <p className="text-xs text-red-400 mt-1">Must include at least one letter</p>
                           )}
                         </div>
 
@@ -450,10 +450,10 @@ export default function AdminWarehousesPage() {
                               required
                               value={formData.city}
                               onChange={(e) => setFormData({ ...formData, city: sanitizeLabelInput(e.target.value, formData.city) })}
-                              className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-hos-gold/50 ${isLabelInvalid(formData.city) ? 'border-red-300' : 'border-hos-border'}`}
+                              className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-hos-gold/50 ${isLabelInvalid(formData.city) ? 'border-red-500/40' : 'border-hos-border'}`}
                             />
                             {isLabelInvalid(formData.city) && (
-                              <p className="text-xs text-red-600 mt-1">Must include at least one letter</p>
+                              <p className="text-xs text-red-400 mt-1">Must include at least one letter</p>
                             )}
                           </div>
                           <div>
@@ -464,10 +464,10 @@ export default function AdminWarehousesPage() {
                               type="text"
                               value={formData.state}
                               onChange={(e) => setFormData({ ...formData, state: sanitizeLabelInput(e.target.value, formData.state) })}
-                              className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-hos-gold/50 ${isLabelInvalid(formData.state) ? 'border-red-300' : 'border-hos-border'}`}
+                              className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-hos-gold/50 ${isLabelInvalid(formData.state) ? 'border-red-500/40' : 'border-hos-border'}`}
                             />
                             {isLabelInvalid(formData.state) && (
-                              <p className="text-xs text-red-600 mt-1">Must include at least one letter</p>
+                              <p className="text-xs text-red-400 mt-1">Must include at least one letter</p>
                             )}
                           </div>
                         </div>
@@ -482,11 +482,11 @@ export default function AdminWarehousesPage() {
                               required
                               value={formData.country}
                               onChange={(e) => setFormData({ ...formData, country: sanitizeLabelInput(e.target.value, formData.country) })}
-                              className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-hos-gold/50 ${isLabelInvalid(formData.country) ? 'border-red-300' : 'border-hos-border'}`}
+                              className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-hos-gold/50 ${isLabelInvalid(formData.country) ? 'border-red-500/40' : 'border-hos-border'}`}
                               placeholder="e.g., GB, US"
                             />
                             {isLabelInvalid(formData.country) && (
-                              <p className="text-xs text-red-600 mt-1">Must include at least one letter</p>
+                              <p className="text-xs text-red-400 mt-1">Must include at least one letter</p>
                             )}
                           </div>
                           <div>
@@ -498,10 +498,10 @@ export default function AdminWarehousesPage() {
                               required
                               value={formData.postalCode}
                               onChange={(e) => setFormData({ ...formData, postalCode: sanitizePostalInput(e.target.value) })}
-                              className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-hos-gold/50 ${isPostalInvalid(formData.postalCode) ? 'border-red-300' : 'border-hos-border'}`}
+                              className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-hos-gold/50 ${isPostalInvalid(formData.postalCode) ? 'border-red-500/40' : 'border-hos-border'}`}
                             />
                             {isPostalInvalid(formData.postalCode) && (
-                              <p className="text-xs text-red-600 mt-1">Must include at least one digit</p>
+                              <p className="text-xs text-red-400 mt-1">Must include at least one digit</p>
                             )}
                           </div>
                         </div>
@@ -569,10 +569,10 @@ export default function AdminWarehousesPage() {
                               type="text"
                               value={formData.managerName}
                               onChange={(e) => setFormData({ ...formData, managerName: sanitizeLabelInput(e.target.value, formData.managerName) })}
-                              className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-hos-gold/50 ${isLabelInvalid(formData.managerName) ? 'border-red-300' : 'border-hos-border'}`}
+                              className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-hos-gold/50 ${isLabelInvalid(formData.managerName) ? 'border-red-500/40' : 'border-hos-border'}`}
                             />
                             {isLabelInvalid(formData.managerName) && (
-                              <p className="text-xs text-red-600 mt-1">Must include at least one letter</p>
+                              <p className="text-xs text-red-400 mt-1">Must include at least one letter</p>
                             )}
                           </div>
                           <div>

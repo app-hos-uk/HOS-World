@@ -50,7 +50,7 @@ export default function AdminJourneysPage() {
               New journey
             </Link>
           </div>
-          {err && <p className="text-red-600 mb-4">{err}</p>}
+          {err && <p className="text-red-400 mb-4">{err}</p>}
           {loading ? (
             <p className="text-hos-text-muted">Loading…</p>
           ) : (
@@ -80,7 +80,7 @@ export default function AdminJourneysPage() {
                         </Link>
                         <button
                           type="button"
-                          className="text-red-600 hover:underline"
+                          className="text-red-400 hover:underline"
                           onClick={() => deactivate(j.id)}
                         >
                           Deactivate

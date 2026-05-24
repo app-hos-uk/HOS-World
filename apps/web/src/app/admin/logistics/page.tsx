@@ -103,8 +103,8 @@ export default function AdminLogisticsPage() {
     return (
       <RouteGuard allowedRoles={['ADMIN']}>
         <AdminLayout>
-          <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-            <p className="text-red-800">Error: {error}</p>
+          <div className="bg-red-500/10 border border-red-500/30 rounded-lg p-4">
+            <p className="text-red-300">Error: {error}</p>
             <button
               onClick={fetchPartners}
               className="mt-2 px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700"
@@ -169,7 +169,7 @@ export default function AdminLogisticsPage() {
                         <span
                           className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
                             partner.active !== false
-                              ? 'bg-green-100 text-green-800'
+                              ? 'bg-green-500/15 text-green-300'
                               : 'bg-hos-bg-tertiary text-white'
                           }`}
                         >

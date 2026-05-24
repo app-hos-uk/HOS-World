@@ -16,8 +16,8 @@ interface TemplateDefinition {
 
 const CHANNEL_COLORS: Record<string, string> = {
   EMAIL: 'bg-hos-gold/20 text-hos-gold',
-  WHATSAPP: 'bg-green-100 text-green-800',
-  SMS: 'bg-yellow-100 text-yellow-800',
+  WHATSAPP: 'bg-green-500/15 text-green-300',
+  SMS: 'bg-yellow-500/15 text-yellow-300',
   IN_APP: 'bg-hos-gold/20 text-hos-gold',
 };
 

@@ -221,7 +221,7 @@ export default function CollectionDetailPage() {
                   <span
                     className={`px-2 py-1 rounded text-xs shrink-0 ${
                       collection.isPublic
-                        ? 'bg-green-100 text-green-800'
+                        ? 'bg-green-500/15 text-green-300'
                         : 'bg-hos-bg-tertiary text-white'
                     }`}
                   >
@@ -330,7 +330,7 @@ export default function CollectionDetailPage() {
                   {isOwner && (
                     <button
                       onClick={() => handleRemoveProduct(product.id)}
-                      className="mt-2 w-full px-3 py-1 bg-red-100 text-red-800 rounded hover:bg-red-200 transition-colors text-sm"
+                      className="mt-2 w-full px-3 py-1 bg-red-500/15 text-red-300 rounded hover:bg-red-200 transition-colors text-sm"
                     >
                       Remove
                     </button>

@@ -571,8 +571,8 @@ function ProfilePageContent() {
                       <div className="text-2xl font-bold text-hos-gold">{stats.activeQuests}</div>
                       <div className="text-sm text-hos-text-secondary">Active Quests</div>
                     </div>
-                    <div className="bg-green-50 rounded-lg p-4">
-                      <div className="text-2xl font-bold text-green-600">{stats.completedQuests}</div>
+                    <div className="bg-green-500/10 rounded-lg p-4">
+                      <div className="text-2xl font-bold text-green-400">{stats.completedQuests}</div>
                       <div className="text-sm text-hos-text-secondary">Completed Quests</div>
                     </div>
                   </div>
@@ -633,7 +633,7 @@ function ProfilePageContent() {
                             <span
                               className={`px-2 py-1 rounded ${
                                 badge.rarity === 'RARE'
-                                  ? 'bg-yellow-100 text-yellow-800'
+                                  ? 'bg-yellow-500/15 text-yellow-300'
                                   : badge.rarity === 'EPIC'
                                   ? 'bg-hos-gold/20 text-hos-gold'
                                   : 'bg-hos-bg-tertiary text-white'
@@ -694,7 +694,7 @@ function ProfilePageContent() {
                           <span
                             className={`px-2 py-1 rounded text-xs ${
                               collection.isPublic
-                                ? 'bg-green-100 text-green-800'
+                                ? 'bg-green-500/15 text-green-300'
                                 : 'bg-hos-bg-tertiary text-white'
                             }`}
                           >
@@ -967,7 +967,7 @@ function ProfilePageContent() {
                               {address.label && (
                                 <span className={`inline-block px-2 py-1 text-xs font-semibold rounded ${
                                   address.label === 'HOME' ? 'bg-hos-gold/20 text-hos-gold' :
-                                  address.label === 'WORK' ? 'bg-green-100 text-green-800' :
+                                  address.label === 'WORK' ? 'bg-green-500/15 text-green-300' :
                                   'bg-hos-bg-tertiary text-white'
                                 }`}>
                                   {address.label === 'HOME' ? '🏠 Home' : address.label === 'WORK' ? '💼 Work' : '📍 Other'}
@@ -1025,7 +1025,7 @@ function ProfilePageContent() {
                             </button>
                             <button
                               onClick={() => handleDeleteAddress(address.id)}
-                              className="px-3 py-1 text-sm border border-red-300 text-red-600 rounded hover:bg-red-50"
+                              className="px-3 py-1 text-sm border border-red-500/40 text-red-400 rounded hover:bg-red-500/10"
                             >
                               Delete
                             </button>
@@ -1290,7 +1290,7 @@ function ProfilePageContent() {
                                   setNewsletterUnsubscribing(false);
                                 }
                               }}
-                              className="px-4 py-2 bg-red-100 text-red-800 rounded-lg hover:bg-red-200 font-medium text-sm disabled:opacity-50"
+                              className="px-4 py-2 bg-red-500/15 text-red-300 rounded-lg hover:bg-red-200 font-medium text-sm disabled:opacity-50"
                             >
                               {newsletterUnsubscribing ? 'Unsubscribing…' : 'Unsubscribe'}
                             </button>
@@ -1346,7 +1346,7 @@ function ProfilePageContent() {
                                 <div className="font-medium text-sm">Essential Cookies</div>
                                 <div className="text-xs text-hos-text-secondary">Required for site functionality</div>
                               </div>
-                              <span className="px-3 py-1 bg-green-100 text-green-800 rounded-full text-xs font-medium">
+                              <span className="px-3 py-1 bg-green-500/15 text-green-300 rounded-full text-xs font-medium">
                                 Always Active
                               </span>
                             </div>
@@ -1449,7 +1449,7 @@ function ProfilePageContent() {
                               <div key={idx} className="flex items-center justify-between p-2 bg-hos-bg-secondary rounded border text-xs">
                                 <div>
                                   <span className="font-medium">{entry.consentType}</span>
-                                  <span className={`ml-2 px-1.5 py-0.5 rounded-full ${entry.granted ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
+                                  <span className={`ml-2 px-1.5 py-0.5 rounded-full ${entry.granted ? 'bg-green-500/15 text-green-400' : 'bg-red-500/15 text-red-400'}`}>
                                     {entry.granted ? 'Granted' : 'Revoked'}
                                   </span>
                                 </div>

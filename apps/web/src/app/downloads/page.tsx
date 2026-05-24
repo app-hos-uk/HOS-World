@@ -169,11 +169,11 @@ export default function DownloadsPage() {
   const getStatusBadge = (status: string) => {
     switch (status) {
       case 'available':
-        return { text: 'Available', class: 'bg-green-100 text-green-800' };
+        return { text: 'Available', class: 'bg-green-500/15 text-green-300' };
       case 'expired':
-        return { text: 'Expired', class: 'bg-red-100 text-red-800' };
+        return { text: 'Expired', class: 'bg-red-500/15 text-red-300' };
       case 'limit_reached':
-        return { text: 'Limit Reached', class: 'bg-yellow-100 text-yellow-800' };
+        return { text: 'Limit Reached', class: 'bg-yellow-500/15 text-yellow-300' };
       default:
         return { text: status, class: 'bg-hos-bg-tertiary text-white' };
     }
@@ -208,7 +208,7 @@ export default function DownloadsPage() {
               }`}
             >
               <h3 className="text-xs font-medium text-hos-text-muted uppercase">Available</h3>
-              <p className="text-2xl font-bold text-green-600 mt-1">{stats.available}</p>
+              <p className="text-2xl font-bold text-green-400 mt-1">{stats.available}</p>
             </button>
             <button
               onClick={() => setFilter('expired')}
@@ -217,11 +217,11 @@ export default function DownloadsPage() {
               }`}
             >
               <h3 className="text-xs font-medium text-hos-text-muted uppercase">Expired</h3>
-              <p className="text-2xl font-bold text-red-600 mt-1">{stats.expired}</p>
+              <p className="text-2xl font-bold text-red-400 mt-1">{stats.expired}</p>
             </button>
             <div className="bg-hos-bg-secondary rounded-lg shadow p-4">
               <h3 className="text-xs font-medium text-hos-text-muted uppercase">Limit Reached</h3>
-              <p className="text-2xl font-bold text-yellow-600 mt-1">{stats.limitReached}</p>
+              <p className="text-2xl font-bold text-yellow-400 mt-1">{stats.limitReached}</p>
             </div>
           </div>
 
@@ -319,7 +319,7 @@ export default function DownloadsPage() {
                         )}
 
                         {product.expiresAt && product.status === 'available' && (
-                          <p className="text-xs text-orange-600 mt-1">
+                          <p className="text-xs text-orange-400 mt-1">
                             Expires on {new Date(product.expiresAt).toLocaleDateString()}
                           </p>
                         )}
@@ -373,7 +373,7 @@ export default function DownloadsPage() {
                           <div 
                             className={`h-full transition-all ${
                               (product.downloadCount || 0) >= product.maxDownloads 
-                                ? 'bg-red-500' 
+                                ? 'bg-red-500/10' 
                                 : 'bg-hos-gold'
                             }`}
                             style={{ width: `${Math.min(100, ((product.downloadCount || 0) / product.maxDownloads) * 100)}%` }}
