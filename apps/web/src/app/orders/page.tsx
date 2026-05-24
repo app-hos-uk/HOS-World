@@ -128,14 +128,14 @@ export default function OrdersPage() {
       case 'pending': return 'bg-yellow-100 text-yellow-800';
       case 'accepted':
       case 'confirmed':
-      case 'processing': return 'bg-blue-100 text-blue-800';
+      case 'processing': return 'bg-hos-gold/20 text-hos-gold';
       case 'fulfilled':
-      case 'shipped': return 'bg-purple-100 text-purple-800';
+      case 'shipped': return 'bg-hos-gold/20 text-hos-gold';
       case 'delivered':
       case 'completed': return 'bg-green-100 text-green-800';
       case 'cancelled':
       case 'refunded': return 'bg-red-100 text-red-800';
-      default: return 'bg-gray-100 text-gray-800';
+      default: return 'bg-hos-bg-tertiary text-white';
     }
   };
 
@@ -152,69 +152,69 @@ export default function OrdersPage() {
 
   return (
     <RouteGuard allowedRoles={['CUSTOMER', 'ADMIN']} showAccessDenied={true}>
-      <div className="min-h-screen bg-gray-50">
+      <div className="min-h-screen bg-hos-bg-secondary">
         <Header />
         <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 lg:py-12">
           {/* Header */}
           <div className="mb-8">
-            <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">My Orders</h1>
-            <p className="text-gray-600 mt-1">Track and manage your orders</p>
+            <h1 className="text-2xl sm:text-3xl font-bold text-white">My Orders</h1>
+            <p className="text-hos-text-secondary mt-1">Track and manage your orders</p>
           </div>
 
           {/* Stats Cards */}
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4 mb-6">
             <button
               onClick={() => setStatusFilter('')}
-              className={`bg-white rounded-lg shadow p-4 text-left transition-all ${
-                statusFilter === '' ? 'ring-2 ring-purple-500' : 'hover:shadow-md'
+              className={`bg-hos-bg-secondary rounded-lg shadow p-4 text-left transition-all ${
+                statusFilter === '' ? 'ring-2 ring-hos-gold/50' : 'hover:shadow-md'
               }`}
             >
-              <h3 className="text-xs font-medium text-gray-500 uppercase">All Orders</h3>
-              <p className="text-2xl font-bold text-gray-900 mt-1">{stats.total}</p>
+              <h3 className="text-xs font-medium text-hos-text-muted uppercase">All Orders</h3>
+              <p className="text-2xl font-bold text-white mt-1">{stats.total}</p>
             </button>
             <button
               onClick={() => setStatusFilter('PENDING')}
-              className={`bg-white rounded-lg shadow p-4 text-left transition-all ${
-                statusFilter === 'PENDING' ? 'ring-2 ring-purple-500' : 'hover:shadow-md'
+              className={`bg-hos-bg-secondary rounded-lg shadow p-4 text-left transition-all ${
+                statusFilter === 'PENDING' ? 'ring-2 ring-hos-gold/50' : 'hover:shadow-md'
               }`}
             >
-              <h3 className="text-xs font-medium text-gray-500 uppercase">Pending</h3>
+              <h3 className="text-xs font-medium text-hos-text-muted uppercase">Pending</h3>
               <p className="text-2xl font-bold text-yellow-600 mt-1">{stats.pending}</p>
             </button>
             <button
               onClick={() => setStatusFilter('PROCESSING')}
-              className={`bg-white rounded-lg shadow p-4 text-left transition-all ${
-                statusFilter === 'PROCESSING' ? 'ring-2 ring-purple-500' : 'hover:shadow-md'
+              className={`bg-hos-bg-secondary rounded-lg shadow p-4 text-left transition-all ${
+                statusFilter === 'PROCESSING' ? 'ring-2 ring-hos-gold/50' : 'hover:shadow-md'
               }`}
             >
-              <h3 className="text-xs font-medium text-gray-500 uppercase">Processing</h3>
-              <p className="text-2xl font-bold text-blue-600 mt-1">{stats.processing}</p>
+              <h3 className="text-xs font-medium text-hos-text-muted uppercase">Processing</h3>
+              <p className="text-2xl font-bold text-hos-gold mt-1">{stats.processing}</p>
             </button>
             <button
               onClick={() => setStatusFilter('SHIPPED')}
-              className={`bg-white rounded-lg shadow p-4 text-left transition-all ${
-                statusFilter === 'SHIPPED' ? 'ring-2 ring-purple-500' : 'hover:shadow-md'
+              className={`bg-hos-bg-secondary rounded-lg shadow p-4 text-left transition-all ${
+                statusFilter === 'SHIPPED' ? 'ring-2 ring-hos-gold/50' : 'hover:shadow-md'
               }`}
             >
-              <h3 className="text-xs font-medium text-gray-500 uppercase">Shipped</h3>
-              <p className="text-2xl font-bold text-purple-600 mt-1">{stats.shipped}</p>
+              <h3 className="text-xs font-medium text-hos-text-muted uppercase">Shipped</h3>
+              <p className="text-2xl font-bold text-hos-gold mt-1">{stats.shipped}</p>
             </button>
             <button
               onClick={() => setStatusFilter('DELIVERED')}
-              className={`bg-white rounded-lg shadow p-4 text-left transition-all ${
-                statusFilter === 'DELIVERED' ? 'ring-2 ring-purple-500' : 'hover:shadow-md'
+              className={`bg-hos-bg-secondary rounded-lg shadow p-4 text-left transition-all ${
+                statusFilter === 'DELIVERED' ? 'ring-2 ring-hos-gold/50' : 'hover:shadow-md'
               }`}
             >
-              <h3 className="text-xs font-medium text-gray-500 uppercase">Delivered</h3>
+              <h3 className="text-xs font-medium text-hos-text-muted uppercase">Delivered</h3>
               <p className="text-2xl font-bold text-green-600 mt-1">{stats.delivered}</p>
             </button>
             <button
               onClick={() => setStatusFilter('CANCELLED')}
-              className={`bg-white rounded-lg shadow p-4 text-left transition-all ${
-                statusFilter === 'CANCELLED' ? 'ring-2 ring-purple-500' : 'hover:shadow-md'
+              className={`bg-hos-bg-secondary rounded-lg shadow p-4 text-left transition-all ${
+                statusFilter === 'CANCELLED' ? 'ring-2 ring-hos-gold/50' : 'hover:shadow-md'
               }`}
             >
-              <h3 className="text-xs font-medium text-gray-500 uppercase">Cancelled</h3>
+              <h3 className="text-xs font-medium text-hos-text-muted uppercase">Cancelled</h3>
               <p className="text-2xl font-bold text-red-600 mt-1">{stats.cancelled}</p>
             </button>
           </div>
@@ -222,18 +222,18 @@ export default function OrdersPage() {
           {/* Orders List */}
           {loading ? (
             <div className="flex items-center justify-center py-12">
-              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600"></div>
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-hos-gold"></div>
             </div>
           ) : filteredOrders.length === 0 ? (
-            <div className="bg-white rounded-lg shadow p-8 text-center">
+            <div className="bg-hos-bg-secondary rounded-lg shadow p-8 text-center">
               <div className="text-6xl mb-4">📦</div>
-              <p className="text-gray-600 mb-4">
+              <p className="text-hos-text-secondary mb-4">
                 {orders.length === 0 ? "You haven't placed any orders yet" : "No orders match your filter"}
               </p>
               {orders.length === 0 && (
                 <Link
                   href="/products"
-                  className="inline-block px-6 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors font-medium"
+                  className="inline-block px-6 py-3 bg-hos-gold text-[#1a1406] rounded-lg hover:bg-hos-gold-hover transition-colors font-medium"
                 >
                   Browse Products
                 </Link>
@@ -242,20 +242,20 @@ export default function OrdersPage() {
           ) : (
             <div className="space-y-4">
               {filteredOrders.map((order) => (
-                <div key={order.id} className="bg-white rounded-lg shadow overflow-hidden">
+                <div key={order.id} className="bg-hos-bg-secondary rounded-lg shadow overflow-hidden">
                   {/* Order Header */}
-                  <div className="p-4 sm:p-6 border-b border-gray-200">
+                  <div className="p-4 sm:p-6 border-b border-hos-border">
                     <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                       <div>
                         <div className="flex items-center gap-3">
-                          <h3 className="text-lg font-semibold text-gray-900">
+                          <h3 className="text-lg font-semibold text-white">
                             Order #{order.orderNumber || order.id.slice(0, 8)}
                           </h3>
                           <span className={`px-3 py-1 text-xs font-medium rounded-full ${getStatusColor(order.status)}`}>
                             {order.status}
                           </span>
                         </div>
-                        <p className="text-sm text-gray-500 mt-1">
+                        <p className="text-sm text-hos-text-muted mt-1">
                           Placed on {new Date(order.createdAt).toLocaleDateString('en-US', {
                             day: 'numeric',
                             month: 'long',
@@ -264,10 +264,10 @@ export default function OrdersPage() {
                         </p>
                       </div>
                       <div className="text-right">
-                        <p className="text-xl font-bold text-purple-600">
+                        <p className="text-xl font-bold text-hos-gold">
                           {formatPrice(order.total, order.currency || 'USD')}
                         </p>
-                        <p className="text-sm text-gray-500">
+                        <p className="text-sm text-hos-text-muted">
                           {order.items?.length || 0} item{(order.items?.length || 0) !== 1 ? 's' : ''}
                         </p>
                       </div>
@@ -275,7 +275,7 @@ export default function OrdersPage() {
                   </div>
 
                   {/* Order Items Preview */}
-                  <div className="p-4 sm:p-6 bg-gray-50">
+                  <div className="p-4 sm:p-6 bg-hos-bg-secondary">
                     <div className="flex items-center gap-4 overflow-x-auto pb-2">
                       {order.items?.slice(0, 4).map((item, index) => {
                         const imageUrl = getProductImage(item);
@@ -290,16 +290,16 @@ export default function OrdersPage() {
                                 className="rounded-lg object-cover"
                               />
                             ) : (
-                              <div className="w-16 h-16 rounded-lg bg-gray-200 flex items-center justify-center">
-                                <span className="text-gray-400 text-xs">No img</span>
+                              <div className="w-16 h-16 rounded-lg bg-hos-bg-tertiary flex items-center justify-center">
+                                <span className="text-hos-text-muted text-xs">No img</span>
                               </div>
                             )}
                           </div>
                         );
                       })}
                       {order.items && order.items.length > 4 && (
-                        <div className="flex-shrink-0 w-16 h-16 rounded-lg bg-gray-200 flex items-center justify-center">
-                          <span className="text-gray-600 text-sm font-medium">+{order.items.length - 4}</span>
+                        <div className="flex-shrink-0 w-16 h-16 rounded-lg bg-hos-bg-tertiary flex items-center justify-center">
+                          <span className="text-hos-text-secondary text-sm font-medium">+{order.items.length - 4}</span>
                         </div>
                       )}
                     </div>
@@ -309,20 +309,20 @@ export default function OrdersPage() {
                   <div className="p-4 sm:p-6 flex flex-wrap gap-3">
                     <button
                       onClick={() => openOrderDetails(order)}
-                      className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors font-medium text-sm"
+                      className="px-4 py-2 bg-hos-gold text-[#1a1406] rounded-lg hover:bg-hos-gold-hover transition-colors font-medium text-sm"
                     >
                       View Details
                     </button>
                     <Link
                       href={`/orders/${order.id}`}
-                      className="px-4 py-2 border border-purple-300 text-purple-700 rounded-lg hover:bg-purple-50 transition-colors font-medium text-sm"
+                      className="px-4 py-2 border border-hos-border-accent text-hos-gold-hover rounded-lg hover:bg-hos-gold/10 transition-colors font-medium text-sm"
                     >
                       View Full Details
                     </Link>
                     {(order.trackingNumber || order.trackingCode) && (
                       <Link
                         href={`/track-order?orderNumber=${order.orderNumber || order.id}`}
-                        className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors font-medium text-sm"
+                        className="px-4 py-2 border border-hos-border text-hos-text-secondary rounded-lg hover:bg-hos-bg-tertiary transition-colors font-medium text-sm"
                       >
                         Track Order
                       </Link>
@@ -330,7 +330,7 @@ export default function OrdersPage() {
                     {['delivered', 'completed'].includes(normalizeStatus(order.status)) && (
                       <Link
                         href={`/returns?orderId=${order.id}`}
-                        className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors font-medium text-sm"
+                        className="px-4 py-2 border border-hos-border text-hos-text-secondary rounded-lg hover:bg-hos-bg-tertiary transition-colors font-medium text-sm"
                       >
                         Request Return
                       </Link>
@@ -343,7 +343,7 @@ export default function OrdersPage() {
 
           {/* Results Count */}
           {!loading && orders.length > 0 && (
-            <div className="text-sm text-gray-500 text-center mt-6">
+            <div className="text-sm text-hos-text-muted text-center mt-6">
               Showing {filteredOrders.length} of {orders.length} orders
             </div>
           )}
@@ -353,20 +353,20 @@ export default function OrdersPage() {
         {/* Order Details Modal */}
         {showDetailsModal && selectedOrder && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-            <div className="bg-white rounded-lg shadow-xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
-              <div className="p-6 border-b sticky top-0 bg-white">
+            <div className="bg-hos-bg-secondary rounded-lg shadow-xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+              <div className="p-6 border-b sticky top-0 bg-hos-bg-secondary">
                 <div className="flex justify-between items-start">
                   <div>
-                    <h2 className="text-xl font-bold text-gray-900">
+                    <h2 className="text-xl font-bold text-white">
                       Order #{selectedOrder.orderNumber || selectedOrder.id.slice(0, 8)}
                     </h2>
-                    <p className="text-sm text-gray-500 mt-1">
+                    <p className="text-sm text-hos-text-muted mt-1">
                       Placed on {new Date(selectedOrder.createdAt).toLocaleString()}
                     </p>
                   </div>
                   <button
                     onClick={() => setShowDetailsModal(false)}
-                    className="text-gray-400 hover:text-gray-600"
+                    className="text-hos-text-muted hover:text-hos-text-secondary"
                   >
                     <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -378,7 +378,7 @@ export default function OrdersPage() {
               <div className="p-6 space-y-6">
                 {/* Status */}
                 <div className="flex items-center gap-3">
-                  <span className="text-sm text-gray-500">Status:</span>
+                  <span className="text-sm text-hos-text-muted">Status:</span>
                   <span className={`px-3 py-1 text-sm font-medium rounded-full ${getStatusColor(selectedOrder.status)}`}>
                     {selectedOrder.status}
                   </span>
@@ -386,13 +386,13 @@ export default function OrdersPage() {
 
                 {/* Tracking Info */}
                 {(selectedOrder.trackingNumber || selectedOrder.trackingCode) && (
-                  <div className="bg-purple-50 rounded-lg p-4">
-                    <h3 className="font-medium text-gray-900 mb-2">Tracking Information</h3>
-                    <p className="text-sm text-gray-700">
+                  <div className="bg-hos-gold/10 rounded-lg p-4">
+                    <h3 className="font-medium text-white mb-2">Tracking Information</h3>
+                    <p className="text-sm text-hos-text-secondary">
                       Tracking Number: <span className="font-mono">{selectedOrder.trackingNumber || selectedOrder.trackingCode}</span>
                     </p>
                     {selectedOrder.estimatedDelivery && (
-                      <p className="text-sm text-gray-700 mt-1">
+                      <p className="text-sm text-hos-text-secondary mt-1">
                         Estimated Delivery: {new Date(selectedOrder.estimatedDelivery).toLocaleDateString()}
                       </p>
                     )}
@@ -401,9 +401,9 @@ export default function OrdersPage() {
 
                 {/* Shipping Address */}
                 {selectedOrder.shippingAddress && (
-                  <div className="bg-gray-50 rounded-lg p-4">
-                    <h3 className="font-medium text-gray-900 mb-2">Shipping Address</h3>
-                    <p className="text-sm text-gray-700">
+                  <div className="bg-hos-bg-secondary rounded-lg p-4">
+                    <h3 className="font-medium text-white mb-2">Shipping Address</h3>
+                    <p className="text-sm text-hos-text-secondary">
                       {selectedOrder.shippingAddress.street}<br />
                       {selectedOrder.shippingAddress.city}, {selectedOrder.shippingAddress.state} {selectedOrder.shippingAddress.postalCode}<br />
                       {selectedOrder.shippingAddress.country}
@@ -413,7 +413,7 @@ export default function OrdersPage() {
 
                 {/* Order Items */}
                 <div>
-                  <h3 className="font-medium text-gray-900 mb-3">Order Items</h3>
+                  <h3 className="font-medium text-white mb-3">Order Items</h3>
                   <div className="border rounded-lg divide-y">
                     {selectedOrder.items?.map((item, index) => {
                       const imageUrl = getProductImage(item);
@@ -428,20 +428,20 @@ export default function OrdersPage() {
                               className="rounded-lg object-cover"
                             />
                           ) : (
-                            <div className="w-16 h-16 rounded-lg bg-gray-200 flex items-center justify-center">
-                              <span className="text-gray-400 text-xs">No img</span>
+                            <div className="w-16 h-16 rounded-lg bg-hos-bg-tertiary flex items-center justify-center">
+                              <span className="text-hos-text-muted text-xs">No img</span>
                             </div>
                           )}
                           <div className="flex-1">
                             <Link
                               href={`/products/${item.productId}`}
-                              className="font-medium text-gray-900 hover:text-purple-600"
+                              className="font-medium text-white hover:text-hos-gold"
                             >
                               {item.product?.name || 'Product'}
                             </Link>
-                            <p className="text-sm text-gray-500">Qty: {item.quantity}</p>
+                            <p className="text-sm text-hos-text-muted">Qty: {item.quantity}</p>
                           </div>
-                          <p className="font-medium text-gray-900">
+                          <p className="font-medium text-white">
                             {formatPrice(item.price * item.quantity, selectedOrder.currency || 'USD')}
                           </p>
                         </div>
@@ -451,19 +451,19 @@ export default function OrdersPage() {
                 </div>
 
                 {/* Order Summary */}
-                <div className="bg-gray-50 rounded-lg p-4">
-                  <h3 className="font-medium text-gray-900 mb-3">Order Summary</h3>
+                <div className="bg-hos-bg-secondary rounded-lg p-4">
+                  <h3 className="font-medium text-white mb-3">Order Summary</h3>
                   <div className="space-y-2 text-sm">
                     {selectedOrder.subtotal && (
                       <div className="flex justify-between">
-                        <span className="text-gray-500">Subtotal</span>
-                        <span className="text-gray-900">{formatPrice(selectedOrder.subtotal, selectedOrder.currency || 'USD')}</span>
+                        <span className="text-hos-text-muted">Subtotal</span>
+                        <span className="text-white">{formatPrice(selectedOrder.subtotal, selectedOrder.currency || 'USD')}</span>
                       </div>
                     )}
                     {(selectedOrder.shippingCost || selectedOrder.shippingAmount) ? (
                       <div className="flex justify-between">
-                        <span className="text-gray-500">Shipping</span>
-                        <span className="text-gray-900">{formatPrice(selectedOrder.shippingCost || selectedOrder.shippingAmount || 0, selectedOrder.currency || 'USD')}</span>
+                        <span className="text-hos-text-muted">Shipping</span>
+                        <span className="text-white">{formatPrice(selectedOrder.shippingCost || selectedOrder.shippingAmount || 0, selectedOrder.currency || 'USD')}</span>
                       </div>
                     ) : null}
                     {(selectedOrder.discount || selectedOrder.discountAmount) ? (
@@ -473,31 +473,31 @@ export default function OrdersPage() {
                       </div>
                     ) : null}
                     <div className="flex justify-between font-bold text-base pt-2 border-t">
-                      <span className="text-gray-900">Total</span>
-                      <span className="text-purple-600">{formatPrice(selectedOrder.total, selectedOrder.currency || 'USD')}</span>
+                      <span className="text-white">Total</span>
+                      <span className="text-hos-gold">{formatPrice(selectedOrder.total, selectedOrder.currency || 'USD')}</span>
                     </div>
                   </div>
                 </div>
               </div>
 
-              <div className="p-6 border-t bg-gray-50 flex gap-3">
+              <div className="p-6 border-t bg-hos-bg-secondary flex gap-3">
                 <Link
                   href={`/orders/${selectedOrder.id}`}
-                  className="flex-1 px-4 py-2 border border-purple-300 text-purple-700 rounded-lg hover:bg-purple-50 text-center font-medium"
+                  className="flex-1 px-4 py-2 border border-hos-border-accent text-hos-gold-hover rounded-lg hover:bg-hos-gold/10 text-center font-medium"
                 >
                   View Full Details
                 </Link>
                 {['delivered', 'completed'].includes(normalizeStatus(selectedOrder.status)) && (
                   <Link
                     href={`/returns?orderId=${selectedOrder.id}`}
-                    className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-100 text-center font-medium"
+                    className="flex-1 px-4 py-2 border border-hos-border text-hos-text-secondary rounded-lg hover:bg-hos-bg-tertiary text-center font-medium"
                   >
                     Request Return
                   </Link>
                 )}
                 <button
                   onClick={() => setShowDetailsModal(false)}
-                  className="flex-1 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 font-medium"
+                  className="flex-1 px-4 py-2 bg-hos-gold text-[#1a1406] rounded-lg hover:bg-hos-gold-hover font-medium"
                 >
                   Close
                 </button>

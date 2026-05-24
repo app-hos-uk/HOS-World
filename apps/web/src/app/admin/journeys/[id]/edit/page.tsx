@@ -78,16 +78,16 @@ export default function AdminJourneyEditPage() {
     <RouteGuard allowedRoles={['ADMIN']}>
       <AdminLayout>
         <div className="p-6 max-w-3xl mx-auto space-y-4">
-          <Link href={`/admin/journeys/${id}`} className="text-indigo-600 hover:underline text-sm">
+          <Link href={`/admin/journeys/${id}`} className="text-hos-gold hover:underline text-sm">
             ← Back to detail
           </Link>
           {loading ? (
-            <p className="text-gray-500">Loading…</p>
+            <p className="text-hos-text-muted">Loading…</p>
           ) : (
             <>
-              <h1 className="text-2xl font-semibold text-gray-900">Edit journey</h1>
+              <h1 className="text-2xl font-semibold text-white">Edit journey</h1>
               <label className="block text-sm">
-                <span className="text-gray-700">Name</span>
+                <span className="text-hos-text-secondary">Name</span>
                 <input
                   className="mt-1 w-full border rounded px-3 py-2"
                   value={name}
@@ -95,7 +95,7 @@ export default function AdminJourneyEditPage() {
                 />
               </label>
               <label className="block text-sm">
-                <span className="text-gray-700">Trigger event</span>
+                <span className="text-hos-text-secondary">Trigger event</span>
                 <input
                   className="mt-1 w-full border rounded px-3 py-2"
                   value={triggerEvent}
@@ -103,7 +103,7 @@ export default function AdminJourneyEditPage() {
                 />
               </label>
               <label className="block text-sm">
-                <span className="text-gray-700">Description</span>
+                <span className="text-hos-text-secondary">Description</span>
                 <textarea
                   className="mt-1 w-full border rounded px-3 py-2"
                   rows={2}
@@ -116,12 +116,12 @@ export default function AdminJourneyEditPage() {
                   type="checkbox"
                   checked={isActive}
                   onChange={(e) => setIsActive(e.target.checked)}
-                  className="rounded border-gray-300"
+                  className="rounded border-hos-border"
                 />
-                <span className="text-gray-700">Active</span>
+                <span className="text-hos-text-secondary">Active</span>
               </label>
               <label className="block text-sm">
-                <span className="text-gray-700">Steps (JSON array)</span>
+                <span className="text-hos-text-secondary">Steps (JSON array)</span>
                 <textarea
                   className="mt-1 w-full border rounded px-3 py-2 font-mono text-xs"
                   rows={16}
@@ -134,13 +134,13 @@ export default function AdminJourneyEditPage() {
                   type="button"
                   disabled={saving}
                   onClick={save}
-                  className="rounded-md bg-indigo-600 px-4 py-2 text-white disabled:opacity-50 hover:bg-indigo-700"
+                  className="rounded-md bg-hos-gold px-4 py-2 text-white disabled:opacity-50 hover:bg-hos-gold-hover"
                 >
                   {saving ? 'Saving…' : 'Save changes'}
                 </button>
                 <Link
                   href={`/admin/journeys/${id}`}
-                  className="rounded-md border border-gray-300 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
+                  className="rounded-md border border-hos-border px-4 py-2 text-sm text-hos-text-secondary hover:bg-hos-bg-tertiary"
                 >
                   Cancel
                 </Link>

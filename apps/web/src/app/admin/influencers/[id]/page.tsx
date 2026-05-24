@@ -141,19 +141,19 @@ export default function InfluencerDetailPage() {
     const styles: Record<string, string> = {
       ACTIVE: 'bg-green-100 text-green-800',
       SUSPENDED: 'bg-red-100 text-red-800',
-      INACTIVE: 'bg-gray-100 text-gray-800',
+      INACTIVE: 'bg-hos-bg-tertiary text-white',
     };
-    return styles[status] || 'bg-gray-100 text-gray-800';
+    return styles[status] || 'bg-hos-bg-tertiary text-white';
   };
 
   const getTierBadge = (tier: string) => {
     const styles: Record<string, string> = {
-      PLATINUM: 'bg-gray-800 text-white',
+      PLATINUM: 'bg-hos-surface text-white',
       GOLD: 'bg-yellow-100 text-yellow-800',
-      SILVER: 'bg-gray-200 text-gray-800',
+      SILVER: 'bg-hos-bg-tertiary text-white',
       BRONZE: 'bg-orange-100 text-orange-800',
     };
-    return styles[tier] || 'bg-gray-100 text-gray-800';
+    return styles[tier] || 'bg-hos-bg-tertiary text-white';
   };
 
   if (loading) {
@@ -161,7 +161,7 @@ export default function InfluencerDetailPage() {
       <RouteGuard allowedRoles={['ADMIN', 'MARKETING']} showAccessDenied={true}>
         <AdminLayout>
           <div className="flex items-center justify-center py-20">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600"></div>
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-hos-gold"></div>
           </div>
         </AdminLayout>
       </RouteGuard>
@@ -173,11 +173,11 @@ export default function InfluencerDetailPage() {
       <RouteGuard allowedRoles={['ADMIN', 'MARKETING']} showAccessDenied={true}>
         <AdminLayout>
           <div className="text-center py-20">
-            <h2 className="text-2xl font-bold text-gray-900 mb-2">Influencer Not Found</h2>
-            <p className="text-gray-600 mb-6">The influencer you are looking for does not exist or has been removed.</p>
+            <h2 className="text-2xl font-bold text-white mb-2">Influencer Not Found</h2>
+            <p className="text-hos-text-secondary mb-6">The influencer you are looking for does not exist or has been removed.</p>
             <Link
               href="/admin/influencers"
-              className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700"
+              className="px-4 py-2 bg-hos-gold text-[#1a1406] rounded-lg hover:bg-hos-gold-hover"
             >
               Back to Influencers
             </Link>
@@ -201,21 +201,21 @@ export default function InfluencerDetailPage() {
             <div className="flex items-center gap-4">
               <button
                 onClick={() => router.push('/admin/influencers')}
-                className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg"
+                className="p-2 text-hos-text-muted hover:text-hos-text-secondary hover:bg-hos-bg-tertiary rounded-lg"
               >
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
                 </svg>
               </button>
               <div>
-                <h1 className="text-2xl font-bold text-gray-900">{influencer.displayName}</h1>
-                <p className="text-gray-500">{influencer.user.email}</p>
+                <h1 className="text-2xl font-bold text-white">{influencer.displayName}</h1>
+                <p className="text-hos-text-muted">{influencer.user.email}</p>
               </div>
             </div>
             <div className="flex items-center gap-2 flex-wrap">
               <Link
                 href={`/admin/influencers/${influencer.id}/commissions`}
-                className="px-4 py-2 bg-purple-600 text-white text-sm font-medium rounded-lg hover:bg-purple-700"
+                className="px-4 py-2 bg-hos-gold text-[#1a1406] text-sm font-medium rounded-lg hover:bg-hos-gold-hover"
               >
                 Commission settings
               </Link>
@@ -230,28 +230,28 @@ export default function InfluencerDetailPage() {
 
           {/* Stats Grid */}
           <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
-            <div className="bg-white rounded-lg shadow-sm p-4">
-              <p className="text-sm text-gray-500">Total Clicks</p>
-              <p className="text-2xl font-bold text-gray-900">{influencer.totalClicks}</p>
+            <div className="bg-hos-bg-secondary rounded-lg shadow-sm p-4">
+              <p className="text-sm text-hos-text-muted">Total Clicks</p>
+              <p className="text-2xl font-bold text-white">{influencer.totalClicks}</p>
             </div>
-            <div className="bg-white rounded-lg shadow-sm p-4">
-              <p className="text-sm text-gray-500">Conversions</p>
+            <div className="bg-hos-bg-secondary rounded-lg shadow-sm p-4">
+              <p className="text-sm text-hos-text-muted">Conversions</p>
               <p className="text-2xl font-bold text-green-600">{influencer.totalConversions}</p>
             </div>
-            <div className="bg-white rounded-lg shadow-sm p-4">
-              <p className="text-sm text-gray-500">Conversion Rate</p>
-              <p className="text-2xl font-bold text-blue-600">{conversionRate}%</p>
+            <div className="bg-hos-bg-secondary rounded-lg shadow-sm p-4">
+              <p className="text-sm text-hos-text-muted">Conversion Rate</p>
+              <p className="text-2xl font-bold text-hos-gold">{conversionRate}%</p>
             </div>
-            <div className="bg-white rounded-lg shadow-sm p-4">
-              <p className="text-sm text-gray-500">Total Sales</p>
-              <p className="text-2xl font-bold text-gray-900">{formatCurrency(influencer.totalSalesAmount)}</p>
+            <div className="bg-hos-bg-secondary rounded-lg shadow-sm p-4">
+              <p className="text-sm text-hos-text-muted">Total Sales</p>
+              <p className="text-2xl font-bold text-white">{formatCurrency(influencer.totalSalesAmount)}</p>
             </div>
-            <div className="bg-white rounded-lg shadow-sm p-4">
-              <p className="text-sm text-gray-500">Commission Earned</p>
-              <p className="text-2xl font-bold text-purple-600">{formatCurrency(influencer.totalCommission)}</p>
+            <div className="bg-hos-bg-secondary rounded-lg shadow-sm p-4">
+              <p className="text-sm text-hos-text-muted">Commission Earned</p>
+              <p className="text-2xl font-bold text-hos-gold">{formatCurrency(influencer.totalCommission)}</p>
             </div>
-            <div className="bg-white rounded-lg shadow-sm p-4">
-              <p className="text-sm text-gray-500">Commission Rate</p>
+            <div className="bg-hos-bg-secondary rounded-lg shadow-sm p-4">
+              <p className="text-sm text-hos-text-muted">Commission Rate</p>
               <p className="text-2xl font-bold text-amber-600">
                 {influencer.baseCommissionRate != null
                   ? `${(Number(influencer.baseCommissionRate) * 100).toFixed(1)}%`
@@ -265,49 +265,49 @@ export default function InfluencerDetailPage() {
           {/* Details */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             {/* Profile Info */}
-            <div className="bg-white rounded-lg shadow-sm p-6">
+            <div className="bg-hos-bg-secondary rounded-lg shadow-sm p-6">
               <h3 className="text-lg font-semibold mb-4">Profile Information</h3>
               <div className="space-y-3">
                 <div className="flex justify-between">
-                  <span className="text-gray-500">Name</span>
+                  <span className="text-hos-text-muted">Name</span>
                   <span className="font-medium">
                     {influencer.user.firstName} {influencer.user.lastName}
                   </span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-gray-500">Email</span>
+                  <span className="text-hos-text-muted">Email</span>
                   <span className="font-medium">{influencer.user.email}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-gray-500">Slug</span>
+                  <span className="text-hos-text-muted">Slug</span>
                   <span className="font-medium">/{influencer.slug}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-gray-500">Referral Code</span>
-                  <code className="px-2 py-1 bg-gray-100 rounded text-sm font-medium">
+                  <span className="text-hos-text-muted">Referral Code</span>
+                  <code className="px-2 py-1 bg-hos-bg-tertiary rounded text-sm font-medium">
                     {influencer.referralCode}
                   </code>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-gray-500">Joined</span>
+                  <span className="text-hos-text-muted">Joined</span>
                   <span className="font-medium">{new Date(influencer.createdAt).toLocaleDateString()}</span>
                 </div>
                 {influencer.bio && (
                   <div className="pt-2 border-t">
-                    <p className="text-gray-500 text-sm mb-1">Bio</p>
-                    <p className="text-gray-700">{influencer.bio}</p>
+                    <p className="text-hos-text-muted text-sm mb-1">Bio</p>
+                    <p className="text-hos-text-secondary">{influencer.bio}</p>
                   </div>
                 )}
               </div>
             </div>
 
             {/* Actions */}
-            <div className="bg-white rounded-lg shadow-sm p-6">
+            <div className="bg-hos-bg-secondary rounded-lg shadow-sm p-6">
               <h3 className="text-lg font-semibold mb-4">Actions</h3>
               <div className="space-y-4">
                 {/* Status Management */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Status</label>
+                  <label className="block text-sm font-medium text-hos-text-secondary mb-2">Status</label>
                   <div className="flex gap-2">
                     {['ACTIVE', 'SUSPENDED', 'INACTIVE'].map((status) => (
                       <button
@@ -316,8 +316,8 @@ export default function InfluencerDetailPage() {
                         disabled={actionLoading || influencer.status === status}
                         className={`px-3 py-1.5 text-sm rounded-lg transition-colors ${
                           influencer.status === status
-                            ? 'bg-purple-600 text-white'
-                            : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                            ? 'bg-hos-gold text-[#1a1406]'
+                            : 'bg-hos-bg-tertiary text-hos-text-secondary hover:bg-hos-bg-tertiary'
                         } disabled:opacity-50`}
                       >
                         {status}
@@ -328,7 +328,7 @@ export default function InfluencerDetailPage() {
 
                 {/* Tier Management */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Tier</label>
+                  <label className="block text-sm font-medium text-hos-text-secondary mb-2">Tier</label>
                   <div className="flex gap-2">
                     {['BRONZE', 'SILVER', 'GOLD', 'PLATINUM'].map((tier) => (
                       <button
@@ -337,8 +337,8 @@ export default function InfluencerDetailPage() {
                         disabled={actionLoading || influencer.tier === tier}
                         className={`px-3 py-1.5 text-sm rounded-lg transition-colors ${
                           influencer.tier === tier
-                            ? 'bg-purple-600 text-white'
-                            : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                            ? 'bg-hos-gold text-[#1a1406]'
+                            : 'bg-hos-bg-tertiary text-hos-text-secondary hover:bg-hos-bg-tertiary'
                         } disabled:opacity-50`}
                       >
                         {tier}
@@ -351,19 +351,19 @@ export default function InfluencerDetailPage() {
                 <div className="pt-4 border-t space-y-2">
                   <Link
                     href={`/admin/influencers/commissions?influencerId=${influencer.id}`}
-                    className="block w-full px-4 py-2 text-center bg-purple-50 text-purple-700 rounded-lg hover:bg-purple-100"
+                    className="block w-full px-4 py-2 text-center bg-hos-gold/10 text-hos-gold-hover rounded-lg hover:bg-hos-gold/20"
                   >
                     View Commissions
                   </Link>
                   <Link
                     href={`/admin/influencers/payouts?influencerId=${influencer.id}`}
-                    className="block w-full px-4 py-2 text-center bg-blue-50 text-blue-700 rounded-lg hover:bg-blue-100"
+                    className="block w-full px-4 py-2 text-center bg-hos-gold/10 text-hos-gold rounded-lg hover:bg-hos-gold/20"
                   >
                     View Payouts
                   </Link>
                   <Link
                     href={`/i/${influencer.slug}`}
-                    className="block w-full px-4 py-2 text-center bg-gray-50 text-gray-700 rounded-lg hover:bg-gray-100"
+                    className="block w-full px-4 py-2 text-center bg-hos-bg-secondary text-hos-text-secondary rounded-lg hover:bg-hos-bg-tertiary"
                   >
                     View Public Storefront
                   </Link>

@@ -228,10 +228,10 @@ function AcceptInvitationForm() {
 
   if (validating) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <div className="max-w-md w-full bg-white rounded-lg shadow p-6">
+      <div className="min-h-screen flex items-center justify-center bg-hos-bg-secondary">
+        <div className="max-w-md w-full bg-hos-bg-secondary rounded-lg shadow p-6">
           <div className="text-center">
-            <div className="text-gray-500">Validating invitation...</div>
+            <div className="text-hos-text-muted">Validating invitation...</div>
           </div>
         </div>
       </div>
@@ -240,10 +240,10 @@ function AcceptInvitationForm() {
 
   if (!token || isValidationError) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <div className="max-w-md w-full bg-white rounded-lg shadow p-6">
-          <h1 className="text-2xl font-bold text-gray-900 mb-4">Invalid Invitation</h1>
-          <p className="text-gray-600">{error || 'This invitation link is invalid or has expired.'}</p>
+      <div className="min-h-screen flex items-center justify-center bg-hos-bg-secondary">
+        <div className="max-w-md w-full bg-hos-bg-secondary rounded-lg shadow p-6">
+          <h1 className="text-2xl font-bold text-white mb-4">Invalid Invitation</h1>
+          <p className="text-hos-text-secondary">{error || 'This invitation link is invalid or has expired.'}</p>
         </div>
       </div>
     );
@@ -258,17 +258,17 @@ function AcceptInvitationForm() {
       : 'B2C Seller';
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen flex items-center justify-center bg-hos-bg-secondary py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-md w-full space-y-8">
         <div>
-          <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
+          <h2 className="mt-6 text-center text-3xl font-extrabold text-white">
             {headingText}
           </h2>
-          <p className="mt-2 text-center text-sm text-gray-600">
+          <p className="mt-2 text-center text-sm text-hos-text-secondary">
             Create your account to get started
           </p>
           {invitationData && (
-            <p className="mt-1 text-center text-xs text-gray-500">
+            <p className="mt-1 text-center text-xs text-hos-text-muted">
               Invited as: {roleLabel}
             </p>
           )}
@@ -282,7 +282,7 @@ function AcceptInvitationForm() {
 
           <div className="space-y-4">
             <div>
-              <label htmlFor="email" className="block text-sm font-medium text-gray-700">
+              <label htmlFor="email" className="block text-sm font-medium text-hos-text-secondary">
                 Email Address
               </label>
               <input
@@ -292,15 +292,15 @@ function AcceptInvitationForm() {
                 required
                 disabled
                 value={formData.email}
-                className="mt-1 appearance-none relative block w-full px-3 py-2 border border-gray-300 bg-gray-50 text-gray-500 rounded-lg sm:text-sm"
+                className="mt-1 appearance-none relative block w-full px-3 py-2 border border-hos-border bg-hos-bg-secondary text-hos-text-muted rounded-lg sm:text-sm"
                 placeholder="Email"
               />
-              <p className="mt-1 text-xs text-gray-500">Email is pre-filled from invitation</p>
+              <p className="mt-1 text-xs text-hos-text-muted">Email is pre-filled from invitation</p>
             </div>
 
             {isInfluencer ? (
               <div>
-                <label htmlFor="displayName" className="block text-sm font-medium text-gray-700">
+                <label htmlFor="displayName" className="block text-sm font-medium text-hos-text-secondary">
                   Display Name *
                 </label>
                 <input
@@ -310,13 +310,13 @@ function AcceptInvitationForm() {
                   required
                   value={formData.displayName}
                   onChange={(e) => setFormData({ ...formData, displayName: e.target.value })}
-                  className="mt-1 appearance-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-lg focus:outline-none focus:ring-purple-500 focus:border-purple-500 focus:z-10 sm:text-sm"
+                  className="mt-1 appearance-none relative block w-full px-3 py-2 border border-hos-border placeholder-hos-text-muted text-white rounded-lg focus:outline-none focus:ring-hos-gold/50 focus:border-hos-gold focus:z-10 sm:text-sm"
                   placeholder="Your public display name"
                 />
               </div>
             ) : (
               <div>
-                <label htmlFor="storeName" className="block text-sm font-medium text-gray-700">
+                <label htmlFor="storeName" className="block text-sm font-medium text-hos-text-secondary">
                   Store Name *
                 </label>
                 <input
@@ -326,7 +326,7 @@ function AcceptInvitationForm() {
                   required
                   value={formData.storeName}
                   onChange={(e) => setFormData({ ...formData, storeName: e.target.value })}
-                  className="mt-1 appearance-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-lg focus:outline-none focus:ring-purple-500 focus:border-purple-500 focus:z-10 sm:text-sm"
+                  className="mt-1 appearance-none relative block w-full px-3 py-2 border border-hos-border placeholder-hos-text-muted text-white rounded-lg focus:outline-none focus:ring-hos-gold/50 focus:border-hos-gold focus:z-10 sm:text-sm"
                   placeholder="Your store name"
                 />
               </div>
@@ -334,7 +334,7 @@ function AcceptInvitationForm() {
 
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label htmlFor="firstName" className="block text-sm font-medium text-gray-700">
+                <label htmlFor="firstName" className="block text-sm font-medium text-hos-text-secondary">
                   First Name *
                 </label>
                 <input
@@ -350,13 +350,13 @@ function AcceptInvitationForm() {
                       setFormData({ ...formData, firstName: val });
                     }
                   }}
-                  className="mt-1 appearance-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-lg focus:outline-none focus:ring-purple-500 focus:border-purple-500 focus:z-10 sm:text-sm"
+                  className="mt-1 appearance-none relative block w-full px-3 py-2 border border-hos-border placeholder-hos-text-muted text-white rounded-lg focus:outline-none focus:ring-hos-gold/50 focus:border-hos-gold focus:z-10 sm:text-sm"
                   placeholder="First name"
                 />
               </div>
 
               <div>
-                <label htmlFor="lastName" className="block text-sm font-medium text-gray-700">
+                <label htmlFor="lastName" className="block text-sm font-medium text-hos-text-secondary">
                   Last Name *
                 </label>
                 <input
@@ -372,7 +372,7 @@ function AcceptInvitationForm() {
                       setFormData({ ...formData, lastName: val });
                     }
                   }}
-                  className="mt-1 appearance-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-lg focus:outline-none focus:ring-purple-500 focus:border-purple-500 focus:z-10 sm:text-sm"
+                  className="mt-1 appearance-none relative block w-full px-3 py-2 border border-hos-border placeholder-hos-text-muted text-white rounded-lg focus:outline-none focus:ring-hos-gold/50 focus:border-hos-gold focus:z-10 sm:text-sm"
                   placeholder="Last name"
                 />
               </div>
@@ -381,7 +381,7 @@ function AcceptInvitationForm() {
             {!isInfluencer && (
               <>
                 <div>
-                  <label htmlFor="country" className="block text-sm font-medium text-gray-700">
+                  <label htmlFor="country" className="block text-sm font-medium text-hos-text-secondary">
                     Country *
                   </label>
                   <input
@@ -391,13 +391,13 @@ function AcceptInvitationForm() {
                     required
                     value={formData.country}
                     onChange={(e) => setFormData({ ...formData, country: e.target.value })}
-                    className="mt-1 appearance-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-lg focus:outline-none focus:ring-purple-500 focus:border-purple-500 focus:z-10 sm:text-sm"
+                    className="mt-1 appearance-none relative block w-full px-3 py-2 border border-hos-border placeholder-hos-text-muted text-white rounded-lg focus:outline-none focus:ring-hos-gold/50 focus:border-hos-gold focus:z-10 sm:text-sm"
                     placeholder="Country"
                   />
                 </div>
 
                 <div>
-                  <label htmlFor="whatsappNumber" className="block text-sm font-medium text-gray-700">
+                  <label htmlFor="whatsappNumber" className="block text-sm font-medium text-hos-text-secondary">
                     WhatsApp Number (Optional)
                   </label>
                   <input
@@ -411,13 +411,13 @@ function AcceptInvitationForm() {
                         setFormData({ ...formData, whatsappNumber: val });
                       }
                     }}
-                    className="mt-1 appearance-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-lg focus:outline-none focus:ring-purple-500 focus:border-purple-500 focus:z-10 sm:text-sm"
+                    className="mt-1 appearance-none relative block w-full px-3 py-2 border border-hos-border placeholder-hos-text-muted text-white rounded-lg focus:outline-none focus:ring-hos-gold/50 focus:border-hos-gold focus:z-10 sm:text-sm"
                     placeholder="+1 555 123 4567"
                   />
                 </div>
 
                 <div>
-                  <label htmlFor="preferredCommunicationMethod" className="block text-sm font-medium text-gray-700">
+                  <label htmlFor="preferredCommunicationMethod" className="block text-sm font-medium text-hos-text-secondary">
                     Preferred Communication Method *
                   </label>
                   <select
@@ -426,7 +426,7 @@ function AcceptInvitationForm() {
                     required
                     value={formData.preferredCommunicationMethod}
                     onChange={(e) => setFormData({ ...formData, preferredCommunicationMethod: e.target.value as any })}
-                    className="mt-1 appearance-none relative block w-full px-3 py-2 border border-gray-300 text-gray-900 rounded-lg focus:outline-none focus:ring-purple-500 focus:border-purple-500 focus:z-10 sm:text-sm"
+                    className="mt-1 appearance-none relative block w-full px-3 py-2 border border-hos-border text-white rounded-lg focus:outline-none focus:ring-hos-gold/50 focus:border-hos-gold focus:z-10 sm:text-sm"
                   >
                     <option value="EMAIL">Email</option>
                     <option value="SMS">SMS</option>
@@ -438,7 +438,7 @@ function AcceptInvitationForm() {
             )}
 
             <div>
-              <label htmlFor="password" className="block text-sm font-medium text-gray-700">
+              <label htmlFor="password" className="block text-sm font-medium text-hos-text-secondary">
                 Password *
               </label>
               <input
@@ -448,13 +448,13 @@ function AcceptInvitationForm() {
                 required
                 value={formData.password}
                 onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                className="mt-1 appearance-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-lg focus:outline-none focus:ring-purple-500 focus:border-purple-500 focus:z-10 sm:text-sm"
+                className="mt-1 appearance-none relative block w-full px-3 py-2 border border-hos-border placeholder-hos-text-muted text-white rounded-lg focus:outline-none focus:ring-hos-gold/50 focus:border-hos-gold focus:z-10 sm:text-sm"
                 placeholder="Password (min 8 characters)"
               />
             </div>
 
             <div>
-              <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700">
+              <label htmlFor="confirmPassword" className="block text-sm font-medium text-hos-text-secondary">
                 Confirm Password *
               </label>
               <input
@@ -464,7 +464,7 @@ function AcceptInvitationForm() {
                 required
                 value={formData.confirmPassword}
                 onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}
-                className="mt-1 appearance-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-lg focus:outline-none focus:ring-purple-500 focus:border-purple-500 focus:z-10 sm:text-sm"
+                className="mt-1 appearance-none relative block w-full px-3 py-2 border border-hos-border placeholder-hos-text-muted text-white rounded-lg focus:outline-none focus:ring-hos-gold/50 focus:border-hos-gold focus:z-10 sm:text-sm"
                 placeholder="Confirm password"
               />
             </div>
@@ -477,10 +477,10 @@ function AcceptInvitationForm() {
                 required
                 checked={formData.gdprConsent}
                 onChange={(e) => setFormData({ ...formData, gdprConsent: e.target.checked })}
-                className="h-4 w-4 text-purple-600 focus:ring-purple-500 border-gray-300 rounded"
+                className="h-4 w-4 text-hos-gold focus:ring-hos-gold/50 border-hos-border rounded"
               />
-              <label htmlFor="gdprConsent" className="ml-2 block text-sm text-gray-900">
-                I acknowledge the <a href="/privacy-policy" target="_blank" className="text-purple-600 hover:underline">Privacy Policy</a> and consent to data processing *
+              <label htmlFor="gdprConsent" className="ml-2 block text-sm text-white">
+                I acknowledge the <a href="/privacy-policy" target="_blank" className="text-hos-gold hover:underline">Privacy Policy</a> and consent to data processing *
               </label>
             </div>
           </div>
@@ -489,7 +489,7 @@ function AcceptInvitationForm() {
             <button
               type="submit"
               disabled={loading}
-              className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-lg text-white bg-purple-600 hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500 disabled:opacity-50"
+              className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-lg text-white bg-hos-gold hover:bg-hos-gold-hover focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-hos-gold/50 disabled:opacity-50"
             >
               {loading ? 'Creating Account...' : 'Create Account'}
             </button>
@@ -503,8 +503,8 @@ function AcceptInvitationForm() {
 export default function AcceptInvitationPage() {
   return (
     <Suspense fallback={
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <div className="text-gray-500">Loading...</div>
+      <div className="min-h-screen flex items-center justify-center bg-hos-bg-secondary">
+        <div className="text-hos-text-muted">Loading...</div>
       </div>
     }>
       <AcceptInvitationForm />

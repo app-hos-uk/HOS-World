@@ -12,6 +12,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useCart } from '@/contexts/CartContext';
 import { SafeImage } from '@/components/SafeImage';
 import Link from 'next/link';
+import { trackViewItem, trackAddToCart } from '@/lib/analytics';
 
 const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 function isUuid(s: string): boolean {
@@ -43,6 +44,7 @@ export default function ProductDetailClient() {
   const wishlistAnimationTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   /** True when the current animation is for an add (so burst shows only on add, not on remove). */
   const wishlistIsAddAnimationRef = useRef(false);
+  const viewedProductIdRef = useRef<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [reviewsLoading, setReviewsLoading] = useState(false);
   const [quantity, setQuantity] = useState(1);
@@ -124,6 +126,12 @@ export default function ProductDetailClient() {
     fetchReviews();
     return () => { cancelled = true; };
   }, [product?.id]);
+
+  useEffect(() => {
+    if (!product?.id || viewedProductIdRef.current === product.id) return;
+    viewedProductIdRef.current = product.id;
+    trackViewItem(product);
+  }, [product]);
 
   useEffect(() => {
     if (!product?.id || !isAuthenticated) return;
@@ -212,6 +220,7 @@ export default function ProductDetailClient() {
         quantity,
         hasVariations && Object.keys(selectedVariations).length > 0 ? selectedVariations : undefined
       );
+      trackAddToCart(product, quantity);
       toast.success('Product added to cart!');
     } catch (err: any) {
       toast.error(err.message || 'Failed to add to cart');
@@ -257,11 +266,11 @@ export default function ProductDetailClient() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-white">
+      <div className="min-h-screen bg-hos-bg-secondary">
         <Header />
         <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 lg:py-12">
           <div className="flex items-center justify-center py-12">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600"></div>
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-hos-gold"></div>
           </div>
         </main>
         <Footer />
@@ -271,14 +280,14 @@ export default function ProductDetailClient() {
 
   if (!product) {
     return (
-      <div className="min-h-screen bg-white">
+      <div className="min-h-screen bg-hos-bg-secondary">
         <Header />
         <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 lg:py-12">
           <div className="text-center py-12">
-            <p className="text-gray-600">Product not found</p>
+            <p className="text-hos-text-secondary">Product not found</p>
             <button
               onClick={handleGoBack}
-              className="text-purple-600 hover:text-purple-800 mt-4 inline-block"
+              className="text-hos-gold hover:text-hos-gold-hover mt-4 inline-block"
             >
               ← Go Back
             </button>
@@ -290,13 +299,13 @@ export default function ProductDetailClient() {
   }
 
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen bg-hos-bg-secondary">
       <Header />
       <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 lg:py-12">
         <div className="mb-6">
           <button
             onClick={handleGoBack}
-            className="text-purple-600 hover:text-purple-800 mb-4 inline-flex items-center gap-1 hover:gap-2 transition-all"
+            className="text-hos-gold hover:text-hos-gold-hover mb-4 inline-flex items-center gap-1 hover:gap-2 transition-all"
           >
             <span>←</span>
             <span>Go Back</span>
@@ -307,7 +316,7 @@ export default function ProductDetailClient() {
           {/* Product Images */}
           <div>
             {product.images && product.images.length > 0 ? (
-              <div className="relative w-full aspect-square mb-4 bg-gray-50 rounded-lg overflow-hidden">
+              <div className="relative w-full aspect-square mb-4 bg-hos-bg-secondary rounded-lg overflow-hidden">
                 <SafeImage
                   src={typeof product.images[0] === 'string' ? product.images[0] : product.images[0]?.url || product.images[0]}
                   alt={product.name}
@@ -317,8 +326,8 @@ export default function ProductDetailClient() {
                 />
               </div>
             ) : (
-              <div className="w-full aspect-square bg-gray-100 rounded-lg flex items-center justify-center">
-                <span className="text-gray-400">No Image</span>
+              <div className="w-full aspect-square bg-hos-bg-tertiary rounded-lg flex items-center justify-center">
+                <span className="text-hos-text-muted">No Image</span>
               </div>
             )}
             {product.images && product.images.length > 1 && (
@@ -349,20 +358,20 @@ export default function ProductDetailClient() {
             <div className="mb-4 flex items-center gap-2">
               <div className="flex items-center">
                 {[...Array(5)].map((_, i) => (
-                  <span key={i} className={i < Math.round(product.averageRating || 0) ? 'text-yellow-400' : 'text-gray-300'}>
+                  <span key={i} className={i < Math.round(product.averageRating || 0) ? 'text-yellow-400' : 'text-hos-text-muted'}>
                     ★
                   </span>
                 ))}
               </div>
-              <span className="text-gray-600">({product.reviewCount || reviews.length} reviews)</span>
+              <span className="text-hos-text-secondary">({product.reviewCount || reviews.length} reviews)</span>
             </div>
 
             {product.shortDescription && (
-              <p className="text-gray-600 mb-4">{product.shortDescription}</p>
+              <p className="text-hos-text-secondary mb-4">{product.shortDescription}</p>
             )}
 
             <div className="mb-6">
-              <div className="text-3xl font-bold text-purple-600 mb-2">
+              <div className="text-3xl font-bold text-hos-gold mb-2">
                 {formatPrice(product.price, product.currency || 'USD')}
               </div>
               {product.stock !== undefined && (
@@ -377,7 +386,7 @@ export default function ProductDetailClient() {
               <div className="mb-6 space-y-4">
                 {product.variations.map((variation: any, varIdx: number) => (
                   <div key={varIdx}>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">{variation.name} *</label>
+                    <label className="block text-sm font-medium text-hos-text-secondary mb-2">{variation.name} *</label>
                     <div className="flex flex-wrap gap-2">
                       {(variation.options || []).map((opt: any, optIdx: number) => {
                         const value = typeof opt === 'object' && opt?.value != null ? opt.value : String(opt);
@@ -390,12 +399,12 @@ export default function ProductDetailClient() {
                             onClick={() => setSelectedVariations((prev) => ({ ...prev, [variation.name]: value }))}
                             className={`px-4 py-2 border rounded-lg text-sm font-medium transition-colors ${
                               isSelected
-                                ? 'border-purple-600 bg-purple-50 text-purple-800 ring-2 ring-purple-600'
-                                : 'border-gray-300 hover:bg-gray-50'
+                                ? 'border-hos-gold bg-hos-gold/10 text-hos-gold ring-2 ring-hos-gold/50'
+                                : 'border-hos-border hover:bg-hos-bg-tertiary'
                             }`}
                           >
                             {value}
-                            {optionPrice != null && <span className="ml-1 text-purple-600">({formatPrice(optionPrice, product.currency || 'USD')})</span>}
+                            {optionPrice != null && <span className="ml-1 text-hos-gold">({formatPrice(optionPrice, product.currency || 'USD')})</span>}
                           </button>
                         );
                       })}
@@ -407,11 +416,11 @@ export default function ProductDetailClient() {
 
             {/* Quantity Selector */}
             <div className="mb-6">
-              <label className="block text-sm font-medium text-gray-700 mb-2">Quantity</label>
+              <label className="block text-sm font-medium text-hos-text-secondary mb-2">Quantity</label>
               <div className="flex items-center gap-4">
                 <button
                   onClick={() => setQuantity(Math.max(1, quantity - 1))}
-                  className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50"
+                  className="px-4 py-2 border border-hos-border rounded-lg hover:bg-hos-bg-tertiary"
                 >
                   -
                 </button>
@@ -422,7 +431,7 @@ export default function ProductDetailClient() {
                     setQuantity(Math.min(max, quantity + 1));
                   }}
                   disabled={quantity >= (product.stock ?? 99)}
-                  className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="px-4 py-2 border border-hos-border rounded-lg hover:bg-hos-bg-tertiary disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   +
                 </button>
@@ -440,7 +449,7 @@ export default function ProductDetailClient() {
                     ? !(product.variations as any[]).every((v: any) => selectedVariations[v.name])
                     : false)
                 }
-                className="flex-1 px-6 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                className="flex-1 px-6 py-3 bg-hos-gold text-[#1a1406] rounded-lg hover:bg-hos-gold-hover transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {addingToCart ? 'Adding...' : 'Add to Cart'}
               </button>
@@ -449,7 +458,7 @@ export default function ProductDetailClient() {
                 className={`group relative px-6 py-3 border rounded-lg font-medium transition-all duration-300 ${
                   isInWishlist
                     ? 'border-red-300 bg-red-50 text-red-600 hover:bg-red-100'
-                    : 'border-gray-300 hover:bg-gray-50'
+                    : 'border-hos-border hover:bg-hos-bg-tertiary'
                 } ${wishlistAnimating ? 'scale-110' : 'scale-100'}`}
                 title={isInWishlist ? 'Remove from wishlist' : 'Add to wishlist'}
               >
@@ -496,7 +505,7 @@ export default function ProductDetailClient() {
             {isAuthenticated && (
               <button
                 onClick={() => setShowReviewForm(!showReviewForm)}
-                className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
+                className="px-4 py-2 bg-hos-gold text-[#1a1406] rounded-lg hover:bg-hos-gold-hover transition-colors"
               >
                 Write a Review
               </button>
@@ -505,18 +514,18 @@ export default function ProductDetailClient() {
 
           {/* Review Form */}
           {showReviewForm && (
-            <div className="bg-gray-50 rounded-lg p-6 mb-6">
+            <div className="bg-hos-bg-secondary rounded-lg p-6 mb-6">
               <h3 className="text-lg font-semibold mb-4">Write Your Review</h3>
               <form onSubmit={handleSubmitReview}>
                 <div className="mb-4">
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Rating</label>
+                  <label className="block text-sm font-medium text-hos-text-secondary mb-2">Rating</label>
                   <div className="flex gap-1">
                     {[1, 2, 3, 4, 5].map((rating) => (
                       <button
                         key={rating}
                         type="button"
                         onClick={() => setReviewForm({ ...reviewForm, rating })}
-                        className={`text-2xl ${rating <= reviewForm.rating ? 'text-yellow-400' : 'text-gray-300'}`}
+                        className={`text-2xl ${rating <= reviewForm.rating ? 'text-yellow-400' : 'text-hos-text-muted'}`}
                       >
                         ★
                       </button>
@@ -524,22 +533,22 @@ export default function ProductDetailClient() {
                   </div>
                 </div>
                 <div className="mb-4">
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Title</label>
+                  <label className="block text-sm font-medium text-hos-text-secondary mb-2">Title</label>
                   <input
                     type="text"
                     value={reviewForm.title}
                     onChange={(e) => setReviewForm({ ...reviewForm, title: e.target.value })}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
+                    className="w-full px-4 py-2 border border-hos-border rounded-lg focus:outline-none focus:ring-2 focus:ring-hos-gold/50"
                     required
                   />
                 </div>
                 <div className="mb-4">
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Review</label>
+                  <label className="block text-sm font-medium text-hos-text-secondary mb-2">Review</label>
                   <textarea
                     value={reviewForm.comment}
                     onChange={(e) => setReviewForm({ ...reviewForm, comment: e.target.value })}
                     rows={4}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
+                    className="w-full px-4 py-2 border border-hos-border rounded-lg focus:outline-none focus:ring-2 focus:ring-hos-gold/50"
                     required
                   />
                 </div>
@@ -547,14 +556,14 @@ export default function ProductDetailClient() {
                   <button
                     type="submit"
                     disabled={submittingReview}
-                    className="px-6 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="px-6 py-2 bg-hos-gold text-[#1a1406] rounded-lg hover:bg-hos-gold-hover transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     {submittingReview ? 'Submitting...' : 'Submit Review'}
                   </button>
                   <button
                     type="button"
                     onClick={() => setShowReviewForm(false)}
-                    className="px-6 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+                    className="px-6 py-2 border border-hos-border rounded-lg hover:bg-hos-bg-tertiary transition-colors"
                   >
                     Cancel
                   </button>
@@ -566,30 +575,30 @@ export default function ProductDetailClient() {
           {/* Reviews List */}
           {reviewsLoading ? (
             <div className="flex items-center justify-center py-8">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-600"></div>
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-hos-gold"></div>
             </div>
           ) : reviews.length === 0 ? (
-            <p className="text-gray-600 text-center py-8">No reviews yet. Be the first to review this product!</p>
+            <p className="text-hos-text-secondary text-center py-8">No reviews yet. Be the first to review this product!</p>
           ) : (
             <div className="space-y-6">
               {reviews.map((review) => (
-                <div key={review.id} className="border-b border-gray-200 pb-6">
+                <div key={review.id} className="border-b border-hos-border pb-6">
                   <div className="flex items-start justify-between mb-2">
                     <div>
                       <h4 className="font-semibold text-lg">{review.title || 'Review'}</h4>
-                      <p className="text-sm text-gray-600">by {review.user?.email || 'Anonymous'}</p>
+                      <p className="text-sm text-hos-text-secondary">by {review.user?.email || 'Anonymous'}</p>
                     </div>
                     <div className="flex items-center gap-1">
                       {[...Array(5)].map((_, i) => (
-                        <span key={i} className={i < review.rating ? 'text-yellow-400' : 'text-gray-300'}>
+                        <span key={i} className={i < review.rating ? 'text-yellow-400' : 'text-hos-text-muted'}>
                           ★
                         </span>
                       ))}
                     </div>
                   </div>
-                  <p className="text-gray-700">{review.comment}</p>
+                  <p className="text-hos-text-secondary">{review.comment}</p>
                   {review.createdAt && (
-                    <p className="text-sm text-gray-500 mt-2">
+                    <p className="text-sm text-hos-text-muted mt-2">
                       {new Date(review.createdAt).toLocaleDateString()}
                     </p>
                   )}
@@ -603,7 +612,7 @@ export default function ProductDetailClient() {
         {product.description && (
           <div className="mt-12 border-t pt-8">
             <h2 className="text-2xl font-bold mb-4">Product Details</h2>
-            <div className="prose prose-gray max-w-none text-gray-700 whitespace-pre-wrap">
+            <div className="prose prose-gray max-w-none text-hos-text-secondary whitespace-pre-wrap">
               {product.description}
             </div>
           </div>
@@ -612,15 +621,15 @@ export default function ProductDetailClient() {
         {/* Additional Product Information */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-8">
           {product.category && (
-            <div className="bg-gray-50 rounded-lg p-4">
+            <div className="bg-hos-bg-secondary rounded-lg p-4">
               <h3 className="font-semibold mb-2">Category</h3>
-              <p className="text-gray-600">{product.category}</p>
+              <p className="text-hos-text-secondary">{product.category}</p>
             </div>
           )}
           {product.fandom && (
-            <div className="bg-gray-50 rounded-lg p-4">
+            <div className="bg-hos-bg-secondary rounded-lg p-4">
               <h3 className="font-semibold mb-2">Fandom</h3>
-              <p className="text-gray-600">{product.fandom}</p>
+              <p className="text-hos-text-secondary">{product.fandom}</p>
             </div>
           )}
         </div>

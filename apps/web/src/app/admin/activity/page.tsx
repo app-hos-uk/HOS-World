@@ -42,13 +42,13 @@ interface Stats {
 
 const ACTION_COLORS: Record<string, string> = {
   CREATE: 'bg-green-100 text-green-800',
-  UPDATE: 'bg-blue-100 text-blue-800',
+  UPDATE: 'bg-hos-gold/20 text-hos-gold',
   DELETE: 'bg-red-100 text-red-800',
-  LOGIN: 'bg-purple-100 text-purple-800',
-  LOGOUT: 'bg-gray-100 text-gray-800',
+  LOGIN: 'bg-hos-gold/20 text-hos-gold',
+  LOGOUT: 'bg-hos-bg-tertiary text-white',
   VIEW: 'bg-cyan-100 text-cyan-800',
   EXPORT: 'bg-yellow-100 text-yellow-800',
-  IMPORT: 'bg-indigo-100 text-indigo-800',
+  IMPORT: 'bg-hos-gold/20 text-hos-gold',
   APPROVE: 'bg-emerald-100 text-emerald-800',
   REJECT: 'bg-orange-100 text-orange-800',
 };
@@ -229,7 +229,7 @@ export default function AdminActivityPage() {
   };
 
   const getActionBadge = (action: string) => {
-    const color = ACTION_COLORS[action] || 'bg-gray-100 text-gray-800';
+    const color = ACTION_COLORS[action] || 'bg-hos-bg-tertiary text-white';
     return <span className={`px-2 py-0.5 text-xs rounded-full ${color}`}>{action}</span>;
   };
 
@@ -269,13 +269,13 @@ export default function AdminActivityPage() {
           {/* Header */}
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div>
-              <h1 className="text-2xl font-bold text-gray-900">Activity Logs</h1>
-              <p className="text-gray-600 mt-1">Monitor platform activity and audit trail</p>
+              <h1 className="text-2xl font-bold text-white">Activity Logs</h1>
+              <p className="text-hos-text-secondary mt-1">Monitor platform activity and audit trail</p>
             </div>
             <div className="flex gap-2">
               <button
                 onClick={fetchLogs}
-                className="px-4 py-2 text-purple-600 border border-purple-600 rounded-lg hover:bg-purple-50"
+                className="px-4 py-2 text-hos-gold border border-hos-gold rounded-lg hover:bg-hos-gold/10"
               >
                 Refresh
               </button>
@@ -286,20 +286,20 @@ export default function AdminActivityPage() {
           {/* Stats Cards */}
           {stats && (
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              <div className="bg-white rounded-lg shadow p-4">
-                <p className="text-sm text-gray-500">Total Logs</p>
-                <p className="text-2xl font-bold text-gray-900">{stats.total.toLocaleString()}</p>
+              <div className="bg-hos-bg-secondary rounded-lg shadow p-4">
+                <p className="text-sm text-hos-text-muted">Total Logs</p>
+                <p className="text-2xl font-bold text-white">{stats.total.toLocaleString()}</p>
               </div>
-              <div className="bg-white rounded-lg shadow p-4">
-                <p className="text-sm text-gray-500">Today</p>
-                <p className="text-2xl font-bold text-blue-600">{stats.today.toLocaleString()}</p>
+              <div className="bg-hos-bg-secondary rounded-lg shadow p-4">
+                <p className="text-sm text-hos-text-muted">Today</p>
+                <p className="text-2xl font-bold text-hos-gold">{stats.today.toLocaleString()}</p>
               </div>
-              <div className="bg-white rounded-lg shadow p-4">
-                <p className="text-sm text-gray-500">This Week</p>
-                <p className="text-2xl font-bold text-purple-600">{stats.thisWeek.toLocaleString()}</p>
+              <div className="bg-hos-bg-secondary rounded-lg shadow p-4">
+                <p className="text-sm text-hos-text-muted">This Week</p>
+                <p className="text-2xl font-bold text-hos-gold">{stats.thisWeek.toLocaleString()}</p>
               </div>
-              <div className="bg-white rounded-lg shadow p-4">
-                <p className="text-sm text-gray-500">Unique Actions</p>
+              <div className="bg-hos-bg-secondary rounded-lg shadow p-4">
+                <p className="text-sm text-hos-text-muted">Unique Actions</p>
                 <p className="text-2xl font-bold text-green-600">{Object.keys(stats.byAction).length}</p>
               </div>
             </div>
@@ -307,13 +307,13 @@ export default function AdminActivityPage() {
 
           {/* Quick Filters - Actions */}
           {stats && Object.keys(stats.byAction).length > 0 && (
-            <div className="bg-white rounded-lg shadow p-4">
-              <h3 className="text-sm font-medium text-gray-700 mb-3">Filter by Action</h3>
+            <div className="bg-hos-bg-secondary rounded-lg shadow p-4">
+              <h3 className="text-sm font-medium text-hos-text-secondary mb-3">Filter by Action</h3>
               <div className="flex flex-wrap gap-2">
                 <button
                   onClick={() => setActionFilter('ALL')}
                   className={`px-3 py-1 text-sm rounded-full transition-colors ${
-                    actionFilter === 'ALL' ? 'bg-purple-600 text-white' : 'bg-gray-100 hover:bg-gray-200'
+                    actionFilter === 'ALL' ? 'bg-hos-gold text-[#1a1406]' : 'bg-hos-bg-tertiary hover:bg-hos-bg-tertiary'
                   }`}
                 >
                   All ({stats.total})
@@ -323,7 +323,7 @@ export default function AdminActivityPage() {
                     key={action}
                     onClick={() => setActionFilter(action)}
                     className={`px-3 py-1 text-sm rounded-full transition-colors ${
-                      actionFilter === action ? 'bg-purple-600 text-white' : 'bg-gray-100 hover:bg-gray-200'
+                      actionFilter === action ? 'bg-hos-gold text-[#1a1406]' : 'bg-hos-bg-tertiary hover:bg-hos-bg-tertiary'
                     }`}
                   >
                     {action} ({count})
@@ -341,24 +341,24 @@ export default function AdminActivityPage() {
           )}
 
           {/* Filters */}
-          <div className="bg-white rounded-lg shadow p-4">
+          <div className="bg-hos-bg-secondary rounded-lg shadow p-4">
             <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
               <div className="md:col-span-2">
-                <label className="block text-sm font-medium text-gray-700 mb-1">Search</label>
+                <label className="block text-sm font-medium text-hos-text-secondary mb-1">Search</label>
                 <input
                   type="text"
                   value={searchTerm}
                   onChange={(e) => { setSearchTerm(e.target.value); setPage(1); }}
                   placeholder="Action, entity, description, user..."
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
+                  className="w-full px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50"
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Entity Type</label>
+                <label className="block text-sm font-medium text-hos-text-secondary mb-1">Entity Type</label>
                 <select
                   value={entityFilter}
                   onChange={(e) => { setEntityFilter(e.target.value); setPage(1); }}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
+                  className="w-full px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50"
                 >
                   <option value="ALL">All Entities</option>
                   {uniqueEntities.map(entity => (
@@ -367,11 +367,11 @@ export default function AdminActivityPage() {
                 </select>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Date Range</label>
+                <label className="block text-sm font-medium text-hos-text-secondary mb-1">Date Range</label>
                 <select
                   value={dateFilter}
                   onChange={(e) => { setDateFilter(e.target.value); setPage(1); }}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
+                  className="w-full px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50"
                 >
                   <option value="1d">Last 24 Hours</option>
                   <option value="7d">Last 7 Days</option>
@@ -380,13 +380,13 @@ export default function AdminActivityPage() {
                 </select>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">User</label>
+                <label className="block text-sm font-medium text-hos-text-secondary mb-1">User</label>
                 <input
                   type="text"
                   value={userFilter}
                   onChange={(e) => { setUserFilter(e.target.value); setPage(1); }}
                   placeholder="Filter by user..."
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
+                  className="w-full px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50"
                 />
               </div>
             </div>
@@ -395,10 +395,10 @@ export default function AdminActivityPage() {
           {/* Activity Log Table */}
           {loading ? (
             <div className="flex items-center justify-center py-12">
-              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600"></div>
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-hos-gold"></div>
             </div>
           ) : (
-            <div className="bg-white rounded-lg shadow overflow-hidden">
+            <div className="bg-hos-bg-secondary rounded-lg shadow overflow-hidden">
               <div className="p-4 border-b flex justify-between items-center">
                 <h2 className="text-lg font-semibold">
                   Activity Logs ({filteredLogs.length.toLocaleString()})
@@ -424,28 +424,28 @@ export default function AdminActivityPage() {
                 )}
               </div>
               <div className="overflow-x-auto">
-                <table className="min-w-full divide-y divide-gray-200">
-                  <thead className="bg-gray-50">
+                <table className="min-w-full divide-y divide-hos-border">
+                  <thead className="bg-hos-bg-secondary">
                     <tr>
-                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Time</th>
-                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Action</th>
-                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Entity</th>
-                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Description</th>
-                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">User</th>
-                      <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">Actions</th>
+                      <th className="px-4 py-3 text-left text-xs font-medium text-hos-text-muted uppercase">Time</th>
+                      <th className="px-4 py-3 text-left text-xs font-medium text-hos-text-muted uppercase">Action</th>
+                      <th className="px-4 py-3 text-left text-xs font-medium text-hos-text-muted uppercase">Entity</th>
+                      <th className="px-4 py-3 text-left text-xs font-medium text-hos-text-muted uppercase">Description</th>
+                      <th className="px-4 py-3 text-left text-xs font-medium text-hos-text-muted uppercase">User</th>
+                      <th className="px-4 py-3 text-right text-xs font-medium text-hos-text-muted uppercase">Actions</th>
                     </tr>
                   </thead>
-                  <tbody className="bg-white divide-y divide-gray-200">
+                  <tbody className="bg-hos-bg-secondary divide-y divide-hos-border">
                     {paginatedLogs.length === 0 ? (
                       <tr>
-                        <td colSpan={6} className="px-6 py-8 text-center text-gray-500">
+                        <td colSpan={6} className="px-6 py-8 text-center text-hos-text-muted">
                           No activity logs found
                         </td>
                       </tr>
                     ) : (
                       paginatedLogs.map((log) => (
-                        <tr key={log.id} className="hover:bg-gray-50">
-                          <td className="px-4 py-3 text-sm text-gray-500 whitespace-nowrap">
+                        <tr key={log.id} className="hover:bg-hos-bg-tertiary">
+                          <td className="px-4 py-3 text-sm text-hos-text-muted whitespace-nowrap">
                             <div>{formatTimeAgo(log.createdAt)}</div>
                             <div className="text-xs">{new Date(log.createdAt).toLocaleTimeString()}</div>
                           </td>
@@ -454,36 +454,36 @@ export default function AdminActivityPage() {
                             <div className="flex items-center gap-2">
                               <span>{getEntityIcon(log.entityType)}</span>
                               <div>
-                                <p className="text-sm font-medium text-gray-900">{log.entityType}</p>
+                                <p className="text-sm font-medium text-white">{log.entityType}</p>
                                 {log.entityId && (
-                                  <p className="text-xs text-gray-500 font-mono">{log.entityId.substring(0, 8)}...</p>
+                                  <p className="text-xs text-hos-text-muted font-mono">{log.entityId.substring(0, 8)}...</p>
                                 )}
                               </div>
                             </div>
                           </td>
-                          <td className="px-4 py-3 text-sm text-gray-600 max-w-xs truncate">
+                          <td className="px-4 py-3 text-sm text-hos-text-secondary max-w-xs truncate">
                             {log.description || '-'}
                           </td>
                           <td className="px-4 py-3">
                             {log.user ? (
                               <div>
-                                <p className="text-sm font-medium text-gray-900">
+                                <p className="text-sm font-medium text-white">
                                   {log.user.firstName && log.user.lastName 
                                     ? `${log.user.firstName} ${log.user.lastName}` 
                                     : log.user.email}
                                 </p>
                                 {log.user.role && (
-                                  <p className="text-xs text-gray-500">{log.user.role}</p>
+                                  <p className="text-xs text-hos-text-muted">{log.user.role}</p>
                                 )}
                               </div>
                             ) : (
-                              <span className="text-sm text-gray-400">System</span>
+                              <span className="text-sm text-hos-text-muted">System</span>
                             )}
                           </td>
                           <td className="px-4 py-3 text-right">
                             <button
                               onClick={() => handleViewDetails(log)}
-                              className="px-2 py-1 text-sm text-purple-600 hover:bg-purple-50 rounded"
+                              className="px-2 py-1 text-sm text-hos-gold hover:bg-hos-gold/10 rounded"
                             >
                               Details
                             </button>
@@ -498,7 +498,7 @@ export default function AdminActivityPage() {
               {/* Pagination Footer */}
               {totalPages > 1 && (
                 <div className="px-4 py-3 border-t flex justify-between items-center">
-                  <p className="text-sm text-gray-500">
+                  <p className="text-sm text-hos-text-muted">
                     Showing {(page - 1) * pageSize + 1} to {Math.min(page * pageSize, filteredLogs.length)} of {filteredLogs.length} logs
                   </p>
                   <div className="flex gap-1">
@@ -518,7 +518,7 @@ export default function AdminActivityPage() {
                           key={pageNum}
                           onClick={() => setPage(pageNum)}
                           className={`px-3 py-1 text-sm rounded ${
-                            page === pageNum ? 'bg-purple-600 text-white' : 'bg-gray-100 hover:bg-gray-200'
+                            page === pageNum ? 'bg-hos-gold text-[#1a1406]' : 'bg-hos-bg-tertiary hover:bg-hos-bg-tertiary'
                           }`}
                         >
                           {pageNum}
@@ -534,14 +534,14 @@ export default function AdminActivityPage() {
           {/* Detail Modal */}
           {showDetailModal && selectedLog && (
             <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-              <div className="bg-white rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+              <div className="bg-hos-bg-secondary rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto">
                 <div className="p-6">
                   <div className="flex justify-between items-start mb-6">
                     <div>
                       <h2 className="text-2xl font-bold">Activity Details</h2>
-                      <p className="text-sm text-gray-500">Log ID: {selectedLog.id}</p>
+                      <p className="text-sm text-hos-text-muted">Log ID: {selectedLog.id}</p>
                     </div>
-                    <button onClick={() => setShowDetailModal(false)} className="text-gray-500 hover:text-gray-700 text-2xl">×</button>
+                    <button onClick={() => setShowDetailModal(false)} className="text-hos-text-muted hover:text-hos-text-secondary text-2xl">×</button>
                   </div>
 
                   <div className="space-y-6">
@@ -555,36 +555,36 @@ export default function AdminActivityPage() {
                     {/* Details Grid */}
                     <div className="grid grid-cols-2 gap-4">
                       <div>
-                        <p className="text-sm text-gray-500">Timestamp</p>
+                        <p className="text-sm text-hos-text-muted">Timestamp</p>
                         <p className="font-medium">{new Date(selectedLog.createdAt).toLocaleString()}</p>
                       </div>
                       {selectedLog.entityId && (
                         <div>
-                          <p className="text-sm text-gray-500">Entity ID</p>
+                          <p className="text-sm text-hos-text-muted">Entity ID</p>
                           <p className="font-medium font-mono text-sm">{selectedLog.entityId}</p>
                         </div>
                       )}
                       {selectedLog.user && (
                         <>
                           <div>
-                            <p className="text-sm text-gray-500">User</p>
+                            <p className="text-sm text-hos-text-muted">User</p>
                             <p className="font-medium">{selectedLog.user.email}</p>
                           </div>
                           <div>
-                            <p className="text-sm text-gray-500">User Role</p>
+                            <p className="text-sm text-hos-text-muted">User Role</p>
                             <p className="font-medium">{selectedLog.user.role || 'N/A'}</p>
                           </div>
                         </>
                       )}
                       {selectedLog.seller && (
                         <div>
-                          <p className="text-sm text-gray-500">Seller</p>
+                          <p className="text-sm text-hos-text-muted">Seller</p>
                           <p className="font-medium">{selectedLog.seller.storeName}</p>
                         </div>
                       )}
                       {selectedLog.ipAddress && (
                         <div>
-                          <p className="text-sm text-gray-500">IP Address</p>
+                          <p className="text-sm text-hos-text-muted">IP Address</p>
                           <p className="font-medium font-mono">{selectedLog.ipAddress}</p>
                         </div>
                       )}
@@ -593,16 +593,16 @@ export default function AdminActivityPage() {
                     {/* Description */}
                     {selectedLog.description && (
                       <div>
-                        <p className="text-sm text-gray-500 mb-1">Description</p>
-                        <p className="text-gray-700">{selectedLog.description}</p>
+                        <p className="text-sm text-hos-text-muted mb-1">Description</p>
+                        <p className="text-hos-text-secondary">{selectedLog.description}</p>
                       </div>
                     )}
 
                     {/* Metadata */}
                     {selectedLog.metadata && Object.keys(selectedLog.metadata).length > 0 && (
                       <div>
-                        <p className="text-sm text-gray-500 mb-2">Additional Data</p>
-                        <div className="bg-gray-50 rounded-lg p-4">
+                        <p className="text-sm text-hos-text-muted mb-2">Additional Data</p>
+                        <div className="bg-hos-bg-secondary rounded-lg p-4">
                           <pre className="text-xs overflow-auto">{JSON.stringify(selectedLog.metadata, null, 2)}</pre>
                         </div>
                       </div>
@@ -611,14 +611,14 @@ export default function AdminActivityPage() {
                     {/* User Agent */}
                     {selectedLog.userAgent && (
                       <div>
-                        <p className="text-sm text-gray-500 mb-1">User Agent</p>
-                        <p className="text-xs text-gray-600 font-mono break-all">{selectedLog.userAgent}</p>
+                        <p className="text-sm text-hos-text-muted mb-1">User Agent</p>
+                        <p className="text-xs text-hos-text-secondary font-mono break-all">{selectedLog.userAgent}</p>
                       </div>
                     )}
 
                     <button
                       onClick={() => setShowDetailModal(false)}
-                      className="w-full px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300"
+                      className="w-full px-4 py-2 bg-hos-bg-tertiary text-hos-text-secondary rounded-lg hover:bg-hos-bg-tertiary"
                     >
                       Close
                     </button>

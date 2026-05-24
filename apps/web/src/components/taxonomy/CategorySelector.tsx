@@ -110,8 +110,8 @@ export function CategorySelector({
       return (
         <div key={category.id} className="ml-4">
           <div
-            className={`flex items-center gap-2 p-2 rounded hover:bg-gray-100 cursor-pointer ${
-              isSelected ? 'bg-purple-100 border border-purple-300' : ''
+            className={`flex items-center gap-2 p-2 rounded hover:bg-hos-bg-tertiary cursor-pointer ${
+              isSelected ? 'bg-hos-gold/20 border border-hos-border-accent' : ''
             }`}
             onClick={() => {
               setSelectedCategory(category);
@@ -125,14 +125,14 @@ export function CategorySelector({
                   e.stopPropagation();
                   toggleLevel(level + 1);
                 }}
-                className="w-4 h-4 flex items-center justify-center text-gray-500 hover:text-gray-700"
+                className="w-4 h-4 flex items-center justify-center text-hos-text-muted hover:text-hos-text-secondary"
               >
                 {isExpanded ? '▼' : '▶'}
               </button>
             )}
             {!hasChildren && <span className="w-4" />}
             <span className="text-sm">{category.name}</span>
-            {isSelected && <span className="ml-auto text-purple-600">✓</span>}
+            {isSelected && <span className="ml-auto text-hos-gold">✓</span>}
           </div>
           {hasChildren && isExpanded && (
             <div className="mt-1">{renderCategoryTree(category.children!, level + 1)}</div>
@@ -146,12 +146,12 @@ export function CategorySelector({
     return (
       <div className="space-y-2">
         {label && (
-          <label className="block text-sm font-medium text-gray-700">
+          <label className="block text-sm font-medium text-hos-text-secondary">
             {label}
             {required && <span className="text-red-500 ml-1">*</span>}
           </label>
         )}
-        <div className="text-sm text-gray-500">Loading fandoms...</div>
+        <div className="text-sm text-hos-text-muted">Loading fandoms...</div>
       </div>
     );
   }
@@ -160,7 +160,7 @@ export function CategorySelector({
     return (
       <div className="space-y-2">
         {label && (
-          <label className="block text-sm font-medium text-gray-700">
+          <label className="block text-sm font-medium text-hos-text-secondary">
             {label}
             {required && <span className="text-red-500 ml-1">*</span>}
           </label>
@@ -174,7 +174,7 @@ export function CategorySelector({
     <div className="space-y-2">
       <div className="flex items-center justify-between gap-2">
         {label && (
-          <label className="block text-sm font-medium text-gray-700">
+          <label className="block text-sm font-medium text-hos-text-secondary">
             {label}
             {required && <span className="text-red-500 ml-1">*</span>}
           </label>
@@ -183,14 +183,14 @@ export function CategorySelector({
           type="button"
           onClick={() => loadCategories(true)}
           disabled={refreshing}
-          className="text-xs text-purple-600 hover:text-purple-800 disabled:opacity-50"
+          className="text-xs text-hos-gold hover:text-hos-gold-hover disabled:opacity-50"
         >
           {refreshing ? 'Refreshing…' : 'Refresh list'}
         </button>
       </div>
-      <div className="border border-gray-300 rounded-lg p-3 min-h-[120px] max-h-64 overflow-y-auto bg-white">
+      <div className="border border-hos-border rounded-lg p-3 min-h-[120px] max-h-64 overflow-y-auto bg-hos-bg-secondary">
         {categories.length === 0 ? (
-          <div className="text-sm text-gray-500 text-center py-4">
+          <div className="text-sm text-hos-text-muted text-center py-4">
             No fandoms available. Create fandoms in Admin → Fandoms.
           </div>
         ) : (
@@ -198,7 +198,7 @@ export function CategorySelector({
         )}
       </div>
       {selectedCategory && (
-        <div className="text-xs text-gray-600 mt-1">
+        <div className="text-xs text-hos-text-secondary mt-1">
           Selected: <span className="font-medium">{selectedCategory.path}</span>
         </div>
       )}

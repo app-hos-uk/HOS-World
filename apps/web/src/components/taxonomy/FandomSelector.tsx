@@ -80,12 +80,12 @@ export function FandomSelector({
     return (
       <div className="space-y-2">
         {label && (
-          <label className="block text-sm font-medium text-gray-700">
+          <label className="block text-sm font-medium text-hos-text-secondary">
             {label}
             {required && <span className="text-red-500 ml-1">*</span>}
           </label>
         )}
-        <div className="w-full px-3 py-2 border border-gray-300 rounded-lg bg-gray-50 text-sm text-gray-500">
+        <div className="w-full px-3 py-2 border border-hos-border rounded-lg bg-hos-bg-secondary text-sm text-hos-text-muted">
           Loading fandoms...
         </div>
       </div>
@@ -96,7 +96,7 @@ export function FandomSelector({
     return (
       <div className="space-y-2">
         {label && (
-          <label className="block text-sm font-medium text-gray-700">
+          <label className="block text-sm font-medium text-hos-text-secondary">
             {label}
             {required && <span className="text-red-500 ml-1">*</span>}
           </label>
@@ -109,7 +109,7 @@ export function FandomSelector({
   return (
     <div className="space-y-2 min-h-[52px]">
       {label && (
-        <label className="block text-sm font-medium text-gray-700">
+        <label className="block text-sm font-medium text-hos-text-secondary">
           {label}
           {required && <span className="text-red-500 ml-1">*</span>}
         </label>
@@ -117,7 +117,7 @@ export function FandomSelector({
       <select
         value={value || ''}
         onChange={(e) => onChange(e.target.value || null)}
-        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent bg-white"
+        className="w-full px-3 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50 focus:border-transparent bg-hos-bg-secondary"
         required={required}
         aria-label={label || 'Fandom'}
       >
@@ -129,7 +129,7 @@ export function FandomSelector({
         ))}
       </select>
       {fandoms.length === 0 && (
-        <p className="text-xs text-gray-500">No fandoms available. Create fandoms in Admin → Fandoms.</p>
+        <p className="text-xs text-hos-text-muted">No fandoms available. Create fandoms in Admin → Fandoms.</p>
       )}
     </div>
   );

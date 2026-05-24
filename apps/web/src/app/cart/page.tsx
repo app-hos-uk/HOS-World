@@ -266,7 +266,7 @@ export default function CartPage() {
   if (loading) {
     return (
       <RouteGuard allowedRoles={['CUSTOMER', 'SELLER', 'B2C_SELLER', 'WHOLESALER', 'ADMIN', 'INFLUENCER']}>
-        <div className="min-h-screen bg-white">
+        <div className="min-h-screen bg-hos-bg-secondary">
           <Header />
           <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 lg:py-12">
             <p className="text-sm sm:text-base">Loading cart...</p>
@@ -280,15 +280,15 @@ export default function CartPage() {
   if (!cart || !cart.items || cart.items.length === 0) {
     return (
       <RouteGuard allowedRoles={['CUSTOMER', 'SELLER', 'B2C_SELLER', 'WHOLESALER', 'ADMIN', 'INFLUENCER']}>
-        <div className="min-h-screen bg-white">
+        <div className="min-h-screen bg-hos-bg-secondary">
           <Header />
           <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 lg:py-12">
-            <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold mb-6 sm:mb-8 font-primary text-purple-900">Shopping Cart</h1>
-            <div className="bg-gray-50 rounded-lg p-6 sm:p-8 text-center">
-              <p className="text-base sm:text-lg text-gray-600 mb-4 sm:mb-6 font-secondary">Your cart is empty</p>
+            <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold mb-6 sm:mb-8 font-primary text-hos-gold">Shopping Cart</h1>
+            <div className="bg-hos-bg-secondary rounded-lg p-6 sm:p-8 text-center">
+              <p className="text-base sm:text-lg text-hos-text-secondary mb-4 sm:mb-6 font-secondary">Your cart is empty</p>
               <Link 
                 href="/products" 
-                className="inline-block px-5 sm:px-6 py-2.5 sm:py-3 text-sm sm:text-base bg-gradient-to-r from-purple-700 to-indigo-700 hover:from-purple-600 hover:to-indigo-600 text-white font-semibold rounded-lg transition-all duration-300 font-primary"
+                className="inline-block px-5 sm:px-6 py-2.5 sm:py-3 text-sm sm:text-base bg-hos-gold hover:bg-hos-gold-hover text-[#1a1406] font-semibold rounded-lg transition-all duration-300 font-primary"
               >
                 Browse Products
               </Link>
@@ -308,21 +308,21 @@ export default function CartPage() {
 
   return (
     <RouteGuard allowedRoles={['CUSTOMER', 'SELLER', 'B2C_SELLER', 'WHOLESALER', 'ADMIN', 'INFLUENCER']}>
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen bg-hos-bg-secondary">
       <Header />
       <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 lg:py-12">
-        <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold mb-6 sm:mb-8 font-primary text-purple-900">Shopping Cart</h1>
+        <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold mb-6 sm:mb-8 font-primary text-hos-gold">Shopping Cart</h1>
         
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 sm:gap-8">
           {/* Cart Items */}
           <div className="lg:col-span-2">
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 sm:p-6">
+            <div className="bg-hos-bg-secondary rounded-lg shadow-sm border border-hos-border p-4 sm:p-6">
               {cart.items.map((item: CartItem) => {
                 const stockWarning = getStockWarning(item);
                 const isMoving = movingToWishlist === item.id;
                 
                 return (
-                  <div key={item.id} className="flex flex-col sm:flex-row gap-4 py-4 sm:py-6 border-b border-gray-200 last:border-b-0">
+                  <div key={item.id} className="flex flex-col sm:flex-row gap-4 py-4 sm:py-6 border-b border-hos-border last:border-b-0">
                     {/* Product Image */}
                     <div className="flex-shrink-0 relative">
                       {item.product?.images?.[0]?.url ? (
@@ -334,18 +334,18 @@ export default function CartPage() {
                           className="rounded-lg object-cover"
                         />
                       ) : (
-                        <div className="w-24 h-24 bg-gray-200 rounded-lg flex items-center justify-center">
-                          <span className="text-gray-400 text-xs">No Image</span>
+                        <div className="w-24 h-24 bg-hos-bg-tertiary rounded-lg flex items-center justify-center">
+                          <span className="text-hos-text-muted text-xs">No Image</span>
                         </div>
                       )}
                     </div>
 
                     {/* Product Details */}
                     <div className="flex-1">
-                      <Link href={`/products/${item.productId}`} className="hover:text-purple-700">
+                      <Link href={`/products/${item.productId}`} className="hover:text-hos-gold-hover">
                         <h3 className="font-semibold text-base sm:text-lg mb-1">{item.product?.name || 'Product'}</h3>
                       </Link>
-                      <p className="text-sm text-gray-600 mb-2">{formatPrice(item.price)} each</p>
+                      <p className="text-sm text-hos-text-secondary mb-2">{formatPrice(item.price)} each</p>
                       
                       {/* Stock Availability */}
                       {stockWarning && (
@@ -364,21 +364,21 @@ export default function CartPage() {
                         <div className={`flex items-center ${updatingQuantityItemId === item.id ? 'opacity-80' : ''}`}>
                           <button
                             onClick={() => handleUpdateQuantity(item.id, item.quantity - 1)}
-                            className="w-8 h-8 rounded-l border border-gray-300 hover:bg-gray-100 flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed transition-opacity"
+                            className="w-8 h-8 rounded-l border border-hos-border hover:bg-hos-bg-tertiary flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed transition-opacity"
                             disabled={item.quantity <= 1 || updatingQuantityItemId === item.id}
                             aria-label="Decrease quantity"
                           >
                             −
                           </button>
-                          <span className="w-12 h-8 flex items-center justify-center border-t border-b border-gray-300 font-medium bg-white">
+                          <span className="w-12 h-8 flex items-center justify-center border-t border-b border-hos-border font-medium bg-hos-bg-secondary">
                             {item.quantity}
                           </span>
                           {updatingQuantityItemId === item.id && (
-                            <span className="ml-1 inline-block h-3 w-3 animate-spin rounded-full border-2 border-gray-300 border-t-purple-600" aria-label="Updating" />
+                            <span className="ml-1 inline-block h-3 w-3 animate-spin rounded-full border-2 border-hos-border border-t-hos-gold" aria-label="Updating" />
                           )}
                           <button
                             onClick={() => handleUpdateQuantity(item.id, item.quantity + 1)}
-                            className="w-8 h-8 rounded-r border border-gray-300 hover:bg-gray-100 flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed transition-opacity"
+                            className="w-8 h-8 rounded-r border border-hos-border hover:bg-hos-bg-tertiary flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed transition-opacity"
                             disabled={
                               updatingQuantityItemId === item.id ||
                               (item.product?.stock != null && item.quantity >= item.product.stock) ||
@@ -393,16 +393,16 @@ export default function CartPage() {
                           <button
                             onClick={() => handleMoveToWishlist(item)}
                             disabled={isMoving}
-                            className="text-purple-600 hover:text-purple-700 text-sm flex items-center gap-1 disabled:opacity-50"
+                            className="text-hos-gold hover:text-hos-gold-hover text-sm flex items-center gap-1 disabled:opacity-50"
                           >
                             {isMoving ? (
-                              <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-purple-600"></div>
+                              <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-hos-gold"></div>
                             ) : (
                               '💜'
                             )}
                             <span className="hidden sm:inline">Save for Later</span>
                           </button>
-                          <span className="text-gray-300">|</span>
+                          <span className="text-hos-text-muted">|</span>
                           <button
                             onClick={() => handleRemoveItem(item.id)}
                             disabled={removingItemId === item.id}
@@ -416,7 +416,7 @@ export default function CartPage() {
 
                     {/* Item Total */}
                     <div className="text-right">
-                      <p className="font-semibold text-base sm:text-lg text-purple-600">
+                      <p className="font-semibold text-base sm:text-lg text-hos-gold">
                         {formatPrice(item.price * item.quantity)}
                       </p>
                     </div>
@@ -426,7 +426,7 @@ export default function CartPage() {
             </div>
 
             {/* Coupon Code Section */}
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 sm:p-6 mt-6">
+            <div className="bg-hos-bg-secondary rounded-lg shadow-sm border border-hos-border p-4 sm:p-6 mt-6">
               <h2 className="text-lg font-semibold mb-4">Have a coupon code?</h2>
               <div className="flex gap-2">
                 <input
@@ -434,7 +434,7 @@ export default function CartPage() {
                   value={couponCode}
                   onChange={(e) => setCouponCode(e.target.value)}
                   placeholder="Enter coupon code"
-                  className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
+                  className="flex-1 px-4 py-2 border border-hos-border rounded-lg focus:outline-none focus:ring-2 focus:ring-hos-gold/50"
                   disabled={applyingCoupon || removingCoupon || !!cart.couponCode}
                 />
                 {cart.couponCode ? (
@@ -452,7 +452,7 @@ export default function CartPage() {
                   <button
                     onClick={handleApplyCoupon}
                     disabled={applyingCoupon || !couponCode.trim()}
-                    className="px-6 py-2 bg-purple-700 text-white rounded-lg hover:bg-purple-600 disabled:opacity-50"
+                    className="px-6 py-2 bg-hos-gold text-[#1a1406] rounded-lg hover:bg-hos-gold disabled:opacity-50"
                   >
                     {applyingCoupon ? 'Applying...' : 'Apply'}
                   </button>
@@ -463,20 +463,20 @@ export default function CartPage() {
 
           {/* Order Summary */}
           <div className="lg:col-span-1">
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 sm:p-6 sticky top-4">
+            <div className="bg-hos-bg-secondary rounded-lg shadow-sm border border-hos-border p-4 sm:p-6 sticky top-4">
               <h2 className="text-lg font-semibold mb-4">Order Summary</h2>
               
               <div className="space-y-3 mb-4">
                 <div className="flex justify-between text-sm">
-                  <span className="text-gray-600">
+                  <span className="text-hos-text-secondary">
                     Items ({cartStats.itemCount})
                   </span>
-                  <span className="text-gray-600">
+                  <span className="text-hos-text-secondary">
                     {cartStats.totalQuantity} unit{cartStats.totalQuantity !== 1 ? 's' : ''}
                   </span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-gray-600">Subtotal</span>
+                  <span className="text-hos-text-secondary">Subtotal</span>
                   <span className="font-medium">{formatPrice(subtotal)}</span>
                 </div>
                 
@@ -489,13 +489,13 @@ export default function CartPage() {
                 
                 {shipping > 0 && (
                   <div className="flex justify-between">
-                    <span className="text-gray-600">Shipping</span>
+                    <span className="text-hos-text-secondary">Shipping</span>
                     <span className="font-medium">{formatPrice(shipping)}</span>
                   </div>
                 )}
                 {tax > 0 && (
                   <div className="flex justify-between">
-                    <span className="text-gray-600">Tax</span>
+                    <span className="text-hos-text-secondary">Tax</span>
                     <span className="font-medium">{formatPrice(tax)}</span>
                   </div>
                 )}
@@ -510,10 +510,10 @@ export default function CartPage() {
                 </div>
               )}
 
-              <div className="border-t border-gray-200 pt-4 mb-4">
+              <div className="border-t border-hos-border pt-4 mb-4">
                 <div className="flex justify-between items-center">
                   <span className="text-lg font-semibold">Total</span>
-                  <span className="text-2xl font-bold text-purple-600">{formatPrice(total)}</span>
+                  <span className="text-2xl font-bold text-hos-gold">{formatPrice(total)}</span>
                 </div>
               </div>
 
@@ -528,14 +528,14 @@ export default function CartPage() {
               <button
                 onClick={handleCheckout}
                 disabled={hasOutOfStockItems}
-                className="w-full px-6 py-3 bg-gradient-to-r from-purple-700 to-indigo-700 hover:from-purple-600 hover:to-indigo-600 text-white font-semibold rounded-lg transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="w-full px-6 py-3 bg-hos-gold hover:bg-hos-gold text-[#1a1406] font-semibold rounded-lg transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {hasOutOfStockItems ? 'Update Stock Issues' : 'Proceed to Checkout'}
               </button>
 
               <Link
                 href="/products"
-                className="block text-center mt-4 text-purple-700 hover:text-purple-600"
+                className="block text-center mt-4 text-hos-gold-hover hover:text-hos-gold"
               >
                 Continue Shopping
               </Link>

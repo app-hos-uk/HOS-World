@@ -170,18 +170,18 @@ export default function AdminPermissionsPage() {
       <AdminLayout>
         <div className="mb-6">
           <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold">Permissions Management</h1>
-          <p className="text-gray-600 mt-2">Manage granular permissions for each role</p>
+          <p className="text-hos-text-secondary mt-2">Manage granular permissions for each role</p>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
           {/* Role Selector */}
           <div className="lg:col-span-1">
-            <div className="bg-white border border-gray-200 rounded-lg p-4">
+            <div className="bg-hos-bg-secondary border border-hos-border rounded-lg p-4">
               <div className="flex items-center justify-between mb-4">
                 <h2 className="font-semibold">Select Role</h2>
                 <button
                   onClick={() => setShowCreateRole(true)}
-                  className="text-sm px-3 py-1 bg-purple-600 text-white rounded hover:bg-purple-700"
+                  className="text-sm px-3 py-1 bg-hos-gold text-[#1a1406] rounded hover:bg-hos-gold-hover"
                 >
                   + New
                 </button>
@@ -193,8 +193,8 @@ export default function AdminPermissionsPage() {
                     onClick={() => setSelectedRole(role)}
                     className={`w-full text-left px-3 py-2 rounded-lg transition-colors ${
                       selectedRole === role
-                        ? 'bg-purple-100 text-purple-700 font-medium'
-                        : 'text-gray-700 hover:bg-gray-100'
+                        ? 'bg-hos-gold/20 text-hos-gold-hover font-medium'
+                        : 'text-hos-text-secondary hover:bg-hos-bg-tertiary'
                     }`}
                   >
                     {role}
@@ -206,11 +206,11 @@ export default function AdminPermissionsPage() {
 
           {/* Permissions List */}
           <div className="lg:col-span-3">
-            <div className="bg-white border border-gray-200 rounded-lg p-6">
+            <div className="bg-hos-bg-secondary border border-hos-border rounded-lg p-6">
               <div className="flex items-center justify-between mb-6">
                 <div>
                   <h2 className="text-xl font-bold">{selectedRole} Permissions</h2>
-                  <p className="text-sm text-gray-600 mt-1">
+                  <p className="text-sm text-hos-text-secondary mt-1">
                     {grantedInMatrixCount} of {PERMISSIONS.length} permissions granted
                     {unknownGrantedIds.length > 0 && (
                       <span className="text-amber-700">
@@ -224,7 +224,7 @@ export default function AdminPermissionsPage() {
                 <button
                   onClick={handleSave}
                   disabled={saving}
-                  className="px-6 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors font-medium disabled:opacity-50"
+                  className="px-6 py-2 bg-hos-gold text-[#1a1406] rounded-lg hover:bg-hos-gold-hover transition-colors font-medium disabled:opacity-50"
                 >
                   {saving ? 'Saving...' : 'Save Permissions'}
                 </button>
@@ -237,12 +237,12 @@ export default function AdminPermissionsPage() {
                   const someSelected = categoryPerms.some((p) => currentPermissions.includes(p));
 
                   return (
-                    <div key={category} className="border border-gray-200 rounded-lg p-4">
+                    <div key={category} className="border border-hos-border rounded-lg p-4">
                       <div className="flex items-center justify-between mb-3">
                         <h3 className="font-semibold text-lg">{category}</h3>
                         <button
                           onClick={() => handleSelectAll(category)}
-                          className="text-sm text-purple-600 hover:text-purple-700"
+                          className="text-sm text-hos-gold hover:text-hos-gold-hover"
                         >
                           {allSelected ? 'Deselect All' : 'Select All'}
                         </button>
@@ -253,17 +253,17 @@ export default function AdminPermissionsPage() {
                           return (
                             <label
                               key={perm.id}
-                              className="flex items-start gap-3 p-2 rounded hover:bg-gray-50 cursor-pointer"
+                              className="flex items-start gap-3 p-2 rounded hover:bg-hos-bg-tertiary cursor-pointer"
                             >
                               <input
                                 type="checkbox"
                                 checked={isChecked}
                                 onChange={() => togglePermission(perm.id)}
-                                className="mt-1 h-4 w-4 text-purple-600 focus:ring-purple-500 border-gray-300 rounded"
+                                className="mt-1 h-4 w-4 text-hos-gold focus:ring-hos-gold/50 border-hos-border rounded"
                               />
                               <div className="flex-1">
-                                <div className="font-medium text-gray-900">{perm.name}</div>
-                                <div className="text-sm text-gray-500">{perm.description}</div>
+                                <div className="font-medium text-white">{perm.name}</div>
+                                <div className="text-sm text-hos-text-muted">{perm.description}</div>
                               </div>
                             </label>
                           );
@@ -280,19 +280,19 @@ export default function AdminPermissionsPage() {
         {/* Create Role Modal */}
         {showCreateRole && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-            <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
+            <div className="bg-hos-bg-secondary rounded-lg p-6 max-w-md w-full mx-4">
               <h3 className="text-lg font-semibold mb-4">Create New Role</h3>
               <div className="space-y-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Role Name *</label>
+                  <label className="block text-sm font-medium text-hos-text-secondary mb-1">Role Name *</label>
                   <input
                     type="text"
                     value={newRoleName}
                     onChange={(e) => setNewRoleName(e.target.value.toUpperCase().replace(/\s+/g, '_'))}
                     placeholder="e.g., MODERATOR"
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-purple-500 focus:border-purple-500"
+                    className="w-full px-3 py-2 border border-hos-border rounded-md focus:outline-none focus:ring-hos-gold/50 focus:border-hos-gold"
                   />
-                  <p className="text-xs text-gray-500 mt-1">Use uppercase letters and underscores</p>
+                  <p className="text-xs text-hos-text-muted mt-1">Use uppercase letters and underscores</p>
                 </div>
                 <div className="flex justify-end gap-3">
                   <button
@@ -300,7 +300,7 @@ export default function AdminPermissionsPage() {
                       setShowCreateRole(false);
                       setNewRoleName('');
                     }}
-                    className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200"
+                    className="px-4 py-2 text-sm font-medium text-hos-text-secondary bg-hos-bg-tertiary rounded-lg hover:bg-hos-bg-tertiary"
                   >
                     Cancel
                   </button>
@@ -332,7 +332,7 @@ export default function AdminPermissionsPage() {
                       }
                     }}
                     disabled={creatingRole || !newRoleName.trim()}
-                    className="px-4 py-2 text-sm font-medium text-white bg-purple-600 rounded-lg hover:bg-purple-700 disabled:opacity-50"
+                    className="px-4 py-2 text-sm font-medium text-white bg-hos-gold rounded-lg hover:bg-hos-gold-hover disabled:opacity-50"
                   >
                     {creatingRole ? 'Creating...' : 'Create Role'}
                   </button>

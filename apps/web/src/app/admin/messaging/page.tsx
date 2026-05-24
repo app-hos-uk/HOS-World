@@ -37,7 +37,7 @@ export default function AdminMessagingLogsPage() {
     <RouteGuard allowedRoles={['ADMIN']}>
       <AdminLayout>
         <div className="p-6 max-w-6xl mx-auto">
-          <h1 className="text-2xl font-semibold text-gray-900 mb-4">Message logs</h1>
+          <h1 className="text-2xl font-semibold text-white mb-4">Message logs</h1>
           <div className="flex flex-wrap gap-2 mb-4">
             <select
               className="border rounded px-2 py-1 text-sm"
@@ -64,13 +64,13 @@ export default function AdminMessagingLogsPage() {
           </div>
           {error && <p className="text-red-600 mb-4">{error}</p>}
           {loading ? (
-            <p className="text-gray-500">Loading…</p>
+            <p className="text-hos-text-muted">Loading…</p>
           ) : (
             <>
-              <p className="text-sm text-gray-500 mb-2">Total: {total}</p>
-              <div className="overflow-x-auto rounded-lg border border-gray-200 bg-white">
+              <p className="text-sm text-hos-text-muted mb-2">Total: {total}</p>
+              <div className="overflow-x-auto rounded-lg border border-hos-border bg-hos-bg-secondary">
                 <table className="min-w-full text-xs">
-                  <thead className="bg-gray-50 text-left">
+                  <thead className="bg-hos-bg-secondary text-left">
                     <tr>
                       <th className="px-2 py-2">Time</th>
                       <th className="px-2 py-2">Channel</th>
@@ -81,7 +81,7 @@ export default function AdminMessagingLogsPage() {
                   </thead>
                   <tbody>
                     {items.map((m) => (
-                      <tr key={m.id} className="border-t border-gray-100">
+                      <tr key={m.id} className="border-t border-hos-border">
                         <td className="px-2 py-1 whitespace-nowrap">{new Date(m.createdAt).toLocaleString()}</td>
                         <td className="px-2 py-1">{m.channel}</td>
                         <td className="px-2 py-1">{m.templateSlug}</td>

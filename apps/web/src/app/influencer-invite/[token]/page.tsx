@@ -83,7 +83,7 @@ export default function AcceptInfluencerInvitePage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-purple-600 to-indigo-700 flex items-center justify-center">
+      <div className="min-h-screen bg-hos-bg flex items-center justify-center">
         <div className="text-center text-white">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-white mx-auto"></div>
           <p className="mt-4">Verifying invitation...</p>
@@ -94,18 +94,18 @@ export default function AcceptInfluencerInvitePage() {
 
   if (error || !invitation) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-purple-600 to-indigo-700 flex items-center justify-center p-4">
-        <div className="bg-white rounded-2xl p-8 max-w-md w-full text-center">
+      <div className="min-h-screen bg-hos-bg flex items-center justify-center p-4">
+        <div className="bg-hos-bg-secondary rounded-2xl p-8 max-w-md w-full text-center">
           <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
             <svg className="w-8 h-8 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
             </svg>
           </div>
-          <h1 className="text-2xl font-bold text-gray-900 mb-2">Invalid Invitation</h1>
-          <p className="text-gray-600 mb-6">{error}</p>
+          <h1 className="text-2xl font-bold text-white mb-2">Invalid Invitation</h1>
+          <p className="text-hos-text-secondary mb-6">{error}</p>
           <a
             href="/"
-            className="inline-block px-6 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
+            className="inline-block px-6 py-3 bg-hos-gold text-[#1a1406] rounded-lg hover:bg-hos-gold-hover transition-colors"
           >
             Go to Homepage
           </a>
@@ -118,15 +118,15 @@ export default function AcceptInfluencerInvitePage() {
 
   if (isExpired) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-purple-600 to-indigo-700 flex items-center justify-center p-4">
-        <div className="bg-white rounded-2xl p-8 max-w-md w-full text-center">
+      <div className="min-h-screen bg-hos-bg flex items-center justify-center p-4">
+        <div className="bg-hos-bg-secondary rounded-2xl p-8 max-w-md w-full text-center">
           <div className="w-16 h-16 bg-yellow-100 rounded-full flex items-center justify-center mx-auto mb-4">
             <svg className="w-8 h-8 text-yellow-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
           </div>
-          <h1 className="text-2xl font-bold text-gray-900 mb-2">Invitation Expired</h1>
-          <p className="text-gray-600 mb-6">
+          <h1 className="text-2xl font-bold text-white mb-2">Invitation Expired</h1>
+          <p className="text-hos-text-secondary mb-6">
             This invitation has expired. Please contact the team for a new invitation.
           </p>
         </div>
@@ -135,33 +135,33 @@ export default function AcceptInfluencerInvitePage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-600 to-indigo-700 flex items-center justify-center p-4">
-      <div className="bg-white rounded-2xl p-8 max-w-md w-full">
+    <div className="min-h-screen bg-hos-bg flex items-center justify-center p-4">
+      <div className="bg-hos-bg-secondary rounded-2xl p-8 max-w-md w-full">
         {/* Header */}
         <div className="text-center mb-8">
-          <div className="w-16 h-16 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-4">
-            <svg className="w-8 h-8 text-purple-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <div className="w-16 h-16 bg-hos-gold/20 rounded-full flex items-center justify-center mx-auto mb-4">
+            <svg className="w-8 h-8 text-hos-gold" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
             </svg>
           </div>
-          <h1 className="text-2xl font-bold text-gray-900">Join as an Influencer</h1>
-          <p className="text-gray-600 mt-2">
+          <h1 className="text-2xl font-bold text-white">Join as an Influencer</h1>
+          <p className="text-hos-text-secondary mt-2">
             You&apos;ve been invited to join our influencer program
           </p>
         </div>
 
         {/* Invitation Details */}
-        <div className="bg-purple-50 rounded-lg p-4 mb-6">
-          <p className="text-sm text-purple-800">
+        <div className="bg-hos-gold/10 rounded-lg p-4 mb-6">
+          <p className="text-sm text-hos-gold">
             <strong>Email:</strong> {invitation.email}
           </p>
           {invitation.baseCommissionRate && (
-            <p className="text-sm text-purple-800 mt-1">
+            <p className="text-sm text-hos-gold mt-1">
               <strong>Commission Rate:</strong> {(invitation.baseCommissionRate * 100).toFixed(0)}%
             </p>
           )}
           {invitation.message && (
-            <p className="text-sm text-purple-700 mt-2 italic">
+            <p className="text-sm text-hos-gold-hover mt-2 italic">
               &ldquo;{invitation.message}&rdquo;
             </p>
           )}
@@ -171,7 +171,7 @@ export default function AcceptInfluencerInvitePage() {
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-hos-text-secondary mb-1">
                 First Name *
               </label>
               <input
@@ -179,11 +179,11 @@ export default function AcceptInfluencerInvitePage() {
                 required
                 value={form.firstName}
                 onChange={(e) => setForm({ ...form, firstName: e.target.value })}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
+                className="w-full px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-hos-text-secondary mb-1">
                 Last Name *
               </label>
               <input
@@ -191,13 +191,13 @@ export default function AcceptInfluencerInvitePage() {
                 required
                 value={form.lastName}
                 onChange={(e) => setForm({ ...form, lastName: e.target.value })}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
+                className="w-full px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50"
               />
             </div>
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-medium text-hos-text-secondary mb-1">
               Display Name *
             </label>
             <input
@@ -206,12 +206,12 @@ export default function AcceptInfluencerInvitePage() {
               value={form.displayName}
               onChange={(e) => setForm({ ...form, displayName: e.target.value })}
               placeholder="How you want to appear on your storefront"
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
+              className="w-full px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50"
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-medium text-hos-text-secondary mb-1">
               Password *
             </label>
             <input
@@ -220,12 +220,12 @@ export default function AcceptInfluencerInvitePage() {
               minLength={8}
               value={form.password}
               onChange={(e) => setForm({ ...form, password: e.target.value })}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
+              className="w-full px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50"
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-medium text-hos-text-secondary mb-1">
               Confirm Password *
             </label>
             <input
@@ -233,20 +233,20 @@ export default function AcceptInfluencerInvitePage() {
               required
               value={form.confirmPassword}
               onChange={(e) => setForm({ ...form, confirmPassword: e.target.value })}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
+              className="w-full px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50"
             />
           </div>
 
           <button
             type="submit"
             disabled={submitting}
-            className="w-full py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700 disabled:opacity-50 transition-colors font-medium"
+            className="w-full py-3 bg-hos-gold text-[#1a1406] rounded-lg hover:bg-hos-gold-hover disabled:opacity-50 transition-colors font-medium"
           >
             {submitting ? 'Creating Account...' : 'Create My Account'}
           </button>
         </form>
 
-        <p className="text-center text-sm text-gray-500 mt-6">
+        <p className="text-center text-sm text-hos-text-muted mt-6">
           By creating an account, you agree to our Terms of Service and Privacy Policy.
         </p>
       </div>

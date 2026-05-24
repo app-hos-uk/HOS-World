@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import Link from 'next/link';
 import { ChevronLeftIcon, ChevronRightIcon } from '@heroicons/react/24/outline';
+import { REFERENCE_ASSETS } from '@/lib/referenceAssets';
 
 /**
  * Hero Slide Interface
@@ -34,6 +35,23 @@ interface HeroBannerProps {
   showArrows?: boolean;
 }
 
+const HERO_FALLBACK_IMAGE = REFERENCE_ASSETS.heroBanner;
+
+const TRUST_STRIP_ITEMS = [
+  {
+    title: 'Buyer protection',
+    description: 'Dispute support on marketplace orders',
+  },
+  {
+    title: 'Fast US delivery',
+    description: 'Tracked shipping · Click & collect near our stores',
+  },
+  {
+    title: 'Official & fan-favorite lines',
+    description: 'From wands and jewelry to limited prints',
+  },
+];
+
 /**
  * Default Hero Slides
  * 
@@ -51,7 +69,7 @@ const defaultSlides: HeroSlide[] = [
     title: 'Welcome to the Magical World',
     subtitle: 'House of Spells',
     description: 'Discover authentic wands, collectibles, and magical items from your favorite fandoms',
-    image: '/hero/harry-potter-banner.svg', // Placeholder - replace with JPG (1920x1080px, max 500KB)
+    image: HERO_FALLBACK_IMAGE,
     link: '/fandoms/harry-potter',
     buttonText: 'Explore Harry Potter',
     fandom: 'Harry Potter',
@@ -61,7 +79,7 @@ const defaultSlides: HeroSlide[] = [
     title: 'Journey to Middle-earth',
     subtitle: 'Lord of the Rings',
     description: 'Authentic replicas and collectibles from the epic fantasy world',
-    image: '/hero/lotr-banner.svg', // Placeholder - replace with JPG (1920x1080px, max 500KB)
+    image: HERO_FALLBACK_IMAGE,
     link: '/fandoms/lord-of-the-rings',
     buttonText: 'Discover Middle-earth',
     fandom: 'Lord of the Rings',
@@ -71,7 +89,7 @@ const defaultSlides: HeroSlide[] = [
     title: 'Enter the Game of Thrones',
     subtitle: 'Westeros Collection',
     description: 'Premium collectibles and merchandise from the Seven Kingdoms',
-    image: '/hero/got-banner.svg', // Placeholder - replace with JPG (1920x1080px, max 500KB)
+    image: HERO_FALLBACK_IMAGE,
     link: '/fandoms/game-of-thrones',
     buttonText: 'Enter Westeros',
     fandom: 'Game of Thrones',
@@ -158,98 +176,77 @@ export function HeroBanner({
   };
 
   const currentSlideData = slides[currentSlide];
+  const heroBackgroundImage = currentSlideData.image || HERO_FALLBACK_IMAGE;
 
   return (
-    <div className="relative w-full h-[400px] sm:h-[500px] md:h-[600px] lg:h-[700px] overflow-hidden">
-      {/* Background Image with Parallax Effect */}
-      <div
-        className={`absolute inset-0 bg-cover bg-center transition-all duration-1000 ease-in-out ${getAnimationClass()}`}
-        style={{
-          backgroundImage: `url(${currentSlideData.image})`,
-          transform: animationType === 'parallax' ? 'scale(1.1)' : undefined,
-        }}
-      >
-        {/* Magical Gradient Overlay - Purple to Indigo */}
-        <div className="absolute inset-0 bg-gradient-to-r from-purple-900/80 via-indigo-900/70 to-purple-900/80" />
-        <div className="absolute inset-0 bg-gradient-to-t from-purple-950/90 via-purple-900/60 to-transparent" />
-        {/* Subtle gold shimmer */}
-        <div className="absolute inset-0 bg-gradient-to-br from-amber-500/10 via-transparent to-amber-500/10" />
-      </div>
+    <>
+      <div className="relative w-full min-h-[420px] mx-4 my-6 max-w-7xl lg:mx-auto flex items-center overflow-hidden rounded-2xl border border-hos-border">
+        {/* Background Image */}
+        <div
+          className={`absolute inset-0 bg-cover bg-no-repeat transition-all duration-1000 ease-in-out ${getAnimationClass()}`}
+          style={{
+            backgroundImage: `linear-gradient(120deg, rgba(7, 7, 8, 0.88) 0%, rgba(7, 7, 8, 0.48) 42%, rgba(7, 7, 8, 0.93) 100%), url(${heroBackgroundImage})`,
+            backgroundPosition: 'center 40%',
+          }}
+        />
 
-      {/* Content — pointer-events: non-interactive layer except CTAs */}
-      <div className="relative z-10 h-full flex items-center pointer-events-none">
-        <div className="container mx-auto px-4 sm:px-6 md:px-8 pointer-events-none">
-          <div className="max-w-2xl pointer-events-auto">
-            {/* Fandom Badge - Purple with gold accent */}
-            {currentSlideData.fandom && (
-              <div className="mb-3 sm:mb-4 inline-block">
-                <span className="px-3 sm:px-4 py-1.5 sm:py-2 bg-gradient-to-r from-purple-700 to-indigo-700 text-white text-xs sm:text-sm font-semibold rounded-full font-primary shadow-lg border border-amber-400/30">
-                  {currentSlideData.fandom}
-                </span>
-              </div>
-            )}
-
-            {/* Subtitle - Gold/Amber */}
-            <p className="text-amber-400 text-sm sm:text-base md:text-lg lg:text-xl mb-2 font-primary font-medium tracking-wide drop-shadow-lg">
-              {currentSlideData.subtitle}
+        {/* Content */}
+        <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-8 py-12 sm:py-16 w-full pointer-events-none">
+          <div className="max-w-xl pointer-events-auto">
+            <p className="text-hos-gold text-xs tracking-[0.2em] uppercase font-ui font-semibold mb-3">
+              Fandom retail · Multi-vendor marketplace
             </p>
 
-            {/* Title - White with purple shadow */}
-            <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-6xl xl:text-7xl font-bold text-white mb-3 sm:mb-4 font-primary leading-tight drop-shadow-2xl" style={{ textShadow: '2px 2px 8px rgba(124, 58, 237, 0.5)' }}>
-              {currentSlideData.title}
+            <h1 className="font-display text-hos-gold-hover text-4xl md:text-5xl leading-tight mb-4 drop-shadow-[0_2px_24px_rgba(0,0,0,0.6)]">
+              Step inside the magic
             </h1>
 
-            {/* Description */}
-            {currentSlideData.description && (
-              <p className="text-purple-100 text-sm sm:text-base md:text-lg lg:text-xl mb-6 sm:mb-8 font-secondary leading-relaxed max-w-xl drop-shadow-md">
-                {currentSlideData.description}
-              </p>
-            )}
+            <p className="text-hos-text-muted text-lg leading-relaxed mb-7 max-w-md font-body">
+              Collectibles, replicas, apparel, and curios from the worlds you love — curated from official lines and trusted sellers, in one enchanted storefront.
+            </p>
 
-            {/* CTA Button - Purple to Indigo gradient with gold hover */}
-            <Link
-              href={currentSlideData.link}
-              className="inline-block px-5 sm:px-6 md:px-8 py-2.5 sm:py-3 md:py-4 bg-gradient-to-r from-purple-700 via-indigo-700 to-purple-700 hover:from-purple-600 hover:via-indigo-600 hover:to-purple-600 text-white font-semibold rounded-lg transition-all duration-300 transform hover:scale-105 shadow-xl hover:shadow-2xl font-primary text-sm sm:text-base md:text-lg border border-amber-400/30 hover:border-amber-400/50"
-              prefetch={true}
-            >
-              {currentSlideData.buttonText} →
-            </Link>
+            <div className="flex flex-row flex-wrap gap-3">
+              <Link href="/products" className="btn-storefront-primary" prefetch={true}>
+                Shop trending deals
+              </Link>
+              <Link href="/fandoms" className="btn-storefront-ghost" prefetch={true}>
+                Browse franchises
+              </Link>
+            </div>
           </div>
         </div>
-      </div>
 
-      {/* Navigation */}
-      {showArrows && (
-        <>
-          <button
-            type="button"
-            onClick={(e) => {
-              e.stopPropagation();
-              prevSlide();
-            }}
-            className="absolute left-2 sm:left-4 top-1/2 -translate-y-1/2 z-30 pointer-events-auto p-2 sm:p-3 bg-purple-800/80 hover:bg-purple-700/90 backdrop-blur-sm rounded-full text-white transition-all duration-300 hover:scale-110 border border-amber-400/30 shadow-lg"
-            aria-label="Previous slide"
-          >
-            <ChevronLeftIcon className="w-4 h-4 sm:w-6 sm:h-6" />
-          </button>
-          <button
-            type="button"
-            onClick={(e) => {
-              e.stopPropagation();
-              nextSlide();
-            }}
-            className="absolute right-2 sm:right-4 top-1/2 -translate-y-1/2 z-30 pointer-events-auto p-2 sm:p-3 bg-purple-800/80 hover:bg-purple-700/90 backdrop-blur-sm rounded-full text-white transition-all duration-300 hover:scale-110 border border-amber-400/30 shadow-lg"
-            aria-label="Next slide"
-          >
-            <ChevronRightIcon className="w-4 h-4 sm:w-6 sm:h-6" />
-          </button>
-        </>
-      )}
+        {/* Navigation */}
+        {showArrows && (
+          <>
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                prevSlide();
+              }}
+              className="absolute left-2 sm:left-4 top-1/2 -translate-y-1/2 z-30 pointer-events-auto p-2 sm:p-3 bg-black/60 hover:bg-black/80 backdrop-blur-sm rounded-full text-hos-gold transition-all duration-300 hover:scale-110 border border-hos-border shadow-lg"
+              aria-label="Previous slide"
+            >
+              <ChevronLeftIcon className="w-4 h-4 sm:w-6 sm:h-6" />
+            </button>
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                nextSlide();
+              }}
+              className="absolute right-2 sm:right-4 top-1/2 -translate-y-1/2 z-30 pointer-events-auto p-2 sm:p-3 bg-black/60 hover:bg-black/80 backdrop-blur-sm rounded-full text-hos-gold transition-all duration-300 hover:scale-110 border border-hos-border shadow-lg"
+              aria-label="Next slide"
+            >
+              <ChevronRightIcon className="w-4 h-4 sm:w-6 sm:h-6" />
+            </button>
+          </>
+        )}
 
-      {/* Indicators + scroll hint stacked so they don't overlap */}
-      {(showIndicators || showArrows) && (
-        <div className="absolute bottom-3 sm:bottom-5 left-0 right-0 z-20 flex flex-col items-center gap-3 pointer-events-none">
-          {showIndicators && (
+        {/* Indicators */}
+        {showIndicators && (
+          <div className="absolute bottom-5 left-0 right-0 z-20 flex justify-center pointer-events-none">
             <div className="flex gap-2 pointer-events-auto">
               {slides.map((_, index) => (
                 <button
@@ -258,25 +255,36 @@ export function HeroBanner({
                   onClick={() => goToSlide(index)}
                   className={`h-2 rounded-full transition-all duration-300 ${
                     index === currentSlide
-                      ? 'w-8 bg-gradient-to-r from-amber-500 to-amber-400 shadow-lg'
-                      : 'w-2 bg-purple-300/50 hover:bg-purple-300/70'
+                      ? 'w-8 bg-hos-gold shadow-lg'
+                      : 'w-2 bg-hos-bg-secondary/30 hover:bg-hos-bg-secondary/50'
                   }`}
                   aria-label={`Go to slide ${index + 1}`}
                 />
               ))}
             </div>
-          )}
-          <div className="flex flex-col items-center gap-1.5 pointer-events-none" aria-hidden="true">
-            <span className="text-[10px] sm:text-xs font-semibold uppercase tracking-[0.18em] text-amber-200/95 drop-shadow-sm">
-              Discover more
-            </span>
-            <div className="animate-bounce w-6 h-10 border-2 border-amber-400/50 rounded-full flex justify-center shrink-0">
-              <div className="w-1 h-3 bg-amber-400 rounded-full mt-2 animate-pulse" />
-            </div>
           </div>
+        )}
+      </div>
+
+      {/* Trust strip */}
+      <div className="bg-hos-bg-secondary py-5 border-y border-hos-border">
+        <div className="max-w-7xl mx-auto px-4 grid grid-cols-1 md:grid-cols-3 gap-6 md:divide-x divide-y md:divide-y-0 divide-hos-border">
+          {TRUST_STRIP_ITEMS.map((item) => (
+            <div key={item.title} className="flex items-start gap-3 px-4 py-2 md:py-0 md:justify-center">
+              <div className="text-hos-gold shrink-0 mt-0.5" aria-hidden>
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6">
+                  <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+                </svg>
+              </div>
+              <div>
+                <p className="text-hos-text-primary text-sm font-ui font-semibold">{item.title}</p>
+                <p className="text-hos-text-muted text-xs mt-0.5 font-body">{item.description}</p>
+              </div>
+            </div>
+          ))}
         </div>
-      )}
-    </div>
+      </div>
+    </>
   );
 }
 

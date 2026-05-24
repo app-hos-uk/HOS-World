@@ -250,8 +250,8 @@ async function main() {
         firstName: 'House',
         lastName: 'Platform',
         role: UserRole.B2C_SELLER,
-        country: 'GB',
-        currencyPreference: 'GBP',
+        country: 'US',
+        currencyPreference: 'USD',
       },
     });
   }

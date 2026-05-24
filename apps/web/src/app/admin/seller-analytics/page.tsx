@@ -211,8 +211,8 @@ export default function AdminSellerAnalyticsPage() {
         <div className="space-y-6">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div>
-              <h1 className="text-2xl font-bold text-gray-900">Seller Analytics</h1>
-              <p className="text-gray-600 mt-1">Performance metrics and insights for all sellers</p>
+              <h1 className="text-2xl font-bold text-white">Seller Analytics</h1>
+              <p className="text-hos-text-secondary mt-1">Performance metrics and insights for all sellers</p>
             </div>
             <div className="flex gap-2">
               {(['7d', '30d', '90d', '1y'] as const).map((range) => (
@@ -221,8 +221,8 @@ export default function AdminSellerAnalyticsPage() {
                   onClick={() => setTimeRange(range)}
                   className={`px-3 py-1.5 text-sm font-medium rounded-lg transition-colors ${
                     timeRange === range
-                      ? 'bg-purple-600 text-white'
-                      : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                      ? 'bg-hos-gold text-[#1a1406]'
+                      : 'bg-hos-bg-tertiary text-hos-text-secondary hover:bg-hos-bg-tertiary'
                   }`}
                 >
                   {range === '7d' ? '7 Days' : range === '30d' ? '30 Days' : range === '90d' ? '90 Days' : '1 Year'}
@@ -233,7 +233,7 @@ export default function AdminSellerAnalyticsPage() {
 
           {loading && (
             <div className="flex items-center justify-center h-64">
-              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600"></div>
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-hos-gold"></div>
             </div>
           )}
 
@@ -253,39 +253,39 @@ export default function AdminSellerAnalyticsPage() {
             <>
               {/* Stats Cards */}
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                <div className="bg-white rounded-lg shadow p-6">
+                <div className="bg-hos-bg-secondary rounded-lg shadow p-6">
                   <div className="flex items-center justify-between">
-                    <h3 className="text-sm font-medium text-gray-500">Total Sellers</h3>
+                    <h3 className="text-sm font-medium text-hos-text-muted">Total Sellers</h3>
                     <span className="text-2xl">👥</span>
                   </div>
-                  <p className="text-3xl font-bold text-gray-900 mt-2">
+                  <p className="text-3xl font-bold text-white mt-2">
                     {analytics.totalSellers}
                   </p>
                 </div>
-                <div className="bg-white rounded-lg shadow p-6">
+                <div className="bg-hos-bg-secondary rounded-lg shadow p-6">
                   <div className="flex items-center justify-between">
-                    <h3 className="text-sm font-medium text-gray-500">Active Sellers</h3>
+                    <h3 className="text-sm font-medium text-hos-text-muted">Active Sellers</h3>
                     <span className="text-2xl">✅</span>
                   </div>
                   <p className="text-3xl font-bold text-green-600 mt-2">
                     {analytics.activeSellers}
                   </p>
                 </div>
-                <div className="bg-white rounded-lg shadow p-6">
+                <div className="bg-hos-bg-secondary rounded-lg shadow p-6">
                   <div className="flex items-center justify-between">
-                    <h3 className="text-sm font-medium text-gray-500">Pending Verification</h3>
+                    <h3 className="text-sm font-medium text-hos-text-muted">Pending Verification</h3>
                     <span className="text-2xl">⏳</span>
                   </div>
                   <p className="text-3xl font-bold text-yellow-600 mt-2">
                     {analytics.pendingSellers}
                   </p>
                 </div>
-                <div className="bg-white rounded-lg shadow p-6">
+                <div className="bg-hos-bg-secondary rounded-lg shadow p-6">
                   <div className="flex items-center justify-between">
-                    <h3 className="text-sm font-medium text-gray-500">Est. Total Revenue</h3>
+                    <h3 className="text-sm font-medium text-hos-text-muted">Est. Total Revenue</h3>
                     <span className="text-2xl">💰</span>
                   </div>
-                  <p className="text-3xl font-bold text-gray-900 mt-2">
+                  <p className="text-3xl font-bold text-white mt-2">
                     ${analytics.totalRevenue.toLocaleString()}
                   </p>
                 </div>
@@ -294,8 +294,8 @@ export default function AdminSellerAnalyticsPage() {
               {/* Charts Row */}
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 {/* Seller Growth Chart */}
-                <div className="bg-white rounded-lg shadow p-6">
-                  <h2 className="text-lg font-semibold text-gray-900 mb-4">Seller Growth</h2>
+                <div className="bg-hos-bg-secondary rounded-lg shadow p-6">
+                  <h2 className="text-lg font-semibold text-white mb-4">Seller Growth</h2>
                   <div className="h-64">
                     <ResponsiveContainer width="100%" height="100%">
                       <LineChart data={analytics.sellerGrowth}>
@@ -319,8 +319,8 @@ export default function AdminSellerAnalyticsPage() {
                 </div>
 
                 {/* Sellers by Type */}
-                <div className="bg-white rounded-lg shadow p-6">
-                  <h2 className="text-lg font-semibold text-gray-900 mb-4">Sellers by Type</h2>
+                <div className="bg-hos-bg-secondary rounded-lg shadow p-6">
+                  <h2 className="text-lg font-semibold text-white mb-4">Sellers by Type</h2>
                   <div className="h-64">
                     {analytics.sellersByType.length > 0 ? (
                       <ResponsiveContainer width="100%" height="100%">
@@ -344,7 +344,7 @@ export default function AdminSellerAnalyticsPage() {
                         </PieChart>
                       </ResponsiveContainer>
                     ) : (
-                      <div className="flex items-center justify-center h-full text-gray-500">
+                      <div className="flex items-center justify-center h-full text-hos-text-muted">
                         No seller data available
                       </div>
                     )}
@@ -353,8 +353,8 @@ export default function AdminSellerAnalyticsPage() {
               </div>
 
               {/* Top Sellers */}
-              <div className="bg-white rounded-lg shadow p-6">
-                <h2 className="text-lg font-semibold text-gray-900 mb-4">Top Sellers by Products</h2>
+              <div className="bg-hos-bg-secondary rounded-lg shadow p-6">
+                <h2 className="text-lg font-semibold text-white mb-4">Top Sellers by Products</h2>
                 {analytics.topSellers.length > 0 ? (
                   <div className="h-64">
                     <ResponsiveContainer width="100%" height="100%">
@@ -371,70 +371,70 @@ export default function AdminSellerAnalyticsPage() {
                     </ResponsiveContainer>
                   </div>
                 ) : (
-                  <div className="text-center py-8 text-gray-500">
+                  <div className="text-center py-8 text-hos-text-muted">
                     No seller performance data available
                   </div>
                 )}
               </div>
 
               {/* Sellers Table */}
-              <div className="bg-white rounded-lg shadow overflow-hidden">
-                <div className="px-6 py-4 border-b border-gray-200">
-                  <h2 className="text-lg font-semibold text-gray-900">All Sellers</h2>
+              <div className="bg-hos-bg-secondary rounded-lg shadow overflow-hidden">
+                <div className="px-6 py-4 border-b border-hos-border">
+                  <h2 className="text-lg font-semibold text-white">All Sellers</h2>
                 </div>
                 <div className="overflow-x-auto">
-                  <table className="min-w-full divide-y divide-gray-200">
-                    <thead className="bg-gray-50">
+                  <table className="min-w-full divide-y divide-hos-border">
+                    <thead className="bg-hos-bg-secondary">
                       <tr>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        <th className="px-6 py-3 text-left text-xs font-medium text-hos-text-muted uppercase tracking-wider">
                           Seller
                         </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        <th className="px-6 py-3 text-left text-xs font-medium text-hos-text-muted uppercase tracking-wider">
                           Type
                         </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        <th className="px-6 py-3 text-left text-xs font-medium text-hos-text-muted uppercase tracking-wider">
                           Status
                         </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        <th className="px-6 py-3 text-left text-xs font-medium text-hos-text-muted uppercase tracking-wider">
                           Products
                         </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        <th className="px-6 py-3 text-left text-xs font-medium text-hos-text-muted uppercase tracking-wider">
                           Joined
                         </th>
                       </tr>
                     </thead>
-                    <tbody className="bg-white divide-y divide-gray-200">
+                    <tbody className="bg-hos-bg-secondary divide-y divide-hos-border">
                       {analytics.sellers.length === 0 ? (
                         <tr>
-                          <td colSpan={5} className="px-6 py-8 text-center text-gray-500">
+                          <td colSpan={5} className="px-6 py-8 text-center text-hos-text-muted">
                             No sellers found
                           </td>
                         </tr>
                       ) : (
                         analytics.sellers.slice(0, 10).map((seller) => (
-                          <tr key={seller.id} className="hover:bg-gray-50">
+                          <tr key={seller.id} className="hover:bg-hos-bg-tertiary">
                             <td className="px-6 py-4 whitespace-nowrap">
                               <div className="flex items-center">
-                                <div className="flex-shrink-0 h-10 w-10 bg-purple-100 rounded-full flex items-center justify-center">
-                                  <span className="text-purple-600 font-medium">
+                                <div className="flex-shrink-0 h-10 w-10 bg-hos-gold/20 rounded-full flex items-center justify-center">
+                                  <span className="text-hos-gold font-medium">
                                     {(seller.storeName || seller.email || '?')[0].toUpperCase()}
                                   </span>
                                 </div>
                                 <div className="ml-4">
-                                  <div className="text-sm font-medium text-gray-900">
+                                  <div className="text-sm font-medium text-white">
                                     {seller.storeName || `${seller.firstName || ''} ${seller.lastName || ''}`.trim() || 'N/A'}
                                   </div>
-                                  <div className="text-sm text-gray-500">{seller.email}</div>
+                                  <div className="text-sm text-hos-text-muted">{seller.email}</div>
                                 </div>
                               </div>
                             </td>
                             <td className="px-6 py-4 whitespace-nowrap">
                               <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
                                 seller.role === 'WHOLESALER' 
-                                  ? 'bg-blue-100 text-blue-800' 
+                                  ? 'bg-hos-gold/20 text-hos-gold' 
                                   : seller.role === 'B2C_SELLER'
                                   ? 'bg-green-100 text-green-800'
-                                  : 'bg-gray-100 text-gray-800'
+                                  : 'bg-hos-bg-tertiary text-white'
                               }`}>
                                 {seller.role.replace('_', ' ')}
                               </span>
@@ -448,10 +448,10 @@ export default function AdminSellerAnalyticsPage() {
                                 {seller.isVerified ? 'Verified' : 'Pending'}
                               </span>
                             </td>
-                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                            <td className="px-6 py-4 whitespace-nowrap text-sm text-hos-text-muted">
                               {seller._count?.products || 0}
                             </td>
-                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                            <td className="px-6 py-4 whitespace-nowrap text-sm text-hos-text-muted">
                               {new Date(seller.createdAt).toLocaleDateString()}
                             </td>
                           </tr>

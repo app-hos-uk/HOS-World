@@ -150,11 +150,11 @@ export default function CollectionDetailPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-white">
+      <div className="min-h-screen bg-hos-bg-secondary">
         <Header />
         <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 lg:py-12">
           <div className="flex items-center justify-center py-12">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600"></div>
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-hos-gold"></div>
           </div>
         </main>
         <Footer />
@@ -164,12 +164,12 @@ export default function CollectionDetailPage() {
 
   if (!collection) {
     return (
-      <div className="min-h-screen bg-white">
+      <div className="min-h-screen bg-hos-bg-secondary">
         <Header />
         <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 lg:py-12">
           <div className="text-center py-12">
-            <p className="text-gray-600">Collection not found</p>
-            <Link href="/collections" className="text-purple-600 hover:text-purple-800 mt-4 inline-block">
+            <p className="text-hos-text-secondary">Collection not found</p>
+            <Link href="/collections" className="text-hos-gold hover:text-hos-gold-hover mt-4 inline-block">
               ← Back to Collections
             </Link>
           </div>
@@ -181,16 +181,16 @@ export default function CollectionDetailPage() {
 
   return (
     <RouteGuard allowedRoles={['CUSTOMER', 'ADMIN']} showAccessDenied={true}>
-      <div className="min-h-screen bg-white">
+      <div className="min-h-screen bg-hos-bg-secondary">
         <Header />
         <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 lg:py-12">
           <div className="mb-6">
-            <Link href="/collections" className="text-purple-600 hover:text-purple-800 mb-4 inline-block">
+            <Link href="/collections" className="text-hos-gold hover:text-hos-gold-hover mb-4 inline-block">
               ← Back to Collections
             </Link>
           </div>
 
-          <div className="bg-white border border-gray-200 rounded-lg p-6 mb-6">
+          <div className="bg-hos-bg-secondary border border-hos-border rounded-lg p-6 mb-6">
             <div className="flex flex-col gap-4 sm:flex-row sm:justify-between sm:items-start sm:gap-6 mb-4">
               <div className="w-full min-w-0 flex-1 space-y-2">
                 {editing ? (
@@ -198,7 +198,7 @@ export default function CollectionDetailPage() {
                     type="text"
                     value={formData.name}
                     onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                    className="block w-full max-w-full px-4 py-2 border border-gray-300 rounded-lg text-2xl font-bold box-border"
+                    className="block w-full max-w-full px-4 py-2 border border-hos-border rounded-lg text-2xl font-bold box-border"
                   />
                 ) : (
                   <h1 className="text-3xl font-bold mb-2 break-words">{collection.name}</h1>
@@ -207,22 +207,22 @@ export default function CollectionDetailPage() {
                   <textarea
                     value={formData.description}
                     onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                    className="block w-full max-w-full px-4 py-2 border border-gray-300 rounded-lg box-border"
+                    className="block w-full max-w-full px-4 py-2 border border-hos-border rounded-lg box-border"
                     rows={3}
                     placeholder="Description..."
                   />
                 ) : (
                   collection.description && (
-                    <p className="text-gray-600 mb-4 break-words">{collection.description}</p>
+                    <p className="text-hos-text-secondary mb-4 break-words">{collection.description}</p>
                   )
                 )}
-                <div className="flex flex-wrap items-center gap-4 text-sm text-gray-600">
+                <div className="flex flex-wrap items-center gap-4 text-sm text-hos-text-secondary">
                   <span>{collection.itemCount} items</span>
                   <span
                     className={`px-2 py-1 rounded text-xs shrink-0 ${
                       collection.isPublic
                         ? 'bg-green-100 text-green-800'
-                        : 'bg-gray-100 text-gray-800'
+                        : 'bg-hos-bg-tertiary text-white'
                     }`}
                   >
                     {collection.isPublic ? 'Public' : 'Private'}
@@ -237,7 +237,7 @@ export default function CollectionDetailPage() {
                         onClick={handleUpdateCollection}
                         disabled={saving}
                         type="button"
-                        className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors font-medium disabled:opacity-50 whitespace-nowrap"
+                        className="px-4 py-2 bg-hos-gold text-[#1a1406] rounded-lg hover:bg-hos-gold-hover transition-colors font-medium disabled:opacity-50 whitespace-nowrap"
                       >
                         {saving ? 'Saving...' : 'Save'}
                       </button>
@@ -251,7 +251,7 @@ export default function CollectionDetailPage() {
                             isPublic: collection.isPublic,
                           });
                         }}
-                        className="px-4 py-2 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300 transition-colors font-medium whitespace-nowrap"
+                        className="px-4 py-2 bg-hos-bg-tertiary text-white rounded-lg hover:bg-hos-bg-tertiary transition-colors font-medium whitespace-nowrap"
                       >
                         Cancel
                       </button>
@@ -261,7 +261,7 @@ export default function CollectionDetailPage() {
                       <button
                         type="button"
                         onClick={() => setEditing(true)}
-                        className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors font-medium whitespace-nowrap"
+                        className="px-4 py-2 bg-hos-gold text-[#1a1406] rounded-lg hover:bg-hos-gold-hover transition-colors font-medium whitespace-nowrap"
                       >
                         Edit
                       </button>
@@ -286,7 +286,7 @@ export default function CollectionDetailPage() {
                   onChange={(e) => setFormData({ ...formData, isPublic: e.target.checked })}
                   className="mr-2"
                 />
-                <label htmlFor="isPublic" className="text-sm text-gray-700">
+                <label htmlFor="isPublic" className="text-sm text-hos-text-secondary">
                   Make this collection public
                 </label>
               </div>
@@ -294,12 +294,12 @@ export default function CollectionDetailPage() {
           </div>
 
           {products.length === 0 ? (
-            <div className="text-center py-12 bg-gray-50 rounded-lg">
+            <div className="text-center py-12 bg-hos-bg-secondary rounded-lg">
               <div className="text-6xl mb-4">📦</div>
-              <p className="text-gray-600">No products in this collection yet</p>
+              <p className="text-hos-text-secondary">No products in this collection yet</p>
               <Link
                 href="/products"
-                className="mt-4 inline-block px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors font-medium"
+                className="mt-4 inline-block px-4 py-2 bg-hos-gold text-[#1a1406] rounded-lg hover:bg-hos-gold-hover transition-colors font-medium"
               >
                 Browse Products
               </Link>
@@ -307,7 +307,7 @@ export default function CollectionDetailPage() {
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
               {products.map((product) => (
-                <div key={product.id} className="bg-gray-50 rounded-lg p-4 hover:shadow-lg transition-shadow">
+                <div key={product.id} className="bg-hos-bg-secondary rounded-lg p-4 hover:shadow-lg transition-shadow">
                   <Link href={`/products/${product.id}`}>
                     {product.images && product.images.length > 0 ? (
                       <div className="relative w-full h-48 mb-3 rounded-lg overflow-hidden">
@@ -320,12 +320,12 @@ export default function CollectionDetailPage() {
                         />
                       </div>
                     ) : (
-                      <div className="w-full h-48 bg-gray-200 rounded-lg mb-3 flex items-center justify-center">
-                        <span className="text-gray-400">No Image</span>
+                      <div className="w-full h-48 bg-hos-bg-tertiary rounded-lg mb-3 flex items-center justify-center">
+                        <span className="text-hos-text-muted">No Image</span>
                       </div>
                     )}
                     <h3 className="font-semibold mb-2 line-clamp-2">{product.name}</h3>
-                    <p className="text-purple-600 font-bold">${product.price}</p>
+                    <p className="text-hos-gold font-bold">${product.price}</p>
                   </Link>
                   {isOwner && (
                     <button

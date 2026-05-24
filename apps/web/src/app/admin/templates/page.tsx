@@ -15,10 +15,10 @@ interface TemplateDefinition {
 }
 
 const CHANNEL_COLORS: Record<string, string> = {
-  EMAIL: 'bg-blue-100 text-blue-800',
+  EMAIL: 'bg-hos-gold/20 text-hos-gold',
   WHATSAPP: 'bg-green-100 text-green-800',
   SMS: 'bg-yellow-100 text-yellow-800',
-  IN_APP: 'bg-purple-100 text-purple-800',
+  IN_APP: 'bg-hos-gold/20 text-hos-gold',
 };
 
 const CHANNEL_ICONS: Record<string, string> = {
@@ -105,8 +105,8 @@ export default function AdminTemplatesPage() {
       <div className="space-y-6">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
-            <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Notification Templates</h1>
-            <p className="text-gray-600 mt-1">
+            <h1 className="text-2xl sm:text-3xl font-bold text-white">Notification Templates</h1>
+            <p className="text-hos-text-secondary mt-1">
               Manage email, WhatsApp, SMS, and in-app notification templates
             </p>
           </div>
@@ -120,13 +120,13 @@ export default function AdminTemplatesPage() {
               onClick={() => setSelectedChannel(selectedChannel === ch ? '' : ch)}
               className={`p-4 rounded-xl border-2 transition-all ${
                 selectedChannel === ch
-                  ? 'border-purple-500 bg-purple-50'
-                  : 'border-gray-200 bg-white hover:border-gray-300'
+                  ? 'border-hos-gold bg-hos-gold/10'
+                  : 'border-hos-border bg-hos-bg-secondary hover:border-hos-border'
               }`}
             >
               <div className="text-2xl mb-1">{CHANNEL_ICONS[ch]}</div>
-              <div className="text-sm font-medium text-gray-900">{ch.replace('_', '-')}</div>
-              <div className="text-2xl font-bold text-purple-700">{channelCounts[ch] || 0}</div>
+              <div className="text-sm font-medium text-white">{ch.replace('_', '-')}</div>
+              <div className="text-2xl font-bold text-hos-gold-hover">{channelCounts[ch] || 0}</div>
             </button>
           ))}
         </div>
@@ -134,11 +134,11 @@ export default function AdminTemplatesPage() {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Template list */}
           <div className="lg:col-span-1 space-y-2">
-            <h2 className="text-lg font-semibold text-gray-900 mb-3">Templates</h2>
+            <h2 className="text-lg font-semibold text-white mb-3">Templates</h2>
             {loading ? (
-              <div className="text-center py-8 text-gray-500">Loading...</div>
+              <div className="text-center py-8 text-hos-text-muted">Loading...</div>
             ) : templates.length === 0 ? (
-              <div className="text-center py-8 text-gray-500">No templates found</div>
+              <div className="text-center py-8 text-hos-text-muted">No templates found</div>
             ) : (
               <div className="space-y-2 max-h-[600px] overflow-y-auto pr-1">
                 {templates.map((t) => (
@@ -147,12 +147,12 @@ export default function AdminTemplatesPage() {
                     onClick={() => handleSelectTemplate(t)}
                     className={`w-full text-left p-3 rounded-lg border transition-all ${
                       selectedTemplate?.slug === t.slug
-                        ? 'border-purple-500 bg-purple-50 shadow-sm'
-                        : 'border-gray-200 bg-white hover:border-gray-300'
+                        ? 'border-hos-gold bg-hos-gold/10 shadow-sm'
+                        : 'border-hos-border bg-hos-bg-secondary hover:border-hos-border'
                     }`}
                   >
                     <div className="flex items-center justify-between mb-1">
-                      <span className="font-medium text-sm text-gray-900">
+                      <span className="font-medium text-sm text-white">
                         {t.slug.replace(/_/g, ' ')}
                       </span>
                       <span
@@ -164,13 +164,13 @@ export default function AdminTemplatesPage() {
                       </span>
                     </div>
                     {t.description && (
-                      <p className="text-xs text-gray-500 line-clamp-2">{t.description}</p>
+                      <p className="text-xs text-hos-text-muted line-clamp-2">{t.description}</p>
                     )}
                     <div className="flex flex-wrap gap-1 mt-2">
                       {t.variables.map((v) => (
                         <span
                           key={v}
-                          className="text-[10px] bg-gray-100 text-gray-600 px-1.5 py-0.5 rounded"
+                          className="text-[10px] bg-hos-bg-tertiary text-hos-text-secondary px-1.5 py-0.5 rounded"
                         >
                           {'{{' + v + '}}'}
                         </span>
@@ -186,9 +186,9 @@ export default function AdminTemplatesPage() {
           <div className="lg:col-span-2">
             {selectedTemplate ? (
               <div className="space-y-4">
-                <div className="bg-white rounded-xl border border-gray-200 p-5">
+                <div className="bg-hos-bg-secondary rounded-xl border border-hos-border p-5">
                   <div className="flex items-center justify-between mb-3">
-                    <h2 className="text-lg font-bold text-gray-900">
+                    <h2 className="text-lg font-bold text-white">
                       {selectedTemplate.slug.replace(/_/g, ' ')}
                     </h2>
                     <span
@@ -201,29 +201,29 @@ export default function AdminTemplatesPage() {
                   </div>
 
                   {selectedTemplate.description && (
-                    <p className="text-sm text-gray-600 mb-3">{selectedTemplate.description}</p>
+                    <p className="text-sm text-hos-text-secondary mb-3">{selectedTemplate.description}</p>
                   )}
 
                   {selectedTemplate.subject && (
                     <div className="mb-3">
-                      <label className="block text-xs font-medium text-gray-500 mb-1">
+                      <label className="block text-xs font-medium text-hos-text-muted mb-1">
                         Subject Line
                       </label>
-                      <div className="bg-gray-50 rounded-lg px-3 py-2 text-sm font-mono text-gray-800">
+                      <div className="bg-hos-bg-secondary rounded-lg px-3 py-2 text-sm font-mono text-white">
                         {selectedTemplate.subject}
                       </div>
                     </div>
                   )}
 
                   <div>
-                    <label className="block text-xs font-medium text-gray-500 mb-1">
+                    <label className="block text-xs font-medium text-hos-text-muted mb-1">
                       Required Variables
                     </label>
                     <div className="flex flex-wrap gap-2">
                       {selectedTemplate.variables.map((v) => (
                         <span
                           key={v}
-                          className="text-xs bg-blue-50 text-blue-700 px-2 py-1 rounded-md font-mono"
+                          className="text-xs bg-hos-gold/10 text-hos-gold px-2 py-1 rounded-md font-mono"
                         >
                           {'{{' + v + '}}'}
                         </span>
@@ -233,14 +233,14 @@ export default function AdminTemplatesPage() {
                 </div>
 
                 {/* Test render form */}
-                <div className="bg-white rounded-xl border border-gray-200 p-5">
-                  <h3 className="text-sm font-semibold text-gray-900 mb-3">
+                <div className="bg-hos-bg-secondary rounded-xl border border-hos-border p-5">
+                  <h3 className="text-sm font-semibold text-white mb-3">
                     Test Render with Custom Variables
                   </h3>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-3">
                     {selectedTemplate.variables.map((v) => (
                       <div key={v}>
-                        <label className="block text-xs font-medium text-gray-600 mb-1">
+                        <label className="block text-xs font-medium text-hos-text-secondary mb-1">
                           {v}
                         </label>
                         <input
@@ -250,7 +250,7 @@ export default function AdminTemplatesPage() {
                             setTestVars({ ...testVars, [v]: e.target.value })
                           }
                           placeholder={`Enter ${v}...`}
-                          className="w-full px-3 py-1.5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
+                          className="w-full px-3 py-1.5 border border-hos-border rounded-lg text-sm focus:ring-2 focus:ring-hos-gold/50 focus:border-hos-gold"
                         />
                       </div>
                     ))}
@@ -258,27 +258,27 @@ export default function AdminTemplatesPage() {
                   <button
                     onClick={handleTestRender}
                     disabled={testLoading}
-                    className="px-4 py-2 bg-purple-600 text-white text-sm rounded-lg hover:bg-purple-700 disabled:opacity-50 transition-colors"
+                    className="px-4 py-2 bg-hos-gold text-[#1a1406] text-sm rounded-lg hover:bg-hos-gold-hover disabled:opacity-50 transition-colors"
                   >
                     {testLoading ? 'Rendering...' : 'Render Template'}
                   </button>
                 </div>
 
                 {/* Preview pane */}
-                <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
-                  <div className="px-5 py-3 border-b border-gray-200 bg-gray-50">
-                    <h3 className="text-sm font-semibold text-gray-900">
+                <div className="bg-hos-bg-secondary rounded-xl border border-hos-border overflow-hidden">
+                  <div className="px-5 py-3 border-b border-hos-border bg-hos-bg-secondary">
+                    <h3 className="text-sm font-semibold text-white">
                       {testResult ? 'Custom Render' : 'Sample Preview'}
                     </h3>
                     {(testResult || previewHtml)?.subject && (
-                      <p className="text-xs text-gray-500 mt-0.5">
+                      <p className="text-xs text-hos-text-muted mt-0.5">
                         Subject: {(testResult || previewHtml)?.subject}
                       </p>
                     )}
                   </div>
                   <div className="p-4">
                     {previewLoading ? (
-                      <div className="text-center py-8 text-gray-500">Loading preview...</div>
+                      <div className="text-center py-8 text-hos-text-muted">Loading preview...</div>
                     ) : testResult ? (
                       selectedTemplate.channel === 'EMAIL' ? (
                         <iframe
@@ -287,8 +287,8 @@ export default function AdminTemplatesPage() {
                           title="Custom render"
                         />
                       ) : (
-                        <div className="bg-gray-50 rounded-lg p-4">
-                          <pre className="text-sm whitespace-pre-wrap text-gray-800">
+                        <div className="bg-hos-bg-secondary rounded-lg p-4">
+                          <pre className="text-sm whitespace-pre-wrap text-white">
                             {testResult.body}
                           </pre>
                         </div>
@@ -301,14 +301,14 @@ export default function AdminTemplatesPage() {
                           title="Email preview"
                         />
                       ) : (
-                        <div className="bg-gray-50 rounded-lg p-4">
-                          <pre className="text-sm whitespace-pre-wrap text-gray-800">
+                        <div className="bg-hos-bg-secondary rounded-lg p-4">
+                          <pre className="text-sm whitespace-pre-wrap text-white">
                             {previewHtml.body}
                           </pre>
                         </div>
                       )
                     ) : (
-                      <div className="text-center py-8 text-gray-500">
+                      <div className="text-center py-8 text-hos-text-muted">
                         Select a template to see its preview
                       </div>
                     )}
@@ -316,22 +316,22 @@ export default function AdminTemplatesPage() {
                 </div>
 
                 {/* Raw template body */}
-                <details className="bg-white rounded-xl border border-gray-200 overflow-hidden">
-                  <summary className="px-5 py-3 cursor-pointer text-sm font-medium text-gray-700 hover:bg-gray-50">
+                <details className="bg-hos-bg-secondary rounded-xl border border-hos-border overflow-hidden">
+                  <summary className="px-5 py-3 cursor-pointer text-sm font-medium text-hos-text-secondary hover:bg-hos-bg-tertiary">
                     View Raw Template Source
                   </summary>
-                  <div className="p-4 border-t border-gray-200">
-                    <pre className="text-xs bg-gray-50 rounded-lg p-4 overflow-x-auto max-h-[300px] whitespace-pre-wrap">
+                  <div className="p-4 border-t border-hos-border">
+                    <pre className="text-xs bg-hos-bg-secondary rounded-lg p-4 overflow-x-auto max-h-[300px] whitespace-pre-wrap">
                       {selectedTemplate.body}
                     </pre>
                   </div>
                 </details>
               </div>
             ) : (
-              <div className="bg-white rounded-xl border border-gray-200 p-12 text-center">
+              <div className="bg-hos-bg-secondary rounded-xl border border-hos-border p-12 text-center">
                 <div className="text-4xl mb-3">📋</div>
-                <h3 className="text-lg font-semibold text-gray-900">Select a Template</h3>
-                <p className="text-sm text-gray-500 mt-1">
+                <h3 className="text-lg font-semibold text-white">Select a Template</h3>
+                <p className="text-sm text-hos-text-muted mt-1">
                   Choose a template from the list to view its details, preview, and test with custom
                   variables.
                 </p>

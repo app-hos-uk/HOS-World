@@ -9,11 +9,11 @@ export default function AdminPosStoresPage() {
     <RouteGuard allowedRoles={['ADMIN']}>
       <AdminLayout>
         <div className="space-y-6">
-          <Link href="/admin/pos" className="text-sm text-indigo-600 hover:text-indigo-800">
+          <Link href="/admin/pos" className="text-sm text-hos-gold hover:text-hos-gold">
             ← POS home
           </Link>
-          <h1 className="text-2xl font-bold text-gray-900">Outlet management</h1>
-          <p className="max-w-2xl text-gray-600">
+          <h1 className="text-2xl font-bold text-white">Outlet management</h1>
+          <p className="max-w-2xl text-hos-text-secondary">
             HOS stores are defined in the platform tenant model. Link each store&apos;s{' '}
             <strong>code</strong> to your webhook path and set <strong>externalOutletId</strong> on the
             POS connection after fetching outlets from the provider (Test → Outlets API).

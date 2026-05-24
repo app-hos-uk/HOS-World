@@ -206,30 +206,30 @@ export default function InfluencerCommissionSettingsPage() {
             <button
               type="button"
               onClick={() => router.push(`/admin/influencers/${influencerId}`)}
-              className="p-2 text-gray-500 hover:bg-gray-100 rounded-lg"
+              className="p-2 text-hos-text-muted hover:bg-hos-bg-tertiary rounded-lg"
             >
               ←
             </button>
             <div>
-              <h1 className="text-2xl font-bold text-gray-900">Commission settings</h1>
-              <p className="text-gray-600">{influencerName || 'Influencer'}</p>
+              <h1 className="text-2xl font-bold text-white">Commission settings</h1>
+              <p className="text-hos-text-secondary">{influencerName || 'Influencer'}</p>
             </div>
           </div>
 
           {loading ? (
-            <div className="py-20 text-center text-gray-500">Loading…</div>
+            <div className="py-20 text-center text-hos-text-muted">Loading…</div>
           ) : (
             <>
-              <div className="bg-white rounded-lg shadow-sm p-6 space-y-4">
+              <div className="bg-hos-bg-secondary rounded-lg shadow-sm p-6 space-y-4">
                 <h2 className="text-lg font-semibold">Base rate & attribution</h2>
-                <p className="text-sm text-gray-500">
+                <p className="text-sm text-hos-text-muted">
                   Default commission when no campaign override or rule matches. Category JSON on the influencer is still
                   supported; rules below take precedence per line item (product → brand → category rule → legacy JSON →
                   base).
                 </p>
                 <div className="grid sm:grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Base commission (%)</label>
+                    <label className="block text-sm font-medium text-hos-text-secondary mb-1">Base commission (%)</label>
                     <input
                       type="number"
                       min={0}
@@ -241,7 +241,7 @@ export default function InfluencerCommissionSettingsPage() {
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Cookie duration (days)</label>
+                    <label className="block text-sm font-medium text-hos-text-secondary mb-1">Cookie duration (days)</label>
                     <input
                       type="number"
                       min={1}
@@ -255,17 +255,17 @@ export default function InfluencerCommissionSettingsPage() {
                   type="button"
                   onClick={saveBase}
                   disabled={savingBase}
-                  className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 disabled:opacity-50"
+                  className="px-4 py-2 bg-hos-gold text-[#1a1406] rounded-lg hover:bg-hos-gold-hover disabled:opacity-50"
                 >
                   {savingBase ? 'Saving…' : 'Save base settings'}
                 </button>
               </div>
 
-              <div className="bg-white rounded-lg shadow-sm p-6 space-y-4">
+              <div className="bg-hos-bg-secondary rounded-lg shadow-sm p-6 space-y-4">
                 <h2 className="text-lg font-semibold">Add rule</h2>
                 <div className="grid sm:grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Scope</label>
+                    <label className="block text-sm font-medium text-hos-text-secondary mb-1">Scope</label>
                     <select
                       value={scopeType}
                       onChange={(e) => setScopeType(e.target.value as any)}
@@ -277,7 +277,7 @@ export default function InfluencerCommissionSettingsPage() {
                     </select>
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Commission (%)</label>
+                    <label className="block text-sm font-medium text-hos-text-secondary mb-1">Commission (%)</label>
                     <input
                       type="number"
                       min={0}
@@ -291,7 +291,7 @@ export default function InfluencerCommissionSettingsPage() {
                   </div>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Priority (higher wins)</label>
+                  <label className="block text-sm font-medium text-hos-text-secondary mb-1">Priority (higher wins)</label>
                   <input
                     type="number"
                     value={rulePriority}
@@ -302,7 +302,7 @@ export default function InfluencerCommissionSettingsPage() {
 
                 {scopeType === 'product' && (
                   <div className="space-y-2">
-                    <label className="block text-sm font-medium text-gray-700">Product search</label>
+                    <label className="block text-sm font-medium text-hos-text-secondary">Product search</label>
                     <div className="flex gap-2">
                       <input
                         value={productQuery}
@@ -313,7 +313,7 @@ export default function InfluencerCommissionSettingsPage() {
                       <button
                         type="button"
                         onClick={searchProducts}
-                        className="px-3 py-2 bg-gray-100 rounded-lg border"
+                        className="px-3 py-2 bg-hos-bg-tertiary rounded-lg border"
                       >
                         Search
                       </button>
@@ -337,7 +337,7 @@ export default function InfluencerCommissionSettingsPage() {
 
                 {scopeType === 'category' && (
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Category</label>
+                    <label className="block text-sm font-medium text-hos-text-secondary mb-1">Category</label>
                     <select
                       value={selectedCategoryId}
                       onChange={(e) => setSelectedCategoryId(e.target.value)}
@@ -355,15 +355,15 @@ export default function InfluencerCommissionSettingsPage() {
 
                 {scopeType === 'brand' && (
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Brand (exact match, case-insensitive)</label>
+                    <label className="block text-sm font-medium text-hos-text-secondary mb-1">Brand (exact match, case-insensitive)</label>
                     <input
                       value={brandInput}
                       onChange={(e) => setBrandInput(e.target.value)}
                       className="w-full border rounded-lg px-3 py-2"
                       placeholder="e.g. Acme Co"
                     />
-                    <p className="text-xs text-gray-500 mt-1">
-                      Set <Link href="/admin/products" className="text-purple-600 underline">product.brand</Link> in catalog
+                    <p className="text-xs text-hos-text-muted mt-1">
+                      Set <Link href="/admin/products" className="text-hos-gold underline">product.brand</Link> in catalog
                       for matching.
                     </p>
                   </div>
@@ -373,19 +373,19 @@ export default function InfluencerCommissionSettingsPage() {
                   type="button"
                   onClick={addRule}
                   disabled={addingRule}
-                  className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 disabled:opacity-50"
+                  className="px-4 py-2 bg-hos-gold text-[#1a1406] rounded-lg hover:bg-hos-gold-hover disabled:opacity-50"
                 >
                   {addingRule ? 'Adding…' : 'Add rule'}
                 </button>
               </div>
 
-              <div className="bg-white rounded-lg shadow-sm overflow-hidden">
+              <div className="bg-hos-bg-secondary rounded-lg shadow-sm overflow-hidden">
                 <div className="p-6 border-b">
                   <h2 className="text-lg font-semibold">Active rules ({rules.length})</h2>
                 </div>
                 <div className="overflow-x-auto">
                   <table className="w-full text-sm">
-                    <thead className="bg-gray-50">
+                    <thead className="bg-hos-bg-secondary">
                       <tr>
                         <th className="text-left px-4 py-2">Target</th>
                         <th className="text-left px-4 py-2">Rate</th>
@@ -405,7 +405,7 @@ export default function InfluencerCommissionSettingsPage() {
                             <button
                               type="button"
                               onClick={() => toggleRule(r)}
-                              className="text-purple-600 hover:underline"
+                              className="text-hos-gold hover:underline"
                             >
                               {r.isActive ? 'Disable' : 'Enable'}
                             </button>
@@ -422,7 +422,7 @@ export default function InfluencerCommissionSettingsPage() {
                     </tbody>
                   </table>
                   {rules.length === 0 && (
-                    <p className="p-6 text-gray-500 text-center">No rules yet — base rate and campaigns apply.</p>
+                    <p className="p-6 text-hos-text-muted text-center">No rules yet — base rate and campaigns apply.</p>
                   )}
                 </div>
               </div>

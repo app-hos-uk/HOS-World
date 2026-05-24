@@ -147,7 +147,7 @@ export default function CMSBlogPage() {
       <RouteGuard allowedRoles={['CMS_EDITOR', 'ADMIN']}>
         <CMSLayout>
           <div className="flex items-center justify-center h-64">
-            <div className="text-gray-500">Loading blog posts...</div>
+            <div className="text-hos-text-muted">Loading blog posts...</div>
           </div>
         </CMSLayout>
       </RouteGuard>
@@ -159,10 +159,10 @@ export default function CMSBlogPage() {
       <CMSLayout>
         <div className="space-y-6">
           <div className="flex justify-between items-center">
-            <h1 className="text-2xl font-bold text-gray-900">Blog Posts</h1>
+            <h1 className="text-2xl font-bold text-white">Blog Posts</h1>
             <button
               onClick={() => setShowCreateForm(true)}
-              className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700"
+              className="px-4 py-2 bg-hos-gold text-[#1a1406] rounded-lg hover:bg-hos-gold-hover"
             >
               + Write Post
             </button>
@@ -171,71 +171,71 @@ export default function CMSBlogPage() {
           <CmsPortalErrorBanner message={error} />
 
           {showEditForm && editingPostId && (
-            <div className="bg-white rounded-lg shadow p-6">
+            <div className="bg-hos-bg-secondary rounded-lg shadow p-6">
               <h2 className="text-lg font-semibold mb-4">Edit Blog Post</h2>
               <form onSubmit={handleUpdatePost} className="space-y-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Post Title</label>
+                  <label className="block text-sm font-medium text-hos-text-secondary mb-1">Post Title</label>
                   <input
                     type="text"
                     required
                     value={formData.title}
                     onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
+                    className="w-full px-3 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50"
                     placeholder="Blog post title"
                   />
                 </div>
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Slug</label>
+                    <label className="block text-sm font-medium text-hos-text-secondary mb-1">Slug</label>
                     <input
                       type="text"
                       required
                       value={formData.slug}
                       onChange={(e) => setFormData({ ...formData, slug: e.target.value })}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
+                      className="w-full px-3 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50"
                       placeholder="blog-post-slug"
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Author</label>
+                    <label className="block text-sm font-medium text-hos-text-secondary mb-1">Author</label>
                     <input
                       type="text"
                       value={formData.author}
                       onChange={(e) => setFormData({ ...formData, author: e.target.value })}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
+                      className="w-full px-3 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50"
                       placeholder="Author name"
                     />
                   </div>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Excerpt</label>
+                  <label className="block text-sm font-medium text-hos-text-secondary mb-1">Excerpt</label>
                   <textarea
                     required
                     value={formData.excerpt}
                     onChange={(e) => setFormData({ ...formData, excerpt: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
+                    className="w-full px-3 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50"
                     rows={2}
                     placeholder="Short excerpt or summary"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Cover Image URL</label>
+                  <label className="block text-sm font-medium text-hos-text-secondary mb-1">Cover Image URL</label>
                   <input
                     type="url"
                     value={formData.coverImage}
                     onChange={(e) => setFormData({ ...formData, coverImage: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
+                    className="w-full px-3 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50"
                     placeholder="https://example.com/image.jpg"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Content</label>
+                  <label className="block text-sm font-medium text-hos-text-secondary mb-1">Content</label>
                   <textarea
                     required
                     value={formData.content}
                     onChange={(e) => setFormData({ ...formData, content: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
+                    className="w-full px-3 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50"
                     rows={15}
                     placeholder="Blog post content (Markdown or HTML)"
                   />
@@ -244,7 +244,7 @@ export default function CMSBlogPage() {
                   <button
                     type="submit"
                     disabled={updatingPost}
-                    className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="px-4 py-2 bg-hos-gold text-[#1a1406] rounded-lg hover:bg-hos-gold-hover disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     {updatingPost ? 'Saving...' : 'Save Changes'}
                   </button>
@@ -262,7 +262,7 @@ export default function CMSBlogPage() {
                         author: '',
                       });
                     }}
-                    className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300"
+                    className="px-4 py-2 bg-hos-bg-tertiary text-hos-text-secondary rounded-lg hover:bg-hos-bg-tertiary"
                   >
                     Cancel
                   </button>
@@ -272,71 +272,71 @@ export default function CMSBlogPage() {
           )}
 
           {showCreateForm && (
-            <div className="bg-white rounded-lg shadow p-6">
+            <div className="bg-hos-bg-secondary rounded-lg shadow p-6">
               <h2 className="text-lg font-semibold mb-4">Create New Blog Post</h2>
               <form onSubmit={handleCreatePost} className="space-y-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Post Title</label>
+                  <label className="block text-sm font-medium text-hos-text-secondary mb-1">Post Title</label>
                   <input
                     type="text"
                     required
                     value={formData.title}
                     onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
+                    className="w-full px-3 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50"
                     placeholder="Blog post title"
                   />
                 </div>
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Slug</label>
+                    <label className="block text-sm font-medium text-hos-text-secondary mb-1">Slug</label>
                     <input
                       type="text"
                       required
                       value={formData.slug}
                       onChange={(e) => setFormData({ ...formData, slug: e.target.value })}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
+                      className="w-full px-3 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50"
                       placeholder="blog-post-slug"
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Author</label>
+                    <label className="block text-sm font-medium text-hos-text-secondary mb-1">Author</label>
                     <input
                       type="text"
                       value={formData.author}
                       onChange={(e) => setFormData({ ...formData, author: e.target.value })}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
+                      className="w-full px-3 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50"
                       placeholder="Author name"
                     />
                   </div>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Excerpt</label>
+                  <label className="block text-sm font-medium text-hos-text-secondary mb-1">Excerpt</label>
                   <textarea
                     required
                     value={formData.excerpt}
                     onChange={(e) => setFormData({ ...formData, excerpt: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
+                    className="w-full px-3 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50"
                     rows={2}
                     placeholder="Short excerpt or summary"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Cover Image URL</label>
+                  <label className="block text-sm font-medium text-hos-text-secondary mb-1">Cover Image URL</label>
                   <input
                     type="url"
                     value={formData.coverImage}
                     onChange={(e) => setFormData({ ...formData, coverImage: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
+                    className="w-full px-3 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50"
                     placeholder="https://example.com/image.jpg"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Content</label>
+                  <label className="block text-sm font-medium text-hos-text-secondary mb-1">Content</label>
                   <textarea
                     required
                     value={formData.content}
                     onChange={(e) => setFormData({ ...formData, content: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
+                    className="w-full px-3 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50"
                     rows={15}
                     placeholder="Blog post content (Markdown or HTML)"
                   />
@@ -345,7 +345,7 @@ export default function CMSBlogPage() {
                   <button
                     type="submit"
                     disabled={creatingPost}
-                    className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="px-4 py-2 bg-hos-gold text-[#1a1406] rounded-lg hover:bg-hos-gold-hover disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     {creatingPost ? 'Creating...' : 'Create Post'}
                   </button>
@@ -362,7 +362,7 @@ export default function CMSBlogPage() {
                         author: '',
                       });
                     }}
-                    className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300"
+                    className="px-4 py-2 bg-hos-bg-tertiary text-hos-text-secondary rounded-lg hover:bg-hos-bg-tertiary"
                   >
                     Cancel
                   </button>
@@ -371,13 +371,13 @@ export default function CMSBlogPage() {
             </div>
           )}
 
-          <div className="bg-white rounded-lg shadow">
-            <div className="p-4 border-b border-gray-200">
+          <div className="bg-hos-bg-secondary rounded-lg shadow">
+            <div className="p-4 border-b border-hos-border">
               <h2 className="text-lg font-semibold">All Blog Posts</h2>
             </div>
             <div className="p-4">
               {posts.length === 0 ? (
-                <div className="text-center py-8 text-gray-500">
+                <div className="text-center py-8 text-hos-text-muted">
                   <p>No blog posts found.</p>
                   <p className="text-sm mt-2">Create your first blog post to get started.</p>
                 </div>
@@ -386,7 +386,7 @@ export default function CMSBlogPage() {
                   {posts.map((post) => (
                     <div
                       key={post.id}
-                      className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow"
+                      className="border border-hos-border rounded-lg p-4 hover:shadow-md transition-shadow"
                     >
                       <div className="flex items-start gap-4">
                         {post.coverImage && (
@@ -399,9 +399,9 @@ export default function CMSBlogPage() {
                           />
                         )}
                         <div className="flex-1">
-                          <h3 className="text-lg font-medium text-gray-900">{post.title}</h3>
-                          <p className="text-sm text-gray-600 mt-1">{post.excerpt}</p>
-                          <div className="flex items-center gap-4 mt-2 text-xs text-gray-500">
+                          <h3 className="text-lg font-medium text-white">{post.title}</h3>
+                          <p className="text-sm text-hos-text-secondary mt-1">{post.excerpt}</p>
+                          <div className="flex items-center gap-4 mt-2 text-xs text-hos-text-muted">
                             {post.author && <span>By {post.author}</span>}
                             {post.publishedAt && (
                               <span>
@@ -432,7 +432,7 @@ export default function CMSBlogPage() {
                           </button>
                           <button
                             onClick={() => handleEditPost(post)}
-                            className="px-3 py-1 text-sm bg-blue-600 text-white rounded hover:bg-blue-700"
+                            className="px-3 py-1 text-sm bg-hos-gold text-[#1a1406] rounded hover:bg-hos-gold-hover"
                           >
                             Edit
                           </button>

@@ -98,7 +98,7 @@ export default function AdminProductAnalyticsPage() {
       <RouteGuard allowedRoles={['ADMIN', 'SELLER', 'B2C_SELLER']}>
         <AdminLayout>
           <div className="flex items-center justify-center h-64">
-            <div className="text-gray-500">Loading product analytics...</div>
+            <div className="text-hos-text-muted">Loading product analytics...</div>
           </div>
         </AdminLayout>
       </RouteGuard>
@@ -122,37 +122,37 @@ export default function AdminProductAnalyticsPage() {
       <AdminLayout>
         <div className="space-y-6">
           <div className="flex items-center justify-between">
-            <h1 className="text-2xl font-bold text-gray-900">Product Performance</h1>
+            <h1 className="text-2xl font-bold text-white">Product Performance</h1>
             <div className="flex gap-2">
               <button
                 onClick={() => handleExport('csv')}
-                className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50"
+                className="px-4 py-2 text-sm font-medium text-hos-text-secondary bg-hos-bg-secondary border border-hos-border rounded-md hover:bg-hos-bg-tertiary"
               >
                 Export CSV
               </button>
               <button
                 onClick={() => handleExport('xlsx')}
-                className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50"
+                className="px-4 py-2 text-sm font-medium text-hos-text-secondary bg-hos-bg-secondary border border-hos-border rounded-md hover:bg-hos-bg-tertiary"
               >
                 Export Excel
               </button>
               <button
                 onClick={() => handleExport('pdf')}
-                className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50"
+                className="px-4 py-2 text-sm font-medium text-hos-text-secondary bg-hos-bg-secondary border border-hos-border rounded-md hover:bg-hos-bg-tertiary"
               >
                 Export PDF
               </button>
             </div>
           </div>
 
-          <div className="bg-white rounded-lg shadow p-6">
+          <div className="bg-hos-bg-secondary rounded-lg shadow p-6">
             <DateRangePicker value={dateRange} onChange={setDateRange} />
             <div className="mt-4 flex items-center gap-4">
-              <label className="text-sm font-medium text-gray-700">Top Products:</label>
+              <label className="text-sm font-medium text-hos-text-secondary">Top Products:</label>
               <select
                 value={limit}
                 onChange={(e) => setLimit(Number(e.target.value))}
-                className="px-3 py-1.5 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="px-3 py-1.5 border border-hos-border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-hos-gold/50"
               >
                 <option value={10}>Top 10</option>
                 <option value={20}>Top 20</option>
@@ -163,30 +163,30 @@ export default function AdminProductAnalyticsPage() {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-            <div className="bg-white rounded-lg shadow p-6">
-              <h3 className="text-sm font-medium text-gray-500">Total Products</h3>
-              <p className="text-3xl font-bold text-gray-900 mt-2">{data.length}</p>
+            <div className="bg-hos-bg-secondary rounded-lg shadow p-6">
+              <h3 className="text-sm font-medium text-hos-text-muted">Total Products</h3>
+              <p className="text-3xl font-bold text-white mt-2">{data.length}</p>
             </div>
-            <div className="bg-white rounded-lg shadow p-6">
-              <h3 className="text-sm font-medium text-gray-500">Total Revenue</h3>
-              <p className="text-3xl font-bold text-gray-900 mt-2">
+            <div className="bg-hos-bg-secondary rounded-lg shadow p-6">
+              <h3 className="text-sm font-medium text-hos-text-muted">Total Revenue</h3>
+              <p className="text-3xl font-bold text-white mt-2">
                 ${totalRevenue.toFixed(2)}
               </p>
             </div>
-            <div className="bg-white rounded-lg shadow p-6">
-              <h3 className="text-sm font-medium text-gray-500">Total Orders</h3>
-              <p className="text-3xl font-bold text-gray-900 mt-2">{totalOrders}</p>
+            <div className="bg-hos-bg-secondary rounded-lg shadow p-6">
+              <h3 className="text-sm font-medium text-hos-text-muted">Total Orders</h3>
+              <p className="text-3xl font-bold text-white mt-2">{totalOrders}</p>
             </div>
-            <div className="bg-white rounded-lg shadow p-6">
-              <h3 className="text-sm font-medium text-gray-500">Total Quantity</h3>
-              <p className="text-3xl font-bold text-gray-900 mt-2">{totalQuantity}</p>
+            <div className="bg-hos-bg-secondary rounded-lg shadow p-6">
+              <h3 className="text-sm font-medium text-hos-text-muted">Total Quantity</h3>
+              <p className="text-3xl font-bold text-white mt-2">{totalQuantity}</p>
             </div>
           </div>
 
           {chartData.length > 0 && (
             <>
-              <div className="bg-white rounded-lg shadow p-6">
-                <h2 className="text-lg font-semibold text-gray-900 mb-4">Top Products by Revenue</h2>
+              <div className="bg-hos-bg-secondary rounded-lg shadow p-6">
+                <h2 className="text-lg font-semibold text-white mb-4">Top Products by Revenue</h2>
                 <ResponsiveContainer width="100%" height={400}>
                   <BarChart data={chartData} layout="vertical">
                     <CartesianGrid strokeDasharray="3 3" />
@@ -199,8 +199,8 @@ export default function AdminProductAnalyticsPage() {
                 </ResponsiveContainer>
               </div>
 
-              <div className="bg-white rounded-lg shadow p-6">
-                <h2 className="text-lg font-semibold text-gray-900 mb-4">Top Products by Orders</h2>
+              <div className="bg-hos-bg-secondary rounded-lg shadow p-6">
+                <h2 className="text-lg font-semibold text-white mb-4">Top Products by Orders</h2>
                 <ResponsiveContainer width="100%" height={400}>
                   <BarChart data={chartData}>
                     <CartesianGrid strokeDasharray="3 3" />
@@ -215,51 +215,51 @@ export default function AdminProductAnalyticsPage() {
             </>
           )}
 
-          <div className="bg-white rounded-lg shadow p-6">
-            <h2 className="text-lg font-semibold text-gray-900 mb-4">Product Performance Table</h2>
+          <div className="bg-hos-bg-secondary rounded-lg shadow p-6">
+            <h2 className="text-lg font-semibold text-white mb-4">Product Performance Table</h2>
             <div className="overflow-x-auto">
-              <table className="min-w-full divide-y divide-gray-200">
-                <thead className="bg-gray-50">
+              <table className="min-w-full divide-y divide-hos-border">
+                <thead className="bg-hos-bg-secondary">
                   <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-6 py-3 text-left text-xs font-medium text-hos-text-muted uppercase tracking-wider">
                       Product
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-6 py-3 text-left text-xs font-medium text-hos-text-muted uppercase tracking-wider">
                       SKU
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-6 py-3 text-left text-xs font-medium text-hos-text-muted uppercase tracking-wider">
                       Revenue
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-6 py-3 text-left text-xs font-medium text-hos-text-muted uppercase tracking-wider">
                       Orders
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-6 py-3 text-left text-xs font-medium text-hos-text-muted uppercase tracking-wider">
                       Quantity
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-6 py-3 text-left text-xs font-medium text-hos-text-muted uppercase tracking-wider">
                       Avg Price
                     </th>
                   </tr>
                 </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
+                <tbody className="bg-hos-bg-secondary divide-y divide-hos-border">
                   {data.slice(0, limit).map((product: any) => (
                     <tr key={product.productId}>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-white">
                         {product.name}
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-hos-text-muted">
                         {product.sku || '-'}
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-white">
                         ${Number(product.revenue || 0).toFixed(2)}
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-white">
                         {product.orders || 0}
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-white">
                         {product.quantity || 0}
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-white">
                         ${Number(product.averagePrice || 0).toFixed(2)}
                       </td>
                     </tr>

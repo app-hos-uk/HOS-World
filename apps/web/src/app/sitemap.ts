@@ -28,8 +28,8 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     'https://hos-marketplaceweb-production.up.railway.app';
 
   const staticPages = [
-    '', '/products', '/login', '/help', '/support/kb',
-    '/gift-cards/purchase', '/about', '/privacy-policy', '/do-not-sell',
+    '', '/products', '/fandoms', '/login', '/help', '/support/kb', '/shipping', '/returns',
+    '/gift-cards/purchase', '/about', '/privacy-policy', '/do-not-sell', '/loyalty', '/sellers',
   ];
 
   const entries: MetadataRoute.Sitemap = staticPages.map((path) => ({

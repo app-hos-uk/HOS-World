@@ -122,7 +122,7 @@ export function Breadcrumbs({
         <li>
           <Link 
             href={homeHref} 
-            className="text-gray-500 hover:text-purple-600 transition-colors"
+            className="text-hos-text-muted hover:text-hos-gold transition-colors"
           >
             {homeLabel}
           </Link>
@@ -131,7 +131,7 @@ export function Breadcrumbs({
         {breadcrumbItems.map((item, index) => (
           <li key={index} className="flex items-center">
             <svg
-              className="w-4 h-4 text-gray-400 mx-2"
+              className="w-4 h-4 text-hos-text-muted mx-2"
               fill="currentColor"
               viewBox="0 0 20 20"
             >
@@ -144,12 +144,12 @@ export function Breadcrumbs({
             {item.href ? (
               <Link 
                 href={item.href} 
-                className="text-gray-500 hover:text-purple-600 transition-colors"
+                className="text-hos-text-muted hover:text-hos-gold transition-colors"
               >
                 {item.label}
               </Link>
             ) : (
-              <span className="text-gray-900 font-medium">{item.label}</span>
+              <span className="text-white font-medium">{item.label}</span>
             )}
           </li>
         ))}

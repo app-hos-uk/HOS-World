@@ -396,16 +396,16 @@ export default function AdminCategoriesPage() {
     return cats
       .filter(cat => showInactive || cat.isActive)
       .map((category, index, arr) => (
-        <div key={category.id} className={level > 0 ? 'ml-6 border-l-2 border-gray-200 pl-4' : ''}>
-          <div className={`flex items-center justify-between p-3 bg-white border rounded-lg mb-2 hover:shadow-md transition-shadow ${
-            !category.isActive ? 'opacity-60 bg-gray-50' : ''
-          } ${category.isFeatured ? 'border-purple-300 bg-purple-50' : 'border-gray-200'}`}>
+        <div key={category.id} className={level > 0 ? 'ml-6 border-l-2 border-hos-border pl-4' : ''}>
+          <div className={`flex items-center justify-between p-3 bg-hos-bg-secondary border rounded-lg mb-2 hover:shadow-md transition-shadow ${
+            !category.isActive ? 'opacity-60 bg-hos-bg-secondary' : ''
+          } ${category.isFeatured ? 'border-hos-border-accent bg-hos-gold/10' : 'border-hos-border'}`}>
             <div className="flex items-center gap-3 flex-1">
               {/* Expand/Collapse */}
               {category.children && category.children.length > 0 ? (
                 <button
                   onClick={() => toggleExpanded(category.id)}
-                  className="w-6 h-6 flex items-center justify-center text-gray-500 hover:text-gray-700"
+                  className="w-6 h-6 flex items-center justify-center text-hos-text-muted hover:text-hos-text-secondary"
                 >
                   {expandedIds.has(category.id) ? '▼' : '▶'}
                 </button>
@@ -415,7 +415,7 @@ export default function AdminCategoriesPage() {
               
               {/* Icon/Image */}
               {category.image ? (
-                <div className="w-10 h-10 rounded overflow-hidden bg-gray-100 flex-shrink-0">
+                <div className="w-10 h-10 rounded overflow-hidden bg-hos-bg-tertiary flex-shrink-0">
                   <SafeImage
                     src={category.image}
                     alt={category.name}
@@ -427,7 +427,7 @@ export default function AdminCategoriesPage() {
               ) : category.icon ? (
                 <span className="text-2xl">{category.icon}</span>
               ) : (
-                <div className="w-10 h-10 rounded bg-gray-200 flex items-center justify-center text-gray-500 flex-shrink-0">
+                <div className="w-10 h-10 rounded bg-hos-bg-tertiary flex items-center justify-center text-hos-text-muted flex-shrink-0">
                   📁
                 </div>
               )}
@@ -435,22 +435,22 @@ export default function AdminCategoriesPage() {
               {/* Info */}
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2 flex-wrap">
-                  <span className="font-medium text-gray-900 truncate">{category.name}</span>
-                  <span className="text-xs text-gray-400">L{category.level}</span>
+                  <span className="font-medium text-white truncate">{category.name}</span>
+                  <span className="text-xs text-hos-text-muted">L{category.level}</span>
                   {category.isFeatured && (
-                    <span className="text-xs bg-purple-100 text-purple-700 px-1.5 py-0.5 rounded">Featured</span>
+                    <span className="text-xs bg-hos-gold/20 text-hos-gold-hover px-1.5 py-0.5 rounded">Featured</span>
                   )}
                   {!category.isActive && (
-                    <span className="text-xs bg-gray-100 text-gray-600 px-1.5 py-0.5 rounded">Inactive</span>
+                    <span className="text-xs bg-hos-bg-tertiary text-hos-text-secondary px-1.5 py-0.5 rounded">Inactive</span>
                   )}
                   {(category.productCount || 0) > 0 && (
-                    <span className="text-xs bg-blue-100 text-blue-700 px-1.5 py-0.5 rounded">
+                    <span className="text-xs bg-hos-gold/20 text-hos-gold px-1.5 py-0.5 rounded">
                       {category.productCount} products
                     </span>
                   )}
                 </div>
                 {category.description && (
-                  <p className="text-sm text-gray-500 truncate">{category.description}</p>
+                  <p className="text-sm text-hos-text-muted truncate">{category.description}</p>
                 )}
               </div>
             </div>
@@ -460,7 +460,7 @@ export default function AdminCategoriesPage() {
               <button
                 onClick={() => handleMoveCategory(category.id, 'up')}
                 disabled={index === 0}
-                className="p-1 text-gray-400 hover:text-gray-600 disabled:opacity-30"
+                className="p-1 text-hos-text-muted hover:text-hos-text-secondary disabled:opacity-30"
                 title="Move up"
               >
                 ↑
@@ -468,28 +468,28 @@ export default function AdminCategoriesPage() {
               <button
                 onClick={() => handleMoveCategory(category.id, 'down')}
                 disabled={index === arr.length - 1}
-                className="p-1 text-gray-400 hover:text-gray-600 disabled:opacity-30"
+                className="p-1 text-hos-text-muted hover:text-hos-text-secondary disabled:opacity-30"
                 title="Move down"
               >
                 ↓
               </button>
               <button
                 onClick={() => handleToggleActive(category)}
-                className={`p-1 rounded ${category.isActive ? 'text-green-600 hover:bg-green-50' : 'text-gray-400 hover:bg-gray-50'}`}
+                className={`p-1 rounded ${category.isActive ? 'text-green-600 hover:bg-green-50' : 'text-hos-text-muted hover:bg-hos-bg-tertiary'}`}
                 title={category.isActive ? 'Deactivate' : 'Activate'}
               >
                 {category.isActive ? '✓' : '○'}
               </button>
               <button
                 onClick={() => handleDuplicateCategory(category)}
-                className="p-1 text-gray-400 hover:text-gray-600 hover:bg-gray-50 rounded"
+                className="p-1 text-hos-text-muted hover:text-hos-text-secondary hover:bg-hos-bg-tertiary rounded"
                 title="Duplicate"
               >
                 📋
               </button>
               <button
                 onClick={() => startEdit(category)}
-                className="px-2 py-1 text-sm bg-blue-600 text-white rounded hover:bg-blue-700"
+                className="px-2 py-1 text-sm bg-hos-gold text-[#1a1406] rounded hover:bg-hos-gold-hover"
               >
                 Edit
               </button>
@@ -518,13 +518,13 @@ export default function AdminCategoriesPage() {
     return allCats.map(category => (
       <div
         key={category.id}
-        className={`bg-white border rounded-lg p-4 hover:shadow-lg transition-shadow ${
+        className={`bg-hos-bg-secondary border rounded-lg p-4 hover:shadow-lg transition-shadow ${
           !category.isActive ? 'opacity-60' : ''
-        } ${category.isFeatured ? 'border-purple-300' : 'border-gray-200'}`}
+        } ${category.isFeatured ? 'border-hos-border-accent' : 'border-hos-border'}`}
       >
         <div className="flex items-start gap-3">
           {category.image ? (
-            <div className="w-16 h-16 rounded overflow-hidden bg-gray-100 flex-shrink-0">
+            <div className="w-16 h-16 rounded overflow-hidden bg-hos-bg-tertiary flex-shrink-0">
               <SafeImage
                 src={category.image}
                 alt={category.name}
@@ -534,24 +534,24 @@ export default function AdminCategoriesPage() {
               />
             </div>
           ) : (
-            <div className="w-16 h-16 rounded bg-gray-100 flex items-center justify-center text-2xl flex-shrink-0">
+            <div className="w-16 h-16 rounded bg-hos-bg-tertiary flex items-center justify-center text-2xl flex-shrink-0">
               {category.icon || '📁'}
             </div>
           )}
           <div className="flex-1 min-w-0">
-            <h3 className="font-medium text-gray-900 truncate">{category.name}</h3>
-            <p className="text-xs text-gray-500">{category.path}</p>
+            <h3 className="font-medium text-white truncate">{category.name}</h3>
+            <p className="text-xs text-hos-text-muted">{category.path}</p>
             {category.description && (
-              <p className="text-sm text-gray-600 mt-1 line-clamp-2">{category.description}</p>
+              <p className="text-sm text-hos-text-secondary mt-1 line-clamp-2">{category.description}</p>
             )}
             <div className="flex flex-wrap gap-1 mt-2">
               {category.isFeatured && (
-                <span className="text-xs bg-purple-100 text-purple-700 px-1.5 py-0.5 rounded">Featured</span>
+                <span className="text-xs bg-hos-gold/20 text-hos-gold-hover px-1.5 py-0.5 rounded">Featured</span>
               )}
               {!category.isActive && (
-                <span className="text-xs bg-gray-100 text-gray-600 px-1.5 py-0.5 rounded">Inactive</span>
+                <span className="text-xs bg-hos-bg-tertiary text-hos-text-secondary px-1.5 py-0.5 rounded">Inactive</span>
               )}
-              <span className="text-xs bg-blue-100 text-blue-700 px-1.5 py-0.5 rounded">
+              <span className="text-xs bg-hos-gold/20 text-hos-gold px-1.5 py-0.5 rounded">
                 {category.productCount || 0} products
               </span>
             </div>
@@ -560,7 +560,7 @@ export default function AdminCategoriesPage() {
         <div className="flex gap-2 mt-4">
           <button
             onClick={() => startEdit(category)}
-            className="flex-1 px-3 py-1.5 text-sm bg-blue-600 text-white rounded hover:bg-blue-700"
+            className="flex-1 px-3 py-1.5 text-sm bg-hos-gold text-[#1a1406] rounded hover:bg-hos-gold-hover"
           >
             Edit
           </button>
@@ -580,7 +580,7 @@ export default function AdminCategoriesPage() {
       <RouteGuard allowedRoles={['ADMIN']}>
         <AdminLayout>
           <div className="flex items-center justify-center h-64">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600"></div>
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-hos-gold"></div>
           </div>
         </AdminLayout>
       </RouteGuard>
@@ -594,8 +594,8 @@ export default function AdminCategoriesPage() {
           {/* Header */}
           <div className="flex justify-between items-center">
             <div>
-              <h1 className="text-2xl font-bold text-gray-900">Fandoms</h1>
-              <p className="text-gray-600 mt-1">Fandom → Fandom → Sub-fandom hierarchy</p>
+              <h1 className="text-2xl font-bold text-white">Fandoms</h1>
+              <p className="text-hos-text-secondary mt-1">Fandom → Fandom → Sub-fandom hierarchy</p>
             </div>
             <button
               onClick={() => {
@@ -606,7 +606,7 @@ export default function AdminCategoriesPage() {
                   order: 0, isActive: true, isFeatured: false, metaTitle: '', metaDescription: '',
                 });
               }}
-              className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 flex items-center gap-2"
+              className="px-4 py-2 bg-hos-gold text-[#1a1406] rounded-lg hover:bg-hos-gold-hover flex items-center gap-2"
               title="Create a new Fandom (top-level) or fandom under a Fandom"
             >
               <span>+</span> Create Fandom / Add Fandom
@@ -616,32 +616,32 @@ export default function AdminCategoriesPage() {
           {/* Stats Cards */}
           {stats && (
             <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-4">
-              <div className="bg-white rounded-lg shadow p-4">
-                <p className="text-sm text-gray-600">Total</p>
-                <p className="text-2xl font-bold text-purple-600">{stats.totalCategories}</p>
+              <div className="bg-hos-bg-secondary rounded-lg shadow p-4">
+                <p className="text-sm text-hos-text-secondary">Total</p>
+                <p className="text-2xl font-bold text-hos-gold">{stats.totalCategories}</p>
               </div>
-              <div className="bg-white rounded-lg shadow p-4">
-                <p className="text-sm text-gray-600">Fandom</p>
-                <p className="text-2xl font-bold text-blue-600">{stats.rootCategories}</p>
+              <div className="bg-hos-bg-secondary rounded-lg shadow p-4">
+                <p className="text-sm text-hos-text-secondary">Fandom</p>
+                <p className="text-2xl font-bold text-hos-gold">{stats.rootCategories}</p>
               </div>
-              <div className="bg-white rounded-lg shadow p-4">
-                <p className="text-sm text-gray-600">Active</p>
+              <div className="bg-hos-bg-secondary rounded-lg shadow p-4">
+                <p className="text-sm text-hos-text-secondary">Active</p>
                 <p className="text-2xl font-bold text-green-600">{stats.activeCategories}</p>
               </div>
-              <div className="bg-white rounded-lg shadow p-4">
-                <p className="text-sm text-gray-600">Inactive</p>
-                <p className="text-2xl font-bold text-gray-400">{stats.inactiveCategories}</p>
+              <div className="bg-hos-bg-secondary rounded-lg shadow p-4">
+                <p className="text-sm text-hos-text-secondary">Inactive</p>
+                <p className="text-2xl font-bold text-hos-text-muted">{stats.inactiveCategories}</p>
               </div>
-              <div className="bg-white rounded-lg shadow p-4">
-                <p className="text-sm text-gray-600">Products</p>
+              <div className="bg-hos-bg-secondary rounded-lg shadow p-4">
+                <p className="text-sm text-hos-text-secondary">Products</p>
                 <p className="text-2xl font-bold text-orange-600">{stats.totalProducts}</p>
               </div>
-              <div className="bg-white rounded-lg shadow p-4">
-                <p className="text-sm text-gray-600">Avg/Fandom</p>
-                <p className="text-2xl font-bold text-indigo-600">{stats.avgProductsPerCategory}</p>
+              <div className="bg-hos-bg-secondary rounded-lg shadow p-4">
+                <p className="text-sm text-hos-text-secondary">Avg/Fandom</p>
+                <p className="text-2xl font-bold text-hos-gold">{stats.avgProductsPerCategory}</p>
               </div>
-              <div className="bg-white rounded-lg shadow p-4">
-                <p className="text-sm text-gray-600">Max Depth</p>
+              <div className="bg-hos-bg-secondary rounded-lg shadow p-4">
+                <p className="text-sm text-hos-text-secondary">Max Depth</p>
                 <p className="text-2xl font-bold text-pink-600">{stats.maxDepth + 1}</p>
               </div>
             </div>
@@ -657,7 +657,7 @@ export default function AdminCategoriesPage() {
           )}
 
           {/* Filters & Controls */}
-          <div className="bg-white rounded-lg shadow p-4">
+          <div className="bg-hos-bg-secondary rounded-lg shadow p-4">
             <div className="flex flex-wrap gap-4 items-center">
               <div className="flex-1 min-w-[200px]">
                 <input
@@ -665,7 +665,7 @@ export default function AdminCategoriesPage() {
                   placeholder="Search fandoms..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
+                  className="w-full px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50"
                 />
               </div>
               <label className="flex items-center gap-2">
@@ -673,30 +673,30 @@ export default function AdminCategoriesPage() {
                   type="checkbox"
                   checked={showInactive}
                   onChange={(e) => setShowInactive(e.target.checked)}
-                  className="rounded border-gray-300 text-purple-600"
+                  className="rounded border-hos-border text-hos-gold"
                 />
-                <span className="text-sm text-gray-700">Show inactive</span>
+                <span className="text-sm text-hos-text-secondary">Show inactive</span>
               </label>
               <div className="flex items-center gap-2 border-l pl-4">
                 <button
                   onClick={() => setViewMode('tree')}
-                  className={`px-3 py-1 rounded ${viewMode === 'tree' ? 'bg-purple-100 text-purple-700' : 'text-gray-600 hover:bg-gray-100'}`}
+                  className={`px-3 py-1 rounded ${viewMode === 'tree' ? 'bg-hos-gold/20 text-hos-gold-hover' : 'text-hos-text-secondary hover:bg-hos-bg-tertiary'}`}
                 >
                   🌲 Tree
                 </button>
                 <button
                   onClick={() => setViewMode('grid')}
-                  className={`px-3 py-1 rounded ${viewMode === 'grid' ? 'bg-purple-100 text-purple-700' : 'text-gray-600 hover:bg-gray-100'}`}
+                  className={`px-3 py-1 rounded ${viewMode === 'grid' ? 'bg-hos-gold/20 text-hos-gold-hover' : 'text-hos-text-secondary hover:bg-hos-bg-tertiary'}`}
                 >
                   ⊞ Grid
                 </button>
               </div>
               {viewMode === 'tree' && (
                 <div className="flex items-center gap-2 border-l pl-4">
-                  <button onClick={expandAll} className="text-sm text-purple-600 hover:text-purple-800">
+                  <button onClick={expandAll} className="text-sm text-hos-gold hover:text-hos-gold-hover">
                     Expand All
                   </button>
-                  <button onClick={collapseAll} className="text-sm text-purple-600 hover:text-purple-800">
+                  <button onClick={collapseAll} className="text-sm text-hos-gold hover:text-hos-gold-hover">
                     Collapse All
                   </button>
                 </div>
@@ -706,29 +706,29 @@ export default function AdminCategoriesPage() {
 
           {/* Create/Edit Form */}
           {showCreateForm && (
-            <div className="bg-white rounded-lg shadow p-6">
+            <div className="bg-hos-bg-secondary rounded-lg shadow p-6">
               <h2 className="text-lg font-semibold mb-4">
                 {editingCategory ? 'Edit Fandom' : (formData.parentId ? 'Create New Fandom' : 'Create New Fandom')}
               </h2>
               <form onSubmit={editingCategory ? handleUpdateCategory : handleCreateCategory} className="space-y-4">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Fandom Name *</label>
+                    <label className="block text-sm font-medium text-hos-text-secondary mb-1">Fandom Name *</label>
                     <input
                       type="text"
                       required
                       value={formData.name}
                       onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
+                      className="w-full px-3 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50"
                       placeholder="Fandom name"
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Fandom</label>
+                    <label className="block text-sm font-medium text-hos-text-secondary mb-1">Fandom</label>
                     <select
                       value={formData.parentId}
                       onChange={(e) => setFormData({ ...formData, parentId: e.target.value })}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
+                      className="w-full px-3 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50"
                     >
                       <option value="">None (Create as Fandom)</option>
                       {getAllCategoriesFlat(categories)
@@ -744,11 +744,11 @@ export default function AdminCategoriesPage() {
                 </div>
                 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
+                  <label className="block text-sm font-medium text-hos-text-secondary mb-1">Description</label>
                   <textarea
                     value={formData.description}
                     onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
+                    className="w-full px-3 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50"
                     rows={2}
                     placeholder="Fandom description"
                   />
@@ -756,11 +756,11 @@ export default function AdminCategoriesPage() {
 
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Icon</label>
+                    <label className="block text-sm font-medium text-hos-text-secondary mb-1">Icon</label>
                     <select
                       value={formData.icon}
                       onChange={(e) => setFormData({ ...formData, icon: e.target.value })}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
+                      className="w-full px-3 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50"
                     >
                       <option value="">No icon</option>
                       {CATEGORY_ICONS.map(icon => (
@@ -771,67 +771,67 @@ export default function AdminCategoriesPage() {
                     </select>
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Image URL</label>
+                    <label className="block text-sm font-medium text-hos-text-secondary mb-1">Image URL</label>
                     <input
                       type="url"
                       value={formData.image}
                       onChange={(e) => setFormData({ ...formData, image: e.target.value })}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
+                      className="w-full px-3 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50"
                       placeholder="https://..."
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Display Order</label>
+                    <label className="block text-sm font-medium text-hos-text-secondary mb-1">Display Order</label>
                     <input
                       type="number"
                       value={formData.order}
                       onChange={(e) => setFormData({ ...formData, order: parseInt(e.target.value, 10) || 0 })}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
+                      className="w-full px-3 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50"
                     />
                   </div>
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">SEO Title</label>
+                    <label className="block text-sm font-medium text-hos-text-secondary mb-1">SEO Title</label>
                     <input
                       type="text"
                       value={formData.metaTitle}
                       onChange={(e) => setFormData({ ...formData, metaTitle: e.target.value })}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
+                      className="w-full px-3 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50"
                       placeholder="SEO meta title"
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">SEO Description</label>
+                    <label className="block text-sm font-medium text-hos-text-secondary mb-1">SEO Description</label>
                     <input
                       type="text"
                       value={formData.metaDescription}
                       onChange={(e) => setFormData({ ...formData, metaDescription: e.target.value })}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
+                      className="w-full px-3 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50"
                       placeholder="SEO meta description"
                     />
                   </div>
                 </div>
 
                 <div className="flex flex-wrap gap-4">
-                  <label className="flex items-center gap-2 p-3 bg-gray-50 rounded-lg">
+                  <label className="flex items-center gap-2 p-3 bg-hos-bg-secondary rounded-lg">
                     <input
                       type="checkbox"
                       checked={formData.isActive}
                       onChange={(e) => setFormData({ ...formData, isActive: e.target.checked })}
-                      className="rounded border-gray-300 text-purple-600"
+                      className="rounded border-hos-border text-hos-gold"
                     />
-                    <span className="text-sm text-gray-700">Active</span>
+                    <span className="text-sm text-hos-text-secondary">Active</span>
                   </label>
-                  <label className="flex items-center gap-2 p-3 bg-gray-50 rounded-lg">
+                  <label className="flex items-center gap-2 p-3 bg-hos-bg-secondary rounded-lg">
                     <input
                       type="checkbox"
                       checked={formData.isFeatured}
                       onChange={(e) => setFormData({ ...formData, isFeatured: e.target.checked })}
-                      className="rounded border-gray-300 text-purple-600"
+                      className="rounded border-hos-border text-hos-gold"
                     />
-                    <span className="text-sm text-gray-700">Featured</span>
+                    <span className="text-sm text-hos-text-secondary">Featured</span>
                   </label>
                 </div>
 
@@ -839,14 +839,14 @@ export default function AdminCategoriesPage() {
                   <button
                     type="submit"
                     disabled={savingCategory}
-                    className="px-6 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="px-6 py-2 bg-hos-gold text-[#1a1406] rounded-lg hover:bg-hos-gold-hover disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     {savingCategory ? 'Saving...' : (editingCategory ? 'Update Fandom' : (formData.parentId ? 'Create Fandom' : 'Create Fandom'))}
                   </button>
                   <button
                     type="button"
                     onClick={resetForm}
-                    className="px-6 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300"
+                    className="px-6 py-2 bg-hos-bg-tertiary text-hos-text-secondary rounded-lg hover:bg-hos-bg-tertiary"
                   >
                     Cancel
                   </button>
@@ -856,15 +856,15 @@ export default function AdminCategoriesPage() {
           )}
 
           {/* Categories Display */}
-          <div className="bg-white rounded-lg shadow">
-            <div className="p-4 border-b border-gray-200">
+          <div className="bg-hos-bg-secondary rounded-lg shadow">
+            <div className="p-4 border-b border-hos-border">
               <h2 className="text-lg font-semibold">
                 {viewMode === 'tree' ? 'Fandom Tree' : 'All Fandoms'} ({getAllCategoriesFlat(filteredCategories).length})
               </h2>
             </div>
             <div className="p-4">
               {filteredCategories.length === 0 ? (
-                <div className="text-center py-8 text-gray-500">
+                <div className="text-center py-8 text-hos-text-muted">
                   {searchTerm ? 'No fandoms match your search.' : 'No fandoms found. Create your first Fandom to get started.'}
                 </div>
               ) : viewMode === 'tree' ? (

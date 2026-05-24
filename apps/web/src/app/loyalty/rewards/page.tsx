@@ -8,7 +8,7 @@ import { Footer } from '@/components/Footer';
 import { apiClient } from '@/lib/api';
 
 const EARN_ACTIONS = [
-  { action: 'Purchase', description: 'Earn on every qualifying order', pointsExample: '1 pt per £1' },
+  { action: 'Purchase', description: 'Earn on every qualifying order', pointsExample: '1 pt per $1' },
   { action: 'Product Review', description: 'Write a review on a product you bought', pointsExample: '25 pts' },
   { action: 'Photo Review', description: 'Include a photo with your review', pointsExample: '50 pts' },
   { action: 'Social Share', description: 'Share a product on social media (up to 5/day)', pointsExample: '10 pts' },

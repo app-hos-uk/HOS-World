@@ -36,7 +36,7 @@ export default function AdminBrandCampaignsListPage() {
           <Link href="/admin/brand-partnerships" className="text-sm text-violet-700 mb-4 inline-block">
             ← Partners
           </Link>
-          <h1 className="text-2xl font-semibold text-gray-900 mb-4">Brand campaigns</h1>
+          <h1 className="text-2xl font-semibold text-white mb-4">Brand campaigns</h1>
           <div className="flex gap-2 mb-4">
             <select
               className="border rounded px-2 py-1 text-sm"
@@ -53,26 +53,26 @@ export default function AdminBrandCampaignsListPage() {
             </select>
             <button
               type="button"
-              className="text-sm px-3 py-1 rounded bg-gray-800 text-white"
+              className="text-sm px-3 py-1 rounded bg-hos-surface text-white"
               onClick={() => load()}
             >
               Apply
             </button>
           </div>
           {loading ? (
-            <p className="text-gray-500">Loading…</p>
+            <p className="text-hos-text-muted">Loading…</p>
           ) : (
             <ul className="space-y-2 text-sm">
               {rows.map((r) => {
                 const id = String(r.id);
                 const p = r.partnership as Record<string, unknown> | undefined;
                 return (
-                  <li key={id} className="border rounded-lg p-3 bg-white flex justify-between gap-2">
+                  <li key={id} className="border rounded-lg p-3 bg-hos-bg-secondary flex justify-between gap-2">
                     <div>
                       <Link href={`/admin/brand-partnerships/campaigns/${id}`} className="text-violet-700 font-medium">
                         {String(r.name)}
                       </Link>
-                      <p className="text-gray-500 text-xs">
+                      <p className="text-hos-text-muted text-xs">
                         {String(r.type)} · {String(r.status)}
                         {p?.name ? ` · ${String(p.name)}` : ''}
                       </p>

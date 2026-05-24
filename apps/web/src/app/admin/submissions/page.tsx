@@ -87,17 +87,17 @@ interface Stats {
 }
 
 const STATUSES = [
-  { value: 'SUBMITTED', label: 'Submitted', color: 'bg-gray-100 text-gray-800', chartColor: '#9ca3af' },
+  { value: 'SUBMITTED', label: 'Submitted', color: 'bg-hos-bg-tertiary text-white', chartColor: '#9ca3af' },
   { value: 'UNDER_REVIEW', label: 'Under Review', color: 'bg-yellow-100 text-yellow-800', chartColor: '#fbbf24' },
-  { value: 'PROCUREMENT_APPROVED', label: 'Procurement Approved', color: 'bg-blue-100 text-blue-800', chartColor: '#3b82f6' },
+  { value: 'PROCUREMENT_APPROVED', label: 'Procurement Approved', color: 'bg-hos-gold/20 text-hos-gold', chartColor: '#3b82f6' },
   { value: 'PROCUREMENT_REJECTED', label: 'Procurement Rejected', color: 'bg-red-100 text-red-800', chartColor: '#ef4444' },
   { value: 'SHIPPED_TO_FC', label: 'Shipped to FC', color: 'bg-orange-100 text-orange-800', chartColor: '#f97316' },
   { value: 'FC_ACCEPTED', label: 'FC Accepted', color: 'bg-teal-100 text-teal-800', chartColor: '#14b8a6' },
   { value: 'FC_REJECTED', label: 'FC Rejected', color: 'bg-red-100 text-red-800', chartColor: '#dc2626' },
-  { value: 'CATALOG_PENDING', label: 'Catalog Pending', color: 'bg-indigo-50 text-indigo-600', chartColor: '#818cf8' },
-  { value: 'CATALOG_COMPLETED', label: 'Catalog Completed', color: 'bg-indigo-100 text-indigo-800', chartColor: '#6366f1' },
-  { value: 'MARKETING_PENDING', label: 'Marketing Pending', color: 'bg-purple-50 text-purple-600', chartColor: '#a78bfa' },
-  { value: 'MARKETING_COMPLETED', label: 'Marketing Completed', color: 'bg-purple-100 text-purple-800', chartColor: '#8b5cf6' },
+  { value: 'CATALOG_PENDING', label: 'Catalog Pending', color: 'bg-hos-gold/10 text-hos-gold', chartColor: '#818cf8' },
+  { value: 'CATALOG_COMPLETED', label: 'Catalog Completed', color: 'bg-hos-gold/20 text-hos-gold', chartColor: '#6366f1' },
+  { value: 'MARKETING_PENDING', label: 'Marketing Pending', color: 'bg-hos-gold/10 text-hos-gold', chartColor: '#a78bfa' },
+  { value: 'MARKETING_COMPLETED', label: 'Marketing Completed', color: 'bg-hos-gold/20 text-hos-gold', chartColor: '#8b5cf6' },
   { value: 'CONTENT_COMPLETED', label: 'Content Completed', color: 'bg-green-100 text-green-800', chartColor: '#10b981' },
   { value: 'FINANCE_PENDING', label: 'Finance Pending', color: 'bg-cyan-50 text-cyan-600', chartColor: '#22d3ee' },
   { value: 'FINANCE_APPROVED', label: 'Finance Approved', color: 'bg-cyan-100 text-cyan-800', chartColor: '#06b6d4' },
@@ -317,7 +317,7 @@ export default function AdminSubmissionsPage() {
     raw.replace(/_/g, ' ').toLowerCase().replace(/\b\w/g, c => c.toUpperCase());
 
   const getStatusBadge = (status: string) => {
-    const statusInfo = STATUSES.find(s => s.value === status) || { label: formatStatusLabel(status), color: 'bg-gray-100 text-gray-800' };
+    const statusInfo = STATUSES.find(s => s.value === status) || { label: formatStatusLabel(status), color: 'bg-hos-bg-tertiary text-white' };
     return <span className={`px-2 py-0.5 text-xs rounded-full ${statusInfo.color}`}>{statusInfo.label}</span>;
   };
 
@@ -341,14 +341,14 @@ export default function AdminSubmissionsPage() {
           {/* Header */}
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div>
-              <h1 className="text-2xl font-bold text-gray-900">Product Submissions</h1>
-              <p className="text-gray-600 mt-1">Review and manage seller product submissions</p>
+              <h1 className="text-2xl font-bold text-white">Product Submissions</h1>
+              <p className="text-hos-text-secondary mt-1">Review and manage seller product submissions</p>
             </div>
             <div className="flex items-center gap-2">
               <button
                 onClick={() => fetchSubmissions()}
                 disabled={loading}
-                className="px-3 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50"
+                className="px-3 py-2 text-sm font-medium text-hos-text-secondary bg-hos-bg-secondary border border-hos-border rounded-lg hover:bg-hos-bg-tertiary disabled:opacity-50"
               >
                 {loading ? 'Refreshing...' : 'Refresh'}
               </button>
@@ -361,79 +361,79 @@ export default function AdminSubmissionsPage() {
             <div className="grid grid-cols-2 md:grid-cols-5 lg:grid-cols-10 gap-3">
               <button
                 onClick={() => setStatusFilter('ALL')}
-                className={`bg-white rounded-lg shadow p-3 text-left hover:shadow-md ${statusFilter === 'ALL' ? 'ring-2 ring-purple-500' : ''}`}
+                className={`bg-hos-bg-secondary rounded-lg shadow p-3 text-left hover:shadow-md ${statusFilter === 'ALL' ? 'ring-2 ring-hos-gold/50' : ''}`}
               >
-                <p className="text-xs text-gray-500">Total</p>
-                <p className="text-xl font-bold text-gray-900">{stats.total}</p>
+                <p className="text-xs text-hos-text-muted">Total</p>
+                <p className="text-xl font-bold text-white">{stats.total}</p>
               </button>
               <button
                 onClick={() => setStatusFilter('SUBMITTED')}
-                className={`bg-white rounded-lg shadow p-3 text-left hover:shadow-md ${statusFilter === 'SUBMITTED' ? 'ring-2 ring-purple-500' : ''}`}
+                className={`bg-hos-bg-secondary rounded-lg shadow p-3 text-left hover:shadow-md ${statusFilter === 'SUBMITTED' ? 'ring-2 ring-hos-gold/50' : ''}`}
               >
-                <p className="text-xs text-gray-500">New</p>
-                <p className="text-xl font-bold text-gray-600">{stats.submitted}</p>
+                <p className="text-xs text-hos-text-muted">New</p>
+                <p className="text-xl font-bold text-hos-text-secondary">{stats.submitted}</p>
               </button>
               <button
                 onClick={() => setStatusFilter('UNDER_REVIEW')}
-                className={`bg-white rounded-lg shadow p-3 text-left hover:shadow-md ${statusFilter === 'UNDER_REVIEW' ? 'ring-2 ring-purple-500' : ''}`}
+                className={`bg-hos-bg-secondary rounded-lg shadow p-3 text-left hover:shadow-md ${statusFilter === 'UNDER_REVIEW' ? 'ring-2 ring-hos-gold/50' : ''}`}
               >
-                <p className="text-xs text-gray-500">Review</p>
+                <p className="text-xs text-hos-text-muted">Review</p>
                 <p className="text-xl font-bold text-yellow-600">{stats.underReview}</p>
               </button>
               <button
                 onClick={() => setStatusFilter('PROCUREMENT_APPROVED')}
-                className={`bg-white rounded-lg shadow p-3 text-left hover:shadow-md ${statusFilter === 'PROCUREMENT_APPROVED' ? 'ring-2 ring-purple-500' : ''}`}
+                className={`bg-hos-bg-secondary rounded-lg shadow p-3 text-left hover:shadow-md ${statusFilter === 'PROCUREMENT_APPROVED' ? 'ring-2 ring-hos-gold/50' : ''}`}
               >
-                <p className="text-xs text-gray-500">Procurement</p>
-                <p className="text-xl font-bold text-blue-600">{stats.procurementApproved}</p>
+                <p className="text-xs text-hos-text-muted">Procurement</p>
+                <p className="text-xl font-bold text-hos-gold">{stats.procurementApproved}</p>
               </button>
               <button
                 onClick={() => setStatusFilter('PROCUREMENT_REJECTED')}
-                className={`bg-white rounded-lg shadow p-3 text-left hover:shadow-md ${statusFilter === 'PROCUREMENT_REJECTED' ? 'ring-2 ring-purple-500' : ''}`}
+                className={`bg-hos-bg-secondary rounded-lg shadow p-3 text-left hover:shadow-md ${statusFilter === 'PROCUREMENT_REJECTED' ? 'ring-2 ring-hos-gold/50' : ''}`}
               >
-                <p className="text-xs text-gray-500">Proc. Rejected</p>
+                <p className="text-xs text-hos-text-muted">Proc. Rejected</p>
                 <p className="text-xl font-bold text-red-600">{stats.procurementRejected}</p>
               </button>
               <button
                 onClick={() => setStatusFilter('CATALOG_COMPLETED')}
-                className={`bg-white rounded-lg shadow p-3 text-left hover:shadow-md ${statusFilter === 'CATALOG_COMPLETED' ? 'ring-2 ring-purple-500' : ''}`}
+                className={`bg-hos-bg-secondary rounded-lg shadow p-3 text-left hover:shadow-md ${statusFilter === 'CATALOG_COMPLETED' ? 'ring-2 ring-hos-gold/50' : ''}`}
               >
-                <p className="text-xs text-gray-500">Catalog</p>
-                <p className="text-xl font-bold text-indigo-600">{stats.catalogCompleted}</p>
+                <p className="text-xs text-hos-text-muted">Catalog</p>
+                <p className="text-xl font-bold text-hos-gold">{stats.catalogCompleted}</p>
               </button>
               <button
                 onClick={() => setStatusFilter('MARKETING_COMPLETED')}
-                className={`bg-white rounded-lg shadow p-3 text-left hover:shadow-md ${statusFilter === 'MARKETING_COMPLETED' ? 'ring-2 ring-purple-500' : ''}`}
+                className={`bg-hos-bg-secondary rounded-lg shadow p-3 text-left hover:shadow-md ${statusFilter === 'MARKETING_COMPLETED' ? 'ring-2 ring-hos-gold/50' : ''}`}
               >
-                <p className="text-xs text-gray-500">Marketing</p>
-                <p className="text-xl font-bold text-purple-600">{stats.marketingCompleted}</p>
+                <p className="text-xs text-hos-text-muted">Marketing</p>
+                <p className="text-xl font-bold text-hos-gold">{stats.marketingCompleted}</p>
               </button>
               <button
                 onClick={() => setStatusFilter('CONTENT_COMPLETED')}
-                className={`bg-white rounded-lg shadow p-3 text-left hover:shadow-md ${statusFilter === 'CONTENT_COMPLETED' ? 'ring-2 ring-purple-500' : ''}`}
+                className={`bg-hos-bg-secondary rounded-lg shadow p-3 text-left hover:shadow-md ${statusFilter === 'CONTENT_COMPLETED' ? 'ring-2 ring-hos-gold/50' : ''}`}
               >
-                <p className="text-xs text-gray-500">Content</p>
+                <p className="text-xs text-hos-text-muted">Content</p>
                 <p className="text-xl font-bold text-green-600">{stats.contentCompleted}</p>
               </button>
               <button
                 onClick={() => setStatusFilter('FINANCE_APPROVED')}
-                className={`bg-white rounded-lg shadow p-3 text-left hover:shadow-md ${statusFilter === 'FINANCE_APPROVED' ? 'ring-2 ring-purple-500' : ''}`}
+                className={`bg-hos-bg-secondary rounded-lg shadow p-3 text-left hover:shadow-md ${statusFilter === 'FINANCE_APPROVED' ? 'ring-2 ring-hos-gold/50' : ''}`}
               >
-                <p className="text-xs text-gray-500">Finance</p>
+                <p className="text-xs text-hos-text-muted">Finance</p>
                 <p className="text-xl font-bold text-cyan-600">{stats.financeApproved}</p>
               </button>
               <button
                 onClick={() => setStatusFilter('PUBLISHED')}
-                className={`bg-white rounded-lg shadow p-3 text-left hover:shadow-md ${statusFilter === 'PUBLISHED' ? 'ring-2 ring-purple-500' : ''}`}
+                className={`bg-hos-bg-secondary rounded-lg shadow p-3 text-left hover:shadow-md ${statusFilter === 'PUBLISHED' ? 'ring-2 ring-hos-gold/50' : ''}`}
               >
-                <p className="text-xs text-gray-500">Published</p>
+                <p className="text-xs text-hos-text-muted">Published</p>
                 <p className="text-xl font-bold text-green-600">{stats.published}</p>
               </button>
               <button
                 onClick={() => setStatusFilter('REJECTED')}
-                className={`bg-white rounded-lg shadow p-3 text-left hover:shadow-md ${statusFilter === 'REJECTED' ? 'ring-2 ring-purple-500' : ''}`}
+                className={`bg-hos-bg-secondary rounded-lg shadow p-3 text-left hover:shadow-md ${statusFilter === 'REJECTED' ? 'ring-2 ring-hos-gold/50' : ''}`}
               >
-                <p className="text-xs text-gray-500">Rejected</p>
+                <p className="text-xs text-hos-text-muted">Rejected</p>
                 <p className="text-xl font-bold text-red-600">{stats.rejected}</p>
               </button>
             </div>
@@ -441,9 +441,9 @@ export default function AdminSubmissionsPage() {
 
           {/* Chart */}
           {chartData.length > 0 && (
-            <div className="bg-white rounded-lg shadow p-6">
+            <div className="bg-hos-bg-secondary rounded-lg shadow p-6">
               <h3 className="text-lg font-semibold mb-2">Submissions by Status</h3>
-              <p className="text-xs text-gray-500 mb-4">
+              <p className="text-xs text-hos-text-muted mb-4">
                 Labels are listed below the chart — hover slices for counts and percentages.
               </p>
               <div className="flex flex-col gap-6">
@@ -489,10 +489,10 @@ export default function AdminSubmissionsPage() {
                           aria-hidden
                         />
                         <span className="min-w-0 leading-snug">
-                          <span className="font-medium text-gray-900">{d.name}</span>
-                          <span className="ml-1.5 tabular-nums text-gray-600">
+                          <span className="font-medium text-white">{d.name}</span>
+                          <span className="ml-1.5 tabular-nums text-hos-text-secondary">
                             {d.value}
-                            <span className="text-gray-400"> ({pct}%)</span>
+                            <span className="text-hos-text-muted"> ({pct}%)</span>
                           </span>
                         </span>
                       </li>
@@ -511,24 +511,24 @@ export default function AdminSubmissionsPage() {
           )}
 
           {/* Filters */}
-          <div className="bg-white rounded-lg shadow p-4">
+          <div className="bg-hos-bg-secondary rounded-lg shadow p-4">
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Search</label>
+                <label className="block text-sm font-medium text-hos-text-secondary mb-1">Search</label>
                 <input
                   type="text"
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   placeholder="Product, seller..."
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
+                  className="w-full px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50"
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Status</label>
+                <label className="block text-sm font-medium text-hos-text-secondary mb-1">Status</label>
                 <select
                   value={statusFilter}
                   onChange={(e) => setStatusFilter(e.target.value)}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
+                  className="w-full px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50"
                 >
                   <option value="ALL">All Status</option>
                   {STATUSES.map(s => (
@@ -537,11 +537,11 @@ export default function AdminSubmissionsPage() {
                 </select>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Date</label>
+                <label className="block text-sm font-medium text-hos-text-secondary mb-1">Date</label>
                 <select
                   value={dateFilter}
                   onChange={(e) => setDateFilter(e.target.value)}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
+                  className="w-full px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50"
                 >
                   <option value="ALL">All Time</option>
                   <option value="7d">Last 7 Days</option>
@@ -550,7 +550,7 @@ export default function AdminSubmissionsPage() {
                 </select>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Sort By</label>
+                <label className="block text-sm font-medium text-hos-text-secondary mb-1">Sort By</label>
                 <select
                   value={`${sortBy}-${sortOrder}`}
                   onChange={(e) => {
@@ -558,7 +558,7 @@ export default function AdminSubmissionsPage() {
                     setSortBy(field as any);
                     setSortOrder(order as any);
                   }}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
+                  className="w-full px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50"
                 >
                   <option value="date-desc">Newest First</option>
                   <option value="date-asc">Oldest First</option>
@@ -572,35 +572,35 @@ export default function AdminSubmissionsPage() {
           {/* Submissions Table */}
           {loading ? (
             <div className="flex items-center justify-center py-12">
-              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600"></div>
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-hos-gold"></div>
             </div>
           ) : (
-            <div className="bg-white rounded-lg shadow overflow-hidden">
+            <div className="bg-hos-bg-secondary rounded-lg shadow overflow-hidden">
               <div className="p-4 border-b">
                 <h2 className="text-lg font-semibold">Submissions ({filteredSubmissions.length})</h2>
               </div>
               <div className="overflow-x-auto">
-                <table className="min-w-full divide-y divide-gray-200">
-                  <thead className="bg-gray-50">
+                <table className="min-w-full divide-y divide-hos-border">
+                  <thead className="bg-hos-bg-secondary">
                     <tr>
-                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Product</th>
-                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Seller</th>
-                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Price</th>
-                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
-                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Submitted</th>
-                      <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">Actions</th>
+                      <th className="px-4 py-3 text-left text-xs font-medium text-hos-text-muted uppercase">Product</th>
+                      <th className="px-4 py-3 text-left text-xs font-medium text-hos-text-muted uppercase">Seller</th>
+                      <th className="px-4 py-3 text-left text-xs font-medium text-hos-text-muted uppercase">Price</th>
+                      <th className="px-4 py-3 text-left text-xs font-medium text-hos-text-muted uppercase">Status</th>
+                      <th className="px-4 py-3 text-left text-xs font-medium text-hos-text-muted uppercase">Submitted</th>
+                      <th className="px-4 py-3 text-right text-xs font-medium text-hos-text-muted uppercase">Actions</th>
                     </tr>
                   </thead>
-                  <tbody className="bg-white divide-y divide-gray-200">
+                  <tbody className="bg-hos-bg-secondary divide-y divide-hos-border">
                     {filteredSubmissions.length === 0 ? (
                       <tr>
-                        <td colSpan={6} className="px-6 py-8 text-center text-gray-500">
+                        <td colSpan={6} className="px-6 py-8 text-center text-hos-text-muted">
                           No submissions found
                         </td>
                       </tr>
                     ) : (
                       filteredSubmissions.map((submission) => (
-                        <tr key={submission.id} className="hover:bg-gray-50">
+                        <tr key={submission.id} className="hover:bg-hos-bg-tertiary">
                           <td className="px-4 py-3">
                             <div className="flex items-center gap-3">
                               {(() => {
@@ -611,19 +611,19 @@ export default function AdminSubmissionsPage() {
                                     alt=""
                                     width={40}
                                     height={40}
-                                    className="rounded object-cover bg-gray-100"
+                                    className="rounded object-cover bg-hos-bg-tertiary"
                                   />
                                 ) : (
-                                  <div className="h-10 w-10 rounded bg-gray-200 flex items-center justify-center text-gray-400 text-xs">No img</div>
+                                  <div className="h-10 w-10 rounded bg-hos-bg-tertiary flex items-center justify-center text-hos-text-muted text-xs">No img</div>
                                 );
                               })()}
                               <div>
-                                <p className="text-sm font-medium text-gray-900">
+                                <p className="text-sm font-medium text-white">
                                   {submission.productData?.name || submission.catalogEntry?.title || 'Untitled'}
                                 </p>
                                 <div className="flex items-center gap-1.5 flex-wrap">
                                   {submission.productData?.sku && (
-                                    <span className="text-xs text-gray-500">SKU: {submission.productData.sku}</span>
+                                    <span className="text-xs text-hos-text-muted">SKU: {submission.productData.sku}</span>
                                   )}
                                   {submission.duplicateProducts && submission.duplicateProducts.length > 0 && (
                                     <span className={`inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[10px] font-semibold ${
@@ -640,23 +640,23 @@ export default function AdminSubmissionsPage() {
                             </div>
                           </td>
                           <td className="px-4 py-3">
-                            <p className="text-sm font-medium text-gray-900">{submission.seller?.storeName || 'Unknown'}</p>
-                            <p className="text-xs text-gray-500">{submission.seller?.email || submission.user?.email}</p>
+                            <p className="text-sm font-medium text-white">{submission.seller?.storeName || 'Unknown'}</p>
+                            <p className="text-xs text-hos-text-muted">{submission.seller?.email || submission.user?.email}</p>
                           </td>
-                          <td className="px-4 py-3 text-sm text-gray-900">
+                          <td className="px-4 py-3 text-sm text-white">
                             {submission.productData?.price 
                               ? `${submission.productData.currency || 'USD'} ${Number(submission.productData.price).toFixed(2)}`
                               : 'N/A'}
                           </td>
                           <td className="px-4 py-3">{getStatusBadge(submission.status)}</td>
-                          <td className="px-4 py-3 text-sm text-gray-500">
+                          <td className="px-4 py-3 text-sm text-hos-text-muted">
                             {new Date(submission.createdAt).toLocaleDateString()}
                           </td>
                           <td className="px-4 py-3 text-right">
                             <div className="flex justify-end gap-1">
                               <button
                                 onClick={() => handleViewDetails(submission)}
-                                className="px-2 py-1 text-sm text-gray-600 hover:bg-gray-100 rounded"
+                                className="px-2 py-1 text-sm text-hos-text-secondary hover:bg-hos-bg-tertiary rounded"
                               >
                                 View
                               </button>
@@ -699,19 +699,19 @@ export default function AdminSubmissionsPage() {
           {/* Detail Modal */}
           {showDetailModal && selectedSubmission && (
             <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-              <div className="bg-white rounded-lg max-w-3xl w-full max-h-[90vh] overflow-y-auto">
+              <div className="bg-hos-bg-secondary rounded-lg max-w-3xl w-full max-h-[90vh] overflow-y-auto">
                 <div className="p-6">
                   <div className="flex justify-between items-start mb-6">
                     <div>
                       <h2 className="text-2xl font-bold">Submission Details</h2>
-                      <p className="text-sm text-gray-500">ID: {selectedSubmission.id}</p>
+                      <p className="text-sm text-hos-text-muted">ID: {selectedSubmission.id}</p>
                     </div>
-                    <button onClick={() => setShowDetailModal(false)} className="text-gray-500 hover:text-gray-700 text-2xl">×</button>
+                    <button onClick={() => setShowDetailModal(false)} className="text-hos-text-muted hover:text-hos-text-secondary text-2xl">×</button>
                   </div>
 
                   <div className="space-y-6">
                     {/* Workflow Progress */}
-                    <div className="bg-gray-50 rounded-lg p-4">
+                    <div className="bg-hos-bg-secondary rounded-lg p-4">
                       <h3 className="font-semibold mb-3">Workflow Progress</h3>
                       <div className="flex items-center justify-between">
                         {['Submitted', 'Review', 'Procurement', 'Catalog', 'Marketing', 'Content', 'Finance', 'Published'].map((step, index) => {
@@ -721,11 +721,11 @@ export default function AdminSubmissionsPage() {
                           return (
                             <div key={step} className="flex flex-col items-center flex-1">
                               <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium ${
-                                isCompleted ? 'bg-green-500 text-white' : isCurrent ? 'bg-purple-500 text-white' : 'bg-gray-200 text-gray-500'
+                                isCompleted ? 'bg-green-500 text-white' : isCurrent ? 'bg-hos-gold text-[#1a1406]' : 'bg-hos-bg-tertiary text-hos-text-muted'
                               }`}>
                                 {isCompleted ? '✓' : index + 1}
                               </div>
-                              <p className={`text-xs mt-1 ${isCurrent ? 'font-medium' : 'text-gray-500'}`}>{step}</p>
+                              <p className={`text-xs mt-1 ${isCurrent ? 'font-medium' : 'text-hos-text-muted'}`}>{step}</p>
                             </div>
                           );
                         })}
@@ -746,17 +746,17 @@ export default function AdminSubmissionsPage() {
                         <h3 className="font-semibold mb-2">Product Information</h3>
                         <div className="space-y-2 text-sm">
                           <div>
-                            <p className="text-gray-500">Name</p>
+                            <p className="text-hos-text-muted">Name</p>
                             <p className="font-medium">{selectedSubmission.productData?.name || selectedSubmission.catalogEntry?.title || 'N/A'}</p>
                           </div>
                           {selectedSubmission.productData?.sku && (
                             <div>
-                              <p className="text-gray-500">SKU</p>
+                              <p className="text-hos-text-muted">SKU</p>
                               <p className="font-medium">{selectedSubmission.productData.sku}</p>
                             </div>
                           )}
                           <div>
-                            <p className="text-gray-500">Price</p>
+                            <p className="text-hos-text-muted">Price</p>
                             <p className="font-medium">
                               {selectedSubmission.productData?.price 
                                 ? `${selectedSubmission.productData.currency || 'USD'} ${Number(selectedSubmission.productData.price).toFixed(2)}`
@@ -769,11 +769,11 @@ export default function AdminSubmissionsPage() {
                         <h3 className="font-semibold mb-2">Seller Information</h3>
                         <div className="space-y-2 text-sm">
                           <div>
-                            <p className="text-gray-500">Store</p>
+                            <p className="text-hos-text-muted">Store</p>
                             <p className="font-medium">{selectedSubmission.seller?.storeName || 'N/A'}</p>
                           </div>
                           <div>
-                            <p className="text-gray-500">Email</p>
+                            <p className="text-hos-text-muted">Email</p>
                             <p className="font-medium">{selectedSubmission.seller?.email || selectedSubmission.user?.email}</p>
                           </div>
                         </div>
@@ -784,7 +784,7 @@ export default function AdminSubmissionsPage() {
                     {(selectedSubmission.productData?.description || selectedSubmission.catalogEntry?.description) && (
                       <div>
                         <h3 className="font-semibold mb-2">Description</h3>
-                        <p className="text-sm text-gray-700">
+                        <p className="text-sm text-hos-text-secondary">
                           {selectedSubmission.productData?.description || selectedSubmission.catalogEntry?.description}
                         </p>
                       </div>
@@ -804,7 +804,7 @@ export default function AdminSubmissionsPage() {
                                 alt={`Product ${idx + 1}`}
                                 width={96}
                                 height={96}
-                                className="rounded object-cover bg-gray-100"
+                                className="rounded object-cover bg-hos-bg-tertiary"
                               />
                             ) : null;
                           })}
@@ -830,15 +830,15 @@ export default function AdminSubmissionsPage() {
                             const ep = dup.existingProduct;
                             const score = dup.similarityScore ?? 0;
                             return (
-                              <div key={dup.id || ep?.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg border border-gray-200">
+                              <div key={dup.id || ep?.id} className="flex items-center justify-between p-3 bg-hos-bg-secondary rounded-lg border border-hos-border">
                                 <div className="min-w-0 flex-1">
-                                  <p className="text-sm font-medium text-gray-900 truncate">{ep?.name || 'Unknown product'}</p>
-                                  <div className="flex flex-wrap gap-2 text-xs text-gray-500 mt-0.5">
+                                  <p className="text-sm font-medium text-white truncate">{ep?.name || 'Unknown product'}</p>
+                                  <div className="flex flex-wrap gap-2 text-xs text-hos-text-muted mt-0.5">
                                     {ep?.sku && <span>SKU: {ep.sku}</span>}
                                     {ep?.barcode && <span>Barcode: {ep.barcode}</span>}
                                     {ep?.ean && <span>EAN: {ep.ean}</span>}
                                     {ep?.price != null && <span>Price: {ep.currency || 'USD'} {Number(ep.price).toFixed(2)}</span>}
-                                    {ep?.status && <span className="px-1 py-0.5 bg-gray-200 rounded">{ep.status}</span>}
+                                    {ep?.status && <span className="px-1 py-0.5 bg-hos-bg-tertiary rounded">{ep.status}</span>}
                                   </div>
                                 </div>
                                 <div className="ml-3 shrink-0 text-right">
@@ -876,24 +876,24 @@ export default function AdminSubmissionsPage() {
                     {selectedSubmission.status !== 'SUBMITTED' && selectedSubmission.status !== 'UNDER_REVIEW' && selectedSubmission.status !== 'REJECTED' && (
                       <div>
                         <h3 className="font-semibold mb-2">Procurement Approval Log</h3>
-                        <div className="bg-blue-50 rounded-lg p-3 border border-blue-200 text-sm">
+                        <div className="bg-hos-gold/10 rounded-lg p-3 border border-hos-border-accent text-sm">
                           <div className="grid grid-cols-2 gap-x-4 gap-y-1">
-                            <p className="text-blue-700">Status:</p>
-                            <p className="text-blue-900 font-medium">Approved</p>
+                            <p className="text-hos-gold">Status:</p>
+                            <p className="text-hos-gold font-medium">Approved</p>
                             {selectedSubmission.procurementApprovedAt && (
                               <>
-                                <p className="text-blue-700">Approved at:</p>
-                                <p className="text-blue-900">{new Date(selectedSubmission.procurementApprovedAt).toLocaleString()}</p>
+                                <p className="text-hos-gold">Approved at:</p>
+                                <p className="text-hos-gold">{new Date(selectedSubmission.procurementApprovedAt).toLocaleString()}</p>
                               </>
                             )}
                             {selectedSubmission.selectedQuantity != null && (
                               <>
-                                <p className="text-blue-700">Approved qty:</p>
-                                <p className="text-blue-900 font-medium">{selectedSubmission.selectedQuantity} units</p>
+                                <p className="text-hos-gold">Approved qty:</p>
+                                <p className="text-hos-gold font-medium">{selectedSubmission.selectedQuantity} units</p>
                               </>
                             )}
-                            <p className="text-blue-700">Seller offered:</p>
-                            <p className="text-blue-900">{(selectedSubmission.productData as any)?.stock ?? 'N/A'} units</p>
+                            <p className="text-hos-gold">Seller offered:</p>
+                            <p className="text-hos-gold">{(selectedSubmission.productData as any)?.stock ?? 'N/A'} units</p>
                           </div>
                         </div>
                       </div>
@@ -905,25 +905,25 @@ export default function AdminSubmissionsPage() {
                         <h3 className="font-semibold mb-2">Review Notes</h3>
                         <div className="space-y-2 text-sm">
                           {selectedSubmission.procurementNotes && (
-                            <div className="p-2 bg-blue-50 rounded">
-                              <p className="text-blue-800 font-medium">Procurement:</p>
+                            <div className="p-2 bg-hos-gold/10 rounded">
+                              <p className="text-hos-gold font-medium">Procurement:</p>
                               {selectedSubmission.procurementNotes.split('\n\n').map((part: string, i: number) => (
-                                <p key={i} className={`mt-0.5 ${part.startsWith('[Duplicate acknowledged]') ? 'text-amber-700 font-medium' : 'text-blue-700'}`}>
+                                <p key={i} className={`mt-0.5 ${part.startsWith('[Duplicate acknowledged]') ? 'text-amber-700 font-medium' : 'text-hos-gold'}`}>
                                   {part}
                                 </p>
                               ))}
                             </div>
                           )}
                           {selectedSubmission.catalogNotes && (
-                            <div className="p-2 bg-indigo-50 rounded">
-                              <p className="text-indigo-800 font-medium">Catalog:</p>
-                              <p className="text-indigo-700">{selectedSubmission.catalogNotes}</p>
+                            <div className="p-2 bg-hos-gold/10 rounded">
+                              <p className="text-hos-gold font-medium">Catalog:</p>
+                              <p className="text-hos-gold">{selectedSubmission.catalogNotes}</p>
                             </div>
                           )}
                           {selectedSubmission.marketingNotes && (
-                            <div className="p-2 bg-purple-50 rounded">
-                              <p className="text-purple-800 font-medium">Marketing:</p>
-                              <p className="text-purple-700">{selectedSubmission.marketingNotes}</p>
+                            <div className="p-2 bg-hos-gold/10 rounded">
+                              <p className="text-hos-gold font-medium">Marketing:</p>
+                              <p className="text-hos-gold-hover">{selectedSubmission.marketingNotes}</p>
                             </div>
                           )}
                           {selectedSubmission.financeNotes && (
@@ -965,7 +965,7 @@ export default function AdminSubmissionsPage() {
                       )}
                       <button
                         onClick={() => setShowDetailModal(false)}
-                        className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300"
+                        className="px-4 py-2 bg-hos-bg-tertiary text-hos-text-secondary rounded-lg hover:bg-hos-bg-tertiary"
                       >
                         Close
                       </button>
@@ -979,7 +979,7 @@ export default function AdminSubmissionsPage() {
           {/* Action Modal */}
           {showActionModal && selectedSubmission && (
             <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-              <div className="bg-white rounded-lg max-w-md w-full">
+              <div className="bg-hos-bg-secondary rounded-lg max-w-md w-full">
                 <div className="p-6">
                   <h2 className="text-xl font-bold mb-4">
                     {actionType === 'approve' ? 'Approve Submission' : 'Reject Submission'}
@@ -988,23 +988,23 @@ export default function AdminSubmissionsPage() {
                   <div className="space-y-4">
                     {actionType === 'approve' ? (
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Notes (Optional)</label>
+                        <label className="block text-sm font-medium text-hos-text-secondary mb-1">Notes (Optional)</label>
                         <textarea
                           value={actionNotes}
                           onChange={(e) => setActionNotes(e.target.value)}
                           rows={3}
-                          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
+                          className="w-full px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50"
                           placeholder="Add any notes for this approval..."
                         />
                       </div>
                     ) : (
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Rejection Reason *</label>
+                        <label className="block text-sm font-medium text-hos-text-secondary mb-1">Rejection Reason *</label>
                         <textarea
                           value={rejectionReason}
                           onChange={(e) => setRejectionReason(e.target.value)}
                           rows={3}
-                          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
+                          className="w-full px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50"
                           placeholder="Please provide a reason for rejection..."
                           required
                         />
@@ -1023,7 +1023,7 @@ export default function AdminSubmissionsPage() {
                       </button>
                       <button
                         onClick={() => setShowActionModal(false)}
-                        className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300"
+                        className="px-4 py-2 bg-hos-bg-tertiary text-hos-text-secondary rounded-lg hover:bg-hos-bg-tertiary"
                       >
                         Cancel
                       </button>

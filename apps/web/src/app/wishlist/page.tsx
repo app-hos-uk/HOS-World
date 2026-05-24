@@ -197,32 +197,32 @@ export default function WishlistPage() {
 
   return (
     <RouteGuard allowedRoles={['CUSTOMER', 'ADMIN']} showAccessDenied={true}>
-      <div className="min-h-screen bg-gray-50">
+      <div className="min-h-screen bg-hos-bg-secondary">
         <Header />
         <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 lg:py-12">
           {loading ? (
             <div className="flex items-center justify-center py-12">
-              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600"></div>
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-hos-gold"></div>
             </div>
           ) : (
           <>
           {/* Header */}
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
             <div>
-              <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">My Wishlist</h1>
-              <p className="text-gray-600 mt-1">{stats.total} item{stats.total !== 1 ? 's' : ''} saved</p>
+              <h1 className="text-2xl sm:text-3xl font-bold text-white">My Wishlist</h1>
+              <p className="text-hos-text-secondary mt-1">{stats.total} item{stats.total !== 1 ? 's' : ''} saved</p>
             </div>
             {wishlistItems.length > 0 && (
               <div className="flex gap-2">
                 <button
                   onClick={handleShareWishlist}
-                  className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors font-medium text-sm"
+                  className="px-4 py-2 border border-hos-border text-hos-text-secondary rounded-lg hover:bg-hos-bg-tertiary transition-colors font-medium text-sm"
                 >
                   Share Wishlist
                 </button>
                 <button
                   onClick={handleMoveAllToCart}
-                  className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors font-medium text-sm"
+                  className="px-4 py-2 bg-hos-gold text-[#1a1406] rounded-lg hover:bg-hos-gold-hover transition-colors font-medium text-sm"
                 >
                   Add All to Cart
                 </button>
@@ -233,20 +233,20 @@ export default function WishlistPage() {
           {/* Stats */}
           {wishlistItems.length > 0 && (
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-6">
-              <div className="bg-white rounded-lg shadow p-4">
-                <h3 className="text-xs font-medium text-gray-500 uppercase">Total Value</h3>
-                <p className="text-xl font-bold text-purple-600 mt-1">{formatPrice(stats.totalValue, 'USD')}</p>
+              <div className="bg-hos-bg-secondary rounded-lg shadow p-4">
+                <h3 className="text-xs font-medium text-hos-text-muted uppercase">Total Value</h3>
+                <p className="text-xl font-bold text-hos-gold mt-1">{formatPrice(stats.totalValue, 'USD')}</p>
               </div>
-              <div className="bg-white rounded-lg shadow p-4">
-                <h3 className="text-xs font-medium text-gray-500 uppercase">In Stock</h3>
+              <div className="bg-hos-bg-secondary rounded-lg shadow p-4">
+                <h3 className="text-xs font-medium text-hos-text-muted uppercase">In Stock</h3>
                 <p className="text-xl font-bold text-green-600 mt-1">{stats.inStock}</p>
               </div>
-              <div className="bg-white rounded-lg shadow p-4">
-                <h3 className="text-xs font-medium text-gray-500 uppercase">Out of Stock</h3>
+              <div className="bg-hos-bg-secondary rounded-lg shadow p-4">
+                <h3 className="text-xs font-medium text-hos-text-muted uppercase">Out of Stock</h3>
                 <p className="text-xl font-bold text-red-600 mt-1">{stats.outOfStock}</p>
               </div>
-              <div className="bg-white rounded-lg shadow p-4">
-                <h3 className="text-xs font-medium text-gray-500 uppercase">On Sale</h3>
+              <div className="bg-hos-bg-secondary rounded-lg shadow p-4">
+                <h3 className="text-xs font-medium text-hos-text-muted uppercase">On Sale</h3>
                 <p className="text-xl font-bold text-orange-600 mt-1">{stats.onSale}</p>
               </div>
             </div>
@@ -258,7 +258,7 @@ export default function WishlistPage() {
               <select
                 value={sortBy}
                 onChange={(e) => setSortBy(e.target.value as typeof sortBy)}
-                className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
+                className="px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50"
               >
                 <option value="newest">Newest Added</option>
                 <option value="price-low">Price: Low to High</option>
@@ -268,13 +268,13 @@ export default function WishlistPage() {
           )}
 
           {wishlistItems.length === 0 ? (
-            <div className="bg-white rounded-lg shadow p-12 text-center">
+            <div className="bg-hos-bg-secondary rounded-lg shadow p-12 text-center">
               <div className="text-6xl mb-4">💜</div>
-              <h2 className="text-xl font-semibold text-gray-900 mb-2">Your wishlist is empty</h2>
-              <p className="text-gray-600 mb-6">Save items you love by clicking the heart icon on any product</p>
+              <h2 className="text-xl font-semibold text-white mb-2">Your wishlist is empty</h2>
+              <p className="text-hos-text-secondary mb-6">Save items you love by clicking the heart icon on any product</p>
               <Link 
                 href="/products" 
-                className="inline-block px-6 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors font-medium"
+                className="inline-block px-6 py-3 bg-hos-gold text-[#1a1406] rounded-lg hover:bg-hos-gold-hover transition-colors font-medium"
               >
                 Browse Products
               </Link>
@@ -290,12 +290,12 @@ export default function WishlistPage() {
                 return (
                   <div 
                     key={item.id} 
-                    className={`bg-white border rounded-lg overflow-hidden transition-all hover:shadow-lg ${
+                    className={`bg-hos-bg-secondary border rounded-lg overflow-hidden transition-all hover:shadow-lg ${
                       isOutOfStock ? 'opacity-75' : ''
                     }`}
                   >
                     <Link href={`/products/${item.productId}`}>
-                      <div className="relative w-full h-48 bg-gray-100">
+                      <div className="relative w-full h-48 bg-hos-bg-tertiary">
                         {(() => {
                           const firstImage = item.product?.images?.[0];
                           const imageUrl = typeof firstImage === 'string' ? firstImage : firstImage?.url;
@@ -308,7 +308,7 @@ export default function WishlistPage() {
                             />
                           ) : (
                             <div className="w-full h-full flex items-center justify-center">
-                              <span className="text-gray-400">No Image</span>
+                              <span className="text-hos-text-muted">No Image</span>
                             </div>
                           );
                         })()}
@@ -328,16 +328,16 @@ export default function WishlistPage() {
                     </Link>
                     <div className="p-4">
                       <Link href={`/products/${item.productId}`}>
-                        <h3 className="font-semibold text-lg mb-2 hover:text-purple-600 transition-colors line-clamp-2">
+                        <h3 className="font-semibold text-lg mb-2 hover:text-hos-gold transition-colors line-clamp-2">
                           {item.product?.name || 'Product'}
                         </h3>
                       </Link>
                      <div className="flex items-center gap-2 mb-4">
-                       <p className="text-purple-600 font-bold">
+                       <p className="text-hos-gold font-bold">
                          {formatPrice(item.product?.price ?? 0, item.product?.currency || 'USD')}
                        </p>
                        {item.product?.originalPrice && item.product.originalPrice > (item.product?.price || 0) && (
-                         <p className="text-gray-400 line-through text-sm">
+                         <p className="text-hos-text-muted line-through text-sm">
                            {formatPrice(item.product.originalPrice, item.product?.currency || 'USD')}
                          </p>
                        )}
@@ -348,8 +348,8 @@ export default function WishlistPage() {
                           disabled={isOutOfStock || isAdding}
                           className={`flex-1 px-4 py-2 rounded-lg transition-colors text-sm font-medium flex items-center justify-center gap-2 ${
                             isOutOfStock
-                              ? 'bg-gray-200 text-gray-500 cursor-not-allowed'
-                              : 'bg-purple-600 text-white hover:bg-purple-700'
+                              ? 'bg-hos-bg-tertiary text-hos-text-muted cursor-not-allowed'
+                              : 'bg-hos-gold text-[#1a1406] hover:bg-hos-gold-hover'
                           }`}
                         >
                           {isAdding ? (
@@ -363,7 +363,7 @@ export default function WishlistPage() {
                         <button
                           onClick={() => handleRemoveFromWishlist(item.productId)}
                           disabled={isRemoving}
-                          className="px-3 py-2 border border-gray-300 rounded-lg hover:bg-red-50 hover:border-red-300 transition-colors text-sm flex items-center justify-center"
+                          className="px-3 py-2 border border-hos-border rounded-lg hover:bg-red-50 hover:border-red-300 transition-colors text-sm flex items-center justify-center"
                           title="Remove from wishlist"
                         >
                           {isRemoving ? (
@@ -376,7 +376,7 @@ export default function WishlistPage() {
                         </button>
                       </div>
                       {item.addedAt && (
-                        <p className="text-xs text-gray-400 mt-3">
+                        <p className="text-xs text-hos-text-muted mt-3">
                           Added {new Date(item.addedAt).toLocaleDateString()}
                         </p>
                       )}

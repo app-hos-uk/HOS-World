@@ -42,39 +42,39 @@ export default function AdminDiscrepanciesPage() {
     <RouteGuard allowedRoles={['ADMIN']}>
       <AdminLayout>
         <div className="space-y-6">
-          <h1 className="text-2xl font-bold text-gray-900">Discrepancy Reports</h1>
+          <h1 className="text-2xl font-bold text-white">Discrepancy Reports</h1>
 
           {loading ? (
             <div className="flex items-center justify-center h-64">
-              <div className="text-gray-500">Loading discrepancies...</div>
+              <div className="text-hos-text-muted">Loading discrepancies...</div>
             </div>
           ) : (
-            <div className="bg-white rounded-lg shadow overflow-hidden">
-              <table className="min-w-full divide-y divide-gray-200">
-                <thead className="bg-gray-50">
+            <div className="bg-hos-bg-secondary rounded-lg shadow overflow-hidden">
+              <table className="min-w-full divide-y divide-hos-border">
+                <thead className="bg-hos-bg-secondary">
                   <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Type</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Severity</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Description</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Date</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-hos-text-muted uppercase">Type</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-hos-text-muted uppercase">Severity</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-hos-text-muted uppercase">Status</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-hos-text-muted uppercase">Description</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-hos-text-muted uppercase">Date</th>
                   </tr>
                 </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
+                <tbody className="bg-hos-bg-secondary divide-y divide-hos-border">
                   {discrepancies.length === 0 ? (
                     <tr>
-                      <td colSpan={5} className="px-6 py-4 text-center text-gray-500">No discrepancies found</td>
+                      <td colSpan={5} className="px-6 py-4 text-center text-hos-text-muted">No discrepancies found</td>
                     </tr>
                   ) : (
                     discrepancies.map((disc) => (
-                      <tr key={disc.id} className="hover:bg-gray-50">
+                      <tr key={disc.id} className="hover:bg-hos-bg-tertiary">
                         <td className="px-6 py-4 whitespace-nowrap text-sm">{disc.type}</td>
                         <td className="px-6 py-4 whitespace-nowrap">
                           <span className={`px-2 py-1 text-xs rounded-full ${
                             disc.severity === 'CRITICAL' ? 'bg-red-100 text-red-800' :
                             disc.severity === 'HIGH' ? 'bg-orange-100 text-orange-800' :
                             disc.severity === 'MEDIUM' ? 'bg-yellow-100 text-yellow-800' :
-                            'bg-gray-100 text-gray-800'
+                            'bg-hos-bg-tertiary text-white'
                           }`}>
                             {disc.severity}
                           </span>
@@ -82,14 +82,14 @@ export default function AdminDiscrepanciesPage() {
                         <td className="px-6 py-4 whitespace-nowrap">
                           <span className={`px-2 py-1 text-xs rounded-full ${
                             disc.status === 'RESOLVED' ? 'bg-green-100 text-green-800' :
-                            disc.status === 'OPEN' ? 'bg-blue-100 text-blue-800' :
-                            'bg-gray-100 text-gray-800'
+                            disc.status === 'OPEN' ? 'bg-hos-gold/20 text-hos-gold' :
+                            'bg-hos-bg-tertiary text-white'
                           }`}>
                             {disc.status}
                           </span>
                         </td>
                         <td className="px-6 py-4 text-sm">{disc.description}</td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-hos-text-muted">
                           {new Date(disc.createdAt).toLocaleDateString()}
                         </td>
                       </tr>

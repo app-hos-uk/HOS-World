@@ -84,10 +84,10 @@ export default function SupportTicketsPage() {
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'OPEN': return 'bg-yellow-100 text-yellow-800';
-      case 'IN_PROGRESS': return 'bg-blue-100 text-blue-800';
+      case 'IN_PROGRESS': return 'bg-hos-gold/20 text-hos-gold';
       case 'RESOLVED': return 'bg-green-100 text-green-800';
-      case 'CLOSED': return 'bg-gray-100 text-gray-800';
-      default: return 'bg-gray-100 text-gray-800';
+      case 'CLOSED': return 'bg-hos-bg-tertiary text-white';
+      default: return 'bg-hos-bg-tertiary text-white';
     }
   };
 
@@ -95,17 +95,17 @@ export default function SupportTicketsPage() {
 
   return (
     <RouteGuard allowedRoles={['CUSTOMER', 'WHOLESALER', 'B2C_SELLER', 'SELLER', 'INFLUENCER', 'ADMIN']} showAccessDenied={true}>
-      <div className="min-h-screen bg-gray-50">
+      <div className="min-h-screen bg-hos-bg-secondary">
         <Header />
         <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 lg:py-12">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
             <div>
-              <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">My Support Tickets</h1>
-              <p className="text-gray-600 mt-1">View and manage your support requests</p>
+              <h1 className="text-2xl sm:text-3xl font-bold text-white">My Support Tickets</h1>
+              <p className="text-hos-text-secondary mt-1">View and manage your support requests</p>
             </div>
             <Link
               href="/support/new"
-              className="inline-flex items-center gap-2 px-5 py-2.5 bg-purple-600 text-white rounded-lg hover:bg-purple-700 font-medium transition-colors self-start"
+              className="inline-flex items-center gap-2 px-5 py-2.5 bg-hos-gold text-[#1a1406] rounded-lg hover:bg-hos-gold-hover font-medium transition-colors self-start"
             >
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
@@ -122,15 +122,15 @@ export default function SupportTicketsPage() {
                 onClick={() => setStatusFilter(tab.value)}
                 className={`px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition-colors ${
                   statusFilter === tab.value
-                    ? 'bg-purple-600 text-white'
-                    : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-200'
+                    ? 'bg-hos-gold text-[#1a1406]'
+                    : 'bg-hos-bg-secondary text-hos-text-secondary hover:bg-hos-bg-tertiary border border-hos-border'
                 }`}
               >
                 {tab.label}
                 <span className={`ml-2 px-1.5 py-0.5 rounded-full text-xs ${
                   statusFilter === tab.value
-                    ? 'bg-purple-500 text-white'
-                    : 'bg-gray-100 text-gray-600'
+                    ? 'bg-hos-gold text-[#1a1406]'
+                    : 'bg-hos-bg-tertiary text-hos-text-secondary'
                 }`}>
                   {statusCounts[tab.value] ?? 0}
                 </span>
@@ -141,16 +141,16 @@ export default function SupportTicketsPage() {
           {/* Tickets List */}
           {loading ? (
             <div className="flex items-center justify-center py-12">
-              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600"></div>
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-hos-gold"></div>
             </div>
           ) : filteredTickets.length === 0 ? (
-            <div className="bg-white rounded-lg shadow p-8 text-center">
-              <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                <svg className="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div className="bg-hos-bg-secondary rounded-lg shadow p-8 text-center">
+              <div className="w-16 h-16 bg-hos-bg-tertiary rounded-full flex items-center justify-center mx-auto mb-4">
+                <svg className="w-8 h-8 text-hos-text-muted" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z" />
                 </svg>
               </div>
-              <p className="text-gray-600 mb-4">
+              <p className="text-hos-text-secondary mb-4">
                 {tickets.length === 0
                   ? "You haven't submitted any support tickets yet"
                   : 'No tickets match the selected filter'}
@@ -158,7 +158,7 @@ export default function SupportTicketsPage() {
               {tickets.length === 0 && (
                 <Link
                   href="/support/new"
-                  className="inline-block px-6 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors font-medium"
+                  className="inline-block px-6 py-3 bg-hos-gold text-[#1a1406] rounded-lg hover:bg-hos-gold-hover transition-colors font-medium"
                 >
                   Submit a Ticket
                 </Link>
@@ -167,27 +167,27 @@ export default function SupportTicketsPage() {
           ) : (
             <>
               {/* Desktop Table */}
-              <div className="hidden md:block bg-white rounded-lg shadow overflow-hidden">
+              <div className="hidden md:block bg-hos-bg-secondary rounded-lg shadow overflow-hidden">
                 <table className="w-full">
-                  <thead className="bg-gray-50 border-b border-gray-200">
+                  <thead className="bg-hos-bg-secondary border-b border-hos-border">
                     <tr>
-                      <th className="text-left px-6 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider">Ticket ID</th>
-                      <th className="text-left px-6 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider">Subject</th>
-                      <th className="text-left px-6 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                      <th className="text-left px-6 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider">Category</th>
-                      <th className="text-left px-6 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider">Created</th>
+                      <th className="text-left px-6 py-3 text-xs font-medium text-hos-text-muted uppercase tracking-wider">Ticket ID</th>
+                      <th className="text-left px-6 py-3 text-xs font-medium text-hos-text-muted uppercase tracking-wider">Subject</th>
+                      <th className="text-left px-6 py-3 text-xs font-medium text-hos-text-muted uppercase tracking-wider">Status</th>
+                      <th className="text-left px-6 py-3 text-xs font-medium text-hos-text-muted uppercase tracking-wider">Category</th>
+                      <th className="text-left px-6 py-3 text-xs font-medium text-hos-text-muted uppercase tracking-wider">Created</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-gray-200">
+                  <tbody className="divide-y divide-hos-border">
                     {filteredTickets.map((ticket) => (
-                      <tr key={ticket.id} className="hover:bg-gray-50 transition-colors">
+                      <tr key={ticket.id} className="hover:bg-hos-bg-tertiary transition-colors">
                         <td className="px-6 py-4">
-                          <Link href={`/support/tickets/${ticket.id}`} className="font-mono text-sm text-purple-600 hover:text-purple-800">
+                          <Link href={`/support/tickets/${ticket.id}`} className="font-mono text-sm text-hos-gold hover:text-hos-gold-hover">
                             {ticket.id.slice(0, 8)}...
                           </Link>
                         </td>
                         <td className="px-6 py-4">
-                          <Link href={`/support/tickets/${ticket.id}`} className="text-gray-900 hover:text-purple-600 font-medium">
+                          <Link href={`/support/tickets/${ticket.id}`} className="text-white hover:text-hos-gold font-medium">
                             {ticket.subject}
                           </Link>
                         </td>
@@ -196,10 +196,10 @@ export default function SupportTicketsPage() {
                             {formatStatus(ticket.status)}
                           </span>
                         </td>
-                        <td className="px-6 py-4 text-sm text-gray-600">
+                        <td className="px-6 py-4 text-sm text-hos-text-secondary">
                           {CATEGORY_LABELS[ticket.category] || ticket.category}
                         </td>
-                        <td className="px-6 py-4 text-sm text-gray-500">
+                        <td className="px-6 py-4 text-sm text-hos-text-muted">
                           {new Date(ticket.createdAt).toLocaleDateString('en-US', {
                             day: 'numeric',
                             month: 'short',
@@ -218,15 +218,15 @@ export default function SupportTicketsPage() {
                   <Link
                     key={ticket.id}
                     href={`/support/tickets/${ticket.id}`}
-                    className="block bg-white rounded-lg shadow p-4 hover:shadow-md transition-shadow"
+                    className="block bg-hos-bg-secondary rounded-lg shadow p-4 hover:shadow-md transition-shadow"
                   >
                     <div className="flex items-start justify-between gap-3 mb-2">
-                      <h3 className="font-medium text-gray-900 line-clamp-1">{ticket.subject}</h3>
+                      <h3 className="font-medium text-white line-clamp-1">{ticket.subject}</h3>
                       <span className={`px-2.5 py-0.5 text-xs font-medium rounded-full whitespace-nowrap ${getStatusColor(ticket.status)}`}>
                         {formatStatus(ticket.status)}
                       </span>
                     </div>
-                    <div className="flex items-center gap-3 text-sm text-gray-500">
+                    <div className="flex items-center gap-3 text-sm text-hos-text-muted">
                       <span className="font-mono">{ticket.id.slice(0, 8)}...</span>
                       <span>&middot;</span>
                       <span>{CATEGORY_LABELS[ticket.category] || ticket.category}</span>
@@ -245,7 +245,7 @@ export default function SupportTicketsPage() {
           )}
 
           {!loading && tickets.length > 0 && (
-            <div className="text-sm text-gray-500 text-center mt-6">
+            <div className="text-sm text-hos-text-muted text-center mt-6">
               Showing {filteredTickets.length} of {tickets.length} ticket{tickets.length !== 1 ? 's' : ''}
             </div>
           )}

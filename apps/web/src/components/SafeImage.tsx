@@ -51,7 +51,7 @@ export function SafeImage({
   if (!src || mode === 'failed') {
     return (
       <div
-        className={`flex items-center justify-center bg-gray-100 text-gray-400 ${className}`}
+        className={`flex items-center justify-center bg-hos-bg-tertiary text-hos-text-muted ${className}`}
         style={placeholderStyle}
       >
         {fallback}

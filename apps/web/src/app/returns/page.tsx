@@ -210,11 +210,11 @@ export default function ReturnsPage() {
       pending: 'bg-yellow-100 text-yellow-800',
       approved: 'bg-green-100 text-green-800',
       rejected: 'bg-red-100 text-red-800',
-      processing: 'bg-blue-100 text-blue-800',
-      completed: 'bg-purple-100 text-purple-800',
+      processing: 'bg-hos-gold/20 text-hos-gold',
+      completed: 'bg-hos-gold/20 text-hos-gold',
       refunded: 'bg-green-100 text-green-800',
     };
-    return colors[(status || '').toLowerCase()] || 'bg-gray-100 text-gray-800';
+    return colors[(status || '').toLowerCase()] || 'bg-hos-bg-tertiary text-white';
   };
 
   const canReturnOrder = (order: Order) => {
@@ -224,22 +224,22 @@ export default function ReturnsPage() {
 
   return (
     <RouteGuard allowedRoles={['CUSTOMER', 'ADMIN']} showAccessDenied={true}>
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen bg-hos-bg-secondary">
       <Header />
       <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 lg:py-12 max-w-6xl">
-        <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold mb-6 sm:mb-8 font-primary text-purple-900">
+        <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold mb-6 sm:mb-8 font-primary text-hos-gold">
           Returns & Refunds
         </h1>
 
         {/* Tabs */}
-        <div className="border-b border-gray-200 mb-6">
+        <div className="border-b border-hos-border mb-6">
           <nav className="flex gap-4">
             <button
               onClick={() => setActiveTab('orders')}
               className={`pb-4 px-2 font-medium text-sm transition-colors ${
                 activeTab === 'orders'
-                  ? 'border-b-2 border-purple-600 text-purple-600'
-                  : 'text-gray-500 hover:text-gray-700'
+                  ? 'border-b-2 border-hos-gold text-hos-gold'
+                  : 'text-hos-text-muted hover:text-hos-text-secondary'
               }`}
             >
               My Orders
@@ -248,8 +248,8 @@ export default function ReturnsPage() {
               onClick={() => setActiveTab('returns')}
               className={`pb-4 px-2 font-medium text-sm transition-colors ${
                 activeTab === 'returns'
-                  ? 'border-b-2 border-purple-600 text-purple-600'
-                  : 'text-gray-500 hover:text-gray-700'
+                  ? 'border-b-2 border-hos-gold text-hos-gold'
+                  : 'text-hos-text-muted hover:text-hos-text-secondary'
               }`}
             >
               Return Requests ({returnRequests.length})
@@ -260,42 +260,42 @@ export default function ReturnsPage() {
         {loading ? (
           <div className="flex items-center justify-center py-12">
             <div className="text-center">
-              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600 mx-auto mb-4"></div>
-              <p className="text-sm sm:text-base text-gray-600">Loading...</p>
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-hos-gold mx-auto mb-4"></div>
+              <p className="text-sm sm:text-base text-hos-text-secondary">Loading...</p>
             </div>
           </div>
         ) : activeTab === 'orders' ? (
           <div className="space-y-4">
             {orders.length === 0 ? (
-              <div className="bg-gray-50 rounded-lg p-8 text-center">
-                <p className="text-gray-600 mb-4">You have no orders yet.</p>
+              <div className="bg-hos-bg-secondary rounded-lg p-8 text-center">
+                <p className="text-hos-text-secondary mb-4">You have no orders yet.</p>
                 <Link
                   href="/products"
-                  className="inline-block px-6 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors font-medium"
+                  className="inline-block px-6 py-3 bg-hos-gold text-[#1a1406] rounded-lg hover:bg-hos-gold-hover transition-colors font-medium"
                 >
                   Browse Products
                 </Link>
               </div>
             ) : (
               orders.map((order) => (
-                <div key={order.id} className="bg-white border rounded-lg shadow-sm p-4 sm:p-6">
+                <div key={order.id} className="bg-hos-bg-secondary border rounded-lg shadow-sm p-4 sm:p-6">
                   <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-4">
                     <div>
-                      <h3 className="text-lg font-semibold text-gray-900">
+                      <h3 className="text-lg font-semibold text-white">
                         Order #{order.orderNumber}
                       </h3>
-                      <p className="text-sm text-gray-500">
+                      <p className="text-sm text-hos-text-muted">
                         Placed on {order.createdAt ? new Date(order.createdAt).toLocaleDateString() : 'N/A'}
                       </p>
                     </div>
                     <div className="mt-2 sm:mt-0 text-right">
-                      <p className="text-lg font-semibold text-purple-900">
+                      <p className="text-lg font-semibold text-hos-gold">
                         {formatPrice(order.total, order.currency || 'USD')}
                       </p>
                       <span className={`inline-block px-2 py-1 text-xs font-medium rounded-full ${
                         (order.status || '').toLowerCase() === 'delivered'
                           ? 'bg-green-100 text-green-800'
-                          : 'bg-gray-100 text-gray-800'
+                          : 'bg-hos-bg-tertiary text-white'
                       }`}>
                         {order.status}
                       </span>
@@ -304,7 +304,7 @@ export default function ReturnsPage() {
 
                   <div className="space-y-3 mb-4">
                     {order.items.map((item) => (
-                      <div key={item.id} className="flex items-center gap-4 p-3 bg-gray-50 rounded-lg">
+                      <div key={item.id} className="flex items-center gap-4 p-3 bg-hos-bg-secondary rounded-lg">
                         <Image
                           src={item.product.images[0]?.url || '/placeholder-image.jpg'}
                           alt={item.product.name}
@@ -313,8 +313,8 @@ export default function ReturnsPage() {
                           className="object-cover rounded-md"
                         />
                         <div className="flex-grow">
-                          <p className="font-medium text-gray-900">{item.product.name}</p>
-                          <p className="text-sm text-gray-500">
+                          <p className="font-medium text-white">{item.product.name}</p>
+                          <p className="text-sm text-hos-text-muted">
                             Quantity: {item.quantity} × {formatPrice(item.price, order.currency || 'USD')}
                           </p>
                         </div>
@@ -325,7 +325,7 @@ export default function ReturnsPage() {
                   {canReturnOrder(order) && (
                     <button
                       onClick={() => handleCreateReturn(order)}
-                      className="w-full sm:w-auto px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors font-medium"
+                      className="w-full sm:w-auto px-4 py-2 bg-hos-gold text-[#1a1406] rounded-lg hover:bg-hos-gold-hover transition-colors font-medium"
                     >
                       Request Return
                     </button>
@@ -337,11 +337,11 @@ export default function ReturnsPage() {
         ) : (
           <div className="space-y-4">
             {returnRequests.length === 0 ? (
-              <div className="bg-gray-50 rounded-lg p-8 text-center">
-                <p className="text-gray-600 mb-4">You have no return requests.</p>
+              <div className="bg-hos-bg-secondary rounded-lg p-8 text-center">
+                <p className="text-hos-text-secondary mb-4">You have no return requests.</p>
                 <button
                   onClick={() => setActiveTab('orders')}
-                  className="inline-block px-6 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors font-medium"
+                  className="inline-block px-6 py-3 bg-hos-gold text-[#1a1406] rounded-lg hover:bg-hos-gold-hover transition-colors font-medium"
                 >
                   View Orders
                 </button>
@@ -350,18 +350,18 @@ export default function ReturnsPage() {
               returnRequests.map((returnRequest) => {
                 const order = orders.find((o) => o.id === returnRequest.orderId);
                 return (
-                  <div key={returnRequest.id} className="bg-white border rounded-lg shadow-sm p-4 sm:p-6">
+                  <div key={returnRequest.id} className="bg-hos-bg-secondary border rounded-lg shadow-sm p-4 sm:p-6">
                     <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-4">
                       <div>
-                        <h3 className="text-lg font-semibold text-gray-900">
+                        <h3 className="text-lg font-semibold text-white">
                           Return Request #{returnRequest.id.slice(0, 8)}
                         </h3>
                         {order && (
-                          <p className="text-sm text-gray-500">
+                          <p className="text-sm text-hos-text-muted">
                             Order #{order.orderNumber}
                           </p>
                         )}
-                        <p className="text-sm text-gray-500">
+                        <p className="text-sm text-hos-text-muted">
                           Created on {returnRequest.createdAt ? new Date(returnRequest.createdAt).toLocaleDateString() : 'N/A'}
                         </p>
                       </div>
@@ -372,18 +372,18 @@ export default function ReturnsPage() {
 
                     <div className="space-y-2 mb-4">
                       <div>
-                        <p className="text-sm font-medium text-gray-700">Reason:</p>
-                        <p className="text-sm text-gray-600">{returnRequest.reason}</p>
+                        <p className="text-sm font-medium text-hos-text-secondary">Reason:</p>
+                        <p className="text-sm text-hos-text-secondary">{returnRequest.reason}</p>
                       </div>
                       {returnRequest.notes && (
                         <div>
-                          <p className="text-sm font-medium text-gray-700">Notes:</p>
-                          <p className="text-sm text-gray-600">{returnRequest.notes}</p>
+                          <p className="text-sm font-medium text-hos-text-secondary">Notes:</p>
+                          <p className="text-sm text-hos-text-secondary">{returnRequest.notes}</p>
                         </div>
                       )}
                       {returnRequest.refundAmount && (
                         <div>
-                          <p className="text-sm font-medium text-gray-700">Refund Amount:</p>
+                          <p className="text-sm font-medium text-hos-text-secondary">Refund Amount:</p>
                           <p className="text-lg font-semibold text-green-600">
                             {formatPrice(returnRequest.refundAmount, order?.currency || 'USD')}
                           </p>
@@ -391,15 +391,15 @@ export default function ReturnsPage() {
                       )}
                       {returnRequest.refundMethod && (
                         <div>
-                          <p className="text-sm font-medium text-gray-700">Refund Method:</p>
-                          <p className="text-sm text-gray-600">{returnRequest.refundMethod}</p>
+                          <p className="text-sm font-medium text-hos-text-secondary">Refund Method:</p>
+                          <p className="text-sm text-hos-text-secondary">{returnRequest.refundMethod}</p>
                         </div>
                       )}
                     </div>
 
                     <Link
                       href={`/returns/${returnRequest.id}`}
-                      className="text-purple-600 hover:text-purple-800 font-medium text-sm"
+                      className="text-hos-gold hover:text-hos-gold-hover font-medium text-sm"
                     >
                       View Details →
                     </Link>
@@ -413,20 +413,20 @@ export default function ReturnsPage() {
         {/* Create Return Modal */}
         {showCreateModal && selectedOrder && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4 overflow-y-auto">
-            <div className="bg-white rounded-lg max-w-2xl w-full p-6 my-8">
+            <div className="bg-hos-bg-secondary rounded-lg max-w-2xl w-full p-6 my-8">
               <h2 className="text-xl font-bold mb-4">Request Return</h2>
-              <p className="text-sm text-gray-600 mb-4">
+              <p className="text-sm text-hos-text-secondary mb-4">
                 Order #{selectedOrder.orderNumber}
               </p>
 
               <div className="space-y-4 max-h-[60vh] overflow-y-auto pr-2">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-medium text-hos-text-secondary mb-2">
                     Select Items to Return (optional - leave empty to return entire order)
                   </label>
                   <div className="space-y-2">
                     {selectedOrder.items.map((item) => (
-                      <label key={item.id} className="flex items-center gap-3 p-3 border rounded-lg hover:bg-gray-50 cursor-pointer">
+                      <label key={item.id} className="flex items-center gap-3 p-3 border rounded-lg hover:bg-hos-bg-tertiary cursor-pointer">
                         <input
                           type="checkbox"
                           checked={returnForm.selectedItems.includes(item.id)}
@@ -443,7 +443,7 @@ export default function ReturnsPage() {
                               });
                             }
                           }}
-                          className="rounded border-gray-300 text-purple-600 focus:ring-purple-500"
+                          className="rounded border-hos-border text-hos-gold focus:ring-hos-gold/50"
                         />
                         <Image
                           src={item.product.images[0]?.url || '/placeholder-image.jpg'}
@@ -453,8 +453,8 @@ export default function ReturnsPage() {
                           className="object-cover rounded-md"
                         />
                         <div className="flex-grow">
-                          <p className="font-medium text-gray-900">{item.product.name}</p>
-                          <p className="text-sm text-gray-500">
+                          <p className="font-medium text-white">{item.product.name}</p>
+                          <p className="text-sm text-hos-text-muted">
                             Qty: {item.quantity} × {formatPrice(item.price, selectedOrder.currency || 'USD')}
                           </p>
                         </div>
@@ -464,13 +464,13 @@ export default function ReturnsPage() {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label className="block text-sm font-medium text-hos-text-secondary mb-1">
                     Reason for Return *
                   </label>
                   <select
                     value={returnForm.reason}
                     onChange={(e) => setReturnForm({ ...returnForm, reason: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-purple-500 focus:border-purple-500"
+                    className="w-full px-3 py-2 border border-hos-border rounded-lg focus:ring-hos-gold/50 focus:border-hos-gold"
                     required
                   >
                     <option value="">Select a reason</option>
@@ -484,13 +484,13 @@ export default function ReturnsPage() {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label className="block text-sm font-medium text-hos-text-secondary mb-1">
                     Additional Notes (optional)
                   </label>
                   <textarea
                     value={returnForm.notes}
                     onChange={(e) => setReturnForm({ ...returnForm, notes: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-purple-500 focus:border-purple-500"
+                    className="w-full px-3 py-2 border border-hos-border rounded-lg focus:ring-hos-gold/50 focus:border-hos-gold"
                     rows={4}
                     placeholder="Please provide any additional details about your return..."
                   />
@@ -500,7 +500,7 @@ export default function ReturnsPage() {
               <div className="flex gap-3 mt-6">
                 <button
                   onClick={() => setShowCreateModal(false)}
-                  className="flex-1 px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors"
+                  className="flex-1 px-4 py-2 border border-hos-border rounded-lg text-hos-text-secondary hover:bg-hos-bg-tertiary transition-colors"
                   disabled={actionLoading}
                 >
                   Cancel
@@ -508,7 +508,7 @@ export default function ReturnsPage() {
                 <button
                   onClick={handleSubmitReturn}
                   disabled={actionLoading || !returnForm.reason}
-                  className="flex-1 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="flex-1 px-4 py-2 bg-hos-gold text-[#1a1406] rounded-lg hover:bg-hos-gold-hover transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {actionLoading ? 'Submitting...' : 'Submit Return Request'}
                 </button>

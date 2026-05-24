@@ -18,8 +18,8 @@ export default function AdminReportsPage() {
       <AdminLayout>
         <div className="space-y-6">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">Reports</h1>
-            <p className="mt-1 text-sm text-gray-500">Analytics and report dashboards</p>
+            <h1 className="text-2xl font-bold text-white">Reports</h1>
+            <p className="mt-1 text-sm text-hos-text-muted">Analytics and report dashboards</p>
           </div>
 
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
@@ -27,12 +27,12 @@ export default function AdminReportsPage() {
               <Link
                 key={item.href}
                 href={item.href}
-                className="block rounded-lg border border-gray-200 bg-white p-6 shadow-sm transition-shadow hover:shadow-md"
+                className="block rounded-lg border border-hos-border bg-hos-bg-secondary p-6 shadow-sm transition-shadow hover:shadow-md"
               >
                 <span className="text-3xl" role="img" aria-hidden>{item.icon}</span>
-                <h2 className="mt-3 text-lg font-semibold text-gray-900">{item.title}</h2>
-                <p className="mt-1 text-sm text-gray-500">{item.description}</p>
-                <span className="mt-3 inline-block text-sm font-medium text-purple-600">View report →</span>
+                <h2 className="mt-3 text-lg font-semibold text-white">{item.title}</h2>
+                <p className="mt-1 text-sm text-hos-text-muted">{item.description}</p>
+                <span className="mt-3 inline-block text-sm font-medium text-hos-gold">View report →</span>
               </Link>
             ))}
           </div>

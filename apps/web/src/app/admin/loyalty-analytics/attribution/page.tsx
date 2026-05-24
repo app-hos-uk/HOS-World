@@ -27,20 +27,20 @@ export default function AttributionPage() {
       <AdminLayout>
         <div className="p-6 max-w-5xl mx-auto space-y-4">
           <Link href="/admin/loyalty-analytics" className="text-sm text-violet-700">← Health</Link>
-          <h1 className="text-2xl font-semibold text-gray-900">Campaign ROI</h1>
-          {loading ? <p className="text-gray-500">Loading…</p> : error ? <p className="text-red-600 text-sm">{error}</p> : (
+          <h1 className="text-2xl font-semibold text-white">Campaign ROI</h1>
+          {loading ? <p className="text-hos-text-muted">Loading…</p> : error ? <p className="text-red-600 text-sm">{error}</p> : (
             <>
               {totals && (
                 <div className="grid grid-cols-2 md:grid-cols-5 gap-3 text-sm">
-                  <div className="border rounded p-3 bg-white"><p className="text-gray-500">Orders</p><p className="text-xl font-semibold">{totals.orders}</p></div>
-                  <div className="border rounded p-3 bg-white"><p className="text-gray-500">Revenue</p><p className="text-xl font-semibold">£{Number(totals.revenue).toFixed(2)}</p></div>
-                  <div className="border rounded p-3 bg-white"><p className="text-gray-500">Points</p><p className="text-xl font-semibold">{totals.points}</p></div>
-                  <div className="border rounded p-3 bg-white"><p className="text-gray-500">Cost</p><p className="text-xl font-semibold">£{Number(totals.cost).toFixed(2)}</p></div>
-                  <div className="border rounded p-3 bg-white"><p className="text-gray-500">Avg ROI</p><p className="text-xl font-semibold">{totals.avgRoi}x</p></div>
+                  <div className="border rounded p-3 bg-hos-bg-secondary"><p className="text-hos-text-muted">Orders</p><p className="text-xl font-semibold">{totals.orders}</p></div>
+                  <div className="border rounded p-3 bg-hos-bg-secondary"><p className="text-hos-text-muted">Revenue</p><p className="text-xl font-semibold">${Number(totals.revenue).toFixed(2)}</p></div>
+                  <div className="border rounded p-3 bg-hos-bg-secondary"><p className="text-hos-text-muted">Points</p><p className="text-xl font-semibold">{totals.points}</p></div>
+                  <div className="border rounded p-3 bg-hos-bg-secondary"><p className="text-hos-text-muted">Cost</p><p className="text-xl font-semibold">${Number(totals.cost).toFixed(2)}</p></div>
+                  <div className="border rounded p-3 bg-hos-bg-secondary"><p className="text-hos-text-muted">Avg ROI</p><p className="text-xl font-semibold">{totals.avgRoi}x</p></div>
                 </div>
               )}
-              <table className="min-w-full text-sm border rounded bg-white">
-                <thead className="bg-gray-50"><tr>
+              <table className="min-w-full text-sm border rounded bg-hos-bg-secondary">
+                <thead className="bg-hos-bg-secondary"><tr>
                   <th className="text-left px-3 py-2">Campaign</th>
                   <th className="px-3 py-2">Type</th>
                   <th className="px-3 py-2">Orders</th>
@@ -54,7 +54,7 @@ export default function AttributionPage() {
                       <td className="px-3 py-2">{c.campaignName}</td>
                       <td className="px-3 py-2">{c.campaignType}</td>
                       <td className="px-3 py-2">{c.totalOrders}</td>
-                      <td className="px-3 py-2">£{Number(c.totalRevenue).toFixed(2)}</td>
+                      <td className="px-3 py-2">${Number(c.totalRevenue).toFixed(2)}</td>
                       <td className="px-3 py-2">{c.totalPoints}</td>
                       <td className="px-3 py-2">{c.roi}x</td>
                     </tr>

@@ -68,12 +68,12 @@ export default function ProcurementDashboardPage() {
         <div className="mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
             <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold">Procurement Dashboard</h1>
-            <p className="text-gray-600 mt-2">Review and approve product submissions</p>
+            <p className="text-hos-text-secondary mt-2">Review and approve product submissions</p>
           </div>
           <button
             onClick={() => fetchDashboardData(true)}
             disabled={loading}
-            className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50"
+            className="px-4 py-2 text-sm font-medium text-hos-text-secondary bg-hos-bg-secondary border border-hos-border rounded-lg hover:bg-hos-bg-tertiary disabled:opacity-50"
           >
             {loading ? 'Refreshing...' : 'Refresh'}
           </button>
@@ -81,7 +81,7 @@ export default function ProcurementDashboardPage() {
 
         {loading && (
           <div className="flex items-center justify-center py-12">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600"></div>
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-hos-gold"></div>
           </div>
         )}
 
@@ -94,26 +94,26 @@ export default function ProcurementDashboardPage() {
         {!loading && !error && (
           <>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-              <div className="bg-white border rounded-lg p-6 shadow-sm">
+              <div className="bg-hos-bg-secondary border rounded-lg p-6 shadow-sm">
                 <div className="flex items-center justify-between">
                   <div>
-                    <h3 className="text-sm font-medium text-gray-600 mb-1">Pending Submissions</h3>
-                    <p className="text-3xl font-bold text-purple-600">{pendingCount.toLocaleString()}</p>
+                    <h3 className="text-sm font-medium text-hos-text-secondary mb-1">Pending Submissions</h3>
+                    <p className="text-3xl font-bold text-hos-gold">{pendingCount.toLocaleString()}</p>
                   </div>
                   <div className="text-4xl">📦</div>
                 </div>
                 <Link
                   href="/procurement/submissions?status=SUBMITTED"
-                  className="text-sm text-purple-600 hover:text-purple-700 mt-2 inline-block"
+                  className="text-sm text-hos-gold hover:text-hos-gold-hover mt-2 inline-block"
                 >
                   View all →
                 </Link>
               </div>
 
-              <div className="bg-white border rounded-lg p-6 shadow-sm">
+              <div className="bg-hos-bg-secondary border rounded-lg p-6 shadow-sm">
                 <div className="flex items-center justify-between">
                   <div>
-                    <h3 className="text-sm font-medium text-gray-600 mb-1">Duplicate Alerts</h3>
+                    <h3 className="text-sm font-medium text-hos-text-secondary mb-1">Duplicate Alerts</h3>
                     <p className="text-3xl font-bold text-orange-600">{duplicatesCount.toLocaleString()}</p>
                   </div>
                   <div className="text-4xl">⚠️</div>
@@ -126,10 +126,10 @@ export default function ProcurementDashboardPage() {
                 </Link>
               </div>
 
-              <div className="bg-white border rounded-lg p-6 shadow-sm">
+              <div className="bg-hos-bg-secondary border rounded-lg p-6 shadow-sm">
                 <div className="flex items-center justify-between">
                   <div>
-                    <h3 className="text-sm font-medium text-gray-600 mb-1">Under Review</h3>
+                    <h3 className="text-sm font-medium text-hos-text-secondary mb-1">Under Review</h3>
                     <p className="text-3xl font-bold text-yellow-600">{underReview.toLocaleString()}</p>
                   </div>
                   <div className="text-4xl">🔍</div>
@@ -142,10 +142,10 @@ export default function ProcurementDashboardPage() {
                 </Link>
               </div>
 
-              <div className="bg-white border rounded-lg p-6 shadow-sm">
+              <div className="bg-hos-bg-secondary border rounded-lg p-6 shadow-sm">
                 <div className="flex items-center justify-between">
                   <div>
-                    <h3 className="text-sm font-medium text-gray-600 mb-1">Approved Today</h3>
+                    <h3 className="text-sm font-medium text-hos-text-secondary mb-1">Approved Today</h3>
                     <p className="text-3xl font-bold text-green-600">{approvedCount.toLocaleString()}</p>
                   </div>
                   <div className="text-4xl">✅</div>
@@ -160,12 +160,12 @@ export default function ProcurementDashboardPage() {
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              <div className="bg-white border rounded-lg p-6 shadow-sm">
+              <div className="bg-hos-bg-secondary border rounded-lg p-6 shadow-sm">
                 <div className="flex items-center justify-between mb-4">
                   <h2 className="text-xl font-semibold">New Submissions</h2>
                   <Link
                     href="/procurement/submissions?status=SUBMITTED"
-                    className="text-sm text-purple-600 hover:text-purple-700"
+                    className="text-sm text-hos-gold hover:text-hos-gold-hover"
                   >
                     View all →
                   </Link>
@@ -176,21 +176,21 @@ export default function ProcurementDashboardPage() {
                       <Link
                         key={submission.id}
                         href={`/procurement/submissions?id=${submission.id}`}
-                        className="block p-3 border rounded-lg hover:bg-gray-50 transition-colors"
+                        className="block p-3 border rounded-lg hover:bg-hos-bg-tertiary transition-colors"
                       >
                         <div className="flex items-start justify-between">
                           <div className="flex-1">
-                            <p className="font-medium text-gray-900">
+                            <p className="font-medium text-white">
                               {submission.productData?.name || 'Untitled Product'}
                             </p>
-                            <p className="text-sm text-gray-500 mt-1">
+                            <p className="text-sm text-hos-text-muted mt-1">
                               {submission.seller?.storeName || 'Unknown Seller'}
                             </p>
-                            <p className="text-xs text-gray-400 mt-1">
+                            <p className="text-xs text-hos-text-muted mt-1">
                               {new Date(submission.createdAt).toLocaleString()}
                             </p>
                           </div>
-                          <span className="px-2 py-1 text-xs font-medium bg-blue-100 text-blue-800 rounded">
+                          <span className="px-2 py-1 text-xs font-medium bg-hos-gold/20 text-hos-gold rounded">
                             {submission.status}
                           </span>
                         </div>
@@ -198,14 +198,14 @@ export default function ProcurementDashboardPage() {
                     ))}
                   </div>
                 ) : (
-                  <div className="text-center py-8 text-gray-500">
+                  <div className="text-center py-8 text-hos-text-muted">
                     <p>No pending submissions</p>
                     <p className="text-sm mt-2">New product submissions will appear here</p>
                   </div>
                 )}
               </div>
 
-              <div className="bg-white border rounded-lg p-6 shadow-sm">
+              <div className="bg-hos-bg-secondary border rounded-lg p-6 shadow-sm">
                 <div className="flex items-center justify-between mb-4">
                   <h2 className="text-xl font-semibold">Duplicate Detection</h2>
                   <Link
@@ -239,7 +239,7 @@ export default function ProcurementDashboardPage() {
                     ))}
                   </div>
                 ) : (
-                  <div className="text-center py-8 text-gray-500">
+                  <div className="text-center py-8 text-hos-text-muted">
                     <p>No duplicate alerts</p>
                     <p className="text-sm mt-2">All submissions are unique</p>
                   </div>

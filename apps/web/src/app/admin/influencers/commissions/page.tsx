@@ -90,11 +90,11 @@ export default function AdminInfluencerCommissionsPage() {
     const styles: Record<string, string> = {
       PENDING: 'bg-yellow-100 text-yellow-800',
       APPROVED: 'bg-green-100 text-green-800',
-      PAID: 'bg-blue-100 text-blue-800',
+      PAID: 'bg-hos-gold/20 text-hos-gold',
       CANCELLED: 'bg-red-100 text-red-800',
-      ADJUSTED: 'bg-purple-100 text-purple-800',
+      ADJUSTED: 'bg-hos-gold/20 text-hos-gold',
     };
-    return styles[status] || 'bg-gray-100 text-gray-800';
+    return styles[status] || 'bg-hos-bg-tertiary text-white';
   };
 
   // Stats
@@ -107,34 +107,34 @@ export default function AdminInfluencerCommissionsPage() {
       <div className="space-y-6">
         {/* Header */}
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Influencer Commissions</h1>
-          <p className="text-gray-600 mt-1">
+          <h1 className="text-2xl font-bold text-white">Influencer Commissions</h1>
+          <p className="text-hos-text-secondary mt-1">
             Review and manage commission payouts
           </p>
         </div>
 
         {/* Stats */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div className="bg-white rounded-lg p-4 shadow-sm">
-            <p className="text-sm text-gray-500">Total Commissions</p>
-            <p className="text-2xl font-bold text-gray-900">{commissions.length}</p>
+          <div className="bg-hos-bg-secondary rounded-lg p-4 shadow-sm">
+            <p className="text-sm text-hos-text-muted">Total Commissions</p>
+            <p className="text-2xl font-bold text-white">{commissions.length}</p>
           </div>
-          <div className="bg-white rounded-lg p-4 shadow-sm">
-            <p className="text-sm text-gray-500">Pending Approval</p>
+          <div className="bg-hos-bg-secondary rounded-lg p-4 shadow-sm">
+            <p className="text-sm text-hos-text-muted">Pending Approval</p>
             <p className="text-2xl font-bold text-yellow-600">{formatCurrency(pendingTotal)}</p>
           </div>
-          <div className="bg-white rounded-lg p-4 shadow-sm">
-            <p className="text-sm text-gray-500">Ready for Payout</p>
+          <div className="bg-hos-bg-secondary rounded-lg p-4 shadow-sm">
+            <p className="text-sm text-hos-text-muted">Ready for Payout</p>
             <p className="text-2xl font-bold text-green-600">{formatCurrency(approvedTotal)}</p>
           </div>
         </div>
 
         {/* Filters */}
-        <div className="bg-white rounded-lg shadow-sm p-4">
+        <div className="bg-hos-bg-secondary rounded-lg shadow-sm p-4">
           <select
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value)}
-            className="px-4 py-2 border border-gray-300 rounded-lg"
+            className="px-4 py-2 border border-hos-border rounded-lg"
           >
             <option value="">All Status</option>
             <option value="PENDING">Pending</option>
@@ -145,45 +145,45 @@ export default function AdminInfluencerCommissionsPage() {
         </div>
 
         {/* Table */}
-        <div className="bg-white rounded-lg shadow-sm overflow-hidden">
+        <div className="bg-hos-bg-secondary rounded-lg shadow-sm overflow-hidden">
           {loading ? (
             <div className="p-12 text-center">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-600 mx-auto"></div>
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-hos-gold mx-auto"></div>
             </div>
           ) : commissions.length === 0 ? (
-            <div className="p-12 text-center text-gray-500">No commissions found</div>
+            <div className="p-12 text-center text-hos-text-muted">No commissions found</div>
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full">
-                <thead className="bg-gray-50">
+                <thead className="bg-hos-bg-secondary">
                   <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Date</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Influencer</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Order</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Order Total</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Rate</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Commission</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-hos-text-muted uppercase">Date</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-hos-text-muted uppercase">Influencer</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-hos-text-muted uppercase">Order</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-hos-text-muted uppercase">Order Total</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-hos-text-muted uppercase">Rate</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-hos-text-muted uppercase">Commission</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-hos-text-muted uppercase">Status</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-hos-text-muted uppercase">Actions</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-gray-200">
+                <tbody className="divide-y divide-hos-border">
                   {commissions.map((commission) => (
-                    <tr key={commission.id} className="hover:bg-gray-50">
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                    <tr key={commission.id} className="hover:bg-hos-bg-tertiary">
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-hos-text-muted">
                         {formatDate(commission.createdAt)}
                       </td>
                       <td className="px-6 py-4">
-                        <p className="font-medium text-gray-900">{commission.influencer.displayName}</p>
-                        <p className="text-sm text-gray-500">{commission.influencer.referralCode}</p>
+                        <p className="font-medium text-white">{commission.influencer.displayName}</p>
+                        <p className="text-sm text-hos-text-muted">{commission.influencer.referralCode}</p>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm font-mono text-gray-900">
+                      <td className="px-6 py-4 whitespace-nowrap text-sm font-mono text-white">
                         {commission.orderId.slice(0, 8)}...
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-white">
                         {formatCurrency(commission.orderTotal, commission.currency)}
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-hos-text-muted">
                         {(commission.rateApplied * 100).toFixed(0)}% ({commission.rateSource})
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm font-semibold text-green-600">

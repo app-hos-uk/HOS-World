@@ -204,7 +204,7 @@ function MarketingMaterialsPageContent() {
       >
         <div className="mb-6">
           <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold">Marketing Materials</h1>
-          <p className="text-gray-600 mt-2">Create and manage marketing materials for products</p>
+          <p className="text-hos-text-secondary mt-2">Create and manage marketing materials for products</p>
         </div>
 
           {/* Tabs */}
@@ -213,8 +213,8 @@ function MarketingMaterialsPageContent() {
               onClick={() => setActiveTab('pending')}
               className={`px-4 py-2 font-medium transition-colors ${
                 activeTab === 'pending'
-                  ? 'border-b-2 border-purple-600 text-purple-600'
-                  : 'text-gray-500 hover:text-gray-700'
+                  ? 'border-b-2 border-hos-gold text-hos-gold'
+                  : 'text-hos-text-muted hover:text-hos-text-secondary'
               }`}
             >
               Pending Products
@@ -223,8 +223,8 @@ function MarketingMaterialsPageContent() {
               onClick={() => setActiveTab('library')}
               className={`px-4 py-2 font-medium transition-colors ${
                 activeTab === 'library'
-                  ? 'border-b-2 border-purple-600 text-purple-600'
-                  : 'text-gray-500 hover:text-gray-700'
+                  ? 'border-b-2 border-hos-gold text-hos-gold'
+                  : 'text-hos-text-muted hover:text-hos-text-secondary'
               }`}
             >
               Materials Library
@@ -240,19 +240,19 @@ function MarketingMaterialsPageContent() {
 
           {loading && (
             <div className="flex items-center justify-center py-12">
-              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600"></div>
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-hos-gold"></div>
             </div>
           )}
 
           {activeTab === 'pending' && !loading && pendingSubmissions.length === 0 && (
-            <div className="bg-white border border-gray-200 rounded-lg p-8 text-center">
-              <p className="text-gray-500 text-lg">No pending products for marketing materials</p>
+            <div className="bg-hos-bg-secondary border border-hos-border rounded-lg p-8 text-center">
+              <p className="text-hos-text-muted text-lg">No pending products for marketing materials</p>
             </div>
           )}
 
           {activeTab === 'library' && !loading && materials.length === 0 && (
-            <div className="bg-white border border-gray-200 rounded-lg p-8 text-center">
-              <p className="text-gray-500 text-lg">No marketing materials created yet</p>
+            <div className="bg-hos-bg-secondary border border-hos-border rounded-lg p-8 text-center">
+              <p className="text-hos-text-muted text-lg">No marketing materials created yet</p>
             </div>
           )}
 
@@ -263,17 +263,17 @@ function MarketingMaterialsPageContent() {
                 return (
                   <div
                     key={submission.id}
-                    className="bg-white border border-gray-200 rounded-lg p-6 hover:shadow-md transition-shadow"
+                    className="bg-hos-bg-secondary border border-hos-border rounded-lg p-6 hover:shadow-md transition-shadow"
                   >
                     <div className="flex flex-col sm:flex-row justify-between gap-4">
                       <div className="flex-1">
-                        <h3 className="text-lg font-semibold text-gray-900">
+                        <h3 className="text-lg font-semibold text-white">
                           {productData.name || 'Untitled Product'}
                         </h3>
-                        <p className="text-sm text-gray-500 mt-1">
+                        <p className="text-sm text-hos-text-muted mt-1">
                           Seller: {submission.seller?.storeName || 'Unknown'}
                         </p>
-                        <p className="text-sm text-gray-600 mt-2 line-clamp-2">
+                        <p className="text-sm text-hos-text-secondary mt-2 line-clamp-2">
                           {productData.description || 'No description'}
                         </p>
                         {submission.marketingMaterials?.length > 0 && (
@@ -286,7 +286,7 @@ function MarketingMaterialsPageContent() {
                       <div className="flex flex-wrap gap-2">
                         <button
                           onClick={() => handleCreateMaterial(submission)}
-                          className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors font-medium text-sm whitespace-nowrap"
+                          className="px-4 py-2 bg-hos-gold text-[#1a1406] rounded-lg hover:bg-hos-gold-hover transition-colors font-medium text-sm whitespace-nowrap"
                         >
                           Create Material
                         </button>
@@ -321,9 +321,9 @@ function MarketingMaterialsPageContent() {
                 return (
                   <div
                     key={material.id}
-                    className="bg-white border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow"
+                    className="bg-hos-bg-secondary border border-hos-border rounded-lg p-4 hover:shadow-md transition-shadow"
                   >
-                    <div className="relative aspect-video bg-gray-100 rounded mb-3 overflow-hidden">
+                    <div className="relative aspect-video bg-hos-bg-tertiary rounded mb-3 overflow-hidden">
                       {material.url ? (
                         <Image
                           src={material.url}
@@ -333,16 +333,16 @@ function MarketingMaterialsPageContent() {
                           sizes="(max-width: 768px) 100vw, 33vw"
                         />
                       ) : (
-                        <div className="w-full h-full flex items-center justify-center text-gray-400">
+                        <div className="w-full h-full flex items-center justify-center text-hos-text-muted">
                           No Image
                         </div>
                       )}
                     </div>
-                    <p className="text-sm font-medium text-gray-900">
+                    <p className="text-sm font-medium text-white">
                       {productData.name || 'Unknown Product'}
                     </p>
-                    <p className="text-xs text-gray-500 mt-1">{material.type}</p>
-                    <p className="text-xs text-gray-400 mt-1">
+                    <p className="text-xs text-hos-text-muted mt-1">{material.type}</p>
+                    <p className="text-xs text-hos-text-muted mt-1">
                       {new Date(material.createdAt).toLocaleDateString()}
                     </p>
                   </div>
@@ -354,7 +354,7 @@ function MarketingMaterialsPageContent() {
           {/* Create Material Modal */}
           {showModal && selectedSubmission && (
             <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-              <div className="bg-white rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+              <div className="bg-hos-bg-secondary rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto">
                 <div className="p-6">
                   <div className="flex justify-between items-start mb-4">
                     <h2 className="text-2xl font-bold">Create Marketing Material</h2>
@@ -363,7 +363,7 @@ function MarketingMaterialsPageContent() {
                         setShowModal(false);
                         setSelectedSubmission(null);
                       }}
-                      className="text-gray-500 hover:text-gray-700"
+                      className="text-hos-text-muted hover:text-hos-text-secondary"
                     >
                       <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path
@@ -378,20 +378,20 @@ function MarketingMaterialsPageContent() {
 
                   <div className="space-y-4">
                     <div>
-                      <p className="text-sm font-medium text-gray-500">Product</p>
-                      <p className="text-gray-900">
+                      <p className="text-sm font-medium text-hos-text-muted">Product</p>
+                      <p className="text-white">
                         {selectedSubmission.productData?.name || 'Unknown'}
                       </p>
                     </div>
 
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                      <label className="block text-sm font-medium text-hos-text-secondary mb-1">
                         Material Type <span className="text-red-500">*</span>
                       </label>
                       <select
                         value={materialType}
                         onChange={(e) => setMaterialType(e.target.value)}
-                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
+                        className="w-full px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50"
                       >
                         <option value="BANNER">Banner</option>
                         <option value="CREATIVE">Creative</option>
@@ -401,7 +401,7 @@ function MarketingMaterialsPageContent() {
                     </div>
 
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                      <label className="block text-sm font-medium text-hos-text-secondary mb-1">
                         Material URL <span className="text-red-500">*</span>
                       </label>
                       <div className="flex flex-wrap items-center gap-2 mb-2">
@@ -418,26 +418,26 @@ function MarketingMaterialsPageContent() {
                         />
                         <label
                           htmlFor={marketingFileInputId}
-                          className={`inline-flex items-center gap-2 px-4 py-2 rounded-lg border border-gray-300 bg-white text-gray-700 text-sm font-medium cursor-pointer hover:bg-gray-50 transition-colors ${uploadingMaterial ? 'opacity-60 cursor-not-allowed' : ''}`}
+                          className={`inline-flex items-center gap-2 px-4 py-2 rounded-lg border border-hos-border bg-hos-bg-secondary text-hos-text-secondary text-sm font-medium cursor-pointer hover:bg-hos-bg-tertiary transition-colors ${uploadingMaterial ? 'opacity-60 cursor-not-allowed' : ''}`}
                         >
                           {uploadingMaterial ? (
                             <>
-                              <span className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-gray-300 border-t-purple-600" aria-hidden />
+                              <span className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-hos-border border-t-hos-gold" aria-hidden />
                               Uploading…
                             </>
                           ) : (
                             <>📤 Upload file</>
                           )}
                         </label>
-                        <span className="text-xs text-gray-500">JPEG, PNG, GIF, WebP · max 250KB</span>
+                        <span className="text-xs text-hos-text-muted">JPEG, PNG, GIF, WebP · max 250KB</span>
                       </div>
-                      <p className="text-xs text-gray-500 mb-1">Or paste a URL:</p>
+                      <p className="text-xs text-hos-text-muted mb-1">Or paste a URL:</p>
                       <input
                         type="url"
                         value={materialUrl}
                         onChange={(e) => setMaterialUrl(e.target.value)}
                         required
-                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
+                        className="w-full px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50"
                         placeholder="https://example.com/image.jpg"
                       />
                       {materialUrl && (
@@ -457,7 +457,7 @@ function MarketingMaterialsPageContent() {
                       <button
                         onClick={handleSubmit}
                         disabled={actionLoading || !materialUrl.trim()}
-                        className="px-6 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors font-medium disabled:opacity-50"
+                        className="px-6 py-2 bg-hos-gold text-[#1a1406] rounded-lg hover:bg-hos-gold-hover transition-colors font-medium disabled:opacity-50"
                       >
                         {actionLoading ? 'Creating...' : 'Create Material'}
                       </button>
@@ -467,7 +467,7 @@ function MarketingMaterialsPageContent() {
                           setSelectedSubmission(null);
                         }}
                         disabled={actionLoading}
-                        className="px-6 py-2 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400 transition-colors font-medium"
+                        className="px-6 py-2 bg-hos-bg-tertiary text-hos-text-secondary rounded-lg hover:bg-hos-text-muted transition-colors font-medium"
                       >
                         Cancel
                       </button>
@@ -486,8 +486,8 @@ export default function MarketingMaterialsPage() {
     <RouteGuard allowedRoles={['MARKETING', 'ADMIN']} showAccessDenied={true}>
       <Suspense
         fallback={
-          <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600" aria-hidden />
+          <div className="min-h-screen bg-hos-bg-secondary flex items-center justify-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-hos-gold" aria-hidden />
           </div>
         }
       >

@@ -76,7 +76,7 @@ export class StoreOnboardingService {
         latitude: dto.latitude ?? null,
         longitude: dto.longitude ?? null,
         timezone: dto.timezone ?? 'Europe/London',
-        currency: dto.currency ?? 'GBP',
+        currency: dto.currency ?? 'USD',
         contactEmail: dto.contactEmail ?? null,
         contactPhone: dto.contactPhone ?? null,
         managerName: dto.managerName ?? null,

@@ -109,7 +109,7 @@ export default function AmbassadorHubPage() {
           <Link href="/loyalty" className="text-amber-500 text-sm font-secondary mb-4 inline-block">
             ← Back
           </Link>
-          <h1 className="font-primary text-2xl text-amber-100 mb-2">Ambassador programme</h1>
+          <h1 className="font-primary text-2xl text-amber-100 mb-2">Ambassador program</h1>
           <p className="font-secondary text-stone-500 text-sm mb-8">
             Unlock at Dragon Keeper tier — share, create, earn.
           </p>

@@ -20,7 +20,7 @@ function getStatusBadgeClass(status: string): string {
     case 'PROCUREMENT_REJECTED':
       return 'bg-red-100 text-red-800';
     case 'UNDER_REVIEW':
-      return 'bg-blue-100 text-blue-800';
+      return 'bg-hos-gold/20 text-hos-gold';
     case 'SUBMITTED':
     default:
       return 'bg-yellow-100 text-yellow-800';
@@ -77,7 +77,7 @@ export function SubmissionViewMode({ submissionId }: { submissionId: string }) {
           <div className="mb-6">
             <Link
               href={isWholesaler ? '/wholesaler/submissions' : '/seller/submissions'}
-              className="inline-flex items-center text-purple-600 hover:text-purple-700 mb-4"
+              className="inline-flex items-center text-hos-gold hover:text-hos-gold-hover mb-4"
             >
               ← Back to Submissions
             </Link>
@@ -90,7 +90,7 @@ export function SubmissionViewMode({ submissionId }: { submissionId: string }) {
                       ? `/wholesaler/submit-product?edit=${submissionId}`
                       : `/seller/submit-product?edit=${submissionId}`
                   }
-                  className="px-4 py-2 bg-purple-600 text-white text-sm font-medium rounded-lg hover:bg-purple-700 shrink-0"
+                  className="px-4 py-2 bg-hos-gold text-[#1a1406] text-sm font-medium rounded-lg hover:bg-hos-gold-hover shrink-0"
                 >
                   Edit submission
                 </Link>
@@ -100,7 +100,7 @@ export function SubmissionViewMode({ submissionId }: { submissionId: string }) {
 
           {loading && (
             <div className="flex items-center justify-center py-12">
-              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600"></div>
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-hos-gold"></div>
             </div>
           )}
 
@@ -114,18 +114,18 @@ export function SubmissionViewMode({ submissionId }: { submissionId: string }) {
           {!loading && !error && submission && (
             <div className="space-y-6">
               {/* Status */}
-              <div className="bg-white border border-gray-200 rounded-lg p-6">
+              <div className="bg-hos-bg-secondary border border-hos-border rounded-lg p-6">
                 <div className="flex items-center justify-between">
                   <h2 className="text-xl font-semibold">Status</h2>
                   <span className={`px-3 py-1 text-sm font-medium rounded-full ${getStatusBadgeClass(submission.status)}`}>
                     {submission.status}
                   </span>
                 </div>
-                <p className="text-sm text-gray-500 mt-2">
+                <p className="text-sm text-hos-text-muted mt-2">
                   Submitted on {new Date(submission.createdAt).toLocaleString()}
                 </p>
                 {submission.updatedAt && submission.updatedAt !== submission.createdAt && (
-                  <p className="text-sm text-gray-500 mt-1">
+                  <p className="text-sm text-hos-text-muted mt-1">
                     Last updated {new Date(submission.updatedAt).toLocaleString()}
                   </p>
                 )}
@@ -133,16 +133,16 @@ export function SubmissionViewMode({ submissionId }: { submissionId: string }) {
 
               {/* Reviewer Notes */}
               {(submission.notes || submission.reviewNotes || submission.rejectionReason) && (
-                <div className="bg-white border border-gray-200 rounded-lg p-6">
+                <div className="bg-hos-bg-secondary border border-hos-border rounded-lg p-6">
                   <h2 className="text-xl font-semibold mb-3">Reviewer Notes</h2>
                   {submission.notes && (
-                    <div className="p-3 bg-gray-50 rounded-lg mb-2">
-                      <p className="text-sm text-gray-700">{submission.notes}</p>
+                    <div className="p-3 bg-hos-bg-secondary rounded-lg mb-2">
+                      <p className="text-sm text-hos-text-secondary">{submission.notes}</p>
                     </div>
                   )}
                   {submission.reviewNotes && (
-                    <div className="p-3 bg-blue-50 rounded-lg mb-2">
-                      <p className="text-sm text-blue-700">{submission.reviewNotes}</p>
+                    <div className="p-3 bg-hos-gold/10 rounded-lg mb-2">
+                      <p className="text-sm text-hos-gold">{submission.reviewNotes}</p>
                     </div>
                   )}
                   {submission.rejectionReason && (
@@ -155,34 +155,34 @@ export function SubmissionViewMode({ submissionId }: { submissionId: string }) {
               )}
 
               {/* Basic Information */}
-              <div className="bg-white border border-gray-200 rounded-lg p-6">
+              <div className="bg-hos-bg-secondary border border-hos-border rounded-lg p-6">
                 <h2 className="text-xl font-semibold mb-4">Product Information</h2>
                 <div className="space-y-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-500">Product Name</label>
-                    <p className="mt-1 text-gray-900 font-medium text-lg">{productData.name || 'N/A'}</p>
+                    <label className="block text-sm font-medium text-hos-text-muted">Product Name</label>
+                    <p className="mt-1 text-white font-medium text-lg">{productData.name || 'N/A'}</p>
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-500">Description</label>
-                    <p className="mt-1 text-gray-700 whitespace-pre-wrap">{productData.description || 'N/A'}</p>
+                    <label className="block text-sm font-medium text-hos-text-muted">Description</label>
+                    <p className="mt-1 text-hos-text-secondary whitespace-pre-wrap">{productData.description || 'N/A'}</p>
                   </div>
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                     {productData.sku && (
                       <div>
-                        <label className="block text-sm font-medium text-gray-500">SKU</label>
-                        <p className="mt-1 text-gray-900">{productData.sku}</p>
+                        <label className="block text-sm font-medium text-hos-text-muted">SKU</label>
+                        <p className="mt-1 text-white">{productData.sku}</p>
                       </div>
                     )}
                     {productData.barcode && (
                       <div>
-                        <label className="block text-sm font-medium text-gray-500">Barcode</label>
-                        <p className="mt-1 text-gray-900">{productData.barcode}</p>
+                        <label className="block text-sm font-medium text-hos-text-muted">Barcode</label>
+                        <p className="mt-1 text-white">{productData.barcode}</p>
                       </div>
                     )}
                     {productData.ean && (
                       <div>
-                        <label className="block text-sm font-medium text-gray-500">EAN</label>
-                        <p className="mt-1 text-gray-900">{productData.ean}</p>
+                        <label className="block text-sm font-medium text-hos-text-muted">EAN</label>
+                        <p className="mt-1 text-white">{productData.ean}</p>
                       </div>
                     )}
                   </div>
@@ -190,41 +190,41 @@ export function SubmissionViewMode({ submissionId }: { submissionId: string }) {
               </div>
 
               {/* Pricing */}
-              <div className="bg-white border border-gray-200 rounded-lg p-6">
+              <div className="bg-hos-bg-secondary border border-hos-border rounded-lg p-6">
                 <h2 className="text-xl font-semibold mb-4">Pricing & Stock</h2>
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-500">Price</label>
-                    <p className="mt-1 text-gray-900 font-semibold text-lg">
+                    <label className="block text-sm font-medium text-hos-text-muted">Price</label>
+                    <p className="mt-1 text-white font-semibold text-lg">
                       {productData.currency || 'USD'} {Number(productData.price || 0).toFixed(2)}
                     </p>
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-500">Stock</label>
-                    <p className="mt-1 text-gray-900 font-semibold text-lg">{productData.stock ?? 'N/A'}</p>
+                    <label className="block text-sm font-medium text-hos-text-muted">Stock</label>
+                    <p className="mt-1 text-white font-semibold text-lg">{productData.stock ?? 'N/A'}</p>
                   </div>
                   {productData.tradePrice && (
                     <div>
-                      <label className="block text-sm font-medium text-gray-500">Trade Price</label>
-                      <p className="mt-1 text-gray-900">{productData.currency || 'USD'} {Number(productData.tradePrice).toFixed(2)}</p>
+                      <label className="block text-sm font-medium text-hos-text-muted">Trade Price</label>
+                      <p className="mt-1 text-white">{productData.currency || 'USD'} {Number(productData.tradePrice).toFixed(2)}</p>
                     </div>
                   )}
                   {productData.rrp && (
                     <div>
-                      <label className="block text-sm font-medium text-gray-500">RRP</label>
-                      <p className="mt-1 text-gray-900">{productData.currency || 'USD'} {Number(productData.rrp).toFixed(2)}</p>
+                      <label className="block text-sm font-medium text-hos-text-muted">RRP</label>
+                      <p className="mt-1 text-white">{productData.currency || 'USD'} {Number(productData.rrp).toFixed(2)}</p>
                     </div>
                   )}
                   {productData.taxRate !== undefined && productData.taxRate !== null && (
                     <div>
-                      <label className="block text-sm font-medium text-gray-500">Tax Rate</label>
-                      <p className="mt-1 text-gray-900">{productData.taxRate}%</p>
+                      <label className="block text-sm font-medium text-hos-text-muted">Tax Rate</label>
+                      <p className="mt-1 text-white">{productData.taxRate}%</p>
                     </div>
                   )}
                   {productData.quantity && (
                     <div>
-                      <label className="block text-sm font-medium text-gray-500">Quantity</label>
-                      <p className="mt-1 text-gray-900">{productData.quantity}</p>
+                      <label className="block text-sm font-medium text-hos-text-muted">Quantity</label>
+                      <p className="mt-1 text-white">{productData.quantity}</p>
                     </div>
                   )}
                 </div>
@@ -232,11 +232,11 @@ export function SubmissionViewMode({ submissionId }: { submissionId: string }) {
 
               {/* Images */}
               {images.length > 0 && (
-                <div className="bg-white border border-gray-200 rounded-lg p-6">
+                <div className="bg-hos-bg-secondary border border-hos-border rounded-lg p-6">
                   <h2 className="text-xl font-semibold mb-4">Product Images</h2>
                   <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
                     {images.map((image: any, index: number) => (
-                      <div key={index} className="relative aspect-square rounded-lg overflow-hidden border border-gray-200">
+                      <div key={index} className="relative aspect-square rounded-lg overflow-hidden border border-hos-border">
                         <Image
                           src={image.url || image}
                           alt={image.alt || `Product image ${index + 1}`}
@@ -251,27 +251,27 @@ export function SubmissionViewMode({ submissionId }: { submissionId: string }) {
 
               {/* Categorization */}
               {(productData.categoryId || productData.fandom || tags.length > 0) && (
-                <div className="bg-white border border-gray-200 rounded-lg p-6">
+                <div className="bg-hos-bg-secondary border border-hos-border rounded-lg p-6">
                   <h2 className="text-xl font-semibold mb-4">Categorization</h2>
                   <div className="space-y-3">
                     {productData.categoryId && (
                       <div>
-                        <label className="block text-sm font-medium text-gray-500">Category ID</label>
-                        <p className="mt-1 text-gray-900">{productData.categoryId}</p>
+                        <label className="block text-sm font-medium text-hos-text-muted">Category ID</label>
+                        <p className="mt-1 text-white">{productData.categoryId}</p>
                       </div>
                     )}
                     {productData.fandom && (
                       <div>
-                        <label className="block text-sm font-medium text-gray-500">Fandom</label>
-                        <p className="mt-1 text-gray-900">{productData.fandom}</p>
+                        <label className="block text-sm font-medium text-hos-text-muted">Fandom</label>
+                        <p className="mt-1 text-white">{productData.fandom}</p>
                       </div>
                     )}
                     {tags.length > 0 && (
                       <div>
-                        <label className="block text-sm font-medium text-gray-500">Tags</label>
+                        <label className="block text-sm font-medium text-hos-text-muted">Tags</label>
                         <div className="mt-1 flex flex-wrap gap-2">
                           {tags.map((tag: string, index: number) => (
-                            <span key={index} className="px-2 py-1 bg-gray-100 text-gray-700 text-sm rounded-full">
+                            <span key={index} className="px-2 py-1 bg-hos-bg-tertiary text-hos-text-secondary text-sm rounded-full">
                               {tag}
                             </span>
                           ))}
@@ -284,15 +284,15 @@ export function SubmissionViewMode({ submissionId }: { submissionId: string }) {
 
               {/* Variations */}
               {variations.length > 0 && (
-                <div className="bg-white border border-gray-200 rounded-lg p-6">
+                <div className="bg-hos-bg-secondary border border-hos-border rounded-lg p-6">
                   <h2 className="text-xl font-semibold mb-4">Variations</h2>
                   <div className="space-y-3">
                     {variations.map((variation: any, index: number) => (
-                      <div key={index} className="p-3 border border-gray-200 rounded-lg">
-                        <p className="font-medium text-gray-900">{variation.name}</p>
+                      <div key={index} className="p-3 border border-hos-border rounded-lg">
+                        <p className="font-medium text-white">{variation.name}</p>
                         <div className="mt-2 flex flex-wrap gap-2">
                           {variation.options?.map((option: any, optIdx: number) => (
-                            <span key={optIdx} className="px-2 py-1 bg-purple-50 text-purple-700 text-sm rounded">
+                            <span key={optIdx} className="px-2 py-1 bg-hos-gold/10 text-hos-gold-hover text-sm rounded">
                               {option.name}: {option.value}
                             </span>
                           ))}

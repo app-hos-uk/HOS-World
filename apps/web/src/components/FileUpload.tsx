@@ -94,13 +94,13 @@ export function FileUpload({
         />
         <label
           htmlFor="file-upload"
-          className={`inline-block px-6 py-3 border-2 border-dashed border-gray-300 rounded-lg cursor-pointer hover:border-purple-500 transition-colors ${
+          className={`inline-block px-6 py-3 border-2 border-dashed border-hos-border rounded-lg cursor-pointer hover:border-hos-gold transition-colors ${
             uploading ? 'opacity-50 cursor-not-allowed' : ''
           }`}
         >
           {uploading ? (
             <span className="flex items-center gap-2">
-              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-purple-600"></div>
+              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-hos-gold"></div>
               Uploading...
             </span>
           ) : (
@@ -116,7 +116,7 @@ export function FileUpload({
           {previewUrls.map((url, index) => (
             <div key={index} className="relative group">
               {accept.startsWith('image/') ? (
-                <div className="relative w-full h-32 rounded-lg overflow-hidden border border-gray-200">
+                <div className="relative w-full h-32 rounded-lg overflow-hidden border border-hos-border">
                   <Image
                     src={url}
                     alt={`Preview ${index + 1}`}
@@ -131,9 +131,9 @@ export function FileUpload({
                   </button>
                 </div>
               ) : (
-                <div className="w-full h-32 rounded-lg border border-gray-200 flex items-center justify-center bg-gray-50">
+                <div className="w-full h-32 rounded-lg border border-hos-border flex items-center justify-center bg-hos-bg-secondary">
                   <div className="text-center">
-                    <p className="text-sm text-gray-600">File uploaded</p>
+                    <p className="text-sm text-hos-text-secondary">File uploaded</p>
                     <button
                       onClick={() => handleRemove(index)}
                       className="mt-2 text-sm text-red-600 hover:text-red-800"

@@ -146,7 +146,7 @@ export default function AdminReviewsPage() {
     return Array.from({ length: 5 }).map((_, i) => (
       <span
         key={i}
-        className={i < rating ? 'text-yellow-400' : 'text-gray-300'}
+        className={i < rating ? 'text-yellow-400' : 'text-hos-text-muted'}
       >
         ★
       </span>
@@ -159,20 +159,20 @@ export default function AdminReviewsPage() {
         <div className="space-y-6">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div>
-              <h1 className="text-2xl font-bold text-gray-900">Product Reviews</h1>
-              <p className="text-gray-600 mt-1">Manage and moderate customer reviews</p>
+              <h1 className="text-2xl font-bold text-white">Product Reviews</h1>
+              <p className="text-hos-text-secondary mt-1">Manage and moderate customer reviews</p>
             </div>
           </div>
 
           {/* Product Selector */}
-          <div className="bg-white rounded-lg shadow p-4">
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+          <div className="bg-hos-bg-secondary rounded-lg shadow p-4">
+            <label className="block text-sm font-medium text-hos-text-secondary mb-2">
               Select Product to View Reviews
             </label>
             <select
               value={selectedProduct}
               onChange={(e) => setSelectedProduct(e.target.value)}
-              className="w-full max-w-md px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+              className="w-full max-w-md px-3 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50 focus:border-transparent"
             >
               <option value="">-- Select a product --</option>
               {products.map((product) => (
@@ -187,13 +187,13 @@ export default function AdminReviewsPage() {
             <>
               {/* Stats Cards */}
               <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-4">
-                <div className="bg-white rounded-lg shadow p-4">
-                  <h3 className="text-xs font-medium text-gray-500 uppercase">Total</h3>
-                  <p className="text-2xl font-bold text-gray-900 mt-1">{stats.totalReviews}</p>
+                <div className="bg-hos-bg-secondary rounded-lg shadow p-4">
+                  <h3 className="text-xs font-medium text-hos-text-muted uppercase">Total</h3>
+                  <p className="text-2xl font-bold text-white mt-1">{stats.totalReviews}</p>
                 </div>
-                <div className="bg-white rounded-lg shadow p-4">
-                  <h3 className="text-xs font-medium text-gray-500 uppercase">Average</h3>
-                  <p className="text-2xl font-bold text-gray-900 mt-1">
+                <div className="bg-hos-bg-secondary rounded-lg shadow p-4">
+                  <h3 className="text-xs font-medium text-hos-text-muted uppercase">Average</h3>
+                  <p className="text-2xl font-bold text-white mt-1">
                     {stats.averageRating.toFixed(1)} ★
                   </p>
                 </div>
@@ -201,12 +201,12 @@ export default function AdminReviewsPage() {
                   <button
                     key={star}
                     onClick={() => setFilterRating(filterRating === star ? null : star)}
-                    className={`bg-white rounded-lg shadow p-4 text-left transition-colors ${
-                      filterRating === star ? 'ring-2 ring-purple-500' : ''
+                    className={`bg-hos-bg-secondary rounded-lg shadow p-4 text-left transition-colors ${
+                      filterRating === star ? 'ring-2 ring-hos-gold/50' : ''
                     }`}
                   >
-                    <h3 className="text-xs font-medium text-gray-500 uppercase">{star} Star</h3>
-                    <p className="text-2xl font-bold text-gray-900 mt-1">
+                    <h3 className="text-xs font-medium text-hos-text-muted uppercase">{star} Star</h3>
+                    <p className="text-2xl font-bold text-white mt-1">
                       {star === 5 ? stats.fiveStars :
                        star === 4 ? stats.fourStars :
                        star === 3 ? stats.threeStars :
@@ -218,7 +218,7 @@ export default function AdminReviewsPage() {
 
               {loading && (
                 <div className="flex items-center justify-center h-32">
-                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-600"></div>
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-hos-gold"></div>
                 </div>
               )}
 
@@ -235,15 +235,15 @@ export default function AdminReviewsPage() {
               )}
 
               {!loading && !error && (
-                <div className="bg-white rounded-lg shadow overflow-hidden">
-                  <div className="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
-                    <h2 className="text-lg font-semibold text-gray-900">
+                <div className="bg-hos-bg-secondary rounded-lg shadow overflow-hidden">
+                  <div className="px-6 py-4 border-b border-hos-border flex items-center justify-between">
+                    <h2 className="text-lg font-semibold text-white">
                       Reviews {filterRating && `(${filterRating} stars only)`}
                     </h2>
                     {filterRating && (
                       <button
                         onClick={() => setFilterRating(null)}
-                        className="text-sm text-purple-600 hover:underline"
+                        className="text-sm text-hos-gold hover:underline"
                       >
                         Clear filter
                       </button>
@@ -251,14 +251,14 @@ export default function AdminReviewsPage() {
                   </div>
                   
                   {filteredReviews.length === 0 ? (
-                    <div className="px-6 py-12 text-center text-gray-500">
+                    <div className="px-6 py-12 text-center text-hos-text-muted">
                       <span className="text-4xl block mb-2">📝</span>
                       <p>No reviews found for this product</p>
                     </div>
                   ) : (
-                    <div className="divide-y divide-gray-200">
+                    <div className="divide-y divide-hos-border">
                       {filteredReviews.map((review) => (
-                        <div key={review.id} className="p-6 hover:bg-gray-50">
+                        <div key={review.id} className="p-6 hover:bg-hos-bg-tertiary">
                           <div className="flex items-start justify-between">
                             <div className="flex-1">
                               <div className="flex items-center gap-3 mb-2">
@@ -270,12 +270,12 @@ export default function AdminReviewsPage() {
                                 )}
                               </div>
                               {review.title && (
-                                <h3 className="font-semibold text-gray-900 mb-1">{review.title}</h3>
+                                <h3 className="font-semibold text-white mb-1">{review.title}</h3>
                               )}
-                              <p className="text-gray-600 text-sm mb-2">
+                              <p className="text-hos-text-secondary text-sm mb-2">
                                 {review.comment || 'No comment provided'}
                               </p>
-                              <div className="flex items-center gap-4 text-xs text-gray-500">
+                              <div className="flex items-center gap-4 text-xs text-hos-text-muted">
                                 <span>
                                   By: {review.user?.firstName 
                                     ? `${review.user.firstName} ${review.user.lastName || ''}` 
@@ -306,7 +306,7 @@ export default function AdminReviewsPage() {
           )}
 
           {!selectedProduct && !loading && (
-            <div className="bg-white rounded-lg shadow p-12 text-center text-gray-500">
+            <div className="bg-hos-bg-secondary rounded-lg shadow p-12 text-center text-hos-text-muted">
               <span className="text-5xl block mb-4">📋</span>
               <p className="text-lg">Select a product above to view its reviews</p>
             </div>

@@ -111,11 +111,11 @@ export default function AdminSellerApplicationsPage() {
       case 'ACCEPTED':
         return 'bg-green-100 text-green-800';
       case 'EXPIRED':
-        return 'bg-gray-100 text-gray-800';
+        return 'bg-hos-bg-tertiary text-white';
       case 'CANCELLED':
         return 'bg-red-100 text-red-800';
       default:
-        return 'bg-gray-100 text-gray-800';
+        return 'bg-hos-bg-tertiary text-white';
     }
   };
 
@@ -132,12 +132,12 @@ export default function AdminSellerApplicationsPage() {
         <div className="space-y-6">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div>
-              <h1 className="text-2xl font-bold text-gray-900">Seller Applications</h1>
-              <p className="text-gray-600 mt-1">Manage seller applications and invitations</p>
+              <h1 className="text-2xl font-bold text-white">Seller Applications</h1>
+              <p className="text-hos-text-secondary mt-1">Manage seller applications and invitations</p>
             </div>
             <button
               onClick={() => setShowInviteModal(true)}
-              className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
+              className="px-4 py-2 bg-hos-gold text-[#1a1406] rounded-lg hover:bg-hos-gold-hover transition-colors"
             >
               + Invite Seller
             </button>
@@ -145,42 +145,42 @@ export default function AdminSellerApplicationsPage() {
 
           {/* Stats Cards */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            <div className="bg-white rounded-lg shadow p-4">
-              <h3 className="text-xs font-medium text-gray-500 uppercase">Total Invitations</h3>
-              <p className="text-2xl font-bold text-gray-900 mt-1">{stats.total}</p>
+            <div className="bg-hos-bg-secondary rounded-lg shadow p-4">
+              <h3 className="text-xs font-medium text-hos-text-muted uppercase">Total Invitations</h3>
+              <p className="text-2xl font-bold text-white mt-1">{stats.total}</p>
             </div>
             <button
               onClick={() => setStatusFilter(statusFilter === 'PENDING' ? '' : 'PENDING')}
-              className={`bg-white rounded-lg shadow p-4 text-left transition-colors ${
-                statusFilter === 'PENDING' ? 'ring-2 ring-purple-500' : ''
+              className={`bg-hos-bg-secondary rounded-lg shadow p-4 text-left transition-colors ${
+                statusFilter === 'PENDING' ? 'ring-2 ring-hos-gold/50' : ''
               }`}
             >
-              <h3 className="text-xs font-medium text-gray-500 uppercase">Pending</h3>
+              <h3 className="text-xs font-medium text-hos-text-muted uppercase">Pending</h3>
               <p className="text-2xl font-bold text-yellow-600 mt-1">{stats.pending}</p>
             </button>
             <button
               onClick={() => setStatusFilter(statusFilter === 'ACCEPTED' ? '' : 'ACCEPTED')}
-              className={`bg-white rounded-lg shadow p-4 text-left transition-colors ${
-                statusFilter === 'ACCEPTED' ? 'ring-2 ring-purple-500' : ''
+              className={`bg-hos-bg-secondary rounded-lg shadow p-4 text-left transition-colors ${
+                statusFilter === 'ACCEPTED' ? 'ring-2 ring-hos-gold/50' : ''
               }`}
             >
-              <h3 className="text-xs font-medium text-gray-500 uppercase">Accepted</h3>
+              <h3 className="text-xs font-medium text-hos-text-muted uppercase">Accepted</h3>
               <p className="text-2xl font-bold text-green-600 mt-1">{stats.accepted}</p>
             </button>
             <button
               onClick={() => setStatusFilter(statusFilter === 'EXPIRED' ? '' : 'EXPIRED')}
-              className={`bg-white rounded-lg shadow p-4 text-left transition-colors ${
-                statusFilter === 'EXPIRED' ? 'ring-2 ring-purple-500' : ''
+              className={`bg-hos-bg-secondary rounded-lg shadow p-4 text-left transition-colors ${
+                statusFilter === 'EXPIRED' ? 'ring-2 ring-hos-gold/50' : ''
               }`}
             >
-              <h3 className="text-xs font-medium text-gray-500 uppercase">Expired</h3>
-              <p className="text-2xl font-bold text-gray-600 mt-1">{stats.expired}</p>
+              <h3 className="text-xs font-medium text-hos-text-muted uppercase">Expired</h3>
+              <p className="text-2xl font-bold text-hos-text-secondary mt-1">{stats.expired}</p>
             </button>
           </div>
 
           {loading && (
             <div className="flex items-center justify-center h-32">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-600"></div>
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-hos-gold"></div>
             </div>
           )}
 
@@ -197,15 +197,15 @@ export default function AdminSellerApplicationsPage() {
           )}
 
           {!loading && !error && (
-            <div className="bg-white rounded-lg shadow overflow-hidden">
-              <div className="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
-                <h2 className="text-lg font-semibold text-gray-900">
+            <div className="bg-hos-bg-secondary rounded-lg shadow overflow-hidden">
+              <div className="px-6 py-4 border-b border-hos-border flex items-center justify-between">
+                <h2 className="text-lg font-semibold text-white">
                   {statusFilter ? `${statusFilter} Invitations` : 'All Invitations'}
                 </h2>
                 {statusFilter && (
                   <button
                     onClick={() => setStatusFilter('')}
-                    className="text-sm text-purple-600 hover:underline"
+                    className="text-sm text-hos-gold hover:underline"
                   >
                     Clear filter
                   </button>
@@ -213,43 +213,43 @@ export default function AdminSellerApplicationsPage() {
               </div>
               
               {invitations.length === 0 ? (
-                <div className="px-6 py-12 text-center text-gray-500">
+                <div className="px-6 py-12 text-center text-hos-text-muted">
                   <span className="text-5xl block mb-4">📧</span>
                   <p className="text-lg">No invitations found</p>
                   <p className="text-sm mt-2">Click &ldquo;Invite Seller&rdquo; to send a new invitation</p>
                 </div>
               ) : (
                 <div className="overflow-x-auto">
-                  <table className="min-w-full divide-y divide-gray-200">
-                    <thead className="bg-gray-50">
+                  <table className="min-w-full divide-y divide-hos-border">
+                    <thead className="bg-hos-bg-secondary">
                       <tr>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        <th className="px-6 py-3 text-left text-xs font-medium text-hos-text-muted uppercase tracking-wider">
                           Email
                         </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        <th className="px-6 py-3 text-left text-xs font-medium text-hos-text-muted uppercase tracking-wider">
                           Type
                         </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        <th className="px-6 py-3 text-left text-xs font-medium text-hos-text-muted uppercase tracking-wider">
                           Status
                         </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        <th className="px-6 py-3 text-left text-xs font-medium text-hos-text-muted uppercase tracking-wider">
                           Sent
                         </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        <th className="px-6 py-3 text-left text-xs font-medium text-hos-text-muted uppercase tracking-wider">
                           Expires
                         </th>
-                        <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        <th className="px-6 py-3 text-right text-xs font-medium text-hos-text-muted uppercase tracking-wider">
                           Actions
                         </th>
                       </tr>
                     </thead>
-                    <tbody className="bg-white divide-y divide-gray-200">
+                    <tbody className="bg-hos-bg-secondary divide-y divide-hos-border">
                       {invitations.map((invitation) => (
-                        <tr key={invitation.id} className="hover:bg-gray-50">
+                        <tr key={invitation.id} className="hover:bg-hos-bg-tertiary">
                           <td className="px-6 py-4 whitespace-nowrap">
-                            <div className="text-sm font-medium text-gray-900">{invitation.email}</div>
+                            <div className="text-sm font-medium text-white">{invitation.email}</div>
                             {invitation.invitedBy && (
-                              <div className="text-xs text-gray-500">
+                              <div className="text-xs text-hos-text-muted">
                                 Invited by: {invitation.invitedBy.firstName || invitation.invitedBy.email}
                               </div>
                             )}
@@ -257,8 +257,8 @@ export default function AdminSellerApplicationsPage() {
                           <td className="px-6 py-4 whitespace-nowrap">
                             <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
                               invitation.sellerType === 'WHOLESALER'
-                                ? 'bg-blue-100 text-blue-800'
-                                : 'bg-purple-100 text-purple-800'
+                                ? 'bg-hos-gold/20 text-hos-gold'
+                                : 'bg-hos-gold/20 text-hos-gold'
                             }`}>
                               {invitation.sellerType.replace('_', ' ')}
                             </span>
@@ -268,10 +268,10 @@ export default function AdminSellerApplicationsPage() {
                               {invitation.status}
                             </span>
                           </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-hos-text-muted">
                             {new Date(invitation.createdAt).toLocaleDateString()}
                           </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-hos-text-muted">
                             {new Date(invitation.expiresAt).toLocaleDateString()}
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
@@ -279,7 +279,7 @@ export default function AdminSellerApplicationsPage() {
                               <div className="flex justify-end gap-2">
                                 <button
                                   onClick={() => handleResendInvitation(invitation.id)}
-                                  className="text-purple-600 hover:text-purple-900"
+                                  className="text-hos-gold hover:text-hos-gold"
                                 >
                                   Resend
                                 </button>
@@ -294,7 +294,7 @@ export default function AdminSellerApplicationsPage() {
                             {invitation.status === 'EXPIRED' && (
                               <button
                                 onClick={() => handleResendInvitation(invitation.id)}
-                                className="text-purple-600 hover:text-purple-900"
+                                className="text-hos-gold hover:text-hos-gold"
                               >
                                 Resend
                               </button>
@@ -312,52 +312,52 @@ export default function AdminSellerApplicationsPage() {
           {/* Invite Modal */}
           {showInviteModal && (
             <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
-              <div className="bg-white rounded-lg shadow-xl max-w-md w-full mx-4 p-6">
+              <div className="bg-hos-bg-secondary rounded-lg shadow-xl max-w-md w-full mx-4 p-6">
                 <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-lg font-semibold text-gray-900">Invite Seller</h3>
+                  <h3 className="text-lg font-semibold text-white">Invite Seller</h3>
                   <button
                     onClick={() => setShowInviteModal(false)}
-                    className="text-gray-400 hover:text-gray-600"
+                    className="text-hos-text-muted hover:text-hos-text-secondary"
                   >
                     ✕
                   </button>
                 </div>
                 <form onSubmit={handleInviteSeller} className="space-y-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                    <label className="block text-sm font-medium text-hos-text-secondary mb-1">
                       Email Address *
                     </label>
                     <input
                       type="email"
                       value={inviteForm.email}
                       onChange={(e) => setInviteForm({ ...inviteForm, email: e.target.value })}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                      className="w-full px-3 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50 focus:border-transparent"
                       placeholder="seller@example.com"
                       required
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                    <label className="block text-sm font-medium text-hos-text-secondary mb-1">
                       Seller Type *
                     </label>
                     <select
                       value={inviteForm.sellerType}
                       onChange={(e) => setInviteForm({ ...inviteForm, sellerType: e.target.value as any })}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                      className="w-full px-3 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50 focus:border-transparent"
                     >
                       <option value="B2C_SELLER">B2C Seller</option>
                       <option value="WHOLESALER">Wholesaler</option>
                     </select>
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                    <label className="block text-sm font-medium text-hos-text-secondary mb-1">
                       Message (optional)
                     </label>
                     <textarea
                       value={inviteForm.message}
                       onChange={(e) => setInviteForm({ ...inviteForm, message: e.target.value })}
                       rows={3}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                      className="w-full px-3 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50 focus:border-transparent"
                       placeholder="Welcome message for the seller..."
                     />
                   </div>
@@ -365,14 +365,14 @@ export default function AdminSellerApplicationsPage() {
                     <button
                       type="button"
                       onClick={() => setShowInviteModal(false)}
-                      className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50"
+                      className="flex-1 px-4 py-2 border border-hos-border text-hos-text-secondary rounded-lg hover:bg-hos-bg-tertiary"
                     >
                       Cancel
                     </button>
                     <button
                       type="submit"
                       disabled={submitting}
-                      className="flex-1 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 disabled:opacity-50"
+                      className="flex-1 px-4 py-2 bg-hos-gold text-[#1a1406] rounded-lg hover:bg-hos-gold-hover disabled:opacity-50"
                     >
                       {submitting ? 'Sending...' : 'Send Invitation'}
                     </button>

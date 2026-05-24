@@ -100,25 +100,25 @@ export default function PublishingDashboardPage() {
         <div className="mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
             <h1 className="text-2xl sm:text-3xl font-bold">Publishing Dashboard</h1>
-            <p className="text-gray-600 mt-1">
+            <p className="text-hos-text-secondary mt-1">
               Review and publish finance-approved products to the marketplace
             </p>
           </div>
           <button
             onClick={fetchData}
             disabled={loading}
-            className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50"
+            className="px-4 py-2 text-sm font-medium text-hos-text-secondary bg-hos-bg-secondary border border-hos-border rounded-lg hover:bg-hos-bg-tertiary disabled:opacity-50"
           >
             {loading ? 'Refreshing...' : 'Refresh'}
           </button>
         </div>
 
         {/* Tabs */}
-        <div className="flex gap-1 bg-gray-100 rounded-lg p-1 mb-6 max-w-xs">
+        <div className="flex gap-1 bg-hos-bg-tertiary rounded-lg p-1 mb-6 max-w-xs">
           <button
             onClick={() => setTab('ready')}
             className={`flex-1 px-4 py-2 text-sm font-medium rounded-md transition-colors ${
-              tab === 'ready' ? 'bg-white text-purple-700 shadow-sm' : 'text-gray-600 hover:text-gray-800'
+              tab === 'ready' ? 'bg-hos-bg-secondary text-hos-gold-hover shadow-sm' : 'text-hos-text-secondary hover:text-white'
             }`}
           >
             Ready ({readySubmissions.length})
@@ -126,7 +126,7 @@ export default function PublishingDashboardPage() {
           <button
             onClick={() => setTab('published')}
             className={`flex-1 px-4 py-2 text-sm font-medium rounded-md transition-colors ${
-              tab === 'published' ? 'bg-white text-purple-700 shadow-sm' : 'text-gray-600 hover:text-gray-800'
+              tab === 'published' ? 'bg-hos-bg-secondary text-hos-gold-hover shadow-sm' : 'text-hos-text-secondary hover:text-white'
             }`}
           >
             Published ({publishedProducts.length})
@@ -135,7 +135,7 @@ export default function PublishingDashboardPage() {
 
         {loading && (
           <div className="flex items-center justify-center py-12">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600" />
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-hos-gold" />
           </div>
         )}
 
@@ -146,15 +146,15 @@ export default function PublishingDashboardPage() {
         )}
 
         {!loading && !error && tab === 'ready' && (
-          <div className="bg-white rounded-lg border border-gray-200 shadow-sm">
+          <div className="bg-hos-bg-secondary rounded-lg border border-hos-border shadow-sm">
             {readySubmissions.length > 0 && (
-              <div className="p-4 border-b border-gray-200 flex items-center justify-between">
+              <div className="p-4 border-b border-hos-border flex items-center justify-between">
                 <label className="flex items-center gap-2 text-sm">
                   <input
                     type="checkbox"
                     checked={selectedIds.size === readySubmissions.length && readySubmissions.length > 0}
                     onChange={toggleSelectAll}
-                    className="rounded border-gray-300 text-purple-600 focus:ring-purple-500"
+                    className="rounded border-hos-border text-hos-gold focus:ring-hos-gold/50"
                   />
                   Select all ({readySubmissions.length})
                 </label>
@@ -171,13 +171,13 @@ export default function PublishingDashboardPage() {
             )}
 
             {readySubmissions.length === 0 ? (
-              <div className="text-center py-12 text-gray-500">
+              <div className="text-center py-12 text-hos-text-muted">
                 <div className="text-4xl mb-3">🎉</div>
                 <p className="text-lg font-medium">All caught up!</p>
                 <p className="text-sm mt-1">No submissions are waiting to be published.</p>
               </div>
             ) : (
-              <div className="divide-y divide-gray-100">
+              <div className="divide-y divide-hos-border">
                 {readySubmissions.map((submission) => {
                   const name =
                     submission.catalogEntry?.title ||
@@ -190,18 +190,18 @@ export default function PublishingDashboardPage() {
                   return (
                     <div
                       key={submission.id}
-                      className="p-4 hover:bg-gray-50 transition-colors flex items-start gap-3"
+                      className="p-4 hover:bg-hos-bg-tertiary transition-colors flex items-start gap-3"
                     >
                       <input
                         type="checkbox"
                         checked={selectedIds.has(submission.id)}
                         onChange={() => toggleSelect(submission.id)}
-                        className="mt-1 rounded border-gray-300 text-purple-600 focus:ring-purple-500"
+                        className="mt-1 rounded border-hos-border text-hos-gold focus:ring-hos-gold/50"
                       />
                       <div className="flex-1 min-w-0">
-                        <p className="font-medium text-gray-900 truncate">{name}</p>
-                        <p className="text-sm text-gray-500 mt-0.5">{seller}</p>
-                        <div className="flex flex-wrap gap-3 mt-2 text-xs text-gray-500">
+                        <p className="font-medium text-white truncate">{name}</p>
+                        <p className="text-sm text-hos-text-muted mt-0.5">{seller}</p>
+                        <div className="flex flex-wrap gap-3 mt-2 text-xs text-hos-text-muted">
                           {price && <span>Price: ${parseFloat(price).toFixed(2)}</span>}
                           <span className="px-2 py-0.5 bg-green-100 text-green-800 rounded font-medium">
                             FINANCE APPROVED
@@ -216,7 +216,7 @@ export default function PublishingDashboardPage() {
                       <button
                         onClick={() => handlePublish(submission.id)}
                         disabled={isPublishing}
-                        className="px-4 py-2 text-sm font-medium bg-purple-600 text-white rounded-lg hover:bg-purple-700 disabled:opacity-50 whitespace-nowrap"
+                        className="px-4 py-2 text-sm font-medium bg-hos-gold text-[#1a1406] rounded-lg hover:bg-hos-gold-hover disabled:opacity-50 whitespace-nowrap"
                       >
                         {isPublishing ? 'Publishing...' : 'Publish'}
                       </button>
@@ -229,22 +229,22 @@ export default function PublishingDashboardPage() {
         )}
 
         {!loading && !error && tab === 'published' && (
-          <div className="bg-white rounded-lg border border-gray-200 shadow-sm">
+          <div className="bg-hos-bg-secondary rounded-lg border border-hos-border shadow-sm">
             {publishedProducts.length === 0 ? (
-              <div className="text-center py-12 text-gray-500">
+              <div className="text-center py-12 text-hos-text-muted">
                 <p className="text-lg font-medium">No published products yet</p>
                 <p className="text-sm mt-1">Products will appear here after publishing.</p>
               </div>
             ) : (
-              <div className="divide-y divide-gray-100">
+              <div className="divide-y divide-hos-border">
                 {publishedProducts.map((product: any) => {
                   const name = product.name || product.catalogEntry?.title || product.productData?.name || 'Untitled';
                   return (
-                    <div key={product.id} className="p-4 hover:bg-gray-50 transition-colors">
+                    <div key={product.id} className="p-4 hover:bg-hos-bg-tertiary transition-colors">
                       <div className="flex items-start justify-between">
                         <div className="flex-1 min-w-0">
-                          <p className="font-medium text-gray-900 truncate">{name}</p>
-                          <div className="flex flex-wrap gap-3 mt-1 text-xs text-gray-500">
+                          <p className="font-medium text-white truncate">{name}</p>
+                          <div className="flex flex-wrap gap-3 mt-1 text-xs text-hos-text-muted">
                             {product.price && (
                               <span>Price: ${parseFloat(product.price).toFixed(2)}</span>
                             )}
@@ -258,7 +258,7 @@ export default function PublishingDashboardPage() {
                             )}
                           </div>
                         </div>
-                        <span className="px-2 py-1 text-xs font-medium bg-blue-100 text-blue-800 rounded">
+                        <span className="px-2 py-1 text-xs font-medium bg-hos-gold/20 text-hos-gold rounded">
                           LIVE
                         </span>
                       </div>

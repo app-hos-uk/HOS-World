@@ -168,7 +168,7 @@ export default function AdminPlatformMetricsPage() {
       <RouteGuard allowedRoles={['ADMIN']}>
         <AdminLayout>
           <div className="flex items-center justify-center h-64">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-600" />
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-hos-gold" />
           </div>
         </AdminLayout>
       </RouteGuard>
@@ -181,10 +181,10 @@ export default function AdminPlatformMetricsPage() {
         <div className="space-y-6">
           {/* Header */}
           <div className="flex items-center justify-between">
-            <h1 className="text-2xl font-bold text-gray-900">Platform Metrics</h1>
+            <h1 className="text-2xl font-bold text-white">Platform Metrics</h1>
             <button
               onClick={handleExportCSV}
-              className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50"
+              className="px-4 py-2 text-sm font-medium text-hos-text-secondary bg-hos-bg-secondary border border-hos-border rounded-md hover:bg-hos-bg-tertiary"
             >
               Export CSV
             </button>
@@ -201,57 +201,57 @@ export default function AdminPlatformMetricsPage() {
 
           {/* Summary Cards */}
           <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-6">
-            <div className="bg-white rounded-lg shadow p-6">
-              <h3 className="text-sm font-medium text-gray-500">Total Users</h3>
-              <p className="text-3xl font-bold text-gray-900 mt-2">{metrics?.totalUsers || 0}</p>
+            <div className="bg-hos-bg-secondary rounded-lg shadow p-6">
+              <h3 className="text-sm font-medium text-hos-text-muted">Total Users</h3>
+              <p className="text-3xl font-bold text-white mt-2">{metrics?.totalUsers || 0}</p>
             </div>
-            <div className="bg-white rounded-lg shadow p-6">
-              <h3 className="text-sm font-medium text-gray-500">Total Products</h3>
-              <p className="text-3xl font-bold text-gray-900 mt-2">{metrics?.totalProducts || 0}</p>
+            <div className="bg-hos-bg-secondary rounded-lg shadow p-6">
+              <h3 className="text-sm font-medium text-hos-text-muted">Total Products</h3>
+              <p className="text-3xl font-bold text-white mt-2">{metrics?.totalProducts || 0}</p>
             </div>
-            <div className="bg-white rounded-lg shadow p-6">
-              <h3 className="text-sm font-medium text-gray-500">Total Orders</h3>
-              <p className="text-3xl font-bold text-gray-900 mt-2">{metrics?.totalOrders || 0}</p>
+            <div className="bg-hos-bg-secondary rounded-lg shadow p-6">
+              <h3 className="text-sm font-medium text-hos-text-muted">Total Orders</h3>
+              <p className="text-3xl font-bold text-white mt-2">{metrics?.totalOrders || 0}</p>
             </div>
-            <div className="bg-white rounded-lg shadow p-6">
-              <h3 className="text-sm font-medium text-gray-500">Total Revenue</h3>
+            <div className="bg-hos-bg-secondary rounded-lg shadow p-6">
+              <h3 className="text-sm font-medium text-hos-text-muted">Total Revenue</h3>
               <p className="text-3xl font-bold text-green-600 mt-2">
                 ${Number(metrics?.totalRevenue || 0).toFixed(2)}
               </p>
             </div>
-            <div className="bg-white rounded-lg shadow p-6">
-              <h3 className="text-sm font-medium text-gray-500">Active Sellers</h3>
-              <p className="text-3xl font-bold text-gray-900 mt-2">{metrics?.activeSellers || 0}</p>
+            <div className="bg-hos-bg-secondary rounded-lg shadow p-6">
+              <h3 className="text-sm font-medium text-hos-text-muted">Active Sellers</h3>
+              <p className="text-3xl font-bold text-white mt-2">{metrics?.activeSellers || 0}</p>
             </div>
           </div>
 
           {/* Filters */}
-          <div className="bg-white rounded-lg shadow p-6">
+          <div className="bg-hos-bg-secondary rounded-lg shadow p-6">
             <div className="flex flex-wrap items-end gap-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Start Date</label>
+                <label className="block text-sm font-medium text-hos-text-secondary mb-1">Start Date</label>
                 <input
                   type="date"
                   value={startDate}
                   onChange={(e) => setStartDate(e.target.value)}
-                  className="px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-purple-500"
+                  className="px-3 py-2 border border-hos-border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-hos-gold/50"
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">End Date</label>
+                <label className="block text-sm font-medium text-hos-text-secondary mb-1">End Date</label>
                 <input
                   type="date"
                   value={endDate}
                   onChange={(e) => setEndDate(e.target.value)}
-                  className="px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-purple-500"
+                  className="px-3 py-2 border border-hos-border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-hos-gold/50"
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Period</label>
+                <label className="block text-sm font-medium text-hos-text-secondary mb-1">Period</label>
                 <select
                   value={period}
                   onChange={(e) => setPeriod(e.target.value as Period)}
-                  className="px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-purple-500"
+                  className="px-3 py-2 border border-hos-border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-hos-gold/50"
                 >
                   <option value="daily">Daily</option>
                   <option value="weekly">Weekly</option>
@@ -264,7 +264,7 @@ export default function AdminPlatformMetricsPage() {
                   setEndDate(format(new Date(), 'yyyy-MM-dd'));
                   setPeriod('monthly');
                 }}
-                className="px-4 py-2 text-sm text-gray-600 hover:text-gray-800 border border-gray-300 rounded-md hover:bg-gray-50"
+                className="px-4 py-2 text-sm text-hos-text-secondary hover:text-white border border-hos-border rounded-md hover:bg-hos-bg-tertiary"
               >
                 Reset
               </button>
@@ -273,8 +273,8 @@ export default function AdminPlatformMetricsPage() {
 
           {/* Combined Chart */}
           {chartData.length > 0 && (
-            <div className="bg-white rounded-lg shadow p-6">
-              <h2 className="text-lg font-semibold text-gray-900 mb-4">Growth Overview</h2>
+            <div className="bg-hos-bg-secondary rounded-lg shadow p-6">
+              <h2 className="text-lg font-semibold text-white mb-4">Growth Overview</h2>
               <ResponsiveContainer width="100%" height={300}>
                 <BarChart data={chartData}>
                   <CartesianGrid strokeDasharray="3 3" />
@@ -296,8 +296,8 @@ export default function AdminPlatformMetricsPage() {
 
           {/* Revenue Trend Chart */}
           {chartData.length > 0 && (
-            <div className="bg-white rounded-lg shadow p-6">
-              <h2 className="text-lg font-semibold text-gray-900 mb-4">Revenue Trend</h2>
+            <div className="bg-hos-bg-secondary rounded-lg shadow p-6">
+              <h2 className="text-lg font-semibold text-white mb-4">Revenue Trend</h2>
               <ResponsiveContainer width="100%" height={300}>
                 <LineChart data={chartData}>
                   <CartesianGrid strokeDasharray="3 3" />
@@ -312,30 +312,30 @@ export default function AdminPlatformMetricsPage() {
           )}
 
           {/* User Growth Table */}
-          <div className="bg-white rounded-lg shadow p-6">
-            <h2 className="text-lg font-semibold text-gray-900 mb-4">User Growth</h2>
+          <div className="bg-hos-bg-secondary rounded-lg shadow p-6">
+            <h2 className="text-lg font-semibold text-white mb-4">User Growth</h2>
             <div className="overflow-x-auto">
-              <table className="min-w-full divide-y divide-gray-200">
-                <thead className="bg-gray-50">
+              <table className="min-w-full divide-y divide-hos-border">
+                <thead className="bg-hos-bg-secondary">
                   <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Period</th>
-                    <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Signups</th>
-                    <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Cumulative</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-hos-text-muted uppercase tracking-wider">Period</th>
+                    <th className="px-6 py-3 text-right text-xs font-medium text-hos-text-muted uppercase tracking-wider">Signups</th>
+                    <th className="px-6 py-3 text-right text-xs font-medium text-hos-text-muted uppercase tracking-wider">Cumulative</th>
                   </tr>
                 </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
+                <tbody className="bg-hos-bg-secondary divide-y divide-hos-border">
                   {userGrowthData.length === 0 ? (
                     <tr>
-                      <td colSpan={3} className="px-6 py-4 text-center text-sm text-gray-500">No data for selected range</td>
+                      <td colSpan={3} className="px-6 py-4 text-center text-sm text-hos-text-muted">No data for selected range</td>
                     </tr>
                   ) : (
                     userGrowthData.map((row, i) => {
                       const cumulative = userGrowthData.slice(0, i + 1).reduce((s, r) => s + r.count, 0);
                       return (
-                        <tr key={row.label} className="hover:bg-gray-50">
-                          <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{row.label}</td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700 text-right">{row.count}</td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 text-right">{cumulative}</td>
+                        <tr key={row.label} className="hover:bg-hos-bg-tertiary">
+                          <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-white">{row.label}</td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-hos-text-secondary text-right">{row.count}</td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-hos-text-muted text-right">{cumulative}</td>
                         </tr>
                       );
                     })
@@ -346,30 +346,30 @@ export default function AdminPlatformMetricsPage() {
           </div>
 
           {/* Order Volume Table */}
-          <div className="bg-white rounded-lg shadow p-6">
-            <h2 className="text-lg font-semibold text-gray-900 mb-4">Order Volume</h2>
+          <div className="bg-hos-bg-secondary rounded-lg shadow p-6">
+            <h2 className="text-lg font-semibold text-white mb-4">Order Volume</h2>
             <div className="overflow-x-auto">
-              <table className="min-w-full divide-y divide-gray-200">
-                <thead className="bg-gray-50">
+              <table className="min-w-full divide-y divide-hos-border">
+                <thead className="bg-hos-bg-secondary">
                   <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Period</th>
-                    <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Orders</th>
-                    <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Cumulative</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-hos-text-muted uppercase tracking-wider">Period</th>
+                    <th className="px-6 py-3 text-right text-xs font-medium text-hos-text-muted uppercase tracking-wider">Orders</th>
+                    <th className="px-6 py-3 text-right text-xs font-medium text-hos-text-muted uppercase tracking-wider">Cumulative</th>
                   </tr>
                 </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
+                <tbody className="bg-hos-bg-secondary divide-y divide-hos-border">
                   {orderVolumeData.length === 0 ? (
                     <tr>
-                      <td colSpan={3} className="px-6 py-4 text-center text-sm text-gray-500">No data for selected range</td>
+                      <td colSpan={3} className="px-6 py-4 text-center text-sm text-hos-text-muted">No data for selected range</td>
                     </tr>
                   ) : (
                     orderVolumeData.map((row, i) => {
                       const cumulative = orderVolumeData.slice(0, i + 1).reduce((s, r) => s + r.count, 0);
                       return (
-                        <tr key={row.label} className="hover:bg-gray-50">
-                          <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{row.label}</td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700 text-right">{row.count}</td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 text-right">{cumulative}</td>
+                        <tr key={row.label} className="hover:bg-hos-bg-tertiary">
+                          <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-white">{row.label}</td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-hos-text-secondary text-right">{row.count}</td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-hos-text-muted text-right">{cumulative}</td>
                         </tr>
                       );
                     })
@@ -380,32 +380,32 @@ export default function AdminPlatformMetricsPage() {
           </div>
 
           {/* Revenue Table */}
-          <div className="bg-white rounded-lg shadow p-6">
-            <h2 className="text-lg font-semibold text-gray-900 mb-4">Revenue Breakdown</h2>
+          <div className="bg-hos-bg-secondary rounded-lg shadow p-6">
+            <h2 className="text-lg font-semibold text-white mb-4">Revenue Breakdown</h2>
             <div className="overflow-x-auto">
-              <table className="min-w-full divide-y divide-gray-200">
-                <thead className="bg-gray-50">
+              <table className="min-w-full divide-y divide-hos-border">
+                <thead className="bg-hos-bg-secondary">
                   <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Period</th>
-                    <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Orders</th>
-                    <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Revenue</th>
-                    <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Avg Order Value</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-hos-text-muted uppercase tracking-wider">Period</th>
+                    <th className="px-6 py-3 text-right text-xs font-medium text-hos-text-muted uppercase tracking-wider">Orders</th>
+                    <th className="px-6 py-3 text-right text-xs font-medium text-hos-text-muted uppercase tracking-wider">Revenue</th>
+                    <th className="px-6 py-3 text-right text-xs font-medium text-hos-text-muted uppercase tracking-wider">Avg Order Value</th>
                   </tr>
                 </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
+                <tbody className="bg-hos-bg-secondary divide-y divide-hos-border">
                   {revenueData.length === 0 ? (
                     <tr>
-                      <td colSpan={4} className="px-6 py-4 text-center text-sm text-gray-500">No data for selected range</td>
+                      <td colSpan={4} className="px-6 py-4 text-center text-sm text-hos-text-muted">No data for selected range</td>
                     </tr>
                   ) : (
                     revenueData.map((row) => {
                       const avg = row.count > 0 ? row.revenue / row.count : 0;
                       return (
-                        <tr key={row.label} className="hover:bg-gray-50">
-                          <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{row.label}</td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700 text-right">{row.count}</td>
+                        <tr key={row.label} className="hover:bg-hos-bg-tertiary">
+                          <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-white">{row.label}</td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-hos-text-secondary text-right">{row.count}</td>
                           <td className="px-6 py-4 whitespace-nowrap text-sm text-green-600 font-medium text-right">${row.revenue.toFixed(2)}</td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 text-right">${avg.toFixed(2)}</td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-hos-text-muted text-right">${avg.toFixed(2)}</td>
                         </tr>
                       );
                     })

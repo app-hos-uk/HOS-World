@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { useTheme } from '@hos-marketplace/theme-system';
+import Image from 'next/image';
 import { useState, Suspense } from 'react';
 import { usePathname } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
@@ -11,6 +11,8 @@ import { CurrencySelector } from '@/components/CurrencySelector';
 import { NotificationBell } from '@/components/NotificationBell';
 import { SearchBar } from '@/components/SearchBar';
 import type { UserRole } from '@hos-marketplace/shared-types';
+import { REFERENCE_ASSETS } from '@/lib/referenceAssets';
+import { STOREFRONT_NAV_LINKS } from '@/lib/storefrontNavigation';
 
 const ROLE_QUICK_LINKS: Record<string, Array<{ title: string; href: string; icon: string }>> = {
   ADMIN: [
@@ -61,7 +63,6 @@ const ROLE_QUICK_LINKS: Record<string, Array<{ title: string; href: string; icon
 };
 
 export function Header() {
-  const theme = useTheme();
   const pathname = usePathname();
   const { user, isAuthenticated, logout, impersonatedRole, effectiveRole, switchRole } = useAuth();
   const { cartItemCount } = useCart();
@@ -138,83 +139,144 @@ export function Header() {
   const showAuthCustomerNav = isCustomerRole && isAuthenticated && currentRole === 'CUSTOMER';
   const showGuestNav = isCustomerRole && !isAuthenticated && !isDashboardPage;
 
+  const accountHref = isAuthenticated && user ? getDashboardLink() : '/login';
+  const accountLabel = isAuthenticated && user ? 'Account' : 'Account';
+
   return (
-    <header
-      className="w-full bg-white border-b border-gray-200 shadow-sm sticky top-0 z-50"
-      style={{ backgroundColor: theme.colors.background }}
-    >
-      {/* Top Row: Logo, Search, Auth/Account */}
-      <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between gap-4 py-3">
+    <header className="w-full sticky top-0 z-50">
+      {/* ROW 1 — Top utility bar */}
+      {showCustomerNav && !isDashboardPage && (
+        <div className="hidden md:block w-full bg-gradient-to-b from-[#121218] to-[#0a0a0d] border-b border-hos-border h-8">
+          <div className="max-w-7xl mx-auto px-4 h-full flex items-center justify-between">
+            <p className="text-hos-gold text-xs truncate">
+              Marketplace: Shop multiple vendors · Secure checkout · US shipping
+            </p>
+            <div className="flex items-center gap-5 shrink-0">
+              <Link href="/sellers" className="text-hos-text-muted text-xs hover:text-hos-gold transition-colors duration-200">
+                Store locations
+              </Link>
+              <Link href="/seller/onboarding" className="text-hos-text-muted text-xs hover:text-hos-gold transition-colors duration-200">
+                Sell with us
+              </Link>
+              <Link href="/help" className="text-hos-text-muted text-xs hover:text-hos-gold transition-colors duration-200">
+                Help Center
+              </Link>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ROW 2 — Main header */}
+      <div className="w-full bg-hos-bg border-b border-hos-border">
+        <div className="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between gap-4">
           {/* Logo */}
-          <Link
-            href="/"
-            className="text-xl sm:text-2xl font-bold font-primary bg-gradient-to-r from-purple-700 via-indigo-700 to-purple-700 bg-clip-text text-transparent hover:from-purple-600 hover:via-indigo-600 transition-all duration-300 shrink-0"
-          >
-            House of Spells
+          <Link href="/" className="flex items-center gap-3 shrink-0 group">
+            <Image
+              src={REFERENCE_ASSETS.logo}
+              alt="House of Spells"
+              width={180}
+              height={56}
+              className="h-10 w-auto object-contain"
+              priority
+            />
+            <span className="hidden sm:inline font-display text-hos-gold-hover text-lg group-hover:text-hos-gold transition-colors">
+              House of Spells
+            </span>
           </Link>
 
           {/* Search (Desktop) */}
           {showCustomerNav && (
-            <div className="hidden md:block flex-1 max-w-xl mx-4">
-              <Suspense fallback={<div className="w-full h-10 bg-gray-50 border border-gray-200 rounded-lg animate-pulse" aria-hidden />}>
+            <div className="hidden md:block flex-1 max-w-2xl mx-4">
+              <Suspense fallback={<div className="w-full h-10 bg-hos-bg-secondary border border-hos-border rounded-lg animate-pulse" aria-hidden />}>
                 <SearchBar compact />
               </Suspense>
             </div>
           )}
 
-          {/* Right Actions */}
-          <div className="hidden md:flex items-center gap-2 shrink-0">
-            {showAuthCustomerNav && !isDashboardPage && <CurrencySelector />}
-            {isAuthenticated && user ? (
-              <>
-                <NotificationBell />
-                <Link
-                  href={getDashboardLink()}
-                  className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-purple-700 hover:bg-purple-50 rounded-lg transition-colors"
-                >
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
-                  </svg>
-                  Dashboard
-                </Link>
-                <span className="px-2 py-0.5 text-xs font-semibold bg-purple-100 text-purple-700 rounded-full">
-                  {ROLE_LABELS[currentRole as UserRole] || currentRole}
-                </span>
-                {user.role === 'ADMIN' && isDashboardPage && <RoleSwitcher />}
-                {impersonatedRole && user.role === 'ADMIN' && !isDashboardPage && (
-                  <button
-                    onClick={handleBackToAdmin}
-                    className="px-3 py-1.5 text-sm bg-green-600 hover:bg-green-500 text-white font-medium rounded-lg transition-colors inline-flex items-center gap-1.5"
-                    title="Return to Admin Dashboard"
+          {/* Customer icon actions (Desktop) */}
+          {showCustomerNav && (
+            <div className="hidden md:flex items-center gap-6 shrink-0">
+              {showAuthCustomerNav && !isDashboardPage && <CurrencySelector />}
+              {isAuthenticated && user && <NotificationBell />}
+              <Link href={accountHref} className="flex flex-col items-center gap-1 group">
+                <svg className="w-5 h-5 text-white group-hover:text-hos-gold transition-colors duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                </svg>
+                <span className="text-hos-text-muted text-[11px] group-hover:text-hos-gold transition-colors duration-200">{accountLabel}</span>
+              </Link>
+              <Link href="/wishlist" className="flex flex-col items-center gap-1 group">
+                <svg className="w-5 h-5 text-white group-hover:text-hos-gold transition-colors duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+                </svg>
+                <span className="text-hos-text-muted text-[11px] group-hover:text-hos-gold transition-colors duration-200">Wishlist</span>
+              </Link>
+              <Link href="/cart" className="relative flex flex-col items-center gap-1 group">
+                <svg className="w-5 h-5 text-white group-hover:text-hos-gold transition-colors duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
+                </svg>
+                {cartItemCount > 0 && (
+                  <span className="absolute -top-1.5 right-0 min-w-[16px] h-4 flex items-center justify-center text-[10px] font-bold bg-hos-gold text-[#1a1406] rounded-full px-1 leading-none">
+                    {cartItemCount > 99 ? '99+' : cartItemCount}
+                  </span>
+                )}
+                <span className="text-hos-text-muted text-[11px] group-hover:text-hos-gold transition-colors duration-200">Basket</span>
+              </Link>
+            </div>
+          )}
+
+          {/* Staff / admin actions (Desktop) */}
+          {!showCustomerNav && (
+            <div className="hidden md:flex items-center gap-2 shrink-0">
+              {isAuthenticated && user ? (
+                <>
+                  <NotificationBell />
+                  <Link
+                    href={getDashboardLink()}
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-hos-gold hover:text-hos-gold-hover hover:bg-hos-bg-secondary rounded-lg transition-colors duration-200"
                   >
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
                     </svg>
-                    Admin
+                    Dashboard
+                  </Link>
+                  <span className="px-2 py-0.5 text-xs font-semibold bg-hos-bg-secondary text-hos-gold border border-hos-border rounded-full">
+                    {ROLE_LABELS[currentRole as UserRole] || currentRole}
+                  </span>
+                  {user.role === 'ADMIN' && isDashboardPage && <RoleSwitcher />}
+                  {impersonatedRole && user.role === 'ADMIN' && !isDashboardPage && (
+                    <button
+                      onClick={handleBackToAdmin}
+                      className="px-3 py-1.5 text-sm bg-hos-new-green hover:opacity-90 text-white font-medium rounded-lg transition-colors inline-flex items-center gap-1.5"
+                      title="Return to Admin Dashboard"
+                    >
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      </svg>
+                      Admin
+                    </button>
+                  )}
+                  <button
+                    onClick={handleLogout}
+                    className="px-3 py-1.5 text-sm bg-hos-sale-red hover:opacity-90 text-white font-medium rounded-lg transition-colors"
+                  >
+                    Logout
                   </button>
-                )}
-                <button
-                  onClick={handleLogout}
-                  className="px-3 py-1.5 text-sm bg-red-600 hover:bg-red-500 text-white font-medium rounded-lg transition-colors"
+                </>
+              ) : (
+                <Link
+                  href="/login"
+                  className="px-4 py-2 text-sm bg-hos-gold hover:bg-hos-gold-hover text-[#1a1406] font-semibold rounded-lg transition-colors duration-200"
                 >
-                  Logout
-                </button>
-              </>
-            ) : (
-              <Link
-                href="/login"
-                className="px-4 py-2 text-sm bg-gradient-to-r from-purple-700 to-indigo-700 hover:from-purple-600 hover:to-indigo-600 text-white font-semibold rounded-lg transition-all duration-300 border border-amber-400/30"
-              >
-                Login
-              </Link>
-            )}
-          </div>
+                  Login
+                </Link>
+              )}
+            </div>
+          )}
 
           {/* Mobile Menu Button */}
           <button
             onClick={toggleMobileMenu}
-            className="md:hidden p-2 rounded-lg text-purple-700 hover:bg-purple-50 transition-colors"
+            className="md:hidden p-2 rounded-lg text-hos-gold hover:bg-hos-bg-secondary transition-colors duration-200"
             aria-label="Toggle menu"
             aria-expanded={isMobileMenuOpen}
           >
@@ -231,15 +293,22 @@ export function Header() {
         </div>
       </div>
 
-      {/* Bottom Row: Navigation Links (Desktop) */}
+      {/* ROW 3 — Navigation links (Desktop) */}
       {(showCustomerNav || (isAuthenticated && !isCustomerRole && !isDashboardPage && quickLinks.length > 0)) && (
-        <div className="hidden md:block border-t border-gray-100 bg-gradient-to-r from-purple-50/50 to-indigo-50/50">
-          <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-            <nav className="flex items-center gap-1 py-1.5 overflow-x-auto" role="navigation" aria-label="Main navigation">
+        <div className="hidden md:block border-t border-hos-border bg-hos-bg">
+          <div className="max-w-7xl mx-auto px-4">
+            <nav className="flex items-center justify-center gap-8 py-2.5 overflow-x-auto" role="navigation" aria-label="Main navigation">
               {showCustomerNav && (
                 <>
-                  <NavLink href="/products" icon="🛍️" label="Products" currentPath={pathname} />
-                  <NavLink href="/fandoms" icon="⚡" label="Fandoms" currentPath={pathname} />
+                  {STOREFRONT_NAV_LINKS.map((item) => (
+                    <Link
+                      key={item.href}
+                      href={item.href}
+                      className="text-hos-text-secondary text-sm hover:text-hos-gold transition-colors duration-200 whitespace-nowrap"
+                    >
+                      {item.label}
+                    </Link>
+                  ))}
                 </>
               )}
               {showAuthCustomerNav && (
@@ -272,22 +341,23 @@ export function Header() {
 
       {/* Mobile Menu */}
       {isMobileMenuOpen && (
-        <nav className="md:hidden border-t border-gray-200 bg-white" role="navigation" aria-label="Mobile navigation">
-          <div className="container mx-auto px-4 py-3 space-y-1" role="menu">
+        <nav className="md:hidden border-t border-hos-border bg-hos-bg" role="navigation" aria-label="Mobile navigation">
+          <div className="max-w-7xl mx-auto px-4 py-3 space-y-1" role="menu">
             {showCustomerNav && (
               <>
                 <div className="px-2 py-2">
-                  <Suspense fallback={<div className="w-full h-9 bg-gray-50 border border-gray-200 rounded-lg animate-pulse" aria-hidden />}>
+                  <Suspense fallback={<div className="w-full h-9 bg-hos-bg-secondary border border-hos-border rounded-lg animate-pulse" aria-hidden />}>
                     <SearchBar compact />
                   </Suspense>
                 </div>
-                <MobileNavLink href="/products" icon="🛍️" label="Products" onClick={() => setIsMobileMenuOpen(false)} />
-                <MobileNavLink href="/fandoms" icon="⚡" label="Fandoms" onClick={() => setIsMobileMenuOpen(false)} />
+                {STOREFRONT_NAV_LINKS.map((item) => (
+                  <MobileNavLink key={item.href} href={item.href} icon="·" label={item.label} onClick={() => setIsMobileMenuOpen(false)} />
+                ))}
               </>
             )}
             {showAuthCustomerNav && (
               <>
-                <div className="border-t border-gray-100 my-2" />
+                <div className="border-t border-hos-border my-2" />
                 <MobileNavLink href="/wishlist" icon="❤️" label="Wishlist" onClick={() => setIsMobileMenuOpen(false)} />
                 <MobileNavLink href="/orders" icon="📦" label="My Orders" onClick={() => setIsMobileMenuOpen(false)} />
                 <MobileNavLink href="/loyalty" icon="✨" label="Rewards" onClick={() => setIsMobileMenuOpen(false)} />
@@ -301,7 +371,7 @@ export function Header() {
             )}
             {showGuestNav && (
               <>
-                <div className="border-t border-gray-100 my-2" />
+                <div className="border-t border-hos-border my-2" />
                 <MobileNavLink href="/loyalty" icon="✨" label="Rewards" onClick={() => setIsMobileMenuOpen(false)} />
                 <MobileNavLink href="/cart" icon="🛒" label={`Cart${cartItemCount > 0 ? ` (${cartItemCount})` : ''}`} onClick={() => setIsMobileMenuOpen(false)} />
               </>
@@ -309,24 +379,24 @@ export function Header() {
 
             {isAuthenticated && !isCustomerRole && !isDashboardPage && quickLinks.length > 0 && (
               <>
-                <div className="border-t border-gray-100 my-2" />
-                <p className="px-3 py-1 text-xs font-semibold text-gray-400 uppercase tracking-wider">Quick Links</p>
+                <div className="border-t border-hos-border my-2" />
+                <p className="px-3 py-1 text-xs font-semibold text-hos-text-muted uppercase tracking-wider">Quick Links</p>
                 {quickLinks.map((link) => (
                   <MobileNavLink key={link.href} href={link.href} icon={link.icon} label={link.title} onClick={() => setIsMobileMenuOpen(false)} />
                 ))}
               </>
             )}
 
-            <div className="border-t border-gray-100 my-2" />
+            <div className="border-t border-hos-border my-2" />
             {isAuthenticated && user ? (
               <div className="space-y-1">
                 <MobileNavLink href="/notifications" icon="🔔" label="Notifications" onClick={() => setIsMobileMenuOpen(false)} />
                 <MobileNavLink href={getDashboardLink()} icon="📊" label="Dashboard" onClick={() => setIsMobileMenuOpen(false)} />
                 <div className="px-3 py-2 flex items-center gap-2">
-                  <span className="px-2.5 py-0.5 text-xs font-semibold bg-purple-100 text-purple-700 rounded-full">
+                  <span className="px-2.5 py-0.5 text-xs font-semibold bg-hos-bg-secondary text-hos-gold border border-hos-border rounded-full">
                     {ROLE_LABELS[currentRole as UserRole] || currentRole}
                   </span>
-                  <span className="text-sm text-gray-500 truncate">{user.email}</span>
+                  <span className="text-sm text-hos-text-muted truncate">{user.email}</span>
                 </div>
                 {user.role === 'ADMIN' && isDashboardPage && (
                   <div className="px-3 py-1">
@@ -336,7 +406,7 @@ export function Header() {
                 {impersonatedRole && user.role === 'ADMIN' && !isDashboardPage && (
                   <button
                     onClick={() => { handleBackToAdmin(); setIsMobileMenuOpen(false); }}
-                    className="w-full px-3 py-2 text-sm bg-green-600 hover:bg-green-500 text-white font-medium rounded-lg transition-colors text-center flex items-center justify-center gap-2"
+                    className="w-full px-3 py-2 text-sm bg-hos-new-green hover:opacity-90 text-white font-medium rounded-lg transition-colors text-center flex items-center justify-center gap-2"
                   >
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -346,19 +416,21 @@ export function Header() {
                 )}
                 <button
                   onClick={() => { handleLogout(); setIsMobileMenuOpen(false); }}
-                  className="w-full px-3 py-2.5 text-sm bg-red-600 hover:bg-red-500 text-white font-medium rounded-lg transition-colors text-center"
+                  className="w-full px-3 py-2.5 text-sm bg-hos-sale-red hover:opacity-90 text-white font-medium rounded-lg transition-colors text-center"
                 >
                   Logout
                 </button>
               </div>
             ) : (
-              <Link
-                href="/login"
-                onClick={() => setIsMobileMenuOpen(false)}
-                className="block px-4 py-2.5 text-sm bg-gradient-to-r from-purple-700 to-indigo-700 hover:from-purple-600 hover:to-indigo-600 text-white font-semibold rounded-lg transition-all text-center border border-amber-400/30"
-              >
-                Login
-              </Link>
+              showCustomerNav && (
+                <Link
+                  href="/login"
+                  onClick={() => setIsMobileMenuOpen(false)}
+                  className="block px-4 py-2.5 text-sm bg-hos-gold hover:bg-hos-gold-hover text-[#1a1406] font-semibold rounded-lg transition-colors text-center"
+                >
+                  Login
+                </Link>
+              )
             )}
           </div>
         </nav>
@@ -372,16 +444,16 @@ function NavLink({ href, icon, label, currentPath, badge }: { href: string; icon
   return (
     <Link
       href={href}
-      className={`relative inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium rounded-md transition-colors whitespace-nowrap ${
+      className={`relative inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium rounded-md transition-colors duration-200 whitespace-nowrap ${
         isActive
-          ? 'bg-purple-100 text-purple-800'
-          : 'text-gray-700 hover:bg-purple-50 hover:text-purple-700'
+          ? 'text-hos-gold'
+          : 'text-hos-text-secondary hover:text-hos-gold'
       }`}
     >
       <span className="text-sm leading-none" aria-hidden>{icon}</span>
       <span>{label}</span>
       {badge && (
-        <span className="ml-0.5 min-w-[18px] h-[18px] flex items-center justify-center text-[10px] font-bold bg-red-600 text-white rounded-full px-1">
+        <span className="ml-0.5 min-w-[18px] h-[18px] flex items-center justify-center text-[10px] font-bold bg-hos-gold text-[#1a1406] rounded-full px-1">
           {badge}
         </span>
       )}
@@ -390,7 +462,7 @@ function NavLink({ href, icon, label, currentPath, badge }: { href: string; icon
 }
 
 function NavDivider() {
-  return <div className="w-px h-5 bg-gray-200 mx-1 shrink-0" />;
+  return <div className="w-px h-5 bg-hos-border mx-1 shrink-0" />;
 }
 
 function MobileNavLink({ href, icon, label, onClick }: { href: string; icon: string; label: string; onClick: () => void }) {
@@ -398,7 +470,7 @@ function MobileNavLink({ href, icon, label, onClick }: { href: string; icon: str
     <Link
       href={href}
       onClick={onClick}
-      className="flex items-center gap-3 px-3 py-2.5 text-sm font-medium text-gray-700 hover:bg-purple-50 hover:text-purple-700 rounded-lg transition-colors"
+      className="flex items-center gap-3 px-3 py-2.5 text-sm font-medium text-hos-text-secondary hover:text-hos-gold hover:bg-hos-bg-secondary rounded-lg transition-colors duration-200"
     >
       <span className="w-6 text-center text-base leading-none shrink-0" aria-hidden>{icon}</span>
       <span>{label}</span>

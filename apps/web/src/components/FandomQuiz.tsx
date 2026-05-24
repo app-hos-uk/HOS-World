@@ -59,9 +59,9 @@ export function FandomQuiz({ onComplete, onSkip }: FandomQuizProps) {
   };
 
   return (
-    <div className="bg-white rounded-xl shadow-lg p-8 max-h-[600px] overflow-y-auto">
+    <div className="bg-hos-bg-secondary rounded-xl shadow-lg p-8 max-h-[600px] overflow-y-auto">
       <h2 className="text-2xl font-bold text-center mb-2">Tell Us About Your Interests</h2>
-      <p className="text-center text-gray-600 mb-6">
+      <p className="text-center text-hos-text-secondary mb-6">
         Help us personalize your experience
       </p>
 
@@ -75,8 +75,8 @@ export function FandomQuiz({ onComplete, onSkip }: FandomQuizProps) {
               onClick={() => toggleFandom(fandom)}
               className={`px-4 py-2 rounded-lg text-sm transition-colors ${
                 selectedFandoms.includes(fandom)
-                  ? 'bg-purple-600 text-white'
-                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                  ? 'bg-hos-gold text-[#1a1406]'
+                  : 'bg-hos-bg-tertiary text-hos-text-secondary hover:bg-hos-bg-tertiary'
               }`}
             >
               {fandom}
@@ -95,8 +95,8 @@ export function FandomQuiz({ onComplete, onSkip }: FandomQuizProps) {
               onClick={() => toggleInterest(interest)}
               className={`px-4 py-2 rounded-lg text-sm transition-colors ${
                 selectedInterests.includes(interest)
-                  ? 'bg-blue-600 text-white'
-                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                  ? 'bg-hos-gold text-[#1a1406]'
+                  : 'bg-hos-bg-tertiary text-hos-text-secondary hover:bg-hos-bg-tertiary'
               }`}
             >
               {interest}
@@ -109,13 +109,13 @@ export function FandomQuiz({ onComplete, onSkip }: FandomQuizProps) {
       <div className="flex gap-3">
         <button
           onClick={onSkip}
-          className="flex-1 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+          className="flex-1 px-4 py-2 border border-hos-border rounded-lg hover:bg-hos-bg-tertiary transition-colors"
         >
           Skip
         </button>
         <button
           onClick={handleSubmit}
-          className="flex-1 bg-purple-600 text-white py-2 rounded-lg font-semibold hover:bg-purple-700 transition-colors"
+          className="flex-1 bg-hos-gold text-[#1a1406] py-2 rounded-lg font-semibold hover:bg-hos-gold-hover transition-colors"
         >
           Complete Setup
         </button>

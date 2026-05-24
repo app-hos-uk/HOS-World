@@ -116,10 +116,10 @@ export default function AdminInfluencerInvitationsPage() {
     const styles: Record<string, string> = {
       PENDING: 'bg-yellow-100 text-yellow-800',
       ACCEPTED: 'bg-green-100 text-green-800',
-      EXPIRED: 'bg-gray-100 text-gray-800',
+      EXPIRED: 'bg-hos-bg-tertiary text-white',
       CANCELLED: 'bg-red-100 text-red-800',
     };
-    return styles[status] || 'bg-gray-100 text-gray-800';
+    return styles[status] || 'bg-hos-bg-tertiary text-white';
   };
 
   return (
@@ -129,14 +129,14 @@ export default function AdminInfluencerInvitationsPage() {
         {/* Header */}
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">Influencer Invitations</h1>
-            <p className="text-gray-600 mt-1">
+            <h1 className="text-2xl font-bold text-white">Influencer Invitations</h1>
+            <p className="text-hos-text-secondary mt-1">
               Invite new influencers to join the program
             </p>
           </div>
           <button
             onClick={() => setShowInviteModal(true)}
-            className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors flex items-center gap-2"
+            className="px-4 py-2 bg-hos-gold text-[#1a1406] rounded-lg hover:bg-hos-gold-hover transition-colors flex items-center gap-2"
           >
             <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
@@ -146,11 +146,11 @@ export default function AdminInfluencerInvitationsPage() {
         </div>
 
         {/* Filters */}
-        <div className="bg-white rounded-lg shadow-sm p-4">
+        <div className="bg-hos-bg-secondary rounded-lg shadow-sm p-4">
           <select
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value)}
-            className="px-4 py-2 border border-gray-300 rounded-lg"
+            className="px-4 py-2 border border-hos-border rounded-lg"
           >
             <option value="">All Status</option>
             <option value="PENDING">Pending</option>
@@ -161,41 +161,41 @@ export default function AdminInfluencerInvitationsPage() {
         </div>
 
         {/* Invitations Table */}
-        <div className="bg-white rounded-lg shadow-sm overflow-hidden">
+        <div className="bg-hos-bg-secondary rounded-lg shadow-sm overflow-hidden">
           {loading ? (
             <div className="p-12 text-center">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-600 mx-auto"></div>
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-hos-gold mx-auto"></div>
             </div>
           ) : invitations.length === 0 ? (
             <div className="p-12 text-center">
-              <svg className="w-12 h-12 text-gray-300 mx-auto mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <svg className="w-12 h-12 text-hos-text-muted mx-auto mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
               </svg>
-              <p className="text-gray-500">No invitations found</p>
+              <p className="text-hos-text-muted">No invitations found</p>
             </div>
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full">
-                <thead className="bg-gray-50">
+                <thead className="bg-hos-bg-secondary">
                   <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Email</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Invited By</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Commission</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Expires</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-hos-text-muted uppercase">Email</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-hos-text-muted uppercase">Invited By</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-hos-text-muted uppercase">Commission</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-hos-text-muted uppercase">Status</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-hos-text-muted uppercase">Expires</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-hos-text-muted uppercase">Actions</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-gray-200">
+                <tbody className="divide-y divide-hos-border">
                   {invitations.map((invitation) => (
-                    <tr key={invitation.id} className="hover:bg-gray-50">
+                    <tr key={invitation.id} className="hover:bg-hos-bg-tertiary">
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <p className="font-medium text-gray-900">{invitation.email}</p>
+                        <p className="font-medium text-white">{invitation.email}</p>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-hos-text-muted">
                         {invitation.user.firstName} {invitation.user.lastName}
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-hos-text-muted">
                         {invitation.baseCommissionRate
                           ? `${(invitation.baseCommissionRate * 100).toFixed(0)}%`
                           : 'Default'}
@@ -205,7 +205,7 @@ export default function AdminInfluencerInvitationsPage() {
                           {invitation.status}
                         </span>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-hos-text-muted">
                         {formatDate(invitation.expiresAt)}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
@@ -213,7 +213,7 @@ export default function AdminInfluencerInvitationsPage() {
                           <div className="flex gap-2">
                             <button
                               onClick={() => handleResend(invitation.id)}
-                              className="text-purple-600 hover:text-purple-800 text-sm font-medium"
+                              className="text-hos-gold hover:text-hos-gold-hover text-sm font-medium"
                             >
                               Resend
                             </button>
@@ -237,13 +237,13 @@ export default function AdminInfluencerInvitationsPage() {
         {/* Invite Modal */}
         {showInviteModal && (
           <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-            <div className="bg-white rounded-xl max-w-md w-full">
+            <div className="bg-hos-bg-secondary rounded-xl max-w-md w-full">
               <div className="p-6 border-b">
                 <div className="flex items-center justify-between">
-                  <h2 className="text-xl font-semibold text-gray-900">Invite Influencer</h2>
+                  <h2 className="text-xl font-semibold text-white">Invite Influencer</h2>
                   <button
                     onClick={() => setShowInviteModal(false)}
-                    className="text-gray-400 hover:text-gray-600"
+                    className="text-hos-text-muted hover:text-hos-text-secondary"
                   >
                     <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -254,7 +254,7 @@ export default function AdminInfluencerInvitationsPage() {
               
               <form onSubmit={handleSendInvitation} className="p-6 space-y-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label className="block text-sm font-medium text-hos-text-secondary mb-1">
                     Email Address *
                   </label>
                   <input
@@ -262,13 +262,13 @@ export default function AdminInfluencerInvitationsPage() {
                     required
                     value={inviteForm.email}
                     onChange={(e) => setInviteForm({ ...inviteForm, email: e.target.value })}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
+                    className="w-full px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50"
                     placeholder="influencer@example.com"
                   />
                 </div>
                 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label className="block text-sm font-medium text-hos-text-secondary mb-1">
                     Base Commission Rate (%)
                   </label>
                   <input
@@ -278,21 +278,21 @@ export default function AdminInfluencerInvitationsPage() {
                     step="1"
                     value={inviteForm.baseCommissionRate}
                     onChange={(e) => setInviteForm({ ...inviteForm, baseCommissionRate: e.target.value })}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
+                    className="w-full px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50"
                     placeholder="10 (default)"
                   />
-                  <p className="text-xs text-gray-500 mt-1">Leave empty for default rate (10%)</p>
+                  <p className="text-xs text-hos-text-muted mt-1">Leave empty for default rate (10%)</p>
                 </div>
                 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label className="block text-sm font-medium text-hos-text-secondary mb-1">
                     Personal Message
                   </label>
                   <textarea
                     value={inviteForm.message}
                     onChange={(e) => setInviteForm({ ...inviteForm, message: e.target.value })}
                     rows={3}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
+                    className="w-full px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50"
                     placeholder="Optional message to include in the invitation email..."
                   />
                 </div>
@@ -301,14 +301,14 @@ export default function AdminInfluencerInvitationsPage() {
                   <button
                     type="button"
                     onClick={() => setShowInviteModal(false)}
-                    className="px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
+                    className="px-4 py-2 text-hos-text-secondary hover:bg-hos-bg-tertiary rounded-lg transition-colors"
                   >
                     Cancel
                   </button>
                   <button
                     type="submit"
                     disabled={sending}
-                    className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 disabled:opacity-50 transition-colors"
+                    className="px-4 py-2 bg-hos-gold text-[#1a1406] rounded-lg hover:bg-hos-gold-hover disabled:opacity-50 transition-colors"
                   >
                     {sending ? 'Sending...' : 'Send Invitation'}
                   </button>

@@ -86,13 +86,13 @@ const STATUS_COLORS: Record<string, string> = {
   pending: 'bg-yellow-100 text-yellow-800',
   accepted: 'bg-cyan-100 text-cyan-800',
   rejected: 'bg-orange-100 text-orange-800',
-  confirmed: 'bg-blue-100 text-blue-800',
-  processing: 'bg-indigo-100 text-indigo-800',
+  confirmed: 'bg-hos-gold/20 text-hos-gold',
+  processing: 'bg-hos-gold/20 text-hos-gold',
   fulfilled: 'bg-violet-100 text-violet-800',
-  shipped: 'bg-purple-100 text-purple-800',
+  shipped: 'bg-hos-gold/20 text-hos-gold',
   delivered: 'bg-green-100 text-green-800',
   cancelled: 'bg-red-100 text-red-800',
-  refunded: 'bg-gray-100 text-gray-800',
+  refunded: 'bg-hos-bg-tertiary text-white',
 };
 
 export default function AdminOrdersPage() {
@@ -287,8 +287,8 @@ export default function AdminOrdersPage() {
         <div className="space-y-6">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div>
-              <h1 className="text-2xl font-bold text-gray-900">Orders Management</h1>
-              <p className="text-gray-600 mt-1">View and manage all customer orders</p>
+              <h1 className="text-2xl font-bold text-white">Orders Management</h1>
+              <p className="text-hos-text-secondary mt-1">View and manage all customer orders</p>
             </div>
             <DataExport
               data={filteredOrders}
@@ -299,84 +299,84 @@ export default function AdminOrdersPage() {
 
           {/* Stats Cards — counts use normalized status; Confirmed / Processing are separate */}
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-8 gap-4">
-            <div className="bg-white rounded-lg shadow p-4">
-              <h3 className="text-xs font-medium text-gray-500 uppercase">Total Orders</h3>
-              <p className="text-2xl font-bold text-gray-900 mt-1">{stats.total}</p>
+            <div className="bg-hos-bg-secondary rounded-lg shadow p-4">
+              <h3 className="text-xs font-medium text-hos-text-muted uppercase">Total Orders</h3>
+              <p className="text-2xl font-bold text-white mt-1">{stats.total}</p>
             </div>
-            <div className="bg-white rounded-lg shadow p-4">
-              <h3 className="text-xs font-medium text-gray-500 uppercase">Revenue</h3>
+            <div className="bg-hos-bg-secondary rounded-lg shadow p-4">
+              <h3 className="text-xs font-medium text-hos-text-muted uppercase">Revenue</h3>
               <p className="text-2xl font-bold text-green-600 mt-1">${stats.totalRevenue.toFixed(2)}</p>
             </div>
             <button
               type="button"
               onClick={() => setStatusFilter(statusFilter === 'pending' ? 'ALL' : 'pending')}
-              className={`bg-white rounded-lg shadow p-4 text-left ${statusFilter === 'pending' ? 'ring-2 ring-purple-500' : ''}`}
+              className={`bg-hos-bg-secondary rounded-lg shadow p-4 text-left ${statusFilter === 'pending' ? 'ring-2 ring-hos-gold/50' : ''}`}
             >
-              <h3 className="text-xs font-medium text-gray-500 uppercase">Pending</h3>
+              <h3 className="text-xs font-medium text-hos-text-muted uppercase">Pending</h3>
               <p className="text-2xl font-bold text-yellow-600 mt-1">{stats.pending}</p>
             </button>
             <button
               type="button"
               onClick={() => setStatusFilter(statusFilter === 'confirmed' ? 'ALL' : 'confirmed')}
-              className={`bg-white rounded-lg shadow p-4 text-left ${statusFilter === 'confirmed' ? 'ring-2 ring-purple-500' : ''}`}
+              className={`bg-hos-bg-secondary rounded-lg shadow p-4 text-left ${statusFilter === 'confirmed' ? 'ring-2 ring-hos-gold/50' : ''}`}
             >
-              <h3 className="text-xs font-medium text-gray-500 uppercase">Confirmed</h3>
+              <h3 className="text-xs font-medium text-hos-text-muted uppercase">Confirmed</h3>
               <p className="text-2xl font-bold text-sky-600 mt-1">{stats.confirmed}</p>
             </button>
             <button
               type="button"
               onClick={() => setStatusFilter(statusFilter === 'PROCESSING' ? 'ALL' : 'PROCESSING')}
-              className={`bg-white rounded-lg shadow p-4 text-left ${statusFilter === 'PROCESSING' ? 'ring-2 ring-purple-500' : ''}`}
+              className={`bg-hos-bg-secondary rounded-lg shadow p-4 text-left ${statusFilter === 'PROCESSING' ? 'ring-2 ring-hos-gold/50' : ''}`}
               title="Confirmed + actively processing"
             >
-              <h3 className="text-xs font-medium text-gray-500 uppercase">In progress</h3>
-              <p className="text-2xl font-bold text-blue-600 mt-1">{stats.confirmed + stats.processing}</p>
+              <h3 className="text-xs font-medium text-hos-text-muted uppercase">In progress</h3>
+              <p className="text-2xl font-bold text-hos-gold mt-1">{stats.confirmed + stats.processing}</p>
             </button>
             <button
               type="button"
               onClick={() => setStatusFilter(statusFilter === 'shipped' ? 'ALL' : 'shipped')}
-              className={`bg-white rounded-lg shadow p-4 text-left ${statusFilter === 'shipped' ? 'ring-2 ring-purple-500' : ''}`}
+              className={`bg-hos-bg-secondary rounded-lg shadow p-4 text-left ${statusFilter === 'shipped' ? 'ring-2 ring-hos-gold/50' : ''}`}
             >
-              <h3 className="text-xs font-medium text-gray-500 uppercase">Shipped</h3>
-              <p className="text-2xl font-bold text-purple-600 mt-1">{stats.shipped}</p>
+              <h3 className="text-xs font-medium text-hos-text-muted uppercase">Shipped</h3>
+              <p className="text-2xl font-bold text-hos-gold mt-1">{stats.shipped}</p>
             </button>
             <button
               type="button"
               onClick={() => setStatusFilter(statusFilter === 'COMPLETED' ? 'ALL' : 'COMPLETED')}
-              className={`bg-white rounded-lg shadow p-4 text-left ${statusFilter === 'COMPLETED' ? 'ring-2 ring-purple-500' : ''}`}
+              className={`bg-hos-bg-secondary rounded-lg shadow p-4 text-left ${statusFilter === 'COMPLETED' ? 'ring-2 ring-hos-gold/50' : ''}`}
             >
-              <h3 className="text-xs font-medium text-gray-500 uppercase">Completed</h3>
+              <h3 className="text-xs font-medium text-hos-text-muted uppercase">Completed</h3>
               <p className="text-2xl font-bold text-green-600 mt-1">{stats.completed}</p>
             </button>
             <button
               type="button"
               onClick={() => setStatusFilter(statusFilter === 'CANCELLED' ? 'ALL' : 'CANCELLED')}
-              className={`bg-white rounded-lg shadow p-4 text-left ${statusFilter === 'CANCELLED' ? 'ring-2 ring-purple-500' : ''}`}
+              className={`bg-hos-bg-secondary rounded-lg shadow p-4 text-left ${statusFilter === 'CANCELLED' ? 'ring-2 ring-hos-gold/50' : ''}`}
             >
-              <h3 className="text-xs font-medium text-gray-500 uppercase">Cancelled</h3>
+              <h3 className="text-xs font-medium text-hos-text-muted uppercase">Cancelled</h3>
               <p className="text-2xl font-bold text-red-600 mt-1">{stats.cancelled}</p>
             </button>
           </div>
 
           {/* Filters */}
-          <div className="bg-white rounded-lg shadow p-4">
+          <div className="bg-hos-bg-secondary rounded-lg shadow p-4">
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Search</label>
+                <label className="block text-sm font-medium text-hos-text-secondary mb-1">Search</label>
                 <input
                   type="text"
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   placeholder="Order ID, customer email..."
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
+                  className="w-full px-3 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50"
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Status</label>
+                <label className="block text-sm font-medium text-hos-text-secondary mb-1">Status</label>
                 <select
                   value={statusFilter}
                   onChange={(e) => setStatusFilter(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
+                  className="w-full px-3 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50"
                 >
                   <option value="ALL">All Statuses</option>
                   <option value="PROCESSING">In progress (confirmed + processing)</option>
@@ -390,27 +390,27 @@ export default function AdminOrdersPage() {
                 </select>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">From Date</label>
+                <label className="block text-sm font-medium text-hos-text-secondary mb-1">From Date</label>
                 <input
                   type="date"
                   value={dateRange.start}
                   onChange={(e) => setDateRange({ ...dateRange, start: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
+                  className="w-full px-3 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50"
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">To Date</label>
+                <label className="block text-sm font-medium text-hos-text-secondary mb-1">To Date</label>
                 <input
                   type="date"
                   value={dateRange.end}
                   onChange={(e) => setDateRange({ ...dateRange, end: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
+                  className="w-full px-3 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50"
                 />
               </div>
             </div>
             {(searchTerm || statusFilter !== 'ALL' || dateRange.start || dateRange.end) && (
               <div className="mt-3 flex items-center gap-2">
-                <span className="text-sm text-gray-500">
+                <span className="text-sm text-hos-text-muted">
                   Showing {filteredOrders.length} of {orders.length} orders (page {currentPage} of {totalPages || 1})
                 </span>
                 <button
@@ -419,7 +419,7 @@ export default function AdminOrdersPage() {
                     setStatusFilter('ALL');
                     setDateRange({ start: '', end: '' });
                   }}
-                  className="text-sm text-purple-600 hover:underline"
+                  className="text-sm text-hos-gold hover:underline"
                 >
                   Clear filters
                 </button>
@@ -429,7 +429,7 @@ export default function AdminOrdersPage() {
 
           {loading && (
             <div className="flex items-center justify-center h-32">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-600"></div>
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-hos-gold"></div>
             </div>
           )}
 
@@ -446,61 +446,61 @@ export default function AdminOrdersPage() {
           )}
 
           {!loading && !error && (
-            <div className="bg-white rounded-lg shadow overflow-hidden">
+            <div className="bg-hos-bg-secondary rounded-lg shadow overflow-hidden">
               <div className="overflow-x-auto">
-                <table className="min-w-full divide-y divide-gray-200">
-                  <thead className="bg-gray-50">
+                <table className="min-w-full divide-y divide-hos-border">
+                  <thead className="bg-hos-bg-secondary">
                     <tr>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      <th className="px-6 py-3 text-left text-xs font-medium text-hos-text-muted uppercase tracking-wider">
                         Order
                       </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      <th className="px-6 py-3 text-left text-xs font-medium text-hos-text-muted uppercase tracking-wider">
                         Customer
                       </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      <th className="px-6 py-3 text-left text-xs font-medium text-hos-text-muted uppercase tracking-wider">
                         Total
                       </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      <th className="px-6 py-3 text-left text-xs font-medium text-hos-text-muted uppercase tracking-wider">
                         Status
                       </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      <th className="px-6 py-3 text-left text-xs font-medium text-hos-text-muted uppercase tracking-wider">
                         Date
                       </th>
-                      <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      <th className="px-6 py-3 text-right text-xs font-medium text-hos-text-muted uppercase tracking-wider">
                         Actions
                       </th>
                     </tr>
                   </thead>
-                  <tbody className="bg-white divide-y divide-gray-200">
+                  <tbody className="bg-hos-bg-secondary divide-y divide-hos-border">
                     {paginatedOrders.length === 0 ? (
                       <tr>
-                        <td colSpan={6} className="px-6 py-12 text-center text-gray-500">
+                        <td colSpan={6} className="px-6 py-12 text-center text-hos-text-muted">
                           <span className="text-4xl block mb-2">📦</span>
                           <p>No orders found</p>
                         </td>
                       </tr>
                     ) : (
                       paginatedOrders.map((order) => (
-                        <tr key={order.id} className="hover:bg-gray-50">
+                        <tr key={order.id} className="hover:bg-hos-bg-tertiary">
                           <td className="px-6 py-4 whitespace-nowrap">
-                            <div className="text-sm font-medium text-gray-900">
+                            <div className="text-sm font-medium text-white">
                               #{order.orderNumber || order.id.substring(0, 8)}
                             </div>
-                            <div className="text-xs text-gray-500">{order.id.substring(0, 12)}...</div>
+                            <div className="text-xs text-hos-text-muted">{order.id.substring(0, 12)}...</div>
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap">
-                            <div className="text-sm text-gray-900">
+                            <div className="text-sm text-white">
                               {(order.user?.firstName || order.user?.lastName)
                                 ? `${order.user.firstName || ''} ${order.user.lastName || ''}`.trim()
                                 : order.user?.email || order.customer?.email || 'Guest'}
                             </div>
                             {(order.user?.firstName || order.user?.lastName) && (
-                              <div className="text-xs text-gray-500">
+                              <div className="text-xs text-hos-text-muted">
                                 {order.user?.email || order.customer?.email || ''}
                               </div>
                             )}
                           </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                          <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-white">
                             {order.currency || 'USD'} {Number(order.total || 0).toFixed(2)}
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap">
@@ -509,7 +509,7 @@ export default function AdminOrdersPage() {
                               onChange={(e) => handleStatusChange(order.id, e.target.value, order.orderNumber || order.id.substring(0, 8), order.status)}
                               disabled={updatingOrderId !== null}
                               className={`text-xs font-semibold rounded-full px-2 py-1 border-0 cursor-pointer ${
-                                STATUS_COLORS[order.status] || 'bg-gray-100 text-gray-800'
+                                STATUS_COLORS[order.status] || 'bg-hos-bg-tertiary text-white'
                               } ${updatingOrderId !== null ? 'opacity-50' : ''}`}
                             >
                               {ORDER_STATUSES.map((status) => (
@@ -517,13 +517,13 @@ export default function AdminOrdersPage() {
                               ))}
                             </select>
                           </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-hos-text-muted">
                             {order.createdAt ? new Date(order.createdAt).toLocaleDateString() : 'N/A'}
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                             <button
                               onClick={() => openOrderDetails(order)}
-                              className="text-purple-600 hover:text-purple-900"
+                              className="text-hos-gold hover:text-hos-gold"
                             >
                               View Details
                             </button>
@@ -539,25 +539,25 @@ export default function AdminOrdersPage() {
 
           {/* Pagination */}
           {!loading && !error && totalPages > 1 && (
-            <div className="flex items-center justify-between bg-white rounded-lg shadow px-6 py-3">
-              <p className="text-sm text-gray-600">
+            <div className="flex items-center justify-between bg-hos-bg-secondary rounded-lg shadow px-6 py-3">
+              <p className="text-sm text-hos-text-secondary">
                 Showing {((currentPage - 1) * pageSize) + 1}–{Math.min(currentPage * pageSize, filteredOrders.length)} of {filteredOrders.length} orders
               </p>
               <div className="flex items-center gap-2">
                 <button
                   onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
                   disabled={currentPage <= 1}
-                  className="px-3 py-1.5 border border-gray-300 rounded text-sm disabled:opacity-50 hover:bg-gray-50"
+                  className="px-3 py-1.5 border border-hos-border rounded text-sm disabled:opacity-50 hover:bg-hos-bg-tertiary"
                 >
                   Previous
                 </button>
-                <span className="text-sm text-gray-600">
+                <span className="text-sm text-hos-text-secondary">
                   Page {currentPage} of {totalPages}
                 </span>
                 <button
                   onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
                   disabled={currentPage >= totalPages}
-                  className="px-3 py-1.5 border border-gray-300 rounded text-sm disabled:opacity-50 hover:bg-gray-50"
+                  className="px-3 py-1.5 border border-hos-border rounded text-sm disabled:opacity-50 hover:bg-hos-bg-tertiary"
                 >
                   Next
                 </button>
@@ -568,29 +568,29 @@ export default function AdminOrdersPage() {
           {/* Status Change Confirmation Dialog */}
           {confirmDialog && (
             <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-              <div className="bg-white rounded-lg max-w-md w-full p-6">
-                <h3 className="text-lg font-bold text-gray-900 mb-2">Confirm Status Change</h3>
-                <p className="text-sm text-gray-600 mb-4">
+              <div className="bg-hos-bg-secondary rounded-lg max-w-md w-full p-6">
+                <h3 className="text-lg font-bold text-white mb-2">Confirm Status Change</h3>
+                <p className="text-sm text-hos-text-secondary mb-4">
                   Are you sure you want to change the status of order{' '}
                   <span className="font-semibold">#{confirmDialog.orderNumber}</span> from{' '}
-                  <span className={`inline-block px-2 py-0.5 text-xs font-semibold rounded-full ${STATUS_COLORS[confirmDialog.currentStatus] || 'bg-gray-100 text-gray-800'}`}>
+                  <span className={`inline-block px-2 py-0.5 text-xs font-semibold rounded-full ${STATUS_COLORS[confirmDialog.currentStatus] || 'bg-hos-bg-tertiary text-white'}`}>
                     {confirmDialog.currentStatus}
                   </span>{' '}
                   to{' '}
-                  <span className={`inline-block px-2 py-0.5 text-xs font-semibold rounded-full ${STATUS_COLORS[confirmDialog.newStatus] || 'bg-gray-100 text-gray-800'}`}>
+                  <span className={`inline-block px-2 py-0.5 text-xs font-semibold rounded-full ${STATUS_COLORS[confirmDialog.newStatus] || 'bg-hos-bg-tertiary text-white'}`}>
                     {confirmDialog.newStatus}
                   </span>?
                 </p>
                 <div className="flex gap-3 justify-end">
                   <button
                     onClick={() => setConfirmDialog(null)}
-                    className="px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50"
+                    className="px-4 py-2 border border-hos-border rounded-lg text-sm font-medium text-hos-text-secondary hover:bg-hos-bg-tertiary"
                   >
                     Cancel
                   </button>
                   <button
                     onClick={confirmStatusUpdate}
-                    className="px-4 py-2 bg-purple-600 text-white rounded-lg text-sm font-medium hover:bg-purple-700"
+                    className="px-4 py-2 bg-hos-gold text-[#1a1406] rounded-lg text-sm font-medium hover:bg-hos-gold-hover"
                   >
                     Confirm
                   </button>
@@ -602,20 +602,20 @@ export default function AdminOrdersPage() {
           {/* Order Details Modal */}
           {showDetailsModal && selectedOrder && (
             <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50 overflow-y-auto">
-              <div className="bg-white rounded-lg max-w-3xl w-full my-4 max-h-[90vh] overflow-y-auto">
+              <div className="bg-hos-bg-secondary rounded-lg max-w-3xl w-full my-4 max-h-[90vh] overflow-y-auto">
                 <div className="p-6">
                   <div className="flex justify-between items-start mb-6">
                     <div>
-                      <h2 className="text-2xl font-bold text-gray-900">
+                      <h2 className="text-2xl font-bold text-white">
                         Order #{selectedOrder.orderNumber || selectedOrder.id.substring(0, 8)}
                       </h2>
-                      <p className="text-sm text-gray-500 mt-1">
+                      <p className="text-sm text-hos-text-muted mt-1">
                         Placed on {new Date(selectedOrder.createdAt).toLocaleString()}
                       </p>
                     </div>
                     <button
                       onClick={() => setShowDetailsModal(false)}
-                      className="text-gray-400 hover:text-gray-600 text-2xl"
+                      className="text-hos-text-muted hover:text-hos-text-secondary text-2xl"
                     >
                       ×
                     </button>
@@ -623,25 +623,25 @@ export default function AdminOrdersPage() {
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
                     {/* Customer Info */}
-                    <div className="bg-gray-50 rounded-lg p-4">
-                      <h3 className="font-semibold text-gray-900 mb-3">Customer Information</h3>
+                    <div className="bg-hos-bg-secondary rounded-lg p-4">
+                      <h3 className="font-semibold text-white mb-3">Customer Information</h3>
                       <div className="space-y-2 text-sm">
                         <p>
-                          <span className="text-gray-500">Name:</span>{' '}
+                          <span className="text-hos-text-muted">Name:</span>{' '}
                           {(selectedOrder.user?.firstName || selectedOrder.user?.lastName)
                             ? `${selectedOrder.user.firstName || ''} ${selectedOrder.user.lastName || ''}`.trim()
                             : 'N/A'}
                         </p>
                         <p>
-                          <span className="text-gray-500">Email:</span>{' '}
+                          <span className="text-hos-text-muted">Email:</span>{' '}
                           {selectedOrder.user?.email || selectedOrder.customer?.email || 'N/A'}
                         </p>
                       </div>
                     </div>
 
                     {/* Shipping Address */}
-                    <div className="bg-gray-50 rounded-lg p-4">
-                      <h3 className="font-semibold text-gray-900 mb-3">Shipping Address</h3>
+                    <div className="bg-hos-bg-secondary rounded-lg p-4">
+                      <h3 className="font-semibold text-white mb-3">Shipping Address</h3>
                       {selectedOrder.shippingAddress ? (
                         <div className="text-sm space-y-1">
                           <p>{selectedOrder.shippingAddress.street}</p>
@@ -652,23 +652,23 @@ export default function AdminOrdersPage() {
                           <p>{selectedOrder.shippingAddress.country}</p>
                         </div>
                       ) : (
-                        <p className="text-sm text-gray-500">No shipping address available</p>
+                        <p className="text-sm text-hos-text-muted">No shipping address available</p>
                       )}
                     </div>
                   </div>
 
                   {/* Order Status */}
-                  <div className="bg-gray-50 rounded-lg p-4 mb-6">
-                    <h3 className="font-semibold text-gray-900 mb-3">Order Status</h3>
+                  <div className="bg-hos-bg-secondary rounded-lg p-4 mb-6">
+                    <h3 className="font-semibold text-white mb-3">Order Status</h3>
                     <div className="flex flex-wrap items-center gap-4">
                       <div>
-                        <span className="text-sm text-gray-500 mr-2">Status:</span>
+                        <span className="text-sm text-hos-text-muted mr-2">Status:</span>
                         <select
                           value={selectedOrder.status}
                           onChange={(e) => handleStatusChange(selectedOrder.id, e.target.value, selectedOrder.orderNumber || selectedOrder.id.substring(0, 8), selectedOrder.status)}
                           disabled={updatingOrderId !== null}
                           className={`text-sm font-semibold rounded-full px-3 py-1 border-0 ${
-                            STATUS_COLORS[selectedOrder.status] || 'bg-gray-100 text-gray-800'
+                            STATUS_COLORS[selectedOrder.status] || 'bg-hos-bg-tertiary text-white'
                           } ${updatingOrderId !== null ? 'opacity-50' : ''}`}
                         >
                           {ORDER_STATUSES.map((status) => (
@@ -678,13 +678,13 @@ export default function AdminOrdersPage() {
                       </div>
                       {selectedOrder.paymentStatus && (
                         <div>
-                          <span className="text-sm text-gray-500 mr-2">Payment:</span>
+                          <span className="text-sm text-hos-text-muted mr-2">Payment:</span>
                           <span className="text-sm font-medium">{selectedOrder.paymentStatus}</span>
                         </div>
                       )}
                       {selectedOrder.paymentMethod && (
                         <div>
-                          <span className="text-sm text-gray-500 mr-2">Method:</span>
+                          <span className="text-sm text-hos-text-muted mr-2">Method:</span>
                           <span className="text-sm font-medium">{selectedOrder.paymentMethod}</span>
                         </div>
                       )}
@@ -693,25 +693,25 @@ export default function AdminOrdersPage() {
 
                   {/* Order Items */}
                   <div className="mb-6">
-                    <h3 className="font-semibold text-gray-900 mb-3">Order Items</h3>
+                    <h3 className="font-semibold text-white mb-3">Order Items</h3>
                     {selectedOrder.items && selectedOrder.items.length > 0 ? (
                       <div className="border rounded-lg overflow-hidden">
-                        <table className="min-w-full divide-y divide-gray-200">
-                          <thead className="bg-gray-50">
+                        <table className="min-w-full divide-y divide-hos-border">
+                          <thead className="bg-hos-bg-secondary">
                             <tr>
-                              <th className="px-4 py-2 text-left text-xs font-medium text-gray-500">Product</th>
-                              <th className="px-4 py-2 text-center text-xs font-medium text-gray-500">Qty</th>
-                              <th className="px-4 py-2 text-right text-xs font-medium text-gray-500">Price</th>
-                              <th className="px-4 py-2 text-right text-xs font-medium text-gray-500">Total</th>
+                              <th className="px-4 py-2 text-left text-xs font-medium text-hos-text-muted">Product</th>
+                              <th className="px-4 py-2 text-center text-xs font-medium text-hos-text-muted">Qty</th>
+                              <th className="px-4 py-2 text-right text-xs font-medium text-hos-text-muted">Price</th>
+                              <th className="px-4 py-2 text-right text-xs font-medium text-hos-text-muted">Total</th>
                             </tr>
                           </thead>
-                          <tbody className="divide-y divide-gray-200">
+                          <tbody className="divide-y divide-hos-border">
                             {selectedOrder.items.map((item) => (
                               <tr key={item.id}>
                                 <td className="px-4 py-3 text-sm">
                                   <div className="font-medium">{item.product?.name || 'Unknown Product'}</div>
                                   {item.product?.sku && (
-                                    <div className="text-xs text-gray-500">SKU: {item.product.sku}</div>
+                                    <div className="text-xs text-hos-text-muted">SKU: {item.product.sku}</div>
                                   )}
                                 </td>
                                 <td className="px-4 py-3 text-sm text-center">{item.quantity}</td>
@@ -725,29 +725,29 @@ export default function AdminOrdersPage() {
                         </table>
                       </div>
                     ) : (
-                      <p className="text-sm text-gray-500">No items data available</p>
+                      <p className="text-sm text-hos-text-muted">No items data available</p>
                     )}
                   </div>
 
                   {/* Order Summary */}
-                  <div className="bg-gray-50 rounded-lg p-4">
-                    <h3 className="font-semibold text-gray-900 mb-3">Order Summary</h3>
+                  <div className="bg-hos-bg-secondary rounded-lg p-4">
+                    <h3 className="font-semibold text-white mb-3">Order Summary</h3>
                     <div className="space-y-2 text-sm">
                       {selectedOrder.subtotal !== undefined && (
                         <div className="flex justify-between">
-                          <span className="text-gray-500">Subtotal:</span>
+                          <span className="text-hos-text-muted">Subtotal:</span>
                           <span>${Number(selectedOrder.subtotal).toFixed(2)}</span>
                         </div>
                       )}
                       {selectedOrder.shipping !== undefined && (
                         <div className="flex justify-between">
-                          <span className="text-gray-500">Shipping:</span>
+                          <span className="text-hos-text-muted">Shipping:</span>
                           <span>${Number(selectedOrder.shipping).toFixed(2)}</span>
                         </div>
                       )}
                       {selectedOrder.tax !== undefined && (
                         <div className="flex justify-between">
-                          <span className="text-gray-500">Tax:</span>
+                          <span className="text-hos-text-muted">Tax:</span>
                           <span>${Number(selectedOrder.tax).toFixed(2)}</span>
                         </div>
                       )}
@@ -767,7 +767,7 @@ export default function AdminOrdersPage() {
                   <div className="mt-6 flex justify-end">
                     <button
                       onClick={() => setShowDetailsModal(false)}
-                      className="px-6 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors"
+                      className="px-6 py-2 bg-hos-bg-tertiary text-hos-text-secondary rounded-lg hover:bg-hos-bg-tertiary transition-colors"
                     >
                       Close
                     </button>

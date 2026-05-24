@@ -91,7 +91,7 @@ export function DataExport({ data, columns, filename = 'export', className = '' 
     <div className={`flex items-center gap-2 ${className}`}>
       <button
         onClick={exportToCSV}
-        className="px-3 py-1.5 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors flex items-center gap-1"
+        className="px-3 py-1.5 text-sm font-medium text-hos-text-secondary bg-hos-bg-secondary border border-hos-border rounded-lg hover:bg-hos-bg-tertiary transition-colors flex items-center gap-1"
       >
         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path
@@ -105,7 +105,7 @@ export function DataExport({ data, columns, filename = 'export', className = '' 
       </button>
       <button
         onClick={exportToJSON}
-        className="px-3 py-1.5 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors flex items-center gap-1"
+        className="px-3 py-1.5 text-sm font-medium text-hos-text-secondary bg-hos-bg-secondary border border-hos-border rounded-lg hover:bg-hos-bg-tertiary transition-colors flex items-center gap-1"
       >
         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path

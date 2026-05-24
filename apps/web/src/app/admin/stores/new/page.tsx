@@ -15,7 +15,7 @@ export default function AdminStoreNewPage() {
   const [name, setName] = useState('');
   const [code, setCode] = useState('');
   const [country, setCountry] = useState('GB');
-  const [currency, setCurrency] = useState('GBP');
+  const [currency, setCurrency] = useState('USD');
   const [region, setRegion] = useState('GB');
   const [saving, setSaving] = useState(false);
 
@@ -66,12 +66,12 @@ export default function AdminStoreNewPage() {
           <Link href="/admin/stores" className="text-sm text-violet-700">
             ← Stores
           </Link>
-          <h1 className="text-2xl font-semibold text-gray-900">New store</h1>
-          <p className="text-xs text-gray-500">
+          <h1 className="text-2xl font-semibold text-white">New store</h1>
+          <p className="text-xs text-hos-text-muted">
             Tenant ID defaults from your first existing store if available; override if needed.
           </p>
           <label className="block text-sm">
-            <span className="text-gray-700">Tenant ID</span>
+            <span className="text-hos-text-secondary">Tenant ID</span>
             <input
               className="mt-1 w-full border rounded px-3 py-2 font-mono text-sm"
               value={tenantId}
@@ -79,7 +79,7 @@ export default function AdminStoreNewPage() {
             />
           </label>
           <label className="block text-sm">
-            <span className="text-gray-700">Name</span>
+            <span className="text-hos-text-secondary">Name</span>
             <input
               className="mt-1 w-full border rounded px-3 py-2"
               value={name}
@@ -87,7 +87,7 @@ export default function AdminStoreNewPage() {
             />
           </label>
           <label className="block text-sm">
-            <span className="text-gray-700">Code</span>
+            <span className="text-hos-text-secondary">Code</span>
             <input
               className="mt-1 w-full border rounded px-3 py-2"
               value={code}
@@ -95,7 +95,7 @@ export default function AdminStoreNewPage() {
             />
           </label>
           <label className="block text-sm">
-            <span className="text-gray-700">Country</span>
+            <span className="text-hos-text-secondary">Country</span>
             <input
               className="mt-1 w-full border rounded px-3 py-2"
               value={country}
@@ -103,7 +103,7 @@ export default function AdminStoreNewPage() {
             />
           </label>
           <label className="block text-sm">
-            <span className="text-gray-700">Currency</span>
+            <span className="text-hos-text-secondary">Currency</span>
             <input
               className="mt-1 w-full border rounded px-3 py-2"
               value={currency}
@@ -111,7 +111,7 @@ export default function AdminStoreNewPage() {
             />
           </label>
           <label className="block text-sm">
-            <span className="text-gray-700">Default region code</span>
+            <span className="text-hos-text-secondary">Default region code</span>
             <input
               className="mt-1 w-full border rounded px-3 py-2"
               value={region}

@@ -194,10 +194,10 @@ export default function AdminCustomerGroupsPage() {
       <AdminLayout>
         <div className="space-y-6">
           <div className="flex justify-between items-center">
-            <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Customer Groups</h1>
+            <h1 className="text-2xl sm:text-3xl font-bold text-white">Customer Groups</h1>
             <button
               onClick={() => setShowCreateModal(true)}
-              className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors font-medium"
+              className="px-4 py-2 bg-hos-gold text-[#1a1406] rounded-lg hover:bg-hos-gold-hover transition-colors font-medium"
             >
               + Create Group
             </button>
@@ -209,17 +209,17 @@ export default function AdminCustomerGroupsPage() {
                 type="checkbox"
                 checked={includeInactive}
                 onChange={(e) => setIncludeInactive(e.target.checked)}
-                className="rounded border-gray-300 text-purple-600 focus:ring-purple-500"
+                className="rounded border-hos-border text-hos-gold focus:ring-hos-gold/50"
               />
-              <span className="text-sm text-gray-700">Include inactive groups</span>
+              <span className="text-sm text-hos-text-secondary">Include inactive groups</span>
             </label>
           </div>
 
           {loading ? (
             <div className="flex items-center justify-center py-12">
               <div className="text-center">
-                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600 mx-auto mb-4"></div>
-                <p className="text-sm text-gray-600">Loading customer groups...</p>
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-hos-gold mx-auto mb-4"></div>
+                <p className="text-sm text-hos-text-secondary">Loading customer groups...</p>
               </div>
             </div>
           ) : error ? (
@@ -227,53 +227,53 @@ export default function AdminCustomerGroupsPage() {
               <p className="text-red-800">{error}</p>
             </div>
           ) : filteredGroups.length === 0 ? (
-            <div className="bg-gray-50 rounded-lg p-8 text-center">
-              <p className="text-gray-600 mb-4">No customer groups found.</p>
+            <div className="bg-hos-bg-secondary rounded-lg p-8 text-center">
+              <p className="text-hos-text-secondary mb-4">No customer groups found.</p>
               <button
                 onClick={() => setShowCreateModal(true)}
-                className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors font-medium"
+                className="px-4 py-2 bg-hos-gold text-[#1a1406] rounded-lg hover:bg-hos-gold-hover transition-colors font-medium"
               >
                 Create First Group
               </button>
             </div>
           ) : (
-            <div className="bg-white border rounded-lg shadow-sm overflow-hidden">
+            <div className="bg-hos-bg-secondary border rounded-lg shadow-sm overflow-hidden">
               <div className="overflow-x-auto">
-                <table className="min-w-full divide-y divide-gray-200">
-                  <thead className="bg-gray-50">
+                <table className="min-w-full divide-y divide-hos-border">
+                  <thead className="bg-hos-bg-secondary">
                     <tr>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      <th className="px-6 py-3 text-left text-xs font-medium text-hos-text-muted uppercase tracking-wider">
                         Name
                       </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      <th className="px-6 py-3 text-left text-xs font-medium text-hos-text-muted uppercase tracking-wider">
                         Type
                       </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      <th className="px-6 py-3 text-left text-xs font-medium text-hos-text-muted uppercase tracking-wider">
                         Customers
                       </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      <th className="px-6 py-3 text-left text-xs font-medium text-hos-text-muted uppercase tracking-wider">
                         Status
                       </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      <th className="px-6 py-3 text-left text-xs font-medium text-hos-text-muted uppercase tracking-wider">
                         Actions
                       </th>
                     </tr>
                   </thead>
-                  <tbody className="bg-white divide-y divide-gray-200">
+                  <tbody className="bg-hos-bg-secondary divide-y divide-hos-border">
                     {filteredGroups.map((group) => (
-                      <tr key={group.id} className="hover:bg-gray-50">
+                      <tr key={group.id} className="hover:bg-hos-bg-tertiary">
                         <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="text-sm font-medium text-gray-900">{group.name}</div>
+                          <div className="text-sm font-medium text-white">{group.name}</div>
                           {group.description && (
-                            <div className="text-sm text-gray-500">{group.description}</div>
+                            <div className="text-sm text-hos-text-muted">{group.description}</div>
                           )}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
-                          <span className="px-2 py-1 text-xs font-medium rounded-full bg-blue-100 text-blue-800">
+                          <span className="px-2 py-1 text-xs font-medium rounded-full bg-hos-gold/20 text-hos-gold">
                             {group.type}
                           </span>
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-hos-text-muted">
                           {group.customers?.length || 0} customers
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
@@ -281,7 +281,7 @@ export default function AdminCustomerGroupsPage() {
                             className={`px-2 py-1 text-xs font-medium rounded-full ${
                               group.isActive
                                 ? 'bg-green-100 text-green-800'
-                                : 'bg-gray-100 text-gray-800'
+                                : 'bg-hos-bg-tertiary text-white'
                             }`}
                           >
                             {group.isActive ? 'Active' : 'Inactive'}
@@ -291,7 +291,7 @@ export default function AdminCustomerGroupsPage() {
                           <div className="flex gap-2">
                             <button
                               onClick={() => handleEdit(group)}
-                              className="text-purple-600 hover:text-purple-900"
+                              className="text-hos-gold hover:text-hos-gold"
                             >
                               Edit
                             </button>
@@ -314,41 +314,41 @@ export default function AdminCustomerGroupsPage() {
           {/* Create Modal */}
           {showCreateModal && (
             <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-              <div className="bg-white rounded-lg max-w-md w-full p-6">
+              <div className="bg-hos-bg-secondary rounded-lg max-w-md w-full p-6">
                 <h2 className="text-xl font-bold mb-4">Create Customer Group</h2>
                 <div className="space-y-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                    <label className="block text-sm font-medium text-hos-text-secondary mb-1">
                       Name *
                     </label>
                     <input
                       type="text"
                       value={createForm.name}
                       onChange={(e) => setCreateForm({ ...createForm, name: e.target.value })}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-purple-500 focus:border-purple-500"
+                      className="w-full px-3 py-2 border border-hos-border rounded-lg focus:ring-hos-gold/50 focus:border-hos-gold"
                       placeholder="e.g., VIP Customers"
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                    <label className="block text-sm font-medium text-hos-text-secondary mb-1">
                       Description
                     </label>
                     <textarea
                       value={createForm.description}
                       onChange={(e) => setCreateForm({ ...createForm, description: e.target.value })}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-purple-500 focus:border-purple-500"
+                      className="w-full px-3 py-2 border border-hos-border rounded-lg focus:ring-hos-gold/50 focus:border-hos-gold"
                       rows={3}
                       placeholder="Group description..."
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                    <label className="block text-sm font-medium text-hos-text-secondary mb-1">
                       Type *
                     </label>
                     <select
                       value={createForm.type}
                       onChange={(e) => setCreateForm({ ...createForm, type: e.target.value })}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-purple-500 focus:border-purple-500"
+                      className="w-full px-3 py-2 border border-hos-border rounded-lg focus:ring-hos-gold/50 focus:border-hos-gold"
                     >
                       {CUSTOMER_GROUP_TYPES.map((type) => (
                         <option key={type} value={type}>
@@ -362,15 +362,15 @@ export default function AdminCustomerGroupsPage() {
                       type="checkbox"
                       checked={createForm.isActive}
                       onChange={(e) => setCreateForm({ ...createForm, isActive: e.target.checked })}
-                      className="rounded border-gray-300 text-purple-600 focus:ring-purple-500"
+                      className="rounded border-hos-border text-hos-gold focus:ring-hos-gold/50"
                     />
-                    <label className="text-sm text-gray-700">Active</label>
+                    <label className="text-sm text-hos-text-secondary">Active</label>
                   </div>
                 </div>
                 <div className="flex gap-3 mt-6">
                   <button
                     onClick={() => setShowCreateModal(false)}
-                    className="flex-1 px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors"
+                    className="flex-1 px-4 py-2 border border-hos-border rounded-lg text-hos-text-secondary hover:bg-hos-bg-tertiary transition-colors"
                     disabled={actionLoading}
                   >
                     Cancel
@@ -378,7 +378,7 @@ export default function AdminCustomerGroupsPage() {
                   <button
                     onClick={handleCreate}
                     disabled={actionLoading}
-                    className="flex-1 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="flex-1 px-4 py-2 bg-hos-gold text-[#1a1406] rounded-lg hover:bg-hos-gold-hover transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     {actionLoading ? 'Creating...' : 'Create'}
                   </button>
@@ -390,39 +390,39 @@ export default function AdminCustomerGroupsPage() {
           {/* Edit Modal */}
           {showEditModal && selectedGroup && (
             <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-              <div className="bg-white rounded-lg max-w-md w-full p-6">
+              <div className="bg-hos-bg-secondary rounded-lg max-w-md w-full p-6">
                 <h2 className="text-xl font-bold mb-4">Edit Customer Group</h2>
                 <div className="space-y-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                    <label className="block text-sm font-medium text-hos-text-secondary mb-1">
                       Name *
                     </label>
                     <input
                       type="text"
                       value={editForm.name}
                       onChange={(e) => setEditForm({ ...editForm, name: e.target.value })}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-purple-500 focus:border-purple-500"
+                      className="w-full px-3 py-2 border border-hos-border rounded-lg focus:ring-hos-gold/50 focus:border-hos-gold"
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                    <label className="block text-sm font-medium text-hos-text-secondary mb-1">
                       Description
                     </label>
                     <textarea
                       value={editForm.description}
                       onChange={(e) => setEditForm({ ...editForm, description: e.target.value })}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-purple-500 focus:border-purple-500"
+                      className="w-full px-3 py-2 border border-hos-border rounded-lg focus:ring-hos-gold/50 focus:border-hos-gold"
                       rows={3}
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                    <label className="block text-sm font-medium text-hos-text-secondary mb-1">
                       Type *
                     </label>
                     <select
                       value={editForm.type}
                       onChange={(e) => setEditForm({ ...editForm, type: e.target.value })}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-purple-500 focus:border-purple-500"
+                      className="w-full px-3 py-2 border border-hos-border rounded-lg focus:ring-hos-gold/50 focus:border-hos-gold"
                     >
                       {CUSTOMER_GROUP_TYPES.map((type) => (
                         <option key={type} value={type}>
@@ -436,15 +436,15 @@ export default function AdminCustomerGroupsPage() {
                       type="checkbox"
                       checked={editForm.isActive}
                       onChange={(e) => setEditForm({ ...editForm, isActive: e.target.checked })}
-                      className="rounded border-gray-300 text-purple-600 focus:ring-purple-500"
+                      className="rounded border-hos-border text-hos-gold focus:ring-hos-gold/50"
                     />
-                    <label className="text-sm text-gray-700">Active</label>
+                    <label className="text-sm text-hos-text-secondary">Active</label>
                   </div>
                 </div>
                 <div className="flex gap-3 mt-6">
                   <button
                     onClick={() => setShowEditModal(false)}
-                    className="flex-1 px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors"
+                    className="flex-1 px-4 py-2 border border-hos-border rounded-lg text-hos-text-secondary hover:bg-hos-bg-tertiary transition-colors"
                     disabled={actionLoading}
                   >
                     Cancel
@@ -452,7 +452,7 @@ export default function AdminCustomerGroupsPage() {
                   <button
                     onClick={handleUpdate}
                     disabled={actionLoading}
-                    className="flex-1 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="flex-1 px-4 py-2 bg-hos-gold text-[#1a1406] rounded-lg hover:bg-hos-gold-hover transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     {actionLoading ? 'Updating...' : 'Update'}
                   </button>
@@ -464,15 +464,15 @@ export default function AdminCustomerGroupsPage() {
           {/* Delete Modal */}
           {showDeleteModal && selectedGroup && (
             <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-              <div className="bg-white rounded-lg max-w-md w-full p-6">
+              <div className="bg-hos-bg-secondary rounded-lg max-w-md w-full p-6">
                 <h2 className="text-xl font-bold mb-4">Deactivate Customer Group</h2>
-                <p className="text-gray-600 mb-6">
+                <p className="text-hos-text-secondary mb-6">
                   Are you sure you want to deactivate &quot;{selectedGroup.name}&quot;? This will mark the group as inactive.
                 </p>
                 <div className="flex gap-3">
                   <button
                     onClick={() => setShowDeleteModal(false)}
-                    className="flex-1 px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors"
+                    className="flex-1 px-4 py-2 border border-hos-border rounded-lg text-hos-text-secondary hover:bg-hos-bg-tertiary transition-colors"
                     disabled={actionLoading}
                   >
                     Cancel

@@ -50,12 +50,12 @@ interface AdminDashboardData {
 const COLORS = ['#a855f7', '#06b6d4', '#10b981', '#f59e0b', '#ef4444', '#ec4899'];
 
 const quickActions = [
-  { title: 'Create Product', href: '/admin/products/create', icon: '➕', bgColor: 'bg-purple-50', iconColor: 'text-purple-600' },
-  { title: 'View Orders', href: '/admin/orders', icon: '🛒', bgColor: 'bg-blue-50', iconColor: 'text-blue-600' },
+  { title: 'Create Product', href: '/admin/products/create', icon: '➕', bgColor: 'bg-hos-gold/10', iconColor: 'text-hos-gold' },
+  { title: 'View Orders', href: '/admin/orders', icon: '🛒', bgColor: 'bg-hos-gold/10', iconColor: 'text-hos-gold' },
   { title: 'Submissions', href: '/admin/submissions', icon: '📋', bgColor: 'bg-amber-50', iconColor: 'text-amber-600' },
   { title: 'Invite Seller', href: '/admin/sellers', icon: '👤', bgColor: 'bg-emerald-50', iconColor: 'text-emerald-600' },
-  { title: 'View Reports', href: '/admin/reports/sales', icon: '📊', bgColor: 'bg-indigo-50', iconColor: 'text-indigo-600' },
-  { title: 'Settings', href: '/admin/settings', icon: '⚙️', bgColor: 'bg-gray-50', iconColor: 'text-gray-600' },
+  { title: 'View Reports', href: '/admin/reports/sales', icon: '📊', bgColor: 'bg-hos-gold/10', iconColor: 'text-hos-gold' },
+  { title: 'Settings', href: '/admin/settings', icon: '⚙️', bgColor: 'bg-hos-bg-secondary', iconColor: 'text-hos-text-secondary' },
 ];
 
 export default function AdminDashboardPage() {
@@ -142,13 +142,13 @@ export default function AdminDashboardPage() {
         {/* Page Header */}
         <div className="mb-8 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
-            <h1 className="text-2xl font-semibold text-gray-900">Dashboard</h1>
-            <p className="text-sm text-gray-500 mt-1">Overview of platform operations and key metrics</p>
+            <h1 className="text-2xl font-semibold text-white">Dashboard</h1>
+            <p className="text-sm text-hos-text-muted mt-1">Overview of platform operations and key metrics</p>
           </div>
           <button
             onClick={() => fetchDashboardData(true)}
             disabled={loading}
-            className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50"
+            className="px-4 py-2 text-sm font-medium text-hos-text-secondary bg-hos-bg-secondary border border-hos-border rounded-lg hover:bg-hos-bg-tertiary disabled:opacity-50"
           >
             {loading ? 'Refreshing...' : 'Refresh'}
           </button>
@@ -198,13 +198,13 @@ export default function AdminDashboardPage() {
                 label="Total Products"
                 value={stats.totalProducts}
                 icon={<span className="text-lg">📦</span>}
-                iconBgColor="bg-purple-50"
+                iconBgColor="bg-hos-gold/10"
               />
               <StatCard
                 label="Total Orders"
                 value={stats.totalOrders}
                 icon={<span className="text-lg">🛒</span>}
-                iconBgColor="bg-blue-50"
+                iconBgColor="bg-hos-gold/10"
               />
               <StatCard
                 label="Total Sellers"
@@ -216,14 +216,14 @@ export default function AdminDashboardPage() {
                 label="Total Users"
                 value={stats.totalUsers || (stats.totalCustomers + stats.totalSellers)}
                 icon={<span className="text-lg">👥</span>}
-                iconBgColor="bg-indigo-50"
+                iconBgColor="bg-hos-gold/10"
               />
               <StatCard
                 label="Pending Approvals"
                 value={pendingApprovals}
                 icon={<span className="text-lg">⏳</span>}
                 iconBgColor="bg-orange-50"
-                valueColor={pendingApprovals > 0 ? 'text-orange-600' : 'text-gray-900'}
+                valueColor={pendingApprovals > 0 ? 'text-orange-600' : 'text-white'}
                 onClick={pendingApprovals > 0 ? () => window.location.href = '/admin/submissions' : undefined}
               />
             </div>
@@ -274,9 +274,9 @@ export default function AdminDashboardPage() {
                     </LineChart>
                   </ResponsiveContainer>
                 ) : (
-                  <div className="flex h-full flex-col items-center justify-center px-4 text-center text-gray-500">
-                    <p className="text-sm font-medium text-gray-700">No trend data loaded</p>
-                    <p className="mt-1 text-xs text-gray-500">Refresh after the dashboard reconnects.</p>
+                  <div className="flex h-full flex-col items-center justify-center px-4 text-center text-hos-text-muted">
+                    <p className="text-sm font-medium text-hos-text-secondary">No trend data loaded</p>
+                    <p className="mt-1 text-xs text-hos-text-muted">Refresh after the dashboard reconnects.</p>
                   </div>
                 )}
               </ChartCard>
@@ -383,7 +383,7 @@ export default function AdminDashboardPage() {
                       <ActivityItem
                         key={activity.id || index}
                         icon={<span className="text-sm">📝</span>}
-                        iconBg="bg-purple-100"
+                        iconBg="bg-hos-gold/20"
                         title={activity.seller?.storeName || activity.user?.email || 'System Activity'}
                         subtitle={
                           typeof activity.description === 'string' && activity.description.trim()
@@ -415,11 +415,11 @@ export default function AdminDashboardPage() {
                 {dashboardData?.submissionsByStatus && dashboardData.submissionsByStatus.length > 0 ? (
                   <div className="space-y-2">
                     {dashboardData.submissionsByStatus.map((item: any) => (
-                      <div key={item.status} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
+                      <div key={item.status} className="flex items-center justify-between p-3 bg-hos-bg-secondary rounded-lg hover:bg-hos-bg-tertiary transition-colors">
                         <div className="flex items-center gap-3">
                           <StatusBadge status={item.status} />
                         </div>
-                        <span className="text-lg font-semibold text-gray-900 tabular-nums">{item._count}</span>
+                        <span className="text-lg font-semibold text-white tabular-nums">{item._count}</span>
                       </div>
                     ))}
                   </div>
@@ -440,15 +440,15 @@ export default function AdminDashboardPage() {
                 {dashboardData?.ordersByStatus && dashboardData.ordersByStatus.length > 0 ? (
                   <div className="space-y-2">
                     {dashboardData.ordersByStatus.map((item: any, index: number) => (
-                      <div key={item.status} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
+                      <div key={item.status} className="flex items-center justify-between p-3 bg-hos-bg-secondary rounded-lg hover:bg-hos-bg-tertiary transition-colors">
                         <div className="flex items-center gap-3">
                           <span 
                             className="w-3 h-3 rounded-full" 
                             style={{ backgroundColor: COLORS[index % COLORS.length] }}
                           />
-                          <span className="text-sm font-medium text-gray-700">{item.status}</span>
+                          <span className="text-sm font-medium text-hos-text-secondary">{item.status}</span>
                         </div>
-                        <span className="text-lg font-semibold text-gray-900 tabular-nums">{item._count}</span>
+                        <span className="text-lg font-semibold text-white tabular-nums">{item._count}</span>
                       </div>
                     ))}
                   </div>

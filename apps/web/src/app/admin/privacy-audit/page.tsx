@@ -61,10 +61,10 @@ export default function PrivacyAuditPage() {
   const getTypeBadgeColor = (type: string) => {
     switch (type) {
       case 'DO_NOT_SELL': return 'bg-orange-100 text-orange-800';
-      case 'MARKETING': return 'bg-blue-100 text-blue-800';
-      case 'ANALYTICS': return 'bg-indigo-100 text-indigo-800';
+      case 'MARKETING': return 'bg-hos-gold/20 text-hos-gold';
+      case 'ANALYTICS': return 'bg-hos-gold/20 text-hos-gold';
       case 'ESSENTIAL': return 'bg-green-100 text-green-800';
-      default: return 'bg-gray-100 text-gray-800';
+      default: return 'bg-hos-bg-tertiary text-white';
     }
   };
 
@@ -73,44 +73,44 @@ export default function PrivacyAuditPage() {
       <AdminLayout>
         <div className="mb-6">
           <h1 className="text-2xl sm:text-3xl font-bold">Privacy Audit Log</h1>
-          <p className="text-gray-600 mt-2">
+          <p className="text-hos-text-secondary mt-2">
             Track all consent changes, Do Not Sell opt-outs, and data access request events across users.
           </p>
         </div>
 
         {/* Stats */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-6">
-          <div className="bg-white rounded-xl border p-4">
-            <div className="text-2xl font-bold text-purple-700">{total}</div>
-            <div className="text-sm text-gray-600">Total Events</div>
+          <div className="bg-hos-bg-secondary rounded-xl border p-4">
+            <div className="text-2xl font-bold text-hos-gold-hover">{total}</div>
+            <div className="text-sm text-hos-text-secondary">Total Events</div>
           </div>
-          <div className="bg-white rounded-xl border p-4">
+          <div className="bg-hos-bg-secondary rounded-xl border p-4">
             <div className="text-2xl font-bold text-orange-600">
               {logs.filter((l) => l.consentType === 'DO_NOT_SELL' && l.granted).length}
             </div>
-            <div className="text-sm text-gray-600">Do Not Sell Opt-Outs</div>
+            <div className="text-sm text-hos-text-secondary">Do Not Sell Opt-Outs</div>
           </div>
-          <div className="bg-white rounded-xl border p-4">
-            <div className="text-2xl font-bold text-blue-600">
+          <div className="bg-hos-bg-secondary rounded-xl border p-4">
+            <div className="text-2xl font-bold text-hos-gold">
               {logs.filter((l) => l.consentType === 'MARKETING').length}
             </div>
-            <div className="text-sm text-gray-600">Marketing Changes</div>
+            <div className="text-sm text-hos-text-secondary">Marketing Changes</div>
           </div>
-          <div className="bg-white rounded-xl border p-4">
+          <div className="bg-hos-bg-secondary rounded-xl border p-4">
             <div className="text-2xl font-bold text-green-600">
               {logs.filter((l) => l.granted).length}
             </div>
-            <div className="text-sm text-gray-600">Grants (This Page)</div>
+            <div className="text-sm text-hos-text-secondary">Grants (This Page)</div>
           </div>
         </div>
 
         {/* Filter */}
         <div className="flex items-center gap-3 mb-4">
-          <label className="text-sm font-medium text-gray-700">Filter by type:</label>
+          <label className="text-sm font-medium text-hos-text-secondary">Filter by type:</label>
           <select
             value={filterType}
             onChange={(e) => setFilterType(e.target.value)}
-            className="px-3 py-1.5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-purple-500"
+            className="px-3 py-1.5 border border-hos-border rounded-lg text-sm focus:ring-2 focus:ring-hos-gold/50"
           >
             <option value="">All</option>
             {consentTypes.map((t) => (
@@ -120,40 +120,40 @@ export default function PrivacyAuditPage() {
         </div>
 
         {/* Table */}
-        <div className="bg-white rounded-xl border overflow-hidden">
+        <div className="bg-hos-bg-secondary rounded-xl border overflow-hidden">
           {loading ? (
             <div className="p-12 text-center">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-600 mx-auto" />
-              <p className="text-gray-500 mt-3">Loading audit log...</p>
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-hos-gold mx-auto" />
+              <p className="text-hos-text-muted mt-3">Loading audit log...</p>
             </div>
           ) : filteredLogs.length === 0 ? (
-            <div className="p-12 text-center text-gray-500">No consent events found.</div>
+            <div className="p-12 text-center text-hos-text-muted">No consent events found.</div>
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
-                <thead className="bg-gray-50 border-b">
+                <thead className="bg-hos-bg-secondary border-b">
                   <tr>
-                    <th className="px-4 py-3 text-left font-medium text-gray-600">Date / Time</th>
-                    <th className="px-4 py-3 text-left font-medium text-gray-600">User</th>
-                    <th className="px-4 py-3 text-left font-medium text-gray-600">Type</th>
-                    <th className="px-4 py-3 text-left font-medium text-gray-600">Action</th>
-                    <th className="px-4 py-3 text-left font-medium text-gray-600">IP Address</th>
+                    <th className="px-4 py-3 text-left font-medium text-hos-text-secondary">Date / Time</th>
+                    <th className="px-4 py-3 text-left font-medium text-hos-text-secondary">User</th>
+                    <th className="px-4 py-3 text-left font-medium text-hos-text-secondary">Type</th>
+                    <th className="px-4 py-3 text-left font-medium text-hos-text-secondary">Action</th>
+                    <th className="px-4 py-3 text-left font-medium text-hos-text-secondary">IP Address</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y">
                   {filteredLogs.map((entry) => (
-                    <tr key={entry.id} className="hover:bg-gray-50">
-                      <td className="px-4 py-3 whitespace-nowrap text-gray-700">
+                    <tr key={entry.id} className="hover:bg-hos-bg-tertiary">
+                      <td className="px-4 py-3 whitespace-nowrap text-hos-text-secondary">
                         {new Date(entry.grantedAt).toLocaleString('en-US', {
                           month: 'short', day: 'numeric', year: 'numeric',
                           hour: '2-digit', minute: '2-digit',
                         })}
                       </td>
                       <td className="px-4 py-3">
-                        <div className="font-medium text-gray-900">
+                        <div className="font-medium text-white">
                           {entry.user ? `${entry.user.firstName} ${entry.user.lastName}` : 'Unknown'}
                         </div>
-                        <div className="text-xs text-gray-500">{entry.user?.email || entry.userId}</div>
+                        <div className="text-xs text-hos-text-muted">{entry.user?.email || entry.userId}</div>
                       </td>
                       <td className="px-4 py-3">
                         <span className={`inline-block px-2 py-0.5 rounded-full text-xs font-medium ${getTypeBadgeColor(entry.consentType)}`}>
@@ -165,7 +165,7 @@ export default function PrivacyAuditPage() {
                           {entry.granted ? 'Granted' : 'Revoked'}
                         </span>
                       </td>
-                      <td className="px-4 py-3 text-xs text-gray-500 font-mono">
+                      <td className="px-4 py-3 text-xs text-hos-text-muted font-mono">
                         {entry.ipAddress || '—'}
                       </td>
                     </tr>
@@ -179,21 +179,21 @@ export default function PrivacyAuditPage() {
         {/* Pagination */}
         {totalPages > 1 && (
           <div className="flex items-center justify-between mt-4">
-            <p className="text-sm text-gray-600">
+            <p className="text-sm text-hos-text-secondary">
               Page {page} of {totalPages} ({total} total events)
             </p>
             <div className="flex gap-2">
               <button
                 onClick={() => setPage((p) => Math.max(1, p - 1))}
                 disabled={page === 1}
-                className="px-3 py-1.5 border rounded-lg text-sm disabled:opacity-50 hover:bg-gray-50"
+                className="px-3 py-1.5 border rounded-lg text-sm disabled:opacity-50 hover:bg-hos-bg-tertiary"
               >
                 Previous
               </button>
               <button
                 onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
                 disabled={page === totalPages}
-                className="px-3 py-1.5 border rounded-lg text-sm disabled:opacity-50 hover:bg-gray-50"
+                className="px-3 py-1.5 border rounded-lg text-sm disabled:opacity-50 hover:bg-hos-bg-tertiary"
               >
                 Next
               </button>

@@ -548,18 +548,18 @@ export default function AdminUsersPage() {
   const getRoleBadgeColor = (role: string) => {
     const colors: Record<string, string> = {
       ADMIN: 'bg-red-100 text-red-800',
-      SELLER: 'bg-blue-100 text-blue-800',
-      B2C_SELLER: 'bg-blue-100 text-blue-800',
+      SELLER: 'bg-hos-gold/20 text-hos-gold',
+      B2C_SELLER: 'bg-hos-gold/20 text-hos-gold',
       WHOLESALER: 'bg-green-100 text-green-800',
-      CUSTOMER: 'bg-gray-100 text-gray-800',
-      PROCUREMENT: 'bg-purple-100 text-purple-800',
+      CUSTOMER: 'bg-hos-bg-tertiary text-white',
+      PROCUREMENT: 'bg-hos-gold/20 text-hos-gold',
       FULFILLMENT: 'bg-yellow-100 text-yellow-800',
-      CATALOG: 'bg-indigo-100 text-indigo-800',
+      CATALOG: 'bg-hos-gold/20 text-hos-gold',
       MARKETING: 'bg-pink-100 text-pink-800',
       FINANCE: 'bg-emerald-100 text-emerald-800',
       CMS_EDITOR: 'bg-cyan-100 text-cyan-800',
     };
-    return colors[role] || 'bg-gray-100 text-gray-800';
+    return colors[role] || 'bg-hos-bg-tertiary text-white';
   };
 
   const exportColumns = [
@@ -585,14 +585,14 @@ export default function AdminUsersPage() {
           {/* Header */}
           <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
             <div>
-              <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">User Management</h1>
-              <p className="text-gray-600 mt-1">Manage all platform users, roles, and permissions</p>
+              <h1 className="text-2xl sm:text-3xl font-bold text-white">User Management</h1>
+              <p className="text-hos-text-secondary mt-1">Manage all platform users, roles, and permissions</p>
             </div>
             <div className="flex flex-wrap gap-2">
               <DataExport data={filteredUsers} columns={exportColumns} filename="users-export" />
               <button
                 onClick={() => setShowCreateModal(true)}
-                className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700"
+                className="px-4 py-2 bg-hos-gold text-[#1a1406] rounded-lg hover:bg-hos-gold-hover"
               >
                 + Create User
               </button>
@@ -604,44 +604,44 @@ export default function AdminUsersPage() {
             <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-3">
               <button
                 onClick={() => { setRoleFilter('ALL'); setStatusFilter('ALL'); setShowNewThisMonth(false); }}
-                className={`bg-white rounded-lg shadow p-3 text-left hover:shadow-md transition-shadow ${roleFilter === 'ALL' && statusFilter === 'ALL' && !showNewThisMonth ? 'ring-2 ring-purple-500' : ''}`}
+                className={`bg-hos-bg-secondary rounded-lg shadow p-3 text-left hover:shadow-md transition-shadow ${roleFilter === 'ALL' && statusFilter === 'ALL' && !showNewThisMonth ? 'ring-2 ring-hos-gold/50' : ''}`}
               >
-                <p className="text-xs text-gray-500">Total</p>
-                <p className="text-xl font-bold text-gray-900">{stats.total}</p>
+                <p className="text-xs text-hos-text-muted">Total</p>
+                <p className="text-xl font-bold text-white">{stats.total}</p>
               </button>
               <button
                 onClick={() => { setRoleFilter('ADMIN'); setShowNewThisMonth(false); }}
-                className={`bg-white rounded-lg shadow p-3 text-left hover:shadow-md transition-shadow ${roleFilter === 'ADMIN' && !showNewThisMonth ? 'ring-2 ring-purple-500' : ''}`}
+                className={`bg-hos-bg-secondary rounded-lg shadow p-3 text-left hover:shadow-md transition-shadow ${roleFilter === 'ADMIN' && !showNewThisMonth ? 'ring-2 ring-hos-gold/50' : ''}`}
               >
-                <p className="text-xs text-gray-500">Admins</p>
+                <p className="text-xs text-hos-text-muted">Admins</p>
                 <p className="text-xl font-bold text-red-600">{stats.admins}</p>
               </button>
               <button
                 onClick={() => { setRoleFilter('SELLERS'); setShowNewThisMonth(false); }}
-                className={`bg-white rounded-lg shadow p-3 text-left hover:shadow-md transition-shadow ${roleFilter === 'SELLERS' && !showNewThisMonth ? 'ring-2 ring-purple-500' : ''}`}
+                className={`bg-hos-bg-secondary rounded-lg shadow p-3 text-left hover:shadow-md transition-shadow ${roleFilter === 'SELLERS' && !showNewThisMonth ? 'ring-2 ring-hos-gold/50' : ''}`}
               >
-                <p className="text-xs text-gray-500">Sellers</p>
-                <p className="text-xl font-bold text-blue-600">{stats.sellers}</p>
+                <p className="text-xs text-hos-text-muted">Sellers</p>
+                <p className="text-xl font-bold text-hos-gold">{stats.sellers}</p>
               </button>
               <button
                 onClick={() => { setRoleFilter('CUSTOMER'); setShowNewThisMonth(false); }}
-                className={`bg-white rounded-lg shadow p-3 text-left hover:shadow-md transition-shadow ${roleFilter === 'CUSTOMER' && !showNewThisMonth ? 'ring-2 ring-purple-500' : ''}`}
+                className={`bg-hos-bg-secondary rounded-lg shadow p-3 text-left hover:shadow-md transition-shadow ${roleFilter === 'CUSTOMER' && !showNewThisMonth ? 'ring-2 ring-hos-gold/50' : ''}`}
               >
-                <p className="text-xs text-gray-500">Customers</p>
-                <p className="text-xl font-bold text-gray-600">{stats.customers}</p>
+                <p className="text-xs text-hos-text-muted">Customers</p>
+                <p className="text-xl font-bold text-hos-text-secondary">{stats.customers}</p>
               </button>
               <button
                 onClick={() => { setRoleFilter('TEAM'); setShowNewThisMonth(false); }}
-                className={`bg-white rounded-lg shadow p-3 text-left hover:shadow-md transition-shadow ${roleFilter === 'TEAM' && !showNewThisMonth ? 'ring-2 ring-purple-500' : ''}`}
+                className={`bg-hos-bg-secondary rounded-lg shadow p-3 text-left hover:shadow-md transition-shadow ${roleFilter === 'TEAM' && !showNewThisMonth ? 'ring-2 ring-hos-gold/50' : ''}`}
               >
-                <p className="text-xs text-gray-500">Team</p>
-                <p className="text-xl font-bold text-purple-600">{stats.teamMembers}</p>
+                <p className="text-xs text-hos-text-muted">Team</p>
+                <p className="text-xl font-bold text-hos-gold">{stats.teamMembers}</p>
               </button>
               <button
                 onClick={() => { setRoleFilter('INFLUENCER'); setShowNewThisMonth(false); }}
-                className={`bg-white rounded-lg shadow p-3 text-left hover:shadow-md transition-shadow ${roleFilter === 'INFLUENCER' && !showNewThisMonth ? 'ring-2 ring-purple-500' : ''}`}
+                className={`bg-hos-bg-secondary rounded-lg shadow p-3 text-left hover:shadow-md transition-shadow ${roleFilter === 'INFLUENCER' && !showNewThisMonth ? 'ring-2 ring-hos-gold/50' : ''}`}
               >
-                <p className="text-xs text-gray-500">Influencers</p>
+                <p className="text-xs text-hos-text-muted">Influencers</p>
                 <p className="text-xl font-bold text-amber-600">{stats.influencers}</p>
               </button>
               <button
@@ -653,23 +653,23 @@ export default function AdminUsersPage() {
                     setStatusFilter('ALL');
                   }
                 }}
-                className={`bg-white rounded-lg shadow p-3 text-left hover:shadow-md transition-shadow ${showNewThisMonth ? 'ring-2 ring-green-500' : ''}`}
+                className={`bg-hos-bg-secondary rounded-lg shadow p-3 text-left hover:shadow-md transition-shadow ${showNewThisMonth ? 'ring-2 ring-green-500' : ''}`}
               >
-                <p className="text-xs text-gray-500">New This Month</p>
+                <p className="text-xs text-hos-text-muted">New This Month</p>
                 <p className="text-xl font-bold text-green-600">{stats.newThisMonth}</p>
               </button>
               <button
                 onClick={() => { setStatusFilter('ACTIVE'); setShowNewThisMonth(false); }}
-                className={`bg-white rounded-lg shadow p-3 text-left hover:shadow-md transition-shadow ${statusFilter === 'ACTIVE' && !showNewThisMonth ? 'ring-2 ring-purple-500' : ''}`}
+                className={`bg-hos-bg-secondary rounded-lg shadow p-3 text-left hover:shadow-md transition-shadow ${statusFilter === 'ACTIVE' && !showNewThisMonth ? 'ring-2 ring-hos-gold/50' : ''}`}
               >
-                <p className="text-xs text-gray-500">Active</p>
+                <p className="text-xs text-hos-text-muted">Active</p>
                 <p className="text-xl font-bold text-green-600">{stats.active}</p>
               </button>
               <button
                 onClick={() => { setStatusFilter('INACTIVE'); setShowNewThisMonth(false); }}
-                className={`bg-white rounded-lg shadow p-3 text-left hover:shadow-md transition-shadow ${statusFilter === 'INACTIVE' && !showNewThisMonth ? 'ring-2 ring-purple-500' : ''}`}
+                className={`bg-hos-bg-secondary rounded-lg shadow p-3 text-left hover:shadow-md transition-shadow ${statusFilter === 'INACTIVE' && !showNewThisMonth ? 'ring-2 ring-hos-gold/50' : ''}`}
               >
-                <p className="text-xs text-gray-500">Inactive</p>
+                <p className="text-xs text-hos-text-muted">Inactive</p>
                 <p className="text-xl font-bold text-red-600">{stats.inactive}</p>
               </button>
             </div>
@@ -683,24 +683,24 @@ export default function AdminUsersPage() {
           )}
 
           {/* Filters */}
-          <div className="bg-white rounded-lg shadow p-4">
+          <div className="bg-hos-bg-secondary rounded-lg shadow p-4">
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Search</label>
+                <label className="block text-sm font-medium text-hos-text-secondary mb-1">Search</label>
                 <input
                   type="text"
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   placeholder="Name, email, or store..."
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
+                  className="w-full px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50"
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Role</label>
+                <label className="block text-sm font-medium text-hos-text-secondary mb-1">Role</label>
                 <select
                   value={roleFilter}
                   onChange={(e) => setRoleFilter(e.target.value)}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
+                  className="w-full px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50"
                 >
                   <option value="ALL">All Roles</option>
                   <option value="SELLERS">All Sellers</option>
@@ -711,11 +711,11 @@ export default function AdminUsersPage() {
                 </select>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Status</label>
+                <label className="block text-sm font-medium text-hos-text-secondary mb-1">Status</label>
                 <select
                   value={statusFilter}
                   onChange={(e) => setStatusFilter(e.target.value)}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
+                  className="w-full px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50"
                 >
                   <option value="ALL">All Status</option>
                   <option value="ACTIVE">Active</option>
@@ -725,7 +725,7 @@ export default function AdminUsersPage() {
                 </select>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Sort By</label>
+                <label className="block text-sm font-medium text-hos-text-secondary mb-1">Sort By</label>
                 <select
                   value={`${sortBy}-${sortOrder}`}
                   onChange={(e) => {
@@ -733,7 +733,7 @@ export default function AdminUsersPage() {
                     setSortBy(field as any);
                     setSortOrder(order as any);
                   }}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
+                  className="w-full px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50"
                 >
                   <option value="date-desc">Newest First</option>
                   <option value="date-asc">Oldest First</option>
@@ -748,7 +748,7 @@ export default function AdminUsersPage() {
             {/* Bulk Actions */}
             {selectedUsers.size > 0 && (
               <div className="flex items-center gap-4 mt-4 pt-4 border-t">
-                <span className="text-sm text-gray-600">{selectedUsers.size} selected</span>
+                <span className="text-sm text-hos-text-secondary">{selectedUsers.size} selected</span>
                 <button
                   onClick={() => handleBulkAction('activate')}
                   className="px-3 py-1 text-sm bg-green-100 text-green-700 rounded hover:bg-green-200"
@@ -769,7 +769,7 @@ export default function AdminUsersPage() {
                 </button>
                 <button
                   onClick={() => setSelectedUsers(new Set())}
-                  className="text-sm text-gray-500 hover:text-gray-700"
+                  className="text-sm text-hos-text-muted hover:text-hos-text-secondary"
                 >
                   Clear
                 </button>
@@ -779,56 +779,56 @@ export default function AdminUsersPage() {
 
           {loading && (
             <div className="flex items-center justify-center py-12">
-              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600"></div>
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-hos-gold"></div>
             </div>
           )}
 
           {!loading && filteredUsers.length === 0 && (
-            <div className="bg-white rounded-lg shadow p-8 text-center">
-              <p className="text-gray-500 text-lg">No users found</p>
+            <div className="bg-hos-bg-secondary rounded-lg shadow p-8 text-center">
+              <p className="text-hos-text-muted text-lg">No users found</p>
             </div>
           )}
 
           {/* Users Table */}
           {!loading && filteredUsers.length > 0 && (
-            <div className="bg-white rounded-lg shadow overflow-hidden">
+            <div className="bg-hos-bg-secondary rounded-lg shadow overflow-hidden">
               <div className="p-4 border-b flex justify-between items-start gap-4">
                 <div>
                   <h2 className="font-semibold">Users ({displayedListCount})</h2>
                   {tableUsesEmailVerifiedFilter && (
-                    <p className="text-xs text-gray-500 mt-0.5">
+                    <p className="text-xs text-hos-text-muted mt-0.5">
                       Email verification is filtered on the loaded page only; totals above reflect the full directory.
                     </p>
                   )}
                 </div>
-                <button onClick={selectAll} className="text-sm text-purple-600 hover:text-purple-800 shrink-0">
+                <button onClick={selectAll} className="text-sm text-hos-gold hover:text-hos-gold-hover shrink-0">
                   {selectedUsers.size === filteredUsers.length ? 'Deselect All' : 'Select All'}
                 </button>
               </div>
               <div ref={tableScrollRef} className="overflow-auto max-h-[500px] overflow-x-auto">
-                <table className="min-w-full divide-y divide-gray-200">
-                  <thead className="bg-gray-50 sticky top-0 z-10">
+                <table className="min-w-full divide-y divide-hos-border">
+                  <thead className="bg-hos-bg-secondary sticky top-0 z-10">
                     <tr>
-                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                      <th className="px-4 py-3 text-left text-xs font-medium text-hos-text-muted uppercase">
                         <input
                           type="checkbox"
                           checked={selectedUsers.size === filteredUsers.length && filteredUsers.length > 0}
                           onChange={selectAll}
-                          className="rounded border-gray-300 text-purple-600"
+                          className="rounded border-hos-border text-hos-gold"
                           aria-label="Select all users"
                         />
                       </th>
-                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">User</th>
-                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Role</th>
-                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
-                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Created</th>
-                      <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">Actions</th>
+                      <th className="px-4 py-3 text-left text-xs font-medium text-hos-text-muted uppercase">User</th>
+                      <th className="px-4 py-3 text-left text-xs font-medium text-hos-text-muted uppercase">Role</th>
+                      <th className="px-4 py-3 text-left text-xs font-medium text-hos-text-muted uppercase">Status</th>
+                      <th className="px-4 py-3 text-left text-xs font-medium text-hos-text-muted uppercase">Created</th>
+                      <th className="px-4 py-3 text-right text-xs font-medium text-hos-text-muted uppercase">Actions</th>
                     </tr>
                   </thead>
                   <VirtualizedTableBody
                     items={filteredUsers}
                     scrollRef={tableScrollRef}
-                    getRowClassName={(user) => `hover:bg-gray-50 ${selectedUsers.has(user.id) ? 'bg-purple-50' : ''}`}
+                    getRowClassName={(user) => `hover:bg-hos-bg-tertiary ${selectedUsers.has(user.id) ? 'bg-hos-gold/10' : ''}`}
                     renderRow={(user) => (
                       <>
                         <td className="px-4 py-3">
@@ -836,7 +836,7 @@ export default function AdminUsersPage() {
                             type="checkbox"
                             checked={selectedUsers.has(user.id)}
                             onChange={() => toggleSelection(user.id)}
-                            className="rounded border-gray-300 text-purple-600"
+                            className="rounded border-hos-border text-hos-gold"
                             aria-label={`Select ${user.email}`}
                           />
                         </td>
@@ -846,19 +846,19 @@ export default function AdminUsersPage() {
                               {user.avatar ? (
                                 <SafeImage width={40} height={40} className="h-10 w-10 rounded-full object-cover" src={user.avatar} alt={`${user.firstName || user.email} avatar`} fallback="👤" />
                               ) : (
-                                <div className="h-10 w-10 rounded-full bg-purple-100 flex items-center justify-center">
-                                  <span className="text-purple-600 font-medium text-sm">
+                                <div className="h-10 w-10 rounded-full bg-hos-gold/20 flex items-center justify-center">
+                                  <span className="text-hos-gold font-medium text-sm">
                                     {user.firstName?.[0] || user.email[0].toUpperCase()}
                                   </span>
                                 </div>
                               )}
                             </div>
                             <div className="ml-3">
-                              <p className="text-sm font-medium text-gray-900">
+                              <p className="text-sm font-medium text-white">
                                 {user.firstName && user.lastName ? `${user.firstName} ${user.lastName}` : 'No Name'}
                               </p>
-                              <p className="text-xs text-gray-500">{user.email}</p>
-                              {user.storeName && <p className="text-xs text-purple-600">{user.storeName}</p>}
+                              <p className="text-xs text-hos-text-muted">{user.email}</p>
+                              {user.storeName && <p className="text-xs text-hos-gold">{user.storeName}</p>}
                             </div>
                           </div>
                         </td>
@@ -873,24 +873,24 @@ export default function AdminUsersPage() {
                               {user.isActive !== false ? 'Active' : 'Inactive'}
                             </span>
                             {user.emailVerified && (
-                              <span className="text-xs text-blue-600">✓ Verified</span>
+                              <span className="text-xs text-hos-gold">✓ Verified</span>
                             )}
                           </div>
                         </td>
-                        <td className="px-4 py-3 text-sm text-gray-500">
+                        <td className="px-4 py-3 text-sm text-hos-text-muted">
                           {new Date(user.createdAt).toLocaleDateString()}
                         </td>
                         <td className="px-4 py-3 text-right">
                           <div className="flex justify-end gap-1">
                             <button
                               onClick={() => handleViewDetails(user)}
-                              className="px-2 py-1 text-sm text-gray-600 hover:bg-gray-100 rounded"
+                              className="px-2 py-1 text-sm text-hos-text-secondary hover:bg-hos-bg-tertiary rounded"
                             >
                               View
                             </button>
                             <button
                               onClick={() => handleEdit(user)}
-                              className="px-2 py-1 text-sm text-purple-600 hover:bg-purple-50 rounded"
+                              className="px-2 py-1 text-sm text-hos-gold hover:bg-hos-gold/10 rounded"
                             >
                               Edit
                             </button>
@@ -927,7 +927,7 @@ export default function AdminUsersPage() {
               </div>
               {showPagination && (
                 <div className="flex items-center justify-between px-4 py-3 border-t text-sm">
-                  <span className="text-gray-500">
+                  <span className="text-hos-text-muted">
                     Page {currentPage} of {totalPages} ({totalUsers} matching)
                   </span>
                   <div className="flex gap-2">
@@ -935,7 +935,7 @@ export default function AdminUsersPage() {
                       type="button"
                       disabled={currentPage <= 1}
                       onClick={() => fetchUsers(currentPage - 1)}
-                      className="px-3 py-1 rounded border text-gray-700 disabled:opacity-40"
+                      className="px-3 py-1 rounded border text-hos-text-secondary disabled:opacity-40"
                     >
                       Previous
                     </button>
@@ -943,7 +943,7 @@ export default function AdminUsersPage() {
                       type="button"
                       disabled={currentPage >= totalPages}
                       onClick={() => fetchUsers(currentPage + 1)}
-                      className="px-3 py-1 rounded border text-gray-700 disabled:opacity-40"
+                      className="px-3 py-1 rounded border text-hos-text-secondary disabled:opacity-40"
                     >
                       Next
                     </button>
@@ -962,11 +962,11 @@ export default function AdminUsersPage() {
               aria-labelledby="user-detail-modal-title"
               onKeyDown={(e) => e.key === 'Escape' && setShowDetailModal(false)}
             >
-              <div className="bg-white rounded-lg max-w-lg w-full max-h-[90vh] overflow-y-auto">
+              <div className="bg-hos-bg-secondary rounded-lg max-w-lg w-full max-h-[90vh] overflow-y-auto">
                 <div className="p-6">
                   <div className="flex justify-between items-start mb-6">
                     <h2 id="user-detail-modal-title" className="text-2xl font-bold">User Details</h2>
-                    <button onClick={() => setShowDetailModal(false)} className="text-gray-500 hover:text-gray-700 text-2xl">×</button>
+                    <button onClick={() => setShowDetailModal(false)} className="text-hos-text-muted hover:text-hos-text-secondary text-2xl">×</button>
                   </div>
 
                   <div className="space-y-4">
@@ -974,8 +974,8 @@ export default function AdminUsersPage() {
                       {selectedUser.avatar ? (
                         <SafeImage width={64} height={64} className="rounded-full object-cover" src={selectedUser.avatar} alt="" fallback="👤" />
                       ) : (
-                        <div className="h-16 w-16 rounded-full bg-purple-100 flex items-center justify-center">
-                          <span className="text-purple-600 font-bold text-2xl">
+                        <div className="h-16 w-16 rounded-full bg-hos-gold/20 flex items-center justify-center">
+                          <span className="text-hos-gold font-bold text-2xl">
                             {selectedUser.firstName?.[0] || selectedUser.email[0].toUpperCase()}
                           </span>
                         </div>
@@ -986,41 +986,41 @@ export default function AdminUsersPage() {
                             ? `${selectedUser.firstName} ${selectedUser.lastName}` 
                             : 'No Name'}
                         </p>
-                        <p className="text-gray-500">{selectedUser.email}</p>
+                        <p className="text-hos-text-muted">{selectedUser.email}</p>
                       </div>
                     </div>
 
                     <div className="grid grid-cols-2 gap-4 pt-4 border-t">
                       <div>
-                        <p className="text-sm text-gray-500">Role</p>
+                        <p className="text-sm text-hos-text-muted">Role</p>
                         <span className={`px-2 py-1 text-xs rounded-full ${getRoleBadgeColor(selectedUser.role)}`}>
                           {selectedUser.role}
                         </span>
-                        <p className="text-xs text-gray-400 mt-1">{ROLE_DESCRIPTIONS[selectedUser.role]}</p>
+                        <p className="text-xs text-hos-text-muted mt-1">{ROLE_DESCRIPTIONS[selectedUser.role]}</p>
                       </div>
                       <div>
-                        <p className="text-sm text-gray-500">Status</p>
+                        <p className="text-sm text-hos-text-muted">Status</p>
                         <span className={`px-2 py-1 text-xs rounded-full ${selectedUser.isActive !== false ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
                           {selectedUser.isActive !== false ? 'Active' : 'Inactive'}
                         </span>
                       </div>
                       {selectedUser.storeName && (
                         <div className="col-span-2">
-                          <p className="text-sm text-gray-500">Store Name</p>
+                          <p className="text-sm text-hos-text-muted">Store Name</p>
                           <p className="font-medium">{selectedUser.storeName}</p>
                         </div>
                       )}
                       <div>
-                        <p className="text-sm text-gray-500">Email Verified</p>
+                        <p className="text-sm text-hos-text-muted">Email Verified</p>
                         <p className="font-medium">{selectedUser.emailVerified ? 'Yes' : 'No'}</p>
                       </div>
                       <div>
-                        <p className="text-sm text-gray-500">Member Since</p>
+                        <p className="text-sm text-hos-text-muted">Member Since</p>
                         <p className="font-medium">{new Date(selectedUser.createdAt).toLocaleDateString()}</p>
                       </div>
                       {selectedUser.lastLoginAt && (
                         <div className="col-span-2">
-                          <p className="text-sm text-gray-500">Last Login</p>
+                          <p className="text-sm text-hos-text-muted">Last Login</p>
                           <p className="font-medium">{new Date(selectedUser.lastLoginAt).toLocaleString()}</p>
                         </div>
                       )}
@@ -1029,13 +1029,13 @@ export default function AdminUsersPage() {
                     <div className="flex gap-2 pt-4 border-t">
                       <button
                         onClick={() => { setShowDetailModal(false); handleEdit(selectedUser); }}
-                        className="flex-1 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700"
+                        className="flex-1 px-4 py-2 bg-hos-gold text-[#1a1406] rounded-lg hover:bg-hos-gold-hover"
                       >
                         Edit User
                       </button>
                       <button
                         onClick={() => setShowDetailModal(false)}
-                        className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300"
+                        className="px-4 py-2 bg-hos-bg-tertiary text-hos-text-secondary rounded-lg hover:bg-hos-bg-tertiary"
                       >
                         Close
                       </button>
@@ -1055,53 +1055,53 @@ export default function AdminUsersPage() {
               aria-labelledby="edit-user-modal-title"
               onKeyDown={(e) => e.key === 'Escape' && setShowEditModal(false)}
             >
-              <div className="bg-white rounded-lg max-w-md w-full">
+              <div className="bg-hos-bg-secondary rounded-lg max-w-md w-full">
                 <div className="p-6">
                   <div className="flex justify-between items-start mb-4">
                     <h2 id="edit-user-modal-title" className="text-2xl font-bold">Edit User</h2>
-                    <button onClick={() => setShowEditModal(false)} className="text-gray-500 hover:text-gray-700">✕</button>
+                    <button onClick={() => setShowEditModal(false)} className="text-hos-text-muted hover:text-hos-text-secondary">✕</button>
                   </div>
 
                   <div className="space-y-4">
                     <div className="grid grid-cols-2 gap-3">
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">First Name</label>
+                        <label className="block text-sm font-medium text-hos-text-secondary mb-1">First Name</label>
                         <input
                           type="text"
                           value={editForm.firstName}
                           onChange={(e) => setEditForm({ ...editForm, firstName: e.target.value })}
-                          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
+                          className="w-full px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50"
                         />
                       </div>
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Last Name</label>
+                        <label className="block text-sm font-medium text-hos-text-secondary mb-1">Last Name</label>
                         <input
                           type="text"
                           value={editForm.lastName}
                           onChange={(e) => setEditForm({ ...editForm, lastName: e.target.value })}
-                          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
+                          className="w-full px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50"
                         />
                       </div>
                     </div>
 
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
+                      <label className="block text-sm font-medium text-hos-text-secondary mb-1">Email</label>
                       <input
                         type="email"
                         value={editForm.email}
                         onChange={(e) => setEditForm({ ...editForm, email: e.target.value })}
                         disabled={selectedUser.email === 'app@houseofspells.co.uk'}
-                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 disabled:bg-gray-100"
+                        className="w-full px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50 disabled:bg-hos-bg-tertiary"
                       />
                     </div>
 
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Role</label>
+                      <label className="block text-sm font-medium text-hos-text-secondary mb-1">Role</label>
                       <select
                         value={editForm.role}
                         onChange={(e) => setEditForm({ ...editForm, role: e.target.value })}
                         disabled={selectedUser.email === 'app@houseofspells.co.uk'}
-                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 disabled:bg-gray-100"
+                        className="w-full px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50 disabled:bg-hos-bg-tertiary"
                       >
                         {ROLES.map((role) => (
                           <option key={role} value={role}>{role}</option>
@@ -1116,22 +1116,22 @@ export default function AdminUsersPage() {
                         checked={editForm.isActive}
                         onChange={(e) => setEditForm({ ...editForm, isActive: e.target.checked })}
                         disabled={selectedUser.email === 'app@houseofspells.co.uk'}
-                        className="rounded border-gray-300 text-purple-600 focus:ring-purple-500"
+                        className="rounded border-hos-border text-hos-gold focus:ring-hos-gold/50"
                       />
-                      <label htmlFor="isActive" className="text-sm font-medium text-gray-700">Active Account</label>
+                      <label htmlFor="isActive" className="text-sm font-medium text-hos-text-secondary">Active Account</label>
                     </div>
 
                     <div className="flex gap-3 pt-4">
                       <button
                         onClick={handleUpdateUser}
                         disabled={actionLoading}
-                        className="flex-1 px-6 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 disabled:opacity-50"
+                        className="flex-1 px-6 py-2 bg-hos-gold text-[#1a1406] rounded-lg hover:bg-hos-gold-hover disabled:opacity-50"
                       >
                         {actionLoading ? 'Updating...' : 'Update User'}
                       </button>
                       <button
                         onClick={() => setShowEditModal(false)}
-                        className="px-6 py-2 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400"
+                        className="px-6 py-2 bg-hos-bg-tertiary text-hos-text-secondary rounded-lg hover:bg-hos-text-muted"
                       >
                         Cancel
                       </button>
@@ -1151,78 +1151,78 @@ export default function AdminUsersPage() {
               aria-labelledby="create-user-modal-title"
               onKeyDown={(e) => e.key === 'Escape' && setShowCreateModal(false)}
             >
-              <div className="bg-white rounded-lg max-w-md w-full max-h-[90vh] overflow-y-auto">
+              <div className="bg-hos-bg-secondary rounded-lg max-w-md w-full max-h-[90vh] overflow-y-auto">
                 <div className="p-6">
                   <div className="flex justify-between items-start mb-4">
                     <h2 id="create-user-modal-title" className="text-2xl font-bold">Create User</h2>
-                    <button onClick={() => setShowCreateModal(false)} className="text-gray-500 hover:text-gray-700">✕</button>
+                    <button onClick={() => setShowCreateModal(false)} className="text-hos-text-muted hover:text-hos-text-secondary">✕</button>
                   </div>
 
                   <div className="space-y-4">
                     <div className="grid grid-cols-2 gap-3">
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">First Name</label>
+                        <label className="block text-sm font-medium text-hos-text-secondary mb-1">First Name</label>
                         <input
                           type="text"
                           value={createForm.firstName}
                           onChange={(e) => setCreateForm({ ...createForm, firstName: e.target.value })}
-                          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
+                          className="w-full px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50"
                         />
                       </div>
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Last Name</label>
+                        <label className="block text-sm font-medium text-hos-text-secondary mb-1">Last Name</label>
                         <input
                           type="text"
                           value={createForm.lastName}
                           onChange={(e) => setCreateForm({ ...createForm, lastName: e.target.value })}
-                          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
+                          className="w-full px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50"
                         />
                       </div>
                     </div>
 
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Email *</label>
+                      <label className="block text-sm font-medium text-hos-text-secondary mb-1">Email *</label>
                       <input
                         type="email"
                         value={createForm.email}
                         onChange={(e) => setCreateForm({ ...createForm, email: e.target.value })}
-                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
+                        className="w-full px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50"
                         placeholder="user@example.com"
                         required
                       />
                     </div>
 
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Phone</label>
+                      <label className="block text-sm font-medium text-hos-text-secondary mb-1">Phone</label>
                       <input
                         type="tel"
                         value={createForm.phone}
                         onChange={(e) => setCreateForm({ ...createForm, phone: e.target.value })}
-                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
+                        className="w-full px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50"
                         placeholder="+1234567890"
                       />
                     </div>
 
                     <div className="grid grid-cols-2 gap-3">
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Password *</label>
+                        <label className="block text-sm font-medium text-hos-text-secondary mb-1">Password *</label>
                         <input
                           type="password"
                           value={createForm.password}
                           onChange={(e) => setCreateForm({ ...createForm, password: e.target.value })}
-                          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
+                          className="w-full px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50"
                           placeholder="Min 8 characters"
                           minLength={8}
                           required
                         />
                       </div>
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Confirm Password *</label>
+                        <label className="block text-sm font-medium text-hos-text-secondary mb-1">Confirm Password *</label>
                         <input
                           type="password"
                           value={createForm.confirmPassword}
                           onChange={(e) => setCreateForm({ ...createForm, confirmPassword: e.target.value })}
-                          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
+                          className="w-full px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50"
                           placeholder="Confirm password"
                           minLength={8}
                           required
@@ -1231,17 +1231,17 @@ export default function AdminUsersPage() {
                     </div>
 
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Role *</label>
+                      <label className="block text-sm font-medium text-hos-text-secondary mb-1">Role *</label>
                       <select
                         value={createForm.role}
                         onChange={(e) => setCreateForm({ ...createForm, role: e.target.value })}
-                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
+                        className="w-full px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50"
                       >
                         {ROLES.map((role) => (
                           <option key={role} value={role}>{role}</option>
                         ))}
                       </select>
-                      <p className="text-xs text-gray-500 mt-1">{ROLE_DESCRIPTIONS[createForm.role]}</p>
+                      <p className="text-xs text-hos-text-muted mt-1">{ROLE_DESCRIPTIONS[createForm.role]}</p>
                     </div>
 
                     {/* ADMIN specific fields */}
@@ -1249,11 +1249,11 @@ export default function AdminUsersPage() {
                       <div className="bg-red-50 p-4 rounded-lg space-y-4">
                         <h4 className="text-sm font-semibold text-red-800">Admin Configuration</h4>
                         <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-1">Permission Role</label>
+                          <label className="block text-sm font-medium text-hos-text-secondary mb-1">Permission Role</label>
                           <select
                             value={createForm.permissionRoleName}
                             onChange={(e) => setCreateForm({ ...createForm, permissionRoleName: e.target.value })}
-                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
+                            className="w-full px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50"
                           >
                             <option value="">Full Admin (no restrictions)</option>
                             {permissionRoles.map((r) => (
@@ -1266,49 +1266,49 @@ export default function AdminUsersPage() {
 
                     {/* SELLER/B2C_SELLER/WHOLESALER specific fields */}
                     {isSellerRole && (
-                      <div className="bg-blue-50 p-4 rounded-lg space-y-4">
-                        <h4 className="text-sm font-semibold text-blue-800">Business Information</h4>
+                      <div className="bg-hos-gold/10 p-4 rounded-lg space-y-4">
+                        <h4 className="text-sm font-semibold text-hos-gold">Business Information</h4>
                         <div className="grid grid-cols-2 gap-3">
                           <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">Store Name *</label>
+                            <label className="block text-sm font-medium text-hos-text-secondary mb-1">Store Name *</label>
                             <input
                               type="text"
                               value={createForm.storeName}
                               onChange={(e) => setCreateForm({ ...createForm, storeName: e.target.value })}
-                              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
+                              className="w-full px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50"
                               placeholder="Your store name"
                               required
                             />
                           </div>
                           <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">Company Name</label>
+                            <label className="block text-sm font-medium text-hos-text-secondary mb-1">Company Name</label>
                             <input
                               type="text"
                               value={createForm.companyName}
                               onChange={(e) => setCreateForm({ ...createForm, companyName: e.target.value })}
-                              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
+                              className="w-full px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50"
                               placeholder="Legal company name"
                             />
                           </div>
                         </div>
                         <div className="grid grid-cols-2 gap-3">
                           <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">Tax ID / EIN</label>
+                            <label className="block text-sm font-medium text-hos-text-secondary mb-1">Tax ID / EIN</label>
                             <input
                               type="text"
                               value={createForm.vatNumber}
                               onChange={(e) => setCreateForm({ ...createForm, vatNumber: e.target.value })}
-                              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
+                              className="w-full px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50"
                               placeholder="GB123456789"
                             />
                           </div>
                           {isWholesaler && (
                             <div>
-                              <label className="block text-sm font-medium text-gray-700 mb-1">Business Type</label>
+                              <label className="block text-sm font-medium text-hos-text-secondary mb-1">Business Type</label>
                               <select
                                 value={createForm.businessType}
                                 onChange={(e) => setCreateForm({ ...createForm, businessType: e.target.value })}
-                                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
+                                className="w-full px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50"
                               >
                                 <option value="">Select type</option>
                                 <option value="RETAIL">Retail</option>
@@ -1323,15 +1323,15 @@ export default function AdminUsersPage() {
 
                     {/* TEAM ROLES specific fields */}
                     {isTeamRole && (
-                      <div className="bg-purple-50 p-4 rounded-lg space-y-4">
-                        <h4 className="text-sm font-semibold text-purple-800">Team Member Details</h4>
+                      <div className="bg-hos-gold/10 p-4 rounded-lg space-y-4">
+                        <h4 className="text-sm font-semibold text-hos-gold">Team Member Details</h4>
                         <div className="grid grid-cols-2 gap-3">
                           <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">Department</label>
+                            <label className="block text-sm font-medium text-hos-text-secondary mb-1">Department</label>
                             <select
                               value={createForm.department}
                               onChange={(e) => setCreateForm({ ...createForm, department: e.target.value })}
-                              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
+                              className="w-full px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50"
                             >
                               <option value="">Select department</option>
                               <option value="OPERATIONS">Operations</option>
@@ -1343,12 +1343,12 @@ export default function AdminUsersPage() {
                             </select>
                           </div>
                           <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">Employee ID</label>
+                            <label className="block text-sm font-medium text-hos-text-secondary mb-1">Employee ID</label>
                             <input
                               type="text"
                               value={createForm.employeeId}
                               onChange={(e) => setCreateForm({ ...createForm, employeeId: e.target.value })}
-                              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
+                              className="w-full px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50"
                               placeholder="EMP-001"
                             />
                           </div>
@@ -1360,13 +1360,13 @@ export default function AdminUsersPage() {
                       <button
                         onClick={handleCreateUser}
                         disabled={actionLoading}
-                        className="flex-1 px-6 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 disabled:opacity-50"
+                        className="flex-1 px-6 py-2 bg-hos-gold text-[#1a1406] rounded-lg hover:bg-hos-gold-hover disabled:opacity-50"
                       >
                         {actionLoading ? 'Creating...' : 'Create User'}
                       </button>
                       <button
                         onClick={() => setShowCreateModal(false)}
-                        className="px-6 py-2 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400"
+                        className="px-6 py-2 bg-hos-bg-tertiary text-hos-text-secondary rounded-lg hover:bg-hos-text-muted"
                       >
                         Cancel
                       </button>
@@ -1386,10 +1386,10 @@ export default function AdminUsersPage() {
               aria-labelledby="delete-user-modal-title"
               onKeyDown={(e) => e.key === 'Escape' && setShowDeleteModal(false)}
             >
-              <div className="bg-white rounded-lg max-w-md w-full">
+              <div className="bg-hos-bg-secondary rounded-lg max-w-md w-full">
                 <div className="p-6">
                   <h2 id="delete-user-modal-title" className="text-2xl font-bold mb-4">Delete User</h2>
-                  <p className="text-gray-600 mb-6">
+                  <p className="text-hos-text-secondary mb-6">
                     Are you sure you want to delete <strong>{selectedUser.email}</strong>? This action cannot be undone.
                   </p>
                   <div className="flex gap-3">
@@ -1402,7 +1402,7 @@ export default function AdminUsersPage() {
                     </button>
                     <button
                       onClick={() => setShowDeleteModal(false)}
-                      className="px-6 py-2 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400"
+                      className="px-6 py-2 bg-hos-bg-tertiary text-hos-text-secondary rounded-lg hover:bg-hos-text-muted"
                     >
                       Cancel
                     </button>
@@ -1420,36 +1420,36 @@ export default function AdminUsersPage() {
               aria-labelledby="reset-password-modal-title"
               onKeyDown={(e) => e.key === 'Escape' && setShowResetPasswordModal(false)}
             >
-              <div className="bg-white rounded-lg max-w-md w-full">
+              <div className="bg-hos-bg-secondary rounded-lg max-w-md w-full">
                 <div className="p-6">
                   <div className="flex justify-between items-start mb-4">
                     <h2 id="reset-password-modal-title" className="text-2xl font-bold">Reset Password</h2>
-                    <button onClick={() => setShowResetPasswordModal(false)} className="text-gray-500 hover:text-gray-700">&#10005;</button>
+                    <button onClick={() => setShowResetPasswordModal(false)} className="text-hos-text-muted hover:text-hos-text-secondary">&#10005;</button>
                   </div>
 
-                  <p className="text-gray-600 mb-4">
+                  <p className="text-hos-text-secondary mb-4">
                     Set a new password for <strong>{selectedUser.email}</strong>
                   </p>
 
                   <div className="space-y-4">
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">New Password</label>
+                      <label className="block text-sm font-medium text-hos-text-secondary mb-1">New Password</label>
                       <input
                         type="password"
                         value={resetPasswordForm.newPassword}
                         onChange={(e) => setResetPasswordForm({ ...resetPasswordForm, newPassword: e.target.value })}
-                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
+                        className="w-full px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50"
                         placeholder="Min 8 characters"
                         minLength={8}
                       />
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Confirm Password</label>
+                      <label className="block text-sm font-medium text-hos-text-secondary mb-1">Confirm Password</label>
                       <input
                         type="password"
                         value={resetPasswordForm.confirmPassword}
                         onChange={(e) => setResetPasswordForm({ ...resetPasswordForm, confirmPassword: e.target.value })}
-                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
+                        className="w-full px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50"
                         placeholder="Confirm new password"
                         minLength={8}
                       />
@@ -1465,7 +1465,7 @@ export default function AdminUsersPage() {
                       </button>
                       <button
                         onClick={() => setShowResetPasswordModal(false)}
-                        className="px-6 py-2 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400"
+                        className="px-6 py-2 bg-hos-bg-tertiary text-hos-text-secondary rounded-lg hover:bg-hos-text-muted"
                       >
                         Cancel
                       </button>

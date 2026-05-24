@@ -67,11 +67,11 @@ export default function AdminBrandPartnershipNewPage() {
           <Link href="/admin/brand-partnerships" className="text-violet-700 text-sm">
             ← Back
           </Link>
-          <h1 className="text-2xl font-semibold text-gray-900">New brand partner</h1>
+          <h1 className="text-2xl font-semibold text-white">New brand partner</h1>
           <label className="block text-sm">
-            <span className="text-gray-700">Name <span className="text-red-500">*</span></span>
+            <span className="text-hos-text-secondary">Name <span className="text-red-500">*</span></span>
             <input
-              className={`mt-1 w-full border rounded px-3 py-2 ${nameError ? 'border-red-300 focus:border-red-500' : 'border-gray-300'}`}
+              className={`mt-1 w-full border rounded px-3 py-2 ${nameError ? 'border-red-300 focus:border-red-500' : 'border-hos-border'}`}
               value={name}
               onChange={(e) => setName(sanitizeNameInput(e.target.value))}
               placeholder="Enter brand/partner name"
@@ -79,9 +79,9 @@ export default function AdminBrandPartnershipNewPage() {
             {nameError && <p className="text-xs text-red-600 mt-1">{nameError}</p>}
           </label>
           <label className="block text-sm">
-            <span className="text-gray-700">Contact name</span>
+            <span className="text-hos-text-secondary">Contact name</span>
             <input
-              className={`mt-1 w-full border rounded px-3 py-2 ${contactNameError ? 'border-red-300 focus:border-red-500' : 'border-gray-300'}`}
+              className={`mt-1 w-full border rounded px-3 py-2 ${contactNameError ? 'border-red-300 focus:border-red-500' : 'border-hos-border'}`}
               value={contactName}
               onChange={(e) => setContactName(sanitizeNameInput(e.target.value))}
               placeholder="Enter contact person's name"
@@ -89,7 +89,7 @@ export default function AdminBrandPartnershipNewPage() {
             {contactNameError && <p className="text-xs text-red-600 mt-1">{contactNameError}</p>}
           </label>
           <label className="block text-sm">
-            <span className="text-gray-700">Contact email</span>
+            <span className="text-hos-text-secondary">Contact email</span>
             <input
               type="email"
               className="mt-1 w-full border rounded px-3 py-2"
@@ -98,7 +98,7 @@ export default function AdminBrandPartnershipNewPage() {
             />
           </label>
           <label className="block text-sm">
-            <span className="text-gray-700">Description</span>
+            <span className="text-hos-text-secondary">Description</span>
             <textarea
               className="mt-1 w-full border rounded px-3 py-2"
               rows={3}
@@ -107,7 +107,7 @@ export default function AdminBrandPartnershipNewPage() {
             />
           </label>
           <label className="block text-sm">
-            <span className="text-gray-700">Contract start</span>
+            <span className="text-hos-text-secondary">Contract start</span>
             <input
               type="date"
               className="mt-1 w-full border rounded px-3 py-2"
@@ -116,7 +116,7 @@ export default function AdminBrandPartnershipNewPage() {
             />
           </label>
           <label className="block text-sm">
-            <span className="text-gray-700">Contract end</span>
+            <span className="text-hos-text-secondary">Contract end</span>
             <input
               type="date"
               className="mt-1 w-full border rounded px-3 py-2"
@@ -125,7 +125,7 @@ export default function AdminBrandPartnershipNewPage() {
             />
           </label>
           <label className="block text-sm">
-            <span className="text-gray-700">Total budget</span>
+            <span className="text-hos-text-secondary">Total budget</span>
             <input
               type="number"
               className="mt-1 w-full border rounded px-3 py-2"

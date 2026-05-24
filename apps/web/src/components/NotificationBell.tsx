@@ -67,10 +67,10 @@ export function NotificationBell() {
     <div className="relative" ref={dropdownRef}>
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="relative p-2 text-purple-700 hover:text-amber-600 transition-colors duration-300 rounded-lg hover:bg-purple-50"
+        className="relative p-2 text-white hover:text-hos-gold transition-colors duration-200 rounded-lg hover:bg-hos-bg-secondary"
         aria-label="Notifications"
       >
-        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path
             strokeLinecap="round"
             strokeLinejoin="round"
@@ -79,40 +79,40 @@ export function NotificationBell() {
           />
         </svg>
         {unreadCount > 0 && (
-          <span className="absolute -top-0.5 -right-0.5 bg-red-600 text-white text-xs font-bold rounded-full min-w-[18px] h-[18px] flex items-center justify-center px-1 leading-none">
+          <span className="absolute -top-0.5 -right-0.5 bg-hos-gold text-[#1a1406] text-xs font-bold rounded-full min-w-[18px] h-[18px] flex items-center justify-center px-1 leading-none">
             {unreadCount > 9 ? '9+' : unreadCount}
           </span>
         )}
       </button>
 
       {isOpen && (
-        <div className="absolute right-0 mt-2 w-80 bg-white rounded-lg shadow-xl border border-gray-200 z-50 overflow-hidden">
-          <div className="px-4 py-3 border-b border-gray-100 bg-purple-50">
-            <h3 className="text-sm font-semibold text-purple-800">Notifications</h3>
+        <div className="absolute right-0 mt-2 w-80 bg-hos-bg-secondary rounded-lg shadow-xl border border-hos-border z-50 overflow-hidden">
+          <div className="px-4 py-3 border-b border-hos-border bg-hos-bg-tertiary">
+            <h3 className="text-sm font-semibold text-hos-gold">Notifications</h3>
           </div>
 
           <div className="max-h-80 overflow-y-auto">
             {notifications.length === 0 ? (
-              <div className="px-4 py-8 text-center text-gray-500 text-sm">
+              <div className="px-4 py-8 text-center text-hos-text-muted text-sm">
                 No notifications yet
               </div>
             ) : (
               notifications.map((notification) => (
                 <div
                   key={notification.id}
-                  className={`px-4 py-3 border-b border-gray-50 hover:bg-gray-50 transition-colors ${
-                    !notification.readAt ? 'bg-purple-50/50' : ''
+                  className={`px-4 py-3 border-b border-hos-border hover:bg-hos-bg-tertiary transition-colors duration-200 ${
+                    !notification.readAt ? 'bg-hos-bg/50' : ''
                   }`}
                 >
                   <div className="flex items-start gap-2">
                     {!notification.readAt && (
-                      <span className="mt-1.5 w-2 h-2 bg-purple-600 rounded-full flex-shrink-0" />
+                      <span className="mt-1.5 w-2 h-2 bg-hos-gold rounded-full flex-shrink-0" />
                     )}
                     <div className={`flex-1 ${notification.readAt ? 'ml-4' : ''}`}>
-                      <p className="text-sm font-medium text-gray-900 line-clamp-1">
+                      <p className="text-sm font-medium text-hos-text-primary line-clamp-1">
                         {notification.subject || notification.type.replace(/_/g, ' ')}
                       </p>
-                      <p className="text-xs text-gray-500 mt-0.5">
+                      <p className="text-xs text-hos-text-muted mt-0.5">
                         {timeAgo(notification.createdAt)}
                       </p>
                     </div>
@@ -122,11 +122,11 @@ export function NotificationBell() {
             )}
           </div>
 
-          <div className="px-4 py-2.5 border-t border-gray-100 bg-gray-50">
+          <div className="px-4 py-2.5 border-t border-hos-border bg-hos-bg-tertiary">
             <Link
               href="/notifications"
               onClick={() => setIsOpen(false)}
-              className="block text-center text-sm font-medium text-purple-700 hover:text-purple-900 transition-colors"
+              className="block text-center text-sm font-medium text-hos-gold hover:text-hos-gold-hover transition-colors duration-200"
             >
               View All Notifications
             </Link>

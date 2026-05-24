@@ -33,13 +33,13 @@ export class ErrorBoundary extends Component<Props, State> {
       }
 
       return (
-        <div className="min-h-[400px] flex items-center justify-center p-8">
-          <div className="max-w-md w-full bg-white border border-red-200 rounded-xl shadow-sm p-8 text-center">
+        <div className="min-h-[400px] flex items-center justify-center p-8 bg-hos-bg">
+          <div className="max-w-md w-full bg-hos-bg-secondary border border-hos-border rounded-xl shadow-sm p-8 text-center">
             <div className="text-5xl mb-4">⚠️</div>
-            <h2 className="text-xl font-bold text-gray-900 mb-2">
+            <h2 className="text-xl font-bold text-white mb-2">
               Something went wrong
             </h2>
-            <p className="text-gray-600 mb-6 text-sm">
+            <p className="text-hos-text-secondary mb-6 text-sm">
               An unexpected error occurred. Please try refreshing the page.
             </p>
             <button
@@ -47,7 +47,7 @@ export class ErrorBoundary extends Component<Props, State> {
                 this.setState({ hasError: false, error: null });
                 window.location.reload();
               }}
-              className="px-6 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium"
+              className="px-6 py-2.5 bg-hos-gold text-[#1a1406] rounded-lg hover:bg-hos-gold-hover transition-colors font-medium"
             >
               Refresh Page
             </button>

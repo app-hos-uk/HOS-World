@@ -71,12 +71,12 @@ export default function AdminSegmentEditPage() {
     <RouteGuard allowedRoles={['ADMIN']}>
       <AdminLayout>
         <div className="p-6 max-w-4xl mx-auto space-y-4">
-          <Link href={`/admin/segments/${id}`} className="text-indigo-600 hover:underline text-sm">
+          <Link href={`/admin/segments/${id}`} className="text-hos-gold hover:underline text-sm">
             ← Back
           </Link>
-          <h1 className="text-2xl font-semibold text-gray-900">Edit segment</h1>
+          <h1 className="text-2xl font-semibold text-white">Edit segment</h1>
           <label className="block text-sm">
-            <span className="text-gray-700">Name</span>
+            <span className="text-hos-text-secondary">Name</span>
             <input
               className="mt-1 w-full border rounded px-3 py-2"
               value={name}
@@ -84,7 +84,7 @@ export default function AdminSegmentEditPage() {
             />
           </label>
           <label className="block text-sm">
-            <span className="text-gray-700">Description</span>
+            <span className="text-hos-text-secondary">Description</span>
             <textarea
               className="mt-1 w-full border rounded px-3 py-2"
               rows={2}
@@ -93,19 +93,19 @@ export default function AdminSegmentEditPage() {
             />
           </label>
           <div>
-            <h2 className="text-sm font-medium text-gray-800 mb-2">Rules</h2>
+            <h2 className="text-sm font-medium text-white mb-2">Rules</h2>
             <RuleBuilder value={rules} onChange={setRules} onPreview={runPreview} />
           </div>
           {preview && (
-            <div className="rounded-lg border bg-gray-50 p-3 text-sm">
-              <p className="font-medium text-gray-800">Preview: ~{preview.count} members</p>
+            <div className="rounded-lg border bg-hos-bg-secondary p-3 text-sm">
+              <p className="font-medium text-white">Preview: ~{preview.count} members</p>
             </div>
           )}
           <button
             type="button"
             disabled={saving}
             onClick={save}
-            className="rounded-md bg-indigo-600 px-4 py-2 text-white text-sm hover:bg-indigo-500 disabled:opacity-50"
+            className="rounded-md bg-hos-gold px-4 py-2 text-white text-sm hover:bg-hos-gold/100 disabled:opacity-50"
           >
             {saving ? 'Saving…' : 'Save'}
           </button>

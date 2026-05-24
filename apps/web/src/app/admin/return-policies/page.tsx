@@ -267,10 +267,10 @@ export default function AdminReturnPoliciesPage() {
       <AdminLayout>
         <div className="space-y-6">
           <div className="flex justify-between items-center">
-            <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Return Policies</h1>
+            <h1 className="text-2xl sm:text-3xl font-bold text-white">Return Policies</h1>
             <button
               onClick={() => setShowCreateModal(true)}
-              className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors font-medium"
+              className="px-4 py-2 bg-hos-gold text-[#1a1406] rounded-lg hover:bg-hos-gold-hover transition-colors font-medium"
             >
               + Create Policy
             </button>
@@ -279,8 +279,8 @@ export default function AdminReturnPoliciesPage() {
           {loading ? (
             <div className="flex items-center justify-center py-12">
               <div className="text-center">
-                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600 mx-auto mb-4"></div>
-                <p className="text-sm text-gray-600">Loading return policies...</p>
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-hos-gold mx-auto mb-4"></div>
+                <p className="text-sm text-hos-text-secondary">Loading return policies...</p>
               </div>
             </div>
           ) : error ? (
@@ -288,59 +288,59 @@ export default function AdminReturnPoliciesPage() {
               <p className="text-red-800">{error}</p>
             </div>
           ) : policies.length === 0 ? (
-            <div className="bg-gray-50 rounded-lg p-8 text-center">
-              <p className="text-gray-600 mb-4">No return policies found.</p>
+            <div className="bg-hos-bg-secondary rounded-lg p-8 text-center">
+              <p className="text-hos-text-secondary mb-4">No return policies found.</p>
               <button
                 onClick={() => setShowCreateModal(true)}
-                className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors font-medium"
+                className="px-4 py-2 bg-hos-gold text-[#1a1406] rounded-lg hover:bg-hos-gold-hover transition-colors font-medium"
               >
                 Create First Policy
               </button>
             </div>
           ) : (
-            <div className="bg-white border rounded-lg shadow-sm overflow-hidden">
+            <div className="bg-hos-bg-secondary border rounded-lg shadow-sm overflow-hidden">
               <div className="overflow-x-auto">
-                <table className="min-w-full divide-y divide-gray-200">
-                  <thead className="bg-gray-50">
+                <table className="min-w-full divide-y divide-hos-border">
+                  <thead className="bg-hos-bg-secondary">
                     <tr>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      <th className="px-6 py-3 text-left text-xs font-medium text-hos-text-muted uppercase tracking-wider">
                         Name
                       </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      <th className="px-6 py-3 text-left text-xs font-medium text-hos-text-muted uppercase tracking-wider">
                         Scope
                       </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      <th className="px-6 py-3 text-left text-xs font-medium text-hos-text-muted uppercase tracking-wider">
                         Return Window
                       </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      <th className="px-6 py-3 text-left text-xs font-medium text-hos-text-muted uppercase tracking-wider">
                         Priority
                       </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      <th className="px-6 py-3 text-left text-xs font-medium text-hos-text-muted uppercase tracking-wider">
                         Status
                       </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      <th className="px-6 py-3 text-left text-xs font-medium text-hos-text-muted uppercase tracking-wider">
                         Actions
                       </th>
                     </tr>
                   </thead>
-                  <tbody className="bg-white divide-y divide-gray-200">
+                  <tbody className="bg-hos-bg-secondary divide-y divide-hos-border">
                     {policies.map((policy) => (
-                      <tr key={policy.id} className="hover:bg-gray-50">
+                      <tr key={policy.id} className="hover:bg-hos-bg-tertiary">
                         <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="text-sm font-medium text-gray-900">{policy.name}</div>
+                          <div className="text-sm font-medium text-white">{policy.name}</div>
                           {policy.description && (
-                            <div className="text-sm text-gray-500">{policy.description}</div>
+                            <div className="text-sm text-hos-text-muted">{policy.description}</div>
                           )}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
-                          <span className="px-2 py-1 text-xs font-medium rounded-full bg-blue-100 text-blue-800">
+                          <span className="px-2 py-1 text-xs font-medium rounded-full bg-hos-gold/20 text-hos-gold">
                             {getScopeLabel(policy)}
                           </span>
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-hos-text-muted">
                           {policy.returnWindowDays} days
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-hos-text-muted">
                           {policy.priority}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
@@ -348,7 +348,7 @@ export default function AdminReturnPoliciesPage() {
                             className={`px-2 py-1 text-xs font-medium rounded-full ${
                               policy.isActive
                                 ? 'bg-green-100 text-green-800'
-                                : 'bg-gray-100 text-gray-800'
+                                : 'bg-hos-bg-tertiary text-white'
                             }`}
                           >
                             {policy.isActive ? 'Active' : 'Inactive'}
@@ -358,7 +358,7 @@ export default function AdminReturnPoliciesPage() {
                           <div className="flex gap-2">
                             <button
                               onClick={() => handleEdit(policy)}
-                              className="text-purple-600 hover:text-purple-900"
+                              className="text-hos-gold hover:text-hos-gold"
                             >
                               Edit
                             </button>
@@ -381,105 +381,105 @@ export default function AdminReturnPoliciesPage() {
           {/* Create Modal */}
           {showCreateModal && (
             <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4 overflow-y-auto">
-              <div className="bg-white rounded-lg max-w-2xl w-full p-6 my-8">
+              <div className="bg-hos-bg-secondary rounded-lg max-w-2xl w-full p-6 my-8">
                 <h2 className="text-xl font-bold mb-4">Create Return Policy</h2>
                 <div className="space-y-4 max-h-[70vh] overflow-y-auto pr-2">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                    <label className="block text-sm font-medium text-hos-text-secondary mb-1">
                       Name *
                     </label>
                     <input
                       type="text"
                       value={createForm.name}
                       onChange={(e) => setCreateForm({ ...createForm, name: e.target.value })}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-purple-500 focus:border-purple-500"
+                      className="w-full px-3 py-2 border border-hos-border rounded-lg focus:ring-hos-gold/50 focus:border-hos-gold"
                       placeholder="e.g., Standard Return Policy"
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                    <label className="block text-sm font-medium text-hos-text-secondary mb-1">
                       Description
                     </label>
                     <textarea
                       value={createForm.description}
                       onChange={(e) => setCreateForm({ ...createForm, description: e.target.value })}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-purple-500 focus:border-purple-500"
+                      className="w-full px-3 py-2 border border-hos-border rounded-lg focus:ring-hos-gold/50 focus:border-hos-gold"
                       rows={3}
                       placeholder="Policy description..."
                     />
                   </div>
                   <div className="grid grid-cols-3 gap-4">
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                      <label className="block text-sm font-medium text-hos-text-secondary mb-1">
                         Seller ID (optional)
                       </label>
                       <input
                         type="text"
                         value={createForm.sellerId}
                         onChange={(e) => setCreateForm({ ...createForm, sellerId: e.target.value, productId: '', categoryId: '' })}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-purple-500 focus:border-purple-500"
+                        className="w-full px-3 py-2 border border-hos-border rounded-lg focus:ring-hos-gold/50 focus:border-hos-gold"
                         placeholder="Seller UUID"
                       />
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                      <label className="block text-sm font-medium text-hos-text-secondary mb-1">
                         Product ID (optional)
                       </label>
                       <input
                         type="text"
                         value={createForm.productId}
                         onChange={(e) => setCreateForm({ ...createForm, productId: e.target.value, sellerId: '', categoryId: '' })}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-purple-500 focus:border-purple-500"
+                        className="w-full px-3 py-2 border border-hos-border rounded-lg focus:ring-hos-gold/50 focus:border-hos-gold"
                         placeholder="Product UUID"
                       />
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                      <label className="block text-sm font-medium text-hos-text-secondary mb-1">
                         Category ID (optional)
                       </label>
                       <input
                         type="text"
                         value={createForm.categoryId}
                         onChange={(e) => setCreateForm({ ...createForm, categoryId: e.target.value, sellerId: '', productId: '' })}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-purple-500 focus:border-purple-500"
+                        className="w-full px-3 py-2 border border-hos-border rounded-lg focus:ring-hos-gold/50 focus:border-hos-gold"
                         placeholder="Category UUID"
                       />
                     </div>
                   </div>
-                  <p className="text-xs text-gray-500">Note: Only one scope (seller, product, or category) can be set. Leave all empty for platform-wide policy.</p>
+                  <p className="text-xs text-hos-text-muted">Note: Only one scope (seller, product, or category) can be set. Leave all empty for platform-wide policy.</p>
                   <div className="grid grid-cols-2 gap-4">
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                      <label className="block text-sm font-medium text-hos-text-secondary mb-1">
                         Return Window (days) *
                       </label>
                       <input
                         type="number"
                         value={createForm.returnWindowDays}
                         onChange={(e) => setCreateForm({ ...createForm, returnWindowDays: parseInt(e.target.value) || 30 })}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-purple-500 focus:border-purple-500"
+                        className="w-full px-3 py-2 border border-hos-border rounded-lg focus:ring-hos-gold/50 focus:border-hos-gold"
                         min="1"
                       />
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                      <label className="block text-sm font-medium text-hos-text-secondary mb-1">
                         Priority
                       </label>
                       <input
                         type="number"
                         value={createForm.priority}
                         onChange={(e) => setCreateForm({ ...createForm, priority: parseInt(e.target.value) || 0 })}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-purple-500 focus:border-purple-500"
+                        className="w-full px-3 py-2 border border-hos-border rounded-lg focus:ring-hos-gold/50 focus:border-hos-gold"
                       />
                     </div>
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                    <label className="block text-sm font-medium text-hos-text-secondary mb-1">
                       Refund Method
                     </label>
                     <select
                       value={createForm.refundMethod}
                       onChange={(e) => setCreateForm({ ...createForm, refundMethod: e.target.value })}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-purple-500 focus:border-purple-500"
+                      className="w-full px-3 py-2 border border-hos-border rounded-lg focus:ring-hos-gold/50 focus:border-hos-gold"
                     >
                       {REFUND_METHODS.map((method) => (
                         <option key={method} value={method}>
@@ -489,7 +489,7 @@ export default function AdminReturnPoliciesPage() {
                     </select>
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                    <label className="block text-sm font-medium text-hos-text-secondary mb-1">
                       Restocking Fee (optional)
                     </label>
                     <input
@@ -497,7 +497,7 @@ export default function AdminReturnPoliciesPage() {
                       step="0.01"
                       value={createForm.restockingFee}
                       onChange={(e) => setCreateForm({ ...createForm, restockingFee: e.target.value })}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-purple-500 focus:border-purple-500"
+                      className="w-full px-3 py-2 border border-hos-border rounded-lg focus:ring-hos-gold/50 focus:border-hos-gold"
                       placeholder="0.00"
                     />
                   </div>
@@ -507,43 +507,43 @@ export default function AdminReturnPoliciesPage() {
                         type="checkbox"
                         checked={createForm.isReturnable}
                         onChange={(e) => setCreateForm({ ...createForm, isReturnable: e.target.checked })}
-                        className="rounded border-gray-300 text-purple-600 focus:ring-purple-500"
+                        className="rounded border-hos-border text-hos-gold focus:ring-hos-gold/50"
                       />
-                      <label className="text-sm text-gray-700">Items are returnable</label>
+                      <label className="text-sm text-hos-text-secondary">Items are returnable</label>
                     </div>
                     <div className="flex items-center gap-2">
                       <input
                         type="checkbox"
                         checked={createForm.requiresApproval}
                         onChange={(e) => setCreateForm({ ...createForm, requiresApproval: e.target.checked })}
-                        className="rounded border-gray-300 text-purple-600 focus:ring-purple-500"
+                        className="rounded border-hos-border text-hos-gold focus:ring-hos-gold/50"
                       />
-                      <label className="text-sm text-gray-700">Requires approval</label>
+                      <label className="text-sm text-hos-text-secondary">Requires approval</label>
                     </div>
                     <div className="flex items-center gap-2">
                       <input
                         type="checkbox"
                         checked={createForm.requiresInspection}
                         onChange={(e) => setCreateForm({ ...createForm, requiresInspection: e.target.checked })}
-                        className="rounded border-gray-300 text-purple-600 focus:ring-purple-500"
+                        className="rounded border-hos-border text-hos-gold focus:ring-hos-gold/50"
                       />
-                      <label className="text-sm text-gray-700">Requires inspection</label>
+                      <label className="text-sm text-hos-text-secondary">Requires inspection</label>
                     </div>
                     <div className="flex items-center gap-2">
                       <input
                         type="checkbox"
                         checked={createForm.isActive}
                         onChange={(e) => setCreateForm({ ...createForm, isActive: e.target.checked })}
-                        className="rounded border-gray-300 text-purple-600 focus:ring-purple-500"
+                        className="rounded border-hos-border text-hos-gold focus:ring-hos-gold/50"
                       />
-                      <label className="text-sm text-gray-700">Active</label>
+                      <label className="text-sm text-hos-text-secondary">Active</label>
                     </div>
                   </div>
                 </div>
                 <div className="flex gap-3 mt-6">
                   <button
                     onClick={() => setShowCreateModal(false)}
-                    className="flex-1 px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors"
+                    className="flex-1 px-4 py-2 border border-hos-border rounded-lg text-hos-text-secondary hover:bg-hos-bg-tertiary transition-colors"
                     disabled={actionLoading}
                   >
                     Cancel
@@ -551,7 +551,7 @@ export default function AdminReturnPoliciesPage() {
                   <button
                     onClick={handleCreate}
                     disabled={actionLoading}
-                    className="flex-1 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="flex-1 px-4 py-2 bg-hos-gold text-[#1a1406] rounded-lg hover:bg-hos-gold-hover transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     {actionLoading ? 'Creating...' : 'Create'}
                   </button>
@@ -563,99 +563,99 @@ export default function AdminReturnPoliciesPage() {
           {/* Edit Modal */}
           {showEditModal && selectedPolicy && (
             <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4 overflow-y-auto">
-              <div className="bg-white rounded-lg max-w-2xl w-full p-6 my-8">
+              <div className="bg-hos-bg-secondary rounded-lg max-w-2xl w-full p-6 my-8">
                 <h2 className="text-xl font-bold mb-4">Edit Return Policy</h2>
                 <div className="space-y-4 max-h-[70vh] overflow-y-auto pr-2">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                    <label className="block text-sm font-medium text-hos-text-secondary mb-1">
                       Name *
                     </label>
                     <input
                       type="text"
                       value={editForm.name}
                       onChange={(e) => setEditForm({ ...editForm, name: e.target.value })}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-purple-500 focus:border-purple-500"
+                      className="w-full px-3 py-2 border border-hos-border rounded-lg focus:ring-hos-gold/50 focus:border-hos-gold"
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                    <label className="block text-sm font-medium text-hos-text-secondary mb-1">
                       Description
                     </label>
                     <textarea
                       value={editForm.description}
                       onChange={(e) => setEditForm({ ...editForm, description: e.target.value })}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-purple-500 focus:border-purple-500"
+                      className="w-full px-3 py-2 border border-hos-border rounded-lg focus:ring-hos-gold/50 focus:border-hos-gold"
                       rows={3}
                     />
                   </div>
                   <div className="grid grid-cols-3 gap-4">
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                      <label className="block text-sm font-medium text-hos-text-secondary mb-1">
                         Seller ID (optional)
                       </label>
                       <input
                         type="text"
                         value={editForm.sellerId}
                         onChange={(e) => setEditForm({ ...editForm, sellerId: e.target.value, productId: '', categoryId: '' })}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-purple-500 focus:border-purple-500"
+                        className="w-full px-3 py-2 border border-hos-border rounded-lg focus:ring-hos-gold/50 focus:border-hos-gold"
                       />
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                      <label className="block text-sm font-medium text-hos-text-secondary mb-1">
                         Product ID (optional)
                       </label>
                       <input
                         type="text"
                         value={editForm.productId}
                         onChange={(e) => setEditForm({ ...editForm, productId: e.target.value, sellerId: '', categoryId: '' })}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-purple-500 focus:border-purple-500"
+                        className="w-full px-3 py-2 border border-hos-border rounded-lg focus:ring-hos-gold/50 focus:border-hos-gold"
                       />
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                      <label className="block text-sm font-medium text-hos-text-secondary mb-1">
                         Category ID (optional)
                       </label>
                       <input
                         type="text"
                         value={editForm.categoryId}
                         onChange={(e) => setEditForm({ ...editForm, categoryId: e.target.value, sellerId: '', productId: '' })}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-purple-500 focus:border-purple-500"
+                        className="w-full px-3 py-2 border border-hos-border rounded-lg focus:ring-hos-gold/50 focus:border-hos-gold"
                       />
                     </div>
                   </div>
                   <div className="grid grid-cols-2 gap-4">
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                      <label className="block text-sm font-medium text-hos-text-secondary mb-1">
                         Return Window (days) *
                       </label>
                       <input
                         type="number"
                         value={editForm.returnWindowDays}
                         onChange={(e) => setEditForm({ ...editForm, returnWindowDays: parseInt(e.target.value) || 30 })}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-purple-500 focus:border-purple-500"
+                        className="w-full px-3 py-2 border border-hos-border rounded-lg focus:ring-hos-gold/50 focus:border-hos-gold"
                         min="1"
                       />
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                      <label className="block text-sm font-medium text-hos-text-secondary mb-1">
                         Priority
                       </label>
                       <input
                         type="number"
                         value={editForm.priority}
                         onChange={(e) => setEditForm({ ...editForm, priority: parseInt(e.target.value) || 0 })}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-purple-500 focus:border-purple-500"
+                        className="w-full px-3 py-2 border border-hos-border rounded-lg focus:ring-hos-gold/50 focus:border-hos-gold"
                       />
                     </div>
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                    <label className="block text-sm font-medium text-hos-text-secondary mb-1">
                       Refund Method
                     </label>
                     <select
                       value={editForm.refundMethod}
                       onChange={(e) => setEditForm({ ...editForm, refundMethod: e.target.value })}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-purple-500 focus:border-purple-500"
+                      className="w-full px-3 py-2 border border-hos-border rounded-lg focus:ring-hos-gold/50 focus:border-hos-gold"
                     >
                       {REFUND_METHODS.map((method) => (
                         <option key={method} value={method}>
@@ -665,7 +665,7 @@ export default function AdminReturnPoliciesPage() {
                     </select>
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                    <label className="block text-sm font-medium text-hos-text-secondary mb-1">
                       Restocking Fee (optional)
                     </label>
                     <input
@@ -673,7 +673,7 @@ export default function AdminReturnPoliciesPage() {
                       step="0.01"
                       value={editForm.restockingFee}
                       onChange={(e) => setEditForm({ ...editForm, restockingFee: e.target.value })}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-purple-500 focus:border-purple-500"
+                      className="w-full px-3 py-2 border border-hos-border rounded-lg focus:ring-hos-gold/50 focus:border-hos-gold"
                     />
                   </div>
                   <div className="space-y-2">
@@ -682,43 +682,43 @@ export default function AdminReturnPoliciesPage() {
                         type="checkbox"
                         checked={editForm.isReturnable}
                         onChange={(e) => setEditForm({ ...editForm, isReturnable: e.target.checked })}
-                        className="rounded border-gray-300 text-purple-600 focus:ring-purple-500"
+                        className="rounded border-hos-border text-hos-gold focus:ring-hos-gold/50"
                       />
-                      <label className="text-sm text-gray-700">Items are returnable</label>
+                      <label className="text-sm text-hos-text-secondary">Items are returnable</label>
                     </div>
                     <div className="flex items-center gap-2">
                       <input
                         type="checkbox"
                         checked={editForm.requiresApproval}
                         onChange={(e) => setEditForm({ ...editForm, requiresApproval: e.target.checked })}
-                        className="rounded border-gray-300 text-purple-600 focus:ring-purple-500"
+                        className="rounded border-hos-border text-hos-gold focus:ring-hos-gold/50"
                       />
-                      <label className="text-sm text-gray-700">Requires approval</label>
+                      <label className="text-sm text-hos-text-secondary">Requires approval</label>
                     </div>
                     <div className="flex items-center gap-2">
                       <input
                         type="checkbox"
                         checked={editForm.requiresInspection}
                         onChange={(e) => setEditForm({ ...editForm, requiresInspection: e.target.checked })}
-                        className="rounded border-gray-300 text-purple-600 focus:ring-purple-500"
+                        className="rounded border-hos-border text-hos-gold focus:ring-hos-gold/50"
                       />
-                      <label className="text-sm text-gray-700">Requires inspection</label>
+                      <label className="text-sm text-hos-text-secondary">Requires inspection</label>
                     </div>
                     <div className="flex items-center gap-2">
                       <input
                         type="checkbox"
                         checked={editForm.isActive}
                         onChange={(e) => setEditForm({ ...editForm, isActive: e.target.checked })}
-                        className="rounded border-gray-300 text-purple-600 focus:ring-purple-500"
+                        className="rounded border-hos-border text-hos-gold focus:ring-hos-gold/50"
                       />
-                      <label className="text-sm text-gray-700">Active</label>
+                      <label className="text-sm text-hos-text-secondary">Active</label>
                     </div>
                   </div>
                 </div>
                 <div className="flex gap-3 mt-6">
                   <button
                     onClick={() => setShowEditModal(false)}
-                    className="flex-1 px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors"
+                    className="flex-1 px-4 py-2 border border-hos-border rounded-lg text-hos-text-secondary hover:bg-hos-bg-tertiary transition-colors"
                     disabled={actionLoading}
                   >
                     Cancel
@@ -726,7 +726,7 @@ export default function AdminReturnPoliciesPage() {
                   <button
                     onClick={handleUpdate}
                     disabled={actionLoading}
-                    className="flex-1 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="flex-1 px-4 py-2 bg-hos-gold text-[#1a1406] rounded-lg hover:bg-hos-gold-hover transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     {actionLoading ? 'Updating...' : 'Update'}
                   </button>
@@ -738,15 +738,15 @@ export default function AdminReturnPoliciesPage() {
           {/* Delete Modal */}
           {showDeleteModal && selectedPolicy && (
             <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-              <div className="bg-white rounded-lg max-w-md w-full p-6">
+              <div className="bg-hos-bg-secondary rounded-lg max-w-md w-full p-6">
                 <h2 className="text-xl font-bold mb-4">Delete Return Policy</h2>
-                <p className="text-gray-600 mb-6">
+                <p className="text-hos-text-secondary mb-6">
                   Are you sure you want to delete &quot;{selectedPolicy.name}&quot;? This action cannot be undone.
                 </p>
                 <div className="flex gap-3">
                   <button
                     onClick={() => setShowDeleteModal(false)}
-                    className="flex-1 px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors"
+                    className="flex-1 px-4 py-2 border border-hos-border rounded-lg text-hos-text-secondary hover:bg-hos-bg-tertiary transition-colors"
                     disabled={actionLoading}
                   >
                     Cancel

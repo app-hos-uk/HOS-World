@@ -87,7 +87,7 @@ export default function ShipmentDetailPage() {
         return 'bg-yellow-100 text-yellow-800';
       case 'PROCESSING':
       case 'IN_TRANSIT':
-        return 'bg-blue-100 text-blue-800';
+        return 'bg-hos-gold/20 text-hos-gold';
       case 'SHIPPED':
       case 'VERIFIED':
         return 'bg-green-100 text-green-800';
@@ -96,7 +96,7 @@ export default function ShipmentDetailPage() {
       case 'REJECTED':
         return 'bg-red-100 text-red-800';
       default:
-        return 'bg-gray-100 text-gray-800';
+        return 'bg-hos-bg-tertiary text-white';
     }
   };
 
@@ -111,7 +111,7 @@ export default function ShipmentDetailPage() {
         <div className="mb-6">
           <Link
             href="/fulfillment/shipments"
-            className="inline-flex items-center text-sm text-purple-600 hover:text-purple-700 mb-4"
+            className="inline-flex items-center text-sm text-hos-gold hover:text-hos-gold-hover mb-4"
           >
             <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
@@ -123,7 +123,7 @@ export default function ShipmentDetailPage() {
 
         {loading && (
           <div className="flex items-center justify-center py-12">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600"></div>
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-hos-gold"></div>
           </div>
         )}
 
@@ -134,12 +134,12 @@ export default function ShipmentDetailPage() {
         )}
 
         {!loading && !error && !shipment && (
-          <div className="bg-white border border-gray-200 rounded-lg p-12 text-center">
+          <div className="bg-hos-bg-secondary border border-hos-border rounded-lg p-12 text-center">
             <div className="text-5xl mb-4">📦</div>
-            <p className="text-gray-500 text-lg">Shipment not found</p>
+            <p className="text-hos-text-muted text-lg">Shipment not found</p>
             <Link
               href="/fulfillment/shipments"
-              className="mt-4 inline-block px-6 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors font-medium"
+              className="mt-4 inline-block px-6 py-2 bg-hos-gold text-[#1a1406] rounded-lg hover:bg-hos-gold-hover transition-colors font-medium"
             >
               View All Shipments
             </Link>
@@ -149,18 +149,18 @@ export default function ShipmentDetailPage() {
         {!loading && !error && shipment && (
           <div className="space-y-6">
             {/* Shipment Header */}
-            <div className="bg-white border border-gray-200 rounded-lg p-6 shadow-sm">
+            <div className="bg-hos-bg-secondary border border-hos-border rounded-lg p-6 shadow-sm">
               <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
                 <div>
                   <div className="flex items-center gap-3 mb-2">
-                    <h2 className="text-xl font-bold text-gray-900">
+                    <h2 className="text-xl font-bold text-white">
                       Shipment #{shipment.id?.slice(-8)?.toUpperCase() || shipmentId}
                     </h2>
                     <span className={`px-3 py-1 text-xs font-medium rounded-full ${getStatusBadgeColor(shipment.status)}`}>
                       {shipment.status?.replace(/_/g, ' ') || 'UNKNOWN'}
                     </span>
                   </div>
-                  <div className="space-y-1 text-sm text-gray-600">
+                  <div className="space-y-1 text-sm text-hos-text-secondary">
                     {shipment.trackingNumber && (
                       <p><span className="font-medium">Tracking Number:</span> {shipment.trackingNumber}</p>
                     )}
@@ -188,18 +188,18 @@ export default function ShipmentDetailPage() {
 
             {/* Verification Form */}
             {showVerifyForm && (
-              <div className="bg-white border-2 border-green-200 rounded-lg p-6 shadow-sm">
+              <div className="bg-hos-bg-secondary border-2 border-green-200 rounded-lg p-6 shadow-sm">
                 <h3 className="text-lg font-semibold mb-4">Verify This Shipment</h3>
                 <div className="space-y-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                    <label className="block text-sm font-medium text-hos-text-secondary mb-1">
                       Verification Notes (Optional)
                     </label>
                     <textarea
                       value={verificationNotes}
                       onChange={(e) => setVerificationNotes(e.target.value)}
                       rows={3}
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                      className="w-full px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
                       placeholder="Add any notes about the verification..."
                     />
                   </div>
@@ -217,7 +217,7 @@ export default function ShipmentDetailPage() {
                         setVerificationNotes('');
                       }}
                       disabled={verifying}
-                      className="px-6 py-2 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400 transition-colors font-medium"
+                      className="px-6 py-2 bg-hos-bg-tertiary text-hos-text-secondary rounded-lg hover:bg-hos-text-muted transition-colors font-medium"
                     >
                       Cancel
                     </button>
@@ -227,12 +227,12 @@ export default function ShipmentDetailPage() {
             )}
 
             {/* Status Timeline */}
-            <div className="bg-white border border-gray-200 rounded-lg p-6 shadow-sm">
+            <div className="bg-hos-bg-secondary border border-hos-border rounded-lg p-6 shadow-sm">
               <h3 className="text-lg font-semibold mb-6">Status Timeline</h3>
               <div className="flex items-center justify-between relative">
-                <div className="absolute top-5 left-0 right-0 h-0.5 bg-gray-200 z-0"></div>
+                <div className="absolute top-5 left-0 right-0 h-0.5 bg-hos-bg-tertiary z-0"></div>
                 <div
-                  className="absolute top-5 left-0 h-0.5 bg-purple-600 z-0 transition-all duration-500"
+                  className="absolute top-5 left-0 h-0.5 bg-hos-gold z-0 transition-all duration-500"
                   style={{ width: currentStepIndex >= 0 ? `${(currentStepIndex / (STATUS_STEPS.length - 1)) * 100}%` : '0%' }}
                 ></div>
                 {STATUS_STEPS.map((step, index) => {
@@ -243,15 +243,15 @@ export default function ShipmentDetailPage() {
                       <div
                         className={`w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold border-2 transition-all ${
                           isCompleted
-                            ? 'bg-purple-600 border-purple-600 text-white'
-                            : 'bg-white border-gray-300 text-gray-400'
-                        } ${isCurrent ? 'ring-4 ring-purple-200' : ''}`}
+                            ? 'bg-hos-gold border-hos-gold text-white'
+                            : 'bg-hos-bg-secondary border-hos-border text-hos-text-muted'
+                        } ${isCurrent ? 'ring-4 ring-hos-gold/30' : ''}`}
                       >
                         {isCompleted ? '✓' : index + 1}
                       </div>
                       <span
                         className={`mt-2 text-xs font-medium ${
-                          isCompleted ? 'text-purple-600' : 'text-gray-400'
+                          isCompleted ? 'text-hos-gold' : 'text-hos-text-muted'
                         }`}
                       >
                         {step}
@@ -263,26 +263,26 @@ export default function ShipmentDetailPage() {
             </div>
 
             {/* Order Items */}
-            <div className="bg-white border border-gray-200 rounded-lg p-6 shadow-sm">
+            <div className="bg-hos-bg-secondary border border-hos-border rounded-lg p-6 shadow-sm">
               <h3 className="text-lg font-semibold mb-4">Order Items</h3>
               {shipment.items && shipment.items.length > 0 ? (
                 <div className="overflow-x-auto">
                   <table className="w-full text-sm">
                     <thead>
-                      <tr className="border-b border-gray-200">
-                        <th className="text-left py-3 px-4 font-medium text-gray-600">Item</th>
-                        <th className="text-left py-3 px-4 font-medium text-gray-600">SKU</th>
-                        <th className="text-right py-3 px-4 font-medium text-gray-600">Quantity</th>
-                        <th className="text-right py-3 px-4 font-medium text-gray-600">Price</th>
+                      <tr className="border-b border-hos-border">
+                        <th className="text-left py-3 px-4 font-medium text-hos-text-secondary">Item</th>
+                        <th className="text-left py-3 px-4 font-medium text-hos-text-secondary">SKU</th>
+                        <th className="text-right py-3 px-4 font-medium text-hos-text-secondary">Quantity</th>
+                        <th className="text-right py-3 px-4 font-medium text-hos-text-secondary">Price</th>
                       </tr>
                     </thead>
                     <tbody>
                       {shipment.items.map((item: any, index: number) => (
-                        <tr key={item.id || index} className="border-b border-gray-100 hover:bg-gray-50">
-                          <td className="py-3 px-4 text-gray-900">{item.name || item.productName || 'Unknown'}</td>
-                          <td className="py-3 px-4 text-gray-500">{item.sku || 'N/A'}</td>
-                          <td className="py-3 px-4 text-right text-gray-900">{item.quantity || 1}</td>
-                          <td className="py-3 px-4 text-right text-gray-900">
+                        <tr key={item.id || index} className="border-b border-hos-border hover:bg-hos-bg-tertiary">
+                          <td className="py-3 px-4 text-white">{item.name || item.productName || 'Unknown'}</td>
+                          <td className="py-3 px-4 text-hos-text-muted">{item.sku || 'N/A'}</td>
+                          <td className="py-3 px-4 text-right text-white">{item.quantity || 1}</td>
+                          <td className="py-3 px-4 text-right text-white">
                             {item.price != null ? `$${Number(item.price).toFixed(2)}` : 'N/A'}
                           </td>
                         </tr>
@@ -291,23 +291,23 @@ export default function ShipmentDetailPage() {
                   </table>
                 </div>
               ) : shipment.submission?.productData ? (
-                <div className="p-4 border border-gray-100 rounded-lg">
+                <div className="p-4 border border-hos-border rounded-lg">
                   <div className="flex items-center justify-between">
                     <div>
-                      <p className="font-medium text-gray-900">{shipment.submission.productData.name}</p>
+                      <p className="font-medium text-white">{shipment.submission.productData.name}</p>
                       {shipment.submission.productData.sku && (
-                        <p className="text-sm text-gray-500">SKU: {shipment.submission.productData.sku}</p>
+                        <p className="text-sm text-hos-text-muted">SKU: {shipment.submission.productData.sku}</p>
                       )}
                     </div>
                     {shipment.submission.productData.price != null && (
-                      <p className="font-medium text-gray-900">
+                      <p className="font-medium text-white">
                         ${Number(shipment.submission.productData.price).toFixed(2)}
                       </p>
                     )}
                   </div>
                 </div>
               ) : (
-                <div className="text-center py-8 text-gray-500">
+                <div className="text-center py-8 text-hos-text-muted">
                   <p>No item details available</p>
                 </div>
               )}
@@ -315,9 +315,9 @@ export default function ShipmentDetailPage() {
 
             {/* Verification Info (if verified/rejected) */}
             {(shipment.verificationNotes || shipment.verifiedAt || shipment.verifiedBy) && (
-              <div className="bg-white border border-gray-200 rounded-lg p-6 shadow-sm">
+              <div className="bg-hos-bg-secondary border border-hos-border rounded-lg p-6 shadow-sm">
                 <h3 className="text-lg font-semibold mb-4">Verification Details</h3>
-                <div className="space-y-2 text-sm text-gray-600">
+                <div className="space-y-2 text-sm text-hos-text-secondary">
                   {shipment.verifiedAt && (
                     <p><span className="font-medium">Verified At:</span> {new Date(shipment.verifiedAt).toLocaleString()}</p>
                   )}
@@ -327,7 +327,7 @@ export default function ShipmentDetailPage() {
                   {shipment.verificationNotes && (
                     <div>
                       <p className="font-medium mb-1">Notes:</p>
-                      <p className="bg-gray-50 rounded-lg p-3">{shipment.verificationNotes}</p>
+                      <p className="bg-hos-bg-secondary rounded-lg p-3">{shipment.verificationNotes}</p>
                     </div>
                   )}
                 </div>

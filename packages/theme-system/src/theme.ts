@@ -26,24 +26,24 @@ export const baseShadows = {
   xl: '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)',
 };
 
-// House of Spells Default Theme - Magical Color Palette
+// House of Spells Default Theme - Dark luxury storefront
 export const hosTheme: Theme = {
   id: 'hos-default',
   name: 'House of Spells Default',
   type: 'hos',
   colors: {
-    primary: '#4c1d95',        // Deep purple - main brand color
-    secondary: '#7c3aed',       // Medium purple - secondary accents
-    background: '#ffffff',      // White background
-    surface: '#faf5ff',        // Very light purple tint
+    primary: '#D4A847',           // Gold accent
+    secondary: '#E0BC6A',         // Gold hover
+    background: '#0D0D0D',        // Primary background
+    surface: '#1E1E1E',           // Card / panel surface
     text: {
-      primary: '#1e1b4b',      // Deep indigo for text
-      secondary: '#6366f1',     // Indigo for secondary text
+      primary: '#FFFFFF',         // Headings, primary text
+      secondary: '#B0B0B0',       // Body text
     },
-    accent: '#d97706',          // Amber/gold - magical accent
-    error: '#dc2626',           // Red for errors
-    success: '#059669',          // Green for success
-    warning: '#d97706',         // Amber for warnings
+    accent: '#D4A847',            // Gold accent
+    error: '#C0392B',             // Sale / error red
+    success: '#27AE60',           // New / success green
+    warning: '#D4A847',           // Gold warnings
   },
   typography: {
     fontFamily: {
@@ -79,25 +79,25 @@ export const customerLightTheme: Theme = {
   type: 'customer',
 };
 
-// Customer Dark Theme - Magical Dark Mode
+// Customer Dark Theme - Dark luxury storefront (matches default)
 export const customerDarkTheme: Theme = {
   ...hosTheme,
   id: 'customer-dark',
   name: 'Dark Theme',
   type: 'customer',
   colors: {
-    primary: '#c4b5fd',         // Light purple
-    secondary: '#a78bfa',        // Medium purple
-    background: '#0f172a',       // Deep navy/slate
-    surface: '#1e293b',          // Dark slate
+    primary: '#D4A847',
+    secondary: '#E0BC6A',
+    background: '#0D0D0D',
+    surface: '#1E1E1E',
     text: {
-      primary: '#f1f5f9',        // Light gray
-      secondary: '#cbd5e1',       // Medium gray
+      primary: '#FFFFFF',
+      secondary: '#B0B0B0',
     },
-    accent: '#fbbf24',           // Gold/amber
-    error: '#f87171',            // Light red
-    success: '#34d399',          // Light green
-    warning: '#fbbf24',          // Amber
+    accent: '#D4A847',
+    error: '#C0392B',
+    success: '#27AE60',
+    warning: '#D4A847',
   },
 };
 

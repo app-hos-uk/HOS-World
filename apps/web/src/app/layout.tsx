@@ -1,45 +1,50 @@
 import type { Metadata } from 'next';
-import { Cinzel, Lora, Inter } from 'next/font/google';
+import { Cormorant_Garamond, Figtree, Inter } from 'next/font/google';
 import { ThemeProviderWrapper } from '@/components/ThemeProviderWrapper';
 import { AuthProviderWrapper } from '@/components/AuthProviderWrapper';
 import { QueryProvider } from '@/components/QueryProvider';
 import { CurrencyProvider } from '@/contexts/CurrencyContext';
 import { CartProvider } from '@/contexts/CartContext';
 import { GDPRConsentBanner } from '@/components/GDPRConsentBanner';
+import { GoogleTags } from '@/components/analytics/GoogleTags';
+import { AnalyticsProvider } from '@/components/analytics/AnalyticsProvider';
+import { SiteStructuredData } from '@/components/analytics/StructuredData';
 import { Toaster } from '@/components/Toaster';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
+import { Suspense } from 'react';
 import './globals.css';
 
-// Cinzel for headings, brand, and magical feel (customer-facing)
-const cinzel = Cinzel({ 
+// Cormorant Garamond — display headings & body (reference storefront)
+const cormorant = Cormorant_Garamond({
   subsets: ['latin'],
-  variable: '--font-cinzel',
+  variable: '--font-cormorant',
   weight: ['400', '500', '600', '700'],
+  style: ['normal', 'italic'],
   display: 'swap',
 });
 
-// Lora for body text - readable and elegant (customer-facing)
-const lora = Lora({ 
+// Figtree — UI labels, buttons, nav (reference storefront)
+const figtree = Figtree({
   subsets: ['latin'],
-  variable: '--font-lora',
-  weight: ['400', '500', '600', '700'],
+  variable: '--font-figtree',
+  weight: ['400', '600', '700'],
   display: 'swap',
 });
 
 // Inter for admin dashboards - modern, professional, highly readable
 const inter = Inter({ 
   subsets: ['latin'],
-  variable: '--font-inter',
+  variable: '--font-ui',
   weight: ['400', '500', '600', '700'],
   display: 'swap',
 });
 
 export const metadata: Metadata = {
   title: {
-    default: 'House of Spells - Magical Marketplace',
+    default: 'House of Spells — Fandom Marketplace | Collectables & Merchandise',
     template: '%s | House of Spells',
   },
-  description: 'Discover magical merchandise, collectibles, and enchanted items from your favorite fandoms at House of Spells marketplace.',
+  description: 'House of Spells marketplace: wizarding-world collectibles, multi-franchise fandom merch, and gifts from trusted US vendors — one checkout, tracked delivery.',
   keywords: ['Harry Potter', 'merchandise', 'collectibles', 'magical', 'fandoms', 'spells', 'marketplace'],
   authors: [{ name: 'House of Spells' }],
   creator: 'House of Spells',
@@ -67,6 +72,12 @@ export const metadata: Metadata = {
     follow: true,
     googleBot: { index: true, follow: true, 'max-video-preview': -1, 'max-image-preview': 'large', 'max-snippet': -1 },
   },
+  verification: process.env.NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION
+    ? { google: process.env.NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION }
+    : undefined,
+  alternates: {
+    canonical: '/',
+  },
 };
 
 export default function RootLayout({
@@ -75,8 +86,10 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en">
-      <body className={`${cinzel.variable} ${lora.variable} ${inter.variable}`}>
+    <html lang="en-US">
+      <body className={`${cormorant.variable} ${figtree.variable} ${inter.variable} storefront-theme antialiased`}>
+        <GoogleTags />
+        <SiteStructuredData />
         <QueryProvider>
           <AuthProviderWrapper>
             <CurrencyProvider>
@@ -85,6 +98,9 @@ export default function RootLayout({
                   <ErrorBoundary>
                     {children}
                   </ErrorBoundary>
+                  <Suspense fallback={null}>
+                    <AnalyticsProvider />
+                  </Suspense>
                   <GDPRConsentBanner />
                   <Toaster />
                 </ThemeProviderWrapper>

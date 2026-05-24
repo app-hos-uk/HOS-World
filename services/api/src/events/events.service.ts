@@ -659,7 +659,7 @@ export class EventsService {
       minTierLevel: dto.minTierLevel ?? 0,
       allowedTierIds: dto.allowedTierIds ?? [],
       requiresTicket: dto.requiresTicket ?? false,
-      ticketCurrency: dto.ticketCurrency ?? 'GBP',
+      ticketCurrency: dto.ticketCurrency ?? 'USD',
       attendancePoints: dto.attendancePoints ?? this.config.get<number>('EVENT_DEFAULT_POINTS', 100),
       earnRuleAction: dto.earnRuleAction,
       tags: dto.tags ?? [],

@@ -169,11 +169,11 @@ export default function SellerProductsPage() {
     if (stock <= 0) return 'bg-red-100 text-red-800';
     switch (status) {
       case 'ACTIVE': return 'bg-green-100 text-green-800';
-      case 'INACTIVE': return 'bg-gray-100 text-gray-800';
+      case 'INACTIVE': return 'bg-hos-bg-tertiary text-white';
       case 'PENDING':
       case 'PENDING_REVIEW':
       case 'DRAFT': return 'bg-yellow-100 text-yellow-800';
-      default: return 'bg-gray-100 text-gray-800';
+      default: return 'bg-hos-bg-tertiary text-white';
     }
   };
 
@@ -189,19 +189,19 @@ export default function SellerProductsPage() {
           {/* Header */}
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div>
-              <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">My Products</h1>
-              <p className="text-gray-600 mt-1">Manage your product listings</p>
+              <h1 className="text-2xl sm:text-3xl font-bold text-white">My Products</h1>
+              <p className="text-hos-text-secondary mt-1">Manage your product listings</p>
             </div>
             <div className="flex gap-2">
               <Link
                 href="/seller/products/bulk"
-                className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors font-medium"
+                className="px-4 py-2 border border-hos-border text-hos-text-secondary rounded-lg hover:bg-hos-bg-tertiary transition-colors font-medium"
               >
                 Bulk Import/Export
               </Link>
               <Link
                 href="/seller/submit-product"
-                className="px-6 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors font-medium"
+                className="px-6 py-2 bg-hos-gold text-[#1a1406] rounded-lg hover:bg-hos-gold-hover transition-colors font-medium"
               >
                 + Add Product
               </Link>
@@ -212,54 +212,54 @@ export default function SellerProductsPage() {
           <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-4">
             <button
               onClick={() => setStatusFilter('')}
-              className={`bg-white rounded-lg shadow p-4 text-left ${statusFilter === '' ? 'ring-2 ring-purple-500' : ''}`}
+              className={`bg-hos-bg-secondary rounded-lg shadow p-4 text-left ${statusFilter === '' ? 'ring-2 ring-hos-gold/50' : ''}`}
             >
-              <h3 className="text-xs font-medium text-gray-500 uppercase">Total</h3>
-              <p className="text-2xl font-bold text-gray-900 mt-1">{stats.total}</p>
+              <h3 className="text-xs font-medium text-hos-text-muted uppercase">Total</h3>
+              <p className="text-2xl font-bold text-white mt-1">{stats.total}</p>
             </button>
             <button
               onClick={() => setStatusFilter('ACTIVE')}
-              className={`bg-white rounded-lg shadow p-4 text-left ${statusFilter === 'ACTIVE' ? 'ring-2 ring-purple-500' : ''}`}
+              className={`bg-hos-bg-secondary rounded-lg shadow p-4 text-left ${statusFilter === 'ACTIVE' ? 'ring-2 ring-hos-gold/50' : ''}`}
             >
-              <h3 className="text-xs font-medium text-gray-500 uppercase">Active</h3>
+              <h3 className="text-xs font-medium text-hos-text-muted uppercase">Active</h3>
               <p className="text-2xl font-bold text-green-600 mt-1">{stats.active}</p>
             </button>
             <button
               onClick={() => setStatusFilter('INACTIVE')}
-              className={`bg-white rounded-lg shadow p-4 text-left ${statusFilter === 'INACTIVE' ? 'ring-2 ring-purple-500' : ''}`}
+              className={`bg-hos-bg-secondary rounded-lg shadow p-4 text-left ${statusFilter === 'INACTIVE' ? 'ring-2 ring-hos-gold/50' : ''}`}
             >
-              <h3 className="text-xs font-medium text-gray-500 uppercase">Inactive</h3>
-              <p className="text-2xl font-bold text-gray-600 mt-1">{stats.inactive}</p>
+              <h3 className="text-xs font-medium text-hos-text-muted uppercase">Inactive</h3>
+              <p className="text-2xl font-bold text-hos-text-secondary mt-1">{stats.inactive}</p>
             </button>
             <button
               onClick={() => setStatusFilter('PENDING')}
-              className={`bg-white rounded-lg shadow p-4 text-left ${statusFilter === 'PENDING' ? 'ring-2 ring-purple-500' : ''}`}
+              className={`bg-hos-bg-secondary rounded-lg shadow p-4 text-left ${statusFilter === 'PENDING' ? 'ring-2 ring-hos-gold/50' : ''}`}
             >
-              <h3 className="text-xs font-medium text-gray-500 uppercase">Pending</h3>
+              <h3 className="text-xs font-medium text-hos-text-muted uppercase">Pending</h3>
               <p className="text-2xl font-bold text-yellow-600 mt-1">{stats.pending}</p>
             </button>
             <button
               onClick={() => setStatusFilter('OUT_OF_STOCK')}
-              className={`bg-white rounded-lg shadow p-4 text-left ${statusFilter === 'OUT_OF_STOCK' ? 'ring-2 ring-purple-500' : ''}`}
+              className={`bg-hos-bg-secondary rounded-lg shadow p-4 text-left ${statusFilter === 'OUT_OF_STOCK' ? 'ring-2 ring-hos-gold/50' : ''}`}
             >
-              <h3 className="text-xs font-medium text-gray-500 uppercase">Out of Stock</h3>
+              <h3 className="text-xs font-medium text-hos-text-muted uppercase">Out of Stock</h3>
               <p className="text-2xl font-bold text-red-600 mt-1">{stats.outOfStock}</p>
             </button>
             <button
               onClick={() => setStatusFilter('LOW_STOCK')}
-              className={`bg-white rounded-lg shadow p-4 text-left ${statusFilter === 'LOW_STOCK' ? 'ring-2 ring-purple-500' : ''}`}
+              className={`bg-hos-bg-secondary rounded-lg shadow p-4 text-left ${statusFilter === 'LOW_STOCK' ? 'ring-2 ring-hos-gold/50' : ''}`}
             >
-              <h3 className="text-xs font-medium text-gray-500 uppercase">Low Stock</h3>
+              <h3 className="text-xs font-medium text-hos-text-muted uppercase">Low Stock</h3>
               <p className="text-2xl font-bold text-orange-600 mt-1">{stats.lowStock}</p>
             </button>
-            <div className="bg-white rounded-lg shadow p-4">
-              <h3 className="text-xs font-medium text-gray-500 uppercase">Inventory Value</h3>
+            <div className="bg-hos-bg-secondary rounded-lg shadow p-4">
+              <h3 className="text-xs font-medium text-hos-text-muted uppercase">Inventory Value</h3>
               <p className="text-xl font-bold text-green-600 mt-1">${stats.totalValue.toFixed(2)}</p>
             </div>
           </div>
 
           {/* Search and Filters */}
-          <div className="bg-white rounded-lg shadow p-4">
+          <div className="bg-hos-bg-secondary rounded-lg shadow p-4">
             <div className="flex flex-col sm:flex-row gap-4">
               <div className="flex-1">
                 <input
@@ -267,13 +267,13 @@ export default function SellerProductsPage() {
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   placeholder="Search products by name, category, or fandom..."
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                  className="w-full px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50 focus:border-transparent"
                 />
               </div>
               <select
                 value={sortBy}
                 onChange={(e) => setSortBy(e.target.value)}
-                className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
+                className="px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50"
               >
                 <option value="newest">Newest First</option>
                 <option value="oldest">Oldest First</option>
@@ -302,19 +302,19 @@ export default function SellerProductsPage() {
           {/* Products Table */}
           {loading ? (
             <div className="flex items-center justify-center py-12">
-              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600"></div>
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-hos-gold"></div>
             </div>
           ) : (
-            <div className="bg-white rounded-lg shadow overflow-hidden">
+            <div className="bg-hos-bg-secondary rounded-lg shadow overflow-hidden">
               {filteredProducts.length === 0 ? (
                 <div className="text-center py-12">
-                  <p className="text-gray-500 mb-4">
+                  <p className="text-hos-text-muted mb-4">
                     {productRows.length === 0 ? 'No products found' : 'No products match your filters'}
                   </p>
                   {productRows.length === 0 && (
                     <Link
                       href="/seller/submit-product"
-                      className="text-purple-600 hover:text-purple-700 font-medium"
+                      className="text-hos-gold hover:text-hos-gold-hover font-medium"
                     >
                       Submit your first product →
                     </Link>
@@ -322,20 +322,20 @@ export default function SellerProductsPage() {
                 </div>
               ) : (
                 <div className="overflow-x-auto">
-                  <table className="min-w-full divide-y divide-gray-200">
-                    <thead className="bg-gray-50">
+                  <table className="min-w-full divide-y divide-hos-border">
+                    <thead className="bg-hos-bg-secondary">
                       <tr>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Product</th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Price</th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Stock</th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Fandom</th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Created</th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-hos-text-muted uppercase">Product</th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-hos-text-muted uppercase">Status</th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-hos-text-muted uppercase">Price</th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-hos-text-muted uppercase">Stock</th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-hos-text-muted uppercase">Fandom</th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-hos-text-muted uppercase">Created</th>
                       </tr>
                     </thead>
-                    <tbody className="bg-white divide-y divide-gray-200">
+                    <tbody className="bg-hos-bg-secondary divide-y divide-hos-border">
                       {filteredProducts.map((product) => (
-                        <tr key={product.id} className="hover:bg-gray-50">
+                        <tr key={product.id} className="hover:bg-hos-bg-tertiary">
                           <td className="px-6 py-4 whitespace-nowrap">
                             <div className="flex items-center">
                               {product.images && product.images[0] ? (
@@ -347,13 +347,13 @@ export default function SellerProductsPage() {
                                   height={48}
                                 />
                               ) : (
-                                <div className="h-12 w-12 rounded-lg bg-gray-200 mr-3 flex items-center justify-center">
-                                  <span className="text-gray-400 text-xs">No img</span>
+                                <div className="h-12 w-12 rounded-lg bg-hos-bg-tertiary mr-3 flex items-center justify-center">
+                                  <span className="text-hos-text-muted text-xs">No img</span>
                                 </div>
                               )}
                               <div>
-                                <div className="text-sm font-medium text-gray-900">{product.name}</div>
-                                <div className="text-sm text-gray-500">{product.slug || (product._isSubmission ? 'Pending review' : '')}</div>
+                                <div className="text-sm font-medium text-white">{product.name}</div>
+                                <div className="text-sm text-hos-text-muted">{product.slug || (product._isSubmission ? 'Pending review' : '')}</div>
                               </div>
                             </div>
                           </td>
@@ -362,14 +362,14 @@ export default function SellerProductsPage() {
                               {product._isSubmission ? 'Pending review' : getDisplayStatus(product.status, product.stock || 0)}
                             </span>
                           </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                          <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-white">
                             ${Number(product.price || 0).toFixed(2)}
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap">
                             <span className={`text-sm font-medium ${
                               (product.stock || 0) <= 0 ? 'text-red-600' :
                               product.stock <= 5 ? 'text-orange-600' :
-                              'text-gray-900'
+                              'text-white'
                             }`}>
                               {product.stock || 0}
                             </span>
@@ -377,10 +377,10 @@ export default function SellerProductsPage() {
                               <span className="ml-2 text-xs text-orange-600">(Low)</span>
                             )}
                           </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-hos-text-muted">
                             {product.category || product.fandom || '-'}
                           </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-hos-text-muted">
                             {new Date(product.createdAt).toLocaleDateString()}
                           </td>
                         </tr>
@@ -394,7 +394,7 @@ export default function SellerProductsPage() {
 
           {/* Results Count */}
           {!loading && productRows.length > 0 && (
-            <div className="text-sm text-gray-500 text-center">
+            <div className="text-sm text-hos-text-muted text-center">
               Showing {filteredProducts.length} of {productRows.length} items
               {pendingSubmissions.length > 0 && (
                 <span className="ml-2">({pendingSubmissions.length} pending review)</span>

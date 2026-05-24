@@ -89,9 +89,9 @@ export default function FulfillmentShipmentsPage() {
       case 'REJECTED':
         return 'bg-red-100 text-red-800';
       case 'IN_TRANSIT':
-        return 'bg-blue-100 text-blue-800';
+        return 'bg-hos-gold/20 text-hos-gold';
       default:
-        return 'bg-gray-100 text-gray-800';
+        return 'bg-hos-bg-tertiary text-white';
     }
   };
 
@@ -105,7 +105,7 @@ export default function FulfillmentShipmentsPage() {
       >
         <div className="mb-6">
           <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold">Manage Shipments</h1>
-          <p className="text-gray-600 mt-2">Verify and manage incoming shipments</p>
+          <p className="text-hos-text-secondary mt-2">Verify and manage incoming shipments</p>
         </div>
 
           {error && (
@@ -123,8 +123,8 @@ export default function FulfillmentShipmentsPage() {
                 onClick={() => setStatusFilter(status)}
                 className={`px-4 py-2 rounded-lg font-medium transition-colors ${
                   statusFilter === status
-                    ? 'bg-purple-600 text-white'
-                    : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                    ? 'bg-hos-gold text-[#1a1406]'
+                    : 'bg-hos-bg-tertiary text-hos-text-secondary hover:bg-hos-bg-tertiary'
                 }`}
               >
                 {status.replace(/_/g, ' ')}
@@ -134,13 +134,13 @@ export default function FulfillmentShipmentsPage() {
 
           {loading && (
             <div className="flex items-center justify-center py-12">
-              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600"></div>
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-hos-gold"></div>
             </div>
           )}
 
           {!loading && shipments.length === 0 && (
-            <div className="bg-white border border-gray-200 rounded-lg p-8 text-center">
-              <p className="text-gray-500 text-lg">No shipments found for this status</p>
+            <div className="bg-hos-bg-secondary border border-hos-border rounded-lg p-8 text-center">
+              <p className="text-hos-text-muted text-lg">No shipments found for this status</p>
             </div>
           )}
 
@@ -151,20 +151,20 @@ export default function FulfillmentShipmentsPage() {
                 return (
                   <div
                     key={shipment.id}
-                    className="bg-white border border-gray-200 rounded-lg p-6 hover:shadow-md transition-shadow"
+                    className="bg-hos-bg-secondary border border-hos-border rounded-lg p-6 hover:shadow-md transition-shadow"
                   >
                     <div className="flex flex-col sm:flex-row justify-between gap-4">
                       <div className="flex-1">
                         <div className="flex items-start justify-between mb-2">
                           <div>
-                            <h3 className="text-lg font-semibold text-gray-900">
+                            <h3 className="text-lg font-semibold text-white">
                               {productData.name || 'Unknown Product'}
                             </h3>
-                            <p className="text-sm text-gray-500 mt-1">
+                            <p className="text-sm text-hos-text-muted mt-1">
                               Seller: {shipment.submission?.seller?.storeName || 'Unknown'}
                             </p>
                             {shipment.trackingNumber && (
-                              <p className="text-sm text-gray-500">
+                              <p className="text-sm text-hos-text-muted">
                                 Tracking: {shipment.trackingNumber}
                               </p>
                             )}
@@ -178,7 +178,7 @@ export default function FulfillmentShipmentsPage() {
                           </span>
                         </div>
 
-                        <div className="flex flex-wrap gap-4 mt-4 text-sm text-gray-600">
+                        <div className="flex flex-wrap gap-4 mt-4 text-sm text-hos-text-secondary">
                           {shipment.fulfillmentCenter && (
                             <span>
                               <strong>Fulfillment Center:</strong> {shipment.fulfillmentCenter.name}
@@ -196,7 +196,7 @@ export default function FulfillmentShipmentsPage() {
                       <div className="flex gap-2 sm:flex-col">
                         <button
                           onClick={() => handleViewDetails(shipment.id)}
-                          className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors font-medium text-sm whitespace-nowrap"
+                          className="px-4 py-2 bg-hos-gold text-[#1a1406] rounded-lg hover:bg-hos-gold-hover transition-colors font-medium text-sm whitespace-nowrap"
                         >
                           View Details
                         </button>
@@ -225,7 +225,7 @@ export default function FulfillmentShipmentsPage() {
           {/* Verification Modal */}
           {showModal && selectedShipment && (
             <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-              <div className="bg-white rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+              <div className="bg-hos-bg-secondary rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto">
                 <div className="p-6">
                   <div className="flex justify-between items-start mb-4">
                     <h2 className="text-2xl font-bold">Verify Shipment</h2>
@@ -234,7 +234,7 @@ export default function FulfillmentShipmentsPage() {
                         setShowModal(false);
                         setSelectedShipment(null);
                       }}
-                      className="text-gray-500 hover:text-gray-700"
+                      className="text-hos-text-muted hover:text-hos-text-secondary"
                     >
                       <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path
@@ -249,20 +249,20 @@ export default function FulfillmentShipmentsPage() {
 
                   <div className="space-y-4">
                     <div>
-                      <p className="text-sm font-medium text-gray-500">Product</p>
-                      <p className="text-gray-900">
+                      <p className="text-sm font-medium text-hos-text-muted">Product</p>
+                      <p className="text-white">
                         {selectedShipment.submission?.productData?.name || 'Unknown'}
                       </p>
                     </div>
 
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                      <label className="block text-sm font-medium text-hos-text-secondary mb-1">
                         Verification Status <span className="text-red-500">*</span>
                       </label>
                       <select
                         value={verificationStatus}
                         onChange={(e) => setVerificationStatus(e.target.value)}
-                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
+                        className="w-full px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50"
                       >
                         <option value="VERIFIED">Verified</option>
                         <option value="REJECTED">Rejected</option>
@@ -270,27 +270,27 @@ export default function FulfillmentShipmentsPage() {
                     </div>
 
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                      <label className="block text-sm font-medium text-hos-text-secondary mb-1">
                         Tracking Number (Optional)
                       </label>
                       <input
                         type="text"
                         value={trackingNumber}
                         onChange={(e) => setTrackingNumber(e.target.value)}
-                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
+                        className="w-full px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50"
                         placeholder="Enter tracking number"
                       />
                     </div>
 
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                      <label className="block text-sm font-medium text-hos-text-secondary mb-1">
                         Verification Notes (Optional)
                       </label>
                       <textarea
                         value={verificationNotes}
                         onChange={(e) => setVerificationNotes(e.target.value)}
                         rows={4}
-                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
+                        className="w-full px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50"
                         placeholder="Add verification notes..."
                       />
                     </div>
@@ -309,7 +309,7 @@ export default function FulfillmentShipmentsPage() {
                           setSelectedShipment(null);
                         }}
                         disabled={actionLoading}
-                        className="px-6 py-2 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400 transition-colors font-medium"
+                        className="px-6 py-2 bg-hos-bg-tertiary text-hos-text-secondary rounded-lg hover:bg-hos-text-muted transition-colors font-medium"
                       >
                         Cancel
                       </button>

@@ -67,13 +67,13 @@ export default function CMSSettingsPage() {
         <div className="space-y-6">
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-2xl font-bold text-gray-900">CMS Settings</h1>
-              <p className="text-gray-600 mt-1">Configure your CMS preferences</p>
+              <h1 className="text-2xl font-bold text-white">CMS Settings</h1>
+              <p className="text-hos-text-secondary mt-1">Configure your CMS preferences</p>
             </div>
             <button
               onClick={handleSave}
               disabled={saving}
-              className="px-6 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors font-medium disabled:opacity-50"
+              className="px-6 py-3 bg-hos-gold text-[#1a1406] rounded-lg hover:bg-hos-gold-hover transition-colors font-medium disabled:opacity-50"
             >
               {saving ? 'Saving...' : 'Save Settings'}
             </button>
@@ -83,44 +83,44 @@ export default function CMSSettingsPage() {
 
           {loading ? (
             <div className="flex items-center justify-center h-64">
-              <div className="text-gray-500">Loading settings...</div>
+              <div className="text-hos-text-muted">Loading settings...</div>
             </div>
           ) : (
-            <div className="bg-white rounded-lg shadow p-6 space-y-6">
+            <div className="bg-hos-bg-secondary rounded-lg shadow p-6 space-y-6">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-hos-text-secondary mb-2">
                   Site Name
                 </label>
                 <input
                   type="text"
                   value={settings.siteName || ''}
                   onChange={(e) => handleChange('siteName', e.target.value)}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
+                  className="w-full px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50"
                   placeholder="Enter site name"
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-hos-text-secondary mb-2">
                   Site Description
                 </label>
                 <textarea
                   value={settings.siteDescription || ''}
                   onChange={(e) => handleChange('siteDescription', e.target.value)}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
+                  className="w-full px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50"
                   rows={3}
                   placeholder="Enter site description"
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-hos-text-secondary mb-2">
                   Default Language
                 </label>
                 <select
                   value={settings.defaultLanguage || 'en'}
                   onChange={(e) => handleChange('defaultLanguage', e.target.value)}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
+                  className="w-full px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50"
                 >
                   <option value="en">English</option>
                   <option value="es">Spanish</option>
@@ -137,7 +137,7 @@ export default function CMSSettingsPage() {
                     onChange={(e) => handleChange('autoPublish', e.target.checked)}
                     className="mr-2"
                   />
-                  <span className="text-sm font-medium text-gray-700">
+                  <span className="text-sm font-medium text-hos-text-secondary">
                     Auto-publish new content
                   </span>
                 </label>
@@ -151,7 +151,7 @@ export default function CMSSettingsPage() {
                     onChange={(e) => handleChange('enableComments', e.target.checked)}
                     className="mr-2"
                   />
-                  <span className="text-sm font-medium text-gray-700">
+                  <span className="text-sm font-medium text-hos-text-secondary">
                     Enable comments on blog posts
                   </span>
                 </label>

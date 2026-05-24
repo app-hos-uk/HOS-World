@@ -57,13 +57,13 @@ const MATERIAL_TYPES = [
 ];
 
 const TYPE_COLORS: Record<string, string> = {
-  HERO_IMAGE: 'bg-purple-100 text-purple-800',
-  LIFESTYLE: 'bg-blue-100 text-blue-800',
+  HERO_IMAGE: 'bg-hos-gold/20 text-hos-gold',
+  LIFESTYLE: 'bg-hos-gold/20 text-hos-gold',
   DETAIL: 'bg-green-100 text-green-800',
   VIDEO: 'bg-red-100 text-red-800',
   BANNER: 'bg-yellow-100 text-yellow-800',
   SOCIAL: 'bg-pink-100 text-pink-800',
-  OTHER: 'bg-gray-100 text-gray-800',
+  OTHER: 'bg-hos-bg-tertiary text-white',
 };
 
 export default function AdminMarketingPage() {
@@ -264,32 +264,32 @@ export default function AdminMarketingPage() {
         <div className="space-y-6">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div>
-              <h1 className="text-2xl font-bold text-gray-900">Marketing Dashboard</h1>
-              <p className="text-gray-600 mt-1">Manage product marketing materials and submissions</p>
+              <h1 className="text-2xl font-bold text-white">Marketing Dashboard</h1>
+              <p className="text-hos-text-secondary mt-1">Manage product marketing materials and submissions</p>
             </div>
           </div>
 
           {/* Stats Cards */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="bg-white rounded-lg shadow p-6">
-              <h3 className="text-sm font-medium text-gray-500 mb-1">Pending Review</h3>
+            <div className="bg-hos-bg-secondary rounded-lg shadow p-6">
+              <h3 className="text-sm font-medium text-hos-text-muted mb-1">Pending Review</h3>
               <p className="text-3xl font-bold text-yellow-600">{stats.pending}</p>
-              <p className="text-xs text-gray-500 mt-1">Awaiting marketing materials</p>
+              <p className="text-xs text-hos-text-muted mt-1">Awaiting marketing materials</p>
             </div>
-            <div className="bg-white rounded-lg shadow p-6">
-              <h3 className="text-sm font-medium text-gray-500 mb-1">Completed</h3>
+            <div className="bg-hos-bg-secondary rounded-lg shadow p-6">
+              <h3 className="text-sm font-medium text-hos-text-muted mb-1">Completed</h3>
               <p className="text-3xl font-bold text-green-600">{stats.completed}</p>
-              <p className="text-xs text-gray-500 mt-1">Marketing finalized</p>
+              <p className="text-xs text-hos-text-muted mt-1">Marketing finalized</p>
             </div>
-            <div className="bg-white rounded-lg shadow p-6">
-              <h3 className="text-sm font-medium text-gray-500 mb-1">Total Materials</h3>
-              <p className="text-3xl font-bold text-purple-600">{stats.totalMaterials}</p>
-              <p className="text-xs text-gray-500 mt-1">Images, videos, banners</p>
+            <div className="bg-hos-bg-secondary rounded-lg shadow p-6">
+              <h3 className="text-sm font-medium text-hos-text-muted mb-1">Total Materials</h3>
+              <p className="text-3xl font-bold text-hos-gold">{stats.totalMaterials}</p>
+              <p className="text-xs text-hos-text-muted mt-1">Images, videos, banners</p>
             </div>
           </div>
 
           {/* Tabs */}
-          <div className="border-b border-gray-200">
+          <div className="border-b border-hos-border">
             <nav className="-mb-px flex space-x-8">
               {tabs.map((tab) => (
                 <button
@@ -297,15 +297,15 @@ export default function AdminMarketingPage() {
                   onClick={() => setActiveTab(tab.id as any)}
                   className={`py-4 px-1 border-b-2 font-medium text-sm flex items-center gap-2 ${
                     activeTab === tab.id
-                      ? 'border-purple-500 text-purple-600'
-                      : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                      ? 'border-hos-gold text-hos-gold'
+                      : 'border-transparent text-hos-text-muted hover:text-hos-text-secondary hover:border-hos-border'
                   }`}
                 >
                   <span>{tab.icon}</span>
                   {tab.label}
                   {tab.count > 0 && (
                     <span className={`px-2 py-0.5 text-xs rounded-full ${
-                      activeTab === tab.id ? 'bg-purple-100 text-purple-800' : 'bg-gray-100 text-gray-600'
+                      activeTab === tab.id ? 'bg-hos-gold/20 text-hos-gold' : 'bg-hos-bg-tertiary text-hos-text-secondary'
                     }`}>
                       {tab.count}
                     </span>
@@ -317,37 +317,37 @@ export default function AdminMarketingPage() {
 
           {loading ? (
             <div className="flex items-center justify-center h-32">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-600"></div>
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-hos-gold"></div>
             </div>
           ) : (
             <>
               {activeTab === 'pending' && (
                 <div className="space-y-4">
                   {pendingSubmissions.length === 0 ? (
-                    <div className="bg-white rounded-lg shadow p-12 text-center">
+                    <div className="bg-hos-bg-secondary rounded-lg shadow p-12 text-center">
                       <span className="text-4xl block mb-2">✅</span>
-                      <p className="text-gray-500">No submissions pending marketing review</p>
+                      <p className="text-hos-text-muted">No submissions pending marketing review</p>
                     </div>
                   ) : (
                     pendingSubmissions.map((submission) => (
-                      <div key={submission.id} className="bg-white rounded-lg shadow overflow-hidden">
+                      <div key={submission.id} className="bg-hos-bg-secondary rounded-lg shadow overflow-hidden">
                         <div className="p-6">
                           <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
                             <div className="flex-1">
-                              <h3 className="text-lg font-semibold text-gray-900">
+                              <h3 className="text-lg font-semibold text-white">
                                 {submission.catalogEntry?.title || submission.productData?.name || 'Untitled Product'}
                               </h3>
-                              <p className="text-sm text-gray-500 mt-1">
+                              <p className="text-sm text-hos-text-muted mt-1">
                                 Seller: {submission.seller?.storeName || 'Unknown'}
                               </p>
-                              <p className="text-xs text-gray-400 mt-1">
+                              <p className="text-xs text-hos-text-muted mt-1">
                                 Catalog completed: {new Date(submission.catalogCompletedAt).toLocaleDateString()}
                               </p>
                             </div>
                             <div className="flex gap-2">
                               <button
                                 onClick={() => openAddModal(submission)}
-                                className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 text-sm"
+                                className="px-4 py-2 bg-hos-gold text-[#1a1406] rounded-lg hover:bg-hos-gold-hover text-sm"
                               >
                                 + Add Material
                               </button>
@@ -365,7 +365,7 @@ export default function AdminMarketingPage() {
                           {/* Existing Materials */}
                           {submission.marketingMaterials.length > 0 && (
                             <div className="mt-4 pt-4 border-t">
-                              <h4 className="text-sm font-medium text-gray-700 mb-3">
+                              <h4 className="text-sm font-medium text-hos-text-secondary mb-3">
                                 Materials ({submission.marketingMaterials.length})
                               </h4>
                               <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
@@ -375,7 +375,7 @@ export default function AdminMarketingPage() {
                                     className="border rounded-lg p-3 relative group"
                                   >
                                     <span className={`px-2 py-0.5 text-xs rounded-full ${
-                                      TYPE_COLORS[material.type] || 'bg-gray-100 text-gray-800'
+                                      TYPE_COLORS[material.type] || 'bg-hos-bg-tertiary text-white'
                                     }`}>
                                       {material.type}
                                     </span>
@@ -383,7 +383,7 @@ export default function AdminMarketingPage() {
                                       href={material.url}
                                       target="_blank"
                                       rel="noopener noreferrer"
-                                      className="block mt-2 text-sm text-purple-600 hover:underline truncate"
+                                      className="block mt-2 text-sm text-hos-gold hover:underline truncate"
                                     >
                                       View Material
                                     </a>
@@ -410,24 +410,24 @@ export default function AdminMarketingPage() {
               {activeTab === 'materials' && (
                 <div className="space-y-4">
                   {/* Filters */}
-                  <div className="bg-white rounded-lg shadow p-4">
+                  <div className="bg-hos-bg-secondary rounded-lg shadow p-4">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Search</label>
+                        <label className="block text-sm font-medium text-hos-text-secondary mb-1">Search</label>
                         <input
                           type="text"
                           value={searchTerm}
                           onChange={(e) => setSearchTerm(e.target.value)}
                           placeholder="Search by URL, product, or seller..."
-                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
+                          className="w-full px-3 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50"
                         />
                       </div>
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Type</label>
+                        <label className="block text-sm font-medium text-hos-text-secondary mb-1">Type</label>
                         <select
                           value={typeFilter}
                           onChange={(e) => setTypeFilter(e.target.value)}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
+                          className="w-full px-3 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50"
                         >
                           <option value="ALL">All Types</option>
                           {MATERIAL_TYPES.map((type) => (
@@ -439,40 +439,40 @@ export default function AdminMarketingPage() {
                   </div>
 
                   {/* Materials Table */}
-                  <div className="bg-white rounded-lg shadow overflow-hidden">
-                    <table className="min-w-full divide-y divide-gray-200">
-                      <thead className="bg-gray-50">
+                  <div className="bg-hos-bg-secondary rounded-lg shadow overflow-hidden">
+                    <table className="min-w-full divide-y divide-hos-border">
+                      <thead className="bg-hos-bg-secondary">
                         <tr>
-                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Type</th>
-                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Product/Seller</th>
-                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">URL</th>
-                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Created</th>
-                          <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">Actions</th>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-hos-text-muted uppercase">Type</th>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-hos-text-muted uppercase">Product/Seller</th>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-hos-text-muted uppercase">URL</th>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-hos-text-muted uppercase">Created</th>
+                          <th className="px-6 py-3 text-right text-xs font-medium text-hos-text-muted uppercase">Actions</th>
                         </tr>
                       </thead>
-                      <tbody className="bg-white divide-y divide-gray-200">
+                      <tbody className="bg-hos-bg-secondary divide-y divide-hos-border">
                         {filteredMaterials.length === 0 ? (
                           <tr>
-                            <td colSpan={5} className="px-6 py-12 text-center text-gray-500">
+                            <td colSpan={5} className="px-6 py-12 text-center text-hos-text-muted">
                               <span className="text-4xl block mb-2">📷</span>
                               <p>No marketing materials found</p>
                             </td>
                           </tr>
                         ) : (
                           filteredMaterials.map((material) => (
-                            <tr key={material.id} className="hover:bg-gray-50">
+                            <tr key={material.id} className="hover:bg-hos-bg-tertiary">
                               <td className="px-6 py-4 whitespace-nowrap">
                                 <span className={`px-2 py-1 text-xs font-semibold rounded-full ${
-                                  TYPE_COLORS[material.type] || 'bg-gray-100 text-gray-800'
+                                  TYPE_COLORS[material.type] || 'bg-hos-bg-tertiary text-white'
                                 }`}>
                                   {material.type}
                                 </span>
                               </td>
                               <td className="px-6 py-4">
-                                <div className="text-sm font-medium text-gray-900">
+                                <div className="text-sm font-medium text-white">
                                   {material.submission?.catalogEntry?.title || 'N/A'}
                                 </div>
-                                <div className="text-xs text-gray-500">
+                                <div className="text-xs text-hos-text-muted">
                                   {material.submission?.seller?.storeName || 'Unknown Seller'}
                                 </div>
                               </td>
@@ -481,18 +481,18 @@ export default function AdminMarketingPage() {
                                   href={material.url}
                                   target="_blank"
                                   rel="noopener noreferrer"
-                                  className="text-sm text-purple-600 hover:text-purple-800 hover:underline truncate block max-w-xs"
+                                  className="text-sm text-hos-gold hover:text-hos-gold-hover hover:underline truncate block max-w-xs"
                                 >
                                   {material.url.length > 40 ? material.url.substring(0, 40) + '...' : material.url}
                                 </a>
                               </td>
-                              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                              <td className="px-6 py-4 whitespace-nowrap text-sm text-hos-text-muted">
                                 {new Date(material.createdAt).toLocaleDateString()}
                               </td>
                               <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                                 <button
                                   onClick={() => openEditModal(material)}
-                                  className="text-purple-600 hover:text-purple-900 mr-3"
+                                  className="text-hos-gold hover:text-hos-gold mr-3"
                                 >
                                   Edit
                                 </button>
@@ -517,28 +517,28 @@ export default function AdminMarketingPage() {
           {/* Add Material Modal */}
           {showAddModal && selectedSubmission && (
             <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-              <div className="bg-white rounded-lg max-w-lg w-full p-6">
+              <div className="bg-hos-bg-secondary rounded-lg max-w-lg w-full p-6">
                 <div className="flex justify-between items-start mb-4">
                   <div>
                     <h2 className="text-xl font-bold">Add Marketing Material</h2>
-                    <p className="text-sm text-gray-500 mt-1">
+                    <p className="text-sm text-hos-text-muted mt-1">
                       For: {selectedSubmission.catalogEntry?.title || selectedSubmission.productData?.name}
                     </p>
                   </div>
                   <button
                     onClick={() => setShowAddModal(false)}
-                    className="text-gray-400 hover:text-gray-600 text-2xl"
+                    className="text-hos-text-muted hover:text-hos-text-secondary text-2xl"
                   >
                     ×
                   </button>
                 </div>
                 <div className="space-y-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Material Type</label>
+                    <label className="block text-sm font-medium text-hos-text-secondary mb-1">Material Type</label>
                     <select
                       value={materialForm.type}
                       onChange={(e) => setMaterialForm({ ...materialForm, type: e.target.value })}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
+                      className="w-full px-3 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50"
                     >
                       {MATERIAL_TYPES.map((type) => (
                         <option key={type} value={type}>{type}</option>
@@ -546,27 +546,27 @@ export default function AdminMarketingPage() {
                     </select>
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">URL</label>
+                    <label className="block text-sm font-medium text-hos-text-secondary mb-1">URL</label>
                     <input
                       type="url"
                       value={materialForm.url}
                       onChange={(e) => setMaterialForm({ ...materialForm, url: e.target.value })}
                       placeholder="https://..."
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
+                      className="w-full px-3 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50"
                     />
-                    <p className="text-xs text-gray-500 mt-1">Enter the URL of the image, video, or asset</p>
+                    <p className="text-xs text-hos-text-muted mt-1">Enter the URL of the image, video, or asset</p>
                   </div>
                   <div className="flex justify-end gap-3 pt-4">
                     <button
                       onClick={() => setShowAddModal(false)}
-                      className="px-4 py-2 text-gray-600 hover:text-gray-800"
+                      className="px-4 py-2 text-hos-text-secondary hover:text-white"
                     >
                       Cancel
                     </button>
                     <button
                       onClick={handleAddMaterial}
                       disabled={materialActionLoading || !materialForm.url}
-                      className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                      className="px-4 py-2 bg-hos-gold text-[#1a1406] rounded-lg hover:bg-hos-gold-hover disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                       {materialActionLoading ? 'Adding...' : 'Add Material'}
                     </button>
@@ -579,23 +579,23 @@ export default function AdminMarketingPage() {
           {/* Edit Material Modal */}
           {showEditModal && selectedMaterial && (
             <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-              <div className="bg-white rounded-lg max-w-lg w-full p-6">
+              <div className="bg-hos-bg-secondary rounded-lg max-w-lg w-full p-6">
                 <div className="flex justify-between items-start mb-4">
                   <h2 className="text-xl font-bold">Edit Marketing Material</h2>
                   <button
                     onClick={() => setShowEditModal(false)}
-                    className="text-gray-400 hover:text-gray-600 text-2xl"
+                    className="text-hos-text-muted hover:text-hos-text-secondary text-2xl"
                   >
                     ×
                   </button>
                 </div>
                 <div className="space-y-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Material Type</label>
+                    <label className="block text-sm font-medium text-hos-text-secondary mb-1">Material Type</label>
                     <select
                       value={materialForm.type}
                       onChange={(e) => setMaterialForm({ ...materialForm, type: e.target.value })}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
+                      className="w-full px-3 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50"
                     >
                       {MATERIAL_TYPES.map((type) => (
                         <option key={type} value={type}>{type}</option>
@@ -603,26 +603,26 @@ export default function AdminMarketingPage() {
                     </select>
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">URL</label>
+                    <label className="block text-sm font-medium text-hos-text-secondary mb-1">URL</label>
                     <input
                       type="url"
                       value={materialForm.url}
                       onChange={(e) => setMaterialForm({ ...materialForm, url: e.target.value })}
                       placeholder="https://..."
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
+                      className="w-full px-3 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50"
                     />
                   </div>
                   <div className="flex justify-end gap-3 pt-4">
                     <button
                       onClick={() => setShowEditModal(false)}
-                      className="px-4 py-2 text-gray-600 hover:text-gray-800"
+                      className="px-4 py-2 text-hos-text-secondary hover:text-white"
                     >
                       Cancel
                     </button>
                     <button
                       onClick={handleUpdateMaterial}
                       disabled={materialActionLoading || !materialForm.url}
-                      className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                      className="px-4 py-2 bg-hos-gold text-[#1a1406] rounded-lg hover:bg-hos-gold-hover disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                       {materialActionLoading ? 'Saving...' : 'Save Changes'}
                     </button>

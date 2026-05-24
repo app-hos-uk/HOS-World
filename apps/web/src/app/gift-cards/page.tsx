@@ -20,13 +20,13 @@ function getStatusStyle(status: string): { bg: string; text: string; label: stri
       return { bg: 'bg-green-100', text: 'text-green-800', label: 'Active' };
     case 'USED':
     case 'REDEEMED':
-      return { bg: 'bg-gray-100', text: 'text-gray-600', label: 'Used' };
+      return { bg: 'bg-hos-bg-tertiary', text: 'text-hos-text-secondary', label: 'Used' };
     case 'EXPIRED':
       return { bg: 'bg-red-100', text: 'text-red-700', label: 'Expired' };
     case 'DISABLED':
       return { bg: 'bg-yellow-100', text: 'text-yellow-700', label: 'Disabled' };
     default:
-      return { bg: 'bg-gray-100', text: 'text-gray-600', label: status || 'Unknown' };
+      return { bg: 'bg-hos-bg-tertiary', text: 'text-hos-text-secondary', label: status || 'Unknown' };
   }
 }
 
@@ -60,23 +60,23 @@ export default function GiftCardsPage() {
 
   return (
     <RouteGuard allowedRoles={['CUSTOMER', 'ADMIN']} showAccessDenied={true}>
-      <div className="min-h-screen bg-white">
+      <div className="min-h-screen bg-hos-bg-secondary">
         <Header />
         <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 lg:py-12">
           <div className="max-w-4xl mx-auto">
             {/* Header */}
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6 sm:mb-8">
               <div>
-                <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold font-primary text-purple-900">
+                <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold font-primary text-hos-gold">
                   My Gift Cards
                 </h1>
-                <p className="text-sm text-gray-500 mt-1">
+                <p className="text-sm text-hos-text-muted mt-1">
                   View and manage your gift card balances
                 </p>
               </div>
               <Link
                 href="/gift-cards/purchase"
-                className="inline-flex items-center justify-center gap-2 px-5 py-2.5 bg-gradient-to-r from-purple-700 to-indigo-700 hover:from-purple-600 hover:to-indigo-600 text-white font-semibold rounded-lg transition-all duration-300 text-sm"
+                className="inline-flex items-center justify-center gap-2 px-5 py-2.5 bg-hos-gold hover:bg-hos-gold text-[#1a1406] font-semibold rounded-lg transition-all duration-300 text-sm"
               >
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
@@ -89,8 +89,8 @@ export default function GiftCardsPage() {
             {loading && (
               <div className="flex items-center justify-center py-16">
                 <div className="text-center">
-                  <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600 mx-auto mb-4" />
-                  <p className="text-sm text-gray-600">Loading your gift cards...</p>
+                  <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-hos-gold mx-auto mb-4" />
+                  <p className="text-sm text-hos-text-secondary">Loading your gift cards...</p>
                 </div>
               </div>
             )}
@@ -114,17 +114,17 @@ export default function GiftCardsPage() {
 
             {/* Empty State */}
             {!loading && !error && giftCards.length === 0 && (
-              <div className="bg-gray-50 border border-gray-200 rounded-lg p-8 sm:p-12 text-center">
-                <svg className="w-16 h-16 text-gray-300 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <div className="bg-hos-bg-secondary border border-hos-border rounded-lg p-8 sm:p-12 text-center">
+                <svg className="w-16 h-16 text-hos-text-muted mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 8v13m0-13V6a2 2 0 112 2h-2zm0 0V5.5A2.5 2.5 0 109.5 8H12zm-7 4h14M5 12a2 2 0 110-4h14a2 2 0 110 4M5 12v7a2 2 0 002 2h10a2 2 0 002-2v-7" />
                 </svg>
-                <h3 className="text-lg font-semibold text-gray-700 mb-2">No Gift Cards Yet</h3>
-                <p className="text-gray-500 mb-6 max-w-sm mx-auto">
+                <h3 className="text-lg font-semibold text-hos-text-secondary mb-2">No Gift Cards Yet</h3>
+                <p className="text-hos-text-muted mb-6 max-w-sm mx-auto">
                   You don&apos;t have any gift cards. Purchase one for yourself or send one to a friend!
                 </p>
                 <Link
                   href="/gift-cards/purchase"
-                  className="inline-flex items-center gap-2 px-5 py-2.5 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors font-medium text-sm"
+                  className="inline-flex items-center gap-2 px-5 py-2.5 bg-hos-gold text-[#1a1406] rounded-lg hover:bg-hos-gold-hover transition-colors font-medium text-sm"
                 >
                   Purchase Your First Gift Card
                 </Link>
@@ -149,35 +149,35 @@ export default function GiftCardsPage() {
                       href={`/gift-cards/${card.id}`}
                       className="group block"
                     >
-                      <div className="bg-gradient-to-br from-purple-600 to-purple-800 rounded-xl p-5 text-white shadow-md hover:shadow-lg transition-all duration-200 group-hover:scale-[1.02] h-full flex flex-col">
+                      <div className="bg-gradient-to-br from-hos-bg-secondary to-hos-bg-tertiary rounded-xl p-5 text-white shadow-md hover:shadow-lg transition-all duration-200 group-hover:scale-[1.02] h-full flex flex-col">
                         <div className="flex items-start justify-between mb-3">
-                          <p className="text-xs font-medium text-purple-200 uppercase tracking-wider">Gift Card</p>
+                          <p className="text-xs font-medium text-hos-gold/30 uppercase tracking-wider">Gift Card</p>
                           <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${effectiveStatus.bg} ${effectiveStatus.text}`}>
                             {effectiveStatus.label}
                           </span>
                         </div>
 
                         <p className="text-2xl sm:text-3xl font-bold mb-1">{formatPrice(balance, currency)}</p>
-                        <p className="text-xs text-purple-200 mb-4">Balance remaining</p>
+                        <p className="text-xs text-hos-gold/30 mb-4">Balance remaining</p>
 
                         <div className="mt-auto space-y-2 text-sm">
                           {card.code && (
                             <div className="flex justify-between items-center">
-                              <span className="text-purple-200">Code</span>
+                              <span className="text-hos-gold/30">Code</span>
                               <span className="font-mono font-medium tracking-wider">{maskCode(card.code)}</span>
                             </div>
                           )}
                           {card.expiresAt && (
                             <div className="flex justify-between items-center">
-                              <span className="text-purple-200">Expires</span>
+                              <span className="text-hos-gold/30">Expires</span>
                               <span>{new Date(card.expiresAt).toLocaleDateString()}</span>
                             </div>
                           )}
                         </div>
 
                         <div className="mt-4 pt-3 border-t border-white/20 flex items-center justify-between">
-                          <span className="text-xs text-purple-200">View details</span>
-                          <svg className="w-4 h-4 text-purple-200 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <span className="text-xs text-hos-gold/30">View details</span>
+                          <svg className="w-4 h-4 text-hos-gold/30 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                           </svg>
                         </div>

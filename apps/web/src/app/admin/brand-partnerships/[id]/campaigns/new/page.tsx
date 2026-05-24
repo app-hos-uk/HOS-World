@@ -69,9 +69,9 @@ export default function AdminBrandCampaignNewPage() {
           <Link href={`/admin/brand-partnerships/${partnershipId}`} className="text-violet-700 text-sm">
             ← Partner
           </Link>
-          <h1 className="text-2xl font-semibold text-gray-900">New brand campaign</h1>
+          <h1 className="text-2xl font-semibold text-white">New brand campaign</h1>
           <label className="block text-sm">
-            <span className="text-gray-700">Name</span>
+            <span className="text-hos-text-secondary">Name</span>
             <input
               className="mt-1 w-full border rounded px-3 py-2"
               value={name}
@@ -79,7 +79,7 @@ export default function AdminBrandCampaignNewPage() {
             />
           </label>
           <label className="block text-sm">
-            <span className="text-gray-700">Type</span>
+            <span className="text-hos-text-secondary">Type</span>
             <select
               className="mt-1 w-full border rounded px-3 py-2"
               value={type}
@@ -93,7 +93,7 @@ export default function AdminBrandCampaignNewPage() {
           </label>
           {type === 'MULTIPLIER' && (
             <label className="block text-sm">
-              <span className="text-gray-700">Multiplier</span>
+              <span className="text-hos-text-secondary">Multiplier</span>
               <input
                 type="number"
                 step="0.1"
@@ -105,7 +105,7 @@ export default function AdminBrandCampaignNewPage() {
           )}
           {type === 'BONUS_POINTS' && (
             <label className="block text-sm">
-              <span className="text-gray-700">Bonus points</span>
+              <span className="text-hos-text-secondary">Bonus points</span>
               <input
                 type="number"
                 className="mt-1 w-full border rounded px-3 py-2"
@@ -115,7 +115,7 @@ export default function AdminBrandCampaignNewPage() {
             </label>
           )}
           <label className="block text-sm">
-            <span className="text-gray-700">Starts (local)</span>
+            <span className="text-hos-text-secondary">Starts (local)</span>
             <input
               type="datetime-local"
               className="mt-1 w-full border rounded px-3 py-2"
@@ -124,7 +124,7 @@ export default function AdminBrandCampaignNewPage() {
             />
           </label>
           <label className="block text-sm">
-            <span className="text-gray-700">Ends (local)</span>
+            <span className="text-hos-text-secondary">Ends (local)</span>
             <input
               type="datetime-local"
               className="mt-1 w-full border rounded px-3 py-2"
@@ -133,7 +133,7 @@ export default function AdminBrandCampaignNewPage() {
             />
           </label>
           <label className="block text-sm">
-            <span className="text-gray-700">Target fandoms (comma-separated)</span>
+            <span className="text-hos-text-secondary">Target fandoms (comma-separated)</span>
             <input
               className="mt-1 w-full border rounded px-3 py-2"
               value={targetFandoms}
@@ -142,7 +142,7 @@ export default function AdminBrandCampaignNewPage() {
             />
           </label>
           <label className="block text-sm">
-            <span className="text-gray-700">Target brands (comma-separated)</span>
+            <span className="text-hos-text-secondary">Target brands (comma-separated)</span>
             <input
               className="mt-1 w-full border rounded px-3 py-2"
               value={targetBrands}

@@ -78,8 +78,8 @@ export default function MapPickerClient({
     if (latitude !== undefined && longitude !== undefined) {
       setCurrentPosition([latitude, longitude]);
     } else {
-      // Default to London, UK if no coordinates provided
-      setCurrentPosition([51.5074, -0.1278]);
+      // Default to New York, US if no coordinates provided
+      setCurrentPosition([40.7128, -74.0060]);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -100,10 +100,10 @@ export default function MapPickerClient({
   if (!mounted || !currentPosition) {
     return (
       <div 
-        className={`bg-gray-100 rounded-lg flex items-center justify-center ${className}`}
+        className={`bg-hos-bg-tertiary rounded-lg flex items-center justify-center ${className}`}
         style={{ height }}
       >
-        <div className="text-gray-500">Loading map...</div>
+        <div className="text-hos-text-muted">Loading map...</div>
       </div>
     );
   }
@@ -112,7 +112,7 @@ export default function MapPickerClient({
   const initialZoom = hasCoordinates ? 16 : 6;
 
   return (
-    <div className={`rounded-lg overflow-hidden border border-gray-300 ${className}`} style={{ height }}>
+    <div className={`rounded-lg overflow-hidden border border-hos-border ${className}`} style={{ height }}>
       <MapContainer
         center={currentPosition}
         zoom={initialZoom}
@@ -129,7 +129,7 @@ export default function MapPickerClient({
           initialLng={longitude}
         />
       </MapContainer>
-      <div className="bg-white px-4 py-2 border-t border-gray-300 text-sm text-gray-600">
+      <div className="bg-hos-bg-secondary px-4 py-2 border-t border-hos-border text-sm text-hos-text-secondary">
         <p className="font-medium mb-1">📍 Click on the map to set your location (map will zoom in to your selection)</p>
         {latitude !== undefined && longitude !== undefined && (
           <p className="text-xs">

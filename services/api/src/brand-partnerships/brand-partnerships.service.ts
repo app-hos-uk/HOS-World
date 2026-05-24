@@ -63,7 +63,7 @@ export class BrandPartnershipsService {
         contractStart: start,
         contractEnd: end,
         totalBudget: new Decimal(dto.totalBudget ?? 0),
-        currency: dto.currency?.trim() || 'GBP',
+        currency: dto.currency?.trim() || 'USD',
       },
     });
   }

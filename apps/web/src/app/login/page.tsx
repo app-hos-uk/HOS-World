@@ -432,27 +432,27 @@ function LoginPageInner() {
   // Once mounted, show login form immediately for maximum stability
   if (!isMounted) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-purple-50 to-blue-50 flex items-center justify-center p-4 sm:p-6 lg:p-8">
+      <div className="min-h-screen bg-gradient-to-br from-hos-bg to-hos-bg-secondary flex items-center justify-center p-4 sm:p-6 lg:p-8">
         <div className="max-w-md w-full text-center">
-          <div className="animate-spin rounded-full h-8 w-8 sm:h-12 sm:w-12 border-b-2 border-purple-600 mx-auto"></div>
-          <p className="mt-4 text-sm sm:text-base text-gray-600">Loading...</p>
+          <div className="animate-spin rounded-full h-8 w-8 sm:h-12 sm:w-12 border-b-2 border-hos-gold mx-auto"></div>
+          <p className="mt-4 text-sm sm:text-base text-hos-text-secondary">Loading...</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-50 to-blue-50 flex items-center justify-center p-4 sm:p-6 lg:p-8">
+    <div className="min-h-screen bg-gradient-to-br from-hos-bg to-hos-bg-secondary flex items-center justify-center p-4 sm:p-6 lg:p-8">
       <div className="max-w-md w-full space-y-6 sm:space-y-8">
         {/* Logo/Brand */}
         <div className="text-center">
           <a href="/" className="inline-block">
-            <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-purple-600 mb-1 sm:mb-2 hover:text-purple-700 transition-colors">House of Spells</h1>
+            <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-hos-gold mb-1 sm:mb-2 hover:text-hos-gold-hover transition-colors">House of Spells</h1>
           </a>
-          <p className="text-sm sm:text-base text-gray-600">Welcome to the magical marketplace</p>
+          <p className="text-sm sm:text-base text-hos-text-secondary">Welcome to the magical marketplace</p>
           <a
             href="/"
-            className="inline-flex items-center gap-1 mt-2 text-sm text-purple-600 hover:text-purple-700 hover:underline transition-colors"
+            className="inline-flex items-center gap-1 mt-2 text-sm text-hos-gold hover:text-hos-gold-hover hover:underline transition-colors"
           >
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
@@ -479,7 +479,7 @@ function LoginPageInner() {
 
         {/* Forgot Password Form */}
         {step === 'forgot-password' && (
-          <div className="bg-white rounded-xl shadow-lg p-6 sm:p-8">
+          <div className="bg-hos-bg-secondary rounded-xl shadow-lg p-6 sm:p-8">
             <h2 className="text-xl sm:text-2xl font-bold text-center mb-4 sm:mb-6">Reset Password</h2>
 
             {resetSuccess ? (
@@ -490,11 +490,11 @@ function LoginPageInner() {
                     If an account exists with that email, you&apos;ll receive password reset instructions.
                   </p>
                 </div>
-                <p className="text-sm text-gray-600">Redirecting to login...</p>
+                <p className="text-sm text-hos-text-secondary">Redirecting to login...</p>
               </div>
             ) : (
               <>
-                <p className="text-gray-600 text-center mb-6">
+                <p className="text-hos-text-secondary text-center mb-6">
                   Enter your email address and we&apos;ll send you a link to reset your password.
                 </p>
 
@@ -508,7 +508,7 @@ function LoginPageInner() {
 
                 <form onSubmit={handleForgotPassword} className="space-y-4">
                   <div>
-                    <label htmlFor="reset-email" className="block text-sm font-medium text-gray-700 mb-1">
+                    <label htmlFor="reset-email" className="block text-sm font-medium text-hos-text-secondary mb-1">
                       Email
                     </label>
                     <input
@@ -519,7 +519,7 @@ function LoginPageInner() {
                       value={resetEmail}
                       onChange={(e) => setResetEmail(e.target.value)}
                       required
-                      className="w-full px-4 py-2.5 bg-white border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 text-gray-900 placeholder-gray-500 text-base"
+                      className="w-full px-4 py-2.5 bg-hos-bg-secondary border-2 border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50 focus:border-hos-gold text-white placeholder-hos-text-muted text-base"
                       placeholder="your.email@example.com"
                       style={{ backgroundColor: '#ffffff', color: '#111827' }}
                     />
@@ -528,7 +528,7 @@ function LoginPageInner() {
                   <button
                     type="submit"
                     disabled={resetLoading}
-                    className="w-full bg-purple-600 text-white py-3 rounded-lg font-semibold hover:bg-purple-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="w-full bg-hos-gold text-[#1a1406] py-3 rounded-lg font-semibold hover:bg-hos-gold-hover transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     {resetLoading ? 'Sending...' : 'Send Reset Link'}
                   </button>
@@ -541,7 +541,7 @@ function LoginPageInner() {
                       setResetEmail('');
                       setError('');
                     }}
-                    className="text-purple-600 hover:underline text-sm"
+                    className="text-hos-gold hover:underline text-sm"
                   >
                     ← Back to Login
                   </button>
@@ -553,7 +553,7 @@ function LoginPageInner() {
 
         {/* Login/Register Form */}
         {step === 'login' && (
-          <div className="bg-white rounded-xl shadow-lg p-6 sm:p-8">
+          <div className="bg-hos-bg-secondary rounded-xl shadow-lg p-6 sm:p-8">
             <h2 className="text-xl sm:text-2xl font-bold text-center mb-4 sm:mb-6">
               {isLogin ? 'Welcome Back!' : 'Join the Magic'}
             </h2>
@@ -568,7 +568,7 @@ function LoginPageInner() {
 
             <form onSubmit={isLogin ? handleLogin : handleRegister} className="space-y-4">
               <div>
-                <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
+                <label htmlFor="email" className="block text-sm font-medium text-hos-text-secondary mb-1">
                   Email
                 </label>
                 <input
@@ -579,7 +579,7 @@ function LoginPageInner() {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   required
-                  className="w-full px-4 py-2.5 bg-white border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 text-gray-900 placeholder-gray-500 text-base"
+                  className="w-full px-4 py-2.5 bg-hos-bg-secondary border-2 border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50 focus:border-hos-gold text-white placeholder-hos-text-muted text-base"
                   placeholder="your.email@example.com"
                   style={{ backgroundColor: '#ffffff', color: '#111827' }}
                 />
@@ -587,14 +587,14 @@ function LoginPageInner() {
 
               <div>
                 <div className="flex items-center justify-between mb-1">
-                  <label htmlFor="password" className="block text-sm font-medium text-gray-700">
+                  <label htmlFor="password" className="block text-sm font-medium text-hos-text-secondary">
                     Password
                   </label>
                   {isLogin && (
                     <button
                       type="button"
                       onClick={() => { setError(''); setStep('forgot-password'); }}
-                      className="text-sm text-purple-600 hover:underline"
+                      className="text-sm text-hos-gold hover:underline"
                     >
                       Forgot password?
                     </button>
@@ -610,14 +610,14 @@ function LoginPageInner() {
                     onChange={(e) => setPassword(e.target.value)}
                     required
                     minLength={8}
-                    className="w-full px-4 py-2.5 pr-10 bg-white border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 text-gray-900 placeholder-gray-500 text-base"
+                    className="w-full px-4 py-2.5 pr-10 bg-hos-bg-secondary border-2 border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50 focus:border-hos-gold text-white placeholder-hos-text-muted text-base"
                     placeholder="••••••••"
                     style={{ backgroundColor: '#ffffff', color: '#111827' }}
                   />
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700 focus:outline-none"
+                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-hos-text-muted hover:text-hos-text-secondary focus:outline-none"
                     aria-label={showPassword ? 'Hide password' : 'Show password'}
                   >
                     {showPassword ? (
@@ -639,7 +639,7 @@ function LoginPageInner() {
                 <>
                   <div className="grid grid-cols-2 gap-4">
                     <div>
-                      <label htmlFor="firstName" className="block text-sm font-medium text-gray-700 mb-1">
+                      <label htmlFor="firstName" className="block text-sm font-medium text-hos-text-secondary mb-1">
                         First Name
                       </label>
                       <input
@@ -655,13 +655,13 @@ function LoginPageInner() {
                           }
                         }}
                         maxLength={50}
-                        className="w-full px-4 py-2.5 bg-white border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 text-gray-900 placeholder-gray-500 text-base"
+                        className="w-full px-4 py-2.5 bg-hos-bg-secondary border-2 border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50 focus:border-hos-gold text-white placeholder-hos-text-muted text-base"
                         placeholder="John"
                         style={{ backgroundColor: '#ffffff', color: '#111827' }}
                       />
                     </div>
                     <div>
-                      <label htmlFor="lastName" className="block text-sm font-medium text-gray-700 mb-1">
+                      <label htmlFor="lastName" className="block text-sm font-medium text-hos-text-secondary mb-1">
                         Last Name
                       </label>
                       <input
@@ -677,7 +677,7 @@ function LoginPageInner() {
                           }
                         }}
                         maxLength={50}
-                        className="w-full px-4 py-2.5 bg-white border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 text-gray-900 placeholder-gray-500 text-base"
+                        className="w-full px-4 py-2.5 bg-hos-bg-secondary border-2 border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50 focus:border-hos-gold text-white placeholder-hos-text-muted text-base"
                         placeholder="Doe"
                         style={{ backgroundColor: '#ffffff', color: '#111827' }}
                       />
@@ -686,34 +686,34 @@ function LoginPageInner() {
 
                   {/* Country Detection */}
                   <div>
-                    <label htmlFor="country" className="block text-sm font-medium text-gray-700 mb-1">
+                    <label htmlFor="country" className="block text-sm font-medium text-hos-text-secondary mb-1">
                       Country <span className="text-red-500">*</span>
                     </label>
                     {detectingCountry ? (
-                      <div className="w-full px-4 py-2.5 bg-gray-50 border-2 border-gray-300 rounded-lg text-sm text-gray-500">
+                      <div className="w-full px-4 py-2.5 bg-hos-bg-secondary border-2 border-hos-border rounded-lg text-sm text-hos-text-muted">
                         Detecting your location...
                       </div>
                     ) : detectedCountry && !country ? (
                       <div className="space-y-2">
-                        <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
-                          <p className="text-sm text-blue-800 font-medium mb-1">
+                        <div className="p-3 bg-hos-gold/10 border border-hos-border-accent rounded-lg">
+                          <p className="text-sm text-hos-gold font-medium mb-1">
                             We detected your location: <strong>{detectedCountry.country}</strong>
                           </p>
-                          <p className="text-xs text-blue-600 mb-2">
+                          <p className="text-xs text-hos-gold mb-2">
                             Currency: {currencyPreference} ({detectedCountry.currency})
                           </p>
                           <div className="flex gap-2">
                             <button
                               type="button"
                               onClick={handleCountryConfirm}
-                              className="px-3 py-1.5 bg-blue-600 text-white text-sm rounded hover:bg-blue-700"
+                              className="px-3 py-1.5 bg-hos-gold text-[#1a1406] text-sm rounded hover:bg-hos-gold-hover"
                             >
                               Confirm
                             </button>
                             <button
                               type="button"
                               onClick={() => setDetectedCountry(null)}
-                              className="px-3 py-1.5 bg-gray-200 text-gray-700 text-sm rounded hover:bg-gray-300"
+                              className="px-3 py-1.5 bg-hos-bg-tertiary text-hos-text-secondary text-sm rounded hover:bg-hos-bg-tertiary"
                             >
                               Change
                             </button>
@@ -740,7 +740,7 @@ function LoginPageInner() {
                           setCurrencyPreference(countryCurrencies[e.target.value] || 'USD');
                         }}
                         required
-                        className="w-full px-4 py-2.5 bg-white border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 text-gray-900 text-base"
+                        className="w-full px-4 py-2.5 bg-hos-bg-secondary border-2 border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50 focus:border-hos-gold text-white text-base"
                         style={{ backgroundColor: '#ffffff', color: '#111827' }}
                       >
                         <option value="">Select your country</option>
@@ -765,7 +765,7 @@ function LoginPageInner() {
                       </select>
                     )}
                     {country && currencyPreference && (
-                      <p className="mt-1 text-xs text-gray-500">
+                      <p className="mt-1 text-xs text-hos-text-muted">
                         Prices will be displayed in {currencyPreference}
                       </p>
                     )}
@@ -773,7 +773,7 @@ function LoginPageInner() {
 
                   {/* WhatsApp Number */}
                   <div>
-                    <label htmlFor="whatsappNumber" className="block text-sm font-medium text-gray-700 mb-1">
+                    <label htmlFor="whatsappNumber" className="block text-sm font-medium text-hos-text-secondary mb-1">
                       WhatsApp Number (Optional)
                     </label>
                     <input
@@ -788,18 +788,18 @@ function LoginPageInner() {
                           setWhatsappNumber(val);
                         }
                       }}
-                      className="w-full px-4 py-2.5 bg-white border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 text-gray-900 placeholder-gray-500 text-base"
+                      className="w-full px-4 py-2.5 bg-hos-bg-secondary border-2 border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50 focus:border-hos-gold text-white placeholder-hos-text-muted text-base"
                       placeholder="+1 555 123 4567"
                       style={{ backgroundColor: '#ffffff', color: '#111827' }}
                     />
-                    <p className="mt-1 text-xs text-gray-500">
+                    <p className="mt-1 text-xs text-hos-text-muted">
                       Include country code (e.g., +1 for US)
                     </p>
                   </div>
 
                   {/* Communication Preference */}
                   <div>
-                    <label htmlFor="communicationMethod" className="block text-sm font-medium text-gray-700 mb-1">
+                    <label htmlFor="communicationMethod" className="block text-sm font-medium text-hos-text-secondary mb-1">
                       Preferred Communication Method <span className="text-red-500">*</span>
                     </label>
                     <select
@@ -807,7 +807,7 @@ function LoginPageInner() {
                       value={preferredCommunicationMethod}
                       onChange={(e) => setPreferredCommunicationMethod(e.target.value as any)}
                       required
-                      className="w-full px-4 py-2.5 bg-white border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 text-gray-900 text-base"
+                      className="w-full px-4 py-2.5 bg-hos-bg-secondary border-2 border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50 focus:border-hos-gold text-white text-base"
                       style={{ backgroundColor: '#ffffff', color: '#111827' }}
                     >
                       <option value="EMAIL">Email</option>
@@ -818,10 +818,10 @@ function LoginPageInner() {
                   </div>
 
                   {/* Privacy notice acknowledgement and consent preferences */}
-                  <div className="space-y-3 p-4 bg-gray-50 rounded-lg border border-gray-200">
-                    <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg mb-2">
-                      <p className="text-xs text-blue-800 font-medium mb-1">Notice at Collection</p>
-                      <p className="text-xs text-blue-700">
+                  <div className="space-y-3 p-4 bg-hos-bg-secondary rounded-lg border border-hos-border">
+                    <div className="p-3 bg-hos-gold/10 border border-hos-border-accent rounded-lg mb-2">
+                      <p className="text-xs text-hos-gold font-medium mb-1">Notice at Collection</p>
+                      <p className="text-xs text-hos-gold">
                         We collect your name, email, phone number, and shipping address to create and manage your
                         account, process orders, and communicate with you. We do not sell your personal information.
                         For more details, see our{' '}
@@ -835,21 +835,21 @@ function LoginPageInner() {
                         checked={gdprConsent}
                         onChange={(e) => setGdprConsent(e.target.checked)}
                         required
-                        className="mt-1 h-4 w-4 text-purple-600 focus:ring-purple-500 border-gray-300 rounded"
+                        className="mt-1 h-4 w-4 text-hos-gold focus:ring-hos-gold/50 border-hos-border rounded"
                       />
-                      <label htmlFor="gdprConsent" className="ml-2 text-sm text-gray-700">
+                      <label htmlFor="gdprConsent" className="ml-2 text-sm text-hos-text-secondary">
                         I acknowledge the{' '}
-                        <a href="/privacy-policy" target="_blank" className="text-purple-600 hover:underline">
+                        <a href="/privacy-policy" target="_blank" className="text-hos-gold hover:underline">
                           Privacy Policy
                         </a>{' '}
                         and consent to account-related data processing{' '}
                         <span className="text-red-500">*</span>
                       </label>
                     </div>
-                    <p className="ml-6 text-xs text-gray-500">
+                    <p className="ml-6 text-xs text-hos-text-muted">
                       California residents: You have the right to know, delete, correct, and opt out.
                       You can exercise these rights anytime from your{' '}
-                      <a href="/profile?tab=settings" className="text-purple-600 hover:underline">Privacy Request Center</a>.
+                      <a href="/profile?tab=settings" className="text-hos-gold hover:underline">Privacy Request Center</a>.
                     </p>
 
                     {/* Granular Consent Options */}
@@ -861,9 +861,9 @@ function LoginPageInner() {
                             type="checkbox"
                             checked={dataProcessingConsent.essential}
                             disabled
-                            className="h-4 w-4 text-purple-600 focus:ring-purple-500 border-gray-300 rounded"
+                            className="h-4 w-4 text-hos-gold focus:ring-hos-gold/50 border-hos-border rounded"
                           />
-                          <label htmlFor="consentEssential" className="ml-2 text-gray-600">
+                          <label htmlFor="consentEssential" className="ml-2 text-hos-text-secondary">
                             Essential cookies (required)
                           </label>
                         </div>
@@ -875,9 +875,9 @@ function LoginPageInner() {
                             onChange={(e) =>
                               setDataProcessingConsent({ ...dataProcessingConsent, marketing: e.target.checked })
                             }
-                            className="h-4 w-4 text-purple-600 focus:ring-purple-500 border-gray-300 rounded"
+                            className="h-4 w-4 text-hos-gold focus:ring-hos-gold/50 border-hos-border rounded"
                           />
-                          <label htmlFor="consentMarketing" className="ml-2 text-gray-600">
+                          <label htmlFor="consentMarketing" className="ml-2 text-hos-text-secondary">
                             Marketing communications
                           </label>
                         </div>
@@ -889,9 +889,9 @@ function LoginPageInner() {
                             onChange={(e) =>
                               setDataProcessingConsent({ ...dataProcessingConsent, analytics: e.target.checked })
                             }
-                            className="h-4 w-4 text-purple-600 focus:ring-purple-500 border-gray-300 rounded"
+                            className="h-4 w-4 text-hos-gold focus:ring-hos-gold/50 border-hos-border rounded"
                           />
-                          <label htmlFor="consentAnalytics" className="ml-2 text-gray-600">
+                          <label htmlFor="consentAnalytics" className="ml-2 text-hos-text-secondary">
                             Analytics and tracking
                           </label>
                         </div>
@@ -904,17 +904,17 @@ function LoginPageInner() {
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full bg-purple-600 text-white py-3 rounded-lg font-semibold hover:bg-purple-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                className="w-full bg-hos-gold text-[#1a1406] py-3 rounded-lg font-semibold hover:bg-hos-gold-hover transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {loading ? 'Loading...' : isLogin ? 'Login' : 'Create Account'}
               </button>
 
               {!isLogin && (
-                <div className="mt-3 p-3 bg-blue-50 border border-blue-200 rounded-lg flex items-start gap-2">
-                  <svg className="w-5 h-5 text-blue-500 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <div className="mt-3 p-3 bg-hos-gold/10 border border-hos-border-accent rounded-lg flex items-start gap-2">
+                  <svg className="w-5 h-5 text-hos-gold flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                   </svg>
-                  <p className="text-sm text-blue-700">
+                  <p className="text-sm text-hos-gold">
                     Please check your email to verify your account after registration.
                   </p>
                 </div>
@@ -939,7 +939,7 @@ function LoginPageInner() {
                     setDetectedCountry(null);
                   }
                 }}
-                className="text-purple-600 hover:underline text-sm"
+                className="text-hos-gold hover:underline text-sm"
               >
                 {isLogin
                   ? "Don't have an account? Sign up"
@@ -951,29 +951,29 @@ function LoginPageInner() {
             <div className="mt-4 sm:mt-6">
               <div className="relative">
                 <div className="absolute inset-0 flex items-center">
-                  <div className="w-full border-t border-gray-300"></div>
+                  <div className="w-full border-t border-hos-border"></div>
                 </div>
                 <div className="relative flex justify-center text-xs sm:text-sm">
-                  <span className="px-2 bg-white text-gray-500">Or continue with</span>
+                  <span className="px-2 bg-hos-bg-secondary text-hos-text-muted">Or continue with</span>
                 </div>
               </div>
 
               <div className="mt-3 sm:mt-4 grid grid-cols-3 gap-2 sm:gap-3">
                 <button
                   onClick={() => (window.location.href = `${oauthBaseUrl}/auth/google`)}
-                  className="flex items-center justify-center px-2 sm:px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+                  className="flex items-center justify-center px-2 sm:px-4 py-2 border border-hos-border rounded-lg hover:bg-hos-bg-tertiary transition-colors"
                 >
                   <span className="text-xs sm:text-sm font-medium">Google</span>
                 </button>
                 <button
                   onClick={() => (window.location.href = `${oauthBaseUrl}/auth/facebook`)}
-                  className="flex items-center justify-center px-2 sm:px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+                  className="flex items-center justify-center px-2 sm:px-4 py-2 border border-hos-border rounded-lg hover:bg-hos-bg-tertiary transition-colors"
                 >
                   <span className="text-xs sm:text-sm font-medium">Facebook</span>
                 </button>
                 <button
                   onClick={() => (window.location.href = `${oauthBaseUrl}/auth/apple`)}
-                  className="flex items-center justify-center px-2 sm:px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+                  className="flex items-center justify-center px-2 sm:px-4 py-2 border border-hos-border rounded-lg hover:bg-hos-bg-tertiary transition-colors"
                 >
                   <span className="text-xs sm:text-sm font-medium">Apple</span>
                 </button>
@@ -990,7 +990,7 @@ export default function LoginPage() {
   return (
     <Suspense
       fallback={
-        <div className="min-h-screen flex items-center justify-center bg-gray-50 text-gray-600 text-sm">
+        <div className="min-h-screen flex items-center justify-center bg-hos-bg-secondary text-hos-text-secondary text-sm">
           Loading…
         </div>
       }

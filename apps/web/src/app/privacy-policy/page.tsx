@@ -6,12 +6,12 @@ import Link from 'next/link';
 
 export default function PrivacyPolicyPage() {
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen bg-hos-bg-secondary">
       <Header />
       <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 lg:py-12 max-w-4xl">
         <div className="prose prose-purple max-w-none">
           <h1 className="text-3xl sm:text-4xl font-bold mb-6">Privacy Policy</h1>
-          <p className="text-sm text-gray-600 mb-8">
+          <p className="text-sm text-hos-text-secondary mb-8">
             Last updated: {new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}
           </p>
 
@@ -136,7 +136,7 @@ export default function PrivacyPolicyPage() {
             </ul>
             <p>
               You can exercise these rights through the{' '}
-              <Link href="/do-not-sell" className="text-purple-600 hover:underline font-medium">
+              <Link href="/do-not-sell" className="text-hos-gold hover:underline font-medium">
                 Do Not Sell or Share
               </Link>{' '}
               page or by contacting us directly.
@@ -152,7 +152,7 @@ export default function PrivacyPolicyPage() {
             </p>
             <p className="mb-4">
               To exercise this right, visit our{' '}
-              <Link href="/do-not-sell" className="text-purple-600 hover:underline font-medium">
+              <Link href="/do-not-sell" className="text-hos-gold hover:underline font-medium">
                 Do Not Sell or Share My Personal Information
               </Link>{' '}
               page to submit your opt-out request, or contact us at{' '}
@@ -207,17 +207,17 @@ export default function PrivacyPolicyPage() {
             <p className="mb-4">
               If you have any questions about this Privacy Policy or wish to exercise your rights, please contact us:
             </p>
-            <div className="bg-gray-50 rounded-lg p-4">
+            <div className="bg-hos-bg-secondary rounded-lg p-4">
               <p className="mb-2"><strong>Email:</strong> privacy@houseofspells.com</p>
               <p className="mb-2"><strong>Address:</strong> House of Spells Marketplace</p>
               <p><strong>Data Protection Officer:</strong> dpo@houseofspells.com</p>
             </div>
           </section>
 
-          <div className="mt-8 pt-6 border-t border-gray-200">
+          <div className="mt-8 pt-6 border-t border-hos-border">
             <Link
               href="/"
-              className="text-purple-600 hover:text-purple-800 font-medium"
+              className="text-hos-gold hover:text-hos-gold-hover font-medium"
             >
               ← Back to Home
             </Link>

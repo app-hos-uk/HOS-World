@@ -78,11 +78,11 @@ export default function KBArticlePage() {
   };
 
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen bg-hos-bg-secondary">
       <Header />
       <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 lg:py-12">
         <div className="max-w-3xl mx-auto">
-          <Link href="/support/kb" className="text-purple-600 hover:text-purple-800 mb-6 inline-flex items-center gap-1">
+          <Link href="/support/kb" className="text-hos-gold hover:text-hos-gold-hover mb-6 inline-flex items-center gap-1">
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
             </svg>
@@ -91,17 +91,17 @@ export default function KBArticlePage() {
 
           {loading ? (
             <div className="flex items-center justify-center py-12">
-              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600"></div>
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-hos-gold"></div>
             </div>
           ) : !article ? (
             <div className="text-center py-12">
-              <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                <svg className="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <div className="w-16 h-16 bg-hos-bg-tertiary rounded-full flex items-center justify-center mx-auto mb-4">
+                <svg className="w-8 h-8 text-hos-text-muted" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
               </div>
-              <p className="text-gray-600 mb-4">Article not found</p>
-              <Link href="/support/kb" className="text-purple-600 hover:text-purple-800 font-medium">
+              <p className="text-hos-text-secondary mb-4">Article not found</p>
+              <Link href="/support/kb" className="text-hos-gold hover:text-hos-gold-hover font-medium">
                 Browse all articles
               </Link>
             </div>
@@ -111,12 +111,12 @@ export default function KBArticlePage() {
               <div className="mb-8">
                 <div className="flex items-center gap-3 mb-3">
                   {article.category && (
-                    <span className="px-2.5 py-0.5 bg-purple-100 text-purple-700 rounded-full text-xs font-medium">
+                    <span className="px-2.5 py-0.5 bg-hos-gold/20 text-hos-gold-hover rounded-full text-xs font-medium">
                       {article.category}
                     </span>
                   )}
                   {article.updatedAt && (
-                    <span className="text-xs text-gray-500">
+                    <span className="text-xs text-hos-text-muted">
                       Updated {new Date(article.updatedAt).toLocaleDateString('en-US', {
                         day: 'numeric',
                         month: 'long',
@@ -125,7 +125,7 @@ export default function KBArticlePage() {
                     </span>
                   )}
                 </div>
-                <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-gray-900">
+                <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-white">
                   {article.title}
                 </h1>
               </div>
@@ -133,17 +133,17 @@ export default function KBArticlePage() {
               {/* Article Content */}
               <div
                 className="prose prose-gray prose-lg max-w-none mb-8
-                  prose-headings:text-gray-900
-                  prose-a:text-purple-600 prose-a:no-underline hover:prose-a:underline
+                  prose-headings:text-white
+                  prose-a:text-hos-gold prose-a:no-underline hover:prose-a:underline
                   prose-img:rounded-lg
-                  prose-code:text-purple-700 prose-code:bg-purple-50 prose-code:px-1 prose-code:py-0.5 prose-code:rounded"
+                  prose-code:text-hos-gold-hover prose-code:bg-hos-gold/10 prose-code:px-1 prose-code:py-0.5 prose-code:rounded"
                 dangerouslySetInnerHTML={{ __html: sanitizeHtml(article.content) }}
               />
 
               {/* Helpful Section */}
-              <div className="border-t border-gray-200 pt-6 mb-8">
-                <div className="bg-gray-50 rounded-xl p-6 text-center">
-                  <p className="text-gray-700 font-medium mb-3">Was this article helpful?</p>
+              <div className="border-t border-hos-border pt-6 mb-8">
+                <div className="bg-hos-bg-secondary rounded-xl p-6 text-center">
+                  <p className="text-hos-text-secondary font-medium mb-3">Was this article helpful?</p>
                   <div className="flex items-center justify-center gap-3">
                     <button
                       onClick={handleMarkHelpful}
@@ -151,7 +151,7 @@ export default function KBArticlePage() {
                       className={`inline-flex items-center gap-2 px-5 py-2.5 rounded-lg font-medium transition-colors ${
                         markedHelpful
                           ? 'bg-green-100 text-green-700 cursor-default'
-                          : 'bg-purple-600 text-white hover:bg-purple-700 disabled:opacity-50'
+                          : 'bg-hos-gold text-[#1a1406] hover:bg-hos-gold-hover disabled:opacity-50'
                       }`}
                     >
                       <svg className="w-5 h-5" fill={markedHelpful ? 'currentColor' : 'none'} stroke="currentColor" viewBox="0 0 24 24">
@@ -161,13 +161,13 @@ export default function KBArticlePage() {
                     </button>
                     <Link
                       href="/support/new"
-                      className="px-5 py-2.5 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-100 font-medium transition-colors"
+                      className="px-5 py-2.5 border border-hos-border text-hos-text-secondary rounded-lg hover:bg-hos-bg-tertiary font-medium transition-colors"
                     >
                       Still need help?
                     </Link>
                   </div>
                   {typeof article.helpfulCount === 'number' && article.helpfulCount > 0 && (
-                    <p className="text-sm text-gray-500 mt-3">
+                    <p className="text-sm text-hos-text-muted mt-3">
                       {article.helpfulCount} {article.helpfulCount === 1 ? 'person' : 'people'} found this helpful
                     </p>
                   )}
@@ -176,18 +176,18 @@ export default function KBArticlePage() {
 
               {/* Related Articles */}
               {article.relatedArticles && article.relatedArticles.length > 0 && (
-                <div className="border-t border-gray-200 pt-6">
-                  <h2 className="text-xl font-semibold text-gray-900 mb-4">Related Articles</h2>
+                <div className="border-t border-hos-border pt-6">
+                  <h2 className="text-xl font-semibold text-white mb-4">Related Articles</h2>
                   <div className="space-y-3">
                     {article.relatedArticles.map((related) => (
                       <Link
                         key={related.id}
                         href={`/support/kb/${related.slug}`}
-                        className="block bg-gray-50 border border-gray-200 rounded-lg p-4 hover:border-purple-300 hover:bg-purple-50 transition-all"
+                        className="block bg-hos-bg-secondary border border-hos-border rounded-lg p-4 hover:border-hos-border-accent hover:bg-hos-gold/10 transition-all"
                       >
-                        <h3 className="font-medium text-gray-900">{related.title}</h3>
+                        <h3 className="font-medium text-white">{related.title}</h3>
                         {related.excerpt && (
-                          <p className="text-sm text-gray-600 mt-1 line-clamp-1">{related.excerpt}</p>
+                          <p className="text-sm text-hos-text-secondary mt-1 line-clamp-1">{related.excerpt}</p>
                         )}
                       </Link>
                     ))}

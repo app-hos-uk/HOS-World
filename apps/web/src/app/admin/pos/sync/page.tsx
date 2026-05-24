@@ -31,37 +31,37 @@ export default function AdminPosSyncPage() {
     <RouteGuard allowedRoles={['ADMIN']}>
       <AdminLayout>
         <div className="space-y-6">
-          <Link href="/admin/pos" className="text-sm text-indigo-600 hover:text-indigo-800">
+          <Link href="/admin/pos" className="text-sm text-hos-gold hover:text-hos-gold">
             ← POS home
           </Link>
-          <h1 className="text-2xl font-bold text-gray-900">POS sync log</h1>
-          <p className="text-gray-600">Recent external entity mappings (products, customers).</p>
+          <h1 className="text-2xl font-bold text-white">POS sync log</h1>
+          <p className="text-hos-text-secondary">Recent external entity mappings (products, customers).</p>
 
           {loading ? (
-            <div className="text-gray-500">Loading…</div>
+            <div className="text-hos-text-muted">Loading…</div>
           ) : (
-            <div className="overflow-hidden rounded-lg border border-gray-200 bg-white shadow">
-              <table className="min-w-full divide-y divide-gray-200 text-sm">
-                <thead className="bg-gray-50">
+            <div className="overflow-hidden rounded-lg border border-hos-border bg-hos-bg-secondary shadow">
+              <table className="min-w-full divide-y divide-hos-border text-sm">
+                <thead className="bg-hos-bg-secondary">
                   <tr>
-                    <th className="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500">
+                    <th className="px-4 py-3 text-left text-xs font-medium uppercase text-hos-text-muted">
                       Provider
                     </th>
-                    <th className="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500">
+                    <th className="px-4 py-3 text-left text-xs font-medium uppercase text-hos-text-muted">
                       Type
                     </th>
-                    <th className="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500">
+                    <th className="px-4 py-3 text-left text-xs font-medium uppercase text-hos-text-muted">
                       Status
                     </th>
-                    <th className="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500">
+                    <th className="px-4 py-3 text-left text-xs font-medium uppercase text-hos-text-muted">
                       Updated
                     </th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-gray-200">
+                <tbody className="divide-y divide-hos-border">
                   {mappings.length === 0 ? (
                     <tr>
-                      <td colSpan={4} className="px-4 py-8 text-center text-gray-500">
+                      <td colSpan={4} className="px-4 py-8 text-center text-hos-text-muted">
                         No mapping activity yet.
                       </td>
                     </tr>
@@ -71,7 +71,7 @@ export default function AdminPosSyncPage() {
                         <td className="px-4 py-3">{m.provider}</td>
                         <td className="px-4 py-3">{m.entityType}</td>
                         <td className="px-4 py-3">{m.syncStatus}</td>
-                        <td className="px-4 py-3 text-gray-500">
+                        <td className="px-4 py-3 text-hos-text-muted">
                           {m.updatedAt ? new Date(m.updatedAt).toLocaleString() : '—'}
                         </td>
                       </tr>

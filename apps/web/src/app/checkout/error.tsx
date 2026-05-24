@@ -33,28 +33,28 @@ export default function CheckoutError({
           </svg>
         </div>
 
-        <h1 className="text-2xl font-bold text-gray-900 font-[family-name:var(--font-cinzel)]">
+        <h1 className="text-2xl font-bold text-white font-[family-name:var(--font-display)]">
           Checkout Error
         </h1>
 
-        <p className="text-gray-600 font-[family-name:var(--font-lora)]">
+        <p className="text-hos-text-secondary font-[family-name:var(--font-body)]">
           {error.message || 'Something went wrong during checkout. Your payment has not been processed.'}
         </p>
 
         {error.digest && (
-          <p className="text-xs text-gray-400">Error ID: {error.digest}</p>
+          <p className="text-xs text-hos-text-muted">Error ID: {error.digest}</p>
         )}
 
         <div className="flex flex-col sm:flex-row gap-3 justify-center pt-2">
           <button
             onClick={reset}
-            className="px-5 py-2 bg-purple-700 text-white rounded-lg hover:bg-purple-800 transition-colors font-medium text-sm"
+            className="px-5 py-2 bg-hos-gold text-[#1a1406] rounded-lg hover:bg-hos-gold-hover transition-colors font-medium text-sm"
           >
             Try Again
           </button>
           <Link
             href="/cart"
-            className="px-5 py-2 border border-purple-300 text-purple-700 rounded-lg hover:bg-purple-50 transition-colors font-medium text-sm"
+            className="px-5 py-2 border border-hos-border-accent text-hos-gold-hover rounded-lg hover:bg-hos-gold/10 transition-colors font-medium text-sm"
           >
             Back to Cart
           </Link>

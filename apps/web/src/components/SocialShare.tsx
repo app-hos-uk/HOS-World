@@ -120,14 +120,14 @@ export function SocialShare({ type, itemId, itemName, itemImage: _itemImage }: S
         />
         <div
           role="menu"
-          className="fixed w-48 bg-white rounded-lg shadow-lg border border-gray-200 z-[90] p-2"
+          className="fixed w-48 bg-hos-bg-secondary rounded-lg shadow-lg border border-hos-border z-[90] p-2"
           style={{ top: portalPosition.top, left: portalPosition.left }}
         >
           <button
             type="button"
             role="menuitem"
             onClick={() => handleShare('copy')}
-            className="w-full text-left px-4 py-2 hover:bg-gray-100 rounded-lg flex items-center gap-2"
+            className="w-full text-left px-4 py-2 hover:bg-hos-bg-tertiary rounded-lg flex items-center gap-2"
           >
             {copied ? '✓ Link Copied!' : '📋 Copy Link'}
           </button>
@@ -135,7 +135,7 @@ export function SocialShare({ type, itemId, itemName, itemImage: _itemImage }: S
             type="button"
             role="menuitem"
             onClick={() => handleShare('facebook')}
-            className="w-full text-left px-4 py-2 hover:bg-gray-100 rounded-lg flex items-center gap-2"
+            className="w-full text-left px-4 py-2 hover:bg-hos-bg-tertiary rounded-lg flex items-center gap-2"
           >
             <span>📘</span> Facebook
           </button>
@@ -143,7 +143,7 @@ export function SocialShare({ type, itemId, itemName, itemImage: _itemImage }: S
             type="button"
             role="menuitem"
             onClick={() => handleShare('twitter')}
-            className="w-full text-left px-4 py-2 hover:bg-gray-100 rounded-lg flex items-center gap-2"
+            className="w-full text-left px-4 py-2 hover:bg-hos-bg-tertiary rounded-lg flex items-center gap-2"
           >
             <span>🐦</span> Twitter
           </button>
@@ -151,7 +151,7 @@ export function SocialShare({ type, itemId, itemName, itemImage: _itemImage }: S
             type="button"
             role="menuitem"
             onClick={() => handleShare('whatsapp')}
-            className="w-full text-left px-4 py-2 hover:bg-gray-100 rounded-lg flex items-center gap-2"
+            className="w-full text-left px-4 py-2 hover:bg-hos-bg-tertiary rounded-lg flex items-center gap-2"
           >
             <span>💬</span> WhatsApp
           </button>
@@ -170,7 +170,7 @@ export function SocialShare({ type, itemId, itemName, itemImage: _itemImage }: S
         }}
         aria-expanded={showShareMenu}
         aria-haspopup="menu"
-        className="flex items-center gap-2 px-4 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
+        className="flex items-center gap-2 px-4 py-2 bg-hos-bg-tertiary hover:bg-hos-bg-tertiary rounded-lg transition-colors"
       >
         <span>📤</span>
         <span>Share</span>

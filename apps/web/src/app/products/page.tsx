@@ -78,7 +78,7 @@ function StarRating({ rating, onClick, interactive = false }: {
           aria-label={`${star} star${star > 1 ? 's' : ''}`}
         >
           <svg
-            className={`w-5 h-5 ${star <= rating ? 'text-yellow-400' : 'text-gray-300'}`}
+            className={`w-5 h-5 ${star <= rating ? 'text-yellow-400' : 'text-hos-text-muted'}`}
             fill="currentColor"
             viewBox="0 0 20 20"
           >
@@ -92,11 +92,11 @@ function StarRating({ rating, onClick, interactive = false }: {
 
 function ActiveFilterChip({ label, onRemove }: { label: string; onRemove: () => void }) {
   return (
-    <span className="inline-flex items-center gap-1 px-3 py-1 bg-purple-100 text-purple-800 rounded-full text-sm">
+    <span className="inline-flex items-center gap-1 px-3 py-1 bg-hos-gold/20 text-hos-gold rounded-full text-sm">
       {label}
       <button
         onClick={onRemove}
-        className="ml-0.5 hover:text-purple-600 transition-colors"
+        className="ml-0.5 hover:text-hos-gold transition-colors"
         aria-label={`Remove ${label} filter`}
       >
         <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -284,15 +284,15 @@ function ProductsContent() {
       {/* Active filter count + clear */}
       {activeFilterCount > 0 && (
         <div className="flex items-center justify-between">
-          <span className="text-sm font-medium text-gray-700">
+          <span className="text-sm font-medium text-hos-text-secondary">
             Filters
-            <span className="ml-1.5 inline-flex items-center justify-center w-5 h-5 bg-purple-600 text-white text-xs rounded-full">
+            <span className="ml-1.5 inline-flex items-center justify-center w-5 h-5 bg-hos-gold text-[#1a1406] text-xs rounded-full">
               {activeFilterCount}
             </span>
           </span>
           <button
             onClick={clearAllFilters}
-            className="text-sm text-purple-600 hover:text-purple-800 font-medium"
+            className="text-sm text-hos-gold hover:text-hos-gold-hover font-medium"
           >
             Clear All
           </button>
@@ -301,57 +301,57 @@ function ProductsContent() {
 
       {/* Category filter */}
       <div>
-        <h3 className="text-sm font-semibold text-gray-900 mb-2">Category</h3>
+        <h3 className="text-sm font-semibold text-white mb-2">Category</h3>
         <div className="space-y-1.5 max-h-48 overflow-y-auto">
           {facets.category && Object.entries(facets.category).length > 0 ? (
             Object.entries(facets.category)
               .sort(([, a], [, b]) => b - a)
               .map(([name, count]) => (
-                <label key={name} className="flex items-center gap-2 cursor-pointer text-sm text-gray-700 hover:text-gray-900">
+                <label key={name} className="flex items-center gap-2 cursor-pointer text-sm text-hos-text-secondary hover:text-white">
                   <input
                     type="checkbox"
                     checked={state.categories.includes(name)}
                     onChange={() => toggleArrayFilter('categories', name)}
-                    className="rounded border-gray-300 text-purple-600 focus:ring-purple-500"
+                    className="rounded border-hos-border text-hos-gold focus:ring-hos-gold/50"
                   />
                   <span className="flex-1 truncate">{name}</span>
-                  <span className="text-xs text-gray-400">({count})</span>
+                  <span className="text-xs text-hos-text-muted">({count})</span>
                 </label>
               ))
           ) : (
-            <p className="text-xs text-gray-400 italic">No categories available</p>
+            <p className="text-xs text-hos-text-muted italic">No categories available</p>
           )}
         </div>
       </div>
 
       {/* Fandom filter */}
       <div>
-        <h3 className="text-sm font-semibold text-gray-900 mb-2">Fandom</h3>
+        <h3 className="text-sm font-semibold text-white mb-2">Fandom</h3>
         <div className="space-y-1.5 max-h-48 overflow-y-auto">
           {facets.fandom && Object.entries(facets.fandom).length > 0 ? (
             Object.entries(facets.fandom)
               .sort(([, a], [, b]) => b - a)
               .map(([name, count]) => (
-                <label key={name} className="flex items-center gap-2 cursor-pointer text-sm text-gray-700 hover:text-gray-900">
+                <label key={name} className="flex items-center gap-2 cursor-pointer text-sm text-hos-text-secondary hover:text-white">
                   <input
                     type="checkbox"
                     checked={state.fandoms.includes(name)}
                     onChange={() => toggleArrayFilter('fandoms', name)}
-                    className="rounded border-gray-300 text-purple-600 focus:ring-purple-500"
+                    className="rounded border-hos-border text-hos-gold focus:ring-hos-gold/50"
                   />
                   <span className="flex-1 truncate">{name}</span>
-                  <span className="text-xs text-gray-400">({count})</span>
+                  <span className="text-xs text-hos-text-muted">({count})</span>
                 </label>
               ))
           ) : (
-            <p className="text-xs text-gray-400 italic">No fandoms available</p>
+            <p className="text-xs text-hos-text-muted italic">No fandoms available</p>
           )}
         </div>
       </div>
 
       {/* Price range */}
       <div>
-        <h3 className="text-sm font-semibold text-gray-900 mb-2">Price Range</h3>
+        <h3 className="text-sm font-semibold text-white mb-2">Price Range</h3>
         <div className="flex items-center gap-2">
           <input
             type="number"
@@ -359,41 +359,41 @@ function ProductsContent() {
             min={0}
             value={state.minPrice}
             onChange={(e) => updateState({ minPrice: e.target.value })}
-            className="w-full px-3 py-1.5 border border-gray-300 rounded-md text-sm focus:ring-purple-500 focus:border-purple-500"
+            className="w-full px-3 py-1.5 border border-hos-border rounded-md text-sm focus:ring-hos-gold/50 focus:border-hos-gold"
           />
-          <span className="text-gray-400">-</span>
+          <span className="text-hos-text-muted">-</span>
           <input
             type="number"
             placeholder="Max"
             min={0}
             value={state.maxPrice}
             onChange={(e) => updateState({ maxPrice: e.target.value })}
-            className="w-full px-3 py-1.5 border border-gray-300 rounded-md text-sm focus:ring-purple-500 focus:border-purple-500"
+            className="w-full px-3 py-1.5 border border-hos-border rounded-md text-sm focus:ring-hos-gold/50 focus:border-hos-gold"
           />
         </div>
       </div>
 
       {/* Rating filter */}
       <div>
-        <h3 className="text-sm font-semibold text-gray-900 mb-2">Minimum Rating</h3>
+        <h3 className="text-sm font-semibold text-white mb-2">Minimum Rating</h3>
         <StarRating
           rating={state.rating}
           interactive
           onClick={(star) => updateState({ rating: state.rating === star ? 0 : star })}
         />
         {state.rating > 0 && (
-          <p className="text-xs text-gray-500 mt-1">{state.rating}+ stars</p>
+          <p className="text-xs text-hos-text-muted mt-1">{state.rating}+ stars</p>
         )}
       </div>
 
       {/* In-stock toggle */}
       <div>
-        <label className="flex items-center gap-2 cursor-pointer text-sm text-gray-700">
+        <label className="flex items-center gap-2 cursor-pointer text-sm text-hos-text-secondary">
           <input
             type="checkbox"
             checked={state.inStock}
             onChange={(e) => updateState({ inStock: e.target.checked })}
-            className="rounded border-gray-300 text-purple-600 focus:ring-purple-500"
+            className="rounded border-hos-border text-hos-gold focus:ring-hos-gold/50"
           />
           In Stock Only
         </label>
@@ -427,14 +427,14 @@ function ProductsContent() {
   );
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-hos-bg-secondary">
       <Header />
       <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
         <div className="mb-6">
-          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">
+          <h1 className="text-2xl sm:text-3xl font-bold text-white">
             {state.query ? `Search results for "${state.query}"` : 'All Products'}
           </h1>
-          <p className="text-gray-600 mt-1">
+          <p className="text-hos-text-secondary mt-1">
             Browse our collection of magical items from your favorite fandoms
           </p>
         </div>
@@ -442,7 +442,7 @@ function ProductsContent() {
         <div className="flex gap-8">
           {/* Desktop sidebar */}
           <aside className="hidden lg:block w-64 shrink-0">
-            <div className="sticky top-24 bg-white rounded-xl shadow-sm border border-gray-200 p-5">
+            <div className="sticky top-24 bg-hos-bg-secondary rounded-xl shadow-sm border border-hos-border p-5">
               <FilterPanel />
             </div>
           </aside>
@@ -451,14 +451,14 @@ function ProductsContent() {
           <div className="lg:hidden fixed bottom-4 right-4 z-40">
             <button
               onClick={() => setMobileFiltersOpen(true)}
-              className="flex items-center gap-2 bg-purple-600 text-white px-4 py-3 rounded-full shadow-lg hover:bg-purple-700 transition-colors"
+              className="flex items-center gap-2 bg-hos-gold text-[#1a1406] px-4 py-3 rounded-full shadow-lg hover:bg-hos-gold-hover transition-colors"
             >
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
               </svg>
               Filters
               {activeFilterCount > 0 && (
-                <span className="bg-white text-purple-600 text-xs font-bold w-5 h-5 rounded-full flex items-center justify-center">
+                <span className="bg-hos-bg-secondary text-hos-gold text-xs font-bold w-5 h-5 rounded-full flex items-center justify-center">
                   {activeFilterCount}
                 </span>
               )}
@@ -469,12 +469,12 @@ function ProductsContent() {
           {mobileFiltersOpen && (
             <div className="fixed inset-0 z-50 lg:hidden">
               <div className="absolute inset-0 bg-black/40" onClick={() => setMobileFiltersOpen(false)} />
-              <div className="absolute right-0 top-0 bottom-0 w-80 max-w-full bg-white shadow-xl p-6 overflow-y-auto">
+              <div className="absolute right-0 top-0 bottom-0 w-80 max-w-full bg-hos-bg-secondary shadow-xl p-6 overflow-y-auto">
                 <div className="flex items-center justify-between mb-6">
                   <h2 className="text-lg font-semibold">Filters</h2>
                   <button
                     onClick={() => setMobileFiltersOpen(false)}
-                    className="p-1 hover:bg-gray-100 rounded-full"
+                    className="p-1 hover:bg-hos-bg-tertiary rounded-full"
                   >
                     <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -490,12 +490,12 @@ function ProductsContent() {
           <div className="flex-1 min-w-0">
             {/* Toolbar: sort, result count, search time */}
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
-              <div className="flex items-center gap-3 text-sm text-gray-600">
+              <div className="flex items-center gap-3 text-sm text-hos-text-secondary">
                 {(!loading || products.length > 0) && totalHits > 0 ? (
                   <span>
                     Showing {startIndex}-{endIndex} of {totalHits.toLocaleString()} results
                     {processingTimeMs > 0 && (
-                      <span className="text-gray-400 ml-1">in {processingTimeMs}ms</span>
+                      <span className="text-hos-text-muted ml-1">in {processingTimeMs}ms</span>
                     )}
                   </span>
                 ) : null}
@@ -503,7 +503,7 @@ function ProductsContent() {
               <select
                 value={state.sort}
                 onChange={(e) => updateState({ sort: e.target.value })}
-                className="px-3 py-2 border border-gray-300 rounded-lg text-sm bg-white focus:ring-purple-500 focus:border-purple-500"
+                className="px-3 py-2 border border-hos-border rounded-lg text-sm bg-hos-bg-secondary focus:ring-hos-gold/50 focus:border-hos-gold"
               >
                 {SORT_OPTIONS.map(opt => (
                   <option key={opt.value} value={opt.value}>{opt.label}</option>
@@ -520,27 +520,27 @@ function ProductsContent() {
             {showInitialSkeleton ? (
               <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4">
                 {Array.from({ length: 8 }).map((_, i) => (
-                  <div key={i} className="bg-white rounded-lg border border-gray-200 overflow-hidden animate-pulse">
-                    <div className="aspect-square bg-gray-200" />
+                  <div key={i} className="bg-hos-bg-secondary rounded-lg border border-hos-border overflow-hidden animate-pulse">
+                    <div className="aspect-square bg-hos-bg-tertiary" />
                     <div className="p-4 space-y-2">
-                      <div className="h-4 bg-gray-200 rounded w-3/4" />
-                      <div className="h-4 bg-gray-200 rounded w-1/2" />
+                      <div className="h-4 bg-hos-bg-tertiary rounded w-3/4" />
+                      <div className="h-4 bg-hos-bg-tertiary rounded w-1/2" />
                     </div>
                   </div>
                 ))}
               </div>
             ) : products.length === 0 ? (
               <div className="text-center py-16">
-                <svg className="w-16 h-16 text-gray-300 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className="w-16 h-16 text-hos-text-muted mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                 </svg>
-                <h3 className="text-lg font-medium text-gray-900 mb-1">No products found</h3>
-                <p className="text-gray-500 mb-4">Try adjusting your filters or search query</p>
+                <h3 className="text-lg font-medium text-white mb-1">No products found</h3>
+                <p className="text-hos-text-muted mb-4">Try adjusting your filters or search query</p>
                 {activeFilterCount > 0 && (
                   <button
                     type="button"
                     onClick={clearAllFilters}
-                    className="text-purple-600 hover:text-purple-800 font-medium text-sm"
+                    className="text-hos-gold hover:text-hos-gold-hover font-medium text-sm"
                   >
                     Clear all filters
                   </button>
@@ -551,11 +551,11 @@ function ProductsContent() {
                 <div className="relative">
                   {loading && products.length > 0 && (
                     <div
-                      className="absolute inset-0 z-[5] rounded-lg bg-white/50 flex justify-center pt-14 min-h-[200px]"
+                      className="absolute inset-0 z-[5] rounded-lg bg-hos-bg-secondary/50 flex justify-center pt-14 min-h-[200px]"
                       aria-busy="true"
                       aria-label="Loading products"
                     >
-                      <div className="h-11 w-11 animate-spin rounded-full border-2 border-purple-200 border-t-purple-600 shrink-0" />
+                      <div className="h-11 w-11 animate-spin rounded-full border-2 border-hos-border-accent border-t-hos-gold shrink-0" />
                     </div>
                   )}
                   <div
@@ -569,8 +569,8 @@ function ProductsContent() {
                         href={`/products/${product.id}`}
                         className="group flex h-full min-h-0"
                       >
-                        <div className="bg-white border border-gray-200 rounded-lg overflow-hidden hover:shadow-lg hover:border-purple-200 transition-all duration-200 flex flex-col h-full w-full min-h-[280px] sm:min-h-[300px]">
-                          <div className="aspect-square bg-gray-100 relative overflow-hidden shrink-0">
+                        <div className="bg-hos-bg-secondary border border-hos-border rounded-lg overflow-hidden hover:shadow-lg hover:border-hos-border-accent transition-all duration-200 flex flex-col h-full w-full min-h-[280px] sm:min-h-[300px]">
+                          <div className="aspect-square bg-hos-bg-tertiary relative overflow-hidden shrink-0">
                             {product.images && product.images[0] ? (
                               <SafeImage
                                 src={product.images[0].url}
@@ -580,7 +580,7 @@ function ProductsContent() {
                                 className="object-cover group-hover:scale-105 transition-transform duration-300"
                               />
                             ) : (
-                              <div className="w-full h-full flex items-center justify-center text-gray-400">
+                              <div className="w-full h-full flex items-center justify-center text-hos-text-muted">
                                 <svg className="w-12 h-12" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
                                 </svg>
@@ -594,18 +594,18 @@ function ProductsContent() {
                           </div>
                           <div className="p-3 sm:p-4 flex flex-col flex-1 gap-2 min-h-0 justify-between">
                             <h3
-                              className="font-semibold text-gray-900 group-hover:text-purple-600 transition-colors text-sm sm:text-base line-clamp-2 min-h-[2.5rem] leading-snug"
+                              className="font-semibold text-white group-hover:text-hos-gold transition-colors text-sm sm:text-base line-clamp-2 min-h-[2.5rem] leading-snug"
                               dangerouslySetInnerHTML={{
                                 __html: sanitizeHighlight(highlighted?.name || product.name),
                               }}
                             />
                             <div className="mt-auto flex flex-col gap-2">
                               <div className="flex items-center justify-between gap-2">
-                                <span className="text-base sm:text-lg font-bold text-purple-900">
+                                <span className="text-base sm:text-lg font-bold text-hos-gold">
                                   {formatPrice(Number(product.price))}
                                 </span>
                                 {product.averageRating > 0 && (
-                                  <div className="flex items-center gap-1 text-xs text-gray-500 shrink-0">
+                                  <div className="flex items-center gap-1 text-xs text-hos-text-muted shrink-0">
                                     <svg className="w-3.5 h-3.5 text-yellow-400" fill="currentColor" viewBox="0 0 20 20">
                                       <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
                                     </svg>
@@ -614,7 +614,7 @@ function ProductsContent() {
                                 )}
                               </div>
                               {product.fandom && (
-                                <p className="text-xs text-gray-500 truncate min-h-[1rem]">{product.fandom}</p>
+                                <p className="text-xs text-hos-text-muted truncate min-h-[1rem]">{product.fandom}</p>
                               )}
                             </div>
                           </div>
@@ -632,13 +632,13 @@ function ProductsContent() {
                       type="button"
                       onClick={() => updateState({ page: state.page - 1 })}
                       disabled={state.page === 1}
-                      className="px-3 py-2 text-sm border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                      className="px-3 py-2 text-sm border border-hos-border rounded-lg hover:bg-hos-bg-tertiary disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
                     >
                       Previous
                     </button>
                     {pageNumbers.map((p, i) =>
                       p < 0 ? (
-                        <span key={`ellipsis-${i}`} className="px-2 py-2 text-gray-400">...</span>
+                        <span key={`ellipsis-${i}`} className="px-2 py-2 text-hos-text-muted">...</span>
                       ) : (
                         <button
                           key={p}
@@ -646,8 +646,8 @@ function ProductsContent() {
                           onClick={() => updateState({ page: p })}
                           className={`px-3 py-2 text-sm rounded-lg transition-colors ${
                             p === state.page
-                              ? 'bg-purple-600 text-white font-medium'
-                              : 'border border-gray-300 hover:bg-gray-50'
+                              ? 'bg-hos-gold text-[#1a1406] font-medium'
+                              : 'border border-hos-border hover:bg-hos-bg-tertiary'
                           }`}
                         >
                           {p}
@@ -658,7 +658,7 @@ function ProductsContent() {
                       type="button"
                       onClick={() => updateState({ page: state.page + 1 })}
                       disabled={state.page === totalPages}
-                      className="px-3 py-2 text-sm border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                      className="px-3 py-2 text-sm border border-hos-border rounded-lg hover:bg-hos-bg-tertiary disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
                     >
                       Next
                     </button>
@@ -677,13 +677,13 @@ function ProductsContent() {
 export default function ProductsPage() {
   return (
     <Suspense fallback={
-      <div className="min-h-screen bg-gray-50">
+      <div className="min-h-screen bg-hos-bg-secondary">
         <Header />
         <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
           <div className="flex items-center justify-center py-16">
             <div className="text-center">
-              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600 mx-auto mb-4" />
-              <p className="text-gray-600">Loading products...</p>
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-hos-gold mx-auto mb-4" />
+              <p className="text-hos-text-secondary">Loading products...</p>
             </div>
           </div>
         </main>

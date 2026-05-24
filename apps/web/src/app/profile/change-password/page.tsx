@@ -50,48 +50,48 @@ export default function ChangePasswordPage() {
 
   return (
     <RouteGuard allowedRoles={['CUSTOMER', 'SELLER', 'B2C_SELLER', 'WHOLESALER', 'ADMIN', 'PROCUREMENT', 'FULFILLMENT', 'CATALOG', 'MARKETING', 'FINANCE', 'CMS_EDITOR', 'INFLUENCER']}>
-      <div className="min-h-screen bg-white">
+      <div className="min-h-screen bg-hos-bg-secondary">
         <Header />
         <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 lg:py-12">
           <div className="max-w-md mx-auto">
-            <Link href="/profile?tab=settings" className="text-purple-600 hover:text-purple-800 mb-4 inline-block">
+            <Link href="/profile?tab=settings" className="text-hos-gold hover:text-hos-gold-hover mb-4 inline-block">
               ← Back to Profile
             </Link>
-            <div className="bg-white border border-gray-200 rounded-lg p-6">
+            <div className="bg-hos-bg-secondary border border-hos-border rounded-lg p-6">
               <h1 className="text-2xl font-bold mb-6">Change Password</h1>
               <form onSubmit={handleSubmit} className="space-y-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Current Password</label>
+                  <label className="block text-sm font-medium text-hos-text-secondary mb-1">Current Password</label>
                   <input
                     type="password"
                     value={formData.currentPassword}
                     onChange={(e) => setFormData({ ...formData, currentPassword: e.target.value })}
                     required
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
+                    className="w-full px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50"
                     placeholder="Enter current password"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">New Password</label>
+                  <label className="block text-sm font-medium text-hos-text-secondary mb-1">New Password</label>
                   <input
                     type="password"
                     value={formData.newPassword}
                     onChange={(e) => setFormData({ ...formData, newPassword: e.target.value })}
                     required
                     minLength={8}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
+                    className="w-full px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50"
                     placeholder="Enter new password (min 8 characters)"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Confirm New Password</label>
+                  <label className="block text-sm font-medium text-hos-text-secondary mb-1">Confirm New Password</label>
                   <input
                     type="password"
                     value={formData.confirmPassword}
                     onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}
                     required
                     minLength={8}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
+                    className="w-full px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50"
                     placeholder="Confirm new password"
                   />
                 </div>
@@ -99,13 +99,13 @@ export default function ChangePasswordPage() {
                   <button
                     type="submit"
                     disabled={loading}
-                    className="px-6 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 disabled:opacity-50 font-medium"
+                    className="px-6 py-2 bg-hos-gold text-[#1a1406] rounded-lg hover:bg-hos-gold-hover disabled:opacity-50 font-medium"
                   >
                     {loading ? 'Changing...' : 'Change Password'}
                   </button>
                   <Link
                     href="/profile?tab=settings"
-                    className="px-6 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 font-medium"
+                    className="px-6 py-2 border border-hos-border text-hos-text-secondary rounded-lg hover:bg-hos-bg-tertiary font-medium"
                   >
                     Cancel
                   </Link>

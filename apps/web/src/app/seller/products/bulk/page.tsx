@@ -23,7 +23,7 @@ interface JobProgress {
 
 const STATUS_CONFIG: Record<JobStatus, { label: string; color: string; bg: string; bar: string }> = {
   queued: { label: 'Queued', color: 'text-yellow-800', bg: 'bg-yellow-100', bar: 'bg-yellow-500' },
-  processing: { label: 'Processing', color: 'text-blue-800', bg: 'bg-blue-100', bar: 'bg-blue-500' },
+  processing: { label: 'Processing', color: 'text-hos-gold', bg: 'bg-hos-gold/20', bar: 'bg-hos-gold/100' },
   completed: { label: 'Completed', color: 'text-green-800', bg: 'bg-green-100', bar: 'bg-green-500' },
   failed: { label: 'Failed', color: 'text-red-800', bg: 'bg-red-100', bar: 'bg-red-500' },
 };
@@ -305,29 +305,29 @@ export default function SellerBulkProductsPage() {
       <DashboardLayout role="SELLER" menuItems={menuItems} title="Seller">
         <div className="mb-6">
           <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold">Bulk Product Import/Export</h1>
-          <p className="text-gray-600 mt-2">Import or export products in bulk using CSV files</p>
+          <p className="text-hos-text-secondary mt-2">Import or export products in bulk using CSV files</p>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {/* Export Section */}
-          <div className="bg-white border border-gray-200 rounded-lg p-6">
+          <div className="bg-hos-bg-secondary border border-hos-border rounded-lg p-6">
             <h2 className="text-xl font-semibold mb-4">Export Products</h2>
-            <p className="text-gray-600 mb-4">
+            <p className="text-hos-text-secondary mb-4">
               Download all your products as a CSV file. You can edit the file and re-import it.
             </p>
             <button
               onClick={handleExport}
               disabled={exportLoading}
-              className="w-full px-6 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full px-6 py-3 bg-hos-gold text-[#1a1406] rounded-lg hover:bg-hos-gold-hover transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {exportLoading ? 'Exporting...' : '📥 Export Products to CSV'}
             </button>
           </div>
 
           {/* Import Section */}
-          <div className="bg-white border border-gray-200 rounded-lg p-6">
+          <div className="bg-hos-bg-secondary border border-hos-border rounded-lg p-6">
             <h2 className="text-xl font-semibold mb-4">Import Products</h2>
-            <p className="text-gray-600 mb-4">
+            <p className="text-hos-text-secondary mb-4">
               Upload a CSV file to import products. Make sure the file follows the correct format.
             </p>
             <form onSubmit={handleImport} className="space-y-4">
@@ -336,7 +336,7 @@ export default function SellerBulkProductsPage() {
                   type="file"
                   accept=".csv"
                   onChange={(e) => setSelectedFile(e.target.files?.[0] || null)}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
+                  className="w-full px-4 py-2 border border-hos-border rounded-lg focus:outline-none focus:ring-2 focus:ring-hos-gold/50"
                   required
                 />
               </div>
@@ -353,7 +353,7 @@ export default function SellerBulkProductsPage() {
 
         {/* Job Progress Tracking */}
         {jobProgress && jobProgress.status !== 'completed' && (
-          <div className="mt-6 bg-white border border-gray-200 rounded-lg p-6">
+          <div className="mt-6 bg-hos-bg-secondary border border-hos-border rounded-lg p-6">
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-lg font-semibold">Import Progress</h3>
               <span className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${STATUS_CONFIG[jobProgress.status].bg} ${STATUS_CONFIG[jobProgress.status].color}`}>
@@ -361,14 +361,14 @@ export default function SellerBulkProductsPage() {
               </span>
             </div>
 
-            <div className="w-full bg-gray-200 rounded-full h-4 mb-3 overflow-hidden">
+            <div className="w-full bg-hos-bg-tertiary rounded-full h-4 mb-3 overflow-hidden">
               <div
                 className={`h-4 rounded-full transition-all duration-500 ease-out ${STATUS_CONFIG[jobProgress.status].bar}`}
                 style={{ width: `${Math.min(jobProgress.progress, 100)}%` }}
               />
             </div>
 
-            <div className="flex items-center justify-between text-sm text-gray-600">
+            <div className="flex items-center justify-between text-sm text-hos-text-secondary">
               <span>{jobProgress.processed} / {jobProgress.total} items processed</span>
               <span className="font-medium">{Math.round(jobProgress.progress)}%</span>
             </div>
@@ -391,7 +391,7 @@ export default function SellerBulkProductsPage() {
 
         {/* Import Results */}
         {importResults && (
-          <div className="mt-6 bg-white border border-gray-200 rounded-lg p-6">
+          <div className="mt-6 bg-hos-bg-secondary border border-hos-border rounded-lg p-6">
             <h3 className="text-lg font-semibold mb-4">Import Results</h3>
             <div className="space-y-2">
               <p><span className="font-medium">Success:</span> {importResults.successCount || 0} products imported</p>
@@ -411,12 +411,12 @@ export default function SellerBulkProductsPage() {
         )}
 
         {/* Instructions */}
-        <div className="mt-6 bg-blue-50 border border-blue-200 rounded-lg p-6">
+        <div className="mt-6 bg-hos-gold/10 border border-hos-border-accent rounded-lg p-6">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-4">
             <h3 className="text-lg font-semibold">CSV Format Instructions</h3>
             <button
               onClick={handleDownloadSampleCSV}
-              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium text-sm flex items-center gap-2"
+              className="px-4 py-2 bg-hos-gold text-[#1a1406] rounded-lg hover:bg-hos-gold-hover transition-colors font-medium text-sm flex items-center gap-2"
             >
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
@@ -427,36 +427,36 @@ export default function SellerBulkProductsPage() {
           
           <div className="space-y-4">
             <div>
-              <h4 className="font-medium text-gray-900 mb-2">Required Columns:</h4>
-              <ul className="list-disc list-inside space-y-1 text-sm text-gray-700">
-                <li><code className="bg-blue-100 px-1 rounded">name</code> - Product name (required for each row)</li>
-                <li><code className="bg-blue-100 px-1 rounded">price</code> - Product price (number, e.g., 49.99)</li>
-                <li><code className="bg-blue-100 px-1 rounded">description</code> - Product description</li>
-                <li><code className="bg-blue-100 px-1 rounded">stock</code> - Available quantity (number)</li>
+              <h4 className="font-medium text-white mb-2">Required Columns:</h4>
+              <ul className="list-disc list-inside space-y-1 text-sm text-hos-text-secondary">
+                <li><code className="bg-hos-gold/20 px-1 rounded">name</code> - Product name (required for each row)</li>
+                <li><code className="bg-hos-gold/20 px-1 rounded">price</code> - Product price (number, e.g., 49.99)</li>
+                <li><code className="bg-hos-gold/20 px-1 rounded">description</code> - Product description</li>
+                <li><code className="bg-hos-gold/20 px-1 rounded">stock</code> - Available quantity (number)</li>
               </ul>
             </div>
 
             <div>
-              <h4 className="font-medium text-gray-900 mb-2">Optional Columns:</h4>
-              <ul className="list-disc list-inside space-y-1 text-sm text-gray-700">
-                <li><code className="bg-blue-100 px-1 rounded">sku</code> - Product SKU/identifier</li>
-                <li><code className="bg-blue-100 px-1 rounded">currency</code> - Currency code (USD, GBP, EUR)</li>
-                <li><code className="bg-blue-100 px-1 rounded">category</code> - Product category</li>
-                <li><code className="bg-blue-100 px-1 rounded">fandom</code> - Fandom slug (e.g., harry-potter, lord-of-the-rings)</li>
-                <li><code className="bg-blue-100 px-1 rounded">tags</code> - Tags separated by pipe | (e.g., wand|replica|collectible)</li>
-                <li><code className="bg-blue-100 px-1 rounded">images</code> - Image URLs separated by pipe | (e.g., url1|url2)</li>
-                <li><code className="bg-blue-100 px-1 rounded">status</code> - ACTIVE, DRAFT, or INACTIVE</li>
+              <h4 className="font-medium text-white mb-2">Optional Columns:</h4>
+              <ul className="list-disc list-inside space-y-1 text-sm text-hos-text-secondary">
+                <li><code className="bg-hos-gold/20 px-1 rounded">sku</code> - Product SKU/identifier</li>
+                <li><code className="bg-hos-gold/20 px-1 rounded">currency</code> - Currency code (USD, GBP, EUR)</li>
+                <li><code className="bg-hos-gold/20 px-1 rounded">category</code> - Product category</li>
+                <li><code className="bg-hos-gold/20 px-1 rounded">fandom</code> - Fandom slug (e.g., harry-potter, lord-of-the-rings)</li>
+                <li><code className="bg-hos-gold/20 px-1 rounded">tags</code> - Tags separated by pipe | (e.g., wand|replica|collectible)</li>
+                <li><code className="bg-hos-gold/20 px-1 rounded">images</code> - Image URLs separated by pipe | (e.g., url1|url2)</li>
+                <li><code className="bg-hos-gold/20 px-1 rounded">status</code> - ACTIVE, DRAFT, or INACTIVE</li>
               </ul>
             </div>
 
-            <div className="bg-white rounded-lg p-4 border border-blue-200">
-              <h4 className="font-medium text-gray-900 mb-2">Example Row:</h4>
-              <div className="text-xs font-mono bg-gray-100 p-3 rounded overflow-x-auto whitespace-nowrap">
+            <div className="bg-hos-bg-secondary rounded-lg p-4 border border-hos-border-accent">
+              <h4 className="font-medium text-white mb-2">Example Row:</h4>
+              <div className="text-xs font-mono bg-hos-bg-tertiary p-3 rounded overflow-x-auto whitespace-nowrap">
                 &quot;Harry Potter Wand&quot;,&quot;Authentic wand replica&quot;,&quot;HP-001&quot;,&quot;49.99&quot;,&quot;100&quot;,&quot;USD&quot;,&quot;Collectibles&quot;,&quot;harry-potter&quot;,&quot;wand|replica&quot;,&quot;https://example.com/image.jpg&quot;,&quot;ACTIVE&quot;
               </div>
             </div>
 
-            <div className="text-sm text-gray-600">
+            <div className="text-sm text-hos-text-secondary">
               <strong>Tips:</strong>
               <ul className="list-disc list-inside mt-1 space-y-1">
                 <li>First row must contain column headers</li>

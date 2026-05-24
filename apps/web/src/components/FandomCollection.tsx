@@ -2,19 +2,26 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { SafeImage } from '@/components/SafeImage';
-import { useTheme } from '@hos-marketplace/theme-system';
 import { apiClient } from '@/lib/api';
 import { getPublicApiBaseUrl } from '@/lib/apiBaseUrl';
+import { REFERENCE_ASSETS, REFERENCE_FRANCHISE_ORDER } from '@/lib/referenceAssets';
 
 interface FandomCollectionProps {
-  /** Max number to show; undefined = show all (e.g. on /fandoms page). Use 6 for homepage. */
   limit?: number;
-  /** When true, hide "See more" and use full-width layout (for /fandoms page). */
   showAllPage?: boolean;
 }
 
-/** Resolve relative image URLs (e.g. /uploads/...) to absolute using API origin. */
+interface FandomItem {
+  id: string;
+  slug: string;
+  name: string;
+  image?: string;
+  logo?: string;
+  photo?: boolean;
+}
+
 function resolveImageUrl(src: string | null | undefined): string {
   if (!src || typeof src !== 'string') return '';
   if (src.startsWith('http://') || src.startsWith('https://') || src.startsWith('//')) return src;
@@ -23,11 +30,24 @@ function resolveImageUrl(src: string | null | undefined): string {
   return origin + (src.startsWith('/') ? src : `/${src}`);
 }
 
+function getReferenceFandoms(limit?: number): FandomItem[] {
+  const items = REFERENCE_FRANCHISE_ORDER.map((key) => {
+    const ref = REFERENCE_ASSETS.franchises[key];
+    return {
+      id: key,
+      slug: key,
+      name: ref.name,
+      logo: ref.logo,
+      photo: 'photo' in ref ? ref.photo : false,
+    };
+  });
+  return limit != null ? items.slice(0, limit) : items;
+}
+
 export function FandomCollection({ limit, showAllPage = false }: FandomCollectionProps) {
-  const theme = useTheme();
-  const [fandoms, setFandoms] = useState<any[]>([]);
+  const [fandoms, setFandoms] = useState<FandomItem[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [usingReference, setUsingReference] = useState(false);
 
   useEffect(() => {
     fetchFandoms();
@@ -36,107 +56,114 @@ export function FandomCollection({ limit, showAllPage = false }: FandomCollectio
 
   const fetchFandoms = async () => {
     try {
-      setError(null);
       const response = await apiClient.getFandoms();
       const list = response?.data;
       const arr = Array.isArray(list) ? list : [];
-      setFandoms(limit != null ? arr.slice(0, limit) : arr);
-    } catch (err: any) {
-      console.error('Error fetching fandoms:', err);
-      setError(err.message || 'Failed to load fandoms');
-      setFandoms([]);
+
+      if (arr.length > 0) {
+        const mapped: FandomItem[] = arr.map((f: any) => {
+          const slug = f.slug || f.id;
+          const ref = REFERENCE_ASSETS.franchises[slug as keyof typeof REFERENCE_ASSETS.franchises];
+          return {
+            id: f.id ?? slug,
+            slug,
+            name: f.name,
+            image: resolveImageUrl(f.image),
+            logo: ref?.logo,
+            photo: ref && 'photo' in ref ? ref.photo : false,
+          };
+        });
+        setFandoms(limit != null ? mapped.slice(0, limit) : mapped);
+        setUsingReference(false);
+      } else {
+        setFandoms(getReferenceFandoms(limit));
+        setUsingReference(true);
+      }
+    } catch {
+      setFandoms(getReferenceFandoms(limit));
+      setUsingReference(true);
     } finally {
       setLoading(false);
     }
   };
 
-  const skeletonCount = showAllPage ? 12 : 6;
+  const skeletonCount = showAllPage ? 12 : 8;
+  const gridClass = showAllPage
+    ? 'grid grid-cols-2 sm:grid-cols-4 md:grid-cols-8 gap-3.5'
+    : 'grid grid-cols-2 sm:grid-cols-4 md:grid-cols-8 gap-3.5';
 
   return (
-    <section>
+    <section className={showAllPage ? undefined : 'max-w-7xl mx-auto px-4 py-12'}>
       {!showAllPage && (
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-4 sm:mb-6 gap-3 sm:gap-0">
-          <h2 className="text-2xl sm:text-3xl font-bold" style={{ color: theme.colors.text.primary }}>
-            Fandom Collection
-          </h2>
+        <div className="flex items-end justify-between mb-8 gap-4 section-head">
+          <div>
+            <h2 className="font-display text-hos-gold-hover text-2xl md:text-3xl">
+              Shop by franchise
+            </h2>
+            <p className="text-hos-text-muted text-sm mt-1 font-body">
+              The magic is within you — explore our top worlds.
+            </p>
+          </div>
           <Link
             href="/fandoms"
-            className="text-sm sm:text-base text-accent hover:underline font-medium"
-            style={{ color: theme.colors.accent }}
+            className="text-hos-gold text-sm font-ui font-semibold hover:text-hos-gold-hover transition-colors shrink-0"
+            prefetch={true}
           >
-            See more
+            View all franchises →
           </Link>
         </div>
       )}
 
       {loading ? (
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3 sm:gap-4">
+        <div className={gridClass}>
           {Array.from({ length: skeletonCount }).map((_, i) => (
-            <div
-              key={`skeleton-${i}`}
-              className="rounded-lg overflow-hidden animate-pulse"
-              style={{ backgroundColor: theme.colors.surface }}
-            >
-              <div className="aspect-square bg-gray-200" />
-              <div className="p-2 sm:p-3">
-                <div className="h-4 bg-gray-200 rounded mx-auto w-3/4" />
-              </div>
-            </div>
+            <div key={`skeleton-${i}`} className="aspect-square rounded-full bg-hos-bg-secondary border border-hos-border animate-pulse" />
           ))}
         </div>
-      ) : error ? (
-        <div className="text-center py-8">
-          <p className="text-gray-600 mb-4">{error}</p>
-          <Link href="/products" className="text-purple-600 hover:underline font-medium">Browse products</Link>
-        </div>
-      ) : fandoms.length === 0 ? (
-        <div className="text-center py-10 px-4 rounded-lg bg-gray-50">
-          <p className="text-gray-600 mb-2">No fandoms available yet.</p>
-          <p className="text-sm text-gray-500 mb-4">Create fandoms in Admin → Products → Fandoms, or explore our products.</p>
-          <Link href="/products" className="inline-block px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 font-medium">
-            Browse products
-          </Link>
-        </div>
       ) : (
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3 sm:gap-4">
+        <div className={gridClass}>
           {fandoms.map((fandom) => {
-            const imageUrl = resolveImageUrl(fandom.image);
+            const logoSrc = fandom.logo || fandom.image;
             return (
               <Link
-                key={fandom.id ?? fandom.slug}
+                key={fandom.id}
                 href={`/fandoms/${fandom.slug}`}
-                className="block rounded-lg overflow-hidden hover:shadow-lg transition-shadow"
-                style={{ backgroundColor: theme.colors.surface }}
+                className="cat-card group"
                 prefetch={true}
               >
-                <div className="relative aspect-square bg-gray-200 flex items-center justify-center overflow-hidden">
-                  {imageUrl ? (
+                <span className={`cat-logo-slot ${fandom.photo ? 'py-2.5' : ''}`}>
+                  {logoSrc ? (
+                    <Image
+                      src={logoSrc}
+                      alt=""
+                      width={172}
+                      height={76}
+                      className={`w-full max-w-[172px] h-auto object-contain object-center ${fandom.photo ? 'max-h-[58px]' : 'max-h-[76px]'}`}
+                    />
+                  ) : fandom.image ? (
                     <SafeImage
-                      src={imageUrl}
-                      alt={fandom.name || 'Fandom'}
-                      fill
-                      className="object-cover"
-                      sizes="(max-width: 768px) 50vw, 16vw"
-                      fallback="✨"
+                      src={fandom.image}
+                      alt={fandom.name}
+                      width={172}
+                      height={76}
+                      className="w-full max-w-[172px] max-h-[76px] object-contain"
                     />
                   ) : (
-                    <span className="text-4xl sm:text-5xl text-gray-400 font-bold" aria-hidden>
-                      {fandom.name ? (fandom.name as string).charAt(0).toUpperCase() : '✨'}
-                    </span>
+                    <span className="text-xl text-hos-text-muted font-bold">{fandom.name.charAt(0)}</span>
                   )}
-                </div>
-                <div className="p-2 sm:p-3">
-                  <h3 className="font-semibold text-center text-xs sm:text-sm" style={{ color: theme.colors.text.primary }}>
-                    {fandom.name}
-                  </h3>
-                </div>
+                </span>
+                <span className="relative font-ui text-xs font-semibold text-hos-text-primary text-center leading-tight">
+                  {fandom.name}
+                </span>
               </Link>
             );
           })}
         </div>
       )}
+
+      {usingReference && !loading && !showAllPage && (
+        <p className="sr-only">Showing reference franchise logos</p>
+      )}
     </section>
   );
 }
-
-

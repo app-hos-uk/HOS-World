@@ -183,18 +183,18 @@ export default function FinancePricingPage() {
       >
         <div className="mb-6">
           <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold">Pricing Management</h1>
-          <p className="text-gray-600 mt-2">Review pending approvals and view pricing history</p>
+          <p className="text-hos-text-secondary mt-2">Review pending approvals and view pricing history</p>
         </div>
 
         {/* Tab Switcher */}
-        <div className="mb-6 flex gap-1 bg-gray-100 rounded-lg p-1">
+        <div className="mb-6 flex gap-1 bg-hos-bg-tertiary rounded-lg p-1">
           <button
             type="button"
             onClick={() => setActiveTab('pending')}
             className={`flex-1 py-2.5 px-4 rounded-md text-sm font-medium transition-all ${
               activeTab === 'pending'
-                ? 'bg-white text-purple-700 shadow-sm'
-                : 'text-gray-600 hover:text-gray-900'
+                ? 'bg-hos-bg-secondary text-hos-gold-hover shadow-sm'
+                : 'text-hos-text-secondary hover:text-white'
             }`}
           >
             Pending Approvals {pendingSubmissions.length > 0 && `(${pendingSubmissions.length})`}
@@ -204,8 +204,8 @@ export default function FinancePricingPage() {
             onClick={() => setActiveTab('history')}
             className={`flex-1 py-2.5 px-4 rounded-md text-sm font-medium transition-all ${
               activeTab === 'history'
-                ? 'bg-white text-purple-700 shadow-sm'
-                : 'text-gray-600 hover:text-gray-900'
+                ? 'bg-hos-bg-secondary text-hos-gold-hover shadow-sm'
+                : 'text-hos-text-secondary hover:text-white'
             }`}
           >
             Pricing History {pricingHistory.length > 0 && `(${pricingHistory.length})`}
@@ -221,15 +221,15 @@ export default function FinancePricingPage() {
 
           {loading && (
             <div className="flex items-center justify-center py-12">
-              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600"></div>
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-hos-gold"></div>
             </div>
           )}
 
           {/* Pending Approvals Tab */}
           {!loading && activeTab === 'pending' && pendingSubmissions.length === 0 && (
-            <div className="bg-white border border-gray-200 rounded-lg p-8 text-center">
-              <p className="text-gray-500 text-lg">No pending pricing approvals</p>
-              <p className="text-sm text-gray-400 mt-2">Products ready for pricing will appear here</p>
+            <div className="bg-hos-bg-secondary border border-hos-border rounded-lg p-8 text-center">
+              <p className="text-hos-text-muted text-lg">No pending pricing approvals</p>
+              <p className="text-sm text-hos-text-muted mt-2">Products ready for pricing will appear here</p>
             </div>
           )}
 
@@ -241,17 +241,17 @@ export default function FinancePricingPage() {
                 return (
                   <div
                     key={submission.id}
-                    className="bg-white border border-gray-200 rounded-lg p-6 hover:shadow-md transition-shadow"
+                    className="bg-hos-bg-secondary border border-hos-border rounded-lg p-6 hover:shadow-md transition-shadow"
                   >
                     <div className="flex flex-col sm:flex-row justify-between gap-4">
                       <div className="flex-1">
-                        <h3 className="text-lg font-semibold text-gray-900">
+                        <h3 className="text-lg font-semibold text-white">
                           {catalogEntry?.title || submission.product?.name || productData.name || 'Untitled Product'}
                         </h3>
-                        <p className="text-sm text-gray-500 mt-1">
+                        <p className="text-sm text-hos-text-muted mt-1">
                           Seller: {submission.seller?.storeName || 'Unknown'}
                         </p>
-                        <div className="flex flex-wrap gap-4 mt-4 text-sm text-gray-600">
+                        <div className="flex flex-wrap gap-4 mt-4 text-sm text-hos-text-secondary">
                           {productData.price && (
                             <span>
                               <strong>Price:</strong> {productData.currency || 'USD'}{' '}
@@ -276,7 +276,7 @@ export default function FinancePricingPage() {
                       <div className="flex gap-2">
                         <button
                           onClick={() => handleViewDetails(submission)}
-                          className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors font-medium text-sm whitespace-nowrap"
+                          className="px-4 py-2 bg-hos-gold text-[#1a1406] rounded-lg hover:bg-hos-gold-hover transition-colors font-medium text-sm whitespace-nowrap"
                         >
                           Review
                         </button>
@@ -290,9 +290,9 @@ export default function FinancePricingPage() {
 
           {/* Pricing History Tab */}
           {!loading && activeTab === 'history' && pricingHistory.length === 0 && (
-            <div className="bg-white border border-gray-200 rounded-lg p-8 text-center">
-              <p className="text-gray-500 text-lg">No pricing history</p>
-              <p className="text-sm text-gray-400 mt-2">Approved pricing decisions will appear here</p>
+            <div className="bg-hos-bg-secondary border border-hos-border rounded-lg p-8 text-center">
+              <p className="text-hos-text-muted text-lg">No pricing history</p>
+              <p className="text-sm text-hos-text-muted mt-2">Approved pricing decisions will appear here</p>
             </div>
           )}
 
@@ -301,14 +301,14 @@ export default function FinancePricingPage() {
               {pricingHistory.map((item: any) => (
                 <div
                   key={item.id}
-                  className="bg-white border border-gray-200 rounded-lg p-6"
+                  className="bg-hos-bg-secondary border border-hos-border rounded-lg p-6"
                 >
                   <div className="flex flex-col sm:flex-row justify-between gap-4">
                     <div className="flex-1">
-                      <h3 className="text-lg font-semibold text-gray-900">
+                      <h3 className="text-lg font-semibold text-white">
                         {item.product?.name || 'Unknown Product'}
                       </h3>
-                      <div className="flex flex-wrap gap-4 mt-2 text-sm text-gray-600">
+                      <div className="flex flex-wrap gap-4 mt-2 text-sm text-hos-text-secondary">
                         <span>
                           <strong>Base Price:</strong> ${Number(item.basePrice || 0).toFixed(2)}
                         </span>
@@ -322,7 +322,7 @@ export default function FinancePricingPage() {
                           <strong>Visibility:</strong> {item.visibilityLevel || 'STANDARD'}
                         </span>
                       </div>
-                      <p className="text-xs text-gray-400 mt-2">
+                      <p className="text-xs text-hos-text-muted mt-2">
                         Approved: {item.approvedAt ? new Date(item.approvedAt).toLocaleString() : 'N/A'}
                       </p>
                     </div>
@@ -340,7 +340,7 @@ export default function FinancePricingPage() {
           {/* Review Modal */}
           {showModal && selectedSubmission && (
             <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-              <div className="bg-white rounded-lg max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+              <div className="bg-hos-bg-secondary rounded-lg max-w-4xl w-full max-h-[90vh] overflow-y-auto">
                 <div className="p-6">
                   <div className="flex justify-between items-start mb-4">
                     <h2 className="text-2xl font-bold">
@@ -358,7 +358,7 @@ export default function FinancePricingPage() {
                         setSelectedSubmission(null);
                         setActionType(null);
                       }}
-                      className="text-gray-500 hover:text-gray-700"
+                      className="text-hos-text-muted hover:text-hos-text-secondary"
                     >
                       <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path
@@ -383,8 +383,8 @@ export default function FinancePricingPage() {
                         <div className="grid grid-cols-2 gap-4 mt-4">
                           {selectedSubmission.productData?.price && (
                             <div>
-                              <p className="text-sm font-medium text-gray-500">Price</p>
-                              <p className="text-gray-900">
+                              <p className="text-sm font-medium text-hos-text-muted">Price</p>
+                              <p className="text-white">
                                 {selectedSubmission.productData.currency || 'USD'}{' '}
                                 {parseFloat(selectedSubmission.productData.price).toFixed(2)}
                               </p>
@@ -392,8 +392,8 @@ export default function FinancePricingPage() {
                           )}
                           {selectedSubmission.productData?.tradePrice && (
                             <div>
-                              <p className="text-sm font-medium text-gray-500">Trade Price</p>
-                              <p className="text-gray-900">
+                              <p className="text-sm font-medium text-hos-text-muted">Trade Price</p>
+                              <p className="text-white">
                                 {selectedSubmission.productData.currency || 'USD'}{' '}
                                 {parseFloat(selectedSubmission.productData.tradePrice).toFixed(2)}
                               </p>
@@ -405,7 +405,7 @@ export default function FinancePricingPage() {
                       <div className="flex gap-3 pt-4">
                         <button
                           onClick={() => setActionType('set-pricing')}
-                          className="px-6 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors font-medium"
+                          className="px-6 py-2 bg-hos-gold text-[#1a1406] rounded-lg hover:bg-hos-gold-hover transition-colors font-medium"
                         >
                           Set Pricing
                         </button>
@@ -428,7 +428,7 @@ export default function FinancePricingPage() {
                   {actionType === 'set-pricing' && (
                     <div className="space-y-4">
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                        <label className="block text-sm font-medium text-hos-text-secondary mb-1">
                           Margin (%) <span className="text-red-500">*</span>
                         </label>
                         <input
@@ -438,18 +438,18 @@ export default function FinancePricingPage() {
                           min="0"
                           step="0.01"
                           required
-                          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
+                          className="w-full px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50"
                           placeholder="Enter margin percentage"
                         />
                       </div>
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                        <label className="block text-sm font-medium text-hos-text-secondary mb-1">
                           Visibility Level
                         </label>
                         <select
                           value={visibilityLevel}
                           onChange={(e) => setVisibilityLevel(e.target.value)}
-                          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
+                          className="w-full px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50"
                         >
                           <option value="STANDARD">Standard</option>
                           <option value="PREMIUM">Premium</option>
@@ -457,14 +457,14 @@ export default function FinancePricingPage() {
                         </select>
                       </div>
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                        <label className="block text-sm font-medium text-hos-text-secondary mb-1">
                           Notes (Optional)
                         </label>
                         <textarea
                           value={notes}
                           onChange={(e) => setNotes(e.target.value)}
                           rows={4}
-                          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
+                          className="w-full px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50"
                           placeholder="Add notes about pricing..."
                         />
                       </div>
@@ -472,14 +472,14 @@ export default function FinancePricingPage() {
                         <button
                           onClick={handleSetPricing}
                           disabled={actionLoading || !margin || parseFloat(margin) <= 0}
-                          className="px-6 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors font-medium disabled:opacity-50"
+                          className="px-6 py-2 bg-hos-gold text-[#1a1406] rounded-lg hover:bg-hos-gold-hover transition-colors font-medium disabled:opacity-50"
                         >
                           {actionLoading ? 'Setting...' : 'Set Pricing'}
                         </button>
                         <button
                           onClick={() => setActionType(null)}
                           disabled={actionLoading}
-                          className="px-6 py-2 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400 transition-colors font-medium"
+                          className="px-6 py-2 bg-hos-bg-tertiary text-hos-text-secondary rounded-lg hover:bg-hos-text-muted transition-colors font-medium"
                         >
                           Cancel
                         </button>
@@ -490,14 +490,14 @@ export default function FinancePricingPage() {
                   {actionType === 'approve' && (
                     <div className="space-y-4">
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                        <label className="block text-sm font-medium text-hos-text-secondary mb-1">
                           Notes (Optional)
                         </label>
                         <textarea
                           value={notes}
                           onChange={(e) => setNotes(e.target.value)}
                           rows={4}
-                          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
+                          className="w-full px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50"
                           placeholder="Add approval notes..."
                         />
                       </div>
@@ -512,7 +512,7 @@ export default function FinancePricingPage() {
                         <button
                           onClick={() => setActionType(null)}
                           disabled={actionLoading}
-                          className="px-6 py-2 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400 transition-colors font-medium"
+                          className="px-6 py-2 bg-hos-bg-tertiary text-hos-text-secondary rounded-lg hover:bg-hos-text-muted transition-colors font-medium"
                         >
                           Cancel
                         </button>
@@ -523,7 +523,7 @@ export default function FinancePricingPage() {
                   {actionType === 'reject' && (
                     <div className="space-y-4">
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                        <label className="block text-sm font-medium text-hos-text-secondary mb-1">
                           Rejection Reason <span className="text-red-500">*</span>
                         </label>
                         <textarea
@@ -531,7 +531,7 @@ export default function FinancePricingPage() {
                           onChange={(e) => setRejectReason(e.target.value)}
                           rows={4}
                           required
-                          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
+                          className="w-full px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50"
                           placeholder="Please provide a reason for rejection..."
                         />
                       </div>
@@ -546,7 +546,7 @@ export default function FinancePricingPage() {
                         <button
                           onClick={() => setActionType(null)}
                           disabled={actionLoading}
-                          className="px-6 py-2 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400 transition-colors font-medium"
+                          className="px-6 py-2 bg-hos-bg-tertiary text-hos-text-secondary rounded-lg hover:bg-hos-text-muted transition-colors font-medium"
                         >
                           Cancel
                         </button>

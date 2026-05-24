@@ -78,12 +78,12 @@ export default function MarketingDashboardPage() {
         <div className="mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
             <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold">Marketing Dashboard</h1>
-            <p className="text-gray-600 mt-2">Create and manage marketing materials</p>
+            <p className="text-hos-text-secondary mt-2">Create and manage marketing materials</p>
           </div>
           <button
             onClick={() => fetchDashboardData(true)}
             disabled={loading}
-            className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50"
+            className="px-4 py-2 text-sm font-medium text-hos-text-secondary bg-hos-bg-secondary border border-hos-border rounded-lg hover:bg-hos-bg-tertiary disabled:opacity-50"
           >
             {loading ? 'Refreshing...' : 'Refresh'}
           </button>
@@ -91,7 +91,7 @@ export default function MarketingDashboardPage() {
 
         {loading && (
           <div className="flex items-center justify-center py-12">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600"></div>
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-hos-gold"></div>
           </div>
         )}
 
@@ -104,26 +104,26 @@ export default function MarketingDashboardPage() {
         {!loading && !error && (
           <>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-              <div className="bg-white border rounded-lg p-6 shadow-sm">
+              <div className="bg-hos-bg-secondary border rounded-lg p-6 shadow-sm">
                 <div className="flex items-center justify-between">
                   <div>
-                    <h3 className="text-sm font-medium text-gray-600 mb-1">Pending Products</h3>
-                    <p className="text-3xl font-bold text-purple-600">{pendingProducts.toLocaleString()}</p>
+                    <h3 className="text-sm font-medium text-hos-text-secondary mb-1">Pending Products</h3>
+                    <p className="text-3xl font-bold text-hos-gold">{pendingProducts.toLocaleString()}</p>
                   </div>
                   <div className="text-4xl">📦</div>
                 </div>
                 <Link
                   href="/marketing/materials"
-                  className="text-sm text-purple-600 hover:text-purple-700 mt-2 inline-block"
+                  className="text-sm text-hos-gold hover:text-hos-gold-hover mt-2 inline-block"
                 >
                   Create materials →
                 </Link>
               </div>
 
-              <div className="bg-white border rounded-lg p-6 shadow-sm">
+              <div className="bg-hos-bg-secondary border rounded-lg p-6 shadow-sm">
                 <div className="flex items-center justify-between">
                   <div>
-                    <h3 className="text-sm font-medium text-gray-600 mb-1">Materials Created</h3>
+                    <h3 className="text-sm font-medium text-hos-text-secondary mb-1">Materials Created</h3>
                     <p className="text-3xl font-bold text-green-600">{materialsCreated.toLocaleString()}</p>
                   </div>
                   <div className="text-4xl">✅</div>
@@ -136,33 +136,33 @@ export default function MarketingDashboardPage() {
                 </Link>
               </div>
 
-              <div className="bg-white border rounded-lg p-6 shadow-sm">
+              <div className="bg-hos-bg-secondary border rounded-lg p-6 shadow-sm">
                 <div className="flex items-center justify-between">
                   <div>
-                    <h3 className="text-sm font-medium text-gray-600 mb-1">Active Campaigns</h3>
-                    <p className="text-3xl font-bold text-blue-600">{activeCampaigns.toLocaleString()}</p>
+                    <h3 className="text-sm font-medium text-hos-text-secondary mb-1">Active Campaigns</h3>
+                    <p className="text-3xl font-bold text-hos-gold">{activeCampaigns.toLocaleString()}</p>
                   </div>
                   <div className="text-4xl">📢</div>
                 </div>
                 <Link
                   href="/marketing/campaigns?status=ACTIVE"
-                  className="text-sm text-blue-600 hover:text-blue-700 mt-2 inline-block"
+                  className="text-sm text-hos-gold hover:text-hos-gold-hover mt-2 inline-block"
                 >
                   View campaigns →
                 </Link>
               </div>
 
-              <div className="bg-white border rounded-lg p-6 shadow-sm">
+              <div className="bg-hos-bg-secondary border rounded-lg p-6 shadow-sm">
                 <div className="flex items-center justify-between">
                   <div>
-                    <h3 className="text-sm font-medium text-gray-600 mb-1">Total Materials</h3>
-                    <p className="text-3xl font-bold text-indigo-600">{totalMaterials.toLocaleString()}</p>
+                    <h3 className="text-sm font-medium text-hos-text-secondary mb-1">Total Materials</h3>
+                    <p className="text-3xl font-bold text-hos-gold">{totalMaterials.toLocaleString()}</p>
                   </div>
                   <div className="text-4xl">📚</div>
                 </div>
                 <Link
                   href="/marketing/materials?tab=library"
-                  className="text-sm text-indigo-600 hover:text-indigo-700 mt-2 inline-block"
+                  className="text-sm text-hos-gold hover:text-hos-gold mt-2 inline-block"
                 >
                   View all →
                 </Link>
@@ -170,12 +170,12 @@ export default function MarketingDashboardPage() {
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              <div className="bg-white border rounded-lg p-6 shadow-sm">
+              <div className="bg-hos-bg-secondary border rounded-lg p-6 shadow-sm">
                 <div className="flex items-center justify-between mb-4">
                   <h2 className="text-xl font-semibold">Pending Materials</h2>
                   <Link
                     href="/marketing/materials"
-                    className="text-sm text-purple-600 hover:text-purple-700"
+                    className="text-sm text-hos-gold hover:text-hos-gold-hover"
                   >
                     View all →
                   </Link>
@@ -186,21 +186,21 @@ export default function MarketingDashboardPage() {
                       <Link
                         key={submission.id}
                         href={`/marketing/materials?submission=${submission.id}`}
-                        className="block p-3 border rounded-lg hover:bg-gray-50 transition-colors"
+                        className="block p-3 border rounded-lg hover:bg-hos-bg-tertiary transition-colors"
                       >
                         <div className="flex items-start justify-between">
                           <div className="flex-1">
-                            <p className="font-medium text-gray-900">
+                            <p className="font-medium text-white">
                               {submission.productData?.name || 'Untitled Product'}
                             </p>
-                            <p className="text-sm text-gray-500 mt-1">
+                            <p className="text-sm text-hos-text-muted mt-1">
                               {submission.seller?.storeName || 'Unknown Seller'}
                             </p>
-                            <p className="text-xs text-gray-400 mt-1">
+                            <p className="text-xs text-hos-text-muted mt-1">
                               Ready for marketing materials
                             </p>
                           </div>
-                          <span className="px-2 py-1 text-xs font-medium bg-purple-100 text-purple-800 rounded">
+                          <span className="px-2 py-1 text-xs font-medium bg-hos-gold/20 text-hos-gold rounded">
                             PENDING
                           </span>
                         </div>
@@ -208,14 +208,14 @@ export default function MarketingDashboardPage() {
                     ))}
                   </div>
                 ) : (
-                  <div className="text-center py-8 text-gray-500">
+                  <div className="text-center py-8 text-hos-text-muted">
                     <p>No pending products</p>
                     <p className="text-sm mt-2">Products ready for marketing will appear here</p>
                   </div>
                 )}
               </div>
 
-              <div className="bg-white border rounded-lg p-6 shadow-sm">
+              <div className="bg-hos-bg-secondary border rounded-lg p-6 shadow-sm">
                 <h2 className="text-xl font-semibold mb-4">Materials Library</h2>
                 {dashboardData?.materials && dashboardData.materials.length > 0 ? (
                   <div className="grid grid-cols-2 gap-3 max-h-96 overflow-y-auto">
@@ -225,7 +225,7 @@ export default function MarketingDashboardPage() {
                         href={`/marketing/materials?tab=library&material=${material.id}`}
                         className="block border rounded-lg overflow-hidden hover:shadow-md transition-shadow"
                       >
-                        <div className="relative aspect-video bg-gray-100">
+                        <div className="relative aspect-video bg-hos-bg-tertiary">
                           {material.url ? (
                             <Image
                               src={material.url}
@@ -235,22 +235,22 @@ export default function MarketingDashboardPage() {
                               sizes="(max-width: 768px) 100vw, 33vw"
                             />
                           ) : (
-                            <div className="w-full h-full flex items-center justify-center text-gray-400">
+                            <div className="w-full h-full flex items-center justify-center text-hos-text-muted">
                               {material.type}
                             </div>
                           )}
                         </div>
                         <div className="p-2">
-                          <p className="text-xs font-medium text-gray-900 truncate">
+                          <p className="text-xs font-medium text-white truncate">
                             {material.submission?.productData?.name || 'Unknown'}
                           </p>
-                          <p className="text-xs text-gray-500">{material.type}</p>
+                          <p className="text-xs text-hos-text-muted">{material.type}</p>
                         </div>
                       </Link>
                     ))}
                   </div>
                 ) : (
-                  <div className="text-center py-8 text-gray-500">
+                  <div className="text-center py-8 text-hos-text-muted">
                     <p>No materials created yet</p>
                     <p className="text-sm mt-2">Create your first marketing material</p>
                   </div>

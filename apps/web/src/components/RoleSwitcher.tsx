@@ -65,7 +65,7 @@ export function RoleSwitcher() {
   // Show loading state while checking auth
   if (loading) {
     return (
-      <div className="px-4 py-2 bg-gray-200 text-gray-500 rounded-lg text-sm">
+      <div className="px-4 py-2 bg-hos-bg-tertiary text-hos-text-muted rounded-lg text-sm">
         Loading...
       </div>
     );
@@ -137,14 +137,14 @@ export function RoleSwitcher() {
           px-4 py-2 rounded-lg font-medium text-sm transition-colors
           ${isImpersonating
             ? 'bg-amber-500 text-white hover:bg-amber-600 border-2 border-amber-600'
-            : 'bg-purple-600 text-white hover:bg-purple-700'
+            : 'bg-hos-gold text-[#1a1406] hover:bg-hos-gold-hover'
           }
         `}
         title={isImpersonating ? `Viewing as: ${ROLE_LABELS[impersonatedRole!]}` : 'Switch Role (Admin)'}
       >
         {isImpersonating ? (
           <span className="flex items-center gap-2">
-            <span className="inline-block w-2 h-2 bg-white rounded-full animate-pulse"></span>
+            <span className="inline-block w-2 h-2 bg-hos-bg-secondary rounded-full animate-pulse"></span>
             Viewing as: {ROLE_LABELS[impersonatedRole!]}
           </span>
         ) : (
@@ -166,12 +166,12 @@ export function RoleSwitcher() {
           />
           
           {/* Dropdown Menu */}
-          <div className="absolute right-0 mt-2 w-64 bg-white rounded-lg shadow-lg border-2 border-purple-200 z-20 max-h-96 overflow-y-auto">
+          <div className="absolute right-0 mt-2 w-64 bg-hos-bg-secondary rounded-lg shadow-lg border-2 border-hos-border-accent z-20 max-h-96 overflow-y-auto">
             <div className="p-2">
               {/* Header */}
-              <div className="px-3 py-2 border-b border-gray-200">
-                <p className="text-sm font-semibold text-gray-700">Switch Role</p>
-                <p className="text-xs text-gray-500 mt-1">
+              <div className="px-3 py-2 border-b border-hos-border">
+                <p className="text-sm font-semibold text-hos-text-secondary">Switch Role</p>
+                <p className="text-xs text-hos-text-muted mt-1">
                   View the platform as another role
                 </p>
               </div>
@@ -180,7 +180,7 @@ export function RoleSwitcher() {
               {isImpersonating && (
                 <button
                   onClick={() => handleRoleSwitch(null)}
-                  className="w-full text-left px-3 py-2 text-sm text-gray-700 hover:bg-purple-50 rounded-lg transition-colors flex items-center gap-2"
+                  className="w-full text-left px-3 py-2 text-sm text-hos-text-secondary hover:bg-hos-gold/10 rounded-lg transition-colors flex items-center gap-2"
                 >
                   <svg className="w-4 h-4 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -201,7 +201,7 @@ export function RoleSwitcher() {
                         w-full text-left px-3 py-2 text-sm rounded-lg transition-colors flex items-center justify-between
                         ${isActive
                           ? 'bg-amber-100 text-amber-900 font-semibold'
-                          : 'text-gray-700 hover:bg-purple-50'
+                          : 'text-hos-text-secondary hover:bg-hos-gold/10'
                         }
                       `}
                     >
@@ -215,8 +215,8 @@ export function RoleSwitcher() {
               </div>
 
               {/* Info Footer */}
-              <div className="px-3 py-2 border-t border-gray-200 mt-1">
-                <p className="text-xs text-gray-500">
+              <div className="px-3 py-2 border-t border-hos-border mt-1">
+                <p className="text-xs text-hos-text-muted">
                   {isImpersonating
                     ? `You are viewing as ${ROLE_LABELS[impersonatedRole!]}. Your admin permissions are preserved.`
                     : 'Select a role to view the platform from that perspective.'

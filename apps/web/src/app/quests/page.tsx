@@ -134,8 +134,8 @@ export default function QuestsPage() {
       case 'EASY': return 'bg-green-100 text-green-800';
       case 'MEDIUM': return 'bg-yellow-100 text-yellow-800';
       case 'HARD': return 'bg-orange-100 text-orange-800';
-      case 'EPIC': return 'bg-purple-100 text-purple-800';
-      default: return 'bg-gray-100 text-gray-800';
+      case 'EPIC': return 'bg-hos-gold/20 text-hos-gold';
+      default: return 'bg-hos-bg-tertiary text-white';
     }
   };
 
@@ -144,7 +144,7 @@ export default function QuestsPage() {
     const progressPercentage = progress?.percentage || 0;
 
     return (
-      <div key={quest.id || quest.questId} className="bg-gray-50 rounded-lg p-6 hover:shadow-lg transition-shadow">
+      <div key={quest.id || quest.questId} className="bg-hos-bg-secondary rounded-lg p-6 hover:shadow-lg transition-shadow">
         <div className="flex items-start justify-between mb-4">
           <div className="flex-1">
             <div className="flex items-center gap-2 mb-2">
@@ -154,11 +154,11 @@ export default function QuestsPage() {
               )}
             </div>
             {quest.description && (
-              <p className="text-sm text-gray-600 mb-3">{quest.description}</p>
+              <p className="text-sm text-hos-text-secondary mb-3">{quest.description}</p>
             )}
             <div className="flex flex-wrap gap-2 mb-3">
               {quest.fandom && (
-                <span className="px-2 py-1 bg-purple-100 text-purple-800 rounded text-xs">
+                <span className="px-2 py-1 bg-hos-gold/20 text-hos-gold rounded text-xs">
                   {quest.fandom.name}
                 </span>
               )}
@@ -167,7 +167,7 @@ export default function QuestsPage() {
                   {quest.difficulty}
                 </span>
               )}
-              <span className="px-2 py-1 bg-blue-100 text-blue-800 rounded text-xs">
+              <span className="px-2 py-1 bg-hos-gold/20 text-hos-gold rounded text-xs">
                 ⭐ {quest.points} points
               </span>
               {quest.badge && (
@@ -178,20 +178,20 @@ export default function QuestsPage() {
             </div>
             {quest.status === 'IN_PROGRESS' && progressPercentage > 0 && (
               <div className="mb-3">
-                <div className="flex justify-between text-xs text-gray-600 mb-1">
+                <div className="flex justify-between text-xs text-hos-text-secondary mb-1">
                   <span>Progress</span>
                   <span>{progressPercentage}%</span>
                 </div>
-                <div className="w-full bg-gray-200 rounded-full h-2">
+                <div className="w-full bg-hos-bg-tertiary rounded-full h-2">
                   <div
-                    className="bg-purple-600 h-2 rounded-full transition-all"
+                    className="bg-hos-gold h-2 rounded-full transition-all"
                     style={{ width: `${progressPercentage}%` }}
                   ></div>
                 </div>
               </div>
             )}
             {quest.completedAt && (
-              <p className="text-xs text-gray-500">
+              <p className="text-xs text-hos-text-muted">
                 Completed: {new Date(quest.completedAt).toLocaleDateString()}
               </p>
             )}
@@ -211,7 +211,7 @@ export default function QuestsPage() {
               <button
                 onClick={() => handleStartQuest(quest.id)}
                 disabled={actionLoading === quest.id}
-                className="flex-1 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors font-medium disabled:opacity-50"
+                className="flex-1 px-4 py-2 bg-hos-gold text-[#1a1406] rounded-lg hover:bg-hos-gold-hover transition-colors font-medium disabled:opacity-50"
               >
                 {actionLoading === quest.id ? 'Starting...' : 'Start Quest'}
               </button>
@@ -224,24 +224,24 @@ export default function QuestsPage() {
 
   return (
     <RouteGuard allowedRoles={['CUSTOMER', 'ADMIN']} showAccessDenied={true}>
-      <div className="min-h-screen bg-gray-50">
+      <div className="min-h-screen bg-hos-bg-secondary">
         <Header />
         <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 lg:py-12">
           {loading ? (
             <div className="flex items-center justify-center py-12">
-              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600"></div>
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-hos-gold"></div>
             </div>
           ) : (
           <>
           {/* Header */}
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
             <div>
-              <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Quests</h1>
-              <p className="text-gray-600 mt-1">Complete quests to earn points and unlock badges</p>
+              <h1 className="text-2xl sm:text-3xl font-bold text-white">Quests</h1>
+              <p className="text-hos-text-secondary mt-1">Complete quests to earn points and unlock badges</p>
             </div>
             <Link
               href="/leaderboard"
-              className="inline-flex items-center px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors font-medium"
+              className="inline-flex items-center px-4 py-2 bg-hos-gold text-[#1a1406] rounded-lg hover:bg-hos-gold-hover transition-colors font-medium"
             >
               🏆 View Leaderboard
             </Link>
@@ -249,40 +249,40 @@ export default function QuestsPage() {
 
           {/* Stats */}
           <div className="grid grid-cols-2 sm:grid-cols-5 gap-4 mb-6">
-            <div className="bg-white rounded-lg shadow p-4">
-              <h3 className="text-xs font-medium text-gray-500 uppercase">Points Earned</h3>
-              <p className="text-2xl font-bold text-purple-600 mt-1">{stats.totalPointsEarned.toLocaleString()}</p>
+            <div className="bg-hos-bg-secondary rounded-lg shadow p-4">
+              <h3 className="text-xs font-medium text-hos-text-muted uppercase">Points Earned</h3>
+              <p className="text-2xl font-bold text-hos-gold mt-1">{stats.totalPointsEarned.toLocaleString()}</p>
             </div>
-            <div className="bg-white rounded-lg shadow p-4">
-              <h3 className="text-xs font-medium text-gray-500 uppercase">Badges Earned</h3>
+            <div className="bg-hos-bg-secondary rounded-lg shadow p-4">
+              <h3 className="text-xs font-medium text-hos-text-muted uppercase">Badges Earned</h3>
               <p className="text-2xl font-bold text-yellow-600 mt-1">{stats.badgesEarned}</p>
             </div>
-            <div className="bg-white rounded-lg shadow p-4">
-              <h3 className="text-xs font-medium text-gray-500 uppercase">Completed</h3>
+            <div className="bg-hos-bg-secondary rounded-lg shadow p-4">
+              <h3 className="text-xs font-medium text-hos-text-muted uppercase">Completed</h3>
               <p className="text-2xl font-bold text-green-600 mt-1">{stats.questsCompleted}</p>
             </div>
-            <div className="bg-white rounded-lg shadow p-4">
-              <h3 className="text-xs font-medium text-gray-500 uppercase">In Progress</h3>
-              <p className="text-2xl font-bold text-blue-600 mt-1">{stats.questsInProgress}</p>
+            <div className="bg-hos-bg-secondary rounded-lg shadow p-4">
+              <h3 className="text-xs font-medium text-hos-text-muted uppercase">In Progress</h3>
+              <p className="text-2xl font-bold text-hos-gold mt-1">{stats.questsInProgress}</p>
             </div>
-            <div className="bg-white rounded-lg shadow p-4">
-              <h3 className="text-xs font-medium text-gray-500 uppercase">Fandoms</h3>
+            <div className="bg-hos-bg-secondary rounded-lg shadow p-4">
+              <h3 className="text-xs font-medium text-hos-text-muted uppercase">Fandoms</h3>
               <p className="text-2xl font-bold text-pink-600 mt-1">{stats.uniqueFandoms}</p>
             </div>
           </div>
 
           {/* Filter */}
           {allFandoms.length > 0 && (
-            <div className="bg-white rounded-lg shadow p-4 mb-6">
+            <div className="bg-hos-bg-secondary rounded-lg shadow p-4 mb-6">
               <div className="flex flex-wrap items-center gap-4">
-                <span className="text-sm font-medium text-gray-700">Filter by Fandom:</span>
+                <span className="text-sm font-medium text-hos-text-secondary">Filter by Fandom:</span>
                 <div className="flex flex-wrap gap-2">
                   <button
                     onClick={() => setFandomFilter('')}
                     className={`px-3 py-1 rounded-full text-sm font-medium transition-colors ${
                       fandomFilter === ''
-                        ? 'bg-purple-600 text-white'
-                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                        ? 'bg-hos-gold text-[#1a1406]'
+                        : 'bg-hos-bg-tertiary text-hos-text-secondary hover:bg-hos-bg-tertiary'
                     }`}
                   >
                     All
@@ -293,8 +293,8 @@ export default function QuestsPage() {
                       onClick={() => setFandomFilter(fandom.id)}
                       className={`px-3 py-1 rounded-full text-sm font-medium transition-colors ${
                         fandomFilter === fandom.id
-                          ? 'bg-purple-600 text-white'
-                          : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                          ? 'bg-hos-gold text-[#1a1406]'
+                          : 'bg-hos-bg-tertiary text-hos-text-secondary hover:bg-hos-bg-tertiary'
                       }`}
                     >
                       {fandom.name}
@@ -306,14 +306,14 @@ export default function QuestsPage() {
           )}
 
           {/* Tabs */}
-          <div className="bg-white rounded-lg shadow overflow-hidden mb-6">
-            <div className="flex flex-wrap border-b border-gray-200 bg-gray-50">
+          <div className="bg-hos-bg-secondary rounded-lg shadow overflow-hidden mb-6">
+            <div className="flex flex-wrap border-b border-hos-border bg-hos-bg-secondary">
               <button
                 onClick={() => setActiveTab('available')}
                 className={`px-6 py-3 font-medium transition-colors ${
                   activeTab === 'available'
-                    ? 'border-b-2 border-purple-600 text-purple-600'
-                    : 'text-gray-600 hover:text-gray-900'
+                    ? 'border-b-2 border-hos-gold text-hos-gold'
+                    : 'text-hos-text-secondary hover:text-white'
                 }`}
               >
                 Available ({availableQuests.length})
@@ -322,8 +322,8 @@ export default function QuestsPage() {
                 onClick={() => setActiveTab('active')}
                 className={`px-6 py-3 font-medium transition-colors ${
                   activeTab === 'active'
-                    ? 'border-b-2 border-purple-600 text-purple-600'
-                    : 'text-gray-600 hover:text-gray-900'
+                    ? 'border-b-2 border-hos-gold text-hos-gold'
+                    : 'text-hos-text-secondary hover:text-white'
                 }`}
               >
                 Active ({activeQuests.length})
@@ -332,8 +332,8 @@ export default function QuestsPage() {
                 onClick={() => setActiveTab('completed')}
                 className={`px-6 py-3 font-medium transition-colors ${
                   activeTab === 'completed'
-                    ? 'border-b-2 border-purple-600 text-purple-600'
-                    : 'text-gray-600 hover:text-gray-900'
+                    ? 'border-b-2 border-hos-gold text-hos-gold'
+                    : 'text-hos-text-secondary hover:text-white'
                 }`}
               >
                 Completed ({completedQuests.length})
@@ -342,16 +342,16 @@ export default function QuestsPage() {
           </div>
 
           {/* Tab Content */}
-          <div className="bg-white rounded-lg shadow p-6">
+          <div className="bg-hos-bg-secondary rounded-lg shadow p-6">
             {activeTab === 'available' && (
               <div>
                 {filterByFandom(availableQuests).length === 0 ? (
                   <div className="text-center py-12">
                     <div className="text-6xl mb-4">🎯</div>
-                    <p className="text-gray-600">
+                    <p className="text-hos-text-secondary">
                       {fandomFilter ? 'No quests available for this fandom' : 'No available quests'}
                     </p>
-                    <p className="text-sm text-gray-500 mt-2">Check back later for new quests!</p>
+                    <p className="text-sm text-hos-text-muted mt-2">Check back later for new quests!</p>
                   </div>
                 ) : (
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -366,10 +366,10 @@ export default function QuestsPage() {
                 {filterByFandom(activeQuests).length === 0 ? (
                   <div className="text-center py-12">
                     <div className="text-6xl mb-4">⚡</div>
-                    <p className="text-gray-600">
+                    <p className="text-hos-text-secondary">
                       {fandomFilter ? 'No active quests for this fandom' : 'No active quests'}
                     </p>
-                    <p className="text-sm text-gray-500 mt-2">Start a quest from the Available tab!</p>
+                    <p className="text-sm text-hos-text-muted mt-2">Start a quest from the Available tab!</p>
                   </div>
                 ) : (
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -384,10 +384,10 @@ export default function QuestsPage() {
                 {filterByFandom(completedQuests).length === 0 ? (
                   <div className="text-center py-12">
                     <div className="text-6xl mb-4">✅</div>
-                    <p className="text-gray-600">
+                    <p className="text-hos-text-secondary">
                       {fandomFilter ? 'No completed quests for this fandom' : 'No completed quests yet'}
                     </p>
-                    <p className="text-sm text-gray-500 mt-2">Complete quests to earn points and badges!</p>
+                    <p className="text-sm text-hos-text-muted mt-2">Complete quests to earn points and badges!</p>
                   </div>
                 ) : (
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">

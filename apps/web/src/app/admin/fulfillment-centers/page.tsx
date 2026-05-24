@@ -176,7 +176,7 @@ export default function AdminFulfillmentCentersPage() {
       <RouteGuard allowedRoles={['ADMIN']}>
         <AdminLayout>
           <div className="flex items-center justify-center h-64">
-            <div className="text-gray-500">Loading fulfillment centers...</div>
+            <div className="text-hos-text-muted">Loading fulfillment centers...</div>
           </div>
         </AdminLayout>
       </RouteGuard>
@@ -206,81 +206,81 @@ export default function AdminFulfillmentCentersPage() {
       <AdminLayout>
         <div className="space-y-6">
           <div className="flex items-center justify-between">
-            <h1 className="text-2xl font-bold text-gray-900">Fulfillment Centers</h1>
+            <h1 className="text-2xl font-bold text-white">Fulfillment Centers</h1>
             <button
               type="button"
               onClick={openAddModal}
-              className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700"
+              className="px-4 py-2 bg-hos-gold text-[#1a1406] rounded-lg hover:bg-hos-gold-hover"
             >
               Add Center
             </button>
           </div>
 
-          <div className="bg-white rounded-lg shadow overflow-hidden">
-            <table className="min-w-full divide-y divide-gray-200">
-              <thead className="bg-gray-50">
+          <div className="bg-hos-bg-secondary rounded-lg shadow overflow-hidden">
+            <table className="min-w-full divide-y divide-hos-border">
+              <thead className="bg-hos-bg-secondary">
                 <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-hos-text-muted uppercase tracking-wider">
                     Name
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-hos-text-muted uppercase tracking-wider">
                     Location
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-hos-text-muted uppercase tracking-wider">
                     Coordinates
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-hos-text-muted uppercase tracking-wider">
                     Contact
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-hos-text-muted uppercase tracking-wider">
                     Status
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-hos-text-muted uppercase tracking-wider">
                     Actions
                   </th>
                 </tr>
               </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
+              <tbody className="bg-hos-bg-secondary divide-y divide-hos-border">
                 {centers.length === 0 ? (
                   <tr>
-                    <td colSpan={6} className="px-6 py-4 text-center text-gray-500">
+                    <td colSpan={6} className="px-6 py-4 text-center text-hos-text-muted">
                       No fulfillment centers found
                     </td>
                   </tr>
                 ) : (
                   centers.map((center) => (
-                    <tr key={center.id} className="hover:bg-gray-50">
+                    <tr key={center.id} className="hover:bg-hos-bg-tertiary">
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm font-medium text-gray-900">{center.name || 'N/A'}</div>
+                        <div className="text-sm font-medium text-white">{center.name || 'N/A'}</div>
                         {center.capacity && (
-                          <div className="text-xs text-gray-500">Capacity: {center.capacity} units</div>
+                          <div className="text-xs text-hos-text-muted">Capacity: {center.capacity} units</div>
                         )}
                       </td>
                       <td className="px-6 py-4">
-                        <div className="text-sm text-gray-900">{center.city}, {center.country}</div>
-                        <div className="text-xs text-gray-500">{center.address}</div>
+                        <div className="text-sm text-white">{center.city}, {center.country}</div>
+                        <div className="text-xs text-hos-text-muted">{center.address}</div>
                         {center.postalCode && (
-                          <div className="text-xs text-gray-500">{center.postalCode}</div>
+                          <div className="text-xs text-hos-text-muted">{center.postalCode}</div>
                         )}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         {center.latitude != null && center.longitude != null ? (
                           <div className="text-xs">
-                            <div className="text-gray-900">{Number(center.latitude).toFixed(4)}</div>
-                            <div className="text-gray-500">{Number(center.longitude).toFixed(4)}</div>
+                            <div className="text-white">{Number(center.latitude).toFixed(4)}</div>
+                            <div className="text-hos-text-muted">{Number(center.longitude).toFixed(4)}</div>
                           </div>
                         ) : (
-                          <span className="text-xs text-gray-400">Not set</span>
+                          <span className="text-xs text-hos-text-muted">Not set</span>
                         )}
                       </td>
                       <td className="px-6 py-4">
                         {center.contactEmail || center.contactPhone ? (
                           <div className="text-xs">
-                            {center.contactEmail && <div className="text-gray-900">{center.contactEmail}</div>}
-                            {center.contactPhone && <div className="text-gray-500">{center.contactPhone}</div>}
+                            {center.contactEmail && <div className="text-white">{center.contactEmail}</div>}
+                            {center.contactPhone && <div className="text-hos-text-muted">{center.contactPhone}</div>}
                           </div>
                         ) : (
-                          <span className="text-xs text-gray-400">-</span>
+                          <span className="text-xs text-hos-text-muted">-</span>
                         )}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
@@ -288,7 +288,7 @@ export default function AdminFulfillmentCentersPage() {
                           className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
                             center.isActive !== false
                               ? 'bg-green-100 text-green-800'
-                              : 'bg-gray-100 text-gray-800'
+                              : 'bg-hos-bg-tertiary text-white'
                           }`}
                         >
                           {center.isActive !== false ? 'Active' : 'Inactive'}
@@ -298,7 +298,7 @@ export default function AdminFulfillmentCentersPage() {
                         <button
                           type="button"
                           onClick={() => openEditModal(center)}
-                          className="text-purple-600 hover:text-purple-900 mr-3"
+                          className="text-hos-gold hover:text-hos-gold mr-3"
                         >
                           Edit
                         </button>
@@ -315,7 +315,7 @@ export default function AdminFulfillmentCentersPage() {
                             <button
                               type="button"
                               onClick={() => setDeleteConfirmId(null)}
-                              className="text-gray-600 text-xs hover:text-gray-900"
+                              className="text-hos-text-secondary text-xs hover:text-white"
                             >
                               Cancel
                             </button>
@@ -364,56 +364,56 @@ export default function AdminFulfillmentCentersPage() {
                   leaveFrom="opacity-100 scale-100"
                   leaveTo="opacity-0 scale-95"
                 >
-                  <Dialog.Panel className="w-full max-w-lg transform overflow-hidden rounded-2xl bg-white p-6 text-left align-middle shadow-xl transition-all max-h-[90vh] overflow-y-auto">
-                    <Dialog.Title as="h3" className="text-lg font-medium leading-6 text-gray-900 mb-4">
+                  <Dialog.Panel className="w-full max-w-lg transform overflow-hidden rounded-2xl bg-hos-bg-secondary p-6 text-left align-middle shadow-xl transition-all max-h-[90vh] overflow-y-auto">
+                    <Dialog.Title as="h3" className="text-lg font-medium leading-6 text-white mb-4">
                       {editingCenter ? 'Edit Fulfillment Center' : 'Add Fulfillment Center'}
                     </Dialog.Title>
                     <form onSubmit={handleSubmit} className="space-y-4">
                       <div>
-                        <label className="block text-sm font-medium text-gray-700">Name *</label>
+                        <label className="block text-sm font-medium text-hos-text-secondary">Name *</label>
                         <input
                           type="text"
                           required
                           value={formData.name}
                           onChange={(e) => setFormData({ ...formData, name: sanitizeLabelInput(e.target.value, formData.name) })}
-                          className={`mt-1 block w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-purple-500 focus:border-purple-500 ${isLabelInvalid(formData.name) ? 'border-red-300' : 'border-gray-300'}`}
+                          className={`mt-1 block w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-hos-gold/50 focus:border-hos-gold ${isLabelInvalid(formData.name) ? 'border-red-300' : 'border-hos-border'}`}
                         />
                         {isLabelInvalid(formData.name) && (
                           <p className="text-xs text-red-600 mt-1">Must include at least one letter</p>
                         )}
                       </div>
                       <div>
-                        <label className="block text-sm font-medium text-gray-700">Address *</label>
+                        <label className="block text-sm font-medium text-hos-text-secondary">Address *</label>
                         <input
                           type="text"
                           required
                           value={formData.address}
                           onChange={(e) => setFormData({ ...formData, address: e.target.value })}
-                          className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-purple-500 focus:border-purple-500"
+                          className="mt-1 block w-full px-3 py-2 border border-hos-border rounded-md shadow-sm focus:outline-none focus:ring-hos-gold/50 focus:border-hos-gold"
                         />
                       </div>
                       <div className="grid grid-cols-2 gap-4">
                         <div>
-                          <label className="block text-sm font-medium text-gray-700">City *</label>
+                          <label className="block text-sm font-medium text-hos-text-secondary">City *</label>
                           <input
                             type="text"
                             required
                             value={formData.city}
                             onChange={(e) => setFormData({ ...formData, city: sanitizeLabelInput(e.target.value, formData.city) })}
-                            className={`mt-1 block w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-purple-500 focus:border-purple-500 ${isLabelInvalid(formData.city) ? 'border-red-300' : 'border-gray-300'}`}
+                            className={`mt-1 block w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-hos-gold/50 focus:border-hos-gold ${isLabelInvalid(formData.city) ? 'border-red-300' : 'border-hos-border'}`}
                           />
                           {isLabelInvalid(formData.city) && (
                             <p className="text-xs text-red-600 mt-1">Must include at least one letter</p>
                           )}
                         </div>
                         <div>
-                          <label className="block text-sm font-medium text-gray-700">Country *</label>
+                          <label className="block text-sm font-medium text-hos-text-secondary">Country *</label>
                           <input
                             type="text"
                             required
                             value={formData.country}
                             onChange={(e) => setFormData({ ...formData, country: sanitizeLabelInput(e.target.value, formData.country) })}
-                            className={`mt-1 block w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-purple-500 focus:border-purple-500 ${isLabelInvalid(formData.country) ? 'border-red-300' : 'border-gray-300'}`}
+                            className={`mt-1 block w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-hos-gold/50 focus:border-hos-gold ${isLabelInvalid(formData.country) ? 'border-red-300' : 'border-hos-border'}`}
                           />
                           {isLabelInvalid(formData.country) && (
                             <p className="text-xs text-red-600 mt-1">Must include at least one letter</p>
@@ -421,12 +421,12 @@ export default function AdminFulfillmentCentersPage() {
                         </div>
                       </div>
                       <div>
-                        <label className="block text-sm font-medium text-gray-700">Postal Code</label>
+                        <label className="block text-sm font-medium text-hos-text-secondary">Postal Code</label>
                         <input
                           type="text"
                           value={formData.postalCode}
                           onChange={(e) => setFormData({ ...formData, postalCode: sanitizePostalInput(e.target.value) })}
-                          className={`mt-1 block w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-purple-500 focus:border-purple-500 ${isPostalInvalid(formData.postalCode) ? 'border-red-300' : 'border-gray-300'}`}
+                          className={`mt-1 block w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-hos-gold/50 focus:border-hos-gold ${isPostalInvalid(formData.postalCode) ? 'border-red-300' : 'border-hos-border'}`}
                         />
                         {isPostalInvalid(formData.postalCode) && (
                           <p className="text-xs text-red-600 mt-1">Must include at least one digit</p>
@@ -434,56 +434,56 @@ export default function AdminFulfillmentCentersPage() {
                       </div>
                       <div className="grid grid-cols-2 gap-4">
                         <div>
-                          <label className="block text-sm font-medium text-gray-700">Contact Email</label>
+                          <label className="block text-sm font-medium text-hos-text-secondary">Contact Email</label>
                           <input
                             type="email"
                             value={formData.contactEmail}
                             onChange={(e) => setFormData({ ...formData, contactEmail: e.target.value })}
-                            className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-purple-500 focus:border-purple-500"
+                            className="mt-1 block w-full px-3 py-2 border border-hos-border rounded-md shadow-sm focus:outline-none focus:ring-hos-gold/50 focus:border-hos-gold"
                           />
                         </div>
                         <div>
-                          <label className="block text-sm font-medium text-gray-700">Contact Phone</label>
+                          <label className="block text-sm font-medium text-hos-text-secondary">Contact Phone</label>
                           <input
                             type="tel"
                             value={formData.contactPhone}
                             onChange={(e) => setFormData({ ...formData, contactPhone: e.target.value })}
-                            className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-purple-500 focus:border-purple-500"
+                            className="mt-1 block w-full px-3 py-2 border border-hos-border rounded-md shadow-sm focus:outline-none focus:ring-hos-gold/50 focus:border-hos-gold"
                           />
                         </div>
                       </div>
                       <div className="grid grid-cols-2 gap-4">
                         <div>
-                          <label className="block text-sm font-medium text-gray-700">Latitude</label>
+                          <label className="block text-sm font-medium text-hos-text-secondary">Latitude</label>
                           <input
                             type="number"
                             step="any"
                             value={formData.latitude}
                             onChange={(e) => setFormData({ ...formData, latitude: e.target.value })}
                             placeholder="e.g., 51.5074"
-                            className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-purple-500 focus:border-purple-500"
+                            className="mt-1 block w-full px-3 py-2 border border-hos-border rounded-md shadow-sm focus:outline-none focus:ring-hos-gold/50 focus:border-hos-gold"
                           />
                         </div>
                         <div>
-                          <label className="block text-sm font-medium text-gray-700">Longitude</label>
+                          <label className="block text-sm font-medium text-hos-text-secondary">Longitude</label>
                           <input
                             type="number"
                             step="any"
                             value={formData.longitude}
                             onChange={(e) => setFormData({ ...formData, longitude: e.target.value })}
                             placeholder="e.g., -0.1278"
-                            className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-purple-500 focus:border-purple-500"
+                            className="mt-1 block w-full px-3 py-2 border border-hos-border rounded-md shadow-sm focus:outline-none focus:ring-hos-gold/50 focus:border-hos-gold"
                           />
                         </div>
                       </div>
                       <div>
-                        <label className="block text-sm font-medium text-gray-700">Capacity (units)</label>
+                        <label className="block text-sm font-medium text-hos-text-secondary">Capacity (units)</label>
                         <input
                           type="number"
                           value={formData.capacity}
                           onChange={(e) => setFormData({ ...formData, capacity: e.target.value })}
                           placeholder="Storage capacity"
-                          className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-purple-500 focus:border-purple-500"
+                          className="mt-1 block w-full px-3 py-2 border border-hos-border rounded-md shadow-sm focus:outline-none focus:ring-hos-gold/50 focus:border-hos-gold"
                         />
                       </div>
                       <div className="flex items-center">
@@ -491,22 +491,22 @@ export default function AdminFulfillmentCentersPage() {
                           type="checkbox"
                           checked={formData.isActive}
                           onChange={(e) => setFormData({ ...formData, isActive: e.target.checked })}
-                          className="h-4 w-4 text-purple-600 focus:ring-purple-500 border-gray-300 rounded"
+                          className="h-4 w-4 text-hos-gold focus:ring-hos-gold/50 border-hos-border rounded"
                         />
-                        <label className="ml-2 block text-sm text-gray-900">Active</label>
+                        <label className="ml-2 block text-sm text-white">Active</label>
                       </div>
                       <div className="flex justify-end gap-3 mt-6">
                         <button
                           type="button"
                           onClick={closeModal}
-                          className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200"
+                          className="px-4 py-2 text-sm font-medium text-hos-text-secondary bg-hos-bg-tertiary rounded-lg hover:bg-hos-bg-tertiary"
                         >
                           Cancel
                         </button>
                         <button
                           type="submit"
                           disabled={submitting}
-                          className="px-4 py-2 text-sm font-medium text-white bg-purple-600 rounded-lg hover:bg-purple-700 disabled:opacity-50"
+                          className="px-4 py-2 text-sm font-medium text-white bg-hos-gold rounded-lg hover:bg-hos-gold-hover disabled:opacity-50"
                         >
                           {submitting ? 'Saving...' : editingCenter ? 'Save changes' : 'Create Center'}
                         </button>

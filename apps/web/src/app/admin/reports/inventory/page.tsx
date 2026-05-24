@@ -84,7 +84,7 @@ export default function AdminInventoryAnalyticsPage() {
       <RouteGuard allowedRoles={['ADMIN']}>
         <AdminLayout>
           <div className="flex items-center justify-center h-64">
-            <div className="text-gray-500">Loading inventory analytics...</div>
+            <div className="text-hos-text-muted">Loading inventory analytics...</div>
           </div>
         </AdminLayout>
       </RouteGuard>
@@ -104,86 +104,86 @@ export default function AdminInventoryAnalyticsPage() {
       <AdminLayout>
         <div className="space-y-6">
           <div className="flex items-center justify-between">
-            <h1 className="text-2xl font-bold text-gray-900">Inventory Analytics</h1>
+            <h1 className="text-2xl font-bold text-white">Inventory Analytics</h1>
             <div className="flex gap-2">
               <button
                 onClick={() => handleExport('csv')}
-                className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50"
+                className="px-4 py-2 text-sm font-medium text-hos-text-secondary bg-hos-bg-secondary border border-hos-border rounded-md hover:bg-hos-bg-tertiary"
               >
                 Export CSV
               </button>
               <button
                 onClick={() => handleExport('xlsx')}
-                className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50"
+                className="px-4 py-2 text-sm font-medium text-hos-text-secondary bg-hos-bg-secondary border border-hos-border rounded-md hover:bg-hos-bg-tertiary"
               >
                 Export Excel
               </button>
               <button
                 onClick={() => handleExport('pdf')}
-                className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50"
+                className="px-4 py-2 text-sm font-medium text-hos-text-secondary bg-hos-bg-secondary border border-hos-border rounded-md hover:bg-hos-bg-tertiary"
               >
                 Export PDF
               </button>
             </div>
           </div>
 
-          <div className="bg-white rounded-lg shadow p-6">
+          <div className="bg-hos-bg-secondary rounded-lg shadow p-6">
             <DateRangePicker value={dateRange} onChange={setDateRange} />
             <div className="mt-4">
-              <label className="text-sm font-medium text-gray-700">Filter by Warehouse:</label>
+              <label className="text-sm font-medium text-hos-text-secondary">Filter by Warehouse:</label>
               <input
                 type="text"
                 value={warehouseId}
                 onChange={(e) => setWarehouseId(e.target.value)}
                 placeholder="Warehouse ID (leave empty for all)"
-                className="mt-1 px-3 py-1.5 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 w-full max-w-xs"
+                className="mt-1 px-3 py-1.5 border border-hos-border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-hos-gold/50 w-full max-w-xs"
               />
             </div>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-            <div className="bg-white rounded-lg shadow p-6">
-              <h3 className="text-sm font-medium text-gray-500">Total Inventory Value</h3>
-              <p className="text-3xl font-bold text-gray-900 mt-2">
+            <div className="bg-hos-bg-secondary rounded-lg shadow p-6">
+              <h3 className="text-sm font-medium text-hos-text-muted">Total Inventory Value</h3>
+              <p className="text-3xl font-bold text-white mt-2">
                 ${data?.totalValue ? Number(data.totalValue).toFixed(2) : '0.00'}
               </p>
             </div>
-            <div className="bg-white rounded-lg shadow p-6">
-              <h3 className="text-sm font-medium text-gray-500">Total Quantity</h3>
-              <p className="text-3xl font-bold text-gray-900 mt-2">{data?.totalQuantity || 0}</p>
+            <div className="bg-hos-bg-secondary rounded-lg shadow p-6">
+              <h3 className="text-sm font-medium text-hos-text-muted">Total Quantity</h3>
+              <p className="text-3xl font-bold text-white mt-2">{data?.totalQuantity || 0}</p>
             </div>
-            <div className="bg-white rounded-lg shadow p-6">
-              <h3 className="text-sm font-medium text-gray-500">Warehouses</h3>
-              <p className="text-3xl font-bold text-gray-900 mt-2">{data?.warehouseCount || 0}</p>
+            <div className="bg-hos-bg-secondary rounded-lg shadow p-6">
+              <h3 className="text-sm font-medium text-hos-text-muted">Warehouses</h3>
+              <p className="text-3xl font-bold text-white mt-2">{data?.warehouseCount || 0}</p>
             </div>
-            <div className="bg-white rounded-lg shadow p-6">
-              <h3 className="text-sm font-medium text-gray-500">Low Stock Items</h3>
+            <div className="bg-hos-bg-secondary rounded-lg shadow p-6">
+              <h3 className="text-sm font-medium text-hos-text-muted">Low Stock Items</h3>
               <p className="text-3xl font-bold text-red-600 mt-2">{data?.lowStockItems || 0}</p>
             </div>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="bg-white rounded-lg shadow p-6">
-              <h3 className="text-sm font-medium text-gray-500 mb-2">Turnover Rate</h3>
-              <p className="text-4xl font-bold text-gray-900">
+            <div className="bg-hos-bg-secondary rounded-lg shadow p-6">
+              <h3 className="text-sm font-medium text-hos-text-muted mb-2">Turnover Rate</h3>
+              <p className="text-4xl font-bold text-white">
                 {data?.turnoverRate ? data.turnoverRate.toFixed(2) : '0.00'}
               </p>
-              <p className="text-sm text-gray-500 mt-2">
+              <p className="text-sm text-hos-text-muted mt-2">
                 Annual inventory turnover rate (times per year)
               </p>
             </div>
-            <div className="bg-white rounded-lg shadow p-6">
-              <h3 className="text-sm font-medium text-gray-500 mb-2">Average Days in Stock</h3>
-              <p className="text-4xl font-bold text-gray-900">
+            <div className="bg-hos-bg-secondary rounded-lg shadow p-6">
+              <h3 className="text-sm font-medium text-hos-text-muted mb-2">Average Days in Stock</h3>
+              <p className="text-4xl font-bold text-white">
                 {data?.averageDaysInStock ? data.averageDaysInStock.toFixed(1) : '0.0'} days
               </p>
-              <p className="text-sm text-gray-500 mt-2">Average time items stay in inventory</p>
+              <p className="text-sm text-hos-text-muted mt-2">Average time items stay in inventory</p>
             </div>
           </div>
 
           {metricsData.length > 0 && (
-            <div className="bg-white rounded-lg shadow p-6">
-              <h2 className="text-lg font-semibold text-gray-900 mb-4">Inventory Metrics</h2>
+            <div className="bg-hos-bg-secondary rounded-lg shadow p-6">
+              <h2 className="text-lg font-semibold text-white mb-4">Inventory Metrics</h2>
               <ResponsiveContainer width="100%" height={300}>
                 <BarChart data={metricsData}>
                   <CartesianGrid strokeDasharray="3 3" />

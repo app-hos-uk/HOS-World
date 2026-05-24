@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import ProductDetailClient from './ProductDetailClient';
+import { ProductStructuredData } from '@/components/analytics/StructuredData';
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'https://hos-marketplaceapi-production.up.railway.app';
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://hos-marketplaceweb-production.up.railway.app';
@@ -64,6 +65,18 @@ export async function generateMetadata({
   };
 }
 
-export default function ProductDetailPage() {
-  return <ProductDetailClient />;
+export default async function ProductDetailPage({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}) {
+  const { id } = await params;
+  const product = await fetchProduct(id);
+
+  return (
+    <>
+      {product ? <ProductStructuredData product={product} pathId={id} /> : null}
+      <ProductDetailClient />
+    </>
+  );
 }

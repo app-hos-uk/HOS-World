@@ -42,21 +42,21 @@ export default function AdminJourneysPage() {
       <AdminLayout>
         <div className="p-6 max-w-6xl mx-auto">
           <div className="flex justify-between items-center mb-6">
-            <h1 className="text-2xl font-semibold text-gray-900">Marketing journeys</h1>
+            <h1 className="text-2xl font-semibold text-white">Marketing journeys</h1>
             <Link
               href="/admin/journeys/new"
-              className="rounded-md bg-indigo-600 px-4 py-2 text-white text-sm hover:bg-indigo-500"
+              className="rounded-md bg-hos-gold px-4 py-2 text-white text-sm hover:bg-hos-gold/100"
             >
               New journey
             </Link>
           </div>
           {err && <p className="text-red-600 mb-4">{err}</p>}
           {loading ? (
-            <p className="text-gray-500">Loading…</p>
+            <p className="text-hos-text-muted">Loading…</p>
           ) : (
-            <div className="overflow-x-auto rounded-lg border border-gray-200 bg-white shadow-sm">
+            <div className="overflow-x-auto rounded-lg border border-hos-border bg-hos-bg-secondary shadow-sm">
               <table className="min-w-full text-sm">
-                <thead className="bg-gray-50 text-left">
+                <thead className="bg-hos-bg-secondary text-left">
                   <tr>
                     <th className="px-4 py-2">Name</th>
                     <th className="px-4 py-2">Slug</th>
@@ -68,14 +68,14 @@ export default function AdminJourneysPage() {
                 </thead>
                 <tbody>
                   {rows.map((j) => (
-                    <tr key={j.id} className="border-t border-gray-100">
+                    <tr key={j.id} className="border-t border-hos-border">
                       <td className="px-4 py-2 font-medium">{j.name}</td>
-                      <td className="px-4 py-2 text-gray-600">{j.slug}</td>
+                      <td className="px-4 py-2 text-hos-text-secondary">{j.slug}</td>
                       <td className="px-4 py-2">{j.triggerEvent}</td>
                       <td className="px-4 py-2">{j.isActive ? 'Yes' : 'No'}</td>
                       <td className="px-4 py-2">{j._count?.enrollments ?? '—'}</td>
                       <td className="px-4 py-2 text-right space-x-2">
-                        <Link href={`/admin/journeys/${j.id}`} className="text-indigo-600 hover:underline">
+                        <Link href={`/admin/journeys/${j.id}`} className="text-hos-gold hover:underline">
                           View
                         </Link>
                         <button
@@ -90,7 +90,7 @@ export default function AdminJourneysPage() {
                   ))}
                 </tbody>
               </table>
-              {rows.length === 0 && <p className="p-6 text-gray-500">No journeys yet. Run db:seed-journeys or create one.</p>}
+              {rows.length === 0 && <p className="p-6 text-hos-text-muted">No journeys yet. Run db:seed-journeys or create one.</p>}
             </div>
           )}
         </div>

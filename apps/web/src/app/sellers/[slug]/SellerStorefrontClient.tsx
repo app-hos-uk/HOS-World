@@ -122,11 +122,11 @@ export default function SellerStorefrontClient() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-white">
+      <div className="min-h-screen bg-hos-bg-secondary">
         <Header />
         <main className="container mx-auto px-4 py-12">
           <div className="flex items-center justify-center h-64">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600"></div>
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-hos-gold"></div>
           </div>
         </main>
         <Footer />
@@ -136,18 +136,18 @@ export default function SellerStorefrontClient() {
 
   if (error || !seller) {
     return (
-      <div className="min-h-screen bg-white">
+      <div className="min-h-screen bg-hos-bg-secondary">
         <Header />
         <main className="container mx-auto px-4 py-12">
           <div className="text-center py-20">
             <div className="text-6xl mb-4">🏪</div>
-            <h1 className="text-2xl font-bold text-gray-900 mb-2">Store Not Found</h1>
-            <p className="text-gray-600 mb-6">
+            <h1 className="text-2xl font-bold text-white mb-2">Store Not Found</h1>
+            <p className="text-hos-text-secondary mb-6">
               The store you are looking for does not exist or has been removed.
             </p>
             <Link
               href="/sellers"
-              className="px-6 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
+              className="px-6 py-3 bg-hos-gold text-[#1a1406] rounded-lg hover:bg-hos-gold-hover transition-colors"
             >
               Browse All Sellers
             </Link>
@@ -159,11 +159,11 @@ export default function SellerStorefrontClient() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-hos-bg-secondary">
       <Header />
       <main>
         {/* Store Banner */}
-        <div className="bg-gradient-to-r from-purple-700 to-indigo-800 text-white">
+        <div className="bg-gradient-to-r from-hos-bg-secondary to-hos-bg-tertiary text-white">
           <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12">
             <div className="flex flex-col sm:flex-row items-start sm:items-center gap-6">
               {/* Store Logo/Avatar */}
@@ -185,7 +185,7 @@ export default function SellerStorefrontClient() {
                     className="rounded-xl object-cover border-4 border-white/20"
                   />
                 ) : (
-                  <div className="w-24 h-24 rounded-xl bg-white/20 flex items-center justify-center text-4xl border-4 border-white/20">
+                  <div className="w-24 h-24 rounded-xl bg-hos-bg-secondary/20 flex items-center justify-center text-4xl border-4 border-white/20">
                     🏪
                   </div>
                 )}
@@ -195,7 +195,7 @@ export default function SellerStorefrontClient() {
               <div className="flex-1">
                 <h1 className="text-2xl sm:text-3xl font-bold">{seller.storeName}</h1>
                 {seller.description && (
-                  <p className="mt-2 text-purple-100 text-sm sm:text-base max-w-2xl line-clamp-2">
+                  <p className="mt-2 text-hos-text-secondary text-sm sm:text-base max-w-2xl line-clamp-2">
                     {seller.description}
                   </p>
                 )}
@@ -215,11 +215,11 @@ export default function SellerStorefrontClient() {
                     </span>
                   )}
                   {seller.country && (
-                    <span className="text-xs text-purple-200">
+                    <span className="text-xs text-hos-gold/30">
                       {[seller.city, seller.country].filter(Boolean).join(', ')}
                     </span>
                   )}
-                  <span className="text-xs text-purple-200">
+                  <span className="text-xs text-hos-gold/30">
                     Member since {new Date(seller.createdAt).toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
                   </span>
                 </div>
@@ -229,12 +229,12 @@ export default function SellerStorefrontClient() {
               <div className="flex gap-6 text-center">
                 <div>
                   <p className="text-2xl font-bold">{products.length}</p>
-                  <p className="text-xs text-purple-200">Products</p>
+                  <p className="text-xs text-hos-gold/30">Products</p>
                 </div>
                 {(seller.totalSales ?? 0) > 0 && (
                   <div>
                     <p className="text-2xl font-bold">{seller.totalSales}</p>
-                    <p className="text-xs text-purple-200">Sales</p>
+                    <p className="text-xs text-hos-gold/30">Sales</p>
                   </div>
                 )}
               </div>
@@ -246,15 +246,15 @@ export default function SellerStorefrontClient() {
         <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
           {/* Sort Bar */}
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
-            <h2 className="text-xl font-bold text-gray-900">
+            <h2 className="text-xl font-bold text-white">
               Products
-              <span className="text-sm font-normal text-gray-500 ml-2">({products.length})</span>
+              <span className="text-sm font-normal text-hos-text-muted ml-2">({products.length})</span>
             </h2>
             {products.length > 1 && (
               <select
                 value={sortBy}
                 onChange={(e) => setSortBy(e.target.value as any)}
-                className="px-4 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-purple-500"
+                className="px-4 py-2 border border-hos-border rounded-lg text-sm focus:ring-2 focus:ring-hos-gold/50"
               >
                 <option value="newest">Newest First</option>
                 <option value="price-asc">Price: Low to High</option>
@@ -266,12 +266,12 @@ export default function SellerStorefrontClient() {
 
           {/* Product Grid */}
           {products.length === 0 ? (
-            <div className="text-center py-16 bg-white rounded-lg border border-gray-200">
+            <div className="text-center py-16 bg-hos-bg-secondary rounded-lg border border-hos-border">
               <div className="text-5xl mb-4">📦</div>
-              <p className="text-gray-500 text-lg">This seller has no products yet.</p>
+              <p className="text-hos-text-muted text-lg">This seller has no products yet.</p>
               <Link
                 href="/products"
-                className="inline-block mt-4 text-purple-600 hover:text-purple-800 font-medium"
+                className="inline-block mt-4 text-hos-gold hover:text-hos-gold-hover font-medium"
               >
                 Browse all products
               </Link>
@@ -282,10 +282,10 @@ export default function SellerStorefrontClient() {
                 <Link
                   key={product.id}
                   href={`/products/${product.id}`}
-                  className="group bg-white rounded-lg border border-gray-200 overflow-hidden hover:shadow-lg transition-shadow"
+                  className="group bg-hos-bg-secondary rounded-lg border border-hos-border overflow-hidden hover:shadow-lg transition-shadow"
                 >
                   {/* Product Image */}
-                  <div className="aspect-square bg-gray-100 relative overflow-hidden">
+                  <div className="aspect-square bg-hos-bg-tertiary relative overflow-hidden">
                     {product.images?.[0]?.url ? (
                       <Image
                         src={product.images[0].url}
@@ -294,7 +294,7 @@ export default function SellerStorefrontClient() {
                         className="object-cover group-hover:scale-105 transition-transform duration-300"
                       />
                     ) : (
-                      <div className="w-full h-full flex items-center justify-center text-gray-300 text-5xl">
+                      <div className="w-full h-full flex items-center justify-center text-hos-text-muted text-5xl">
                         📦
                       </div>
                     )}
@@ -307,20 +307,20 @@ export default function SellerStorefrontClient() {
 
                   {/* Product Info */}
                   <div className="p-4">
-                    <h3 className="font-medium text-gray-900 group-hover:text-purple-600 transition-colors line-clamp-2 text-sm">
+                    <h3 className="font-medium text-white group-hover:text-hos-gold transition-colors line-clamp-2 text-sm">
                       {product.name}
                     </h3>
                     {product.shortDescription && (
-                      <p className="mt-1 text-xs text-gray-500 line-clamp-1">
+                      <p className="mt-1 text-xs text-hos-text-muted line-clamp-1">
                         {product.shortDescription}
                       </p>
                     )}
                     <div className="mt-2 flex items-center justify-between">
-                      <p className="text-lg font-bold text-purple-600">
+                      <p className="text-lg font-bold text-hos-gold">
                         {formatPrice(product.price, product.currency || 'USD')}
                       </p>
                       {product.averageRating != null && product.averageRating > 0 && (
-                        <div className="flex items-center gap-1 text-xs text-gray-500">
+                        <div className="flex items-center gap-1 text-xs text-hos-text-muted">
                           <span className="text-yellow-400">★</span>
                           {product.averageRating.toFixed(1)}
                           {product.reviewCount != null && (

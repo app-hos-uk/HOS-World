@@ -86,7 +86,7 @@ export default function AdminSalesReportsPage() {
       <RouteGuard allowedRoles={['ADMIN', 'SELLER', 'B2C_SELLER']}>
         <AdminLayout>
           <div className="flex items-center justify-center h-64">
-            <div className="text-gray-500">Loading sales report...</div>
+            <div className="text-hos-text-muted">Loading sales report...</div>
           </div>
         </AdminLayout>
       </RouteGuard>
@@ -106,30 +106,30 @@ export default function AdminSalesReportsPage() {
       <AdminLayout>
         <div className="space-y-6">
           <div className="flex items-center justify-between">
-            <h1 className="text-2xl font-bold text-gray-900">Sales Reports</h1>
+            <h1 className="text-2xl font-bold text-white">Sales Reports</h1>
             <div className="flex gap-2">
               <button
                 onClick={() => handleExport('csv')}
-                className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50"
+                className="px-4 py-2 text-sm font-medium text-hos-text-secondary bg-hos-bg-secondary border border-hos-border rounded-md hover:bg-hos-bg-tertiary"
               >
                 Export CSV
               </button>
               <button
                 onClick={() => handleExport('xlsx')}
-                className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50"
+                className="px-4 py-2 text-sm font-medium text-hos-text-secondary bg-hos-bg-secondary border border-hos-border rounded-md hover:bg-hos-bg-tertiary"
               >
                 Export Excel
               </button>
               <button
                 onClick={() => handleExport('pdf')}
-                className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50"
+                className="px-4 py-2 text-sm font-medium text-hos-text-secondary bg-hos-bg-secondary border border-hos-border rounded-md hover:bg-hos-bg-tertiary"
               >
                 Export PDF
               </button>
             </div>
           </div>
 
-          <div className="bg-white rounded-lg shadow p-6">
+          <div className="bg-hos-bg-secondary rounded-lg shadow p-6">
             <DateRangePicker
               value={dateRange}
               onChange={setDateRange}
@@ -137,11 +137,11 @@ export default function AdminSalesReportsPage() {
               compareEnabled={compareWithPrevious}
             />
             <div className="mt-4 flex items-center gap-4">
-              <label className="text-sm font-medium text-gray-700">Period:</label>
+              <label className="text-sm font-medium text-hos-text-secondary">Period:</label>
               <select
                 value={period}
                 onChange={(e) => setPeriod(e.target.value as any)}
-                className="px-3 py-1.5 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="px-3 py-1.5 border border-hos-border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-hos-gold/50"
               >
                 <option value="daily">Daily</option>
                 <option value="weekly">Weekly</option>
@@ -152,9 +152,9 @@ export default function AdminSalesReportsPage() {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-            <div className="bg-white rounded-lg shadow p-6">
-              <h3 className="text-sm font-medium text-gray-500">Total Revenue</h3>
-              <p className="text-3xl font-bold text-gray-900 mt-2">
+            <div className="bg-hos-bg-secondary rounded-lg shadow p-6">
+              <h3 className="text-sm font-medium text-hos-text-muted">Total Revenue</h3>
+              <p className="text-3xl font-bold text-white mt-2">
                 ${Number(data?.totalRevenue || 0).toFixed(2)}
               </p>
               {data?.growthRate && (
@@ -166,26 +166,26 @@ export default function AdminSalesReportsPage() {
                 </p>
               )}
             </div>
-            <div className="bg-white rounded-lg shadow p-6">
-              <h3 className="text-sm font-medium text-gray-500">Total Orders</h3>
-              <p className="text-3xl font-bold text-gray-900 mt-2">{data?.totalOrders || 0}</p>
+            <div className="bg-hos-bg-secondary rounded-lg shadow p-6">
+              <h3 className="text-sm font-medium text-hos-text-muted">Total Orders</h3>
+              <p className="text-3xl font-bold text-white mt-2">{data?.totalOrders || 0}</p>
               {data?.periodComparison && (
-                <p className="text-sm text-gray-500 mt-1">
+                <p className="text-sm text-hos-text-muted mt-1">
                   Previous: {data.periodComparison.previous.orders}
                 </p>
               )}
             </div>
-            <div className="bg-white rounded-lg shadow p-6">
-              <h3 className="text-sm font-medium text-gray-500">Average Order Value</h3>
-              <p className="text-3xl font-bold text-gray-900 mt-2">
+            <div className="bg-hos-bg-secondary rounded-lg shadow p-6">
+              <h3 className="text-sm font-medium text-hos-text-muted">Average Order Value</h3>
+              <p className="text-3xl font-bold text-white mt-2">
                 $
                 {data?.totalOrders > 0
                   ? (data.totalRevenue / data.totalOrders).toFixed(2)
                   : '0.00'}
               </p>
             </div>
-            <div className="bg-white rounded-lg shadow p-6">
-              <h3 className="text-sm font-medium text-gray-500">Growth Rate</h3>
+            <div className="bg-hos-bg-secondary rounded-lg shadow p-6">
+              <h3 className="text-sm font-medium text-hos-text-muted">Growth Rate</h3>
               <p
                 className={`text-3xl font-bold mt-2 ${data?.growthRate >= 0 ? 'text-green-600' : 'text-red-600'}`}
               >
@@ -195,36 +195,36 @@ export default function AdminSalesReportsPage() {
           </div>
 
           {data?.periodComparison && (
-            <div className="bg-white rounded-lg shadow p-6">
-              <h2 className="text-lg font-semibold text-gray-900 mb-4">Period Comparison</h2>
+            <div className="bg-hos-bg-secondary rounded-lg shadow p-6">
+              <h2 className="text-lg font-semibold text-white mb-4">Period Comparison</h2>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <div>
-                  <h3 className="text-sm font-medium text-gray-500">Current Period</h3>
-                  <p className="text-2xl font-bold text-gray-900 mt-1">
+                  <h3 className="text-sm font-medium text-hos-text-muted">Current Period</h3>
+                  <p className="text-2xl font-bold text-white mt-1">
                     ${Number(data.periodComparison.current.revenue).toFixed(2)}
                   </p>
-                  <p className="text-sm text-gray-500 mt-1">
+                  <p className="text-sm text-hos-text-muted mt-1">
                     {data.periodComparison.current.orders} orders
                   </p>
                 </div>
                 <div>
-                  <h3 className="text-sm font-medium text-gray-500">Previous Period</h3>
-                  <p className="text-2xl font-bold text-gray-900 mt-1">
+                  <h3 className="text-sm font-medium text-hos-text-muted">Previous Period</h3>
+                  <p className="text-2xl font-bold text-white mt-1">
                     ${Number(data.periodComparison.previous.revenue).toFixed(2)}
                   </p>
-                  <p className="text-sm text-gray-500 mt-1">
+                  <p className="text-sm text-hos-text-muted mt-1">
                     {data.periodComparison.previous.orders} orders
                   </p>
                 </div>
                 <div>
-                  <h3 className="text-sm font-medium text-gray-500">Growth</h3>
+                  <h3 className="text-sm font-medium text-hos-text-muted">Growth</h3>
                   <p
                     className={`text-2xl font-bold mt-1 ${data.periodComparison.growth.revenue >= 0 ? 'text-green-600' : 'text-red-600'}`}
                   >
                     {data.periodComparison.growth.revenue >= 0 ? '+' : ''}
                     {data.periodComparison.growth.revenue.toFixed(2)}%
                   </p>
-                  <p className="text-sm text-gray-500 mt-1">
+                  <p className="text-sm text-hos-text-muted mt-1">
                     Orders: {data.periodComparison.growth.orders >= 0 ? '+' : ''}
                     {data.periodComparison.growth.orders.toFixed(2)}%
                   </p>
@@ -235,8 +235,8 @@ export default function AdminSalesReportsPage() {
 
           {chartData.length > 0 && (
             <>
-              <div className="bg-white rounded-lg shadow p-6">
-                <h2 className="text-lg font-semibold text-gray-900 mb-4">Revenue Trends</h2>
+              <div className="bg-hos-bg-secondary rounded-lg shadow p-6">
+                <h2 className="text-lg font-semibold text-white mb-4">Revenue Trends</h2>
                 <ResponsiveContainer width="100%" height={300}>
                   <LineChart data={chartData}>
                     <CartesianGrid strokeDasharray="3 3" />
@@ -286,8 +286,8 @@ export default function AdminSalesReportsPage() {
                 </ResponsiveContainer>
               </div>
 
-              <div className="bg-white rounded-lg shadow p-6">
-                <h2 className="text-lg font-semibold text-gray-900 mb-4">Orders Volume</h2>
+              <div className="bg-hos-bg-secondary rounded-lg shadow p-6">
+                <h2 className="text-lg font-semibold text-white mb-4">Orders Volume</h2>
                 <ResponsiveContainer width="100%" height={300}>
                   <BarChart data={chartData}>
                     <CartesianGrid strokeDasharray="3 3" />
@@ -300,8 +300,8 @@ export default function AdminSalesReportsPage() {
                 </ResponsiveContainer>
               </div>
 
-              <div className="bg-white rounded-lg shadow p-6">
-                <h2 className="text-lg font-semibold text-gray-900 mb-4">Average Order Value</h2>
+              <div className="bg-hos-bg-secondary rounded-lg shadow p-6">
+                <h2 className="text-lg font-semibold text-white mb-4">Average Order Value</h2>
                 <ResponsiveContainer width="100%" height={300}>
                   <LineChart data={chartData}>
                     <CartesianGrid strokeDasharray="3 3" />

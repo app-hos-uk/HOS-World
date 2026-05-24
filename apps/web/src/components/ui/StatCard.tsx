@@ -22,11 +22,11 @@ export function StatCard({
   label,
   value,
   icon,
-  iconBgColor = 'bg-purple-50',
+  iconBgColor = 'bg-hos-gold/10',
   trend,
   onClick,
   isActive = false,
-  valueColor = 'text-gray-900',
+  valueColor = 'text-white',
   className = '',
 }: StatCardProps) {
   const Component = onClick ? 'button' : 'div';
@@ -35,15 +35,15 @@ export function StatCard({
     <Component
       onClick={onClick}
       className={`
-        bg-white rounded-xl border p-5 text-left w-full
+        bg-hos-bg-secondary rounded-xl border p-5 text-left w-full
         transition-all duration-200
         ${onClick ? 'cursor-pointer hover:shadow-md' : ''}
-        ${isActive ? 'ring-2 ring-purple-500 border-purple-200' : 'border-gray-100 shadow-sm'}
+        ${isActive ? 'ring-2 ring-hos-gold/50 border-hos-border-accent' : 'border-hos-border shadow-sm'}
         ${className}
       `}
     >
       <div className="flex items-start justify-between">
-        <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">
+        <p className="text-xs font-medium text-hos-text-muted uppercase tracking-wide">
           {label}
         </p>
         {icon && (
@@ -63,7 +63,7 @@ export function StatCard({
         }`}>
           <span>{trend.isPositive !== false ? '↑' : '↓'}</span>
           <span>{trend.value > 0 ? '+' : ''}{trend.value}%</span>
-          {trend.label && <span className="text-gray-500">{trend.label}</span>}
+          {trend.label && <span className="text-hos-text-muted">{trend.label}</span>}
         </p>
       )}
     </Component>
@@ -82,7 +82,7 @@ interface MiniStatCardProps {
 export function MiniStatCard({
   label,
   value,
-  valueColor = 'text-gray-900',
+  valueColor = 'text-white',
   onClick,
   isActive = false,
 }: MiniStatCardProps) {
@@ -92,13 +92,13 @@ export function MiniStatCard({
     <Component
       onClick={onClick}
       className={`
-        bg-white rounded-lg border p-3 text-left w-full
+        bg-hos-bg-secondary rounded-lg border p-3 text-left w-full
         transition-all duration-200
         ${onClick ? 'cursor-pointer hover:shadow-md' : ''}
-        ${isActive ? 'ring-2 ring-purple-500 border-purple-200' : 'border-gray-100 shadow-sm'}
+        ${isActive ? 'ring-2 ring-hos-gold/50 border-hos-border-accent' : 'border-hos-border shadow-sm'}
       `}
     >
-      <p className="text-xs text-gray-500">{label}</p>
+      <p className="text-xs text-hos-text-muted">{label}</p>
       <p className={`text-xl font-semibold mt-1 tabular-nums ${valueColor}`}>
         {typeof value === 'number' ? value.toLocaleString() : value}
       </p>

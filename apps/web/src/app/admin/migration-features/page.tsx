@@ -130,11 +130,11 @@ export default function MigrationFeaturesPage() {
         <div className="p-6">
           <h1 className="text-2xl font-bold mb-6">Comprehensive Features Migration</h1>
 
-          <div className="bg-white rounded-lg shadow p-6 mb-6">
-            <p className="text-gray-600 mb-4">
+          <div className="bg-hos-bg-secondary rounded-lg shadow p-6 mb-6">
+            <p className="text-hos-text-secondary mb-4">
               This migration will create all new tables and models for:
             </p>
-            <ul className="list-disc list-inside text-gray-700 mb-4 space-y-1">
+            <ul className="list-disc list-inside text-hos-text-secondary mb-4 space-y-1">
               <li>Seller Invitations</li>
               <li>Activity Logging</li>
               <li>Transaction Ledger</li>
@@ -149,7 +149,7 @@ export default function MigrationFeaturesPage() {
               <button
                 onClick={runMigration}
                 disabled={loading}
-                className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed"
+                className="px-4 py-2 bg-hos-gold text-[#1a1406] rounded hover:bg-hos-gold-hover disabled:bg-hos-text-muted disabled:cursor-not-allowed"
               >
                 {loading ? 'Running Migration...' : 'Run Migration'}
               </button>
@@ -157,7 +157,7 @@ export default function MigrationFeaturesPage() {
               <button
                 onClick={verifyMigration}
                 disabled={verifying}
-                className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 disabled:bg-gray-400 disabled:cursor-not-allowed"
+                className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 disabled:bg-hos-text-muted disabled:cursor-not-allowed"
               >
                 {verifying ? 'Verifying...' : 'Verify Migration'}
               </button>
@@ -165,7 +165,7 @@ export default function MigrationFeaturesPage() {
           </div>
 
           {result && (
-            <div className="bg-white rounded-lg shadow p-6 mb-6">
+            <div className="bg-hos-bg-secondary rounded-lg shadow p-6 mb-6">
               <h2 className="text-xl font-bold mb-4">Migration Result</h2>
               <div className={`p-4 rounded mb-4 ${result.success ? 'bg-green-50 border border-green-200' : 'bg-red-50 border border-red-200'}`}>
                 <p className={`font-semibold ${result.success ? 'text-green-800' : 'text-red-800'}`}>
@@ -182,7 +182,7 @@ export default function MigrationFeaturesPage() {
               {result.summary && (
                 <div className="mb-4">
                   <h3 className="font-semibold mb-2">Summary:</h3>
-                  <ul className="list-disc list-inside text-gray-700">
+                  <ul className="list-disc list-inside text-hos-text-secondary">
                     <li>Total Statements: {result.summary.totalStatements}</li>
                     <li>Successful: {result.summary.successful}</li>
                     <li>Errors: {result.summary.errors}</li>
@@ -199,7 +199,7 @@ export default function MigrationFeaturesPage() {
                         <span className={value ? 'text-green-600' : 'text-red-600'}>
                           {value ? '✅' : '❌'}
                         </span>
-                        <span className="text-sm text-gray-700">{key}</span>
+                        <span className="text-sm text-hos-text-secondary">{key}</span>
                       </div>
                     ))}
                   </div>
@@ -235,7 +235,7 @@ export default function MigrationFeaturesPage() {
           )}
 
           {verification && (
-            <div className="bg-white rounded-lg shadow p-6">
+            <div className="bg-hos-bg-secondary rounded-lg shadow p-6">
               <h2 className="text-xl font-bold mb-4">Verification Results</h2>
               <div className="grid grid-cols-2 gap-2">
                 {Object.entries(verification).map(([key, value]) => (
@@ -245,7 +245,7 @@ export default function MigrationFeaturesPage() {
                         <span className={value ? 'text-green-600' : 'text-red-600'}>
                           {value ? '✅' : '❌'}
                         </span>
-                        <span className="text-sm text-gray-700">{key}</span>
+                        <span className="text-sm text-hos-text-secondary">{key}</span>
                       </>
                     ) : (
                       <span className="text-red-600 text-sm">{key}: {String(value)}</span>

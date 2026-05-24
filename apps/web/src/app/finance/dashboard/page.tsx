@@ -75,12 +75,12 @@ export default function FinanceDashboardPage() {
         <div className="mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
             <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold">Pricing Review Dashboard</h1>
-            <p className="text-gray-600 mt-2">Overview of pending pricing approvals and review history</p>
+            <p className="text-hos-text-secondary mt-2">Overview of pending pricing approvals and review history</p>
           </div>
           <button
             onClick={() => fetchDashboardData(true)}
             disabled={loading}
-            className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50"
+            className="px-4 py-2 text-sm font-medium text-hos-text-secondary bg-hos-bg-secondary border border-hos-border rounded-lg hover:bg-hos-bg-tertiary disabled:opacity-50"
           >
             {loading ? 'Refreshing...' : 'Refresh'}
           </button>
@@ -88,7 +88,7 @@ export default function FinanceDashboardPage() {
 
         {loading && (
           <div className="flex items-center justify-center py-12">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600"></div>
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-hos-gold"></div>
           </div>
         )}
 
@@ -101,26 +101,26 @@ export default function FinanceDashboardPage() {
         {!loading && !error && (
           <>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-              <div className="bg-white border rounded-lg p-6 shadow-sm">
+              <div className="bg-hos-bg-secondary border rounded-lg p-6 shadow-sm">
                 <div className="flex items-center justify-between">
                   <div>
-                    <h3 className="text-sm font-medium text-gray-600 mb-1">Pending Approvals</h3>
-                    <p className="text-3xl font-bold text-purple-600">{pendingApprovals.toLocaleString()}</p>
+                    <h3 className="text-sm font-medium text-hos-text-secondary mb-1">Pending Approvals</h3>
+                    <p className="text-3xl font-bold text-hos-gold">{pendingApprovals.toLocaleString()}</p>
                   </div>
                   <div className="text-4xl">💰</div>
                 </div>
                 <Link
                   href="/finance/pricing"
-                  className="text-sm text-purple-600 hover:text-purple-700 mt-2 inline-block"
+                  className="text-sm text-hos-gold hover:text-hos-gold-hover mt-2 inline-block"
                 >
                   Review now →
                 </Link>
               </div>
 
-              <div className="bg-white border rounded-lg p-6 shadow-sm">
+              <div className="bg-hos-bg-secondary border rounded-lg p-6 shadow-sm">
                 <div className="flex items-center justify-between">
                   <div>
-                    <h3 className="text-sm font-medium text-gray-600 mb-1">Total Revenue</h3>
+                    <h3 className="text-sm font-medium text-hos-text-secondary mb-1">Total Revenue</h3>
                     <p className="text-3xl font-bold text-green-600">
                       ${totalRevenue.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                     </p>
@@ -135,11 +135,11 @@ export default function FinanceDashboardPage() {
                 </Link>
               </div>
 
-              <div className="bg-white border rounded-lg p-6 shadow-sm">
+              <div className="bg-hos-bg-secondary border rounded-lg p-6 shadow-sm">
                 <div className="flex items-center justify-between">
                   <div>
-                    <h3 className="text-sm font-medium text-gray-600 mb-1">Platform Fees</h3>
-                    <p className="text-3xl font-bold text-blue-600">
+                    <h3 className="text-sm font-medium text-hos-text-secondary mb-1">Platform Fees</h3>
+                    <p className="text-3xl font-bold text-hos-gold">
                       ${platformFees.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                     </p>
                   </div>
@@ -147,16 +147,16 @@ export default function FinanceDashboardPage() {
                 </div>
                 <Link
                   href="/finance/reports/fees"
-                  className="text-sm text-blue-600 hover:text-blue-700 mt-2 inline-block"
+                  className="text-sm text-hos-gold hover:text-hos-gold-hover mt-2 inline-block"
                 >
                   View details →
                 </Link>
               </div>
 
-              <div className="bg-white border rounded-lg p-6 shadow-sm">
+              <div className="bg-hos-bg-secondary border rounded-lg p-6 shadow-sm">
                 <div className="flex items-center justify-between">
                   <div>
-                    <h3 className="text-sm font-medium text-gray-600 mb-1">Payouts Pending</h3>
+                    <h3 className="text-sm font-medium text-hos-text-secondary mb-1">Payouts Pending</h3>
                     <p className="text-3xl font-bold text-orange-600">
                       ${payoutsPending.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                     </p>
@@ -173,12 +173,12 @@ export default function FinanceDashboardPage() {
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              <div className="bg-white border rounded-lg p-6 shadow-sm">
+              <div className="bg-hos-bg-secondary border rounded-lg p-6 shadow-sm">
                 <div className="flex items-center justify-between mb-4">
                   <h2 className="text-xl font-semibold">Pricing Approvals</h2>
                   <Link
                     href="/finance/pricing"
-                    className="text-sm text-purple-600 hover:text-purple-700"
+                    className="text-sm text-hos-gold hover:text-hos-gold-hover"
                   >
                     View all →
                   </Link>
@@ -189,20 +189,20 @@ export default function FinanceDashboardPage() {
                       <Link
                         key={approval.id}
                         href={`/finance/pricing?submission=${approval.id}`}
-                        className="block p-3 border rounded-lg hover:bg-gray-50 transition-colors"
+                        className="block p-3 border rounded-lg hover:bg-hos-bg-tertiary transition-colors"
                       >
                         <div className="flex items-start justify-between">
                           <div className="flex-1">
-                            <p className="font-medium text-gray-900">
+                            <p className="font-medium text-white">
                               {approval.catalogEntry?.title ||
                                 approval.product?.name ||
                                 approval.productData?.name ||
                                 'Untitled Product'}
                             </p>
-                            <p className="text-sm text-gray-500 mt-1">
+                            <p className="text-sm text-hos-text-muted mt-1">
                               {approval.seller?.storeName || 'Unknown Seller'}
                             </p>
-                            <div className="flex gap-4 mt-2 text-xs text-gray-500">
+                            <div className="flex gap-4 mt-2 text-xs text-hos-text-muted">
                               {approval.productData?.price && (
                                 <span>
                                   Price: ${parseFloat(approval.productData.price).toFixed(2)}
@@ -218,19 +218,19 @@ export default function FinanceDashboardPage() {
                     ))}
                   </div>
                 ) : (
-                  <div className="text-center py-8 text-gray-500">
+                  <div className="text-center py-8 text-hos-text-muted">
                     <p>No pending pricing approvals</p>
                     <p className="text-sm mt-2">Catalog entries ready for pricing will appear here</p>
                   </div>
                 )}
               </div>
 
-              <div className="bg-white border rounded-lg p-6 shadow-sm">
+              <div className="bg-hos-bg-secondary border rounded-lg p-6 shadow-sm">
                 <div className="flex items-center justify-between mb-4">
                   <h2 className="text-xl font-semibold">Pricing History</h2>
                   <Link
                     href="/finance/pricing?view=history"
-                    className="text-sm text-purple-600 hover:text-purple-700"
+                    className="text-sm text-hos-gold hover:text-hos-gold-hover"
                   >
                     View all →
                   </Link>
@@ -244,13 +244,13 @@ export default function FinanceDashboardPage() {
                       >
                         <div className="flex items-start justify-between">
                           <div className="flex-1">
-                            <p className="font-medium text-gray-900">
+                            <p className="font-medium text-white">
                               {item.product?.name || 'Unknown Product'}
                             </p>
-                            <p className="text-sm text-gray-500 mt-1">
+                            <p className="text-sm text-hos-text-muted mt-1">
                               Margin: {((Number(item.hosMargin) || 0) * 100).toFixed(1)}% | Visibility: {item.visibilityLevel || 'STANDARD'}
                             </p>
-                            <p className="text-xs text-gray-400 mt-1">
+                            <p className="text-xs text-hos-text-muted mt-1">
                               {new Date(item.approvedAt || item.createdAt).toLocaleString()}
                             </p>
                           </div>
@@ -262,7 +262,7 @@ export default function FinanceDashboardPage() {
                     ))}
                   </div>
                 ) : (
-                  <div className="text-center py-8 text-gray-500">
+                  <div className="text-center py-8 text-hos-text-muted">
                     <p>No pricing history</p>
                     <p className="text-sm mt-2">Approved pricing will appear here</p>
                   </div>

@@ -149,7 +149,7 @@ export default function AdminInfluencerPayoutsPage() {
       PAID: 'bg-green-100 text-green-800',
       CANCELLED: 'bg-red-100 text-red-800',
     };
-    return styles[status] || 'bg-gray-100 text-gray-800';
+    return styles[status] || 'bg-hos-bg-tertiary text-white';
   };
 
   return (
@@ -159,25 +159,25 @@ export default function AdminInfluencerPayoutsPage() {
         {/* Header */}
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">Influencer Payouts</h1>
-            <p className="text-gray-600 mt-1">
+            <h1 className="text-2xl font-bold text-white">Influencer Payouts</h1>
+            <p className="text-hos-text-secondary mt-1">
               Create and track payout records
             </p>
           </div>
           <button
             onClick={() => setShowCreateModal(true)}
-            className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
+            className="px-4 py-2 bg-hos-gold text-[#1a1406] rounded-lg hover:bg-hos-gold-hover transition-colors"
           >
             Create Payout
           </button>
         </div>
 
         {/* Filters */}
-        <div className="bg-white rounded-lg shadow-sm p-4">
+        <div className="bg-hos-bg-secondary rounded-lg shadow-sm p-4">
           <select
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value)}
-            className="px-4 py-2 border border-gray-300 rounded-lg"
+            className="px-4 py-2 border border-hos-border rounded-lg"
           >
             <option value="">All Status</option>
             <option value="PENDING">Pending</option>
@@ -187,40 +187,40 @@ export default function AdminInfluencerPayoutsPage() {
         </div>
 
         {/* Table */}
-        <div className="bg-white rounded-lg shadow-sm overflow-hidden">
+        <div className="bg-hos-bg-secondary rounded-lg shadow-sm overflow-hidden">
           {loading ? (
             <div className="p-12 text-center">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-600 mx-auto"></div>
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-hos-gold mx-auto"></div>
             </div>
           ) : payouts.length === 0 ? (
-            <div className="p-12 text-center text-gray-500">No payouts found</div>
+            <div className="p-12 text-center text-hos-text-muted">No payouts found</div>
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full">
-                <thead className="bg-gray-50">
+                <thead className="bg-hos-bg-secondary">
                   <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Date</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Influencer</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Period</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Commissions</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Amount</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-hos-text-muted uppercase">Date</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-hos-text-muted uppercase">Influencer</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-hos-text-muted uppercase">Period</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-hos-text-muted uppercase">Commissions</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-hos-text-muted uppercase">Amount</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-hos-text-muted uppercase">Status</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-hos-text-muted uppercase">Actions</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-gray-200">
+                <tbody className="divide-y divide-hos-border">
                   {payouts.map((payout) => (
-                    <tr key={payout.id} className="hover:bg-gray-50">
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                    <tr key={payout.id} className="hover:bg-hos-bg-tertiary">
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-hos-text-muted">
                         {formatDate(payout.createdAt)}
                       </td>
                       <td className="px-6 py-4">
-                        <p className="font-medium text-gray-900">{payout.influencer.displayName}</p>
+                        <p className="font-medium text-white">{payout.influencer.displayName}</p>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-hos-text-muted">
                         {formatDate(payout.periodStart)} - {formatDate(payout.periodEnd)}
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-hos-text-muted">
                         {payout._count.commissions} commissions
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm font-semibold text-green-600">
@@ -231,7 +231,7 @@ export default function AdminInfluencerPayoutsPage() {
                           {payout.status}
                         </span>
                         {payout.paidAt && (
-                          <p className="text-xs text-gray-500 mt-1">
+                          <p className="text-xs text-hos-text-muted mt-1">
                             Paid {formatDate(payout.paidAt)}
                           </p>
                         )}
@@ -265,17 +265,17 @@ export default function AdminInfluencerPayoutsPage() {
         {/* Create Modal */}
         {showCreateModal && (
           <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-            <div className="bg-white rounded-xl max-w-md w-full">
+            <div className="bg-hos-bg-secondary rounded-xl max-w-md w-full">
               <div className="p-6 border-b">
-                <h2 className="text-xl font-semibold text-gray-900">Create Payout</h2>
+                <h2 className="text-xl font-semibold text-white">Create Payout</h2>
               </div>
               <form onSubmit={handleCreate} className="p-6 space-y-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Influencer</label>
+                  <label className="block text-sm font-medium text-hos-text-secondary mb-1">Influencer</label>
                   <select
                     value={createForm.influencerId}
                     onChange={(e) => setCreateForm({ ...createForm, influencerId: e.target.value })}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg"
+                    className="w-full px-4 py-2 border border-hos-border rounded-lg"
                     required
                   >
                     <option value="">Select influencer</option>
@@ -286,47 +286,47 @@ export default function AdminInfluencerPayoutsPage() {
                 </div>
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Period Start</label>
+                    <label className="block text-sm font-medium text-hos-text-secondary mb-1">Period Start</label>
                     <input
                       type="date"
                       value={createForm.periodStart}
                       onChange={(e) => setCreateForm({ ...createForm, periodStart: e.target.value })}
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg"
+                      className="w-full px-4 py-2 border border-hos-border rounded-lg"
                       required
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Period End</label>
+                    <label className="block text-sm font-medium text-hos-text-secondary mb-1">Period End</label>
                     <input
                       type="date"
                       value={createForm.periodEnd}
                       onChange={(e) => setCreateForm({ ...createForm, periodEnd: e.target.value })}
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg"
+                      className="w-full px-4 py-2 border border-hos-border rounded-lg"
                       required
                     />
                   </div>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Notes</label>
+                  <label className="block text-sm font-medium text-hos-text-secondary mb-1">Notes</label>
                   <textarea
                     value={createForm.notes}
                     onChange={(e) => setCreateForm({ ...createForm, notes: e.target.value })}
                     rows={2}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg"
+                    className="w-full px-4 py-2 border border-hos-border rounded-lg"
                   />
                 </div>
                 <div className="flex justify-end gap-3 pt-4">
                   <button
                     type="button"
                     onClick={() => setShowCreateModal(false)}
-                    className="px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-lg"
+                    className="px-4 py-2 text-hos-text-secondary hover:bg-hos-bg-tertiary rounded-lg"
                   >
                     Cancel
                   </button>
                   <button
                     type="submit"
                     disabled={creating}
-                    className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 disabled:opacity-50"
+                    className="px-4 py-2 bg-hos-gold text-[#1a1406] rounded-lg hover:bg-hos-gold-hover disabled:opacity-50"
                   >
                     {creating ? 'Creating...' : 'Create Payout'}
                   </button>
@@ -339,21 +339,21 @@ export default function AdminInfluencerPayoutsPage() {
         {/* Mark Paid Modal */}
         {showPayModal && (
           <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-            <div className="bg-white rounded-xl max-w-md w-full">
+            <div className="bg-hos-bg-secondary rounded-xl max-w-md w-full">
               <div className="p-6 border-b">
-                <h2 className="text-xl font-semibold text-gray-900">Mark Payout as Paid</h2>
+                <h2 className="text-xl font-semibold text-white">Mark Payout as Paid</h2>
               </div>
               <div className="p-6 space-y-4">
-                <p className="text-gray-600">
+                <p className="text-hos-text-secondary">
                   Recording payment of <strong>{formatCurrency(showPayModal.totalAmount)}</strong> to{' '}
                   <strong>{showPayModal.influencer.displayName}</strong>
                 </p>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Payment Method</label>
+                  <label className="block text-sm font-medium text-hos-text-secondary mb-1">Payment Method</label>
                   <select
                     value={payForm.paymentMethod}
                     onChange={(e) => setPayForm({ ...payForm, paymentMethod: e.target.value })}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg"
+                    className="w-full px-4 py-2 border border-hos-border rounded-lg"
                   >
                     <option value="">Select method</option>
                     <option value="BANK">Bank Transfer</option>
@@ -363,19 +363,19 @@ export default function AdminInfluencerPayoutsPage() {
                   </select>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Reference Number</label>
+                  <label className="block text-sm font-medium text-hos-text-secondary mb-1">Reference Number</label>
                   <input
                     type="text"
                     value={payForm.paymentRef}
                     onChange={(e) => setPayForm({ ...payForm, paymentRef: e.target.value })}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg"
+                    className="w-full px-4 py-2 border border-hos-border rounded-lg"
                     placeholder="Transaction ID or reference"
                   />
                 </div>
                 <div className="flex justify-end gap-3 pt-4">
                   <button
                     onClick={() => setShowPayModal(null)}
-                    className="px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-lg"
+                    className="px-4 py-2 text-hos-text-secondary hover:bg-hos-bg-tertiary rounded-lg"
                   >
                     Cancel
                   </button>

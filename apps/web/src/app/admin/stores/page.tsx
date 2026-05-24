@@ -29,7 +29,7 @@ export default function AdminStoresPage() {
       <AdminLayout>
         <div className="p-6 max-w-6xl mx-auto">
           <div className="flex justify-between items-center mb-4">
-            <h1 className="text-2xl font-semibold text-gray-900">Stores</h1>
+            <h1 className="text-2xl font-semibold text-white">Stores</h1>
             <Link
               href="/admin/stores/new"
               className="text-sm rounded-md bg-violet-700 px-3 py-2 text-white"
@@ -38,11 +38,11 @@ export default function AdminStoresPage() {
             </Link>
           </div>
           {loading ? (
-            <p className="text-gray-500">Loading…</p>
+            <p className="text-hos-text-muted">Loading…</p>
           ) : (
             <div className="overflow-x-auto border rounded-lg">
               <table className="min-w-full text-sm">
-                <thead className="bg-gray-50">
+                <thead className="bg-hos-bg-secondary">
                   <tr>
                     <th className="text-left p-2">Name</th>
                     <th className="text-left p-2">Code</th>

@@ -237,7 +237,7 @@ export default function IntegrationsPage() {
       case 'FAILED':
         return 'bg-red-100 text-red-800';
       default:
-        return 'bg-gray-100 text-gray-800';
+        return 'bg-hos-bg-tertiary text-white';
     }
   };
 
@@ -256,19 +256,19 @@ export default function IntegrationsPage() {
     <RouteGuard allowedRoles={['ADMIN']} showAccessDenied={true}>
       <AdminLayout>
         <div className="mb-6">
-          <div className="flex items-center gap-2 text-sm text-gray-500 mb-2">
-            <Link href="/admin/settings" className="hover:text-purple-600">Settings</Link>
+          <div className="flex items-center gap-2 text-sm text-hos-text-muted mb-2">
+            <Link href="/admin/settings" className="hover:text-hos-gold">Settings</Link>
             <span>/</span>
             <span>Integrations</span>
           </div>
           <div className="flex justify-between items-center">
             <div>
               <h1 className="text-2xl sm:text-3xl font-bold">Integrations</h1>
-              <p className="text-gray-600 mt-1">Manage third-party service connections</p>
+              <p className="text-hos-text-secondary mt-1">Manage third-party service connections</p>
             </div>
             <button
               onClick={() => setShowAddModal(true)}
-              className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 font-medium"
+              className="px-4 py-2 bg-hos-gold text-[#1a1406] rounded-lg hover:bg-hos-gold-hover font-medium"
             >
               + Add Integration
             </button>
@@ -278,8 +278,8 @@ export default function IntegrationsPage() {
         {loading ? (
           <div className="flex items-center justify-center py-12">
             <div className="text-center">
-              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600 mx-auto mb-4"></div>
-              <p className="text-gray-600">Loading integrations...</p>
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-hos-gold mx-auto mb-4"></div>
+              <p className="text-hos-text-secondary">Loading integrations...</p>
             </div>
           </div>
         ) : (
@@ -289,20 +289,20 @@ export default function IntegrationsPage() {
               const categoryProviders = availableProviders[category] || [];
 
               return (
-                <div key={category} className="bg-white border border-gray-200 rounded-lg overflow-hidden">
-                  <div className="px-6 py-4 bg-gray-50 border-b border-gray-200">
+                <div key={category} className="bg-hos-bg-secondary border border-hos-border rounded-lg overflow-hidden">
+                  <div className="px-6 py-4 bg-hos-bg-secondary border-b border-hos-border">
                     <div className="flex items-center gap-3">
                       <span className="text-2xl">{info.icon}</span>
                       <div>
                         <h2 className="text-lg font-semibold">{info.name}</h2>
-                        <p className="text-sm text-gray-600">{info.description}</p>
+                        <p className="text-sm text-hos-text-secondary">{info.description}</p>
                       </div>
                     </div>
                   </div>
 
                   <div className="p-6">
                     {categoryIntegrations.length === 0 ? (
-                      <div className="text-center py-8 text-gray-500">
+                      <div className="text-center py-8 text-hos-text-muted">
                         <p>No integrations configured for this category.</p>
                         {categoryProviders.length > 0 && (
                           <button
@@ -310,7 +310,7 @@ export default function IntegrationsPage() {
                               setSelectedCategory(category);
                               setShowAddModal(true);
                             }}
-                            className="mt-2 text-purple-600 hover:text-purple-700 font-medium"
+                            className="mt-2 text-hos-gold hover:text-hos-gold-hover font-medium"
                           >
                             Add {info.name.toLowerCase()} integration
                           </button>
@@ -321,12 +321,12 @@ export default function IntegrationsPage() {
                         {categoryIntegrations.map((integration) => (
                           <div
                             key={integration.id}
-                            className="border border-gray-200 rounded-lg p-4 hover:border-purple-300 transition-colors"
+                            className="border border-hos-border rounded-lg p-4 hover:border-hos-border-accent transition-colors"
                           >
                             <div className="flex items-start justify-between mb-3">
                               <div>
                                 <h3 className="font-semibold">{integration.displayName}</h3>
-                                <p className="text-sm text-gray-500">{integration.provider}</p>
+                                <p className="text-sm text-hos-text-muted">{integration.provider}</p>
                               </div>
                               <div className="flex items-center gap-2">
                                 <span
@@ -344,7 +344,7 @@ export default function IntegrationsPage() {
                                 className={`px-2 py-1 text-xs rounded ${
                                   integration.isTestMode
                                     ? 'bg-yellow-100 text-yellow-800'
-                                    : 'bg-blue-100 text-blue-800'
+                                    : 'bg-hos-gold/20 text-hos-gold'
                                 }`}
                               >
                                 {integration.isTestMode ? 'Test Mode' : 'Production'}
@@ -353,7 +353,7 @@ export default function IntegrationsPage() {
                                 className={`px-2 py-1 text-xs rounded ${
                                   integration.isActive
                                     ? 'bg-green-100 text-green-800'
-                                    : 'bg-gray-100 text-gray-600'
+                                    : 'bg-hos-bg-tertiary text-hos-text-secondary'
                                 }`}
                               >
                                 {integration.isActive ? 'Active' : 'Inactive'}
@@ -361,16 +361,16 @@ export default function IntegrationsPage() {
                             </div>
 
                             {integration.lastTestedAt && (
-                              <p className="text-xs text-gray-500 mb-3">
+                              <p className="text-xs text-hos-text-muted mb-3">
                                 Last tested: {new Date(integration.lastTestedAt).toLocaleString()}
                               </p>
                             )}
 
-                            <div className="flex gap-2 pt-3 border-t border-gray-100">
+                            <div className="flex gap-2 pt-3 border-t border-hos-border">
                               <button
                                 onClick={() => handleTestConnection(integration.id)}
                                 disabled={testingId === integration.id}
-                                className="flex-1 px-3 py-1.5 text-sm bg-gray-100 hover:bg-gray-200 rounded disabled:opacity-50"
+                                className="flex-1 px-3 py-1.5 text-sm bg-hos-bg-tertiary hover:bg-hos-bg-tertiary rounded disabled:opacity-50"
                               >
                                 {testingId === integration.id ? 'Testing...' : 'Test'}
                               </button>
@@ -430,7 +430,7 @@ export default function IntegrationsPage() {
                   leaveFrom="opacity-100 scale-100"
                   leaveTo="opacity-0 scale-95"
                 >
-                  <Dialog.Panel className="w-full max-w-lg transform overflow-hidden rounded-2xl bg-white p-6 shadow-xl transition-all">
+                  <Dialog.Panel className="w-full max-w-lg transform overflow-hidden rounded-2xl bg-hos-bg-secondary p-6 shadow-xl transition-all">
                     <Dialog.Title as="h3" className="text-lg font-semibold mb-4">
                       Add Integration
                     </Dialog.Title>
@@ -438,7 +438,7 @@ export default function IntegrationsPage() {
                     <form onSubmit={handleAddIntegration} className="space-y-4">
                       {/* Category Selection */}
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                        <label className="block text-sm font-medium text-hos-text-secondary mb-1">
                           Category *
                         </label>
                         <select
@@ -448,7 +448,7 @@ export default function IntegrationsPage() {
                             setSelectedProvider(null);
                             setFormData({ ...formData, credentials: {} });
                           }}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
+                          className="w-full px-3 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50"
                           required
                         >
                           <option value="">Select category...</option>
@@ -463,7 +463,7 @@ export default function IntegrationsPage() {
                       {/* Provider Selection */}
                       {selectedCategory && (
                         <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-1">
+                          <label className="block text-sm font-medium text-hos-text-secondary mb-1">
                             Provider *
                           </label>
                           <select
@@ -481,7 +481,7 @@ export default function IntegrationsPage() {
                                 });
                               }
                             }}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
+                            className="w-full px-3 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50"
                             required
                           >
                             <option value="">Select provider...</option>
@@ -498,14 +498,14 @@ export default function IntegrationsPage() {
                       {selectedProvider && (
                         <>
                           <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                            <label className="block text-sm font-medium text-hos-text-secondary mb-1">
                               Display Name *
                             </label>
                             <input
                               type="text"
                               value={formData.displayName}
                               onChange={(e) => setFormData({ ...formData, displayName: e.target.value })}
-                              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
+                              className="w-full px-3 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50"
                               required
                             />
                           </div>
@@ -517,7 +517,7 @@ export default function IntegrationsPage() {
                               id="testMode"
                               checked={formData.isTestMode}
                               onChange={(e) => setFormData({ ...formData, isTestMode: e.target.checked })}
-                              className="h-4 w-4 text-purple-600 rounded"
+                              className="h-4 w-4 text-hos-gold rounded"
                             />
                             <label htmlFor="testMode" className="text-sm">
                               Test/Sandbox Mode
@@ -527,10 +527,10 @@ export default function IntegrationsPage() {
                           {/* Credentials */}
                           {getProviderMetadata() && (
                             <div className="space-y-3">
-                              <h4 className="text-sm font-medium text-gray-700">Credentials</h4>
+                              <h4 className="text-sm font-medium text-hos-text-secondary">Credentials</h4>
                               {getProviderMetadata()!.requiredCredentials.map((field) => (
                                 <div key={field}>
-                                  <label className="block text-sm text-gray-600 mb-1">
+                                  <label className="block text-sm text-hos-text-secondary mb-1">
                                     {field.replace(/([A-Z])/g, ' $1').replace(/^./, (s) => s.toUpperCase())} *
                                   </label>
                                   <input
@@ -542,14 +542,14 @@ export default function IntegrationsPage() {
                                         credentials: { ...formData.credentials, [field]: e.target.value },
                                       })
                                     }
-                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
+                                    className="w-full px-3 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50"
                                     required
                                   />
                                 </div>
                               ))}
                               {getProviderMetadata()!.optionalCredentials.map((field) => (
                                 <div key={field}>
-                                  <label className="block text-sm text-gray-600 mb-1">
+                                  <label className="block text-sm text-hos-text-secondary mb-1">
                                     {field.replace(/([A-Z])/g, ' $1').replace(/^./, (s) => s.toUpperCase())}
                                   </label>
                                   <input
@@ -561,18 +561,18 @@ export default function IntegrationsPage() {
                                         credentials: { ...formData.credentials, [field]: e.target.value },
                                       })
                                     }
-                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
+                                    className="w-full px-3 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50"
                                   />
                                 </div>
                               ))}
 
                               {getProviderMetadata()!.documentationUrl && (
-                                <p className="text-sm text-gray-500">
+                                <p className="text-sm text-hos-text-muted">
                                   <a
                                     href={getProviderMetadata()!.documentationUrl}
                                     target="_blank"
                                     rel="noopener noreferrer"
-                                    className="text-purple-600 hover:underline"
+                                    className="text-hos-gold hover:underline"
                                   >
                                     View API documentation →
                                   </a>
@@ -590,14 +590,14 @@ export default function IntegrationsPage() {
                             setShowAddModal(false);
                             resetForm();
                           }}
-                          className="px-4 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200"
+                          className="px-4 py-2 text-hos-text-secondary bg-hos-bg-tertiary rounded-lg hover:bg-hos-bg-tertiary"
                         >
                           Cancel
                         </button>
                         <button
                           type="submit"
                           disabled={submitting || !selectedProvider}
-                          className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 disabled:opacity-50"
+                          className="px-4 py-2 bg-hos-gold text-[#1a1406] rounded-lg hover:bg-hos-gold-hover disabled:opacity-50"
                         >
                           {submitting ? 'Adding...' : 'Add Integration'}
                         </button>

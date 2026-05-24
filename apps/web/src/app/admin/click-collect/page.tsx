@@ -43,7 +43,7 @@ export default function AdminClickCollectListPage() {
     <RouteGuard allowedRoles={['ADMIN']}>
       <AdminLayout>
         <div className="p-6 max-w-6xl mx-auto">
-          <h1 className="text-2xl font-semibold text-gray-900 mb-4">Click &amp; collect</h1>
+          <h1 className="text-2xl font-semibold text-white mb-4">Click &amp; collect</h1>
           <div className="flex flex-wrap gap-2 mb-4">
             <input
               className="border rounded px-2 py-1 text-sm"
@@ -66,14 +66,14 @@ export default function AdminClickCollectListPage() {
             </select>
             <button
               type="button"
-              className="text-sm px-3 py-1 rounded bg-gray-800 text-white"
+              className="text-sm px-3 py-1 rounded bg-hos-surface text-white"
               onClick={() => load()}
             >
               Apply
             </button>
           </div>
           {loading ? (
-            <p className="text-gray-500">Loading…</p>
+            <p className="text-hos-text-muted">Loading…</p>
           ) : (
             <ul className="space-y-2 text-sm">
               {rows.map((r) => {
@@ -81,12 +81,12 @@ export default function AdminClickCollectListPage() {
                 const st = r.store as Record<string, string> | undefined;
                 const ord = r.order as Record<string, string> | undefined;
                 return (
-                  <li key={id} className="border rounded-lg p-3 bg-white flex justify-between gap-2">
+                  <li key={id} className="border rounded-lg p-3 bg-hos-bg-secondary flex justify-between gap-2">
                     <div>
                       <Link href={`/admin/click-collect/${id}`} className="text-violet-700 font-medium">
                         {ord?.orderNumber ?? id.slice(0, 8)}
                       </Link>
-                      <p className="text-gray-500 text-xs">
+                      <p className="text-hos-text-muted text-xs">
                         {String(r.status)} · {st?.name ?? st?.code ?? '—'}
                       </p>
                     </div>

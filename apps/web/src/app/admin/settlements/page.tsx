@@ -334,12 +334,12 @@ export default function AdminSettlementsPage() {
   const getStatusBadge = (status: string) => {
     const styles: Record<string, string> = {
       PENDING: 'bg-yellow-100 text-yellow-800',
-      PROCESSING: 'bg-blue-100 text-blue-800',
+      PROCESSING: 'bg-hos-gold/20 text-hos-gold',
       PAID: 'bg-green-100 text-green-800',
       FAILED: 'bg-red-100 text-red-800',
-      CANCELLED: 'bg-gray-100 text-gray-800',
+      CANCELLED: 'bg-hos-bg-tertiary text-white',
     };
-    return <span className={`px-2 py-0.5 text-xs rounded-full ${styles[status] || 'bg-gray-100 text-gray-800'}`}>{status}</span>;
+    return <span className={`px-2 py-0.5 text-xs rounded-full ${styles[status] || 'bg-hos-bg-tertiary text-white'}`}>{status}</span>;
   };
 
   const exportColumns = [
@@ -358,7 +358,7 @@ export default function AdminSettlementsPage() {
       <RouteGuard allowedRoles={['ADMIN', 'FINANCE']}>
         <AdminLayout>
           <div className="flex items-center justify-center h-64">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600"></div>
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-hos-gold"></div>
           </div>
         </AdminLayout>
       </RouteGuard>
@@ -372,14 +372,14 @@ export default function AdminSettlementsPage() {
           {/* Header */}
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div>
-              <h1 className="text-2xl font-bold text-gray-900">Settlements</h1>
-              <p className="text-gray-600 mt-1">Manage seller payouts and settlements</p>
+              <h1 className="text-2xl font-bold text-white">Settlements</h1>
+              <p className="text-hos-text-secondary mt-1">Manage seller payouts and settlements</p>
             </div>
             <div className="flex gap-2">
               <DataExport data={filteredSettlements} columns={exportColumns} filename="settlements-export" />
               <button
                 onClick={() => setShowCreateModal(true)}
-                className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700"
+                className="px-4 py-2 bg-hos-gold text-[#1a1406] rounded-lg hover:bg-hos-gold-hover"
               >
                 + Create Settlement
               </button>
@@ -389,35 +389,35 @@ export default function AdminSettlementsPage() {
           {/* Stats Cards */}
           {stats && (
             <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4">
-              <div className="bg-white rounded-lg shadow p-4">
-                <p className="text-sm text-gray-600">Pending</p>
+              <div className="bg-hos-bg-secondary rounded-lg shadow p-4">
+                <p className="text-sm text-hos-text-secondary">Pending</p>
                 <p className="text-2xl font-bold text-yellow-600">{stats.pendingCount}</p>
-                <p className="text-xs text-gray-500">{formatPrice(stats.pendingAmount)}</p>
+                <p className="text-xs text-hos-text-muted">{formatPrice(stats.pendingAmount)}</p>
               </div>
-              <div className="bg-white rounded-lg shadow p-4">
-                <p className="text-sm text-gray-600">Processing</p>
-                <p className="text-2xl font-bold text-blue-600">{stats.processingCount}</p>
-                <p className="text-xs text-gray-500">{formatPrice(stats.processingAmount)}</p>
+              <div className="bg-hos-bg-secondary rounded-lg shadow p-4">
+                <p className="text-sm text-hos-text-secondary">Processing</p>
+                <p className="text-2xl font-bold text-hos-gold">{stats.processingCount}</p>
+                <p className="text-xs text-hos-text-muted">{formatPrice(stats.processingAmount)}</p>
               </div>
-              <div className="bg-white rounded-lg shadow p-4">
-                <p className="text-sm text-gray-600">Paid This Month</p>
+              <div className="bg-hos-bg-secondary rounded-lg shadow p-4">
+                <p className="text-sm text-hos-text-secondary">Paid This Month</p>
                 <p className="text-2xl font-bold text-green-600">{stats.paidThisMonth}</p>
-                <p className="text-xs text-gray-500">{formatPrice(stats.paidThisMonthAmount)}</p>
+                <p className="text-xs text-hos-text-muted">{formatPrice(stats.paidThisMonthAmount)}</p>
               </div>
-              <div className="bg-white rounded-lg shadow p-4">
-                <p className="text-sm text-gray-600">Failed</p>
+              <div className="bg-hos-bg-secondary rounded-lg shadow p-4">
+                <p className="text-sm text-hos-text-secondary">Failed</p>
                 <p className="text-2xl font-bold text-red-600">{stats.failedCount}</p>
               </div>
-              <div className="bg-white rounded-lg shadow p-4">
-                <p className="text-sm text-gray-600">Platform Fees (Total)</p>
-                <p className="text-2xl font-bold text-purple-600">{formatPrice(stats.totalPlatformFees)}</p>
+              <div className="bg-hos-bg-secondary rounded-lg shadow p-4">
+                <p className="text-sm text-hos-text-secondary">Platform Fees (Total)</p>
+                <p className="text-2xl font-bold text-hos-gold">{formatPrice(stats.totalPlatformFees)}</p>
               </div>
             </div>
           )}
 
           {/* Chart */}
-          <div className="bg-white rounded-lg shadow p-6">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">Payouts (Last 30 Days)</h3>
+          <div className="bg-hos-bg-secondary rounded-lg shadow p-6">
+            <h3 className="text-lg font-semibold text-white mb-4">Payouts (Last 30 Days)</h3>
             <div className="h-64">
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={chartData}>
@@ -439,7 +439,7 @@ export default function AdminSettlementsPage() {
           )}
 
           {/* Filters */}
-          <div className="bg-white rounded-lg shadow p-4">
+          <div className="bg-hos-bg-secondary rounded-lg shadow p-4">
             <div className="flex flex-wrap gap-4 items-center">
               <div className="flex-1 min-w-[200px]">
                 <input
@@ -447,13 +447,13 @@ export default function AdminSettlementsPage() {
                   placeholder="Search by seller, ID, or reference..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
+                  className="w-full px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50"
                 />
               </div>
               <select
                 value={statusFilter}
                 onChange={(e) => setStatusFilter(e.target.value)}
-                className="px-4 py-2 border border-gray-300 rounded-lg"
+                className="px-4 py-2 border border-hos-border rounded-lg"
               >
                 <option value="ALL">All Status</option>
                 <option value="PENDING">Pending</option>
@@ -465,7 +465,7 @@ export default function AdminSettlementsPage() {
               <select
                 value={dateFilter}
                 onChange={(e) => setDateFilter(e.target.value)}
-                className="px-4 py-2 border border-gray-300 rounded-lg"
+                className="px-4 py-2 border border-hos-border rounded-lg"
               >
                 <option value="ALL">All Time</option>
                 <option value="7d">Last 7 Days</option>
@@ -479,7 +479,7 @@ export default function AdminSettlementsPage() {
                   setSortBy(field as any);
                   setSortOrder(order as any);
                 }}
-                className="px-4 py-2 border border-gray-300 rounded-lg"
+                className="px-4 py-2 border border-hos-border rounded-lg"
               >
                 <option value="date-desc">Newest First</option>
                 <option value="date-asc">Oldest First</option>
@@ -492,14 +492,14 @@ export default function AdminSettlementsPage() {
             {/* Bulk Actions */}
             {selectedSettlements.size > 0 && (
               <div className="flex items-center gap-4 mt-4 pt-4 border-t">
-                <span className="text-sm text-gray-600">{selectedSettlements.size} selected</span>
+                <span className="text-sm text-hos-text-secondary">{selectedSettlements.size} selected</span>
                 <button
                   onClick={handleBulkProcess}
-                  className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 text-sm"
+                  className="px-4 py-2 bg-hos-gold text-[#1a1406] rounded-lg hover:bg-hos-gold-hover text-sm"
                 >
                   Process Selected
                 </button>
-                <button onClick={() => setSelectedSettlements(new Set())} className="text-sm text-gray-500 hover:text-gray-700">
+                <button onClick={() => setSelectedSettlements(new Set())} className="text-sm text-hos-text-muted hover:text-hos-text-secondary">
                   Clear
                 </button>
               </div>
@@ -507,64 +507,64 @@ export default function AdminSettlementsPage() {
           </div>
 
           {/* Settlements Table */}
-          <div className="bg-white rounded-lg shadow overflow-hidden">
+          <div className="bg-hos-bg-secondary rounded-lg shadow overflow-hidden">
             <div className="p-4 border-b flex justify-between items-center">
               <h2 className="text-lg font-semibold">Settlements ({filteredSettlements.length})</h2>
-              <button onClick={selectAllPending} className="text-sm text-purple-600 hover:text-purple-800">
+              <button onClick={selectAllPending} className="text-sm text-hos-gold hover:text-hos-gold-hover">
                 Select All Pending
               </button>
             </div>
             <div className="overflow-x-auto">
-              <table className="min-w-full divide-y divide-gray-200">
-                <thead className="bg-gray-50">
+              <table className="min-w-full divide-y divide-hos-border">
+                <thead className="bg-hos-bg-secondary">
                   <tr>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                    <th className="px-4 py-3 text-left text-xs font-medium text-hos-text-muted uppercase">
                       <input
                         type="checkbox"
                         checked={selectedSettlements.size === filteredSettlements.filter(s => s.status === 'PENDING').length && filteredSettlements.filter(s => s.status === 'PENDING').length > 0}
                         onChange={() => selectedSettlements.size > 0 ? setSelectedSettlements(new Set()) : selectAllPending()}
-                        className="rounded border-gray-300 text-purple-600"
+                        className="rounded border-hos-border text-hos-gold"
                       />
                     </th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Seller</th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Period</th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Orders</th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Gross</th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Fees</th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Net</th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
-                    <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">Actions</th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-hos-text-muted uppercase">Seller</th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-hos-text-muted uppercase">Period</th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-hos-text-muted uppercase">Orders</th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-hos-text-muted uppercase">Gross</th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-hos-text-muted uppercase">Fees</th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-hos-text-muted uppercase">Net</th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-hos-text-muted uppercase">Status</th>
+                    <th className="px-4 py-3 text-right text-xs font-medium text-hos-text-muted uppercase">Actions</th>
                   </tr>
                 </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
+                <tbody className="bg-hos-bg-secondary divide-y divide-hos-border">
                   {filteredSettlements.length === 0 ? (
                     <tr>
-                      <td colSpan={9} className="px-6 py-8 text-center text-gray-500">
+                      <td colSpan={9} className="px-6 py-8 text-center text-hos-text-muted">
                         No settlements found
                       </td>
                     </tr>
                   ) : (
                     filteredSettlements.map((settlement) => (
-                      <tr key={settlement.id} className={`hover:bg-gray-50 ${selectedSettlements.has(settlement.id) ? 'bg-purple-50' : ''}`}>
+                      <tr key={settlement.id} className={`hover:bg-hos-bg-tertiary ${selectedSettlements.has(settlement.id) ? 'bg-hos-gold/10' : ''}`}>
                         <td className="px-4 py-3">
                           {settlement.status === 'PENDING' && (
                             <input
                               type="checkbox"
                               checked={selectedSettlements.has(settlement.id)}
                               onChange={() => toggleSelection(settlement.id)}
-                              className="rounded border-gray-300 text-purple-600"
+                              className="rounded border-hos-border text-hos-gold"
                             />
                           )}
                         </td>
                         <td className="px-4 py-3">
-                          <div className="text-sm font-medium text-gray-900">{settlement.seller?.storeName || 'Unknown'}</div>
-                          <div className="text-xs text-gray-500">{settlement.seller?.email}</div>
+                          <div className="text-sm font-medium text-white">{settlement.seller?.storeName || 'Unknown'}</div>
+                          <div className="text-xs text-hos-text-muted">{settlement.seller?.email}</div>
                         </td>
-                        <td className="px-4 py-3 text-sm text-gray-600">
+                        <td className="px-4 py-3 text-sm text-hos-text-secondary">
                           {new Date(settlement.periodStart).toLocaleDateString()} - {new Date(settlement.periodEnd).toLocaleDateString()}
                         </td>
-                        <td className="px-4 py-3 text-sm text-gray-600">{settlement.ordersCount}</td>
-                        <td className="px-4 py-3 text-sm text-gray-900">{formatPrice(settlement.amount)}</td>
+                        <td className="px-4 py-3 text-sm text-hos-text-secondary">{settlement.ordersCount}</td>
+                        <td className="px-4 py-3 text-sm text-white">{formatPrice(settlement.amount)}</td>
                         <td className="px-4 py-3 text-sm text-red-600">-{formatPrice(settlement.platformFee)}</td>
                         <td className="px-4 py-3 text-sm font-medium text-green-600">{formatPrice(settlement.netAmount)}</td>
                         <td className="px-4 py-3">{getStatusBadge(settlement.status)}</td>
@@ -572,14 +572,14 @@ export default function AdminSettlementsPage() {
                           <div className="flex justify-end gap-1">
                             <button
                               onClick={() => handleViewDetails(settlement)}
-                              className="px-2 py-1 text-sm text-purple-600 hover:bg-purple-50 rounded"
+                              className="px-2 py-1 text-sm text-hos-gold hover:bg-hos-gold/10 rounded"
                             >
                               View
                             </button>
                             {settlement.status === 'PENDING' && (
                               <button
                                 onClick={() => handleProcessSettlement(settlement.id)}
-                                className="px-2 py-1 text-sm text-blue-600 hover:bg-blue-50 rounded"
+                                className="px-2 py-1 text-sm text-hos-gold hover:bg-hos-gold/10 rounded"
                               >
                                 Process
                               </button>
@@ -597,27 +597,27 @@ export default function AdminSettlementsPage() {
           {/* Detail Modal */}
           {showDetailModal && selectedSettlement && (
             <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-              <div className="bg-white rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+              <div className="bg-hos-bg-secondary rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto">
                 <div className="p-6">
                   <div className="flex justify-between items-start mb-6">
                     <div>
                       <h2 className="text-2xl font-bold">Settlement Details</h2>
-                      <p className="text-sm text-gray-500 mt-1">ID: {selectedSettlement.id}</p>
+                      <p className="text-sm text-hos-text-muted mt-1">ID: {selectedSettlement.id}</p>
                     </div>
-                    <button onClick={() => setShowDetailModal(false)} className="text-gray-500 hover:text-gray-700 text-2xl">×</button>
+                    <button onClick={() => setShowDetailModal(false)} className="text-hos-text-muted hover:text-hos-text-secondary text-2xl">×</button>
                   </div>
 
                   <div className="space-y-6">
                     {/* Seller Info */}
-                    <div className="bg-gray-50 rounded-lg p-4">
-                      <h3 className="font-semibold text-gray-900 mb-2">Seller Information</h3>
+                    <div className="bg-hos-bg-secondary rounded-lg p-4">
+                      <h3 className="font-semibold text-white mb-2">Seller Information</h3>
                       <div className="grid grid-cols-2 gap-4 text-sm">
                         <div>
-                          <p className="text-gray-500">Store Name</p>
+                          <p className="text-hos-text-muted">Store Name</p>
                           <p className="font-medium">{selectedSettlement.seller?.storeName || 'N/A'}</p>
                         </div>
                         <div>
-                          <p className="text-gray-500">Email</p>
+                          <p className="text-hos-text-muted">Email</p>
                           <p className="font-medium">{selectedSettlement.seller?.email || 'N/A'}</p>
                         </div>
                       </div>
@@ -626,43 +626,43 @@ export default function AdminSettlementsPage() {
                     {/* Settlement Details */}
                     <div className="grid grid-cols-2 gap-4">
                       <div>
-                        <p className="text-sm text-gray-500">Period</p>
+                        <p className="text-sm text-hos-text-muted">Period</p>
                         <p className="font-medium">
                           {new Date(selectedSettlement.periodStart).toLocaleDateString()} - {new Date(selectedSettlement.periodEnd).toLocaleDateString()}
                         </p>
                       </div>
                       <div>
-                        <p className="text-sm text-gray-500">Orders</p>
+                        <p className="text-sm text-hos-text-muted">Orders</p>
                         <p className="font-medium">{selectedSettlement.ordersCount}</p>
                       </div>
                       <div>
-                        <p className="text-sm text-gray-500">Gross Amount</p>
+                        <p className="text-sm text-hos-text-muted">Gross Amount</p>
                         <p className="font-medium">{formatPrice(selectedSettlement.amount)}</p>
                       </div>
                       <div>
-                        <p className="text-sm text-gray-500">Platform Fee</p>
+                        <p className="text-sm text-hos-text-muted">Platform Fee</p>
                         <p className="font-medium text-red-600">-{formatPrice(selectedSettlement.platformFee)}</p>
                       </div>
                       <div>
-                        <p className="text-sm text-gray-500">Net Amount</p>
+                        <p className="text-sm text-hos-text-muted">Net Amount</p>
                         <p className="text-xl font-bold text-green-600">{formatPrice(selectedSettlement.netAmount)}</p>
                       </div>
                       <div>
-                        <p className="text-sm text-gray-500">Status</p>
+                        <p className="text-sm text-hos-text-muted">Status</p>
                         <div className="mt-1">{getStatusBadge(selectedSettlement.status)}</div>
                       </div>
                     </div>
 
                     {selectedSettlement.paymentReference && (
                       <div>
-                        <p className="text-sm text-gray-500">Payment Reference</p>
+                        <p className="text-sm text-hos-text-muted">Payment Reference</p>
                         <p className="font-medium">{selectedSettlement.paymentReference}</p>
                       </div>
                     )}
 
                     {selectedSettlement.paidAt && (
                       <div>
-                        <p className="text-sm text-gray-500">Paid At</p>
+                        <p className="text-sm text-hos-text-muted">Paid At</p>
                         <p className="font-medium">{new Date(selectedSettlement.paidAt).toLocaleString()}</p>
                       </div>
                     )}
@@ -673,7 +673,7 @@ export default function AdminSettlementsPage() {
                         <button
                           onClick={() => handleProcessSettlement(selectedSettlement.id)}
                           disabled={processing}
-                          className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50"
+                          className="px-4 py-2 bg-hos-gold text-[#1a1406] rounded-lg hover:bg-hos-gold-hover disabled:opacity-50"
                         >
                           {processing ? 'Processing...' : 'Start Processing'}
                         </button>
@@ -704,7 +704,7 @@ export default function AdminSettlementsPage() {
                       )}
                       <button
                         onClick={() => setShowDetailModal(false)}
-                        className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300"
+                        className="px-4 py-2 bg-hos-bg-tertiary text-hos-text-secondary rounded-lg hover:bg-hos-bg-tertiary"
                       >
                         Close
                       </button>
@@ -718,19 +718,19 @@ export default function AdminSettlementsPage() {
           {/* Create Modal */}
           {showCreateModal && (
             <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-              <div className="bg-white rounded-lg max-w-md w-full p-6">
+              <div className="bg-hos-bg-secondary rounded-lg max-w-md w-full p-6">
                 <div className="flex justify-between items-start mb-6">
                   <h2 className="text-xl font-bold">Create Settlement</h2>
-                  <button onClick={() => setShowCreateModal(false)} className="text-gray-500 hover:text-gray-700 text-2xl">×</button>
+                  <button onClick={() => setShowCreateModal(false)} className="text-hos-text-muted hover:text-hos-text-secondary text-2xl">×</button>
                 </div>
 
                 <div className="space-y-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Seller *</label>
+                    <label className="block text-sm font-medium text-hos-text-secondary mb-1">Seller *</label>
                     <select
                       value={createForm.sellerId}
                       onChange={(e) => setCreateForm({ ...createForm, sellerId: e.target.value })}
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
+                      className="w-full px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50"
                     >
                       <option value="">Select a seller</option>
                       {sellers.map(s => (
@@ -740,21 +740,21 @@ export default function AdminSettlementsPage() {
                   </div>
                   <div className="grid grid-cols-2 gap-4">
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Period Start *</label>
+                      <label className="block text-sm font-medium text-hos-text-secondary mb-1">Period Start *</label>
                       <input
                         type="date"
                         value={createForm.periodStart}
                         onChange={(e) => setCreateForm({ ...createForm, periodStart: e.target.value })}
-                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
+                        className="w-full px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50"
                       />
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Period End *</label>
+                      <label className="block text-sm font-medium text-hos-text-secondary mb-1">Period End *</label>
                       <input
                         type="date"
                         value={createForm.periodEnd}
                         onChange={(e) => setCreateForm({ ...createForm, periodEnd: e.target.value })}
-                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
+                        className="w-full px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50"
                       />
                     </div>
                   </div>
@@ -763,13 +763,13 @@ export default function AdminSettlementsPage() {
                     <button
                       onClick={handleCreateSettlement}
                       disabled={processing}
-                      className="flex-1 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 disabled:opacity-50"
+                      className="flex-1 px-4 py-2 bg-hos-gold text-[#1a1406] rounded-lg hover:bg-hos-gold-hover disabled:opacity-50"
                     >
                       {processing ? 'Creating...' : 'Create Settlement'}
                     </button>
                     <button
                       onClick={() => setShowCreateModal(false)}
-                      className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300"
+                      className="px-4 py-2 bg-hos-bg-tertiary text-hos-text-secondary rounded-lg hover:bg-hos-bg-tertiary"
                     >
                       Cancel
                     </button>

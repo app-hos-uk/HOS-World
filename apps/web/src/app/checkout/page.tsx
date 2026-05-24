@@ -11,6 +11,7 @@ import { useCart } from '@/contexts/CartContext';
 import { useToast } from '@/hooks/useToast';
 import Link from 'next/link';
 import type { ApiResponse } from '@hos-marketplace/shared-types';
+import { trackBeginCheckout } from '@/lib/analytics';
 
 interface StockIssue {
   productId: string;
@@ -40,6 +41,7 @@ export default function CheckoutPage() {
   const [stockIssues, setStockIssues] = useState<StockIssue[]>([]);
   /**1=Address, 2=Shipping, 3=Review items, 4=Confirm & place order */
   const [checkoutStep, setCheckoutStep] = useState(1);
+  const checkoutTrackedRef = useRef(false);
   const checkoutSteps = useMemo(
     () => [
       { id: 1, label: 'Address' },
@@ -132,6 +134,11 @@ export default function CheckoutPage() {
         const criticalIssues = issues.filter(i => i.type !== 'low_stock');
         if (criticalIssues.length > 0) {
           toast.error(`${criticalIssues.length} item(s) have stock issues. Please update your cart.`);
+        }
+
+        if (cartResponse.data.items?.length && !checkoutTrackedRef.current) {
+          checkoutTrackedRef.current = true;
+          trackBeginCheckout(cartResponse.data);
         }
       }
 
@@ -390,7 +397,7 @@ export default function CheckoutPage() {
   if (loading) {
     return (
       <RouteGuard allowedRoles={['CUSTOMER', 'SELLER', 'B2C_SELLER', 'WHOLESALER', 'ADMIN', 'INFLUENCER']}>
-        <div className="min-h-screen bg-white">
+        <div className="min-h-screen bg-hos-bg-secondary">
           <Header />
           <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 lg:py-12">
             <p className="text-sm sm:text-base">Loading checkout...</p>
@@ -404,15 +411,15 @@ export default function CheckoutPage() {
   if (!cart || !cart.items || cart.items.length === 0) {
     return (
       <RouteGuard allowedRoles={['CUSTOMER', 'SELLER', 'B2C_SELLER', 'WHOLESALER', 'ADMIN', 'INFLUENCER']}>
-        <div className="min-h-screen bg-white">
+        <div className="min-h-screen bg-hos-bg-secondary">
           <Header />
           <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 lg:py-12">
             <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold mb-6 sm:mb-8">Checkout</h1>
-            <div className="bg-gray-50 rounded-lg p-6 sm:p-8 text-center">
-              <p className="text-base sm:text-lg text-gray-600 mb-4 sm:mb-6">Your cart is empty</p>
+            <div className="bg-hos-bg-secondary rounded-lg p-6 sm:p-8 text-center">
+              <p className="text-base sm:text-lg text-hos-text-secondary mb-4 sm:mb-6">Your cart is empty</p>
               <Link
                 href="/products"
-                className="inline-block px-5 sm:px-6 py-2.5 sm:py-3 text-sm sm:text-base bg-gradient-to-r from-purple-700 to-indigo-700 hover:from-purple-600 hover:to-indigo-600 text-white font-semibold rounded-lg transition-all duration-300"
+                className="inline-block px-5 sm:px-6 py-2.5 sm:py-3 text-sm sm:text-base bg-hos-gold hover:bg-hos-gold text-[#1a1406] font-semibold rounded-lg transition-all duration-300"
               >
                 Browse Products
               </Link>
@@ -431,10 +438,10 @@ export default function CheckoutPage() {
 
   return (
     <RouteGuard allowedRoles={['CUSTOMER', 'SELLER', 'B2C_SELLER', 'WHOLESALER', 'ADMIN', 'INFLUENCER']}>
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen bg-hos-bg-secondary">
       <Header />
       <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 lg:py-12">
-        <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold mb-4 sm:mb-6 font-primary text-purple-900">Checkout</h1>
+        <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold mb-4 sm:mb-6 font-primary text-hos-gold">Checkout</h1>
 
         <nav aria-label="Checkout steps" className="mb-8">
           <ol className="flex flex-wrap gap-2 sm:gap-4 items-center">
@@ -443,19 +450,19 @@ export default function CheckoutPage() {
                 <span
                   className={`flex h-8 w-8 items-center justify-center rounded-full font-semibold ${
                     checkoutStep === s.id
-                      ? 'bg-purple-700 text-white'
+                      ? 'bg-hos-gold text-[#1a1406]'
                       : checkoutStep > s.id
                         ? 'bg-green-500 text-white'
-                        : 'bg-gray-200 text-gray-600'
+                        : 'bg-hos-bg-tertiary text-hos-text-secondary'
                   }`}
                 >
                   {s.id}
                 </span>
-                <span className={checkoutStep === s.id ? 'font-semibold text-purple-900' : 'text-gray-600'}>
+                <span className={checkoutStep === s.id ? 'font-semibold text-hos-gold' : 'text-hos-text-secondary'}>
                   {s.label}
                 </span>
                 {idx < checkoutSteps.length - 1 && (
-                  <span className="hidden sm:inline text-gray-300 mx-1" aria-hidden>
+                  <span className="hidden sm:inline text-hos-text-muted mx-1" aria-hidden>
                     /
                   </span>
                 )}
@@ -473,29 +480,29 @@ export default function CheckoutPage() {
           <div className={`space-y-6 ${checkoutStep === 4 ? 'hidden' : 'lg:col-span-2'}`}>
             {/* Shipping Address */}
             {checkoutStep === 1 && (
-            <section aria-label="Shipping Address" className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 sm:p-6">
+            <section aria-label="Shipping Address" className="bg-hos-bg-secondary rounded-lg shadow-sm border border-hos-border p-4 sm:p-6">
               <h2 className="text-lg font-semibold mb-4">Shipping Address</h2>
               {addresses.length === 0 ? (
                 <div className="text-center py-4">
-                  <p className="text-gray-600 mb-4">No addresses found. Please add a shipping address to continue.</p>
+                  <p className="text-hos-text-secondary mb-4">No addresses found. Please add a shipping address to continue.</p>
                   <Link
                     href="/profile?tab=addresses&action=add&returnUrl=/checkout"
-                    className="inline-flex items-center gap-2 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
+                    className="inline-flex items-center gap-2 px-4 py-2 bg-hos-gold text-[#1a1406] rounded-lg hover:bg-hos-gold-hover transition-colors"
                   >
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
                     </svg>
                     Add New Address
                   </Link>
-                  <p className="text-xs text-gray-500 mt-2">You will be redirected to your profile to add an address, then return here to complete checkout.</p>
+                  <p className="text-xs text-hos-text-muted mt-2">You will be redirected to your profile to add an address, then return here to complete checkout.</p>
                 </div>
               ) : (
                 <div className="space-y-3">
                   {addresses.map((address: any) => (
                     <label
                       key={address.id}
-                      className={`flex items-start p-3 border rounded-lg cursor-pointer hover:bg-gray-50 ${
-                        shippingAddressId === address.id ? 'border-purple-500 bg-purple-50' : 'border-gray-200'
+                      className={`flex items-start p-3 border rounded-lg cursor-pointer hover:bg-hos-bg-tertiary ${
+                        shippingAddressId === address.id ? 'border-hos-gold bg-hos-gold/10' : 'border-hos-border'
                       }`}
                     >
                       <input
@@ -513,17 +520,17 @@ export default function CheckoutPage() {
                       />
                       <div className="flex-1">
                         <p className="font-medium">{address.fullName}</p>
-                        <p className="text-sm text-gray-600">{address.street}</p>
-                        <p className="text-sm text-gray-600">
+                        <p className="text-sm text-hos-text-secondary">{address.street}</p>
+                        <p className="text-sm text-hos-text-secondary">
                           {address.city}, {address.state} {address.postalCode}
                         </p>
-                        <p className="text-sm text-gray-600">{address.country}</p>
+                        <p className="text-sm text-hos-text-secondary">{address.country}</p>
                       </div>
                     </label>
                   ))}
                   <Link
                     href="/profile?tab=addresses&action=add&returnUrl=/checkout"
-                    className="block text-center text-purple-700 hover:text-purple-600 text-sm"
+                    className="block text-center text-hos-gold-hover hover:text-hos-gold text-sm"
                   >
                     + Add New Address
                   </Link>
@@ -534,7 +541,7 @@ export default function CheckoutPage() {
 
             {/* Shipping Method */}
             {checkoutStep === 2 && shippingAddressId && shippingOptions.length > 0 && (
-              <section aria-label="Shipping Method" className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 sm:p-6">
+              <section aria-label="Shipping Method" className="bg-hos-bg-secondary rounded-lg shadow-sm border border-hos-border p-4 sm:p-6">
                 <h2 className="text-lg font-semibold mb-4">Shipping Method</h2>
                 <div className="space-y-3">
                   {shippingOptions.map((option: any) => {
@@ -544,8 +551,8 @@ export default function CheckoutPage() {
                     return (
                     <label
                       key={methodId}
-                      className={`flex items-center justify-between p-3 border rounded-lg cursor-pointer hover:bg-gray-50 ${
-                        selectedShippingMethod === methodId ? 'border-purple-500 bg-purple-50' : 'border-gray-200'
+                      className={`flex items-center justify-between p-3 border rounded-lg cursor-pointer hover:bg-hos-bg-tertiary ${
+                        selectedShippingMethod === methodId ? 'border-hos-gold bg-hos-gold/10' : 'border-hos-border'
                       }`}
                     >
                       <div className="flex items-center">
@@ -563,7 +570,7 @@ export default function CheckoutPage() {
                         <div>
                           <p className="font-medium">{methodName}</p>
                           {methodDesc && (
-                            <p className="text-sm text-gray-600">{methodDesc}</p>
+                            <p className="text-sm text-hos-text-secondary">{methodDesc}</p>
                           )}
                         </div>
                       </div>
@@ -575,15 +582,15 @@ export default function CheckoutPage() {
               </section>
             )}
             {checkoutStep === 2 && shippingAddressId && shippingOptions.length === 0 && (
-              <section className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 sm:p-6">
+              <section className="bg-hos-bg-secondary rounded-lg shadow-sm border border-hos-border p-4 sm:p-6">
                 <h2 className="text-lg font-semibold mb-2">Shipping Method</h2>
-                <p className="text-sm text-gray-600">No shipping options are required or available for this order. Continue to review.</p>
+                <p className="text-sm text-hos-text-secondary">No shipping options are required or available for this order. Continue to review.</p>
               </section>
             )}
 
             {/* Order Items */}
             {checkoutStep === 3 && (
-            <section aria-label="Order Items" className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 sm:p-6">
+            <section aria-label="Order Items" className="bg-hos-bg-secondary rounded-lg shadow-sm border border-hos-border p-4 sm:p-6">
               <h2 className="text-lg font-semibold mb-4">Order Items</h2>
               
               {/* Stock Issues Warning Banner */}
@@ -614,7 +621,7 @@ export default function CheckoutPage() {
                     >
                       <div className="flex-1">
                         <p className="font-medium">{item.product?.name || 'Product'}</p>
-                        <p className="text-sm text-gray-600">Quantity: {item.quantity}</p>
+                        <p className="text-sm text-hos-text-secondary">Quantity: {item.quantity}</p>
                         
                         {/* Stock Warning */}
                         {stockIssue && (
@@ -643,14 +650,14 @@ export default function CheckoutPage() {
                   type="button"
                   onClick={goPrevStep}
                   disabled={checkoutStep === 1}
-                  className="px-5 py-2.5 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed"
+                  className="px-5 py-2.5 border border-hos-border rounded-lg text-hos-text-secondary hover:bg-hos-bg-tertiary disabled:opacity-40 disabled:cursor-not-allowed"
                 >
                   Back
                 </button>
                 <button
                   type="button"
                   onClick={goNextStep}
-                  className="px-5 py-2.5 bg-purple-700 text-white rounded-lg hover:bg-purple-600 font-medium"
+                  className="px-5 py-2.5 bg-hos-gold text-[#1a1406] rounded-lg hover:bg-hos-gold font-medium"
                 >
                   {checkoutStep === 3 ? 'Continue to confirm' : 'Continue'}
                 </button>
@@ -660,36 +667,36 @@ export default function CheckoutPage() {
 
           {/* Order Review & Summary */}
           <div className={checkoutStep === 4 ? 'max-w-lg mx-auto w-full lg:col-span-3' : 'lg:col-span-1'}>
-            <section aria-label="Order Review" className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 sm:p-6 sticky top-4">
+            <section aria-label="Order Review" className="bg-hos-bg-secondary rounded-lg shadow-sm border border-hos-border p-4 sm:p-6 sticky top-4">
               <h2 className="text-lg font-semibold mb-4">Order Review</h2>
 
               {/* Selected Shipping Address Summary */}
               {shippingAddressId && (() => {
                 const selectedAddress = addresses.find((a: any) => a.id === shippingAddressId);
                 return selectedAddress ? (
-                  <div className="mb-4 p-3 bg-gray-50 rounded-lg border border-gray-100">
-                    <p className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-1">Ship to</p>
+                  <div className="mb-4 p-3 bg-hos-bg-secondary rounded-lg border border-hos-border">
+                    <p className="text-xs font-medium text-hos-text-muted uppercase tracking-wide mb-1">Ship to</p>
                     <p className="text-sm font-medium">{selectedAddress.fullName}</p>
-                    <p className="text-xs text-gray-600">{selectedAddress.street}</p>
-                    <p className="text-xs text-gray-600">
+                    <p className="text-xs text-hos-text-secondary">{selectedAddress.street}</p>
+                    <p className="text-xs text-hos-text-secondary">
                       {selectedAddress.city}, {selectedAddress.state} {selectedAddress.postalCode}
                     </p>
-                    <p className="text-xs text-gray-600">{selectedAddress.country}</p>
+                    <p className="text-xs text-hos-text-secondary">{selectedAddress.country}</p>
                   </div>
                 ) : null;
               })()}
 
               {/* Cart Items Summary */}
               <div className="mb-4">
-                <p className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-2">
+                <p className="text-xs font-medium text-hos-text-muted uppercase tracking-wide mb-2">
                   Items ({cart.items.length})
                 </p>
                 <div className="space-y-2 max-h-48 overflow-y-auto">
                   {cart.items.map((item: any) => (
                     <div key={item.id} className="flex justify-between items-center text-sm">
                       <div className="flex-1 min-w-0 mr-2">
-                        <p className="truncate text-gray-800">{item.product?.name || 'Product'}</p>
-                        <p className="text-xs text-gray-500">Qty: {item.quantity}</p>
+                        <p className="truncate text-white">{item.product?.name || 'Product'}</p>
+                        <p className="text-xs text-hos-text-muted">Qty: {item.quantity}</p>
                       </div>
                       <p className="text-sm font-medium whitespace-nowrap">{formatPrice(item.price * item.quantity)}</p>
                     </div>
@@ -698,9 +705,9 @@ export default function CheckoutPage() {
               </div>
 
               {/* Price Breakdown */}
-              <div className="border-t border-gray-200 pt-3 space-y-2 mb-3">
+              <div className="border-t border-hos-border pt-3 space-y-2 mb-3">
                 <div className="flex justify-between text-sm">
-                  <span className="text-gray-600">Subtotal</span>
+                  <span className="text-hos-text-secondary">Subtotal</span>
                   <span>{formatPrice(subtotal)}</span>
                 </div>
 
@@ -712,19 +719,19 @@ export default function CheckoutPage() {
                 )}
 
                 <div className="flex justify-between text-sm">
-                  <span className="text-gray-600">Shipping</span>
+                  <span className="text-hos-text-secondary">Shipping</span>
                   <span>{effectiveShippingCost > 0 ? formatPrice(effectiveShippingCost) : 'Free'}</span>
                 </div>
 
                 <div className="flex justify-between text-sm">
-                  <span className="text-gray-600">Tax</span>
+                  <span className="text-hos-text-secondary">Tax</span>
                   <span>{taxAmount > 0 ? formatPrice(taxAmount) : formatPrice(0)}</span>
                 </div>
               </div>
 
               {/* Total */}
-              <div className="border-t-2 border-purple-200 pt-3 mb-4">
-                <div className="flex justify-between font-bold text-lg text-purple-900">
+              <div className="border-t-2 border-hos-border-accent pt-3 mb-4">
+                <div className="flex justify-between font-bold text-lg text-hos-gold">
                   <span>Total</span>
                   <span>{formatPrice(total)}</span>
                 </div>
@@ -733,10 +740,10 @@ export default function CheckoutPage() {
               {/* Review Confirmation Separator */}
               <div className="relative mb-4">
                 <div className="absolute inset-0 flex items-center" aria-hidden="true">
-                  <div className="w-full border-t border-gray-200" />
+                  <div className="w-full border-t border-hos-border" />
                 </div>
                 <div className="relative flex justify-center">
-                  <span className="bg-white px-3 text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <span className="bg-hos-bg-secondary px-3 text-xs font-medium text-hos-text-muted uppercase tracking-wider">
                     Review &amp; Confirm
                   </span>
                 </div>
@@ -748,9 +755,9 @@ export default function CheckoutPage() {
                   {shippingAddressId ? (
                     <svg className="w-4 h-4 text-green-500 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" /></svg>
                   ) : (
-                    <svg className="w-4 h-4 text-gray-300 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><circle cx="10" cy="10" r="8" /></svg>
+                    <svg className="w-4 h-4 text-hos-text-muted flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><circle cx="10" cy="10" r="8" /></svg>
                   )}
-                  <span className={shippingAddressId ? 'text-gray-700' : 'text-gray-400'}>Shipping address selected</span>
+                  <span className={shippingAddressId ? 'text-hos-text-secondary' : 'text-hos-text-muted'}>Shipping address selected</span>
                 </div>
                 <div className="flex items-center gap-2">
                   {!hasCriticalStockIssues ? (
@@ -758,16 +765,16 @@ export default function CheckoutPage() {
                   ) : (
                     <svg className="w-4 h-4 text-red-400 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" /></svg>
                   )}
-                  <span className={!hasCriticalStockIssues ? 'text-gray-700' : 'text-red-500'}>All items in stock</span>
+                  <span className={!hasCriticalStockIssues ? 'text-hos-text-secondary' : 'text-red-500'}>All items in stock</span>
                 </div>
                 {shippingOptions.length > 0 && (
                   <div className="flex items-center gap-2">
                     {selectedShippingMethod ? (
                       <svg className="w-4 h-4 text-green-500 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" /></svg>
                     ) : (
-                      <svg className="w-4 h-4 text-gray-300 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><circle cx="10" cy="10" r="8" /></svg>
+                      <svg className="w-4 h-4 text-hos-text-muted flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><circle cx="10" cy="10" r="8" /></svg>
                     )}
-                    <span className={selectedShippingMethod ? 'text-gray-700' : 'text-gray-400'}>Shipping method selected</span>
+                    <span className={selectedShippingMethod ? 'text-hos-text-secondary' : 'text-hos-text-muted'}>Shipping method selected</span>
                   </div>
                 )}
               </div>
@@ -776,7 +783,7 @@ export default function CheckoutPage() {
                 <button
                   type="button"
                   onClick={goPrevStep}
-                  className="w-full mb-3 px-6 py-2.5 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50"
+                  className="w-full mb-3 px-6 py-2.5 border border-hos-border rounded-lg text-hos-text-secondary hover:bg-hos-bg-tertiary"
                 >
                   Back to review
                 </button>
@@ -791,7 +798,7 @@ export default function CheckoutPage() {
                   (shippingOptions.length > 0 && !selectedShippingMethod) ||
                   hasCriticalStockIssues
                 }
-                className="w-full px-6 py-3 bg-gradient-to-r from-purple-700 to-indigo-700 hover:from-purple-600 hover:to-indigo-600 text-white font-semibold rounded-lg transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="w-full px-6 py-3 bg-hos-gold hover:bg-hos-gold text-[#1a1406] font-semibold rounded-lg transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {checkoutStep !== 4
                   ? 'Complete steps above to place order'
@@ -810,7 +817,7 @@ export default function CheckoutPage() {
 
               <Link
                 href="/cart"
-                className="block text-center mt-4 text-purple-700 hover:text-purple-600"
+                className="block text-center mt-4 text-hos-gold-hover hover:text-hos-gold"
               >
                 Back to Cart
               </Link>

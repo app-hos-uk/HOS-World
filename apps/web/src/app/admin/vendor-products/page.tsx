@@ -47,17 +47,17 @@ interface VendorProduct {
 }
 
 const STATUS_CONFIG: Record<string, { label: string; color: string; bg: string }> = {
-  DRAFT: { label: 'Draft', color: 'text-gray-700', bg: 'bg-gray-100' },
+  DRAFT: { label: 'Draft', color: 'text-hos-text-secondary', bg: 'bg-hos-bg-tertiary' },
   PENDING_APPROVAL: { label: 'Pending', color: 'text-yellow-700', bg: 'bg-yellow-100' },
-  APPROVED: { label: 'Approved', color: 'text-blue-700', bg: 'bg-blue-100' },
+  APPROVED: { label: 'Approved', color: 'text-hos-gold', bg: 'bg-hos-gold/20' },
   REJECTED: { label: 'Rejected', color: 'text-red-700', bg: 'bg-red-100' },
   ACTIVE: { label: 'Active', color: 'text-green-700', bg: 'bg-green-100' },
-  INACTIVE: { label: 'Inactive', color: 'text-gray-700', bg: 'bg-gray-200' },
+  INACTIVE: { label: 'Inactive', color: 'text-hos-text-secondary', bg: 'bg-hos-bg-tertiary' },
   OUT_OF_STOCK: { label: 'Out of Stock', color: 'text-orange-700', bg: 'bg-orange-100' },
 };
 
 function StatusBadge({ status }: { status: string }) {
-  const config = STATUS_CONFIG[status] || { label: status, color: 'text-gray-600', bg: 'bg-gray-100' };
+  const config = STATUS_CONFIG[status] || { label: status, color: 'text-hos-text-secondary', bg: 'bg-hos-bg-tertiary' };
   return (
     <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${config.bg} ${config.color}`}>
       {config.label}
@@ -184,8 +184,8 @@ function VendorProductsContent() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Vendor Products</h1>
-          <p className="text-sm text-gray-500 mt-1">
+          <h1 className="text-2xl font-bold text-white">Vendor Products</h1>
+          <p className="text-sm text-hos-text-muted mt-1">
             Manage vendor product listings, approvals, and activations
           </p>
         </div>
@@ -194,19 +194,19 @@ function VendorProductsContent() {
       {/* Stats Cards */}
       <div className="grid grid-cols-2 sm:grid-cols-5 gap-4">
         {[
-          { label: 'Total', value: stats.total, onClick: () => setStatusFilter('ALL'), active: statusFilter === 'ALL', color: 'bg-gray-50 border-gray-200' },
+          { label: 'Total', value: stats.total, onClick: () => setStatusFilter('ALL'), active: statusFilter === 'ALL', color: 'bg-hos-bg-secondary border-hos-border' },
           { label: 'Pending Review', value: stats.pending, onClick: () => setStatusFilter('PENDING_APPROVAL'), active: statusFilter === 'PENDING_APPROVAL', color: 'bg-yellow-50 border-yellow-200' },
-          { label: 'Approved', value: stats.approved, onClick: () => setStatusFilter('APPROVED'), active: statusFilter === 'APPROVED', color: 'bg-blue-50 border-blue-200' },
+          { label: 'Approved', value: stats.approved, onClick: () => setStatusFilter('APPROVED'), active: statusFilter === 'APPROVED', color: 'bg-hos-gold/10 border-hos-border-accent' },
           { label: 'Active', value: stats.active, onClick: () => setStatusFilter('ACTIVE'), active: statusFilter === 'ACTIVE', color: 'bg-green-50 border-green-200' },
           { label: 'Rejected', value: stats.rejected, onClick: () => setStatusFilter('REJECTED'), active: statusFilter === 'REJECTED', color: 'bg-red-50 border-red-200' },
         ].map(card => (
           <button
             key={card.label}
             onClick={card.onClick}
-            className={`p-4 rounded-xl border text-left transition-all ${card.color} ${card.active ? 'ring-2 ring-purple-500 shadow-sm' : 'hover:shadow-sm'}`}
+            className={`p-4 rounded-xl border text-left transition-all ${card.color} ${card.active ? 'ring-2 ring-hos-gold/50 shadow-sm' : 'hover:shadow-sm'}`}
           >
-            <div className="text-2xl font-bold text-gray-900">{card.value}</div>
-            <div className="text-xs text-gray-600 mt-1">{card.label}</div>
+            <div className="text-2xl font-bold text-white">{card.value}</div>
+            <div className="text-xs text-hos-text-secondary mt-1">{card.label}</div>
           </button>
         ))}
       </div>
@@ -214,7 +214,7 @@ function VendorProductsContent() {
       {/* Search & Filters */}
       <div className="flex flex-col sm:flex-row gap-3">
         <div className="relative flex-1">
-          <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-hos-text-muted" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
           </svg>
           <input
@@ -222,13 +222,13 @@ function VendorProductsContent() {
             placeholder="Search by product name, vendor, SKU..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg text-sm focus:ring-purple-500 focus:border-purple-500"
+            className="w-full pl-10 pr-4 py-2.5 border border-hos-border rounded-lg text-sm focus:ring-hos-gold/50 focus:border-hos-gold"
           />
         </div>
         <select
           value={statusFilter}
           onChange={(e) => setStatusFilter(e.target.value)}
-          className="px-4 py-2.5 border border-gray-300 rounded-lg text-sm bg-white focus:ring-purple-500 focus:border-purple-500"
+          className="px-4 py-2.5 border border-hos-border rounded-lg text-sm bg-hos-bg-secondary focus:ring-hos-gold/50 focus:border-hos-gold"
         >
           <option value="ALL">All Statuses</option>
           {Object.entries(STATUS_CONFIG).map(([key, val]) => (
@@ -239,46 +239,46 @@ function VendorProductsContent() {
 
       {/* Table */}
       {loading ? (
-        <div className="bg-white rounded-xl border border-gray-200 p-12 text-center">
-          <div className="animate-spin h-8 w-8 border-4 border-purple-500 border-t-transparent rounded-full mx-auto mb-3" />
-          <p className="text-gray-500 text-sm">Loading vendor products...</p>
+        <div className="bg-hos-bg-secondary rounded-xl border border-hos-border p-12 text-center">
+          <div className="animate-spin h-8 w-8 border-4 border-hos-gold border-t-transparent rounded-full mx-auto mb-3" />
+          <p className="text-hos-text-muted text-sm">Loading vendor products...</p>
         </div>
       ) : filteredListings.length === 0 ? (
-        <div className="bg-white rounded-xl border border-gray-200 p-12 text-center">
-          <svg className="w-12 h-12 text-gray-300 mx-auto mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <div className="bg-hos-bg-secondary rounded-xl border border-hos-border p-12 text-center">
+          <svg className="w-12 h-12 text-hos-text-muted mx-auto mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
           </svg>
-          <h3 className="text-gray-900 font-medium">No vendor products found</h3>
-          <p className="text-gray-500 text-sm mt-1">
+          <h3 className="text-white font-medium">No vendor products found</h3>
+          <p className="text-hos-text-muted text-sm mt-1">
             {statusFilter !== 'ALL' ? 'Try changing the filter' : 'Vendor listings will appear here once vendors submit products'}
           </p>
         </div>
       ) : (
-        <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
+        <div className="bg-hos-bg-secondary rounded-xl border border-hos-border overflow-hidden">
           <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-gray-200">
-              <thead className="bg-gray-50">
+            <table className="min-w-full divide-y divide-hos-border">
+              <thead className="bg-hos-bg-secondary">
                 <tr>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Product</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Vendor</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                  <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Vendor Price</th>
-                  <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Platform Price</th>
-                  <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Stock</th>
-                  <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Sales</th>
-                  <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-hos-text-muted uppercase tracking-wider">Product</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-hos-text-muted uppercase tracking-wider">Vendor</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-hos-text-muted uppercase tracking-wider">Status</th>
+                  <th className="px-4 py-3 text-right text-xs font-medium text-hos-text-muted uppercase tracking-wider">Vendor Price</th>
+                  <th className="px-4 py-3 text-right text-xs font-medium text-hos-text-muted uppercase tracking-wider">Platform Price</th>
+                  <th className="px-4 py-3 text-right text-xs font-medium text-hos-text-muted uppercase tracking-wider">Stock</th>
+                  <th className="px-4 py-3 text-right text-xs font-medium text-hos-text-muted uppercase tracking-wider">Sales</th>
+                  <th className="px-4 py-3 text-center text-xs font-medium text-hos-text-muted uppercase tracking-wider">Actions</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-200">
+              <tbody className="divide-y divide-hos-border">
                 {filteredListings.map((listing) => (
                   <tr
                     key={listing.id}
-                    className={`hover:bg-gray-50 cursor-pointer transition-colors ${selectedListing?.id === listing.id ? 'bg-purple-50' : ''}`}
+                    className={`hover:bg-hos-bg-tertiary cursor-pointer transition-colors ${selectedListing?.id === listing.id ? 'bg-hos-gold/10' : ''}`}
                     onClick={() => setSelectedListing(selectedListing?.id === listing.id ? null : listing)}
                   >
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 bg-gray-100 rounded-lg overflow-hidden flex-shrink-0">
+                        <div className="w-10 h-10 bg-hos-bg-tertiary rounded-lg overflow-hidden flex-shrink-0">
                           {listing.product?.images?.[0] ? (
                             <SafeImage
                               src={listing.product.images[0].url}
@@ -288,36 +288,36 @@ function VendorProductsContent() {
                               className="w-full h-full object-cover"
                             />
                           ) : (
-                            <div className="w-full h-full flex items-center justify-center text-gray-400 text-xs">N/A</div>
+                            <div className="w-full h-full flex items-center justify-center text-hos-text-muted text-xs">N/A</div>
                           )}
                         </div>
                         <div className="min-w-0">
-                          <p className="text-sm font-medium text-gray-900 truncate max-w-[200px]">
+                          <p className="text-sm font-medium text-white truncate max-w-[200px]">
                             {listing.product?.name || 'Unknown Product'}
                           </p>
-                          <p className="text-xs text-gray-500">{listing.product?.sku || listing.productId?.slice(0, 8)}</p>
+                          <p className="text-xs text-hos-text-muted">{listing.product?.sku || listing.productId?.slice(0, 8)}</p>
                         </div>
                       </div>
                     </td>
                     <td className="px-4 py-3">
-                      <p className="text-sm text-gray-900">{listing.seller?.storeName || 'Unknown Vendor'}</p>
-                      <p className="text-xs text-gray-500">{listing.seller?.user?.email}</p>
+                      <p className="text-sm text-white">{listing.seller?.storeName || 'Unknown Vendor'}</p>
+                      <p className="text-xs text-hos-text-muted">{listing.seller?.user?.email}</p>
                     </td>
                     <td className="px-4 py-3">
                       <StatusBadge status={listing.status} />
                     </td>
-                    <td className="px-4 py-3 text-right text-sm text-gray-900">
+                    <td className="px-4 py-3 text-right text-sm text-white">
                       {formatPrice(Number(listing.vendorPrice))}
                     </td>
-                    <td className="px-4 py-3 text-right text-sm text-gray-900">
+                    <td className="px-4 py-3 text-right text-sm text-white">
                       {listing.platformPrice ? formatPrice(Number(listing.platformPrice)) : '—'}
                     </td>
                     <td className="px-4 py-3 text-right">
-                      <span className={`text-sm font-medium ${listing.vendorStock <= listing.lowStockThreshold ? 'text-orange-600' : 'text-gray-900'}`}>
+                      <span className={`text-sm font-medium ${listing.vendorStock <= listing.lowStockThreshold ? 'text-orange-600' : 'text-white'}`}>
                         {listing.vendorStock}
                       </span>
                     </td>
-                    <td className="px-4 py-3 text-right text-sm text-gray-900">
+                    <td className="px-4 py-3 text-right text-sm text-white">
                       {listing.totalUnitsSold}
                     </td>
                     <td className="px-4 py-3 text-center" onClick={(e) => e.stopPropagation()}>
@@ -344,7 +344,7 @@ function VendorProductsContent() {
                           <button
                             onClick={() => handleActivate(listing.id)}
                             disabled={actionLoading === listing.id}
-                            className="px-2.5 py-1 text-xs font-medium text-white bg-purple-600 hover:bg-purple-700 rounded-md transition-colors disabled:opacity-50"
+                            className="px-2.5 py-1 text-xs font-medium text-white bg-hos-gold hover:bg-hos-gold-hover rounded-md transition-colors disabled:opacity-50"
                           >
                             Activate
                           </button>
@@ -358,7 +358,7 @@ function VendorProductsContent() {
                           </span>
                         )}
                         {(listing.status === 'DRAFT' || listing.status === 'INACTIVE') && (
-                          <span className="text-xs text-gray-400">—</span>
+                          <span className="text-xs text-hos-text-muted">—</span>
                         )}
                       </div>
                     </td>
@@ -372,10 +372,10 @@ function VendorProductsContent() {
 
       {/* Detail Panel */}
       {selectedListing && (
-        <div className="bg-white rounded-xl border border-gray-200 p-6">
+        <div className="bg-hos-bg-secondary rounded-xl border border-hos-border p-6">
           <div className="flex items-start justify-between mb-4">
-            <h3 className="text-lg font-semibold text-gray-900">Listing Details</h3>
-            <button onClick={() => setSelectedListing(null)} className="text-gray-400 hover:text-gray-600">
+            <h3 className="text-lg font-semibold text-white">Listing Details</h3>
+            <button onClick={() => setSelectedListing(null)} className="text-hos-text-muted hover:text-hos-text-secondary">
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
               </svg>
@@ -383,51 +383,51 @@ function VendorProductsContent() {
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             <div>
-              <h4 className="text-xs font-medium text-gray-500 uppercase mb-2">Product Info</h4>
+              <h4 className="text-xs font-medium text-hos-text-muted uppercase mb-2">Product Info</h4>
               <div className="space-y-1.5 text-sm">
-                <p><span className="text-gray-500">Name:</span> {selectedListing.product?.name}</p>
-                <p><span className="text-gray-500">SKU:</span> {selectedListing.product?.sku || '—'}</p>
-                <p><span className="text-gray-500">Catalog Price:</span> {formatPrice(Number(selectedListing.product?.price || 0))}</p>
-                <p><span className="text-gray-500">Catalog Stock:</span> {selectedListing.product?.stock}</p>
+                <p><span className="text-hos-text-muted">Name:</span> {selectedListing.product?.name}</p>
+                <p><span className="text-hos-text-muted">SKU:</span> {selectedListing.product?.sku || '—'}</p>
+                <p><span className="text-hos-text-muted">Catalog Price:</span> {formatPrice(Number(selectedListing.product?.price || 0))}</p>
+                <p><span className="text-hos-text-muted">Catalog Stock:</span> {selectedListing.product?.stock}</p>
               </div>
             </div>
             <div>
-              <h4 className="text-xs font-medium text-gray-500 uppercase mb-2">Vendor Pricing</h4>
+              <h4 className="text-xs font-medium text-hos-text-muted uppercase mb-2">Vendor Pricing</h4>
               <div className="space-y-1.5 text-sm">
-                <p><span className="text-gray-500">Vendor Price:</span> {formatPrice(Number(selectedListing.vendorPrice))}</p>
-                <p><span className="text-gray-500">Platform Price:</span> {selectedListing.platformPrice ? formatPrice(Number(selectedListing.platformPrice)) : '—'}</p>
-                <p><span className="text-gray-500">Cost Price:</span> {selectedListing.costPrice ? formatPrice(Number(selectedListing.costPrice)) : '—'}</p>
-                <p><span className="text-gray-500">Margin:</span> {selectedListing.marginPercent ? `${(Number(selectedListing.marginPercent) * 100).toFixed(1)}%` : '—'}</p>
+                <p><span className="text-hos-text-muted">Vendor Price:</span> {formatPrice(Number(selectedListing.vendorPrice))}</p>
+                <p><span className="text-hos-text-muted">Platform Price:</span> {selectedListing.platformPrice ? formatPrice(Number(selectedListing.platformPrice)) : '—'}</p>
+                <p><span className="text-hos-text-muted">Cost Price:</span> {selectedListing.costPrice ? formatPrice(Number(selectedListing.costPrice)) : '—'}</p>
+                <p><span className="text-hos-text-muted">Margin:</span> {selectedListing.marginPercent ? `${(Number(selectedListing.marginPercent) * 100).toFixed(1)}%` : '—'}</p>
               </div>
             </div>
             <div>
-              <h4 className="text-xs font-medium text-gray-500 uppercase mb-2">Fulfillment</h4>
+              <h4 className="text-xs font-medium text-hos-text-muted uppercase mb-2">Fulfillment</h4>
               <div className="space-y-1.5 text-sm">
-                <p><span className="text-gray-500">Stock:</span> {selectedListing.vendorStock}</p>
-                <p><span className="text-gray-500">Low Stock Alert:</span> {selectedListing.lowStockThreshold}</p>
-                <p><span className="text-gray-500">Method:</span> {selectedListing.fulfillmentMethod || '—'}</p>
-                <p><span className="text-gray-500">Lead Time:</span> {selectedListing.leadTimeDays} days</p>
+                <p><span className="text-hos-text-muted">Stock:</span> {selectedListing.vendorStock}</p>
+                <p><span className="text-hos-text-muted">Low Stock Alert:</span> {selectedListing.lowStockThreshold}</p>
+                <p><span className="text-hos-text-muted">Method:</span> {selectedListing.fulfillmentMethod || '—'}</p>
+                <p><span className="text-hos-text-muted">Lead Time:</span> {selectedListing.leadTimeDays} days</p>
               </div>
             </div>
             <div>
-              <h4 className="text-xs font-medium text-gray-500 uppercase mb-2">Performance</h4>
+              <h4 className="text-xs font-medium text-hos-text-muted uppercase mb-2">Performance</h4>
               <div className="space-y-1.5 text-sm">
-                <p><span className="text-gray-500">Units Sold:</span> {selectedListing.totalUnitsSold}</p>
-                <p><span className="text-gray-500">Revenue:</span> {formatPrice(Number(selectedListing.totalRevenue))}</p>
+                <p><span className="text-hos-text-muted">Units Sold:</span> {selectedListing.totalUnitsSold}</p>
+                <p><span className="text-hos-text-muted">Revenue:</span> {formatPrice(Number(selectedListing.totalRevenue))}</p>
               </div>
             </div>
             <div>
-              <h4 className="text-xs font-medium text-gray-500 uppercase mb-2">Timeline</h4>
+              <h4 className="text-xs font-medium text-hos-text-muted uppercase mb-2">Timeline</h4>
               <div className="space-y-1.5 text-sm">
-                <p><span className="text-gray-500">Created:</span> {new Date(selectedListing.createdAt).toLocaleDateString()}</p>
-                {selectedListing.submittedAt && <p><span className="text-gray-500">Submitted:</span> {new Date(selectedListing.submittedAt).toLocaleDateString()}</p>}
-                {selectedListing.approvedAt && <p><span className="text-gray-500">Approved:</span> {new Date(selectedListing.approvedAt).toLocaleDateString()}</p>}
-                {selectedListing.rejectedAt && <p><span className="text-gray-500">Rejected:</span> {new Date(selectedListing.rejectedAt).toLocaleDateString()}</p>}
+                <p><span className="text-hos-text-muted">Created:</span> {new Date(selectedListing.createdAt).toLocaleDateString()}</p>
+                {selectedListing.submittedAt && <p><span className="text-hos-text-muted">Submitted:</span> {new Date(selectedListing.submittedAt).toLocaleDateString()}</p>}
+                {selectedListing.approvedAt && <p><span className="text-hos-text-muted">Approved:</span> {new Date(selectedListing.approvedAt).toLocaleDateString()}</p>}
+                {selectedListing.rejectedAt && <p><span className="text-hos-text-muted">Rejected:</span> {new Date(selectedListing.rejectedAt).toLocaleDateString()}</p>}
               </div>
             </div>
             {selectedListing.rejectionReason && (
               <div>
-                <h4 className="text-xs font-medium text-gray-500 uppercase mb-2">Rejection Reason</h4>
+                <h4 className="text-xs font-medium text-hos-text-muted uppercase mb-2">Rejection Reason</h4>
                 <p className="text-sm text-red-600 bg-red-50 p-3 rounded-lg">{selectedListing.rejectionReason}</p>
               </div>
             )}
@@ -439,40 +439,40 @@ function VendorProductsContent() {
       {approveModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center">
           <div className="absolute inset-0 bg-black/40" onClick={() => setApproveModal(null)} />
-          <div className="relative bg-white rounded-xl shadow-2xl p-6 w-full max-w-md mx-4">
-            <h3 className="text-lg font-semibold text-gray-900 mb-1">Approve Vendor Product</h3>
-            <p className="text-sm text-gray-500 mb-4">
+          <div className="relative bg-hos-bg-secondary rounded-xl shadow-2xl p-6 w-full max-w-md mx-4">
+            <h3 className="text-lg font-semibold text-white mb-1">Approve Vendor Product</h3>
+            <p className="text-sm text-hos-text-muted mb-4">
               {approveModal.product?.name} by {approveModal.seller?.storeName}
             </p>
             <div className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Platform Selling Price (optional)</label>
+                <label className="block text-sm font-medium text-hos-text-secondary mb-1">Platform Selling Price (optional)</label>
                 <input
                   type="number"
                   step="0.01"
                   value={approveForm.platformPrice}
                   onChange={(e) => setApproveForm(prev => ({ ...prev, platformPrice: e.target.value }))}
                   placeholder={String(approveModal.vendorPrice)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-purple-500 focus:border-purple-500"
+                  className="w-full px-3 py-2 border border-hos-border rounded-lg text-sm focus:ring-hos-gold/50 focus:border-hos-gold"
                 />
-                <p className="text-xs text-gray-400 mt-1">Defaults to vendor price if left blank</p>
+                <p className="text-xs text-hos-text-muted mt-1">Defaults to vendor price if left blank</p>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Margin % (optional)</label>
+                <label className="block text-sm font-medium text-hos-text-secondary mb-1">Margin % (optional)</label>
                 <input
                   type="number"
                   step="0.1"
                   value={approveForm.marginPercent}
                   onChange={(e) => setApproveForm(prev => ({ ...prev, marginPercent: e.target.value }))}
                   placeholder="e.g. 15"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-purple-500 focus:border-purple-500"
+                  className="w-full px-3 py-2 border border-hos-border rounded-lg text-sm focus:ring-hos-gold/50 focus:border-hos-gold"
                 />
               </div>
             </div>
             <div className="flex justify-end gap-3 mt-6">
               <button
                 onClick={() => setApproveModal(null)}
-                className="px-4 py-2 text-sm text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
+                className="px-4 py-2 text-sm text-hos-text-secondary bg-hos-bg-tertiary hover:bg-hos-bg-tertiary rounded-lg transition-colors"
               >
                 Cancel
               </button>
@@ -492,25 +492,25 @@ function VendorProductsContent() {
       {rejectModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center">
           <div className="absolute inset-0 bg-black/40" onClick={() => setRejectModal(null)} />
-          <div className="relative bg-white rounded-xl shadow-2xl p-6 w-full max-w-md mx-4">
-            <h3 className="text-lg font-semibold text-gray-900 mb-1">Reject Vendor Product</h3>
-            <p className="text-sm text-gray-500 mb-4">
+          <div className="relative bg-hos-bg-secondary rounded-xl shadow-2xl p-6 w-full max-w-md mx-4">
+            <h3 className="text-lg font-semibold text-white mb-1">Reject Vendor Product</h3>
+            <p className="text-sm text-hos-text-muted mb-4">
               {rejectModal.product?.name} by {rejectModal.seller?.storeName}
             </p>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Reason for Rejection</label>
+              <label className="block text-sm font-medium text-hos-text-secondary mb-1">Reason for Rejection</label>
               <textarea
                 value={rejectReason}
                 onChange={(e) => setRejectReason(e.target.value)}
                 rows={3}
                 placeholder="Provide a reason for the vendor..."
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-purple-500 focus:border-purple-500 resize-none"
+                className="w-full px-3 py-2 border border-hos-border rounded-lg text-sm focus:ring-hos-gold/50 focus:border-hos-gold resize-none"
               />
             </div>
             <div className="flex justify-end gap-3 mt-6">
               <button
                 onClick={() => { setRejectModal(null); setRejectReason(''); }}
-                className="px-4 py-2 text-sm text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
+                className="px-4 py-2 text-sm text-hos-text-secondary bg-hos-bg-tertiary hover:bg-hos-bg-tertiary rounded-lg transition-colors"
               >
                 Cancel
               </button>

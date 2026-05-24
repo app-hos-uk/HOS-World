@@ -64,16 +64,16 @@ export default function AdminEventEditPage() {
     <RouteGuard allowedRoles={['ADMIN']}>
       <AdminLayout>
         <div className="p-6 max-w-xl mx-auto space-y-4">
-          <Link href={`/admin/events/${id}`} className="text-indigo-600 hover:underline text-sm">
+          <Link href={`/admin/events/${id}`} className="text-hos-gold hover:underline text-sm">
             ← Detail
           </Link>
           {loading ? (
-            <p className="text-gray-500">Loading…</p>
+            <p className="text-hos-text-muted">Loading…</p>
           ) : (
             <>
-              <h1 className="text-2xl font-semibold text-gray-900">Edit event</h1>
+              <h1 className="text-2xl font-semibold text-white">Edit event</h1>
               <label className="block text-sm">
-                <span className="text-gray-700">Title</span>
+                <span className="text-hos-text-secondary">Title</span>
                 <input
                   className="mt-1 w-full border rounded px-3 py-2"
                   value={title}
@@ -81,7 +81,7 @@ export default function AdminEventEditPage() {
                 />
               </label>
               <label className="block text-sm">
-                <span className="text-gray-700">Description</span>
+                <span className="text-hos-text-secondary">Description</span>
                 <textarea
                   className="mt-1 w-full border rounded px-3 py-2"
                   rows={4}
@@ -90,7 +90,7 @@ export default function AdminEventEditPage() {
                 />
               </label>
               <label className="block text-sm">
-                <span className="text-gray-700">Min tier level</span>
+                <span className="text-hos-text-secondary">Min tier level</span>
                 <input
                   type="number"
                   className="mt-1 w-full border rounded px-3 py-2"
@@ -99,7 +99,7 @@ export default function AdminEventEditPage() {
                 />
               </label>
               <label className="block text-sm">
-                <span className="text-gray-700">Attendance points</span>
+                <span className="text-hos-text-secondary">Attendance points</span>
                 <input
                   type="number"
                   className="mt-1 w-full border rounded px-3 py-2"
@@ -111,7 +111,7 @@ export default function AdminEventEditPage() {
                 type="button"
                 disabled={saving}
                 onClick={save}
-                className="rounded-md bg-indigo-600 px-4 py-2 text-white disabled:opacity-50"
+                className="rounded-md bg-hos-gold px-4 py-2 text-white disabled:opacity-50"
               >
                 {saving ? 'Saving…' : 'Save'}
               </button>

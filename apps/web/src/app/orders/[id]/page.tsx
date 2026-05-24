@@ -116,10 +116,10 @@ export default function OrderDetailPage() {
         return 'bg-yellow-100 text-yellow-800';
       case 'CONFIRMED':
       case 'PROCESSING':
-        return 'bg-blue-100 text-blue-800';
+        return 'bg-hos-gold/20 text-hos-gold';
       case 'FULFILLED':
       case 'SHIPPED':
-        return 'bg-purple-100 text-purple-800';
+        return 'bg-hos-gold/20 text-hos-gold';
       case 'DELIVERED':
       case 'COMPLETED':
         return 'bg-green-100 text-green-800';
@@ -127,7 +127,7 @@ export default function OrderDetailPage() {
       case 'REFUNDED':
         return 'bg-red-100 text-red-800';
       default:
-        return 'bg-gray-100 text-gray-800';
+        return 'bg-hos-bg-tertiary text-white';
     }
   };
 
@@ -152,13 +152,13 @@ export default function OrderDetailPage() {
   if (loading) {
     return (
       <RouteGuard allowedRoles={['CUSTOMER', 'ADMIN']}>
-        <div className="min-h-screen bg-white">
+        <div className="min-h-screen bg-hos-bg-secondary">
           <Header />
           <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 lg:py-12">
             <div className="flex items-center justify-center py-12">
               <div className="text-center">
-                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600 mx-auto mb-4"></div>
-                <p className="text-sm sm:text-base text-gray-600">Loading order details...</p>
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-hos-gold mx-auto mb-4"></div>
+                <p className="text-sm sm:text-base text-hos-text-secondary">Loading order details...</p>
               </div>
             </div>
           </main>
@@ -171,7 +171,7 @@ export default function OrderDetailPage() {
   if (error || !order) {
     return (
       <RouteGuard allowedRoles={['CUSTOMER', 'ADMIN']}>
-        <div className="min-h-screen bg-white">
+        <div className="min-h-screen bg-hos-bg-secondary">
           <Header />
           <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 lg:py-12">
             <div className="bg-red-50 border border-red-200 rounded-lg p-6 text-center">
@@ -180,7 +180,7 @@ export default function OrderDetailPage() {
               <p className="text-red-700 mb-4">{error || 'The order you are looking for does not exist.'}</p>
               <Link
                 href="/orders"
-                className="inline-block px-6 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
+                className="inline-block px-6 py-2 bg-hos-gold text-[#1a1406] rounded-lg hover:bg-hos-gold-hover transition-colors"
               >
                 Back to Orders
               </Link>
@@ -194,23 +194,23 @@ export default function OrderDetailPage() {
 
   return (
     <RouteGuard allowedRoles={['CUSTOMER', 'ADMIN']}>
-      <div className="min-h-screen bg-gray-50">
+      <div className="min-h-screen bg-hos-bg-secondary">
         <Header />
         <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 lg:py-12">
           {/* Header */}
           <div className="mb-6">
             <Link
               href="/orders"
-              className="text-purple-600 hover:text-purple-700 text-sm font-medium mb-4 inline-block"
+              className="text-hos-gold hover:text-hos-gold-hover text-sm font-medium mb-4 inline-block"
             >
               ← Back to Orders
             </Link>
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mt-4">
               <div>
-                <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">
+                <h1 className="text-2xl sm:text-3xl font-bold text-white">
                   Order #{order.orderNumber || order.id.slice(0, 8)}
                 </h1>
-                <p className="text-gray-600 mt-1">
+                <p className="text-hos-text-secondary mt-1">
                   Placed on {new Date(order.createdAt).toLocaleDateString('en-US', {
                     day: 'numeric',
                     month: 'long',
@@ -230,9 +230,9 @@ export default function OrderDetailPage() {
             {/* Main Content */}
             <div className="lg:col-span-2 space-y-6">
               {/* Order Items */}
-              <div className="bg-white rounded-lg shadow border border-gray-200">
-                <div className="p-4 sm:p-6 border-b border-gray-200">
-                  <h2 className="text-lg font-semibold text-gray-900">Order Items</h2>
+              <div className="bg-hos-bg-secondary rounded-lg shadow border border-hos-border">
+                <div className="p-4 sm:p-6 border-b border-hos-border">
+                  <h2 className="text-lg font-semibold text-white">Order Items</h2>
                 </div>
                 <div className="divide-y">
                   {order.items?.map((item, index) => {
@@ -251,28 +251,28 @@ export default function OrderDetailPage() {
                               />
                             </Link>
                           ) : (
-                            <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-lg bg-gray-200 flex items-center justify-center flex-shrink-0">
-                              <span className="text-gray-400 text-xs">No img</span>
+                            <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-lg bg-hos-bg-tertiary flex items-center justify-center flex-shrink-0">
+                              <span className="text-hos-text-muted text-xs">No img</span>
                             </div>
                           )}
                           <div className="flex-1 min-w-0">
                             <Link
                               href={`/products/${item.productId}`}
-                              className="font-medium text-gray-900 hover:text-purple-600 transition-colors block mb-1"
+                              className="font-medium text-white hover:text-hos-gold transition-colors block mb-1"
                             >
                               {item.product?.name || 'Product'}
                             </Link>
-                            <p className="text-sm text-gray-500">Quantity: {item.quantity}</p>
-                            <p className="text-sm text-gray-500">Unit Price: {formatPrice(item.price, order.currency || 'USD')}</p>
+                            <p className="text-sm text-hos-text-muted">Quantity: {item.quantity}</p>
+                            <p className="text-sm text-hos-text-muted">Unit Price: {formatPrice(item.price, order.currency || 'USD')}</p>
                           </div>
                           <div className="text-right">
-                            <p className="font-semibold text-gray-900">
+                            <p className="font-semibold text-white">
                               {formatPrice(item.price * item.quantity, order.currency || 'USD')}
                             </p>
                             {['DELIVERED', 'COMPLETED'].includes(order.status.toUpperCase()) && (
                               <Link
                                 href={`/products/${item.productId}`}
-                                className="text-sm text-purple-600 hover:text-purple-700 mt-2 inline-block"
+                                className="text-sm text-hos-gold hover:text-hos-gold-hover mt-2 inline-block"
                               >
                                 Buy Again
                               </Link>
@@ -287,15 +287,15 @@ export default function OrderDetailPage() {
 
               {/* Tracking Information */}
               {(order.trackingNumber || order.trackingCode) && (
-                <div className="bg-white rounded-lg shadow border border-gray-200 p-4 sm:p-6">
-                  <h2 className="text-lg font-semibold text-gray-900 mb-4">Tracking Information</h2>
-                  <div className="bg-purple-50 rounded-lg p-4">
-                    <p className="text-sm text-gray-600 mb-1">Tracking Number</p>
-                    <p className="font-mono text-lg font-semibold text-purple-900">{order.trackingNumber || order.trackingCode}</p>
+                <div className="bg-hos-bg-secondary rounded-lg shadow border border-hos-border p-4 sm:p-6">
+                  <h2 className="text-lg font-semibold text-white mb-4">Tracking Information</h2>
+                  <div className="bg-hos-gold/10 rounded-lg p-4">
+                    <p className="text-sm text-hos-text-secondary mb-1">Tracking Number</p>
+                    <p className="font-mono text-lg font-semibold text-hos-gold">{order.trackingNumber || order.trackingCode}</p>
                     {order.estimatedDelivery && (
                       <>
-                        <p className="text-sm text-gray-600 mt-3 mb-1">Estimated Delivery</p>
-                        <p className="text-gray-900">
+                        <p className="text-sm text-hos-text-secondary mt-3 mb-1">Estimated Delivery</p>
+                        <p className="text-white">
                           {new Date(order.estimatedDelivery).toLocaleDateString('en-US', {
                             day: 'numeric',
                             month: 'long',
@@ -306,7 +306,7 @@ export default function OrderDetailPage() {
                     )}
                     <Link
                       href={`/track-order?orderNumber=${order.orderNumber || order.id}`}
-                      className="inline-block mt-4 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors text-sm font-medium"
+                      className="inline-block mt-4 px-4 py-2 bg-hos-gold text-[#1a1406] rounded-lg hover:bg-hos-gold-hover transition-colors text-sm font-medium"
                     >
                       Track Order
                     </Link>
@@ -316,13 +316,13 @@ export default function OrderDetailPage() {
 
               {/* Order Notes */}
               {order.notes && order.notes.length > 0 && (
-                <div className="bg-white rounded-lg shadow border border-gray-200 p-4 sm:p-6">
-                  <h2 className="text-lg font-semibold text-gray-900 mb-4">Order Notes</h2>
+                <div className="bg-hos-bg-secondary rounded-lg shadow border border-hos-border p-4 sm:p-6">
+                  <h2 className="text-lg font-semibold text-white mb-4">Order Notes</h2>
                   <div className="space-y-3">
                     {order.notes.filter(note => !note.internal).map((note) => (
-                      <div key={note.id} className="border-l-4 border-purple-200 pl-4 py-2">
-                        <p className="text-gray-700">{note.content}</p>
-                        <p className="text-xs text-gray-400 mt-1">
+                      <div key={note.id} className="border-l-4 border-hos-border-accent pl-4 py-2">
+                        <p className="text-hos-text-secondary">{note.content}</p>
+                        <p className="text-xs text-hos-text-muted mt-1">
                           {new Date(note.createdAt).toLocaleDateString()}
                         </p>
                       </div>
@@ -335,25 +335,25 @@ export default function OrderDetailPage() {
             {/* Sidebar */}
             <div className="space-y-6">
               {/* Order Summary */}
-              <div className="bg-white rounded-lg shadow border border-gray-200 p-4 sm:p-6">
-                <h2 className="text-lg font-semibold text-gray-900 mb-4">Order Summary</h2>
+              <div className="bg-hos-bg-secondary rounded-lg shadow border border-hos-border p-4 sm:p-6">
+                <h2 className="text-lg font-semibold text-white mb-4">Order Summary</h2>
                 <div className="space-y-3">
                   {order.subtotal !== undefined && (
                     <div className="flex justify-between text-sm">
-                      <span className="text-gray-600">Subtotal</span>
-                      <span className="text-gray-900">{formatPrice(order.subtotal, order.currency || 'USD')}</span>
+                      <span className="text-hos-text-secondary">Subtotal</span>
+                      <span className="text-white">{formatPrice(order.subtotal, order.currency || 'USD')}</span>
                     </div>
                   )}
                   {(order.shippingCost || order.shippingAmount) ? (
                     <div className="flex justify-between text-sm">
-                      <span className="text-gray-600">Shipping</span>
-                      <span className="text-gray-900">{formatPrice(order.shippingCost || order.shippingAmount || 0, order.currency || 'USD')}</span>
+                      <span className="text-hos-text-secondary">Shipping</span>
+                      <span className="text-white">{formatPrice(order.shippingCost || order.shippingAmount || 0, order.currency || 'USD')}</span>
                     </div>
                   ) : null}
                   {order.tax !== undefined && order.tax > 0 && (
                     <div className="flex justify-between text-sm">
-                      <span className="text-gray-600">Tax</span>
-                      <span className="text-gray-900">{formatPrice(order.tax, order.currency || 'USD')}</span>
+                      <span className="text-hos-text-secondary">Tax</span>
+                      <span className="text-white">{formatPrice(order.tax, order.currency || 'USD')}</span>
                     </div>
                   )}
                   {(order.discount || order.discountAmount) ? (
@@ -363,17 +363,17 @@ export default function OrderDetailPage() {
                     </div>
                   ) : null}
                   <div className="flex justify-between font-bold text-base pt-3 border-t">
-                    <span className="text-gray-900">Total</span>
-                    <span className="text-purple-600">{formatPrice(order.total, order.currency || 'USD')}</span>
+                    <span className="text-white">Total</span>
+                    <span className="text-hos-gold">{formatPrice(order.total, order.currency || 'USD')}</span>
                   </div>
                 </div>
               </div>
 
               {/* Shipping Address */}
               {order.shippingAddress && (
-                <div className="bg-white rounded-lg shadow border border-gray-200 p-4 sm:p-6">
-                  <h2 className="text-lg font-semibold text-gray-900 mb-4">Shipping Address</h2>
-                  <div className="text-sm text-gray-700 space-y-1">
+                <div className="bg-hos-bg-secondary rounded-lg shadow border border-hos-border p-4 sm:p-6">
+                  <h2 className="text-lg font-semibold text-white mb-4">Shipping Address</h2>
+                  <div className="text-sm text-hos-text-secondary space-y-1">
                     {order.shippingAddress.firstName && order.shippingAddress.lastName && (
                       <p className="font-medium">
                         {order.shippingAddress.firstName} {order.shippingAddress.lastName}
@@ -391,7 +391,7 @@ export default function OrderDetailPage() {
                     </p>
                     {order.shippingAddress.country && <p>{order.shippingAddress.country}</p>}
                     {order.shippingAddress.phone && (
-                      <p className="mt-2 text-gray-600">Phone: {order.shippingAddress.phone}</p>
+                      <p className="mt-2 text-hos-text-secondary">Phone: {order.shippingAddress.phone}</p>
                     )}
                   </div>
                 </div>
@@ -399,9 +399,9 @@ export default function OrderDetailPage() {
 
               {/* Billing Address */}
               {order.billingAddress && formatAddress(order.billingAddress) !== formatAddress(order.shippingAddress) && (
-                <div className="bg-white rounded-lg shadow border border-gray-200 p-4 sm:p-6">
-                  <h2 className="text-lg font-semibold text-gray-900 mb-4">Billing Address</h2>
-                  <div className="text-sm text-gray-700 space-y-1">
+                <div className="bg-hos-bg-secondary rounded-lg shadow border border-hos-border p-4 sm:p-6">
+                  <h2 className="text-lg font-semibold text-white mb-4">Billing Address</h2>
+                  <div className="text-sm text-hos-text-secondary space-y-1">
                     {order.billingAddress.firstName && order.billingAddress.lastName && (
                       <p className="font-medium">
                         {order.billingAddress.firstName} {order.billingAddress.lastName}
@@ -423,13 +423,13 @@ export default function OrderDetailPage() {
               )}
 
               {/* Actions */}
-              <div className="bg-white rounded-lg shadow border border-gray-200 p-4 sm:p-6">
-                <h2 className="text-lg font-semibold text-gray-900 mb-4">Actions</h2>
+              <div className="bg-hos-bg-secondary rounded-lg shadow border border-hos-border p-4 sm:p-6">
+                <h2 className="text-lg font-semibold text-white mb-4">Actions</h2>
                 <div className="space-y-3">
                   {(order.trackingNumber || order.trackingCode) && (
                     <Link
                       href={`/track-order?orderNumber=${order.orderNumber || order.id}`}
-                      className="block w-full px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 text-center font-medium transition-colors"
+                      className="block w-full px-4 py-2 border border-hos-border text-hos-text-secondary rounded-lg hover:bg-hos-bg-tertiary text-center font-medium transition-colors"
                     >
                       Track Order
                     </Link>
@@ -438,7 +438,7 @@ export default function OrderDetailPage() {
                     <>
                       <Link
                         href={`/returns?orderId=${order.id}`}
-                        className="block w-full px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 text-center font-medium transition-colors"
+                        className="block w-full px-4 py-2 border border-hos-border text-hos-text-secondary rounded-lg hover:bg-hos-bg-tertiary text-center font-medium transition-colors"
                       >
                         Request Return
                       </Link>
@@ -466,7 +466,7 @@ export default function OrderDetailPage() {
                             toast.error(err.message || 'Failed to reorder items');
                           }
                         }}
-                        className="w-full px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 font-medium transition-colors"
+                        className="w-full px-4 py-2 bg-hos-gold text-[#1a1406] rounded-lg hover:bg-hos-gold-hover font-medium transition-colors"
                       >
                         Reorder Items
                       </button>

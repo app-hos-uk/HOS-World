@@ -82,73 +82,73 @@ export default function AdminLoyaltyEarnRulesPage() {
       <AdminLayout>
         <div className="flex items-center justify-between mb-6">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">Earn Rules</h1>
-            <p className="text-gray-600 mt-1">Configure how customers earn loyalty points</p>
+            <h1 className="text-2xl font-bold text-white">Earn Rules</h1>
+            <p className="text-hos-text-secondary mt-1">Configure how customers earn loyalty points</p>
           </div>
-          <button onClick={() => { resetForm(); setShowForm(true); }} className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 text-sm font-medium">
+          <button onClick={() => { resetForm(); setShowForm(true); }} className="px-4 py-2 bg-hos-gold text-[#1a1406] rounded-lg hover:bg-hos-gold-hover text-sm font-medium">
             + New Rule
           </button>
         </div>
 
         {showForm && (
-          <div className="bg-white border rounded-lg p-6 mb-6">
+          <div className="bg-hos-bg-secondary border rounded-lg p-6 mb-6">
             <h2 className="text-lg font-semibold mb-4">{editing ? 'Edit Rule' : 'New Earn Rule'}</h2>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Action</label>
+                <label className="block text-sm font-medium text-hos-text-secondary mb-1">Action</label>
                 <input className="w-full border rounded-lg px-3 py-2" placeholder="e.g. PURCHASE, REVIEW, REFERRAL" value={form.action} onChange={(e) => setForm({ ...form, action: e.target.value.toUpperCase() })} />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Points Awarded</label>
+                <label className="block text-sm font-medium text-hos-text-secondary mb-1">Points Awarded</label>
                 <input type="number" className="w-full border rounded-lg px-3 py-2" value={form.pointsAwarded} onChange={(e) => setForm({ ...form, pointsAwarded: parseInt(e.target.value) || 0 })} />
               </div>
               <div className="sm:col-span-2">
-                <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
+                <label className="block text-sm font-medium text-hos-text-secondary mb-1">Description</label>
                 <input className="w-full border rounded-lg px-3 py-2" placeholder="What triggers this rule" value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} />
               </div>
               <div className="flex items-center gap-2">
                 <input type="checkbox" id="isActive" checked={form.isActive} onChange={(e) => setForm({ ...form, isActive: e.target.checked })} className="rounded" />
-                <label htmlFor="isActive" className="text-sm font-medium text-gray-700">Active</label>
+                <label htmlFor="isActive" className="text-sm font-medium text-hos-text-secondary">Active</label>
               </div>
             </div>
             <div className="flex gap-2">
-              <button onClick={handleSave} disabled={saving} className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 disabled:opacity-50 text-sm font-medium">
+              <button onClick={handleSave} disabled={saving} className="px-4 py-2 bg-hos-gold text-[#1a1406] rounded-lg hover:bg-hos-gold-hover disabled:opacity-50 text-sm font-medium">
                 {saving ? 'Saving...' : editing ? 'Update' : 'Create'}
               </button>
-              <button onClick={resetForm} className="px-4 py-2 border rounded-lg hover:bg-gray-50 text-sm font-medium">Cancel</button>
+              <button onClick={resetForm} className="px-4 py-2 border rounded-lg hover:bg-hos-bg-tertiary text-sm font-medium">Cancel</button>
             </div>
           </div>
         )}
 
         {loading ? (
           <div className="flex justify-center py-12">
-            <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-purple-600" />
+            <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-hos-gold" />
           </div>
         ) : (
-          <div className="bg-white border rounded-lg overflow-hidden">
+          <div className="bg-hos-bg-secondary border rounded-lg overflow-hidden">
             <table className="w-full text-sm">
-              <thead className="bg-gray-50 border-b">
+              <thead className="bg-hos-bg-secondary border-b">
                 <tr>
-                  <th className="text-left px-4 py-3 font-medium text-gray-600">Action</th>
-                  <th className="text-left px-4 py-3 font-medium text-gray-600">Points</th>
-                  <th className="text-left px-4 py-3 font-medium text-gray-600">Description</th>
-                  <th className="text-left px-4 py-3 font-medium text-gray-600">Status</th>
-                  <th className="text-right px-4 py-3 font-medium text-gray-600">Actions</th>
+                  <th className="text-left px-4 py-3 font-medium text-hos-text-secondary">Action</th>
+                  <th className="text-left px-4 py-3 font-medium text-hos-text-secondary">Points</th>
+                  <th className="text-left px-4 py-3 font-medium text-hos-text-secondary">Description</th>
+                  <th className="text-left px-4 py-3 font-medium text-hos-text-secondary">Status</th>
+                  <th className="text-right px-4 py-3 font-medium text-hos-text-secondary">Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y">
                 {rules.map((rule) => (
-                  <tr key={rule.id} className="hover:bg-gray-50">
-                    <td className="px-4 py-3 font-medium text-gray-900">{rule.action}</td>
+                  <tr key={rule.id} className="hover:bg-hos-bg-tertiary">
+                    <td className="px-4 py-3 font-medium text-white">{rule.action}</td>
                     <td className="px-4 py-3">{rule.pointsAwarded}</td>
-                    <td className="px-4 py-3 text-gray-600">{rule.description || '—'}</td>
+                    <td className="px-4 py-3 text-hos-text-secondary">{rule.description || '—'}</td>
                     <td className="px-4 py-3">
-                      <span className={`px-2 py-0.5 text-xs font-medium rounded-full ${rule.isActive !== false ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-600'}`}>
+                      <span className={`px-2 py-0.5 text-xs font-medium rounded-full ${rule.isActive !== false ? 'bg-green-100 text-green-700' : 'bg-hos-bg-tertiary text-hos-text-secondary'}`}>
                         {rule.isActive !== false ? 'Active' : 'Inactive'}
                       </span>
                     </td>
                     <td className="px-4 py-3 text-right">
-                      <button onClick={() => startEdit(rule)} className="text-purple-600 hover:text-purple-800 font-medium mr-3">Edit</button>
+                      <button onClick={() => startEdit(rule)} className="text-hos-gold hover:text-hos-gold-hover font-medium mr-3">Edit</button>
                       <button onClick={() => handleDelete(rule.id)} className="text-red-600 hover:text-red-800 font-medium">Delete</button>
                     </td>
                   </tr>
@@ -156,7 +156,7 @@ export default function AdminLoyaltyEarnRulesPage() {
               </tbody>
             </table>
             {rules.length === 0 && (
-              <div className="p-8 text-center text-gray-500">No earn rules configured yet.</div>
+              <div className="p-8 text-center text-hos-text-muted">No earn rules configured yet.</div>
             )}
           </div>
         )}

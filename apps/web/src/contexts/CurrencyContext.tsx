@@ -141,7 +141,7 @@ export function CurrencyProvider({ children }: { children: React.ReactNode }) {
       const convertedAmount = convertPrice(amount, fromCurrency);
       const safeAmount = typeof convertedAmount === 'number' && !Number.isNaN(convertedAmount) ? convertedAmount : 0;
       try {
-        return new Intl.NumberFormat(undefined, {
+        return new Intl.NumberFormat('en-US', {
           style: 'currency',
           currency: currency,
           minimumFractionDigits: 2,

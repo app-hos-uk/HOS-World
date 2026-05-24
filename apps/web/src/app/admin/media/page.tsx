@@ -178,8 +178,8 @@ export default function AdminMediaLibraryPage() {
           {/* Header */}
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
             <div>
-              <h1 className="text-2xl font-bold text-gray-900">Media Library</h1>
-              <p className="text-gray-600 mt-1">
+              <h1 className="text-2xl font-bold text-white">Media Library</h1>
+              <p className="text-hos-text-secondary mt-1">
                 Manage uploaded images and media assets ({total} total)
               </p>
             </div>
@@ -195,7 +195,7 @@ export default function AdminMediaLibraryPage() {
               <button
                 onClick={() => fileInputRef.current?.click()}
                 disabled={uploading}
-                className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors font-medium disabled:opacity-50"
+                className="px-4 py-2 bg-hos-gold text-[#1a1406] rounded-lg hover:bg-hos-gold-hover transition-colors font-medium disabled:opacity-50"
               >
                 {uploading ? 'Uploading...' : '+ Upload Image'}
               </button>
@@ -203,10 +203,10 @@ export default function AdminMediaLibraryPage() {
           </div>
 
           {/* Search & Filters */}
-          <div className="bg-white rounded-lg shadow p-4">
+          <div className="bg-hos-bg-secondary rounded-lg shadow p-4">
             <div className="flex flex-col sm:flex-row gap-4">
               <div className="flex-1">
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-hos-text-secondary mb-1">
                   Search
                 </label>
                 <input
@@ -214,13 +214,13 @@ export default function AdminMediaLibraryPage() {
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   placeholder="Search by filename or product name..."
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                  className="w-full px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50 focus:border-transparent"
                 />
               </div>
               <div className="flex items-end">
                 <button
                   onClick={() => fetchAssets()}
-                  className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors"
+                  className="px-4 py-2 bg-hos-bg-tertiary text-hos-text-secondary rounded-lg hover:bg-hos-bg-tertiary transition-colors"
                 >
                   Refresh
                 </button>
@@ -231,7 +231,7 @@ export default function AdminMediaLibraryPage() {
           {/* Loading */}
           {loading && (
             <div className="flex items-center justify-center py-12">
-              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600"></div>
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-hos-gold"></div>
             </div>
           )}
 
@@ -252,12 +252,12 @@ export default function AdminMediaLibraryPage() {
 
           {/* Empty State */}
           {!loading && !error && filteredAssets.length === 0 && (
-            <div className="bg-white border border-gray-200 rounded-lg p-8 text-center">
+            <div className="bg-hos-bg-secondary border border-hos-border rounded-lg p-8 text-center">
               <div className="text-5xl mb-4">🖼️</div>
-              <p className="text-gray-500 text-lg mb-2">
+              <p className="text-hos-text-muted text-lg mb-2">
                 {debouncedSearch ? 'No matching media found' : 'No media assets yet'}
               </p>
-              <p className="text-gray-400 text-sm mb-4">
+              <p className="text-hos-text-muted text-sm mb-4">
                 {debouncedSearch
                   ? 'Try adjusting your search term'
                   : 'Upload images to get started'}
@@ -265,7 +265,7 @@ export default function AdminMediaLibraryPage() {
               {!debouncedSearch && (
                 <button
                   onClick={() => fileInputRef.current?.click()}
-                  className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700"
+                  className="px-4 py-2 bg-hos-gold text-[#1a1406] rounded-lg hover:bg-hos-gold-hover"
                 >
                   Upload Your First Image
                 </button>
@@ -279,12 +279,12 @@ export default function AdminMediaLibraryPage() {
               {filteredAssets.map((asset) => (
                 <div
                   key={asset.id}
-                  className="bg-white border border-gray-200 rounded-lg overflow-hidden hover:shadow-lg transition-all group"
+                  className="bg-hos-bg-secondary border border-hos-border rounded-lg overflow-hidden hover:shadow-lg transition-all group"
                 >
                   {/* Thumbnail */}
                   <button
                     onClick={() => setPreviewAsset(asset)}
-                    className="w-full aspect-square bg-gray-100 relative cursor-pointer"
+                    className="w-full aspect-square bg-hos-bg-tertiary relative cursor-pointer"
                   >
                     <SafeImage
                       src={asset.url}
@@ -306,17 +306,17 @@ export default function AdminMediaLibraryPage() {
                   {/* Info */}
                   <div className="p-2">
                     <p
-                      className="text-xs font-medium text-gray-900 truncate"
+                      className="text-xs font-medium text-white truncate"
                       title={asset.filename}
                     >
                       {asset.filename}
                     </p>
                     {asset.productName && (
-                      <p className="text-[10px] text-gray-500 truncate mt-0.5" title={asset.productName}>
+                      <p className="text-[10px] text-hos-text-muted truncate mt-0.5" title={asset.productName}>
                         {asset.productName}
                       </p>
                     )}
-                    <p className="text-[10px] text-gray-400 mt-0.5">
+                    <p className="text-[10px] text-hos-text-muted mt-0.5">
                       {formatDate(asset.createdAt)}
                     </p>
 
@@ -324,7 +324,7 @@ export default function AdminMediaLibraryPage() {
                     <div className="flex gap-1 mt-2">
                       <button
                         onClick={() => copyUrl(asset.url)}
-                        className="flex-1 px-2 py-1 text-[10px] bg-gray-100 text-gray-600 rounded hover:bg-gray-200 transition-colors"
+                        className="flex-1 px-2 py-1 text-[10px] bg-hos-bg-tertiary text-hos-text-secondary rounded hover:bg-hos-bg-tertiary transition-colors"
                         title="Copy URL"
                       >
                         Copy URL
@@ -345,8 +345,8 @@ export default function AdminMediaLibraryPage() {
 
           {/* Pagination */}
           {!loading && totalPages > 1 && (
-            <div className="flex items-center justify-between bg-white rounded-lg shadow px-4 py-3">
-              <p className="text-sm text-gray-600">
+            <div className="flex items-center justify-between bg-hos-bg-secondary rounded-lg shadow px-4 py-3">
+              <p className="text-sm text-hos-text-secondary">
                 Showing {(page - 1) * limit + 1}–
                 {Math.min(page * limit, total)} of {total}
               </p>
@@ -354,7 +354,7 @@ export default function AdminMediaLibraryPage() {
                 <button
                   onClick={() => setPage((p) => Math.max(1, p - 1))}
                   disabled={page <= 1}
-                  className="px-3 py-1.5 text-sm border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="px-3 py-1.5 text-sm border border-hos-border rounded-lg hover:bg-hos-bg-tertiary disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   Previous
                 </button>
@@ -375,8 +375,8 @@ export default function AdminMediaLibraryPage() {
                       onClick={() => setPage(pageNum)}
                       className={`px-3 py-1.5 text-sm rounded-lg ${
                         page === pageNum
-                          ? 'bg-purple-600 text-white'
-                          : 'border border-gray-300 hover:bg-gray-50'
+                          ? 'bg-hos-gold text-[#1a1406]'
+                          : 'border border-hos-border hover:bg-hos-bg-tertiary'
                       }`}
                     >
                       {pageNum}
@@ -386,7 +386,7 @@ export default function AdminMediaLibraryPage() {
                 <button
                   onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
                   disabled={page >= totalPages}
-                  className="px-3 py-1.5 text-sm border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="px-3 py-1.5 text-sm border border-hos-border rounded-lg hover:bg-hos-bg-tertiary disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   Next
                 </button>
@@ -397,28 +397,28 @@ export default function AdminMediaLibraryPage() {
           {/* Preview Modal */}
           {previewAsset && (
             <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center p-4 z-50">
-              <div className="bg-white rounded-lg max-w-3xl w-full max-h-[90vh] overflow-y-auto">
+              <div className="bg-hos-bg-secondary rounded-lg max-w-3xl w-full max-h-[90vh] overflow-y-auto">
                 <div className="p-6">
                   <div className="flex justify-between items-start mb-4">
                     <div>
-                      <h2 className="text-xl font-bold text-gray-900">
+                      <h2 className="text-xl font-bold text-white">
                         {previewAsset.filename}
                       </h2>
                       {previewAsset.productName && (
-                        <p className="text-sm text-gray-500 mt-1">
+                        <p className="text-sm text-hos-text-muted mt-1">
                           Product: {previewAsset.productName}
                         </p>
                       )}
                     </div>
                     <button
                       onClick={() => setPreviewAsset(null)}
-                      className="text-gray-500 hover:text-gray-700 text-2xl leading-none"
+                      className="text-hos-text-muted hover:text-hos-text-secondary text-2xl leading-none"
                     >
                       ×
                     </button>
                   </div>
 
-                  <div className="relative w-full aspect-video bg-gray-100 rounded-lg overflow-hidden mb-4">
+                  <div className="relative w-full aspect-video bg-hos-bg-tertiary rounded-lg overflow-hidden mb-4">
                     <SafeImage
                       src={previewAsset.url}
                       alt={previewAsset.alt || previewAsset.filename}
@@ -429,41 +429,41 @@ export default function AdminMediaLibraryPage() {
                   </div>
 
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm mb-4">
-                    <div className="bg-gray-50 p-3 rounded">
-                      <p className="text-gray-500">Type</p>
+                    <div className="bg-hos-bg-secondary p-3 rounded">
+                      <p className="text-hos-text-muted">Type</p>
                       <p className="font-medium">
                         {formatFileSize(previewAsset.url)}
                       </p>
                     </div>
-                    <div className="bg-gray-50 p-3 rounded">
-                      <p className="text-gray-500">Image Type</p>
+                    <div className="bg-hos-bg-secondary p-3 rounded">
+                      <p className="text-hos-text-muted">Image Type</p>
                       <p className="font-medium">{previewAsset.type}</p>
                     </div>
-                    <div className="bg-gray-50 p-3 rounded">
-                      <p className="text-gray-500">Uploaded</p>
+                    <div className="bg-hos-bg-secondary p-3 rounded">
+                      <p className="text-hos-text-muted">Uploaded</p>
                       <p className="font-medium">
                         {formatDate(previewAsset.createdAt)}
                       </p>
                     </div>
-                    <div className="bg-gray-50 p-3 rounded">
-                      <p className="text-gray-500">Alt Text</p>
+                    <div className="bg-hos-bg-secondary p-3 rounded">
+                      <p className="text-hos-text-muted">Alt Text</p>
                       <p className="font-medium">
                         {previewAsset.alt || '—'}
                       </p>
                     </div>
                   </div>
 
-                  <div className="bg-gray-50 p-3 rounded mb-4">
-                    <p className="text-xs text-gray-500 mb-1">URL</p>
-                    <p className="text-sm text-gray-700 break-all font-mono">
+                  <div className="bg-hos-bg-secondary p-3 rounded mb-4">
+                    <p className="text-xs text-hos-text-muted mb-1">URL</p>
+                    <p className="text-sm text-hos-text-secondary break-all font-mono">
                       {previewAsset.url}
                     </p>
                   </div>
 
-                  <div className="flex gap-2 pt-2 border-t border-gray-200">
+                  <div className="flex gap-2 pt-2 border-t border-hos-border">
                     <button
                       onClick={() => copyUrl(previewAsset.url)}
-                      className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 text-sm"
+                      className="px-4 py-2 bg-hos-gold text-[#1a1406] rounded-lg hover:bg-hos-gold-hover text-sm"
                     >
                       Copy URL
                     </button>
@@ -471,7 +471,7 @@ export default function AdminMediaLibraryPage() {
                       href={previewAsset.url}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 text-sm"
+                      className="px-4 py-2 bg-hos-bg-tertiary text-hos-text-secondary rounded-lg hover:bg-hos-bg-tertiary text-sm"
                     >
                       Open in New Tab
                     </a>
@@ -486,7 +486,7 @@ export default function AdminMediaLibraryPage() {
                     </button>
                     <button
                       onClick={() => setPreviewAsset(null)}
-                      className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 text-sm"
+                      className="px-4 py-2 bg-hos-bg-tertiary text-hos-text-secondary rounded-lg hover:bg-hos-bg-tertiary text-sm"
                     >
                       Close
                     </button>

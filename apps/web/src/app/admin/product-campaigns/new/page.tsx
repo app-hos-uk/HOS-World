@@ -62,9 +62,9 @@ export default function AdminProductCampaignNewPage() {
           <Link href="/admin/product-campaigns" className="text-sm text-violet-700">
             ← Campaigns
           </Link>
-          <h1 className="text-2xl font-semibold text-gray-900">New product campaign</h1>
+          <h1 className="text-2xl font-semibold text-white">New product campaign</h1>
           <label className="block text-sm">
-            <span className="text-gray-700">Name</span>
+            <span className="text-hos-text-secondary">Name</span>
             <input
               className="mt-1 w-full border rounded px-3 py-2"
               value={name}
@@ -72,7 +72,7 @@ export default function AdminProductCampaignNewPage() {
             />
           </label>
           <label className="block text-sm">
-            <span className="text-gray-700">Bonus points (per qualifying unit)</span>
+            <span className="text-hos-text-secondary">Bonus points (per qualifying unit)</span>
             <input
               type="number"
               className="mt-1 w-full border rounded px-3 py-2"
@@ -81,7 +81,7 @@ export default function AdminProductCampaignNewPage() {
             />
           </label>
           <label className="block text-sm">
-            <span className="text-gray-700">Starts (local)</span>
+            <span className="text-hos-text-secondary">Starts (local)</span>
             <input
               type="datetime-local"
               className="mt-1 w-full border rounded px-3 py-2"
@@ -90,7 +90,7 @@ export default function AdminProductCampaignNewPage() {
             />
           </label>
           <label className="block text-sm">
-            <span className="text-gray-700">Ends (local)</span>
+            <span className="text-hos-text-secondary">Ends (local)</span>
             <input
               type="datetime-local"
               className="mt-1 w-full border rounded px-3 py-2"
@@ -99,7 +99,7 @@ export default function AdminProductCampaignNewPage() {
             />
           </label>
           <label className="block text-sm">
-            <span className="text-gray-700">Fandom filter (comma-separated)</span>
+            <span className="text-hos-text-secondary">Fandom filter (comma-separated)</span>
             <input
               className="mt-1 w-full border rounded px-3 py-2"
               value={fandoms}
@@ -107,7 +107,7 @@ export default function AdminProductCampaignNewPage() {
               placeholder="Harry Potter"
             />
           </label>
-          <label className="flex items-center gap-2 text-sm text-gray-700">
+          <label className="flex items-center gap-2 text-sm text-hos-text-secondary">
             <input
               type="checkbox"
               checked={applyToAllProducts}

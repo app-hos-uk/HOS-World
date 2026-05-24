@@ -46,8 +46,8 @@ export default function AdminBrandPartnershipDetailPage() {
             <>
               <div className="flex justify-between items-start">
                 <div>
-                  <h1 className="text-2xl font-semibold text-gray-900">{String(row.name)}</h1>
-                  <p className="text-sm text-gray-500">
+                  <h1 className="text-2xl font-semibold text-white">{String(row.name)}</h1>
+                  <p className="text-sm text-hos-text-muted">
                     {String(row.status)} · {String(row.slug)}
                   </p>
                 </div>
@@ -58,36 +58,36 @@ export default function AdminBrandPartnershipDetailPage() {
                   New campaign
                 </Link>
               </div>
-              <div className="border rounded-lg p-4 bg-white text-sm">
+              <div className="border rounded-lg p-4 bg-hos-bg-secondary text-sm">
                 <p className="font-medium mb-2">Budget</p>
                 <p>
                   Spent {String(row.spentBudget)} / {String(row.totalBudget)} {String(row.currency)}
                 </p>
               </div>
               {report && (
-                <div className="border rounded-lg p-4 bg-white text-sm">
+                <div className="border rounded-lg p-4 bg-hos-bg-secondary text-sm">
                   <p className="font-medium mb-3">Report Snapshot</p>
                   <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-                    <div className="bg-purple-50 rounded-lg p-3">
-                      <p className="text-xs text-gray-500">Total Campaigns</p>
-                      <p className="text-xl font-semibold text-purple-700">
+                    <div className="bg-hos-gold/10 rounded-lg p-3">
+                      <p className="text-xs text-hos-text-muted">Total Campaigns</p>
+                      <p className="text-xl font-semibold text-hos-gold-hover">
                         {Number(report.totalCampaigns ?? report.campaignCount ?? 0)}
                       </p>
                     </div>
                     <div className="bg-green-50 rounded-lg p-3">
-                      <p className="text-xs text-gray-500">Total Revenue</p>
+                      <p className="text-xs text-hos-text-muted">Total Revenue</p>
                       <p className="text-xl font-semibold text-green-700">
                         ${Number(report.totalRevenue ?? report.revenue ?? 0).toLocaleString()}
                       </p>
                     </div>
-                    <div className="bg-blue-50 rounded-lg p-3">
-                      <p className="text-xs text-gray-500">Total Orders</p>
-                      <p className="text-xl font-semibold text-blue-700">
+                    <div className="bg-hos-gold/10 rounded-lg p-3">
+                      <p className="text-xs text-hos-text-muted">Total Orders</p>
+                      <p className="text-xl font-semibold text-hos-gold">
                         {Number(report.totalOrders ?? report.orders ?? 0)}
                       </p>
                     </div>
                     <div className="bg-amber-50 rounded-lg p-3">
-                      <p className="text-xs text-gray-500">Conversion Rate</p>
+                      <p className="text-xs text-hos-text-muted">Conversion Rate</p>
                       <p className="text-xl font-semibold text-amber-700">
                         {Number(report.conversionRate ?? 0).toFixed(1)}%
                       </p>
@@ -96,33 +96,33 @@ export default function AdminBrandPartnershipDetailPage() {
                   {(report.impressions != null || report.clicks != null) && (
                     <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mt-4">
                       {report.impressions != null && (
-                        <div className="bg-gray-50 rounded-lg p-3">
-                          <p className="text-xs text-gray-500">Impressions</p>
-                          <p className="text-lg font-semibold text-gray-700">
+                        <div className="bg-hos-bg-secondary rounded-lg p-3">
+                          <p className="text-xs text-hos-text-muted">Impressions</p>
+                          <p className="text-lg font-semibold text-hos-text-secondary">
                             {Number(report.impressions).toLocaleString()}
                           </p>
                         </div>
                       )}
                       {report.clicks != null && (
-                        <div className="bg-gray-50 rounded-lg p-3">
-                          <p className="text-xs text-gray-500">Clicks</p>
-                          <p className="text-lg font-semibold text-gray-700">
+                        <div className="bg-hos-bg-secondary rounded-lg p-3">
+                          <p className="text-xs text-hos-text-muted">Clicks</p>
+                          <p className="text-lg font-semibold text-hos-text-secondary">
                             {Number(report.clicks).toLocaleString()}
                           </p>
                         </div>
                       )}
                       {report.ctr != null && (
-                        <div className="bg-gray-50 rounded-lg p-3">
-                          <p className="text-xs text-gray-500">CTR</p>
-                          <p className="text-lg font-semibold text-gray-700">
+                        <div className="bg-hos-bg-secondary rounded-lg p-3">
+                          <p className="text-xs text-hos-text-muted">CTR</p>
+                          <p className="text-lg font-semibold text-hos-text-secondary">
                             {Number(report.ctr).toFixed(2)}%
                           </p>
                         </div>
                       )}
                       {report.avgOrderValue != null && (
-                        <div className="bg-gray-50 rounded-lg p-3">
-                          <p className="text-xs text-gray-500">Avg Order Value</p>
-                          <p className="text-lg font-semibold text-gray-700">
+                        <div className="bg-hos-bg-secondary rounded-lg p-3">
+                          <p className="text-xs text-hos-text-muted">Avg Order Value</p>
+                          <p className="text-lg font-semibold text-hos-text-secondary">
                             ${Number(report.avgOrderValue).toFixed(2)}
                           </p>
                         </div>
@@ -135,9 +135,9 @@ export default function AdminBrandPartnershipDetailPage() {
                 <h2 className="text-lg font-medium mb-2">Campaigns</h2>
                 <ul className="space-y-2">
                   {campaigns.map((c) => (
-                    <li key={String(c.id)} className="border rounded p-2 bg-white flex justify-between">
+                    <li key={String(c.id)} className="border rounded p-2 bg-hos-bg-secondary flex justify-between">
                       <span>{String(c.name)}</span>
-                      <span className="text-gray-500 text-xs">{String(c.status)}</span>
+                      <span className="text-hos-text-muted text-xs">{String(c.status)}</span>
                       <Link
                         href={`/admin/brand-partnerships/campaigns/${String(c.id)}`}
                         className="text-violet-600 text-sm"
@@ -150,7 +150,7 @@ export default function AdminBrandPartnershipDetailPage() {
               </div>
             </>
           ) : (
-            <p className="text-gray-500">Loading…</p>
+            <p className="text-hos-text-muted">Loading…</p>
           )}
         </div>
       </AdminLayout>

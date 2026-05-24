@@ -215,15 +215,15 @@ export default function AdminWarehousesPage() {
         <div className="container mx-auto px-4 py-8">
           <div className="flex justify-between items-center mb-6">
             <div>
-              <h1 className="text-3xl font-bold text-purple-900 mb-2">Warehouse Management</h1>
-              <p className="text-gray-600">Manage warehouses and inventory locations</p>
+              <h1 className="text-3xl font-bold text-hos-gold mb-2">Warehouse Management</h1>
+              <p className="text-hos-text-secondary">Manage warehouses and inventory locations</p>
             </div>
             <button
               onClick={() => {
                 resetForm();
                 setIsModalOpen(true);
               }}
-              className="bg-purple-600 hover:bg-purple-700 text-white px-6 py-2 rounded-lg font-medium transition-colors"
+              className="bg-hos-gold hover:bg-hos-gold text-[#1a1406] px-6 py-2 rounded-lg font-medium transition-colors"
             >
               + Add Warehouse
             </button>
@@ -237,89 +237,89 @@ export default function AdminWarehousesPage() {
 
           {loading ? (
             <div className="text-center py-12">
-              <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600"></div>
-              <p className="mt-4 text-gray-600">Loading warehouses...</p>
+              <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-hos-gold"></div>
+              <p className="mt-4 text-hos-text-secondary">Loading warehouses...</p>
             </div>
           ) : (
-            <div className="bg-white rounded-lg shadow overflow-hidden">
-              <table className="min-w-full divide-y divide-gray-200">
-                <thead className="bg-gray-50">
+            <div className="bg-hos-bg-secondary rounded-lg shadow overflow-hidden">
+              <table className="min-w-full divide-y divide-hos-border">
+                <thead className="bg-hos-bg-secondary">
                   <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-6 py-3 text-left text-xs font-medium text-hos-text-muted uppercase tracking-wider">
                       Code
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-6 py-3 text-left text-xs font-medium text-hos-text-muted uppercase tracking-wider">
                       Name / Type
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-6 py-3 text-left text-xs font-medium text-hos-text-muted uppercase tracking-wider">
                       Location
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-6 py-3 text-left text-xs font-medium text-hos-text-muted uppercase tracking-wider">
                       Coordinates
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-6 py-3 text-left text-xs font-medium text-hos-text-muted uppercase tracking-wider">
                       Contact
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-6 py-3 text-left text-xs font-medium text-hos-text-muted uppercase tracking-wider">
                       Status
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-6 py-3 text-left text-xs font-medium text-hos-text-muted uppercase tracking-wider">
                       Actions
                     </th>
                   </tr>
                 </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
+                <tbody className="bg-hos-bg-secondary divide-y divide-hos-border">
                   {warehouses.length === 0 ? (
                     <tr>
-                      <td colSpan={7} className="px-6 py-8 text-center text-gray-500">
+                      <td colSpan={7} className="px-6 py-8 text-center text-hos-text-muted">
                         No warehouses found. Create your first warehouse to get started.
                       </td>
                     </tr>
                   ) : (
                     warehouses.map((warehouse) => (
-                      <tr key={warehouse.id} className="hover:bg-gray-50">
+                      <tr key={warehouse.id} className="hover:bg-hos-bg-tertiary">
                         <td className="px-6 py-4 whitespace-nowrap">
-                          <span className="font-mono text-sm font-medium text-purple-600">
+                          <span className="font-mono text-sm font-medium text-hos-gold">
                             {warehouse.code}
                           </span>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="text-sm font-medium text-gray-900">{warehouse.name}</div>
+                          <div className="text-sm font-medium text-white">{warehouse.name}</div>
                           {warehouse.warehouseType && (
-                            <span className="text-xs px-1.5 py-0.5 bg-gray-100 text-gray-600 rounded">
+                            <span className="text-xs px-1.5 py-0.5 bg-hos-bg-tertiary text-hos-text-secondary rounded">
                               {warehouse.warehouseType.replace('_', ' ')}
                             </span>
                           )}
                           {warehouse.capacity && (
-                            <div className="text-xs text-gray-500">Capacity: {warehouse.capacity}</div>
+                            <div className="text-xs text-hos-text-muted">Capacity: {warehouse.capacity}</div>
                           )}
                         </td>
                         <td className="px-6 py-4">
-                          <div className="text-sm text-gray-900">
+                          <div className="text-sm text-white">
                             {warehouse.city}, {warehouse.state || ''} {warehouse.country}
                           </div>
-                          <div className="text-xs text-gray-500">{warehouse.address}</div>
-                          <div className="text-xs text-gray-400">{warehouse.postalCode}</div>
+                          <div className="text-xs text-hos-text-muted">{warehouse.address}</div>
+                          <div className="text-xs text-hos-text-muted">{warehouse.postalCode}</div>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
                           {warehouse.latitude != null && warehouse.longitude != null ? (
                             <div className="text-xs">
-                              <div className="text-gray-900">{Number(warehouse.latitude).toFixed(4)}</div>
-                              <div className="text-gray-500">{Number(warehouse.longitude).toFixed(4)}</div>
+                              <div className="text-white">{Number(warehouse.latitude).toFixed(4)}</div>
+                              <div className="text-hos-text-muted">{Number(warehouse.longitude).toFixed(4)}</div>
                             </div>
                           ) : (
-                            <span className="text-xs text-gray-400">Not set</span>
+                            <span className="text-xs text-hos-text-muted">Not set</span>
                           )}
                         </td>
                         <td className="px-6 py-4">
                           {warehouse.contactEmail || warehouse.contactPhone || warehouse.managerName ? (
                             <div className="text-xs">
-                              {warehouse.managerName && <div className="text-gray-900 font-medium">{warehouse.managerName}</div>}
-                              {warehouse.contactEmail && <div className="text-gray-600">{warehouse.contactEmail}</div>}
-                              {warehouse.contactPhone && <div className="text-gray-500">{warehouse.contactPhone}</div>}
+                              {warehouse.managerName && <div className="text-white font-medium">{warehouse.managerName}</div>}
+                              {warehouse.contactEmail && <div className="text-hos-text-secondary">{warehouse.contactEmail}</div>}
+                              {warehouse.contactPhone && <div className="text-hos-text-muted">{warehouse.contactPhone}</div>}
                             </div>
                           ) : (
-                            <span className="text-xs text-gray-400">-</span>
+                            <span className="text-xs text-hos-text-muted">-</span>
                           )}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
@@ -327,7 +327,7 @@ export default function AdminWarehousesPage() {
                             className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
                               warehouse.isActive
                                 ? 'bg-green-100 text-green-800'
-                                : 'bg-gray-100 text-gray-800'
+                                : 'bg-hos-bg-tertiary text-white'
                             }`}
                           >
                             {warehouse.isActive ? 'Active' : 'Inactive'}
@@ -336,13 +336,13 @@ export default function AdminWarehousesPage() {
                         <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                           <button
                             onClick={() => handleEdit(warehouse)}
-                            className="text-purple-600 hover:text-purple-900 mr-3"
+                            className="text-hos-gold hover:text-hos-gold mr-3"
                           >
                             Edit
                           </button>
                           <Link
                             href={`/admin/warehouses/transfers?fromWarehouse=${warehouse.id}`}
-                            className="text-blue-600 hover:text-blue-900 mr-3"
+                            className="text-hos-gold hover:text-hos-gold mr-3"
                           >
                             Transfers
                           </Link>
@@ -387,17 +387,17 @@ export default function AdminWarehousesPage() {
                     leaveFrom="opacity-100 scale-100"
                     leaveTo="opacity-0 scale-95"
                   >
-                    <Dialog.Panel className="w-full max-w-2xl transform overflow-hidden rounded-2xl bg-white p-6 text-left align-middle shadow-xl transition-all max-h-[90vh] overflow-y-auto">
+                    <Dialog.Panel className="w-full max-w-2xl transform overflow-hidden rounded-2xl bg-hos-bg-secondary p-6 text-left align-middle shadow-xl transition-all max-h-[90vh] overflow-y-auto">
                       <Dialog.Title
                         as="h3"
-                        className="text-lg font-medium leading-6 text-gray-900 mb-4"
+                        className="text-lg font-medium leading-6 text-white mb-4"
                       >
                         {isEditMode ? 'Edit Warehouse' : 'Create New Warehouse'}
                       </Dialog.Title>
 
                       <form onSubmit={handleSubmit} className="space-y-4">
                         <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-1">
+                          <label className="block text-sm font-medium text-hos-text-secondary mb-1">
                             Name *
                           </label>
                           <input
@@ -405,7 +405,7 @@ export default function AdminWarehousesPage() {
                             required
                             value={formData.name}
                             onChange={(e) => setFormData({ ...formData, name: sanitizeLabelInput(e.target.value, formData.name) })}
-                            className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500 ${isLabelInvalid(formData.name) ? 'border-red-300' : 'border-gray-300'}`}
+                            className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-hos-gold/50 ${isLabelInvalid(formData.name) ? 'border-red-300' : 'border-hos-border'}`}
                           />
                           {isLabelInvalid(formData.name) && (
                             <p className="text-xs text-red-600 mt-1">Must include at least one letter</p>
@@ -413,7 +413,7 @@ export default function AdminWarehousesPage() {
                         </div>
 
                         <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-1">
+                          <label className="block text-sm font-medium text-hos-text-secondary mb-1">
                             Code * (Unique)
                           </label>
                           <input
@@ -422,13 +422,13 @@ export default function AdminWarehousesPage() {
                             disabled={isEditMode}
                             value={formData.code}
                             onChange={(e) => setFormData({ ...formData, code: e.target.value.toUpperCase() })}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500 disabled:bg-gray-100"
+                            className="w-full px-3 py-2 border border-hos-border rounded-md focus:outline-none focus:ring-2 focus:ring-hos-gold/50 disabled:bg-hos-bg-tertiary"
                             placeholder="e.g., WH-LON-01"
                           />
                         </div>
 
                         <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-1">
+                          <label className="block text-sm font-medium text-hos-text-secondary mb-1">
                             Address *
                           </label>
                           <input
@@ -436,13 +436,13 @@ export default function AdminWarehousesPage() {
                             required
                             value={formData.address}
                             onChange={(e) => setFormData({ ...formData, address: e.target.value })}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
+                            className="w-full px-3 py-2 border border-hos-border rounded-md focus:outline-none focus:ring-2 focus:ring-hos-gold/50"
                           />
                         </div>
 
                         <div className="grid grid-cols-2 gap-4">
                           <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                            <label className="block text-sm font-medium text-hos-text-secondary mb-1">
                               City *
                             </label>
                             <input
@@ -450,21 +450,21 @@ export default function AdminWarehousesPage() {
                               required
                               value={formData.city}
                               onChange={(e) => setFormData({ ...formData, city: sanitizeLabelInput(e.target.value, formData.city) })}
-                              className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500 ${isLabelInvalid(formData.city) ? 'border-red-300' : 'border-gray-300'}`}
+                              className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-hos-gold/50 ${isLabelInvalid(formData.city) ? 'border-red-300' : 'border-hos-border'}`}
                             />
                             {isLabelInvalid(formData.city) && (
                               <p className="text-xs text-red-600 mt-1">Must include at least one letter</p>
                             )}
                           </div>
                           <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                            <label className="block text-sm font-medium text-hos-text-secondary mb-1">
                               State/Region
                             </label>
                             <input
                               type="text"
                               value={formData.state}
                               onChange={(e) => setFormData({ ...formData, state: sanitizeLabelInput(e.target.value, formData.state) })}
-                              className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500 ${isLabelInvalid(formData.state) ? 'border-red-300' : 'border-gray-300'}`}
+                              className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-hos-gold/50 ${isLabelInvalid(formData.state) ? 'border-red-300' : 'border-hos-border'}`}
                             />
                             {isLabelInvalid(formData.state) && (
                               <p className="text-xs text-red-600 mt-1">Must include at least one letter</p>
@@ -474,7 +474,7 @@ export default function AdminWarehousesPage() {
 
                         <div className="grid grid-cols-2 gap-4">
                           <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                            <label className="block text-sm font-medium text-hos-text-secondary mb-1">
                               Country *
                             </label>
                             <input
@@ -482,7 +482,7 @@ export default function AdminWarehousesPage() {
                               required
                               value={formData.country}
                               onChange={(e) => setFormData({ ...formData, country: sanitizeLabelInput(e.target.value, formData.country) })}
-                              className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500 ${isLabelInvalid(formData.country) ? 'border-red-300' : 'border-gray-300'}`}
+                              className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-hos-gold/50 ${isLabelInvalid(formData.country) ? 'border-red-300' : 'border-hos-border'}`}
                               placeholder="e.g., GB, US"
                             />
                             {isLabelInvalid(formData.country) && (
@@ -490,7 +490,7 @@ export default function AdminWarehousesPage() {
                             )}
                           </div>
                           <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                            <label className="block text-sm font-medium text-hos-text-secondary mb-1">
                               Postal Code *
                             </label>
                             <input
@@ -498,7 +498,7 @@ export default function AdminWarehousesPage() {
                               required
                               value={formData.postalCode}
                               onChange={(e) => setFormData({ ...formData, postalCode: sanitizePostalInput(e.target.value) })}
-                              className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500 ${isPostalInvalid(formData.postalCode) ? 'border-red-300' : 'border-gray-300'}`}
+                              className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-hos-gold/50 ${isPostalInvalid(formData.postalCode) ? 'border-red-300' : 'border-hos-border'}`}
                             />
                             {isPostalInvalid(formData.postalCode) && (
                               <p className="text-xs text-red-600 mt-1">Must include at least one digit</p>
@@ -508,7 +508,7 @@ export default function AdminWarehousesPage() {
 
                         <div className="grid grid-cols-2 gap-4">
                           <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                            <label className="block text-sm font-medium text-hos-text-secondary mb-1">
                               Latitude
                             </label>
                             <input
@@ -516,12 +516,12 @@ export default function AdminWarehousesPage() {
                               step="any"
                               value={formData.latitude}
                               onChange={(e) => setFormData({ ...formData, latitude: e.target.value })}
-                              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
+                              className="w-full px-3 py-2 border border-hos-border rounded-md focus:outline-none focus:ring-2 focus:ring-hos-gold/50"
                               placeholder="e.g., 51.5074"
                             />
                           </div>
                           <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                            <label className="block text-sm font-medium text-hos-text-secondary mb-1">
                               Longitude
                             </label>
                             <input
@@ -529,7 +529,7 @@ export default function AdminWarehousesPage() {
                               step="any"
                               value={formData.longitude}
                               onChange={(e) => setFormData({ ...formData, longitude: e.target.value })}
-                              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
+                              className="w-full px-3 py-2 border border-hos-border rounded-md focus:outline-none focus:ring-2 focus:ring-hos-gold/50"
                               placeholder="e.g., -0.1278"
                             />
                           </div>
@@ -537,66 +537,66 @@ export default function AdminWarehousesPage() {
 
                         <div className="grid grid-cols-2 gap-4">
                           <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                            <label className="block text-sm font-medium text-hos-text-secondary mb-1">
                               Contact Email
                             </label>
                             <input
                               type="email"
                               value={formData.contactEmail}
                               onChange={(e) => setFormData({ ...formData, contactEmail: e.target.value })}
-                              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
+                              className="w-full px-3 py-2 border border-hos-border rounded-md focus:outline-none focus:ring-2 focus:ring-hos-gold/50"
                             />
                           </div>
                           <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                            <label className="block text-sm font-medium text-hos-text-secondary mb-1">
                               Contact Phone
                             </label>
                             <input
                               type="tel"
                               value={formData.contactPhone}
                               onChange={(e) => setFormData({ ...formData, contactPhone: e.target.value })}
-                              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
+                              className="w-full px-3 py-2 border border-hos-border rounded-md focus:outline-none focus:ring-2 focus:ring-hos-gold/50"
                             />
                           </div>
                         </div>
 
                         <div className="grid grid-cols-2 gap-4">
                           <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                            <label className="block text-sm font-medium text-hos-text-secondary mb-1">
                               Manager Name
                             </label>
                             <input
                               type="text"
                               value={formData.managerName}
                               onChange={(e) => setFormData({ ...formData, managerName: sanitizeLabelInput(e.target.value, formData.managerName) })}
-                              className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500 ${isLabelInvalid(formData.managerName) ? 'border-red-300' : 'border-gray-300'}`}
+                              className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-hos-gold/50 ${isLabelInvalid(formData.managerName) ? 'border-red-300' : 'border-hos-border'}`}
                             />
                             {isLabelInvalid(formData.managerName) && (
                               <p className="text-xs text-red-600 mt-1">Must include at least one letter</p>
                             )}
                           </div>
                           <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                            <label className="block text-sm font-medium text-hos-text-secondary mb-1">
                               Capacity (units)
                             </label>
                             <input
                               type="number"
                               value={formData.capacity}
                               onChange={(e) => setFormData({ ...formData, capacity: e.target.value })}
-                              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
+                              className="w-full px-3 py-2 border border-hos-border rounded-md focus:outline-none focus:ring-2 focus:ring-hos-gold/50"
                               placeholder="Storage capacity"
                             />
                           </div>
                         </div>
 
                         <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-1">
+                          <label className="block text-sm font-medium text-hos-text-secondary mb-1">
                             Warehouse Type
                           </label>
                           <select
                             value={formData.warehouseType}
                             onChange={(e) => setFormData({ ...formData, warehouseType: e.target.value })}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
+                            className="w-full px-3 py-2 border border-hos-border rounded-md focus:outline-none focus:ring-2 focus:ring-hos-gold/50"
                           >
                             <option value="DISTRIBUTION">Distribution</option>
                             <option value="RETURNS">Returns Processing</option>
@@ -613,9 +613,9 @@ export default function AdminWarehousesPage() {
                               id="isActive"
                               checked={formData.isActive}
                               onChange={(e) => setFormData({ ...formData, isActive: e.target.checked })}
-                              className="h-4 w-4 text-purple-600 focus:ring-purple-500 border-gray-300 rounded"
+                              className="h-4 w-4 text-hos-gold focus:ring-hos-gold/50 border-hos-border rounded"
                             />
-                            <label htmlFor="isActive" className="ml-2 block text-sm text-gray-900">
+                            <label htmlFor="isActive" className="ml-2 block text-sm text-white">
                               Active
                             </label>
                           </div>
@@ -625,14 +625,14 @@ export default function AdminWarehousesPage() {
                           <button
                             type="button"
                             onClick={handleCloseModal}
-                            className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50"
+                            className="px-4 py-2 text-sm font-medium text-hos-text-secondary bg-hos-bg-secondary border border-hos-border rounded-md hover:bg-hos-bg-tertiary"
                           >
                             Cancel
                           </button>
                           <button
                             type="submit"
                             disabled={submitting}
-                            className="px-4 py-2 text-sm font-medium text-white bg-purple-600 rounded-md hover:bg-purple-700 disabled:opacity-50"
+                            className="px-4 py-2 text-sm font-medium text-white bg-hos-gold rounded-md hover:bg-hos-gold-hover disabled:opacity-50"
                           >
                             {submitting ? 'Saving...' : isEditMode ? 'Update' : 'Create'}
                           </button>

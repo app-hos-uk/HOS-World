@@ -60,20 +60,20 @@ export function DashboardLayout({ children, role, menuItems, title, dashboardHre
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-hos-bg-secondary">
       {/* Sidebar */}
       <div
-        className={`fixed inset-y-0 left-0 z-50 w-64 bg-white border-r border-gray-200 transition-transform duration-300 ${
+        className={`fixed inset-y-0 left-0 z-50 w-64 bg-hos-bg-secondary border-r border-hos-border transition-transform duration-300 ${
           sidebarOpen ? 'translate-x-0' : '-translate-x-full'
         } lg:translate-x-0`}
       >
         <div className="flex flex-col h-full">
           {/* Logo/Header */}
-          <div className="flex items-center justify-between h-16 px-4 border-b border-gray-200">
-            <h2 className="text-xl font-bold text-purple-600">{title}</h2>
+          <div className="flex items-center justify-between h-16 px-4 border-b border-hos-border">
+            <h2 className="text-xl font-bold text-hos-gold">{title}</h2>
             <button
               onClick={() => setSidebarOpen(false)}
-              className="lg:hidden text-gray-500 hover:text-gray-700"
+              className="lg:hidden text-hos-text-muted hover:text-hos-text-secondary"
             >
               ✕
             </button>
@@ -88,8 +88,8 @@ export function DashboardLayout({ children, role, menuItems, title, dashboardHre
                     href={item.href}
                     className={`flex items-center justify-between gap-2 px-3 py-2 text-sm font-medium rounded-lg transition-colors ${
                       isMenuActive(item)
-                        ? 'bg-purple-100 text-purple-700'
-                        : 'text-gray-700 hover:bg-gray-100'
+                        ? 'bg-hos-gold/20 text-hos-gold-hover'
+                        : 'text-hos-text-secondary hover:bg-hos-bg-tertiary'
                     }`}
                   >
                     <span className="flex items-center gap-2">
@@ -108,11 +108,11 @@ export function DashboardLayout({ children, role, menuItems, title, dashboardHre
           </nav>
 
           {/* Footer: Admin link when provided; role Dashboard only if not already first nav item (avoids 3x "Dashboard") */}
-          <div className="border-t border-gray-200 p-4 space-y-1">
+          <div className="border-t border-hos-border p-4 space-y-1">
             {adminBackHref && (
               <Link
                 href={adminBackHref.href}
-                className="flex items-center gap-2 px-3 py-2 text-sm text-gray-600 hover:bg-gray-100 rounded-lg transition-colors font-medium"
+                className="flex items-center gap-2 px-3 py-2 text-sm text-hos-text-secondary hover:bg-hos-bg-tertiary rounded-lg transition-colors font-medium"
               >
                 <span>←</span>
                 <span>{adminBackHref.title}</span>
@@ -121,7 +121,7 @@ export function DashboardLayout({ children, role, menuItems, title, dashboardHre
             {dashboardLink && dashboardLink !== menuItems[0]?.href && (
               <Link
                 href={dashboardLink}
-                className="flex items-center gap-2 px-3 py-2 text-sm text-purple-600 hover:bg-purple-50 rounded-lg transition-colors font-medium"
+                className="flex items-center gap-2 px-3 py-2 text-sm text-hos-gold hover:bg-hos-gold/10 rounded-lg transition-colors font-medium"
               >
                 <span>📊</span>
                 <span>Dashboard</span>
@@ -142,19 +142,19 @@ export function DashboardLayout({ children, role, menuItems, title, dashboardHre
       {/* Main Content */}
       <div className={`lg:pl-64 transition-all duration-300`}>
         {/* Top Bar */}
-        <div className="sticky top-0 z-30 bg-white border-b border-gray-200">
+        <div className="sticky top-0 z-30 bg-hos-bg-secondary border-b border-hos-border">
           <div className="flex items-center justify-between h-16 px-4 sm:px-6 lg:px-8">
             <div className="flex items-center gap-3">
               <button
                 onClick={() => setSidebarOpen(true)}
-                className="lg:hidden text-gray-500 hover:text-gray-700"
+                className="lg:hidden text-hos-text-muted hover:text-hos-text-secondary"
               >
                 ☰
               </button>
               {adminBackHref && (
                 <Link
                   href={adminBackHref.href}
-                  className="text-sm font-medium text-gray-600 hover:text-gray-800 hidden sm:inline"
+                  className="text-sm font-medium text-hos-text-secondary hover:text-white hidden sm:inline"
                 >
                   ← {adminBackHref.title}
                 </Link>
@@ -162,7 +162,7 @@ export function DashboardLayout({ children, role, menuItems, title, dashboardHre
               {dashboardLink && dashboardLink !== menuItems[0]?.href && (
                 <Link
                   href={dashboardLink}
-                  className="text-sm font-medium text-purple-600 hover:text-purple-700 hidden sm:inline"
+                  className="text-sm font-medium text-hos-gold hover:text-hos-gold-hover hidden sm:inline"
                 >
                   Dashboard
                 </Link>
@@ -170,7 +170,7 @@ export function DashboardLayout({ children, role, menuItems, title, dashboardHre
             </div>
             <div className="flex items-center gap-4">
               {user && (
-                <span className="text-sm text-gray-600 hidden sm:inline">
+                <span className="text-sm text-hos-text-secondary hidden sm:inline">
                   {user.firstName} {user.lastName}
                 </span>
               )}

@@ -31,16 +31,16 @@ interface TicketMessage {
 }
 
 const STATUS_COLORS: Record<string, string> = {
-  OPEN: 'bg-blue-100 text-blue-800',
-  ASSIGNED: 'bg-indigo-100 text-indigo-800',
-  IN_PROGRESS: 'bg-purple-100 text-purple-800',
+  OPEN: 'bg-hos-gold/20 text-hos-gold',
+  ASSIGNED: 'bg-hos-gold/20 text-hos-gold',
+  IN_PROGRESS: 'bg-hos-gold/20 text-hos-gold',
   WAITING_CUSTOMER: 'bg-yellow-100 text-yellow-800',
   RESOLVED: 'bg-green-100 text-green-800',
-  CLOSED: 'bg-gray-100 text-gray-800',
+  CLOSED: 'bg-hos-bg-tertiary text-white',
 };
 
 const PRIORITY_COLORS: Record<string, string> = {
-  LOW: 'bg-gray-100 text-gray-800',
+  LOW: 'bg-hos-bg-tertiary text-white',
   MEDIUM: 'bg-yellow-100 text-yellow-800',
   HIGH: 'bg-orange-100 text-orange-800',
   URGENT: 'bg-red-100 text-red-800',
@@ -320,12 +320,12 @@ export default function AdminSupportPage() {
         <div className="space-y-6">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div>
-              <h1 className="text-2xl font-bold text-gray-900">Support Center</h1>
-              <p className="text-gray-600 mt-1">Manage customer support tickets</p>
+              <h1 className="text-2xl font-bold text-white">Support Center</h1>
+              <p className="text-hos-text-secondary mt-1">Manage customer support tickets</p>
             </div>
             <button
               onClick={() => setShowCreateModal(true)}
-              className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700"
+              className="px-4 py-2 bg-hos-gold text-[#1a1406] rounded-lg hover:bg-hos-gold-hover"
             >
               + New Ticket
             </button>
@@ -335,85 +335,85 @@ export default function AdminSupportPage() {
           <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
             <button
               onClick={() => setFilter('all')}
-              className={`bg-white rounded-lg shadow p-4 text-left ${filter === 'all' ? 'ring-2 ring-purple-500' : ''}`}
+              className={`bg-hos-bg-secondary rounded-lg shadow p-4 text-left ${filter === 'all' ? 'ring-2 ring-hos-gold/50' : ''}`}
             >
-              <h3 className="text-xs font-medium text-gray-500 uppercase">Total Tickets</h3>
-              <p className="text-2xl font-bold text-gray-900 mt-1">{stats.total}</p>
+              <h3 className="text-xs font-medium text-hos-text-muted uppercase">Total Tickets</h3>
+              <p className="text-2xl font-bold text-white mt-1">{stats.total}</p>
             </button>
             <button
               onClick={() => setFilter('open')}
-              className={`bg-white rounded-lg shadow p-4 text-left ${filter === 'open' ? 'ring-2 ring-purple-500' : ''}`}
+              className={`bg-hos-bg-secondary rounded-lg shadow p-4 text-left ${filter === 'open' ? 'ring-2 ring-hos-gold/50' : ''}`}
             >
-              <h3 className="text-xs font-medium text-gray-500 uppercase">Open</h3>
-              <p className="text-2xl font-bold text-blue-600 mt-1">{stats.open}</p>
+              <h3 className="text-xs font-medium text-hos-text-muted uppercase">Open</h3>
+              <p className="text-2xl font-bold text-hos-gold mt-1">{stats.open}</p>
             </button>
             <button
               onClick={() => setFilter('inprogress')}
-              className={`bg-white rounded-lg shadow p-4 text-left ${filter === 'inprogress' ? 'ring-2 ring-purple-500' : ''}`}
+              className={`bg-hos-bg-secondary rounded-lg shadow p-4 text-left ${filter === 'inprogress' ? 'ring-2 ring-hos-gold/50' : ''}`}
             >
-              <h3 className="text-xs font-medium text-gray-500 uppercase">In Progress</h3>
-              <p className="text-2xl font-bold text-purple-600 mt-1">{stats.inProgress}</p>
+              <h3 className="text-xs font-medium text-hos-text-muted uppercase">In Progress</h3>
+              <p className="text-2xl font-bold text-hos-gold mt-1">{stats.inProgress}</p>
             </button>
             <button
               onClick={() => setFilter('resolved')}
-              className={`bg-white rounded-lg shadow p-4 text-left ${filter === 'resolved' ? 'ring-2 ring-purple-500' : ''}`}
+              className={`bg-hos-bg-secondary rounded-lg shadow p-4 text-left ${filter === 'resolved' ? 'ring-2 ring-hos-gold/50' : ''}`}
             >
-              <h3 className="text-xs font-medium text-gray-500 uppercase">Resolved</h3>
+              <h3 className="text-xs font-medium text-hos-text-muted uppercase">Resolved</h3>
               <p className="text-2xl font-bold text-green-600 mt-1">{stats.resolved}</p>
             </button>
             <button
               onClick={() => setFilter('urgent')}
-              className={`bg-white rounded-lg shadow p-4 text-left ${filter === 'urgent' ? 'ring-2 ring-purple-500' : ''}`}
+              className={`bg-hos-bg-secondary rounded-lg shadow p-4 text-left ${filter === 'urgent' ? 'ring-2 ring-hos-gold/50' : ''}`}
             >
-              <h3 className="text-xs font-medium text-gray-500 uppercase">Urgent</h3>
+              <h3 className="text-xs font-medium text-hos-text-muted uppercase">Urgent</h3>
               <p className="text-2xl font-bold text-red-600 mt-1">{stats.urgent}</p>
             </button>
           </div>
 
           {/* Search */}
-          <div className="bg-white rounded-lg shadow p-4">
+          <div className="bg-hos-bg-secondary rounded-lg shadow p-4">
             <input
               type="text"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               placeholder="Search by ticket number, subject, or customer email..."
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
+              className="w-full px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50"
             />
           </div>
 
           {loading ? (
             <div className="flex items-center justify-center h-32">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-600"></div>
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-hos-gold"></div>
             </div>
           ) : (
-            <div className="bg-white rounded-lg shadow overflow-hidden">
-              <table className="min-w-full divide-y divide-gray-200">
-                <thead className="bg-gray-50">
+            <div className="bg-hos-bg-secondary rounded-lg shadow overflow-hidden">
+              <table className="min-w-full divide-y divide-hos-border">
+                <thead className="bg-hos-bg-secondary">
                   <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Ticket</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Customer</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Priority</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Created</th>
-                    <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">Actions</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-hos-text-muted uppercase">Ticket</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-hos-text-muted uppercase">Customer</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-hos-text-muted uppercase">Priority</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-hos-text-muted uppercase">Status</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-hos-text-muted uppercase">Created</th>
+                    <th className="px-6 py-3 text-right text-xs font-medium text-hos-text-muted uppercase">Actions</th>
                   </tr>
                 </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
+                <tbody className="bg-hos-bg-secondary divide-y divide-hos-border">
                   {filteredTickets.length === 0 ? (
                     <tr>
-                      <td colSpan={6} className="px-6 py-12 text-center text-gray-500">
+                      <td colSpan={6} className="px-6 py-12 text-center text-hos-text-muted">
                         <span className="text-4xl block mb-2">🎫</span>
                         <p>No tickets found</p>
                       </td>
                     </tr>
                   ) : (
                     filteredTickets.map((ticket) => (
-                      <tr key={ticket.id} className="hover:bg-gray-50">
+                      <tr key={ticket.id} className="hover:bg-hos-bg-tertiary">
                         <td className="px-6 py-4">
-                          <div className="text-sm font-medium text-gray-900">#{ticket.ticketNumber}</div>
-                          <div className="text-sm text-gray-500 truncate max-w-xs">{ticket.subject}</div>
+                          <div className="text-sm font-medium text-white">#{ticket.ticketNumber}</div>
+                          <div className="text-sm text-hos-text-muted truncate max-w-xs">{ticket.subject}</div>
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-hos-text-muted">
                           {ticket.user?.email || 'Unknown'}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
@@ -421,7 +421,7 @@ export default function AdminSupportPage() {
                             value={ticket.priority}
                             onChange={(e) => handlePriorityUpdate(ticket.id, e.target.value)}
                             className={`text-xs font-semibold rounded-full px-2 py-1 border-0 cursor-pointer ${
-                              PRIORITY_COLORS[ticket.priority] || 'bg-gray-100 text-gray-800'
+                              PRIORITY_COLORS[ticket.priority] || 'bg-hos-bg-tertiary text-white'
                             }`}
                           >
                             {TICKET_PRIORITIES.map((p) => (
@@ -434,7 +434,7 @@ export default function AdminSupportPage() {
                             value={ticket.status}
                             onChange={(e) => handleStatusUpdate(ticket.id, e.target.value)}
                             className={`text-xs font-semibold rounded-full px-2 py-1 border-0 cursor-pointer ${
-                              STATUS_COLORS[ticket.status] || 'bg-gray-100 text-gray-800'
+                              STATUS_COLORS[ticket.status] || 'bg-hos-bg-tertiary text-white'
                             }`}
                           >
                             {TICKET_STATUSES.map((s) => (
@@ -442,13 +442,13 @@ export default function AdminSupportPage() {
                             ))}
                           </select>
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-hos-text-muted">
                           {new Date(ticket.createdAt).toLocaleDateString()}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                           <button
                             onClick={() => openTicketDetails(ticket)}
-                            className="text-purple-600 hover:text-purple-900"
+                            className="text-hos-gold hover:text-hos-gold"
                           >
                             View Details
                           </button>
@@ -464,12 +464,12 @@ export default function AdminSupportPage() {
           {/* Ticket Details Modal */}
           {showDetailsModal && selectedTicket && (
             <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50 overflow-y-auto">
-              <div className="bg-white rounded-lg max-w-4xl w-full my-4 max-h-[90vh] overflow-y-auto">
+              <div className="bg-hos-bg-secondary rounded-lg max-w-4xl w-full my-4 max-h-[90vh] overflow-y-auto">
                 <div className="p-6">
                   <div className="flex justify-between items-start mb-6">
                     <div>
                       <div className="flex items-center gap-3">
-                        <h2 className="text-2xl font-bold text-gray-900">
+                        <h2 className="text-2xl font-bold text-white">
                           #{selectedTicket.ticketNumber}
                         </h2>
                         <span className={`px-2 py-1 text-xs font-semibold rounded-full ${
@@ -483,35 +483,35 @@ export default function AdminSupportPage() {
                           {selectedTicket.status}
                         </span>
                       </div>
-                      <p className="text-lg text-gray-600 mt-1">{selectedTicket.subject}</p>
+                      <p className="text-lg text-hos-text-secondary mt-1">{selectedTicket.subject}</p>
                     </div>
                     <button
                       onClick={() => setShowDetailsModal(false)}
-                      className="text-gray-400 hover:text-gray-600 text-2xl"
+                      className="text-hos-text-muted hover:text-hos-text-secondary text-2xl"
                     >
                       ×
                     </button>
                   </div>
 
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-                    <div className="bg-gray-50 rounded-lg p-4">
-                      <h3 className="text-sm font-medium text-gray-500 mb-1">Customer</h3>
-                      <p className="text-gray-900">
+                    <div className="bg-hos-bg-secondary rounded-lg p-4">
+                      <h3 className="text-sm font-medium text-hos-text-muted mb-1">Customer</h3>
+                      <p className="text-white">
                         {selectedTicket.user?.firstName || ''} {selectedTicket.user?.lastName || ''}
                       </p>
-                      <p className="text-sm text-gray-500">{selectedTicket.user?.email || 'Unknown'}</p>
+                      <p className="text-sm text-hos-text-muted">{selectedTicket.user?.email || 'Unknown'}</p>
                     </div>
-                    <div className="bg-gray-50 rounded-lg p-4">
-                      <h3 className="text-sm font-medium text-gray-500 mb-1">Created</h3>
-                      <p className="text-gray-900">{formatDate(selectedTicket.createdAt)}</p>
+                    <div className="bg-hos-bg-secondary rounded-lg p-4">
+                      <h3 className="text-sm font-medium text-hos-text-muted mb-1">Created</h3>
+                      <p className="text-white">{formatDate(selectedTicket.createdAt)}</p>
                     </div>
                     {selectedTicket.assignedAgent && (
-                      <div className="bg-gray-50 rounded-lg p-4">
-                        <h3 className="text-sm font-medium text-gray-500 mb-1">Assigned To</h3>
-                        <p className="text-gray-900">
+                      <div className="bg-hos-bg-secondary rounded-lg p-4">
+                        <h3 className="text-sm font-medium text-hos-text-muted mb-1">Assigned To</h3>
+                        <p className="text-white">
                           {selectedTicket.assignedAgent.firstName || ''} {selectedTicket.assignedAgent.lastName || ''}
                         </p>
-                        <p className="text-sm text-gray-500">{selectedTicket.assignedAgent.email}</p>
+                        <p className="text-sm text-hos-text-muted">{selectedTicket.assignedAgent.email}</p>
                       </div>
                     )}
                   </div>
@@ -519,11 +519,11 @@ export default function AdminSupportPage() {
                   {/* Update Status/Priority */}
                   <div className="flex gap-4 mb-6">
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Status</label>
+                      <label className="block text-sm font-medium text-hos-text-secondary mb-1">Status</label>
                       <select
                         value={selectedTicket.status}
                         onChange={(e) => handleStatusUpdate(selectedTicket.id, e.target.value)}
-                        className="px-3 py-2 border border-gray-300 rounded-lg"
+                        className="px-3 py-2 border border-hos-border rounded-lg"
                       >
                         {TICKET_STATUSES.map((s) => (
                           <option key={s} value={s}>{STATUS_LABELS[s] || s}</option>
@@ -531,11 +531,11 @@ export default function AdminSupportPage() {
                       </select>
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Priority</label>
+                      <label className="block text-sm font-medium text-hos-text-secondary mb-1">Priority</label>
                       <select
                         value={selectedTicket.priority}
                         onChange={(e) => handlePriorityUpdate(selectedTicket.id, e.target.value)}
-                        className="px-3 py-2 border border-gray-300 rounded-lg"
+                        className="px-3 py-2 border border-hos-border rounded-lg"
                       >
                         {TICKET_PRIORITIES.map((p) => (
                           <option key={p} value={p}>{p}</option>
@@ -547,45 +547,45 @@ export default function AdminSupportPage() {
                   {/* Original Description */}
                   {selectedTicket.description && (
                     <div className="mb-6">
-                      <h3 className="text-sm font-medium text-gray-700 mb-2">Original Message</h3>
-                      <div className="bg-gray-50 rounded-lg p-4">
-                        <p className="text-gray-700 whitespace-pre-wrap">{selectedTicket.description}</p>
+                      <h3 className="text-sm font-medium text-hos-text-secondary mb-2">Original Message</h3>
+                      <div className="bg-hos-bg-secondary rounded-lg p-4">
+                        <p className="text-hos-text-secondary whitespace-pre-wrap">{selectedTicket.description}</p>
                       </div>
                     </div>
                   )}
 
                   {/* Conversation Thread */}
                   <div className="mb-6">
-                    <h3 className="text-sm font-medium text-gray-700 mb-2">Conversation</h3>
+                    <h3 className="text-sm font-medium text-hos-text-secondary mb-2">Conversation</h3>
                     <div className="border rounded-lg max-h-80 overflow-y-auto">
                       {selectedTicket.messages && selectedTicket.messages.length > 0 ? (
-                        <div className="divide-y divide-gray-200">
+                        <div className="divide-y divide-hos-border">
                           {selectedTicket.messages.map((message) => (
                             <div
                               key={message.id}
-                              className={`p-4 ${message.sender === 'ADMIN' ? 'bg-purple-50' : 'bg-white'}`}
+                              className={`p-4 ${message.sender === 'ADMIN' ? 'bg-hos-gold/10' : 'bg-hos-bg-secondary'}`}
                             >
                               <div className="flex justify-between items-start mb-2">
                                 <div className="flex items-center gap-2">
                                   <span className={`px-2 py-0.5 text-xs rounded-full ${
                                     message.sender === 'ADMIN' 
-                                      ? 'bg-purple-200 text-purple-800' 
-                                      : 'bg-gray-200 text-gray-800'
+                                      ? 'bg-hos-gold/20 text-hos-gold' 
+                                      : 'bg-hos-bg-tertiary text-white'
                                   }`}>
                                     {message.sender}
                                   </span>
                                   {message.senderName && (
-                                    <span className="text-sm text-gray-600">{message.senderName}</span>
+                                    <span className="text-sm text-hos-text-secondary">{message.senderName}</span>
                                   )}
                                 </div>
-                                <span className="text-xs text-gray-500">{formatDate(message.createdAt)}</span>
+                                <span className="text-xs text-hos-text-muted">{formatDate(message.createdAt)}</span>
                               </div>
-                              <p className="text-gray-700 whitespace-pre-wrap">{message.content}</p>
+                              <p className="text-hos-text-secondary whitespace-pre-wrap">{message.content}</p>
                             </div>
                           ))}
                         </div>
                       ) : (
-                        <div className="p-8 text-center text-gray-500">
+                        <div className="p-8 text-center text-hos-text-muted">
                           No messages yet
                         </div>
                       )}
@@ -594,25 +594,25 @@ export default function AdminSupportPage() {
 
                   {/* Reply Form */}
                   <div className="border-t pt-4">
-                    <h3 className="text-sm font-medium text-gray-700 mb-2">Send Reply</h3>
+                    <h3 className="text-sm font-medium text-hos-text-secondary mb-2">Send Reply</h3>
                     <textarea
                       value={replyContent}
                       onChange={(e) => setReplyContent(e.target.value)}
                       placeholder="Type your response here..."
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
+                      className="w-full px-3 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50"
                       rows={4}
                     />
                     <div className="flex justify-end gap-3 mt-3">
                       <button
                         onClick={() => setShowDetailsModal(false)}
-                        className="px-4 py-2 text-gray-600 hover:text-gray-800"
+                        className="px-4 py-2 text-hos-text-secondary hover:text-white"
                       >
                         Close
                       </button>
                       <button
                         onClick={handleSendReply}
                         disabled={sendingReply || !replyContent.trim()}
-                        className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 disabled:opacity-50"
+                        className="px-4 py-2 bg-hos-gold text-[#1a1406] rounded-lg hover:bg-hos-gold-hover disabled:opacity-50"
                       >
                         {sendingReply ? 'Sending...' : 'Send Reply'}
                       </button>
@@ -626,44 +626,44 @@ export default function AdminSupportPage() {
           {/* Create Ticket Modal */}
           {showCreateModal && (
             <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-              <div className="bg-white rounded-lg max-w-lg w-full p-6">
+              <div className="bg-hos-bg-secondary rounded-lg max-w-lg w-full p-6">
                 <div className="flex justify-between items-start mb-4">
                   <h2 className="text-xl font-bold">Create New Ticket</h2>
                   <button
                     onClick={() => setShowCreateModal(false)}
-                    className="text-gray-400 hover:text-gray-600 text-2xl"
+                    className="text-hos-text-muted hover:text-hos-text-secondary text-2xl"
                   >
                     ×
                   </button>
                 </div>
                 <div className="space-y-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Subject</label>
+                    <label className="block text-sm font-medium text-hos-text-secondary mb-1">Subject</label>
                     <input
                       type="text"
                       value={newTicket.subject}
                       onChange={(e) => setNewTicket({ ...newTicket, subject: e.target.value })}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
+                      className="w-full px-3 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50"
                       placeholder="Brief description of the issue"
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
+                    <label className="block text-sm font-medium text-hos-text-secondary mb-1">Description</label>
                     <textarea
                       value={newTicket.description}
                       onChange={(e) => setNewTicket({ ...newTicket, description: e.target.value })}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
+                      className="w-full px-3 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50"
                       rows={4}
                       placeholder="Detailed description..."
                     />
                   </div>
                   <div className="grid grid-cols-2 gap-4">
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Priority</label>
+                      <label className="block text-sm font-medium text-hos-text-secondary mb-1">Priority</label>
                       <select
                         value={newTicket.priority}
                         onChange={(e) => setNewTicket({ ...newTicket, priority: e.target.value as 'HIGH' | 'MEDIUM' | 'LOW' | 'URGENT' })}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
+                        className="w-full px-3 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50"
                       >
                         {TICKET_PRIORITIES.map((p) => (
                           <option key={p} value={p}>{p}</option>
@@ -671,11 +671,11 @@ export default function AdminSupportPage() {
                       </select>
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Category</label>
+                      <label className="block text-sm font-medium text-hos-text-secondary mb-1">Category</label>
                       <select
                         value={newTicket.category}
                         onChange={(e) => setNewTicket({ ...newTicket, category: e.target.value as typeof newTicket.category })}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
+                        className="w-full px-3 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50"
                       >
                         <option value="OTHER">General / Other</option>
                         <option value="ORDER_INQUIRY">Order Inquiry</option>
@@ -690,14 +690,14 @@ export default function AdminSupportPage() {
                   <div className="flex justify-end gap-3 pt-4">
                     <button
                       onClick={() => setShowCreateModal(false)}
-                      className="px-4 py-2 text-gray-600 hover:text-gray-800"
+                      className="px-4 py-2 text-hos-text-secondary hover:text-white"
                     >
                       Cancel
                     </button>
                     <button
                       onClick={handleCreateTicket}
                       disabled={creatingTicket || !newTicket.subject.trim() || !newTicket.description.trim()}
-                      className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                      className="px-4 py-2 bg-hos-gold text-[#1a1406] rounded-lg hover:bg-hos-gold-hover disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                       {creatingTicket ? 'Creating...' : 'Create Ticket'}
                     </button>

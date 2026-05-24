@@ -369,10 +369,10 @@ export default function AdminThemesPage() {
 
   const getTypeBadgeColor = (type: string) => {
     switch (type) {
-      case 'HOS': return 'bg-purple-100 text-purple-800';
-      case 'SELLER': return 'bg-blue-100 text-blue-800';
+      case 'HOS': return 'bg-hos-gold/20 text-hos-gold';
+      case 'SELLER': return 'bg-hos-gold/20 text-hos-gold';
       case 'CUSTOMER': return 'bg-green-100 text-green-800';
-      default: return 'bg-gray-100 text-gray-800';
+      default: return 'bg-hos-bg-tertiary text-white';
     }
   };
 
@@ -393,14 +393,14 @@ export default function AdminThemesPage() {
           {/* Header */}
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
             <div>
-              <h1 className="text-2xl font-bold text-gray-900">Theme Management</h1>
-              <p className="text-gray-600 mt-1">Upload, manage, and configure themes for sellers</p>
+              <h1 className="text-2xl font-bold text-white">Theme Management</h1>
+              <p className="text-hos-text-secondary mt-1">Upload, manage, and configure themes for sellers</p>
             </div>
             <div className="flex gap-2">
               <DataExport data={filteredThemes} columns={exportColumns} filename="themes-export" />
               <button
                 onClick={() => setShowUploadModal(true)}
-                className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors font-medium"
+                className="px-4 py-2 bg-hos-gold text-[#1a1406] rounded-lg hover:bg-hos-gold-hover transition-colors font-medium"
               >
                 + Upload Theme
               </button>
@@ -412,45 +412,45 @@ export default function AdminThemesPage() {
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
               <button
                 onClick={() => { setFilter('ALL'); setStatusFilter('ALL'); }}
-                className={`bg-white rounded-lg shadow p-4 text-left hover:shadow-md transition-shadow ${filter === 'ALL' && statusFilter === 'ALL' ? 'ring-2 ring-purple-500' : ''}`}
+                className={`bg-hos-bg-secondary rounded-lg shadow p-4 text-left hover:shadow-md transition-shadow ${filter === 'ALL' && statusFilter === 'ALL' ? 'ring-2 ring-hos-gold/50' : ''}`}
               >
-                <p className="text-sm text-gray-500">Total Themes</p>
-                <p className="text-2xl font-bold text-gray-900">{stats.total}</p>
+                <p className="text-sm text-hos-text-muted">Total Themes</p>
+                <p className="text-2xl font-bold text-white">{stats.total}</p>
               </button>
               <button
                 onClick={() => { setFilter('HOS'); setStatusFilter('ALL'); }}
-                className={`bg-white rounded-lg shadow p-4 text-left hover:shadow-md transition-shadow ${filter === 'HOS' ? 'ring-2 ring-purple-500' : ''}`}
+                className={`bg-hos-bg-secondary rounded-lg shadow p-4 text-left hover:shadow-md transition-shadow ${filter === 'HOS' ? 'ring-2 ring-hos-gold/50' : ''}`}
               >
-                <p className="text-sm text-gray-500">HOS Themes</p>
-                <p className="text-2xl font-bold text-purple-600">{stats.hos}</p>
+                <p className="text-sm text-hos-text-muted">HOS Themes</p>
+                <p className="text-2xl font-bold text-hos-gold">{stats.hos}</p>
               </button>
               <button
                 onClick={() => { setFilter('SELLER'); setStatusFilter('ALL'); }}
-                className={`bg-white rounded-lg shadow p-4 text-left hover:shadow-md transition-shadow ${filter === 'SELLER' ? 'ring-2 ring-purple-500' : ''}`}
+                className={`bg-hos-bg-secondary rounded-lg shadow p-4 text-left hover:shadow-md transition-shadow ${filter === 'SELLER' ? 'ring-2 ring-hos-gold/50' : ''}`}
               >
-                <p className="text-sm text-gray-500">Seller Themes</p>
-                <p className="text-2xl font-bold text-blue-600">{stats.seller}</p>
+                <p className="text-sm text-hos-text-muted">Seller Themes</p>
+                <p className="text-2xl font-bold text-hos-gold">{stats.seller}</p>
               </button>
               <button
                 onClick={() => { setFilter('CUSTOMER'); setStatusFilter('ALL'); }}
-                className={`bg-white rounded-lg shadow p-4 text-left hover:shadow-md transition-shadow ${filter === 'CUSTOMER' ? 'ring-2 ring-purple-500' : ''}`}
+                className={`bg-hos-bg-secondary rounded-lg shadow p-4 text-left hover:shadow-md transition-shadow ${filter === 'CUSTOMER' ? 'ring-2 ring-hos-gold/50' : ''}`}
               >
-                <p className="text-sm text-gray-500">Customer Themes</p>
+                <p className="text-sm text-hos-text-muted">Customer Themes</p>
                 <p className="text-2xl font-bold text-green-600">{stats.customer}</p>
               </button>
               <button
                 onClick={() => { setFilter('ALL'); setStatusFilter('ACTIVE'); }}
-                className={`bg-white rounded-lg shadow p-4 text-left hover:shadow-md transition-shadow ${statusFilter === 'ACTIVE' ? 'ring-2 ring-purple-500' : ''}`}
+                className={`bg-hos-bg-secondary rounded-lg shadow p-4 text-left hover:shadow-md transition-shadow ${statusFilter === 'ACTIVE' ? 'ring-2 ring-hos-gold/50' : ''}`}
               >
-                <p className="text-sm text-gray-500">Active</p>
+                <p className="text-sm text-hos-text-muted">Active</p>
                 <p className="text-2xl font-bold text-emerald-600">{stats.active}</p>
               </button>
               <button
                 onClick={() => { setFilter('ALL'); setStatusFilter('INACTIVE'); }}
-                className={`bg-white rounded-lg shadow p-4 text-left hover:shadow-md transition-shadow ${statusFilter === 'INACTIVE' ? 'ring-2 ring-purple-500' : ''}`}
+                className={`bg-hos-bg-secondary rounded-lg shadow p-4 text-left hover:shadow-md transition-shadow ${statusFilter === 'INACTIVE' ? 'ring-2 ring-hos-gold/50' : ''}`}
               >
-                <p className="text-sm text-gray-500">Inactive</p>
-                <p className="text-2xl font-bold text-gray-600">{stats.inactive}</p>
+                <p className="text-sm text-hos-text-muted">Inactive</p>
+                <p className="text-2xl font-bold text-hos-text-secondary">{stats.inactive}</p>
               </button>
             </div>
           )}
@@ -458,7 +458,7 @@ export default function AdminThemesPage() {
           {/* Chart & Most Used */}
           {stats && chartData.length > 0 && (
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              <div className="bg-white rounded-lg shadow p-6">
+              <div className="bg-hos-bg-secondary rounded-lg shadow p-6">
                 <h3 className="text-lg font-semibold mb-4">Themes by Type</h3>
                 <div className="h-48">
                   <ResponsiveContainer width="100%" height="100%">
@@ -483,10 +483,10 @@ export default function AdminThemesPage() {
                 </div>
               </div>
               {stats.mostUsed && (
-                <div className="bg-white rounded-lg shadow p-6">
+                <div className="bg-hos-bg-secondary rounded-lg shadow p-6">
                   <h3 className="text-lg font-semibold mb-4">Most Popular Theme</h3>
                   <div className="flex items-center gap-4">
-                    <div className="relative w-24 h-16 bg-gray-100 rounded-lg overflow-hidden">
+                    <div className="relative w-24 h-16 bg-hos-bg-tertiary rounded-lg overflow-hidden">
                       {stats.mostUsed.previewImages?.[0] ? (
                         <SafeImage src={stats.mostUsed.previewImages[0]} alt="" fill className="object-cover" sizes="96px" />
                       ) : (
@@ -495,7 +495,7 @@ export default function AdminThemesPage() {
                     </div>
                     <div>
                       <p className="font-semibold text-lg">{stats.mostUsed.name}</p>
-                      <p className="text-sm text-gray-500">
+                      <p className="text-sm text-hos-text-muted">
                         Used by {stats.mostUsed.usageCount || 0} sellers
                       </p>
                       <span className={`inline-block mt-1 px-2 py-0.5 text-xs rounded ${getTypeBadgeColor(stats.mostUsed.type)}`}>
@@ -509,20 +509,20 @@ export default function AdminThemesPage() {
           )}
 
           {/* Search & Filters */}
-          <div className="bg-white rounded-lg shadow p-4">
+          <div className="bg-hos-bg-secondary rounded-lg shadow p-4">
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
               <div className="md:col-span-2">
-                <label className="block text-sm font-medium text-gray-700 mb-1">Search</label>
+                <label className="block text-sm font-medium text-hos-text-secondary mb-1">Search</label>
                 <input
                   type="text"
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   placeholder="Search by name or description..."
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
+                  className="w-full px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50"
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Sort By</label>
+                <label className="block text-sm font-medium text-hos-text-secondary mb-1">Sort By</label>
                 <select
                   value={`${sortBy}-${sortOrder}`}
                   onChange={(e) => {
@@ -530,7 +530,7 @@ export default function AdminThemesPage() {
                     setSortBy(field as any);
                     setSortOrder(order as any);
                   }}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
+                  className="w-full px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50"
                 >
                   <option value="date-desc">Newest First</option>
                   <option value="date-asc">Oldest First</option>
@@ -541,8 +541,8 @@ export default function AdminThemesPage() {
                 </select>
               </div>
               <div className="md:col-span-2">
-                <label className="block text-sm font-medium text-gray-700 mb-1">Bulk actions</label>
-                <p className="text-xs text-gray-500 mb-2">
+                <label className="block text-sm font-medium text-hos-text-secondary mb-1">Bulk actions</label>
+                <p className="text-xs text-hos-text-muted mb-2">
                   Select themes using the checkboxes in the top-left corner of each card, then activate or deactivate in bulk.
                 </p>
                 <div className="flex gap-2">
@@ -567,11 +567,11 @@ export default function AdminThemesPage() {
             </div>
             {selectedThemes.size > 0 && (
               <div className="mt-3 flex items-center gap-4">
-                <span className="text-sm text-gray-600">{selectedThemes.size} selected</span>
-                <button onClick={() => setSelectedThemes(new Set())} className="text-sm text-purple-600 hover:underline">
+                <span className="text-sm text-hos-text-secondary">{selectedThemes.size} selected</span>
+                <button onClick={() => setSelectedThemes(new Set())} className="text-sm text-hos-gold hover:underline">
                   Clear selection
                 </button>
-                <button onClick={selectAll} className="text-sm text-purple-600 hover:underline">
+                <button onClick={selectAll} className="text-sm text-hos-gold hover:underline">
                   {selectedThemes.size === filteredThemes.length ? 'Deselect all' : 'Select all'}
                 </button>
               </div>
@@ -581,18 +581,18 @@ export default function AdminThemesPage() {
           {/* Loading */}
           {loading && (
             <div className="flex items-center justify-center py-12">
-              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600"></div>
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-hos-gold"></div>
             </div>
           )}
 
           {/* Empty State */}
           {!loading && filteredThemes.length === 0 && (
-            <div className="bg-white border border-gray-200 rounded-lg p-8 text-center">
+            <div className="bg-hos-bg-secondary border border-hos-border rounded-lg p-8 text-center">
               <div className="text-5xl mb-4">🎨</div>
-              <p className="text-gray-500 text-lg mb-4">No themes found</p>
+              <p className="text-hos-text-muted text-lg mb-4">No themes found</p>
               <button
                 onClick={() => setShowUploadModal(true)}
-                className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700"
+                className="px-4 py-2 bg-hos-gold text-[#1a1406] rounded-lg hover:bg-hos-gold-hover"
               >
                 Upload Your First Theme
               </button>
@@ -605,8 +605,8 @@ export default function AdminThemesPage() {
               {filteredThemes.map((theme) => (
                 <div
                   key={theme.id}
-                  className={`relative bg-white border rounded-lg overflow-hidden hover:shadow-lg transition-all ${
-                    selectedThemes.has(theme.id) ? 'ring-2 ring-purple-500 border-purple-500' : 'border-gray-200'
+                  className={`relative bg-hos-bg-secondary border rounded-lg overflow-hidden hover:shadow-lg transition-all ${
+                    selectedThemes.has(theme.id) ? 'ring-2 ring-hos-gold/50 border-hos-gold' : 'border-hos-border'
                   }`}
                 >
                   {/* Selection checkbox */}
@@ -616,16 +616,16 @@ export default function AdminThemesPage() {
                       checked={selectedThemes.has(theme.id)}
                       onChange={() => toggleSelection(theme.id)}
                       aria-label={`Select theme ${theme.name}`}
-                      className="h-4 w-4 text-purple-600 rounded border-gray-300"
+                      className="h-4 w-4 text-hos-gold rounded border-hos-border"
                     />
                   </div>
 
                   {/* Preview Image */}
-                  <div className="aspect-video bg-gray-100 relative">
+                  <div className="aspect-video bg-hos-bg-tertiary relative">
                     {theme.previewImages && theme.previewImages.length > 0 ? (
                       <SafeImage src={theme.previewImages[0]} alt={theme.name} fill className="object-cover" sizes="(max-width: 768px) 100vw, 50vw" />
                     ) : (
-                      <div className="w-full h-full flex items-center justify-center text-gray-400">
+                      <div className="w-full h-full flex items-center justify-center text-hos-text-muted">
                         <div className="text-center">
                           <div className="text-4xl mb-2">🎨</div>
                           <div className="text-sm">No Preview</div>
@@ -636,7 +636,7 @@ export default function AdminThemesPage() {
                       <span className={`px-2 py-1 text-xs font-medium rounded ${getTypeBadgeColor(theme.type)}`}>
                         {theme.type}
                       </span>
-                      <span className={`px-2 py-1 text-xs font-medium rounded ${theme.isActive ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'}`}>
+                      <span className={`px-2 py-1 text-xs font-medium rounded ${theme.isActive ? 'bg-green-100 text-green-800' : 'bg-hos-bg-tertiary text-white'}`}>
                         {theme.isActive ? 'Active' : 'Inactive'}
                       </span>
                     </div>
@@ -649,31 +649,31 @@ export default function AdminThemesPage() {
 
                   {/* Theme Info */}
                   <div className="p-4">
-                    <h3 className="text-lg font-semibold text-gray-900 truncate">{theme.name}</h3>
-                    <p className="text-sm text-gray-500 mt-1">v{theme.versionString || theme.version}</p>
+                    <h3 className="text-lg font-semibold text-white truncate">{theme.name}</h3>
+                    <p className="text-sm text-hos-text-muted mt-1">v{theme.versionString || theme.version}</p>
                     {theme.description && (
-                      <p className="text-sm text-gray-600 mt-2 line-clamp-2">{theme.description}</p>
+                      <p className="text-sm text-hos-text-secondary mt-2 line-clamp-2">{theme.description}</p>
                     )}
 
-                    <div className="flex flex-wrap items-center gap-2 mt-4 pt-4 border-t border-gray-200">
+                    <div className="flex flex-wrap items-center gap-2 mt-4 pt-4 border-t border-hos-border">
                       <button
                         type="button"
                         onClick={() => handlePreview(theme)}
-                        className="px-3 py-1.5 text-sm bg-gray-100 text-gray-700 rounded hover:bg-gray-200"
+                        className="px-3 py-1.5 text-sm bg-hos-bg-tertiary text-hos-text-secondary rounded hover:bg-hos-bg-tertiary"
                       >
                         Preview
                       </button>
                       <button
                         type="button"
                         onClick={() => handleEdit(theme)}
-                        className="px-3 py-1.5 text-sm bg-purple-100 text-purple-700 rounded hover:bg-purple-200"
+                        className="px-3 py-1.5 text-sm bg-hos-gold/20 text-hos-gold-hover rounded hover:bg-hos-gold/20"
                       >
                         Edit
                       </button>
                       <button
                         type="button"
                         onClick={() => handleDuplicate(theme)}
-                        className="px-3 py-1.5 text-sm bg-blue-100 text-blue-700 rounded hover:bg-blue-200"
+                        className="px-3 py-1.5 text-sm bg-hos-gold/20 text-hos-gold rounded hover:bg-hos-gold/20"
                       >
                         Duplicate
                       </button>
@@ -701,42 +701,42 @@ export default function AdminThemesPage() {
           {/* Upload Modal */}
           {showUploadModal && (
             <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-              <div className="bg-white rounded-lg max-w-md w-full">
+              <div className="bg-hos-bg-secondary rounded-lg max-w-md w-full">
                 <div className="p-6">
                   <div className="flex justify-between items-start mb-4">
                     <h2 className="text-xl font-bold">Upload Theme</h2>
-                    <button onClick={() => setShowUploadModal(false)} className="text-gray-500 hover:text-gray-700 text-2xl">×</button>
+                    <button onClick={() => setShowUploadModal(false)} className="text-hos-text-muted hover:text-hos-text-secondary text-2xl">×</button>
                   </div>
 
                   <div className="space-y-4">
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Theme File (ZIP) *</label>
+                      <label className="block text-sm font-medium text-hos-text-secondary mb-1">Theme File (ZIP) *</label>
                       <input
                         type="file"
                         accept=".zip"
                         onChange={handleFileChange}
-                        className="w-full px-4 py-2 border border-gray-300 rounded-lg"
+                        className="w-full px-4 py-2 border border-hos-border rounded-lg"
                       />
-                      <p className="text-xs text-gray-500 mt-1">Maximum file size: 50MB</p>
+                      <p className="text-xs text-hos-text-muted mt-1">Maximum file size: 50MB</p>
                     </div>
 
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Theme Name *</label>
+                      <label className="block text-sm font-medium text-hos-text-secondary mb-1">Theme Name *</label>
                       <input
                         type="text"
                         value={uploadForm.name}
                         onChange={(e) => setUploadForm({ ...uploadForm, name: e.target.value })}
                         placeholder="Enter theme name"
-                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
+                        className="w-full px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50"
                       />
                     </div>
 
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Type *</label>
+                      <label className="block text-sm font-medium text-hos-text-secondary mb-1">Type *</label>
                       <select
                         value={uploadForm.type}
                         onChange={(e) => setUploadForm({ ...uploadForm, type: e.target.value })}
-                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
+                        className="w-full px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50"
                       >
                         <option value="SELLER">Seller Theme</option>
                         <option value="HOS">HOS Theme</option>
@@ -745,13 +745,13 @@ export default function AdminThemesPage() {
                     </div>
 
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
+                      <label className="block text-sm font-medium text-hos-text-secondary mb-1">Description</label>
                       <textarea
                         value={uploadForm.description}
                         onChange={(e) => setUploadForm({ ...uploadForm, description: e.target.value })}
                         placeholder="Enter theme description"
                         rows={3}
-                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
+                        className="w-full px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50"
                       />
                     </div>
 
@@ -759,13 +759,13 @@ export default function AdminThemesPage() {
                       <button
                         onClick={handleUpload}
                         disabled={uploading || !uploadForm.file || !uploadForm.name}
-                        className="flex-1 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 disabled:opacity-50"
+                        className="flex-1 px-4 py-2 bg-hos-gold text-[#1a1406] rounded-lg hover:bg-hos-gold-hover disabled:opacity-50"
                       >
                         {uploading ? 'Uploading...' : 'Upload Theme'}
                       </button>
                       <button
                         onClick={() => setShowUploadModal(false)}
-                        className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300"
+                        className="px-4 py-2 bg-hos-bg-tertiary text-hos-text-secondary rounded-lg hover:bg-hos-bg-tertiary"
                       >
                         Cancel
                       </button>
@@ -779,30 +779,30 @@ export default function AdminThemesPage() {
           {/* Edit Modal */}
           {showEditModal && selectedTheme && (
             <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-              <div className="bg-white rounded-lg max-w-md w-full">
+              <div className="bg-hos-bg-secondary rounded-lg max-w-md w-full">
                 <div className="p-6">
                   <div className="flex justify-between items-start mb-4">
                     <h2 className="text-xl font-bold">Edit Theme</h2>
-                    <button onClick={() => setShowEditModal(false)} className="text-gray-500 hover:text-gray-700 text-2xl">×</button>
+                    <button onClick={() => setShowEditModal(false)} className="text-hos-text-muted hover:text-hos-text-secondary text-2xl">×</button>
                   </div>
 
                   <div className="space-y-4">
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Theme Name *</label>
+                      <label className="block text-sm font-medium text-hos-text-secondary mb-1">Theme Name *</label>
                       <input
                         type="text"
                         value={editForm.name}
                         onChange={(e) => setEditForm({ ...editForm, name: e.target.value })}
-                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
+                        className="w-full px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50"
                       />
                     </div>
 
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Type *</label>
+                      <label className="block text-sm font-medium text-hos-text-secondary mb-1">Type *</label>
                       <select
                         value={editForm.type}
                         onChange={(e) => setEditForm({ ...editForm, type: e.target.value })}
-                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
+                        className="w-full px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50"
                       >
                         <option value="SELLER">Seller Theme</option>
                         <option value="HOS">HOS Theme</option>
@@ -811,12 +811,12 @@ export default function AdminThemesPage() {
                     </div>
 
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
+                      <label className="block text-sm font-medium text-hos-text-secondary mb-1">Description</label>
                       <textarea
                         value={editForm.description}
                         onChange={(e) => setEditForm({ ...editForm, description: e.target.value })}
                         rows={3}
-                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
+                        className="w-full px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50"
                       />
                     </div>
 
@@ -824,13 +824,13 @@ export default function AdminThemesPage() {
                       <button
                         onClick={handleSaveEdit}
                         disabled={actionLoading || !editForm.name}
-                        className="flex-1 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 disabled:opacity-50"
+                        className="flex-1 px-4 py-2 bg-hos-gold text-[#1a1406] rounded-lg hover:bg-hos-gold-hover disabled:opacity-50"
                       >
                         {actionLoading ? 'Saving...' : 'Save Changes'}
                       </button>
                       <button
                         onClick={() => setShowEditModal(false)}
-                        className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300"
+                        className="px-4 py-2 bg-hos-bg-tertiary text-hos-text-secondary rounded-lg hover:bg-hos-bg-tertiary"
                       >
                         Cancel
                       </button>
@@ -844,65 +844,65 @@ export default function AdminThemesPage() {
           {/* Preview Modal */}
           {showPreviewModal && selectedTheme && (
             <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-              <div className="bg-white rounded-lg max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+              <div className="bg-hos-bg-secondary rounded-lg max-w-4xl w-full max-h-[90vh] overflow-y-auto">
                 <div className="p-6">
                   <div className="flex justify-between items-start mb-4">
                     <div>
                       <h2 className="text-2xl font-bold">{selectedTheme.name}</h2>
                       <div className="flex items-center gap-2 mt-1">
                         <span className={`px-2 py-0.5 text-xs rounded ${getTypeBadgeColor(selectedTheme.type)}`}>{selectedTheme.type}</span>
-                        <span className="text-gray-500">v{selectedTheme.versionString || selectedTheme.version}</span>
+                        <span className="text-hos-text-muted">v{selectedTheme.versionString || selectedTheme.version}</span>
                       </div>
                     </div>
-                    <button onClick={() => setShowPreviewModal(false)} className="text-gray-500 hover:text-gray-700 text-2xl">×</button>
+                    <button onClick={() => setShowPreviewModal(false)} className="text-hos-text-muted hover:text-hos-text-secondary text-2xl">×</button>
                   </div>
 
                   <div className="space-y-4">
                     {selectedTheme.previewImages && selectedTheme.previewImages.length > 0 ? (
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         {selectedTheme.previewImages.map((img, idx) => (
-                          <div key={idx} className="relative w-full aspect-video rounded-lg border border-gray-200 overflow-hidden">
+                          <div key={idx} className="relative w-full aspect-video rounded-lg border border-hos-border overflow-hidden">
                             <SafeImage src={img} alt={`Preview ${idx + 1}`} fill className="object-contain" sizes="(max-width: 768px) 100vw, 50vw" />
                           </div>
                         ))}
                       </div>
                     ) : (
-                      <div className="bg-gray-100 rounded-lg p-8 text-center">
-                        <p className="text-gray-500">No preview images available</p>
+                      <div className="bg-hos-bg-tertiary rounded-lg p-8 text-center">
+                        <p className="text-hos-text-muted">No preview images available</p>
                       </div>
                     )}
 
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
-                      <div className="bg-gray-50 p-3 rounded">
-                        <p className="text-gray-500">Status</p>
+                      <div className="bg-hos-bg-secondary p-3 rounded">
+                        <p className="text-hos-text-muted">Status</p>
                         <p className="font-medium">{selectedTheme.isActive ? 'Active' : 'Inactive'}</p>
                       </div>
-                      <div className="bg-gray-50 p-3 rounded">
-                        <p className="text-gray-500">Usage</p>
+                      <div className="bg-hos-bg-secondary p-3 rounded">
+                        <p className="text-hos-text-muted">Usage</p>
                         <p className="font-medium">{selectedTheme.usageCount || 0} sellers</p>
                       </div>
-                      <div className="bg-gray-50 p-3 rounded">
-                        <p className="text-gray-500">Created</p>
+                      <div className="bg-hos-bg-secondary p-3 rounded">
+                        <p className="text-hos-text-muted">Created</p>
                         <p className="font-medium">{new Date(selectedTheme.createdAt).toLocaleDateString()}</p>
                       </div>
-                      <div className="bg-gray-50 p-3 rounded">
-                        <p className="text-gray-500">Updated</p>
+                      <div className="bg-hos-bg-secondary p-3 rounded">
+                        <p className="text-hos-text-muted">Updated</p>
                         <p className="font-medium">{new Date(selectedTheme.updatedAt).toLocaleDateString()}</p>
                       </div>
                     </div>
 
                     {selectedTheme.description && (
                       <div>
-                        <p className="text-sm text-gray-500 mb-1">Description</p>
-                        <p className="text-gray-700">{selectedTheme.description}</p>
+                        <p className="text-sm text-hos-text-muted mb-1">Description</p>
+                        <p className="text-hos-text-secondary">{selectedTheme.description}</p>
                       </div>
                     )}
 
                     <div className="flex gap-2 pt-4 border-t">
-                      <button onClick={() => { setShowPreviewModal(false); handleEdit(selectedTheme); }} className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700">
+                      <button onClick={() => { setShowPreviewModal(false); handleEdit(selectedTheme); }} className="px-4 py-2 bg-hos-gold text-[#1a1406] rounded-lg hover:bg-hos-gold-hover">
                         Edit Theme
                       </button>
-                      <button onClick={() => setShowPreviewModal(false)} className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300">
+                      <button onClick={() => setShowPreviewModal(false)} className="px-4 py-2 bg-hos-bg-tertiary text-hos-text-secondary rounded-lg hover:bg-hos-bg-tertiary">
                         Close
                       </button>
                     </div>

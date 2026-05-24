@@ -31,7 +31,7 @@ function isValidCatalogImageUrl(value: string): boolean {
 
 export default function CatalogEntriesPage() {
   return (
-    <Suspense fallback={<div className="flex items-center justify-center min-h-screen"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-600" /></div>}>
+    <Suspense fallback={<div className="flex items-center justify-center min-h-screen"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-hos-gold" /></div>}>
       <CatalogEntriesContent />
     </Suspense>
   );
@@ -254,25 +254,25 @@ function CatalogEntriesContent() {
         <div className="mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
             <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold">Catalog Entries</h1>
-            <p className="text-gray-600 mt-2">Create marketplace-ready product listings</p>
+            <p className="text-hos-text-secondary mt-2">Create marketplace-ready product listings</p>
           </div>
           <button
             onClick={() => fetchData()}
             disabled={loading}
-            className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50"
+            className="px-4 py-2 text-sm font-medium text-hos-text-secondary bg-hos-bg-secondary border border-hos-border rounded-lg hover:bg-hos-bg-tertiary disabled:opacity-50"
           >
             {loading ? 'Refreshing...' : 'Refresh'}
           </button>
         </div>
 
           {/* Tabs */}
-          <div className="flex gap-1 mb-6 bg-gray-100 rounded-lg p-1 w-fit">
+          <div className="flex gap-1 mb-6 bg-hos-bg-tertiary rounded-lg p-1 w-fit">
             <button
               onClick={() => setActiveTab('pending')}
               className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
                 activeTab === 'pending'
-                  ? 'bg-white text-purple-700 shadow-sm'
-                  : 'text-gray-600 hover:text-gray-900'
+                  ? 'bg-hos-bg-secondary text-hos-gold-hover shadow-sm'
+                  : 'text-hos-text-secondary hover:text-white'
               }`}
             >
               Pending ({pendingSubmissions.length})
@@ -281,8 +281,8 @@ function CatalogEntriesContent() {
               onClick={() => setActiveTab('in_progress')}
               className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
                 activeTab === 'in_progress'
-                  ? 'bg-white text-yellow-700 shadow-sm'
-                  : 'text-gray-600 hover:text-gray-900'
+                  ? 'bg-hos-bg-secondary text-yellow-700 shadow-sm'
+                  : 'text-hos-text-secondary hover:text-white'
               }`}
             >
               In Progress ({inProgressEntries.length})
@@ -291,8 +291,8 @@ function CatalogEntriesContent() {
               onClick={() => setActiveTab('completed')}
               className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
                 activeTab === 'completed'
-                  ? 'bg-white text-green-700 shadow-sm'
-                  : 'text-gray-600 hover:text-gray-900'
+                  ? 'bg-hos-bg-secondary text-green-700 shadow-sm'
+                  : 'text-hos-text-secondary hover:text-white'
               }`}
             >
               Completed ({completedEntries.length})
@@ -308,14 +308,14 @@ function CatalogEntriesContent() {
 
           {loading && (
             <div className="flex items-center justify-center py-12">
-              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600"></div>
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-hos-gold"></div>
             </div>
           )}
 
           {/* Pending Submissions Tab */}
           {!loading && activeTab === 'pending' && pendingSubmissions.length === 0 && (
-            <div className="bg-white border border-gray-200 rounded-lg p-8 text-center">
-              <p className="text-gray-500 text-lg">No pending submissions for catalog creation</p>
+            <div className="bg-hos-bg-secondary border border-hos-border rounded-lg p-8 text-center">
+              <p className="text-hos-text-muted text-lg">No pending submissions for catalog creation</p>
             </div>
           )}
 
@@ -326,20 +326,20 @@ function CatalogEntriesContent() {
                 return (
                   <div
                     key={submission.id}
-                    className="bg-white border border-gray-200 rounded-lg p-6 hover:shadow-md transition-shadow"
+                    className="bg-hos-bg-secondary border border-hos-border rounded-lg p-6 hover:shadow-md transition-shadow"
                   >
                     <div className="flex flex-col sm:flex-row justify-between gap-4">
                       <div className="flex-1">
-                        <h3 className="text-lg font-semibold text-gray-900">
+                        <h3 className="text-lg font-semibold text-white">
                           {productData.name || 'Untitled Product'}
                         </h3>
-                        <p className="text-sm text-gray-500 mt-1">
+                        <p className="text-sm text-hos-text-muted mt-1">
                           Seller: {submission.seller?.storeName || 'Unknown'}
                         </p>
-                        <p className="text-sm text-gray-600 mt-2 line-clamp-2">
+                        <p className="text-sm text-hos-text-secondary mt-2 line-clamp-2">
                           {productData.description || 'No description'}
                         </p>
-                        <div className="flex flex-wrap gap-4 mt-4 text-sm text-gray-600">
+                        <div className="flex flex-wrap gap-4 mt-4 text-sm text-hos-text-secondary">
                           {productData.sku && (
                             <span>
                               <strong>SKU:</strong> {productData.sku}
@@ -357,7 +357,7 @@ function CatalogEntriesContent() {
                       <div className="flex gap-2">
                         <button
                           onClick={() => handleCreateEntry(submission.id)}
-                          className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors font-medium text-sm whitespace-nowrap"
+                          className="px-4 py-2 bg-hos-gold text-[#1a1406] rounded-lg hover:bg-hos-gold-hover transition-colors font-medium text-sm whitespace-nowrap"
                         >
                           Create Entry
                         </button>
@@ -371,9 +371,9 @@ function CatalogEntriesContent() {
 
           {/* In Progress Entries Tab */}
           {!loading && activeTab === 'in_progress' && inProgressEntries.length === 0 && (
-            <div className="bg-white border border-gray-200 rounded-lg p-8 text-center">
-              <p className="text-gray-500 text-lg">No entries in progress</p>
-              <p className="text-sm text-gray-400 mt-1">Catalog entries not yet completed will appear here</p>
+            <div className="bg-hos-bg-secondary border border-hos-border rounded-lg p-8 text-center">
+              <p className="text-hos-text-muted text-lg">No entries in progress</p>
+              <p className="text-sm text-hos-text-muted mt-1">Catalog entries not yet completed will appear here</p>
             </div>
           )}
 
@@ -385,20 +385,20 @@ function CatalogEntriesContent() {
                 return (
                   <div
                     key={entry.id}
-                    className="bg-white border border-gray-200 rounded-lg p-6 hover:shadow-md transition-shadow"
+                    className="bg-hos-bg-secondary border border-hos-border rounded-lg p-6 hover:shadow-md transition-shadow"
                   >
                     <div className="flex flex-col sm:flex-row justify-between gap-4">
                       <div className="flex-1">
-                        <h3 className="text-lg font-semibold text-gray-900">
+                        <h3 className="text-lg font-semibold text-white">
                           {entry.title || productData.name || 'Untitled Product'}
                         </h3>
-                        <p className="text-sm text-gray-500 mt-1">
+                        <p className="text-sm text-hos-text-muted mt-1">
                           Seller: {submission.seller?.storeName || 'Unknown'}
                         </p>
-                        <p className="text-sm text-gray-600 mt-2 line-clamp-2">
+                        <p className="text-sm text-hos-text-secondary mt-2 line-clamp-2">
                           {entry.description || productData.description || 'No description'}
                         </p>
-                        <div className="flex flex-wrap gap-4 mt-4 text-sm text-gray-600">
+                        <div className="flex flex-wrap gap-4 mt-4 text-sm text-hos-text-secondary">
                           {entry.keywords && entry.keywords.length > 0 && (
                             <span>
                               <strong>Keywords:</strong> {entry.keywords.join(', ')}
@@ -425,8 +425,8 @@ function CatalogEntriesContent() {
 
           {/* Completed Entries Tab */}
           {!loading && activeTab === 'completed' && completedEntries.length === 0 && (
-            <div className="bg-white border border-gray-200 rounded-lg p-8 text-center">
-              <p className="text-gray-500 text-lg">No completed catalog entries yet</p>
+            <div className="bg-hos-bg-secondary border border-hos-border rounded-lg p-8 text-center">
+              <p className="text-hos-text-muted text-lg">No completed catalog entries yet</p>
             </div>
           )}
 
@@ -438,20 +438,20 @@ function CatalogEntriesContent() {
                 return (
                   <div
                     key={entry.id}
-                    className="bg-white border border-gray-200 rounded-lg p-6 hover:shadow-md transition-shadow"
+                    className="bg-hos-bg-secondary border border-hos-border rounded-lg p-6 hover:shadow-md transition-shadow"
                   >
                     <div className="flex flex-col sm:flex-row justify-between gap-4">
                       <div className="flex-1">
-                        <h3 className="text-lg font-semibold text-gray-900">
+                        <h3 className="text-lg font-semibold text-white">
                           {entry.title || productData.name || 'Untitled Product'}
                         </h3>
-                        <p className="text-sm text-gray-500 mt-1">
+                        <p className="text-sm text-hos-text-muted mt-1">
                           Seller: {submission.seller?.storeName || 'Unknown'}
                         </p>
-                        <p className="text-sm text-gray-600 mt-2 line-clamp-2">
+                        <p className="text-sm text-hos-text-secondary mt-2 line-clamp-2">
                           {entry.description || productData.description || 'No description'}
                         </p>
-                        <div className="flex flex-wrap gap-4 mt-4 text-sm text-gray-600">
+                        <div className="flex flex-wrap gap-4 mt-4 text-sm text-hos-text-secondary">
                           {entry.keywords && entry.keywords.length > 0 && (
                             <span>
                               <strong>Keywords:</strong> {entry.keywords.join(', ')}
@@ -479,7 +479,7 @@ function CatalogEntriesContent() {
           {/* Create Entry Modal */}
           {showModal && selectedSubmission && (
             <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-              <div className="bg-white rounded-lg max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+              <div className="bg-hos-bg-secondary rounded-lg max-w-4xl w-full max-h-[90vh] overflow-y-auto">
                 <div className="p-6">
                   <div className="flex justify-between items-start mb-4">
                     <h2 className="text-2xl font-bold">Create Catalog Entry</h2>
@@ -488,7 +488,7 @@ function CatalogEntriesContent() {
                         setShowModal(false);
                         setSelectedSubmission(null);
                       }}
-                      className="text-gray-500 hover:text-gray-700"
+                      className="text-hos-text-muted hover:text-hos-text-secondary"
                     >
                       <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path
@@ -503,7 +503,7 @@ function CatalogEntriesContent() {
 
                   <div className="space-y-4">
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                      <label className="block text-sm font-medium text-hos-text-secondary mb-1">
                         Title <span className="text-red-500">*</span>
                       </label>
                       <input
@@ -511,13 +511,13 @@ function CatalogEntriesContent() {
                         value={title}
                         onChange={(e) => setTitle(e.target.value)}
                         required
-                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
+                        className="w-full px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50"
                         placeholder="Product title"
                       />
                     </div>
 
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                      <label className="block text-sm font-medium text-hos-text-secondary mb-1">
                         Description <span className="text-red-500">*</span>
                       </label>
                       <textarea
@@ -525,13 +525,13 @@ function CatalogEntriesContent() {
                         onChange={(e) => setDescription(e.target.value)}
                         required
                         rows={6}
-                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
+                        className="w-full px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50"
                         placeholder="Product description"
                       />
                     </div>
 
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                      <label className="block text-sm font-medium text-hos-text-secondary mb-1">
                         Keywords
                       </label>
                       <div className="flex gap-2 mb-2">
@@ -545,12 +545,12 @@ function CatalogEntriesContent() {
                               addKeyword();
                             }
                           }}
-                          className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
+                          className="flex-1 px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50"
                           placeholder="Add keyword"
                         />
                         <button
                           onClick={addKeyword}
-                          className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300"
+                          className="px-4 py-2 bg-hos-bg-tertiary text-hos-text-secondary rounded-lg hover:bg-hos-bg-tertiary"
                         >
                           Add
                         </button>
@@ -560,12 +560,12 @@ function CatalogEntriesContent() {
                           {keywords.map((keyword, index) => (
                             <span
                               key={index}
-                              className="inline-flex items-center gap-1 px-3 py-1 bg-purple-100 text-purple-800 rounded-full text-sm"
+                              className="inline-flex items-center gap-1 px-3 py-1 bg-hos-gold/20 text-hos-gold rounded-full text-sm"
                             >
                               {keyword}
                               <button
                                 onClick={() => removeKeyword(index)}
-                                className="text-purple-600 hover:text-purple-800"
+                                className="text-hos-gold hover:text-hos-gold-hover"
                               >
                                 ×
                               </button>
@@ -576,7 +576,7 @@ function CatalogEntriesContent() {
                     </div>
 
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                      <label className="block text-sm font-medium text-hos-text-secondary mb-1">
                         Images <span className="text-red-500">*</span>
                       </label>
                       <div className="flex flex-wrap items-center gap-2 mb-2">
@@ -594,20 +594,20 @@ function CatalogEntriesContent() {
                         />
                         <label
                           htmlFor={catalogImageInputId}
-                          className={`inline-flex items-center gap-2 px-4 py-2 rounded-lg border border-gray-300 bg-white text-gray-700 text-sm font-medium cursor-pointer hover:bg-gray-50 transition-colors ${uploadingImages ? 'opacity-60 cursor-not-allowed' : ''}`}
+                          className={`inline-flex items-center gap-2 px-4 py-2 rounded-lg border border-hos-border bg-hos-bg-secondary text-hos-text-secondary text-sm font-medium cursor-pointer hover:bg-hos-bg-tertiary transition-colors ${uploadingImages ? 'opacity-60 cursor-not-allowed' : ''}`}
                         >
                           {uploadingImages ? (
                             <>
-                              <span className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-gray-300 border-t-purple-600" aria-hidden />
+                              <span className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-hos-border border-t-hos-gold" aria-hidden />
                               Uploading…
                             </>
                           ) : (
                             <>📤 Upload image(s)</>
                           )}
                         </label>
-                        <span className="text-xs text-gray-500">JPEG, PNG, GIF, WebP · max 250KB each · up to 4</span>
+                        <span className="text-xs text-hos-text-muted">JPEG, PNG, GIF, WebP · max 250KB each · up to 4</span>
                       </div>
-                      <p className="text-xs text-gray-500 mb-2">Or paste a URL below:</p>
+                      <p className="text-xs text-hos-text-muted mb-2">Or paste a URL below:</p>
                       <div className="flex gap-2 mb-2">
                         <input
                           type="url"
@@ -619,13 +619,13 @@ function CatalogEntriesContent() {
                               addImage();
                             }
                           }}
-                          className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
+                          className="flex-1 px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50"
                           placeholder="https://..."
                         />
                         <button
                           type="button"
                           onClick={addImage}
-                          className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300"
+                          className="px-4 py-2 bg-hos-bg-tertiary text-hos-text-secondary rounded-lg hover:bg-hos-bg-tertiary"
                         >
                           Add URL
                         </button>
@@ -657,7 +657,7 @@ function CatalogEntriesContent() {
                       <button
                         onClick={handleSubmit}
                         disabled={actionLoading || !title.trim() || !description.trim() || images.length === 0}
-                        className="px-6 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors font-medium disabled:opacity-50"
+                        className="px-6 py-2 bg-hos-gold text-[#1a1406] rounded-lg hover:bg-hos-gold-hover transition-colors font-medium disabled:opacity-50"
                       >
                         {actionLoading ? 'Creating...' : 'Create Entry'}
                       </button>
@@ -667,7 +667,7 @@ function CatalogEntriesContent() {
                           setSelectedSubmission(null);
                         }}
                         disabled={actionLoading}
-                        className="px-6 py-2 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400 transition-colors font-medium"
+                        className="px-6 py-2 bg-hos-bg-tertiary text-hos-text-secondary rounded-lg hover:bg-hos-text-muted transition-colors font-medium"
                       >
                         Cancel
                       </button>

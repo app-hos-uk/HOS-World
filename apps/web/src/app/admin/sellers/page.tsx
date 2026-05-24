@@ -341,9 +341,9 @@ export default function AdminSellersPage() {
 
   const getRoleBadge = (role: string) => {
     const styles: Record<string, string> = {
-      B2C_SELLER: 'bg-blue-100 text-blue-800',
+      B2C_SELLER: 'bg-hos-gold/20 text-hos-gold',
       WHOLESALER: 'bg-green-100 text-green-800',
-      SELLER: 'bg-gray-100 text-gray-800',
+      SELLER: 'bg-hos-bg-tertiary text-white',
     };
     const labels: Record<string, string> = {
       B2C_SELLER: 'B2C',
@@ -351,7 +351,7 @@ export default function AdminSellersPage() {
       SELLER: 'Legacy',
     };
     return (
-      <span className={`px-2 py-0.5 text-xs rounded-full ${styles[role] || 'bg-gray-100 text-gray-800'}`}>
+      <span className={`px-2 py-0.5 text-xs rounded-full ${styles[role] || 'bg-hos-bg-tertiary text-white'}`}>
         {labels[role] || role}
       </span>
     );
@@ -397,14 +397,14 @@ export default function AdminSellersPage() {
           {/* Header */}
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div>
-              <h1 className="text-2xl font-bold text-gray-900">Seller Management</h1>
-              <p className="text-gray-600 mt-1">Manage marketplace sellers and invitations</p>
+              <h1 className="text-2xl font-bold text-white">Seller Management</h1>
+              <p className="text-hos-text-secondary mt-1">Manage marketplace sellers and invitations</p>
             </div>
             <div className="flex gap-2">
               <DataExport data={filteredSellers} columns={exportColumns} filename="sellers-export" />
               <button
                 onClick={() => setShowInviteForm(true)}
-                className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700"
+                className="px-4 py-2 bg-hos-gold text-[#1a1406] rounded-lg hover:bg-hos-gold-hover"
               >
                 + Invite Seller
               </button>
@@ -416,53 +416,53 @@ export default function AdminSellersPage() {
             <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-3">
               <button
                 onClick={() => { setTypeFilter('ALL'); setStatusFilter('ALL'); }}
-                className={`bg-white rounded-lg shadow p-3 text-left hover:shadow-md ${typeFilter === 'ALL' && statusFilter === 'ALL' ? 'ring-2 ring-purple-500' : ''}`}
+                className={`bg-hos-bg-secondary rounded-lg shadow p-3 text-left hover:shadow-md ${typeFilter === 'ALL' && statusFilter === 'ALL' ? 'ring-2 ring-hos-gold/50' : ''}`}
               >
-                <p className="text-xs text-gray-500">Total Sellers</p>
-                <p className="text-xl font-bold text-gray-900">{stats.totalSellers}</p>
+                <p className="text-xs text-hos-text-muted">Total Sellers</p>
+                <p className="text-xl font-bold text-white">{stats.totalSellers}</p>
               </button>
               <button
                 onClick={() => setTypeFilter('B2C_SELLER')}
-                className={`bg-white rounded-lg shadow p-3 text-left hover:shadow-md ${typeFilter === 'B2C_SELLER' ? 'ring-2 ring-purple-500' : ''}`}
+                className={`bg-hos-bg-secondary rounded-lg shadow p-3 text-left hover:shadow-md ${typeFilter === 'B2C_SELLER' ? 'ring-2 ring-hos-gold/50' : ''}`}
               >
-                <p className="text-xs text-gray-500">B2C Sellers</p>
-                <p className="text-xl font-bold text-blue-600">{stats.b2cSellers}</p>
+                <p className="text-xs text-hos-text-muted">B2C Sellers</p>
+                <p className="text-xl font-bold text-hos-gold">{stats.b2cSellers}</p>
               </button>
               <button
                 onClick={() => setTypeFilter('WHOLESALER')}
-                className={`bg-white rounded-lg shadow p-3 text-left hover:shadow-md ${typeFilter === 'WHOLESALER' ? 'ring-2 ring-purple-500' : ''}`}
+                className={`bg-hos-bg-secondary rounded-lg shadow p-3 text-left hover:shadow-md ${typeFilter === 'WHOLESALER' ? 'ring-2 ring-hos-gold/50' : ''}`}
               >
-                <p className="text-xs text-gray-500">Wholesalers</p>
+                <p className="text-xs text-hos-text-muted">Wholesalers</p>
                 <p className="text-xl font-bold text-green-600">{stats.wholesalers}</p>
               </button>
               <button
                 onClick={() => setStatusFilter('ACTIVE')}
-                className={`bg-white rounded-lg shadow p-3 text-left hover:shadow-md ${statusFilter === 'ACTIVE' ? 'ring-2 ring-purple-500' : ''}`}
+                className={`bg-hos-bg-secondary rounded-lg shadow p-3 text-left hover:shadow-md ${statusFilter === 'ACTIVE' ? 'ring-2 ring-hos-gold/50' : ''}`}
               >
-                <p className="text-xs text-gray-500">Active</p>
+                <p className="text-xs text-hos-text-muted">Active</p>
                 <p className="text-xl font-bold text-green-600">{stats.activeSellers}</p>
               </button>
               <button
                 onClick={() => setStatusFilter('INACTIVE')}
-                className={`bg-white rounded-lg shadow p-3 text-left hover:shadow-md ${statusFilter === 'INACTIVE' ? 'ring-2 ring-purple-500' : ''}`}
+                className={`bg-hos-bg-secondary rounded-lg shadow p-3 text-left hover:shadow-md ${statusFilter === 'INACTIVE' ? 'ring-2 ring-hos-gold/50' : ''}`}
               >
-                <p className="text-xs text-gray-500">Inactive</p>
+                <p className="text-xs text-hos-text-muted">Inactive</p>
                 <p className="text-xl font-bold text-red-600">{stats.inactiveSellers}</p>
               </button>
               <button
                 onClick={() => setActiveTab('invitations')}
-                className={`bg-white rounded-lg shadow p-3 text-left hover:shadow-md ${activeTab === 'invitations' ? 'ring-2 ring-purple-500' : ''}`}
+                className={`bg-hos-bg-secondary rounded-lg shadow p-3 text-left hover:shadow-md ${activeTab === 'invitations' ? 'ring-2 ring-hos-gold/50' : ''}`}
               >
-                <p className="text-xs text-gray-500">Pending Invites</p>
+                <p className="text-xs text-hos-text-muted">Pending Invites</p>
                 <p className="text-xl font-bold text-yellow-600">{pendingInvitationsCount}</p>
               </button>
-              <div className="bg-white rounded-lg shadow p-3">
-                <p className="text-xs text-gray-500">New This Month</p>
-                <p className="text-xl font-bold text-purple-600">{stats.newThisMonth}</p>
+              <div className="bg-hos-bg-secondary rounded-lg shadow p-3">
+                <p className="text-xs text-hos-text-muted">New This Month</p>
+                <p className="text-xl font-bold text-hos-gold">{stats.newThisMonth}</p>
               </div>
-              <div className="bg-white rounded-lg shadow p-3">
-                <p className="text-xs text-gray-500">Avg Products</p>
-                <p className="text-xl font-bold text-gray-600">{stats.avgProductsPerSeller}</p>
+              <div className="bg-hos-bg-secondary rounded-lg shadow p-3">
+                <p className="text-xs text-hos-text-muted">Avg Products</p>
+                <p className="text-xl font-bold text-hos-text-secondary">{stats.avgProductsPerSeller}</p>
               </div>
             </div>
           )}
@@ -470,7 +470,7 @@ export default function AdminSellersPage() {
           {/* Charts */}
           {sellerTypeData.length > 0 && (
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              <div className="bg-white rounded-lg shadow p-6">
+              <div className="bg-hos-bg-secondary rounded-lg shadow p-6">
                 <h3 className="text-lg font-semibold mb-4">Seller Distribution</h3>
                 <div className="h-64">
                   <ResponsiveContainer width="100%" height="100%">
@@ -494,23 +494,23 @@ export default function AdminSellersPage() {
                   </ResponsiveContainer>
                 </div>
               </div>
-              <div className="bg-white rounded-lg shadow p-6">
+              <div className="bg-hos-bg-secondary rounded-lg shadow p-6">
                 <h3 className="text-lg font-semibold mb-4">Quick Stats</h3>
                 <div className="space-y-4">
-                  <div className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
-                    <span className="text-gray-600">Total Active Sellers</span>
+                  <div className="flex justify-between items-center p-3 bg-hos-bg-secondary rounded-lg">
+                    <span className="text-hos-text-secondary">Total Active Sellers</span>
                     <span className="text-xl font-bold text-green-600">{stats?.activeSellers || 0}</span>
                   </div>
-                  <div className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
-                    <span className="text-gray-600">Pending Invitations</span>
+                  <div className="flex justify-between items-center p-3 bg-hos-bg-secondary rounded-lg">
+                    <span className="text-hos-text-secondary">Pending Invitations</span>
                     <span className="text-xl font-bold text-yellow-600">{pendingInvitationsCount}</span>
                   </div>
-                  <div className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
-                    <span className="text-gray-600">Accepted This Month</span>
-                    <span className="text-xl font-bold text-blue-600">{stats?.newThisMonth || 0}</span>
+                  <div className="flex justify-between items-center p-3 bg-hos-bg-secondary rounded-lg">
+                    <span className="text-hos-text-secondary">Accepted This Month</span>
+                    <span className="text-xl font-bold text-hos-gold">{stats?.newThisMonth || 0}</span>
                   </div>
-                  <div className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
-                    <span className="text-gray-600">Expired Invitations</span>
+                  <div className="flex justify-between items-center p-3 bg-hos-bg-secondary rounded-lg">
+                    <span className="text-hos-text-secondary">Expired Invitations</span>
                     <span className="text-xl font-bold text-red-600">
                       {invitations.filter((i) => invitationStatusNormalized(i.status) === 'EXPIRED').length}
                     </span>
@@ -528,7 +528,7 @@ export default function AdminSellersPage() {
           )}
 
           {/* Tabs */}
-          <div className="border-b border-gray-200">
+          <div className="border-b border-hos-border">
             <nav className="-mb-px flex space-x-8">
               {tabs.map((tab: { id: string; label: string; count: number; pendingCount?: number }) => (
                 <button
@@ -536,8 +536,8 @@ export default function AdminSellersPage() {
                   onClick={() => setActiveTab(tab.id as any)}
                   className={`py-4 px-1 border-b-2 font-medium text-sm ${
                     activeTab === tab.id
-                      ? 'border-purple-500 text-purple-600'
-                      : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                      ? 'border-hos-gold text-hos-gold'
+                      : 'border-transparent text-hos-text-muted hover:text-hos-text-secondary hover:border-hos-border'
                   }`}
                 >
                   {tab.id === 'invitations'
@@ -552,24 +552,24 @@ export default function AdminSellersPage() {
           {activeTab === 'sellers' && (
             <>
               {/* Filters */}
-              <div className="bg-white rounded-lg shadow p-4">
+              <div className="bg-hos-bg-secondary rounded-lg shadow p-4">
                 <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Search</label>
+                    <label className="block text-sm font-medium text-hos-text-secondary mb-1">Search</label>
                     <input
                       type="text"
                       value={searchTerm}
                       onChange={(e) => setSearchTerm(e.target.value)}
                       placeholder="Store name, email..."
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
+                      className="w-full px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50"
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Type</label>
+                    <label className="block text-sm font-medium text-hos-text-secondary mb-1">Type</label>
                     <select
                       value={typeFilter}
                       onChange={(e) => setTypeFilter(e.target.value)}
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
+                      className="w-full px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50"
                     >
                       <option value="ALL">All Types</option>
                       <option value="B2C_SELLER">B2C Seller</option>
@@ -578,11 +578,11 @@ export default function AdminSellersPage() {
                     </select>
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Status</label>
+                    <label className="block text-sm font-medium text-hos-text-secondary mb-1">Status</label>
                     <select
                       value={statusFilter}
                       onChange={(e) => setStatusFilter(e.target.value)}
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
+                      className="w-full px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50"
                     >
                       <option value="ALL">All Status</option>
                       <option value="ACTIVE">Active</option>
@@ -592,7 +592,7 @@ export default function AdminSellersPage() {
                     </select>
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Sort By</label>
+                    <label className="block text-sm font-medium text-hos-text-secondary mb-1">Sort By</label>
                     <select
                       value={`${sortBy}-${sortOrder}`}
                       onChange={(e) => {
@@ -600,7 +600,7 @@ export default function AdminSellersPage() {
                         setSortBy(field as any);
                         setSortOrder(order as any);
                       }}
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
+                      className="w-full px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50"
                     >
                       <option value="date-desc">Newest First</option>
                       <option value="date-asc">Oldest First</option>
@@ -615,50 +615,50 @@ export default function AdminSellersPage() {
               {/* Sellers Table */}
               {loading ? (
                 <div className="flex items-center justify-center py-12">
-                  <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600"></div>
+                  <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-hos-gold"></div>
                 </div>
               ) : (
-                <div className="bg-white rounded-lg shadow overflow-hidden">
+                <div className="bg-hos-bg-secondary rounded-lg shadow overflow-hidden">
                   <div className="overflow-x-auto">
-                    <table className="min-w-full divide-y divide-gray-200">
-                      <thead className="bg-gray-50">
+                    <table className="min-w-full divide-y divide-hos-border">
+                      <thead className="bg-hos-bg-secondary">
                         <tr>
-                          <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Seller</th>
-                          <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Type</th>
-                          <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
-                          <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Products</th>
-                          <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Orders</th>
-                          <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Revenue</th>
-                          <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Joined</th>
-                          <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">Actions</th>
+                          <th className="px-4 py-3 text-left text-xs font-medium text-hos-text-muted uppercase">Seller</th>
+                          <th className="px-4 py-3 text-left text-xs font-medium text-hos-text-muted uppercase">Type</th>
+                          <th className="px-4 py-3 text-left text-xs font-medium text-hos-text-muted uppercase">Status</th>
+                          <th className="px-4 py-3 text-left text-xs font-medium text-hos-text-muted uppercase">Products</th>
+                          <th className="px-4 py-3 text-left text-xs font-medium text-hos-text-muted uppercase">Orders</th>
+                          <th className="px-4 py-3 text-left text-xs font-medium text-hos-text-muted uppercase">Revenue</th>
+                          <th className="px-4 py-3 text-left text-xs font-medium text-hos-text-muted uppercase">Joined</th>
+                          <th className="px-4 py-3 text-right text-xs font-medium text-hos-text-muted uppercase">Actions</th>
                         </tr>
                       </thead>
-                      <tbody className="bg-white divide-y divide-gray-200">
+                      <tbody className="bg-hos-bg-secondary divide-y divide-hos-border">
                         {filteredSellers.length === 0 ? (
                           <tr>
-                            <td colSpan={8} className="px-6 py-8 text-center text-gray-500">
+                            <td colSpan={8} className="px-6 py-8 text-center text-hos-text-muted">
                               No sellers found
                             </td>
                           </tr>
                         ) : (
                           filteredSellers.map((seller) => (
-                            <tr key={seller.id} className="hover:bg-gray-50">
+                            <tr key={seller.id} className="hover:bg-hos-bg-tertiary">
                               <td className="px-4 py-3">
                                 <div className="flex items-center">
                                   <div className="flex-shrink-0 h-10 w-10">
                                     {seller.avatar ? (
                                       <SafeImage width={40} height={40} className="h-10 w-10 rounded-full object-cover" src={seller.avatar} alt="" fallback="🏪" />
                                     ) : (
-                                      <div className="h-10 w-10 rounded-full bg-purple-100 flex items-center justify-center">
-                                        <span className="text-purple-600 font-medium text-sm">
+                                      <div className="h-10 w-10 rounded-full bg-hos-gold/20 flex items-center justify-center">
+                                        <span className="text-hos-gold font-medium text-sm">
                                           {seller.storeName?.[0] || seller.email[0].toUpperCase()}
                                         </span>
                                       </div>
                                     )}
                                   </div>
                                   <div className="ml-3">
-                                    <p className="text-sm font-medium text-gray-900">{seller.storeName || seller.email || 'No Store Name'}</p>
-                                    <p className="text-xs text-gray-500">{seller.email}</p>
+                                    <p className="text-sm font-medium text-white">{seller.storeName || seller.email || 'No Store Name'}</p>
+                                    <p className="text-xs text-hos-text-muted">{seller.email}</p>
                                   </div>
                                 </div>
                               </td>
@@ -669,23 +669,23 @@ export default function AdminSellersPage() {
                                     {seller.isActive !== false ? 'Active' : 'Inactive'}
                                   </span>
                                   {seller.emailVerified && (
-                                    <span className="text-xs text-blue-600">✓ Verified</span>
+                                    <span className="text-xs text-hos-gold">✓ Verified</span>
                                   )}
                                 </div>
                               </td>
-                              <td className="px-4 py-3 text-sm text-gray-600">{seller.totalProducts || 0}</td>
-                              <td className="px-4 py-3 text-sm text-gray-600">{seller.totalOrders || 0}</td>
-                              <td className="px-4 py-3 text-sm font-medium text-gray-900">
+                              <td className="px-4 py-3 text-sm text-hos-text-secondary">{seller.totalProducts || 0}</td>
+                              <td className="px-4 py-3 text-sm text-hos-text-secondary">{seller.totalOrders || 0}</td>
+                              <td className="px-4 py-3 text-sm font-medium text-white">
                                 {formatPrice(seller.totalRevenue || 0)}
                               </td>
-                              <td className="px-4 py-3 text-sm text-gray-500">
+                              <td className="px-4 py-3 text-sm text-hos-text-muted">
                                 {new Date(seller.createdAt).toLocaleDateString()}
                               </td>
                               <td className="px-4 py-3 text-right">
                                 <div className="flex justify-end gap-1">
                                   <button
                                     onClick={() => handleViewDetails(seller)}
-                                    className="px-2 py-1 text-sm text-purple-600 hover:bg-purple-50 rounded"
+                                    className="px-2 py-1 text-sm text-hos-gold hover:bg-hos-gold/10 rounded"
                                   >
                                     View
                                   </button>
@@ -705,16 +705,16 @@ export default function AdminSellersPage() {
                     </table>
                   </div>
                   {sellersTotal > sellersLimit && (
-                    <div className="flex flex-wrap items-center justify-between gap-2 px-4 py-3 border-t border-gray-100 bg-gray-50">
+                    <div className="flex flex-wrap items-center justify-between gap-2 px-4 py-3 border-t border-hos-border bg-hos-bg-secondary">
                       <button
                         type="button"
                         disabled={sellersPage <= 1 || loading}
                         onClick={() => setSellersPage((p) => Math.max(1, p - 1))}
-                        className="px-3 py-1.5 text-sm rounded-lg border border-gray-300 bg-white text-gray-700 disabled:opacity-50"
+                        className="px-3 py-1.5 text-sm rounded-lg border border-hos-border bg-hos-bg-secondary text-hos-text-secondary disabled:opacity-50"
                       >
                         Previous
                       </button>
-                      <span className="text-sm text-gray-600">
+                      <span className="text-sm text-hos-text-secondary">
                         Page {sellersPage} of {Math.max(1, Math.ceil(sellersTotal / sellersLimit))}
                         {' · '}
                         {sellersTotal} total
@@ -723,7 +723,7 @@ export default function AdminSellersPage() {
                         type="button"
                         disabled={loading || sellersPage * sellersLimit >= sellersTotal}
                         onClick={() => setSellersPage((p) => p + 1)}
-                        className="px-3 py-1.5 text-sm rounded-lg border border-gray-300 bg-white text-gray-700 disabled:opacity-50"
+                        className="px-3 py-1.5 text-sm rounded-lg border border-hos-border bg-hos-bg-secondary text-hos-text-secondary disabled:opacity-50"
                       >
                         Next
                       </button>
@@ -736,44 +736,44 @@ export default function AdminSellersPage() {
 
           {/* Invitations Tab */}
           {activeTab === 'invitations' && (
-            <div className="bg-white rounded-lg shadow overflow-hidden">
+            <div className="bg-hos-bg-secondary rounded-lg shadow overflow-hidden">
               <div className="p-4 border-b flex justify-between items-center">
                 <div>
                   <h2 className="text-lg font-semibold">Seller invitations</h2>
-                  <p className="text-xs text-gray-500 mt-0.5">
+                  <p className="text-xs text-hos-text-muted mt-0.5">
                     {pendingInvitationsCount} pending · {invitations.length} total
                   </p>
                 </div>
                 <button
                   onClick={() => setShowInviteForm(true)}
-                  className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 text-sm"
+                  className="px-4 py-2 bg-hos-gold text-[#1a1406] rounded-lg hover:bg-hos-gold-hover text-sm"
                 >
                   + New Invitation
                 </button>
               </div>
               <div className="overflow-x-auto">
-                <table className="min-w-full divide-y divide-gray-200">
-                  <thead className="bg-gray-50">
+                <table className="min-w-full divide-y divide-hos-border">
+                  <thead className="bg-hos-bg-secondary">
                     <tr>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Email</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Type</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Sent</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Expires</th>
-                      <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">Actions</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-hos-text-muted uppercase">Email</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-hos-text-muted uppercase">Type</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-hos-text-muted uppercase">Status</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-hos-text-muted uppercase">Sent</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-hos-text-muted uppercase">Expires</th>
+                      <th className="px-6 py-3 text-right text-xs font-medium text-hos-text-muted uppercase">Actions</th>
                     </tr>
                   </thead>
-                  <tbody className="bg-white divide-y divide-gray-200">
+                  <tbody className="bg-hos-bg-secondary divide-y divide-hos-border">
                     {invitations.length === 0 ? (
                       <tr>
-                        <td colSpan={6} className="px-6 py-8 text-center text-gray-500">
+                        <td colSpan={6} className="px-6 py-8 text-center text-hos-text-muted">
                           No invitations found
                         </td>
                       </tr>
                     ) : (
                       invitations.map((inv) => (
-                        <tr key={inv.id} className="hover:bg-gray-50">
-                          <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{inv.email}</td>
+                        <tr key={inv.id} className="hover:bg-hos-bg-tertiary">
+                          <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-white">{inv.email}</td>
                           <td className="px-6 py-4 whitespace-nowrap text-sm">{getRoleBadge(inv.sellerType)}</td>
                           <td className="px-6 py-4 whitespace-nowrap">
                             <span className={`px-2 py-1 text-xs rounded-full ${
@@ -784,16 +784,16 @@ export default function AdminSellersPage() {
                                   : invitationStatusNormalized(inv.status) === 'EXPIRED'
                                     ? 'bg-red-100 text-red-800'
                                     : invitationStatusNormalized(inv.status) === 'CANCELLED'
-                                      ? 'bg-gray-100 text-gray-700'
-                                      : 'bg-gray-100 text-gray-800'
+                                      ? 'bg-hos-bg-tertiary text-hos-text-secondary'
+                                      : 'bg-hos-bg-tertiary text-white'
                             }`}>
                               {invitationStatusNormalized(inv.status)}
                             </span>
                           </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-hos-text-muted">
                             {new Date(inv.createdAt).toLocaleDateString()}
                           </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-hos-text-muted">
                             {inv.expiresAt ? new Date(inv.expiresAt).toLocaleDateString() : 'N/A'}
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap text-right text-sm">
@@ -801,7 +801,7 @@ export default function AdminSellersPage() {
                               <>
                                 <button
                                   onClick={() => handleResendInvitation(inv.id)}
-                                  className="text-blue-600 hover:text-blue-800 mr-3"
+                                  className="text-hos-gold hover:text-hos-gold mr-3"
                                 >
                                   Resend
                                 </button>
@@ -826,46 +826,46 @@ export default function AdminSellersPage() {
           {/* Invite Form Modal */}
           {showInviteForm && (
             <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-              <div className="bg-white rounded-lg max-w-md w-full">
+              <div className="bg-hos-bg-secondary rounded-lg max-w-md w-full">
                 <div className="p-6">
                   <div className="flex justify-between items-start mb-6">
                     <h2 className="text-xl font-bold">Invite New Seller</h2>
-                    <button onClick={() => setShowInviteForm(false)} className="text-gray-500 hover:text-gray-700 text-2xl">×</button>
+                    <button onClick={() => setShowInviteForm(false)} className="text-hos-text-muted hover:text-hos-text-secondary text-2xl">×</button>
                   </div>
                   <form onSubmit={handleInviteSeller} className="space-y-4">
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Email Address *</label>
+                      <label className="block text-sm font-medium text-hos-text-secondary mb-1">Email Address *</label>
                       <input
                         type="email"
                         required
                         value={inviteForm.email}
                         onChange={(e) => setInviteForm({ ...inviteForm, email: e.target.value })}
-                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
+                        className="w-full px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50"
                         placeholder="seller@example.com"
                       />
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Seller Type *</label>
+                      <label className="block text-sm font-medium text-hos-text-secondary mb-1">Seller Type *</label>
                       <select
                         value={inviteForm.sellerType}
                         onChange={(e) => setInviteForm({ ...inviteForm, sellerType: e.target.value as any })}
-                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
+                        className="w-full px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50"
                       >
                         <option value="B2C_SELLER">B2C Seller</option>
                         <option value="WHOLESALER">Wholesaler</option>
                       </select>
-                      <p className="text-xs text-gray-500 mt-1">
+                      <p className="text-xs text-hos-text-muted mt-1">
                         {inviteForm.sellerType === 'B2C_SELLER' 
                           ? 'Sells directly to consumers with standard pricing' 
                           : 'Wholesale seller with bulk pricing options'}
                       </p>
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Welcome Message</label>
+                      <label className="block text-sm font-medium text-hos-text-secondary mb-1">Welcome Message</label>
                       <textarea
                         value={inviteForm.message}
                         onChange={(e) => setInviteForm({ ...inviteForm, message: e.target.value })}
-                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
+                        className="w-full px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50"
                         rows={3}
                         placeholder="Optional personalized message..."
                       />
@@ -874,14 +874,14 @@ export default function AdminSellersPage() {
                       <button
                         type="submit"
                         disabled={actionLoading}
-                        className="flex-1 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 disabled:opacity-50"
+                        className="flex-1 px-4 py-2 bg-hos-gold text-[#1a1406] rounded-lg hover:bg-hos-gold-hover disabled:opacity-50"
                       >
                         {actionLoading ? 'Sending...' : 'Send Invitation'}
                       </button>
                       <button
                         type="button"
                         onClick={() => setShowInviteForm(false)}
-                        className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300"
+                        className="px-4 py-2 bg-hos-bg-tertiary text-hos-text-secondary rounded-lg hover:bg-hos-bg-tertiary"
                       >
                         Cancel
                       </button>
@@ -895,11 +895,11 @@ export default function AdminSellersPage() {
           {/* Seller Detail Modal */}
           {showDetailModal && selectedSeller && (
             <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-              <div className="bg-white rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+              <div className="bg-hos-bg-secondary rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto">
                 <div className="p-6">
                   <div className="flex justify-between items-start mb-6">
                     <h2 className="text-2xl font-bold">Seller Details</h2>
-                    <button onClick={() => setShowDetailModal(false)} className="text-gray-500 hover:text-gray-700 text-2xl">×</button>
+                    <button onClick={() => setShowDetailModal(false)} className="text-hos-text-muted hover:text-hos-text-secondary text-2xl">×</button>
                   </div>
 
                   <div className="space-y-6">
@@ -908,15 +908,15 @@ export default function AdminSellersPage() {
                       {selectedSeller.avatar ? (
                         <SafeImage width={80} height={80} className="rounded-full object-cover" src={selectedSeller.avatar} alt="" fallback="🏪" />
                       ) : (
-                        <div className="h-20 w-20 rounded-full bg-purple-100 flex items-center justify-center">
-                          <span className="text-purple-600 font-bold text-3xl">
+                        <div className="h-20 w-20 rounded-full bg-hos-gold/20 flex items-center justify-center">
+                          <span className="text-hos-gold font-bold text-3xl">
                             {selectedSeller.storeName?.[0] || selectedSeller.email[0].toUpperCase()}
                           </span>
                         </div>
                       )}
                       <div>
                         <h3 className="text-xl font-semibold">{selectedSeller.storeName || selectedSeller.email || 'No Store Name'}</h3>
-                        <p className="text-gray-500">{selectedSeller.email}</p>
+                        <p className="text-hos-text-muted">{selectedSeller.email}</p>
                         <div className="flex items-center gap-2 mt-2">
                           {getRoleBadge(selectedSeller.role)}
                           <span className={`px-2 py-0.5 text-xs rounded-full ${selectedSeller.isActive !== false ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
@@ -928,14 +928,14 @@ export default function AdminSellersPage() {
 
                     {/* Seller profile ID — required for Finance → Schedule Payout */}
                     {selectedSeller.sellerId && (
-                      <div className="rounded-lg border border-purple-200 bg-purple-50/80 p-4">
+                      <div className="rounded-lg border border-hos-border-accent bg-hos-gold/10/80 p-4">
                         <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2">
                           <div className="min-w-0 flex-1">
-                            <p className="text-sm font-medium text-gray-800">Seller ID (payouts &amp; finance)</p>
-                            <p className="text-xs text-gray-600 mt-0.5">
+                            <p className="text-sm font-medium text-white">Seller ID (payouts &amp; finance)</p>
+                            <p className="text-xs text-hos-text-secondary mt-0.5">
                               Use this UUID in Finance → Process Payouts → Schedule Payout.
                             </p>
-                            <p className="mt-2 font-mono text-xs text-gray-900 break-all select-all">
+                            <p className="mt-2 font-mono text-xs text-white break-all select-all">
                               {selectedSeller.sellerId}
                             </p>
                           </div>
@@ -949,7 +949,7 @@ export default function AdminSellersPage() {
                                 toast.error('Could not copy to clipboard');
                               }
                             }}
-                            className="shrink-0 px-3 py-1.5 text-sm font-medium text-purple-700 bg-white border border-purple-300 rounded-lg hover:bg-purple-50"
+                            className="shrink-0 px-3 py-1.5 text-sm font-medium text-hos-gold-hover bg-hos-bg-secondary border border-hos-border-accent rounded-lg hover:bg-hos-gold/10"
                           >
                             Copy ID
                           </button>
@@ -959,28 +959,28 @@ export default function AdminSellersPage() {
 
                     {/* Stats Grid */}
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                      <div className="bg-gray-50 rounded-lg p-4 text-center">
-                        <p className="text-2xl font-bold text-purple-600">{selectedSeller.totalProducts || 0}</p>
-                        <p className="text-sm text-gray-500">Products</p>
+                      <div className="bg-hos-bg-secondary rounded-lg p-4 text-center">
+                        <p className="text-2xl font-bold text-hos-gold">{selectedSeller.totalProducts || 0}</p>
+                        <p className="text-sm text-hos-text-muted">Products</p>
                       </div>
-                      <div className="bg-gray-50 rounded-lg p-4 text-center">
-                        <p className="text-2xl font-bold text-blue-600">{selectedSeller.totalOrders || 0}</p>
-                        <p className="text-sm text-gray-500">Orders</p>
+                      <div className="bg-hos-bg-secondary rounded-lg p-4 text-center">
+                        <p className="text-2xl font-bold text-hos-gold">{selectedSeller.totalOrders || 0}</p>
+                        <p className="text-sm text-hos-text-muted">Orders</p>
                       </div>
-                      <div className="bg-gray-50 rounded-lg p-4 text-center">
+                      <div className="bg-hos-bg-secondary rounded-lg p-4 text-center">
                         <p className="text-2xl font-bold text-green-600">{formatPrice(selectedSeller.totalRevenue || 0)}</p>
-                        <p className="text-sm text-gray-500">Revenue</p>
+                        <p className="text-sm text-hos-text-muted">Revenue</p>
                       </div>
-                      <div className="bg-gray-50 rounded-lg p-4 text-center">
+                      <div className="bg-hos-bg-secondary rounded-lg p-4 text-center">
                         <p className="text-2xl font-bold text-yellow-600">{selectedSeller.rating?.toFixed(1) || 'N/A'}</p>
-                        <p className="text-sm text-gray-500">Rating</p>
+                        <p className="text-sm text-hos-text-muted">Rating</p>
                       </div>
                     </div>
 
                     {/* Details */}
                     <div className="grid grid-cols-2 gap-4 pt-4 border-t">
                       <div>
-                        <p className="text-sm text-gray-500">Owner Name</p>
+                        <p className="text-sm text-hos-text-muted">Owner Name</p>
                         <p className="font-medium">
                           {selectedSeller.firstName && selectedSeller.lastName 
                             ? `${selectedSeller.firstName} ${selectedSeller.lastName}` 
@@ -988,27 +988,27 @@ export default function AdminSellersPage() {
                         </p>
                       </div>
                       <div>
-                        <p className="text-sm text-gray-500">Phone</p>
+                        <p className="text-sm text-hos-text-muted">Phone</p>
                         <p className="font-medium">{selectedSeller.phone || 'Not set'}</p>
                       </div>
                       <div>
-                        <p className="text-sm text-gray-500">Email Verified</p>
+                        <p className="text-sm text-hos-text-muted">Email Verified</p>
                         <p className="font-medium">{selectedSeller.emailVerified ? 'Yes' : 'No'}</p>
                       </div>
                       <div>
-                        <p className="text-sm text-gray-500">Onboarding</p>
+                        <p className="text-sm text-hos-text-muted">Onboarding</p>
                         <p className="font-medium">{selectedSeller.onboardingComplete ? 'Complete' : 'Pending'}</p>
                       </div>
                       <div>
-                        <p className="text-sm text-gray-500">Member Since</p>
+                        <p className="text-sm text-hos-text-muted">Member Since</p>
                         <p className="font-medium">{new Date(selectedSeller.createdAt).toLocaleDateString()}</p>
                       </div>
                     </div>
 
                     {selectedSeller.storeDescription && (
                       <div className="pt-4 border-t">
-                        <p className="text-sm text-gray-500 mb-1">Store Description</p>
-                        <p className="text-gray-700">{selectedSeller.storeDescription}</p>
+                        <p className="text-sm text-hos-text-muted mb-1">Store Description</p>
+                        <p className="text-hos-text-secondary">{selectedSeller.storeDescription}</p>
                       </div>
                     )}
 
@@ -1016,13 +1016,13 @@ export default function AdminSellersPage() {
                     <div className="flex flex-wrap gap-2 pt-4 border-t">
                       <a
                         href={`/admin/products?seller=${selectedSeller.sellerId ?? selectedSeller.id}`}
-                        className="px-4 py-2 bg-purple-100 text-purple-700 rounded-lg hover:bg-purple-200"
+                        className="px-4 py-2 bg-hos-gold/20 text-hos-gold-hover rounded-lg hover:bg-hos-gold/20"
                       >
                         View Products
                       </a>
                       <a
                         href={`/admin/orders?seller=${selectedSeller.id}`}
-                        className="px-4 py-2 bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200"
+                        className="px-4 py-2 bg-hos-gold/20 text-hos-gold rounded-lg hover:bg-hos-gold/20"
                       >
                         View Orders
                       </a>
@@ -1035,7 +1035,7 @@ export default function AdminSellersPage() {
                       </button>
                       <button
                         onClick={() => setShowDetailModal(false)}
-                        className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300"
+                        className="px-4 py-2 bg-hos-bg-tertiary text-hos-text-secondary rounded-lg hover:bg-hos-bg-tertiary"
                       >
                         Close
                       </button>

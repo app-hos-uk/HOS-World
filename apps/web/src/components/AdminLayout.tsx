@@ -145,7 +145,7 @@ const menuItems: MenuItem[] = [
     title: 'Loyalty Analytics',
     icon: '📈',
     children: [
-      { title: 'Programme health', href: '/admin/loyalty-analytics', icon: '💡' },
+      { title: 'Program health', href: '/admin/loyalty-analytics', icon: '💡' },
       { title: 'CLV report', href: '/admin/loyalty-analytics/clv', icon: '👤' },
       { title: 'Campaign ROI', href: '/admin/loyalty-analytics/attribution', icon: '🎯' },
       { title: 'Fandom trends', href: '/admin/loyalty-analytics/fandom-trends', icon: '⚡' },
@@ -414,16 +414,16 @@ export function AdminLayout({ children }: AdminLayoutProps) {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 font-inter">
+    <div className="min-h-screen bg-hos-bg-secondary font-inter">
       {/* Sidebar */}
       <div
-        className={`fixed inset-y-0 left-0 z-50 w-64 bg-white border-r border-gray-100 transition-transform duration-300 shadow-sm ${
+        className={`fixed inset-y-0 left-0 z-50 w-64 bg-hos-bg-secondary border-r border-hos-border transition-transform duration-300 shadow-sm ${
           sidebarOpen ? 'translate-x-0' : '-translate-x-full'
         } lg:translate-x-0`}
       >
         <div className="flex flex-col h-full">
           {/* Logo/Header */}
-          <div className="flex items-center justify-between h-16 px-4 border-b border-gray-100 bg-gradient-to-r from-purple-600 to-purple-700">
+          <div className="flex items-center justify-between h-16 px-4 border-b border-hos-border bg-hos-bg-secondary border border-hos-border">
             <h2 className="text-xl font-semibold text-white tracking-tight">Admin Panel</h2>
             <button
               onClick={() => setSidebarOpen(false)}
@@ -434,7 +434,7 @@ export function AdminLayout({ children }: AdminLayoutProps) {
           </div>
 
           {/* Search */}
-          <div className="px-3 py-3 border-b border-gray-100 relative">
+          <div className="px-3 py-3 border-b border-hos-border relative">
             <div className="relative">
               <input
                 id="admin-sidebar-search"
@@ -452,10 +452,10 @@ export function AdminLayout({ children }: AdminLayoutProps) {
                   }
                   blurTimeoutRef.current = setTimeout(() => setShowSearchResults(false), 200);
                 }}
-                className="w-full px-3 py-2.5 pl-9 text-sm bg-gray-50 border border-gray-200 rounded-lg focus:bg-white focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20 outline-none transition-all"
+                className="w-full px-3 py-2.5 pl-9 text-sm bg-hos-bg-secondary border border-hos-border rounded-lg focus:bg-hos-bg-secondary focus:border-hos-gold focus:ring-2 focus:ring-hos-gold/20 outline-none transition-all"
               />
               <svg
-                className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400"
+                className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-hos-text-muted"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -471,17 +471,17 @@ export function AdminLayout({ children }: AdminLayoutProps) {
             
             {/* Search Results Dropdown */}
             {showSearchResults && searchResults.length > 0 && (
-              <div className="absolute left-3 right-3 top-full mt-1 bg-white rounded-lg shadow-lg border border-gray-200 z-50 max-h-64 overflow-y-auto">
+              <div className="absolute left-3 right-3 top-full mt-1 bg-hos-bg-secondary rounded-lg shadow-lg border border-hos-border z-50 max-h-64 overflow-y-auto">
                 {searchResults.map((item) => (
                   <button
                     key={item.href}
                     onClick={() => handleSearchSelect(item.href)}
-                    className="w-full px-3 py-2 text-left hover:bg-purple-50 flex items-center gap-2 text-sm"
+                    className="w-full px-3 py-2 text-left hover:bg-hos-gold/10 flex items-center gap-2 text-sm"
                   >
                     <span>{item.icon}</span>
                     <span className="font-medium">{item.title}</span>
                     {item.parent && (
-                      <span className="text-gray-400 text-xs">in {item.parent}</span>
+                      <span className="text-hos-text-muted text-xs">in {item.parent}</span>
                     )}
                   </button>
                 ))}
@@ -489,7 +489,7 @@ export function AdminLayout({ children }: AdminLayoutProps) {
             )}
             
             {showSearchResults && searchQuery && searchResults.length === 0 && (
-              <div className="absolute left-3 right-3 top-full mt-1 bg-white rounded-lg shadow-lg border border-gray-200 z-50 p-3 text-sm text-gray-500 text-center">
+              <div className="absolute left-3 right-3 top-full mt-1 bg-hos-bg-secondary rounded-lg shadow-lg border border-hos-border z-50 p-3 text-sm text-hos-text-muted text-center">
                 No results found
               </div>
             )}
@@ -511,8 +511,8 @@ export function AdminLayout({ children }: AdminLayoutProps) {
                           onClick={() => toggleMenu(item.title)}
                           className={`w-full flex items-center justify-between px-3 py-2 text-sm font-medium rounded-lg transition-colors ${
                             parentActive
-                              ? 'bg-purple-50 text-purple-700'
-                              : 'text-gray-700 hover:bg-gray-100'
+                              ? 'bg-hos-gold/10 text-hos-gold-hover'
+                              : 'text-hos-text-secondary hover:bg-hos-bg-tertiary'
                           }`}
                         >
                           <span className="flex items-center gap-2">
@@ -532,8 +532,8 @@ export function AdminLayout({ children }: AdminLayoutProps) {
                                     href={child.href}
                                     className={`flex items-center gap-2 px-3 py-2 text-sm rounded-lg transition-colors ${
                                       isActive(child.href)
-                                        ? 'bg-purple-100 text-purple-700 font-medium'
-                                        : 'text-gray-600 hover:bg-gray-50'
+                                        ? 'bg-hos-gold/20 text-hos-gold-hover font-medium'
+                                        : 'text-hos-text-secondary hover:bg-hos-bg-tertiary'
                                     }`}
                                   >
                                     <span>{child.icon}</span>
@@ -545,7 +545,7 @@ export function AdminLayout({ children }: AdminLayoutProps) {
                                     )}
                                   </Link>
                                 ) : (
-                                  <span className="flex items-center gap-2 px-3 py-2 text-sm text-gray-600">
+                                  <span className="flex items-center gap-2 px-3 py-2 text-sm text-hos-text-secondary">
                                     <span>{child.icon}</span>
                                     <span>{child.title}</span>
                                   </span>
@@ -560,8 +560,8 @@ export function AdminLayout({ children }: AdminLayoutProps) {
                         href={item.href}
                         className={`flex items-center gap-2 px-3 py-2 text-sm font-medium rounded-lg transition-colors ${
                           isActive(item.href)
-                            ? 'bg-purple-100 text-purple-700'
-                            : 'text-gray-700 hover:bg-gray-100'
+                            ? 'bg-hos-gold/20 text-hos-gold-hover'
+                            : 'text-hos-text-secondary hover:bg-hos-bg-tertiary'
                         }`}
                       >
                         <span>{item.icon}</span>
@@ -573,7 +573,7 @@ export function AdminLayout({ children }: AdminLayoutProps) {
                         )}
                       </Link>
                     ) : (
-                      <span className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-gray-700">
+                      <span className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-hos-text-secondary">
                         <span>{item.icon}</span>
                         <span>{item.title}</span>
                       </span>
@@ -585,10 +585,10 @@ export function AdminLayout({ children }: AdminLayoutProps) {
           </nav>
 
           {/* Footer */}
-          <div className="border-t border-gray-100 p-3">
+          <div className="border-t border-hos-border p-3">
             <Link
               href="/"
-              className="flex items-center gap-2.5 px-3 py-2.5 text-sm text-gray-600 hover:bg-gray-50 rounded-lg transition-colors font-medium"
+              className="flex items-center gap-2.5 px-3 py-2.5 text-sm text-hos-text-secondary hover:bg-hos-bg-tertiary rounded-lg transition-colors font-medium"
             >
               <span>🏠</span>
               <span>View Store</span>
@@ -608,12 +608,12 @@ export function AdminLayout({ children }: AdminLayoutProps) {
       {/* Main Content */}
       <div className={`lg:pl-64 transition-all duration-300`}>
         {/* Top Bar */}
-        <div className="sticky top-0 z-30 bg-white/95 backdrop-blur-sm border-b border-gray-100">
+        <div className="sticky top-0 z-30 bg-hos-bg-secondary/95 backdrop-blur-sm border-b border-hos-border">
           <div className="flex items-center justify-between h-14 px-4 sm:px-6 lg:px-8">
             <div className="flex items-center gap-2">
               <button
                 onClick={() => setSidebarOpen(true)}
-                className="lg:hidden p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
+                className="lg:hidden p-2 text-hos-text-muted hover:text-hos-text-secondary hover:bg-hos-bg-tertiary rounded-lg transition-colors"
               >
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
@@ -622,13 +622,13 @@ export function AdminLayout({ children }: AdminLayoutProps) {
             </div>
             <div className="flex items-center gap-3 ml-auto">
               {user && (
-                <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 bg-gray-50 rounded-lg">
-                  <div className="w-7 h-7 bg-purple-100 rounded-full flex items-center justify-center">
-                    <span className="text-xs font-medium text-purple-600">
+                <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 bg-hos-bg-secondary rounded-lg">
+                  <div className="w-7 h-7 bg-hos-gold/20 rounded-full flex items-center justify-center">
+                    <span className="text-xs font-medium text-hos-gold">
                       {user.firstName?.[0]}{user.lastName?.[0]}
                     </span>
                   </div>
-                  <span className="text-sm font-medium text-gray-700">
+                  <span className="text-sm font-medium text-hos-text-secondary">
                     {user.firstName} {user.lastName}
                   </span>
                 </div>
@@ -644,12 +644,12 @@ export function AdminLayout({ children }: AdminLayoutProps) {
         </div>
 
         {/* Breadcrumbs */}
-        <div className="px-4 sm:px-6 lg:px-8 py-2.5 bg-gray-50/50">
+        <div className="px-4 sm:px-6 lg:px-8 py-2.5 bg-hos-bg-secondary/50">
           <AdminBreadcrumbs />
         </div>
 
         {/* Page Content */}
-        <main className="p-4 sm:p-6 lg:p-8 bg-gray-50/30 min-h-[calc(100vh-7rem)]">
+        <main className="p-4 sm:p-6 lg:p-8 bg-hos-bg-secondary/30 min-h-[calc(100vh-7rem)]">
           <ErrorBoundary>{children}</ErrorBoundary>
         </main>
       </div>

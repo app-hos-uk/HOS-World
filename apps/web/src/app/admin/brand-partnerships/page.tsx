@@ -59,7 +59,7 @@ export default function AdminBrandPartnershipsPage() {
       <AdminLayout>
         <div className="p-6 max-w-6xl mx-auto">
           <div className="flex flex-wrap gap-4 justify-between items-center mb-6">
-            <h1 className="text-2xl font-semibold text-gray-900">Brand partnerships</h1>
+            <h1 className="text-2xl font-semibold text-white">Brand partnerships</h1>
             <div className="flex gap-2">
               <Link
                 href="/admin/brand-partnerships/new"
@@ -92,18 +92,18 @@ export default function AdminBrandPartnershipsPage() {
             </select>
             <button
               type="button"
-              className="text-sm px-3 py-1 rounded bg-gray-800 text-white"
+              className="text-sm px-3 py-1 rounded bg-hos-surface text-white"
               onClick={() => load()}
             >
               Apply
             </button>
           </div>
           {loading ? (
-            <p className="text-gray-500">Loading…</p>
+            <p className="text-hos-text-muted">Loading…</p>
           ) : (
             <div className="overflow-x-auto border rounded-lg">
               <table className="min-w-full text-sm">
-                <thead className="bg-gray-50">
+                <thead className="bg-hos-bg-secondary">
                   <tr>
                     <th className="text-left p-2">Name</th>
                     <th className="text-left p-2">Status</th>
@@ -126,9 +126,9 @@ export default function AdminBrandPartnershipsPage() {
                         </td>
                         <td className="p-2">{String(row.status)}</td>
                         <td className="p-2">
-                          {spent} / {total} {String(row.currency ?? 'GBP')}
+                          {spent} / {total} {String(row.currency ?? 'USD')}
                         </td>
-                        <td className="p-2 text-xs text-gray-600">
+                        <td className="p-2 text-xs text-hos-text-secondary">
                           {row.contractStart ? new Date(String(row.contractStart)).toLocaleDateString() : '—'}{' '}
                           – {row.contractEnd ? new Date(String(row.contractEnd)).toLocaleDateString() : '—'}
                         </td>

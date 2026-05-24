@@ -49,14 +49,14 @@ export default function AdminClickCollectDetailPage() {
             <>
               <div className="flex justify-between items-start">
                 <div>
-                  <h1 className="text-2xl font-semibold text-gray-900">Click &amp; collect</h1>
-                  <p className="text-sm text-gray-500">{status}</p>
+                  <h1 className="text-2xl font-semibold text-white">Click &amp; collect</h1>
+                  <p className="text-sm text-hos-text-muted">{status}</p>
                 </div>
                 <div className="flex flex-wrap gap-2">
                   {status === 'PENDING' && (
                     <button
                       type="button"
-                      className="text-sm px-2 py-1 rounded bg-gray-800 text-white"
+                      className="text-sm px-2 py-1 rounded bg-hos-surface text-white"
                       onClick={() => act(() => apiClient.adminMarkCCPreparing(id), 'Preparing')}
                     >
                       Preparing
@@ -91,12 +91,12 @@ export default function AdminClickCollectDetailPage() {
                   )}
                 </div>
               </div>
-              <pre className="text-xs overflow-auto border rounded-lg p-4 bg-white max-h-96">
+              <pre className="text-xs overflow-auto border rounded-lg p-4 bg-hos-bg-secondary max-h-96">
                 {JSON.stringify(row, null, 2)}
               </pre>
             </>
           ) : (
-            <p className="text-gray-500">Loading…</p>
+            <p className="text-hos-text-muted">Loading…</p>
           )}
         </div>
       </AdminLayout>

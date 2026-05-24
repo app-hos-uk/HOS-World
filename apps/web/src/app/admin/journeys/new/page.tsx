@@ -57,12 +57,12 @@ export default function AdminJourneyNewPage() {
     <RouteGuard allowedRoles={['ADMIN']}>
       <AdminLayout>
         <div className="p-6 max-w-3xl mx-auto space-y-4">
-          <Link href="/admin/journeys" className="text-indigo-600 hover:underline text-sm">
+          <Link href="/admin/journeys" className="text-hos-gold hover:underline text-sm">
             ← Back
           </Link>
-          <h1 className="text-2xl font-semibold text-gray-900">New journey</h1>
+          <h1 className="text-2xl font-semibold text-white">New journey</h1>
           <label className="block text-sm">
-            <span className="text-gray-700">Slug</span>
+            <span className="text-hos-text-secondary">Slug</span>
             <input
               className="mt-1 w-full border rounded px-3 py-2"
               value={slug}
@@ -71,7 +71,7 @@ export default function AdminJourneyNewPage() {
             />
           </label>
           <label className="block text-sm">
-            <span className="text-gray-700">Name</span>
+            <span className="text-hos-text-secondary">Name</span>
             <input
               className="mt-1 w-full border rounded px-3 py-2"
               value={name}
@@ -79,7 +79,7 @@ export default function AdminJourneyNewPage() {
             />
           </label>
           <label className="block text-sm">
-            <span className="text-gray-700">Trigger event</span>
+            <span className="text-hos-text-secondary">Trigger event</span>
             <input
               className="mt-1 w-full border rounded px-3 py-2"
               value={triggerEvent}
@@ -87,7 +87,7 @@ export default function AdminJourneyNewPage() {
             />
           </label>
           <label className="block text-sm">
-            <span className="text-gray-700">Description</span>
+            <span className="text-hos-text-secondary">Description</span>
             <textarea
               className="mt-1 w-full border rounded px-3 py-2"
               rows={2}
@@ -96,7 +96,7 @@ export default function AdminJourneyNewPage() {
             />
           </label>
           <label className="block text-sm">
-            <span className="text-gray-700">Steps (JSON array)</span>
+            <span className="text-hos-text-secondary">Steps (JSON array)</span>
             <textarea
               className="mt-1 w-full border rounded px-3 py-2 font-mono text-xs"
               rows={14}
@@ -108,7 +108,7 @@ export default function AdminJourneyNewPage() {
             type="button"
             disabled={saving}
             onClick={save}
-            className="rounded-md bg-indigo-600 px-4 py-2 text-white disabled:opacity-50"
+            className="rounded-md bg-hos-gold px-4 py-2 text-white disabled:opacity-50"
           >
             {saving ? 'Saving…' : 'Create'}
           </button>

@@ -2,59 +2,23 @@
 
 import { Header } from '@/components/Header';
 import { HeroBanner } from '@/components/HeroBanner';
-import { BannerCarousel } from '@/components/BannerCarousel';
-import { FeatureBanner } from '@/components/FeatureBanner';
 import { FandomCollection } from '@/components/FandomCollection';
+import BrowseByDepartment from '@/components/BrowseByDepartment';
 import { RecentlyViewed } from '@/components/RecentlyViewed';
+import WeeklyPicks from '@/components/WeeklyPicks';
+import EnchantedFinds from '@/components/EnchantedFinds';
+import FeaturedFranchises from '@/components/FeaturedFranchises';
+import Testimonials from '@/components/Testimonials';
+import VendorCTA from '@/components/VendorCTA';
+import BlogPreview from '@/components/BlogPreview';
+import PaymentIcons from '@/components/PaymentIcons';
+import NewsletterSignup from '@/components/NewsletterSignup';
 import { Footer } from '@/components/Footer';
-
-/**
- * Featured Banners for Carousel
- * 
- * Image Specifications:
- * - All images should be 800x600px (4:3 aspect ratio)
- * - Format: JPG or WebP
- * - Max file size: 200KB
- * - Place images in: /public/banners/
- * 
- * See: /public/IMAGE_SPECIFICATIONS.md for detailed requirements
- */
-const featuredBanners = [
-  {
-    id: 1,
-    title: 'New Arrivals',
-    image: '/banners/new-arrivals.svg',
-    link: '/products?sort=newest',
-    badge: 'New',
-  },
-  {
-    id: 2,
-    title: 'Best Sellers',
-    image: '/banners/best-sellers.svg',
-    link: '/products?sort=popular',
-    badge: 'Hot',
-  },
-  {
-    id: 3,
-    title: 'Limited Edition',
-    image: '/banners/limited-edition.svg',
-    link: '/products?sort=rating',
-    badge: 'Limited',
-  },
-  {
-    id: 4,
-    title: 'Sale Items',
-    image: '/banners/sale.svg',
-    link: '/products?sort=price_asc',
-    badge: 'Sale',
-  },
-];
-
 
 export default function HomePage() {
   
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen bg-hos-bg">
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{
@@ -71,9 +35,7 @@ export default function HomePage() {
       />
       <Header />
       <main>
-        {/* Primary search lives in Header (guests/customers); avoid duplicate field here */}
-
-        {/* Hero Banner with Auto-play */}
+        {/* 1. Hero Banner + Trust Strip */}
         <HeroBanner
           animationType="fade"
           autoPlay={true}
@@ -82,58 +44,44 @@ export default function HomePage() {
           showArrows={true}
         />
 
-        {/* Scrolling Banner Carousel */}
-        <BannerCarousel
-          banners={featuredBanners}
-          scrollSpeed="medium"
-          direction="left"
-        />
+        {/* 2. Shop by Franchise */}
+        <FandomCollection limit={8} />
 
-        {/* Feature Banner Section */}
-        <section className="container mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6 mb-6 sm:mb-8">
-            <FeatureBanner
-              title="Exclusive Collectibles"
-              description="Rare and authentic items from your favorite fandoms"
-              image="/featured/collectibles.svg" // Placeholder - replace with JPG (1920x1080px, max 400KB)
-              link="/products?category=collectibles"
-              buttonText="Shop Collectibles"
-              position="left"
-              variant="gradient"
-            />
-            <FeatureBanner
-              title="Magical Apparel"
-              description="Wear your fandom with pride - official merchandise"
-              image="/featured/apparel.svg" // Placeholder - replace with JPG (1920x1080px, max 400KB)
-              link="/products?category=apparel"
-              buttonText="Shop Apparel"
-              position="right"
-              variant="overlay"
-            />
-          </div>
-        </section>
+        {/* 3. Browse by Department */}
+        <BrowseByDepartment />
 
-        {/* Fandom Collection section */}
-        <section className="container mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
-          <div className="mb-6 sm:mb-8">
-            <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-center mb-3 sm:mb-4 font-primary text-purple-900 px-4">
-              Explore Fandoms
-            </h2>
-            <p className="text-center text-purple-700 text-base sm:text-lg font-secondary max-w-2xl mx-auto px-4">
-              Discover magical items from your favorite worlds
-            </p>
-          </div>
-          <FandomCollection limit={6} />
-        </section>
+        {/* 4. This Week on the Marketplace */}
+        <WeeklyPicks />
 
-        {/* Recently Viewed section */}
-        <section className="container mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
+        {/* 5. Enchanted Finds */}
+        <EnchantedFinds />
+
+        {/* 6. Featured Franchises */}
+        <FeaturedFranchises />
+
+        {/* Recently Viewed (if any) */}
+        <section className="max-w-7xl mx-auto px-4 py-6 sm:py-8">
           <RecentlyViewed />
         </section>
+
+        {/* 7. Testimonials */}
+        <Testimonials />
+
+        {/* 8. Sell on HOS */}
+        <VendorCTA />
+
+        {/* 9. Blog / From the Grimoire */}
+        <BlogPreview />
+
+        {/* 10. Payment Icons */}
+        <PaymentIcons />
+
+        {/* 11. Newsletter */}
+        <NewsletterSignup />
       </main>
+
+      {/* 12. Footer */}
       <Footer />
     </div>
   );
 }
-
-

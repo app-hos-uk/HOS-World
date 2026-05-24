@@ -139,7 +139,7 @@ export default function CMSBannersPage() {
       <RouteGuard allowedRoles={['CMS_EDITOR', 'ADMIN']}>
         <CMSLayout>
           <div className="flex items-center justify-center h-64">
-            <div className="text-gray-500">Loading banners...</div>
+            <div className="text-hos-text-muted">Loading banners...</div>
           </div>
         </CMSLayout>
       </RouteGuard>
@@ -151,10 +151,10 @@ export default function CMSBannersPage() {
       <CMSLayout>
         <div className="space-y-6">
           <div className="flex justify-between items-center">
-            <h1 className="text-2xl font-bold text-gray-900">CMS Banners</h1>
+            <h1 className="text-2xl font-bold text-white">CMS Banners</h1>
             <button
               onClick={() => setShowCreateForm(true)}
-              className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700"
+              className="px-4 py-2 bg-hos-gold text-[#1a1406] rounded-lg hover:bg-hos-gold-hover"
             >
               + Create Banner
             </button>
@@ -163,14 +163,14 @@ export default function CMSBannersPage() {
           <CmsPortalErrorBanner message={error} />
 
           {/* Filter */}
-          <div className="bg-white rounded-lg shadow p-4">
+          <div className="bg-hos-bg-secondary rounded-lg shadow p-4">
             <div className="flex gap-2">
               <button
                 onClick={() => setFilterType('all')}
                 className={`px-4 py-2 rounded-lg text-sm ${
                   filterType === 'all'
-                    ? 'bg-purple-600 text-white'
-                    : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                    ? 'bg-hos-gold text-[#1a1406]'
+                    : 'bg-hos-bg-tertiary text-hos-text-secondary hover:bg-hos-bg-tertiary'
                 }`}
               >
                 All
@@ -179,8 +179,8 @@ export default function CMSBannersPage() {
                 onClick={() => setFilterType('hero')}
                 className={`px-4 py-2 rounded-lg text-sm ${
                   filterType === 'hero'
-                    ? 'bg-purple-600 text-white'
-                    : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                    ? 'bg-hos-gold text-[#1a1406]'
+                    : 'bg-hos-bg-tertiary text-hos-text-secondary hover:bg-hos-bg-tertiary'
                 }`}
               >
                 Hero
@@ -189,8 +189,8 @@ export default function CMSBannersPage() {
                 onClick={() => setFilterType('promotional')}
                 className={`px-4 py-2 rounded-lg text-sm ${
                   filterType === 'promotional'
-                    ? 'bg-purple-600 text-white'
-                    : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                    ? 'bg-hos-gold text-[#1a1406]'
+                    : 'bg-hos-bg-tertiary text-hos-text-secondary hover:bg-hos-bg-tertiary'
                 }`}
               >
                 Promotional
@@ -199,8 +199,8 @@ export default function CMSBannersPage() {
                 onClick={() => setFilterType('sidebar')}
                 className={`px-4 py-2 rounded-lg text-sm ${
                   filterType === 'sidebar'
-                    ? 'bg-purple-600 text-white'
-                    : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                    ? 'bg-hos-gold text-[#1a1406]'
+                    : 'bg-hos-bg-tertiary text-hos-text-secondary hover:bg-hos-bg-tertiary'
                 }`}
               >
                 Sidebar
@@ -209,28 +209,28 @@ export default function CMSBannersPage() {
           </div>
 
           {editingBannerId && (
-            <div className="bg-white rounded-lg shadow p-6">
+            <div className="bg-hos-bg-secondary rounded-lg shadow p-6">
               <h2 className="text-lg font-semibold mb-4">Edit Banner</h2>
               <form onSubmit={handleUpdateBanner} className="space-y-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Banner Title</label>
+                  <label className="block text-sm font-medium text-hos-text-secondary mb-1">Banner Title</label>
                   <input
                     type="text"
                     required
                     value={formData.title}
                     onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
+                    className="w-full px-3 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50"
                     placeholder="Banner title"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Banner Type</label>
+                  <label className="block text-sm font-medium text-hos-text-secondary mb-1">Banner Type</label>
                   <select
                     value={formData.type}
                     onChange={(e) =>
                       setFormData({ ...formData, type: e.target.value as any })
                     }
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
+                    className="w-full px-3 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50"
                   >
                     <option value="hero">Hero Banner</option>
                     <option value="promotional">Promotional Banner</option>
@@ -238,32 +238,32 @@ export default function CMSBannersPage() {
                   </select>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Image URL</label>
+                  <label className="block text-sm font-medium text-hos-text-secondary mb-1">Image URL</label>
                   <input
                     type="url"
                     required
                     value={formData.image}
                     onChange={(e) => setFormData({ ...formData, image: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
+                    className="w-full px-3 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50"
                     placeholder="https://example.com/banner.jpg"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Link URL (optional)</label>
+                  <label className="block text-sm font-medium text-hos-text-secondary mb-1">Link URL (optional)</label>
                   <input
                     type="url"
                     value={formData.link}
                     onChange={(e) => setFormData({ ...formData, link: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
+                    className="w-full px-3 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50"
                     placeholder="https://example.com/page"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Content (optional)</label>
+                  <label className="block text-sm font-medium text-hos-text-secondary mb-1">Content (optional)</label>
                   <textarea
                     value={formData.content}
                     onChange={(e) => setFormData({ ...formData, content: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
+                    className="w-full px-3 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50"
                     rows={3}
                     placeholder="Banner content or description"
                   />
@@ -274,16 +274,16 @@ export default function CMSBannersPage() {
                       type="checkbox"
                       checked={formData.active}
                       onChange={(e) => setFormData({ ...formData, active: e.target.checked })}
-                      className="rounded border-gray-300 text-purple-600 focus:ring-purple-500"
+                      className="rounded border-hos-border text-hos-gold focus:ring-hos-gold/50"
                     />
-                    <span className="text-sm text-gray-700">Active</span>
+                    <span className="text-sm text-hos-text-secondary">Active</span>
                   </label>
                 </div>
                 <div className="flex gap-2">
                   <button
                     type="submit"
                     disabled={updatingBanner}
-                    className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="px-4 py-2 bg-hos-gold text-[#1a1406] rounded-lg hover:bg-hos-gold-hover disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     {updatingBanner ? 'Saving...' : 'Save Changes'}
                   </button>
@@ -300,7 +300,7 @@ export default function CMSBannersPage() {
                         active: true,
                       });
                     }}
-                    className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300"
+                    className="px-4 py-2 bg-hos-bg-tertiary text-hos-text-secondary rounded-lg hover:bg-hos-bg-tertiary"
                   >
                     Cancel
                   </button>
@@ -310,28 +310,28 @@ export default function CMSBannersPage() {
           )}
 
           {showCreateForm && (
-            <div className="bg-white rounded-lg shadow p-6">
+            <div className="bg-hos-bg-secondary rounded-lg shadow p-6">
               <h2 className="text-lg font-semibold mb-4">Create New Banner</h2>
               <form onSubmit={handleCreateBanner} className="space-y-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Banner Title</label>
+                  <label className="block text-sm font-medium text-hos-text-secondary mb-1">Banner Title</label>
                   <input
                     type="text"
                     required
                     value={formData.title}
                     onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
+                    className="w-full px-3 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50"
                     placeholder="Banner title"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Banner Type</label>
+                  <label className="block text-sm font-medium text-hos-text-secondary mb-1">Banner Type</label>
                   <select
                     value={formData.type}
                     onChange={(e) =>
                       setFormData({ ...formData, type: e.target.value as any })
                     }
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
+                    className="w-full px-3 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50"
                   >
                     <option value="hero">Hero Banner</option>
                     <option value="promotional">Promotional Banner</option>
@@ -339,32 +339,32 @@ export default function CMSBannersPage() {
                   </select>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Image URL</label>
+                  <label className="block text-sm font-medium text-hos-text-secondary mb-1">Image URL</label>
                   <input
                     type="url"
                     required
                     value={formData.image}
                     onChange={(e) => setFormData({ ...formData, image: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
+                    className="w-full px-3 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50"
                     placeholder="https://example.com/banner.jpg"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Link URL (optional)</label>
+                  <label className="block text-sm font-medium text-hos-text-secondary mb-1">Link URL (optional)</label>
                   <input
                     type="url"
                     value={formData.link}
                     onChange={(e) => setFormData({ ...formData, link: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
+                    className="w-full px-3 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50"
                     placeholder="https://example.com/page"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Content (optional)</label>
+                  <label className="block text-sm font-medium text-hos-text-secondary mb-1">Content (optional)</label>
                   <textarea
                     value={formData.content}
                     onChange={(e) => setFormData({ ...formData, content: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
+                    className="w-full px-3 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50"
                     rows={3}
                     placeholder="Banner content or description"
                   />
@@ -375,16 +375,16 @@ export default function CMSBannersPage() {
                       type="checkbox"
                       checked={formData.active}
                       onChange={(e) => setFormData({ ...formData, active: e.target.checked })}
-                      className="rounded border-gray-300 text-purple-600 focus:ring-purple-500"
+                      className="rounded border-hos-border text-hos-gold focus:ring-hos-gold/50"
                     />
-                    <span className="text-sm text-gray-700">Active</span>
+                    <span className="text-sm text-hos-text-secondary">Active</span>
                   </label>
                 </div>
                 <div className="flex gap-2">
                   <button
                     type="submit"
                     disabled={creatingBanner}
-                    className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="px-4 py-2 bg-hos-gold text-[#1a1406] rounded-lg hover:bg-hos-gold-hover disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     {creatingBanner ? 'Creating...' : 'Create Banner'}
                   </button>
@@ -401,7 +401,7 @@ export default function CMSBannersPage() {
                         active: true,
                       });
                     }}
-                    className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300"
+                    className="px-4 py-2 bg-hos-bg-tertiary text-hos-text-secondary rounded-lg hover:bg-hos-bg-tertiary"
                   >
                     Cancel
                   </button>
@@ -410,15 +410,15 @@ export default function CMSBannersPage() {
             </div>
           )}
 
-          <div className="bg-white rounded-lg shadow">
-            <div className="p-4 border-b border-gray-200">
+          <div className="bg-hos-bg-secondary rounded-lg shadow">
+            <div className="p-4 border-b border-hos-border">
               <h2 className="text-lg font-semibold">
                 {filterType === 'all' ? 'All Banners' : `${filterType.charAt(0).toUpperCase() + filterType.slice(1)} Banners`}
               </h2>
             </div>
             <div className="p-4">
               {banners.length === 0 ? (
-                <div className="text-center py-8 text-gray-500">
+                <div className="text-center py-8 text-hos-text-muted">
                   <p>No banners found.</p>
                   <p className="text-sm mt-2">
                     {filterType !== 'all' ? `No ${filterType} banners available.` : 'Create your first banner to get started.'}
@@ -429,7 +429,7 @@ export default function CMSBannersPage() {
                   {banners.map((banner) => (
                     <div
                       key={banner.id}
-                      className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow"
+                      className="border border-hos-border rounded-lg p-4 hover:shadow-md transition-shadow"
                     >
                       <div className="relative mb-3 h-32">
                         {banner.image && (
@@ -444,8 +444,8 @@ export default function CMSBannersPage() {
                       </div>
                       <div className="flex items-start justify-between mb-2">
                         <div className="flex-1">
-                          <h3 className="text-lg font-medium text-gray-900">{banner.title}</h3>
-                          <span className="text-xs bg-purple-100 text-purple-800 px-2 py-0.5 rounded mt-1 inline-block">
+                          <h3 className="text-lg font-medium text-white">{banner.title}</h3>
+                          <span className="text-xs bg-hos-gold/20 text-hos-gold px-2 py-0.5 rounded mt-1 inline-block">
                             {banner.type}
                           </span>
                         </div>
@@ -454,13 +454,13 @@ export default function CMSBannersPage() {
                             Active
                           </span>
                         ) : (
-                          <span className="text-xs bg-gray-100 text-gray-800 px-2 py-0.5 rounded">
+                          <span className="text-xs bg-hos-bg-tertiary text-white px-2 py-0.5 rounded">
                             Inactive
                           </span>
                         )}
                       </div>
                       {banner.link && (
-                        <p className="text-xs text-gray-500 mb-2">Link: {banner.link}</p>
+                        <p className="text-xs text-hos-text-muted mb-2">Link: {banner.link}</p>
                       )}
                       <div className="flex gap-2 mt-3">
                         <button
@@ -475,7 +475,7 @@ export default function CMSBannersPage() {
                         </button>
                         <button
                           onClick={() => handleEditBanner(banner)}
-                          className="flex-1 px-3 py-1 text-sm bg-blue-600 text-white rounded hover:bg-blue-700"
+                          className="flex-1 px-3 py-1 text-sm bg-hos-gold text-[#1a1406] rounded hover:bg-hos-gold-hover"
                         >
                           Edit
                         </button>

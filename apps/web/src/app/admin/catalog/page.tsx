@@ -55,7 +55,7 @@ export default function AdminCatalogPage() {
       <RouteGuard allowedRoles={['ADMIN']}>
         <AdminLayout>
           <div className="flex items-center justify-center h-64">
-            <div className="text-gray-500">Loading catalog entries...</div>
+            <div className="text-hos-text-muted">Loading catalog entries...</div>
           </div>
         </AdminLayout>
       </RouteGuard>
@@ -86,48 +86,48 @@ export default function AdminCatalogPage() {
         <div className="space-y-6">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div>
-              <h1 className="text-2xl font-bold text-gray-900">Catalog Entries</h1>
-              <p className="text-sm text-gray-500 mt-1">Pending submissions ready for catalog creation</p>
+              <h1 className="text-2xl font-bold text-white">Catalog Entries</h1>
+              <p className="text-sm text-hos-text-muted mt-1">Pending submissions ready for catalog creation</p>
             </div>
             <div className="flex items-center gap-2">
               <button
                 onClick={() => fetchEntries(true)}
                 disabled={loading}
-                className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50"
+                className="px-4 py-2 text-sm font-medium text-hos-text-secondary bg-hos-bg-secondary border border-hos-border rounded-lg hover:bg-hos-bg-tertiary disabled:opacity-50"
               >
                 {loading ? 'Refreshing...' : 'Refresh'}
               </button>
               <Link
                 href="/catalog/entries"
-                className="px-4 py-2 text-sm font-medium text-white bg-purple-600 rounded-lg hover:bg-purple-700"
+                className="px-4 py-2 text-sm font-medium text-white bg-hos-gold rounded-lg hover:bg-hos-gold-hover"
               >
                 Full Catalog Workflow →
               </Link>
             </div>
           </div>
 
-          <div className="bg-white rounded-lg shadow overflow-hidden">
-            <table className="min-w-full divide-y divide-gray-200">
-              <thead className="bg-gray-50">
+          <div className="bg-hos-bg-secondary rounded-lg shadow overflow-hidden">
+            <table className="min-w-full divide-y divide-hos-border">
+              <thead className="bg-hos-bg-secondary">
                 <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-hos-text-muted uppercase tracking-wider">
                     Submission ID
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-hos-text-muted uppercase tracking-wider">
                     Product
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-hos-text-muted uppercase tracking-wider">
                     Status
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-hos-text-muted uppercase tracking-wider">
                     Created
                   </th>
                 </tr>
               </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
+              <tbody className="bg-hos-bg-secondary divide-y divide-hos-border">
                 {entries.length === 0 ? (
                   <tr>
-                    <td colSpan={4} className="px-6 py-4 text-center text-gray-500">
+                    <td colSpan={4} className="px-6 py-4 text-center text-hos-text-muted">
                       No catalog entries found
                     </td>
                   </tr>
@@ -142,11 +142,11 @@ export default function AdminCatalogPage() {
                       'N/A';
                     const completed = entry.completed ?? !!entry.catalogEntry;
                     return (
-                      <tr key={entry.id || submissionId} className="hover:bg-gray-50">
-                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                      <tr key={entry.id || submissionId} className="hover:bg-hos-bg-tertiary">
+                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-white">
                           {submissionId ? `${String(submissionId).substring(0, 8)}...` : 'N/A'}
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-hos-text-muted">
                           {productName}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
@@ -158,7 +158,7 @@ export default function AdminCatalogPage() {
                             {completed ? 'Completed' : 'Pending'}
                           </span>
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-hos-text-muted">
                           {entry.createdAt
                             ? new Date(entry.createdAt).toLocaleDateString()
                             : 'N/A'}

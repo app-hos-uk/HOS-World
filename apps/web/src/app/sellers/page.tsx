@@ -53,27 +53,27 @@ export default function SellersPage() {
   };
 
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen bg-hos-bg-secondary">
       <Header />
       <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 lg:py-12">
         <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold mb-4 sm:mb-6 lg:mb-8">Sellers</h1>
-        <p className="text-base sm:text-lg text-gray-600 mb-6 sm:mb-8">
+        <p className="text-base sm:text-lg text-hos-text-secondary mb-6 sm:mb-8">
           Browse our marketplace sellers and their collections
         </p>
 
         {loading ? (
           <div className="flex items-center justify-center py-12">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600"></div>
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-hos-gold"></div>
           </div>
         ) : sellers.length === 0 ? (
-          <div className="text-center text-gray-500 py-12">No sellers found</div>
+          <div className="text-center text-hos-text-muted py-12">No sellers found</div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6">
             {sellers.map((seller) => (
               <Link
                 key={seller.id}
                 href={`/sellers/${seller.slug}`}
-                className="group bg-white border rounded-lg p-6 hover:shadow-lg transition-shadow"
+                className="group bg-hos-bg-secondary border rounded-lg p-6 hover:shadow-lg transition-shadow"
               >
                 <div className="text-center">
                   {seller.logo ? (
@@ -81,15 +81,15 @@ export default function SellersPage() {
                       <SafeImage src={seller.logo} alt={seller.storeName} width={80} height={80} className="object-cover w-full h-full" fallback="🏪" />
                     </div>
                   ) : (
-                    <div className="w-20 h-20 mx-auto mb-4 bg-purple-100 rounded-full flex items-center justify-center">
+                    <div className="w-20 h-20 mx-auto mb-4 bg-hos-gold/20 rounded-full flex items-center justify-center">
                       <span className="text-2xl">🏪</span>
                     </div>
                   )}
-                  <h3 className="font-semibold text-gray-900 group-hover:text-purple-600 transition-colors">
+                  <h3 className="font-semibold text-white group-hover:text-hos-gold transition-colors">
                     {seller.storeName}
                   </h3>
                   {seller.country && (
-                    <p className="text-sm text-gray-500 mt-1">
+                    <p className="text-sm text-hos-text-muted mt-1">
                       {[seller.city, seller.country].filter(Boolean).join(', ')}
                     </p>
                   )}
@@ -98,13 +98,13 @@ export default function SellersPage() {
                       <span className="text-xs text-green-600 bg-green-50 px-2 py-0.5 rounded-full">Verified</span>
                     )}
                     {seller.totalProducts > 0 && (
-                      <span className="text-xs text-purple-600 bg-purple-50 px-2 py-0.5 rounded-full">
+                      <span className="text-xs text-hos-gold bg-hos-gold/10 px-2 py-0.5 rounded-full">
                         {seller.totalProducts} product{seller.totalProducts !== 1 ? 's' : ''}
                       </span>
                     )}
                   </div>
                   {seller.rating != null && seller.rating > 0 && (
-                    <div className="mt-2 text-sm text-gray-500">
+                    <div className="mt-2 text-sm text-hos-text-muted">
                       <span className="text-yellow-400">★</span> {seller.rating.toFixed(1)}
                     </div>
                   )}

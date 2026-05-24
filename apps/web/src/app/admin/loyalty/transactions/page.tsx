@@ -29,32 +29,32 @@ export default function AdminLoyaltyTransactionsPage() {
     <RouteGuard allowedRoles={['ADMIN']} showAccessDenied>
       <AdminLayout>
         <div className="mb-6">
-          <h1 className="text-2xl font-bold text-gray-900">Points Transactions</h1>
-          <p className="text-gray-600 mt-1">Recent loyalty point transactions across all members</p>
+          <h1 className="text-2xl font-bold text-white">Points Transactions</h1>
+          <p className="text-hos-text-secondary mt-1">Recent loyalty point transactions across all members</p>
         </div>
 
         {loading ? (
           <div className="flex justify-center py-12">
-            <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-purple-600" />
+            <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-hos-gold" />
           </div>
         ) : (
-          <div className="bg-white border rounded-lg overflow-hidden">
+          <div className="bg-hos-bg-secondary border rounded-lg overflow-hidden">
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
-                <thead className="bg-gray-50 border-b">
+                <thead className="bg-hos-bg-secondary border-b">
                   <tr>
-                    <th className="text-left px-4 py-3 font-medium text-gray-600">Date</th>
-                    <th className="text-left px-4 py-3 font-medium text-gray-600">Type</th>
-                    <th className="text-left px-4 py-3 font-medium text-gray-600">Action</th>
-                    <th className="text-right px-4 py-3 font-medium text-gray-600">Points</th>
-                    <th className="text-right px-4 py-3 font-medium text-gray-600">Balance After</th>
-                    <th className="text-left px-4 py-3 font-medium text-gray-600">Description</th>
+                    <th className="text-left px-4 py-3 font-medium text-hos-text-secondary">Date</th>
+                    <th className="text-left px-4 py-3 font-medium text-hos-text-secondary">Type</th>
+                    <th className="text-left px-4 py-3 font-medium text-hos-text-secondary">Action</th>
+                    <th className="text-right px-4 py-3 font-medium text-hos-text-secondary">Points</th>
+                    <th className="text-right px-4 py-3 font-medium text-hos-text-secondary">Balance After</th>
+                    <th className="text-left px-4 py-3 font-medium text-hos-text-secondary">Description</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y">
                   {transactions.map((tx) => (
-                    <tr key={tx.id} className="hover:bg-gray-50">
-                      <td className="px-4 py-3 text-gray-500 text-xs whitespace-nowrap">
+                    <tr key={tx.id} className="hover:bg-hos-bg-tertiary">
+                      <td className="px-4 py-3 text-hos-text-muted text-xs whitespace-nowrap">
                         {new Date(tx.createdAt).toLocaleString()}
                       </td>
                       <td className="px-4 py-3">
@@ -62,25 +62,25 @@ export default function AdminLoyaltyTransactionsPage() {
                           tx.type === 'EARN' ? 'bg-green-100 text-green-700' :
                           tx.type === 'BURN' || tx.type === 'REDEEM' ? 'bg-red-100 text-red-700' :
                           tx.type === 'ADJUST' ? 'bg-amber-100 text-amber-700' :
-                          tx.type === 'EXPIRE' ? 'bg-gray-100 text-gray-600' :
-                          'bg-blue-100 text-blue-700'
+                          tx.type === 'EXPIRE' ? 'bg-hos-bg-tertiary text-hos-text-secondary' :
+                          'bg-hos-gold/20 text-hos-gold'
                         }`}>
                           {tx.type}
                         </span>
                       </td>
-                      <td className="px-4 py-3 text-gray-600">{tx.action || '—'}</td>
-                      <td className={`px-4 py-3 text-right font-semibold ${tx.points > 0 ? 'text-green-600' : tx.points < 0 ? 'text-red-600' : 'text-gray-600'}`}>
+                      <td className="px-4 py-3 text-hos-text-secondary">{tx.action || '—'}</td>
+                      <td className={`px-4 py-3 text-right font-semibold ${tx.points > 0 ? 'text-green-600' : tx.points < 0 ? 'text-red-600' : 'text-hos-text-secondary'}`}>
                         {tx.points > 0 ? '+' : ''}{tx.points}
                       </td>
-                      <td className="px-4 py-3 text-right text-gray-600">{tx.balanceAfter != null ? Number(tx.balanceAfter).toLocaleString() : '—'}</td>
-                      <td className="px-4 py-3 text-gray-500 text-xs max-w-[200px] truncate">{tx.description || tx.reason || '—'}</td>
+                      <td className="px-4 py-3 text-right text-hos-text-secondary">{tx.balanceAfter != null ? Number(tx.balanceAfter).toLocaleString() : '—'}</td>
+                      <td className="px-4 py-3 text-hos-text-muted text-xs max-w-[200px] truncate">{tx.description || tx.reason || '—'}</td>
                     </tr>
                   ))}
                 </tbody>
               </table>
             </div>
             {transactions.length === 0 && (
-              <div className="p-8 text-center text-gray-500">No transactions recorded yet.</div>
+              <div className="p-8 text-center text-hos-text-muted">No transactions recorded yet.</div>
             )}
           </div>
         )}

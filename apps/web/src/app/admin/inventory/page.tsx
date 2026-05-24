@@ -149,12 +149,12 @@ export default function AdminInventoryDashboardPage() {
       case 'PENDING':
         return 'bg-yellow-100 text-yellow-800';
       case 'IN_TRANSIT':
-        return 'bg-blue-100 text-blue-800';
+        return 'bg-hos-gold/20 text-hos-gold';
       case 'CANCELLED':
       case 'REJECTED':
         return 'bg-red-100 text-red-800';
       default:
-        return 'bg-gray-100 text-gray-800';
+        return 'bg-hos-bg-tertiary text-white';
     }
   };
 
@@ -167,7 +167,7 @@ export default function AdminInventoryDashboardPage() {
       case 'ADJUST':
         return 'text-orange-600';
       default:
-        return 'text-gray-600';
+        return 'text-hos-text-secondary';
     }
   };
 
@@ -176,113 +176,113 @@ export default function AdminInventoryDashboardPage() {
       <AdminLayout>
         <div className="container mx-auto px-4 py-8">
           <div className="mb-6">
-            <h1 className="text-3xl font-bold text-purple-900 mb-2">Inventory Dashboard</h1>
-            <p className="text-gray-600">Overview of warehouses, stock transfers, and movements</p>
+            <h1 className="text-3xl font-bold text-hos-gold mb-2">Inventory Dashboard</h1>
+            <p className="text-hos-text-secondary">Overview of warehouses, stock transfers, and movements</p>
           </div>
 
           {loading ? (
             <div className="text-center py-12">
-              <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600"></div>
-              <p className="mt-4 text-gray-600">Loading inventory data...</p>
+              <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-hos-gold"></div>
+              <p className="mt-4 text-hos-text-secondary">Loading inventory data...</p>
             </div>
           ) : (
             <div className="space-y-6">
               {/* Stats Cards */}
               <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-4">
-                <div className="bg-white rounded-lg shadow p-4">
-                  <div className="text-sm text-gray-600 mb-1">Total Warehouses</div>
-                  <div className="text-2xl font-bold text-purple-900">{stats?.totalWarehouses || 0}</div>
+                <div className="bg-hos-bg-secondary rounded-lg shadow p-4">
+                  <div className="text-sm text-hos-text-secondary mb-1">Total Warehouses</div>
+                  <div className="text-2xl font-bold text-hos-gold">{stats?.totalWarehouses || 0}</div>
                 </div>
-                <div className="bg-white rounded-lg shadow p-4">
-                  <div className="text-sm text-gray-600 mb-1">Active Warehouses</div>
+                <div className="bg-hos-bg-secondary rounded-lg shadow p-4">
+                  <div className="text-sm text-hos-text-secondary mb-1">Active Warehouses</div>
                   <div className="text-2xl font-bold text-green-600">{stats?.activeWarehouses || 0}</div>
                 </div>
-                <div className="bg-white rounded-lg shadow p-4">
-                  <div className="text-sm text-gray-600 mb-1">Pending Transfers</div>
+                <div className="bg-hos-bg-secondary rounded-lg shadow p-4">
+                  <div className="text-sm text-hos-text-secondary mb-1">Pending Transfers</div>
                   <div className="text-2xl font-bold text-yellow-600">{stats?.pendingTransfers || 0}</div>
                 </div>
-                <div className="bg-white rounded-lg shadow p-4">
-                  <div className="text-sm text-gray-600 mb-1">Total Products</div>
-                  <div className="text-2xl font-bold text-blue-600">{(stats?.totalProducts ?? 0).toLocaleString()}</div>
+                <div className="bg-hos-bg-secondary rounded-lg shadow p-4">
+                  <div className="text-sm text-hos-text-secondary mb-1">Total Products</div>
+                  <div className="text-2xl font-bold text-hos-gold">{(stats?.totalProducts ?? 0).toLocaleString()}</div>
                 </div>
-                <div className="bg-white rounded-lg shadow p-4">
-                  <div className="text-sm text-gray-600 mb-1">Low Stock Items</div>
+                <div className="bg-hos-bg-secondary rounded-lg shadow p-4">
+                  <div className="text-sm text-hos-text-secondary mb-1">Low Stock Items</div>
                   <div className="text-2xl font-bold text-red-600">{(stats?.lowStockProducts ?? 0).toLocaleString()}</div>
                 </div>
-                <div className="bg-white rounded-lg shadow p-4">
-                  <div className="text-sm text-gray-600 mb-1">Total Stock Value</div>
-                  <div className="text-2xl font-bold text-purple-600">
+                <div className="bg-hos-bg-secondary rounded-lg shadow p-4">
+                  <div className="text-sm text-hos-text-secondary mb-1">Total Stock Value</div>
+                  <div className="text-2xl font-bold text-hos-gold">
                     ${(stats?.totalStockValue ?? 0).toLocaleString()}
                   </div>
                 </div>
               </div>
 
               {/* Quick Actions */}
-              <div className="bg-white rounded-lg shadow p-6">
-                <h2 className="text-xl font-semibold text-gray-900 mb-4">Quick Actions</h2>
+              <div className="bg-hos-bg-secondary rounded-lg shadow p-6">
+                <h2 className="text-xl font-semibold text-white mb-4">Quick Actions</h2>
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                   <Link
                     href="/admin/warehouses"
-                    className="p-4 border border-gray-200 rounded-lg hover:bg-purple-50 hover:border-purple-300 transition-colors text-center"
+                    className="p-4 border border-hos-border rounded-lg hover:bg-hos-gold/10 hover:border-hos-border-accent transition-colors text-center"
                   >
                     <div className="text-2xl mb-2">📦</div>
-                    <div className="text-sm font-medium text-gray-900">Manage Warehouses</div>
+                    <div className="text-sm font-medium text-white">Manage Warehouses</div>
                   </Link>
                   <Link
                     href="/admin/warehouses?action=transfer"
-                    className="p-4 border border-gray-200 rounded-lg hover:bg-purple-50 hover:border-purple-300 transition-colors text-center"
+                    className="p-4 border border-hos-border rounded-lg hover:bg-hos-gold/10 hover:border-hos-border-accent transition-colors text-center"
                   >
                     <div className="text-2xl mb-2">🔄</div>
-                    <div className="text-sm font-medium text-gray-900">Stock Transfers</div>
+                    <div className="text-sm font-medium text-white">Stock Transfers</div>
                   </Link>
                   <Link
                     href="/admin/inventory?tab=movements"
-                    className="p-4 border border-gray-200 rounded-lg hover:bg-purple-50 hover:border-purple-300 transition-colors text-center"
+                    className="p-4 border border-hos-border rounded-lg hover:bg-hos-gold/10 hover:border-hos-border-accent transition-colors text-center"
                   >
                     <div className="text-2xl mb-2">📊</div>
-                    <div className="text-sm font-medium text-gray-900">Stock Movements</div>
+                    <div className="text-sm font-medium text-white">Stock Movements</div>
                   </Link>
                   <Link
                     href="/admin/products"
-                    className="p-4 border border-gray-200 rounded-lg hover:bg-purple-50 hover:border-purple-300 transition-colors text-center"
+                    className="p-4 border border-hos-border rounded-lg hover:bg-hos-gold/10 hover:border-hos-border-accent transition-colors text-center"
                   >
                     <div className="text-2xl mb-2">📋</div>
-                    <div className="text-sm font-medium text-gray-900">Product Inventory</div>
+                    <div className="text-sm font-medium text-white">Product Inventory</div>
                   </Link>
                 </div>
               </div>
 
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 {/* Recent Transfers */}
-                <div className="bg-white rounded-lg shadow overflow-hidden">
-                  <div className="px-6 py-4 border-b border-gray-200 bg-gray-50">
+                <div className="bg-hos-bg-secondary rounded-lg shadow overflow-hidden">
+                  <div className="px-6 py-4 border-b border-hos-border bg-hos-bg-secondary">
                     <div className="flex justify-between items-center">
-                      <h2 className="text-lg font-semibold text-gray-900">Pending Stock Transfers</h2>
+                      <h2 className="text-lg font-semibold text-white">Pending Stock Transfers</h2>
                       <Link
                         href="/admin/warehouses?tab=transfers"
-                        className="text-sm text-purple-600 hover:text-purple-900"
+                        className="text-sm text-hos-gold hover:text-hos-gold"
                       >
                         View All →
                       </Link>
                     </div>
                   </div>
-                  <div className="divide-y divide-gray-200">
+                  <div className="divide-y divide-hos-border">
                     {recentTransfers.length === 0 ? (
-                      <div className="px-6 py-8 text-center text-gray-500 text-sm">
+                      <div className="px-6 py-8 text-center text-hos-text-muted text-sm">
                         No pending transfers
                       </div>
                     ) : (
                       recentTransfers.map((transfer) => (
-                        <div key={transfer.id} className="px-6 py-4 hover:bg-gray-50">
+                        <div key={transfer.id} className="px-6 py-4 hover:bg-hos-bg-tertiary">
                           <div className="flex justify-between items-start mb-2">
                             <div className="flex-1">
-                              <div className="text-sm font-medium text-gray-900">
+                              <div className="text-sm font-medium text-white">
                                 {transfer.product.name}
                               </div>
-                              <div className="text-xs text-gray-500 mt-1">
+                              <div className="text-xs text-hos-text-muted mt-1">
                                 {transfer.fromWarehouse.name} → {transfer.toWarehouse.name}
                               </div>
-                              <div className="text-xs text-gray-500">
+                              <div className="text-xs text-hos-text-muted">
                                 Qty: {transfer.quantity} • {formatDate(transfer.createdAt)}
                               </div>
                             </div>
@@ -299,7 +299,7 @@ export default function AdminInventoryDashboardPage() {
                           {transfer.status === 'PENDING' && (
                             <button
                               onClick={() => handleCompleteTransfer(transfer.id)}
-                              className="mt-2 text-xs text-purple-600 hover:text-purple-900 font-medium"
+                              className="mt-2 text-xs text-hos-gold hover:text-hos-gold font-medium"
                             >
                               Complete Transfer →
                             </button>
@@ -311,35 +311,35 @@ export default function AdminInventoryDashboardPage() {
                 </div>
 
                 {/* Recent Stock Movements */}
-                <div className="bg-white rounded-lg shadow overflow-hidden">
-                  <div className="px-6 py-4 border-b border-gray-200 bg-gray-50">
+                <div className="bg-hos-bg-secondary rounded-lg shadow overflow-hidden">
+                  <div className="px-6 py-4 border-b border-hos-border bg-hos-bg-secondary">
                     <div className="flex justify-between items-center">
-                      <h2 className="text-lg font-semibold text-gray-900">Recent Stock Movements</h2>
+                      <h2 className="text-lg font-semibold text-white">Recent Stock Movements</h2>
                       <Link
                         href="/admin/inventory?tab=movements"
-                        className="text-sm text-purple-600 hover:text-purple-900"
+                        className="text-sm text-hos-gold hover:text-hos-gold"
                       >
                         View All →
                       </Link>
                     </div>
                   </div>
-                  <div className="divide-y divide-gray-200">
+                  <div className="divide-y divide-hos-border">
                     {recentMovements.length === 0 ? (
-                      <div className="px-6 py-8 text-center text-gray-500 text-sm">
+                      <div className="px-6 py-8 text-center text-hos-text-muted text-sm">
                         No recent movements
                       </div>
                     ) : (
                       recentMovements.map((movement) => (
-                        <div key={movement.id} className="px-6 py-4 hover:bg-gray-50">
+                        <div key={movement.id} className="px-6 py-4 hover:bg-hos-bg-tertiary">
                           <div className="flex justify-between items-start">
                             <div className="flex-1">
-                              <div className="text-sm font-medium text-gray-900">
+                              <div className="text-sm font-medium text-white">
                                 {movement.product.name}
                               </div>
-                              <div className="text-xs text-gray-500 mt-1">
+                              <div className="text-xs text-hos-text-muted mt-1">
                                 {movement.inventoryLocation.warehouse.name} ({movement.inventoryLocation.warehouse.code})
                               </div>
-                              <div className="text-xs text-gray-500">
+                              <div className="text-xs text-hos-text-muted">
                                 {movement.referenceType && `${movement.referenceType} • `}
                                 {formatDate(movement.createdAt)}
                               </div>
@@ -351,7 +351,7 @@ export default function AdminInventoryDashboardPage() {
                                 {movement.quantity > 0 ? '+' : ''}
                                 {movement.quantity}
                               </div>
-                              <div className="text-xs text-gray-500 mt-1">{movement.movementType}</div>
+                              <div className="text-xs text-hos-text-muted mt-1">{movement.movementType}</div>
                             </div>
                           </div>
                         </div>

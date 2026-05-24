@@ -82,15 +82,15 @@ export default function AccessDeniedPage() {
 
   if (!config) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-purple-50 to-blue-50 flex items-center justify-center">
-        <div className="max-w-md text-center bg-white rounded-xl shadow-lg p-8">
+      <div className="min-h-screen bg-gradient-to-br from-hos-bg to-hos-bg-secondary flex items-center justify-center">
+        <div className="max-w-md text-center bg-hos-bg-secondary rounded-xl shadow-lg p-8">
           <svg className="mx-auto h-16 w-16 text-red-500 mb-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
           </svg>
-          <h1 className="text-2xl font-bold text-gray-900 mb-4">Access Denied</h1>
-          <p className="text-gray-600 mb-6">You don&apos;t have permission to access this page.</p>
+          <h1 className="text-2xl font-bold text-white mb-4">Access Denied</h1>
+          <p className="text-hos-text-secondary mb-6">You don&apos;t have permission to access this page.</p>
           <div className="flex flex-col gap-3">
-            <Link href="/" className="px-6 py-3 bg-purple-600 text-white font-semibold rounded-lg hover:bg-purple-700 transition-colors">Go to Home</Link>
+            <Link href="/" className="px-6 py-3 bg-hos-gold text-[#1a1406] font-semibold rounded-lg hover:bg-hos-gold-hover transition-colors">Go to Home</Link>
             <button onClick={logout} className="px-6 py-3 bg-red-600 hover:bg-red-700 text-white font-semibold rounded-lg transition-colors">Logout</button>
           </div>
         </div>
@@ -105,7 +105,7 @@ export default function AccessDeniedPage() {
       title={config.title}
     >
       <div className="max-w-2xl mx-auto py-8">
-        <div className="bg-white rounded-xl shadow-lg p-8 sm:p-12 text-center">
+        <div className="bg-hos-bg-secondary rounded-xl shadow-lg p-8 sm:p-12 text-center">
           <div className="mb-6">
             <svg
               className="mx-auto h-16 w-16 text-red-500"
@@ -122,20 +122,20 @@ export default function AccessDeniedPage() {
             </svg>
           </div>
 
-          <h1 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-4">
+          <h1 className="text-3xl sm:text-4xl font-bold text-white mb-4">
             Access Denied
           </h1>
 
-          <p className="text-lg text-gray-600 mb-8">
+          <p className="text-lg text-hos-text-secondary mb-8">
             You don&apos;t have permission to access this page. This page is restricted to specific user roles.
           </p>
 
           {user && (
-            <div className="mb-8 p-4 bg-purple-50 rounded-lg">
-              <p className="text-sm text-gray-700 mb-2">
+            <div className="mb-8 p-4 bg-hos-gold/10 rounded-lg">
+              <p className="text-sm text-hos-text-secondary mb-2">
                 <span className="font-semibold">Current Role:</span> {user.role}
               </p>
-              <p className="text-sm text-gray-700">
+              <p className="text-sm text-hos-text-secondary">
                 <span className="font-semibold">Email:</span> {user.email}
               </p>
             </div>
@@ -144,14 +144,14 @@ export default function AccessDeniedPage() {
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Link
               href={config.dashboardHref}
-              className="px-6 py-3 bg-gradient-to-r from-purple-700 to-indigo-700 hover:from-purple-600 hover:to-indigo-600 text-white font-semibold rounded-lg transition-all duration-300"
+              className="px-6 py-3 bg-hos-gold hover:bg-hos-gold-hover text-[#1a1406] font-semibold rounded-lg transition-all duration-300"
             >
               Go to My Dashboard
             </Link>
 
             <Link
               href="/"
-              className="px-6 py-3 bg-white border-2 border-purple-700 text-purple-700 hover:bg-purple-50 font-semibold rounded-lg transition-all duration-300"
+              className="px-6 py-3 bg-hos-bg-secondary border-2 border-hos-gold text-hos-gold hover:bg-hos-gold/10 font-semibold rounded-lg transition-all duration-300"
             >
               Go to Home
             </Link>

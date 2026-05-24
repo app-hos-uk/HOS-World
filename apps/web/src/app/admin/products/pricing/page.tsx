@@ -183,19 +183,19 @@ export default function PriceManagementPage() {
         <div className="space-y-6">
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-2xl font-bold text-gray-900">Price Management</h1>
-              <p className="text-gray-600 mt-2">Manage product pricing, stock, and tax information. Products must be created first.</p>
+              <h1 className="text-2xl font-bold text-white">Price Management</h1>
+              <p className="text-hos-text-secondary mt-2">Manage product pricing, stock, and tax information. Products must be created first.</p>
             </div>
             <button
               onClick={() => router.push('/admin/products')}
-              className="px-4 py-2 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400"
+              className="px-4 py-2 bg-hos-bg-tertiary text-hos-text-secondary rounded-lg hover:bg-hos-text-muted"
             >
               Back to Products
             </button>
           </div>
 
           {/* Search and Filters */}
-          <div className="bg-white rounded-lg shadow p-4">
+          <div className="bg-hos-bg-secondary rounded-lg shadow p-4">
             <div className="flex flex-col sm:flex-row gap-4">
               <div className="flex-1">
                 <div className="relative">
@@ -204,15 +204,15 @@ export default function PriceManagementPage() {
                     placeholder="Search by name, SKU, or barcode..."
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                    className="w-full pl-10 pr-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50 focus:border-transparent"
                   />
-                  <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400">
+                  <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-hos-text-muted">
                     🔍
                   </span>
                   {searchQuery && (
                     <button
                       onClick={() => setSearchQuery('')}
-                      className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                      className="absolute right-3 top-1/2 transform -translate-y-1/2 text-hos-text-muted hover:text-hos-text-secondary"
                     >
                       ✕
                     </button>
@@ -223,7 +223,7 @@ export default function PriceManagementPage() {
                 <select
                   value={statusFilter}
                   onChange={(e) => setStatusFilter(e.target.value as any)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
+                  className="w-full px-3 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50"
                 >
                   <option value="ALL">All Statuses</option>
                   <option value="DRAFT">Draft Only</option>
@@ -233,7 +233,7 @@ export default function PriceManagementPage() {
               </div>
             </div>
             {(searchQuery || statusFilter !== 'ALL') && (
-              <div className="mt-3 flex items-center justify-between text-sm text-gray-600">
+              <div className="mt-3 flex items-center justify-between text-sm text-hos-text-secondary">
                 <span>
                   Showing {filteredProducts.length} of {products.length} products
                 </span>
@@ -242,7 +242,7 @@ export default function PriceManagementPage() {
                     setSearchQuery('');
                     setStatusFilter('ALL');
                   }}
-                  className="text-purple-600 hover:text-purple-700 font-medium"
+                  className="text-hos-gold hover:text-hos-gold-hover font-medium"
                 >
                   Clear filters
                 </button>
@@ -252,7 +252,7 @@ export default function PriceManagementPage() {
 
           {loading && (
             <div className="flex items-center justify-center py-12">
-              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600"></div>
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-hos-gold"></div>
             </div>
           )}
 
@@ -269,34 +269,34 @@ export default function PriceManagementPage() {
           )}
 
           {!loading && !error && (
-            <div className="bg-white rounded-lg shadow overflow-hidden">
-              <table className="min-w-full divide-y divide-gray-200">
-                <thead className="bg-gray-50">
+            <div className="bg-hos-bg-secondary rounded-lg shadow overflow-hidden">
+              <table className="min-w-full divide-y divide-hos-border">
+                <thead className="bg-hos-bg-secondary">
                   <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-6 py-3 text-left text-xs font-medium text-hos-text-muted uppercase tracking-wider">
                       Product
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-6 py-3 text-left text-xs font-medium text-hos-text-muted uppercase tracking-wider">
                       Current Price
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-6 py-3 text-left text-xs font-medium text-hos-text-muted uppercase tracking-wider">
                       Stock
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-6 py-3 text-left text-xs font-medium text-hos-text-muted uppercase tracking-wider">
                       Tax Class
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-6 py-3 text-left text-xs font-medium text-hos-text-muted uppercase tracking-wider">
                       Status
                     </th>
-                    <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-6 py-3 text-right text-xs font-medium text-hos-text-muted uppercase tracking-wider">
                       Actions
                     </th>
                   </tr>
                 </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
+                <tbody className="bg-hos-bg-secondary divide-y divide-hos-border">
                   {filteredProducts.length === 0 ? (
                     <tr>
-                      <td colSpan={6} className="px-6 py-4 text-center text-gray-500">
+                      <td colSpan={6} className="px-6 py-4 text-center text-hos-text-muted">
                         {searchQuery || statusFilter !== 'ALL'
                           ? 'No products match your search criteria'
                           : 'No products found'}
@@ -304,20 +304,20 @@ export default function PriceManagementPage() {
                     </tr>
                   ) : (
                     filteredProducts.map((product) => (
-                      <tr key={product.id} className="hover:bg-gray-50">
+                      <tr key={product.id} className="hover:bg-hos-bg-tertiary">
                         <td className="px-6 py-4">
-                          <div className="text-sm font-medium text-gray-900">
+                          <div className="text-sm font-medium text-white">
                             {product.name}
                           </div>
-                          <div className="text-sm text-gray-500">{product.sku || 'No SKU'}</div>
+                          <div className="text-sm text-hos-text-muted">{product.sku || 'No SKU'}</div>
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-white">
                           {product.currency || 'USD'} {Number(product.price || 0).toFixed(2)}
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-white">
                           {product.stock || 0}
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-white">
                           {product.taxClassId
                             ? getTaxClassDisplay(product.taxClassId)
                             : product.taxRate != null
@@ -331,7 +331,7 @@ export default function PriceManagementPage() {
                                 ? 'bg-green-100 text-green-800'
                                 : product.status === 'DRAFT'
                                 ? 'bg-yellow-100 text-yellow-800'
-                                : 'bg-gray-100 text-gray-800'
+                                : 'bg-hos-bg-tertiary text-white'
                             }`}
                           >
                             {product.status || 'UNKNOWN'}
@@ -341,7 +341,7 @@ export default function PriceManagementPage() {
                           <div className="flex justify-end gap-2">
                             <button
                               onClick={() => handleEditPricing(product)}
-                              className="text-purple-600 hover:text-purple-900 px-2 py-1 rounded hover:bg-purple-50 transition-colors"
+                              className="text-hos-gold hover:text-hos-gold px-2 py-1 rounded hover:bg-hos-gold/10 transition-colors"
                             >
                               Edit Pricing
                             </button>
@@ -366,19 +366,19 @@ export default function PriceManagementPage() {
           {/* Pricing Modal */}
           {showPricingModal && selectedProduct && (
             <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50 overflow-y-auto">
-              <div className="bg-white rounded-lg max-w-2xl w-full my-4">
+              <div className="bg-hos-bg-secondary rounded-lg max-w-2xl w-full my-4">
                 <div className="p-6">
                   <div className="flex justify-between items-start mb-4">
                     <div>
                       <h2 className="text-2xl font-bold">Manage Pricing</h2>
-                      <p className="text-sm text-gray-600 mt-1">{selectedProduct.name}</p>
+                      <p className="text-sm text-hos-text-secondary mt-1">{selectedProduct.name}</p>
                     </div>
                     <button
                       onClick={() => {
                         setShowPricingModal(false);
                         setSelectedProduct(null);
                       }}
-                      className="text-gray-500 hover:text-gray-700"
+                      className="text-hos-text-muted hover:text-hos-text-secondary"
                     >
                       ✕
                     </button>
@@ -386,7 +386,7 @@ export default function PriceManagementPage() {
                   <form onSubmit={handleUpdatePricing} className="space-y-4">
                     <div className="grid grid-cols-2 gap-4">
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Price *</label>
+                        <label className="block text-sm font-medium text-hos-text-secondary mb-1">Price *</label>
                         <input
                           type="number"
                           step="0.01"
@@ -394,16 +394,16 @@ export default function PriceManagementPage() {
                           required
                           value={pricingData.price}
                           onChange={(e) => setPricingData({ ...pricingData, price: e.target.value })}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
+                          className="w-full px-3 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50"
                           placeholder="0.00"
                         />
                       </div>
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Currency</label>
+                        <label className="block text-sm font-medium text-hos-text-secondary mb-1">Currency</label>
                         <select
                           value={pricingData.currency}
                           onChange={(e) => setPricingData({ ...pricingData, currency: e.target.value })}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
+                          className="w-full px-3 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50"
                         >
                           <option value="USD">USD</option>
                           <option value="EUR">EUR</option>
@@ -412,49 +412,49 @@ export default function PriceManagementPage() {
                     </div>
                     <div className="grid grid-cols-2 gap-4">
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Trade Price</label>
+                        <label className="block text-sm font-medium text-hos-text-secondary mb-1">Trade Price</label>
                         <input
                           type="number"
                           step="0.01"
                           min="0"
                           value={pricingData.tradePrice}
                           onChange={(e) => setPricingData({ ...pricingData, tradePrice: e.target.value })}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
+                          className="w-full px-3 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50"
                           placeholder="Wholesale price"
                         />
                       </div>
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">RRP (Recommended Retail Price)</label>
+                        <label className="block text-sm font-medium text-hos-text-secondary mb-1">RRP (Recommended Retail Price)</label>
                         <input
                           type="number"
                           step="0.01"
                           min="0"
                           value={pricingData.rrp}
                           onChange={(e) => setPricingData({ ...pricingData, rrp: e.target.value })}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
+                          className="w-full px-3 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50"
                           placeholder="MSRP"
                         />
                       </div>
                     </div>
                     <div className="grid grid-cols-2 gap-4">
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Stock *</label>
+                        <label className="block text-sm font-medium text-hos-text-secondary mb-1">Stock *</label>
                         <input
                           type="number"
                           min="0"
                           required
                           value={pricingData.stock}
                           onChange={(e) => setPricingData({ ...pricingData, stock: e.target.value })}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
+                          className="w-full px-3 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50"
                           placeholder="0"
                         />
                       </div>
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Tax Class</label>
+                        <label className="block text-sm font-medium text-hos-text-secondary mb-1">Tax Class</label>
                         <select
                           value={pricingData.taxClassId}
                           onChange={(e) => setPricingData({ ...pricingData, taxClassId: e.target.value })}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
+                          className="w-full px-3 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50"
                         >
                           <option value="">No tax class (uses default rate)</option>
                           {taxClasses.map((tc) => {
@@ -468,13 +468,13 @@ export default function PriceManagementPage() {
                           })}
                         </select>
                         {taxClasses.length === 0 && (
-                          <p className="mt-1 text-xs text-gray-500">
-                            No tax classes configured. <a href="/admin/settings/integrations/tax" className="text-purple-600 hover:underline">Configure tax classes</a>
+                          <p className="mt-1 text-xs text-hos-text-muted">
+                            No tax classes configured. <a href="/admin/settings/integrations/tax" className="text-hos-gold hover:underline">Configure tax classes</a>
                           </p>
                         )}
                       </div>
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Tax rate (optional override)</label>
+                        <label className="block text-sm font-medium text-hos-text-secondary mb-1">Tax rate (optional override)</label>
                         <input
                           type="number"
                           step="0.01"
@@ -482,17 +482,17 @@ export default function PriceManagementPage() {
                           max="1"
                           value={pricingData.taxRate}
                           onChange={(e) => setPricingData({ ...pricingData, taxRate: e.target.value })}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
+                          className="w-full px-3 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50"
                           placeholder="e.g. 0.2 for 20%"
                         />
-                        <p className="mt-1 text-xs text-gray-500">Decimal 0–1. Leave empty when using a tax class.</p>
+                        <p className="mt-1 text-xs text-hos-text-muted">Decimal 0–1. Leave empty when using a tax class.</p>
                       </div>
                     </div>
                     <div className="flex gap-3 pt-4">
                       <button
                         type="submit"
                         disabled={updating}
-                        className="flex-1 px-6 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors font-medium disabled:opacity-50"
+                        className="flex-1 px-6 py-2 bg-hos-gold text-[#1a1406] rounded-lg hover:bg-hos-gold-hover transition-colors font-medium disabled:opacity-50"
                       >
                         {updating ? 'Updating...' : 'Update Pricing'}
                       </button>
@@ -502,7 +502,7 @@ export default function PriceManagementPage() {
                           setShowPricingModal(false);
                           setSelectedProduct(null);
                         }}
-                        className="px-6 py-2 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400 transition-colors font-medium"
+                        className="px-6 py-2 bg-hos-bg-tertiary text-hos-text-secondary rounded-lg hover:bg-hos-text-muted transition-colors font-medium"
                       >
                         Cancel
                       </button>

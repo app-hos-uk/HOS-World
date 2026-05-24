@@ -155,12 +155,12 @@ export default function AdminStockTransfersPage() {
       case 'PENDING':
         return 'bg-yellow-100 text-yellow-800';
       case 'IN_TRANSIT':
-        return 'bg-blue-100 text-blue-800';
+        return 'bg-hos-gold/20 text-hos-gold';
       case 'CANCELLED':
       case 'REJECTED':
         return 'bg-red-100 text-red-800';
       default:
-        return 'bg-gray-100 text-gray-800';
+        return 'bg-hos-bg-tertiary text-white';
     }
   };
 
@@ -180,29 +180,29 @@ export default function AdminStockTransfersPage() {
         <div className="container mx-auto px-4 py-8">
           <div className="flex justify-between items-center mb-6">
             <div>
-              <h1 className="text-3xl font-bold text-purple-900 mb-2">Stock Transfers</h1>
-              <p className="text-gray-600">Manage stock transfers between warehouses</p>
+              <h1 className="text-3xl font-bold text-hos-gold mb-2">Stock Transfers</h1>
+              <p className="text-hos-text-secondary">Manage stock transfers between warehouses</p>
             </div>
             <button
               onClick={() => setShowCreateModal(true)}
-              className="bg-purple-600 hover:bg-purple-700 text-white px-6 py-2 rounded-lg font-medium transition-colors"
+              className="bg-hos-gold hover:bg-hos-gold text-[#1a1406] px-6 py-2 rounded-lg font-medium transition-colors"
             >
               + Create Transfer
             </button>
           </div>
 
           {/* Filters */}
-          <div className="bg-white rounded-lg shadow p-4 mb-6">
+          <div className="bg-hos-bg-secondary rounded-lg shadow p-4 mb-6">
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Status</label>
+                <label className="block text-sm font-medium text-hos-text-secondary mb-1">Status</label>
                 <select
                   value={filters.status}
                   onChange={(e) => {
                     setFilters({ ...filters, status: e.target.value });
                     setTimeout(() => fetchTransfers(), 100);
                   }}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
+                  className="w-full px-3 py-2 border border-hos-border rounded-md focus:outline-none focus:ring-2 focus:ring-hos-gold/50"
                 >
                   <option value="">All Statuses</option>
                   <option value="PENDING">Pending</option>
@@ -213,14 +213,14 @@ export default function AdminStockTransfersPage() {
                 </select>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">From Warehouse</label>
+                <label className="block text-sm font-medium text-hos-text-secondary mb-1">From Warehouse</label>
                 <select
                   value={filters.fromWarehouseId}
                   onChange={(e) => {
                     setFilters({ ...filters, fromWarehouseId: e.target.value });
                     setTimeout(() => fetchTransfers(), 100);
                   }}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
+                  className="w-full px-3 py-2 border border-hos-border rounded-md focus:outline-none focus:ring-2 focus:ring-hos-gold/50"
                 >
                   <option value="">All Warehouses</option>
                   {warehouses.map((w) => (
@@ -231,14 +231,14 @@ export default function AdminStockTransfersPage() {
                 </select>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">To Warehouse</label>
+                <label className="block text-sm font-medium text-hos-text-secondary mb-1">To Warehouse</label>
                 <select
                   value={filters.toWarehouseId}
                   onChange={(e) => {
                     setFilters({ ...filters, toWarehouseId: e.target.value });
                     setTimeout(() => fetchTransfers(), 100);
                   }}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
+                  className="w-full px-3 py-2 border border-hos-border rounded-md focus:outline-none focus:ring-2 focus:ring-hos-gold/50"
                 >
                   <option value="">All Warehouses</option>
                   {warehouses.map((w) => (
@@ -254,7 +254,7 @@ export default function AdminStockTransfersPage() {
                     setFilters({ status: '', fromWarehouseId: '', toWarehouseId: '', productId: '' });
                     setTimeout(() => fetchTransfers(), 100);
                   }}
-                  className="w-full px-4 py-2 bg-gray-100 hover:bg-gray-200 rounded-md text-sm font-medium"
+                  className="w-full px-4 py-2 bg-hos-bg-tertiary hover:bg-hos-bg-tertiary rounded-md text-sm font-medium"
                 >
                   Clear Filters
                 </button>
@@ -264,61 +264,61 @@ export default function AdminStockTransfersPage() {
 
           {loading ? (
             <div className="text-center py-12">
-              <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600"></div>
-              <p className="mt-4 text-gray-600">Loading transfers...</p>
+              <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-hos-gold"></div>
+              <p className="mt-4 text-hos-text-secondary">Loading transfers...</p>
             </div>
           ) : (
-            <div className="bg-white rounded-lg shadow overflow-hidden">
-              <table className="min-w-full divide-y divide-gray-200">
-                <thead className="bg-gray-50">
+            <div className="bg-hos-bg-secondary rounded-lg shadow overflow-hidden">
+              <table className="min-w-full divide-y divide-hos-border">
+                <thead className="bg-hos-bg-secondary">
                   <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-6 py-3 text-left text-xs font-medium text-hos-text-muted uppercase tracking-wider">
                       Product
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-6 py-3 text-left text-xs font-medium text-hos-text-muted uppercase tracking-wider">
                       From → To
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-6 py-3 text-left text-xs font-medium text-hos-text-muted uppercase tracking-wider">
                       Quantity
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-6 py-3 text-left text-xs font-medium text-hos-text-muted uppercase tracking-wider">
                       Status
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-6 py-3 text-left text-xs font-medium text-hos-text-muted uppercase tracking-wider">
                       Created
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-6 py-3 text-left text-xs font-medium text-hos-text-muted uppercase tracking-wider">
                       Actions
                     </th>
                   </tr>
                 </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
+                <tbody className="bg-hos-bg-secondary divide-y divide-hos-border">
                   {transfers.length === 0 ? (
                     <tr>
-                      <td colSpan={6} className="px-6 py-8 text-center text-gray-500">
+                      <td colSpan={6} className="px-6 py-8 text-center text-hos-text-muted">
                         No stock transfers found. Create your first transfer to get started.
                       </td>
                     </tr>
                   ) : (
                     transfers.map((transfer) => (
-                      <tr key={transfer.id} className="hover:bg-gray-50">
+                      <tr key={transfer.id} className="hover:bg-hos-bg-tertiary">
                         <td className="px-6 py-4">
-                          <div className="text-sm font-medium text-gray-900">{transfer.product.name}</div>
+                          <div className="text-sm font-medium text-white">{transfer.product.name}</div>
                           {transfer.product.sku && (
-                            <div className="text-sm text-gray-500">SKU: {transfer.product.sku}</div>
+                            <div className="text-sm text-hos-text-muted">SKU: {transfer.product.sku}</div>
                           )}
                         </td>
                         <td className="px-6 py-4">
-                          <div className="text-sm text-gray-900">
+                          <div className="text-sm text-white">
                             {transfer.fromWarehouse.name} ({transfer.fromWarehouse.code})
                           </div>
-                          <div className="text-sm text-gray-500">→</div>
-                          <div className="text-sm text-gray-900">
+                          <div className="text-sm text-hos-text-muted">→</div>
+                          <div className="text-sm text-white">
                             {transfer.toWarehouse.name} ({transfer.toWarehouse.code})
                           </div>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
-                          <span className="text-sm font-medium text-gray-900">{transfer.quantity}</span>
+                          <span className="text-sm font-medium text-white">{transfer.quantity}</span>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
                           <span
@@ -329,20 +329,20 @@ export default function AdminStockTransfersPage() {
                             {transfer.status}
                           </span>
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-hos-text-muted">
                           {formatDate(transfer.createdAt)}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                           {transfer.status === 'PENDING' && (
                             <button
                               onClick={() => handleCompleteTransfer(transfer.id)}
-                              className="text-purple-600 hover:text-purple-900 mr-4"
+                              className="text-hos-gold hover:text-hos-gold mr-4"
                             >
                               Complete
                             </button>
                           )}
                           {transfer.status === 'COMPLETED' && transfer.completedAt && (
-                            <span className="text-sm text-gray-500">
+                            <span className="text-sm text-hos-text-muted">
                               Completed {formatDate(transfer.completedAt)}
                             </span>
                           )}
@@ -381,24 +381,24 @@ export default function AdminStockTransfersPage() {
                     leaveFrom="opacity-100 scale-100"
                     leaveTo="opacity-0 scale-95"
                   >
-                    <Dialog.Panel className="w-full max-w-md transform overflow-hidden rounded-2xl bg-white p-6 text-left align-middle shadow-xl transition-all">
+                    <Dialog.Panel className="w-full max-w-md transform overflow-hidden rounded-2xl bg-hos-bg-secondary p-6 text-left align-middle shadow-xl transition-all">
                       <Dialog.Title
                         as="h3"
-                        className="text-lg font-medium leading-6 text-gray-900 mb-4"
+                        className="text-lg font-medium leading-6 text-white mb-4"
                       >
                         Create Stock Transfer
                       </Dialog.Title>
 
                       <form onSubmit={handleCreateTransfer} className="space-y-4">
                         <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-1">
+                          <label className="block text-sm font-medium text-hos-text-secondary mb-1">
                             From Warehouse *
                           </label>
                           <select
                             required
                             value={formData.fromWarehouseId}
                             onChange={(e) => setFormData({ ...formData, fromWarehouseId: e.target.value, productId: '' })}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
+                            className="w-full px-3 py-2 border border-hos-border rounded-md focus:outline-none focus:ring-2 focus:ring-hos-gold/50"
                           >
                             <option value="">Select warehouse</option>
                             {warehouses.map((w) => (
@@ -410,14 +410,14 @@ export default function AdminStockTransfersPage() {
                         </div>
 
                         <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-1">
+                          <label className="block text-sm font-medium text-hos-text-secondary mb-1">
                             To Warehouse *
                           </label>
                           <select
                             required
                             value={formData.toWarehouseId}
                             onChange={(e) => setFormData({ ...formData, toWarehouseId: e.target.value })}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
+                            className="w-full px-3 py-2 border border-hos-border rounded-md focus:outline-none focus:ring-2 focus:ring-hos-gold/50"
                           >
                             <option value="">Select warehouse</option>
                             {warehouses
@@ -431,7 +431,7 @@ export default function AdminStockTransfersPage() {
                         </div>
 
                         <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-1">
+                          <label className="block text-sm font-medium text-hos-text-secondary mb-1">
                             Product *
                           </label>
                           <select
@@ -439,7 +439,7 @@ export default function AdminStockTransfersPage() {
                             value={formData.productId}
                             onChange={(e) => setFormData({ ...formData, productId: e.target.value })}
                             disabled={!formData.fromWarehouseId}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500 disabled:bg-gray-100"
+                            className="w-full px-3 py-2 border border-hos-border rounded-md focus:outline-none focus:ring-2 focus:ring-hos-gold/50 disabled:bg-hos-bg-tertiary"
                           >
                             <option value="">Select product</option>
                             {products.map((p) => (
@@ -449,12 +449,12 @@ export default function AdminStockTransfersPage() {
                             ))}
                           </select>
                           {!formData.fromWarehouseId && (
-                            <p className="mt-1 text-xs text-gray-500">Select source warehouse first</p>
+                            <p className="mt-1 text-xs text-hos-text-muted">Select source warehouse first</p>
                           )}
                         </div>
 
                         <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-1">
+                          <label className="block text-sm font-medium text-hos-text-secondary mb-1">
                             Quantity *
                           </label>
                           <input
@@ -465,19 +465,19 @@ export default function AdminStockTransfersPage() {
                             onChange={(e) =>
                               setFormData({ ...formData, quantity: parseInt(e.target.value) || 1 })
                             }
-                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
+                            className="w-full px-3 py-2 border border-hos-border rounded-md focus:outline-none focus:ring-2 focus:ring-hos-gold/50"
                           />
                         </div>
 
                         <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-1">
+                          <label className="block text-sm font-medium text-hos-text-secondary mb-1">
                             Notes (optional)
                           </label>
                           <textarea
                             value={formData.notes}
                             onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
                             rows={3}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
+                            className="w-full px-3 py-2 border border-hos-border rounded-md focus:outline-none focus:ring-2 focus:ring-hos-gold/50"
                             placeholder="Add any notes about this transfer..."
                           />
                         </div>
@@ -486,14 +486,14 @@ export default function AdminStockTransfersPage() {
                           <button
                             type="button"
                             onClick={() => setShowCreateModal(false)}
-                            className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50"
+                            className="px-4 py-2 text-sm font-medium text-hos-text-secondary bg-hos-bg-secondary border border-hos-border rounded-md hover:bg-hos-bg-tertiary"
                           >
                             Cancel
                           </button>
                           <button
                             type="submit"
                             disabled={submitting}
-                            className="px-4 py-2 text-sm font-medium text-white bg-purple-600 rounded-md hover:bg-purple-700 disabled:opacity-50"
+                            className="px-4 py-2 text-sm font-medium text-white bg-hos-gold rounded-md hover:bg-hos-gold-hover disabled:opacity-50"
                           >
                             {submitting ? 'Creating...' : 'Create Transfer'}
                           </button>

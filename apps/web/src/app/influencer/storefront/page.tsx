@@ -104,7 +104,7 @@ export default function InfluencerStorefrontPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center py-12">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600"></div>
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-hos-gold"></div>
       </div>
     );
   }
@@ -115,8 +115,8 @@ export default function InfluencerStorefrontPage() {
         {/* Header */}
         <div className="flex items-center justify-between mb-8">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">Storefront Editor</h1>
-            <p className="text-gray-600 mt-1">
+            <h1 className="text-2xl font-bold text-white">Storefront Editor</h1>
+            <p className="text-hos-text-secondary mt-1">
               Customize how your public storefront looks
             </p>
           </div>
@@ -125,7 +125,7 @@ export default function InfluencerStorefrontPage() {
               <Link
                 href={`/i/${profile.slug}`}
                 target="_blank"
-                className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors flex items-center gap-2"
+                className="px-4 py-2 border border-hos-border text-hos-text-secondary rounded-lg hover:bg-hos-bg-tertiary transition-colors flex items-center gap-2"
               >
                 <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
@@ -136,7 +136,7 @@ export default function InfluencerStorefrontPage() {
             <button
               onClick={handleSave}
               disabled={saving}
-              className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 disabled:opacity-50 transition-colors"
+              className="px-4 py-2 bg-hos-gold text-[#1a1406] rounded-lg hover:bg-hos-gold-hover disabled:opacity-50 transition-colors"
             >
               {saving ? 'Saving...' : 'Save Changes'}
             </button>
@@ -147,11 +147,11 @@ export default function InfluencerStorefrontPage() {
           {/* Settings Panel */}
           <div className="lg:col-span-2 space-y-6">
             {/* Theme Colors */}
-            <div className="bg-white rounded-xl p-6 shadow-sm">
-              <h2 className="text-lg font-semibold text-gray-900 mb-4">Theme Colors</h2>
+            <div className="bg-hos-bg-secondary rounded-xl p-6 shadow-sm">
+              <h2 className="text-lg font-semibold text-white mb-4">Theme Colors</h2>
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-medium text-hos-text-secondary mb-2">
                     Primary Color
                   </label>
                   <div className="flex items-center gap-2">
@@ -165,12 +165,12 @@ export default function InfluencerStorefrontPage() {
                       type="text"
                       value={storefront.primaryColor}
                       onChange={(e) => setStorefront({ ...storefront, primaryColor: e.target.value })}
-                      className="flex-1 px-3 py-2 border border-gray-300 rounded-lg"
+                      className="flex-1 px-3 py-2 border border-hos-border rounded-lg"
                     />
                   </div>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-medium text-hos-text-secondary mb-2">
                     Secondary Color
                   </label>
                   <div className="flex items-center gap-2">
@@ -184,12 +184,12 @@ export default function InfluencerStorefrontPage() {
                       type="text"
                       value={storefront.secondaryColor}
                       onChange={(e) => setStorefront({ ...storefront, secondaryColor: e.target.value })}
-                      className="flex-1 px-3 py-2 border border-gray-300 rounded-lg"
+                      className="flex-1 px-3 py-2 border border-hos-border rounded-lg"
                     />
                   </div>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-medium text-hos-text-secondary mb-2">
                     Background Color
                   </label>
                   <div className="flex items-center gap-2">
@@ -203,12 +203,12 @@ export default function InfluencerStorefrontPage() {
                       type="text"
                       value={storefront.backgroundColor}
                       onChange={(e) => setStorefront({ ...storefront, backgroundColor: e.target.value })}
-                      className="flex-1 px-3 py-2 border border-gray-300 rounded-lg"
+                      className="flex-1 px-3 py-2 border border-hos-border rounded-lg"
                     />
                   </div>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-medium text-hos-text-secondary mb-2">
                     Text Color
                   </label>
                   <div className="flex items-center gap-2">
@@ -222,7 +222,7 @@ export default function InfluencerStorefrontPage() {
                       type="text"
                       value={storefront.textColor}
                       onChange={(e) => setStorefront({ ...storefront, textColor: e.target.value })}
-                      className="flex-1 px-3 py-2 border border-gray-300 rounded-lg"
+                      className="flex-1 px-3 py-2 border border-hos-border rounded-lg"
                     />
                   </div>
                 </div>
@@ -230,17 +230,17 @@ export default function InfluencerStorefrontPage() {
             </div>
 
             {/* Typography & Layout */}
-            <div className="bg-white rounded-xl p-6 shadow-sm">
-              <h2 className="text-lg font-semibold text-gray-900 mb-4">Typography & Layout</h2>
+            <div className="bg-hos-bg-secondary rounded-xl p-6 shadow-sm">
+              <h2 className="text-lg font-semibold text-white mb-4">Typography & Layout</h2>
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-medium text-hos-text-secondary mb-2">
                     Font Family
                   </label>
                   <select
                     value={storefront.fontFamily}
                     onChange={(e) => setStorefront({ ...storefront, fontFamily: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg"
+                    className="w-full px-3 py-2 border border-hos-border rounded-lg"
                   >
                     {fonts.map((font) => (
                       <option key={font} value={font}>{font}</option>
@@ -248,13 +248,13 @@ export default function InfluencerStorefrontPage() {
                   </select>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-medium text-hos-text-secondary mb-2">
                     Layout Type
                   </label>
                   <select
                     value={storefront.layoutType}
                     onChange={(e) => setStorefront({ ...storefront, layoutType: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg"
+                    className="w-full px-3 py-2 border border-hos-border rounded-lg"
                   >
                     <option value="grid">Grid</option>
                     <option value="list">List</option>
@@ -265,45 +265,45 @@ export default function InfluencerStorefrontPage() {
             </div>
 
             {/* Display Options */}
-            <div className="bg-white rounded-xl p-6 shadow-sm">
-              <h2 className="text-lg font-semibold text-gray-900 mb-4">Display Options</h2>
+            <div className="bg-hos-bg-secondary rounded-xl p-6 shadow-sm">
+              <h2 className="text-lg font-semibold text-white mb-4">Display Options</h2>
               <div className="space-y-4">
                 <label className="flex items-center gap-3">
                   <input
                     type="checkbox"
                     checked={storefront.showBanner}
                     onChange={(e) => setStorefront({ ...storefront, showBanner: e.target.checked })}
-                    className="w-5 h-5 text-purple-600 rounded"
+                    className="w-5 h-5 text-hos-gold rounded"
                   />
-                  <span className="text-gray-700">Show banner image</span>
+                  <span className="text-hos-text-secondary">Show banner image</span>
                 </label>
                 <label className="flex items-center gap-3">
                   <input
                     type="checkbox"
                     checked={storefront.showBio}
                     onChange={(e) => setStorefront({ ...storefront, showBio: e.target.checked })}
-                    className="w-5 h-5 text-purple-600 rounded"
+                    className="w-5 h-5 text-hos-gold rounded"
                   />
-                  <span className="text-gray-700">Show bio/description</span>
+                  <span className="text-hos-text-secondary">Show bio/description</span>
                 </label>
                 <label className="flex items-center gap-3">
                   <input
                     type="checkbox"
                     checked={storefront.showSocialLinks}
                     onChange={(e) => setStorefront({ ...storefront, showSocialLinks: e.target.checked })}
-                    className="w-5 h-5 text-purple-600 rounded"
+                    className="w-5 h-5 text-hos-gold rounded"
                   />
-                  <span className="text-gray-700">Show social media links</span>
+                  <span className="text-hos-text-secondary">Show social media links</span>
                 </label>
               </div>
             </div>
 
             {/* SEO Settings */}
-            <div className="bg-white rounded-xl p-6 shadow-sm">
-              <h2 className="text-lg font-semibold text-gray-900 mb-4">SEO Settings</h2>
+            <div className="bg-hos-bg-secondary rounded-xl p-6 shadow-sm">
+              <h2 className="text-lg font-semibold text-white mb-4">SEO Settings</h2>
               <div className="space-y-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-medium text-hos-text-secondary mb-2">
                     Meta Title
                   </label>
                   <input
@@ -311,11 +311,11 @@ export default function InfluencerStorefrontPage() {
                     value={storefront.metaTitle || ''}
                     onChange={(e) => setStorefront({ ...storefront, metaTitle: e.target.value })}
                     placeholder={profile?.displayName || 'My Storefront'}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg"
+                    className="w-full px-3 py-2 border border-hos-border rounded-lg"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-medium text-hos-text-secondary mb-2">
                     Meta Description
                   </label>
                   <textarea
@@ -323,7 +323,7 @@ export default function InfluencerStorefrontPage() {
                     onChange={(e) => setStorefront({ ...storefront, metaDescription: e.target.value })}
                     placeholder="A short description of your storefront for search engines"
                     rows={3}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg"
+                    className="w-full px-3 py-2 border border-hos-border rounded-lg"
                   />
                 </div>
               </div>
@@ -333,9 +333,9 @@ export default function InfluencerStorefrontPage() {
           {/* Preview Panel */}
           <div className="lg:col-span-1">
             <div className="sticky top-8">
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">Preview</h3>
+              <h3 className="text-lg font-semibold text-white mb-4">Preview</h3>
               <div
-                className="rounded-xl overflow-hidden shadow-lg border border-gray-100"
+                className="rounded-xl overflow-hidden shadow-lg border border-hos-border"
                 style={{
                   backgroundColor: storefront.backgroundColor,
                   color: storefront.textColor,

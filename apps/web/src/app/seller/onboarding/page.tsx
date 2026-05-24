@@ -218,7 +218,7 @@ export default function SellerOnboardingPage() {
 
   return (
     <RouteGuard allowedRoles={['SELLER', 'B2C_SELLER', 'WHOLESALER', 'ADMIN']} showAccessDenied={true}>
-      <div className="min-h-screen bg-white">
+      <div className="min-h-screen bg-hos-bg-secondary">
         <Header />
         <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 lg:py-12">
           <div className="max-w-4xl mx-auto">
@@ -231,8 +231,8 @@ export default function SellerOnboardingPage() {
                       <div
                         className={`w-10 h-10 rounded-full flex items-center justify-center font-semibold transition-colors ${
                           index <= currentStepIndex
-                            ? 'bg-purple-600 text-white'
-                            : 'bg-gray-200 text-gray-600'
+                            ? 'bg-hos-gold text-[#1a1406]'
+                            : 'bg-hos-bg-tertiary text-hos-text-secondary'
                         }`}
                       >
                         {index < currentStepIndex ? '✓' : index + 1}
@@ -240,7 +240,7 @@ export default function SellerOnboardingPage() {
                       <div className="mt-2 text-center hidden sm:block">
                         <div
                           className={`text-xs font-medium ${
-                            index <= currentStepIndex ? 'text-purple-600' : 'text-gray-500'
+                            index <= currentStepIndex ? 'text-hos-gold' : 'text-hos-text-muted'
                           }`}
                         >
                           {step.title}
@@ -250,7 +250,7 @@ export default function SellerOnboardingPage() {
                     {index < steps.length - 1 && (
                       <div
                         className={`h-1 flex-1 mx-2 transition-colors ${
-                          index < currentStepIndex ? 'bg-purple-600' : 'bg-gray-200'
+                          index < currentStepIndex ? 'bg-hos-gold' : 'bg-hos-bg-tertiary'
                         }`}
                       ></div>
                     )}
@@ -260,16 +260,16 @@ export default function SellerOnboardingPage() {
             </div>
 
             {/* Step Content */}
-            <div className="bg-white border border-gray-200 rounded-lg p-6 sm:p-8">
+            <div className="bg-hos-bg-secondary border border-hos-border rounded-lg p-6 sm:p-8">
               {currentStep === 'store-info' && (
                 <div className="space-y-6">
                   <div>
                     <h2 className="text-2xl font-bold mb-2">Store Information</h2>
-                    <p className="text-gray-600">Let&apos;s start by setting up your store details</p>
+                    <p className="text-hos-text-secondary">Let&apos;s start by setting up your store details</p>
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                    <label className="block text-sm font-medium text-hos-text-secondary mb-1">
                       Store Name <span className="text-red-500">*</span>
                     </label>
                     <input
@@ -277,42 +277,42 @@ export default function SellerOnboardingPage() {
                       value={storeInfo.storeName}
                       onChange={(e) => setStoreInfo({ ...storeInfo, storeName: e.target.value })}
                       placeholder="My Awesome Store"
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
+                      className="w-full px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50"
                       required
                     />
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Store Description</label>
+                    <label className="block text-sm font-medium text-hos-text-secondary mb-1">Store Description</label>
                     <textarea
                       value={storeInfo.description}
                       onChange={(e) => setStoreInfo({ ...storeInfo, description: e.target.value })}
                       placeholder="Tell customers about your store..."
                       rows={4}
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
+                      className="w-full px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50"
                     />
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Store Logo URL</label>
+                    <label className="block text-sm font-medium text-hos-text-secondary mb-1">Store Logo URL</label>
                     <input
                       type="url"
                       value={storeInfo.logo}
                       onChange={(e) => setStoreInfo({ ...storeInfo, logo: e.target.value })}
                       placeholder="https://example.com/logo.png"
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
+                      className="w-full px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50"
                     />
-                    <p className="text-xs text-gray-500 mt-1">You can upload a logo later</p>
+                    <p className="text-xs text-hos-text-muted mt-1">You can upload a logo later</p>
                   </div>
 
                   {userRole === 'WHOLESALER' && (
-                    <div className="space-y-4 border-t border-gray-200 pt-6">
-                      <h3 className="text-lg font-semibold text-gray-900">Business details (B2B)</h3>
-                      <p className="text-sm text-gray-600">
+                    <div className="space-y-4 border-t border-hos-border pt-6">
+                      <h3 className="text-lg font-semibold text-white">Business details (B2B)</h3>
+                      <p className="text-sm text-hos-text-secondary">
                         Used for invoicing and wholesale verification.
                       </p>
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                        <label className="block text-sm font-medium text-hos-text-secondary mb-1">
                           Company name <span className="text-red-500">*</span>
                         </label>
                         <input
@@ -321,24 +321,24 @@ export default function SellerOnboardingPage() {
                           onChange={(e) =>
                             setWholesalerB2b({ ...wholesalerB2b, companyName: e.target.value })
                           }
-                          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
+                          className="w-full px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50"
                           placeholder="Registered company name"
                         />
                       </div>
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-1">VAT number</label>
+                          <label className="block text-sm font-medium text-hos-text-secondary mb-1">VAT number</label>
                           <input
                             type="text"
                             value={wholesalerB2b.vatNumber}
                             onChange={(e) =>
                               setWholesalerB2b({ ...wholesalerB2b, vatNumber: e.target.value })
                             }
-                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
+                            className="w-full px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50"
                           />
                         </div>
                         <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-1">
+                          <label className="block text-sm font-medium text-hos-text-secondary mb-1">
                             Business registration #
                           </label>
                           <input
@@ -347,12 +347,12 @@ export default function SellerOnboardingPage() {
                             onChange={(e) =>
                               setWholesalerB2b({ ...wholesalerB2b, businessRegNumber: e.target.value })
                             }
-                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
+                            className="w-full px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50"
                           />
                         </div>
                       </div>
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Business type</label>
+                        <label className="block text-sm font-medium text-hos-text-secondary mb-1">Business type</label>
                         <input
                           type="text"
                           value={wholesalerB2b.businessType}
@@ -360,7 +360,7 @@ export default function SellerOnboardingPage() {
                             setWholesalerB2b({ ...wholesalerB2b, businessType: e.target.value })
                           }
                           placeholder="e.g. DISTRIBUTOR, RETAIL"
-                          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
+                          className="w-full px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50"
                         />
                       </div>
                     </div>
@@ -370,7 +370,7 @@ export default function SellerOnboardingPage() {
                     <button
                       onClick={handleStoreInfoSubmit}
                       disabled={loading || !storeInfo.storeName}
-                      className="px-6 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors font-medium disabled:opacity-50"
+                      className="px-6 py-2 bg-hos-gold text-[#1a1406] rounded-lg hover:bg-hos-gold-hover transition-colors font-medium disabled:opacity-50"
                     >
                       {loading ? 'Saving...' : 'Continue'}
                     </button>
@@ -382,11 +382,11 @@ export default function SellerOnboardingPage() {
                 <div className="space-y-6">
                   <div>
                     <h2 className="text-2xl font-bold mb-2">Business Location</h2>
-                    <p className="text-gray-600">Where is your business located?</p>
+                    <p className="text-hos-text-secondary">Where is your business located?</p>
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                    <label className="block text-sm font-medium text-hos-text-secondary mb-1">
                       Country <span className="text-red-500">*</span>
                     </label>
                     <input
@@ -394,30 +394,30 @@ export default function SellerOnboardingPage() {
                       value={location.country}
                       onChange={(e) => setLocation({ ...location, country: e.target.value })}
                       placeholder="United States"
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
+                      className="w-full px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50"
                       required
                     />
                   </div>
 
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">City</label>
+                      <label className="block text-sm font-medium text-hos-text-secondary mb-1">City</label>
                       <input
                         type="text"
                         value={location.city}
                         onChange={(e) => setLocation({ ...location, city: e.target.value })}
                         placeholder="London"
-                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
+                        className="w-full px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50"
                       />
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Region/State</label>
+                      <label className="block text-sm font-medium text-hos-text-secondary mb-1">Region/State</label>
                       <input
                         type="text"
                         value={location.region}
                         onChange={(e) => setLocation({ ...location, region: e.target.value })}
                         placeholder="England"
-                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
+                        className="w-full px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50"
                       />
                     </div>
                   </div>
@@ -425,14 +425,14 @@ export default function SellerOnboardingPage() {
                   <div className="flex justify-between">
                     <button
                       onClick={() => setCurrentStep('store-info')}
-                      className="px-6 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors font-medium"
+                      className="px-6 py-2 bg-hos-bg-tertiary text-hos-text-secondary rounded-lg hover:bg-hos-bg-tertiary transition-colors font-medium"
                     >
                       Back
                     </button>
                     <button
                       onClick={handleLocationSubmit}
                       disabled={loading || !location.country}
-                      className="px-6 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors font-medium disabled:opacity-50"
+                      className="px-6 py-2 bg-hos-gold text-[#1a1406] rounded-lg hover:bg-hos-gold-hover transition-colors font-medium disabled:opacity-50"
                     >
                       {loading ? 'Saving...' : 'Continue'}
                     </button>
@@ -444,7 +444,7 @@ export default function SellerOnboardingPage() {
                 <div className="space-y-6">
                   <div>
                     <h2 className="text-2xl font-bold mb-2">Choose Your Theme</h2>
-                    <p className="text-gray-600">Select a theme for your store</p>
+                    <p className="text-hos-text-secondary">Select a theme for your store</p>
                   </div>
 
                   <ThemeSelector
@@ -455,14 +455,14 @@ export default function SellerOnboardingPage() {
                   <div className="flex justify-between">
                     <button
                       onClick={() => setCurrentStep('location')}
-                      className="px-6 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors font-medium"
+                      className="px-6 py-2 bg-hos-bg-tertiary text-hos-text-secondary rounded-lg hover:bg-hos-bg-tertiary transition-colors font-medium"
                     >
                       Back
                     </button>
                     <button
                       onClick={handleThemeSubmit}
                       disabled={loading || !theme.themeId}
-                      className="px-6 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors font-medium disabled:opacity-50"
+                      className="px-6 py-2 bg-hos-gold text-[#1a1406] rounded-lg hover:bg-hos-gold-hover transition-colors font-medium disabled:opacity-50"
                     >
                       {loading ? 'Saving...' : 'Continue'}
                     </button>
@@ -474,12 +474,12 @@ export default function SellerOnboardingPage() {
                 <div className="space-y-6">
                   <div>
                     <h2 className="text-2xl font-bold mb-2">Payment Setup</h2>
-                    <p className="text-gray-600">Connect your payment methods to receive payouts</p>
+                    <p className="text-hos-text-secondary">Connect your payment methods to receive payouts</p>
                   </div>
 
-                  <div className="bg-gray-50 rounded-lg p-6">
+                  <div className="bg-hos-bg-secondary rounded-lg p-6">
                     <h3 className="font-semibold mb-4">Stripe Integration</h3>
-                    <p className="text-sm text-gray-600 mb-4">
+                    <p className="text-sm text-hos-text-secondary mb-4">
                       Connect your Stripe account to receive payments. You can set this up later from your dashboard.
                     </p>
                     <button
@@ -487,7 +487,7 @@ export default function SellerOnboardingPage() {
                         // TODO: Implement Stripe connection
                         toast.success('Payment setup can be completed later');
                       }}
-                      className="px-6 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors font-medium"
+                      className="px-6 py-2 bg-hos-gold text-[#1a1406] rounded-lg hover:bg-hos-gold-hover transition-colors font-medium"
                     >
                       Connect Stripe (Optional)
                     </button>
@@ -496,14 +496,14 @@ export default function SellerOnboardingPage() {
                   <div className="flex justify-between">
                     <button
                       onClick={() => setCurrentStep('theme')}
-                      className="px-6 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors font-medium"
+                      className="px-6 py-2 bg-hos-bg-tertiary text-hos-text-secondary rounded-lg hover:bg-hos-bg-tertiary transition-colors font-medium"
                     >
                       Back
                     </button>
                     <button
                       onClick={handlePaymentSubmit}
                       disabled={loading}
-                      className="px-6 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors font-medium disabled:opacity-50"
+                      className="px-6 py-2 bg-hos-gold text-[#1a1406] rounded-lg hover:bg-hos-gold-hover transition-colors font-medium disabled:opacity-50"
                     >
                       {loading ? 'Completing...' : 'Complete Setup'}
                     </button>
@@ -515,8 +515,8 @@ export default function SellerOnboardingPage() {
                 <div className="text-center py-12">
                   <div className="text-6xl mb-4">🎉</div>
                   <h2 className="text-2xl font-bold mb-2">Welcome to HOS Marketplace!</h2>
-                  <p className="text-gray-600 mb-6">Your store is set up and ready to go.</p>
-                  <p className="text-sm text-gray-500">Redirecting to your dashboard...</p>
+                  <p className="text-hos-text-secondary mb-6">Your store is set up and ready to go.</p>
+                  <p className="text-sm text-hos-text-muted">Redirecting to your dashboard...</p>
                 </div>
               )}
             </div>
@@ -568,11 +568,11 @@ function ThemeSelector({
           onClick={() => onSelect(theme.id)}
           className={`p-4 border-2 rounded-lg text-left transition-all ${
             selectedThemeId === theme.id
-              ? 'border-purple-600 bg-purple-50'
-              : 'border-gray-200 hover:border-gray-300'
+              ? 'border-hos-gold bg-hos-gold/10'
+              : 'border-hos-border hover:border-hos-border'
           }`}
         >
-          <div className="relative aspect-video bg-gray-100 rounded mb-3 flex items-center justify-center overflow-hidden">
+          <div className="relative aspect-video bg-hos-bg-tertiary rounded mb-3 flex items-center justify-center overflow-hidden">
             {theme.previewImages && theme.previewImages.length > 0 ? (
               <Image
                 src={theme.previewImages[0]}
@@ -587,7 +587,7 @@ function ThemeSelector({
           </div>
           <div className="font-semibold">{theme.name}</div>
           {theme.description && (
-            <div className="text-sm text-gray-600 mt-1 line-clamp-2">{theme.description}</div>
+            <div className="text-sm text-hos-text-secondary mt-1 line-clamp-2">{theme.description}</div>
           )}
         </button>
       ))}

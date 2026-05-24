@@ -48,42 +48,42 @@ export default function NewCollectionPage() {
 
   return (
     <RouteGuard allowedRoles={['CUSTOMER', 'ADMIN']} showAccessDenied={true}>
-      <div className="min-h-screen bg-white">
+      <div className="min-h-screen bg-hos-bg-secondary">
         <Header />
         <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 lg:py-12">
           <div className="max-w-2xl mx-auto">
             <div className="mb-6">
-              <Link href="/collections" className="text-purple-600 hover:text-purple-800 mb-4 inline-block">
+              <Link href="/collections" className="text-hos-gold hover:text-hos-gold-hover mb-4 inline-block">
                 ← Back to Collections
               </Link>
             </div>
 
-            <div className="bg-white border border-gray-200 rounded-lg p-6">
+            <div className="bg-hos-bg-secondary border border-hos-border rounded-lg p-6">
               <h1 className="text-3xl font-bold mb-6">Create New Collection</h1>
               
               <form onSubmit={handleCreate} className="space-y-6">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label className="block text-sm font-medium text-hos-text-secondary mb-1">
                     Collection Name *
                   </label>
                   <input
                     type="text"
                     value={formData.name}
                     onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg"
+                    className="w-full px-4 py-2 border border-hos-border rounded-lg"
                     placeholder="My Favorite Products"
                     required
                   />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label className="block text-sm font-medium text-hos-text-secondary mb-1">
                     Description
                   </label>
                   <textarea
                     value={formData.description}
                     onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg"
+                    className="w-full px-4 py-2 border border-hos-border rounded-lg"
                     rows={4}
                     placeholder="Describe your collection..."
                   />
@@ -97,7 +97,7 @@ export default function NewCollectionPage() {
                     onChange={(e) => setFormData({ ...formData, isPublic: e.target.checked })}
                     className="mr-2"
                   />
-                  <label htmlFor="isPublic" className="text-sm text-gray-700">
+                  <label htmlFor="isPublic" className="text-sm text-hos-text-secondary">
                     Make this collection public (others can view it)
                   </label>
                 </div>
@@ -106,13 +106,13 @@ export default function NewCollectionPage() {
                   <button
                     type="submit"
                     disabled={creating}
-                    className="flex-1 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors font-medium disabled:opacity-50"
+                    className="flex-1 px-4 py-2 bg-hos-gold text-[#1a1406] rounded-lg hover:bg-hos-gold-hover transition-colors font-medium disabled:opacity-50"
                   >
                     {creating ? 'Creating...' : 'Create Collection'}
                   </button>
                   <Link
                     href="/collections"
-                    className="flex-1 px-4 py-2 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300 transition-colors font-medium text-center"
+                    className="flex-1 px-4 py-2 bg-hos-bg-tertiary text-white rounded-lg hover:bg-hos-bg-tertiary transition-colors font-medium text-center"
                   >
                     Cancel
                   </Link>

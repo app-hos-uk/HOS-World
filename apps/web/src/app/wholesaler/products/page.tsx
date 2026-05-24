@@ -44,18 +44,18 @@ export default function WholesalerProductsPage() {
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
             <div>
               <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold">My Products</h1>
-              <p className="text-gray-600 mt-2">Manage your wholesale product listings</p>
+              <p className="text-hos-text-secondary mt-2">Manage your wholesale product listings</p>
             </div>
             <div className="flex flex-wrap gap-2 sm:gap-3">
               <Link
                 href="/wholesaler/bulk"
-                className="inline-flex items-center justify-center px-5 py-3 border-2 border-purple-600 text-purple-700 rounded-lg hover:bg-purple-50 transition-colors font-medium"
+                className="inline-flex items-center justify-center px-5 py-3 border-2 border-hos-gold text-hos-gold-hover rounded-lg hover:bg-hos-gold/10 transition-colors font-medium"
               >
                 Bulk upload (CSV)
               </Link>
               <Link
                 href="/wholesaler/submit-product"
-                className="inline-flex items-center justify-center px-6 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors font-medium"
+                className="inline-flex items-center justify-center px-6 py-3 bg-hos-gold text-[#1a1406] rounded-lg hover:bg-hos-gold-hover transition-colors font-medium"
               >
                 + Add product
               </Link>
@@ -65,7 +65,7 @@ export default function WholesalerProductsPage() {
 
         {loading && (
           <div className="flex items-center justify-center py-12">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600"></div>
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-hos-gold"></div>
           </div>
         )}
 
@@ -82,20 +82,20 @@ export default function WholesalerProductsPage() {
         )}
 
         {!loading && !error && (
-          <div className="bg-white rounded-lg shadow overflow-hidden">
+          <div className="bg-hos-bg-secondary rounded-lg shadow overflow-hidden">
             {products.length === 0 ? (
               <div className="text-center py-12">
-                <p className="text-gray-500 mb-4">No products found</p>
+                <p className="text-hos-text-muted mb-4">No products found</p>
                 <div className="flex flex-wrap gap-3 justify-center">
                   <Link
                     href="/wholesaler/bulk"
-                    className="text-purple-700 font-medium border border-purple-300 rounded-lg px-4 py-2 hover:bg-purple-50"
+                    className="text-hos-gold-hover font-medium border border-hos-border-accent rounded-lg px-4 py-2 hover:bg-hos-gold/10"
                   >
                     Bulk upload (CSV) →
                   </Link>
                   <Link
                     href="/wholesaler/submit-product"
-                    className="text-purple-600 hover:text-purple-700 font-medium"
+                    className="text-hos-gold hover:text-hos-gold-hover font-medium"
                   >
                     Add a single product →
                   </Link>
@@ -103,32 +103,32 @@ export default function WholesalerProductsPage() {
               </div>
             ) : (
               <div className="overflow-x-auto">
-                <table className="min-w-full divide-y divide-gray-200">
-                  <thead className="bg-gray-50">
+                <table className="min-w-full divide-y divide-hos-border">
+                  <thead className="bg-hos-bg-secondary">
                     <tr>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      <th className="px-6 py-3 text-left text-xs font-medium text-hos-text-muted uppercase tracking-wider">
                         Product
                       </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      <th className="px-6 py-3 text-left text-xs font-medium text-hos-text-muted uppercase tracking-wider">
                         Status
                       </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      <th className="px-6 py-3 text-left text-xs font-medium text-hos-text-muted uppercase tracking-wider">
                         Price
                       </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      <th className="px-6 py-3 text-left text-xs font-medium text-hos-text-muted uppercase tracking-wider">
                         Stock
                       </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      <th className="px-6 py-3 text-left text-xs font-medium text-hos-text-muted uppercase tracking-wider">
                         Min. Order
                       </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      <th className="px-6 py-3 text-left text-xs font-medium text-hos-text-muted uppercase tracking-wider">
                         Created
                       </th>
                     </tr>
                   </thead>
-                  <tbody className="bg-white divide-y divide-gray-200">
+                  <tbody className="bg-hos-bg-secondary divide-y divide-hos-border">
                     {products.map((product) => (
-                      <tr key={product.id} className="hover:bg-gray-50">
+                      <tr key={product.id} className="hover:bg-hos-bg-tertiary">
                         <td className="px-6 py-4 whitespace-nowrap">
                           <div className="flex items-center">
                             {product.images && product.images[0] && (
@@ -141,8 +141,8 @@ export default function WholesalerProductsPage() {
                               />
                             )}
                             <div>
-                              <div className="text-sm font-medium text-gray-900">{product.name}</div>
-                              <div className="text-sm text-gray-500">{product.slug}</div>
+                              <div className="text-sm font-medium text-white">{product.name}</div>
+                              <div className="text-sm text-hos-text-muted">{product.slug}</div>
                             </div>
                           </div>
                         </td>
@@ -152,23 +152,23 @@ export default function WholesalerProductsPage() {
                               product.status === 'ACTIVE'
                                 ? 'bg-green-100 text-green-800'
                                 : product.status === 'INACTIVE'
-                                  ? 'bg-gray-100 text-gray-800'
+                                  ? 'bg-hos-bg-tertiary text-white'
                                   : 'bg-yellow-100 text-yellow-800'
                             }`}
                           >
                             {product.status}
                           </span>
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-white">
                           {formatPrice(parseFloat(product.price || 0))}
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-white">
                           {product.stock ?? 0}
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-white">
                           {product.quantity || '—'}
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-hos-text-muted">
                           {new Date(product.createdAt).toLocaleDateString()}
                         </td>
                       </tr>

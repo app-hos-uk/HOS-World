@@ -175,76 +175,76 @@ export default function DownloadsPage() {
       case 'limit_reached':
         return { text: 'Limit Reached', class: 'bg-yellow-100 text-yellow-800' };
       default:
-        return { text: status, class: 'bg-gray-100 text-gray-800' };
+        return { text: status, class: 'bg-hos-bg-tertiary text-white' };
     }
   };
 
   return (
     <RouteGuard allowedRoles={['CUSTOMER', 'ADMIN']} showAccessDenied={true}>
-      <div className="min-h-screen bg-gray-50">
+      <div className="min-h-screen bg-hos-bg-secondary">
         <Header />
         <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 lg:py-12">
           {/* Header */}
           <div className="mb-8">
-            <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">My Downloads</h1>
-            <p className="text-gray-600 mt-1">Access your purchased digital products</p>
+            <h1 className="text-2xl sm:text-3xl font-bold text-white">My Downloads</h1>
+            <p className="text-hos-text-secondary mt-1">Access your purchased digital products</p>
           </div>
 
           {/* Stats Cards */}
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-6">
             <button
               onClick={() => setFilter('all')}
-              className={`bg-white rounded-lg shadow p-4 text-left transition-all ${
-                filter === 'all' ? 'ring-2 ring-purple-500' : 'hover:shadow-md'
+              className={`bg-hos-bg-secondary rounded-lg shadow p-4 text-left transition-all ${
+                filter === 'all' ? 'ring-2 ring-hos-gold/50' : 'hover:shadow-md'
               }`}
             >
-              <h3 className="text-xs font-medium text-gray-500 uppercase">All Downloads</h3>
-              <p className="text-2xl font-bold text-gray-900 mt-1">{stats.total}</p>
+              <h3 className="text-xs font-medium text-hos-text-muted uppercase">All Downloads</h3>
+              <p className="text-2xl font-bold text-white mt-1">{stats.total}</p>
             </button>
             <button
               onClick={() => setFilter('available')}
-              className={`bg-white rounded-lg shadow p-4 text-left transition-all ${
-                filter === 'available' ? 'ring-2 ring-purple-500' : 'hover:shadow-md'
+              className={`bg-hos-bg-secondary rounded-lg shadow p-4 text-left transition-all ${
+                filter === 'available' ? 'ring-2 ring-hos-gold/50' : 'hover:shadow-md'
               }`}
             >
-              <h3 className="text-xs font-medium text-gray-500 uppercase">Available</h3>
+              <h3 className="text-xs font-medium text-hos-text-muted uppercase">Available</h3>
               <p className="text-2xl font-bold text-green-600 mt-1">{stats.available}</p>
             </button>
             <button
               onClick={() => setFilter('expired')}
-              className={`bg-white rounded-lg shadow p-4 text-left transition-all ${
-                filter === 'expired' ? 'ring-2 ring-purple-500' : 'hover:shadow-md'
+              className={`bg-hos-bg-secondary rounded-lg shadow p-4 text-left transition-all ${
+                filter === 'expired' ? 'ring-2 ring-hos-gold/50' : 'hover:shadow-md'
               }`}
             >
-              <h3 className="text-xs font-medium text-gray-500 uppercase">Expired</h3>
+              <h3 className="text-xs font-medium text-hos-text-muted uppercase">Expired</h3>
               <p className="text-2xl font-bold text-red-600 mt-1">{stats.expired}</p>
             </button>
-            <div className="bg-white rounded-lg shadow p-4">
-              <h3 className="text-xs font-medium text-gray-500 uppercase">Limit Reached</h3>
+            <div className="bg-hos-bg-secondary rounded-lg shadow p-4">
+              <h3 className="text-xs font-medium text-hos-text-muted uppercase">Limit Reached</h3>
               <p className="text-2xl font-bold text-yellow-600 mt-1">{stats.limitReached}</p>
             </div>
           </div>
 
           {/* Search */}
-          <div className="bg-white rounded-lg shadow p-4 mb-6">
+          <div className="bg-hos-bg-secondary rounded-lg shadow p-4 mb-6">
             <input
               type="text"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               placeholder="Search downloads..."
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+              className="w-full px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50 focus:border-transparent"
             />
           </div>
 
           {/* Downloads List */}
           {loading ? (
             <div className="flex items-center justify-center py-12">
-              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600"></div>
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-hos-gold"></div>
             </div>
           ) : filteredDownloads.length === 0 ? (
-            <div className="bg-white rounded-lg shadow p-8 text-center">
+            <div className="bg-hos-bg-secondary rounded-lg shadow p-8 text-center">
               <div className="text-6xl mb-4">📥</div>
-              <p className="text-gray-600 mb-4">
+              <p className="text-hos-text-secondary mb-4">
                 {downloads.length === 0 
                   ? "You haven't purchased any digital products yet" 
                   : "No downloads match your filter"}
@@ -252,7 +252,7 @@ export default function DownloadsPage() {
               {downloads.length === 0 && (
                 <Link
                   href="/products?type=digital"
-                  className="inline-block px-6 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors font-medium"
+                  className="inline-block px-6 py-3 bg-hos-gold text-[#1a1406] rounded-lg hover:bg-hos-gold-hover transition-colors font-medium"
                 >
                   Browse Digital Products
                 </Link>
@@ -265,7 +265,7 @@ export default function DownloadsPage() {
                 const isDownloading = downloading === product.id;
 
                 return (
-                  <div key={product.id} className="bg-white rounded-lg shadow overflow-hidden">
+                  <div key={product.id} className="bg-hos-bg-secondary rounded-lg shadow overflow-hidden">
                     <div className="p-6 flex flex-col sm:flex-row gap-6">
                       {/* Thumbnail */}
                       <div className="flex-shrink-0">
@@ -278,7 +278,7 @@ export default function DownloadsPage() {
                             className="rounded-lg object-cover"
                           />
                         ) : (
-                          <div className="w-24 h-24 rounded-lg bg-purple-100 flex items-center justify-center">
+                          <div className="w-24 h-24 rounded-lg bg-hos-gold/20 flex items-center justify-center">
                             <span className="text-4xl">{getFileIcon(product.fileType)}</span>
                           </div>
                         )}
@@ -287,17 +287,17 @@ export default function DownloadsPage() {
                       {/* Info */}
                       <div className="flex-1 min-w-0">
                         <div className="flex flex-wrap items-start gap-2 mb-2">
-                          <h3 className="text-lg font-semibold text-gray-900">{product.name}</h3>
+                          <h3 className="text-lg font-semibold text-white">{product.name}</h3>
                           <span className={`px-2 py-0.5 text-xs font-medium rounded-full ${statusBadge.class}`}>
                             {statusBadge.text}
                           </span>
                         </div>
                         
                         {product.description && (
-                          <p className="text-gray-600 text-sm mb-3 line-clamp-2">{product.description}</p>
+                          <p className="text-hos-text-secondary text-sm mb-3 line-clamp-2">{product.description}</p>
                         )}
 
-                        <div className="flex flex-wrap gap-x-6 gap-y-2 text-sm text-gray-500">
+                        <div className="flex flex-wrap gap-x-6 gap-y-2 text-sm text-hos-text-muted">
                           <span className="flex items-center gap-1">
                             📁 {product.fileName}
                           </span>
@@ -313,7 +313,7 @@ export default function DownloadsPage() {
                         </div>
 
                         {product.purchasedAt && (
-                          <p className="text-xs text-gray-400 mt-2">
+                          <p className="text-xs text-hos-text-muted mt-2">
                             Purchased on {new Date(product.purchasedAt).toLocaleDateString()}
                           </p>
                         )}
@@ -332,8 +332,8 @@ export default function DownloadsPage() {
                           disabled={product.status !== 'available' || isDownloading}
                           className={`px-6 py-2 rounded-lg font-medium transition-colors flex items-center gap-2 ${
                             product.status === 'available'
-                              ? 'bg-purple-600 text-white hover:bg-purple-700'
-                              : 'bg-gray-200 text-gray-500 cursor-not-allowed'
+                              ? 'bg-hos-gold text-[#1a1406] hover:bg-hos-gold-hover'
+                              : 'bg-hos-bg-tertiary text-hos-text-muted cursor-not-allowed'
                           }`}
                         >
                           {isDownloading ? (
@@ -354,7 +354,7 @@ export default function DownloadsPage() {
                         {product.orderId && (
                           <Link
                             href={`/orders/${product.orderId}`}
-                            className="text-sm text-purple-600 hover:text-purple-700"
+                            className="text-sm text-hos-gold hover:text-hos-gold-hover"
                           >
                             View Order →
                           </Link>
@@ -365,16 +365,16 @@ export default function DownloadsPage() {
                     {/* Progress bar for download limit */}
                     {product.maxDownloads && (
                       <div className="px-6 pb-4">
-                        <div className="flex justify-between text-xs text-gray-500 mb-1">
+                        <div className="flex justify-between text-xs text-hos-text-muted mb-1">
                           <span>Download Limit</span>
                           <span>{product.downloadCount || 0} / {product.maxDownloads}</span>
                         </div>
-                        <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
+                        <div className="h-2 bg-hos-bg-tertiary rounded-full overflow-hidden">
                           <div 
                             className={`h-full transition-all ${
                               (product.downloadCount || 0) >= product.maxDownloads 
                                 ? 'bg-red-500' 
-                                : 'bg-purple-600'
+                                : 'bg-hos-gold'
                             }`}
                             style={{ width: `${Math.min(100, ((product.downloadCount || 0) / product.maxDownloads) * 100)}%` }}
                           />
@@ -388,14 +388,14 @@ export default function DownloadsPage() {
           )}
 
           {/* Help Section */}
-          <div className="mt-8 bg-purple-50 rounded-lg p-6 text-center">
-            <h3 className="text-lg font-semibold text-gray-900 mb-2">Need Help?</h3>
-            <p className="text-gray-600 mb-4">
+          <div className="mt-8 bg-hos-gold/10 rounded-lg p-6 text-center">
+            <h3 className="text-lg font-semibold text-white mb-2">Need Help?</h3>
+            <p className="text-hos-text-secondary mb-4">
               Having trouble with your downloads? Contact our support team for assistance.
             </p>
             <Link
               href="/help"
-              className="inline-block px-6 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors font-medium"
+              className="inline-block px-6 py-2 bg-hos-gold text-[#1a1406] rounded-lg hover:bg-hos-gold-hover transition-colors font-medium"
             >
               Contact Support
             </Link>

@@ -55,10 +55,10 @@ const emptyForm: CampaignFormData = {
 };
 
 const STATUS_COLORS: Record<CampaignStatus, string> = {
-  DRAFT: 'bg-gray-100 text-gray-800',
+  DRAFT: 'bg-hos-bg-tertiary text-white',
   ACTIVE: 'bg-green-100 text-green-800',
   PAUSED: 'bg-yellow-100 text-yellow-800',
-  COMPLETED: 'bg-blue-100 text-blue-800',
+  COMPLETED: 'bg-hos-gold/20 text-hos-gold',
 };
 
 const FILTER_TABS: { label: string; value: CampaignStatus | 'ALL' }[] = [
@@ -285,13 +285,13 @@ function MarketingCampaignsPageContent() {
         <div className="mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
             <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold">Influencer campaigns</h1>
-            <p className="text-gray-600 mt-2">
+            <p className="text-hos-text-secondary mt-2">
               Create and manage commission campaigns tied to influencers (same as admin influencer campaigns).
             </p>
           </div>
           <button
             onClick={openCreateModal}
-            className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors font-medium text-sm whitespace-nowrap"
+            className="px-4 py-2 bg-hos-gold text-[#1a1406] rounded-lg hover:bg-hos-gold-hover transition-colors font-medium text-sm whitespace-nowrap"
           >
             + Create Campaign
           </button>
@@ -304,8 +304,8 @@ function MarketingCampaignsPageContent() {
               onClick={() => setStatusFilter(tab.value)}
               className={`px-4 py-2 font-medium transition-colors whitespace-nowrap ${
                 statusFilter === tab.value
-                  ? 'border-b-2 border-purple-600 text-purple-600'
-                  : 'text-gray-500 hover:text-gray-700'
+                  ? 'border-b-2 border-hos-gold text-hos-gold'
+                  : 'text-hos-text-muted hover:text-hos-text-secondary'
               }`}
             >
               {tab.label}
@@ -327,19 +327,19 @@ function MarketingCampaignsPageContent() {
 
         {loading && (
           <div className="flex items-center justify-center py-12">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600"></div>
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-hos-gold"></div>
           </div>
         )}
 
         {!loading && !error && filteredCampaigns.length === 0 && (
-          <div className="bg-white border border-gray-200 rounded-lg p-8 text-center">
+          <div className="bg-hos-bg-secondary border border-hos-border rounded-lg p-8 text-center">
             <div className="text-4xl mb-3">{'\u{1F4E3}'}</div>
-            <p className="text-gray-500 text-lg">
+            <p className="text-hos-text-muted text-lg">
               {statusFilter === 'ALL'
                 ? 'No campaigns yet'
                 : `No ${statusFilter.toLowerCase()} campaigns`}
             </p>
-            <p className="text-gray-400 text-sm mt-1">
+            <p className="text-hos-text-muted text-sm mt-1">
               {statusFilter === 'ALL'
                 ? 'Create a campaign and assign an influencer'
                 : 'Try selecting a different status filter'}
@@ -347,7 +347,7 @@ function MarketingCampaignsPageContent() {
             {statusFilter === 'ALL' && (
               <button
                 onClick={openCreateModal}
-                className="mt-4 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors font-medium text-sm"
+                className="mt-4 px-4 py-2 bg-hos-gold text-[#1a1406] rounded-lg hover:bg-hos-gold-hover transition-colors font-medium text-sm"
               >
                 + Create Campaign
               </button>
@@ -356,44 +356,44 @@ function MarketingCampaignsPageContent() {
         )}
 
         {!loading && !error && filteredCampaigns.length > 0 && (
-          <div className="bg-white border border-gray-200 rounded-lg overflow-hidden shadow-sm">
+          <div className="bg-hos-bg-secondary border border-hos-border rounded-lg overflow-hidden shadow-sm">
             <div className="overflow-x-auto">
               <table className="w-full text-left">
-                <thead className="bg-gray-50 border-b">
+                <thead className="bg-hos-bg-secondary border-b">
                   <tr>
-                    <th className="px-4 py-3 text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                    <th className="px-4 py-3 text-xs font-semibold text-hos-text-secondary uppercase tracking-wider">
                       Name / Influencer
                     </th>
-                    <th className="px-4 py-3 text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                    <th className="px-4 py-3 text-xs font-semibold text-hos-text-secondary uppercase tracking-wider">
                       Status
                     </th>
-                    <th className="px-4 py-3 text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                    <th className="px-4 py-3 text-xs font-semibold text-hos-text-secondary uppercase tracking-wider">
                       Dates
                     </th>
-                    <th className="px-4 py-3 text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                    <th className="px-4 py-3 text-xs font-semibold text-hos-text-secondary uppercase tracking-wider">
                       Clicks
                     </th>
-                    <th className="px-4 py-3 text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                    <th className="px-4 py-3 text-xs font-semibold text-hos-text-secondary uppercase tracking-wider">
                       Conv.
                     </th>
-                    <th className="px-4 py-3 text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                    <th className="px-4 py-3 text-xs font-semibold text-hos-text-secondary uppercase tracking-wider">
                       Sales
                     </th>
-                    <th className="px-4 py-3 text-xs font-semibold text-gray-600 uppercase tracking-wider text-right">
+                    <th className="px-4 py-3 text-xs font-semibold text-hos-text-secondary uppercase tracking-wider text-right">
                       Actions
                     </th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-gray-100">
+                <tbody className="divide-y divide-hos-border">
                   {filteredCampaigns.map((campaign) => (
-                    <tr key={campaign.id} className="hover:bg-gray-50 transition-colors">
+                    <tr key={campaign.id} className="hover:bg-hos-bg-tertiary transition-colors">
                       <td className="px-4 py-3">
-                        <p className="font-medium text-gray-900">{campaign.name}</p>
-                        <p className="text-xs text-gray-500 mt-0.5">
+                        <p className="font-medium text-white">{campaign.name}</p>
+                        <p className="text-xs text-hos-text-muted mt-0.5">
                           {campaign.influencer?.displayName ?? '—'} ({campaign.influencer?.referralCode ?? '—'})
                         </p>
                         {campaign.description && (
-                          <p className="text-xs text-gray-400 mt-0.5 line-clamp-1">{campaign.description}</p>
+                          <p className="text-xs text-hos-text-muted mt-0.5 line-clamp-1">{campaign.description}</p>
                         )}
                       </td>
                       <td className="px-4 py-3">
@@ -403,13 +403,13 @@ function MarketingCampaignsPageContent() {
                           {campaign.status}
                         </span>
                       </td>
-                      <td className="px-4 py-3 text-sm text-gray-600">
+                      <td className="px-4 py-3 text-sm text-hos-text-secondary">
                         {campaign.startDate ? new Date(campaign.startDate).toLocaleDateString() : '—'} –{' '}
                         {campaign.endDate ? new Date(campaign.endDate).toLocaleDateString() : '—'}
                       </td>
-                      <td className="px-4 py-3 text-sm text-gray-900">{campaign.totalClicks ?? 0}</td>
-                      <td className="px-4 py-3 text-sm text-gray-900">{campaign.totalConversions ?? 0}</td>
-                      <td className="px-4 py-3 text-sm font-medium text-gray-900">
+                      <td className="px-4 py-3 text-sm text-white">{campaign.totalClicks ?? 0}</td>
+                      <td className="px-4 py-3 text-sm text-white">{campaign.totalConversions ?? 0}</td>
+                      <td className="px-4 py-3 text-sm font-medium text-white">
                         $
                         {Number(campaign.totalSales ?? 0).toLocaleString(undefined, {
                           minimumFractionDigits: 2,
@@ -420,7 +420,7 @@ function MarketingCampaignsPageContent() {
                         <div className="flex items-center justify-end gap-2">
                           <button
                             onClick={() => openEditModal(campaign)}
-                            className="px-3 py-1.5 text-xs font-medium text-purple-700 bg-purple-50 border border-purple-200 rounded-lg hover:bg-purple-100 transition-colors"
+                            className="px-3 py-1.5 text-xs font-medium text-hos-gold-hover bg-hos-gold/10 border border-hos-border-accent rounded-lg hover:bg-hos-gold/20 transition-colors"
                           >
                             Edit
                           </button>
@@ -436,7 +436,7 @@ function MarketingCampaignsPageContent() {
                               <button
                                 onClick={() => setDeleteConfirmId(null)}
                                 disabled={deleteLoading}
-                                className="px-3 py-1.5 text-xs font-medium text-gray-600 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
+                                className="px-3 py-1.5 text-xs font-medium text-hos-text-secondary bg-hos-bg-tertiary rounded-lg hover:bg-hos-bg-tertiary transition-colors"
                               >
                                 Cancel
                               </button>
@@ -461,13 +461,13 @@ function MarketingCampaignsPageContent() {
 
         {showModal && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-            <div className="bg-white rounded-lg max-w-lg w-full max-h-[90vh] overflow-y-auto">
+            <div className="bg-hos-bg-secondary rounded-lg max-w-lg w-full max-h-[90vh] overflow-y-auto">
               <div className="p-6">
                 <div className="flex justify-between items-start mb-4">
                   <h2 className="text-2xl font-bold">
                     {editingCampaign ? 'Edit Campaign' : 'Create Campaign'}
                   </h2>
-                  <button onClick={closeModal} className="text-gray-500 hover:text-gray-700">
+                  <button onClick={closeModal} className="text-hos-text-muted hover:text-hos-text-secondary">
                     <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                     </svg>
@@ -483,13 +483,13 @@ function MarketingCampaignsPageContent() {
                 <div className="space-y-4">
                   {!editingCampaign && (
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                      <label className="block text-sm font-medium text-hos-text-secondary mb-1">
                         Influencer <span className="text-red-500">*</span>
                       </label>
                       <select
                         value={formData.influencerId}
                         onChange={(e) => handleFormChange('influencerId', e.target.value)}
-                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                        className="w-full px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50 focus:border-transparent"
                       >
                         <option value="">Select influencer…</option>
                         {influencers.map((inf) => (
@@ -502,65 +502,65 @@ function MarketingCampaignsPageContent() {
                   )}
 
                   {editingCampaign && (
-                    <div className="text-sm text-gray-600 bg-gray-50 rounded-lg p-3">
+                    <div className="text-sm text-hos-text-secondary bg-hos-bg-secondary rounded-lg p-3">
                       <span className="font-medium">Influencer:</span>{' '}
                       {editingCampaign.influencer?.displayName ?? editingCampaign.influencerId} (
                       {editingCampaign.influencer?.referralCode ?? '—'})
-                      <p className="text-xs text-gray-500 mt-1">Influencer cannot be changed after creation.</p>
+                      <p className="text-xs text-hos-text-muted mt-1">Influencer cannot be changed after creation.</p>
                     </div>
                   )}
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                    <label className="block text-sm font-medium text-hos-text-secondary mb-1">
                       Campaign Name <span className="text-red-500">*</span>
                     </label>
                     <input
                       type="text"
                       value={formData.name}
                       onChange={(e) => handleFormChange('name', e.target.value)}
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                      className="w-full px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50 focus:border-transparent"
                       placeholder="e.g. Summer Sale 2026"
                     />
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
+                    <label className="block text-sm font-medium text-hos-text-secondary mb-1">Description</label>
                     <textarea
                       value={formData.description}
                       onChange={(e) => handleFormChange('description', e.target.value)}
                       rows={3}
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent resize-none"
+                      className="w-full px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50 focus:border-transparent resize-none"
                       placeholder="Brief description…"
                     />
                   </div>
 
                   <div className="grid grid-cols-2 gap-4">
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                      <label className="block text-sm font-medium text-hos-text-secondary mb-1">
                         Start Date <span className="text-red-500">*</span>
                       </label>
                       <input
                         type="date"
                         value={formData.startDate}
                         onChange={(e) => handleFormChange('startDate', e.target.value)}
-                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                        className="w-full px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50 focus:border-transparent"
                       />
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                      <label className="block text-sm font-medium text-hos-text-secondary mb-1">
                         End Date <span className="text-red-500">*</span>
                       </label>
                       <input
                         type="date"
                         value={formData.endDate}
                         onChange={(e) => handleFormChange('endDate', e.target.value)}
-                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                        className="w-full px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50 focus:border-transparent"
                       />
                     </div>
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                    <label className="block text-sm font-medium text-hos-text-secondary mb-1">
                       Override commission (%)
                     </label>
                     <input
@@ -570,18 +570,18 @@ function MarketingCampaignsPageContent() {
                       step="0.01"
                       value={formData.overrideCommissionPercent}
                       onChange={(e) => handleFormChange('overrideCommissionPercent', e.target.value)}
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                      className="w-full px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50 focus:border-transparent"
                       placeholder="Leave empty to use influencer default / rules"
                     />
-                    <p className="text-xs text-gray-500 mt-1">Applied to eligible order lines during this campaign window.</p>
+                    <p className="text-xs text-hos-text-muted mt-1">Applied to eligible order lines during this campaign window.</p>
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Status</label>
+                    <label className="block text-sm font-medium text-hos-text-secondary mb-1">Status</label>
                     <select
                       value={formData.status}
                       onChange={(e) => handleFormChange('status', e.target.value as CampaignStatus)}
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                      className="w-full px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50 focus:border-transparent"
                     >
                       <option value="DRAFT">Draft</option>
                       <option value="ACTIVE">Active</option>
@@ -594,7 +594,7 @@ function MarketingCampaignsPageContent() {
                     <button
                       onClick={handleSubmit}
                       disabled={actionLoading}
-                      className="px-6 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors font-medium disabled:opacity-50"
+                      className="px-6 py-2 bg-hos-gold text-[#1a1406] rounded-lg hover:bg-hos-gold-hover transition-colors font-medium disabled:opacity-50"
                     >
                       {actionLoading
                         ? 'Saving...'
@@ -605,7 +605,7 @@ function MarketingCampaignsPageContent() {
                     <button
                       onClick={closeModal}
                       disabled={actionLoading}
-                      className="px-6 py-2 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400 transition-colors font-medium"
+                      className="px-6 py-2 bg-hos-bg-tertiary text-hos-text-secondary rounded-lg hover:bg-hos-text-muted transition-colors font-medium"
                     >
                       Cancel
                     </button>
@@ -624,8 +624,8 @@ export default function MarketingCampaignsPage() {
     <RouteGuard allowedRoles={['MARKETING', 'ADMIN']} showAccessDenied={true}>
       <Suspense
         fallback={
-          <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600" aria-hidden />
+          <div className="min-h-screen bg-hos-bg-secondary flex items-center justify-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-hos-gold" aria-hidden />
           </div>
         }
       >

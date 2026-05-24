@@ -133,22 +133,24 @@ async function testPublicEndpoints() {
   console.log('\n📋 Geolocation');
   await req('GET', '/api/geolocation/detect', { expectStatus: [200, 400] });
 
-  console.log('\n📋 Metrics');
-  await req('GET', '/api/metrics/prometheus', { expectStatus: 200 });
-  await req('GET', '/api/metrics/json', { expectStatus: 200 });
-  await req('GET', '/api/metrics/health', { expectStatus: 200 });
+  console.log('\n📋 Metrics (admin-only without token → 401)');
+  await req('GET', '/api/metrics/prometheus', { expectStatus: 401 });
+  await req('GET', '/api/metrics/json', { expectStatus: 401 });
+  await req('GET', '/api/metrics/health', { expectStatus: 401 });
+
+  console.log('\n📋 Newsletter (public write)');
+  await req('POST', '/api/newsletter/subscribe', {
+    body: { email: `curl-test-${Date.now()}@example.com`, source: 'api_smoke_test' },
+    expectStatus: [200, 201],
+  });
 
   console.log('\n📋 Gift Cards (public validate)');
   await req('GET', '/api/gift-cards/validate/NON-EXISTENT', { expectStatus: [200, 404, 400] });
 
-  console.log('\n📋 Gamification (public)');
+  console.log('\n📋 Loyalty (public leaderboard already tested)');
   await req('GET', '/api/gamification/leaderboard', { expectStatus: 200 });
-
-  console.log('\n📋 Badges (public)');
-  await req('GET', '/api/badges', { expectStatus: 200 });
-
-  console.log('\n📋 Quests (public)');
   await req('GET', '/api/quests', { expectStatus: 200 });
+  await req('GET', '/api/badges', { expectStatus: 200 });
 
   console.log('\n📋 Social Sharing (public)');
   await req('GET', '/api/social-sharing/shared', { expectStatus: [200, 400] });
@@ -211,6 +213,16 @@ async function testAuthEndpoints() {
 
   console.log('\n📋 Currency (auth)');
   await req('GET', '/api/currency/user-currency', { auth: true, expectStatus: 200 });
+
+  console.log('\n📋 Loyalty (customer)');
+  await req('GET', '/api/loyalty/membership', { auth: true, expectStatus: [200, 404] });
+  await req('GET', '/api/loyalty/redemption-options', { auth: true, expectStatus: [200, 404] });
+  await req('GET', '/api/loyalty/tier-progress', { auth: true, expectStatus: [200, 404] });
+
+  console.log('\n📋 Metrics (admin auth)');
+  await req('GET', '/api/metrics/prometheus', { auth: true, expectStatus: 200 });
+  await req('GET', '/api/metrics/json', { auth: true, expectStatus: 200 });
+  await req('GET', '/api/metrics/health', { auth: true, expectStatus: 200 });
 }
 
 async function testAdminEndpoints() {
@@ -368,7 +380,7 @@ async function testAdminEndpoints() {
   await req('GET', '/api/domains/packages', { auth: true, expectStatus: [200, 403] });
 
   console.log('\n📋 Stripe Connect');
-  await req('GET', '/api/stripe-connect/status', { auth: true, expectStatus: [200, 400, 403, 404] });
+  await req('GET', '/api/stripe-connect/status', { auth: true, expectStatus: [200, 403, 404] });
 
   console.log('\n📋 Permissions');
   await req('GET', '/api/admin/permissions/catalog', { auth: true, expectStatus: [200, 403] });

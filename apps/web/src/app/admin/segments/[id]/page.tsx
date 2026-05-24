@@ -107,16 +107,16 @@ export default function AdminSegmentDetailPage() {
         <div className="p-6 max-w-5xl mx-auto space-y-4">
           <div className="flex justify-between items-start gap-4 flex-wrap">
             <div>
-              <Link href="/admin/segments" className="text-indigo-600 hover:underline text-sm">
+              <Link href="/admin/segments" className="text-hos-gold hover:underline text-sm">
                 ← Segments
               </Link>
-              <h1 className="text-2xl font-semibold text-gray-900 mt-1">{seg.name}</h1>
-              <p className="text-gray-600 text-sm mt-1">{seg.description || '—'}</p>
+              <h1 className="text-2xl font-semibold text-white mt-1">{seg.name}</h1>
+              <p className="text-hos-text-secondary text-sm mt-1">{seg.description || '—'}</p>
             </div>
             <div className="flex gap-2 flex-wrap">
               <Link
                 href={`/admin/segments/${id}/edit`}
-                className="rounded-md border px-3 py-1.5 text-sm text-gray-800"
+                className="rounded-md border px-3 py-1.5 text-sm text-white"
               >
                 Edit
               </Link>
@@ -125,7 +125,7 @@ export default function AdminSegmentDetailPage() {
                   <button
                     type="button"
                     onClick={refresh}
-                    className="rounded-md bg-indigo-600 px-3 py-1.5 text-sm text-white"
+                    className="rounded-md bg-hos-gold px-3 py-1.5 text-sm text-white"
                   >
                     Refresh now
                   </button>
@@ -146,7 +146,7 @@ export default function AdminSegmentDetailPage() {
                 key={t}
                 type="button"
                 className={`px-3 py-2 text-sm capitalize ${
-                  tab === t ? 'border-b-2 border-indigo-600 text-indigo-700' : 'text-gray-600'
+                  tab === t ? 'border-b-2 border-hos-gold text-hos-gold' : 'text-hos-text-secondary'
                 }`}
                 onClick={() => setTab(t)}
               >
@@ -156,19 +156,19 @@ export default function AdminSegmentDetailPage() {
           </div>
           {tab === 'overview' && (
             <div className="grid md:grid-cols-2 gap-4">
-              <div className="rounded-lg border p-4 bg-white">
-                <p className="text-sm text-gray-500">Members</p>
+              <div className="rounded-lg border p-4 bg-hos-bg-secondary">
+                <p className="text-sm text-hos-text-muted">Members</p>
                 <p className="text-2xl font-semibold">{seg.members ?? seg.memberCount ?? 0}</p>
               </div>
-              <div className="rounded-lg border p-4 bg-white">
-                <p className="text-sm text-gray-500">Last evaluated</p>
+              <div className="rounded-lg border p-4 bg-hos-bg-secondary">
+                <p className="text-sm text-hos-text-muted">Last evaluated</p>
                 <p className="text-lg">
                   {seg.lastEvaluatedAt ? new Date(seg.lastEvaluatedAt).toLocaleString() : '—'}
                 </p>
               </div>
-              <div className="md:col-span-2 rounded-lg border p-4 bg-white">
-                <p className="text-sm text-gray-500 mb-2">Rules (JSON)</p>
-                <pre className="text-xs bg-gray-50 p-3 rounded overflow-x-auto">
+              <div className="md:col-span-2 rounded-lg border p-4 bg-hos-bg-secondary">
+                <p className="text-sm text-hos-text-muted mb-2">Rules (JSON)</p>
+                <pre className="text-xs bg-hos-bg-secondary p-3 rounded overflow-x-auto">
                   {JSON.stringify(seg.rules, null, 2)}
                 </pre>
               </div>
@@ -185,7 +185,7 @@ export default function AdminSegmentDetailPage() {
                 />
                 <button
                   type="button"
-                  className="text-sm text-indigo-600"
+                  className="text-sm text-hos-gold"
                   onClick={() => {
                     setMemberPage(1);
                     loadMembers(1, search);
@@ -193,10 +193,10 @@ export default function AdminSegmentDetailPage() {
                 >
                   Search
                 </button>
-                <span className="text-sm text-gray-500">{memberTotal} total</span>
+                <span className="text-sm text-hos-text-muted">{memberTotal} total</span>
               </div>
-              <table className="min-w-full text-sm border rounded bg-white">
-                <thead className="bg-gray-50 text-left">
+              <table className="min-w-full text-sm border rounded bg-hos-bg-secondary">
+                <thead className="bg-hos-bg-secondary text-left">
                   <tr>
                     <th className="px-3 py-2">Name</th>
                     <th className="px-3 py-2">Email</th>
@@ -244,7 +244,7 @@ export default function AdminSegmentDetailPage() {
             </div>
           )}
           {tab === 'broadcast' && (
-            <div className="max-w-md space-y-3 rounded-lg border p-4 bg-white">
+            <div className="max-w-md space-y-3 rounded-lg border p-4 bg-hos-bg-secondary">
               <p className="text-sm font-medium">Channels</p>
               {['EMAIL', 'SMS', 'WHATSAPP', 'PUSH'].map((ch) => (
                 <label key={ch} className="flex items-center gap-2 text-sm">
@@ -287,7 +287,7 @@ export default function AdminSegmentDetailPage() {
               <button
                 type="button"
                 onClick={sendBroadcast}
-                className="rounded-md bg-indigo-600 px-4 py-2 text-white text-sm"
+                className="rounded-md bg-hos-gold px-4 py-2 text-white text-sm"
               >
                 Send
               </button>

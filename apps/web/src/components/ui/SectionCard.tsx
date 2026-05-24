@@ -25,25 +25,25 @@ export function SectionCard({
   noPadding = false,
 }: SectionCardProps) {
   return (
-    <div className={`bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden ${className}`}>
+    <div className={`bg-hos-bg-secondary rounded-xl border border-hos-border shadow-sm overflow-hidden ${className}`}>
       {(title || action) && (
-        <div className="px-5 py-4 border-b border-gray-100 flex items-center justify-between">
+        <div className="px-5 py-4 border-b border-hos-border flex items-center justify-between">
           <div>
-            {title && <h3 className="text-base font-semibold text-gray-900">{title}</h3>}
-            {subtitle && <p className="text-sm text-gray-500 mt-0.5">{subtitle}</p>}
+            {title && <h3 className="text-base font-semibold text-white">{title}</h3>}
+            {subtitle && <p className="text-sm text-hos-text-muted mt-0.5">{subtitle}</p>}
           </div>
           {action && (
             action.href ? (
               <Link 
                 href={action.href} 
-                className="text-sm font-medium text-purple-600 hover:text-purple-700 transition-colors"
+                className="text-sm font-medium text-hos-gold hover:text-hos-gold-hover transition-colors"
               >
                 {action.label}
               </Link>
             ) : (
               <button 
                 onClick={action.onClick}
-                className="text-sm font-medium text-purple-600 hover:text-purple-700 transition-colors"
+                className="text-sm font-medium text-hos-gold hover:text-hos-gold-hover transition-colors"
               >
                 {action.label}
               </button>
@@ -75,10 +75,10 @@ export function ChartCard({
   className = '',
 }: ChartCardProps) {
   return (
-    <div className={`bg-white rounded-xl border border-gray-100 shadow-sm p-5 ${className}`}>
+    <div className={`bg-hos-bg-secondary rounded-xl border border-hos-border shadow-sm p-5 ${className}`}>
       <div className="mb-4">
-        <h3 className="text-base font-semibold text-gray-900">{title}</h3>
-        {subtitle && <p className="text-sm text-gray-500 mt-0.5">{subtitle}</p>}
+        <h3 className="text-base font-semibold text-white">{title}</h3>
+        {subtitle && <p className="text-sm text-hos-text-muted mt-0.5">{subtitle}</p>}
       </div>
       <div className={height}>
         {children}
@@ -99,23 +99,23 @@ interface ActivityItemProps {
 
 export function ActivityItem({
   icon,
-  iconBg = 'bg-purple-100',
+  iconBg = 'bg-hos-gold/20',
   title,
   subtitle,
   timestamp,
   action,
 }: ActivityItemProps) {
   return (
-    <div className="flex items-start gap-3 p-3 bg-gray-50/50 rounded-lg hover:bg-gray-50 transition-colors">
+    <div className="flex items-start gap-3 p-3 bg-hos-bg-secondary/50 rounded-lg hover:bg-hos-bg-tertiary transition-colors">
       {icon && (
         <div className={`flex-shrink-0 w-9 h-9 rounded-lg flex items-center justify-center ${iconBg}`}>
           {icon}
         </div>
       )}
       <div className="flex-1 min-w-0">
-        <p className="text-sm font-medium text-gray-900 truncate">{title}</p>
-        {subtitle && <p className="text-xs text-gray-500 mt-0.5">{subtitle}</p>}
-        {timestamp && <p className="text-xs text-gray-400 mt-1">{timestamp}</p>}
+        <p className="text-sm font-medium text-white truncate">{title}</p>
+        {subtitle && <p className="text-xs text-hos-text-muted mt-0.5">{subtitle}</p>}
+        {timestamp && <p className="text-xs text-hos-text-muted mt-1">{timestamp}</p>}
       </div>
       {action && <div className="flex-shrink-0">{action}</div>}
     </div>
@@ -143,8 +143,8 @@ export function EmptyState({
   return (
     <div className="text-center py-12">
       <span className="text-5xl block mb-4">{icon}</span>
-      <h3 className="text-lg font-medium text-gray-900 mb-2">{title}</h3>
-      {description && <p className="text-sm text-gray-500 mb-4 max-w-sm mx-auto">{description}</p>}
+      <h3 className="text-lg font-medium text-white mb-2">{title}</h3>
+      {description && <p className="text-sm text-hos-text-muted mb-4 max-w-sm mx-auto">{description}</p>}
       {action && (
         action.href ? (
           <Link href={action.href} className="btn-primary inline-flex">

@@ -130,7 +130,7 @@ export default function CustomerDashboardPage() {
         setProfileStats(gamificationResponse.data);
       }
 
-      // Fetch loyalty programme data
+      // Fetch loyalty program data
       const [loyaltyRes, loyaltyProgressRes] = await Promise.all([
         apiClient.getLoyaltyMembership().catch(() => null),
         apiClient.getLoyaltyTierProgress().catch(() => null),
@@ -257,16 +257,16 @@ export default function CustomerDashboardPage() {
       case 'PENDING':
         return 'bg-yellow-100 text-yellow-800';
       case 'PROCESSING':
-        return 'bg-blue-100 text-blue-800';
+        return 'bg-hos-gold/20 text-hos-gold';
       case 'SHIPPED':
-        return 'bg-purple-100 text-purple-800';
+        return 'bg-hos-gold/20 text-hos-gold';
       case 'DELIVERED':
       case 'COMPLETED':
         return 'bg-green-100 text-green-800';
       case 'CANCELLED':
         return 'bg-red-100 text-red-800';
       default:
-        return 'bg-gray-100 text-gray-800';
+        return 'bg-hos-bg-tertiary text-white';
     }
   };
 
@@ -285,13 +285,13 @@ export default function CustomerDashboardPage() {
   if (loading) {
     return (
       <RouteGuard allowedRoles={['CUSTOMER']}>
-        <div className="min-h-screen bg-gray-50">
+        <div className="min-h-screen bg-hos-bg-secondary">
           <Header />
           <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 lg:py-12">
             <div className="flex items-center justify-center py-12">
               <div className="text-center">
-                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600 mx-auto mb-4"></div>
-                <p className="text-sm sm:text-base text-gray-600">Loading dashboard...</p>
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-hos-gold mx-auto mb-4"></div>
+                <p className="text-sm sm:text-base text-hos-text-secondary">Loading dashboard...</p>
               </div>
             </div>
           </main>
@@ -303,15 +303,15 @@ export default function CustomerDashboardPage() {
 
   return (
     <RouteGuard allowedRoles={['CUSTOMER']}>
-      <div className="min-h-screen bg-gray-50">
+      <div className="min-h-screen bg-hos-bg-secondary">
         <Header />
         <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
           {/* Header */}
           <div className="mb-6 sm:mb-8">
-            <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-gray-900 mb-2">
+            <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-white mb-2">
               {stats?.totalOrders === 0 ? 'Welcome' : 'Welcome back'}{user?.firstName ? `, ${user.firstName}` : ''}! ✨
             </h1>
-            <p className="text-gray-600 text-sm sm:text-base">
+            <p className="text-hos-text-secondary text-sm sm:text-base">
               {stats?.totalOrders === 0
                 ? 'Start your magical shopping journey with us'
                 : 'Manage your orders, track shipments, and explore your shopping journey'}
@@ -325,7 +325,7 @@ export default function CustomerDashboardPage() {
           )}
 
           {/* Tab Navigation */}
-          <div className="flex flex-wrap gap-2 mb-6 border-b border-gray-200 pb-2">
+          <div className="flex flex-wrap gap-2 mb-6 border-b border-hos-border pb-2">
             {[
               { id: 'overview', label: 'Overview', icon: '📊' },
               { id: 'orders', label: 'Orders', icon: '📦' },
@@ -337,8 +337,8 @@ export default function CustomerDashboardPage() {
                 onClick={() => setActiveTab(tab.id as TabType)}
                 className={`px-4 py-2 rounded-lg font-medium text-sm transition-all ${
                   activeTab === tab.id
-                    ? 'bg-purple-600 text-white shadow-md'
-                    : 'bg-white text-gray-600 hover:bg-gray-100 border border-gray-200'
+                    ? 'bg-hos-gold text-[#1a1406] shadow-md'
+                    : 'bg-hos-bg-secondary text-hos-text-secondary hover:bg-hos-bg-tertiary border border-hos-border'
                 }`}
               >
                 <span className="mr-2">{tab.icon}</span>
@@ -352,51 +352,51 @@ export default function CustomerDashboardPage() {
             <>
               {/* Stats Grid */}
               <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4 mb-6">
-                <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
+                <div className="bg-hos-bg-secondary rounded-xl p-4 shadow-sm border border-hos-border">
                   <div className="text-3xl mb-2">📦</div>
-                  <p className="text-2xl font-bold text-gray-900">{stats?.totalOrders || 0}</p>
-                  <p className="text-xs text-gray-500">Total Orders</p>
+                  <p className="text-2xl font-bold text-white">{stats?.totalOrders || 0}</p>
+                  <p className="text-xs text-hos-text-muted">Total Orders</p>
                 </div>
-                <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
+                <div className="bg-hos-bg-secondary rounded-xl p-4 shadow-sm border border-hos-border">
                   <div className="text-3xl mb-2">⏳</div>
                   <p className="text-2xl font-bold text-amber-600">{stats?.pendingOrders || 0}</p>
-                  <p className="text-xs text-gray-500">In Progress</p>
+                  <p className="text-xs text-hos-text-muted">In Progress</p>
                 </div>
-                <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
+                <div className="bg-hos-bg-secondary rounded-xl p-4 shadow-sm border border-hos-border">
                   <div className="text-3xl mb-2">✅</div>
                   <p className="text-2xl font-bold text-green-600">{stats?.completedOrders || 0}</p>
-                  <p className="text-xs text-gray-500">Completed</p>
+                  <p className="text-xs text-hos-text-muted">Completed</p>
                 </div>
-                <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
+                <div className="bg-hos-bg-secondary rounded-xl p-4 shadow-sm border border-hos-border">
                   <div className="text-3xl mb-2">💰</div>
-                  <p className="text-2xl font-bold text-purple-600">{formatPrice(stats?.totalSpent || 0)}</p>
-                  <p className="text-xs text-gray-500">Total Spent</p>
+                  <p className="text-2xl font-bold text-hos-gold">{formatPrice(stats?.totalSpent || 0)}</p>
+                  <p className="text-xs text-hos-text-muted">Total Spent</p>
                 </div>
-                <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
+                <div className="bg-hos-bg-secondary rounded-xl p-4 shadow-sm border border-hos-border">
                   <div className="text-3xl mb-2">❤️</div>
                   <p className="text-2xl font-bold text-pink-600">{stats?.wishlistItems || 0}</p>
-                  <p className="text-xs text-gray-500">Wishlist</p>
+                  <p className="text-xs text-hos-text-muted">Wishlist</p>
                 </div>
-                <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
+                <div className="bg-hos-bg-secondary rounded-xl p-4 shadow-sm border border-hos-border">
                   <div className="text-3xl mb-2">🛒</div>
-                  <p className="text-2xl font-bold text-blue-600">{stats?.cartItems || 0}</p>
-                  <p className="text-xs text-gray-500">In Cart</p>
+                  <p className="text-2xl font-bold text-hos-gold">{stats?.cartItems || 0}</p>
+                  <p className="text-xs text-hos-text-muted">In Cart</p>
                 </div>
               </div>
 
               <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
                 {/* Profile Summary */}
-                <div className="bg-gradient-to-br from-purple-500 to-indigo-600 rounded-xl p-6 text-white shadow-lg">
+                <div className="bg-gradient-to-br from-hos-bg-secondary to-hos-gold/30 rounded-xl p-6 text-white shadow-lg">
                   <div className="flex items-center justify-between mb-4">
                     <h2 className="text-lg font-semibold">Your Profile</h2>
-                    <Link href="/profile" className="text-purple-200 hover:text-white text-sm">
+                    <Link href="/profile" className="text-hos-gold/30 hover:text-white text-sm">
                       View →
                     </Link>
                   </div>
                   {profileStats ? (
                     <div className="space-y-4">
                       <div className="flex items-center gap-4">
-                        <div className="w-16 h-16 rounded-full bg-white/20 flex items-center justify-center text-2xl">
+                        <div className="w-16 h-16 rounded-full bg-hos-bg-secondary/20 flex items-center justify-center text-2xl">
                           {profileStats.character?.avatar ? (
                             <Image
                               src={profileStats.character.avatar}
@@ -413,17 +413,17 @@ export default function CustomerDashboardPage() {
                           <p className="font-bold text-lg">
                             {profileStats.character?.name || user?.firstName || 'Adventurer'}
                           </p>
-                          <p className="text-purple-200">Level {profileStats.level || 1}</p>
+                          <p className="text-hos-gold/30">Level {profileStats.level || 1}</p>
                         </div>
                       </div>
                       <div className="grid grid-cols-2 gap-4 pt-4 border-t border-white/20">
                         <div className="text-center">
                           <p className="text-2xl font-bold">{(profileStats.points || 0).toLocaleString()}</p>
-                          <p className="text-xs text-purple-200">Points</p>
+                          <p className="text-xs text-hos-gold/30">Points</p>
                         </div>
                         <div className="text-center">
                           <p className="text-2xl font-bold">{profileStats.badgeCount || 0}</p>
-                          <p className="text-xs text-purple-200">Badges</p>
+                          <p className="text-xs text-hos-gold/30">Badges</p>
                         </div>
                       </div>
                       {profileStats.progress && (
@@ -432,9 +432,9 @@ export default function CustomerDashboardPage() {
                             <span>Next Level</span>
                             <span>{profileStats.progress.percentage}%</span>
                           </div>
-                          <div className="w-full bg-white/20 rounded-full h-2">
+                          <div className="w-full bg-hos-bg-secondary/20 rounded-full h-2">
                             <div
-                              className="bg-white h-2 rounded-full"
+                              className="bg-hos-bg-secondary h-2 rounded-full"
                               style={{ width: `${profileStats.progress.percentage}%` }}
                             ></div>
                           </div>
@@ -443,10 +443,10 @@ export default function CustomerDashboardPage() {
                     </div>
                   ) : (
                     <div className="text-center py-6">
-                      <p className="text-purple-200 mb-3">Start your adventure!</p>
+                      <p className="text-hos-gold/30 mb-3">Start your adventure!</p>
                       <Link
                         href="/profile"
-                        className="inline-block px-4 py-2 bg-white/20 hover:bg-white/30 rounded-lg text-sm font-medium"
+                        className="inline-block px-4 py-2 bg-hos-bg-secondary/20 hover:bg-hos-bg-secondary/30 rounded-lg text-sm font-medium"
                       >
                         Set Up Profile
                       </Link>
@@ -454,7 +454,7 @@ export default function CustomerDashboardPage() {
                   )}
                 </div>
 
-                {/* Loyalty Programme Card */}
+                {/* Loyalty Program Card */}
                 <div className="bg-gradient-to-br from-amber-600 to-amber-800 rounded-xl p-6 text-white shadow-lg">
                   <div className="flex items-center justify-between mb-4">
                     <h2 className="text-lg font-semibold">The Enchanted Circle</h2>
@@ -465,7 +465,7 @@ export default function CustomerDashboardPage() {
                   {loyaltyMembership ? (
                     <div className="space-y-4">
                       <div className="flex items-center gap-4">
-                        <div className="w-12 h-12 rounded-full bg-white/20 flex items-center justify-center text-2xl">
+                        <div className="w-12 h-12 rounded-full bg-hos-bg-secondary/20 flex items-center justify-center text-2xl">
                           ✨
                         </div>
                         <div>
@@ -489,9 +489,9 @@ export default function CustomerDashboardPage() {
                             <span>Progress to {loyaltyProgress.nextTier.name}</span>
                             <span>{loyaltyProgress.progressPercent ?? 0}%</span>
                           </div>
-                          <div className="w-full bg-white/20 rounded-full h-2">
+                          <div className="w-full bg-hos-bg-secondary/20 rounded-full h-2">
                             <div
-                              className="bg-white h-2 rounded-full transition-all"
+                              className="bg-hos-bg-secondary h-2 rounded-full transition-all"
                               style={{ width: `${loyaltyProgress.progressPercent ?? 0}%` }}
                             />
                           </div>
@@ -501,10 +501,10 @@ export default function CustomerDashboardPage() {
                     </div>
                   ) : (
                     <div className="text-center py-6">
-                      <p className="text-amber-200 mb-3">Join our loyalty programme to earn rewards!</p>
+                      <p className="text-amber-200 mb-3">Join our loyalty program to earn rewards!</p>
                       <Link
                         href="/loyalty"
-                        className="inline-block px-4 py-2 bg-white/20 hover:bg-white/30 rounded-lg text-sm font-medium"
+                        className="inline-block px-4 py-2 bg-hos-bg-secondary/20 hover:bg-hos-bg-secondary/30 rounded-lg text-sm font-medium"
                       >
                         Join Now
                       </Link>
@@ -513,20 +513,20 @@ export default function CustomerDashboardPage() {
                 </div>
 
                 {/* Wishlist Preview */}
-                <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
+                <div className="bg-hos-bg-secondary rounded-xl p-6 shadow-sm border border-hos-border">
                   <div className="flex items-center justify-between mb-4">
-                    <h2 className="text-lg font-semibold text-gray-900">Wishlist</h2>
-                    <Link href="/wishlist" className="text-purple-600 hover:text-purple-700 text-sm font-medium">
+                    <h2 className="text-lg font-semibold text-white">Wishlist</h2>
+                    <Link href="/wishlist" className="text-hos-gold hover:text-hos-gold-hover text-sm font-medium">
                       View All →
                     </Link>
                   </div>
                   {recentWishlist.length === 0 ? (
                     <div className="text-center py-8">
                       <div className="text-4xl mb-2">💜</div>
-                      <p className="text-gray-500 text-sm mb-3">No items yet</p>
+                      <p className="text-hos-text-muted text-sm mb-3">No items yet</p>
                       <Link
                         href="/products"
-                        className="inline-block px-4 py-2 bg-purple-100 text-purple-700 rounded-lg text-sm font-medium hover:bg-purple-200"
+                        className="inline-block px-4 py-2 bg-hos-gold/20 text-hos-gold-hover rounded-lg text-sm font-medium hover:bg-hos-gold/20"
                       >
                         Explore Products
                       </Link>
@@ -542,7 +542,7 @@ export default function CustomerDashboardPage() {
                             href={`/products/${product.id}`}
                             className="group"
                           >
-                            <div className="relative aspect-square rounded-lg overflow-hidden bg-gray-100 mb-2">
+                            <div className="relative aspect-square rounded-lg overflow-hidden bg-hos-bg-tertiary mb-2">
                               {imageUrl ? (
                                 <Image
                                   src={imageUrl}
@@ -552,13 +552,13 @@ export default function CustomerDashboardPage() {
                                   sizes="(max-width: 768px) 50vw, 25vw"
                                 />
                               ) : (
-                                <div className="w-full h-full flex items-center justify-center text-gray-400 text-xs">
+                                <div className="w-full h-full flex items-center justify-center text-hos-text-muted text-xs">
                                   No image
                                 </div>
                               )}
                             </div>
-                            <p className="text-xs font-medium text-gray-900 truncate">{product.name}</p>
-                            <p className="text-xs text-purple-600">{formatPrice(product.price)}</p>
+                            <p className="text-xs font-medium text-white truncate">{product.name}</p>
+                            <p className="text-xs text-hos-gold">{formatPrice(product.price)}</p>
                           </Link>
                         );
                       })}
@@ -570,63 +570,63 @@ export default function CustomerDashboardPage() {
                 <div className="space-y-4">
                   <Link
                     href="/orders"
-                    className="flex items-center gap-4 bg-white rounded-xl p-4 shadow-sm border border-gray-100 hover:shadow-md hover:border-purple-200 transition-all"
+                    className="flex items-center gap-4 bg-hos-bg-secondary rounded-xl p-4 shadow-sm border border-hos-border hover:shadow-md hover:border-hos-border-accent transition-all"
                   >
-                    <div className="w-12 h-12 rounded-lg bg-purple-100 flex items-center justify-center text-2xl">📋</div>
+                    <div className="w-12 h-12 rounded-lg bg-hos-gold/20 flex items-center justify-center text-2xl">📋</div>
                     <div>
-                      <p className="font-semibold text-gray-900">View All Orders</p>
-                      <p className="text-sm text-gray-500">Track and manage your orders</p>
+                      <p className="font-semibold text-white">View All Orders</p>
+                      <p className="text-sm text-hos-text-muted">Track and manage your orders</p>
                     </div>
                   </Link>
                   <Link
                     href="/cart"
-                    className="flex items-center gap-4 bg-white rounded-xl p-4 shadow-sm border border-gray-100 hover:shadow-md hover:border-purple-200 transition-all"
+                    className="flex items-center gap-4 bg-hos-bg-secondary rounded-xl p-4 shadow-sm border border-hos-border hover:shadow-md hover:border-hos-border-accent transition-all"
                   >
                     <div className="w-12 h-12 rounded-lg bg-amber-100 flex items-center justify-center text-2xl">🛒</div>
                     <div>
-                      <p className="font-semibold text-gray-900">Shopping Cart</p>
-                      <p className="text-sm text-gray-500">{stats?.cartItems || 0} items ready to checkout</p>
+                      <p className="font-semibold text-white">Shopping Cart</p>
+                      <p className="text-sm text-hos-text-muted">{stats?.cartItems || 0} items ready to checkout</p>
                     </div>
                   </Link>
                   <Link
                     href="/loyalty"
-                    className="flex items-center gap-4 bg-white rounded-xl p-4 shadow-sm border border-gray-100 hover:shadow-md hover:border-amber-200 transition-all"
+                    className="flex items-center gap-4 bg-hos-bg-secondary rounded-xl p-4 shadow-sm border border-hos-border hover:shadow-md hover:border-amber-200 transition-all"
                   >
                     <div className="w-12 h-12 rounded-lg bg-amber-100 flex items-center justify-center text-2xl">✨</div>
                     <div>
-                      <p className="font-semibold text-gray-900">Loyalty Rewards</p>
-                      <p className="text-sm text-gray-500">Earn points &amp; unlock rewards</p>
+                      <p className="font-semibold text-white">Loyalty Rewards</p>
+                      <p className="text-sm text-hos-text-muted">Earn points &amp; unlock rewards</p>
                     </div>
                   </Link>
                   <Link
                     href="/products"
-                    className="flex items-center gap-4 bg-white rounded-xl p-4 shadow-sm border border-gray-100 hover:shadow-md hover:border-purple-200 transition-all"
+                    className="flex items-center gap-4 bg-hos-bg-secondary rounded-xl p-4 shadow-sm border border-hos-border hover:shadow-md hover:border-hos-border-accent transition-all"
                   >
                     <div className="w-12 h-12 rounded-lg bg-green-100 flex items-center justify-center text-2xl">🔮</div>
                     <div>
-                      <p className="font-semibold text-gray-900">Browse Products</p>
-                      <p className="text-sm text-gray-500">Discover magical items</p>
+                      <p className="font-semibold text-white">Browse Products</p>
+                      <p className="text-sm text-hos-text-muted">Discover magical items</p>
                     </div>
                   </Link>
                 </div>
               </div>
 
               {/* Recent Orders */}
-              <div className="bg-white rounded-xl shadow-sm border border-gray-100">
-                <div className="p-6 border-b border-gray-100 flex items-center justify-between">
-                  <h2 className="text-lg font-semibold text-gray-900">Recent Orders</h2>
-                  <Link href="/orders" className="text-purple-600 hover:text-purple-700 text-sm font-medium">
+              <div className="bg-hos-bg-secondary rounded-xl shadow-sm border border-hos-border">
+                <div className="p-6 border-b border-hos-border flex items-center justify-between">
+                  <h2 className="text-lg font-semibold text-white">Recent Orders</h2>
+                  <Link href="/orders" className="text-hos-gold hover:text-hos-gold-hover text-sm font-medium">
                     View All →
                   </Link>
                 </div>
-                <div className="divide-y divide-gray-100">
+                <div className="divide-y divide-hos-border">
                   {recentOrders.length === 0 ? (
                     <div className="text-center py-12">
                       <div className="text-5xl mb-4">📦</div>
-                      <p className="text-gray-500 mb-4">No orders yet</p>
+                      <p className="text-hos-text-muted mb-4">No orders yet</p>
                       <Link
                         href="/products"
-                        className="inline-block px-6 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700"
+                        className="inline-block px-6 py-2 bg-hos-gold text-[#1a1406] rounded-lg hover:bg-hos-gold-hover"
                       >
                         Start Shopping
                       </Link>
@@ -636,24 +636,24 @@ export default function CustomerDashboardPage() {
                       <Link
                         key={order.id}
                         href={`/orders/${order.id}`}
-                        className="flex items-center justify-between p-4 hover:bg-gray-50 transition-colors"
+                        className="flex items-center justify-between p-4 hover:bg-hos-bg-tertiary transition-colors"
                       >
                         <div className="flex items-center gap-4">
-                          <div className="w-10 h-10 rounded-full bg-purple-100 flex items-center justify-center text-lg">
+                          <div className="w-10 h-10 rounded-full bg-hos-gold/20 flex items-center justify-center text-lg">
                             📦
                           </div>
                           <div>
-                            <p className="font-medium text-gray-900">
+                            <p className="font-medium text-white">
                               Order #{order.orderNumber || order.id.slice(0, 8)}
                             </p>
-                            <p className="text-sm text-gray-500">{formatDate(order.createdAt)}</p>
+                            <p className="text-sm text-hos-text-muted">{formatDate(order.createdAt)}</p>
                           </div>
                         </div>
                         <div className="text-right">
                           <span className={`inline-block px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(order.status)}`}>
                             {order.status}
                           </span>
-                          <p className="text-sm font-semibold text-gray-900 mt-1">{formatPrice(order.total)}</p>
+                          <p className="text-sm font-semibold text-white mt-1">{formatPrice(order.total)}</p>
                         </div>
                       </Link>
                     ))
@@ -668,40 +668,40 @@ export default function CustomerDashboardPage() {
             <div className="space-y-6">
               {/* Order Stats */}
               <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
-                <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100 text-center">
-                  <p className="text-3xl font-bold text-gray-900">{stats?.totalOrders || 0}</p>
-                  <p className="text-sm text-gray-500">Total Orders</p>
+                <div className="bg-hos-bg-secondary rounded-xl p-6 shadow-sm border border-hos-border text-center">
+                  <p className="text-3xl font-bold text-white">{stats?.totalOrders || 0}</p>
+                  <p className="text-sm text-hos-text-muted">Total Orders</p>
                 </div>
-                <div className="bg-white rounded-xl p-6 shadow-sm border border-yellow-200 text-center">
+                <div className="bg-hos-bg-secondary rounded-xl p-6 shadow-sm border border-yellow-200 text-center">
                   <p className="text-3xl font-bold text-yellow-600">{stats?.pendingOrders || 0}</p>
-                  <p className="text-sm text-gray-500">Pending</p>
+                  <p className="text-sm text-hos-text-muted">Pending</p>
                 </div>
-                <div className="bg-white rounded-xl p-6 shadow-sm border border-green-200 text-center">
+                <div className="bg-hos-bg-secondary rounded-xl p-6 shadow-sm border border-green-200 text-center">
                   <p className="text-3xl font-bold text-green-600">{stats?.completedOrders || 0}</p>
-                  <p className="text-sm text-gray-500">Completed</p>
+                  <p className="text-sm text-hos-text-muted">Completed</p>
                 </div>
-                <div className="bg-white rounded-xl p-6 shadow-sm border border-purple-200 text-center">
-                  <p className="text-3xl font-bold text-purple-600">{formatPrice(stats?.totalSpent || 0)}</p>
-                  <p className="text-sm text-gray-500">Total Spent</p>
+                <div className="bg-hos-bg-secondary rounded-xl p-6 shadow-sm border border-hos-border-accent text-center">
+                  <p className="text-3xl font-bold text-hos-gold">{formatPrice(stats?.totalSpent || 0)}</p>
+                  <p className="text-sm text-hos-text-muted">Total Spent</p>
                 </div>
               </div>
 
               {/* Orders List */}
-              <div className="bg-white rounded-xl shadow-sm border border-gray-100">
-                <div className="p-6 border-b border-gray-100 flex items-center justify-between">
-                  <h2 className="text-lg font-semibold text-gray-900">All Orders</h2>
-                  <Link href="/orders" className="text-purple-600 hover:text-purple-700 text-sm font-medium">
+              <div className="bg-hos-bg-secondary rounded-xl shadow-sm border border-hos-border">
+                <div className="p-6 border-b border-hos-border flex items-center justify-between">
+                  <h2 className="text-lg font-semibold text-white">All Orders</h2>
+                  <Link href="/orders" className="text-hos-gold hover:text-hos-gold-hover text-sm font-medium">
                     View Full Page →
                   </Link>
                 </div>
-                <div className="divide-y divide-gray-100">
+                <div className="divide-y divide-hos-border">
                   {allOrders.length === 0 ? (
                     <div className="text-center py-12">
                       <div className="text-5xl mb-4">📦</div>
-                      <p className="text-gray-500 mb-4">No orders yet</p>
+                      <p className="text-hos-text-muted mb-4">No orders yet</p>
                       <Link
                         href="/products"
-                        className="inline-block px-6 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700"
+                        className="inline-block px-6 py-2 bg-hos-gold text-[#1a1406] rounded-lg hover:bg-hos-gold-hover"
                       >
                         Start Shopping
                       </Link>
@@ -711,17 +711,17 @@ export default function CustomerDashboardPage() {
                       <Link
                         key={order.id}
                         href={`/orders/${order.id}`}
-                        className="flex items-center justify-between p-4 hover:bg-gray-50 transition-colors"
+                        className="flex items-center justify-between p-4 hover:bg-hos-bg-tertiary transition-colors"
                       >
                         <div className="flex items-center gap-4">
-                          <div className="w-10 h-10 rounded-full bg-purple-100 flex items-center justify-center text-lg">
+                          <div className="w-10 h-10 rounded-full bg-hos-gold/20 flex items-center justify-center text-lg">
                             📦
                           </div>
                           <div>
-                            <p className="font-medium text-gray-900">
+                            <p className="font-medium text-white">
                               Order #{order.orderNumber || order.id.slice(0, 8)}
                             </p>
-                            <p className="text-sm text-gray-500">
+                            <p className="text-sm text-hos-text-muted">
                               {new Date(order.createdAt).toLocaleDateString('en-US', {
                                 day: 'numeric',
                                 month: 'short',
@@ -734,7 +734,7 @@ export default function CustomerDashboardPage() {
                           <span className={`inline-block px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(order.status)}`}>
                             {order.status}
                           </span>
-                          <p className="text-sm font-semibold text-gray-900 mt-1">{formatPrice(order.total)}</p>
+                          <p className="text-sm font-semibold text-white mt-1">{formatPrice(order.total)}</p>
                         </div>
                       </Link>
                     ))
@@ -749,8 +749,8 @@ export default function CustomerDashboardPage() {
             <div className="space-y-6">
               {/* Summary Cards */}
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                <div className="bg-gradient-to-br from-purple-500 to-indigo-600 rounded-xl p-6 text-white">
-                  <p className="text-purple-200 text-sm mb-1">This Year&apos;s Spending</p>
+                <div className="bg-gradient-to-br from-hos-bg-secondary to-hos-gold/30 rounded-xl p-6 text-white">
+                  <p className="text-hos-gold/30 text-sm mb-1">This Year&apos;s Spending</p>
                   <p className="text-3xl font-bold">{formatPrice(spendingAnalytics.yearlyTotal)}</p>
                 </div>
                 <div className="bg-gradient-to-br from-green-500 to-emerald-600 rounded-xl p-6 text-white">
@@ -770,8 +770,8 @@ export default function CustomerDashboardPage() {
               </div>
 
               {/* Spending Chart */}
-              <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
-                <h3 className="text-lg font-semibold text-gray-900 mb-4">Spending Over Time (Last 6 Months)</h3>
+              <div className="bg-hos-bg-secondary rounded-xl p-6 shadow-sm border border-hos-border">
+                <h3 className="text-lg font-semibold text-white mb-4">Spending Over Time (Last 6 Months)</h3>
                 {spendingAnalytics.monthlySpending.length > 0 ? (
                   <div className="h-64">
                     <ResponsiveContainer width="100%" height="100%">
@@ -788,7 +788,7 @@ export default function CustomerDashboardPage() {
                     </ResponsiveContainer>
                   </div>
                 ) : (
-                  <div className="text-center py-12 text-gray-500">
+                  <div className="text-center py-12 text-hos-text-muted">
                     <div className="text-4xl mb-2">📊</div>
                     <p>No spending data yet</p>
                   </div>
@@ -797,8 +797,8 @@ export default function CustomerDashboardPage() {
 
               {/* Order Status Breakdown — legend + fixed chart box avoids slice-label overflow misalignment */}
               <div className="grid grid-cols-1 gap-6 lg:grid-cols-2 lg:items-stretch">
-                <div className="flex min-h-[320px] flex-col rounded-xl border border-gray-100 bg-white p-6 shadow-sm">
-                  <h3 className="mb-4 text-lg font-semibold text-gray-900">Order Status Breakdown</h3>
+                <div className="flex min-h-[320px] flex-col rounded-xl border border-hos-border bg-hos-bg-secondary p-6 shadow-sm">
+                  <h3 className="mb-4 text-lg font-semibold text-white">Order Status Breakdown</h3>
                   {spendingAnalytics.categoryBreakdown.length > 0 ? (
                     <div className="flex min-h-0 flex-1 flex-col justify-center">
                       <div className="mx-auto h-[260px] w-full max-w-md">
@@ -828,7 +828,7 @@ export default function CustomerDashboardPage() {
                               formatter={(value, entry) => {
                                 const v = (entry?.payload as { value?: number })?.value;
                                 return (
-                                  <span className="text-xs text-gray-700">
+                                  <span className="text-xs text-hos-text-secondary">
                                     {value}
                                     {typeof v === 'number' ? ` (${v})` : ''}
                                   </span>
@@ -840,29 +840,29 @@ export default function CustomerDashboardPage() {
                       </div>
                     </div>
                   ) : (
-                    <div className="flex flex-1 items-center justify-center py-12 text-gray-500">
+                    <div className="flex flex-1 items-center justify-center py-12 text-hos-text-muted">
                       <p>No order data yet</p>
                     </div>
                   )}
                 </div>
 
-                <div className="flex min-h-[320px] flex-col rounded-xl border border-gray-100 bg-white p-6 shadow-sm">
-                  <h3 className="mb-4 text-lg font-semibold text-gray-900">Shopping Insights</h3>
+                <div className="flex min-h-[320px] flex-col rounded-xl border border-hos-border bg-hos-bg-secondary p-6 shadow-sm">
+                  <h3 className="mb-4 text-lg font-semibold text-white">Shopping Insights</h3>
                   <div className="flex flex-1 flex-col justify-center space-y-4">
-                    <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                      <span className="text-gray-600">Favorite Category</span>
-                      <span className="font-semibold text-gray-900">🧙 Wizarding Items</span>
+                    <div className="flex items-center justify-between p-3 bg-hos-bg-secondary rounded-lg">
+                      <span className="text-hos-text-secondary">Favorite Category</span>
+                      <span className="font-semibold text-white">🧙 Wizarding Items</span>
                     </div>
-                    <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                      <span className="text-gray-600">Most Active Month</span>
-                      <span className="font-semibold text-gray-900">
+                    <div className="flex items-center justify-between p-3 bg-hos-bg-secondary rounded-lg">
+                      <span className="text-hos-text-secondary">Most Active Month</span>
+                      <span className="font-semibold text-white">
                         {spendingAnalytics.monthlySpending.length > 0
                           ? spendingAnalytics.monthlySpending.reduce((a, b) => (a.amount > b.amount ? a : b)).month
                           : 'N/A'}
                       </span>
                     </div>
-                    <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                      <span className="text-gray-600">Completion Rate</span>
+                    <div className="flex items-center justify-between p-3 bg-hos-bg-secondary rounded-lg">
+                      <span className="text-hos-text-secondary">Completion Rate</span>
                       <span className="font-semibold text-green-600">
                         {stats?.totalOrders
                           ? Math.round((stats.completedOrders / stats.totalOrders) * 100)
@@ -877,19 +877,19 @@ export default function CustomerDashboardPage() {
 
           {/* Activity Tab */}
           {activeTab === 'activity' && (
-            <div className="bg-white rounded-xl shadow-sm border border-gray-100">
-              <div className="p-6 border-b border-gray-100">
-                <h2 className="text-lg font-semibold text-gray-900">Recent Activity</h2>
-                <p className="text-sm text-gray-500">Your recent orders and wishlist updates</p>
+            <div className="bg-hos-bg-secondary rounded-xl shadow-sm border border-hos-border">
+              <div className="p-6 border-b border-hos-border">
+                <h2 className="text-lg font-semibold text-white">Recent Activity</h2>
+                <p className="text-sm text-hos-text-muted">Your recent orders and wishlist updates</p>
               </div>
-              <div className="divide-y divide-gray-100">
+              <div className="divide-y divide-hos-border">
                 {recentActivity.length === 0 ? (
                   <div className="text-center py-12">
                     <div className="text-5xl mb-4">🕐</div>
-                    <p className="text-gray-500 mb-4">No recent activity</p>
+                    <p className="text-hos-text-muted mb-4">No recent activity</p>
                     <Link
                       href="/products"
-                      className="inline-block px-6 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700"
+                      className="inline-block px-6 py-2 bg-hos-gold text-[#1a1406] rounded-lg hover:bg-hos-gold-hover"
                     >
                       Start Exploring
                     </Link>
@@ -899,16 +899,16 @@ export default function CustomerDashboardPage() {
                     <Link
                       key={activity.id}
                       href={activity.link}
-                      className="flex items-center gap-4 p-4 hover:bg-gray-50 transition-colors"
+                      className="flex items-center gap-4 p-4 hover:bg-hos-bg-tertiary transition-colors"
                     >
-                      <div className="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center text-xl">
+                      <div className="w-10 h-10 rounded-full bg-hos-bg-tertiary flex items-center justify-center text-xl">
                         {activity.icon}
                       </div>
                       <div className="flex-1 min-w-0">
-                        <p className="font-medium text-gray-900">{activity.title}</p>
-                        <p className="text-sm text-gray-500 truncate">{activity.description}</p>
+                        <p className="font-medium text-white">{activity.title}</p>
+                        <p className="text-sm text-hos-text-muted truncate">{activity.description}</p>
                       </div>
-                      <div className="text-sm text-gray-400">{formatDate(activity.date)}</div>
+                      <div className="text-sm text-hos-text-muted">{formatDate(activity.date)}</div>
                     </Link>
                   ))
                 )}

@@ -53,13 +53,13 @@ export default function WholesalerSubmissionsPage() {
           <div className="flex items-center justify-between">
             <div>
               <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold">Submissions</h1>
-              <p className="text-gray-600 mt-2">Track your product submission status</p>
+              <p className="text-hos-text-secondary mt-2">Track your product submission status</p>
             </div>
             <div className="flex gap-4">
               <select
                 value={statusFilter}
                 onChange={(e) => setStatusFilter(e.target.value)}
-                className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
+                className="px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50"
               >
                 <option value="">All Status</option>
                 <option value="SUBMITTED">Submitted</option>
@@ -73,7 +73,7 @@ export default function WholesalerSubmissionsPage() {
               </select>
               <Link
                 href="/wholesaler/submit-product"
-                className="px-6 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors font-medium"
+                className="px-6 py-2 bg-hos-gold text-[#1a1406] rounded-lg hover:bg-hos-gold-hover transition-colors font-medium"
               >
                 + New Submission
               </Link>
@@ -83,7 +83,7 @@ export default function WholesalerSubmissionsPage() {
 
         {loading && (
           <div className="flex items-center justify-center py-12">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600"></div>
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-hos-gold"></div>
           </div>
         )}
 
@@ -100,57 +100,57 @@ export default function WholesalerSubmissionsPage() {
         )}
 
         {!loading && !error && (
-          <div className="bg-white rounded-lg shadow overflow-hidden">
+          <div className="bg-hos-bg-secondary rounded-lg shadow overflow-hidden">
             {submissions.length === 0 ? (
               <div className="text-center py-12">
-                <p className="text-gray-500 mb-4">No submissions found</p>
+                <p className="text-hos-text-muted mb-4">No submissions found</p>
                 <Link
                   href="/wholesaler/submit-product"
-                  className="text-purple-600 hover:text-purple-700 font-medium"
+                  className="text-hos-gold hover:text-hos-gold-hover font-medium"
                 >
                   Submit your first bulk product →
                 </Link>
               </div>
             ) : (
               <div className="overflow-x-auto">
-                <table className="min-w-full divide-y divide-gray-200">
-                  <thead className="bg-gray-50">
+                <table className="min-w-full divide-y divide-hos-border">
+                  <thead className="bg-hos-bg-secondary">
                     <tr>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      <th className="px-6 py-3 text-left text-xs font-medium text-hos-text-muted uppercase tracking-wider">
                         Product
                       </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      <th className="px-6 py-3 text-left text-xs font-medium text-hos-text-muted uppercase tracking-wider">
                         Stock
                       </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      <th className="px-6 py-3 text-left text-xs font-medium text-hos-text-muted uppercase tracking-wider">
                         Min. Order
                       </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      <th className="px-6 py-3 text-left text-xs font-medium text-hos-text-muted uppercase tracking-wider">
                         Status
                       </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      <th className="px-6 py-3 text-left text-xs font-medium text-hos-text-muted uppercase tracking-wider">
                         Submitted
                       </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      <th className="px-6 py-3 text-left text-xs font-medium text-hos-text-muted uppercase tracking-wider">
                         Actions
                       </th>
                     </tr>
                   </thead>
-                  <tbody className="bg-white divide-y divide-gray-200">
+                  <tbody className="bg-hos-bg-secondary divide-y divide-hos-border">
                     {submissions.map((submission) => (
-                      <tr key={submission.id} className="hover:bg-gray-50">
+                      <tr key={submission.id} className="hover:bg-hos-bg-tertiary">
                         <td className="px-6 py-4">
-                          <div className="text-sm font-medium text-gray-900">
+                          <div className="text-sm font-medium text-white">
                             {submission.productData?.name || 'Untitled Product'}
                           </div>
-                          <div className="text-sm text-gray-500">
+                          <div className="text-sm text-hos-text-muted">
                             {submission.productData?.description?.substring(0, 50)}...
                           </div>
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-white">
                           {submission.productData?.stock ?? 'N/A'}
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-white">
                           {submission.productData?.quantity || '—'}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
@@ -176,21 +176,21 @@ export default function WholesalerSubmissionsPage() {
                                   : submission.status}
                           </span>
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-hos-text-muted">
                           {new Date(submission.createdAt).toLocaleDateString()}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                           <div className="flex flex-wrap items-center gap-3">
                             <Link
                               href={`/wholesaler/submit-product?id=${submission.id}`}
-                              className="text-purple-600 hover:text-purple-900"
+                              className="text-hos-gold hover:text-hos-gold"
                             >
                               View
                             </Link>
                             {canSellerEditSubmission(submission.status) && (
                               <Link
                                 href={`/wholesaler/submit-product?edit=${submission.id}`}
-                                className="text-gray-700 hover:text-gray-900"
+                                className="text-hos-text-secondary hover:text-white"
                               >
                                 Edit
                               </Link>

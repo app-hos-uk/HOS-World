@@ -14,21 +14,21 @@ interface BadgeProps {
 }
 
 const variantStyles: Record<BadgeVariant, string> = {
-  primary: 'bg-purple-100 text-purple-800',
-  success: 'bg-green-100 text-green-800',
-  warning: 'bg-yellow-100 text-yellow-800',
-  error: 'bg-red-100 text-red-800',
-  info: 'bg-blue-100 text-blue-800',
-  gray: 'bg-gray-100 text-gray-800',
+  primary: 'bg-hos-gold/20 text-hos-gold',
+  success: 'bg-green-900/40 text-green-400',
+  warning: 'bg-yellow-900/40 text-yellow-400',
+  error: 'bg-red-900/40 text-red-400',
+  info: 'bg-hos-gold/15 text-hos-gold',
+  gray: 'bg-hos-bg-tertiary text-hos-text-secondary',
 };
 
 const dotColors: Record<BadgeVariant, string> = {
-  primary: 'bg-purple-500',
+  primary: 'bg-hos-gold',
   success: 'bg-green-500',
   warning: 'bg-yellow-500',
   error: 'bg-red-500',
-  info: 'bg-blue-500',
-  gray: 'bg-gray-500',
+  info: 'bg-hos-gold',
+  gray: 'bg-hos-text-muted',
 };
 
 const sizeStyles: Record<BadgeSize, string> = {

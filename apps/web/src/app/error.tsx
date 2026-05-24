@@ -15,11 +15,11 @@ export default function GlobalError({
   }, [error]);
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-purple-50 to-white px-4">
+    <div className="min-h-screen flex items-center justify-center bg-hos-bg px-4">
       <div className="max-w-md w-full text-center space-y-6">
-        <div className="mx-auto w-16 h-16 rounded-full bg-purple-100 flex items-center justify-center">
+        <div className="mx-auto w-16 h-16 rounded-full bg-hos-gold/20 flex items-center justify-center">
           <svg
-            className="w-8 h-8 text-purple-600"
+            className="w-8 h-8 text-hos-gold"
             fill="none"
             viewBox="0 0 24 24"
             stroke="currentColor"
@@ -33,28 +33,28 @@ export default function GlobalError({
           </svg>
         </div>
 
-        <h1 className="text-3xl font-bold text-purple-900 font-[family-name:var(--font-cinzel)]">
+        <h1 className="text-3xl font-bold text-hos-gold font-[family-name:var(--font-display)]">
           Something Went Wrong
         </h1>
 
-        <p className="text-gray-600 font-[family-name:var(--font-lora)]">
+        <p className="text-hos-text-secondary font-[family-name:var(--font-body)]">
           An unexpected error occurred. Please try again.
         </p>
 
         {error.digest && (
-          <p className="text-xs text-gray-400">Error ID: {error.digest}</p>
+          <p className="text-xs text-hos-text-muted">Error ID: {error.digest}</p>
         )}
 
         <div className="flex flex-col sm:flex-row gap-3 justify-center pt-2">
           <button
             onClick={reset}
-            className="px-6 py-2.5 bg-purple-700 text-white rounded-lg hover:bg-purple-800 transition-colors font-medium"
+            className="px-6 py-2.5 bg-hos-gold text-[#1a1406] rounded-lg hover:bg-hos-gold-hover transition-colors font-medium"
           >
             Try Again
           </button>
           <Link
             href="/"
-            className="px-6 py-2.5 border border-purple-300 text-purple-700 rounded-lg hover:bg-purple-50 transition-colors font-medium"
+            className="px-6 py-2.5 border border-hos-border-accent text-hos-gold-hover rounded-lg hover:bg-hos-gold/10 transition-colors font-medium"
           >
             Go Home
           </Link>

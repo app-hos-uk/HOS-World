@@ -36,35 +36,35 @@ export default function AdminLoyaltyDashboardPage() {
   ];
 
   const colorMap: Record<string, string> = {
-    purple: 'bg-purple-50 text-purple-700',
+    purple: 'bg-hos-gold/10 text-hos-gold-hover',
     amber: 'bg-amber-50 text-amber-700',
-    blue: 'bg-blue-50 text-blue-700',
+    blue: 'bg-hos-gold/10 text-hos-gold',
     green: 'bg-green-50 text-green-700',
     rose: 'bg-rose-50 text-rose-700',
-    indigo: 'bg-indigo-50 text-indigo-700',
+    indigo: 'bg-hos-gold/10 text-hos-gold',
   };
 
   return (
     <RouteGuard allowedRoles={['ADMIN']} showAccessDenied>
       <AdminLayout>
         <div className="mb-6">
-          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Loyalty Programme Management</h1>
-          <p className="text-gray-600 mt-1">Manage tiers, earn rules, rewards, campaigns, and members</p>
+          <h1 className="text-2xl sm:text-3xl font-bold text-white">Loyalty Program Management</h1>
+          <p className="text-hos-text-secondary mt-1">Manage tiers, earn rules, rewards, campaigns, and members</p>
         </div>
 
         {loading ? (
           <div className="flex justify-center py-12">
-            <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-purple-600" />
+            <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-hos-gold" />
           </div>
         ) : (
           <>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-8">
               {cards.map((c) => (
-                <Link key={c.label} href={c.href} className="block bg-white border rounded-lg p-5 hover:shadow-md transition-shadow">
+                <Link key={c.label} href={c.href} className="block bg-hos-bg-secondary border rounded-lg p-5 hover:shadow-md transition-shadow">
                   <div className="flex items-center justify-between">
                     <div>
-                      <p className="text-sm font-medium text-gray-500">{c.label}</p>
-                      <p className="text-2xl font-bold text-gray-900 mt-1">{Number(c.value).toLocaleString()}</p>
+                      <p className="text-sm font-medium text-hos-text-muted">{c.label}</p>
+                      <p className="text-2xl font-bold text-white mt-1">{Number(c.value).toLocaleString()}</p>
                     </div>
                     <div className={`w-12 h-12 rounded-lg flex items-center justify-center text-2xl ${colorMap[c.color]}`}>
                       {c.icon}
@@ -75,69 +75,69 @@ export default function AdminLoyaltyDashboardPage() {
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div className="bg-white border rounded-lg p-6">
+              <div className="bg-hos-bg-secondary border rounded-lg p-6">
                 <h2 className="text-lg font-semibold mb-4">Quick Actions</h2>
                 <div className="space-y-2">
-                  <Link href="/admin/loyalty/tiers" className="flex items-center gap-3 p-3 rounded-lg hover:bg-gray-50 transition-colors">
+                  <Link href="/admin/loyalty/tiers" className="flex items-center gap-3 p-3 rounded-lg hover:bg-hos-bg-tertiary transition-colors">
                     <span className="text-xl">🏆</span>
                     <div>
-                      <p className="font-medium text-gray-900">Manage Tiers</p>
-                      <p className="text-sm text-gray-500">Edit tier thresholds and multipliers</p>
+                      <p className="font-medium text-white">Manage Tiers</p>
+                      <p className="text-sm text-hos-text-muted">Edit tier thresholds and multipliers</p>
                     </div>
                   </Link>
-                  <Link href="/admin/loyalty/earn-rules" className="flex items-center gap-3 p-3 rounded-lg hover:bg-gray-50 transition-colors">
+                  <Link href="/admin/loyalty/earn-rules" className="flex items-center gap-3 p-3 rounded-lg hover:bg-hos-bg-tertiary transition-colors">
                     <span className="text-xl">⚡</span>
                     <div>
-                      <p className="font-medium text-gray-900">Earn Rules</p>
-                      <p className="text-sm text-gray-500">Configure how customers earn points</p>
+                      <p className="font-medium text-white">Earn Rules</p>
+                      <p className="text-sm text-hos-text-muted">Configure how customers earn points</p>
                     </div>
                   </Link>
-                  <Link href="/admin/loyalty/redemption-options" className="flex items-center gap-3 p-3 rounded-lg hover:bg-gray-50 transition-colors">
+                  <Link href="/admin/loyalty/redemption-options" className="flex items-center gap-3 p-3 rounded-lg hover:bg-hos-bg-tertiary transition-colors">
                     <span className="text-xl">🎁</span>
                     <div>
-                      <p className="font-medium text-gray-900">Redemption Options</p>
-                      <p className="text-sm text-gray-500">Manage the rewards catalogue</p>
+                      <p className="font-medium text-white">Redemption Options</p>
+                      <p className="text-sm text-hos-text-muted">Manage the rewards catalogue</p>
                     </div>
                   </Link>
-                  <Link href="/admin/loyalty/campaigns" className="flex items-center gap-3 p-3 rounded-lg hover:bg-gray-50 transition-colors">
+                  <Link href="/admin/loyalty/campaigns" className="flex items-center gap-3 p-3 rounded-lg hover:bg-hos-bg-tertiary transition-colors">
                     <span className="text-xl">🎯</span>
                     <div>
-                      <p className="font-medium text-gray-900">Bonus Campaigns</p>
-                      <p className="text-sm text-gray-500">Create double-points events</p>
+                      <p className="font-medium text-white">Bonus Campaigns</p>
+                      <p className="text-sm text-hos-text-muted">Create double-points events</p>
                     </div>
                   </Link>
-                  <Link href="/admin/loyalty/members" className="flex items-center gap-3 p-3 rounded-lg hover:bg-gray-50 transition-colors">
+                  <Link href="/admin/loyalty/members" className="flex items-center gap-3 p-3 rounded-lg hover:bg-hos-bg-tertiary transition-colors">
                     <span className="text-xl">👥</span>
                     <div>
-                      <p className="font-medium text-gray-900">Member Lookup</p>
-                      <p className="text-sm text-gray-500">Search members, adjust points</p>
+                      <p className="font-medium text-white">Member Lookup</p>
+                      <p className="text-sm text-hos-text-muted">Search members, adjust points</p>
                     </div>
                   </Link>
                 </div>
               </div>
 
-              <div className="bg-white border rounded-lg p-6">
+              <div className="bg-hos-bg-secondary border rounded-lg p-6">
                 <h2 className="text-lg font-semibold mb-4">Analytics</h2>
                 <div className="space-y-2">
-                  <Link href="/admin/loyalty-analytics" className="flex items-center gap-3 p-3 rounded-lg hover:bg-gray-50 transition-colors">
+                  <Link href="/admin/loyalty-analytics" className="flex items-center gap-3 p-3 rounded-lg hover:bg-hos-bg-tertiary transition-colors">
                     <span className="text-xl">💡</span>
                     <div>
-                      <p className="font-medium text-gray-900">Programme Health</p>
-                      <p className="text-sm text-gray-500">Overall loyalty KPIs and trends</p>
+                      <p className="font-medium text-white">Program Health</p>
+                      <p className="text-sm text-hos-text-muted">Overall loyalty KPIs and trends</p>
                     </div>
                   </Link>
-                  <Link href="/admin/loyalty-analytics/tiers" className="flex items-center gap-3 p-3 rounded-lg hover:bg-gray-50 transition-colors">
+                  <Link href="/admin/loyalty-analytics/tiers" className="flex items-center gap-3 p-3 rounded-lg hover:bg-hos-bg-tertiary transition-colors">
                     <span className="text-xl">📊</span>
                     <div>
-                      <p className="font-medium text-gray-900">Tier Analysis</p>
-                      <p className="text-sm text-gray-500">Member distribution across tiers</p>
+                      <p className="font-medium text-white">Tier Analysis</p>
+                      <p className="text-sm text-hos-text-muted">Member distribution across tiers</p>
                     </div>
                   </Link>
-                  <Link href="/admin/loyalty-analytics/clv" className="flex items-center gap-3 p-3 rounded-lg hover:bg-gray-50 transition-colors">
+                  <Link href="/admin/loyalty-analytics/clv" className="flex items-center gap-3 p-3 rounded-lg hover:bg-hos-bg-tertiary transition-colors">
                     <span className="text-xl">👤</span>
                     <div>
-                      <p className="font-medium text-gray-900">Customer Lifetime Value</p>
-                      <p className="text-sm text-gray-500">CLV distribution and top members</p>
+                      <p className="font-medium text-white">Customer Lifetime Value</p>
+                      <p className="text-sm text-hos-text-muted">CLV distribution and top members</p>
                     </div>
                   </Link>
                 </div>

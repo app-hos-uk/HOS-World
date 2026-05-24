@@ -52,14 +52,14 @@ export default function DoNotSellPage() {
   };
 
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen bg-hos-bg-secondary">
       <Header />
       <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12 max-w-2xl">
-        <h1 className="text-3xl sm:text-4xl font-bold mb-6 text-gray-900">
+        <h1 className="text-3xl sm:text-4xl font-bold mb-6 text-white">
           Do Not Sell or Share My Personal Information
         </h1>
 
-        <section className="mb-8 text-gray-700 space-y-4">
+        <section className="mb-8 text-hos-text-secondary space-y-4">
           <p>
             Under the California Consumer Privacy Act (CCPA) and similar laws, you have the right to
             opt out of the &quot;sale&quot; or &quot;sharing&quot; of your personal information.
@@ -75,9 +75,9 @@ export default function DoNotSellPage() {
           </p>
         </section>
 
-        <form onSubmit={handleSubmit} className="space-y-6 p-6 bg-gray-50 rounded-xl border border-purple-100">
+        <form onSubmit={handleSubmit} className="space-y-6 p-6 bg-hos-bg-secondary rounded-xl border border-hos-border">
           <div>
-            <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
+            <label htmlFor="email" className="block text-sm font-medium text-hos-text-secondary mb-2">
               Email Address
             </label>
             <input
@@ -88,7 +88,7 @@ export default function DoNotSellPage() {
               placeholder="you@example.com"
               required
               disabled={status === 'loading'}
-              className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-purple-500 focus:border-purple-500 bg-white disabled:opacity-70"
+              className="w-full px-4 py-3 rounded-lg border border-hos-border focus:ring-2 focus:ring-hos-gold/50 focus:border-hos-gold bg-hos-bg-secondary disabled:opacity-70"
             />
           </div>
 
@@ -101,8 +101,8 @@ export default function DoNotSellPage() {
                 disabled={status === 'loading'}
                 className="sr-only peer"
               />
-              <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-purple-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-purple-600"></div>
-              <span className="ml-3 text-sm font-medium text-gray-700">
+              <div className="w-11 h-6 bg-hos-bg-tertiary peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-hos-gold/30 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-hos-bg-secondary after:border-hos-border after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-hos-gold"></div>
+              <span className="ml-3 text-sm font-medium text-hos-text-secondary">
                 I wish to opt out of the sale or sharing of my personal information
               </span>
             </label>
@@ -111,7 +111,7 @@ export default function DoNotSellPage() {
           <button
             type="submit"
             disabled={status === 'loading'}
-            className="w-full px-6 py-3 text-white font-semibold rounded-lg bg-purple-600 hover:bg-purple-700 transition-colors disabled:opacity-70 disabled:cursor-not-allowed"
+            className="w-full px-6 py-3 text-white font-semibold rounded-lg bg-hos-gold hover:bg-hos-gold-hover transition-colors disabled:opacity-70 disabled:cursor-not-allowed"
           >
             {status === 'loading' ? 'Submitting…' : 'Submit Opt-Out Request'}
           </button>
@@ -130,10 +130,10 @@ export default function DoNotSellPage() {
           </div>
         )}
 
-        <div className="mt-8 pt-6 border-t border-gray-200">
+        <div className="mt-8 pt-6 border-t border-hos-border">
           <Link
             href="/privacy-policy"
-            className="text-purple-600 hover:text-purple-800 font-medium"
+            className="text-hos-gold hover:text-hos-gold-hover font-medium"
           >
             ← Back to Privacy Policy
           </Link>

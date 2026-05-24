@@ -60,63 +60,63 @@ export default function AdminLoyaltyTiersPage() {
     <RouteGuard allowedRoles={['ADMIN']} showAccessDenied>
       <AdminLayout>
         <div className="mb-6">
-          <h1 className="text-2xl font-bold text-gray-900">Loyalty Tiers</h1>
-          <p className="text-gray-600 mt-1">Configure tier thresholds, multipliers, and branding</p>
+          <h1 className="text-2xl font-bold text-white">Loyalty Tiers</h1>
+          <p className="text-hos-text-secondary mt-1">Configure tier thresholds, multipliers, and branding</p>
         </div>
 
         {loading ? (
           <div className="flex justify-center py-12">
-            <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-purple-600" />
+            <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-hos-gold" />
           </div>
         ) : (
           <div className="space-y-4">
             {tiers.map((tier) => (
-              <div key={tier.id} className="bg-white border rounded-lg p-6">
+              <div key={tier.id} className="bg-hos-bg-secondary border rounded-lg p-6">
                 {editing === tier.id ? (
                   <div className="space-y-4">
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Name</label>
+                        <label className="block text-sm font-medium text-hos-text-secondary mb-1">Name</label>
                         <input className="w-full border rounded-lg px-3 py-2" value={String(form.name || '')} onChange={(e) => setForm({ ...form, name: e.target.value })} />
                       </div>
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Level</label>
+                        <label className="block text-sm font-medium text-hos-text-secondary mb-1">Level</label>
                         <input type="number" className="w-full border rounded-lg px-3 py-2" value={Number(form.level || 0)} onChange={(e) => setForm({ ...form, level: parseInt(e.target.value) })} />
                       </div>
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Min Points</label>
+                        <label className="block text-sm font-medium text-hos-text-secondary mb-1">Min Points</label>
                         <input type="number" className="w-full border rounded-lg px-3 py-2" value={Number(form.minPoints || 0)} onChange={(e) => setForm({ ...form, minPoints: parseInt(e.target.value) })} />
                       </div>
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Multiplier</label>
+                        <label className="block text-sm font-medium text-hos-text-secondary mb-1">Multiplier</label>
                         <input type="number" step="0.1" className="w-full border rounded-lg px-3 py-2" value={Number(form.multiplier || 1)} onChange={(e) => setForm({ ...form, multiplier: parseFloat(e.target.value) })} />
                       </div>
                     </div>
                     <div className="flex gap-2">
-                      <button onClick={handleSave} disabled={saving} className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 disabled:opacity-50 text-sm font-medium">
+                      <button onClick={handleSave} disabled={saving} className="px-4 py-2 bg-hos-gold text-[#1a1406] rounded-lg hover:bg-hos-gold-hover disabled:opacity-50 text-sm font-medium">
                         {saving ? 'Saving...' : 'Save'}
                       </button>
-                      <button onClick={() => setEditing(null)} className="px-4 py-2 border rounded-lg hover:bg-gray-50 text-sm font-medium">Cancel</button>
+                      <button onClick={() => setEditing(null)} className="px-4 py-2 border rounded-lg hover:bg-hos-bg-tertiary text-sm font-medium">Cancel</button>
                     </div>
                   </div>
                 ) : (
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-4">
-                      <div className="w-12 h-12 rounded-lg bg-purple-100 flex items-center justify-center text-xl">
+                      <div className="w-12 h-12 rounded-lg bg-hos-gold/20 flex items-center justify-center text-xl">
                         {tier.icon || '🏆'}
                       </div>
                       <div>
-                        <h3 className="font-semibold text-gray-900">{tier.name}</h3>
-                        <p className="text-sm text-gray-500">
+                        <h3 className="font-semibold text-white">{tier.name}</h3>
+                        <p className="text-sm text-hos-text-muted">
                           Level {tier.level} &middot; {Number(tier.minPoints).toLocaleString()}+ pts &middot; {tier.multiplier}x multiplier
                         </p>
                       </div>
                     </div>
                     <div className="flex items-center gap-3">
                       {tier._count?.members != null && (
-                        <span className="text-sm text-gray-500">{tier._count.members} members</span>
+                        <span className="text-sm text-hos-text-muted">{tier._count.members} members</span>
                       )}
-                      <button onClick={() => startEdit(tier)} className="px-3 py-1.5 text-sm text-purple-600 hover:bg-purple-50 rounded-lg transition-colors font-medium">
+                      <button onClick={() => startEdit(tier)} className="px-3 py-1.5 text-sm text-hos-gold hover:bg-hos-gold/10 rounded-lg transition-colors font-medium">
                         Edit
                       </button>
                     </div>
@@ -125,8 +125,8 @@ export default function AdminLoyaltyTiersPage() {
               </div>
             ))}
             {tiers.length === 0 && (
-              <div className="bg-white border rounded-lg p-8 text-center text-gray-500">
-                No tiers configured. Seed the loyalty programme to create default tiers.
+              <div className="bg-hos-bg-secondary border rounded-lg p-8 text-center text-hos-text-muted">
+                No tiers configured. Seed the loyalty program to create default tiers.
               </div>
             )}
           </div>

@@ -139,9 +139,9 @@ export function AIChatInterface({ characterId, character, onClose }: AIChatInter
   };
 
   return (
-    <div className="flex flex-col h-[600px] bg-white rounded-xl shadow-lg border border-gray-200">
+    <div className="flex flex-col h-[600px] bg-hos-bg-secondary rounded-xl shadow-lg border border-hos-border">
       {/* Header */}
-      <div className="flex items-center justify-between p-4 border-b border-gray-200">
+      <div className="flex items-center justify-between p-4 border-b border-hos-border">
         <div className="flex items-center gap-3">
           {characterInfo?.avatar ? (
             <Image
@@ -152,19 +152,19 @@ export function AIChatInterface({ characterId, character, onClose }: AIChatInter
               className="rounded-full object-cover"
             />
           ) : (
-            <div className="w-10 h-10 rounded-full bg-purple-100 flex items-center justify-center">
+            <div className="w-10 h-10 rounded-full bg-hos-gold/20 flex items-center justify-center">
               <span className="text-xl">🧙</span>
             </div>
           )}
           <div>
             <h3 className="font-semibold">{characterInfo?.name || 'Character'}</h3>
-            <p className="text-xs text-gray-500">{characterInfo?.fandom.name}</p>
+            <p className="text-xs text-hos-text-muted">{characterInfo?.fandom.name}</p>
           </div>
         </div>
         {onClose && (
           <button
             onClick={onClose}
-            className="text-gray-400 hover:text-gray-600"
+            className="text-hos-text-muted hover:text-hos-text-secondary"
           >
             ✕
           </button>
@@ -174,7 +174,7 @@ export function AIChatInterface({ characterId, character, onClose }: AIChatInter
       {/* Messages */}
       <div className="flex-1 overflow-y-auto p-4 space-y-4">
         {messages.length === 0 && (
-          <div className="text-center text-gray-500 mt-8">
+          <div className="text-center text-hos-text-muted mt-8">
             <p className="text-lg font-semibold mb-2">Start chatting!</p>
             <p className="text-sm">Ask {characterInfo?.name} about products, fandoms, or recommendations.</p>
           </div>
@@ -190,8 +190,8 @@ export function AIChatInterface({ characterId, character, onClose }: AIChatInter
             <div
               className={`max-w-[80%] rounded-lg p-3 ${
                 message.role === 'user'
-                  ? 'bg-purple-600 text-white'
-                  : 'bg-gray-100 text-gray-800'
+                  ? 'bg-hos-gold text-[#1a1406]'
+                  : 'bg-hos-bg-tertiary text-white'
               }`}
             >
               <p className="text-sm whitespace-pre-wrap">{message.content}</p>
@@ -201,11 +201,11 @@ export function AIChatInterface({ characterId, character, onClose }: AIChatInter
 
         {loading && (
           <div className="flex justify-start">
-            <div className="bg-gray-100 rounded-lg p-3">
+            <div className="bg-hos-bg-tertiary rounded-lg p-3">
               <div className="flex gap-1">
-                <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"></div>
-                <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
-                <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0.4s' }}></div>
+                <div className="w-2 h-2 bg-hos-text-muted rounded-full animate-bounce"></div>
+                <div className="w-2 h-2 bg-hos-text-muted rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
+                <div className="w-2 h-2 bg-hos-text-muted rounded-full animate-bounce" style={{ animationDelay: '0.4s' }}></div>
               </div>
             </div>
           </div>
@@ -215,20 +215,20 @@ export function AIChatInterface({ characterId, character, onClose }: AIChatInter
       </div>
 
       {/* Input */}
-      <form onSubmit={sendMessage} className="p-4 border-t border-gray-200">
+      <form onSubmit={sendMessage} className="p-4 border-t border-hos-border">
         <div className="flex gap-2">
           <input
             type="text"
             value={input}
             onChange={(e) => setInput(e.target.value)}
             placeholder="Type your message..."
-            className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+            className="flex-1 px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50 focus:border-transparent"
             disabled={loading}
           />
           <button
             type="submit"
             disabled={!input.trim() || loading}
-            className="px-6 py-2 bg-purple-600 text-white rounded-lg font-semibold hover:bg-purple-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            className="px-6 py-2 bg-hos-gold text-[#1a1406] rounded-lg font-semibold hover:bg-hos-gold-hover transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
             Send
           </button>

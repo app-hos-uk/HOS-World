@@ -72,8 +72,8 @@ export default function AdminStoreDetailPage() {
             <>
               <div className="flex justify-between items-start">
                 <div>
-                  <h1 className="text-2xl font-semibold text-gray-900">{String(row.name)}</h1>
-                  <p className="text-sm text-gray-500">
+                  <h1 className="text-2xl font-semibold text-white">{String(row.name)}</h1>
+                  <p className="text-sm text-hos-text-muted">
                     {String(row.code)} · {String(row.defaultRegionCode)} · active:{' '}
                     {String(row.isActive)}
                   </p>
@@ -88,12 +88,12 @@ export default function AdminStoreDetailPage() {
               </div>
               <div>
                 <h2 className="text-lg font-medium mb-2">Onboarding</h2>
-                <p className="text-xs text-gray-500 mb-2">Status: {String(checklist?.status ?? '—')}</p>
+                <p className="text-xs text-hos-text-muted mb-2">Status: {String(checklist?.status ?? '—')}</p>
                 <ul className="space-y-2 text-sm">
                   {steps.map((s) => (
                     <li
                       key={s.key}
-                      className="flex justify-between items-center border rounded p-2 bg-white"
+                      className="flex justify-between items-center border rounded p-2 bg-hos-bg-secondary"
                     >
                       <span>
                         {s.label}
@@ -115,7 +115,7 @@ export default function AdminStoreDetailPage() {
                 </ul>
                 <button
                   type="button"
-                  className="mt-3 text-sm px-3 py-1 rounded bg-gray-900 text-white"
+                  className="mt-3 text-sm px-3 py-1 rounded bg-hos-bg-tertiary text-white"
                   onClick={finishOnboarding}
                 >
                   Complete onboarding (all steps must be done)
@@ -123,7 +123,7 @@ export default function AdminStoreDetailPage() {
               </div>
             </>
           ) : (
-            <p className="text-gray-500">Loading…</p>
+            <p className="text-hos-text-muted">Loading…</p>
           )}
         </div>
       </AdminLayout>

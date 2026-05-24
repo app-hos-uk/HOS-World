@@ -7,8 +7,8 @@ import dynamic from 'next/dynamic';
 const MapComponent = dynamic(() => import('./MapPickerClient'), {
   ssr: false,
   loading: () => (
-    <div className="bg-gray-100 rounded-lg flex items-center justify-center" style={{ height: '400px' }}>
-      <div className="text-gray-500">Loading map...</div>
+    <div className="bg-hos-bg-tertiary rounded-lg flex items-center justify-center" style={{ height: '400px' }}>
+      <div className="text-hos-text-muted">Loading map...</div>
     </div>
   ),
 });

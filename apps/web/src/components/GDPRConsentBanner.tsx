@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { apiClient } from '@/lib/api';
 import { useToast } from '@/hooks/useToast';
 import Link from 'next/link';
+import { dispatchConsentUpdated } from '@/lib/analytics';
 
 interface ConsentPreferences {
   essential: boolean;
@@ -109,6 +110,7 @@ export function GDPRConsentBanner() {
       // Always save to localStorage (works for both authenticated and anonymous users)
       localStorage.setItem('gdpr_consent_given', 'true');
       localStorage.setItem('gdpr_consent_preferences', JSON.stringify(preferences));
+      dispatchConsentUpdated(preferences);
       
       setShowBanner(false);
       toast.success('Consent preferences saved');
@@ -116,6 +118,7 @@ export function GDPRConsentBanner() {
       // Fallback: save to localStorage even if something unexpected fails
       localStorage.setItem('gdpr_consent_given', 'true');
       localStorage.setItem('gdpr_consent_preferences', JSON.stringify(preferences));
+      dispatchConsentUpdated(preferences);
       setShowBanner(false);
       console.error('Error saving consent:', error);
     } finally {
@@ -132,22 +135,22 @@ export function GDPRConsentBanner() {
   }
 
   return (
-    <div className="fixed bottom-0 left-0 right-0 z-50 bg-white border-t-2 border-purple-200 shadow-2xl">
-      <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6">
+    <div className="fixed bottom-0 w-full bg-hos-bg-secondary border-t border-hos-border p-4 z-50 shadow-lg">
+      <div className="container mx-auto px-4 sm:px-6 lg:px-8">
         {!showDetails ? (
           // Simple Banner View
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
             <div className="flex-1">
-              <h3 className="text-base sm:text-lg font-semibold text-gray-900 mb-2">
+              <h3 className="text-base sm:text-lg font-semibold text-white mb-2">
                 We value your privacy
               </h3>
-              <p className="text-sm text-gray-600 mb-2">
+              <p className="text-hos-text-secondary text-sm mb-2">
                 We use cookies and similar technologies to enhance your experience, analyze site usage, and assist in our marketing efforts. 
                 By clicking &quot;Accept All&quot;, you consent to our use of cookies. You can customize your preferences or learn more in our{' '}
-                <Link href="/privacy-policy" className="text-purple-600 hover:underline font-medium">
+                <Link href="/privacy-policy" className="text-hos-gold hover:text-hos-gold-hover font-medium">
                   Privacy Policy
                 </Link>.{' '}
-                <Link href="/do-not-sell" className="text-purple-600 hover:underline font-medium">
+                <Link href="/do-not-sell" className="text-hos-gold hover:text-hos-gold-hover font-medium">
                   Do Not Sell or Share My Personal Information
                 </Link>.
               </p>
@@ -155,21 +158,21 @@ export function GDPRConsentBanner() {
             <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 w-full sm:w-auto">
               <button
                 onClick={() => setShowDetails(true)}
-                className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+                className="border border-hos-border text-hos-text-secondary px-5 py-2 rounded-md text-sm hover:border-hos-gold hover:text-hos-gold transition-colors"
               >
                 Customize
               </button>
               <button
                 onClick={handleRejectAll}
                 disabled={loading}
-                className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors disabled:opacity-50"
+                className="border border-hos-border text-hos-text-secondary px-5 py-2 rounded-md text-sm hover:border-hos-gold hover:text-hos-gold transition-colors disabled:opacity-50"
               >
                 Reject All
               </button>
               <button
                 onClick={handleAcceptAll}
                 disabled={loading}
-                className="px-4 py-2 text-sm font-medium text-white bg-purple-600 rounded-lg hover:bg-purple-700 transition-colors disabled:opacity-50"
+                className="bg-hos-gold text-[#1a1406] px-5 py-2 rounded-md font-semibold text-sm hover:bg-hos-gold-hover transition-colors disabled:opacity-50"
               >
                 {loading ? 'Saving...' : 'Accept All'}
               </button>
@@ -179,29 +182,29 @@ export function GDPRConsentBanner() {
           // Detailed Preferences View
           <div className="space-y-4">
             <div>
-              <h3 className="text-lg font-semibold text-gray-900 mb-2">
+              <h3 className="text-lg font-semibold text-white mb-2">
                 Cookie & Privacy Preferences
               </h3>
-              <p className="text-sm text-gray-600">
+              <p className="text-hos-text-secondary text-sm">
                 Manage your cookie preferences. You can enable or disable different types of cookies below. 
                 Learn more in our{' '}
-                <Link href="/privacy-policy" className="text-purple-600 hover:underline font-medium">
+                <Link href="/privacy-policy" className="text-hos-gold hover:text-hos-gold-hover font-medium">
                   Privacy Policy
                 </Link>.
               </p>
             </div>
 
-            <div className="space-y-3 border-t border-gray-200 pt-4">
+            <div className="space-y-3 border-t border-hos-border pt-4">
               {/* Essential Cookies */}
-              <div className="flex items-start justify-between p-3 bg-gray-50 rounded-lg">
+              <div className="flex items-start justify-between p-3 bg-hos-bg rounded-lg border border-hos-border">
                 <div className="flex-1">
                   <div className="flex items-center gap-2 mb-1">
-                    <h4 className="font-medium text-gray-900">Essential Cookies</h4>
-                    <span className="px-2 py-0.5 bg-green-100 text-green-800 text-xs rounded-full font-medium">
+                    <h4 className="font-medium text-white">Essential Cookies</h4>
+                    <span className="px-2 py-0.5 bg-hos-new-green/20 text-hos-new-green text-xs rounded-full font-medium">
                       Required
                     </span>
                   </div>
-                  <p className="text-sm text-gray-600">
+                  <p className="text-hos-text-secondary text-sm">
                     These cookies are necessary for the website to function and cannot be switched off. They are usually only set in response to actions made by you.
                   </p>
                 </div>
@@ -211,17 +214,17 @@ export function GDPRConsentBanner() {
                       type="checkbox"
                       checked={true}
                       disabled
-                      className="w-11 h-6 bg-purple-600 rounded-full appearance-none cursor-not-allowed opacity-50"
+                      className="w-11 h-6 bg-hos-gold rounded-full appearance-none cursor-not-allowed opacity-50"
                     />
                   </div>
                 </div>
               </div>
 
               {/* Marketing Cookies */}
-              <div className="flex items-start justify-between p-3 bg-white border border-gray-200 rounded-lg">
+              <div className="flex items-start justify-between p-3 bg-hos-bg border border-hos-border rounded-lg">
                 <div className="flex-1">
-                  <h4 className="font-medium text-gray-900 mb-1">Marketing Cookies</h4>
-                  <p className="text-sm text-gray-600">
+                  <h4 className="font-medium text-white mb-1">Marketing Cookies</h4>
+                  <p className="text-hos-text-secondary text-sm">
                     These cookies are used to deliver personalized advertisements and track campaign performance.
                   </p>
                 </div>
@@ -235,16 +238,16 @@ export function GDPRConsentBanner() {
                       }
                       className="sr-only peer"
                     />
-                    <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-purple-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-purple-600"></div>
+                    <div className="w-11 h-6 bg-hos-bg-tertiary peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-hos-gold/30 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-hos-bg-secondary after:border-hos-border after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-hos-gold"></div>
                   </label>
                 </div>
               </div>
 
               {/* Analytics Cookies */}
-              <div className="flex items-start justify-between p-3 bg-white border border-gray-200 rounded-lg">
+              <div className="flex items-start justify-between p-3 bg-hos-bg border border-hos-border rounded-lg">
                 <div className="flex-1">
-                  <h4 className="font-medium text-gray-900 mb-1">Analytics Cookies</h4>
-                  <p className="text-sm text-gray-600">
+                  <h4 className="font-medium text-white mb-1">Analytics Cookies</h4>
+                  <p className="text-hos-text-secondary text-sm">
                     These cookies help us understand how visitors interact with our website by collecting and reporting information anonymously.
                   </p>
                 </div>
@@ -258,30 +261,30 @@ export function GDPRConsentBanner() {
                       }
                       className="sr-only peer"
                     />
-                    <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-purple-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-purple-600"></div>
+                    <div className="w-11 h-6 bg-hos-bg-tertiary peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-hos-gold/30 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-hos-bg-secondary after:border-hos-border after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-hos-gold"></div>
                   </label>
                 </div>
               </div>
             </div>
 
-            <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 pt-4 border-t border-gray-200">
+            <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 pt-4 border-t border-hos-border">
               <button
                 onClick={() => setShowDetails(false)}
-                className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+                className="border border-hos-border text-hos-text-secondary px-5 py-2 rounded-md text-sm hover:border-hos-gold hover:text-hos-gold transition-colors"
               >
                 Back
               </button>
               <button
                 onClick={handleRejectAll}
                 disabled={loading}
-                className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors disabled:opacity-50"
+                className="border border-hos-border text-hos-text-secondary px-5 py-2 rounded-md text-sm hover:border-hos-gold hover:text-hos-gold transition-colors disabled:opacity-50"
               >
                 Reject All
               </button>
               <button
                 onClick={handleCustomSave}
                 disabled={loading}
-                className="px-4 py-2 text-sm font-medium text-white bg-purple-600 rounded-lg hover:bg-purple-700 transition-colors disabled:opacity-50 flex-1 sm:flex-initial"
+                className="bg-hos-gold text-[#1a1406] px-5 py-2 rounded-md font-semibold text-sm hover:bg-hos-gold-hover transition-colors disabled:opacity-50 flex-1 sm:flex-initial"
               >
                 {loading ? 'Saving...' : 'Save Preferences'}
               </button>

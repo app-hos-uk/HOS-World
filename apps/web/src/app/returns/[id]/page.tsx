@@ -58,11 +58,11 @@ export default function ReturnDetailPage() {
   if (loading) {
     return (
       <RouteGuard allowedRoles={['CUSTOMER', 'ADMIN']}>
-        <div className="min-h-screen bg-white">
+        <div className="min-h-screen bg-hos-bg-secondary">
           <Header />
           <main className="container mx-auto px-4 py-12">
             <div className="flex justify-center">
-              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600" />
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-hos-gold" />
             </div>
           </main>
           <Footer />
@@ -74,12 +74,12 @@ export default function ReturnDetailPage() {
   if (error || !returnRequest) {
     return (
       <RouteGuard allowedRoles={['CUSTOMER', 'ADMIN']}>
-        <div className="min-h-screen bg-white">
+        <div className="min-h-screen bg-hos-bg-secondary">
           <Header />
           <main className="container mx-auto px-4 py-12">
             <div className="max-w-md mx-auto text-center">
-              <p className="text-gray-600 mb-4">{error || 'Return request not found'}</p>
-              <Link href="/returns" className="text-purple-600 hover:text-purple-800 font-medium">
+              <p className="text-hos-text-secondary mb-4">{error || 'Return request not found'}</p>
+              <Link href="/returns" className="text-hos-gold hover:text-hos-gold-hover font-medium">
                 ← Back to Returns
               </Link>
             </div>
@@ -92,37 +92,37 @@ export default function ReturnDetailPage() {
 
   return (
     <RouteGuard allowedRoles={['CUSTOMER', 'ADMIN']}>
-      <div className="min-h-screen bg-white">
+      <div className="min-h-screen bg-hos-bg-secondary">
         <Header />
         <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 lg:py-12">
           <div className="max-w-2xl mx-auto">
-            <Link href="/returns" className="text-purple-600 hover:text-purple-800 mb-4 inline-block">
+            <Link href="/returns" className="text-hos-gold hover:text-hos-gold-hover mb-4 inline-block">
               ← Back to Returns
             </Link>
-            <div className="bg-white border border-gray-200 rounded-lg p-6">
+            <div className="bg-hos-bg-secondary border border-hos-border rounded-lg p-6">
               <h1 className="text-2xl font-bold mb-6">Return Request Details</h1>
               <dl className="space-y-4">
                 <div>
-                  <dt className="text-sm font-medium text-gray-500">Status</dt>
+                  <dt className="text-sm font-medium text-hos-text-muted">Status</dt>
                   <dd className="mt-1">
-                    <span className="px-2 py-1 text-xs font-medium rounded-full bg-gray-100 text-gray-800">
+                    <span className="px-2 py-1 text-xs font-medium rounded-full bg-hos-bg-tertiary text-white">
                       {returnRequest.status || 'N/A'}
                     </span>
                   </dd>
                 </div>
                 <div>
-                  <dt className="text-sm font-medium text-gray-500">Reason</dt>
-                  <dd className="mt-1 text-gray-900">{returnRequest.reason || 'N/A'}</dd>
+                  <dt className="text-sm font-medium text-hos-text-muted">Reason</dt>
+                  <dd className="mt-1 text-white">{returnRequest.reason || 'N/A'}</dd>
                 </div>
                 {returnRequest.notes && (
                   <div>
-                    <dt className="text-sm font-medium text-gray-500">Notes</dt>
-                    <dd className="mt-1 text-gray-900">{returnRequest.notes}</dd>
+                    <dt className="text-sm font-medium text-hos-text-muted">Notes</dt>
+                    <dd className="mt-1 text-white">{returnRequest.notes}</dd>
                   </div>
                 )}
                 {returnRequest.refundAmount != null && (
                   <div>
-                    <dt className="text-sm font-medium text-gray-500">Refund Amount</dt>
+                    <dt className="text-sm font-medium text-hos-text-muted">Refund Amount</dt>
                     <dd className="mt-1 text-lg font-semibold text-green-600">
                       {formatPrice(Number(returnRequest.refundAmount), returnRequest.currency || 'USD')}
                     </dd>
@@ -130,13 +130,13 @@ export default function ReturnDetailPage() {
                 )}
                 {returnRequest.refundMethod && (
                   <div>
-                    <dt className="text-sm font-medium text-gray-500">Refund Method</dt>
-                    <dd className="mt-1 text-gray-900">{returnRequest.refundMethod}</dd>
+                    <dt className="text-sm font-medium text-hos-text-muted">Refund Method</dt>
+                    <dd className="mt-1 text-white">{returnRequest.refundMethod}</dd>
                   </div>
                 )}
                 <div>
-                  <dt className="text-sm font-medium text-gray-500">Created</dt>
-                  <dd className="mt-1 text-gray-900">
+                  <dt className="text-sm font-medium text-hos-text-muted">Created</dt>
+                  <dd className="mt-1 text-white">
                     {returnRequest.createdAt
                       ? new Date(returnRequest.createdAt).toLocaleString()
                       : 'N/A'}
@@ -145,7 +145,7 @@ export default function ReturnDetailPage() {
               </dl>
 
               {(returnRequest.status || '').toLowerCase() === 'pending' && (
-                <div className="mt-6 pt-6 border-t border-gray-200">
+                <div className="mt-6 pt-6 border-t border-hos-border">
                   <button
                     onClick={handleCancelReturn}
                     disabled={cancelLoading}

@@ -176,19 +176,19 @@ export default function FulfillmentCentersPage() {
         <div className="mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
             <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold">Fulfillment Centers</h1>
-            <p className="text-gray-600 mt-2">Manage your fulfillment center locations</p>
+            <p className="text-hos-text-secondary mt-2">Manage your fulfillment center locations</p>
           </div>
           <div className="flex gap-2">
             <button
               onClick={() => fetchCenters(true)}
               disabled={loading}
-              className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50"
+              className="px-4 py-2 text-sm font-medium text-hos-text-secondary bg-hos-bg-secondary border border-hos-border rounded-lg hover:bg-hos-bg-tertiary disabled:opacity-50"
             >
               {loading ? 'Refreshing...' : 'Refresh'}
             </button>
             <button
               onClick={openAddModal}
-              className="px-4 py-2 text-sm font-medium text-white bg-purple-600 rounded-lg hover:bg-purple-700 transition-colors"
+              className="px-4 py-2 text-sm font-medium text-white bg-hos-gold rounded-lg hover:bg-hos-gold-hover transition-colors"
             >
               + Add Center
             </button>
@@ -197,7 +197,7 @@ export default function FulfillmentCentersPage() {
 
         {loading && (
           <div className="flex items-center justify-center py-12">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600"></div>
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-hos-gold"></div>
           </div>
         )}
 
@@ -208,13 +208,13 @@ export default function FulfillmentCentersPage() {
         )}
 
         {!loading && !error && centers.length === 0 && (
-          <div className="bg-white border border-gray-200 rounded-lg p-12 text-center">
+          <div className="bg-hos-bg-secondary border border-hos-border rounded-lg p-12 text-center">
             <div className="text-5xl mb-4">🏭</div>
-            <p className="text-gray-500 text-lg">No fulfillment centers found</p>
-            <p className="text-sm text-gray-400 mt-2">Create your first center to get started</p>
+            <p className="text-hos-text-muted text-lg">No fulfillment centers found</p>
+            <p className="text-sm text-hos-text-muted mt-2">Create your first center to get started</p>
             <button
               onClick={openAddModal}
-              className="mt-4 px-6 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors font-medium"
+              className="mt-4 px-6 py-2 bg-hos-gold text-[#1a1406] rounded-lg hover:bg-hos-gold-hover transition-colors font-medium"
             >
               + Add Center
             </button>
@@ -229,15 +229,15 @@ export default function FulfillmentCentersPage() {
               return (
               <div
                 key={center.id}
-                className="bg-white border border-gray-200 rounded-lg p-6 shadow-sm hover:shadow-md transition-shadow"
+                className="bg-hos-bg-secondary border border-hos-border rounded-lg p-6 shadow-sm hover:shadow-md transition-shadow"
               >
                 <div className="flex items-start justify-between mb-3">
-                  <h3 className="text-lg font-semibold text-gray-900 flex-1 mr-2">{center.name}</h3>
+                  <h3 className="text-lg font-semibold text-white flex-1 mr-2">{center.name}</h3>
                   <span
                     className={`px-2 py-1 text-xs font-medium rounded-full ${
                       isActive
                         ? 'bg-green-100 text-green-800'
-                        : 'bg-gray-100 text-gray-600'
+                        : 'bg-hos-bg-tertiary text-hos-text-secondary'
                     }`}
                   >
                     {isActive ? 'ACTIVE' : 'INACTIVE'}
@@ -245,27 +245,27 @@ export default function FulfillmentCentersPage() {
                 </div>
 
                 <div className="space-y-2 mb-4">
-                  <div className="flex items-start gap-2 text-sm text-gray-600">
+                  <div className="flex items-start gap-2 text-sm text-hos-text-secondary">
                     <span className="shrink-0">📍</span>
                     <span>{center.address}</span>
                   </div>
-                  <div className="flex items-center gap-2 text-sm text-gray-600">
+                  <div className="flex items-center gap-2 text-sm text-hos-text-secondary">
                     <span className="shrink-0">📦</span>
                     <span>Capacity: {(center.capacity ?? 0).toLocaleString()}</span>
                   </div>
                   {center.createdAt && (
-                    <div className="flex items-center gap-2 text-xs text-gray-400">
+                    <div className="flex items-center gap-2 text-xs text-hos-text-muted">
                       <span>Created: {new Date(center.createdAt).toLocaleDateString()}</span>
                     </div>
                   )}
                 </div>
 
-                <div className="flex flex-wrap gap-2 pt-3 border-t border-gray-100">
+                <div className="flex flex-wrap gap-2 pt-3 border-t border-hos-border">
                   <button
                     onClick={() => handleToggleStatus(center)}
                     className={`px-3 py-1.5 text-xs font-medium rounded-lg transition-colors ${
                       isActive
-                        ? 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                        ? 'bg-hos-bg-tertiary text-hos-text-secondary hover:bg-hos-bg-tertiary'
                         : 'bg-green-100 text-green-700 hover:bg-green-200'
                     }`}
                   >
@@ -273,7 +273,7 @@ export default function FulfillmentCentersPage() {
                   </button>
                   <button
                     onClick={() => openEditModal(center)}
-                    className="px-3 py-1.5 text-xs font-medium rounded-lg bg-blue-100 text-blue-700 hover:bg-blue-200 transition-colors"
+                    className="px-3 py-1.5 text-xs font-medium rounded-lg bg-hos-gold/20 text-hos-gold hover:bg-hos-gold/20 transition-colors"
                   >
                     Edit
                   </button>
@@ -288,7 +288,7 @@ export default function FulfillmentCentersPage() {
                       </button>
                       <button
                         onClick={() => setDeleteConfirmId(null)}
-                        className="px-3 py-1.5 text-xs font-medium rounded-lg bg-gray-100 text-gray-700 hover:bg-gray-200 transition-colors"
+                        className="px-3 py-1.5 text-xs font-medium rounded-lg bg-hos-bg-tertiary text-hos-text-secondary hover:bg-hos-bg-tertiary transition-colors"
                       >
                         Cancel
                       </button>
@@ -311,7 +311,7 @@ export default function FulfillmentCentersPage() {
         {/* Add/Edit Modal */}
         {showModal && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-            <div className="bg-white rounded-lg max-w-lg w-full">
+            <div className="bg-hos-bg-secondary rounded-lg max-w-lg w-full">
               <div className="p-6">
                 <div className="flex justify-between items-start mb-4">
                   <h2 className="text-2xl font-bold">
@@ -319,7 +319,7 @@ export default function FulfillmentCentersPage() {
                   </h2>
                   <button
                     onClick={closeModal}
-                    className="text-gray-500 hover:text-gray-700"
+                    className="text-hos-text-muted hover:text-hos-text-secondary"
                   >
                     <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -329,28 +329,28 @@ export default function FulfillmentCentersPage() {
 
                 <form onSubmit={handleSubmit} className="space-y-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                    <label className="block text-sm font-medium text-hos-text-secondary mb-1">
                       Center Name <span className="text-red-500">*</span>
                     </label>
                     <input
                       type="text"
                       value={formData.name}
                       onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                      className="w-full px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50 focus:border-transparent"
                       placeholder="e.g. East Coast Warehouse"
                       required
                     />
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                    <label className="block text-sm font-medium text-hos-text-secondary mb-1">
                       Address <span className="text-red-500">*</span>
                     </label>
                     <textarea
                       value={formData.address}
                       onChange={(e) => setFormData({ ...formData, address: e.target.value })}
                       rows={3}
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                      className="w-full px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50 focus:border-transparent"
                       placeholder="Full address of the center"
                       required
                     />
@@ -358,23 +358,23 @@ export default function FulfillmentCentersPage() {
 
                   <div className="grid grid-cols-2 gap-3">
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">City <span className="text-red-500">*</span></label>
+                      <label className="block text-sm font-medium text-hos-text-secondary mb-1">City <span className="text-red-500">*</span></label>
                       <input
                         type="text"
                         value={formData.city}
                         onChange={(e) => setFormData({ ...formData, city: e.target.value })}
-                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                        className="w-full px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50 focus:border-transparent"
                         placeholder="City"
                         required
                       />
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Country <span className="text-red-500">*</span></label>
+                      <label className="block text-sm font-medium text-hos-text-secondary mb-1">Country <span className="text-red-500">*</span></label>
                       <input
                         type="text"
                         value={formData.country}
                         onChange={(e) => setFormData({ ...formData, country: e.target.value })}
-                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                        className="w-full px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50 focus:border-transparent"
                         placeholder="Country"
                         required
                       />
@@ -382,14 +382,14 @@ export default function FulfillmentCentersPage() {
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                    <label className="block text-sm font-medium text-hos-text-secondary mb-1">
                       Capacity
                     </label>
                     <input
                       type="number"
                       value={formData.capacity}
                       onChange={(e) => setFormData({ ...formData, capacity: parseInt(e.target.value) || 0 })}
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                      className="w-full px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50 focus:border-transparent"
                       placeholder="Max number of items"
                       min={0}
                     />
@@ -399,7 +399,7 @@ export default function FulfillmentCentersPage() {
                     <button
                       type="submit"
                       disabled={actionLoading}
-                      className="px-6 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors font-medium disabled:opacity-50"
+                      className="px-6 py-2 bg-hos-gold text-[#1a1406] rounded-lg hover:bg-hos-gold-hover transition-colors font-medium disabled:opacity-50"
                     >
                       {actionLoading ? 'Saving...' : editingCenter ? 'Update Center' : 'Create Center'}
                     </button>
@@ -407,7 +407,7 @@ export default function FulfillmentCentersPage() {
                       type="button"
                       onClick={closeModal}
                       disabled={actionLoading}
-                      className="px-6 py-2 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400 transition-colors font-medium"
+                      className="px-6 py-2 bg-hos-bg-tertiary text-hos-text-secondary rounded-lg hover:bg-hos-text-muted transition-colors font-medium"
                     >
                       Cancel
                     </button>

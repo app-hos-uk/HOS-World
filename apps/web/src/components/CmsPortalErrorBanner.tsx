@@ -20,7 +20,7 @@ export function CmsPortalErrorBanner({
       <p className="mt-1 text-amber-900">{message}</p>
       <div className="mt-3 flex flex-wrap items-center gap-3">
         {showSettingsLink ? (
-          <Link href="/cms/settings" className="inline-flex font-medium text-purple-700 underline hover:text-purple-800">
+          <Link href="/cms/settings" className="inline-flex font-medium text-hos-gold-hover underline hover:text-hos-gold-hover">
             Open CMS Settings
           </Link>
         ) : null}

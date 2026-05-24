@@ -111,23 +111,23 @@ export default function AdminSettingsPage() {
       <AdminLayout>
         <div className="mb-6">
           <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold">System Settings</h1>
-          <p className="text-gray-600 mt-2">Configure platform-wide settings and preferences</p>
+          <p className="text-hos-text-secondary mt-2">Configure platform-wide settings and preferences</p>
         </div>
 
         {/* Quick Access Cards */}
         <div className="grid gap-4 md:grid-cols-3 mb-6">
           <Link
             href="/admin/settings/integrations"
-            className="group bg-gradient-to-br from-purple-50 to-purple-100 border border-purple-200 rounded-lg p-5 hover:shadow-md transition-all"
+            className="group bg-gradient-to-br from-hos-bg to-hos-bg-tertiary border border-hos-border-accent rounded-lg p-5 hover:shadow-md transition-all"
           >
             <div className="flex items-center gap-3 mb-2">
               <span className="text-2xl">🔌</span>
-              <h3 className="font-semibold text-gray-900 group-hover:text-purple-700">Integrations</h3>
+              <h3 className="font-semibold text-white group-hover:text-hos-gold-hover">Integrations</h3>
             </div>
-            <p className="text-sm text-gray-600">
+            <p className="text-sm text-hos-text-secondary">
               Configure third-party services: shipping carriers, tax services, payment gateways
             </p>
-            <span className="inline-flex items-center mt-3 text-sm text-purple-600 font-medium group-hover:gap-2 transition-all">
+            <span className="inline-flex items-center mt-3 text-sm text-hos-gold font-medium group-hover:gap-2 transition-all">
               Manage Integrations
               <svg className="w-4 h-4 ml-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
@@ -137,16 +137,16 @@ export default function AdminSettingsPage() {
 
           <Link
             href="/admin/settings/integrations/shipping"
-            className="group bg-gradient-to-br from-blue-50 to-blue-100 border border-blue-200 rounded-lg p-5 hover:shadow-md transition-all"
+            className="group bg-gradient-to-br from-hos-bg-secondary to-hos-bg-tertiary border border-hos-border-accent rounded-lg p-5 hover:shadow-md transition-all"
           >
             <div className="flex items-center gap-3 mb-2">
               <span className="text-2xl">🚚</span>
-              <h3 className="font-semibold text-gray-900 group-hover:text-blue-700">Shipping Carriers</h3>
+              <h3 className="font-semibold text-white group-hover:text-hos-gold-hover">Shipping Carriers</h3>
             </div>
-            <p className="text-sm text-gray-600">
+            <p className="text-sm text-hos-text-secondary">
               USPS, FedEx, DHL - Generate labels and track shipments
             </p>
-            <span className="inline-flex items-center mt-3 text-sm text-blue-600 font-medium group-hover:gap-2 transition-all">
+            <span className="inline-flex items-center mt-3 text-sm text-hos-gold font-medium group-hover:gap-2 transition-all">
               Configure Carriers
               <svg className="w-4 h-4 ml-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
@@ -160,9 +160,9 @@ export default function AdminSettingsPage() {
           >
             <div className="flex items-center gap-3 mb-2">
               <span className="text-2xl">📊</span>
-              <h3 className="font-semibold text-gray-900 group-hover:text-green-700">Tax Services</h3>
+              <h3 className="font-semibold text-white group-hover:text-green-700">Tax Services</h3>
             </div>
-            <p className="text-sm text-gray-600">
+            <p className="text-sm text-hos-text-secondary">
               Avalara, TaxJar - Automated tax calculation and compliance
             </p>
             <span className="inline-flex items-center mt-3 text-sm text-green-600 font-medium group-hover:gap-2 transition-all">
@@ -177,14 +177,14 @@ export default function AdminSettingsPage() {
         {loading ? (
           <div className="flex items-center justify-center py-12">
             <div className="text-center">
-              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600 mx-auto mb-4"></div>
-              <p className="text-gray-600">Loading settings...</p>
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-hos-gold mx-auto mb-4"></div>
+              <p className="text-hos-text-secondary">Loading settings...</p>
             </div>
           </div>
         ) : (
-        <div className="bg-white border border-gray-200 rounded-lg">
+        <div className="bg-hos-bg-secondary border border-hos-border rounded-lg">
           {/* Tabs */}
-          <div className="border-b border-gray-200">
+          <div className="border-b border-hos-border">
             <div className="flex overflow-x-auto">
               {tabs.map((tab) => (
                 <button
@@ -192,8 +192,8 @@ export default function AdminSettingsPage() {
                   onClick={() => setActiveTab(tab.id as any)}
                   className={`px-6 py-4 font-medium text-sm border-b-2 transition-colors whitespace-nowrap ${
                     activeTab === tab.id
-                      ? 'border-purple-600 text-purple-600'
-                      : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                      ? 'border-hos-gold text-hos-gold'
+                      : 'border-transparent text-hos-text-muted hover:text-hos-text-secondary hover:border-hos-border'
                   }`}
                 >
                   <span className="mr-2">{tab.icon}</span>
@@ -211,25 +211,25 @@ export default function AdminSettingsPage() {
                   <h3 className="text-lg font-semibold mb-4">General Settings</h3>
                   <div className="space-y-4">
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                      <label className="block text-sm font-medium text-hos-text-secondary mb-1">
                         Platform Name
                       </label>
                       <input
                         type="text"
                         value={settings.platformName}
                         onChange={(e) => updateSetting('platformName', e.target.value)}
-                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
+                        className="w-full px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50"
                       />
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                      <label className="block text-sm font-medium text-hos-text-secondary mb-1">
                         Platform URL
                       </label>
                       <input
                         type="url"
                         value={settings.platformUrl}
                         onChange={(e) => updateSetting('platformUrl', e.target.value)}
-                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
+                        className="w-full px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50"
                       />
                     </div>
                     <div className="flex items-center gap-2">
@@ -238,9 +238,9 @@ export default function AdminSettingsPage() {
                         id="maintenanceMode"
                         checked={settings.maintenanceMode}
                         onChange={(e) => updateSetting('maintenanceMode', e.target.checked)}
-                        className="h-4 w-4 text-purple-600 focus:ring-purple-500"
+                        className="h-4 w-4 text-hos-gold focus:ring-hos-gold/50"
                       />
-                      <label htmlFor="maintenanceMode" className="text-sm font-medium text-gray-700">
+                      <label htmlFor="maintenanceMode" className="text-sm font-medium text-hos-text-secondary">
                         Maintenance Mode
                       </label>
                     </div>
@@ -250,9 +250,9 @@ export default function AdminSettingsPage() {
                         id="allowRegistration"
                         checked={settings.allowRegistration}
                         onChange={(e) => updateSetting('allowRegistration', e.target.checked)}
-                        className="h-4 w-4 text-purple-600 focus:ring-purple-500"
+                        className="h-4 w-4 text-hos-gold focus:ring-hos-gold/50"
                       />
-                      <label htmlFor="allowRegistration" className="text-sm font-medium text-gray-700">
+                      <label htmlFor="allowRegistration" className="text-sm font-medium text-hos-text-secondary">
                         Allow User Registration
                       </label>
                     </div>
@@ -262,9 +262,9 @@ export default function AdminSettingsPage() {
                         id="requireEmailVerification"
                         checked={settings.requireEmailVerification}
                         onChange={(e) => updateSetting('requireEmailVerification', e.target.checked)}
-                        className="h-4 w-4 text-purple-600 focus:ring-purple-500"
+                        className="h-4 w-4 text-hos-gold focus:ring-hos-gold/50"
                       />
-                      <label htmlFor="requireEmailVerification" className="text-sm font-medium text-gray-700">
+                      <label htmlFor="requireEmailVerification" className="text-sm font-medium text-hos-text-secondary">
                         Require Email Verification
                       </label>
                     </div>
@@ -279,42 +279,42 @@ export default function AdminSettingsPage() {
                   <h3 className="text-lg font-semibold mb-4">Email Configuration</h3>
                   <div className="space-y-4">
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">SMTP Host</label>
+                      <label className="block text-sm font-medium text-hos-text-secondary mb-1">SMTP Host</label>
                       <input
                         type="text"
                         value={settings.smtpHost}
                         onChange={(e) => updateSetting('smtpHost', e.target.value)}
                         placeholder="smtp.gmail.com"
-                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
+                        className="w-full px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50"
                       />
                     </div>
                     <div className="grid grid-cols-2 gap-4">
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">SMTP Port</label>
+                        <label className="block text-sm font-medium text-hos-text-secondary mb-1">SMTP Port</label>
                         <input
                           type="number"
                           value={settings.smtpPort}
                           onChange={(e) => updateSetting('smtpPort', parseInt(e.target.value))}
-                          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
+                          className="w-full px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50"
                         />
                       </div>
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">SMTP User</label>
+                        <label className="block text-sm font-medium text-hos-text-secondary mb-1">SMTP User</label>
                         <input
                           type="text"
                           value={settings.smtpUser}
                           onChange={(e) => updateSetting('smtpUser', e.target.value)}
-                          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
+                          className="w-full px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50"
                         />
                       </div>
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">From Email</label>
+                      <label className="block text-sm font-medium text-hos-text-secondary mb-1">From Email</label>
                       <input
                         type="email"
                         value={settings.smtpFrom}
                         onChange={(e) => updateSetting('smtpFrom', e.target.value)}
-                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
+                        className="w-full px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50"
                       />
                     </div>
                     <div className="flex items-center gap-2">
@@ -323,9 +323,9 @@ export default function AdminSettingsPage() {
                         id="emailNotifications"
                         checked={settings.emailNotifications}
                         onChange={(e) => updateSetting('emailNotifications', e.target.checked)}
-                        className="h-4 w-4 text-purple-600 focus:ring-purple-500"
+                        className="h-4 w-4 text-hos-gold focus:ring-hos-gold/50"
                       />
-                      <label htmlFor="emailNotifications" className="text-sm font-medium text-gray-700">
+                      <label htmlFor="emailNotifications" className="text-sm font-medium text-hos-text-secondary">
                         Enable Email Notifications
                       </label>
                     </div>
@@ -345,9 +345,9 @@ export default function AdminSettingsPage() {
                         id="stripeEnabled"
                         checked={settings.stripeEnabled}
                         onChange={(e) => updateSetting('stripeEnabled', e.target.checked)}
-                        className="h-4 w-4 text-purple-600 focus:ring-purple-500"
+                        className="h-4 w-4 text-hos-gold focus:ring-hos-gold/50"
                       />
-                      <label htmlFor="stripeEnabled" className="text-sm font-medium text-gray-700">
+                      <label htmlFor="stripeEnabled" className="text-sm font-medium text-hos-text-secondary">
                         Enable Stripe Payments
                       </label>
                     </div>
@@ -357,27 +357,27 @@ export default function AdminSettingsPage() {
                         id="stripeTestMode"
                         checked={settings.stripeTestMode}
                         onChange={(e) => updateSetting('stripeTestMode', e.target.checked)}
-                        className="h-4 w-4 text-purple-600 focus:ring-purple-500"
+                        className="h-4 w-4 text-hos-gold focus:ring-hos-gold/50"
                       />
-                      <label htmlFor="stripeTestMode" className="text-sm font-medium text-gray-700">
+                      <label htmlFor="stripeTestMode" className="text-sm font-medium text-hos-text-secondary">
                         Stripe Test Mode
                       </label>
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                      <label className="block text-sm font-medium text-hos-text-secondary mb-1">
                         Default Currency
                       </label>
                       <select
                         value={settings.defaultCurrency}
                         onChange={(e) => updateSetting('defaultCurrency', e.target.value)}
-                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
+                        className="w-full px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50"
                       >
                         <option value="USD">USD</option>
                         <option value="EUR">EUR</option>
                       </select>
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                      <label className="block text-sm font-medium text-hos-text-secondary mb-1">
                         Platform Fee (%)
                       </label>
                       <input
@@ -387,7 +387,7 @@ export default function AdminSettingsPage() {
                         step="0.1"
                         min="0"
                         max="100"
-                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
+                        className="w-full px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50"
                       />
                     </div>
                   </div>
@@ -406,9 +406,9 @@ export default function AdminSettingsPage() {
                         id="autoCreateShipments"
                         checked={settings.autoCreateShipments}
                         onChange={(e) => updateSetting('autoCreateShipments', e.target.checked)}
-                        className="h-4 w-4 text-purple-600 focus:ring-purple-500"
+                        className="h-4 w-4 text-hos-gold focus:ring-hos-gold/50"
                       />
-                      <label htmlFor="autoCreateShipments" className="text-sm font-medium text-gray-700">
+                      <label htmlFor="autoCreateShipments" className="text-sm font-medium text-hos-text-secondary">
                         Auto-create Shipments on Approval
                       </label>
                     </div>
@@ -418,9 +418,9 @@ export default function AdminSettingsPage() {
                         id="requireTrackingNumber"
                         checked={settings.requireTrackingNumber}
                         onChange={(e) => updateSetting('requireTrackingNumber', e.target.checked)}
-                        className="h-4 w-4 text-purple-600 focus:ring-purple-500"
+                        className="h-4 w-4 text-hos-gold focus:ring-hos-gold/50"
                       />
-                      <label htmlFor="requireTrackingNumber" className="text-sm font-medium text-gray-700">
+                      <label htmlFor="requireTrackingNumber" className="text-sm font-medium text-hos-text-secondary">
                         Require Tracking Number
                       </label>
                     </div>
@@ -440,9 +440,9 @@ export default function AdminSettingsPage() {
                         id="notifyOnNewSubmission"
                         checked={settings.notifyOnNewSubmission}
                         onChange={(e) => updateSetting('notifyOnNewSubmission', e.target.checked)}
-                        className="h-4 w-4 text-purple-600 focus:ring-purple-500"
+                        className="h-4 w-4 text-hos-gold focus:ring-hos-gold/50"
                       />
-                      <label htmlFor="notifyOnNewSubmission" className="text-sm font-medium text-gray-700">
+                      <label htmlFor="notifyOnNewSubmission" className="text-sm font-medium text-hos-text-secondary">
                         Notify on New Product Submission
                       </label>
                     </div>
@@ -452,9 +452,9 @@ export default function AdminSettingsPage() {
                         id="notifyOnNewOrder"
                         checked={settings.notifyOnNewOrder}
                         onChange={(e) => updateSetting('notifyOnNewOrder', e.target.checked)}
-                        className="h-4 w-4 text-purple-600 focus:ring-purple-500"
+                        className="h-4 w-4 text-hos-gold focus:ring-hos-gold/50"
                       />
-                      <label htmlFor="notifyOnNewOrder" className="text-sm font-medium text-gray-700">
+                      <label htmlFor="notifyOnNewOrder" className="text-sm font-medium text-hos-text-secondary">
                         Notify on New Order
                       </label>
                     </div>
@@ -464,9 +464,9 @@ export default function AdminSettingsPage() {
                         id="notifyOnShipmentReceived"
                         checked={settings.notifyOnShipmentReceived}
                         onChange={(e) => updateSetting('notifyOnShipmentReceived', e.target.checked)}
-                        className="h-4 w-4 text-purple-600 focus:ring-purple-500"
+                        className="h-4 w-4 text-hos-gold focus:ring-hos-gold/50"
                       />
-                      <label htmlFor="notifyOnShipmentReceived" className="text-sm font-medium text-gray-700">
+                      <label htmlFor="notifyOnShipmentReceived" className="text-sm font-medium text-hos-text-secondary">
                         Notify on Shipment Received
                       </label>
                     </div>
@@ -476,11 +476,11 @@ export default function AdminSettingsPage() {
             )}
 
             {/* Save Button */}
-            <div className="mt-6 pt-6 border-t border-gray-200">
+            <div className="mt-6 pt-6 border-t border-hos-border">
               <button
                 onClick={() => setShowConfirm(true)}
                 disabled={saving}
-                className="px-6 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors font-medium disabled:opacity-50"
+                className="px-6 py-2 bg-hos-gold text-[#1a1406] rounded-lg hover:bg-hos-gold-hover transition-colors font-medium disabled:opacity-50"
               >
                 {saving ? 'Saving...' : 'Save Settings'}
               </button>
@@ -489,22 +489,22 @@ export default function AdminSettingsPage() {
             {/* Confirmation Dialog */}
             {showConfirm && (
               <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
-                <div className="bg-white rounded-lg shadow-xl p-6 max-w-sm w-full mx-4">
+                <div className="bg-hos-bg-secondary rounded-lg shadow-xl p-6 max-w-sm w-full mx-4">
                   <h3 className="text-lg font-semibold mb-2">Confirm Changes</h3>
-                  <p className="text-gray-600 text-sm mb-6">
+                  <p className="text-hos-text-secondary text-sm mb-6">
                     Are you sure you want to save these settings? This will apply changes platform-wide.
                   </p>
                   <div className="flex justify-end gap-3">
                     <button
                       onClick={() => setShowConfirm(false)}
-                      className="px-4 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors font-medium"
+                      className="px-4 py-2 text-hos-text-secondary bg-hos-bg-tertiary rounded-lg hover:bg-hos-bg-tertiary transition-colors font-medium"
                     >
                       Cancel
                     </button>
                     <button
                       onClick={() => { setShowConfirm(false); handleSave(); }}
                       disabled={saving}
-                      className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors font-medium disabled:opacity-50"
+                      className="px-4 py-2 bg-hos-gold text-[#1a1406] rounded-lg hover:bg-hos-gold-hover transition-colors font-medium disabled:opacity-50"
                     >
                       {saving ? 'Saving...' : 'Confirm & Save'}
                     </button>

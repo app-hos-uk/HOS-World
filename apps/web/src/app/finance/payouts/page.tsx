@@ -10,7 +10,7 @@ type PayoutStatus = 'ALL' | 'PENDING' | 'PROCESSING' | 'PAID' | 'FAILED';
 
 const STATUS_STYLES: Record<string, string> = {
   PENDING: 'bg-yellow-100 text-yellow-800',
-  PROCESSING: 'bg-blue-100 text-blue-800',
+  PROCESSING: 'bg-hos-gold/20 text-hos-gold',
   PAID: 'bg-green-100 text-green-800',
   FAILED: 'bg-red-100 text-red-800',
 };
@@ -146,19 +146,19 @@ export default function FinancePayoutsPage() {
         <div className="mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
             <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold">Process Payouts</h1>
-            <p className="text-gray-600 mt-2">Manage seller payouts and settlements</p>
+            <p className="text-hos-text-secondary mt-2">Manage seller payouts and settlements</p>
           </div>
           <div className="flex gap-2">
             <button
               onClick={() => fetchPayouts(true)}
               disabled={loading}
-              className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50"
+              className="px-4 py-2 text-sm font-medium text-hos-text-secondary bg-hos-bg-secondary border border-hos-border rounded-lg hover:bg-hos-bg-tertiary disabled:opacity-50"
             >
               {loading ? 'Refreshing...' : 'Refresh'}
             </button>
             <button
               onClick={() => setShowScheduleModal(true)}
-              className="px-4 py-2 text-sm font-medium text-white bg-purple-600 rounded-lg hover:bg-purple-700"
+              className="px-4 py-2 text-sm font-medium text-white bg-hos-gold rounded-lg hover:bg-hos-gold-hover"
             >
               Schedule Payout
             </button>
@@ -178,8 +178,8 @@ export default function FinancePayoutsPage() {
                 onClick={() => setActiveTab(tab)}
                 className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors ${
                   activeTab === tab
-                    ? 'bg-purple-600 text-white'
-                    : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50'
+                    ? 'bg-hos-gold text-[#1a1406]'
+                    : 'bg-hos-bg-secondary text-hos-text-secondary border border-hos-border hover:bg-hos-bg-tertiary'
                 }`}
               >
                 {tab.charAt(0) + tab.slice(1).toLowerCase()} ({count})
@@ -198,13 +198,13 @@ export default function FinancePayoutsPage() {
         {loading && (
           <div className="space-y-4">
             {[...Array(5)].map((_, i) => (
-              <div key={i} className="bg-white border rounded-lg p-6 animate-pulse">
+              <div key={i} className="bg-hos-bg-secondary border rounded-lg p-6 animate-pulse">
                 <div className="flex justify-between">
                   <div className="space-y-2 flex-1">
-                    <div className="h-4 bg-gray-200 rounded w-1/3"></div>
-                    <div className="h-3 bg-gray-200 rounded w-1/4"></div>
+                    <div className="h-4 bg-hos-bg-tertiary rounded w-1/3"></div>
+                    <div className="h-3 bg-hos-bg-tertiary rounded w-1/4"></div>
                   </div>
-                  <div className="h-6 w-20 bg-gray-200 rounded"></div>
+                  <div className="h-6 w-20 bg-hos-bg-tertiary rounded"></div>
                 </div>
               </div>
             ))}
@@ -212,10 +212,10 @@ export default function FinancePayoutsPage() {
         )}
 
         {!loading && !error && filteredPayouts.length === 0 && (
-          <div className="bg-white border border-gray-200 rounded-lg p-12 text-center">
+          <div className="bg-hos-bg-secondary border border-hos-border rounded-lg p-12 text-center">
             <div className="text-4xl mb-4">💸</div>
-            <p className="text-gray-500 text-lg">No payouts found</p>
-            <p className="text-sm text-gray-400 mt-2">
+            <p className="text-hos-text-muted text-lg">No payouts found</p>
+            <p className="text-sm text-hos-text-muted mt-2">
               {activeTab === 'ALL'
                 ? 'Schedule a payout to get started. Need a seller UUID? Admin → Sellers → View → copy Seller ID.'
                 : `No ${activeTab.toLowerCase()} payouts`}
@@ -224,37 +224,37 @@ export default function FinancePayoutsPage() {
         )}
 
         {!loading && !error && filteredPayouts.length > 0 && (
-          <div className="bg-white border rounded-lg shadow-sm overflow-hidden">
+          <div className="bg-hos-bg-secondary border rounded-lg shadow-sm overflow-hidden">
             <div className="overflow-x-auto">
               <table className="w-full">
                 <thead>
-                  <tr className="bg-gray-50 border-b">
-                    <th className="text-left px-6 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <tr className="bg-hos-bg-secondary border-b">
+                    <th className="text-left px-6 py-3 text-xs font-medium text-hos-text-muted uppercase tracking-wider">
                       Seller
                     </th>
-                    <th className="text-left px-6 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="text-left px-6 py-3 text-xs font-medium text-hos-text-muted uppercase tracking-wider">
                       Amount
                     </th>
-                    <th className="text-left px-6 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="text-left px-6 py-3 text-xs font-medium text-hos-text-muted uppercase tracking-wider">
                       Status
                     </th>
-                    <th className="text-left px-6 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="text-left px-6 py-3 text-xs font-medium text-hos-text-muted uppercase tracking-wider">
                       Created
                     </th>
-                    <th className="text-right px-6 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="text-right px-6 py-3 text-xs font-medium text-hos-text-muted uppercase tracking-wider">
                       Actions
                     </th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-gray-200">
+                <tbody className="divide-y divide-hos-border">
                   {filteredPayouts.map((payout) => (
-                    <tr key={payout.id} className="hover:bg-gray-50 transition-colors">
+                    <tr key={payout.id} className="hover:bg-hos-bg-tertiary transition-colors">
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <p className="text-sm font-medium text-gray-900">
+                        <p className="text-sm font-medium text-white">
                           {payout.seller?.storeName || payout.sellerName || 'Unknown Seller'}
                         </p>
                         <div className="flex flex-wrap items-center gap-x-2 gap-y-1 mt-0.5">
-                          <p className="text-xs text-gray-500 font-mono">
+                          <p className="text-xs text-hos-text-muted font-mono">
                             Seller ID: {payout.sellerId || '—'}
                           </p>
                           {payout.sellerId && (
@@ -268,7 +268,7 @@ export default function FinancePayoutsPage() {
                                   toast.error('Could not copy');
                                 }
                               }}
-                              className="text-xs font-medium text-purple-600 hover:text-purple-800"
+                              className="text-xs font-medium text-hos-gold hover:text-hos-gold-hover"
                             >
                               Copy
                             </button>
@@ -276,7 +276,7 @@ export default function FinancePayoutsPage() {
                         </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <p className="text-sm font-semibold text-gray-900">
+                        <p className="text-sm font-semibold text-white">
                           ${(payout.amount || 0).toLocaleString(undefined, {
                             minimumFractionDigits: 2,
                             maximumFractionDigits: 2,
@@ -286,13 +286,13 @@ export default function FinancePayoutsPage() {
                       <td className="px-6 py-4 whitespace-nowrap">
                         <span
                           className={`px-2.5 py-1 text-xs font-medium rounded-full ${
-                            STATUS_STYLES[payout.status] || 'bg-gray-100 text-gray-800'
+                            STATUS_STYLES[payout.status] || 'bg-hos-bg-tertiary text-white'
                           }`}
                         >
                           {payout.status}
                         </span>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-hos-text-muted">
                         {new Date(payout.createdAt).toLocaleDateString()}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-right">
@@ -317,7 +317,7 @@ export default function FinancePayoutsPage() {
         {/* Schedule Payout Modal */}
         {showScheduleModal && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-            <div className="bg-white rounded-lg max-w-md w-full">
+            <div className="bg-hos-bg-secondary rounded-lg max-w-md w-full">
               <div className="p-6">
                 <div className="flex justify-between items-start mb-6">
                   <h2 className="text-xl font-bold">Schedule Payout</h2>
@@ -326,7 +326,7 @@ export default function FinancePayoutsPage() {
                       setShowScheduleModal(false);
                       setScheduleForm({ sellerId: '', amount: '' });
                     }}
-                    className="text-gray-500 hover:text-gray-700"
+                    className="text-hos-text-muted hover:text-hos-text-secondary"
                   >
                     <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -336,7 +336,7 @@ export default function FinancePayoutsPage() {
 
                 <div className="space-y-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                    <label className="block text-sm font-medium text-hos-text-secondary mb-1">
                       Seller ID <span className="text-red-500">*</span>
                     </label>
                     <input
@@ -345,17 +345,17 @@ export default function FinancePayoutsPage() {
                       onChange={(e) =>
                         setScheduleForm((prev) => ({ ...prev, sellerId: e.target.value }))
                       }
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent font-mono text-sm"
+                      className="w-full px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50 focus:border-transparent font-mono text-sm"
                       placeholder="Paste seller profile UUID"
                     />
-                    <p className="text-xs text-gray-500 mt-1.5">
+                    <p className="text-xs text-hos-text-muted mt-1.5">
                       Find it under <span className="font-medium">Admin → Sellers</span>, open{' '}
                       <span className="font-medium">View</span>, then copy <span className="font-medium">Seller ID</span>.
                       After payouts exist, it also appears in the table below as &quot;Seller ID&quot;.
                     </p>
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                    <label className="block text-sm font-medium text-hos-text-secondary mb-1">
                       Amount ($) <span className="text-red-500">*</span>
                     </label>
                     <input
@@ -366,7 +366,7 @@ export default function FinancePayoutsPage() {
                       }
                       min="0"
                       step="0.01"
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                      className="w-full px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50 focus:border-transparent"
                       placeholder="Enter payout amount"
                     />
                   </div>
@@ -376,7 +376,7 @@ export default function FinancePayoutsPage() {
                   <button
                     onClick={handleSchedulePayout}
                     disabled={scheduling || !scheduleForm.sellerId.trim() || !scheduleForm.amount}
-                    className="flex-1 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors font-medium disabled:opacity-50"
+                    className="flex-1 px-4 py-2 bg-hos-gold text-[#1a1406] rounded-lg hover:bg-hos-gold-hover transition-colors font-medium disabled:opacity-50"
                   >
                     {scheduling ? 'Scheduling...' : 'Schedule Payout'}
                   </button>
@@ -386,7 +386,7 @@ export default function FinancePayoutsPage() {
                       setScheduleForm({ sellerId: '', amount: '' });
                     }}
                     disabled={scheduling}
-                    className="px-4 py-2 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400 transition-colors font-medium"
+                    className="px-4 py-2 bg-hos-bg-tertiary text-hos-text-secondary rounded-lg hover:bg-hos-text-muted transition-colors font-medium"
                   >
                     Cancel
                   </button>

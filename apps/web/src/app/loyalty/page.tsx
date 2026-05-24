@@ -38,7 +38,7 @@ export default function LoyaltyDashboardPage() {
          String(mResult.reason?.message ?? '').toLowerCase().includes('not enabled'));
 
       if (membershipDisabled) {
-        setLoadError('The loyalty programme is currently unavailable. Please try again later.');
+        setLoadError('The loyalty program is currently unavailable. Please try again later.');
         setMembership(null);
       } else if (mResult.status === 'rejected') {
         const msg = mResult.reason?.message || 'Failed to load loyalty data';
@@ -85,7 +85,7 @@ export default function LoyaltyDashboardPage() {
         <main className="flex-1 container mx-auto px-4 py-10 max-w-3xl">
           <h1 className="font-primary text-3xl text-amber-100 mb-2">The Enchanted Circle</h1>
           <p className="font-secondary text-stone-400 mb-8">
-            Your House of Spells loyalty programme — earn on qualifying purchases, redeem on checkout and at our
+            Your House of Spells loyalty program — earn on qualifying purchases, redeem on checkout and at our
             stores.
           </p>
 
@@ -110,7 +110,7 @@ export default function LoyaltyDashboardPage() {
                 onClick={enroll}
                 className="rounded-md bg-amber-600 px-4 py-2 text-stone-950 font-medium hover:bg-amber-500"
               >
-                Join the programme
+                Join the program
               </button>
             </div>
           ) : (

@@ -44,12 +44,12 @@ export default function WholesalerOrdersPage() {
           <div className="flex items-center justify-between">
             <div>
               <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold">Bulk Orders</h1>
-              <p className="text-gray-600 mt-2">Manage your wholesale bulk orders</p>
+              <p className="text-hos-text-secondary mt-2">Manage your wholesale bulk orders</p>
             </div>
             <select
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value)}
-              className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
+              className="px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50"
             >
               <option value="">All Status</option>
               <option value="PENDING">Pending</option>
@@ -64,7 +64,7 @@ export default function WholesalerOrdersPage() {
 
         {loading && (
           <div className="flex items-center justify-center py-12">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600"></div>
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-hos-gold"></div>
           </div>
         )}
 
@@ -81,49 +81,49 @@ export default function WholesalerOrdersPage() {
         )}
 
         {!loading && !error && (
-          <div className="bg-white rounded-lg shadow overflow-hidden">
+          <div className="bg-hos-bg-secondary rounded-lg shadow overflow-hidden">
             {orders.length === 0 ? (
               <div className="text-center py-12">
-                <p className="text-gray-500">No bulk orders found</p>
+                <p className="text-hos-text-muted">No bulk orders found</p>
               </div>
             ) : (
               <div className="overflow-x-auto">
-                <table className="min-w-full divide-y divide-gray-200">
-                  <thead className="bg-gray-50">
+                <table className="min-w-full divide-y divide-hos-border">
+                  <thead className="bg-hos-bg-secondary">
                     <tr>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      <th className="px-6 py-3 text-left text-xs font-medium text-hos-text-muted uppercase tracking-wider">
                         Order ID
                       </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      <th className="px-6 py-3 text-left text-xs font-medium text-hos-text-muted uppercase tracking-wider">
                         Customer
                       </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      <th className="px-6 py-3 text-left text-xs font-medium text-hos-text-muted uppercase tracking-wider">
                         Total
                       </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      <th className="px-6 py-3 text-left text-xs font-medium text-hos-text-muted uppercase tracking-wider">
                         Quantity
                       </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      <th className="px-6 py-3 text-left text-xs font-medium text-hos-text-muted uppercase tracking-wider">
                         Status
                       </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      <th className="px-6 py-3 text-left text-xs font-medium text-hos-text-muted uppercase tracking-wider">
                         Date
                       </th>
                     </tr>
                   </thead>
-                  <tbody className="bg-white divide-y divide-gray-200">
+                  <tbody className="bg-hos-bg-secondary divide-y divide-hos-border">
                     {orders.map((order) => (
-                      <tr key={order.id} className="hover:bg-gray-50">
-                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                      <tr key={order.id} className="hover:bg-hos-bg-tertiary">
+                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-white">
                           #{order.orderNumber || order.id.slice(0, 8)}
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-hos-text-muted">
                           {order.user?.firstName} {order.user?.lastName}
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-white">
                           {formatPrice(parseFloat(order.total || 0))}
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-white">
                           {order.items?.reduce((sum: number, item: any) => sum + (item.quantity || 0), 0) || 0}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
@@ -132,18 +132,18 @@ export default function WholesalerOrdersPage() {
                               (() => {
                                 const s = (order.status || '').toLowerCase();
                                 if (s === 'pending') return 'bg-yellow-100 text-yellow-800';
-                                if (['confirmed', 'processing', 'accepted'].includes(s)) return 'bg-blue-100 text-blue-800';
-                                if (['fulfilled', 'shipped'].includes(s)) return 'bg-purple-100 text-purple-800';
+                                if (['confirmed', 'processing', 'accepted'].includes(s)) return 'bg-hos-gold/20 text-hos-gold';
+                                if (['fulfilled', 'shipped'].includes(s)) return 'bg-hos-gold/20 text-hos-gold';
                                 if (s === 'delivered') return 'bg-green-100 text-green-800';
                                 if (['cancelled', 'refunded'].includes(s)) return 'bg-red-100 text-red-800';
-                                return 'bg-gray-100 text-gray-800';
+                                return 'bg-hos-bg-tertiary text-white';
                               })()
                             }`}
                           >
                             {order.status}
                           </span>
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-hos-text-muted">
                           {new Date(order.createdAt).toLocaleDateString()}
                         </td>
                       </tr>

@@ -56,8 +56,8 @@ export default function AdminBrandCampaignDetailPage() {
             <>
               <div className="flex justify-between items-start">
                 <div>
-                  <h1 className="text-2xl font-semibold text-gray-900">{String(row.name)}</h1>
-                  <p className="text-sm text-gray-500">
+                  <h1 className="text-2xl font-semibold text-white">{String(row.name)}</h1>
+                  <p className="text-sm text-hos-text-muted">
                     {String(row.type)} · {String(row.status)}
                     {p?.name ? ` · ${String(p.name)}` : ''}
                   </p>
@@ -85,7 +85,7 @@ export default function AdminBrandCampaignDetailPage() {
                     <>
                       <button
                         type="button"
-                        className="text-sm px-2 py-1 rounded bg-gray-800 text-white"
+                        className="text-sm px-2 py-1 rounded bg-hos-surface text-white"
                         onClick={() => act(() => apiClient.adminCompleteBrandCampaign(id), 'Completed')}
                       >
                         Complete
@@ -101,18 +101,18 @@ export default function AdminBrandCampaignDetailPage() {
                   ) : null}
                 </div>
               </div>
-              <div className="border rounded-lg p-4 bg-white text-xs overflow-auto">
+              <div className="border rounded-lg p-4 bg-hos-bg-secondary text-xs overflow-auto">
                 <pre>{JSON.stringify(row, null, 2)}</pre>
               </div>
               {report && (
-                <div className="border rounded-lg p-4 bg-white text-sm">
+                <div className="border rounded-lg p-4 bg-hos-bg-secondary text-sm">
                   <p className="font-medium mb-2">Report</p>
                   <pre className="text-xs overflow-auto max-h-64">{JSON.stringify(report, null, 2)}</pre>
                 </div>
               )}
             </>
           ) : (
-            <p className="text-gray-500">Loading…</p>
+            <p className="text-hos-text-muted">Loading…</p>
           )}
         </div>
       </AdminLayout>

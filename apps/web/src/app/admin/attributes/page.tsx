@@ -548,7 +548,7 @@ export default function AdminAttributesPage() {
       <RouteGuard allowedRoles={['ADMIN']}>
         <AdminLayout>
           <div className="flex items-center justify-center h-64">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600"></div>
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-hos-gold"></div>
           </div>
         </AdminLayout>
       </RouteGuard>
@@ -562,8 +562,8 @@ export default function AdminAttributesPage() {
           {/* Header */}
           <div className="flex justify-between items-center">
             <div>
-              <h1 className="text-2xl font-bold text-gray-900">Product Attributes</h1>
-              <p className="text-gray-600 mt-1">Define custom attributes for your products</p>
+              <h1 className="text-2xl font-bold text-white">Product Attributes</h1>
+              <p className="text-hos-text-secondary mt-1">Define custom attributes for your products</p>
             </div>
             <button
               onClick={() => {
@@ -571,7 +571,7 @@ export default function AdminAttributesPage() {
                 setEditingAttribute(null);
                 resetForm();
               }}
-              className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 flex items-center gap-2"
+              className="px-4 py-2 bg-hos-gold text-[#1a1406] rounded-lg hover:bg-hos-gold-hover flex items-center gap-2"
             >
               <span>+</span> Add Attribute
             </button>
@@ -580,31 +580,31 @@ export default function AdminAttributesPage() {
           {/* Stats Cards */}
           {stats && (
             <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
-              <div className="bg-white rounded-lg shadow p-4">
-                <p className="text-sm text-gray-600">Total Attributes</p>
-                <p className="text-2xl font-bold text-purple-600">{stats.totalAttributes}</p>
+              <div className="bg-hos-bg-secondary rounded-lg shadow p-4">
+                <p className="text-sm text-hos-text-secondary">Total Attributes</p>
+                <p className="text-2xl font-bold text-hos-gold">{stats.totalAttributes}</p>
               </div>
-              <div className="bg-white rounded-lg shadow p-4">
-                <p className="text-sm text-gray-600">Global</p>
-                <p className="text-2xl font-bold text-blue-600">{stats.globalAttributes}</p>
+              <div className="bg-hos-bg-secondary rounded-lg shadow p-4">
+                <p className="text-sm text-hos-text-secondary">Global</p>
+                <p className="text-2xl font-bold text-hos-gold">{stats.globalAttributes}</p>
               </div>
-              <div className="bg-white rounded-lg shadow p-4">
-                <p className="text-sm text-gray-600">Category-Specific</p>
+              <div className="bg-hos-bg-secondary rounded-lg shadow p-4">
+                <p className="text-sm text-hos-text-secondary">Category-Specific</p>
                 <p className="text-2xl font-bold text-green-600">{stats.categoryAttributes}</p>
               </div>
-              <div className="bg-white rounded-lg shadow p-4">
-                <p className="text-sm text-gray-600">Total Values</p>
+              <div className="bg-hos-bg-secondary rounded-lg shadow p-4">
+                <p className="text-sm text-hos-text-secondary">Total Values</p>
                 <p className="text-2xl font-bold text-orange-600">{stats.totalValues}</p>
               </div>
-              <div className="bg-white rounded-lg shadow p-4">
-                <p className="text-sm text-gray-600">In Use</p>
-                <p className="text-2xl font-bold text-indigo-600">{stats.attributesWithProducts}</p>
+              <div className="bg-hos-bg-secondary rounded-lg shadow p-4">
+                <p className="text-sm text-hos-text-secondary">In Use</p>
+                <p className="text-2xl font-bold text-hos-gold">{stats.attributesWithProducts}</p>
               </div>
               {stats.mostUsedAttribute && (
-                <div className="bg-white rounded-lg shadow p-4">
-                  <p className="text-sm text-gray-600">Most Used</p>
+                <div className="bg-hos-bg-secondary rounded-lg shadow p-4">
+                  <p className="text-sm text-hos-text-secondary">Most Used</p>
                   <p className="text-lg font-bold text-pink-600 truncate">{stats.mostUsedAttribute.name}</p>
-                  <p className="text-xs text-gray-500">{stats.mostUsedAttribute.count} products</p>
+                  <p className="text-xs text-hos-text-muted">{stats.mostUsedAttribute.count} products</p>
                 </div>
               )}
             </div>
@@ -620,7 +620,7 @@ export default function AdminAttributesPage() {
           )}
 
           {/* Filters */}
-          <div className="bg-white rounded-lg shadow p-4">
+          <div className="bg-hos-bg-secondary rounded-lg shadow p-4">
             <div className="flex flex-wrap gap-4 items-center">
               <div className="flex-1 min-w-[200px]">
                 <input
@@ -628,13 +628,13 @@ export default function AdminAttributesPage() {
                   placeholder="Search attributes..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
+                  className="w-full px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50"
                 />
               </div>
               <select
                 value={typeFilter}
                 onChange={(e) => setTypeFilter(e.target.value)}
-                className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
+                className="px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50"
               >
                 <option value="ALL">All Types</option>
                 {ATTRIBUTE_TYPES.map(type => (
@@ -644,7 +644,7 @@ export default function AdminAttributesPage() {
               <select
                 value={scopeFilter}
                 onChange={(e) => setScopeFilter(e.target.value as any)}
-                className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
+                className="px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50"
               >
                 <option value="ALL">All Scopes</option>
                 <option value="GLOBAL">Global Only</option>
@@ -653,7 +653,7 @@ export default function AdminAttributesPage() {
               <select
                 value={sortBy}
                 onChange={(e) => setSortBy(e.target.value as any)}
-                className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
+                className="px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50"
               >
                 <option value="name">Sort by Name</option>
                 <option value="type">Sort by Type</option>
@@ -664,7 +664,7 @@ export default function AdminAttributesPage() {
 
           {/* Create/Edit Form */}
           {showCreateForm && (
-            <div className="bg-white rounded-lg shadow p-6">
+            <div className="bg-hos-bg-secondary rounded-lg shadow p-6">
               <h2 className="text-lg font-semibold mb-4">
                 {editingAttribute ? 'Edit Attribute' : 'Create New Attribute'}
               </h2>
@@ -674,23 +674,23 @@ export default function AdminAttributesPage() {
               >
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Attribute Name *</label>
+                    <label className="block text-sm font-medium text-hos-text-secondary mb-1">Attribute Name *</label>
                     <input
                       type="text"
                       required
                       value={formData.name}
                       onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
+                      className="w-full px-3 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50"
                       placeholder="e.g., Size, Color, Material"
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
+                    <label className="block text-sm font-medium text-hos-text-secondary mb-1">Description</label>
                     <input
                       type="text"
                       value={formData.description}
                       onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
+                      className="w-full px-3 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50"
                       placeholder="Help text for this attribute"
                     />
                   </div>
@@ -698,11 +698,11 @@ export default function AdminAttributesPage() {
 
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Type *</label>
+                    <label className="block text-sm font-medium text-hos-text-secondary mb-1">Type *</label>
                     <select
                       value={formData.type}
                       onChange={(e) => setFormData({ ...formData, type: e.target.value as any })}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
+                      className="w-full px-3 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50"
                     >
                       {ATTRIBUTE_TYPES.map(type => (
                         <option key={type.value} value={type.value}>
@@ -712,11 +712,11 @@ export default function AdminAttributesPage() {
                     </select>
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Scope</label>
+                    <label className="block text-sm font-medium text-hos-text-secondary mb-1">Scope</label>
                     <select
                       value={formData.isGlobal ? 'global' : 'category'}
                       onChange={(e) => setFormData({ ...formData, isGlobal: e.target.value === 'global' })}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
+                      className="w-full px-3 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50"
                     >
                       <option value="global">Global (All Categories)</option>
                       <option value="category">Category-Specific</option>
@@ -737,13 +737,13 @@ export default function AdminAttributesPage() {
 
                 {/* Number-specific options */}
                 {formData.type === 'NUMBER' && (
-                  <div className="grid grid-cols-1 md:grid-cols-4 gap-4 p-4 bg-gray-50 rounded-lg">
+                  <div className="grid grid-cols-1 md:grid-cols-4 gap-4 p-4 bg-hos-bg-secondary rounded-lg">
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Unit</label>
+                      <label className="block text-sm font-medium text-hos-text-secondary mb-1">Unit</label>
                       <select
                         value={formData.unit}
                         onChange={(e) => setFormData({ ...formData, unit: e.target.value })}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
+                        className="w-full px-3 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50"
                       >
                         <option value="">No unit</option>
                         {COMMON_UNITS.map(group => (
@@ -756,34 +756,34 @@ export default function AdminAttributesPage() {
                       </select>
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Minimum Value</label>
+                      <label className="block text-sm font-medium text-hos-text-secondary mb-1">Minimum Value</label>
                       <input
                         type="number"
                         step="any"
                         value={formData.minValue}
                         onChange={(e) => setFormData({ ...formData, minValue: e.target.value })}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
+                        className="w-full px-3 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50"
                         placeholder="0"
                       />
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Maximum Value</label>
+                      <label className="block text-sm font-medium text-hos-text-secondary mb-1">Maximum Value</label>
                       <input
                         type="number"
                         step="any"
                         value={formData.maxValue}
                         onChange={(e) => setFormData({ ...formData, maxValue: e.target.value })}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
+                        className="w-full px-3 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50"
                         placeholder="1000"
                       />
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Placeholder</label>
+                      <label className="block text-sm font-medium text-hos-text-secondary mb-1">Placeholder</label>
                       <input
                         type="text"
                         value={formData.placeholder}
                         onChange={(e) => setFormData({ ...formData, placeholder: e.target.value })}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
+                        className="w-full px-3 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50"
                         placeholder="Enter value..."
                       />
                     </div>
@@ -792,34 +792,34 @@ export default function AdminAttributesPage() {
 
                 {/* Text-specific options */}
                 {formData.type === 'TEXT' && (
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4 p-4 bg-gray-50 rounded-lg">
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4 p-4 bg-hos-bg-secondary rounded-lg">
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Placeholder</label>
+                      <label className="block text-sm font-medium text-hos-text-secondary mb-1">Placeholder</label>
                       <input
                         type="text"
                         value={formData.placeholder}
                         onChange={(e) => setFormData({ ...formData, placeholder: e.target.value })}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
+                        className="w-full px-3 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50"
                         placeholder="Enter text..."
                       />
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Validation Pattern (Regex)</label>
+                      <label className="block text-sm font-medium text-hos-text-secondary mb-1">Validation Pattern (Regex)</label>
                       <input
                         type="text"
                         value={formData.validationPattern}
                         onChange={(e) => setFormData({ ...formData, validationPattern: e.target.value })}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
+                        className="w-full px-3 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50"
                         placeholder="^[A-Za-z]+$"
                       />
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Validation Error Message</label>
+                      <label className="block text-sm font-medium text-hos-text-secondary mb-1">Validation Error Message</label>
                       <input
                         type="text"
                         value={formData.validationMessage}
                         onChange={(e) => setFormData({ ...formData, validationMessage: e.target.value })}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
+                        className="w-full px-3 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50"
                         placeholder="Please enter only letters"
                       />
                     </div>
@@ -828,41 +828,41 @@ export default function AdminAttributesPage() {
 
                 {/* Flags */}
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                  <label className="flex items-center space-x-2 p-3 bg-gray-50 rounded-lg">
+                  <label className="flex items-center space-x-2 p-3 bg-hos-bg-secondary rounded-lg">
                     <input
                       type="checkbox"
                       checked={formData.isRequired}
                       onChange={(e) => setFormData({ ...formData, isRequired: e.target.checked })}
-                      className="rounded border-gray-300 text-purple-600 focus:ring-purple-500"
+                      className="rounded border-hos-border text-hos-gold focus:ring-hos-gold/50"
                     />
-                    <span className="text-sm text-gray-700">Required</span>
+                    <span className="text-sm text-hos-text-secondary">Required</span>
                   </label>
-                  <label className="flex items-center space-x-2 p-3 bg-gray-50 rounded-lg">
+                  <label className="flex items-center space-x-2 p-3 bg-hos-bg-secondary rounded-lg">
                     <input
                       type="checkbox"
                       checked={formData.isFilterable}
                       onChange={(e) => setFormData({ ...formData, isFilterable: e.target.checked })}
-                      className="rounded border-gray-300 text-purple-600 focus:ring-purple-500"
+                      className="rounded border-hos-border text-hos-gold focus:ring-hos-gold/50"
                     />
-                    <span className="text-sm text-gray-700">Filterable</span>
+                    <span className="text-sm text-hos-text-secondary">Filterable</span>
                   </label>
-                  <label className="flex items-center space-x-2 p-3 bg-gray-50 rounded-lg">
+                  <label className="flex items-center space-x-2 p-3 bg-hos-bg-secondary rounded-lg">
                     <input
                       type="checkbox"
                       checked={formData.isSearchable}
                       onChange={(e) => setFormData({ ...formData, isSearchable: e.target.checked })}
-                      className="rounded border-gray-300 text-purple-600 focus:ring-purple-500"
+                      className="rounded border-hos-border text-hos-gold focus:ring-hos-gold/50"
                     />
-                    <span className="text-sm text-gray-700">Searchable</span>
+                    <span className="text-sm text-hos-text-secondary">Searchable</span>
                   </label>
-                  <label className="flex items-center space-x-2 p-3 bg-gray-50 rounded-lg">
+                  <label className="flex items-center space-x-2 p-3 bg-hos-bg-secondary rounded-lg">
                     <input
                       type="checkbox"
                       checked={formData.isVisible}
                       onChange={(e) => setFormData({ ...formData, isVisible: e.target.checked })}
-                      className="rounded border-gray-300 text-purple-600 focus:ring-purple-500"
+                      className="rounded border-hos-border text-hos-gold focus:ring-hos-gold/50"
                     />
-                    <span className="text-sm text-gray-700">Visible on Product</span>
+                    <span className="text-sm text-hos-text-secondary">Visible on Product</span>
                   </label>
                 </div>
 
@@ -870,14 +870,14 @@ export default function AdminAttributesPage() {
                   <button
                     type="submit"
                     disabled={savingAttribute}
-                    className="px-6 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="px-6 py-2 bg-hos-gold text-[#1a1406] rounded-lg hover:bg-hos-gold-hover disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     {savingAttribute ? 'Saving...' : (editingAttribute ? 'Update Attribute' : 'Create Attribute')}
                   </button>
                   <button
                     type="button"
                     onClick={cancelForm}
-                    className="px-6 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300"
+                    className="px-6 py-2 bg-hos-bg-tertiary text-hos-text-secondary rounded-lg hover:bg-hos-bg-tertiary"
                   >
                     Cancel
                   </button>
@@ -887,15 +887,15 @@ export default function AdminAttributesPage() {
           )}
 
           {/* Attributes List */}
-          <div className="bg-white rounded-lg shadow">
-            <div className="p-4 border-b border-gray-200 flex justify-between items-center">
+          <div className="bg-hos-bg-secondary rounded-lg shadow">
+            <div className="p-4 border-b border-hos-border flex justify-between items-center">
               <h2 className="text-lg font-semibold">
                 Attributes ({filteredAttributes.length})
               </h2>
             </div>
             <div className="p-4">
               {filteredAttributes.length === 0 ? (
-                <div className="text-center py-8 text-gray-500">
+                <div className="text-center py-8 text-hos-text-muted">
                   {attributes.length === 0 
                     ? 'No attributes found. Create your first attribute to get started.'
                     : 'No attributes match your filters.'}
@@ -905,23 +905,23 @@ export default function AdminAttributesPage() {
                   {filteredAttributes.map((attribute) => (
                     <div
                       key={attribute.id}
-                      className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow"
+                      className="border border-hos-border rounded-lg p-4 hover:shadow-md transition-shadow"
                     >
                       <div className="flex items-start justify-between">
                         <div className="flex-1">
                           <div className="flex items-center gap-2 flex-wrap">
                             <span className="text-xl">{getTypeIcon(attribute.type)}</span>
-                            <h3 className="text-lg font-medium text-gray-900">{attribute.name}</h3>
-                            <span className="text-xs bg-purple-100 text-purple-800 px-2 py-0.5 rounded">
+                            <h3 className="text-lg font-medium text-white">{attribute.name}</h3>
+                            <span className="text-xs bg-hos-gold/20 text-hos-gold px-2 py-0.5 rounded">
                               {attribute.type}
                             </span>
                             {attribute.unit && (
-                              <span className="text-xs bg-gray-100 text-gray-700 px-2 py-0.5 rounded">
+                              <span className="text-xs bg-hos-bg-tertiary text-hos-text-secondary px-2 py-0.5 rounded">
                                 Unit: {attribute.unit}
                               </span>
                             )}
                             {attribute.isGlobal ? (
-                              <span className="text-xs bg-blue-100 text-blue-800 px-2 py-0.5 rounded">
+                              <span className="text-xs bg-hos-gold/20 text-hos-gold px-2 py-0.5 rounded">
                                 Global
                               </span>
                             ) : (
@@ -937,7 +937,7 @@ export default function AdminAttributesPage() {
                           </div>
                           
                           {attribute.description && (
-                            <p className="text-sm text-gray-600 mt-1">{attribute.description}</p>
+                            <p className="text-sm text-hos-text-secondary mt-1">{attribute.description}</p>
                           )}
                           
                           <div className="mt-2 flex flex-wrap gap-2">
@@ -948,15 +948,15 @@ export default function AdminAttributesPage() {
                               <span className="text-xs bg-yellow-100 text-yellow-800 px-2 py-0.5 rounded">Filterable</span>
                             )}
                             {attribute.isSearchable && (
-                              <span className="text-xs bg-indigo-100 text-indigo-800 px-2 py-0.5 rounded">Searchable</span>
+                              <span className="text-xs bg-hos-gold/20 text-hos-gold px-2 py-0.5 rounded">Searchable</span>
                             )}
                             {attribute.minValue !== undefined && (
-                              <span className="text-xs bg-gray-100 text-gray-700 px-2 py-0.5 rounded">
+                              <span className="text-xs bg-hos-bg-tertiary text-hos-text-secondary px-2 py-0.5 rounded">
                                 Min: {attribute.minValue}
                               </span>
                             )}
                             {attribute.maxValue !== undefined && (
-                              <span className="text-xs bg-gray-100 text-gray-700 px-2 py-0.5 rounded">
+                              <span className="text-xs bg-hos-bg-tertiary text-hos-text-secondary px-2 py-0.5 rounded">
                                 Max: {attribute.maxValue}
                               </span>
                             )}
@@ -966,7 +966,7 @@ export default function AdminAttributesPage() {
                           {['SELECT', 'MULTISELECT', 'COLOR'].includes(attribute.type) && (
                             <div className="mt-3">
                               <div className="flex items-center justify-between mb-2">
-                                <span className="text-sm font-medium text-gray-700">
+                                <span className="text-sm font-medium text-hos-text-secondary">
                                   Values ({attribute.values?.length || 0}):
                                 </span>
                                 <button
@@ -976,7 +976,7 @@ export default function AdminAttributesPage() {
                                       fetchAttributeValues(attribute.id);
                                     }
                                   }}
-                                  className="text-sm text-purple-600 hover:text-purple-800"
+                                  className="text-sm text-hos-gold hover:text-hos-gold-hover"
                                 >
                                   Manage Values
                                 </button>
@@ -986,11 +986,11 @@ export default function AdminAttributesPage() {
                                   {attribute.values.slice(0, 10).map((val) => (
                                     <span
                                       key={val.id}
-                                      className="text-xs bg-gray-100 text-gray-800 px-2 py-1 rounded flex items-center gap-1"
+                                      className="text-xs bg-hos-bg-tertiary text-white px-2 py-1 rounded flex items-center gap-1"
                                     >
                                       {attribute.type === 'COLOR' && val.colorHex && (
                                         <span 
-                                          className="w-3 h-3 rounded-full border border-gray-300"
+                                          className="w-3 h-3 rounded-full border border-hos-border"
                                           style={{ backgroundColor: val.colorHex }}
                                         />
                                       )}
@@ -998,7 +998,7 @@ export default function AdminAttributesPage() {
                                     </span>
                                   ))}
                                   {(attribute.values?.length || 0) > 10 && (
-                                    <span className="text-xs text-gray-500">
+                                    <span className="text-xs text-hos-text-muted">
                                       +{attribute.values.length - 10} more
                                     </span>
                                   )}
@@ -1014,21 +1014,21 @@ export default function AdminAttributesPage() {
                               setShowUsageModal(attribute.id);
                               fetchAttributeUsage(attribute.id);
                             }}
-                            className="px-3 py-1 text-sm bg-gray-100 text-gray-700 rounded hover:bg-gray-200"
+                            className="px-3 py-1 text-sm bg-hos-bg-tertiary text-hos-text-secondary rounded hover:bg-hos-bg-tertiary"
                             title="View usage"
                           >
                             📊
                           </button>
                           <button
                             onClick={() => handleDuplicateAttribute(attribute)}
-                            className="px-3 py-1 text-sm bg-gray-100 text-gray-700 rounded hover:bg-gray-200"
+                            className="px-3 py-1 text-sm bg-hos-bg-tertiary text-hos-text-secondary rounded hover:bg-hos-bg-tertiary"
                             title="Duplicate"
                           >
                             📋
                           </button>
                           <button
                             onClick={() => startEdit(attribute)}
-                            className="px-3 py-1 text-sm bg-blue-600 text-white rounded hover:bg-blue-700"
+                            className="px-3 py-1 text-sm bg-hos-gold text-[#1a1406] rounded hover:bg-hos-gold-hover"
                           >
                             Edit
                           </button>
@@ -1050,7 +1050,7 @@ export default function AdminAttributesPage() {
           {/* Values Modal */}
           {showValuesModal && (
             <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-              <div className="bg-white rounded-lg shadow-xl p-6 max-w-lg w-full max-h-[80vh] overflow-hidden flex flex-col">
+              <div className="bg-hos-bg-secondary rounded-lg shadow-xl p-6 max-w-lg w-full max-h-[80vh] overflow-hidden flex flex-col">
                 <div className="flex justify-between items-center mb-4">
                   <h3 className="text-lg font-semibold">
                     Manage Values: {attributes.find(a => a.id === showValuesModal)?.name}
@@ -1062,7 +1062,7 @@ export default function AdminAttributesPage() {
                       setShowBulkAdd(false);
                       setBulkValues('');
                     }}
-                    className="text-gray-500 hover:text-gray-700 text-2xl"
+                    className="text-hos-text-muted hover:text-hos-text-secondary text-2xl"
                   >
                     ×
                   </button>
@@ -1077,7 +1077,7 @@ export default function AdminAttributesPage() {
                           type="color"
                           value={colorHex}
                           onChange={(e) => setColorHex(e.target.value)}
-                          className="w-12 h-10 rounded border border-gray-300 cursor-pointer"
+                          className="w-12 h-10 rounded border border-hos-border cursor-pointer"
                         />
                       )}
                       <input
@@ -1090,12 +1090,12 @@ export default function AdminAttributesPage() {
                             handleAddValue(showValuesModal);
                           }
                         }}
-                        className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
+                        className="flex-1 px-3 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50"
                         placeholder="Enter value..."
                       />
                       <button
                         onClick={() => handleAddValue(showValuesModal)}
-                        className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700"
+                        className="px-4 py-2 bg-hos-gold text-[#1a1406] rounded-lg hover:bg-hos-gold-hover"
                       >
                         Add
                       </button>
@@ -1106,7 +1106,7 @@ export default function AdminAttributesPage() {
                   <div className="flex justify-end">
                     <button
                       onClick={() => setShowBulkAdd(!showBulkAdd)}
-                      className="text-sm text-purple-600 hover:text-purple-800"
+                      className="text-sm text-hos-gold hover:text-hos-gold-hover"
                     >
                       {showBulkAdd ? 'Single Add' : 'Bulk Add'}
                     </button>
@@ -1118,12 +1118,12 @@ export default function AdminAttributesPage() {
                       <textarea
                         value={bulkValues}
                         onChange={(e) => setBulkValues(e.target.value)}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 h-32"
+                        className="w-full px-3 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50 h-32"
                         placeholder="Enter one value per line:&#10;Small&#10;Medium&#10;Large"
                       />
                       <button
                         onClick={() => handleBulkAddValues(showValuesModal)}
-                        className="w-full px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700"
+                        className="w-full px-4 py-2 bg-hos-gold text-[#1a1406] rounded-lg hover:bg-hos-gold-hover"
                       >
                         Add All Values
                       </button>
@@ -1138,12 +1138,12 @@ export default function AdminAttributesPage() {
                       .map((val, index, arr) => (
                         <div
                           key={val.id}
-                          className="flex items-center justify-between p-2 bg-gray-50 rounded"
+                          className="flex items-center justify-between p-2 bg-hos-bg-secondary rounded"
                         >
                           <div className="flex items-center gap-2">
                             {val.colorHex && (
                               <span 
-                                className="w-6 h-6 rounded border border-gray-300"
+                                className="w-6 h-6 rounded border border-hos-border"
                                 style={{ backgroundColor: val.colorHex }}
                               />
                             )}
@@ -1153,14 +1153,14 @@ export default function AdminAttributesPage() {
                             <button
                               onClick={() => handleReorderValue(showValuesModal, val.id, 'up')}
                               disabled={index === 0}
-                              className="px-2 py-1 text-gray-500 hover:text-gray-700 disabled:opacity-30"
+                              className="px-2 py-1 text-hos-text-muted hover:text-hos-text-secondary disabled:opacity-30"
                             >
                               ↑
                             </button>
                             <button
                               onClick={() => handleReorderValue(showValuesModal, val.id, 'down')}
                               disabled={index === arr.length - 1}
-                              className="px-2 py-1 text-gray-500 hover:text-gray-700 disabled:opacity-30"
+                              className="px-2 py-1 text-hos-text-muted hover:text-hos-text-secondary disabled:opacity-30"
                             >
                               ↓
                             </button>
@@ -1182,7 +1182,7 @@ export default function AdminAttributesPage() {
           {/* Usage Modal */}
           {showUsageModal && (
             <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-              <div className="bg-white rounded-lg shadow-xl p-6 max-w-lg w-full max-h-[80vh] overflow-hidden flex flex-col">
+              <div className="bg-hos-bg-secondary rounded-lg shadow-xl p-6 max-w-lg w-full max-h-[80vh] overflow-hidden flex flex-col">
                 <div className="flex justify-between items-center mb-4">
                   <h3 className="text-lg font-semibold">
                     Usage: {attributes.find(a => a.id === showUsageModal)?.name}
@@ -1192,7 +1192,7 @@ export default function AdminAttributesPage() {
                       setShowUsageModal(null);
                       setUsageProducts([]);
                     }}
-                    className="text-gray-500 hover:text-gray-700 text-2xl"
+                    className="text-hos-text-muted hover:text-hos-text-secondary text-2xl"
                   >
                     ×
                   </button>
@@ -1201,16 +1201,16 @@ export default function AdminAttributesPage() {
                 <div className="flex-1 overflow-auto">
                   {loadingUsage ? (
                     <div className="flex items-center justify-center py-8">
-                      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-600"></div>
+                      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-hos-gold"></div>
                     </div>
                   ) : usageProducts.length === 0 ? (
-                    <div className="text-center py-8 text-gray-500">
+                    <div className="text-center py-8 text-hos-text-muted">
                       No products are using this attribute yet.
                     </div>
                   ) : (
                     <div className="space-y-2">
                       {usageProducts.map((product) => (
-                        <div key={product.id} className="p-3 bg-gray-50 rounded flex items-center gap-3">
+                        <div key={product.id} className="p-3 bg-hos-bg-secondary rounded flex items-center gap-3">
                           {product.images?.[0] && (
                             <SafeImage
                               src={typeof product.images[0] === 'string' ? product.images[0] : product.images[0].url}
@@ -1222,7 +1222,7 @@ export default function AdminAttributesPage() {
                           )}
                           <div>
                             <p className="font-medium">{product.name}</p>
-                            <p className="text-sm text-gray-500">{product.sku}</p>
+                            <p className="text-sm text-hos-text-muted">{product.sku}</p>
                           </div>
                         </div>
                       ))}

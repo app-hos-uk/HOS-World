@@ -33,28 +33,28 @@ export default function WholesalerError({
           </svg>
         </div>
 
-        <h1 className="text-2xl font-bold text-gray-900 font-[family-name:var(--font-inter)]">
+        <h1 className="text-2xl font-bold text-white font-[family-name:var(--font-ui)]">
           Wholesaler Portal Error
         </h1>
 
-        <p className="text-gray-600">
+        <p className="text-hos-text-secondary">
           {error.message || 'Something went wrong in the wholesaler portal.'}
         </p>
 
         {error.digest && (
-          <p className="text-xs text-gray-400">Error ID: {error.digest}</p>
+          <p className="text-xs text-hos-text-muted">Error ID: {error.digest}</p>
         )}
 
         <div className="flex flex-col sm:flex-row gap-3 justify-center pt-2">
           <button
             onClick={reset}
-            className="px-5 py-2 bg-purple-700 text-white rounded-lg hover:bg-purple-800 transition-colors font-medium text-sm"
+            className="px-5 py-2 bg-hos-gold text-[#1a1406] rounded-lg hover:bg-hos-gold-hover transition-colors font-medium text-sm"
           >
             Try Again
           </button>
           <Link
             href="/wholesaler/dashboard"
-            className="px-5 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors font-medium text-sm"
+            className="px-5 py-2 border border-hos-border text-hos-text-secondary rounded-lg hover:bg-hos-bg-tertiary transition-colors font-medium text-sm"
           >
             Back to Wholesaler Dashboard
           </Link>

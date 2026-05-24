@@ -65,43 +65,43 @@ export default function AdminPosConnectionsPage() {
         <div className="space-y-6">
           <div className="flex items-center justify-between">
             <div>
-              <Link href="/admin/pos" className="text-sm text-indigo-600 hover:text-indigo-800">
+              <Link href="/admin/pos" className="text-sm text-hos-gold hover:text-hos-gold">
                 ← POS home
               </Link>
-              <h1 className="mt-2 text-2xl font-bold text-gray-900">POS connections</h1>
+              <h1 className="mt-2 text-2xl font-bold text-white">POS connections</h1>
             </div>
           </div>
 
           {loading ? (
-            <div className="text-gray-500">Loading…</div>
+            <div className="text-hos-text-muted">Loading…</div>
           ) : (
-            <div className="overflow-hidden rounded-lg border border-gray-200 bg-white shadow">
-              <table className="min-w-full divide-y divide-gray-200">
-                <thead className="bg-gray-50">
+            <div className="overflow-hidden rounded-lg border border-hos-border bg-hos-bg-secondary shadow">
+              <table className="min-w-full divide-y divide-hos-border">
+                <thead className="bg-hos-bg-secondary">
                   <tr>
-                    <th className="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500">
+                    <th className="px-4 py-3 text-left text-xs font-medium uppercase text-hos-text-muted">
                       Store
                     </th>
-                    <th className="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500">
+                    <th className="px-4 py-3 text-left text-xs font-medium uppercase text-hos-text-muted">
                       Provider
                     </th>
-                    <th className="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500">
+                    <th className="px-4 py-3 text-left text-xs font-medium uppercase text-hos-text-muted">
                       Status
                     </th>
-                    <th className="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500">
+                    <th className="px-4 py-3 text-left text-xs font-medium uppercase text-hos-text-muted">
                       Sync
                     </th>
-                    <th className="px-4 py-3 text-right text-xs font-medium uppercase text-gray-500">
+                    <th className="px-4 py-3 text-right text-xs font-medium uppercase text-hos-text-muted">
                       Actions
                     </th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-gray-200 bg-white">
+                <tbody className="divide-y divide-hos-border bg-hos-bg-secondary">
                   {items.length === 0 ? (
                     <tr>
-                      <td colSpan={5} className="px-4 py-8 text-center text-gray-500">
+                      <td colSpan={5} className="px-4 py-8 text-center text-hos-text-muted">
                         No POS connections. Create one via API{' '}
-                        <code className="rounded bg-gray-100 px-1">POST /admin/pos/connections</code> or
+                        <code className="rounded bg-hos-bg-tertiary px-1">POST /admin/pos/connections</code> or
                         extend this UI with a form.
                       </td>
                     </tr>
@@ -110,29 +110,29 @@ export default function AdminPosConnectionsPage() {
                       <tr key={c.id}>
                         <td className="px-4 py-3 text-sm">
                           {c.store?.name ?? '—'}{' '}
-                          <span className="text-gray-400">({c.store?.code})</span>
+                          <span className="text-hos-text-muted">({c.store?.code})</span>
                         </td>
                         <td className="px-4 py-3 text-sm">{c.provider}</td>
                         <td className="px-4 py-3 text-sm">
                           {c.isActive ? (
                             <span className="text-green-700">Active</span>
                           ) : (
-                            <span className="text-gray-500">Inactive</span>
+                            <span className="text-hos-text-muted">Inactive</span>
                           )}
                         </td>
-                        <td className="px-4 py-3 text-sm text-gray-600">{c.syncStatus}</td>
+                        <td className="px-4 py-3 text-sm text-hos-text-secondary">{c.syncStatus}</td>
                         <td className="px-4 py-3 text-right text-sm">
                           <button
                             type="button"
                             onClick={() => void test(c.id)}
-                            className="mr-2 text-indigo-600 hover:text-indigo-800"
+                            className="mr-2 text-hos-gold hover:text-hos-gold"
                           >
                             Test
                           </button>
                           <button
                             type="button"
                             onClick={() => void syncProducts(c.id)}
-                            className="text-indigo-600 hover:text-indigo-800"
+                            className="text-hos-gold hover:text-hos-gold"
                           >
                             Sync products
                           </button>

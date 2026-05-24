@@ -132,8 +132,8 @@ export function AttributeEditor({
   if (loading) {
     return (
       <div className="space-y-2">
-        {label && <label className="block text-sm font-medium text-gray-700">{label}</label>}
-        <div className="text-sm text-gray-500">Loading attributes...</div>
+        {label && <label className="block text-sm font-medium text-hos-text-secondary">{label}</label>}
+        <div className="text-sm text-hos-text-muted">Loading attributes...</div>
       </div>
     );
   }
@@ -141,8 +141,8 @@ export function AttributeEditor({
   if (attributes.length === 0) {
     return (
       <div className="space-y-2">
-        {label && <label className="block text-sm font-medium text-gray-700">{label}</label>}
-        <div className="text-sm text-gray-500 p-4 border border-gray-200 rounded-lg bg-gray-50">
+        {label && <label className="block text-sm font-medium text-hos-text-secondary">{label}</label>}
+        <div className="text-sm text-hos-text-muted p-4 border border-hos-border rounded-lg bg-hos-bg-secondary">
           {categoryId
             ? 'No attributes available for this category. Create attributes first.'
             : 'No global attributes available. Create attributes first.'}
@@ -153,7 +153,7 @@ export function AttributeEditor({
 
   return (
     <div className="space-y-4">
-      {label && <label className="block text-sm font-medium text-gray-700">{label}</label>}
+      {label && <label className="block text-sm font-medium text-hos-text-secondary">{label}</label>}
 
       <div className="space-y-4">
         {attributes.map((attribute) => {
@@ -163,15 +163,15 @@ export function AttributeEditor({
           return (
             <div
               key={attribute.id}
-              className="border border-gray-200 rounded-lg p-4 bg-white"
+              className="border border-hos-border rounded-lg p-4 bg-hos-bg-secondary"
             >
               <div className="flex items-center justify-between mb-2">
                 <div>
-                  <label className="text-sm font-medium text-gray-700">
+                  <label className="text-sm font-medium text-hos-text-secondary">
                     {attribute.name}
                     {attribute.isRequired && <span className="text-red-500 ml-1">*</span>}
                   </label>
-                  <div className="text-xs text-gray-500 mt-1">
+                  <div className="text-xs text-hos-text-muted mt-1">
                     Type: {attribute.type}
                     {attribute.isFilterable && ' • Filterable'}
                     {attribute.isSearchable && ' • Searchable'}
@@ -193,7 +193,7 @@ export function AttributeEditor({
                   type="text"
                   value={currentValue?.textValue || ''}
                   onChange={(e) => updateAttributeValue(attribute, e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
+                  className="w-full px-3 py-2 border border-hos-border rounded-lg focus:outline-none focus:ring-2 focus:ring-hos-gold/50"
                   placeholder={`Enter ${attribute.name.toLowerCase()}`}
                 />
               )}
@@ -204,7 +204,7 @@ export function AttributeEditor({
                   step="any"
                   value={currentValue?.numberValue || ''}
                   onChange={(e) => updateAttributeValue(attribute, e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
+                  className="w-full px-3 py-2 border border-hos-border rounded-lg focus:outline-none focus:ring-2 focus:ring-hos-gold/50"
                   placeholder={`Enter ${attribute.name.toLowerCase()}`}
                 />
               )}
@@ -213,7 +213,7 @@ export function AttributeEditor({
                 <select
                   value={currentValue?.attributeValueId || ''}
                   onChange={(e) => updateAttributeValue(attribute, e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
+                  className="w-full px-3 py-2 border border-hos-border rounded-lg focus:outline-none focus:ring-2 focus:ring-hos-gold/50"
                 >
                   <option value="">Select {attribute.name.toLowerCase()}</option>
                   {attribute.values?.map((val) => (
@@ -230,9 +230,9 @@ export function AttributeEditor({
                     type="checkbox"
                     checked={currentValue?.booleanValue || false}
                     onChange={(e) => updateAttributeValue(attribute, e.target.checked)}
-                    className="w-4 h-4 text-purple-600 focus:ring-purple-500 border-gray-300 rounded"
+                    className="w-4 h-4 text-hos-gold focus:ring-hos-gold/50 border-hos-border rounded"
                   />
-                  <label className="text-sm text-gray-700">
+                  <label className="text-sm text-hos-text-secondary">
                     {currentValue?.booleanValue ? 'Yes' : 'No'}
                   </label>
                 </div>
@@ -243,7 +243,7 @@ export function AttributeEditor({
                   type="date"
                   value={currentValue?.dateValue || ''}
                   onChange={(e) => updateAttributeValue(attribute, e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
+                  className="w-full px-3 py-2 border border-hos-border rounded-lg focus:outline-none focus:ring-2 focus:ring-hos-gold/50"
                 />
               )}
             </div>

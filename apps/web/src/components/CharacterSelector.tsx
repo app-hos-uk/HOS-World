@@ -69,17 +69,17 @@ export function CharacterSelector({ onSelect, onSkip }: CharacterSelectorProps) 
 
   if (loading) {
     return (
-      <div className="bg-white rounded-xl shadow-lg p-6 sm:p-8 text-center">
-        <div className="animate-spin rounded-full h-10 w-10 sm:h-12 sm:w-12 border-b-2 border-purple-600 mx-auto"></div>
-        <p className="mt-4 text-sm sm:text-base text-gray-600">Loading characters...</p>
+      <div className="bg-hos-bg-secondary rounded-xl shadow-lg p-6 sm:p-8 text-center">
+        <div className="animate-spin rounded-full h-10 w-10 sm:h-12 sm:w-12 border-b-2 border-hos-gold mx-auto"></div>
+        <p className="mt-4 text-sm sm:text-base text-hos-text-secondary">Loading characters...</p>
       </div>
     );
   }
 
   return (
-    <div className="bg-white rounded-xl shadow-lg p-6 sm:p-8">
+    <div className="bg-hos-bg-secondary rounded-xl shadow-lg p-6 sm:p-8">
       <h2 className="text-xl sm:text-2xl font-bold text-center mb-2">Choose Your Character</h2>
-      <p className="text-center text-sm sm:text-base text-gray-600 mb-4 sm:mb-6">
+      <p className="text-center text-sm sm:text-base text-hos-text-secondary mb-4 sm:mb-6">
         Select a character to guide you through your fandom journey
       </p>
 
@@ -91,11 +91,11 @@ export function CharacterSelector({ onSelect, onSkip }: CharacterSelectorProps) 
             onClick={() => setSelectedCharacter(character.id)}
             className={`p-4 rounded-lg border-2 transition-all ${
               selectedCharacter === character.id
-                ? 'border-purple-600 bg-purple-50'
-                : 'border-gray-200 hover:border-purple-300'
+                ? 'border-hos-gold bg-hos-gold/10'
+                : 'border-hos-border hover:border-hos-border-accent'
             }`}
           >
-            <div className="relative aspect-square bg-gray-200 rounded-lg mb-2 flex items-center justify-center overflow-hidden">
+            <div className="relative aspect-square bg-hos-bg-tertiary rounded-lg mb-2 flex items-center justify-center overflow-hidden">
               {character.avatar ? (
                 <Image
                   src={character.avatar}
@@ -109,7 +109,7 @@ export function CharacterSelector({ onSelect, onSkip }: CharacterSelectorProps) 
               )}
             </div>
             <h3 className="font-semibold text-xs sm:text-sm">{character.name}</h3>
-            <p className="text-xs text-gray-500">{character.fandom.name}</p>
+            <p className="text-xs text-hos-text-muted">{character.fandom.name}</p>
           </button>
         ))}
       </div>
@@ -124,8 +124,8 @@ export function CharacterSelector({ onSelect, onSkip }: CharacterSelectorProps) 
               onClick={() => toggleFandom(fandom.slug)}
               className={`px-3 sm:px-4 py-1.5 sm:py-2 rounded-full text-xs sm:text-sm transition-colors ${
                 selectedFandoms.includes(fandom.slug)
-                  ? 'bg-purple-600 text-white'
-                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                  ? 'bg-hos-gold text-[#1a1406]'
+                  : 'bg-hos-bg-tertiary text-hos-text-secondary hover:bg-hos-bg-tertiary'
               }`}
             >
               {fandom.name}
@@ -138,14 +138,14 @@ export function CharacterSelector({ onSelect, onSkip }: CharacterSelectorProps) 
       <div className="flex flex-col sm:flex-row gap-2 sm:gap-3">
         <button
           onClick={onSkip}
-          className="flex-1 px-4 py-2 text-sm sm:text-base border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+          className="flex-1 px-4 py-2 text-sm sm:text-base border border-hos-border rounded-lg hover:bg-hos-bg-tertiary transition-colors"
         >
           Skip for Now
         </button>
         <button
           onClick={handleContinue}
           disabled={!selectedCharacter}
-          className="flex-1 px-4 py-2 text-sm sm:text-base bg-purple-600 text-white rounded-lg font-semibold hover:bg-purple-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          className="flex-1 px-4 py-2 text-sm sm:text-base bg-hos-gold text-[#1a1406] rounded-lg font-semibold hover:bg-hos-gold-hover transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
         >
           Continue
         </button>

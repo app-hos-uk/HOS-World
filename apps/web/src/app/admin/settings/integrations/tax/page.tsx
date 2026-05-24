@@ -251,7 +251,7 @@ export default function TaxIntegrationsPage() {
     switch (testStatus) {
       case 'SUCCESS': return 'text-green-600 bg-green-100';
       case 'FAILED': return 'text-red-600 bg-red-100';
-      default: return 'text-gray-600 bg-gray-100';
+      default: return 'text-hos-text-secondary bg-hos-bg-tertiary';
     }
   };
 
@@ -269,15 +269,15 @@ export default function TaxIntegrationsPage() {
     <RouteGuard allowedRoles={['ADMIN']} showAccessDenied={true}>
       <AdminLayout>
         <div className="mb-6">
-          <div className="flex items-center gap-2 text-sm text-gray-500 mb-2">
-            <Link href="/admin/settings" className="hover:text-purple-600">Settings</Link>
+          <div className="flex items-center gap-2 text-sm text-hos-text-muted mb-2">
+            <Link href="/admin/settings" className="hover:text-hos-gold">Settings</Link>
             <span>/</span>
-            <Link href="/admin/settings/integrations" className="hover:text-purple-600">Integrations</Link>
+            <Link href="/admin/settings/integrations" className="hover:text-hos-gold">Integrations</Link>
             <span>/</span>
             <span>Tax Services</span>
           </div>
           <h1 className="text-2xl sm:text-3xl font-bold">Tax Services</h1>
-          <p className="text-gray-600 mt-1">Configure automated tax calculation and compliance services</p>
+          <p className="text-hos-text-secondary mt-1">Configure automated tax calculation and compliance services</p>
         </div>
 
         {/* Active Provider Banner */}
@@ -326,8 +326,8 @@ export default function TaxIntegrationsPage() {
         {loading ? (
           <div className="flex items-center justify-center py-12">
             <div className="text-center">
-              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600 mx-auto mb-4"></div>
-              <p className="text-gray-600">Loading tax integrations...</p>
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-hos-gold mx-auto mb-4"></div>
+              <p className="text-hos-text-secondary">Loading tax integrations...</p>
             </div>
           </div>
         ) : (
@@ -340,17 +340,17 @@ export default function TaxIntegrationsPage() {
               return (
                 <div
                   key={provider}
-                  className={`bg-white border rounded-lg overflow-hidden ${
+                  className={`bg-hos-bg-secondary border rounded-lg overflow-hidden ${
                     isActive
                       ? 'border-green-300 shadow-lg ring-2 ring-green-200'
-                      : 'border-gray-200'
+                      : 'border-hos-border'
                   }`}
                 >
                   <div className="p-6">
                     <div className="flex items-start justify-between mb-4">
                       <div>
                         <h3 className="text-xl font-semibold">{metadata.displayName}</h3>
-                        <p className="text-gray-600 mt-1">{metadata.description}</p>
+                        <p className="text-hos-text-secondary mt-1">{metadata.description}</p>
                       </div>
                       {isActive && (
                         <span className="px-3 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800">
@@ -361,10 +361,10 @@ export default function TaxIntegrationsPage() {
 
                     {/* Features */}
                     <div className="mb-4">
-                      <h4 className="text-sm font-medium text-gray-700 mb-2">Features</h4>
+                      <h4 className="text-sm font-medium text-hos-text-secondary mb-2">Features</h4>
                       <ul className="grid grid-cols-2 gap-1">
                         {metadata.features.map((feature, index) => (
-                          <li key={index} className="flex items-center gap-1 text-sm text-gray-600">
+                          <li key={index} className="flex items-center gap-1 text-sm text-hos-text-secondary">
                             <svg className="w-4 h-4 text-green-500 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                             </svg>
@@ -388,7 +388,7 @@ export default function TaxIntegrationsPage() {
                             className={`px-2 py-1 text-xs rounded ${
                               integration.isTestMode
                                 ? 'bg-yellow-100 text-yellow-800'
-                                : 'bg-blue-100 text-blue-800'
+                                : 'bg-hos-gold/20 text-hos-gold'
                             }`}
                           >
                             {integration.isTestMode ? 'Sandbox' : 'Production'}
@@ -398,14 +398,14 @@ export default function TaxIntegrationsPage() {
                         <div className="flex flex-wrap gap-2">
                           <button
                             onClick={() => handleConfigure(provider, integration)}
-                            className="flex-1 px-3 py-2 text-sm bg-gray-100 hover:bg-gray-200 rounded font-medium"
+                            className="flex-1 px-3 py-2 text-sm bg-hos-bg-tertiary hover:bg-hos-bg-tertiary rounded font-medium"
                           >
                             Configure
                           </button>
                           <button
                             onClick={() => handleTestConnection(integration.id)}
                             disabled={testingId === integration.id}
-                            className="px-3 py-2 text-sm bg-purple-100 hover:bg-purple-200 text-purple-700 rounded disabled:opacity-50"
+                            className="px-3 py-2 text-sm bg-hos-gold/20 hover:bg-hos-gold/20 text-hos-gold-hover rounded disabled:opacity-50"
                           >
                             {testingId === integration.id ? 'Testing...' : 'Test'}
                           </button>
@@ -425,7 +425,7 @@ export default function TaxIntegrationsPage() {
                       <div className="pt-4 border-t">
                         <button
                           onClick={() => handleConfigure(provider)}
-                          className="w-full px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 font-medium"
+                          className="w-full px-4 py-2 bg-hos-gold text-[#1a1406] rounded-lg hover:bg-hos-gold-hover font-medium"
                         >
                           Set Up {metadata.displayName}
                         </button>
@@ -434,7 +434,7 @@ export default function TaxIntegrationsPage() {
                             href={metadata.documentationUrl}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="block text-center text-sm text-purple-600 hover:underline mt-2"
+                            className="block text-center text-sm text-hos-gold hover:underline mt-2"
                           >
                             View Documentation →
                           </a>
@@ -449,15 +449,15 @@ export default function TaxIntegrationsPage() {
         )}
 
         {/* Manual Tax Configuration Link */}
-        <div className="mt-8 p-6 bg-gray-50 rounded-lg border border-gray-200">
+        <div className="mt-8 p-6 bg-hos-bg-secondary rounded-lg border border-hos-border">
           <h3 className="text-lg font-semibold mb-2">Manual Tax Configuration</h3>
-          <p className="text-gray-600 mb-4">
+          <p className="text-hos-text-secondary mb-4">
             You can also configure tax zones and rates manually without an external provider.
             Manual rates will be used as a fallback if no provider is active.
           </p>
           <Link
             href="/admin/tax-zones"
-            className="inline-flex items-center gap-2 text-purple-600 hover:text-purple-700 font-medium"
+            className="inline-flex items-center gap-2 text-hos-gold hover:text-hos-gold-hover font-medium"
           >
             Manage Tax Zones & Rates →
           </Link>
@@ -489,7 +489,7 @@ export default function TaxIntegrationsPage() {
                   leaveFrom="opacity-100 scale-100"
                   leaveTo="opacity-0 scale-95"
                 >
-                  <Dialog.Panel className="w-full max-w-lg transform overflow-hidden rounded-2xl bg-white p-6 shadow-xl transition-all">
+                  <Dialog.Panel className="w-full max-w-lg transform overflow-hidden rounded-2xl bg-hos-bg-secondary p-6 shadow-xl transition-all">
                     <Dialog.Title as="h3" className="text-lg font-semibold mb-4">
                       {editingIntegration ? 'Edit' : 'Configure'} {selectedProvider && TAX_PROVIDERS[selectedProvider]?.displayName}
                     </Dialog.Title>
@@ -497,14 +497,14 @@ export default function TaxIntegrationsPage() {
                     {selectedProvider && (
                       <form onSubmit={handleSaveConfiguration} className="space-y-4">
                         <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-1">
+                          <label className="block text-sm font-medium text-hos-text-secondary mb-1">
                             Display Name
                           </label>
                           <input
                             type="text"
                             value={formData.displayName}
                             onChange={(e) => setFormData({ ...formData, displayName: e.target.value })}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
+                            className="w-full px-3 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50"
                             required
                           />
                         </div>
@@ -516,7 +516,7 @@ export default function TaxIntegrationsPage() {
                               id="testMode"
                               checked={formData.isTestMode}
                               onChange={(e) => setFormData({ ...formData, isTestMode: e.target.checked })}
-                              className="h-4 w-4 text-purple-600 rounded"
+                              className="h-4 w-4 text-hos-gold rounded"
                             />
                             <label htmlFor="testMode" className="text-sm">
                               Sandbox Mode
@@ -528,7 +528,7 @@ export default function TaxIntegrationsPage() {
                               id="isActive"
                               checked={formData.isActive}
                               onChange={(e) => setFormData({ ...formData, isActive: e.target.checked })}
-                              className="h-4 w-4 text-purple-600 rounded"
+                              className="h-4 w-4 text-hos-gold rounded"
                             />
                             <label htmlFor="isActive" className="text-sm">
                               Set as Active
@@ -537,10 +537,10 @@ export default function TaxIntegrationsPage() {
                         </div>
 
                         <div className="border-t pt-4">
-                          <h4 className="text-sm font-medium text-gray-700 mb-3">API Credentials</h4>
+                          <h4 className="text-sm font-medium text-hos-text-secondary mb-3">API Credentials</h4>
                           {TAX_PROVIDERS[selectedProvider]?.requiredCredentials.map((field) => (
                             <div key={field} className="mb-3">
-                              <label className="block text-sm text-gray-600 mb-1">
+                              <label className="block text-sm text-hos-text-secondary mb-1">
                                 {field.replace(/([A-Z])/g, ' $1').replace(/^./, (s) => s.toUpperCase())} *
                               </label>
                               <input
@@ -553,7 +553,7 @@ export default function TaxIntegrationsPage() {
                                   })
                                 }
                                 placeholder={editingIntegration ? '(unchanged)' : ''}
-                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
+                                className="w-full px-3 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50"
                                 required={!editingIntegration}
                               />
                             </div>
@@ -561,13 +561,13 @@ export default function TaxIntegrationsPage() {
                         </div>
 
                         {TAX_PROVIDERS[selectedProvider]?.documentationUrl && (
-                          <p className="text-sm text-gray-500">
+                          <p className="text-sm text-hos-text-muted">
                             Need API credentials?{' '}
                             <a
                               href={TAX_PROVIDERS[selectedProvider].documentationUrl}
                               target="_blank"
                               rel="noopener noreferrer"
-                              className="text-purple-600 hover:underline"
+                              className="text-hos-gold hover:underline"
                             >
                               Visit {TAX_PROVIDERS[selectedProvider].displayName} →
                             </a>
@@ -588,14 +588,14 @@ export default function TaxIntegrationsPage() {
                             <button
                               type="button"
                               onClick={() => setShowConfigModal(false)}
-                              className="px-4 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200"
+                              className="px-4 py-2 text-hos-text-secondary bg-hos-bg-tertiary rounded-lg hover:bg-hos-bg-tertiary"
                             >
                               Cancel
                             </button>
                             <button
                               type="submit"
                               disabled={submitting}
-                              className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 disabled:opacity-50"
+                              className="px-4 py-2 bg-hos-gold text-[#1a1406] rounded-lg hover:bg-hos-gold-hover disabled:opacity-50"
                             >
                               {submitting ? 'Saving...' : 'Save Configuration'}
                             </button>

@@ -79,7 +79,7 @@ export class LoyaltyService {
         userId,
         tierId: initiate.id,
         regionCode: dto?.regionCode || user.country || 'GB',
-        preferredCurrency: dto?.preferredCurrency || user.currencyPreference || 'GBP',
+        preferredCurrency: dto?.preferredCurrency || user.currencyPreference || 'USD',
         enrollmentChannel: dto?.enrollmentChannel || 'WEB',
         cardNumber,
       },

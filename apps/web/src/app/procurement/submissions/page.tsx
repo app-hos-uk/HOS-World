@@ -27,7 +27,7 @@ type DuplicateGroup = {
 
 export default function ProcurementSubmissionsPage() {
   return (
-    <Suspense fallback={<div className="flex items-center justify-center min-h-screen"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-600" /></div>}>
+    <Suspense fallback={<div className="flex items-center justify-center min-h-screen"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-hos-gold" /></div>}>
       <ProcurementSubmissionsContent />
     </Suspense>
   );
@@ -223,7 +223,7 @@ function ProcurementSubmissionsContent() {
   const getStatusBadgeColor = (status: string) => {
     switch (status) {
       case 'SUBMITTED':
-        return 'bg-blue-100 text-blue-800';
+        return 'bg-hos-gold/20 text-hos-gold';
       case 'UNDER_REVIEW':
         return 'bg-yellow-100 text-yellow-800';
       case 'PROCUREMENT_APPROVED':
@@ -231,7 +231,7 @@ function ProcurementSubmissionsContent() {
       case 'PROCUREMENT_REJECTED':
         return 'bg-red-100 text-red-800';
       default:
-        return 'bg-gray-100 text-gray-800';
+        return 'bg-hos-bg-tertiary text-white';
     }
   };
 
@@ -245,7 +245,7 @@ function ProcurementSubmissionsContent() {
       >
         <div className="mb-6">
           <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold">Review Submissions</h1>
-          <p className="text-gray-600 mt-2">Review and approve product submissions from sellers</p>
+          <p className="text-hos-text-secondary mt-2">Review and approve product submissions from sellers</p>
         </div>
 
           {error && (
@@ -257,11 +257,11 @@ function ProcurementSubmissionsContent() {
 
           {/* Toggle: All submissions vs Same product from multiple sellers */}
           <div className="mb-6 flex flex-wrap items-center gap-4">
-            <span className="text-sm font-medium text-gray-700">View:</span>
+            <span className="text-sm font-medium text-hos-text-secondary">View:</span>
             <button
               onClick={() => setShowDuplicateGroups(false)}
               className={`px-4 py-2 rounded-lg font-medium transition-colors ${
-                !showDuplicateGroups ? 'bg-purple-600 text-white' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                !showDuplicateGroups ? 'bg-hos-gold text-[#1a1406]' : 'bg-hos-bg-tertiary text-hos-text-secondary hover:bg-hos-bg-tertiary'
               }`}
             >
               All submissions
@@ -269,7 +269,7 @@ function ProcurementSubmissionsContent() {
             <button
               onClick={() => setShowDuplicateGroups(true)}
               className={`px-4 py-2 rounded-lg font-medium transition-colors ${
-                showDuplicateGroups ? 'bg-amber-600 text-white' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                showDuplicateGroups ? 'bg-amber-600 text-white' : 'bg-hos-bg-tertiary text-hos-text-secondary hover:bg-hos-bg-tertiary'
               }`}
             >
               Same product from multiple sellers
@@ -279,10 +279,10 @@ function ProcurementSubmissionsContent() {
           {/* Cross-seller duplicate groups section */}
           {showDuplicateGroups && (
             <div className="mb-8">
-              <h2 className="text-xl font-semibold text-gray-900 mb-2">
+              <h2 className="text-xl font-semibold text-white mb-2">
                 Duplicate groups — approve one per product
               </h2>
-              <p className="text-sm text-gray-600 mb-4">
+              <p className="text-sm text-hos-text-secondary mb-4">
                 These submissions represent the same product from different sellers/wholesalers. Approve only one per product.
               </p>
               {duplicateGroupsLoading && (
@@ -291,8 +291,8 @@ function ProcurementSubmissionsContent() {
                 </div>
               )}
               {!duplicateGroupsLoading && duplicateGroups.length === 0 && (
-                <div className="bg-white border border-gray-200 rounded-lg p-6 text-center">
-                  <p className="text-gray-500">No duplicate groups found. No same product submitted by multiple sellers.</p>
+                <div className="bg-hos-bg-secondary border border-hos-border rounded-lg p-6 text-center">
+                  <p className="text-hos-text-muted">No duplicate groups found. No same product submitted by multiple sellers.</p>
                 </div>
               )}
               {!duplicateGroupsLoading && duplicateGroups.length > 0 && (
@@ -315,27 +315,27 @@ function ProcurementSubmissionsContent() {
                         </p>
                         <button
                           onClick={() => setExpandedGroupId(expandedGroupId === group.groupId ? null : group.groupId)}
-                          className="px-3 py-1.5 text-xs bg-white border border-amber-300 text-amber-800 rounded-lg hover:bg-amber-100 font-medium"
+                          className="px-3 py-1.5 text-xs bg-hos-bg-secondary border border-amber-300 text-amber-800 rounded-lg hover:bg-amber-100 font-medium"
                         >
                           {expandedGroupId === group.groupId ? 'Hide Comparison' : 'Compare All'}
                         </button>
                       </div>
 
                       {expandedGroupId === group.groupId && (
-                        <div className="mb-4 overflow-x-auto border border-amber-200 rounded-lg bg-white">
+                        <div className="mb-4 overflow-x-auto border border-amber-200 rounded-lg bg-hos-bg-secondary">
                           <table className="w-full text-sm">
                             <thead>
                               <tr className="bg-amber-50">
                                 <th className="px-3 py-2 text-left text-xs font-semibold text-amber-800 border-r border-amber-200 w-24">Field</th>
                                 {group.submissions.map((s) => (
-                                  <th key={s.id} className={`px-3 py-2 text-left text-xs font-semibold border-r last:border-r-0 border-amber-200 ${s.id === group.suggestedPrimaryId ? 'text-green-800 bg-green-50' : 'text-gray-700'}`}>
+                                  <th key={s.id} className={`px-3 py-2 text-left text-xs font-semibold border-r last:border-r-0 border-amber-200 ${s.id === group.suggestedPrimaryId ? 'text-green-800 bg-green-50' : 'text-hos-text-secondary'}`}>
                                     {s.sellerStoreName}
                                     {s.id === group.suggestedPrimaryId && <span className="ml-1 text-[10px] bg-green-200 text-green-900 px-1 rounded">Primary</span>}
                                   </th>
                                 ))}
                               </tr>
                             </thead>
-                            <tbody className="divide-y divide-gray-100">
+                            <tbody className="divide-y divide-hos-border">
                               {['name', 'sku', 'barcode', 'ean', 'price', 'stock', 'category'].map((field) => {
                                 const vals = group.submissions.map((s) => {
                                   const pd = s.productData as Record<string, any>;
@@ -345,9 +345,9 @@ function ProcurementSubmissionsContent() {
                                 const allSame = vals.every((v) => v === vals[0]);
                                 return (
                                   <tr key={field}>
-                                    <td className="px-3 py-2 font-medium text-gray-600 border-r border-gray-200 capitalize">{field}</td>
+                                    <td className="px-3 py-2 font-medium text-hos-text-secondary border-r border-hos-border capitalize">{field}</td>
                                     {vals.map((v, i) => (
-                                      <td key={i} className={`px-3 py-2 border-r last:border-r-0 border-gray-100 ${allSame && v !== '—' ? 'bg-green-50 text-green-800' : !allSame && v !== '—' ? 'bg-amber-50 text-amber-800' : 'text-gray-500'}`}>
+                                      <td key={i} className={`px-3 py-2 border-r last:border-r-0 border-hos-border ${allSame && v !== '—' ? 'bg-green-50 text-green-800' : !allSame && v !== '—' ? 'bg-amber-50 text-amber-800' : 'text-hos-text-muted'}`}>
                                         {v}
                                       </td>
                                     ))}
@@ -355,17 +355,17 @@ function ProcurementSubmissionsContent() {
                                 );
                               })}
                               <tr>
-                                <td className="px-3 py-2 font-medium text-gray-600 border-r border-gray-200">Submitted</td>
+                                <td className="px-3 py-2 font-medium text-hos-text-secondary border-r border-hos-border">Submitted</td>
                                 {group.submissions.map((s) => (
-                                  <td key={s.id} className="px-3 py-2 border-r last:border-r-0 border-gray-100 text-gray-600">
+                                  <td key={s.id} className="px-3 py-2 border-r last:border-r-0 border-hos-border text-hos-text-secondary">
                                     {new Date(s.createdAt).toLocaleDateString()}
                                   </td>
                                 ))}
                               </tr>
                               <tr>
-                                <td className="px-3 py-2 font-medium text-gray-600 border-r border-gray-200">Status</td>
+                                <td className="px-3 py-2 font-medium text-hos-text-secondary border-r border-hos-border">Status</td>
                                 {group.submissions.map((s) => (
-                                  <td key={s.id} className="px-3 py-2 border-r last:border-r-0 border-gray-100">
+                                  <td key={s.id} className="px-3 py-2 border-r last:border-r-0 border-hos-border">
                                     <span className={`px-1.5 py-0.5 rounded text-xs font-medium ${getStatusBadgeColor(s.status)}`}>{s.status.replace(/_/g, ' ').toLowerCase().replace(/\b\w/g, (c: string) => c.toUpperCase())}</span>
                                   </td>
                                 ))}
@@ -379,18 +379,18 @@ function ProcurementSubmissionsContent() {
                         {group.submissions.map((sub) => (
                           <div
                             key={sub.id}
-                            className="bg-white border border-amber-100 rounded-lg p-4 flex flex-wrap items-center justify-between gap-3"
+                            className="bg-hos-bg-secondary border border-amber-100 rounded-lg p-4 flex flex-wrap items-center justify-between gap-3"
                           >
                             <div>
-                              <p className="font-medium text-gray-900">{sub.productName}</p>
-                              <p className="text-sm text-gray-600">
+                              <p className="font-medium text-white">{sub.productName}</p>
+                              <p className="text-sm text-hos-text-secondary">
                                 Seller: {sub.sellerStoreName} · {new Date(sub.createdAt).toLocaleDateString()}
                               </p>
                             </div>
                             <div className="flex gap-2">
                               <button
                                 onClick={() => handleViewDetails(sub.id)}
-                                className="px-3 py-1.5 text-sm bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300"
+                                className="px-3 py-1.5 text-sm bg-hos-bg-tertiary text-hos-text-secondary rounded-lg hover:bg-hos-bg-tertiary"
                               >
                                 View
                               </button>
@@ -468,8 +468,8 @@ function ProcurementSubmissionsContent() {
                   onClick={() => setStatusFilter(status)}
                   className={`px-4 py-2 rounded-lg font-medium transition-colors ${
                     statusFilter === status
-                      ? 'bg-purple-600 text-white'
-                      : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                      ? 'bg-hos-gold text-[#1a1406]'
+                      : 'bg-hos-bg-tertiary text-hos-text-secondary hover:bg-hos-bg-tertiary'
                   }`}
                 >
                   {status.replace(/_/g, ' ').toLowerCase().replace(/\b\w/g, (c: string) => c.toUpperCase())}
@@ -481,13 +481,13 @@ function ProcurementSubmissionsContent() {
 
           {!showDuplicateGroups && loading && (
             <div className="flex items-center justify-center py-12">
-              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600"></div>
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-hos-gold"></div>
             </div>
           )}
 
           {!showDuplicateGroups && !loading && submissions.length === 0 && (
-            <div className="bg-white border border-gray-200 rounded-lg p-8 text-center">
-              <p className="text-gray-500 text-lg">No submissions found for this status</p>
+            <div className="bg-hos-bg-secondary border border-hos-border rounded-lg p-8 text-center">
+              <p className="text-hos-text-muted text-lg">No submissions found for this status</p>
             </div>
           )}
 
@@ -498,16 +498,16 @@ function ProcurementSubmissionsContent() {
                 return (
                   <div
                     key={submission.id}
-                    className="bg-white border border-gray-200 rounded-lg p-6 hover:shadow-md transition-shadow"
+                    className="bg-hos-bg-secondary border border-hos-border rounded-lg p-6 hover:shadow-md transition-shadow"
                   >
                     <div className="flex flex-col sm:flex-row justify-between gap-4">
                       <div className="flex-1">
                         <div className="flex items-start justify-between mb-2">
                           <div>
-                            <h3 className="text-lg font-semibold text-gray-900">
+                            <h3 className="text-lg font-semibold text-white">
                               {productData.name || 'Untitled Product'}
                             </h3>
-                            <p className="text-sm text-gray-500 mt-1">
+                            <p className="text-sm text-hos-text-muted mt-1">
                               Seller: {submission.seller?.storeName || 'Unknown'}
                             </p>
                           </div>
@@ -520,11 +520,11 @@ function ProcurementSubmissionsContent() {
                           </span>
                         </div>
 
-                        <p className="text-sm text-gray-600 mt-2 line-clamp-2">
+                        <p className="text-sm text-hos-text-secondary mt-2 line-clamp-2">
                           {productData.description || 'No description'}
                         </p>
 
-                        <div className="flex flex-wrap gap-4 mt-4 text-sm text-gray-600">
+                        <div className="flex flex-wrap gap-4 mt-4 text-sm text-hos-text-secondary">
                           {productData.sku && (
                             <span>
                               <strong>SKU:</strong> {productData.sku}
@@ -579,7 +579,7 @@ function ProcurementSubmissionsContent() {
                         <button
                           onClick={() => handleViewDetails(submission.id)}
                           disabled={detailsLoadingId === submission.id}
-                          className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors font-medium text-sm whitespace-nowrap disabled:opacity-70 disabled:cursor-wait flex items-center gap-2"
+                          className="px-4 py-2 bg-hos-gold text-[#1a1406] rounded-lg hover:bg-hos-gold-hover transition-colors font-medium text-sm whitespace-nowrap disabled:opacity-70 disabled:cursor-wait flex items-center gap-2"
                         >
                           {detailsLoadingId === submission.id && (
                             <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent" />
@@ -624,7 +624,7 @@ function ProcurementSubmissionsContent() {
           {/* Modal for Details/Approve/Reject */}
           {showModal && selectedSubmission && (
             <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-              <div className="bg-white rounded-lg max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+              <div className="bg-hos-bg-secondary rounded-lg max-w-4xl w-full max-h-[90vh] overflow-y-auto">
                 <div className="p-6">
                   <div className="flex justify-between items-start mb-4">
                     <h2 className="text-2xl font-bold">
@@ -644,7 +644,7 @@ function ProcurementSubmissionsContent() {
                         setAcknowledgeDuplicates(false);
                         setDuplicateAcknowledgementNote('');
                       }}
-                      className="text-gray-500 hover:text-gray-700"
+                      className="text-hos-text-muted hover:text-hos-text-secondary"
                     >
                       <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path
@@ -663,18 +663,18 @@ function ProcurementSubmissionsContent() {
                         <h3 className="font-semibold text-lg mb-2">
                           {selectedSubmission.productData?.name || 'Untitled Product'}
                         </h3>
-                        <p className="text-gray-600">
+                        <p className="text-hos-text-secondary">
                           {selectedSubmission.productData?.description || 'No description'}
                         </p>
                       </div>
 
                       <div className="grid grid-cols-2 gap-4">
                         <div>
-                          <p className="text-sm font-medium text-gray-500">Seller</p>
-                          <p className="text-gray-900">{selectedSubmission.seller?.storeName || 'Unknown'}</p>
+                          <p className="text-sm font-medium text-hos-text-muted">Seller</p>
+                          <p className="text-white">{selectedSubmission.seller?.storeName || 'Unknown'}</p>
                         </div>
                         <div>
-                          <p className="text-sm font-medium text-gray-500">Status</p>
+                          <p className="text-sm font-medium text-hos-text-muted">Status</p>
                           <span
                             className={`inline-block px-2 py-1 rounded text-xs font-medium ${getStatusBadgeColor(
                               selectedSubmission.status
@@ -685,14 +685,14 @@ function ProcurementSubmissionsContent() {
                         </div>
                         {selectedSubmission.productData?.sku && (
                           <div>
-                            <p className="text-sm font-medium text-gray-500">SKU</p>
-                            <p className="text-gray-900">{selectedSubmission.productData.sku}</p>
+                            <p className="text-sm font-medium text-hos-text-muted">SKU</p>
+                            <p className="text-white">{selectedSubmission.productData.sku}</p>
                           </div>
                         )}
                         {selectedSubmission.productData?.price && (
                           <div>
-                            <p className="text-sm font-medium text-gray-500">Price</p>
-                            <p className="text-gray-900">
+                            <p className="text-sm font-medium text-hos-text-muted">Price</p>
+                            <p className="text-white">
                               {selectedSubmission.productData.currency || 'USD'}{' '}
                               {parseFloat(selectedSubmission.productData.price).toFixed(2)}
                             </p>
@@ -700,13 +700,13 @@ function ProcurementSubmissionsContent() {
                         )}
                         {selectedSubmission.productData?.stock !== undefined && (
                           <div>
-                            <p className="text-sm font-medium text-gray-500">Stock</p>
-                            <p className="text-gray-900">{selectedSubmission.productData.stock}</p>
+                            <p className="text-sm font-medium text-hos-text-muted">Stock</p>
+                            <p className="text-white">{selectedSubmission.productData.stock}</p>
                           </div>
                         )}
                         <div>
-                          <p className="text-sm font-medium text-gray-500">Submitted</p>
-                          <p className="text-gray-900">
+                          <p className="text-sm font-medium text-hos-text-muted">Submitted</p>
+                          <p className="text-white">
                             {selectedSubmission.createdAt
                               ? new Date(selectedSubmission.createdAt).toLocaleString()
                               : '—'}
@@ -717,7 +717,7 @@ function ProcurementSubmissionsContent() {
                       {selectedSubmission.productData?.images &&
                         selectedSubmission.productData.images.length > 0 && (
                           <div>
-                            <p className="text-sm font-medium text-gray-500 mb-2">Images</p>
+                            <p className="text-sm font-medium text-hos-text-muted mb-2">Images</p>
                             <div className="grid grid-cols-3 gap-2">
                               {selectedSubmission.productData.images.map((img: any, idx: number) => (
                                 <div key={idx} className="relative w-full h-24">
@@ -748,16 +748,16 @@ function ProcurementSubmissionsContent() {
                               const score = dup.similarityScore ?? 0;
                               const isHigh = score >= 90;
                               return (
-                                <div key={dup.id || ep?.id} className="p-4 bg-white">
+                                <div key={dup.id || ep?.id} className="p-4 bg-hos-bg-secondary">
                                   <div className="flex items-start justify-between gap-3">
                                     <div className="flex-1 min-w-0">
-                                      <p className="font-medium text-gray-900 truncate">{ep?.name || 'Unknown'}</p>
-                                      <div className="flex flex-wrap gap-3 mt-1 text-xs text-gray-500">
+                                      <p className="font-medium text-white truncate">{ep?.name || 'Unknown'}</p>
+                                      <div className="flex flex-wrap gap-3 mt-1 text-xs text-hos-text-muted">
                                         {ep?.sku && <span>SKU: {ep.sku}</span>}
                                         {ep?.barcode && <span>Barcode: {ep.barcode}</span>}
                                         {ep?.ean && <span>EAN: {ep.ean}</span>}
                                         {ep?.price && <span>Price: {ep.currency || 'USD'} {parseFloat(ep.price).toFixed(2)}</span>}
-                                        {ep?.status && <span className="px-1.5 py-0.5 bg-gray-100 rounded">{ep.status}</span>}
+                                        {ep?.status && <span className="px-1.5 py-0.5 bg-hos-bg-tertiary rounded">{ep.status}</span>}
                                       </div>
                                       {ep?.images && ep.images.length > 0 && (
                                         <div className="flex gap-1 mt-2">
@@ -774,7 +774,7 @@ function ProcurementSubmissionsContent() {
                                         <span className={`inline-block px-2 py-1 rounded text-xs font-bold ${isHigh ? 'bg-red-100 text-red-800' : 'bg-orange-100 text-orange-800'}`}>
                                           {score}% match
                                         </span>
-                                        <div className="w-20 h-1.5 bg-gray-200 rounded-full mt-1">
+                                        <div className="w-20 h-1.5 bg-hos-bg-tertiary rounded-full mt-1">
                                           <div className={`h-full rounded-full ${isHigh ? 'bg-red-500' : score >= 80 ? 'bg-orange-400' : 'bg-yellow-400'}`} style={{ width: `${score}%` }} />
                                         </div>
                                       </div>
@@ -783,7 +783,7 @@ function ProcurementSubmissionsContent() {
                                           setCompareProduct(ep);
                                           setCompareSubmissionData(selectedSubmission.productData);
                                         }}
-                                        className="px-3 py-1.5 text-xs bg-purple-600 text-white rounded-lg hover:bg-purple-700 font-medium"
+                                        className="px-3 py-1.5 text-xs bg-hos-gold text-[#1a1406] rounded-lg hover:bg-hos-gold-hover font-medium"
                                       >
                                         Compare Side-by-Side
                                       </button>
@@ -798,8 +798,8 @@ function ProcurementSubmissionsContent() {
 
                       {selectedSubmission.procurementNotes && (
                         <div>
-                          <p className="text-sm font-medium text-gray-500 mb-1">Procurement Notes</p>
-                          <p className="text-gray-900 bg-gray-50 p-3 rounded">{selectedSubmission.procurementNotes}</p>
+                          <p className="text-sm font-medium text-hos-text-muted mb-1">Procurement Notes</p>
+                          <p className="text-white bg-hos-bg-secondary p-3 rounded">{selectedSubmission.procurementNotes}</p>
                         </div>
                       )}
 
@@ -854,7 +854,7 @@ function ProcurementSubmissionsContent() {
                         </div>
                       )}
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                        <label className="block text-sm font-medium text-hos-text-secondary mb-1">
                           Approved Order Quantity (Optional)
                         </label>
                         <input
@@ -862,23 +862,23 @@ function ProcurementSubmissionsContent() {
                           value={quantity}
                           onChange={(e) => setQuantity(e.target.value)}
                           min="1"
-                          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
+                          className="w-full px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50"
                           placeholder={`Seller offered: ${(selectedSubmission.productData as any)?.stock ?? '—'} units`}
                         />
-                        <p className="text-xs text-gray-500 mt-1">
+                        <p className="text-xs text-hos-text-muted mt-1">
                           Seller&apos;s available stock: {(selectedSubmission.productData as any)?.stock ?? 'N/A'} &middot;
                           Enter how many units to approve for procurement
                         </p>
                       </div>
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                        <label className="block text-sm font-medium text-hos-text-secondary mb-1">
                           Procurement Notes (Optional)
                         </label>
                         <textarea
                           value={notes}
                           onChange={(e) => setNotes(e.target.value)}
                           rows={3}
-                          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
+                          className="w-full px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50"
                           placeholder="Add notes about this approval..."
                         />
                       </div>
@@ -896,7 +896,7 @@ function ProcurementSubmissionsContent() {
                         <button
                           onClick={() => setActionType(null)}
                           disabled={actionLoading}
-                          className="px-6 py-2 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400 transition-colors font-medium"
+                          className="px-6 py-2 bg-hos-bg-tertiary text-hos-text-secondary rounded-lg hover:bg-hos-text-muted transition-colors font-medium"
                         >
                           Cancel
                         </button>
@@ -907,7 +907,7 @@ function ProcurementSubmissionsContent() {
                   {actionType === 'reject' && (
                     <div className="space-y-4">
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                        <label className="block text-sm font-medium text-hos-text-secondary mb-1">
                           Rejection Reason <span className="text-red-500">*</span>
                         </label>
                         <textarea
@@ -915,7 +915,7 @@ function ProcurementSubmissionsContent() {
                           onChange={(e) => setRejectReason(e.target.value)}
                           rows={4}
                           required
-                          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
+                          className="w-full px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50"
                           placeholder="Please provide a reason for rejection..."
                         />
                       </div>
@@ -930,7 +930,7 @@ function ProcurementSubmissionsContent() {
                         <button
                           onClick={() => setActionType(null)}
                           disabled={actionLoading}
-                          className="px-6 py-2 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400 transition-colors font-medium"
+                          className="px-6 py-2 bg-hos-bg-tertiary text-hos-text-secondary rounded-lg hover:bg-hos-text-muted transition-colors font-medium"
                         >
                           Cancel
                         </button>
@@ -944,12 +944,12 @@ function ProcurementSubmissionsContent() {
           {/* Side-by-Side Comparison Modal */}
           {compareProduct && compareSubmissionData && (
             <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center p-4 z-[60]">
-              <div className="bg-white rounded-lg max-w-5xl w-full max-h-[92vh] overflow-y-auto">
-                <div className="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between z-10">
-                  <h2 className="text-xl font-bold text-gray-900">Side-by-Side Comparison</h2>
+              <div className="bg-hos-bg-secondary rounded-lg max-w-5xl w-full max-h-[92vh] overflow-y-auto">
+                <div className="sticky top-0 bg-hos-bg-secondary border-b border-hos-border px-6 py-4 flex items-center justify-between z-10">
+                  <h2 className="text-xl font-bold text-white">Side-by-Side Comparison</h2>
                   <button
                     onClick={() => { setCompareProduct(null); setCompareSubmissionData(null); }}
-                    className="text-gray-500 hover:text-gray-700"
+                    className="text-hos-text-muted hover:text-hos-text-secondary"
                   >
                     <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
                   </button>
@@ -958,7 +958,7 @@ function ProcurementSubmissionsContent() {
                 <div className="p-6">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div className="text-center">
-                      <span className="inline-block px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm font-semibold mb-3">Submitted Product</span>
+                      <span className="inline-block px-3 py-1 bg-hos-gold/20 text-hos-gold rounded-full text-sm font-semibold mb-3">Submitted Product</span>
                     </div>
                     <div className="text-center">
                       <span className="inline-block px-3 py-1 bg-green-100 text-green-800 rounded-full text-sm font-semibold mb-3">Existing Product</span>
@@ -980,14 +980,14 @@ function ProcurementSubmissionsContent() {
                     ];
 
                     return (
-                      <div className="mt-4 border border-gray-200 rounded-lg overflow-hidden">
+                      <div className="mt-4 border border-hos-border rounded-lg overflow-hidden">
                         {fields.map((f, i) => {
                           const match = f.subVal === f.exVal && f.subVal !== '—';
                           const bothEmpty = f.subVal === '—' && f.exVal === '—';
                           return (
-                            <div key={f.label} className={`grid grid-cols-[120px_1fr_1fr] ${i % 2 === 0 ? 'bg-white' : 'bg-gray-50'}`}>
-                              <div className="px-4 py-3 font-medium text-sm text-gray-600 border-r border-gray-200">{f.label}</div>
-                              <div className={`px-4 py-3 text-sm border-r border-gray-200 ${match ? 'bg-green-50 text-green-800' : bothEmpty ? '' : f.subVal !== '—' && f.exVal !== '—' && f.subVal !== f.exVal ? 'bg-amber-50 text-amber-800' : ''}`}>
+                            <div key={f.label} className={`grid grid-cols-[120px_1fr_1fr] ${i % 2 === 0 ? 'bg-hos-bg-secondary' : 'bg-hos-bg-secondary'}`}>
+                              <div className="px-4 py-3 font-medium text-sm text-hos-text-secondary border-r border-hos-border">{f.label}</div>
+                              <div className={`px-4 py-3 text-sm border-r border-hos-border ${match ? 'bg-green-50 text-green-800' : bothEmpty ? '' : f.subVal !== '—' && f.exVal !== '—' && f.subVal !== f.exVal ? 'bg-amber-50 text-amber-800' : ''}`}>
                                 {f.subVal}
                               </div>
                               <div className={`px-4 py-3 text-sm ${match ? 'bg-green-50 text-green-800' : bothEmpty ? '' : f.subVal !== '—' && f.exVal !== '—' && f.subVal !== f.exVal ? 'bg-amber-50 text-amber-800' : ''}`}>
@@ -997,26 +997,26 @@ function ProcurementSubmissionsContent() {
                           );
                         })}
 
-                        <div className="grid grid-cols-[120px_1fr_1fr] bg-white border-t border-gray-200">
-                          <div className="px-4 py-3 font-medium text-sm text-gray-600 border-r border-gray-200">Description</div>
-                          <div className="px-4 py-3 text-sm border-r border-gray-200">
-                            <p className="line-clamp-4 text-gray-700">{sub?.description || '—'}</p>
+                        <div className="grid grid-cols-[120px_1fr_1fr] bg-hos-bg-secondary border-t border-hos-border">
+                          <div className="px-4 py-3 font-medium text-sm text-hos-text-secondary border-r border-hos-border">Description</div>
+                          <div className="px-4 py-3 text-sm border-r border-hos-border">
+                            <p className="line-clamp-4 text-hos-text-secondary">{sub?.description || '—'}</p>
                           </div>
                           <div className="px-4 py-3 text-sm">
-                            <p className="line-clamp-4 text-gray-700">{ex?.description || '—'}</p>
+                            <p className="line-clamp-4 text-hos-text-secondary">{ex?.description || '—'}</p>
                           </div>
                         </div>
 
-                        <div className="grid grid-cols-[120px_1fr_1fr] bg-gray-50 border-t border-gray-200">
-                          <div className="px-4 py-3 font-medium text-sm text-gray-600 border-r border-gray-200">Images</div>
-                          <div className="px-4 py-3 border-r border-gray-200">
+                        <div className="grid grid-cols-[120px_1fr_1fr] bg-hos-bg-secondary border-t border-hos-border">
+                          <div className="px-4 py-3 font-medium text-sm text-hos-text-secondary border-r border-hos-border">Images</div>
+                          <div className="px-4 py-3 border-r border-hos-border">
                             <div className="flex gap-1 flex-wrap">
                               {(sub?.images || []).slice(0, 4).map((img: any, i: number) => (
                                 <div key={i} className="relative w-16 h-16">
                                   <SafeImage src={img.url || img} alt={img.alt || ''} fill className="object-cover rounded" sizes="64px" />
                                 </div>
                               ))}
-                              {(!sub?.images || sub.images.length === 0) && <span className="text-xs text-gray-400">No images</span>}
+                              {(!sub?.images || sub.images.length === 0) && <span className="text-xs text-hos-text-muted">No images</span>}
                             </div>
                           </div>
                           <div className="px-4 py-3">
@@ -1026,7 +1026,7 @@ function ProcurementSubmissionsContent() {
                                   <SafeImage src={img.url || img} alt={img.alt || ''} fill className="object-cover rounded" sizes="64px" />
                                 </div>
                               ))}
-                              {(!ex?.images || ex.images.length === 0) && <span className="text-xs text-gray-400">No images</span>}
+                              {(!ex?.images || ex.images.length === 0) && <span className="text-xs text-hos-text-muted">No images</span>}
                             </div>
                           </div>
                         </div>
@@ -1037,7 +1037,7 @@ function ProcurementSubmissionsContent() {
                   <div className="flex justify-end gap-3 mt-6">
                     <button
                       onClick={() => { setCompareProduct(null); setCompareSubmissionData(null); }}
-                      className="px-5 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 font-medium text-sm"
+                      className="px-5 py-2 bg-hos-bg-tertiary text-hos-text-secondary rounded-lg hover:bg-hos-bg-tertiary font-medium text-sm"
                     >
                       Close
                     </button>

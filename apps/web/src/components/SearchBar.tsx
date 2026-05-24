@@ -2,7 +2,6 @@
 
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
-import { useTheme } from '@hos-marketplace/theme-system';
 import { apiClient } from '@/lib/api';
 
 const RECENT_SEARCHES_KEY = 'recent_searches';
@@ -65,7 +64,6 @@ export function SearchBar({ compact = false }: SearchBarProps) {
   const [searchError, setSearchError] = useState<string | null>(null);
   const [highlightIndex, setHighlightIndex] = useState(-1);
   const router = useRouter();
-  const theme = useTheme();
   const searchRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const debounceTimer = useRef<NodeJS.Timeout | null>(null);
@@ -258,11 +256,11 @@ export function SearchBar({ compact = false }: SearchBarProps) {
   const shouldShowDropdown = showDropdown && (showingRecent || showingResults || filteredSuggestions.length > 0 || (searchError !== null && query.trim().length >= 2));
 
   return (
-    <div ref={searchRef} className={compact ? "relative w-full min-w-[200px] max-w-sm lg:max-w-md" : "w-full max-w-2xl mx-auto relative"}>
-      <form onSubmit={handleSubmit}>
-        <div className="relative">
+    <div ref={searchRef} className={compact ? "relative w-full" : "w-full max-w-2xl mx-auto relative"}>
+      <form onSubmit={handleSubmit} className="flex w-full">
+        <div className="relative flex-1">
           <svg
-            className={`absolute left-3 top-1/2 -translate-y-1/2 ${compact ? 'w-4 h-4' : 'w-4 h-4'} text-gray-400 pointer-events-none`}
+            className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-hos-text-muted pointer-events-none"
             fill="none"
             stroke="currentColor"
             viewBox="0 0 24 24"
@@ -284,15 +282,11 @@ export function SearchBar({ compact = false }: SearchBarProps) {
             onFocus={handleFocus}
             onKeyDown={handleKeyDown}
             placeholder={compact ? "Search products..." : "Search products, fandoms, sellers..."}
-            className={compact
-              ? "w-full pl-10 pr-3 py-2 text-sm rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500 bg-white"
-              : "w-full px-3 sm:px-4 py-2 sm:py-3 pl-9 sm:pl-10 pr-20 sm:pr-24 text-sm sm:text-base rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-accent"
+            className={
+              compact
+                ? "w-full pl-10 pr-4 py-2.5 text-sm rounded-l-lg border border-hos-border border-r-0 bg-[#1A1A1A] text-white placeholder:text-hos-text-muted focus:outline-none focus:ring-1 focus:ring-hos-gold focus:border-hos-gold"
+                : "w-full pl-10 pr-4 py-2.5 sm:py-3 text-sm sm:text-base rounded-l-lg border border-hos-border border-r-0 bg-[#1A1A1A] text-white placeholder:text-hos-text-muted focus:outline-none focus:ring-1 focus:ring-hos-gold focus:border-hos-gold"
             }
-            style={compact ? undefined : {
-              backgroundColor: theme.colors.surface,
-              color: theme.colors.text.primary,
-              borderColor: theme.colors.secondary,
-            }}
             autoComplete="off"
             role="combobox"
             aria-label="Search products"
@@ -301,36 +295,30 @@ export function SearchBar({ compact = false }: SearchBarProps) {
             aria-controls={shouldShowDropdown ? 'search-results-listbox' : undefined}
             aria-activedescendant={highlightIndex >= 0 ? `search-option-${highlightIndex}` : undefined}
           />
-          {!compact && (
-            <button
-              type="submit"
-              className="absolute right-1 sm:right-2 top-1/2 transform -translate-y-1/2 px-3 sm:px-4 py-1.5 sm:py-2 text-xs sm:text-sm rounded-md font-medium transition-colors"
-              style={{
-                backgroundColor: theme.colors.accent,
-                color: '#ffffff',
-              }}
-            >
-              Search
-            </button>
-          )}
         </div>
+        <button
+          type="submit"
+          className="bg-hos-gold text-[#1a1406] font-semibold px-5 py-2.5 rounded-r-lg hover:bg-hos-gold-hover transition-colors duration-200 shrink-0 text-sm"
+        >
+          Search
+        </button>
       </form>
 
       {shouldShowDropdown && (
         <div
           id="search-results-listbox"
-          className="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-xl shadow-xl z-50 overflow-hidden"
+          className="absolute top-full left-0 right-0 mt-1 bg-hos-bg-secondary border border-hos-border rounded-xl shadow-xl z-50 overflow-hidden"
           role="listbox"
           aria-label="Search results"
         >
           {/* Recent searches */}
           {showingRecent && (
             <>
-              <div className="flex items-center justify-between px-4 py-2 border-b border-gray-100">
-                <span className="text-xs font-medium text-gray-500 uppercase tracking-wider">Recent Searches</span>
+              <div className="flex items-center justify-between px-4 py-2 border-b border-hos-border">
+                <span className="text-xs font-medium text-hos-text-muted uppercase tracking-wider">Recent Searches</span>
                 <button
                   onClick={handleClearRecent}
-                  className="text-xs text-gray-400 hover:text-gray-600 transition-colors"
+                  className="text-xs text-hos-text-muted hover:text-hos-gold transition-colors duration-200"
                 >
                   Clear
                 </button>
@@ -341,16 +329,16 @@ export function SearchBar({ compact = false }: SearchBarProps) {
                   type="button"
                   id={`search-option-${index}`}
                   onClick={() => navigateToSearch(term)}
-                  className={`w-full text-left px-4 py-2.5 flex items-center gap-3 transition-colors ${
-                    highlightIndex === index ? 'bg-purple-50' : 'hover:bg-gray-50'
+                  className={`w-full text-left px-4 py-2.5 flex items-center gap-3 transition-colors duration-200 ${
+                    highlightIndex === index ? 'bg-hos-bg-tertiary' : 'hover:bg-hos-bg-tertiary'
                   }`}
                   role="option"
                   aria-selected={highlightIndex === index}
                 >
-                  <svg className="w-4 h-4 text-gray-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg className="w-4 h-4 text-hos-text-muted shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                   </svg>
-                  <span className="text-sm text-gray-700 truncate">{term}</span>
+                  <span className="text-sm text-hos-text-secondary truncate">{term}</span>
                 </button>
               ))}
             </>
@@ -359,8 +347,8 @@ export function SearchBar({ compact = false }: SearchBarProps) {
           {/* Loading state */}
           {loading && query.trim().length >= 2 && results.length === 0 && (
             <div className="p-4 text-center">
-              <div className="inline-flex items-center gap-2 text-sm text-gray-500">
-                <div className="w-4 h-4 border-2 border-purple-600 border-t-transparent rounded-full animate-spin" />
+              <div className="inline-flex items-center gap-2 text-sm text-hos-text-muted">
+                <div className="w-4 h-4 border-2 border-hos-gold border-t-transparent rounded-full animate-spin" />
                 Searching...
               </div>
             </div>
@@ -369,8 +357,8 @@ export function SearchBar({ compact = false }: SearchBarProps) {
           {/* Suggestions (did you mean / related searches) */}
           {!showingRecent && !loading && filteredSuggestions.length > 0 && (
             <>
-              <div className="px-4 py-2 border-b border-gray-100">
-                <span className="text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <div className="px-4 py-2 border-b border-hos-border">
+                <span className="text-xs font-medium text-hos-text-muted uppercase tracking-wider">
                   {results.length === 0 ? 'Did you mean' : 'Related searches'}
                 </span>
               </div>
@@ -380,16 +368,16 @@ export function SearchBar({ compact = false }: SearchBarProps) {
                   type="button"
                   id={`search-option-${index}`}
                   onClick={() => navigateToSearch(suggestion)}
-                  className={`w-full text-left px-4 py-2.5 flex items-center gap-3 transition-colors ${
-                    highlightIndex === index ? 'bg-purple-50' : 'hover:bg-gray-50'
+                  className={`w-full text-left px-4 py-2.5 flex items-center gap-3 transition-colors duration-200 ${
+                    highlightIndex === index ? 'bg-hos-bg-tertiary' : 'hover:bg-hos-bg-tertiary'
                   }`}
                   role="option"
                   aria-selected={highlightIndex === index}
                 >
-                  <svg className="w-4 h-4 text-gray-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg className="w-4 h-4 text-hos-text-muted shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                   </svg>
-                  <span className="text-sm text-gray-700 truncate">{suggestion}</span>
+                  <span className="text-sm text-hos-text-secondary truncate">{suggestion}</span>
                 </button>
               ))}
             </>
@@ -406,13 +394,13 @@ export function SearchBar({ compact = false }: SearchBarProps) {
                   type="button"
                   id={`search-option-${index}`}
                   onClick={() => navigateToProduct(product.id)}
-                  className={`w-full text-left px-4 py-2.5 flex items-center gap-3 transition-colors ${
-                    highlightIndex === index ? 'bg-purple-50' : 'hover:bg-gray-50'
+                  className={`w-full text-left px-4 py-2.5 flex items-center gap-3 transition-colors duration-200 ${
+                    highlightIndex === index ? 'bg-hos-bg-tertiary' : 'hover:bg-hos-bg-tertiary'
                   }`}
                   role="option"
                   aria-selected={highlightIndex === index}
                 >
-                  <div className="w-10 h-10 rounded-lg bg-gray-100 overflow-hidden shrink-0 relative">
+                  <div className="w-10 h-10 rounded-lg bg-hos-bg-tertiary overflow-hidden shrink-0 relative">
                     {product.image ? (
                       /* eslint-disable @next/next/no-img-element */
                       <img
@@ -422,7 +410,7 @@ export function SearchBar({ compact = false }: SearchBarProps) {
                         loading="lazy"
                       />
                     ) : (
-                      <div className="w-full h-full flex items-center justify-center text-gray-300">
+                      <div className="w-full h-full flex items-center justify-center text-hos-text-muted">
                         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
                         </svg>
@@ -430,12 +418,12 @@ export function SearchBar({ compact = false }: SearchBarProps) {
                     )}
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-gray-900 truncate">{product.name}</p>
-                    <p className="text-sm text-purple-700 font-semibold">
+                    <p className="text-sm font-medium text-hos-text-primary truncate">{product.name}</p>
+                    <p className="text-sm text-hos-gold font-semibold">
                       {new Intl.NumberFormat('en-US', { style: 'currency', currency: product.currency || 'USD' }).format(Number(product.price))}
                     </p>
                   </div>
-                  <svg className="w-4 h-4 text-gray-300 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg className="w-4 h-4 text-hos-text-muted shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                   </svg>
                 </button>
@@ -447,16 +435,16 @@ export function SearchBar({ compact = false }: SearchBarProps) {
                 type="button"
                 id={`search-option-${displayedSuggestionsCount + results.length}`}
                 onClick={() => navigateToSearch(query)}
-                className={`w-full text-left px-4 py-3 border-t border-gray-100 flex items-center justify-center gap-2 transition-colors ${
-                  highlightIndex === displayedSuggestionsCount + results.length ? 'bg-purple-50' : 'hover:bg-gray-50'
+                className={`w-full text-left px-4 py-3 border-t border-hos-border flex items-center justify-center gap-2 transition-colors duration-200 ${
+                  highlightIndex === displayedSuggestionsCount + results.length ? 'bg-hos-bg-tertiary' : 'hover:bg-hos-bg-tertiary'
                 }`}
                 role="option"
                 aria-selected={highlightIndex === displayedSuggestionsCount + results.length}
               >
-                <span className="text-sm font-medium text-purple-600">
+                <span className="text-sm font-medium text-hos-gold">
                   View all results for &ldquo;{query}&rdquo;
                 </span>
-                <svg className="w-4 h-4 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className="w-4 h-4 text-hos-gold" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" />
                 </svg>
               </button>
@@ -465,14 +453,14 @@ export function SearchBar({ compact = false }: SearchBarProps) {
 
           {/* Search error */}
           {searchError && !loading && query.trim().length >= 2 && (
-            <div className="p-4 text-center text-sm text-red-500">
+            <div className="p-4 text-center text-sm text-hos-sale-red">
               {searchError}
             </div>
           )}
 
           {/* No results */}
           {!showingRecent && !loading && !searchError && query.trim().length >= 2 && results.length === 0 && filteredSuggestions.length === 0 && (
-            <div className="p-4 text-center text-sm text-gray-500">
+            <div className="p-4 text-center text-sm text-hos-text-muted">
               No results found for &ldquo;{query}&rdquo;
             </div>
           )}

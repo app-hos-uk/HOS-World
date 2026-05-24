@@ -55,16 +55,40 @@ module.exports = {
           secondary: 'var(--color-text-secondary)',
         },
         accent: 'var(--color-accent)',
+        hos: {
+          bg: 'var(--color-bg-primary)',
+          'bg-secondary': 'var(--color-bg-secondary)',
+          'bg-tertiary': 'var(--color-bg-tertiary)',
+          surface: 'var(--color-surface)',
+          border: 'var(--color-border)',
+          'border-accent': 'var(--color-border-accent)',
+          'text-primary': 'var(--color-text-primary)',
+          'text-secondary': 'var(--color-text-secondary)',
+          'text-muted': 'var(--color-text-muted)',
+          gold: 'var(--color-accent-gold)',
+          'gold-hover': 'var(--color-accent-gold-hover)',
+          'gold-dim': 'var(--color-accent-gold-dim)',
+          'gold-15': 'var(--color-accent-gold-15)',
+          'gold-20': 'var(--color-accent-gold-20)',
+          'gold-ring': 'var(--color-accent-gold-ring)',
+          'bg-tertiary-half': 'var(--color-bg-tertiary-half)',
+          'sale-red': 'var(--color-sale-red)',
+          'new-green': 'var(--color-new-green)',
+        },
       },
       fontFamily: {
-        // Customer-facing fonts
-        primary: ['var(--font-cinzel)', 'serif'],
-        secondary: ['var(--font-lora)', 'serif'],
-        cinzel: ['var(--font-cinzel)', 'serif'],
-        lora: ['var(--font-lora)', 'serif'],
+        // Reference storefront fonts
+        display: ['var(--font-display)'],
+        body: ['var(--font-body)'],
+        ui: ['var(--font-ui)'],
+        // Legacy aliases (mapped to reference fonts)
+        primary: ['var(--font-display)'],
+        secondary: ['var(--font-body)'],
+        cinzel: ['var(--font-display)'],
+        lora: ['var(--font-body)'],
         // Admin dashboard font
         inter: ['var(--font-inter)', 'system-ui', 'sans-serif'],
-        sans: ['var(--font-inter)', 'system-ui', 'sans-serif'],
+        sans: ['var(--font-ui)', 'system-ui', 'sans-serif'],
       },
       fontSize: {
         // Custom sizes for better hierarchy

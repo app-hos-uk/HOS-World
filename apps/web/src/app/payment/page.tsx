@@ -11,6 +11,7 @@ import { useCurrency } from '@/contexts/CurrencyContext';
 import { apiClient } from '@/lib/api';
 import { useToast } from '@/hooks/useToast';
 import Link from 'next/link';
+import { trackPurchase } from '@/lib/analytics';
 
 const stripePublishableKey = process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY || '';
 const stripePromise = stripePublishableKey ? loadStripe(stripePublishableKey) : null;
@@ -85,6 +86,7 @@ function StripeCardCheckout({
       });
       if (confirmResponse?.data) {
         toast.success('Payment successful!');
+        trackPurchase(order);
         onClearStripe();
         router.push(`/orders/${order.id}`);
       } else {
@@ -103,9 +105,9 @@ function StripeCardCheckout({
   };
 
   return (
-    <div className="mb-4 p-4 border border-purple-200 bg-purple-50 rounded-lg">
-      <h3 className="text-sm font-semibold text-purple-900 mb-3">Card details</h3>
-      <div className="p-3 bg-white rounded-lg border border-gray-200">
+    <div className="mb-4 p-4 border border-hos-border-accent bg-hos-gold/10 rounded-lg">
+      <h3 className="text-sm font-semibold text-hos-gold mb-3">Card details</h3>
+      <div className="p-3 bg-hos-bg-secondary rounded-lg border border-hos-border">
         <CardElement
           options={{
             style: {
@@ -122,7 +124,7 @@ function StripeCardCheckout({
         type="button"
         onClick={handleConfirm}
         disabled={!stripe}
-        className="w-full mt-4 bg-purple-600 text-white py-2.5 sm:py-3 text-sm sm:text-base rounded-lg font-medium hover:bg-purple-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+        className="w-full mt-4 bg-hos-gold text-[#1a1406] py-2.5 sm:py-3 text-sm sm:text-base rounded-lg font-medium hover:bg-hos-gold-hover transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
       >
         {`Pay ${displayTotal}`}
       </button>
@@ -178,13 +180,13 @@ function PaymentContent() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-white">
+      <div className="min-h-screen bg-hos-bg-secondary">
         <Header />
         <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 lg:py-12">
           <div className="flex items-center justify-center py-12">
             <div className="text-center">
-              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600 mx-auto mb-4"></div>
-              <p className="text-sm sm:text-base text-gray-600">Loading order details...</p>
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-hos-gold mx-auto mb-4"></div>
+              <p className="text-sm sm:text-base text-hos-text-secondary">Loading order details...</p>
             </div>
           </div>
         </main>
@@ -195,22 +197,22 @@ function PaymentContent() {
 
   if (error || !order) {
     return (
-      <div className="min-h-screen bg-white">
+      <div className="min-h-screen bg-hos-bg-secondary">
         <Header />
         <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 lg:py-12">
           <div className="max-w-2xl mx-auto text-center">
             <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold mb-4 text-red-600">Order Not Found</h1>
-            <p className="text-gray-600 mb-6">{error || 'The order you are looking for does not exist or has been removed.'}</p>
+            <p className="text-hos-text-secondary mb-6">{error || 'The order you are looking for does not exist or has been removed.'}</p>
             <div className="flex gap-4 justify-center">
               <Link
                 href="/orders"
-                className="px-6 py-3 bg-purple-700 text-white rounded-lg hover:bg-purple-600 transition-colors"
+                className="px-6 py-3 bg-hos-gold text-[#1a1406] rounded-lg hover:bg-hos-gold transition-colors"
               >
                 View My Orders
               </Link>
               <Link
                 href="/products"
-                className="px-6 py-3 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors"
+                className="px-6 py-3 bg-hos-bg-tertiary text-hos-text-secondary rounded-lg hover:bg-hos-bg-tertiary transition-colors"
               >
                 Continue Shopping
               </Link>
@@ -223,23 +225,23 @@ function PaymentContent() {
   }
 
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen bg-hos-bg-secondary">
       <Header />
       <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 lg:py-12 max-w-4xl">
-        <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold mb-6 sm:mb-8 font-primary text-purple-900">Complete Payment</h1>
+        <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold mb-6 sm:mb-8 font-primary text-hos-gold">Complete Payment</h1>
         
         {/* Seller Information - Revealed at Payment Page */}
         {order.seller && (
-          <div className="bg-gray-50 border rounded-lg p-4 sm:p-6 mb-4 sm:mb-6">
+          <div className="bg-hos-bg-secondary border rounded-lg p-4 sm:p-6 mb-4 sm:mb-6">
             <h2 className="text-lg sm:text-xl font-semibold mb-3 sm:mb-4">Seller Information</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4">
               <div>
-                <p className="text-sm text-gray-600">Store Name</p>
+                <p className="text-sm text-hos-text-secondary">Store Name</p>
                 <p className="font-medium">{order.seller.storeName}</p>
               </div>
               {order.seller.location && (
                 <div>
-                  <p className="text-sm text-gray-600">Location</p>
+                  <p className="text-sm text-hos-text-secondary">Location</p>
                   <p className="font-medium">{order.seller.location.city}, {order.seller.location.country}</p>
                 </div>
               )}
@@ -248,7 +250,7 @@ function PaymentContent() {
         )}
 
         {/* Order Summary */}
-        <div className="bg-white border rounded-lg p-4 sm:p-6 mb-4 sm:mb-6">
+        <div className="bg-hos-bg-secondary border rounded-lg p-4 sm:p-6 mb-4 sm:mb-6">
           <h2 className="text-lg sm:text-xl font-semibold mb-3 sm:mb-4">Order Summary</h2>
           <div className="space-y-2">
             {order.items?.map((item: any, index: number) => (
@@ -286,7 +288,7 @@ function PaymentContent() {
               <span>{formatPrice(order.total, order.currency || 'USD')}</span>
             </div>
             {order.currency && order.currency !== 'USD' && (
-              <p className="text-xs text-gray-500 mt-2">
+              <p className="text-xs text-hos-text-muted mt-2">
                 Original amount: ${typeof order.total === 'number' ? order.total.toFixed(2) : '0.00'} USD
               </p>
             )}
@@ -526,6 +528,7 @@ function PaymentForm({ order }: { order: any }) {
           // If gift card fully covers the order
           if (finalAmountAfterRedemption <= 0) {
             toast.success('Payment successful with gift card!');
+            trackPurchase(order);
             setProcessing(false); // Reset processing state before redirect
             router.push(`/orders/${order.id}`);
             return;
@@ -608,6 +611,7 @@ function PaymentForm({ order }: { order: any }) {
         // This should only be reached if no gift card was applied but finalAmount is 0
         // (i.e., gift card fully covered the order, or order total is 0)
         toast.success('Payment successful!');
+        trackPurchase(order);
         router.push(`/orders/${order.id}`);
       }
     } catch (err: any) {
@@ -639,11 +643,11 @@ function PaymentForm({ order }: { order: any }) {
 
   if (loadingProviders) {
     return (
-      <div className="bg-white border rounded-lg p-4 sm:p-6">
+      <div className="bg-hos-bg-secondary border rounded-lg p-4 sm:p-6">
         <div className="flex items-center justify-center py-8">
           <div className="text-center">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-600 mx-auto mb-2"></div>
-            <p className="text-sm text-gray-600">Loading payment options...</p>
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-hos-gold mx-auto mb-2"></div>
+            <p className="text-sm text-hos-text-secondary">Loading payment options...</p>
           </div>
         </div>
       </div>
@@ -651,13 +655,13 @@ function PaymentForm({ order }: { order: any }) {
   }
 
   return (
-    <div className="bg-white border rounded-lg p-4 sm:p-6 relative">
+    <div className="bg-hos-bg-secondary border rounded-lg p-4 sm:p-6 relative">
       {processing && (
-        <div className="absolute inset-0 bg-white/80 z-10 flex items-center justify-center rounded-lg">
+        <div className="absolute inset-0 bg-hos-bg-secondary/80 z-10 flex items-center justify-center rounded-lg">
           <div className="text-center">
-            <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-purple-600 mx-auto mb-3"></div>
-            <p className="text-sm font-medium text-gray-700">Processing payment...</p>
-            <p className="text-xs text-gray-500 mt-1">Please do not close this page</p>
+            <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-hos-gold mx-auto mb-3"></div>
+            <p className="text-sm font-medium text-hos-text-secondary">Processing payment...</p>
+            <p className="text-xs text-hos-text-muted mt-1">Please do not close this page</p>
           </div>
         </div>
       )}
@@ -666,13 +670,13 @@ function PaymentForm({ order }: { order: any }) {
       {/* Payment Provider Selection */}
       {availableProviders.length > 0 && (
         <div className="mb-4">
-          <label className="block text-sm font-medium text-gray-700 mb-2">Payment Method</label>
+          <label className="block text-sm font-medium text-hos-text-secondary mb-2">Payment Method</label>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             {availableProviders.map((provider) => (
               <label
                 key={provider}
-                className={`flex items-center p-3 border-2 rounded-lg cursor-pointer hover:bg-gray-50 transition-colors ${
-                  selectedProvider === provider ? 'border-purple-500 bg-purple-50' : 'border-gray-200'
+                className={`flex items-center p-3 border-2 rounded-lg cursor-pointer hover:bg-hos-bg-tertiary transition-colors ${
+                  selectedProvider === provider ? 'border-hos-gold bg-hos-gold/10' : 'border-hos-border'
                 }`}
               >
                 <input
@@ -688,14 +692,14 @@ function PaymentForm({ order }: { order: any }) {
             ))}
           </div>
           {selectedProvider && (
-            <p className="mt-2 text-sm text-gray-600">{getProviderDescription(selectedProvider)}</p>
+            <p className="mt-2 text-sm text-hos-text-secondary">{getProviderDescription(selectedProvider)}</p>
           )}
         </div>
       )}
 
       {/* Gift Card Input */}
-      <div className="mb-4 p-4 bg-gray-50 rounded-lg">
-        <label className="block text-sm font-medium text-gray-700 mb-2">Gift Card (Optional)</label>
+      <div className="mb-4 p-4 bg-hos-bg-secondary rounded-lg">
+        <label className="block text-sm font-medium text-hos-text-secondary mb-2">Gift Card (Optional)</label>
         <div className="flex gap-2">
           <input
             type="text"
@@ -705,7 +709,7 @@ function PaymentForm({ order }: { order: any }) {
             maxLength={19}
             inputMode="text"
             autoComplete="off"
-            className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
+            className="flex-1 px-4 py-2 border border-hos-border rounded-lg focus:outline-none focus:ring-2 focus:ring-hos-gold/50"
             disabled={giftCardApplied || validatingGiftCard}
           />
           {!giftCardApplied ? (
@@ -713,7 +717,7 @@ function PaymentForm({ order }: { order: any }) {
               type="button"
               onClick={handleValidateGiftCard}
               disabled={validatingGiftCard || !giftCardCode.trim()}
-              className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+              className="px-4 py-2 bg-hos-gold text-[#1a1406] rounded-lg hover:bg-hos-gold-hover transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {validatingGiftCard ? 'Validating...' : 'Apply'}
             </button>
@@ -739,7 +743,7 @@ function PaymentForm({ order }: { order: any }) {
 
       {/* Order Total with Gift Card Discount */}
       {(giftCardApplied || giftCardRedeemedAmount > 0) && (
-        <div className="mb-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+        <div className="mb-4 p-4 bg-hos-gold/10 border border-hos-border-accent rounded-lg">
           <div className="flex justify-between text-sm mb-2">
             <span>Original Order Total:</span>
             <span>{formatPrice(order.total, order.currency || 'USD')}</span>
@@ -756,7 +760,7 @@ function PaymentForm({ order }: { order: any }) {
               <span>-{formatPrice(Math.min(giftCardBalance, Math.max(0, (order.total || 0) - giftCardRedeemedAmount)), order.currency || 'USD')}</span>
             </div>
           )}
-          <div className="flex justify-between font-bold text-lg pt-2 border-t border-blue-300">
+          <div className="flex justify-between font-bold text-lg pt-2 border-t border-hos-border">
             <span>Amount to Pay:</span>
             <span>{formatPrice(calculateTotal(), order.currency || 'USD')}</span>
           </div>
@@ -828,7 +832,7 @@ function PaymentForm({ order }: { order: any }) {
         <button
           onClick={handlePayment}
           disabled={processing || loadingProviders || availableProviders.length === 0 || !selectedProvider}
-          className="w-full bg-purple-600 text-white py-2.5 sm:py-3 text-sm sm:text-base rounded-lg font-medium hover:bg-purple-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          className="w-full bg-hos-gold text-[#1a1406] py-2.5 sm:py-3 text-sm sm:text-base rounded-lg font-medium hover:bg-hos-gold-hover transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {processing ? 'Processing...' : loadingProviders ? 'Loading payment methods...' : availableProviders.length === 0 ? 'No Payment Methods Available' : !selectedProvider ? 'Select a Payment Method' : `Complete Payment - ${formatPrice(calculateTotal(), order?.currency || 'USD')}`}
         </button>
@@ -841,13 +845,13 @@ export default function PaymentPage() {
   return (
     <RouteGuard allowedRoles={['CUSTOMER', 'SELLER', 'B2C_SELLER', 'WHOLESALER', 'ADMIN', 'INFLUENCER']}>
       <Suspense fallback={
-        <div className="min-h-screen bg-white">
+        <div className="min-h-screen bg-hos-bg-secondary">
           <Header />
           <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 lg:py-12">
             <div className="flex items-center justify-center py-12">
               <div className="text-center">
-                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600 mx-auto mb-4"></div>
-                <p className="text-sm sm:text-base text-gray-600">Loading...</p>
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-hos-gold mx-auto mb-4"></div>
+                <p className="text-sm sm:text-base text-hos-text-secondary">Loading...</p>
               </div>
             </div>
           </main>

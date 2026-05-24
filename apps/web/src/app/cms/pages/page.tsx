@@ -147,7 +147,7 @@ function CMSPagesContent() {
       <RouteGuard allowedRoles={['CMS_EDITOR', 'ADMIN']}>
         <CMSLayout>
           <div className="flex items-center justify-center h-64">
-            <div className="text-gray-500">Loading pages...</div>
+            <div className="text-hos-text-muted">Loading pages...</div>
           </div>
         </CMSLayout>
       </RouteGuard>
@@ -159,10 +159,10 @@ function CMSPagesContent() {
       <CMSLayout>
         <div className="space-y-6">
           <div className="flex justify-between items-center">
-            <h1 className="text-2xl font-bold text-gray-900">CMS Pages</h1>
+            <h1 className="text-2xl font-bold text-white">CMS Pages</h1>
             <button
               onClick={() => setShowCreateForm(true)}
-              className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700"
+              className="px-4 py-2 bg-hos-gold text-[#1a1406] rounded-lg hover:bg-hos-gold-hover"
             >
               + Create Page
             </button>
@@ -171,71 +171,71 @@ function CMSPagesContent() {
           <CmsPortalErrorBanner message={error} />
 
           {showEditForm && editingPageId && (
-            <div className="bg-white rounded-lg shadow p-6">
+            <div className="bg-hos-bg-secondary rounded-lg shadow p-6">
               <h2 className="text-lg font-semibold mb-4">Edit Page</h2>
               <form onSubmit={handleUpdatePage} className="space-y-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Page Title</label>
+                  <label className="block text-sm font-medium text-hos-text-secondary mb-1">Page Title</label>
                   <input
                     type="text"
                     required
                     value={formData.title}
                     onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
+                    className="w-full px-3 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50"
                     placeholder="Page title"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Slug</label>
+                  <label className="block text-sm font-medium text-hos-text-secondary mb-1">Slug</label>
                   <input
                     type="text"
                     required
                     value={formData.slug}
                     onChange={(e) => setFormData({ ...formData, slug: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
+                    className="w-full px-3 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50"
                     placeholder="page-slug"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Content</label>
+                  <label className="block text-sm font-medium text-hos-text-secondary mb-1">Content</label>
                   <textarea
                     required
                     value={formData.content}
                     onChange={(e) => setFormData({ ...formData, content: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
+                    className="w-full px-3 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50"
                     rows={10}
                     placeholder="Page content (Markdown or HTML)"
                   />
                 </div>
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Meta Title</label>
+                    <label className="block text-sm font-medium text-hos-text-secondary mb-1">Meta Title</label>
                     <input
                       type="text"
                       value={formData.metaTitle}
                       onChange={(e) => setFormData({ ...formData, metaTitle: e.target.value })}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
+                      className="w-full px-3 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50"
                       placeholder="SEO meta title"
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Meta Description</label>
+                    <label className="block text-sm font-medium text-hos-text-secondary mb-1">Meta Description</label>
                     <input
                       type="text"
                       value={formData.metaDescription}
                       onChange={(e) => setFormData({ ...formData, metaDescription: e.target.value })}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
+                      className="w-full px-3 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50"
                       placeholder="SEO meta description"
                     />
                   </div>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Keywords</label>
+                  <label className="block text-sm font-medium text-hos-text-secondary mb-1">Keywords</label>
                   <input
                     type="text"
                     value={formData.keywords}
                     onChange={(e) => setFormData({ ...formData, keywords: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
+                    className="w-full px-3 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50"
                     placeholder="keyword1, keyword2, keyword3"
                   />
                 </div>
@@ -243,7 +243,7 @@ function CMSPagesContent() {
                   <button
                     type="submit"
                     disabled={updatingPage}
-                    className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="px-4 py-2 bg-hos-gold text-[#1a1406] rounded-lg hover:bg-hos-gold-hover disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     {updatingPage ? 'Saving...' : 'Save Changes'}
                   </button>
@@ -254,7 +254,7 @@ function CMSPagesContent() {
                       setEditingPageId(null);
                       window.history.replaceState({}, '', '/cms/pages');
                     }}
-                    className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300"
+                    className="px-4 py-2 bg-hos-bg-tertiary text-hos-text-secondary rounded-lg hover:bg-hos-bg-tertiary"
                   >
                     Cancel
                   </button>
@@ -264,71 +264,71 @@ function CMSPagesContent() {
           )}
 
           {showCreateForm && (
-            <div className="bg-white rounded-lg shadow p-6">
+            <div className="bg-hos-bg-secondary rounded-lg shadow p-6">
               <h2 className="text-lg font-semibold mb-4">Create New Page</h2>
               <form onSubmit={handleCreatePage} className="space-y-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Page Title</label>
+                  <label className="block text-sm font-medium text-hos-text-secondary mb-1">Page Title</label>
                   <input
                     type="text"
                     required
                     value={formData.title}
                     onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
+                    className="w-full px-3 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50"
                     placeholder="Page title"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Slug</label>
+                  <label className="block text-sm font-medium text-hos-text-secondary mb-1">Slug</label>
                   <input
                     type="text"
                     required
                     value={formData.slug}
                     onChange={(e) => setFormData({ ...formData, slug: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
+                    className="w-full px-3 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50"
                     placeholder="page-slug"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Content</label>
+                  <label className="block text-sm font-medium text-hos-text-secondary mb-1">Content</label>
                   <textarea
                     required
                     value={formData.content}
                     onChange={(e) => setFormData({ ...formData, content: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
+                    className="w-full px-3 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50"
                     rows={10}
                     placeholder="Page content (Markdown or HTML)"
                   />
                 </div>
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Meta Title</label>
+                    <label className="block text-sm font-medium text-hos-text-secondary mb-1">Meta Title</label>
                     <input
                       type="text"
                       value={formData.metaTitle}
                       onChange={(e) => setFormData({ ...formData, metaTitle: e.target.value })}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
+                      className="w-full px-3 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50"
                       placeholder="SEO meta title"
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Meta Description</label>
+                    <label className="block text-sm font-medium text-hos-text-secondary mb-1">Meta Description</label>
                     <input
                       type="text"
                       value={formData.metaDescription}
                       onChange={(e) => setFormData({ ...formData, metaDescription: e.target.value })}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
+                      className="w-full px-3 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50"
                       placeholder="SEO meta description"
                     />
                   </div>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Keywords</label>
+                  <label className="block text-sm font-medium text-hos-text-secondary mb-1">Keywords</label>
                   <input
                     type="text"
                     value={formData.keywords}
                     onChange={(e) => setFormData({ ...formData, keywords: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
+                    className="w-full px-3 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50"
                     placeholder="keyword1, keyword2, keyword3"
                   />
                 </div>
@@ -336,7 +336,7 @@ function CMSPagesContent() {
                   <button
                     type="submit"
                     disabled={creatingPage}
-                    className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="px-4 py-2 bg-hos-gold text-[#1a1406] rounded-lg hover:bg-hos-gold-hover disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     {creatingPage ? 'Creating...' : 'Create Page'}
                   </button>
@@ -353,7 +353,7 @@ function CMSPagesContent() {
                         keywords: '',
                       });
                     }}
-                    className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300"
+                    className="px-4 py-2 bg-hos-bg-tertiary text-hos-text-secondary rounded-lg hover:bg-hos-bg-tertiary"
                   >
                     Cancel
                   </button>
@@ -362,21 +362,21 @@ function CMSPagesContent() {
             </div>
           )}
 
-          <div className="bg-white rounded-lg shadow">
-            <div className="p-4 border-b border-gray-200">
+          <div className="bg-hos-bg-secondary rounded-lg shadow">
+            <div className="p-4 border-b border-hos-border">
               <h2 className="text-lg font-semibold">All Pages</h2>
             </div>
             <div className="p-4">
               {pages.length === 0 ? (
-                <div className="text-center py-8 text-gray-500">
+                <div className="text-center py-8 text-hos-text-muted">
                   <p>No pages found.</p>
                   <p className="text-sm mt-2">
                     Pages are stored in your external CMS. Once it is linked, listings will appear here.
                   </p>
-                  <div className="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-                    <p className="text-sm text-blue-800">
+                  <div className="mt-4 p-4 bg-hos-gold/10 border border-hos-border-accent rounded-lg">
+                    <p className="text-sm text-hos-gold">
                       <strong>Note:</strong> Ask an administrator to configure the CMS connection for the API
-                      (<code className="bg-blue-100 px-1 rounded text-xs">CMS / environment</code>). You can review
+                      (<code className="bg-hos-gold/20 px-1 rounded text-xs">CMS / environment</code>). You can review
                       labels under{' '}
                       <Link href="/cms/settings" className="underline font-medium">
                         CMS Settings
@@ -390,12 +390,12 @@ function CMSPagesContent() {
                   {pages.map((page) => (
                     <div
                       key={page.id}
-                      className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow"
+                      className="border border-hos-border rounded-lg p-4 hover:shadow-md transition-shadow"
                     >
                       <div className="flex items-start justify-between">
                         <div className="flex-1">
-                          <h3 className="text-lg font-medium text-gray-900">{page.title}</h3>
-                          <p className="text-sm text-gray-500 mt-1">Slug: /{page.slug}</p>
+                          <h3 className="text-lg font-medium text-white">{page.title}</h3>
+                          <p className="text-sm text-hos-text-muted mt-1">Slug: /{page.slug}</p>
                           {page.publishedAt && (
                             <span className="inline-block mt-2 text-xs bg-green-100 text-green-800 px-2 py-1 rounded">
                               Published
@@ -428,7 +428,7 @@ function CMSPagesContent() {
                           </button>
                           <Link
                             href={`/cms/pages?edit=${page.id}`}
-                            className="px-3 py-1 text-sm bg-blue-600 text-white rounded hover:bg-blue-700"
+                            className="px-3 py-1 text-sm bg-hos-gold text-[#1a1406] rounded hover:bg-hos-gold-hover"
                           >
                             Edit
                           </Link>
@@ -463,7 +463,7 @@ function CMSPagesContent() {
 
 export default function CMSPagesPage() {
   return (
-    <Suspense fallback={<div className="flex items-center justify-center min-h-64"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-600" /></div>}>
+    <Suspense fallback={<div className="flex items-center justify-center min-h-64"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-hos-gold" /></div>}>
       <CMSPagesContent />
     </Suspense>
   );

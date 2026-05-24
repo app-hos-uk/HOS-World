@@ -259,15 +259,15 @@ export default function AdminTaxZonesPage() {
         <div className="container mx-auto px-4 py-8">
           <div className="flex justify-between items-center mb-6">
             <div>
-              <h1 className="text-3xl font-bold text-purple-900 mb-2">Tax Zones Management</h1>
-              <p className="text-gray-600">Configure tax zones, classes, and rates</p>
+              <h1 className="text-3xl font-bold text-hos-gold mb-2">Tax Zones Management</h1>
+              <p className="text-hos-text-secondary">Configure tax zones, classes, and rates</p>
             </div>
             <button
               onClick={() => {
                 resetZoneForm();
                 setShowZoneModal(true);
               }}
-              className="bg-purple-600 hover:bg-purple-700 text-white px-6 py-2 rounded-lg font-medium transition-colors"
+              className="bg-hos-gold hover:bg-hos-gold text-[#1a1406] px-6 py-2 rounded-lg font-medium transition-colors"
             >
               + Add Tax Zone
             </button>
@@ -281,23 +281,23 @@ export default function AdminTaxZonesPage() {
 
           {loading ? (
             <div className="text-center py-12">
-              <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600"></div>
-              <p className="mt-4 text-gray-600">Loading tax zones...</p>
+              <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-hos-gold"></div>
+              <p className="mt-4 text-hos-text-secondary">Loading tax zones...</p>
             </div>
           ) : (
             <div className="space-y-6">
               {zones.length === 0 ? (
-                <div className="bg-white rounded-lg shadow p-8 text-center">
-                  <p className="text-gray-500">No tax zones found. Create your first tax zone to get started.</p>
+                <div className="bg-hos-bg-secondary rounded-lg shadow p-8 text-center">
+                  <p className="text-hos-text-muted">No tax zones found. Create your first tax zone to get started.</p>
                 </div>
               ) : (
                 zones.map((zone) => (
-                  <div key={zone.id} className="bg-white rounded-lg shadow overflow-hidden">
-                    <div className="px-6 py-4 border-b border-gray-200 bg-gray-50">
+                  <div key={zone.id} className="bg-hos-bg-secondary rounded-lg shadow overflow-hidden">
+                    <div className="px-6 py-4 border-b border-hos-border bg-hos-bg-secondary">
                       <div className="flex justify-between items-start">
                         <div>
-                          <h3 className="text-lg font-semibold text-gray-900">{zone.name}</h3>
-                          <p className="text-sm text-gray-600 mt-1">
+                          <h3 className="text-lg font-semibold text-white">{zone.name}</h3>
+                          <p className="text-sm text-hos-text-secondary mt-1">
                             {zone.city && `${zone.city}, `}
                             {zone.state && `${zone.state}, `}
                             {zone.country || 'Global'}
@@ -309,20 +309,20 @@ export default function AdminTaxZonesPage() {
                             className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
                               zone.isActive
                                 ? 'bg-green-100 text-green-800'
-                                : 'bg-gray-100 text-gray-800'
+                                : 'bg-hos-bg-tertiary text-white'
                             }`}
                           >
                             {zone.isActive ? 'Active' : 'Inactive'}
                           </span>
                           <button
                             onClick={() => openRateModal(zone)}
-                            className="text-sm text-purple-600 hover:text-purple-900 font-medium"
+                            className="text-sm text-hos-gold hover:text-hos-gold font-medium"
                           >
                             + Add Rate
                           </button>
                           <button
                             onClick={() => handleEditZone(zone)}
-                            className="text-sm text-gray-600 hover:text-gray-900"
+                            className="text-sm text-hos-text-secondary hover:text-white"
                           >
                             Edit
                           </button>
@@ -338,27 +338,27 @@ export default function AdminTaxZonesPage() {
 
                     <div className="px-6 py-4">
                       {zone.rates && zone.rates.length > 0 ? (
-                        <table className="min-w-full divide-y divide-gray-200">
-                          <thead className="bg-gray-50">
+                        <table className="min-w-full divide-y divide-hos-border">
+                          <thead className="bg-hos-bg-secondary">
                             <tr>
-                              <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">
+                              <th className="px-4 py-2 text-left text-xs font-medium text-hos-text-muted uppercase">
                                 Tax Class
                               </th>
-                              <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">
+                              <th className="px-4 py-2 text-left text-xs font-medium text-hos-text-muted uppercase">
                                 Rate
                               </th>
-                              <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">
+                              <th className="px-4 py-2 text-left text-xs font-medium text-hos-text-muted uppercase">
                                 Type
                               </th>
-                              <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">
+                              <th className="px-4 py-2 text-left text-xs font-medium text-hos-text-muted uppercase">
                                 Status
                               </th>
-                              <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">
+                              <th className="px-4 py-2 text-left text-xs font-medium text-hos-text-muted uppercase">
                                 Actions
                               </th>
                             </tr>
                           </thead>
-                          <tbody className="bg-white divide-y divide-gray-200">
+                          <tbody className="bg-hos-bg-secondary divide-y divide-hos-border">
                             {zone.rates.map((rate) => (
                               <tr key={rate.id}>
                                 <td className="px-4 py-2 text-sm">
@@ -375,7 +375,7 @@ export default function AdminTaxZonesPage() {
                                     className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
                                       rate.isActive
                                         ? 'bg-green-100 text-green-800'
-                                        : 'bg-gray-100 text-gray-800'
+                                        : 'bg-hos-bg-tertiary text-white'
                                     }`}
                                   >
                                     {rate.isActive ? 'Active' : 'Inactive'}
@@ -394,7 +394,7 @@ export default function AdminTaxZonesPage() {
                           </tbody>
                         </table>
                       ) : (
-                        <p className="text-sm text-gray-500">No tax rates configured. Add a rate to get started.</p>
+                        <p className="text-sm text-hos-text-muted">No tax rates configured. Add a rate to get started.</p>
                       )}
                     </div>
                   </div>
@@ -429,17 +429,17 @@ export default function AdminTaxZonesPage() {
                     leaveFrom="opacity-100 scale-100"
                     leaveTo="opacity-0 scale-95"
                   >
-                    <Dialog.Panel className="w-full max-w-lg transform overflow-hidden rounded-2xl bg-white p-6 text-left align-middle shadow-xl transition-all">
+                    <Dialog.Panel className="w-full max-w-lg transform overflow-hidden rounded-2xl bg-hos-bg-secondary p-6 text-left align-middle shadow-xl transition-all">
                       <Dialog.Title
                         as="h3"
-                        className="text-lg font-medium leading-6 text-gray-900 mb-4"
+                        className="text-lg font-medium leading-6 text-white mb-4"
                       >
                         {isEditMode ? 'Edit Tax Zone' : 'Create New Tax Zone'}
                       </Dialog.Title>
 
                       <form onSubmit={handleZoneSubmit} className="space-y-4">
                         <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-1">
+                          <label className="block text-sm font-medium text-hos-text-secondary mb-1">
                             Zone Name *
                           </label>
                           <input
@@ -447,50 +447,50 @@ export default function AdminTaxZonesPage() {
                             required
                             value={zoneFormData.name}
                             onChange={(e) => setZoneFormData({ ...zoneFormData, name: e.target.value })}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
+                            className="w-full px-3 py-2 border border-hos-border rounded-md focus:outline-none focus:ring-2 focus:ring-hos-gold/50"
                             placeholder="e.g., US Standard Rate"
                           />
                         </div>
 
                         <div className="grid grid-cols-3 gap-4">
                           <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                            <label className="block text-sm font-medium text-hos-text-secondary mb-1">
                               Country
                             </label>
                             <input
                               type="text"
                               value={zoneFormData.country}
                               onChange={(e) => setZoneFormData({ ...zoneFormData, country: e.target.value })}
-                              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
+                              className="w-full px-3 py-2 border border-hos-border rounded-md focus:outline-none focus:ring-2 focus:ring-hos-gold/50"
                               placeholder="US"
                             />
                           </div>
                           <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                            <label className="block text-sm font-medium text-hos-text-secondary mb-1">
                               State/Region
                             </label>
                             <input
                               type="text"
                               value={zoneFormData.state}
                               onChange={(e) => setZoneFormData({ ...zoneFormData, state: e.target.value })}
-                              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
+                              className="w-full px-3 py-2 border border-hos-border rounded-md focus:outline-none focus:ring-2 focus:ring-hos-gold/50"
                             />
                           </div>
                           <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                            <label className="block text-sm font-medium text-hos-text-secondary mb-1">
                               City
                             </label>
                             <input
                               type="text"
                               value={zoneFormData.city}
                               onChange={(e) => setZoneFormData({ ...zoneFormData, city: e.target.value })}
-                              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
+                              className="w-full px-3 py-2 border border-hos-border rounded-md focus:outline-none focus:ring-2 focus:ring-hos-gold/50"
                             />
                           </div>
                         </div>
 
                         <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-1">
+                          <label className="block text-sm font-medium text-hos-text-secondary mb-1">
                             Postal Codes (optional)
                           </label>
                           <div className="flex space-x-2">
@@ -504,13 +504,13 @@ export default function AdminTaxZonesPage() {
                                   addPostalCode();
                                 }
                               }}
-                              className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
+                              className="flex-1 px-3 py-2 border border-hos-border rounded-md focus:outline-none focus:ring-2 focus:ring-hos-gold/50"
                               placeholder="Enter postal code and press Enter"
                             />
                             <button
                               type="button"
                               onClick={addPostalCode}
-                              className="px-4 py-2 bg-gray-100 hover:bg-gray-200 rounded-md text-sm font-medium"
+                              className="px-4 py-2 bg-hos-bg-tertiary hover:bg-hos-bg-tertiary rounded-md text-sm font-medium"
                             >
                               Add
                             </button>
@@ -520,13 +520,13 @@ export default function AdminTaxZonesPage() {
                               {zoneFormData.postalCodes.map((code, index) => (
                                 <span
                                   key={index}
-                                  className="inline-flex items-center px-2 py-1 rounded-md bg-purple-100 text-purple-800 text-sm"
+                                  className="inline-flex items-center px-2 py-1 rounded-md bg-hos-gold/20 text-hos-gold text-sm"
                                 >
                                   {code}
                                   <button
                                     type="button"
                                     onClick={() => removePostalCode(index)}
-                                    className="ml-2 text-purple-600 hover:text-purple-900"
+                                    className="ml-2 text-hos-gold hover:text-hos-gold"
                                   >
                                     ×
                                   </button>
@@ -543,9 +543,9 @@ export default function AdminTaxZonesPage() {
                               id="zoneIsActive"
                               checked={zoneFormData.isActive}
                               onChange={(e) => setZoneFormData({ ...zoneFormData, isActive: e.target.checked })}
-                              className="h-4 w-4 text-purple-600 focus:ring-purple-500 border-gray-300 rounded"
+                              className="h-4 w-4 text-hos-gold focus:ring-hos-gold/50 border-hos-border rounded"
                             />
-                            <label htmlFor="zoneIsActive" className="ml-2 block text-sm text-gray-900">
+                            <label htmlFor="zoneIsActive" className="ml-2 block text-sm text-white">
                               Active
                             </label>
                           </div>
@@ -555,14 +555,14 @@ export default function AdminTaxZonesPage() {
                           <button
                             type="button"
                             onClick={() => setShowZoneModal(false)}
-                            className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50"
+                            className="px-4 py-2 text-sm font-medium text-hos-text-secondary bg-hos-bg-secondary border border-hos-border rounded-md hover:bg-hos-bg-tertiary"
                           >
                             Cancel
                           </button>
                           <button
                             type="submit"
                             disabled={submitting}
-                            className="px-4 py-2 text-sm font-medium text-white bg-purple-600 rounded-md hover:bg-purple-700 disabled:opacity-50"
+                            className="px-4 py-2 text-sm font-medium text-white bg-hos-gold rounded-md hover:bg-hos-gold-hover disabled:opacity-50"
                           >
                             {submitting ? 'Saving...' : isEditMode ? 'Update' : 'Create'}
                           </button>
@@ -601,23 +601,23 @@ export default function AdminTaxZonesPage() {
                     leaveFrom="opacity-100 scale-100"
                     leaveTo="opacity-0 scale-95"
                   >
-                    <Dialog.Panel className="w-full max-w-md transform overflow-hidden rounded-2xl bg-white p-6 text-left align-middle shadow-xl transition-all">
+                    <Dialog.Panel className="w-full max-w-md transform overflow-hidden rounded-2xl bg-hos-bg-secondary p-6 text-left align-middle shadow-xl transition-all">
                       <Dialog.Title
                         as="h3"
-                        className="text-lg font-medium leading-6 text-gray-900 mb-4"
+                        className="text-lg font-medium leading-6 text-white mb-4"
                       >
                         Add Tax Rate to {selectedZone?.name}
                       </Dialog.Title>
 
                       <form onSubmit={handleRateSubmit} className="space-y-4">
                         <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-1">
+                          <label className="block text-sm font-medium text-hos-text-secondary mb-1">
                             Tax Class (optional)
                           </label>
                           <select
                             value={rateFormData.taxClassId}
                             onChange={(e) => setRateFormData({ ...rateFormData, taxClassId: e.target.value })}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
+                            className="w-full px-3 py-2 border border-hos-border rounded-md focus:outline-none focus:ring-2 focus:ring-hos-gold/50"
                           >
                             <option value="">Default (all classes)</option>
                             {taxClasses.map((tc) => (
@@ -629,7 +629,7 @@ export default function AdminTaxZonesPage() {
                         </div>
 
                         <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-1">
+                          <label className="block text-sm font-medium text-hos-text-secondary mb-1">
                             Tax Rate (%) *
                           </label>
                           <input
@@ -659,10 +659,10 @@ export default function AdminTaxZonesPage() {
                                 setRatePercentInput((Math.round(num * 100) / 100).toFixed(2));
                               }
                             }}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
+                            className="w-full px-3 py-2 border border-hos-border rounded-md focus:outline-none focus:ring-2 focus:ring-hos-gold/50"
                             placeholder="e.g. 20, 5, 18.2"
                           />
-                          <p className="mt-1 text-sm text-gray-500">
+                          <p className="mt-1 text-sm text-hos-text-muted">
                             20 = 20%, 5 = 5%, 18.2 = 18.20%. Up to 2 decimal places.
                           </p>
                         </div>
@@ -675,9 +675,9 @@ export default function AdminTaxZonesPage() {
                             onChange={(e) =>
                               setRateFormData({ ...rateFormData, isInclusive: e.target.checked })
                             }
-                            className="h-4 w-4 text-purple-600 focus:ring-purple-500 border-gray-300 rounded"
+                            className="h-4 w-4 text-hos-gold focus:ring-hos-gold/50 border-hos-border rounded"
                           />
-                          <label htmlFor="isInclusive" className="ml-2 block text-sm text-gray-900">
+                          <label htmlFor="isInclusive" className="ml-2 block text-sm text-white">
                             Tax-inclusive pricing (tax included in product price)
                           </label>
                         </div>
@@ -690,9 +690,9 @@ export default function AdminTaxZonesPage() {
                             onChange={(e) =>
                               setRateFormData({ ...rateFormData, isActive: e.target.checked })
                             }
-                            className="h-4 w-4 text-purple-600 focus:ring-purple-500 border-gray-300 rounded"
+                            className="h-4 w-4 text-hos-gold focus:ring-hos-gold/50 border-hos-border rounded"
                           />
-                          <label htmlFor="rateIsActive" className="ml-2 block text-sm text-gray-900">
+                          <label htmlFor="rateIsActive" className="ml-2 block text-sm text-white">
                             Active
                           </label>
                         </div>
@@ -701,14 +701,14 @@ export default function AdminTaxZonesPage() {
                           <button
                             type="button"
                             onClick={() => setShowRateModal(false)}
-                            className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50"
+                            className="px-4 py-2 text-sm font-medium text-hos-text-secondary bg-hos-bg-secondary border border-hos-border rounded-md hover:bg-hos-bg-tertiary"
                           >
                             Cancel
                           </button>
                           <button
                             type="submit"
                             disabled={submitting}
-                            className="px-4 py-2 text-sm font-medium text-white bg-purple-600 rounded-md hover:bg-purple-700 disabled:opacity-50"
+                            className="px-4 py-2 text-sm font-medium text-white bg-hos-gold rounded-md hover:bg-hos-gold-hover disabled:opacity-50"
                           >
                             {submitting ? 'Saving...' : 'Create Rate'}
                           </button>

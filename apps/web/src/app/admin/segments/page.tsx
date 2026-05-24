@@ -55,10 +55,10 @@ export default function AdminSegmentsPage() {
       <AdminLayout>
         <div className="p-6 max-w-6xl mx-auto">
           <div className="flex justify-between items-center mb-6">
-            <h1 className="text-2xl font-semibold text-gray-900">Segments</h1>
+            <h1 className="text-2xl font-semibold text-white">Segments</h1>
             <Link
               href="/admin/segments/new"
-              className="rounded-md bg-indigo-600 px-4 py-2 text-white text-sm hover:bg-indigo-500"
+              className="rounded-md bg-hos-gold px-4 py-2 text-white text-sm hover:bg-hos-gold/100"
             >
               Create segment
             </Link>
@@ -70,7 +70,7 @@ export default function AdminSegmentsPage() {
                 type="button"
                 onClick={() => setStatus(s)}
                 className={`rounded-full px-3 py-1 text-sm ${
-                  status === s ? 'bg-indigo-600 text-white' : 'bg-gray-100 text-gray-700'
+                  status === s ? 'bg-hos-gold text-[#1a1406]' : 'bg-hos-bg-tertiary text-hos-text-secondary'
                 }`}
               >
                 {s || 'All'}
@@ -78,11 +78,11 @@ export default function AdminSegmentsPage() {
             ))}
           </div>
           {loading ? (
-            <p className="text-gray-500">Loading…</p>
+            <p className="text-hos-text-muted">Loading…</p>
           ) : (
-            <div className="overflow-x-auto rounded-lg border border-gray-200 bg-white shadow-sm">
+            <div className="overflow-x-auto rounded-lg border border-hos-border bg-hos-bg-secondary shadow-sm">
               <table className="min-w-full text-sm">
-                <thead className="bg-gray-50 text-left">
+                <thead className="bg-hos-bg-secondary text-left">
                   <tr>
                     <th className="px-4 py-2">Name</th>
                     <th className="px-4 py-2">Type</th>
@@ -94,7 +94,7 @@ export default function AdminSegmentsPage() {
                 </thead>
                 <tbody>
                   {rows.map((s) => (
-                    <tr key={s.id} className="border-t border-gray-100">
+                    <tr key={s.id} className="border-t border-hos-border">
                       <td className="px-4 py-2 font-medium">
                         {s.name}
                         {s.isTemplate && (
@@ -110,17 +110,17 @@ export default function AdminSegmentsPage() {
                         {s.lastEvaluatedAt ? new Date(s.lastEvaluatedAt).toLocaleString() : '—'}
                       </td>
                       <td className="px-4 py-2 text-right space-x-2 whitespace-nowrap">
-                        <Link href={`/admin/segments/${s.id}`} className="text-indigo-600 hover:underline">
+                        <Link href={`/admin/segments/${s.id}`} className="text-hos-gold hover:underline">
                           View
                         </Link>
-                        <Link href={`/admin/segments/${s.id}/edit`} className="text-indigo-600 hover:underline">
+                        <Link href={`/admin/segments/${s.id}/edit`} className="text-hos-gold hover:underline">
                           Edit
                         </Link>
                         {s.status !== 'ARCHIVED' && (
                           <>
                             <button
                               type="button"
-                              className="text-gray-600 hover:underline"
+                              className="text-hos-text-secondary hover:underline"
                               onClick={() => refreshOne(s.id)}
                             >
                               Refresh

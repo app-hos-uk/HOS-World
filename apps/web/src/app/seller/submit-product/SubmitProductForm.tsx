@@ -552,18 +552,18 @@ export function SubmitProductForm({ editSubmissionId }: { editSubmissionId?: str
             <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold">
               {editSubmissionId ? 'Edit product submission' : 'Submit Product'}
             </h1>
-            <p className="text-gray-600 mt-2">Browse existing catalog or submit a new product for review</p>
+            <p className="text-hos-text-secondary mt-2">Browse existing catalog or submit a new product for review</p>
           </div>
 
             {/* Tab Switcher */}
-            <div className="mb-6 flex gap-1 bg-gray-100 rounded-lg p-1">
+            <div className="mb-6 flex gap-1 bg-hos-bg-tertiary rounded-lg p-1">
               <button
                 type="button"
                 onClick={() => setActiveTab('browse')}
                 className={`flex-1 py-2.5 px-4 rounded-md text-sm font-medium transition-all ${
                   activeTab === 'browse'
-                    ? 'bg-white text-purple-700 shadow-sm'
-                    : 'text-gray-600 hover:text-gray-900'
+                    ? 'bg-hos-bg-secondary text-hos-gold-hover shadow-sm'
+                    : 'text-hos-text-secondary hover:text-white'
                 }`}
               >
                 Browse Catalog
@@ -573,8 +573,8 @@ export function SubmitProductForm({ editSubmissionId }: { editSubmissionId?: str
                 onClick={() => setActiveTab('submit')}
                 className={`flex-1 py-2.5 px-4 rounded-md text-sm font-medium transition-all ${
                   activeTab === 'submit'
-                    ? 'bg-white text-purple-700 shadow-sm'
-                    : 'text-gray-600 hover:text-gray-900'
+                    ? 'bg-hos-bg-secondary text-hos-gold-hover shadow-sm'
+                    : 'text-hos-text-secondary hover:text-white'
                 }`}
               >
                 Submit New Product
@@ -584,20 +584,20 @@ export function SubmitProductForm({ editSubmissionId }: { editSubmissionId?: str
             {/* Browse Catalog Tab */}
             {activeTab === 'browse' && (
               <div className="space-y-4">
-                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                  <p className="text-sm text-blue-800">
+                <div className="bg-hos-gold/10 border border-hos-border-accent rounded-lg p-4">
+                  <p className="text-sm text-hos-gold">
                     <strong>Browse first:</strong> Check if the product you want to sell already exists in our catalog.
                     If it does, you can list it instantly with your own price and stock — no approval process needed.
                   </p>
                 </div>
 
                 {/* Search & Filter */}
-                <div className="bg-white border border-gray-200 rounded-lg p-4">
+                <div className="bg-hos-bg-secondary border border-hos-border rounded-lg p-4">
                   <form onSubmit={handleCatalogSearchSubmit} className="flex flex-col sm:flex-row gap-3">
                     <select
                       value={selectedFandom}
                       onChange={(e) => { setSelectedFandom(e.target.value); setCatalogPage(1); }}
-                      className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                      className="px-3 py-2 border border-hos-border rounded-lg text-sm focus:ring-2 focus:ring-hos-gold/50 focus:border-transparent"
                     >
                       <option value="">All Fandoms</option>
                       {catalogFandoms.map((f) => (
@@ -609,11 +609,11 @@ export function SubmitProductForm({ editSubmissionId }: { editSubmissionId?: str
                       value={catalogSearch}
                       onChange={(e) => setCatalogSearch(e.target.value)}
                       placeholder="Search products (typo-tolerant)..."
-                      className="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                      className="flex-1 px-3 py-2 border border-hos-border rounded-lg text-sm focus:ring-2 focus:ring-hos-gold/50 focus:border-transparent"
                     />
                     <button
                       type="submit"
-                      className="px-4 py-2 bg-purple-600 text-white rounded-lg text-sm font-medium hover:bg-purple-700"
+                      className="px-4 py-2 bg-hos-gold text-[#1a1406] rounded-lg text-sm font-medium hover:bg-hos-gold-hover"
                     >
                       Search
                     </button>
@@ -623,37 +623,37 @@ export function SubmitProductForm({ editSubmissionId }: { editSubmissionId?: str
                 {/* Product Grid */}
                 {catalogLoading ? (
                   <div className="flex justify-center py-12">
-                    <svg className="animate-spin h-8 w-8 text-purple-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <svg className="animate-spin h-8 w-8 text-hos-gold" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                       <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                       <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
                     </svg>
                   </div>
                 ) : catalogProducts.length === 0 ? (
-                  <div className="text-center py-12 bg-white border border-gray-200 rounded-lg">
-                    <p className="text-gray-500 mb-2">No catalog products found</p>
-                    <p className="text-sm text-gray-400">Try a different search or fandom filter, or submit a new product below</p>
+                  <div className="text-center py-12 bg-hos-bg-secondary border border-hos-border rounded-lg">
+                    <p className="text-hos-text-muted mb-2">No catalog products found</p>
+                    <p className="text-sm text-hos-text-muted">Try a different search or fandom filter, or submit a new product below</p>
                     <button
                       type="button"
                       onClick={() => setActiveTab('submit')}
-                      className="mt-4 px-4 py-2 bg-purple-600 text-white rounded-lg text-sm font-medium hover:bg-purple-700"
+                      className="mt-4 px-4 py-2 bg-hos-gold text-[#1a1406] rounded-lg text-sm font-medium hover:bg-hos-gold-hover"
                     >
                       Submit New Product
                     </button>
                   </div>
                 ) : (
                   <>
-                    <div className="text-sm text-gray-500 mb-2 flex items-center gap-2">
+                    <div className="text-sm text-hos-text-muted mb-2 flex items-center gap-2">
                       <span>{catalogTotal} products found</span>
                       {searchMeta?.processingTimeMs != null && (
-                        <span className="text-xs text-gray-400">({searchMeta.processingTimeMs}ms)</span>
+                        <span className="text-xs text-hos-text-muted">({searchMeta.processingTimeMs}ms)</span>
                       )}
                     </div>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       {catalogProducts.map((product: any) => (
-                        <div key={product.id} className="bg-white border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow">
+                        <div key={product.id} className="bg-hos-bg-secondary border border-hos-border rounded-lg p-4 hover:shadow-md transition-shadow">
                           <div className="flex gap-3">
                             {product.imageUrl && (
-                              <div className="relative w-16 h-16 rounded-lg overflow-hidden bg-gray-100 shrink-0">
+                              <div className="relative w-16 h-16 rounded-lg overflow-hidden bg-hos-bg-tertiary shrink-0">
                                 <Image
                                   src={product.imageUrl}
                                   alt={product.name}
@@ -665,14 +665,14 @@ export function SubmitProductForm({ editSubmissionId }: { editSubmissionId?: str
                               </div>
                             )}
                             <div className="min-w-0 flex-1">
-                              <h3 className="text-sm font-semibold text-gray-900 truncate">{product.name}</h3>
-                              <p className="text-xs text-gray-500 mt-0.5">
+                              <h3 className="text-sm font-semibold text-white truncate">{product.name}</h3>
+                              <p className="text-xs text-hos-text-muted mt-0.5">
                                 {product.sku ? `SKU: ${product.sku}` : ''}{product.fandom ? ` · ${product.fandom}` : ''}
                               </p>
                               <div className="flex items-center gap-2 mt-1">
-                                <span className="text-sm font-bold text-gray-900">${Number(product.price || 0).toFixed(2)}</span>
-                                <span className="text-xs text-gray-400">·</span>
-                                <span className="text-xs text-gray-500">{product.vendorCount} vendor{product.vendorCount !== 1 ? 's' : ''}</span>
+                                <span className="text-sm font-bold text-white">${Number(product.price || 0).toFixed(2)}</span>
+                                <span className="text-xs text-hos-text-muted">·</span>
+                                <span className="text-xs text-hos-text-muted">{product.vendorCount} vendor{product.vendorCount !== 1 ? 's' : ''}</span>
                               </div>
                             </div>
                           </div>
@@ -689,7 +689,7 @@ export function SubmitProductForm({ editSubmissionId }: { editSubmissionId?: str
                                   setVendorPrice(String(product.price || ''));
                                   setVendorStock('');
                                 }}
-                                className="flex-1 py-1.5 bg-purple-600 text-white rounded-lg text-xs font-medium hover:bg-purple-700 transition-colors"
+                                className="flex-1 py-1.5 bg-hos-gold text-[#1a1406] rounded-lg text-xs font-medium hover:bg-hos-gold-hover transition-colors"
                               >
                                 List as Vendor
                               </button>
@@ -706,18 +706,18 @@ export function SubmitProductForm({ editSubmissionId }: { editSubmissionId?: str
                           type="button"
                           disabled={catalogPage <= 1}
                           onClick={() => setCatalogPage((p) => Math.max(1, p - 1))}
-                          className="px-3 py-1.5 border border-gray-300 rounded text-sm disabled:opacity-50"
+                          className="px-3 py-1.5 border border-hos-border rounded text-sm disabled:opacity-50"
                         >
                           Previous
                         </button>
-                        <span className="px-3 py-1.5 text-sm text-gray-600">
+                        <span className="px-3 py-1.5 text-sm text-hos-text-secondary">
                           Page {catalogPage} of {Math.ceil(catalogTotal / 20)}
                         </span>
                         <button
                           type="button"
                           disabled={catalogPage >= Math.ceil(catalogTotal / 20)}
                           onClick={() => setCatalogPage((p) => p + 1)}
-                          className="px-3 py-1.5 border border-gray-300 rounded text-sm disabled:opacity-50"
+                          className="px-3 py-1.5 border border-hos-border rounded text-sm disabled:opacity-50"
                         >
                           Next
                         </button>
@@ -726,12 +726,12 @@ export function SubmitProductForm({ editSubmissionId }: { editSubmissionId?: str
                   </>
                 )}
 
-                <div className="text-center pt-4 border-t border-gray-200">
-                  <p className="text-sm text-gray-500 mb-2">Can&apos;t find your product?</p>
+                <div className="text-center pt-4 border-t border-hos-border">
+                  <p className="text-sm text-hos-text-muted mb-2">Can&apos;t find your product?</p>
                   <button
                     type="button"
                     onClick={() => setActiveTab('submit')}
-                    className="px-6 py-2 bg-gray-900 text-white rounded-lg text-sm font-medium hover:bg-gray-800"
+                    className="px-6 py-2 bg-hos-bg-tertiary text-white rounded-lg text-sm font-medium hover:bg-hos-bg-secondary"
                   >
                     Submit a New Product
                   </button>
@@ -742,33 +742,33 @@ export function SubmitProductForm({ editSubmissionId }: { editSubmissionId?: str
             {/* List as Vendor Modal */}
             {listAsVendorModal && (
               <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4">
-                <div className="bg-white rounded-xl shadow-xl max-w-md w-full p-6">
+                <div className="bg-hos-bg-secondary rounded-xl shadow-xl max-w-md w-full p-6">
                   <h3 className="text-lg font-bold mb-1">List as Vendor</h3>
-                  <p className="text-sm text-gray-500 mb-4">
+                  <p className="text-sm text-hos-text-muted mb-4">
                     Sell &ldquo;{listAsVendorModal.name}&rdquo; with your own pricing and stock.
                   </p>
                   <div className="space-y-3">
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Your Price ($)</label>
+                      <label className="block text-sm font-medium text-hos-text-secondary mb-1">Your Price ($)</label>
                       <input
                         type="number"
                         step="0.01"
                         min="0.01"
                         value={vendorPrice}
                         onChange={(e) => setVendorPrice(e.target.value)}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-purple-500"
+                        className="w-full px-3 py-2 border border-hos-border rounded-lg text-sm focus:ring-2 focus:ring-hos-gold/50"
                         placeholder="Enter your selling price"
                       />
-                      <p className="text-xs text-gray-400 mt-1">Catalog price: ${Number(listAsVendorModal.price || 0).toFixed(2)}</p>
+                      <p className="text-xs text-hos-text-muted mt-1">Catalog price: ${Number(listAsVendorModal.price || 0).toFixed(2)}</p>
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Your Stock</label>
+                      <label className="block text-sm font-medium text-hos-text-secondary mb-1">Your Stock</label>
                       <input
                         type="number"
                         min="1"
                         value={vendorStock}
                         onChange={(e) => setVendorStock(e.target.value)}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-purple-500"
+                        className="w-full px-3 py-2 border border-hos-border rounded-lg text-sm focus:ring-2 focus:ring-hos-gold/50"
                         placeholder="Quantity available"
                       />
                     </div>
@@ -777,7 +777,7 @@ export function SubmitProductForm({ editSubmissionId }: { editSubmissionId?: str
                     <button
                       type="button"
                       onClick={() => setListAsVendorModal(null)}
-                      className="flex-1 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50"
+                      className="flex-1 py-2 border border-hos-border rounded-lg text-sm font-medium text-hos-text-secondary hover:bg-hos-bg-tertiary"
                     >
                       Cancel
                     </button>
@@ -785,7 +785,7 @@ export function SubmitProductForm({ editSubmissionId }: { editSubmissionId?: str
                       type="button"
                       onClick={handleListAsVendor}
                       disabled={vendorSubmitting || !vendorPrice || !vendorStock}
-                      className="flex-1 py-2 bg-purple-600 text-white rounded-lg text-sm font-medium hover:bg-purple-700 disabled:opacity-50"
+                      className="flex-1 py-2 bg-hos-gold text-[#1a1406] rounded-lg text-sm font-medium hover:bg-hos-gold-hover disabled:opacity-50"
                     >
                       {vendorSubmitting ? 'Listing...' : 'List Product'}
                     </button>
@@ -798,8 +798,8 @@ export function SubmitProductForm({ editSubmissionId }: { editSubmissionId?: str
             {activeTab === 'submit' && (
             <>
             {editSubmissionId && editLoading && (
-              <div className="flex flex-col items-center justify-center py-16 text-gray-600">
-                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600 mb-4" />
+              <div className="flex flex-col items-center justify-center py-16 text-hos-text-secondary">
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-hos-gold mb-4" />
                 <p className="text-sm">Loading submission…</p>
               </div>
             )}
@@ -830,7 +830,7 @@ export function SubmitProductForm({ editSubmissionId }: { editSubmissionId?: str
                   <h3 className="font-semibold text-amber-900">Potential Duplicates Detected</h3>
                   <p className="text-xs text-amber-700 mt-0.5">Review matches below. If a product already exists, use &ldquo;Browse Catalog&rdquo; tab to list it as your vendor product instead.</p>
                 </div>
-                <div className="p-4 space-y-3 bg-white">
+                <div className="p-4 space-y-3 bg-hos-bg-secondary">
                   {duplicateWarnings.sellerActiveMatches?.length > 0 && (
                     <div>
                       <p className="text-sm font-semibold text-red-800 mb-1.5">Your Active Products</p>
@@ -838,8 +838,8 @@ export function SubmitProductForm({ editSubmissionId }: { editSubmissionId?: str
                       {duplicateWarnings.sellerActiveMatches.slice(0, 3).map((m: any) => (
                         <div key={m.id} className="flex items-center justify-between p-2.5 bg-red-50 rounded-lg mb-1.5 border border-red-200">
                           <div className="min-w-0">
-                            <p className="text-sm font-medium text-gray-900 truncate">{m.name}</p>
-                            <p className="text-xs text-gray-500">{m.sku ? `SKU: ${m.sku}` : ''} {m.reasons?.[0] || ''}</p>
+                            <p className="text-sm font-medium text-white truncate">{m.name}</p>
+                            <p className="text-xs text-hos-text-muted">{m.sku ? `SKU: ${m.sku}` : ''} {m.reasons?.[0] || ''}</p>
                           </div>
                           <span className="ml-2 shrink-0 px-2 py-0.5 bg-red-200 text-red-900 rounded text-xs font-bold">{m.similarityScore}%</span>
                         </div>
@@ -853,8 +853,8 @@ export function SubmitProductForm({ editSubmissionId }: { editSubmissionId?: str
                       {duplicateWarnings.sellerPendingMatches.slice(0, 3).map((m: any) => (
                         <div key={m.id} className="flex items-center justify-between p-2.5 bg-orange-50 rounded-lg mb-1.5 border border-orange-200">
                           <div className="min-w-0">
-                            <p className="text-sm font-medium text-gray-900 truncate">{m.name}</p>
-                            <p className="text-xs text-gray-500">Status: {m.status?.replace(/_/g, ' ')} &middot; {m.reasons?.[0] || ''}</p>
+                            <p className="text-sm font-medium text-white truncate">{m.name}</p>
+                            <p className="text-xs text-hos-text-muted">Status: {m.status?.replace(/_/g, ' ')} &middot; {m.reasons?.[0] || ''}</p>
                           </div>
                           <span className="ml-2 shrink-0 px-2 py-0.5 bg-orange-200 text-orange-900 rounded text-xs font-bold">{m.similarityScore}%</span>
                         </div>
@@ -868,8 +868,8 @@ export function SubmitProductForm({ editSubmissionId }: { editSubmissionId?: str
                       {duplicateWarnings.catalogueMatches.slice(0, 3).map((m: any) => (
                         <div key={m.id} className="flex items-center justify-between p-2.5 bg-amber-50 rounded-lg mb-1.5 border border-amber-200">
                           <div className="min-w-0">
-                            <p className="text-sm font-medium text-gray-900 truncate">{m.name}</p>
-                            <p className="text-xs text-gray-500">{m.sku ? `SKU: ${m.sku}` : ''} {m.reasons?.[0] || ''}</p>
+                            <p className="text-sm font-medium text-white truncate">{m.name}</p>
+                            <p className="text-xs text-hos-text-muted">{m.sku ? `SKU: ${m.sku}` : ''} {m.reasons?.[0] || ''}</p>
                           </div>
                           <div className="flex items-center gap-2 ml-2 shrink-0">
                             <span className="px-2 py-0.5 bg-amber-200 text-amber-900 rounded text-xs font-bold">{m.similarityScore}%</span>
@@ -880,7 +880,7 @@ export function SubmitProductForm({ editSubmissionId }: { editSubmissionId?: str
                                 setVendorPrice(String(m.price || ''));
                                 setVendorStock('');
                               }}
-                              className="px-2 py-0.5 bg-purple-600 text-white rounded text-xs font-medium hover:bg-purple-700"
+                              className="px-2 py-0.5 bg-hos-gold text-[#1a1406] rounded text-xs font-medium hover:bg-hos-gold-hover"
                             >
                               List as Vendor
                             </button>
@@ -894,8 +894,8 @@ export function SubmitProductForm({ editSubmissionId }: { editSubmissionId?: str
             )}
 
             {checkingDuplicates && (
-              <div className="mb-4 flex items-center gap-2 text-sm text-gray-500">
-                <svg className="animate-spin h-4 w-4 text-purple-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+              <div className="mb-4 flex items-center gap-2 text-sm text-hos-text-muted">
+                <svg className="animate-spin h-4 w-4 text-hos-gold" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                   <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                   <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
                 </svg>
@@ -905,11 +905,11 @@ export function SubmitProductForm({ editSubmissionId }: { editSubmissionId?: str
 
             <form onSubmit={handleSubmit} className="space-y-6 sm:space-y-8">
               {/* Basic Information */}
-              <div className="bg-white border border-gray-200 rounded-lg p-6 sm:p-8">
+              <div className="bg-hos-bg-secondary border border-hos-border rounded-lg p-6 sm:p-8">
                 <h2 className="text-xl font-semibold mb-4 sm:mb-6">Basic Information</h2>
                 <div className="space-y-4 sm:space-y-6">
                   <div>
-                    <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-1">
+                    <label htmlFor="name" className="block text-sm font-medium text-hos-text-secondary mb-1">
                       Product Name <span className="text-red-500">*</span>
                     </label>
                     <input
@@ -919,7 +919,7 @@ export function SubmitProductForm({ editSubmissionId }: { editSubmissionId?: str
                       value={formData.name}
                       onChange={handleInputChange}
                       required
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                      className="w-full px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50 focus:border-transparent"
                       placeholder="Enter product name"
                     />
                   </div>
@@ -927,7 +927,7 @@ export function SubmitProductForm({ editSubmissionId }: { editSubmissionId?: str
                   <div>
                     <label
                       htmlFor="description"
-                      className="block text-sm font-medium text-gray-700 mb-1"
+                      className="block text-sm font-medium text-hos-text-secondary mb-1"
                     >
                       Description <span className="text-red-500">*</span>
                     </label>
@@ -938,14 +938,14 @@ export function SubmitProductForm({ editSubmissionId }: { editSubmissionId?: str
                       onChange={handleInputChange}
                       required
                       rows={6}
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                      className="w-full px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50 focus:border-transparent"
                       placeholder="Enter product description"
                     />
                   </div>
 
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                     <div>
-                      <label htmlFor="sku" className="block text-sm font-medium text-gray-700 mb-1">
+                      <label htmlFor="sku" className="block text-sm font-medium text-hos-text-secondary mb-1">
                         SKU
                       </label>
                       <input
@@ -954,7 +954,7 @@ export function SubmitProductForm({ editSubmissionId }: { editSubmissionId?: str
                         name="sku"
                         value={formData.sku}
                         onChange={handleInputChange}
-                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                        className="w-full px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50 focus:border-transparent"
                         placeholder="SKU"
                       />
                     </div>
@@ -962,7 +962,7 @@ export function SubmitProductForm({ editSubmissionId }: { editSubmissionId?: str
                     <div>
                       <label
                         htmlFor="barcode"
-                        className="block text-sm font-medium text-gray-700 mb-1"
+                        className="block text-sm font-medium text-hos-text-secondary mb-1"
                       >
                         Barcode
                       </label>
@@ -972,13 +972,13 @@ export function SubmitProductForm({ editSubmissionId }: { editSubmissionId?: str
                         name="barcode"
                         value={formData.barcode}
                         onChange={handleInputChange}
-                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                        className="w-full px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50 focus:border-transparent"
                         placeholder="Barcode"
                       />
                     </div>
 
                     <div>
-                      <label htmlFor="ean" className="block text-sm font-medium text-gray-700 mb-1">
+                      <label htmlFor="ean" className="block text-sm font-medium text-hos-text-secondary mb-1">
                         EAN
                       </label>
                       <input
@@ -987,7 +987,7 @@ export function SubmitProductForm({ editSubmissionId }: { editSubmissionId?: str
                         name="ean"
                         value={formData.ean}
                         onChange={handleInputChange}
-                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                        className="w-full px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50 focus:border-transparent"
                         placeholder="EAN"
                       />
                     </div>
@@ -996,14 +996,14 @@ export function SubmitProductForm({ editSubmissionId }: { editSubmissionId?: str
               </div>
 
               {/* Pricing */}
-              <div className="bg-white border border-gray-200 rounded-lg p-6 sm:p-8">
+              <div className="bg-hos-bg-secondary border border-hos-border rounded-lg p-6 sm:p-8">
                 <h2 className="text-xl font-semibold mb-4 sm:mb-6">Pricing</h2>
                 <div className="space-y-4 sm:space-y-6">
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
                       <label
                         htmlFor="price"
-                        className="block text-sm font-medium text-gray-700 mb-1"
+                        className="block text-sm font-medium text-hos-text-secondary mb-1"
                       >
                         Price <span className="text-red-500">*</span>
                       </label>
@@ -1016,7 +1016,7 @@ export function SubmitProductForm({ editSubmissionId }: { editSubmissionId?: str
                         required
                         min="0"
                         step="0.01"
-                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                        className="w-full px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50 focus:border-transparent"
                         placeholder="0.00"
                       />
                     </div>
@@ -1024,7 +1024,7 @@ export function SubmitProductForm({ editSubmissionId }: { editSubmissionId?: str
                     <div>
                       <label
                         htmlFor="currency"
-                        className="block text-sm font-medium text-gray-700 mb-1"
+                        className="block text-sm font-medium text-hos-text-secondary mb-1"
                       >
                         Currency
                       </label>
@@ -1033,7 +1033,7 @@ export function SubmitProductForm({ editSubmissionId }: { editSubmissionId?: str
                         name="currency"
                         value={formData.currency}
                         onChange={handleInputChange}
-                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                        className="w-full px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50 focus:border-transparent"
                       >
                         <option value="USD">USD</option>
                         <option value="EUR">EUR</option>
@@ -1045,7 +1045,7 @@ export function SubmitProductForm({ editSubmissionId }: { editSubmissionId?: str
                     <div>
                       <label
                         htmlFor="tradePrice"
-                        className="block text-sm font-medium text-gray-700 mb-1"
+                        className="block text-sm font-medium text-hos-text-secondary mb-1"
                       >
                         Trade Price
                       </label>
@@ -1057,13 +1057,13 @@ export function SubmitProductForm({ editSubmissionId }: { editSubmissionId?: str
                         onChange={handleInputChange}
                         min="0"
                         step="0.01"
-                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                        className="w-full px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50 focus:border-transparent"
                         placeholder="0.00"
                       />
                     </div>
 
                     <div>
-                      <label htmlFor="rrp" className="block text-sm font-medium text-gray-700 mb-1">
+                      <label htmlFor="rrp" className="block text-sm font-medium text-hos-text-secondary mb-1">
                         RRP (Recommended Retail Price)
                       </label>
                       <input
@@ -1074,7 +1074,7 @@ export function SubmitProductForm({ editSubmissionId }: { editSubmissionId?: str
                         onChange={handleInputChange}
                         min="0"
                         step="0.01"
-                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                        className="w-full px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50 focus:border-transparent"
                         placeholder="0.00"
                       />
                     </div>
@@ -1084,7 +1084,7 @@ export function SubmitProductForm({ editSubmissionId }: { editSubmissionId?: str
                     <div>
                       <label
                         htmlFor="stock"
-                        className="block text-sm font-medium text-gray-700 mb-1"
+                        className="block text-sm font-medium text-hos-text-secondary mb-1"
                       >
                         Available Stock <span className="text-red-500">*</span>
                       </label>
@@ -1096,16 +1096,16 @@ export function SubmitProductForm({ editSubmissionId }: { editSubmissionId?: str
                         onChange={handleInputChange}
                         required
                         min="0"
-                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                        className="w-full px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50 focus:border-transparent"
                         placeholder="0"
                       />
-                      <p className="text-xs text-gray-500 mt-1">Total units you have available to supply</p>
+                      <p className="text-xs text-hos-text-muted mt-1">Total units you have available to supply</p>
                     </div>
 
                     <div>
                       <label
                         htmlFor="taxRate"
-                        className="block text-sm font-medium text-gray-700 mb-1"
+                        className="block text-sm font-medium text-hos-text-secondary mb-1"
                       >
                         Tax Rate (%)
                       </label>
@@ -1118,7 +1118,7 @@ export function SubmitProductForm({ editSubmissionId }: { editSubmissionId?: str
                         min="0"
                         max="100"
                         step="0.01"
-                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                        className="w-full px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50 focus:border-transparent"
                         placeholder="0"
                       />
                     </div>
@@ -1128,7 +1128,7 @@ export function SubmitProductForm({ editSubmissionId }: { editSubmissionId?: str
                   <div>
                     <label
                       htmlFor="quantity"
-                      className="block text-sm font-medium text-gray-700 mb-1"
+                      className="block text-sm font-medium text-hos-text-secondary mb-1"
                     >
                       Minimum Order Quantity
                     </label>
@@ -1139,17 +1139,17 @@ export function SubmitProductForm({ editSubmissionId }: { editSubmissionId?: str
                       value={formData.quantity}
                       onChange={handleInputChange}
                       min="1"
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                      className="w-full px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50 focus:border-transparent"
                       placeholder="Minimum order quantity for bulk buyers"
                     />
-                    <p className="text-xs text-gray-500 mt-1">Minimum units a buyer must order at wholesale price</p>
+                    <p className="text-xs text-hos-text-muted mt-1">Minimum units a buyer must order at wholesale price</p>
                   </div>
                   )}
                 </div>
               </div>
 
               {/* Categorization */}
-              <div className="bg-white border border-gray-200 rounded-lg p-6 sm:p-8">
+              <div className="bg-hos-bg-secondary border border-hos-border rounded-lg p-6 sm:p-8">
                 <h2 className="text-xl font-semibold mb-4 sm:mb-6">Categorization</h2>
                 <div className="space-y-4 sm:space-y-6 min-h-[200px]">
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -1173,7 +1173,7 @@ export function SubmitProductForm({ editSubmissionId }: { editSubmissionId?: str
                   </div>
 
                   <div>
-                    <label htmlFor="tags" className="block text-sm font-medium text-gray-700 mb-1">
+                    <label htmlFor="tags" className="block text-sm font-medium text-hos-text-secondary mb-1">
                       Tags (comma-separated)
                     </label>
                     <input
@@ -1182,7 +1182,7 @@ export function SubmitProductForm({ editSubmissionId }: { editSubmissionId?: str
                       name="tags"
                       value={formData.tags}
                       onChange={handleInputChange}
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                      className="w-full px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50 focus:border-transparent"
                       placeholder="tag1, tag2, tag3"
                     />
                   </div>
@@ -1190,7 +1190,7 @@ export function SubmitProductForm({ editSubmissionId }: { editSubmissionId?: str
               </div>
 
               {/* Product Images */}
-              <div className="bg-white border border-gray-200 rounded-lg p-6 sm:p-8">
+              <div className="bg-hos-bg-secondary border border-hos-border rounded-lg p-6 sm:p-8">
                 <h2 className="text-xl font-semibold mb-4 sm:mb-6">
                   Product Images <span className="text-red-500">*</span>
                 </h2>
@@ -1201,13 +1201,13 @@ export function SubmitProductForm({ editSubmissionId }: { editSubmissionId?: str
                     </div>
                   )}
                 <div className="space-y-4">
-                  <div className="p-4 border border-gray-200 rounded-lg bg-gray-50">
+                  <div className="p-4 border border-hos-border rounded-lg bg-hos-bg-secondary">
                     <div className="flex items-center justify-between gap-3 flex-wrap">
                       <div>
-                        <div className="font-medium text-gray-900">Upload images</div>
-                        <div className="text-xs text-gray-600">JPEG/PNG/GIF/WebP, max 10MB each</div>
+                        <div className="font-medium text-white">Upload images</div>
+                        <div className="text-xs text-hos-text-secondary">JPEG/PNG/GIF/WebP, max 10MB each</div>
                       </div>
-                      <label className="inline-flex items-center px-4 py-2 bg-purple-600 text-white rounded hover:bg-purple-700 cursor-pointer">
+                      <label className="inline-flex items-center px-4 py-2 bg-hos-gold text-[#1a1406] rounded hover:bg-hos-gold-hover cursor-pointer">
                         <input
                           type="file"
                           accept="image/jpeg,image/png,image/gif,image/webp"
@@ -1221,7 +1221,7 @@ export function SubmitProductForm({ editSubmissionId }: { editSubmissionId?: str
                     </div>
 
                     <div className="mt-4">
-                      <div className="text-sm font-medium text-gray-700 mb-2">Or paste an image URL</div>
+                      <div className="text-sm font-medium text-hos-text-secondary mb-2">Or paste an image URL</div>
                       <div className="flex gap-2">
                         <input
                           type="url"
@@ -1233,13 +1233,13 @@ export function SubmitProductForm({ editSubmissionId }: { editSubmissionId?: str
                               addImage();
                             }
                           }}
-                          className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent bg-white"
+                          className="flex-1 px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50 focus:border-transparent bg-hos-bg-secondary"
                           placeholder="https://example.com/image.jpg"
                         />
                         <button
                           type="button"
                           onClick={addImage}
-                          className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
+                          className="px-4 py-2 bg-hos-gold text-[#1a1406] rounded-lg hover:bg-hos-gold-hover transition-colors"
                         >
                           Add URL
                         </button>
@@ -1252,7 +1252,7 @@ export function SubmitProductForm({ editSubmissionId }: { editSubmissionId?: str
                       {images.map((image, index) => (
                         <div
                           key={index}
-                          className="flex items-start gap-4 p-3 border border-gray-200 rounded-lg"
+                          className="flex items-start gap-4 p-3 border border-hos-border rounded-lg"
                         >
                           <Image
                             src={image.url}
@@ -1266,10 +1266,10 @@ export function SubmitProductForm({ editSubmissionId }: { editSubmissionId?: str
                               type="text"
                               value={image.alt}
                               onChange={(e) => updateImageAlt(index, e.target.value)}
-                              className="w-full px-3 py-1 border border-gray-300 rounded text-sm mb-2"
+                              className="w-full px-3 py-1 border border-hos-border rounded text-sm mb-2"
                               placeholder="Image alt text"
                             />
-                            <p className="text-xs text-gray-500 truncate">{image.url}</p>
+                            <p className="text-xs text-hos-text-muted truncate">{image.url}</p>
                           </div>
                           <button
                             type="button"
@@ -1286,10 +1286,10 @@ export function SubmitProductForm({ editSubmissionId }: { editSubmissionId?: str
               </div>
 
               {/* Variations */}
-              <div className="bg-white border border-gray-200 rounded-lg p-6 sm:p-8">
+              <div className="bg-hos-bg-secondary border border-hos-border rounded-lg p-6 sm:p-8">
                 <h2 className="text-xl font-semibold mb-4 sm:mb-6">Product Variations (Optional)</h2>
                 <div className="space-y-4">
-                  <div className="border border-gray-200 rounded-lg p-4">
+                  <div className="border border-hos-border rounded-lg p-4">
                     <div className="space-y-3">
                       <input
                         type="text"
@@ -1297,7 +1297,7 @@ export function SubmitProductForm({ editSubmissionId }: { editSubmissionId?: str
                         onChange={(e) =>
                           setCurrentVariation({ ...currentVariation, name: e.target.value })
                         }
-                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                        className="w-full px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50 focus:border-transparent"
                         placeholder="Variation name (e.g., Size, Color)"
                       />
 
@@ -1306,20 +1306,20 @@ export function SubmitProductForm({ editSubmissionId }: { editSubmissionId?: str
                           type="text"
                           value={newOptionName}
                           onChange={(e) => setNewOptionName(e.target.value)}
-                          className="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm"
+                          className="flex-1 px-3 py-2 border border-hos-border rounded-lg text-sm"
                           placeholder="Option name"
                         />
                         <input
                           type="text"
                           value={newOptionValue}
                           onChange={(e) => setNewOptionValue(e.target.value)}
-                          className="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm"
+                          className="flex-1 px-3 py-2 border border-hos-border rounded-lg text-sm"
                           placeholder="Option value"
                         />
                         <button
                           type="button"
                           onClick={addVariationOption}
-                          className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 text-sm"
+                          className="px-4 py-2 bg-hos-bg-tertiary text-hos-text-secondary rounded-lg hover:bg-hos-bg-tertiary text-sm"
                         >
                           Add Option
                         </button>
@@ -1327,11 +1327,11 @@ export function SubmitProductForm({ editSubmissionId }: { editSubmissionId?: str
 
                       {currentVariation.options.length > 0 && (
                         <div className="space-y-2">
-                          <p className="text-sm font-medium text-gray-700">Options:</p>
+                          <p className="text-sm font-medium text-hos-text-secondary">Options:</p>
                           {currentVariation.options.map((option, idx) => (
                             <div
                               key={idx}
-                              className="flex items-center justify-between p-2 bg-gray-50 rounded"
+                              className="flex items-center justify-between p-2 bg-hos-bg-secondary rounded"
                             >
                               <span className="text-sm">
                                 {option.name}: {option.value}
@@ -1351,7 +1351,7 @@ export function SubmitProductForm({ editSubmissionId }: { editSubmissionId?: str
                       <button
                         type="button"
                         onClick={addVariation}
-                        className="w-full px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
+                        className="w-full px-4 py-2 bg-hos-gold text-[#1a1406] rounded-lg hover:bg-hos-gold-hover transition-colors"
                       >
                         Add Variation
                       </button>
@@ -1360,15 +1360,15 @@ export function SubmitProductForm({ editSubmissionId }: { editSubmissionId?: str
 
                   {variations.length > 0 && (
                     <div className="space-y-3">
-                      <p className="font-medium text-gray-700">Added Variations:</p>
+                      <p className="font-medium text-hos-text-secondary">Added Variations:</p>
                       {variations.map((variation, index) => (
                         <div
                           key={index}
-                          className="flex items-center justify-between p-3 border border-gray-200 rounded-lg"
+                          className="flex items-center justify-between p-3 border border-hos-border rounded-lg"
                         >
                           <div>
                             <p className="font-medium">{variation.name}</p>
-                            <p className="text-sm text-gray-500">
+                            <p className="text-sm text-hos-text-muted">
                               {variation.options.length} option(s)
                             </p>
                           </div>
@@ -1397,14 +1397,14 @@ export function SubmitProductForm({ editSubmissionId }: { editSubmissionId?: str
                 <button
                   type="button"
                   onClick={() => router.back()}
-                  className="px-6 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
+                  className="px-6 py-3 border border-hos-border text-hos-text-secondary rounded-lg hover:bg-hos-bg-tertiary transition-colors"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={loading}
-                  className="flex-1 px-6 py-3 bg-purple-600 text-white rounded-lg font-semibold hover:bg-purple-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="flex-1 px-6 py-3 bg-hos-gold text-[#1a1406] rounded-lg font-semibold hover:bg-hos-gold-hover transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {loading ? (editSubmissionId ? 'Saving…' : 'Submitting…') : editSubmissionId ? 'Save changes' : 'Submit Product'}
                 </button>

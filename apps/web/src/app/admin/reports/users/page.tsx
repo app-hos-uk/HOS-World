@@ -91,7 +91,7 @@ export default function AdminCustomerAnalyticsPage() {
       <RouteGuard allowedRoles={['ADMIN', 'SELLER', 'B2C_SELLER']}>
         <AdminLayout>
           <div className="flex items-center justify-center h-64">
-            <div className="text-gray-500">Loading customer analytics...</div>
+            <div className="text-hos-text-muted">Loading customer analytics...</div>
           </div>
         </AdminLayout>
       </RouteGuard>
@@ -118,86 +118,86 @@ export default function AdminCustomerAnalyticsPage() {
       <AdminLayout>
         <div className="space-y-6">
           <div className="flex items-center justify-between">
-            <h1 className="text-2xl font-bold text-gray-900">Customer Analytics</h1>
+            <h1 className="text-2xl font-bold text-white">Customer Analytics</h1>
             <div className="flex gap-2">
               <button
                 onClick={() => handleExport('csv')}
-                className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50"
+                className="px-4 py-2 text-sm font-medium text-hos-text-secondary bg-hos-bg-secondary border border-hos-border rounded-md hover:bg-hos-bg-tertiary"
               >
                 Export CSV
               </button>
               <button
                 onClick={() => handleExport('xlsx')}
-                className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50"
+                className="px-4 py-2 text-sm font-medium text-hos-text-secondary bg-hos-bg-secondary border border-hos-border rounded-md hover:bg-hos-bg-tertiary"
               >
                 Export Excel
               </button>
               <button
                 onClick={() => handleExport('pdf')}
-                className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50"
+                className="px-4 py-2 text-sm font-medium text-hos-text-secondary bg-hos-bg-secondary border border-hos-border rounded-md hover:bg-hos-bg-tertiary"
               >
                 Export PDF
               </button>
             </div>
           </div>
 
-          <div className="bg-white rounded-lg shadow p-6">
+          <div className="bg-hos-bg-secondary rounded-lg shadow p-6">
             <DateRangePicker value={dateRange} onChange={setDateRange} />
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-            <div className="bg-white rounded-lg shadow p-6">
-              <h3 className="text-sm font-medium text-gray-500">Total Customers</h3>
-              <p className="text-3xl font-bold text-gray-900 mt-2">{data?.totalCustomers || 0}</p>
+            <div className="bg-hos-bg-secondary rounded-lg shadow p-6">
+              <h3 className="text-sm font-medium text-hos-text-muted">Total Customers</h3>
+              <p className="text-3xl font-bold text-white mt-2">{data?.totalCustomers || 0}</p>
             </div>
-            <div className="bg-white rounded-lg shadow p-6">
-              <h3 className="text-sm font-medium text-gray-500">New Customers</h3>
+            <div className="bg-hos-bg-secondary rounded-lg shadow p-6">
+              <h3 className="text-sm font-medium text-hos-text-muted">New Customers</h3>
               <p className="text-3xl font-bold text-green-600 mt-2">{data?.newCustomers || 0}</p>
             </div>
-            <div className="bg-white rounded-lg shadow p-6">
-              <h3 className="text-sm font-medium text-gray-500">Returning Customers</h3>
-              <p className="text-3xl font-bold text-blue-600 mt-2">{data?.returningCustomers || 0}</p>
+            <div className="bg-hos-bg-secondary rounded-lg shadow p-6">
+              <h3 className="text-sm font-medium text-hos-text-muted">Returning Customers</h3>
+              <p className="text-3xl font-bold text-hos-gold mt-2">{data?.returningCustomers || 0}</p>
             </div>
-            <div className="bg-white rounded-lg shadow p-6">
-              <h3 className="text-sm font-medium text-gray-500">Retention Rate</h3>
-              <p className="text-3xl font-bold text-gray-900 mt-2">
+            <div className="bg-hos-bg-secondary rounded-lg shadow p-6">
+              <h3 className="text-sm font-medium text-hos-text-muted">Retention Rate</h3>
+              <p className="text-3xl font-bold text-white mt-2">
                 {data?.retentionRate ? `${data.retentionRate.toFixed(1)}%` : '0%'}
               </p>
             </div>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="bg-white rounded-lg shadow p-6">
-              <h3 className="text-sm font-medium text-gray-500 mb-2">Average Lifetime Value</h3>
-              <p className="text-4xl font-bold text-gray-900">
+            <div className="bg-hos-bg-secondary rounded-lg shadow p-6">
+              <h3 className="text-sm font-medium text-hos-text-muted mb-2">Average Lifetime Value</h3>
+              <p className="text-4xl font-bold text-white">
                 ${data?.averageLTV ? data.averageLTV.toFixed(2) : '0.00'}
               </p>
-              <p className="text-sm text-gray-500 mt-2">
+              <p className="text-sm text-hos-text-muted mt-2">
                 Average total value of purchases per customer
               </p>
             </div>
-            <div className="bg-white rounded-lg shadow p-6">
-              <h3 className="text-sm font-medium text-gray-500 mb-2">Average Order Frequency</h3>
-              <p className="text-4xl font-bold text-gray-900">
+            <div className="bg-hos-bg-secondary rounded-lg shadow p-6">
+              <h3 className="text-sm font-medium text-hos-text-muted mb-2">Average Order Frequency</h3>
+              <p className="text-4xl font-bold text-white">
                 {data?.averageOrderFrequency ? data.averageOrderFrequency.toFixed(2) : '0.00'}
               </p>
-              <p className="text-sm text-gray-500 mt-2">Orders per customer on average</p>
+              <p className="text-sm text-hos-text-muted mt-2">Orders per customer on average</p>
             </div>
-            <div className="bg-white rounded-lg shadow p-6">
-              <h3 className="text-sm font-medium text-gray-500 mb-2">Churn Rate</h3>
+            <div className="bg-hos-bg-secondary rounded-lg shadow p-6">
+              <h3 className="text-sm font-medium text-hos-text-muted mb-2">Churn Rate</h3>
               <p className="text-4xl font-bold text-red-600">
                 {data?.churnRate ? `${data.churnRate.toFixed(1)}%` : '0%'}
               </p>
-              <p className="text-sm text-gray-500 mt-2">
+              <p className="text-sm text-hos-text-muted mt-2">
                 Customers with no orders in the last 30 days
               </p>
             </div>
-            <div className="bg-white rounded-lg shadow p-6">
-              <h3 className="text-sm font-medium text-gray-500 mb-2">Retention Rate</h3>
+            <div className="bg-hos-bg-secondary rounded-lg shadow p-6">
+              <h3 className="text-sm font-medium text-hos-text-muted mb-2">Retention Rate</h3>
               <p className="text-4xl font-bold text-green-600">
                 {data?.retentionRate ? `${data.retentionRate.toFixed(1)}%` : '0%'}
               </p>
-              <p className="text-sm text-gray-500 mt-2">
+              <p className="text-sm text-hos-text-muted mt-2">
                 Percentage of customers with 2+ orders
               </p>
             </div>
@@ -205,8 +205,8 @@ export default function AdminCustomerAnalyticsPage() {
 
           {pieData.length > 0 && (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div className="bg-white rounded-lg shadow p-6">
-                <h2 className="text-lg font-semibold text-gray-900 mb-4">
+              <div className="bg-hos-bg-secondary rounded-lg shadow p-6">
+                <h2 className="text-lg font-semibold text-white mb-4">
                   Customer Distribution
                 </h2>
                 <ResponsiveContainer width="100%" height={300}>
@@ -231,8 +231,8 @@ export default function AdminCustomerAnalyticsPage() {
                 </ResponsiveContainer>
               </div>
 
-              <div className="bg-white rounded-lg shadow p-6">
-                <h2 className="text-lg font-semibold text-gray-900 mb-4">Customer Metrics</h2>
+              <div className="bg-hos-bg-secondary rounded-lg shadow p-6">
+                <h2 className="text-lg font-semibold text-white mb-4">Customer Metrics</h2>
                 <ResponsiveContainer width="100%" height={300}>
                   <BarChart data={metricsData}>
                     <CartesianGrid strokeDasharray="3 3" />

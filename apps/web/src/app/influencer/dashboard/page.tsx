@@ -286,8 +286,8 @@ export default function InfluencerDashboardPage() {
     return (
       <div className="flex items-center justify-center py-12">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600 mx-auto"></div>
-          <p className="mt-4 text-gray-600">Loading dashboard...</p>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-hos-gold mx-auto"></div>
+          <p className="mt-4 text-hos-text-secondary">Loading dashboard...</p>
         </div>
       </div>
     );
@@ -298,18 +298,18 @@ export default function InfluencerDashboardPage() {
         {/* Header */}
         <div className="flex items-center justify-between mb-8">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900">
+            <h1 className="text-3xl font-bold text-white">
               Welcome back, {profile?.displayName}!
             </h1>
-            <p className="text-gray-600 mt-1">
+            <p className="text-hos-text-secondary mt-1">
               Track your performance and manage your referral links
             </p>
           </div>
           <div className="flex items-center gap-4">
             <span className={`px-3 py-1 rounded-full text-sm font-medium ${
-              profile?.tier === 'PLATINUM' ? 'bg-gray-800 text-white' :
+              profile?.tier === 'PLATINUM' ? 'bg-hos-surface text-white' :
               profile?.tier === 'GOLD' ? 'bg-yellow-100 text-yellow-800' :
-              profile?.tier === 'SILVER' ? 'bg-gray-200 text-gray-800' :
+              profile?.tier === 'SILVER' ? 'bg-hos-bg-tertiary text-white' :
               'bg-orange-100 text-orange-800'
             }`}>
               {profile?.tier} Tier
@@ -318,33 +318,33 @@ export default function InfluencerDashboardPage() {
         </div>
 
         {/* Referral Link Card */}
-        <div className="bg-gradient-to-r from-purple-600 to-indigo-600 rounded-2xl p-6 mb-8 text-white">
+        <div className="bg-hos-bg-secondary border border-hos-border rounded-2xl p-6 mb-8 text-white">
           <div className="flex items-center justify-between">
             <div>
               <h2 className="text-lg font-semibold mb-2">Your Referral Link</h2>
-              <p className="text-purple-100 text-sm mb-4">
+              <p className="text-hos-text-secondary text-sm mb-4">
                 Share this link to earn commissions on every purchase
               </p>
-              <div className="flex items-center gap-3 bg-white/10 rounded-lg px-4 py-2">
+              <div className="flex items-center gap-3 bg-hos-bg-secondary/10 rounded-lg px-4 py-2">
                 <code className="text-sm">
                   {typeof window !== 'undefined' && `${window.location.origin}?ref=${analytics?.referralCode}`}
                 </code>
                 <div className="flex items-center gap-2">
                   <button
                     onClick={shareToTwitter}
-                    className="px-2 py-1 bg-white text-blue-500 rounded-md text-sm font-medium hover:bg-white/90"
+                    className="px-2 py-1 bg-hos-bg-secondary text-hos-gold rounded-md text-sm font-medium hover:bg-hos-bg-secondary/90"
                   >
                     Twitter
                   </button>
                   <button
                     onClick={shareToFacebook}
-                    className="px-2 py-1 bg-white text-blue-700 rounded-md text-sm font-medium hover:bg-white/90"
+                    className="px-2 py-1 bg-hos-bg-secondary text-hos-gold rounded-md text-sm font-medium hover:bg-hos-bg-secondary/90"
                   >
                     Facebook
                   </button>
                   <button
                     onClick={copyReferralLink}
-                    className="px-3 py-1 bg-white text-purple-600 rounded-md text-sm font-medium hover:bg-purple-50 transition-colors"
+                    className="px-3 py-1 bg-hos-bg-secondary text-hos-gold rounded-md text-sm font-medium hover:bg-hos-gold/10 transition-colors"
                   >
                     {copied ? 'Copied!' : 'Copy'}
                   </button>
@@ -352,9 +352,9 @@ export default function InfluencerDashboardPage() {
               </div>
             </div>
             <div className="hidden md:block">
-              <div className="bg-white/10 rounded-xl p-4 text-center">
+              <div className="bg-hos-bg-secondary/10 rounded-xl p-4 text-center">
                 <p className="text-4xl font-bold">{analytics?.referralCode}</p>
-                <p className="text-purple-200 text-sm mt-1">Your Code</p>
+                <p className="text-hos-gold/30 text-sm mt-1">Your Code</p>
               </div>
             </div>
           </div>
@@ -362,11 +362,11 @@ export default function InfluencerDashboardPage() {
 
         {/* Stats Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-          <div className="bg-white rounded-xl p-6 shadow-sm">
+          <div className="bg-hos-bg-secondary rounded-xl p-6 shadow-sm">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-gray-500 text-sm">Total Clicks</p>
-                <p className="text-3xl font-bold text-gray-900 mt-1">
+                <p className="text-hos-text-muted text-sm">Total Clicks</p>
+                <p className="text-3xl font-bold text-white mt-1">
                   {analytics?.totalClicks?.toLocaleString() || 0}
                 </p>
                 {weeklyGrowth.clicks !== 0 && (
@@ -384,19 +384,19 @@ export default function InfluencerDashboardPage() {
                   </p>
                 )}
               </div>
-              <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
-                <svg className="w-6 h-6 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <div className="w-12 h-12 bg-hos-gold/20 rounded-lg flex items-center justify-center">
+                <svg className="w-6 h-6 text-hos-gold" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 15l-2 5L9 9l11 4-5 2zm0 0l5 5M7.188 2.239l.777 2.897M5.136 7.965l-2.898-.777M13.95 4.05l-2.122 2.122m-5.657 5.656l-2.12 2.122" />
                 </svg>
               </div>
             </div>
           </div>
 
-          <div className="bg-white rounded-xl p-6 shadow-sm">
+          <div className="bg-hos-bg-secondary rounded-xl p-6 shadow-sm">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-gray-500 text-sm">Conversions</p>
-                <p className="text-3xl font-bold text-gray-900 mt-1">
+                <p className="text-hos-text-muted text-sm">Conversions</p>
+                <p className="text-3xl font-bold text-white mt-1">
                   {analytics?.totalConversions?.toLocaleString() || 0}
                 </p>
                 <p className="text-green-600 text-sm mt-1">
@@ -425,27 +425,27 @@ export default function InfluencerDashboardPage() {
             </div>
           </div>
 
-          <div className="bg-white rounded-xl p-6 shadow-sm">
+          <div className="bg-hos-bg-secondary rounded-xl p-6 shadow-sm">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-gray-500 text-sm">Total Sales</p>
-                <p className="text-3xl font-bold text-gray-900 mt-1">
+                <p className="text-hos-text-muted text-sm">Total Sales</p>
+                <p className="text-3xl font-bold text-white mt-1">
                   {formatCurrency(analytics?.totalSalesAmount || 0)}
                 </p>
               </div>
-              <div className="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center">
-                <svg className="w-6 h-6 text-purple-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <div className="w-12 h-12 bg-hos-gold/20 rounded-lg flex items-center justify-center">
+                <svg className="w-6 h-6 text-hos-gold" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
                 </svg>
               </div>
             </div>
           </div>
 
-          <div className="bg-white rounded-xl p-6 shadow-sm">
+          <div className="bg-hos-bg-secondary rounded-xl p-6 shadow-sm">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-gray-500 text-sm">Total Earnings</p>
-                <p className="text-3xl font-bold text-gray-900 mt-1">
+                <p className="text-hos-text-muted text-sm">Total Earnings</p>
+                <p className="text-3xl font-bold text-white mt-1">
                   {formatCurrency(analytics?.totalCommission || 0)}
                 </p>
               </div>
@@ -459,27 +459,27 @@ export default function InfluencerDashboardPage() {
         </div>
 
         {/* Tier Progress Section */}
-        <div className="bg-white rounded-xl p-6 shadow-sm mb-8">
+        <div className="bg-hos-bg-secondary rounded-xl p-6 shadow-sm mb-8">
           <div className="flex items-center justify-between mb-4">
-            <h3 className="text-lg font-semibold text-gray-900">Tier Progress</h3>
+            <h3 className="text-lg font-semibold text-white">Tier Progress</h3>
             <div className="flex items-center gap-2">
               <span className={`px-3 py-1 rounded-full text-sm font-medium ${
-                profile?.tier === 'PLATINUM' ? 'bg-gray-800 text-white' :
+                profile?.tier === 'PLATINUM' ? 'bg-hos-surface text-white' :
                 profile?.tier === 'GOLD' ? 'bg-yellow-100 text-yellow-800' :
-                profile?.tier === 'SILVER' ? 'bg-gray-200 text-gray-800' :
+                profile?.tier === 'SILVER' ? 'bg-hos-bg-tertiary text-white' :
                 'bg-orange-100 text-orange-800'
               }`}>
                 {profile?.tier || 'BRONZE'}
               </span>
               {tierProgress.nextTier && (
                 <>
-                  <svg className="w-4 h-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <svg className="w-4 h-4 text-hos-text-muted" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
                   </svg>
                   <span className={`px-3 py-1 rounded-full text-sm font-medium ${
-                    tierProgress.nextTier === 'PLATINUM' ? 'bg-gray-800 text-white' :
+                    tierProgress.nextTier === 'PLATINUM' ? 'bg-hos-surface text-white' :
                     tierProgress.nextTier === 'GOLD' ? 'bg-yellow-100 text-yellow-800' :
-                    tierProgress.nextTier === 'SILVER' ? 'bg-gray-200 text-gray-800' :
+                    tierProgress.nextTier === 'SILVER' ? 'bg-hos-bg-tertiary text-white' :
                     'bg-orange-100 text-orange-800'
                   }`}>
                     {tierProgress.nextTier}
@@ -491,9 +491,9 @@ export default function InfluencerDashboardPage() {
           
           {tierProgress.nextTier ? (
             <>
-              <div className="relative h-4 bg-gray-200 rounded-full overflow-hidden mb-2">
+              <div className="relative h-4 bg-hos-bg-tertiary rounded-full overflow-hidden mb-2">
                 <div
-                  className="absolute left-0 top-0 h-full bg-gradient-to-r from-purple-500 to-indigo-600 transition-all duration-500 ease-out"
+                  className="absolute left-0 top-0 h-full bg-gradient-to-r from-hos-bg-secondary to-hos-gold transition-all duration-500 ease-out"
                   style={{ width: `${tierProgress.percentage}%` }}
                 />
                 <div className="absolute inset-0 flex items-center justify-center">
@@ -502,9 +502,9 @@ export default function InfluencerDashboardPage() {
                   </span>
                 </div>
               </div>
-              <div className="flex justify-between text-sm text-gray-600">
+              <div className="flex justify-between text-sm text-hos-text-secondary">
                 <span>Current: {formatCurrency(tierProgress.current)}</span>
-                <span className="font-medium text-purple-600">
+                <span className="font-medium text-hos-gold">
                   {formatCurrency(tierProgress.remaining || 0)} to go!
                 </span>
                 <span>Target: {formatCurrency(tierProgress.target)}</span>
@@ -513,20 +513,20 @@ export default function InfluencerDashboardPage() {
           ) : (
             <div className="text-center py-4">
               <span className="text-2xl">🎉</span>
-              <p className="text-gray-600 mt-2">Congratulations! You&apos;ve reached the highest tier!</p>
+              <p className="text-hos-text-secondary mt-2">Congratulations! You&apos;ve reached the highest tier!</p>
             </div>
           )}
         </div>
 
         {/* Performance Chart */}
         {chartData.length > 0 && (
-          <div className="bg-white rounded-xl p-6 shadow-sm mb-8">
+          <div className="bg-hos-bg-secondary rounded-xl p-6 shadow-sm mb-8">
             <div className="flex items-center justify-between mb-6">
-              <h3 className="text-lg font-semibold text-gray-900">Performance Trends</h3>
+              <h3 className="text-lg font-semibold text-white">Performance Trends</h3>
               <div className="flex items-center gap-4 text-sm">
                 {weeklyGrowth.clicks !== 0 && (
                   <div className="flex items-center gap-1">
-                    <span className="text-gray-500">Clicks:</span>
+                    <span className="text-hos-text-muted">Clicks:</span>
                     <span className={weeklyGrowth.clicks > 0 ? 'text-green-600' : 'text-red-600'}>
                       {weeklyGrowth.clicks > 0 ? '↑' : '↓'} {Math.abs(weeklyGrowth.clicks)}%
                     </span>
@@ -534,7 +534,7 @@ export default function InfluencerDashboardPage() {
                 )}
                 {weeklyGrowth.conversions !== 0 && (
                   <div className="flex items-center gap-1">
-                    <span className="text-gray-500">Conversions:</span>
+                    <span className="text-hos-text-muted">Conversions:</span>
                     <span className={weeklyGrowth.conversions > 0 ? 'text-green-600' : 'text-red-600'}>
                       {weeklyGrowth.conversions > 0 ? '↑' : '↓'} {Math.abs(weeklyGrowth.conversions)}%
                     </span>
@@ -592,10 +592,10 @@ export default function InfluencerDashboardPage() {
         )}
 
         {/* Achievements Section */}
-        <div className="bg-white rounded-xl p-6 shadow-sm mb-8">
+        <div className="bg-hos-bg-secondary rounded-xl p-6 shadow-sm mb-8">
           <div className="flex items-center justify-between mb-6">
-            <h3 className="text-lg font-semibold text-gray-900">Achievements</h3>
-            <span className="text-sm text-gray-500">
+            <h3 className="text-lg font-semibold text-white">Achievements</h3>
+            <span className="text-sm text-hos-text-muted">
               {earnedAchievements.length} / {ACHIEVEMENTS.length} unlocked
             </span>
           </div>
@@ -607,17 +607,17 @@ export default function InfluencerDashboardPage() {
                   key={achievement.id}
                   className={`relative p-4 rounded-xl text-center transition-all ${
                     isEarned
-                      ? 'bg-gradient-to-br from-purple-50 to-indigo-50 border-2 border-purple-200'
-                      : 'bg-gray-50 border border-gray-200 opacity-50'
+                      ? 'bg-gradient-to-br from-hos-bg-secondary to-hos-bg-tertiary border-2 border-hos-border-accent'
+                      : 'bg-hos-bg-secondary border border-hos-border opacity-50'
                   }`}
                 >
                   <div className={`text-3xl mb-2 ${isEarned ? '' : 'grayscale'}`}>
                     {achievement.icon}
                   </div>
-                  <p className={`font-medium text-sm ${isEarned ? 'text-gray-900' : 'text-gray-500'}`}>
+                  <p className={`font-medium text-sm ${isEarned ? 'text-white' : 'text-hos-text-muted'}`}>
                     {achievement.name}
                   </p>
-                  <p className="text-xs text-gray-500 mt-1">{achievement.description}</p>
+                  <p className="text-xs text-hos-text-muted mt-1">{achievement.description}</p>
                   {isEarned && (
                     <div className="absolute -top-1 -right-1 w-5 h-5 bg-green-500 rounded-full flex items-center justify-center">
                       <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -633,68 +633,68 @@ export default function InfluencerDashboardPage() {
 
         {/* Commission Breakdown */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
-          <div className="bg-white rounded-xl p-6 shadow-sm">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">Commission Status</h3>
+          <div className="bg-hos-bg-secondary rounded-xl p-6 shadow-sm">
+            <h3 className="text-lg font-semibold text-white mb-4">Commission Status</h3>
             <div className="space-y-4">
               <div className="flex items-center justify-between">
-                <span className="text-gray-600">Pending</span>
+                <span className="text-hos-text-secondary">Pending</span>
                 <span className="font-semibold text-yellow-600">
                   {formatCurrency(analytics?.pendingCommission || 0)}
                 </span>
               </div>
               <div className="flex items-center justify-between">
-                <span className="text-gray-600">Approved</span>
+                <span className="text-hos-text-secondary">Approved</span>
                 <span className="font-semibold text-green-600">
                   {formatCurrency(analytics?.approvedCommission || 0)}
                 </span>
               </div>
               <div className="flex items-center justify-between">
-                <span className="text-gray-600">Paid</span>
-                <span className="font-semibold text-gray-900">
+                <span className="text-hos-text-secondary">Paid</span>
+                <span className="font-semibold text-white">
                   {formatCurrency(analytics?.paidCommission || 0)}
                 </span>
               </div>
             </div>
           </div>
 
-          <div className="lg:col-span-2 bg-white rounded-xl p-6 shadow-sm">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">Quick Actions</h3>
+          <div className="lg:col-span-2 bg-hos-bg-secondary rounded-xl p-6 shadow-sm">
+            <h3 className="text-lg font-semibold text-white mb-4">Quick Actions</h3>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               <Link
                 href="/influencer/product-links"
-                className="flex flex-col items-center p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
+                className="flex flex-col items-center p-4 bg-hos-bg-secondary rounded-lg hover:bg-hos-bg-tertiary transition-colors"
               >
-                <svg className="w-8 h-8 text-purple-600 mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <svg className="w-8 h-8 text-hos-gold mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
                 </svg>
-                <span className="text-sm font-medium text-gray-700">Product Links</span>
+                <span className="text-sm font-medium text-hos-text-secondary">Product Links</span>
               </Link>
               <Link
                 href="/influencer/storefront"
-                className="flex flex-col items-center p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
+                className="flex flex-col items-center p-4 bg-hos-bg-secondary rounded-lg hover:bg-hos-bg-tertiary transition-colors"
               >
-                <svg className="w-8 h-8 text-purple-600 mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <svg className="w-8 h-8 text-hos-gold mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
                 </svg>
-                <span className="text-sm font-medium text-gray-700">My Storefront</span>
+                <span className="text-sm font-medium text-hos-text-secondary">My Storefront</span>
               </Link>
               <Link
                 href="/influencer/earnings"
-                className="flex flex-col items-center p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
+                className="flex flex-col items-center p-4 bg-hos-bg-secondary rounded-lg hover:bg-hos-bg-tertiary transition-colors"
               >
-                <svg className="w-8 h-8 text-purple-600 mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <svg className="w-8 h-8 text-hos-gold mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
                 </svg>
-                <span className="text-sm font-medium text-gray-700">Earnings</span>
+                <span className="text-sm font-medium text-hos-text-secondary">Earnings</span>
               </Link>
               <Link
                 href="/influencer/profile"
-                className="flex flex-col items-center p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
+                className="flex flex-col items-center p-4 bg-hos-bg-secondary rounded-lg hover:bg-hos-bg-tertiary transition-colors"
               >
-                <svg className="w-8 h-8 text-purple-600 mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <svg className="w-8 h-8 text-hos-gold mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                 </svg>
-                <span className="text-sm font-medium text-gray-700">Profile</span>
+                <span className="text-sm font-medium text-hos-text-secondary">Profile</span>
               </Link>
             </div>
           </div>
@@ -706,7 +706,7 @@ export default function InfluencerDashboardPage() {
             <Link
               href={`/i/${profile.slug}`}
               target="_blank"
-              className="inline-flex items-center gap-2 text-purple-600 hover:text-purple-700 font-medium"
+              className="inline-flex items-center gap-2 text-hos-gold hover:text-hos-gold-hover font-medium"
             >
               <span>View my public storefront</span>
               <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">

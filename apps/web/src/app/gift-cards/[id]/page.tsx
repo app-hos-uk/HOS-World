@@ -44,11 +44,11 @@ export default function GiftCardDetailPage() {
   if (loading) {
     return (
       <RouteGuard allowedRoles={['CUSTOMER', 'ADMIN']} showAccessDenied={true}>
-        <div className="min-h-screen bg-white">
+        <div className="min-h-screen bg-hos-bg-secondary">
           <Header />
           <main className="container mx-auto px-4 py-12">
             <div className="flex justify-center">
-              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600" />
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-hos-gold" />
             </div>
           </main>
           <Footer />
@@ -60,12 +60,12 @@ export default function GiftCardDetailPage() {
   if (error || !giftCard) {
     return (
       <RouteGuard allowedRoles={['CUSTOMER', 'ADMIN']} showAccessDenied={true}>
-        <div className="min-h-screen bg-white">
+        <div className="min-h-screen bg-hos-bg-secondary">
           <Header />
           <main className="container mx-auto px-4 py-12">
             <div className="max-w-md mx-auto text-center">
-              <p className="text-gray-600 mb-4">{error || 'Gift card not found'}</p>
-              <Link href="/gift-cards" className="text-purple-600 hover:text-purple-800 font-medium">
+              <p className="text-hos-text-secondary mb-4">{error || 'Gift card not found'}</p>
+              <Link href="/gift-cards" className="text-hos-gold hover:text-hos-gold-hover font-medium">
                 ← Back to Gift Cards
               </Link>
             </div>
@@ -82,20 +82,20 @@ export default function GiftCardDetailPage() {
 
   return (
     <RouteGuard allowedRoles={['CUSTOMER', 'ADMIN']} showAccessDenied={true}>
-      <div className="min-h-screen bg-white">
+      <div className="min-h-screen bg-hos-bg-secondary">
         <Header />
         <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 lg:py-12">
           <div className="max-w-md mx-auto">
-            <Link href="/gift-cards" className="text-purple-600 hover:text-purple-800 mb-4 inline-block">
+            <Link href="/gift-cards" className="text-hos-gold hover:text-hos-gold-hover mb-4 inline-block">
               ← Back to Gift Cards
             </Link>
-            <div className="bg-gradient-to-br from-purple-600 to-purple-800 rounded-xl p-8 text-white shadow-lg">
+            <div className="bg-gradient-to-br from-hos-bg-secondary to-hos-bg-tertiary rounded-xl p-8 text-white shadow-lg">
               <h1 className="text-2xl font-bold mb-2">Gift Card</h1>
-              <p className="text-purple-200 text-sm mb-6">Your gift card balance</p>
+              <p className="text-hos-gold/30 text-sm mb-6">Your gift card balance</p>
               <p className="text-4xl font-bold mb-6">{formatPrice(balance, currency)}</p>
               {giftCard.code && (
-                <div className="bg-white/10 rounded-lg p-4 mb-6">
-                  <p className="text-xs text-purple-200 mb-1">Gift Card Code</p>
+                <div className="bg-hos-bg-secondary/10 rounded-lg p-4 mb-6">
+                  <p className="text-xs text-hos-gold/30 mb-1">Gift Card Code</p>
                   <div className="flex items-center justify-between gap-2">
                     <p className="font-mono font-semibold tracking-wider">{giftCard.code}</p>
                     <button
@@ -107,7 +107,7 @@ export default function GiftCardDetailPage() {
                           toast.error('Failed to copy code. Please copy it manually.');
                         }
                       }}
-                      className="px-3 py-1 bg-white/20 hover:bg-white/30 rounded-md text-sm font-medium transition-colors"
+                      className="px-3 py-1 bg-hos-bg-secondary/20 hover:bg-hos-bg-secondary/30 rounded-md text-sm font-medium transition-colors"
                     >
                       Copy Code
                     </button>
@@ -116,24 +116,24 @@ export default function GiftCardDetailPage() {
               )}
               <dl className="space-y-2 text-sm">
                 <div className="flex justify-between">
-                  <dt className="text-purple-200">Original Amount</dt>
+                  <dt className="text-hos-gold/30">Original Amount</dt>
                   <dd>{formatPrice(amount, currency)}</dd>
                 </div>
                 {giftCard.status && (
                   <div className="flex justify-between">
-                    <dt className="text-purple-200">Status</dt>
+                    <dt className="text-hos-gold/30">Status</dt>
                     <dd>{giftCard.status}</dd>
                   </div>
                 )}
                 {giftCard.expiresAt && (
                   <div className="flex justify-between">
-                    <dt className="text-purple-200">Expires</dt>
+                    <dt className="text-hos-gold/30">Expires</dt>
                     <dd>{new Date(giftCard.expiresAt).toLocaleDateString()}</dd>
                   </div>
                 )}
               </dl>
             </div>
-            <p className="text-sm text-gray-500 mt-4 text-center">
+            <p className="text-sm text-hos-text-muted mt-4 text-center">
               Use this code at checkout to apply your gift card balance.
             </p>
           </div>

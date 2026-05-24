@@ -38,12 +38,12 @@ const TAG_CATEGORIES = [
 ] as const;
 
 const CATEGORY_COLORS: Record<string, string> = {
-  THEME: 'bg-purple-100 text-purple-800 border-purple-200',
+  THEME: 'bg-hos-gold/20 text-hos-gold border-hos-border-accent',
   OCCASION: 'bg-pink-100 text-pink-800 border-pink-200',
-  STYLE: 'bg-blue-100 text-blue-800 border-blue-200',
+  STYLE: 'bg-hos-gold/20 text-hos-gold border-hos-border-accent',
   CHARACTER: 'bg-green-100 text-green-800 border-green-200',
   FANDOM: 'bg-yellow-100 text-yellow-800 border-yellow-200',
-  CUSTOM: 'bg-gray-100 text-gray-800 border-gray-200',
+  CUSTOM: 'bg-hos-bg-tertiary text-white border-hos-border',
 };
 
 export default function AdminTagsPage() {
@@ -423,7 +423,7 @@ export default function AdminTagsPage() {
       <RouteGuard allowedRoles={['ADMIN']}>
         <AdminLayout>
           <div className="flex items-center justify-center h-64">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600"></div>
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-hos-gold"></div>
           </div>
         </AdminLayout>
       </RouteGuard>
@@ -437,13 +437,13 @@ export default function AdminTagsPage() {
           {/* Header */}
           <div className="flex justify-between items-center">
             <div>
-              <h1 className="text-2xl font-bold text-gray-900">Product Tags</h1>
-              <p className="text-gray-600 mt-1">Organize products with searchable tags</p>
+              <h1 className="text-2xl font-bold text-white">Product Tags</h1>
+              <p className="text-hos-text-secondary mt-1">Organize products with searchable tags</p>
             </div>
             <div className="flex gap-2">
               <button
                 onClick={() => setShowBulkCreate(true)}
-                className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200"
+                className="px-4 py-2 bg-hos-bg-tertiary text-hos-text-secondary rounded-lg hover:bg-hos-bg-tertiary"
               >
                 Bulk Create
               </button>
@@ -453,7 +453,7 @@ export default function AdminTagsPage() {
                   resetFormFields();
                   setShowCreateForm(true);
                 }}
-                className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700"
+                className="px-4 py-2 bg-hos-gold text-[#1a1406] rounded-lg hover:bg-hos-gold-hover"
               >
                 + Add Tag
               </button>
@@ -463,31 +463,31 @@ export default function AdminTagsPage() {
           {/* Stats Cards */}
           {stats && (
             <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-4">
-              <div className="bg-white rounded-lg shadow p-4">
-                <p className="text-sm text-gray-600">Total Tags</p>
-                <p className="text-2xl font-bold text-purple-600">{stats.totalTags}</p>
+              <div className="bg-hos-bg-secondary rounded-lg shadow p-4">
+                <p className="text-sm text-hos-text-secondary">Total Tags</p>
+                <p className="text-2xl font-bold text-hos-gold">{stats.totalTags}</p>
               </div>
-              <div className="bg-white rounded-lg shadow p-4">
-                <p className="text-sm text-gray-600">Active</p>
+              <div className="bg-hos-bg-secondary rounded-lg shadow p-4">
+                <p className="text-sm text-hos-text-secondary">Active</p>
                 <p className="text-2xl font-bold text-green-600">{stats.activeTags}</p>
               </div>
-              <div className="bg-white rounded-lg shadow p-4">
-                <p className="text-sm text-gray-600">Inactive</p>
-                <p className="text-2xl font-bold text-gray-400">{stats.inactiveTags}</p>
+              <div className="bg-hos-bg-secondary rounded-lg shadow p-4">
+                <p className="text-sm text-hos-text-secondary">Inactive</p>
+                <p className="text-2xl font-bold text-hos-text-muted">{stats.inactiveTags}</p>
               </div>
-              <div className="bg-white rounded-lg shadow p-4">
-                <p className="text-sm text-gray-600">Products Tagged</p>
-                <p className="text-2xl font-bold text-blue-600">{stats.totalProducts}</p>
+              <div className="bg-hos-bg-secondary rounded-lg shadow p-4">
+                <p className="text-sm text-hos-text-secondary">Products Tagged</p>
+                <p className="text-2xl font-bold text-hos-gold">{stats.totalProducts}</p>
               </div>
-              <div className="bg-white rounded-lg shadow p-4">
-                <p className="text-sm text-gray-600">Unused Tags</p>
+              <div className="bg-hos-bg-secondary rounded-lg shadow p-4">
+                <p className="text-sm text-hos-text-secondary">Unused Tags</p>
                 <p className="text-2xl font-bold text-orange-600">{stats.unusedTags}</p>
               </div>
               {stats.mostUsedTag && (
-                <div className="bg-white rounded-lg shadow p-4 col-span-2">
-                  <p className="text-sm text-gray-600">Most Used</p>
+                <div className="bg-hos-bg-secondary rounded-lg shadow p-4 col-span-2">
+                  <p className="text-sm text-hos-text-secondary">Most Used</p>
                   <p className="text-lg font-bold text-pink-600 truncate">{stats.mostUsedTag.name}</p>
-                  <p className="text-xs text-gray-500">{stats.mostUsedTag.count} products</p>
+                  <p className="text-xs text-hos-text-muted">{stats.mostUsedTag.count} products</p>
                 </div>
               )}
             </div>
@@ -495,8 +495,8 @@ export default function AdminTagsPage() {
 
           {/* Category Distribution */}
           {stats && (
-            <div className="bg-white rounded-lg shadow p-4">
-              <h3 className="text-sm font-medium text-gray-700 mb-3">Tags by Category</h3>
+            <div className="bg-hos-bg-secondary rounded-lg shadow p-4">
+              <h3 className="text-sm font-medium text-hos-text-secondary mb-3">Tags by Category</h3>
               <div className="flex flex-wrap gap-3">
                 {TAG_CATEGORIES.map(cat => (
                   <button
@@ -505,7 +505,7 @@ export default function AdminTagsPage() {
                     className={`flex items-center gap-2 px-3 py-2 rounded-lg border transition-colors ${
                       filterCategory === cat.value
                         ? CATEGORY_COLORS[cat.value]
-                        : 'bg-white border-gray-200 hover:bg-gray-50'
+                        : 'bg-hos-bg-secondary border-hos-border hover:bg-hos-bg-tertiary'
                     }`}
                   >
                     <span>{cat.icon}</span>
@@ -527,7 +527,7 @@ export default function AdminTagsPage() {
           )}
 
           {/* Filters & Bulk Actions */}
-          <div className="bg-white rounded-lg shadow p-4">
+          <div className="bg-hos-bg-secondary rounded-lg shadow p-4">
             <div className="flex flex-wrap gap-4 items-center">
               <div className="flex-1 min-w-[200px]">
                 <input
@@ -535,13 +535,13 @@ export default function AdminTagsPage() {
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   placeholder="Search tags or synonyms..."
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
+                  className="w-full px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50"
                 />
               </div>
               <select
                 value={sortBy}
                 onChange={(e) => setSortBy(e.target.value as any)}
-                className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
+                className="px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50"
               >
                 <option value="name">Sort by Name</option>
                 <option value="category">Sort by Category</option>
@@ -552,14 +552,14 @@ export default function AdminTagsPage() {
                   type="checkbox"
                   checked={showInactive}
                   onChange={(e) => setShowInactive(e.target.checked)}
-                  className="rounded border-gray-300 text-purple-600"
+                  className="rounded border-hos-border text-hos-gold"
                 />
-                <span className="text-sm text-gray-700">Show inactive</span>
+                <span className="text-sm text-hos-text-secondary">Show inactive</span>
               </label>
               
               {selectedTags.size > 0 && (
                 <div className="flex items-center gap-2 border-l pl-4">
-                  <span className="text-sm text-gray-600">{selectedTags.size} selected</span>
+                  <span className="text-sm text-hos-text-secondary">{selectedTags.size} selected</span>
                   <button
                     onClick={() => handleBulkToggleActive(true)}
                     className="px-3 py-1 text-sm bg-green-100 text-green-700 rounded hover:bg-green-200"
@@ -568,13 +568,13 @@ export default function AdminTagsPage() {
                   </button>
                   <button
                     onClick={() => handleBulkToggleActive(false)}
-                    className="px-3 py-1 text-sm bg-gray-100 text-gray-700 rounded hover:bg-gray-200"
+                    className="px-3 py-1 text-sm bg-hos-bg-tertiary text-hos-text-secondary rounded hover:bg-hos-bg-tertiary"
                   >
                     Deactivate
                   </button>
                   <button
                     onClick={() => setShowMergeModal(true)}
-                    className="px-3 py-1 text-sm bg-blue-100 text-blue-700 rounded hover:bg-blue-200"
+                    className="px-3 py-1 text-sm bg-hos-gold/20 text-hos-gold rounded hover:bg-hos-gold/20"
                     disabled={selectedTags.size < 2}
                   >
                     Merge
@@ -587,7 +587,7 @@ export default function AdminTagsPage() {
                   </button>
                   <button
                     onClick={clearSelection}
-                    className="text-sm text-gray-500 hover:text-gray-700"
+                    className="text-sm text-hos-text-muted hover:text-hos-text-secondary"
                   >
                     Clear
                   </button>
@@ -598,29 +598,29 @@ export default function AdminTagsPage() {
 
           {/* Create/Edit Form */}
           {showCreateForm && (
-            <div className="bg-white rounded-lg shadow p-6">
+            <div className="bg-hos-bg-secondary rounded-lg shadow p-6">
               <h2 className="text-lg font-semibold mb-4">
                 {editingTag ? 'Edit Tag' : 'Create New Tag'}
               </h2>
               <form onSubmit={editingTag ? handleUpdateTag : handleCreateTag} className="space-y-4">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Tag Name *</label>
+                    <label className="block text-sm font-medium text-hos-text-secondary mb-1">Tag Name *</label>
                     <input
                       type="text"
                       required
                       value={formData.name}
                       onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
+                      className="w-full px-3 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50"
                       placeholder="e.g., Harry Potter, Christmas, Vintage"
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Category *</label>
+                    <label className="block text-sm font-medium text-hos-text-secondary mb-1">Category *</label>
                     <select
                       value={formData.category}
                       onChange={(e) => setFormData({ ...formData, category: e.target.value as any })}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
+                      className="w-full px-3 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50"
                     >
                       {TAG_CATEGORIES.map((cat) => (
                         <option key={cat.value} value={cat.value}>
@@ -632,11 +632,11 @@ export default function AdminTagsPage() {
                 </div>
                 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
+                  <label className="block text-sm font-medium text-hos-text-secondary mb-1">Description</label>
                   <textarea
                     value={formData.description}
                     onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
+                    className="w-full px-3 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50"
                     rows={2}
                     placeholder="Optional description"
                   />
@@ -644,32 +644,32 @@ export default function AdminTagsPage() {
                 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                    <label className="block text-sm font-medium text-hos-text-secondary mb-1">
                       Synonyms (comma-separated)
                     </label>
                     <input
                       type="text"
                       value={formData.synonyms}
                       onChange={(e) => setFormData({ ...formData, synonyms: e.target.value })}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
+                      className="w-full px-3 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50"
                       placeholder="e.g., HP, Potter, Wizarding World"
                     />
-                    <p className="text-xs text-gray-500 mt-1">Alternative names for search</p>
+                    <p className="text-xs text-hos-text-muted mt-1">Alternative names for search</p>
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Color (optional)</label>
+                    <label className="block text-sm font-medium text-hos-text-secondary mb-1">Color (optional)</label>
                     <div className="flex gap-2">
                       <input
                         type="color"
                         value={formData.color || '#6b7280'}
                         onChange={(e) => setFormData({ ...formData, color: e.target.value })}
-                        className="w-12 h-10 rounded border border-gray-300 cursor-pointer"
+                        className="w-12 h-10 rounded border border-hos-border cursor-pointer"
                       />
                       <input
                         type="text"
                         value={formData.color}
                         onChange={(e) => setFormData({ ...formData, color: e.target.value })}
-                        className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
+                        className="flex-1 px-3 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50"
                         placeholder="#6b7280"
                       />
                     </div>
@@ -681,23 +681,23 @@ export default function AdminTagsPage() {
                     type="checkbox"
                     checked={formData.isActive}
                     onChange={(e) => setFormData({ ...formData, isActive: e.target.checked })}
-                    className="rounded border-gray-300 text-purple-600"
+                    className="rounded border-hos-border text-hos-gold"
                   />
-                  <span className="text-sm text-gray-700">Active</span>
+                  <span className="text-sm text-hos-text-secondary">Active</span>
                 </label>
 
                 <div className="flex gap-2 pt-4">
                   <button
                     type="submit"
                     disabled={savingTag}
-                    className="px-6 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="px-6 py-2 bg-hos-gold text-[#1a1406] rounded-lg hover:bg-hos-gold-hover disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     {savingTag ? 'Saving...' : (editingTag ? 'Update Tag' : 'Create Tag')}
                   </button>
                   <button
                     type="button"
                     onClick={resetForm}
-                    className="px-6 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300"
+                    className="px-6 py-2 bg-hos-bg-tertiary text-hos-text-secondary rounded-lg hover:bg-hos-bg-tertiary"
                   >
                     Cancel
                   </button>
@@ -707,21 +707,21 @@ export default function AdminTagsPage() {
           )}
 
           {/* Tags Grid */}
-          <div className="bg-white rounded-lg shadow">
-            <div className="p-4 border-b border-gray-200 flex justify-between items-center">
+          <div className="bg-hos-bg-secondary rounded-lg shadow">
+            <div className="p-4 border-b border-hos-border flex justify-between items-center">
               <h2 className="text-lg font-semibold">
                 Tags ({filteredTags.length})
               </h2>
               <button
                 onClick={selectAllVisible}
-                className="text-sm text-purple-600 hover:text-purple-800"
+                className="text-sm text-hos-gold hover:text-hos-gold-hover"
               >
                 Select All Visible
               </button>
             </div>
             <div className="p-4">
               {filteredTags.length === 0 ? (
-                <div className="text-center py-8 text-gray-500">
+                <div className="text-center py-8 text-hos-text-muted">
                   {searchQuery || filterCategory !== 'ALL'
                     ? 'No tags match your filters'
                     : 'No tags found. Create your first tag to get started.'}
@@ -734,8 +734,8 @@ export default function AdminTagsPage() {
                       <div
                         key={tag.id}
                         className={`border rounded-lg p-4 hover:shadow-md transition-shadow ${
-                          selectedTags.has(tag.id) ? 'ring-2 ring-purple-500' : ''
-                        } ${!tag.isActive ? 'opacity-60 bg-gray-50' : 'bg-white'}`}
+                          selectedTags.has(tag.id) ? 'ring-2 ring-hos-gold/50' : ''
+                        } ${!tag.isActive ? 'opacity-60 bg-hos-bg-secondary' : 'bg-hos-bg-secondary'}`}
                       >
                         <div className="flex items-start justify-between mb-2">
                           <label className="flex items-center gap-2 cursor-pointer flex-1 min-w-0">
@@ -743,7 +743,7 @@ export default function AdminTagsPage() {
                               type="checkbox"
                               checked={selectedTags.has(tag.id)}
                               onChange={() => toggleTagSelection(tag.id)}
-                              className="rounded border-gray-300 text-purple-600"
+                              className="rounded border-hos-border text-hos-gold"
                             />
                             <div className="flex items-center gap-2 min-w-0">
                               {tag.color && (
@@ -752,11 +752,11 @@ export default function AdminTagsPage() {
                                   style={{ backgroundColor: tag.color }}
                                 />
                               )}
-                              <h3 className="font-medium text-gray-900 truncate">{tag.name}</h3>
+                              <h3 className="font-medium text-white truncate">{tag.name}</h3>
                             </div>
                           </label>
                           {!tag.isActive && (
-                            <span className="text-xs bg-gray-200 text-gray-600 px-1.5 py-0.5 rounded ml-2 flex-shrink-0">
+                            <span className="text-xs bg-hos-bg-tertiary text-hos-text-secondary px-1.5 py-0.5 rounded ml-2 flex-shrink-0">
                               Inactive
                             </span>
                           )}
@@ -768,39 +768,39 @@ export default function AdminTagsPage() {
                         </div>
                         
                         {tag.description && (
-                          <p className="text-sm text-gray-600 mt-2 line-clamp-2">{tag.description}</p>
+                          <p className="text-sm text-hos-text-secondary mt-2 line-clamp-2">{tag.description}</p>
                         )}
                         
                         {tag.synonyms && tag.synonyms.length > 0 && (
                           <div className="mt-2">
                             <div className="flex flex-wrap gap-1">
                               {tag.synonyms.slice(0, 3).map((syn, idx) => (
-                                <span key={idx} className="text-xs bg-gray-100 text-gray-600 px-1.5 py-0.5 rounded">
+                                <span key={idx} className="text-xs bg-hos-bg-tertiary text-hos-text-secondary px-1.5 py-0.5 rounded">
                                   {syn}
                                 </span>
                               ))}
                               {tag.synonyms.length > 3 && (
-                                <span className="text-xs text-gray-400">+{tag.synonyms.length - 3}</span>
+                                <span className="text-xs text-hos-text-muted">+{tag.synonyms.length - 3}</span>
                               )}
                             </div>
                           </div>
                         )}
                         
                         <div className="flex items-center justify-between mt-3 pt-3 border-t">
-                          <span className="text-sm text-gray-500">
+                          <span className="text-sm text-hos-text-muted">
                             {tag.productCount || 0} products
                           </span>
                           <div className="flex gap-1">
                             <button
                               onClick={() => handleDuplicateTag(tag)}
-                              className="px-2 py-1 text-xs text-gray-600 hover:bg-gray-100 rounded"
+                              className="px-2 py-1 text-xs text-hos-text-secondary hover:bg-hos-bg-tertiary rounded"
                               title="Duplicate"
                             >
                               📋
                             </button>
                             <button
                               onClick={() => startEdit(tag)}
-                              className="px-2 py-1 text-xs bg-blue-600 text-white rounded hover:bg-blue-700"
+                              className="px-2 py-1 text-xs bg-hos-gold text-[#1a1406] rounded hover:bg-hos-gold-hover"
                             >
                               Edit
                             </button>
@@ -823,20 +823,20 @@ export default function AdminTagsPage() {
           {/* Bulk Create Modal */}
           {showBulkCreate && (
             <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-              <div className="bg-white rounded-lg shadow-xl max-w-md w-full p-6">
+              <div className="bg-hos-bg-secondary rounded-lg shadow-xl max-w-md w-full p-6">
                 <div className="flex justify-between items-center mb-4">
                   <h3 className="text-lg font-semibold">Bulk Create Tags</h3>
-                  <button onClick={() => setShowBulkCreate(false)} className="text-gray-500 hover:text-gray-700 text-2xl">
+                  <button onClick={() => setShowBulkCreate(false)} className="text-hos-text-muted hover:text-hos-text-secondary text-2xl">
                     ×
                   </button>
                 </div>
                 <div className="space-y-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Category</label>
+                    <label className="block text-sm font-medium text-hos-text-secondary mb-1">Category</label>
                     <select
                       value={bulkData.category}
                       onChange={(e) => setBulkData({ ...bulkData, category: e.target.value as any })}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
+                      className="w-full px-3 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50"
                     >
                       {TAG_CATEGORIES.map((cat) => (
                         <option key={cat.value} value={cat.value}>{cat.icon} {cat.label}</option>
@@ -844,18 +844,18 @@ export default function AdminTagsPage() {
                     </select>
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Tags (one per line)</label>
+                    <label className="block text-sm font-medium text-hos-text-secondary mb-1">Tags (one per line)</label>
                     <textarea
                       value={bulkData.tags}
                       onChange={(e) => setBulkData({ ...bulkData, tags: e.target.value })}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
+                      className="w-full px-3 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50"
                       rows={8}
                       placeholder="Harry Potter&#10;Hermione Granger&#10;Ron Weasley&#10;..."
                     />
                   </div>
                   <button
                     onClick={handleBulkCreate}
-                    className="w-full px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700"
+                    className="w-full px-4 py-2 bg-hos-gold text-[#1a1406] rounded-lg hover:bg-hos-gold-hover"
                   >
                     Create Tags
                   </button>
@@ -867,14 +867,14 @@ export default function AdminTagsPage() {
           {/* Merge Modal */}
           {showMergeModal && selectedTags.size >= 2 && (
             <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-              <div className="bg-white rounded-lg shadow-xl max-w-md w-full p-6">
+              <div className="bg-hos-bg-secondary rounded-lg shadow-xl max-w-md w-full p-6">
                 <div className="flex justify-between items-center mb-4">
                   <h3 className="text-lg font-semibold">Merge Tags</h3>
-                  <button onClick={() => setShowMergeModal(false)} className="text-gray-500 hover:text-gray-700 text-2xl">
+                  <button onClick={() => setShowMergeModal(false)} className="text-hos-text-muted hover:text-hos-text-secondary text-2xl">
                     ×
                   </button>
                 </div>
-                <p className="text-gray-600 mb-4">
+                <p className="text-hos-text-secondary mb-4">
                   Select the target tag to merge others into. Other tags will become synonyms.
                 </p>
                 <div className="space-y-2 max-h-64 overflow-y-auto">
@@ -885,10 +885,10 @@ export default function AdminTagsPage() {
                       <button
                         key={id}
                         onClick={() => handleMergeTags(id)}
-                        className="w-full text-left p-3 border rounded-lg hover:bg-purple-50 hover:border-purple-300 transition-colors"
+                        className="w-full text-left p-3 border rounded-lg hover:bg-hos-gold/10 hover:border-hos-border-accent transition-colors"
                       >
                         <span className="font-medium">{tag.name}</span>
-                        <span className="text-sm text-gray-500 ml-2">({tag.productCount || 0} products)</span>
+                        <span className="text-sm text-hos-text-muted ml-2">({tag.productCount || 0} products)</span>
                       </button>
                     );
                   })}

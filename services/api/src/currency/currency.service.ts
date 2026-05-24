@@ -3,7 +3,7 @@ import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../database/prisma.service';
 import { CacheService } from '../cache/cache.service';
 
-const DEFAULT_SUPPORTED = ['GBP', 'USD', 'EUR', 'AED', 'JPY', 'AUD', 'CAD', 'SGD'];
+const DEFAULT_SUPPORTED = ['USD', 'EUR', 'GBP', 'AED', 'JPY', 'AUD', 'CAD', 'SGD'];
 
 @Injectable()
 export class CurrencyService {

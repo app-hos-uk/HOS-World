@@ -723,7 +723,7 @@ function AdminProductsContent() {
       <RouteGuard allowedRoles={['ADMIN']}>
         <AdminLayout>
           <div className="flex items-center justify-center h-64">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600"></div>
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-hos-gold"></div>
           </div>
         </AdminLayout>
       </RouteGuard>
@@ -737,14 +737,14 @@ function AdminProductsContent() {
           {/* Header */}
           <div className="flex justify-between items-center">
             <div>
-              <h1 className="text-2xl font-bold text-gray-900">Products</h1>
-              <p className="text-gray-600 mt-1">Manage all products in the catalog</p>
+              <h1 className="text-2xl font-bold text-white">Products</h1>
+              <p className="text-hos-text-secondary mt-1">Manage all products in the catalog</p>
             </div>
             <div className="flex gap-2">
               <DataExport data={filteredProducts} columns={exportColumns} filename="products-export" />
               <Link
                 href="/admin/products/create"
-                className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700"
+                className="px-4 py-2 bg-hos-gold text-[#1a1406] rounded-lg hover:bg-hos-gold-hover"
               >
                 + Create Product
               </Link>
@@ -753,20 +753,20 @@ function AdminProductsContent() {
 
           {/* Seller Filter Indicator */}
           {sellerFilterFromUrl && (
-            <div className="bg-purple-50 border border-purple-200 rounded-lg p-4 flex items-center justify-between">
+            <div className="bg-hos-gold/10 border border-hos-border-accent rounded-lg p-4 flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <span className="text-purple-700 font-medium">Filtered by Seller:</span>
-                <span className="text-purple-600">
+                <span className="text-hos-gold-hover font-medium">Filtered by Seller:</span>
+                <span className="text-hos-gold">
                   {(() => {
                     const seller = sellers.find(s => (s as any).sellerId === sellerFilterFromUrl || s.id === sellerFilterFromUrl);
                     return seller?.storeName || seller?.email || sellerFilterFromUrl.substring(0, 8) + '...';
                   })()}
                 </span>
-                <span className="text-xs text-purple-500">({filteredProducts.length} product{filteredProducts.length !== 1 ? 's' : ''})</span>
+                <span className="text-xs text-hos-gold">({filteredProducts.length} product{filteredProducts.length !== 1 ? 's' : ''})</span>
               </div>
               <Link
                 href="/admin/products"
-                className="text-purple-600 hover:text-purple-800 text-sm font-medium underline"
+                className="text-hos-gold hover:text-hos-gold-hover text-sm font-medium underline"
               >
                 Clear Filter
               </Link>
@@ -778,49 +778,49 @@ function AdminProductsContent() {
             <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-4">
               <button
                 onClick={() => { setStatusFilter('ALL'); setStockFilter('ALL'); }}
-                className={`bg-white rounded-lg shadow p-4 text-left hover:ring-2 hover:ring-purple-300 transition ${statusFilter === 'ALL' && stockFilter === 'ALL' ? 'ring-2 ring-purple-500' : ''}`}
+                className={`bg-hos-bg-secondary rounded-lg shadow p-4 text-left hover:ring-2 hover:ring-hos-gold/30 transition ${statusFilter === 'ALL' && stockFilter === 'ALL' ? 'ring-2 ring-hos-gold/50' : ''}`}
               >
-                <p className="text-sm text-gray-600">Total</p>
-                <p className="text-2xl font-bold text-purple-600">{stats.totalProducts}</p>
+                <p className="text-sm text-hos-text-secondary">Total</p>
+                <p className="text-2xl font-bold text-hos-gold">{stats.totalProducts}</p>
               </button>
               <button
                 onClick={() => { setStatusFilter('ACTIVE'); setStockFilter('ALL'); }}
-                className={`bg-white rounded-lg shadow p-4 text-left hover:ring-2 hover:ring-green-300 transition ${statusFilter === 'ACTIVE' && stockFilter === 'ALL' ? 'ring-2 ring-green-500' : ''}`}
+                className={`bg-hos-bg-secondary rounded-lg shadow p-4 text-left hover:ring-2 hover:ring-green-300 transition ${statusFilter === 'ACTIVE' && stockFilter === 'ALL' ? 'ring-2 ring-green-500' : ''}`}
               >
-                <p className="text-sm text-gray-600">Active</p>
+                <p className="text-sm text-hos-text-secondary">Active</p>
                 <p className="text-2xl font-bold text-green-600">{stats.activeProducts}</p>
               </button>
               <button
                 onClick={() => { setStatusFilter('DRAFT'); setStockFilter('ALL'); }}
-                className={`bg-white rounded-lg shadow p-4 text-left hover:ring-2 hover:ring-yellow-300 transition ${statusFilter === 'DRAFT' && stockFilter === 'ALL' ? 'ring-2 ring-yellow-500' : ''}`}
+                className={`bg-hos-bg-secondary rounded-lg shadow p-4 text-left hover:ring-2 hover:ring-yellow-300 transition ${statusFilter === 'DRAFT' && stockFilter === 'ALL' ? 'ring-2 ring-yellow-500' : ''}`}
               >
-                <p className="text-sm text-gray-600">Draft</p>
+                <p className="text-sm text-hos-text-secondary">Draft</p>
                 <p className="text-2xl font-bold text-yellow-600">{stats.draftProducts}</p>
               </button>
               <button
                 onClick={() => { setStatusFilter('ALL'); setStockFilter('OUT'); }}
-                className={`bg-white rounded-lg shadow p-4 text-left hover:ring-2 hover:ring-red-300 transition ${stockFilter === 'OUT' && statusFilter === 'ALL' ? 'ring-2 ring-red-500' : ''}`}
+                className={`bg-hos-bg-secondary rounded-lg shadow p-4 text-left hover:ring-2 hover:ring-red-300 transition ${stockFilter === 'OUT' && statusFilter === 'ALL' ? 'ring-2 ring-red-500' : ''}`}
               >
-                <p className="text-sm text-gray-600">Out of Stock</p>
+                <p className="text-sm text-hos-text-secondary">Out of Stock</p>
                 <p className="text-2xl font-bold text-red-600">{stats.outOfStock}</p>
               </button>
               <button
                 onClick={() => { setStatusFilter('ALL'); setStockFilter('LOW'); }}
-                className={`bg-white rounded-lg shadow p-4 text-left hover:ring-2 hover:ring-orange-300 transition ${stockFilter === 'LOW' && statusFilter === 'ALL' ? 'ring-2 ring-orange-500' : ''}`}
+                className={`bg-hos-bg-secondary rounded-lg shadow p-4 text-left hover:ring-2 hover:ring-orange-300 transition ${stockFilter === 'LOW' && statusFilter === 'ALL' ? 'ring-2 ring-orange-500' : ''}`}
               >
-                <p className="text-sm text-gray-600">Low Stock</p>
+                <p className="text-sm text-hos-text-secondary">Low Stock</p>
                 <p className="text-2xl font-bold text-orange-600">{stats.lowStock}</p>
               </button>
-              <div className="bg-white rounded-lg shadow p-4">
-                <p className="text-sm text-gray-600">Platform</p>
-                <p className="text-2xl font-bold text-blue-600">{stats.platformOwned}</p>
+              <div className="bg-hos-bg-secondary rounded-lg shadow p-4">
+                <p className="text-sm text-hos-text-secondary">Platform</p>
+                <p className="text-2xl font-bold text-hos-gold">{stats.platformOwned}</p>
               </div>
-              <div className="bg-white rounded-lg shadow p-4">
-                <p className="text-sm text-gray-600">Seller</p>
-                <p className="text-2xl font-bold text-indigo-600">{stats.sellerProducts}</p>
+              <div className="bg-hos-bg-secondary rounded-lg shadow p-4">
+                <p className="text-sm text-hos-text-secondary">Seller</p>
+                <p className="text-2xl font-bold text-hos-gold">{stats.sellerProducts}</p>
               </div>
-              <div className="bg-white rounded-lg shadow p-4">
-                <p className="text-sm text-gray-600">Avg Price</p>
+              <div className="bg-hos-bg-secondary rounded-lg shadow p-4">
+                <p className="text-sm text-hos-text-secondary">Avg Price</p>
                 <p className="text-xl font-bold text-pink-600">{formatPrice(stats.avgPrice)}</p>
               </div>
             </div>
@@ -834,7 +834,7 @@ function AdminProductsContent() {
           )}
 
           {/* Filters */}
-          <div className="bg-white rounded-lg shadow p-4">
+          <div className="bg-hos-bg-secondary rounded-lg shadow p-4">
             <div className="flex flex-wrap gap-4 items-center">
               <div className="flex-1 min-w-[200px]">
                 <input
@@ -842,13 +842,13 @@ function AdminProductsContent() {
                   placeholder="Search products..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
+                  className="w-full px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50"
                 />
               </div>
               <select
                 value={statusFilter}
                 onChange={(e) => setStatusFilter(e.target.value)}
-                className="px-4 py-2 border border-gray-300 rounded-lg"
+                className="px-4 py-2 border border-hos-border rounded-lg"
               >
                 <option value="ALL">All Status</option>
                 <option value="ACTIVE">Active</option>
@@ -858,7 +858,7 @@ function AdminProductsContent() {
               <select
                 value={categoryFilter}
                 onChange={(e) => setCategoryFilter(e.target.value)}
-                className="px-4 py-2 border border-gray-300 rounded-lg"
+                className="px-4 py-2 border border-hos-border rounded-lg"
               >
                 <option value="ALL">All Fandoms</option>
                 {categories.map(cat => (
@@ -868,7 +868,7 @@ function AdminProductsContent() {
               <select
                 value={stockFilter}
                 onChange={(e) => setStockFilter(e.target.value)}
-                className="px-4 py-2 border border-gray-300 rounded-lg"
+                className="px-4 py-2 border border-hos-border rounded-lg"
               >
                 <option value="ALL">All Stock</option>
                 <option value="OUT">Out of Stock</option>
@@ -882,7 +882,7 @@ function AdminProductsContent() {
                   setSortBy(field as any);
                   setSortOrder(order as any);
                 }}
-                className="px-4 py-2 border border-gray-300 rounded-lg"
+                className="px-4 py-2 border border-hos-border rounded-lg"
               >
                 <option value="date-desc">Newest First</option>
                 <option value="date-asc">Oldest First</option>
@@ -897,7 +897,7 @@ function AdminProductsContent() {
             {/* Bulk Actions */}
             {selectedProducts.size > 0 && (
               <div className="flex items-center gap-4 mt-4 pt-4 border-t">
-                <span className="text-sm text-gray-600">{selectedProducts.size} selected</span>
+                <span className="text-sm text-hos-text-secondary">{selectedProducts.size} selected</span>
                 <button
                   onClick={() => { setBulkAction('publish'); setShowBulkModal(true); }}
                   className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 text-sm"
@@ -912,7 +912,7 @@ function AdminProductsContent() {
                 </button>
                 <button
                   onClick={() => { setBulkAction('inactive'); setShowBulkModal(true); }}
-                  className="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 text-sm"
+                  className="px-4 py-2 bg-hos-bg-tertiary text-white rounded-lg hover:bg-hos-bg-secondary text-sm"
                 >
                   Set Inactive
                 </button>
@@ -922,7 +922,7 @@ function AdminProductsContent() {
                 >
                   Delete
                 </button>
-                <button onClick={clearSelection} className="text-sm text-gray-500 hover:text-gray-700">
+                <button onClick={clearSelection} className="text-sm text-hos-text-muted hover:text-hos-text-secondary">
                   Clear
                 </button>
               </div>
@@ -930,15 +930,15 @@ function AdminProductsContent() {
           </div>
 
           {/* Products Table */}
-          <div className="bg-white rounded-lg shadow overflow-hidden">
+          <div className="bg-hos-bg-secondary rounded-lg shadow overflow-hidden">
             <div className="p-4 border-b flex justify-between items-center">
               <h2 className="text-lg font-semibold">Products ({filteredProducts.length})</h2>
-              <button onClick={selectAllVisible} className="text-sm text-purple-600 hover:text-purple-800">
+              <button onClick={selectAllVisible} className="text-sm text-hos-gold hover:text-hos-gold-hover">
                 Select All Visible
               </button>
             </div>
             <div className="overflow-auto max-h-[500px] overflow-x-auto">
-              <table className="w-full min-w-[900px] table-fixed border-collapse divide-y divide-gray-200">
+              <table className="w-full min-w-[900px] table-fixed border-collapse divide-y divide-hos-border">
                 <colgroup>
                   <col style={{ width: '2.75rem' }} />
                   <col />
@@ -948,58 +948,58 @@ function AdminProductsContent() {
                   <col style={{ width: '6.5rem' }} />
                   <col style={{ width: '10rem' }} />
                 </colgroup>
-                <thead className="bg-gray-50 sticky top-0 z-10">
+                <thead className="bg-hos-bg-secondary sticky top-0 z-10">
                   <tr>
-                    <th scope="col" className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase align-middle">
+                    <th scope="col" className="px-3 py-3 text-left text-xs font-medium text-hos-text-muted uppercase align-middle">
                       <input
                         type="checkbox"
                         checked={selectedProducts.size === filteredProducts.length && filteredProducts.length > 0}
                         onChange={() => selectedProducts.size === filteredProducts.length ? clearSelection() : selectAllVisible()}
-                        className="rounded border-gray-300 text-purple-600"
+                        className="rounded border-hos-border text-hos-gold"
                         aria-label="Select all products"
                       />
                     </th>
-                    <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase align-middle">
+                    <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-hos-text-muted uppercase align-middle">
                       Product
                     </th>
-                    <th scope="col" className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase align-middle">
+                    <th scope="col" className="px-4 py-3 text-right text-xs font-medium text-hos-text-muted uppercase align-middle">
                       Price
                     </th>
-                    <th scope="col" className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase align-middle">
+                    <th scope="col" className="px-4 py-3 text-center text-xs font-medium text-hos-text-muted uppercase align-middle">
                       Stock
                     </th>
-                    <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase align-middle">
+                    <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-hos-text-muted uppercase align-middle">
                       Status
                     </th>
-                    <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase align-middle whitespace-nowrap">
+                    <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-hos-text-muted uppercase align-middle whitespace-nowrap">
                       Created
                     </th>
-                    <th scope="col" className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase align-middle">
+                    <th scope="col" className="px-4 py-3 text-right text-xs font-medium text-hos-text-muted uppercase align-middle">
                       Actions
                     </th>
                   </tr>
                 </thead>
                 {filteredProducts.length === 0 ? (
-                  <tbody className="bg-white divide-y divide-gray-200">
+                  <tbody className="bg-hos-bg-secondary divide-y divide-hos-border">
                     <tr>
-                      <td colSpan={7} className="px-6 py-8 text-center text-gray-500">
+                      <td colSpan={7} className="px-6 py-8 text-center text-hos-text-muted">
                         No products found
                       </td>
                     </tr>
                   </tbody>
                 ) : (
-                  <tbody className="bg-white divide-y divide-gray-200">
+                  <tbody className="bg-hos-bg-secondary divide-y divide-hos-border">
                     {filteredProducts.map((product) => (
                       <tr
                         key={product.id}
-                        className={`hover:bg-gray-50 ${selectedProducts.has(product.id) ? 'bg-purple-50' : ''}`}
+                        className={`hover:bg-hos-bg-tertiary ${selectedProducts.has(product.id) ? 'bg-hos-gold/10' : ''}`}
                       >
                         <td className="px-3 py-3 align-middle">
                           <input
                             type="checkbox"
                             checked={selectedProducts.has(product.id)}
                             onChange={() => toggleProductSelection(product.id)}
-                            className="rounded border-gray-300 text-purple-600"
+                            className="rounded border-hos-border text-hos-gold"
                             aria-label={`Select ${product.name}`}
                           />
                         </td>
@@ -1015,20 +1015,20 @@ function AdminProductsContent() {
                                 fallback="📦"
                               />
                             ) : (
-                              <div className="h-10 w-10 shrink-0 rounded bg-gray-200 flex items-center justify-center text-gray-400 text-sm">
+                              <div className="h-10 w-10 shrink-0 rounded bg-hos-bg-tertiary flex items-center justify-center text-hos-text-muted text-sm">
                                 📦
                               </div>
                             )}
                             <div className="min-w-0 flex-1">
-                              <div className="text-sm font-medium text-gray-900 truncate">
+                              <div className="text-sm font-medium text-white truncate">
                                 {product.isFeatured && <span className="text-yellow-500 mr-1">★</span>}
                                 {product.name}
                               </div>
-                              <div className="text-xs text-gray-500 truncate">{product.sku || product.slug}</div>
+                              <div className="text-xs text-hos-text-muted truncate">{product.sku || product.slug}</div>
                             </div>
                           </div>
                         </td>
-                        <td className="px-4 py-3 align-middle text-right text-sm text-gray-900 tabular-nums whitespace-nowrap">
+                        <td className="px-4 py-3 align-middle text-right text-sm text-white tabular-nums whitespace-nowrap">
                           {formatPrice(product.price)}
                         </td>
                         <td className="px-4 py-3 align-middle text-center">{getStockBadge(product.stock)}</td>
@@ -1039,13 +1039,13 @@ function AdminProductsContent() {
                                 ? 'bg-green-100 text-green-700'
                                 : product.status === 'DRAFT'
                                   ? 'bg-yellow-100 text-yellow-700'
-                                  : 'bg-gray-100 text-gray-700'
+                                  : 'bg-hos-bg-tertiary text-hos-text-secondary'
                             }`}
                           >
                             {product.status}
                           </span>
                         </td>
-                        <td className="px-4 py-3 align-middle text-sm text-gray-500 whitespace-nowrap tabular-nums">
+                        <td className="px-4 py-3 align-middle text-sm text-hos-text-muted whitespace-nowrap tabular-nums">
                           {new Date(product.createdAt).toLocaleDateString()}
                         </td>
                         <td className="px-4 py-3 align-middle text-right">
@@ -1053,14 +1053,14 @@ function AdminProductsContent() {
                             <button
                               type="button"
                               onClick={() => handleEdit(product)}
-                              className="px-2 py-1 text-sm text-purple-600 hover:bg-purple-50 rounded whitespace-nowrap"
+                              className="px-2 py-1 text-sm text-hos-gold hover:bg-hos-gold/10 rounded whitespace-nowrap"
                             >
                               Edit
                             </button>
                             <button
                               type="button"
                               onClick={() => handleDuplicateProduct(product)}
-                              className="px-2 py-1 text-sm text-gray-600 hover:bg-gray-50 rounded shrink-0"
+                              className="px-2 py-1 text-sm text-hos-text-secondary hover:bg-hos-bg-tertiary rounded shrink-0"
                               title="Duplicate"
                             >
                               📋
@@ -1075,7 +1075,7 @@ function AdminProductsContent() {
                                   ? 'border-green-300 text-green-700 bg-green-50'
                                   : product.status === 'DRAFT'
                                     ? 'border-yellow-300 text-yellow-700 bg-yellow-50'
-                                    : 'border-gray-300 text-gray-700 bg-gray-50'
+                                    : 'border-hos-border text-hos-text-secondary bg-hos-bg-secondary'
                               }`}
                               title="Change status"
                             >
@@ -1109,11 +1109,11 @@ function AdminProductsContent() {
               aria-labelledby="edit-product-modal-title"
               onKeyDown={(e) => e.key === 'Escape' && (setShowEditModal(false), setEditingProduct(null))}
             >
-              <div className="bg-white rounded-lg max-w-4xl w-full my-4 max-h-[90vh] overflow-y-auto">
+              <div className="bg-hos-bg-secondary rounded-lg max-w-4xl w-full my-4 max-h-[90vh] overflow-y-auto">
                 <div className="p-6">
                   <div className="flex justify-between items-start mb-4">
                     <h2 id="edit-product-modal-title" className="text-2xl font-bold">Edit Product</h2>
-                    <button onClick={() => { setShowEditModal(false); setEditingProduct(null); }} className="text-gray-500 hover:text-gray-700 text-2xl">
+                    <button onClick={() => { setShowEditModal(false); setEditingProduct(null); }} className="text-hos-text-muted hover:text-hos-text-secondary text-2xl">
                       ×
                     </button>
                   </div>
@@ -1121,55 +1121,55 @@ function AdminProductsContent() {
                     {/* Same form fields as create form */}
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Product Name *</label>
-                        <input type="text" required value={formData.name} onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500" />
+                        <label className="block text-sm font-medium text-hos-text-secondary mb-1">Product Name *</label>
+                        <input type="text" required value={formData.name} onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))} className="w-full px-3 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50" />
                       </div>
                       <div className="grid grid-cols-2 gap-4">
                         <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-1">Price *</label>
+                          <label className="block text-sm font-medium text-hos-text-secondary mb-1">Price *</label>
                           {editingProduct?.productType === 'VARIANT' && formData.variations.length > 0 && (
                             <p className="text-xs text-amber-600 mb-1">For variable products, set price per variation option in the Variations section below (or when creating). Base price here is fallback.</p>
                           )}
-                          <input type="number" step="0.01" required value={formData.price} onChange={(e) => setFormData(prev => ({ ...prev, price: e.target.value }))} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500" />
+                          <input type="number" step="0.01" required value={formData.price} onChange={(e) => setFormData(prev => ({ ...prev, price: e.target.value }))} className="w-full px-3 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50" />
                         </div>
                         <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-1">Stock *</label>
+                          <label className="block text-sm font-medium text-hos-text-secondary mb-1">Stock *</label>
                           {editingProduct?.productType === 'VARIANT' && formData.variations.length > 0 && (
                             <p className="text-xs text-amber-600 mb-1">For variable products, set stock per variation option in the Variations section below.</p>
                           )}
-                          <input type="number" required value={formData.stock} onChange={(e) => setFormData(prev => ({ ...prev, stock: e.target.value }))} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500" />
+                          <input type="number" required value={formData.stock} onChange={(e) => setFormData(prev => ({ ...prev, stock: e.target.value }))} className="w-full px-3 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50" />
                         </div>
                       </div>
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Description *</label>
-                      <textarea required value={formData.description} onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500" rows={3} />
+                      <label className="block text-sm font-medium text-hos-text-secondary mb-1">Description *</label>
+                      <textarea required value={formData.description} onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))} className="w-full px-3 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50" rows={3} />
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Short Description</label>
-                      <input type="text" value={formData.shortDescription} onChange={(e) => setFormData(prev => ({ ...prev, shortDescription: e.target.value }))} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500" placeholder="Brief summary for listing/customer view" />
+                      <label className="block text-sm font-medium text-hos-text-secondary mb-1">Short Description</label>
+                      <input type="text" value={formData.shortDescription} onChange={(e) => setFormData(prev => ({ ...prev, shortDescription: e.target.value }))} className="w-full px-3 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50" placeholder="Brief summary for listing/customer view" />
                     </div>
 
                     {/* Variations (editable) */}
                     {formData.variations.length === 0 && (
                       <div className="border-t pt-4">
-                        <p className="text-sm text-gray-600 mb-2">No variations. Add dimensions (e.g. Size, Color) with options and optional price/stock per option.</p>
-                        <button type="button" onClick={addVariationDimension} className="text-sm text-purple-600 hover:text-purple-800 font-medium">+ Add variation dimension</button>
+                        <p className="text-sm text-hos-text-secondary mb-2">No variations. Add dimensions (e.g. Size, Color) with options and optional price/stock per option.</p>
+                        <button type="button" onClick={addVariationDimension} className="text-sm text-hos-gold hover:text-hos-gold-hover font-medium">+ Add variation dimension</button>
                       </div>
                     )}
                     {formData.variations.length > 0 && (
                       <div className="border-t pt-4">
-                        <h3 className="text-sm font-semibold text-gray-700 mb-2">Variations (price/stock per option)</h3>
-                        <p className="text-xs text-gray-500 mb-3">Set optional price and stock per option. Base price/stock above are fallback for simple products.</p>
+                        <h3 className="text-sm font-semibold text-hos-text-secondary mb-2">Variations (price/stock per option)</h3>
+                        <p className="text-xs text-hos-text-muted mb-3">Set optional price and stock per option. Base price/stock above are fallback for simple products.</p>
                         <div className="space-y-4">
                           {formData.variations.map((variation, varIdx) => (
-                            <div key={varIdx} className="bg-gray-50 rounded-lg p-4 border border-gray-200">
+                            <div key={varIdx} className="bg-hos-bg-secondary rounded-lg p-4 border border-hos-border">
                               <div className="flex items-center justify-between mb-2">
-                                <label className="block text-sm font-medium text-gray-700">Dimension name</label>
+                                <label className="block text-sm font-medium text-hos-text-secondary">Dimension name</label>
                                 <button type="button" onClick={() => setFormData(prev => ({ ...prev, variations: prev.variations.filter((_, i) => i !== varIdx) }))} className="text-red-600 hover:text-red-800 text-xs">Remove dimension</button>
                               </div>
-                              <input type="text" value={variation.name} onChange={(e) => setFormData(prev => ({ ...prev, variations: prev.variations.map((v, i) => i === varIdx ? { ...v, name: e.target.value } : v) }))} className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm mb-3" placeholder="e.g. Size, Color" />
-                              <p className="text-xs font-medium text-gray-600 mb-2">Options (value, optional price, optional stock)</p>
+                              <input type="text" value={variation.name} onChange={(e) => setFormData(prev => ({ ...prev, variations: prev.variations.map((v, i) => i === varIdx ? { ...v, name: e.target.value } : v) }))} className="w-full px-3 py-2 border border-hos-border rounded-lg text-sm mb-3" placeholder="e.g. Size, Color" />
+                              <p className="text-xs font-medium text-hos-text-secondary mb-2">Options (value, optional price, optional stock)</p>
                               <div className="space-y-2">
                                 {(variation.options || []).map((opt: any, optIdx: number) => {
                                   const val = typeof opt === 'object' && opt?.value != null ? opt.value : String(opt ?? '');
@@ -1177,18 +1177,18 @@ function AdminProductsContent() {
                                   const stock = typeof opt === 'object' && opt?.stock != null ? String(opt.stock) : '';
                                   return (
                                     <div key={optIdx} className="flex flex-wrap items-center gap-2">
-                                      <input type="text" value={val} onChange={(e) => updateVariationOption(varIdx, optIdx, 'value', e.target.value)} className="w-28 px-2 py-1.5 border border-gray-300 rounded text-sm" placeholder="Value" />
-                                      <input type="number" step="0.01" value={price} onChange={(e) => updateVariationOption(varIdx, optIdx, 'price', e.target.value)} className="w-20 px-2 py-1.5 border border-gray-300 rounded text-sm" placeholder="Price" />
-                                      <input type="number" value={stock} onChange={(e) => updateVariationOption(varIdx, optIdx, 'stock', e.target.value)} className="w-16 px-2 py-1.5 border border-gray-300 rounded text-sm" placeholder="Stock" />
+                                      <input type="text" value={val} onChange={(e) => updateVariationOption(varIdx, optIdx, 'value', e.target.value)} className="w-28 px-2 py-1.5 border border-hos-border rounded text-sm" placeholder="Value" />
+                                      <input type="number" step="0.01" value={price} onChange={(e) => updateVariationOption(varIdx, optIdx, 'price', e.target.value)} className="w-20 px-2 py-1.5 border border-hos-border rounded text-sm" placeholder="Price" />
+                                      <input type="number" value={stock} onChange={(e) => updateVariationOption(varIdx, optIdx, 'stock', e.target.value)} className="w-16 px-2 py-1.5 border border-hos-border rounded text-sm" placeholder="Stock" />
                                       <button type="button" onClick={() => removeVariationOption(varIdx, optIdx)} className="text-red-600 hover:text-red-800 text-sm">×</button>
                                     </div>
                                   );
                                 })}
-                                <button type="button" onClick={() => addVariationOption(varIdx)} className="text-sm text-purple-600 hover:text-purple-800">+ Add option</button>
+                                <button type="button" onClick={() => addVariationOption(varIdx)} className="text-sm text-hos-gold hover:text-hos-gold-hover">+ Add option</button>
                               </div>
                             </div>
                           ))}
-                          <button type="button" onClick={addVariationDimension} className="text-sm text-purple-600 hover:text-purple-800 font-medium">+ Add variation dimension</button>
+                          <button type="button" onClick={addVariationDimension} className="text-sm text-hos-gold hover:text-hos-gold-hover font-medium">+ Add variation dimension</button>
                         </div>
                       </div>
                     )}
@@ -1220,23 +1220,23 @@ function AdminProductsContent() {
 
                     {/* Images */}
                     <div className="border-t pt-4">
-                      <h3 className="text-sm font-semibold text-gray-700 mb-4">Images</h3>
+                      <h3 className="text-sm font-semibold text-hos-text-secondary mb-4">Images</h3>
                       <div className="flex items-center gap-3 flex-wrap">
-                        <label className="inline-flex items-center px-4 py-2 bg-purple-600 text-white rounded hover:bg-purple-700 cursor-pointer">
+                        <label className="inline-flex items-center px-4 py-2 bg-hos-gold text-[#1a1406] rounded hover:bg-hos-gold-hover cursor-pointer">
                           <input type="file" accept="image/jpeg,image/png,image/gif,image/webp" multiple className="hidden" disabled={uploadingImages} onChange={(e) => uploadImages(e.target.files)} />
                           {uploadingImages ? 'Uploading…' : 'Upload Files'}
                         </label>
-                        <span className="text-xs text-gray-400">or</span>
+                        <span className="text-xs text-hos-text-muted">or</span>
                         <div className="flex gap-2 flex-1 min-w-[200px]">
                           <input
                             type="url"
                             value={newImageUrl}
                             onChange={(e) => setNewImageUrl(e.target.value)}
                             onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); addImageByUrl(); } }}
-                            className="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                            className="flex-1 px-3 py-2 border border-hos-border rounded-lg text-sm focus:ring-2 focus:ring-hos-gold/50 focus:border-transparent"
                             placeholder="Paste image URL"
                           />
-                          <button type="button" onClick={addImageByUrl} disabled={!newImageUrl.trim()} className="px-3 py-2 bg-purple-600 text-white rounded-lg text-sm hover:bg-purple-700 disabled:opacity-50">
+                          <button type="button" onClick={addImageByUrl} disabled={!newImageUrl.trim()} className="px-3 py-2 bg-hos-gold text-[#1a1406] rounded-lg text-sm hover:bg-hos-gold-hover disabled:opacity-50">
                             Add
                           </button>
                         </div>
@@ -1244,9 +1244,9 @@ function AdminProductsContent() {
                       {images.length > 0 && (
                         <div className="mt-4 flex flex-wrap gap-2">
                           {images.map((img, idx) => (
-                            <div key={idx} className={`relative ${img.isPrimary ? 'ring-2 ring-purple-500' : ''}`}>
+                            <div key={idx} className={`relative ${img.isPrimary ? 'ring-2 ring-hos-gold/50' : ''}`}>
                               <SafeImage src={img.url} alt={img.alt || `Product image ${idx + 1}`} width={64} height={64} className="object-cover rounded" />
-                              {img.isPrimary && <span className="absolute -top-1 -right-1 bg-purple-600 text-white text-xs px-1 rounded">★</span>}
+                              {img.isPrimary && <span className="absolute -top-1 -right-1 bg-hos-gold text-[#1a1406] text-xs px-1 rounded">★</span>}
                               <button type="button" onClick={() => removeImage(idx)} className="absolute -bottom-1 -right-1 bg-red-500 text-white text-xs w-5 h-5 rounded-full">×</button>
                             </div>
                           ))}
@@ -1256,48 +1256,48 @@ function AdminProductsContent() {
 
                     {/* SEO */}
                     <div className="border-t pt-4">
-                      <h3 className="text-sm font-semibold text-gray-700 mb-3">SEO & Search</h3>
+                      <h3 className="text-sm font-semibold text-hos-text-secondary mb-3">SEO & Search</h3>
                       <div className="space-y-3">
                         <div>
-                          <label className="block text-xs font-medium text-gray-600 mb-1">Meta Title</label>
-                          <input type="text" value={formData.metaTitle} onChange={(e) => setFormData(prev => ({ ...prev, metaTitle: e.target.value }))} className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-purple-500" placeholder="SEO title (shown in search engine results)" maxLength={70} />
-                          <p className="text-xs text-gray-400 mt-1">{formData.metaTitle.length}/70 characters</p>
+                          <label className="block text-xs font-medium text-hos-text-secondary mb-1">Meta Title</label>
+                          <input type="text" value={formData.metaTitle} onChange={(e) => setFormData(prev => ({ ...prev, metaTitle: e.target.value }))} className="w-full px-3 py-2 border border-hos-border rounded-lg text-sm focus:ring-2 focus:ring-hos-gold/50" placeholder="SEO title (shown in search engine results)" maxLength={70} />
+                          <p className="text-xs text-hos-text-muted mt-1">{formData.metaTitle.length}/70 characters</p>
                         </div>
                         <div>
-                          <label className="block text-xs font-medium text-gray-600 mb-1">Meta Description</label>
-                          <textarea value={formData.metaDescription} onChange={(e) => setFormData(prev => ({ ...prev, metaDescription: e.target.value }))} className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-purple-500" placeholder="SEO description (shown in search engine results)" rows={2} maxLength={160} />
-                          <p className="text-xs text-gray-400 mt-1">{formData.metaDescription.length}/160 characters</p>
+                          <label className="block text-xs font-medium text-hos-text-secondary mb-1">Meta Description</label>
+                          <textarea value={formData.metaDescription} onChange={(e) => setFormData(prev => ({ ...prev, metaDescription: e.target.value }))} className="w-full px-3 py-2 border border-hos-border rounded-lg text-sm focus:ring-2 focus:ring-hos-gold/50" placeholder="SEO description (shown in search engine results)" rows={2} maxLength={160} />
+                          <p className="text-xs text-hos-text-muted mt-1">{formData.metaDescription.length}/160 characters</p>
                         </div>
                       </div>
                     </div>
 
                     {/* Shipping Dimensions */}
                     <div className="border-t pt-4">
-                      <h3 className="text-sm font-semibold text-gray-700 mb-3">Shipping Dimensions</h3>
+                      <h3 className="text-sm font-semibold text-hos-text-secondary mb-3">Shipping Dimensions</h3>
                       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                         <div>
-                          <label className="block text-xs font-medium text-gray-600 mb-1">Weight (kg)</label>
-                          <input type="number" step="0.001" min="0" value={formData.weight} onChange={(e) => setFormData(prev => ({ ...prev, weight: e.target.value }))} className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm" placeholder="0.00" />
+                          <label className="block text-xs font-medium text-hos-text-secondary mb-1">Weight (kg)</label>
+                          <input type="number" step="0.001" min="0" value={formData.weight} onChange={(e) => setFormData(prev => ({ ...prev, weight: e.target.value }))} className="w-full px-3 py-2 border border-hos-border rounded-lg text-sm" placeholder="0.00" />
                         </div>
                         <div>
-                          <label className="block text-xs font-medium text-gray-600 mb-1">Length (cm)</label>
-                          <input type="number" step="0.1" min="0" value={formData.length} onChange={(e) => setFormData(prev => ({ ...prev, length: e.target.value }))} className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm" placeholder="0.0" />
+                          <label className="block text-xs font-medium text-hos-text-secondary mb-1">Length (cm)</label>
+                          <input type="number" step="0.1" min="0" value={formData.length} onChange={(e) => setFormData(prev => ({ ...prev, length: e.target.value }))} className="w-full px-3 py-2 border border-hos-border rounded-lg text-sm" placeholder="0.0" />
                         </div>
                         <div>
-                          <label className="block text-xs font-medium text-gray-600 mb-1">Width (cm)</label>
-                          <input type="number" step="0.1" min="0" value={formData.width} onChange={(e) => setFormData(prev => ({ ...prev, width: e.target.value }))} className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm" placeholder="0.0" />
+                          <label className="block text-xs font-medium text-hos-text-secondary mb-1">Width (cm)</label>
+                          <input type="number" step="0.1" min="0" value={formData.width} onChange={(e) => setFormData(prev => ({ ...prev, width: e.target.value }))} className="w-full px-3 py-2 border border-hos-border rounded-lg text-sm" placeholder="0.0" />
                         </div>
                         <div>
-                          <label className="block text-xs font-medium text-gray-600 mb-1">Height (cm)</label>
-                          <input type="number" step="0.1" min="0" value={formData.height} onChange={(e) => setFormData(prev => ({ ...prev, height: e.target.value }))} className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm" placeholder="0.0" />
+                          <label className="block text-xs font-medium text-hos-text-secondary mb-1">Height (cm)</label>
+                          <input type="number" step="0.1" min="0" value={formData.height} onChange={(e) => setFormData(prev => ({ ...prev, height: e.target.value }))} className="w-full px-3 py-2 border border-hos-border rounded-lg text-sm" placeholder="0.0" />
                         </div>
                       </div>
                     </div>
 
                     {/* Publish Readiness Checklist */}
                     <div className="border-t pt-4">
-                      <h3 className="text-sm font-semibold text-gray-700 mb-3">Publish Readiness</h3>
-                      <div className="bg-gray-50 rounded-lg p-4 space-y-2">
+                      <h3 className="text-sm font-semibold text-hos-text-secondary mb-3">Publish Readiness</h3>
+                      <div className="bg-hos-bg-secondary rounded-lg p-4 space-y-2">
                         {[
                           { label: 'Product name', ok: !!formData.name.trim() },
                           { label: 'Description (min 10 chars)', ok: formData.description.trim().length >= 10 },
@@ -1313,7 +1313,7 @@ function AdminProductsContent() {
                             <span className={check.ok ? 'text-green-600' : check.optional ? 'text-amber-500' : 'text-red-500'}>
                               {check.ok ? '✓' : check.optional ? '○' : '✗'}
                             </span>
-                            <span className={check.ok ? 'text-gray-700' : check.optional ? 'text-amber-700' : 'text-red-700'}>
+                            <span className={check.ok ? 'text-hos-text-secondary' : check.optional ? 'text-amber-700' : 'text-red-700'}>
                               {check.label}{check.optional ? ' (recommended)' : ' *'}
                             </span>
                           </div>
@@ -1341,20 +1341,20 @@ function AdminProductsContent() {
                     {/* Visibility */}
                     <div className="border-t pt-4 flex flex-wrap gap-4">
                       <label className="flex items-center gap-2">
-                        <input type="checkbox" checked={publishNow} onChange={(e) => setPublishNow(e.target.checked)} className="rounded border-gray-300 text-purple-600" />
+                        <input type="checkbox" checked={publishNow} onChange={(e) => setPublishNow(e.target.checked)} className="rounded border-hos-border text-hos-gold" />
                         <span className="text-sm">Published</span>
                       </label>
                       <label className="flex items-center gap-2">
-                        <input type="checkbox" checked={formData.isFeatured} onChange={(e) => setFormData(prev => ({ ...prev, isFeatured: e.target.checked }))} className="rounded border-gray-300 text-purple-600" />
+                        <input type="checkbox" checked={formData.isFeatured} onChange={(e) => setFormData(prev => ({ ...prev, isFeatured: e.target.checked }))} className="rounded border-hos-border text-hos-gold" />
                         <span className="text-sm">Featured</span>
                       </label>
                     </div>
 
                     <div className="flex gap-3 pt-4">
-                      <button type="submit" disabled={updatingProduct} className="flex-1 px-6 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 font-medium disabled:opacity-50 disabled:cursor-not-allowed">
+                      <button type="submit" disabled={updatingProduct} className="flex-1 px-6 py-2 bg-hos-gold text-[#1a1406] rounded-lg hover:bg-hos-gold-hover font-medium disabled:opacity-50 disabled:cursor-not-allowed">
                         {updatingProduct ? 'Updating...' : 'Update Product'}
                       </button>
-                      <button type="button" onClick={() => { setShowEditModal(false); setEditingProduct(null); }} className="px-6 py-2 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400 font-medium">
+                      <button type="button" onClick={() => { setShowEditModal(false); setEditingProduct(null); }} className="px-6 py-2 bg-hos-bg-tertiary text-hos-text-secondary rounded-lg hover:bg-hos-text-muted font-medium">
                         Cancel
                       </button>
                     </div>
@@ -1373,27 +1373,27 @@ function AdminProductsContent() {
               aria-labelledby="delete-product-modal-title"
               onKeyDown={(e) => e.key === 'Escape' && (setShowDeleteModal(false), setProductToDelete(null), setDeleteError(null))}
             >
-              <div className="bg-white rounded-lg max-w-md w-full p-6">
+              <div className="bg-hos-bg-secondary rounded-lg max-w-md w-full p-6">
                 <h2 id="delete-product-modal-title" className="text-2xl font-bold mb-4">Delete Product</h2>
                 {deleteError ? (
                   <>
                     <div className="mb-4 p-4 bg-amber-50 border border-amber-200 rounded-lg">
                       <p className="text-amber-800 text-sm">{deleteError}</p>
                     </div>
-                    <p className="text-gray-600 mb-4">
+                    <p className="text-hos-text-secondary mb-4">
                       Use <strong>Set to Inactive</strong> to hide the product from the marketplace while keeping order history intact.
                     </p>
                     <div className="flex flex-col gap-2">
                       <button
                         onClick={handleSetInactiveFromDeleteModal}
                         disabled={deleteLoading}
-                        className="w-full px-6 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 font-medium disabled:opacity-50"
+                        className="w-full px-6 py-2 bg-hos-bg-tertiary text-white rounded-lg hover:bg-hos-bg-secondary font-medium disabled:opacity-50"
                       >
                         {deleteLoading ? 'Updating...' : 'Set to Inactive'}
                       </button>
                       <button
                         onClick={() => { setShowDeleteModal(false); setProductToDelete(null); setDeleteError(null); }}
-                        className="w-full px-6 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 font-medium"
+                        className="w-full px-6 py-2 bg-hos-bg-tertiary text-hos-text-secondary rounded-lg hover:bg-hos-bg-tertiary font-medium"
                       >
                         Cancel
                       </button>
@@ -1401,7 +1401,7 @@ function AdminProductsContent() {
                   </>
                 ) : (
                   <>
-                    <p className="text-gray-600 mb-6">
+                    <p className="text-hos-text-secondary mb-6">
                       Are you sure you want to delete <strong>{productToDelete.name}</strong>? This cannot be undone.
                     </p>
                     <div className="flex gap-3">
@@ -1414,7 +1414,7 @@ function AdminProductsContent() {
                       </button>
                       <button
                         onClick={() => { setShowDeleteModal(false); setProductToDelete(null); setDeleteError(null); }}
-                        className="px-6 py-2 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400 font-medium"
+                        className="px-6 py-2 bg-hos-bg-tertiary text-hos-text-secondary rounded-lg hover:bg-hos-text-muted font-medium"
                       >
                         Cancel
                       </button>
@@ -1434,14 +1434,14 @@ function AdminProductsContent() {
               aria-labelledby="bulk-action-modal-title"
               onKeyDown={(e) => e.key === 'Escape' && setShowBulkModal(false)}
             >
-              <div className="bg-white rounded-lg max-w-md w-full p-6">
+              <div className="bg-hos-bg-secondary rounded-lg max-w-md w-full p-6">
                 <h2 id="bulk-action-modal-title" className="text-2xl font-bold mb-4">
                   {bulkAction === 'publish' ? 'Publish Products' : 
                    bulkAction === 'unpublish' ? 'Unpublish Products' : 
                    bulkAction === 'inactive' ? 'Set Products Inactive' : 
                    'Delete Products'}
                 </h2>
-                <p className="text-gray-600 mb-6">
+                <p className="text-hos-text-secondary mb-6">
                   Are you sure you want to {bulkAction === 'inactive' ? 'set inactive' : bulkAction} <strong>{selectedProducts.size}</strong> products?
                   {bulkAction === 'delete' && ' This cannot be undone.'}
                 </p>
@@ -1450,8 +1450,8 @@ function AdminProductsContent() {
                     onClick={handleBulkAction} 
                     className={`flex-1 px-6 py-2 text-white rounded-lg font-medium ${
                       bulkAction === 'delete' ? 'bg-red-600 hover:bg-red-700' : 
-                      bulkAction === 'inactive' ? 'bg-gray-600 hover:bg-gray-700' : 
-                      'bg-purple-600 hover:bg-purple-700'
+                      bulkAction === 'inactive' ? 'bg-hos-bg-tertiary hover:bg-hos-bg-secondary' : 
+                      'bg-hos-gold hover:bg-hos-gold-hover'
                     }`}
                   >
                     {bulkAction === 'publish' ? 'Publish All' : 
@@ -1459,7 +1459,7 @@ function AdminProductsContent() {
                      bulkAction === 'inactive' ? 'Set All Inactive' : 
                      'Delete All'}
                   </button>
-                  <button onClick={() => setShowBulkModal(false)} className="px-6 py-2 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400 font-medium">
+                  <button onClick={() => setShowBulkModal(false)} className="px-6 py-2 bg-hos-bg-tertiary text-hos-text-secondary rounded-lg hover:bg-hos-text-muted font-medium">
                     Cancel
                   </button>
                 </div>
@@ -1478,7 +1478,7 @@ export default function AdminProductsPage() {
       <RouteGuard allowedRoles={['ADMIN']}>
         <AdminLayout>
           <div className="flex items-center justify-center h-64">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600"></div>
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-hos-gold"></div>
           </div>
         </AdminLayout>
       </RouteGuard>

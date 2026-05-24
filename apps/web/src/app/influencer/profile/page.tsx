@@ -111,8 +111,8 @@ export default function InfluencerProfilePage() {
     return (
       <div className="flex items-center justify-center py-12">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600 mx-auto" />
-          <p className="mt-4 text-gray-600">Loading profile...</p>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-hos-gold mx-auto" />
+          <p className="mt-4 text-hos-text-secondary">Loading profile...</p>
         </div>
       </div>
     );
@@ -122,7 +122,7 @@ export default function InfluencerProfilePage() {
     <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <Link
           href="/influencer/dashboard"
-          className="inline-flex items-center gap-2 text-purple-600 hover:text-purple-700 font-medium mb-6"
+          className="inline-flex items-center gap-2 text-hos-gold hover:text-hos-gold-hover font-medium mb-6"
         >
           <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m7 7h18" />
@@ -130,53 +130,53 @@ export default function InfluencerProfilePage() {
           Back to Dashboard
         </Link>
 
-        <h1 className="text-3xl font-bold text-gray-900 mb-2">Profile & Social Links</h1>
-        <p className="text-gray-600 mb-8">
+        <h1 className="text-3xl font-bold text-white mb-2">Profile & Social Links</h1>
+        <p className="text-hos-text-secondary mb-8">
           Update your display info and social links. They appear on your public storefront when enabled.
         </p>
 
         <div className="space-y-8">
           {/* Basic profile */}
-          <div className="bg-white rounded-xl shadow-sm p-6">
-            <h2 className="text-lg font-semibold text-gray-900 mb-4">Public profile</h2>
+          <div className="bg-hos-bg-secondary rounded-xl shadow-sm p-6">
+            <h2 className="text-lg font-semibold text-white mb-4">Public profile</h2>
             <div className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Display name</label>
+                <label className="block text-sm font-medium text-hos-text-secondary mb-1">Display name</label>
                 <input
                   type="text"
                   value={displayName}
                   onChange={(e) => setDisplayName(e.target.value)}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
+                  className="w-full px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50 focus:border-hos-gold"
                   placeholder="Your name"
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Bio</label>
+                <label className="block text-sm font-medium text-hos-text-secondary mb-1">Bio</label>
                 <textarea
                   value={bio}
                   onChange={(e) => setBio(e.target.value)}
                   rows={3}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
+                  className="w-full px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50 focus:border-hos-gold"
                   placeholder="A short bio for your storefront"
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Profile image URL</label>
+                <label className="block text-sm font-medium text-hos-text-secondary mb-1">Profile image URL</label>
                 <input
                   type="url"
                   value={profileImage}
                   onChange={(e) => setProfileImage(e.target.value)}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
+                  className="w-full px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50 focus:border-hos-gold"
                   placeholder="https://..."
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Banner image URL</label>
+                <label className="block text-sm font-medium text-hos-text-secondary mb-1">Banner image URL</label>
                 <input
                   type="url"
                   value={bannerImage}
                   onChange={(e) => setBannerImage(e.target.value)}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
+                  className="w-full px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50 focus:border-hos-gold"
                   placeholder="https://..."
                 />
               </div>
@@ -184,20 +184,20 @@ export default function InfluencerProfilePage() {
           </div>
 
           {/* Social links */}
-          <div className="bg-white rounded-xl shadow-sm p-6">
-            <h2 className="text-lg font-semibold text-gray-900 mb-2">Social media links</h2>
-            <p className="text-sm text-gray-500 mb-4">
+          <div className="bg-hos-bg-secondary rounded-xl shadow-sm p-6">
+            <h2 className="text-lg font-semibold text-white mb-2">Social media links</h2>
+            <p className="text-sm text-hos-text-muted mb-4">
               Add full URLs. They will show on your storefront when &quot;Show social media links&quot; is on in Storefront settings.
             </p>
             <div className="space-y-4">
               {SOCIAL_PLATFORMS.map(({ key, label, placeholder }) => (
                 <div key={key}>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">{label}</label>
+                  <label className="block text-sm font-medium text-hos-text-secondary mb-1">{label}</label>
                   <input
                     type="url"
                     value={socialLinks[key] ?? ''}
                     onChange={(e) => handleSocialLinkChange(key, e.target.value)}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
+                    className="w-full px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50 focus:border-hos-gold"
                     placeholder={placeholder}
                   />
                 </div>
@@ -209,7 +209,7 @@ export default function InfluencerProfilePage() {
             <button
               onClick={handleSave}
               disabled={saving}
-              className="px-6 py-2.5 bg-purple-600 text-white rounded-lg font-medium hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              className="px-6 py-2.5 bg-hos-gold text-[#1a1406] rounded-lg font-medium hover:bg-hos-gold-hover disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
             >
               {saving ? 'Saving...' : 'Save profile'}
             </button>
@@ -217,7 +217,7 @@ export default function InfluencerProfilePage() {
               <Link
                 href={`/i/${profile.slug}`}
                 target="_blank"
-                className="inline-flex items-center gap-2 text-purple-600 hover:text-purple-700 font-medium"
+                className="inline-flex items-center gap-2 text-hos-gold hover:text-hos-gold-hover font-medium"
               >
                 View storefront
                 <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -229,19 +229,19 @@ export default function InfluencerProfilePage() {
         </div>
 
         {/* Quick links */}
-        <div className="mt-12 pt-8 border-t border-gray-200">
-          <p className="text-sm font-medium text-gray-700 mb-3">Quick links</p>
+        <div className="mt-12 pt-8 border-t border-hos-border">
+          <p className="text-sm font-medium text-hos-text-secondary mb-3">Quick links</p>
           <div className="flex flex-wrap gap-4">
-            <Link href="/influencer/dashboard" className="text-purple-600 hover:text-purple-700 text-sm font-medium">
+            <Link href="/influencer/dashboard" className="text-hos-gold hover:text-hos-gold-hover text-sm font-medium">
               Dashboard
             </Link>
-            <Link href="/influencer/storefront" className="text-purple-600 hover:text-purple-700 text-sm font-medium">
+            <Link href="/influencer/storefront" className="text-hos-gold hover:text-hos-gold-hover text-sm font-medium">
               Storefront settings
             </Link>
-            <Link href="/influencer/product-links" className="text-purple-600 hover:text-purple-700 text-sm font-medium">
+            <Link href="/influencer/product-links" className="text-hos-gold hover:text-hos-gold-hover text-sm font-medium">
               Product links
             </Link>
-            <Link href="/influencer/earnings" className="text-purple-600 hover:text-purple-700 text-sm font-medium">
+            <Link href="/influencer/earnings" className="text-hos-gold hover:text-hos-gold-hover text-sm font-medium">
               Earnings
             </Link>
           </div>

@@ -34,7 +34,7 @@ export default function AdminProductCampaignsPage() {
       <AdminLayout>
         <div className="p-6 max-w-5xl mx-auto">
           <div className="flex justify-between items-center mb-4">
-            <h1 className="text-2xl font-semibold text-gray-900">Product campaigns</h1>
+            <h1 className="text-2xl font-semibold text-white">Product campaigns</h1>
             <Link
               href="/admin/product-campaigns/new"
               className="text-sm rounded-md bg-violet-700 px-3 py-2 text-white"
@@ -56,24 +56,24 @@ export default function AdminProductCampaignsPage() {
             </select>
             <button
               type="button"
-              className="text-sm px-3 py-1 rounded bg-gray-800 text-white"
+              className="text-sm px-3 py-1 rounded bg-hos-surface text-white"
               onClick={() => load()}
             >
               Apply
             </button>
           </div>
           {loading ? (
-            <p className="text-gray-500">Loading…</p>
+            <p className="text-hos-text-muted">Loading…</p>
           ) : (
             <ul className="space-y-2 text-sm">
               {rows.map((r) => {
                 const cid = String(r.id);
                 return (
-                  <li key={cid} className="border rounded-lg p-3 bg-white">
+                  <li key={cid} className="border rounded-lg p-3 bg-hos-bg-secondary">
                     <Link href={`/admin/product-campaigns/${cid}`} className="text-violet-700 font-medium">
                       {String(r.name)}
                     </Link>
-                    <p className="text-gray-500 text-xs">
+                    <p className="text-hos-text-muted text-xs">
                       {String(r.status)} · {String(r.type)}
                     </p>
                   </li>

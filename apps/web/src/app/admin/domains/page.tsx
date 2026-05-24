@@ -390,8 +390,8 @@ export default function AdminDomainsPage() {
           {/* Header */}
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
             <div>
-              <h1 className="text-2xl font-bold text-gray-900">Domain Management</h1>
-              <p className="text-gray-600 mt-1">Manage subdomains and custom domains for all sellers</p>
+              <h1 className="text-2xl font-bold text-white">Domain Management</h1>
+              <p className="text-hos-text-secondary mt-1">Manage subdomains and custom domains for all sellers</p>
             </div>
             <DataExport data={filteredSellers} columns={exportColumns} filename="domains-export" />
           </div>
@@ -401,53 +401,53 @@ export default function AdminDomainsPage() {
             <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-4">
               <button
                 onClick={() => setStatusFilter('ALL')}
-                className={`bg-white rounded-lg shadow p-4 text-left hover:shadow-md transition-shadow ${statusFilter === 'ALL' ? 'ring-2 ring-purple-500' : ''}`}
+                className={`bg-hos-bg-secondary rounded-lg shadow p-4 text-left hover:shadow-md transition-shadow ${statusFilter === 'ALL' ? 'ring-2 ring-hos-gold/50' : ''}`}
               >
-                <p className="text-sm text-gray-500">Total Sellers</p>
-                <p className="text-2xl font-bold text-gray-900">{stats.total}</p>
+                <p className="text-sm text-hos-text-muted">Total Sellers</p>
+                <p className="text-2xl font-bold text-white">{stats.total}</p>
               </button>
               <button
                 onClick={() => setStatusFilter('SUBDOMAIN')}
-                className={`bg-white rounded-lg shadow p-4 text-left hover:shadow-md transition-shadow ${statusFilter === 'SUBDOMAIN' ? 'ring-2 ring-purple-500' : ''}`}
+                className={`bg-hos-bg-secondary rounded-lg shadow p-4 text-left hover:shadow-md transition-shadow ${statusFilter === 'SUBDOMAIN' ? 'ring-2 ring-hos-gold/50' : ''}`}
               >
-                <p className="text-sm text-gray-500">With Subdomain</p>
-                <p className="text-2xl font-bold text-blue-600">{stats.withSubdomain}</p>
+                <p className="text-sm text-hos-text-muted">With Subdomain</p>
+                <p className="text-2xl font-bold text-hos-gold">{stats.withSubdomain}</p>
               </button>
               <button
                 onClick={() => setStatusFilter('CUSTOM')}
-                className={`bg-white rounded-lg shadow p-4 text-left hover:shadow-md transition-shadow ${statusFilter === 'CUSTOM' ? 'ring-2 ring-purple-500' : ''}`}
+                className={`bg-hos-bg-secondary rounded-lg shadow p-4 text-left hover:shadow-md transition-shadow ${statusFilter === 'CUSTOM' ? 'ring-2 ring-hos-gold/50' : ''}`}
               >
-                <p className="text-sm text-gray-500">Custom Domain</p>
+                <p className="text-sm text-hos-text-muted">Custom Domain</p>
                 <p className="text-2xl font-bold text-green-600">{stats.withCustomDomain}</p>
               </button>
               <button
                 onClick={() => setStatusFilter('PENDING')}
-                className={`bg-white rounded-lg shadow p-4 text-left hover:shadow-md transition-shadow ${statusFilter === 'PENDING' ? 'ring-2 ring-purple-500' : ''}`}
+                className={`bg-hos-bg-secondary rounded-lg shadow p-4 text-left hover:shadow-md transition-shadow ${statusFilter === 'PENDING' ? 'ring-2 ring-hos-gold/50' : ''}`}
               >
-                <p className="text-sm text-gray-500">Pending DNS</p>
+                <p className="text-sm text-hos-text-muted">Pending DNS</p>
                 <p className="text-2xl font-bold text-yellow-600">{stats.pendingVerification}</p>
               </button>
               <button
                 onClick={() => setStatusFilter('NONE')}
-                className={`bg-white rounded-lg shadow p-4 text-left hover:shadow-md transition-shadow ${statusFilter === 'NONE' ? 'ring-2 ring-purple-500' : ''}`}
+                className={`bg-hos-bg-secondary rounded-lg shadow p-4 text-left hover:shadow-md transition-shadow ${statusFilter === 'NONE' ? 'ring-2 ring-hos-gold/50' : ''}`}
               >
-                <p className="text-sm text-gray-500">No Domain</p>
+                <p className="text-sm text-hos-text-muted">No Domain</p>
                 <p className="text-2xl font-bold text-red-600">{stats.noDomain}</p>
               </button>
-              <div className="bg-white rounded-lg shadow p-4">
-                <p className="text-sm text-gray-500">SSL Valid</p>
+              <div className="bg-hos-bg-secondary rounded-lg shadow p-4">
+                <p className="text-sm text-hos-text-muted">SSL Valid</p>
                 <p className="text-2xl font-bold text-emerald-600">{stats.sslValid}</p>
               </div>
-              <div className="bg-white rounded-lg shadow p-4">
-                <p className="text-sm text-gray-500">Packages</p>
-                <p className="text-2xl font-bold text-purple-600">{stats.packagesPurchased}</p>
+              <div className="bg-hos-bg-secondary rounded-lg shadow p-4">
+                <p className="text-sm text-hos-text-muted">Packages</p>
+                <p className="text-2xl font-bold text-hos-gold">{stats.packagesPurchased}</p>
               </div>
             </div>
           )}
 
           {/* Chart */}
           {stats && chartData.length > 0 && (
-            <div className="bg-white rounded-lg shadow p-6">
+            <div className="bg-hos-bg-secondary rounded-lg shadow p-6">
               <h3 className="text-lg font-semibold mb-4">Domain Distribution</h3>
               <div className="h-48">
                 <ResponsiveContainer width="100%" height="100%">
@@ -474,24 +474,24 @@ export default function AdminDomainsPage() {
           )}
 
           {/* Search & Filters */}
-          <div className="bg-white rounded-lg shadow p-4">
+          <div className="bg-hos-bg-secondary rounded-lg shadow p-4">
             <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
               <div className="md:col-span-2">
-                <label className="block text-sm font-medium text-gray-700 mb-1">Search</label>
+                <label className="block text-sm font-medium text-hos-text-secondary mb-1">Search</label>
                 <input
                   type="text"
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   placeholder="Store name, email, domain..."
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
+                  className="w-full px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50"
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Seller Type</label>
+                <label className="block text-sm font-medium text-hos-text-secondary mb-1">Seller Type</label>
                 <select
                   value={typeFilter}
                   onChange={(e) => setTypeFilter(e.target.value)}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
+                  className="w-full px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50"
                 >
                   <option value="ALL">All Types</option>
                   {sellerTypes.map(type => (
@@ -500,7 +500,7 @@ export default function AdminDomainsPage() {
                 </select>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Sort By</label>
+                <label className="block text-sm font-medium text-hos-text-secondary mb-1">Sort By</label>
                 <select
                   value={`${sortBy}-${sortOrder}`}
                   onChange={(e) => {
@@ -508,7 +508,7 @@ export default function AdminDomainsPage() {
                     setSortBy(field as any);
                     setSortOrder(order as any);
                   }}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
+                  className="w-full px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50"
                 >
                   <option value="name-asc">Name A-Z</option>
                   <option value="name-desc">Name Z-A</option>
@@ -518,11 +518,11 @@ export default function AdminDomainsPage() {
                 </select>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Bulk Actions</label>
+                <label className="block text-sm font-medium text-hos-text-secondary mb-1">Bulk Actions</label>
                 <button
                   onClick={handleBulkGenerateSubdomains}
                   disabled={selectedSellers.size === 0 || actionLoading}
-                  className="w-full px-4 py-2 text-sm bg-purple-100 text-purple-700 rounded-lg hover:bg-purple-200 disabled:opacity-50"
+                  className="w-full px-4 py-2 text-sm bg-hos-gold/20 text-hos-gold-hover rounded-lg hover:bg-hos-gold/20 disabled:opacity-50"
                 >
                   Generate Subdomains ({selectedSellers.size})
                 </button>
@@ -530,11 +530,11 @@ export default function AdminDomainsPage() {
             </div>
             {selectedSellers.size > 0 && (
               <div className="mt-3 flex items-center gap-4">
-                <span className="text-sm text-gray-600">{selectedSellers.size} selected</span>
-                <button onClick={() => setSelectedSellers(new Set())} className="text-sm text-purple-600 hover:underline">
+                <span className="text-sm text-hos-text-secondary">{selectedSellers.size} selected</span>
+                <button onClick={() => setSelectedSellers(new Set())} className="text-sm text-hos-gold hover:underline">
                   Clear selection
                 </button>
-                <button onClick={selectAll} className="text-sm text-purple-600 hover:underline">
+                <button onClick={selectAll} className="text-sm text-hos-gold hover:underline">
                   {selectedSellers.size === filteredSellers.length ? 'Deselect all' : 'Select all'}
                 </button>
               </div>
@@ -544,63 +544,63 @@ export default function AdminDomainsPage() {
           {/* Loading */}
           {loading && (
             <div className="flex items-center justify-center py-12">
-              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600"></div>
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-hos-gold"></div>
             </div>
           )}
 
           {/* Empty State */}
           {!loading && filteredSellers.length === 0 && (
-            <div className="bg-white border border-gray-200 rounded-lg p-8 text-center">
+            <div className="bg-hos-bg-secondary border border-hos-border rounded-lg p-8 text-center">
               <div className="text-5xl mb-4">🌐</div>
-              <p className="text-gray-500 text-lg">No sellers found</p>
+              <p className="text-hos-text-muted text-lg">No sellers found</p>
             </div>
           )}
 
           {/* Sellers Table */}
           {!loading && filteredSellers.length > 0 && (
-            <div className="bg-white border border-gray-200 rounded-lg overflow-hidden">
+            <div className="bg-hos-bg-secondary border border-hos-border rounded-lg overflow-hidden">
               <div className="p-4 border-b flex justify-between items-center">
                 <h2 className="text-lg font-semibold">Sellers ({filteredSellers.length})</h2>
               </div>
               <div className="overflow-x-auto">
-                <table className="min-w-full divide-y divide-gray-200">
-                  <thead className="bg-gray-50">
+                <table className="min-w-full divide-y divide-hos-border">
+                  <thead className="bg-hos-bg-secondary">
                     <tr>
-                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                      <th className="px-4 py-3 text-left text-xs font-medium text-hos-text-muted uppercase">
                         <input
                           type="checkbox"
                           checked={selectedSellers.size === filteredSellers.length && filteredSellers.length > 0}
                           onChange={selectAll}
-                          className="h-4 w-4 text-purple-600 rounded border-gray-300"
+                          className="h-4 w-4 text-hos-gold rounded border-hos-border"
                         />
                       </th>
-                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Seller</th>
-                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Type</th>
-                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Subdomain</th>
-                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Custom Domain</th>
-                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
-                      <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">Actions</th>
+                      <th className="px-4 py-3 text-left text-xs font-medium text-hos-text-muted uppercase">Seller</th>
+                      <th className="px-4 py-3 text-left text-xs font-medium text-hos-text-muted uppercase">Type</th>
+                      <th className="px-4 py-3 text-left text-xs font-medium text-hos-text-muted uppercase">Subdomain</th>
+                      <th className="px-4 py-3 text-left text-xs font-medium text-hos-text-muted uppercase">Custom Domain</th>
+                      <th className="px-4 py-3 text-left text-xs font-medium text-hos-text-muted uppercase">Status</th>
+                      <th className="px-4 py-3 text-right text-xs font-medium text-hos-text-muted uppercase">Actions</th>
                     </tr>
                   </thead>
-                  <tbody className="bg-white divide-y divide-gray-200">
+                  <tbody className="bg-hos-bg-secondary divide-y divide-hos-border">
                     {filteredSellers.map((seller) => (
-                      <tr key={seller.id} className={`hover:bg-gray-50 ${selectedSellers.has(seller.id) ? 'bg-purple-50' : ''}`}>
+                      <tr key={seller.id} className={`hover:bg-hos-bg-tertiary ${selectedSellers.has(seller.id) ? 'bg-hos-gold/10' : ''}`}>
                         <td className="px-4 py-3">
                           <input
                             type="checkbox"
                             checked={selectedSellers.has(seller.id)}
                             onChange={() => toggleSelection(seller.id)}
-                            className="h-4 w-4 text-purple-600 rounded border-gray-300"
+                            className="h-4 w-4 text-hos-gold rounded border-hos-border"
                           />
                         </td>
                         <td className="px-4 py-3">
                           <div>
-                            <p className="font-medium text-gray-900">{seller.storeName}</p>
-                            <p className="text-sm text-gray-500">{seller.user.email}</p>
+                            <p className="font-medium text-white">{seller.storeName}</p>
+                            <p className="text-sm text-hos-text-muted">{seller.user.email}</p>
                           </div>
                         </td>
                         <td className="px-4 py-3">
-                          <span className="px-2 py-1 text-xs font-medium bg-blue-100 text-blue-800 rounded">
+                          <span className="px-2 py-1 text-xs font-medium bg-hos-gold/20 text-hos-gold rounded">
                             {seller.sellerType}
                           </span>
                         </td>
@@ -611,7 +611,7 @@ export default function AdminDomainsPage() {
                                 href={`/sellers/${seller.slug}`}
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                className="text-sm font-medium text-blue-700 hover:text-blue-900 hover:underline"
+                                className="text-sm font-medium text-hos-gold hover:text-hos-gold hover:underline"
                               >
                                 {seller.subDomain}.houseofspells.com
                               </a>
@@ -620,7 +620,7 @@ export default function AdminDomainsPage() {
                                   href={`/sellers/${seller.slug}`}
                                   target="_blank"
                                   rel="noopener noreferrer"
-                                  className="text-xs text-blue-600 hover:text-blue-800"
+                                  className="text-xs text-hos-gold hover:text-hos-gold"
                                 >
                                   Visit Store
                                 </a>
@@ -630,7 +630,7 @@ export default function AdminDomainsPage() {
                                     setSubDomainForm({ subDomain: seller.subDomain || '' });
                                     setShowSubDomainModal(true);
                                   }}
-                                  className="text-xs text-purple-600 hover:text-purple-800"
+                                  className="text-xs text-hos-gold hover:text-hos-gold-hover"
                                 >
                                   Edit
                                 </button>
@@ -645,7 +645,7 @@ export default function AdminDomainsPage() {
                           ) : (
                             <button
                               onClick={() => handleGenerateSubDomain(seller)}
-                              className="text-sm text-purple-600 hover:text-purple-800"
+                              className="text-sm text-hos-gold hover:text-hos-gold-hover"
                             >
                               + Generate
                             </button>
@@ -654,7 +654,7 @@ export default function AdminDomainsPage() {
                         <td className="px-4 py-3">
                           {seller.customDomain ? (
                             <div>
-                              <p className="text-sm font-medium text-gray-900">{seller.customDomain}</p>
+                              <p className="text-sm font-medium text-white">{seller.customDomain}</p>
                               <div className="flex items-center gap-2 mt-1">
                                 {seller.domainPackagePurchased && (
                                   <span className="text-xs text-green-600">✓ Package</span>
@@ -668,7 +668,7 @@ export default function AdminDomainsPage() {
                                     });
                                     setShowCustomDomainModal(true);
                                   }}
-                                  className="text-xs text-purple-600 hover:text-purple-800"
+                                  className="text-xs text-hos-gold hover:text-hos-gold-hover"
                                 >
                                   Edit
                                 </button>
@@ -687,7 +687,7 @@ export default function AdminDomainsPage() {
                                 setCustomDomainForm({ customDomain: '', domainPackagePurchased: false });
                                 setShowCustomDomainModal(true);
                               }}
-                              className="text-sm text-purple-600 hover:text-purple-800"
+                              className="text-sm text-hos-gold hover:text-hos-gold-hover"
                             >
                               + Configure
                             </button>
@@ -703,7 +703,7 @@ export default function AdminDomainsPage() {
                           <div className="flex justify-end gap-1">
                             <button
                               onClick={() => handleViewDetails(seller)}
-                              className="px-2 py-1 text-sm text-gray-600 hover:bg-gray-100 rounded"
+                              className="px-2 py-1 text-sm text-hos-text-secondary hover:bg-hos-bg-tertiary rounded"
                             >
                               Details
                             </button>
@@ -711,7 +711,7 @@ export default function AdminDomainsPage() {
                               <>
                                 <button
                                   onClick={() => handleViewDNSGuide(seller)}
-                                  className="px-2 py-1 text-sm text-blue-600 hover:bg-blue-50 rounded"
+                                  className="px-2 py-1 text-sm text-hos-gold hover:bg-hos-gold/10 rounded"
                                 >
                                   DNS Guide
                                 </button>
@@ -737,46 +737,46 @@ export default function AdminDomainsPage() {
           {/* Subdomain Modal */}
           {showSubDomainModal && selectedSeller && (
             <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-              <div className="bg-white rounded-lg max-w-md w-full">
+              <div className="bg-hos-bg-secondary rounded-lg max-w-md w-full">
                 <div className="p-6">
                   <div className="flex justify-between items-start mb-4">
                     <h2 className="text-xl font-bold">Configure Subdomain</h2>
-                    <button onClick={() => setShowSubDomainModal(false)} className="text-gray-500 hover:text-gray-700 text-2xl">×</button>
+                    <button onClick={() => setShowSubDomainModal(false)} className="text-hos-text-muted hover:text-hos-text-secondary text-2xl">×</button>
                   </div>
 
-                  <p className="text-sm text-gray-600 mb-4">
+                  <p className="text-sm text-hos-text-secondary mb-4">
                     Store: <span className="font-medium">{selectedSeller.storeName}</span>
                   </p>
 
                   <div className="space-y-4">
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Subdomain</label>
+                      <label className="block text-sm font-medium text-hos-text-secondary mb-1">Subdomain</label>
                       <div className="flex items-center">
                         <input
                           type="text"
                           value={subDomainForm.subDomain}
                           onChange={(e) => setSubDomainForm({ subDomain: e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, '') })}
                           placeholder="store-name"
-                          className="flex-1 px-4 py-2 border border-gray-300 rounded-l-lg focus:ring-2 focus:ring-purple-500"
+                          className="flex-1 px-4 py-2 border border-hos-border rounded-l-lg focus:ring-2 focus:ring-hos-gold/50"
                         />
-                        <span className="px-4 py-2 bg-gray-100 border border-l-0 border-gray-300 rounded-r-lg text-gray-600 text-sm">
+                        <span className="px-4 py-2 bg-hos-bg-tertiary border border-l-0 border-hos-border rounded-r-lg text-hos-text-secondary text-sm">
                           .houseofspells.com
                         </span>
                       </div>
-                      <p className="text-xs text-gray-500 mt-1">Only lowercase letters, numbers, and hyphens allowed</p>
+                      <p className="text-xs text-hos-text-muted mt-1">Only lowercase letters, numbers, and hyphens allowed</p>
                     </div>
 
                     <div className="flex gap-3 pt-4">
                       <button
                         onClick={handleAssignSubDomain}
                         disabled={actionLoading || !subDomainForm.subDomain}
-                        className="flex-1 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 disabled:opacity-50"
+                        className="flex-1 px-4 py-2 bg-hos-gold text-[#1a1406] rounded-lg hover:bg-hos-gold-hover disabled:opacity-50"
                       >
                         {actionLoading ? 'Saving...' : 'Save Subdomain'}
                       </button>
                       <button
                         onClick={() => setShowSubDomainModal(false)}
-                        className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300"
+                        className="px-4 py-2 bg-hos-bg-tertiary text-hos-text-secondary rounded-lg hover:bg-hos-bg-tertiary"
                       >
                         Cancel
                       </button>
@@ -790,28 +790,28 @@ export default function AdminDomainsPage() {
           {/* Custom Domain Modal */}
           {showCustomDomainModal && selectedSeller && (
             <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-              <div className="bg-white rounded-lg max-w-md w-full">
+              <div className="bg-hos-bg-secondary rounded-lg max-w-md w-full">
                 <div className="p-6">
                   <div className="flex justify-between items-start mb-4">
                     <h2 className="text-xl font-bold">Configure Custom Domain</h2>
-                    <button onClick={() => setShowCustomDomainModal(false)} className="text-gray-500 hover:text-gray-700 text-2xl">×</button>
+                    <button onClick={() => setShowCustomDomainModal(false)} className="text-hos-text-muted hover:text-hos-text-secondary text-2xl">×</button>
                   </div>
 
-                  <p className="text-sm text-gray-600 mb-4">
+                  <p className="text-sm text-hos-text-secondary mb-4">
                     Store: <span className="font-medium">{selectedSeller.storeName}</span>
                   </p>
 
                   <div className="space-y-4">
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Custom Domain</label>
+                      <label className="block text-sm font-medium text-hos-text-secondary mb-1">Custom Domain</label>
                       <input
                         type="text"
                         value={customDomainForm.customDomain}
                         onChange={(e) => setCustomDomainForm({ ...customDomainForm, customDomain: e.target.value })}
                         placeholder="example.com"
-                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
+                        className="w-full px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50"
                       />
-                      <p className="text-xs text-gray-500 mt-1">Enter the full domain name (e.g., mystore.com)</p>
+                      <p className="text-xs text-hos-text-muted mt-1">Enter the full domain name (e.g., mystore.com)</p>
                     </div>
 
                     <div className="flex items-center">
@@ -820,22 +820,22 @@ export default function AdminDomainsPage() {
                         id="packagePurchased"
                         checked={customDomainForm.domainPackagePurchased}
                         onChange={(e) => setCustomDomainForm({ ...customDomainForm, domainPackagePurchased: e.target.checked })}
-                        className="h-4 w-4 text-purple-600 rounded border-gray-300"
+                        className="h-4 w-4 text-hos-gold rounded border-hos-border"
                       />
-                      <label htmlFor="packagePurchased" className="ml-2 text-sm text-gray-700">Domain package purchased</label>
+                      <label htmlFor="packagePurchased" className="ml-2 text-sm text-hos-text-secondary">Domain package purchased</label>
                     </div>
 
                     <div className="flex gap-3 pt-4">
                       <button
                         onClick={handleAssignCustomDomain}
                         disabled={actionLoading || !customDomainForm.customDomain}
-                        className="flex-1 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 disabled:opacity-50"
+                        className="flex-1 px-4 py-2 bg-hos-gold text-[#1a1406] rounded-lg hover:bg-hos-gold-hover disabled:opacity-50"
                       >
                         {actionLoading ? 'Saving...' : 'Save Domain'}
                       </button>
                       <button
                         onClick={() => setShowCustomDomainModal(false)}
-                        className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300"
+                        className="px-4 py-2 bg-hos-bg-tertiary text-hos-text-secondary rounded-lg hover:bg-hos-bg-tertiary"
                       >
                         Cancel
                       </button>
@@ -849,57 +849,57 @@ export default function AdminDomainsPage() {
           {/* Detail Modal */}
           {showDetailModal && selectedSeller && (
             <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-              <div className="bg-white rounded-lg max-w-lg w-full max-h-[90vh] overflow-y-auto">
+              <div className="bg-hos-bg-secondary rounded-lg max-w-lg w-full max-h-[90vh] overflow-y-auto">
                 <div className="p-6">
                   <div className="flex justify-between items-start mb-4">
                     <h2 className="text-xl font-bold">Domain Details</h2>
-                    <button onClick={() => setShowDetailModal(false)} className="text-gray-500 hover:text-gray-700 text-2xl">×</button>
+                    <button onClick={() => setShowDetailModal(false)} className="text-hos-text-muted hover:text-hos-text-secondary text-2xl">×</button>
                   </div>
 
                   <div className="space-y-4">
-                    <div className="bg-gray-50 p-4 rounded-lg">
+                    <div className="bg-hos-bg-secondary p-4 rounded-lg">
                       <h3 className="font-semibold mb-2">Store Information</h3>
                       <div className="grid grid-cols-2 gap-2 text-sm">
                         <div>
-                          <p className="text-gray-500">Store Name</p>
+                          <p className="text-hos-text-muted">Store Name</p>
                           <p className="font-medium">{selectedSeller.storeName}</p>
                         </div>
                         <div>
-                          <p className="text-gray-500">Email</p>
+                          <p className="text-hos-text-muted">Email</p>
                           <p className="font-medium">{selectedSeller.user.email}</p>
                         </div>
                         <div>
-                          <p className="text-gray-500">Type</p>
+                          <p className="text-hos-text-muted">Type</p>
                           <p className="font-medium">{selectedSeller.sellerType}</p>
                         </div>
                         <div>
-                          <p className="text-gray-500">Slug</p>
+                          <p className="text-hos-text-muted">Slug</p>
                           <p className="font-medium">{selectedSeller.slug}</p>
                         </div>
                       </div>
                     </div>
 
-                    <div className="bg-blue-50 p-4 rounded-lg">
+                    <div className="bg-hos-gold/10 p-4 rounded-lg">
                       <h3 className="font-semibold mb-2">Subdomain</h3>
                       {selectedSeller.subDomain ? (
                         <div>
-                          <p className="font-mono text-blue-800">{selectedSeller.subDomain}.houseofspells.com</p>
+                          <p className="font-mono text-hos-gold">{selectedSeller.subDomain}.houseofspells.com</p>
                           <div className="flex flex-col gap-1 mt-2">
                             <a
                               href={`/sellers/${selectedSeller.slug}`}
                               target="_blank"
                               rel="noopener noreferrer"
-                              className="text-sm text-blue-600 hover:underline inline-block"
+                              className="text-sm text-hos-gold hover:underline inline-block"
                             >
                               Visit Store Page →
                             </a>
-                            <p className="text-xs text-gray-500">
+                            <p className="text-xs text-hos-text-muted">
                               Subdomain URL: {selectedSeller.subDomain}.houseofspells.com (requires wildcard DNS)
                             </p>
                           </div>
                         </div>
                       ) : (
-                        <p className="text-gray-500">No subdomain configured</p>
+                        <p className="text-hos-text-muted">No subdomain configured</p>
                       )}
                     </div>
 
@@ -912,7 +912,7 @@ export default function AdminDomainsPage() {
                             {getDNSBadge(selectedSeller.dnsVerified, true)}
                             {getSSLBadge(selectedSeller.sslStatus)}
                             {selectedSeller.domainPackagePurchased && (
-                              <span className="px-2 py-0.5 text-xs rounded bg-purple-100 text-purple-800">Package Purchased</span>
+                              <span className="px-2 py-0.5 text-xs rounded bg-hos-gold/20 text-hos-gold">Package Purchased</span>
                             )}
                           </div>
                           <a
@@ -925,19 +925,19 @@ export default function AdminDomainsPage() {
                           </a>
                         </div>
                       ) : (
-                        <p className="text-gray-500">No custom domain configured</p>
+                        <p className="text-hos-text-muted">No custom domain configured</p>
                       )}
                     </div>
 
                     {selectedSeller.domainUpdatedAt && (
-                      <p className="text-sm text-gray-500">
+                      <p className="text-sm text-hos-text-muted">
                         Last updated: {new Date(selectedSeller.domainUpdatedAt).toLocaleString()}
                       </p>
                     )}
 
                     <button
                       onClick={() => setShowDetailModal(false)}
-                      className="w-full px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300"
+                      className="w-full px-4 py-2 bg-hos-bg-tertiary text-hos-text-secondary rounded-lg hover:bg-hos-bg-tertiary"
                     >
                       Close
                     </button>
@@ -950,11 +950,11 @@ export default function AdminDomainsPage() {
           {/* DNS Guide Modal */}
           {showDNSGuideModal && selectedSeller && (
             <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-              <div className="bg-white rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+              <div className="bg-hos-bg-secondary rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto">
                 <div className="p-6">
                   <div className="flex justify-between items-start mb-4">
                     <h2 className="text-xl font-bold">DNS Configuration Guide</h2>
-                    <button onClick={() => setShowDNSGuideModal(false)} className="text-gray-500 hover:text-gray-700 text-2xl">×</button>
+                    <button onClick={() => setShowDNSGuideModal(false)} className="text-hos-text-muted hover:text-hos-text-secondary text-2xl">×</button>
                   </div>
 
                   <div className="space-y-4">
@@ -966,26 +966,26 @@ export default function AdminDomainsPage() {
 
                     <div>
                       <h3 className="font-semibold mb-2">Domain: {selectedSeller.customDomain}</h3>
-                      <p className="text-sm text-gray-600 mb-4">
+                      <p className="text-sm text-hos-text-secondary mb-4">
                         Add the following DNS records to your domain provider:
                       </p>
                     </div>
 
-                    <div className="bg-gray-50 rounded-lg p-4 space-y-4">
+                    <div className="bg-hos-bg-secondary rounded-lg p-4 space-y-4">
                       <div>
-                        <h4 className="font-medium text-sm text-gray-700 mb-2">Option 1: CNAME Record (Recommended)</h4>
-                        <div className="bg-white border rounded p-3 font-mono text-sm">
+                        <h4 className="font-medium text-sm text-hos-text-secondary mb-2">Option 1: CNAME Record (Recommended)</h4>
+                        <div className="bg-hos-bg-secondary border rounded p-3 font-mono text-sm">
                           <div className="grid grid-cols-3 gap-4">
                             <div>
-                              <p className="text-gray-500 text-xs">Type</p>
+                              <p className="text-hos-text-muted text-xs">Type</p>
                               <p>CNAME</p>
                             </div>
                             <div>
-                              <p className="text-gray-500 text-xs">Name/Host</p>
+                              <p className="text-hos-text-muted text-xs">Name/Host</p>
                               <p>@ or www</p>
                             </div>
                             <div>
-                              <p className="text-gray-500 text-xs">Value/Points to</p>
+                              <p className="text-hos-text-muted text-xs">Value/Points to</p>
                               <p>proxy.houseofspells.com</p>
                             </div>
                           </div>
@@ -993,19 +993,19 @@ export default function AdminDomainsPage() {
                       </div>
 
                       <div>
-                        <h4 className="font-medium text-sm text-gray-700 mb-2">Option 2: A Records</h4>
-                        <div className="bg-white border rounded p-3 font-mono text-sm">
+                        <h4 className="font-medium text-sm text-hos-text-secondary mb-2">Option 2: A Records</h4>
+                        <div className="bg-hos-bg-secondary border rounded p-3 font-mono text-sm">
                           <div className="grid grid-cols-3 gap-4 mb-2">
                             <div>
-                              <p className="text-gray-500 text-xs">Type</p>
+                              <p className="text-hos-text-muted text-xs">Type</p>
                               <p>A</p>
                             </div>
                             <div>
-                              <p className="text-gray-500 text-xs">Name/Host</p>
+                              <p className="text-hos-text-muted text-xs">Name/Host</p>
                               <p>@</p>
                             </div>
                             <div>
-                              <p className="text-gray-500 text-xs">Value/IP</p>
+                              <p className="text-hos-text-muted text-xs">Value/IP</p>
                               <p>76.76.21.21</p>
                             </div>
                           </div>
@@ -1023,7 +1023,7 @@ export default function AdminDomainsPage() {
                       </button>
                       <button
                         onClick={() => setShowDNSGuideModal(false)}
-                        className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300"
+                        className="px-4 py-2 bg-hos-bg-tertiary text-hos-text-secondary rounded-lg hover:bg-hos-bg-tertiary"
                       >
                         Close
                       </button>

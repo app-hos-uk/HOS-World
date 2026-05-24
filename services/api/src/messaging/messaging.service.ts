@@ -32,7 +32,7 @@ export class MessagingService {
 
   private buildUnsubscribeUrl(userId: string, channel: MessagingChannel): string {
     const token = this.generateUnsubscribeToken(userId, channel);
-    const base = this.config.get<string>('APP_URL', 'https://houseofspells.co.uk');
+    const base = this.config.get<string>('APP_URL', 'https://houseofspells.com');
     return `${base}/unsubscribe?token=${token}`;
   }
 

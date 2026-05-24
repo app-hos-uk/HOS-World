@@ -105,28 +105,28 @@ export default function PurchaseGiftCardPage() {
 
   return (
     <RouteGuard allowedRoles={['CUSTOMER', 'ADMIN']} showAccessDenied={true}>
-      <div className="min-h-screen bg-white">
+      <div className="min-h-screen bg-hos-bg-secondary">
         <Header />
         <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 lg:py-12">
           <div className="max-w-2xl mx-auto">
             <div className="mb-6">
-              <Link href="/profile" className="text-purple-600 hover:text-purple-800 mb-4 inline-block">
+              <Link href="/profile" className="text-hos-gold hover:text-hos-gold-hover mb-4 inline-block">
                 ← Back to Profile
               </Link>
             </div>
 
-            <div className="bg-white border border-gray-200 rounded-lg p-6">
+            <div className="bg-hos-bg-secondary border border-hos-border rounded-lg p-6">
               <h1 className="text-3xl font-bold mb-6">Purchase Gift Card</h1>
               
               <form onSubmit={handleRequestConfirmation} className="space-y-6">
                 {/* Gift Card Type */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-medium text-hos-text-secondary mb-2">
                     Gift Card Type *
                   </label>
                   <div className="grid grid-cols-2 gap-4">
                     <label className={`flex items-center p-4 border-2 rounded-lg cursor-pointer transition-colors ${
-                      formData.type === 'digital' ? 'border-purple-600 bg-purple-50' : 'border-gray-300'
+                      formData.type === 'digital' ? 'border-hos-gold bg-hos-gold/10' : 'border-hos-border'
                     }`}>
                       <input
                         type="radio"
@@ -137,11 +137,11 @@ export default function PurchaseGiftCardPage() {
                       />
                       <div>
                         <div className="font-medium">Digital</div>
-                        <div className="text-sm text-gray-600">Sent via email</div>
+                        <div className="text-sm text-hos-text-secondary">Sent via email</div>
                       </div>
                     </label>
                     <label className={`flex items-center p-4 border-2 rounded-lg cursor-pointer transition-colors ${
-                      formData.type === 'physical' ? 'border-purple-600 bg-purple-50' : 'border-gray-300'
+                      formData.type === 'physical' ? 'border-hos-gold bg-hos-gold/10' : 'border-hos-border'
                     }`}>
                       <input
                         type="radio"
@@ -152,7 +152,7 @@ export default function PurchaseGiftCardPage() {
                       />
                       <div>
                         <div className="font-medium">Physical</div>
-                        <div className="text-sm text-gray-600">Shipped to address</div>
+                        <div className="text-sm text-hos-text-secondary">Shipped to address</div>
                       </div>
                     </label>
                   </div>
@@ -160,7 +160,7 @@ export default function PurchaseGiftCardPage() {
 
                 {/* Amount Selection */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-medium text-hos-text-secondary mb-2">
                     Amount *
                   </label>
                   <div className="grid grid-cols-3 sm:grid-cols-5 gap-3 mb-3">
@@ -173,8 +173,8 @@ export default function PurchaseGiftCardPage() {
                         }}
                         className={`px-4 py-2 border-2 rounded-lg font-medium transition-colors ${
                           formData.amount === amount && !formData.customAmount
-                            ? 'border-purple-600 bg-purple-50 text-purple-700'
-                            : 'border-gray-300 hover:border-gray-400'
+                            ? 'border-hos-gold bg-hos-gold/10 text-hos-gold-hover'
+                            : 'border-hos-border hover:border-gray-400'
                         }`}
                       >
                         {formatPrice(amount, formData.currency)}
@@ -182,7 +182,7 @@ export default function PurchaseGiftCardPage() {
                     ))}
                   </div>
                   <div>
-                    <label className="block text-sm text-gray-600 mb-1">Or enter custom amount</label>
+                    <label className="block text-sm text-hos-text-secondary mb-1">Or enter custom amount</label>
                     <input
                       type="number"
                       min="1"
@@ -192,20 +192,20 @@ export default function PurchaseGiftCardPage() {
                         setFormData({ ...formData, customAmount: e.target.value, amount: 0 });
                       }}
                       placeholder="Enter amount"
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg"
+                      className="w-full px-4 py-2 border border-hos-border rounded-lg"
                     />
                   </div>
                 </div>
 
                 {/* Currency */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-medium text-hos-text-secondary mb-2">
                     Currency *
                   </label>
                   <select
                     value={formData.currency}
                     onChange={(e) => setFormData({ ...formData, currency: e.target.value })}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg"
+                    className="w-full px-4 py-2 border border-hos-border rounded-lg"
                   >
                     <option value="USD">$ USD (US Dollar)</option>
                     <option value="EUR">€ EUR (Euro)</option>
@@ -217,7 +217,7 @@ export default function PurchaseGiftCardPage() {
                 {formData.type === 'digital' && (
                   <>
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                      <label className="block text-sm font-medium text-hos-text-secondary mb-2">
                         Recipient Email *
                       </label>
                       <input
@@ -225,19 +225,19 @@ export default function PurchaseGiftCardPage() {
                         value={formData.issuedToEmail}
                         onChange={(e) => setFormData({ ...formData, issuedToEmail: e.target.value })}
                         required
-                        className="w-full px-4 py-2 border border-gray-300 rounded-lg"
+                        className="w-full px-4 py-2 border border-hos-border rounded-lg"
                         placeholder="recipient@example.com"
                       />
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                      <label className="block text-sm font-medium text-hos-text-secondary mb-2">
                         Recipient Name
                       </label>
                       <input
                         type="text"
                         value={formData.issuedToName}
                         onChange={(e) => setFormData({ ...formData, issuedToName: e.target.value })}
-                        className="w-full px-4 py-2 border border-gray-300 rounded-lg"
+                        className="w-full px-4 py-2 border border-hos-border rounded-lg"
                         placeholder="Recipient's name"
                       />
                     </div>
@@ -246,21 +246,21 @@ export default function PurchaseGiftCardPage() {
 
                 {/* Message */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-medium text-hos-text-secondary mb-2">
                     Personal Message
                   </label>
                   <textarea
                     value={formData.message}
                     onChange={(e) => setFormData({ ...formData, message: e.target.value })}
                     rows={4}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg"
+                    className="w-full px-4 py-2 border border-hos-border rounded-lg"
                     placeholder="Add a personal message to your gift card..."
                   />
                 </div>
 
                 {/* Expiration Date (Optional) */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-medium text-hos-text-secondary mb-2">
                     Expiration Date (Optional)
                   </label>
                   <input
@@ -268,25 +268,25 @@ export default function PurchaseGiftCardPage() {
                     value={formData.expiresAt}
                     onChange={(e) => setFormData({ ...formData, expiresAt: e.target.value })}
                     min={new Date().toISOString().split('T')[0]}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg"
+                    className="w-full px-4 py-2 border border-hos-border rounded-lg"
                   />
-                  <p className="text-xs text-gray-500 mt-1">
+                  <p className="text-xs text-hos-text-muted mt-1">
                     Leave empty for no expiration
                   </p>
                 </div>
 
                 {/* Summary */}
-                <div className="bg-gray-50 rounded-lg p-4">
+                <div className="bg-hos-bg-secondary rounded-lg p-4">
                   <div className="flex justify-between items-center mb-2">
                     <span className="font-medium">Gift Card Amount:</span>
-                    <span className="text-xl font-bold text-purple-600">
+                    <span className="text-xl font-bold text-hos-gold">
                       {formatPrice(
                         formData.customAmount ? parseFloat(formData.customAmount) || 0 : formData.amount,
                         formData.currency
                       )}
                     </span>
                   </div>
-                  <div className="text-sm text-gray-600">
+                  <div className="text-sm text-hos-text-secondary">
                     {formData.type === 'digital' ? 'Digital gift card will be sent via email' : 'Physical gift card will be shipped'}
                   </div>
                 </div>
@@ -296,13 +296,13 @@ export default function PurchaseGiftCardPage() {
                   <button
                     type="submit"
                     disabled={loading}
-                    className="flex-1 px-6 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors font-medium disabled:opacity-50"
+                    className="flex-1 px-6 py-3 bg-hos-gold text-[#1a1406] rounded-lg hover:bg-hos-gold-hover transition-colors font-medium disabled:opacity-50"
                   >
                     {loading ? 'Processing...' : 'Purchase Gift Card'}
                   </button>
                   <Link
                     href="/profile"
-                    className="flex-1 px-6 py-3 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300 transition-colors font-medium text-center"
+                    className="flex-1 px-6 py-3 bg-hos-bg-tertiary text-white rounded-lg hover:bg-hos-bg-tertiary transition-colors font-medium text-center"
                   >
                     Cancel
                   </Link>
@@ -312,16 +312,16 @@ export default function PurchaseGiftCardPage() {
 
             {showConfirmation && (
               <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-                <div className="bg-white rounded-lg max-w-md w-full p-6">
+                <div className="bg-hos-bg-secondary rounded-lg max-w-md w-full p-6">
                   <h2 className="text-xl font-bold mb-4">Confirm Purchase</h2>
                   <div className="space-y-3 mb-6">
                     <div className="flex justify-between">
-                      <span className="text-gray-600">Type:</span>
+                      <span className="text-hos-text-secondary">Type:</span>
                       <span className="font-medium capitalize">{formData.type}</span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-gray-600">Amount:</span>
-                      <span className="font-medium text-purple-600">
+                      <span className="text-hos-text-secondary">Amount:</span>
+                      <span className="font-medium text-hos-gold">
                         {formatPrice(
                           formData.customAmount ? parseFloat(formData.customAmount) || 0 : formData.amount,
                           formData.currency
@@ -330,26 +330,26 @@ export default function PurchaseGiftCardPage() {
                     </div>
                     {formData.issuedToEmail && (
                       <div className="flex justify-between">
-                        <span className="text-gray-600">Recipient:</span>
+                        <span className="text-hos-text-secondary">Recipient:</span>
                         <span className="font-medium">{formData.issuedToEmail}</span>
                       </div>
                     )}
                   </div>
-                  <p className="text-sm text-gray-500 mb-6">
+                  <p className="text-sm text-hos-text-muted mb-6">
                     This amount will be charged to your card on file. Please confirm to proceed.
                   </p>
                   <div className="flex gap-3">
                     <button
                       onClick={() => setShowConfirmation(false)}
                       disabled={loading}
-                      className="flex-1 px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors"
+                      className="flex-1 px-4 py-2 border border-hos-border rounded-lg text-hos-text-secondary hover:bg-hos-bg-tertiary transition-colors"
                     >
                       Cancel
                     </button>
                     <button
                       onClick={handleConfirmedPurchase}
                       disabled={loading}
-                      className="flex-1 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors font-medium disabled:opacity-50"
+                      className="flex-1 px-4 py-2 bg-hos-gold text-[#1a1406] rounded-lg hover:bg-hos-gold-hover transition-colors font-medium disabled:opacity-50"
                     >
                       {loading ? 'Processing...' : 'Confirm Purchase'}
                     </button>

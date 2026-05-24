@@ -125,7 +125,7 @@ export function TagSelector({
 
   return (
     <div className="space-y-2">
-      {label && <label className="block text-sm font-medium text-gray-700">{label}</label>}
+      {label && <label className="block text-sm font-medium text-hos-text-secondary">{label}</label>}
 
       {/* Selected Tags */}
       {selectedTags.length > 0 && (
@@ -133,13 +133,13 @@ export function TagSelector({
           {selectedTags.map((tag) => (
             <span
               key={tag.id}
-              className="inline-flex items-center gap-1 px-2 py-1 bg-purple-100 text-purple-800 rounded text-sm"
+              className="inline-flex items-center gap-1 px-2 py-1 bg-hos-gold/20 text-hos-gold rounded text-sm"
             >
               {tag.name}
               <button
                 type="button"
                 onClick={() => handleRemoveTag(tag.id)}
-                className="text-purple-600 hover:text-purple-800"
+                className="text-hos-gold hover:text-hos-gold-hover"
               >
                 ×
               </button>
@@ -159,7 +159,7 @@ export function TagSelector({
           }}
           onFocus={() => setShowDropdown(true)}
           placeholder={placeholder}
-          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
+          className="w-full px-3 py-2 border border-hos-border rounded-lg focus:outline-none focus:ring-2 focus:ring-hos-gold/50"
         />
 
         {/* Category Filter */}
@@ -172,8 +172,8 @@ export function TagSelector({
             }}
             className={`px-2 py-1 text-xs rounded ${
               filterCategory === null
-                ? 'bg-purple-600 text-white'
-                : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                ? 'bg-hos-gold text-[#1a1406]'
+                : 'bg-hos-bg-tertiary text-hos-text-secondary hover:bg-hos-bg-tertiary'
             }`}
           >
             All
@@ -188,8 +188,8 @@ export function TagSelector({
               }}
               className={`px-2 py-1 text-xs rounded ${
                 filterCategory === key
-                  ? 'bg-purple-600 text-white'
-                  : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                  ? 'bg-hos-gold text-[#1a1406]'
+                  : 'bg-hos-bg-tertiary text-hos-text-secondary hover:bg-hos-bg-tertiary'
               }`}
             >
               {label}
@@ -199,11 +199,11 @@ export function TagSelector({
 
         {/* Dropdown */}
         {showDropdown && (
-          <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-64 overflow-y-auto">
+          <div className="absolute z-10 w-full mt-1 bg-hos-bg-secondary border border-hos-border rounded-lg shadow-lg max-h-64 overflow-y-auto">
             {loading ? (
-              <div className="p-4 text-sm text-gray-500 text-center">Loading...</div>
+              <div className="p-4 text-sm text-hos-text-muted text-center">Loading...</div>
             ) : filteredTags.length === 0 ? (
-              <div className="p-4 text-sm text-gray-500 text-center">
+              <div className="p-4 text-sm text-hos-text-muted text-center">
                 {searchQuery ? 'No tags found' : 'No tags available'}
               </div>
             ) : (
@@ -215,21 +215,21 @@ export function TagSelector({
                       key={tag.id}
                       type="button"
                       onClick={() => handleTagSelect(tag)}
-                      className={`w-full text-left px-4 py-2 hover:bg-gray-100 flex items-center justify-between ${
-                        isSelected ? 'bg-purple-50' : ''
+                      className={`w-full text-left px-4 py-2 hover:bg-hos-bg-tertiary flex items-center justify-between ${
+                        isSelected ? 'bg-hos-gold/10' : ''
                       }`}
                     >
                       <div>
                         <div className="text-sm font-medium">{tag.name}</div>
                         {tag.description && (
-                          <div className="text-xs text-gray-500">{tag.description}</div>
+                          <div className="text-xs text-hos-text-muted">{tag.description}</div>
                         )}
                       </div>
                       <div className="flex items-center gap-2">
-                        <span className="text-xs text-gray-500">
+                        <span className="text-xs text-hos-text-muted">
                           {TAG_CATEGORY_LABELS[tag.category]}
                         </span>
-                        {isSelected && <span className="text-purple-600">✓</span>}
+                        {isSelected && <span className="text-hos-gold">✓</span>}
                       </div>
                     </button>
                   );

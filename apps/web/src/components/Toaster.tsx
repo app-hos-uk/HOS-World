@@ -10,36 +10,37 @@ export function Toaster() {
       toastOptions={{
         duration: 4000,
         style: {
-          background: '#fff',
-          color: '#1f2937',
+          background: '#1A1A1A',
+          color: '#B0B0B0',
           padding: '16px',
           borderRadius: '8px',
-          boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)',
+          boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.4), 0 4px 6px -2px rgba(0, 0, 0, 0.3)',
           fontSize: '14px',
           maxWidth: '400px',
+          border: '1px solid #2A2A2A',
         },
         success: {
           iconTheme: {
-            primary: '#10b981',
-            secondary: '#fff',
+            primary: '#27AE60',
+            secondary: '#1A1A1A',
           },
           style: {
-            border: '1px solid #10b981',
+            border: '1px solid #27AE60',
           },
         },
         error: {
           iconTheme: {
-            primary: '#ef4444',
-            secondary: '#fff',
+            primary: '#C0392B',
+            secondary: '#1A1A1A',
           },
           style: {
-            border: '1px solid #ef4444',
+            border: '1px solid #C0392B',
           },
         },
         loading: {
           iconTheme: {
-            primary: '#6366f1',
-            secondary: '#fff',
+            primary: '#D4A847',
+            secondary: '#1A1A1A',
           },
         },
       }}
@@ -54,7 +55,7 @@ export function Toaster() {
                 <button
                   type="button"
                   onClick={() => toast.dismiss(t.id)}
-                  className="shrink-0 p-1 rounded hover:bg-black/10 text-gray-500 hover:text-gray-700 transition-colors"
+                  className="shrink-0 p-1 rounded hover:bg-hos-bg-tertiary text-hos-text-muted hover:text-white transition-colors"
                   aria-label="Dismiss notification"
                 >
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">

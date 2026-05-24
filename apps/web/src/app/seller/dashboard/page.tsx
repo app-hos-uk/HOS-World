@@ -84,27 +84,27 @@ export default function SellerDashboardPage() {
       <DashboardLayout role="SELLER" menuItems={menuItems} title="Seller">
         <div className="mb-6">
           <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold">Seller Dashboard</h1>
-          <p className="text-gray-600 mt-2">Manage your products, orders, and submissions</p>
+          <p className="text-hos-text-secondary mt-2">Manage your products, orders, and submissions</p>
         </div>
 
         {loading && (
           <div className="space-y-6 animate-pulse">
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
               {[...Array(4)].map((_, i) => (
-                <div key={i} className="bg-white border rounded-lg p-6 shadow-sm">
-                  <div className="h-4 bg-gray-200 rounded w-24 mb-3" />
-                  <div className="h-8 bg-gray-200 rounded w-32 mb-2" />
-                  <div className="h-3 bg-gray-100 rounded w-20 mt-2" />
+                <div key={i} className="bg-hos-bg-secondary border rounded-lg p-6 shadow-sm">
+                  <div className="h-4 bg-hos-bg-tertiary rounded w-24 mb-3" />
+                  <div className="h-8 bg-hos-bg-tertiary rounded w-32 mb-2" />
+                  <div className="h-3 bg-hos-bg-tertiary rounded w-20 mt-2" />
                 </div>
               ))}
             </div>
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               {[...Array(2)].map((_, i) => (
-                <div key={i} className="bg-white border rounded-lg p-6 shadow-sm">
-                  <div className="h-5 bg-gray-200 rounded w-40 mb-4" />
+                <div key={i} className="bg-hos-bg-secondary border rounded-lg p-6 shadow-sm">
+                  <div className="h-5 bg-hos-bg-tertiary rounded w-40 mb-4" />
                   <div className="space-y-3">
                     {[...Array(3)].map((_, j) => (
-                      <div key={j} className="h-16 bg-gray-100 rounded" />
+                      <div key={j} className="h-16 bg-hos-bg-tertiary rounded" />
                     ))}
                   </div>
                 </div>
@@ -128,10 +128,10 @@ export default function SellerDashboardPage() {
         {!loading && !error && (
           <>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-              <div className="bg-white border rounded-lg p-6 shadow-sm">
+              <div className="bg-hos-bg-secondary border rounded-lg p-6 shadow-sm">
                 <div className="flex items-center justify-between">
                   <div>
-                    <h3 className="text-sm font-medium text-gray-600 mb-1">Total Sales</h3>
+                    <h3 className="text-sm font-medium text-hos-text-secondary mb-1">Total Sales</h3>
                     <p className="text-3xl font-bold text-green-600">
                       {formatPrice(Number(dashboardData?.totalSales) || 0)}
                     </p>
@@ -146,11 +146,11 @@ export default function SellerDashboardPage() {
                 </Link>
               </div>
 
-              <div className="bg-white border rounded-lg p-6 shadow-sm">
+              <div className="bg-hos-bg-secondary border rounded-lg p-6 shadow-sm">
                 <div className="flex items-center justify-between">
                   <div>
-                    <h3 className="text-sm font-medium text-gray-600 mb-1">Total Orders</h3>
-                    <p className="text-3xl font-bold text-blue-600">
+                    <h3 className="text-sm font-medium text-hos-text-secondary mb-1">Total Orders</h3>
+                    <p className="text-3xl font-bold text-hos-gold">
                       {dashboardData?.totalOrders?.toLocaleString() || '0'}
                     </p>
                   </div>
@@ -158,17 +158,17 @@ export default function SellerDashboardPage() {
                 </div>
                 <Link
                   href="/seller/orders"
-                  className="text-sm text-blue-600 hover:text-blue-700 mt-2 inline-block"
+                  className="text-sm text-hos-gold hover:text-hos-gold-hover mt-2 inline-block"
                 >
                   Manage orders →
                 </Link>
               </div>
 
-              <div className="bg-white border rounded-lg p-6 shadow-sm">
+              <div className="bg-hos-bg-secondary border rounded-lg p-6 shadow-sm">
                 <div className="flex items-center justify-between">
                   <div>
-                    <h3 className="text-sm font-medium text-gray-600 mb-1">Total Products</h3>
-                    <p className="text-3xl font-bold text-purple-600">
+                    <h3 className="text-sm font-medium text-hos-text-secondary mb-1">Total Products</h3>
+                    <p className="text-3xl font-bold text-hos-gold">
                       {dashboardData?.totalProducts?.toLocaleString() || '0'}
                     </p>
                   </div>
@@ -176,16 +176,16 @@ export default function SellerDashboardPage() {
                 </div>
                 <Link
                   href="/seller/products"
-                  className="text-sm text-purple-600 hover:text-purple-700 mt-2 inline-block"
+                  className="text-sm text-hos-gold hover:text-hos-gold-hover mt-2 inline-block"
                 >
                   View products →
                 </Link>
               </div>
 
-              <div className="bg-white border rounded-lg p-6 shadow-sm">
+              <div className="bg-hos-bg-secondary border rounded-lg p-6 shadow-sm">
                 <div className="flex items-center justify-between">
                   <div>
-                    <h3 className="text-sm font-medium text-gray-600 mb-1">Pending Approvals</h3>
+                    <h3 className="text-sm font-medium text-hos-text-secondary mb-1">Pending Approvals</h3>
                     <p className="text-3xl font-bold text-orange-600">
                       {pendingApprovals.toLocaleString()}
                     </p>
@@ -202,12 +202,12 @@ export default function SellerDashboardPage() {
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              <div className="bg-white border rounded-lg p-6 shadow-sm">
+              <div className="bg-hos-bg-secondary border rounded-lg p-6 shadow-sm">
                 <div className="flex items-center justify-between mb-4">
                   <h2 className="text-xl font-semibold">Recent Submissions</h2>
                   <Link
                     href="/seller/submissions"
-                    className="text-sm text-purple-600 hover:text-purple-700"
+                    className="text-sm text-hos-gold hover:text-hos-gold-hover"
                   >
                     View all →
                   </Link>
@@ -218,17 +218,17 @@ export default function SellerDashboardPage() {
                       <Link
                         key={submission.id}
                         href={`/seller/submit-product?id=${submission.id}`}
-                        className="block p-3 border rounded-lg hover:bg-gray-50 transition-colors"
+                        className="block p-3 border rounded-lg hover:bg-hos-bg-tertiary transition-colors"
                       >
                         <div className="flex items-start justify-between">
                           <div className="flex-1">
-                            <p className="font-medium text-gray-900">
+                            <p className="font-medium text-white">
                               {submission.productData?.name || 'Untitled Product'}
                             </p>
-                            <p className="text-sm text-gray-500 mt-1">
+                            <p className="text-sm text-hos-text-muted mt-1">
                               Status: {submission.status}
                             </p>
-                            <p className="text-xs text-gray-400 mt-1">
+                            <p className="text-xs text-hos-text-muted mt-1">
                               {new Date(submission.createdAt).toLocaleString()}
                             </p>
                           </div>
@@ -248,11 +248,11 @@ export default function SellerDashboardPage() {
                     ))}
                   </div>
                 ) : (
-                  <div className="text-center py-8 text-gray-500">
+                  <div className="text-center py-8 text-hos-text-muted">
                     <p>No recent submissions</p>
                     <Link
                       href="/seller/submit-product"
-                      className="text-sm text-purple-600 hover:text-purple-700 mt-2 inline-block"
+                      className="text-sm text-hos-gold hover:text-hos-gold-hover mt-2 inline-block"
                     >
                       Submit your first product →
                     </Link>
@@ -260,12 +260,12 @@ export default function SellerDashboardPage() {
                 )}
               </div>
 
-              <div className="bg-white border rounded-lg p-6 shadow-sm">
+              <div className="bg-hos-bg-secondary border rounded-lg p-6 shadow-sm">
                 <div className="flex items-center justify-between mb-4">
                   <h2 className="text-xl font-semibold">Recent Orders</h2>
                   <Link
                     href="/seller/orders"
-                    className="text-sm text-purple-600 hover:text-purple-700"
+                    className="text-sm text-hos-gold hover:text-hos-gold-hover"
                   >
                     View all →
                   </Link>
@@ -276,17 +276,17 @@ export default function SellerDashboardPage() {
                       <Link
                         key={order.id}
                         href={`/seller/orders?id=${order.id}`}
-                        className="block p-3 border rounded-lg hover:bg-gray-50 transition-colors"
+                        className="block p-3 border rounded-lg hover:bg-hos-bg-tertiary transition-colors"
                       >
                         <div className="flex items-start justify-between">
                           <div className="flex-1">
-                            <p className="font-medium text-gray-900">
+                            <p className="font-medium text-white">
                               Order #{order.orderNumber || order.id.slice(0, 8)}
                             </p>
-                            <p className="text-sm text-gray-500 mt-1">
+                            <p className="text-sm text-hos-text-muted mt-1">
                               {formatPrice(parseFloat(order.total || 0))}
                             </p>
-                            <p className="text-xs text-gray-400 mt-1">
+                            <p className="text-xs text-hos-text-muted mt-1">
                               {new Date(order.createdAt).toLocaleString()}
                             </p>
                           </div>
@@ -296,7 +296,7 @@ export default function SellerDashboardPage() {
                                 ? 'bg-green-100 text-green-800'
                                 : (order.status || '').toUpperCase() === 'CANCELLED'
                                   ? 'bg-red-100 text-red-800'
-                                  : 'bg-blue-100 text-blue-800'
+                                  : 'bg-hos-gold/20 text-hos-gold'
                             }`}
                           >
                             {order.status}
@@ -306,7 +306,7 @@ export default function SellerDashboardPage() {
                     ))}
                   </div>
                 ) : (
-                  <div className="text-center py-8 text-gray-500">
+                  <div className="text-center py-8 text-hos-text-muted">
                     <p>No recent orders</p>
                     <p className="text-sm mt-2">Orders will appear here when customers purchase your products</p>
                   </div>
@@ -314,17 +314,17 @@ export default function SellerDashboardPage() {
               </div>
             </div>
 
-            <div className="mt-6 bg-white border rounded-lg p-6 shadow-sm">
+            <div className="mt-6 bg-hos-bg-secondary border rounded-lg p-6 shadow-sm">
               <div className="flex items-center justify-between">
                 <div>
                   <h3 className="text-lg font-semibold mb-1">Average Order Value</h3>
-                  <p className="text-3xl font-bold text-purple-600">
+                  <p className="text-3xl font-bold text-hos-gold">
                     {formatPrice(Number(dashboardData?.averageOrderValue) || 0)}
                   </p>
                 </div>
                 <Link
                   href="/seller/submit-product"
-                  className="px-6 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors font-medium"
+                  className="px-6 py-3 bg-hos-gold text-[#1a1406] rounded-lg hover:bg-hos-gold-hover transition-colors font-medium"
                 >
                   Submit New Product
                 </Link>

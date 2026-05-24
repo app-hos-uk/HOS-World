@@ -382,11 +382,11 @@ function ProfilePageContent() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-white">
+      <div className="min-h-screen bg-hos-bg-secondary">
         <Header />
         <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 lg:py-12">
           <div className="flex items-center justify-center py-12">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600"></div>
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-hos-gold"></div>
           </div>
         </main>
         <Footer />
@@ -396,13 +396,13 @@ function ProfilePageContent() {
 
   return (
     <RouteGuard allowedRoles={['CUSTOMER', 'ADMIN']} showAccessDenied={true}>
-      <div className="min-h-screen bg-white">
+      <div className="min-h-screen bg-hos-bg-secondary">
         <Header />
         <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 lg:py-12">
           {/* Profile Header */}
-          <div className="bg-gradient-to-r from-purple-600 to-indigo-600 rounded-lg p-6 sm:p-8 mb-6 text-white">
+          <div className="bg-hos-bg-secondary border border-hos-border rounded-lg p-6 sm:p-8 mb-6 text-white">
             <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 sm:gap-6">
-              <div className="relative w-20 h-20 sm:w-24 sm:h-24 rounded-full bg-white bg-opacity-20 flex items-center justify-center text-4xl sm:text-5xl overflow-hidden">
+              <div className="relative w-20 h-20 sm:w-24 sm:h-24 rounded-full bg-hos-bg-secondary bg-opacity-20 flex items-center justify-center text-4xl sm:text-5xl overflow-hidden">
                 {profile?.avatar ? (
                   <Image
                     src={profile.avatar}
@@ -421,20 +421,20 @@ function ProfilePageContent() {
                     ? `${profile.firstName} ${profile.lastName}`
                     : profile?.email || 'User'}
                 </h1>
-                <p className="text-purple-100 text-sm sm:text-base">{profile?.email}</p>
+                <p className="text-hos-text-secondary text-sm sm:text-base">{profile?.email}</p>
                 {stats && (
                   <div className="flex flex-wrap gap-4 mt-4">
                     <div>
                       <div className="text-2xl sm:text-3xl font-bold">Level {stats.level}</div>
-                      <div className="text-xs sm:text-sm text-purple-100">Current Level</div>
+                      <div className="text-xs sm:text-sm text-hos-text-secondary">Current Level</div>
                     </div>
                     <div>
                       <div className="text-2xl sm:text-3xl font-bold">{stats.points.toLocaleString()}</div>
-                      <div className="text-xs sm:text-sm text-purple-100">Points</div>
+                      <div className="text-xs sm:text-sm text-hos-text-secondary">Points</div>
                     </div>
                     <div>
                       <div className="text-2xl sm:text-3xl font-bold">{stats.badgeCount}</div>
-                      <div className="text-xs sm:text-sm text-purple-100">Badges</div>
+                      <div className="text-xs sm:text-sm text-hos-text-secondary">Badges</div>
                     </div>
                   </div>
                 )}
@@ -443,14 +443,14 @@ function ProfilePageContent() {
           </div>
 
           {/* Tabs */}
-          <div className="bg-white border border-gray-200 rounded-lg mb-6">
-            <div className="flex flex-wrap border-b border-gray-200">
+          <div className="bg-hos-bg-secondary border border-hos-border rounded-lg mb-6">
+            <div className="flex flex-wrap border-b border-hos-border">
               <button
                 onClick={() => setActiveTab('overview')}
                 className={`px-4 sm:px-6 py-3 font-medium text-sm sm:text-base transition-colors ${
                   activeTab === 'overview'
-                    ? 'border-b-2 border-purple-600 text-purple-600'
-                    : 'text-gray-600 hover:text-gray-900'
+                    ? 'border-b-2 border-hos-gold text-hos-gold'
+                    : 'text-hos-text-secondary hover:text-white'
                 }`}
               >
                 Overview
@@ -459,8 +459,8 @@ function ProfilePageContent() {
                 onClick={() => setActiveTab('badges')}
                 className={`px-4 sm:px-6 py-3 font-medium text-sm sm:text-base transition-colors ${
                   activeTab === 'badges'
-                    ? 'border-b-2 border-purple-600 text-purple-600'
-                    : 'text-gray-600 hover:text-gray-900'
+                    ? 'border-b-2 border-hos-gold text-hos-gold'
+                    : 'text-hos-text-secondary hover:text-white'
                 }`}
               >
                 Badges ({badges.length})
@@ -469,8 +469,8 @@ function ProfilePageContent() {
                 onClick={() => setActiveTab('collections')}
                 className={`px-4 sm:px-6 py-3 font-medium text-sm sm:text-base transition-colors ${
                   activeTab === 'collections'
-                    ? 'border-b-2 border-purple-600 text-purple-600'
-                    : 'text-gray-600 hover:text-gray-900'
+                    ? 'border-b-2 border-hos-gold text-hos-gold'
+                    : 'text-hos-text-secondary hover:text-white'
                 }`}
               >
                 Collections ({collections.length})
@@ -479,8 +479,8 @@ function ProfilePageContent() {
                 onClick={() => setActiveTab('addresses')}
                 className={`px-4 sm:px-6 py-3 font-medium text-sm sm:text-base transition-colors ${
                   activeTab === 'addresses'
-                    ? 'border-b-2 border-purple-600 text-purple-600'
-                    : 'text-gray-600 hover:text-gray-900'
+                    ? 'border-b-2 border-hos-gold text-hos-gold'
+                    : 'text-hos-text-secondary hover:text-white'
                 }`}
               >
                 Addresses
@@ -489,8 +489,8 @@ function ProfilePageContent() {
                 onClick={() => setActiveTab('settings')}
                 className={`px-4 sm:px-6 py-3 font-medium text-sm sm:text-base transition-colors ${
                   activeTab === 'settings'
-                    ? 'border-b-2 border-purple-600 text-purple-600'
-                    : 'text-gray-600 hover:text-gray-900'
+                    ? 'border-b-2 border-hos-gold text-hos-gold'
+                    : 'text-hos-text-secondary hover:text-white'
                 }`}
               >
                 Settings
@@ -499,7 +499,7 @@ function ProfilePageContent() {
           </div>
 
           {/* Tab Content */}
-          <div className="bg-white border border-gray-200 rounded-lg p-4 sm:p-6">
+          <div className="bg-hos-bg-secondary border border-hos-border rounded-lg p-4 sm:p-6">
             {activeTab === 'overview' && (
               <div className="space-y-6">
                 {/* Level Progress */}
@@ -507,17 +507,17 @@ function ProfilePageContent() {
                   <div>
                     <div className="flex justify-between items-center mb-2">
                       <h3 className="text-lg font-semibold">Progress to Level {stats.progress.nextLevel}</h3>
-                      <span className="text-sm text-gray-600">
+                      <span className="text-sm text-hos-text-secondary">
                         {stats.progress.current} / {stats.progress.current + stats.progress.needed} points
                       </span>
                     </div>
-                    <div className="w-full bg-gray-200 rounded-full h-4">
+                    <div className="w-full bg-hos-bg-tertiary rounded-full h-4">
                       <div
-                        className="bg-gradient-to-r from-purple-600 to-indigo-600 h-4 rounded-full transition-all duration-300"
+                        className="bg-hos-bg-secondary border border-hos-border h-4 rounded-full transition-all duration-300"
                         style={{ width: `${stats.progress.percentage}%` }}
                       ></div>
                     </div>
-                    <p className="text-sm text-gray-600 mt-2">
+                    <p className="text-sm text-hos-text-secondary mt-2">
                       {stats.progress.needed} more points to reach Level {stats.progress.nextLevel}
                     </p>
                   </div>
@@ -525,7 +525,7 @@ function ProfilePageContent() {
 
                 {/* Character */}
                 {stats?.character && (
-                  <div className="bg-gray-50 rounded-lg p-4">
+                  <div className="bg-hos-bg-secondary rounded-lg p-4">
                     <h3 className="text-lg font-semibold mb-3">Your Character</h3>
                     <div className="flex items-center gap-4">
                       {stats.character.avatar && (
@@ -540,7 +540,7 @@ function ProfilePageContent() {
                       <div>
                         <div className="font-semibold">{stats.character.name}</div>
                         {stats.character.fandom && (
-                          <div className="text-sm text-gray-600">{stats.character.fandom.name}</div>
+                          <div className="text-sm text-hos-text-secondary">{stats.character.fandom.name}</div>
                         )}
                       </div>
                     </div>
@@ -555,7 +555,7 @@ function ProfilePageContent() {
                       {stats.favoriteFandoms.map((fandom, idx) => (
                         <span
                           key={idx}
-                          className="px-3 py-1 bg-purple-100 text-purple-800 rounded-full text-sm font-medium"
+                          className="px-3 py-1 bg-hos-gold/20 text-hos-gold rounded-full text-sm font-medium"
                         >
                           {fandom}
                         </span>
@@ -567,13 +567,13 @@ function ProfilePageContent() {
                 {/* Quest Stats */}
                 {stats && (
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div className="bg-blue-50 rounded-lg p-4">
-                      <div className="text-2xl font-bold text-blue-600">{stats.activeQuests}</div>
-                      <div className="text-sm text-gray-600">Active Quests</div>
+                    <div className="bg-hos-gold/10 rounded-lg p-4">
+                      <div className="text-2xl font-bold text-hos-gold">{stats.activeQuests}</div>
+                      <div className="text-sm text-hos-text-secondary">Active Quests</div>
                     </div>
                     <div className="bg-green-50 rounded-lg p-4">
                       <div className="text-2xl font-bold text-green-600">{stats.completedQuests}</div>
-                      <div className="text-sm text-gray-600">Completed Quests</div>
+                      <div className="text-sm text-hos-text-secondary">Completed Quests</div>
                     </div>
                   </div>
                 )}
@@ -586,18 +586,18 @@ function ProfilePageContent() {
                       {badges.slice(0, 4).map((badge) => (
                         <div
                           key={badge.id}
-                          className="bg-gray-50 rounded-lg p-4 text-center hover:shadow-md transition-shadow"
+                          className="bg-hos-bg-secondary rounded-lg p-4 text-center hover:shadow-md transition-shadow"
                         >
                           <div className="text-3xl mb-2">{badge.icon || '🏆'}</div>
                           <div className="text-sm font-medium">{badge.name}</div>
-                          <div className="text-xs text-gray-500 mt-1">{badge.category}</div>
+                          <div className="text-xs text-hos-text-muted mt-1">{badge.category}</div>
                         </div>
                       ))}
                     </div>
                     {badges.length > 4 && (
                       <button
                         onClick={() => setActiveTab('badges')}
-                        className="mt-4 text-purple-600 hover:text-purple-800 font-medium text-sm"
+                        className="mt-4 text-hos-gold hover:text-hos-gold-hover font-medium text-sm"
                       >
                         View All Badges →
                       </button>
@@ -613,21 +613,21 @@ function ProfilePageContent() {
                 {badges.length === 0 ? (
                   <div className="text-center py-12">
                     <div className="text-6xl mb-4">🏆</div>
-                    <p className="text-gray-600">No badges earned yet</p>
-                    <p className="text-sm text-gray-500 mt-2">Complete quests and activities to earn badges!</p>
+                    <p className="text-hos-text-secondary">No badges earned yet</p>
+                    <p className="text-sm text-hos-text-muted mt-2">Complete quests and activities to earn badges!</p>
                   </div>
                 ) : (
                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
                     {badges.map((badge) => (
                       <div
                         key={badge.id}
-                        className="bg-gray-50 rounded-lg p-6 hover:shadow-lg transition-shadow"
+                        className="bg-hos-bg-secondary rounded-lg p-6 hover:shadow-lg transition-shadow"
                       >
                         <div className="text-center">
                           <div className="text-5xl mb-3">{badge.icon || '🏆'}</div>
                           <h3 className="text-lg font-semibold mb-2">{badge.name}</h3>
                           {badge.description && (
-                            <p className="text-sm text-gray-600 mb-3">{badge.description}</p>
+                            <p className="text-sm text-hos-text-secondary mb-3">{badge.description}</p>
                           )}
                           <div className="flex items-center justify-center gap-2 text-xs">
                             <span
@@ -635,15 +635,15 @@ function ProfilePageContent() {
                                 badge.rarity === 'RARE'
                                   ? 'bg-yellow-100 text-yellow-800'
                                   : badge.rarity === 'EPIC'
-                                  ? 'bg-purple-100 text-purple-800'
-                                  : 'bg-gray-100 text-gray-800'
+                                  ? 'bg-hos-gold/20 text-hos-gold'
+                                  : 'bg-hos-bg-tertiary text-white'
                               }`}
                             >
                               {badge.rarity}
                             </span>
-                            <span className="text-gray-500">{badge.points} points</span>
+                            <span className="text-hos-text-muted">{badge.points} points</span>
                           </div>
-                          <div className="text-xs text-gray-500 mt-3">
+                          <div className="text-xs text-hos-text-muted mt-3">
                             Earned {new Date(badge.earnedAt).toLocaleDateString()}
                           </div>
                         </div>
@@ -660,7 +660,7 @@ function ProfilePageContent() {
                   <h2 className="text-2xl font-bold">Your Collections</h2>
                   <Link
                     href="/collections/new"
-                    className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors font-medium"
+                    className="px-4 py-2 bg-hos-gold text-[#1a1406] rounded-lg hover:bg-hos-gold-hover transition-colors font-medium"
                   >
                     + Create Collection
                   </Link>
@@ -668,10 +668,10 @@ function ProfilePageContent() {
                 {collections.length === 0 ? (
                   <div className="text-center py-12">
                     <div className="text-6xl mb-4">📚</div>
-                    <p className="text-gray-600">No collections yet</p>
+                    <p className="text-hos-text-secondary">No collections yet</p>
                     <Link
                       href="/collections/new"
-                      className="mt-4 inline-block px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors font-medium"
+                      className="mt-4 inline-block px-4 py-2 bg-hos-gold text-[#1a1406] rounded-lg hover:bg-hos-gold-hover transition-colors font-medium"
                     >
                       Create Your First Collection
                     </Link>
@@ -682,20 +682,20 @@ function ProfilePageContent() {
                       <Link
                         key={collection.id}
                         href={`/collections/${collection.id}`}
-                        className="bg-gray-50 rounded-lg p-6 hover:shadow-lg transition-shadow block"
+                        className="bg-hos-bg-secondary rounded-lg p-6 hover:shadow-lg transition-shadow block"
                       >
                         <div className="text-4xl mb-3">📚</div>
                         <h3 className="text-lg font-semibold mb-2">{collection.name}</h3>
                         {collection.description && (
-                          <p className="text-sm text-gray-600 mb-3 line-clamp-2">{collection.description}</p>
+                          <p className="text-sm text-hos-text-secondary mb-3 line-clamp-2">{collection.description}</p>
                         )}
                         <div className="flex items-center justify-between text-sm">
-                          <span className="text-gray-600">{collection.itemCount} items</span>
+                          <span className="text-hos-text-secondary">{collection.itemCount} items</span>
                           <span
                             className={`px-2 py-1 rounded text-xs ${
                               collection.isPublic
                                 ? 'bg-green-100 text-green-800'
-                                : 'bg-gray-100 text-gray-800'
+                                : 'bg-hos-bg-tertiary text-white'
                             }`}
                           >
                             {collection.isPublic ? 'Public' : 'Private'}
@@ -711,13 +711,13 @@ function ProfilePageContent() {
             {activeTab === 'addresses' && (
               <div className="space-y-6">
                 {returnUrl && (
-                  <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 flex items-center justify-between">
-                    <p className="text-sm text-blue-800">
+                  <div className="bg-hos-gold/10 border border-hos-border-accent rounded-lg p-4 flex items-center justify-between">
+                    <p className="text-sm text-hos-gold">
                       Add or select a shipping address, then continue your checkout.
                     </p>
                     <button
                       onClick={() => router.push(returnUrl)}
-                      className="ml-4 px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors whitespace-nowrap"
+                      className="ml-4 px-4 py-2 bg-hos-gold text-[#1a1406] text-sm font-medium rounded-lg hover:bg-hos-gold-hover transition-colors whitespace-nowrap"
                     >
                       Return to Checkout
                     </button>
@@ -744,19 +744,19 @@ function ProfilePageContent() {
                       });
                       setShowAddressForm(true);
                     }}
-                    className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors text-sm font-medium"
+                    className="px-4 py-2 bg-hos-gold text-[#1a1406] rounded-lg hover:bg-hos-gold-hover transition-colors text-sm font-medium"
                   >
                     + Add Address
                   </button>
                 </div>
 
                 {showAddressForm && (
-                  <div className="bg-gray-50 rounded-lg p-6">
+                  <div className="bg-hos-bg-secondary rounded-lg p-6">
                     <h4 className="font-semibold mb-4">{editingAddress ? 'Edit' : 'Add'} Address</h4>
                     <form onSubmit={handleSaveAddress} className="space-y-4">
                       {/* Address Label */}
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Address Type</label>
+                        <label className="block text-sm font-medium text-hos-text-secondary mb-1">Address Type</label>
                         <div className="flex gap-3">
                           {(['HOME', 'WORK', 'OTHER'] as const).map((type) => (
                             <button
@@ -765,8 +765,8 @@ function ProfilePageContent() {
                               onClick={() => setAddressForm({ ...addressForm, label: type })}
                               className={`px-4 py-2 rounded-lg border text-sm font-medium transition-colors ${
                                 addressForm.label === type
-                                  ? 'bg-purple-600 text-white border-purple-600'
-                                  : 'bg-white text-gray-700 border-gray-300 hover:border-purple-300'
+                                  ? 'bg-hos-gold text-[#1a1406] border-hos-gold'
+                                  : 'bg-hos-bg-secondary text-hos-text-secondary border-hos-border hover:border-hos-border-accent'
                               }`}
                             >
                               {type === 'HOME' ? '🏠 Home' : type === 'WORK' ? '💼 Work' : '📍 Other'}
@@ -778,7 +778,7 @@ function ProfilePageContent() {
                       {/* Contact Details */}
                       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                         <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-1">First Name *</label>
+                          <label className="block text-sm font-medium text-hos-text-secondary mb-1">First Name *</label>
                           <input
                             type="text"
                             value={addressForm.firstName}
@@ -788,13 +788,13 @@ function ProfilePageContent() {
                                 firstName: sanitizeLatinPersonName(e.target.value),
                               })
                             }
-                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
+                            className="w-full px-4 py-2 border border-hos-border rounded-lg focus:outline-none focus:ring-2 focus:ring-hos-gold/50"
                             placeholder="Recipient first name"
                             required
                           />
                         </div>
                         <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-1">Last Name *</label>
+                          <label className="block text-sm font-medium text-hos-text-secondary mb-1">Last Name *</label>
                           <input
                             type="text"
                             value={addressForm.lastName}
@@ -804,20 +804,20 @@ function ProfilePageContent() {
                                 lastName: sanitizeLatinPersonName(e.target.value),
                               })
                             }
-                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
+                            className="w-full px-4 py-2 border border-hos-border rounded-lg focus:outline-none focus:ring-2 focus:ring-hos-gold/50"
                             placeholder="Recipient last name"
                             required
                           />
                         </div>
                         <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-1">Phone</label>
+                          <label className="block text-sm font-medium text-hos-text-secondary mb-1">Phone</label>
                           <input
                             type="tel"
                             value={addressForm.phone}
                             onChange={(e) =>
                               setAddressForm({ ...addressForm, phone: sanitizeTelInput(e.target.value) })
                             }
-                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
+                            className="w-full px-4 py-2 border border-hos-border rounded-lg focus:outline-none focus:ring-2 focus:ring-hos-gold/50"
                             placeholder="+1 555 123 4567"
                           />
                         </div>
@@ -826,18 +826,18 @@ function ProfilePageContent() {
                       {/* Address Details */}
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div className="md:col-span-2">
-                          <label className="block text-sm font-medium text-gray-700 mb-1">Street Address *</label>
+                          <label className="block text-sm font-medium text-hos-text-secondary mb-1">Street Address *</label>
                           <input
                             type="text"
                             value={addressForm.street}
                             onChange={(e) => setAddressForm({ ...addressForm, street: e.target.value })}
-                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
+                            className="w-full px-4 py-2 border border-hos-border rounded-lg focus:outline-none focus:ring-2 focus:ring-hos-gold/50"
                             placeholder="House number and street name"
                             required
                           />
                         </div>
                         <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-1">City *</label>
+                          <label className="block text-sm font-medium text-hos-text-secondary mb-1">City *</label>
                           <input
                             type="text"
                             value={addressForm.city}
@@ -847,12 +847,12 @@ function ProfilePageContent() {
                                 city: sanitizeLatinCityOrState(e.target.value),
                               })
                             }
-                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
+                            className="w-full px-4 py-2 border border-hos-border rounded-lg focus:outline-none focus:ring-2 focus:ring-hos-gold/50"
                             required
                           />
                         </div>
                         <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-1">State/Province/Region</label>
+                          <label className="block text-sm font-medium text-hos-text-secondary mb-1">State/Province/Region</label>
                           <input
                             type="text"
                             value={addressForm.state}
@@ -862,11 +862,11 @@ function ProfilePageContent() {
                                 state: sanitizeLatinCityOrState(e.target.value),
                               })
                             }
-                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
+                            className="w-full px-4 py-2 border border-hos-border rounded-lg focus:outline-none focus:ring-2 focus:ring-hos-gold/50"
                           />
                         </div>
                         <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-1">Postal Code *</label>
+                          <label className="block text-sm font-medium text-hos-text-secondary mb-1">Postal Code *</label>
                           <input
                             type="text"
                             value={addressForm.postalCode}
@@ -877,16 +877,16 @@ function ProfilePageContent() {
                               })
                             }
                             inputMode="numeric"
-                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
+                            className="w-full px-4 py-2 border border-hos-border rounded-lg focus:outline-none focus:ring-2 focus:ring-hos-gold/50"
                             required
                           />
                         </div>
                         <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-1">Country *</label>
+                          <label className="block text-sm font-medium text-hos-text-secondary mb-1">Country *</label>
                           <select
                             value={addressForm.country}
                             onChange={(e) => setAddressForm({ ...addressForm, country: e.target.value })}
-                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
+                            className="w-full px-4 py-2 border border-hos-border rounded-lg focus:outline-none focus:ring-2 focus:ring-hos-gold/50"
                             required
                           >
                             <option value="">Select country</option>
@@ -908,17 +908,17 @@ function ProfilePageContent() {
                           type="checkbox"
                           checked={addressForm.isDefault}
                           onChange={(e) => setAddressForm({ ...addressForm, isDefault: e.target.checked })}
-                          className="mr-2 rounded border-gray-300 text-purple-600"
+                          className="mr-2 rounded border-hos-border text-hos-gold"
                         />
-                        <label className="text-sm text-gray-700">Set as default shipping address</label>
+                        <label className="text-sm text-hos-text-secondary">Set as default shipping address</label>
                       </div>
                       
                       {/* Map Picker for Location Selection */}
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                        <label className="block text-sm font-medium text-hos-text-secondary mb-2">
                           Location on Map (Optional)
                         </label>
-                        <p className="text-xs text-gray-500 mb-2">
+                        <p className="text-xs text-hos-text-muted mb-2">
                           Click on the map to set your exact location. This helps with accurate delivery routing.
                         </p>
                         <MapPicker
@@ -936,7 +936,7 @@ function ProfilePageContent() {
                         <button
                           type="submit"
                           disabled={savingAddress}
-                          className="px-6 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                          className="px-6 py-2 bg-hos-gold text-[#1a1406] rounded-lg hover:bg-hos-gold-hover transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                         >
                           {savingAddress ? 'Saving...' : (editingAddress ? 'Update' : 'Add')} Address
                         </button>
@@ -946,7 +946,7 @@ function ProfilePageContent() {
                             setShowAddressForm(false);
                             setEditingAddress(null);
                           }}
-                          className="px-6 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+                          className="px-6 py-2 border border-hos-border rounded-lg hover:bg-hos-bg-tertiary transition-colors"
                         >
                           Cancel
                         </button>
@@ -957,24 +957,24 @@ function ProfilePageContent() {
 
                 <div className="space-y-4">
                   {addresses.length === 0 ? (
-                    <p className="text-gray-600 text-center py-8">No addresses saved. Add your first address above.</p>
+                    <p className="text-hos-text-secondary text-center py-8">No addresses saved. Add your first address above.</p>
                   ) : (
                     addresses.map((address) => (
-                      <div key={address.id} className="border border-gray-200 rounded-lg p-4">
+                      <div key={address.id} className="border border-hos-border rounded-lg p-4">
                         <div className="flex justify-between items-start">
                           <div className="flex-1">
                             <div className="flex items-center gap-2 mb-2">
                               {address.label && (
                                 <span className={`inline-block px-2 py-1 text-xs font-semibold rounded ${
-                                  address.label === 'HOME' ? 'bg-blue-100 text-blue-800' :
+                                  address.label === 'HOME' ? 'bg-hos-gold/20 text-hos-gold' :
                                   address.label === 'WORK' ? 'bg-green-100 text-green-800' :
-                                  'bg-gray-100 text-gray-800'
+                                  'bg-hos-bg-tertiary text-white'
                                 }`}>
                                   {address.label === 'HOME' ? '🏠 Home' : address.label === 'WORK' ? '💼 Work' : '📍 Other'}
                                 </span>
                               )}
                               {address.isDefault && (
-                                <span className="inline-block px-2 py-1 bg-purple-100 text-purple-800 text-xs font-semibold rounded">
+                                <span className="inline-block px-2 py-1 bg-hos-gold/20 text-hos-gold text-xs font-semibold rounded">
                                   Default
                                 </span>
                               )}
@@ -984,18 +984,18 @@ function ProfilePageContent() {
                                 ? `${address.firstName} ${address.lastName}` 
                                 : address.street}
                             </p>
-                            {address.firstName && <p className="text-gray-600">{address.street}</p>}
-                            <p className="text-gray-600">
+                            {address.firstName && <p className="text-hos-text-secondary">{address.street}</p>}
+                            <p className="text-hos-text-secondary">
                               {address.city}{address.state ? `, ${address.state}` : ''} {address.postalCode}
                             </p>
-                            <p className="text-gray-600">{address.country}</p>
-                            {address.phone && <p className="text-gray-500 text-sm mt-1">📞 {address.phone}</p>}
+                            <p className="text-hos-text-secondary">{address.country}</p>
+                            {address.phone && <p className="text-hos-text-muted text-sm mt-1">📞 {address.phone}</p>}
                           </div>
                           <div className="flex gap-2">
                             {!address.isDefault && (
                               <button
                                 onClick={() => handleSetDefault(address.id)}
-                                className="px-3 py-1 text-sm border border-gray-300 rounded hover:bg-gray-50"
+                                className="px-3 py-1 text-sm border border-hos-border rounded hover:bg-hos-bg-tertiary"
                               >
                                 Set Default
                               </button>
@@ -1019,7 +1019,7 @@ function ProfilePageContent() {
                                 });
                                 setShowAddressForm(true);
                               }}
-                              className="px-3 py-1 text-sm border border-gray-300 rounded hover:bg-gray-50"
+                              className="px-3 py-1 text-sm border border-hos-border rounded hover:bg-hos-bg-tertiary"
                             >
                               Edit
                             </button>
@@ -1049,26 +1049,26 @@ function ProfilePageContent() {
                       {!editing && (
                         <button
                           onClick={() => setEditing(true)}
-                          className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors font-medium text-sm"
+                          className="px-4 py-2 bg-hos-gold text-[#1a1406] rounded-lg hover:bg-hos-gold-hover transition-colors font-medium text-sm"
                         >
                           Edit Profile
                         </button>
                       )}
                     </div>
-                    <div className="bg-gray-50 rounded-lg p-4 sm:p-6 space-y-4">
+                    <div className="bg-hos-bg-secondary rounded-lg p-4 sm:p-6 space-y-4">
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
+                        <label className="block text-sm font-medium text-hos-text-secondary mb-1">Email</label>
                         <input
                           type="email"
                           value={profile?.email || ''}
                           disabled
-                          className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-gray-100 text-gray-600"
+                          className="w-full px-4 py-2 border border-hos-border rounded-lg bg-hos-bg-tertiary text-hos-text-secondary"
                         />
-                        <p className="text-xs text-gray-500 mt-1">Email cannot be changed</p>
+                        <p className="text-xs text-hos-text-muted mt-1">Email cannot be changed</p>
                       </div>
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-1">First Name</label>
+                          <label className="block text-sm font-medium text-hos-text-secondary mb-1">First Name</label>
                           <input
                             type="text"
                             value={editing ? formData.firstName : (profile?.firstName || '')}
@@ -1076,11 +1076,11 @@ function ProfilePageContent() {
                               setFormData({ ...formData, firstName: sanitizeLatinPersonName(e.target.value) })
                             }
                             disabled={!editing}
-                            className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-white disabled:bg-gray-100"
+                            className="w-full px-4 py-2 border border-hos-border rounded-lg bg-hos-bg-secondary disabled:bg-hos-bg-tertiary"
                           />
                         </div>
                         <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-1">Last Name</label>
+                          <label className="block text-sm font-medium text-hos-text-secondary mb-1">Last Name</label>
                           <input
                             type="text"
                             value={editing ? formData.lastName : (profile?.lastName || '')}
@@ -1088,27 +1088,27 @@ function ProfilePageContent() {
                               setFormData({ ...formData, lastName: sanitizeLatinPersonName(e.target.value) })
                             }
                             disabled={!editing}
-                            className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-white disabled:bg-gray-100"
+                            className="w-full px-4 py-2 border border-hos-border rounded-lg bg-hos-bg-secondary disabled:bg-hos-bg-tertiary"
                           />
                         </div>
                       </div>
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Phone</label>
+                        <label className="block text-sm font-medium text-hos-text-secondary mb-1">Phone</label>
                         <input
                           type="tel"
                           value={editing ? formData.phone : (profile?.phone || '')}
                           onChange={(e) => setFormData({ ...formData, phone: sanitizeTelInput(e.target.value) })}
                           disabled={!editing}
-                          className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-white disabled:bg-gray-100"
+                          className="w-full px-4 py-2 border border-hos-border rounded-lg bg-hos-bg-secondary disabled:bg-hos-bg-tertiary"
                         />
                       </div>
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Country</label>
+                        <label className="block text-sm font-medium text-hos-text-secondary mb-1">Country</label>
                         <select
                           value={editing ? formData.country : (profile?.country || '')}
                           onChange={(e) => setFormData({ ...formData, country: e.target.value })}
                           disabled={!editing}
-                          className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-white disabled:bg-gray-100"
+                          className="w-full px-4 py-2 border border-hos-border rounded-lg bg-hos-bg-secondary disabled:bg-hos-bg-tertiary"
                         >
                           <option value="">Select country</option>
                           <option value="United States">United States</option>
@@ -1132,7 +1132,7 @@ function ProfilePageContent() {
                         </select>
                       </div>
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">WhatsApp Number</label>
+                        <label className="block text-sm font-medium text-hos-text-secondary mb-1">WhatsApp Number</label>
                         <input
                           type="tel"
                           value={editing ? formData.whatsappNumber : (profile?.whatsappNumber || '')}
@@ -1141,17 +1141,17 @@ function ProfilePageContent() {
                           }
                           disabled={!editing}
                           placeholder="+1 555 123 4567"
-                          className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-white disabled:bg-gray-100"
+                          className="w-full px-4 py-2 border border-hos-border rounded-lg bg-hos-bg-secondary disabled:bg-hos-bg-tertiary"
                         />
-                        <p className="text-xs text-gray-500 mt-1">Include country code (e.g., +1 for US)</p>
+                        <p className="text-xs text-hos-text-muted mt-1">Include country code (e.g., +1 for US)</p>
                       </div>
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Preferred Communication Method</label>
+                        <label className="block text-sm font-medium text-hos-text-secondary mb-1">Preferred Communication Method</label>
                         <select
                           value={editing ? formData.preferredCommunicationMethod : (profile?.preferredCommunicationMethod || 'EMAIL')}
                           onChange={(e) => setFormData({ ...formData, preferredCommunicationMethod: e.target.value as any })}
                           disabled={!editing}
-                          className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-white disabled:bg-gray-100"
+                          className="w-full px-4 py-2 border border-hos-border rounded-lg bg-hos-bg-secondary disabled:bg-hos-bg-tertiary"
                         >
                           <option value="EMAIL">Email</option>
                           <option value="SMS">SMS</option>
@@ -1160,46 +1160,46 @@ function ProfilePageContent() {
                         </select>
                       </div>
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Currency Preference</label>
+                        <label className="block text-sm font-medium text-hos-text-secondary mb-1">Currency Preference</label>
                         <select
                           value={editing ? formData.currencyPreference : (profile?.currencyPreference || 'USD')}
                           onChange={(e) => setFormData({ ...formData, currencyPreference: e.target.value })}
                           disabled={!editing}
-                          className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-white disabled:bg-gray-100"
+                          className="w-full px-4 py-2 border border-hos-border rounded-lg bg-hos-bg-secondary disabled:bg-hos-bg-tertiary"
                         >
                           <option value="USD">$ USD (US Dollar)</option>
                           <option value="EUR">€ EUR (Euro)</option>
                           <option value="AED">د.إ AED (UAE Dirham)</option>
                         </select>
-                        <p className="text-xs text-gray-500 mt-1">Prices will be displayed in this currency</p>
+                        <p className="text-xs text-hos-text-muted mt-1">Prices will be displayed in this currency</p>
                       </div>
 
                       {/* Special Dates - Optional for marketing */}
                       <div className="border-t pt-4 mt-4">
-                        <h4 className="text-sm font-semibold text-gray-700 mb-3">Special Dates (Optional)</h4>
-                        <p className="text-xs text-gray-500 mb-3">Share your special dates to receive personalized offers and birthday surprises!</p>
+                        <h4 className="text-sm font-semibold text-hos-text-secondary mb-3">Special Dates (Optional)</h4>
+                        <p className="text-xs text-hos-text-muted mb-3">Share your special dates to receive personalized offers and birthday surprises!</p>
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                           <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">Birthday</label>
+                            <label className="block text-sm font-medium text-hos-text-secondary mb-1">Birthday</label>
                             <input
                               type="date"
                               value={editing ? formData.birthday : (profile?.birthday ? new Date(profile.birthday).toISOString().split('T')[0] : '')}
                               onChange={(e) => setFormData({ ...formData, birthday: e.target.value })}
                               disabled={!editing}
-                              className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-white disabled:bg-gray-100"
+                              className="w-full px-4 py-2 border border-hos-border rounded-lg bg-hos-bg-secondary disabled:bg-hos-bg-tertiary"
                             />
-                            <p className="text-xs text-gray-500 mt-1">Get birthday discounts and surprises</p>
+                            <p className="text-xs text-hos-text-muted mt-1">Get birthday discounts and surprises</p>
                           </div>
                           <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">Anniversary</label>
+                            <label className="block text-sm font-medium text-hos-text-secondary mb-1">Anniversary</label>
                             <input
                               type="date"
                               value={editing ? formData.anniversary : (profile?.anniversary ? new Date(profile.anniversary).toISOString().split('T')[0] : '')}
                               onChange={(e) => setFormData({ ...formData, anniversary: e.target.value })}
                               disabled={!editing}
-                              className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-white disabled:bg-gray-100"
+                              className="w-full px-4 py-2 border border-hos-border rounded-lg bg-hos-bg-secondary disabled:bg-hos-bg-tertiary"
                             />
-                            <p className="text-xs text-gray-500 mt-1">Receive gift suggestions for special occasions</p>
+                            <p className="text-xs text-hos-text-muted mt-1">Receive gift suggestions for special occasions</p>
                           </div>
                         </div>
                       </div>
@@ -1208,7 +1208,7 @@ function ProfilePageContent() {
                           <button
                             onClick={handleSaveProfile}
                             disabled={saving}
-                            className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors font-medium disabled:opacity-50"
+                            className="px-4 py-2 bg-hos-gold text-[#1a1406] rounded-lg hover:bg-hos-gold-hover transition-colors font-medium disabled:opacity-50"
                           >
                             {saving ? 'Saving...' : 'Save Changes'}
                           </button>
@@ -1228,7 +1228,7 @@ function ProfilePageContent() {
                                 anniversary: profile?.anniversary ? new Date(profile.anniversary).toISOString().split('T')[0] : '',
                               });
                             }}
-                            className="px-4 py-2 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300 transition-colors font-medium"
+                            className="px-4 py-2 bg-hos-bg-tertiary text-white rounded-lg hover:bg-hos-bg-tertiary transition-colors font-medium"
                           >
                             Cancel
                           </button>
@@ -1240,8 +1240,8 @@ function ProfilePageContent() {
                   {/* Newsletter */}
                   <div>
                     <h3 className="text-lg font-semibold mb-4">Newsletter</h3>
-                    <div className="bg-gray-50 rounded-lg p-4 sm:p-6 space-y-4">
-                      <p className="text-sm text-gray-600">
+                    <div className="bg-hos-bg-secondary rounded-lg p-4 sm:p-6 space-y-4">
+                      <p className="text-sm text-hos-text-secondary">
                         Manage your newsletter subscription for this account ({profile?.email}).
                       </p>
                       {newsletterStatus === null && !newsletterLoading && (
@@ -1259,19 +1259,19 @@ function ProfilePageContent() {
                               setNewsletterLoading(false);
                             }
                           }}
-                          className="px-4 py-2 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300 font-medium text-sm"
+                          className="px-4 py-2 bg-hos-bg-tertiary text-white rounded-lg hover:bg-hos-bg-tertiary font-medium text-sm"
                         >
                           Check subscription status
                         </button>
                       )}
-                      {newsletterLoading && <p className="text-sm text-gray-500">Checking…</p>}
+                      {newsletterLoading && <p className="text-sm text-hos-text-muted">Checking…</p>}
                       {newsletterStatus && (
-                        <div className="flex flex-wrap items-center justify-between gap-3 p-3 bg-white rounded-lg border">
+                        <div className="flex flex-wrap items-center justify-between gap-3 p-3 bg-hos-bg-secondary rounded-lg border">
                           <div>
                             <span className="font-medium">
                               {newsletterStatus.subscribed ? 'You are subscribed to the newsletter.' : 'You are not subscribed.'}
                             </span>
-                            <span className="ml-2 text-sm text-gray-500">({newsletterStatus.status})</span>
+                            <span className="ml-2 text-sm text-hos-text-muted">({newsletterStatus.status})</span>
                           </div>
                           {newsletterStatus.subscribed && (
                             <button
@@ -1303,23 +1303,23 @@ function ProfilePageContent() {
                   {/* Privacy Request Center */}
                   <div>
                     <h3 className="text-lg font-semibold mb-4">Privacy Request Center</h3>
-                    <p className="text-sm text-gray-600 mb-4">
+                    <p className="text-sm text-hos-text-secondary mb-4">
                       Manage your privacy preferences and exercise your rights under applicable US privacy laws including the California Consumer Privacy Act (CCPA).
                     </p>
-                    <div className="bg-gray-50 rounded-lg p-4 sm:p-6 space-y-6">
+                    <div className="bg-hos-bg-secondary rounded-lg p-4 sm:p-6 space-y-6">
 
                       {/* Do Not Sell or Share */}
                       <div>
                         <h4 className="font-medium mb-2">Do Not Sell or Share My Personal Information</h4>
-                        <p className="text-sm text-gray-600 mb-3">
+                        <p className="text-sm text-hos-text-secondary mb-3">
                           Under CCPA, you have the right to opt out of the sale or sharing of your personal information.
                           When enabled, we will not sell or share your personal data with third parties for cross-context
                           behavioral advertising purposes.
                         </p>
-                        <div className="flex items-center justify-between p-3 bg-white rounded-lg border">
+                        <div className="flex items-center justify-between p-3 bg-hos-bg-secondary rounded-lg border">
                           <div>
                             <div className="font-medium text-sm">Opt Out of Sale / Sharing</div>
-                            <div className="text-xs text-gray-500">
+                            <div className="text-xs text-hos-text-muted">
                               {gdprConsent?.doNotSell ? 'You have opted out.' : 'Currently opted in (default).'}
                             </div>
                           </div>
@@ -1331,7 +1331,7 @@ function ProfilePageContent() {
                               disabled={doNotSellUpdating}
                               className="sr-only peer"
                             />
-                            <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-purple-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-purple-600"></div>
+                            <div className="w-11 h-6 bg-hos-bg-tertiary peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-hos-gold/30 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-hos-bg-secondary after:border-hos-border after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-hos-gold"></div>
                           </label>
                         </div>
                       </div>
@@ -1341,19 +1341,19 @@ function ProfilePageContent() {
                         <div className="border-t pt-4">
                           <h4 className="font-medium mb-3">Consent Preferences</h4>
                           <div className="space-y-3">
-                            <div className="flex items-center justify-between p-3 bg-white rounded-lg border">
+                            <div className="flex items-center justify-between p-3 bg-hos-bg-secondary rounded-lg border">
                               <div>
                                 <div className="font-medium text-sm">Essential Cookies</div>
-                                <div className="text-xs text-gray-600">Required for site functionality</div>
+                                <div className="text-xs text-hos-text-secondary">Required for site functionality</div>
                               </div>
                               <span className="px-3 py-1 bg-green-100 text-green-800 rounded-full text-xs font-medium">
                                 Always Active
                               </span>
                             </div>
-                            <div className="flex items-center justify-between p-3 bg-white rounded-lg border">
+                            <div className="flex items-center justify-between p-3 bg-hos-bg-secondary rounded-lg border">
                               <div>
                                 <div className="font-medium text-sm">Marketing Communications</div>
-                                <div className="text-xs text-gray-600">Receive promotional emails and offers</div>
+                                <div className="text-xs text-hos-text-secondary">Receive promotional emails and offers</div>
                               </div>
                               <label className="relative inline-flex items-center cursor-pointer">
                                 <input
@@ -1362,13 +1362,13 @@ function ProfilePageContent() {
                                   onChange={(e) => handleUpdateGDPRConsent({ marketing: e.target.checked })}
                                   className="sr-only peer"
                                 />
-                                <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-purple-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-purple-600"></div>
+                                <div className="w-11 h-6 bg-hos-bg-tertiary peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-hos-gold/30 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-hos-bg-secondary after:border-hos-border after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-hos-gold"></div>
                               </label>
                             </div>
-                            <div className="flex items-center justify-between p-3 bg-white rounded-lg border">
+                            <div className="flex items-center justify-between p-3 bg-hos-bg-secondary rounded-lg border">
                               <div>
                                 <div className="font-medium text-sm">Analytics & Tracking</div>
-                                <div className="text-xs text-gray-600">Help us improve our services</div>
+                                <div className="text-xs text-hos-text-secondary">Help us improve our services</div>
                               </div>
                               <label className="relative inline-flex items-center cursor-pointer">
                                 <input
@@ -1377,17 +1377,17 @@ function ProfilePageContent() {
                                   onChange={(e) => handleUpdateGDPRConsent({ analytics: e.target.checked })}
                                   className="sr-only peer"
                                 />
-                                <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-purple-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-purple-600"></div>
+                                <div className="w-11 h-6 bg-hos-bg-tertiary peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-hos-gold/30 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-hos-bg-secondary after:border-hos-border after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-hos-gold"></div>
                               </label>
                             </div>
                           </div>
                           {gdprConsent.gdprConsentDate && (
-                            <p className="text-xs text-gray-500 mt-3">
+                            <p className="text-xs text-hos-text-muted mt-3">
                               Consent last updated: {new Date(gdprConsent.gdprConsentDate).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}
                             </p>
                           )}
                           {gdprConsent.privacyPolicyVersion && (
-                            <p className="text-xs text-gray-500 mt-1">
+                            <p className="text-xs text-hos-text-muted mt-1">
                               Privacy Policy version: {gdprConsent.privacyPolicyVersion}
                             </p>
                           )}
@@ -1397,25 +1397,25 @@ function ProfilePageContent() {
                       {/* Your Privacy Rights (DSAR) */}
                       <div className="border-t pt-4">
                         <h4 className="font-medium mb-3">Your Privacy Rights</h4>
-                        <p className="text-sm text-gray-600 mb-4">
+                        <p className="text-sm text-hos-text-secondary mb-4">
                           Under applicable US privacy laws, you have the following rights:
                         </p>
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4">
-                          <div className="p-3 bg-white rounded-lg border">
+                          <div className="p-3 bg-hos-bg-secondary rounded-lg border">
                             <div className="font-medium text-sm mb-1">Right to Know</div>
-                            <p className="text-xs text-gray-600">Request a copy of the personal information we have collected about you.</p>
+                            <p className="text-xs text-hos-text-secondary">Request a copy of the personal information we have collected about you.</p>
                           </div>
-                          <div className="p-3 bg-white rounded-lg border">
+                          <div className="p-3 bg-hos-bg-secondary rounded-lg border">
                             <div className="font-medium text-sm mb-1">Right to Delete</div>
-                            <p className="text-xs text-gray-600">Request deletion of your personal information (subject to legal exceptions).</p>
+                            <p className="text-xs text-hos-text-secondary">Request deletion of your personal information (subject to legal exceptions).</p>
                           </div>
-                          <div className="p-3 bg-white rounded-lg border">
+                          <div className="p-3 bg-hos-bg-secondary rounded-lg border">
                             <div className="font-medium text-sm mb-1">Right to Correct</div>
-                            <p className="text-xs text-gray-600">Update or correct inaccurate personal information in your profile above.</p>
+                            <p className="text-xs text-hos-text-secondary">Update or correct inaccurate personal information in your profile above.</p>
                           </div>
-                          <div className="p-3 bg-white rounded-lg border">
+                          <div className="p-3 bg-hos-bg-secondary rounded-lg border">
                             <div className="font-medium text-sm mb-1">Right to Opt-Out</div>
-                            <p className="text-xs text-gray-600">Opt out of the sale or sharing of your personal information (see above).</p>
+                            <p className="text-xs text-hos-text-secondary">Opt out of the sale or sharing of your personal information (see above).</p>
                           </div>
                         </div>
 
@@ -1423,7 +1423,7 @@ function ProfilePageContent() {
                           <button
                             onClick={handleExportData}
                             disabled={exportingData}
-                            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium disabled:opacity-50 text-sm"
+                            className="px-4 py-2 bg-hos-gold text-[#1a1406] rounded-lg hover:bg-hos-gold-hover transition-colors font-medium disabled:opacity-50 text-sm"
                           >
                             {exportingData ? 'Preparing...' : 'Download My Data'}
                           </button>
@@ -1435,7 +1435,7 @@ function ProfilePageContent() {
                             {deletingAccount ? 'Deleting...' : 'Delete My Account'}
                           </button>
                         </div>
-                        <p className="text-xs text-gray-500 mt-3">
+                        <p className="text-xs text-hos-text-muted mt-3">
                           Deleting your account will anonymize personal data. Order history is retained for legal compliance. This action cannot be undone.
                         </p>
                       </div>
@@ -1446,14 +1446,14 @@ function ProfilePageContent() {
                           <h4 className="font-medium mb-3">Consent Change History</h4>
                           <div className="max-h-48 overflow-y-auto space-y-2">
                             {gdprConsentHistory.slice(0, 20).map((entry: any, idx: number) => (
-                              <div key={idx} className="flex items-center justify-between p-2 bg-white rounded border text-xs">
+                              <div key={idx} className="flex items-center justify-between p-2 bg-hos-bg-secondary rounded border text-xs">
                                 <div>
                                   <span className="font-medium">{entry.consentType}</span>
                                   <span className={`ml-2 px-1.5 py-0.5 rounded-full ${entry.granted ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
                                     {entry.granted ? 'Granted' : 'Revoked'}
                                   </span>
                                 </div>
-                                <span className="text-gray-500">
+                                <span className="text-hos-text-muted">
                                   {new Date(entry.grantedAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
                                 </span>
                               </div>
@@ -1467,10 +1467,10 @@ function ProfilePageContent() {
                   {/* Security */}
                   <div>
                     <h3 className="text-lg font-semibold mb-4">Security</h3>
-                    <div className="bg-gray-50 rounded-lg p-4">
+                    <div className="bg-hos-bg-secondary rounded-lg p-4">
                       <Link
                         href="/profile/change-password"
-                        className="inline-block px-4 py-2 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300 transition-colors font-medium"
+                        className="inline-block px-4 py-2 bg-hos-bg-tertiary text-white rounded-lg hover:bg-hos-bg-tertiary transition-colors font-medium"
                       >
                         Change Password
                       </Link>
@@ -1489,7 +1489,7 @@ function ProfilePageContent() {
 
 export default function ProfilePage() {
   return (
-    <Suspense fallback={<div className="min-h-screen flex items-center justify-center"><div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600" /></div>}>
+    <Suspense fallback={<div className="min-h-screen flex items-center justify-center"><div className="animate-spin rounded-full h-12 w-12 border-b-2 border-hos-gold" /></div>}>
       <ProfilePageContent />
     </Suspense>
   );

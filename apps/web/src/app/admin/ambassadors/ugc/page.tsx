@@ -46,14 +46,14 @@ export default function AdminAmbassadorUgcPage() {
           <Link href="/admin/ambassadors" className="text-sm text-violet-700 mb-4 inline-block">
             ← Ambassadors
           </Link>
-          <h1 className="text-2xl font-semibold text-gray-900 mb-4">UGC review</h1>
+          <h1 className="text-2xl font-semibold text-white mb-4">UGC review</h1>
           <div className="flex gap-2 mb-4">
             {['PENDING', 'APPROVED', 'REJECTED', 'FEATURED'].map((s) => (
               <button
                 key={s}
                 type="button"
                 className={`text-xs px-2 py-1 rounded ${
-                  status === s ? 'bg-gray-900 text-white' : 'bg-gray-100'
+                  status === s ? 'bg-hos-bg-tertiary text-white' : 'bg-hos-bg-tertiary'
                 }`}
                 onClick={() => setStatus(s)}
               >
@@ -62,19 +62,19 @@ export default function AdminAmbassadorUgcPage() {
             ))}
           </div>
           {loading ? (
-            <p className="text-gray-500">Loading…</p>
+            <p className="text-hos-text-muted">Loading…</p>
           ) : (
             <ul className="space-y-3">
               {rows.map((r) => {
                 const id = String(r.id);
                 const amb = r.ambassador as Record<string, unknown> | undefined;
                 return (
-                  <li key={id} className="border rounded-lg p-4 bg-white text-sm flex flex-wrap justify-between gap-2">
+                  <li key={id} className="border rounded-lg p-4 bg-hos-bg-secondary text-sm flex flex-wrap justify-between gap-2">
                     <div>
                       <p className="font-medium">
                         {String(r.type)} — {String(r.title || 'Untitled')}
                       </p>
-                      <p className="text-gray-500 text-xs">
+                      <p className="text-hos-text-muted text-xs">
                         From {String(amb?.displayName || amb?.referralCode || '—')} · {String(r.status)}
                       </p>
                     </div>
@@ -96,7 +96,7 @@ export default function AdminAmbassadorUgcPage() {
                         </button>
                         <button
                           type="button"
-                          className="text-xs px-2 py-1 rounded bg-gray-200"
+                          className="text-xs px-2 py-1 rounded bg-hos-bg-tertiary"
                           onClick={() => review(id, 'REJECTED')}
                         >
                           Reject

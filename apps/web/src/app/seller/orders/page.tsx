@@ -230,13 +230,13 @@ export default function SellerOrdersPage() {
       case 'pending': return 'bg-yellow-100 text-yellow-800';
       case 'accepted':
       case 'confirmed':
-      case 'processing': return 'bg-blue-100 text-blue-800';
+      case 'processing': return 'bg-hos-gold/20 text-hos-gold';
       case 'fulfilled':
-      case 'shipped': return 'bg-purple-100 text-purple-800';
+      case 'shipped': return 'bg-hos-gold/20 text-hos-gold';
       case 'delivered': return 'bg-green-100 text-green-800';
       case 'cancelled':
       case 'refunded': return 'bg-red-100 text-red-800';
-      default: return 'bg-gray-100 text-gray-800';
+      default: return 'bg-hos-bg-tertiary text-white';
     }
   };
 
@@ -247,8 +247,8 @@ export default function SellerOrdersPage() {
           {/* Header */}
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div>
-              <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Orders</h1>
-              <p className="text-gray-600 mt-1">Manage your customer orders</p>
+              <h1 className="text-2xl sm:text-3xl font-bold text-white">Orders</h1>
+              <p className="text-hos-text-secondary mt-1">Manage your customer orders</p>
             </div>
           </div>
 
@@ -256,60 +256,60 @@ export default function SellerOrdersPage() {
           <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-4">
             <button
               onClick={() => setStatusFilter('')}
-              className={`bg-white rounded-lg shadow p-4 text-left ${statusFilter === '' ? 'ring-2 ring-purple-500' : ''}`}
+              className={`bg-hos-bg-secondary rounded-lg shadow p-4 text-left ${statusFilter === '' ? 'ring-2 ring-hos-gold/50' : ''}`}
             >
-              <h3 className="text-xs font-medium text-gray-500 uppercase">Total</h3>
-              <p className="text-2xl font-bold text-gray-900 mt-1">{stats.total}</p>
+              <h3 className="text-xs font-medium text-hos-text-muted uppercase">Total</h3>
+              <p className="text-2xl font-bold text-white mt-1">{stats.total}</p>
             </button>
             <button
               onClick={() => setStatusFilter('PENDING')}
-              className={`bg-white rounded-lg shadow p-4 text-left ${statusFilter === 'PENDING' ? 'ring-2 ring-purple-500' : ''}`}
+              className={`bg-hos-bg-secondary rounded-lg shadow p-4 text-left ${statusFilter === 'PENDING' ? 'ring-2 ring-hos-gold/50' : ''}`}
             >
-              <h3 className="text-xs font-medium text-gray-500 uppercase">Pending</h3>
+              <h3 className="text-xs font-medium text-hos-text-muted uppercase">Pending</h3>
               <p className="text-2xl font-bold text-yellow-600 mt-1">{stats.pending}</p>
             </button>
             <button
               onClick={() => setStatusFilter('PROCESSING')}
-              className={`bg-white rounded-lg shadow p-4 text-left ${statusFilter === 'PROCESSING' ? 'ring-2 ring-purple-500' : ''}`}
+              className={`bg-hos-bg-secondary rounded-lg shadow p-4 text-left ${statusFilter === 'PROCESSING' ? 'ring-2 ring-hos-gold/50' : ''}`}
             >
-              <h3 className="text-xs font-medium text-gray-500 uppercase">Processing</h3>
-              <p className="text-2xl font-bold text-blue-600 mt-1">{stats.processing}</p>
+              <h3 className="text-xs font-medium text-hos-text-muted uppercase">Processing</h3>
+              <p className="text-2xl font-bold text-hos-gold mt-1">{stats.processing}</p>
             </button>
             <button
               onClick={() => setStatusFilter('SHIPPED')}
-              className={`bg-white rounded-lg shadow p-4 text-left ${statusFilter === 'SHIPPED' ? 'ring-2 ring-purple-500' : ''}`}
+              className={`bg-hos-bg-secondary rounded-lg shadow p-4 text-left ${statusFilter === 'SHIPPED' ? 'ring-2 ring-hos-gold/50' : ''}`}
             >
-              <h3 className="text-xs font-medium text-gray-500 uppercase">Shipped</h3>
-              <p className="text-2xl font-bold text-purple-600 mt-1">{stats.shipped}</p>
+              <h3 className="text-xs font-medium text-hos-text-muted uppercase">Shipped</h3>
+              <p className="text-2xl font-bold text-hos-gold mt-1">{stats.shipped}</p>
             </button>
             <button
               onClick={() => setStatusFilter('DELIVERED')}
-              className={`bg-white rounded-lg shadow p-4 text-left ${statusFilter === 'DELIVERED' ? 'ring-2 ring-purple-500' : ''}`}
+              className={`bg-hos-bg-secondary rounded-lg shadow p-4 text-left ${statusFilter === 'DELIVERED' ? 'ring-2 ring-hos-gold/50' : ''}`}
             >
-              <h3 className="text-xs font-medium text-gray-500 uppercase">Delivered</h3>
+              <h3 className="text-xs font-medium text-hos-text-muted uppercase">Delivered</h3>
               <p className="text-2xl font-bold text-green-600 mt-1">{stats.delivered}</p>
             </button>
             <button
               onClick={() => setStatusFilter('CANCELLED')}
-              className={`bg-white rounded-lg shadow p-4 text-left ${statusFilter === 'CANCELLED' ? 'ring-2 ring-purple-500' : ''}`}
+              className={`bg-hos-bg-secondary rounded-lg shadow p-4 text-left ${statusFilter === 'CANCELLED' ? 'ring-2 ring-hos-gold/50' : ''}`}
             >
-              <h3 className="text-xs font-medium text-gray-500 uppercase">Cancelled</h3>
+              <h3 className="text-xs font-medium text-hos-text-muted uppercase">Cancelled</h3>
               <p className="text-2xl font-bold text-red-600 mt-1">{stats.cancelled}</p>
             </button>
-            <div className="bg-white rounded-lg shadow p-4">
-              <h3 className="text-xs font-medium text-gray-500 uppercase">Revenue</h3>
+            <div className="bg-hos-bg-secondary rounded-lg shadow p-4">
+              <h3 className="text-xs font-medium text-hos-text-muted uppercase">Revenue</h3>
               <p className="text-2xl font-bold text-green-600 mt-1">${stats.totalRevenue.toFixed(2)}</p>
             </div>
           </div>
 
           {/* Search */}
-          <div className="bg-white rounded-lg shadow p-4">
+          <div className="bg-hos-bg-secondary rounded-lg shadow p-4">
             <input
               type="text"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               placeholder="Search by order ID, customer name, or email..."
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+              className="w-full px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50 focus:border-transparent"
             />
           </div>
 
@@ -329,42 +329,42 @@ export default function SellerOrdersPage() {
           {/* Orders Table */}
           {loading ? (
             <div className="flex items-center justify-center py-12">
-              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600"></div>
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-hos-gold"></div>
             </div>
           ) : (
-            <div className="bg-white rounded-lg shadow overflow-hidden">
+            <div className="bg-hos-bg-secondary rounded-lg shadow overflow-hidden">
               {filteredOrders.length === 0 ? (
                 <div className="text-center py-12">
-                  <p className="text-gray-500">No orders found</p>
+                  <p className="text-hos-text-muted">No orders found</p>
                 </div>
               ) : (
                 <div className="overflow-x-auto">
-                  <table className="min-w-full divide-y divide-gray-200">
-                    <thead className="bg-gray-50">
+                  <table className="min-w-full divide-y divide-hos-border">
+                    <thead className="bg-hos-bg-secondary">
                       <tr>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Order ID</th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Customer</th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Total</th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Date</th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-hos-text-muted uppercase">Order ID</th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-hos-text-muted uppercase">Customer</th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-hos-text-muted uppercase">Total</th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-hos-text-muted uppercase">Status</th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-hos-text-muted uppercase">Date</th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-hos-text-muted uppercase">Actions</th>
                       </tr>
                     </thead>
-                    <tbody className="bg-white divide-y divide-gray-200">
+                    <tbody className="bg-hos-bg-secondary divide-y divide-hos-border">
                       {filteredOrders.map((order) => (
-                        <tr key={order.id} className="hover:bg-gray-50">
-                          <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                        <tr key={order.id} className="hover:bg-hos-bg-tertiary">
+                          <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-white">
                             #{order.orderNumber || order.id.slice(0, 8)}
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap">
-                            <div className="text-sm text-gray-900">
+                            <div className="text-sm text-white">
                               {order.user?.firstName} {order.user?.lastName}
                             </div>
-                            <div className="text-sm text-gray-500">
+                            <div className="text-sm text-hos-text-muted">
                               {order.user?.email || order.customer?.email}
                             </div>
                           </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                          <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-white">
                             ${Number(order.total || 0).toFixed(2)}
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap">
@@ -372,13 +372,13 @@ export default function SellerOrdersPage() {
                               {order.status}
                             </span>
                           </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-hos-text-muted">
                             {new Date(order.createdAt).toLocaleDateString()}
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap">
                             <button
                               onClick={() => openOrderDetails(order)}
-                              className="text-purple-600 hover:text-purple-900 font-medium text-sm"
+                              className="text-hos-gold hover:text-hos-gold font-medium text-sm"
                             >
                               View Details
                             </button>
@@ -396,20 +396,20 @@ export default function SellerOrdersPage() {
         {/* Order Details Modal */}
         {showDetailsModal && selectedOrder && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-            <div className="bg-white rounded-lg shadow-xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+            <div className="bg-hos-bg-secondary rounded-lg shadow-xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
               <div className="p-6 border-b">
                 <div className="flex justify-between items-start">
                   <div>
-                    <h2 className="text-xl font-bold text-gray-900">
+                    <h2 className="text-xl font-bold text-white">
                       Order #{selectedOrder.orderNumber || selectedOrder.id.slice(0, 8)}
                     </h2>
-                    <p className="text-sm text-gray-500 mt-1">
+                    <p className="text-sm text-hos-text-muted mt-1">
                       Placed on {new Date(selectedOrder.createdAt).toLocaleString()}
                     </p>
                   </div>
                   <button
                     onClick={() => setShowDetailsModal(false)}
-                    className="text-gray-400 hover:text-gray-600"
+                    className="text-hos-text-muted hover:text-hos-text-secondary"
                   >
                     <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -422,7 +422,7 @@ export default function SellerOrdersPage() {
                 {/* Status and Actions */}
                 <div className="flex items-center justify-between">
                   <div>
-                    <span className="text-sm text-gray-500">Current Status:</span>
+                    <span className="text-sm text-hos-text-muted">Current Status:</span>
                     <span className={`ml-2 px-3 py-1 text-sm font-medium rounded-full ${getStatusColor(selectedOrder.status)}`}>
                       {selectedOrder.status}
                     </span>
@@ -432,7 +432,7 @@ export default function SellerOrdersPage() {
                       <button
                         onClick={() => handleStatusUpdate('CONFIRMED')}
                         disabled={updatingStatus}
-                        className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 text-sm"
+                        className="px-4 py-2 bg-hos-gold text-[#1a1406] rounded-lg hover:bg-hos-gold-hover disabled:opacity-50 text-sm"
                       >
                         Accept Order
                       </button>
@@ -441,7 +441,7 @@ export default function SellerOrdersPage() {
                       <button
                         onClick={() => handleStatusUpdate('CONFIRMED')}
                         disabled={updatingStatus}
-                        className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 text-sm"
+                        className="px-4 py-2 bg-hos-gold text-[#1a1406] rounded-lg hover:bg-hos-gold-hover disabled:opacity-50 text-sm"
                       >
                         Confirm Order
                       </button>
@@ -450,7 +450,7 @@ export default function SellerOrdersPage() {
                       <button
                         onClick={() => handleStatusUpdate('PROCESSING')}
                         disabled={updatingStatus}
-                        className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 text-sm"
+                        className="px-4 py-2 bg-hos-gold text-[#1a1406] rounded-lg hover:bg-hos-gold-hover disabled:opacity-50 text-sm"
                       >
                         Start Processing
                       </button>
@@ -459,7 +459,7 @@ export default function SellerOrdersPage() {
                       <button
                         onClick={() => handleStatusUpdate('FULFILLED')}
                         disabled={updatingStatus}
-                        className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 disabled:opacity-50 text-sm"
+                        className="px-4 py-2 bg-hos-gold text-[#1a1406] rounded-lg hover:bg-hos-gold-hover disabled:opacity-50 text-sm"
                       >
                         Mark as Fulfilled
                       </button>
@@ -468,7 +468,7 @@ export default function SellerOrdersPage() {
                       <button
                         onClick={() => handleStatusUpdate('SHIPPED')}
                         disabled={updatingStatus}
-                        className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 disabled:opacity-50 text-sm"
+                        className="px-4 py-2 bg-hos-gold text-[#1a1406] rounded-lg hover:bg-hos-gold-hover disabled:opacity-50 text-sm"
                       >
                         Mark as Shipped
                       </button>
@@ -495,18 +495,18 @@ export default function SellerOrdersPage() {
                 </div>
 
                 {/* Customer Info */}
-                <div className="bg-gray-50 rounded-lg p-4">
-                  <h3 className="font-medium text-gray-900 mb-2">Customer Information</h3>
+                <div className="bg-hos-bg-secondary rounded-lg p-4">
+                  <h3 className="font-medium text-white mb-2">Customer Information</h3>
                   <div className="grid grid-cols-2 gap-4 text-sm">
                     <div>
-                      <span className="text-gray-500">Name:</span>
-                      <span className="ml-2 text-gray-900">
+                      <span className="text-hos-text-muted">Name:</span>
+                      <span className="ml-2 text-white">
                         {selectedOrder.user?.firstName} {selectedOrder.user?.lastName}
                       </span>
                     </div>
                     <div>
-                      <span className="text-gray-500">Email:</span>
-                      <span className="ml-2 text-gray-900">
+                      <span className="text-hos-text-muted">Email:</span>
+                      <span className="ml-2 text-white">
                         {selectedOrder.user?.email || selectedOrder.customer?.email}
                       </span>
                     </div>
@@ -515,9 +515,9 @@ export default function SellerOrdersPage() {
 
                 {/* Shipping Address */}
                 {selectedOrder.shippingAddress && (
-                  <div className="bg-gray-50 rounded-lg p-4">
-                    <h3 className="font-medium text-gray-900 mb-2">Shipping Address</h3>
-                    <p className="text-sm text-gray-700">
+                  <div className="bg-hos-bg-secondary rounded-lg p-4">
+                    <h3 className="font-medium text-white mb-2">Shipping Address</h3>
+                    <p className="text-sm text-hos-text-secondary">
                       {selectedOrder.shippingAddress.street}<br />
                       {selectedOrder.shippingAddress.city}, {selectedOrder.shippingAddress.state} {selectedOrder.shippingAddress.postalCode}<br />
                       {selectedOrder.shippingAddress.country}
@@ -527,7 +527,7 @@ export default function SellerOrdersPage() {
 
                 {/* Order Items */}
                 <div>
-                  <h3 className="font-medium text-gray-900 mb-3">Order Items</h3>
+                  <h3 className="font-medium text-white mb-3">Order Items</h3>
                   <div className="border rounded-lg divide-y">
                     {selectedOrder.items && selectedOrder.items.length > 0 ? (
                       selectedOrder.items.map((item, index) => (
@@ -542,18 +542,18 @@ export default function SellerOrdersPage() {
                             />
                           )}
                           <div className="flex-1">
-                            <p className="font-medium text-gray-900">
+                            <p className="font-medium text-white">
                               {item.product?.name || item.productName || 'Product'}
                             </p>
-                            <p className="text-sm text-gray-500">Qty: {item.quantity}</p>
+                            <p className="text-sm text-hos-text-muted">Qty: {item.quantity}</p>
                           </div>
-                          <p className="font-medium text-gray-900">
+                          <p className="font-medium text-white">
                             ${Number(item.price || 0).toFixed(2)}
                           </p>
                         </div>
                       ))
                     ) : (
-                      <div className="p-4 text-center text-gray-500">
+                      <div className="p-4 text-center text-hos-text-muted">
                         No item details available
                       </div>
                     )}
@@ -561,39 +561,39 @@ export default function SellerOrdersPage() {
                 </div>
 
                 {/* Order Summary */}
-                <div className="bg-gray-50 rounded-lg p-4">
-                  <h3 className="font-medium text-gray-900 mb-3">Order Summary</h3>
+                <div className="bg-hos-bg-secondary rounded-lg p-4">
+                  <h3 className="font-medium text-white mb-3">Order Summary</h3>
                   <div className="space-y-2 text-sm">
                     {selectedOrder.subtotal && (
                       <div className="flex justify-between">
-                        <span className="text-gray-500">Subtotal</span>
-                        <span className="text-gray-900">${Number(selectedOrder.subtotal).toFixed(2)}</span>
+                        <span className="text-hos-text-muted">Subtotal</span>
+                        <span className="text-white">${Number(selectedOrder.subtotal).toFixed(2)}</span>
                       </div>
                     )}
                     {(selectedOrder.shippingCost || selectedOrder.shippingAmount) ? (
                       <div className="flex justify-between">
-                        <span className="text-gray-500">Shipping</span>
-                        <span className="text-gray-900">${Number(selectedOrder.shippingCost || selectedOrder.shippingAmount || 0).toFixed(2)}</span>
+                        <span className="text-hos-text-muted">Shipping</span>
+                        <span className="text-white">${Number(selectedOrder.shippingCost || selectedOrder.shippingAmount || 0).toFixed(2)}</span>
                       </div>
                     ) : null}
                     <div className="flex justify-between font-medium text-base pt-2 border-t">
-                      <span className="text-gray-900">Total</span>
-                      <span className="text-gray-900">${Number(selectedOrder.total).toFixed(2)}</span>
+                      <span className="text-white">Total</span>
+                      <span className="text-white">${Number(selectedOrder.total).toFixed(2)}</span>
                     </div>
                   </div>
                 </div>
 
                 {/* Tracking Number */}
                 {(['processing', 'fulfilled', 'shipped', 'delivered', 'confirmed'].includes(selectedOrder.status) || selectedOrder.trackingNumber || selectedOrder.trackingCode) && (
-                  <div className="bg-purple-50 rounded-lg p-4">
-                    <h3 className="font-medium text-gray-900 mb-2">Tracking Information</h3>
+                  <div className="bg-hos-gold/10 rounded-lg p-4">
+                    <h3 className="font-medium text-white mb-2">Tracking Information</h3>
                     <div className="flex gap-2">
                       <input
                         type="text"
                         value={trackingNumber}
                         onChange={(e) => setTrackingNumber(e.target.value)}
                         placeholder="Enter tracking number"
-                        className="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                        className="flex-1 px-3 py-2 border border-hos-border rounded-lg text-sm focus:ring-2 focus:ring-hos-gold/50 focus:border-transparent"
                       />
                       <button
                         onClick={async () => {
@@ -613,7 +613,7 @@ export default function SellerOrdersPage() {
                           }
                         }}
                         disabled={updatingStatus}
-                        className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 disabled:opacity-50 text-sm"
+                        className="px-4 py-2 bg-hos-gold text-[#1a1406] rounded-lg hover:bg-hos-gold-hover disabled:opacity-50 text-sm"
                       >
                         Save
                       </button>
@@ -622,10 +622,10 @@ export default function SellerOrdersPage() {
                 )}
               </div>
 
-              <div className="p-6 border-t bg-gray-50">
+              <div className="p-6 border-t bg-hos-bg-secondary">
                 <button
                   onClick={() => setShowDetailsModal(false)}
-                  className="w-full px-4 py-2 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300"
+                  className="w-full px-4 py-2 bg-hos-bg-tertiary text-white rounded-lg hover:bg-hos-bg-tertiary"
                 >
                   Close
                 </button>

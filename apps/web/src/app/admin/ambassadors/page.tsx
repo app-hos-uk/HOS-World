@@ -60,7 +60,7 @@ export default function AdminAmbassadorsPage() {
     <RouteGuard allowedRoles={['ADMIN']}>
       <AdminLayout>
         <div className="p-6 max-w-6xl mx-auto">
-          <h1 className="text-2xl font-semibold text-gray-900 mb-4">Ambassadors</h1>
+          <h1 className="text-2xl font-semibold text-white mb-4">Ambassadors</h1>
           <div className="flex flex-wrap gap-2 mb-4">
             <input
               className="border rounded px-2 py-1 text-sm"
@@ -90,21 +90,21 @@ export default function AdminAmbassadorsPage() {
             </select>
             <button
               type="button"
-              className="text-sm px-3 py-1 rounded bg-gray-800 text-white"
+              className="text-sm px-3 py-1 rounded bg-hos-surface text-white"
               onClick={() => load()}
             >
               Apply
             </button>
             <Link href="/admin/ambassadors/dashboard" className="text-sm text-violet-700 ml-auto">
-              Programme dashboard →
+              Program dashboard →
             </Link>
           </div>
           {loading ? (
-            <p className="text-gray-500">Loading…</p>
+            <p className="text-hos-text-muted">Loading…</p>
           ) : (
             <div className="overflow-x-auto border rounded-lg">
               <table className="min-w-full text-sm">
-                <thead className="bg-gray-50">
+                <thead className="bg-hos-bg-secondary">
                   <tr>
                     <th className="text-left p-2">Name</th>
                     <th className="text-left p-2">Tier</th>

@@ -91,10 +91,10 @@ export function RuleBuilder({
 
     return (
       <div
-        className={`rounded-lg border p-3 space-y-2 ${path.length ? 'ml-4 border-dashed border-indigo-200 bg-indigo-50/40' : 'border-gray-200 bg-white'}`}
+        className={`rounded-lg border p-3 space-y-2 ${path.length ? 'ml-4 border-dashed border-hos-border-accent bg-hos-gold/10/40' : 'border-hos-border bg-hos-bg-secondary'}`}
       >
         <div className="flex flex-wrap items-center gap-2">
-          <span className="text-xs text-gray-500">Combine with</span>
+          <span className="text-xs text-hos-text-muted">Combine with</span>
           <select
             className="text-sm border rounded px-2 py-1"
             value={g.operator}
@@ -180,14 +180,14 @@ export function RuleBuilder({
         <div className="flex flex-wrap gap-2">
           <button
             type="button"
-            className="text-xs text-indigo-600 hover:underline"
+            className="text-xs text-hos-gold hover:underline"
             onClick={() => setG({ ...g, rules: [...g.rules, defaultRule()] })}
           >
             + Add rule
           </button>
           <button
             type="button"
-            className="text-xs text-indigo-600 hover:underline"
+            className="text-xs text-hos-gold hover:underline"
             onClick={() =>
               setG({
                 ...g,
@@ -202,7 +202,7 @@ export function RuleBuilder({
           <div key={sub._key} className="relative">
             <button
               type="button"
-              className="absolute right-0 top-0 text-xs text-gray-500"
+              className="absolute right-0 top-0 text-xs text-hos-text-muted"
               onClick={() => {
                 const ng = [...(g.groups ?? [])];
                 ng.splice(idx, 1);

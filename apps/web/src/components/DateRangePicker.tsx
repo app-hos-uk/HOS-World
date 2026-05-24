@@ -83,44 +83,44 @@ export function DateRangePicker({
     <div className="space-y-2">
       <div className="flex items-center gap-2 flex-wrap">
         <div className="flex items-center gap-2">
-          <label className="text-sm font-medium text-gray-700">Start Date:</label>
+          <label className="text-sm font-medium text-hos-text-secondary">Start Date:</label>
           <input
             type="date"
             value={value.startDate ? format(value.startDate, 'yyyy-MM-dd') : ''}
             onChange={(e) => {
               onChange({ ...value, startDate: e.target.value ? new Date(e.target.value) : null });
             }}
-            className="px-3 py-1.5 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="px-3 py-1.5 border border-hos-border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-hos-gold/50"
           />
         </div>
         <div className="flex items-center gap-2">
-          <label className="text-sm font-medium text-gray-700">End Date:</label>
+          <label className="text-sm font-medium text-hos-text-secondary">End Date:</label>
           <input
             type="date"
             value={value.endDate ? format(value.endDate, 'yyyy-MM-dd') : ''}
             onChange={(e) => {
               onChange({ ...value, endDate: e.target.value ? new Date(e.target.value) : null });
             }}
-            className="px-3 py-1.5 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="px-3 py-1.5 border border-hos-border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-hos-gold/50"
           />
         </div>
         <div className="relative">
           <button
             type="button"
             onClick={() => setShowPresets(!showPresets)}
-            className="px-3 py-1.5 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="px-3 py-1.5 text-sm font-medium text-hos-text-secondary bg-hos-bg-secondary border border-hos-border rounded-md hover:bg-hos-bg-tertiary focus:outline-none focus:ring-2 focus:ring-hos-gold/50"
           >
             Presets ▼
           </button>
           {showPresets && (
-            <div className="absolute z-10 mt-1 w-48 bg-white border border-gray-300 rounded-md shadow-lg">
+            <div className="absolute z-10 mt-1 w-48 bg-hos-bg-secondary border border-hos-border rounded-md shadow-lg">
               <div className="py-1">
                 {presets.map((preset) => (
                   <button
                     key={preset.label}
                     type="button"
                     onClick={() => applyPreset(preset)}
-                    className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                    className="w-full text-left px-4 py-2 text-sm text-hos-text-secondary hover:bg-hos-bg-tertiary"
                   >
                     {preset.label}
                   </button>
@@ -135,9 +135,9 @@ export function DateRangePicker({
               type="checkbox"
               checked={compareEnabled}
               onChange={(e) => onCompareChange(e.target.checked)}
-              className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+              className="w-4 h-4 text-hos-gold border-hos-border rounded focus:ring-hos-gold/50"
             />
-            <span className="text-sm font-medium text-gray-700">Compare with Previous Period</span>
+            <span className="text-sm font-medium text-hos-text-secondary">Compare with Previous Period</span>
           </label>
         )}
       </div>

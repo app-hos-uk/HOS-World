@@ -126,31 +126,31 @@ export function BulkSelectTable<T>({
   const getActionButtonClass = (variant: string = 'secondary') => {
     switch (variant) {
       case 'primary':
-        return 'bg-purple-600 text-white hover:bg-purple-700';
+        return 'bg-hos-gold text-[#1a1406] hover:bg-hos-gold-hover';
       case 'danger':
         return 'bg-red-600 text-white hover:bg-red-700';
       default:
-        return 'bg-gray-100 text-gray-700 hover:bg-gray-200';
+        return 'bg-hos-bg-tertiary text-hos-text-secondary hover:bg-hos-bg-tertiary';
     }
   };
 
   if (loading) {
     return (
-      <div className={`bg-white rounded-lg shadow overflow-hidden ${className}`}>
+      <div className={`bg-hos-bg-secondary rounded-lg shadow overflow-hidden ${className}`}>
         <div className="flex items-center justify-center h-64">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-600"></div>
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-hos-gold"></div>
         </div>
       </div>
     );
   }
 
   return (
-    <div className={`bg-white rounded-lg shadow overflow-hidden ${className}`}>
+    <div className={`bg-hos-bg-secondary rounded-lg shadow overflow-hidden ${className}`}>
       {/* Bulk Actions Bar */}
       {(someSelected || bulkActions.length > 0) && (
-        <div className="px-4 py-3 bg-gray-50 border-b border-gray-200 flex items-center justify-between">
+        <div className="px-4 py-3 bg-hos-bg-secondary border-b border-hos-border flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <span className="text-sm text-gray-600">
+            <span className="text-sm text-hos-text-secondary">
               {selectedIds.size > 0 ? (
                 <>
                   <span className="font-medium">{selectedIds.size}</span> item{selectedIds.size !== 1 ? 's' : ''} selected
@@ -162,7 +162,7 @@ export function BulkSelectTable<T>({
             {selectedIds.size > 0 && (
               <button
                 onClick={() => setSelectedIds(new Set())}
-                className="text-sm text-purple-600 hover:underline"
+                className="text-sm text-hos-gold hover:underline"
               >
                 Clear selection
               </button>
@@ -188,8 +188,8 @@ export function BulkSelectTable<T>({
 
       {/* Table */}
       <div className="overflow-x-auto">
-        <table className="min-w-full divide-y divide-gray-200">
-          <thead className="bg-gray-50">
+        <table className="min-w-full divide-y divide-hos-border">
+          <thead className="bg-hos-bg-secondary">
             <tr>
               <th className="w-12 px-4 py-3">
                 <input
@@ -199,14 +199,14 @@ export function BulkSelectTable<T>({
                     if (el) el.indeterminate = someSelected && !allSelected;
                   }}
                   onChange={toggleAll}
-                  className="h-4 w-4 rounded border-gray-300 text-purple-600 focus:ring-purple-500"
+                  className="h-4 w-4 rounded border-hos-border text-hos-gold focus:ring-hos-gold/50"
                 />
               </th>
               {columns.map((column) => (
                 <th
                   key={column.key}
-                  className={`px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider ${
-                    column.sortable ? 'cursor-pointer hover:bg-gray-100' : ''
+                  className={`px-6 py-3 text-left text-xs font-medium text-hos-text-muted uppercase tracking-wider ${
+                    column.sortable ? 'cursor-pointer hover:bg-hos-bg-tertiary' : ''
                   }`}
                   style={{ width: column.width }}
                   onClick={() => column.sortable && handleSort(column.key)}
@@ -221,10 +221,10 @@ export function BulkSelectTable<T>({
               ))}
             </tr>
           </thead>
-          <tbody className="bg-white divide-y divide-gray-200">
+          <tbody className="bg-hos-bg-secondary divide-y divide-hos-border">
             {sortedData.length === 0 ? (
               <tr>
-                <td colSpan={columns.length + 1} className="px-6 py-12 text-center text-gray-500">
+                <td colSpan={columns.length + 1} className="px-6 py-12 text-center text-hos-text-muted">
                   <span className="text-4xl block mb-2">📭</span>
                   <p>{emptyMessage}</p>
                 </td>
@@ -237,7 +237,7 @@ export function BulkSelectTable<T>({
                 return (
                   <tr
                     key={id}
-                    className={`${isSelected ? 'bg-purple-50' : 'hover:bg-gray-50'} ${
+                    className={`${isSelected ? 'bg-hos-gold/10' : 'hover:bg-hos-bg-tertiary'} ${
                       onRowClick ? 'cursor-pointer' : ''
                     }`}
                   >
@@ -247,13 +247,13 @@ export function BulkSelectTable<T>({
                         checked={isSelected}
                         onChange={() => toggleItem(id)}
                         onClick={(e) => e.stopPropagation()}
-                        className="h-4 w-4 rounded border-gray-300 text-purple-600 focus:ring-purple-500"
+                        className="h-4 w-4 rounded border-hos-border text-hos-gold focus:ring-hos-gold/50"
                       />
                     </td>
                     {columns.map((column) => (
                       <td
                         key={column.key}
-                        className="px-6 py-4 whitespace-nowrap text-sm text-gray-900"
+                        className="px-6 py-4 whitespace-nowrap text-sm text-white"
                         onClick={() => onRowClick?.(item)}
                       >
                         {column.render

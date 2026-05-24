@@ -1,38 +1,37 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useTheme } from '@hos-marketplace/theme-system';
+import { ProductCard } from '@/components/ProductCard';
 
 interface RecentlyViewedItem {
   id: string;
   name: string;
   image: string;
   price: number;
+  rrp?: number;
+  averageRating?: number;
+  vendor?: string;
 }
 
 export function RecentlyViewed() {
   const [items, setItems] = useState<RecentlyViewedItem[]>([]);
-  const theme = useTheme();
 
   useEffect(() => {
-    // Load recently viewed items from localStorage
     const stored = localStorage.getItem('recentlyViewed');
     if (stored) {
       try {
         const parsed = JSON.parse(stored);
-        setItems(parsed);
+        setItems(Array.isArray(parsed) ? parsed : []);
       } catch (error) {
         console.error('Failed to parse recently viewed items:', error);
       }
     }
   }, []);
 
-  // Hide section if empty (per requirements)
   if (items.length === 0) {
     return null;
   }
 
-  // Determine grid columns based on item count
   const getGridCols = () => {
     if (items.length === 1) return 'grid-cols-1 max-w-xs mx-auto';
     if (items.length === 2) return 'grid-cols-1 sm:grid-cols-2 max-w-2xl mx-auto';
@@ -42,31 +41,24 @@ export function RecentlyViewed() {
 
   return (
     <section>
-      <h2 className="text-2xl sm:text-3xl font-bold mb-4 sm:mb-6" style={{ color: theme.colors.text.primary }}>
+      <h2 className="font-display text-white text-2xl md:text-3xl font-bold mb-6">
         Recently Viewed
       </h2>
-      
-      <div className={`grid ${getGridCols()} gap-3 sm:gap-4`}>
+
+      <div className={`grid ${getGridCols()} gap-4 sm:gap-6`}>
         {items.map((item) => (
-          <div
+          <ProductCard
             key={item.id}
-            className="rounded-lg overflow-hidden hover:shadow-lg transition-shadow"
-            style={{ backgroundColor: theme.colors.surface }}
-          >
-            <div className="aspect-square bg-gray-200"></div>
-            <div className="p-2 sm:p-3">
-              <h3 className="font-semibold mb-1 text-sm sm:text-base" style={{ color: theme.colors.text.primary }}>
-                {item.name}
-              </h3>
-              <p className="text-base sm:text-lg font-bold" style={{ color: theme.colors.accent }}>
-                ${item.price.toFixed(2)}
-              </p>
-            </div>
-          </div>
+            id={item.id}
+            name={item.name}
+            price={item.price}
+            rrp={item.rrp}
+            images={item.image ? [{ url: item.image, alt: item.name }] : undefined}
+            averageRating={item.averageRating}
+            vendor={item.vendor}
+          />
         ))}
       </div>
     </section>
   );
 }
-
-

@@ -66,7 +66,7 @@ export default function LoyaltyPreferencesPage() {
           </Link>
           <h1 className="font-primary text-2xl text-amber-100 mb-2">Message preferences</h1>
           <p className="font-secondary text-stone-400 text-sm mb-8">
-            Choose how we may reach you about offers and programme updates.
+            Choose how we may reach you about offers and program updates.
           </p>
           {loading ? (
             <p className="text-stone-500">Loading…</p>

@@ -132,18 +132,18 @@ function TrackOrderContent() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-hos-bg-secondary">
       <Header />
       <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 lg:py-12">
         {/* Header */}
         <div className="text-center mb-8">
-          <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-gray-900">Track Your Order</h1>
-          <p className="text-gray-600 mt-2">Enter your order number to see its current status</p>
+          <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-white">Track Your Order</h1>
+          <p className="text-hos-text-secondary mt-2">Enter your order number to see its current status</p>
         </div>
 
         {/* Search Form */}
         <div className="max-w-xl mx-auto mb-8">
-          <div className="bg-white rounded-lg shadow p-6">
+          <div className="bg-hos-bg-secondary rounded-lg shadow p-6">
             <div className="flex gap-3">
               <input
                 type="text"
@@ -151,12 +151,12 @@ function TrackOrderContent() {
                 onChange={(e) => setOrderNumber(e.target.value)}
                 onKeyDown={(e) => e.key === 'Enter' && handleTrackOrder()}
                 placeholder="Enter order number or ID"
-                className="flex-1 px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                className="flex-1 px-4 py-3 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50 focus:border-transparent"
               />
               <button
                 onClick={() => handleTrackOrder()}
                 disabled={loading}
-                className="px-6 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors font-medium disabled:opacity-50"
+                className="px-6 py-3 bg-hos-gold text-[#1a1406] rounded-lg hover:bg-hos-gold-hover transition-colors font-medium disabled:opacity-50"
               >
                 {loading ? (
                   <span className="flex items-center gap-2">
@@ -168,9 +168,9 @@ function TrackOrderContent() {
                 )}
               </button>
             </div>
-            <p className="text-sm text-gray-500 mt-3">
+            <p className="text-sm text-hos-text-muted mt-3">
               You can find your order number in your confirmation email or in{' '}
-              <Link href="/orders" className="text-purple-600 hover:text-purple-700">
+              <Link href="/orders" className="text-hos-gold hover:text-hos-gold-hover">
                 My Orders
               </Link>
             </p>
@@ -190,13 +190,13 @@ function TrackOrderContent() {
         {order && (
           <div className="max-w-3xl mx-auto space-y-6">
             {/* Order Header */}
-            <div className="bg-white rounded-lg shadow p-6">
+            <div className="bg-hos-bg-secondary rounded-lg shadow p-6">
               <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                 <div>
-                  <h2 className="text-xl font-bold text-gray-900">
+                  <h2 className="text-xl font-bold text-white">
                     Order #{order.orderNumber || order.id.slice(0, 8)}
                   </h2>
-                  <p className="text-sm text-gray-500 mt-1">
+                  <p className="text-sm text-hos-text-muted mt-1">
                     Placed on {new Date(order.createdAt).toLocaleDateString('en-US', {
                       day: 'numeric',
                       month: 'long',
@@ -205,11 +205,11 @@ function TrackOrderContent() {
                   </p>
                 </div>
                 <div className="text-right">
-                  <p className="text-xl font-bold text-purple-600">
+                  <p className="text-xl font-bold text-hos-gold">
                     {formatPrice(order.total, order.currency || 'USD')}
                   </p>
                   {order.estimatedDelivery && (
-                    <p className="text-sm text-gray-500">
+                    <p className="text-sm text-hos-text-muted">
                       Est. Delivery: {new Date(order.estimatedDelivery).toLocaleDateString()}
                     </p>
                   )}
@@ -218,8 +218,8 @@ function TrackOrderContent() {
             </div>
 
             {/* Progress Tracker */}
-            <div className="bg-white rounded-lg shadow p-6">
-              <h3 className="font-semibold text-gray-900 mb-6">Order Progress</h3>
+            <div className="bg-hos-bg-secondary rounded-lg shadow p-6">
+              <h3 className="font-semibold text-white mb-6">Order Progress</h3>
               
               {/* Handle cancelled/refunded status */}
               {['cancelled', 'refunded'].includes((order.status || '').toLowerCase()) ? (
@@ -227,10 +227,10 @@ function TrackOrderContent() {
                   <div className="text-6xl mb-4">
                     {order.status.toLowerCase() === 'cancelled' ? '❌' : '💸'}
                   </div>
-                  <h4 className="text-xl font-bold text-gray-900">
+                  <h4 className="text-xl font-bold text-white">
                     Order {order.status.toLowerCase() === 'cancelled' ? 'Cancelled' : 'Refunded'}
                   </h4>
-                  <p className="text-gray-600 mt-2">
+                  <p className="text-hos-text-secondary mt-2">
                     {order.status.toLowerCase() === 'cancelled'
                       ? 'This order has been cancelled.'
                       : 'This order has been refunded.'}
@@ -239,9 +239,9 @@ function TrackOrderContent() {
               ) : (
                 <div className="relative">
                   {/* Progress Line */}
-                  <div className="absolute top-8 left-0 right-0 h-1 bg-gray-200">
+                  <div className="absolute top-8 left-0 right-0 h-1 bg-hos-bg-tertiary">
                     <div 
-                      className="h-full bg-purple-600 transition-all duration-500"
+                      className="h-full bg-hos-gold transition-all duration-500"
                       style={{ width: `${(currentStatusIndex / (ORDER_STATUSES.length - 1)) * 100}%` }}
                     />
                   </div>
@@ -253,18 +253,18 @@ function TrackOrderContent() {
                         <div
                           className={`w-16 h-16 rounded-full flex items-center justify-center text-2xl z-10 transition-all ${
                             index <= currentStatusIndex
-                              ? 'bg-purple-600 text-white'
-                              : 'bg-gray-200 text-gray-400'
+                              ? 'bg-hos-gold text-[#1a1406]'
+                              : 'bg-hos-bg-tertiary text-hos-text-muted'
                           }`}
                         >
                           {status.icon}
                         </div>
                         <p className={`mt-3 text-sm font-medium ${
-                          index <= currentStatusIndex ? 'text-purple-600' : 'text-gray-400'
+                          index <= currentStatusIndex ? 'text-hos-gold' : 'text-hos-text-muted'
                         }`}>
                           {status.label}
                         </p>
-                        <p className="text-xs text-gray-500 text-center max-w-[100px] hidden sm:block">
+                        <p className="text-xs text-hos-text-muted text-center max-w-[100px] hidden sm:block">
                           {status.description}
                         </p>
                       </div>
@@ -276,18 +276,18 @@ function TrackOrderContent() {
 
             {/* Tracking Number */}
             {(order.trackingNumber || order.trackingCode) && (
-              <div className="bg-purple-50 rounded-lg shadow p-6">
+              <div className="bg-hos-gold/10 rounded-lg shadow p-6">
                 <div className="flex items-center justify-between flex-wrap gap-4">
                   <div>
-                    <h3 className="font-semibold text-gray-900">Tracking Number</h3>
-                    <p className="font-mono text-purple-600 mt-1">{order.trackingNumber || order.trackingCode}</p>
+                    <h3 className="font-semibold text-white">Tracking Number</h3>
+                    <p className="font-mono text-hos-gold mt-1">{order.trackingNumber || order.trackingCode}</p>
                   </div>
                   <button
                     onClick={() => {
                       navigator.clipboard.writeText((order.trackingNumber || order.trackingCode)!);
                       toast.success('Tracking number copied!');
                     }}
-                    className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors font-medium text-sm"
+                    className="px-4 py-2 bg-hos-gold text-[#1a1406] rounded-lg hover:bg-hos-gold-hover transition-colors font-medium text-sm"
                   >
                     Copy
                   </button>
@@ -296,22 +296,22 @@ function TrackOrderContent() {
             )}
 
             {/* Timeline */}
-            <div className="bg-white rounded-lg shadow p-6">
-              <h3 className="font-semibold text-gray-900 mb-4">Tracking History</h3>
+            <div className="bg-hos-bg-secondary rounded-lg shadow p-6">
+              <h3 className="font-semibold text-white mb-4">Tracking History</h3>
               <div className="space-y-4">
                 {generateTrackingEvents(order).map((event, index) => (
                   <div key={index} className="flex gap-4">
                     <div className="flex flex-col items-center">
                       <div className={`w-3 h-3 rounded-full ${
-                        index === 0 ? 'bg-purple-600' : 'bg-gray-300'
+                        index === 0 ? 'bg-hos-gold' : 'bg-hos-bg-tertiary'
                       }`} />
                       {index < generateTrackingEvents(order).length - 1 && (
-                        <div className="w-0.5 h-full bg-gray-200 mt-1" />
+                        <div className="w-0.5 h-full bg-hos-bg-tertiary mt-1" />
                       )}
                     </div>
                     <div className="pb-4">
-                      <p className="font-medium text-gray-900">{event.description}</p>
-                      <p className="text-sm text-gray-500">
+                      <p className="font-medium text-white">{event.description}</p>
+                      <p className="text-sm text-hos-text-muted">
                         {new Date(event.date).toLocaleString()}
                         {event.location && ` • ${event.location}`}
                       </p>
@@ -323,9 +323,9 @@ function TrackOrderContent() {
 
             {/* Shipping Address */}
             {order.shippingAddress && (
-              <div className="bg-white rounded-lg shadow p-6">
-                <h3 className="font-semibold text-gray-900 mb-3">Shipping Address</h3>
-                <p className="text-gray-700">
+              <div className="bg-hos-bg-secondary rounded-lg shadow p-6">
+                <h3 className="font-semibold text-white mb-3">Shipping Address</h3>
+                <p className="text-hos-text-secondary">
                   {order.shippingAddress.street}<br />
                   {order.shippingAddress.city}, {order.shippingAddress.state} {order.shippingAddress.postalCode}<br />
                   {order.shippingAddress.country}
@@ -334,8 +334,8 @@ function TrackOrderContent() {
             )}
 
             {/* Order Items */}
-            <div className="bg-white rounded-lg shadow p-6">
-              <h3 className="font-semibold text-gray-900 mb-4">Items in Order</h3>
+            <div className="bg-hos-bg-secondary rounded-lg shadow p-6">
+              <h3 className="font-semibold text-white mb-4">Items in Order</h3>
               <div className="divide-y">
                 {order.items?.map((item, index) => {
                   const firstImage = item.product?.images?.[0];
@@ -354,15 +354,15 @@ function TrackOrderContent() {
                           className="rounded-lg object-cover"
                         />
                       ) : (
-                        <div className="w-16 h-16 rounded-lg bg-gray-200 flex items-center justify-center">
-                          <span className="text-gray-400 text-xs">No img</span>
+                        <div className="w-16 h-16 rounded-lg bg-hos-bg-tertiary flex items-center justify-center">
+                          <span className="text-hos-text-muted text-xs">No img</span>
                         </div>
                       )}
                       <div className="flex-1">
-                        <p className="font-medium text-gray-900">{item.product?.name || 'Product'}</p>
-                        <p className="text-sm text-gray-500">Qty: {item.quantity}</p>
+                        <p className="font-medium text-white">{item.product?.name || 'Product'}</p>
+                        <p className="text-sm text-hos-text-muted">Qty: {item.quantity}</p>
                       </div>
-                      <p className="font-medium text-gray-900">
+                      <p className="font-medium text-white">
                         {formatPrice(item.price * item.quantity, order.currency || 'USD')}
                       </p>
                     </div>
@@ -375,13 +375,13 @@ function TrackOrderContent() {
             <div className="flex flex-wrap gap-4 justify-center">
               <Link
                 href="/orders"
-                className="px-6 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors font-medium"
+                className="px-6 py-3 bg-hos-gold text-[#1a1406] rounded-lg hover:bg-hos-gold-hover transition-colors font-medium"
               >
                 View All Orders
               </Link>
               <Link
                 href="/help"
-                className="px-6 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors font-medium"
+                className="px-6 py-3 border border-hos-border text-hos-text-secondary rounded-lg hover:bg-hos-bg-tertiary transition-colors font-medium"
               >
                 Contact Support
               </Link>
@@ -392,9 +392,9 @@ function TrackOrderContent() {
         {/* No Search Yet */}
         {!searched && !order && !loading && (
           <div className="max-w-2xl mx-auto">
-            <div className="bg-white rounded-lg shadow p-8 text-center">
+            <div className="bg-hos-bg-secondary rounded-lg shadow p-8 text-center">
               <div className="text-6xl mb-4">📦</div>
-              <p className="text-gray-600">
+              <p className="text-hos-text-secondary">
                 Enter your order number above to track its progress
               </p>
             </div>
@@ -409,8 +409,8 @@ function TrackOrderContent() {
 export default function TrackOrderPage() {
   return (
     <Suspense fallback={
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600"></div>
+      <div className="min-h-screen bg-hos-bg-secondary flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-hos-gold"></div>
       </div>
     }>
       <TrackOrderContent />
