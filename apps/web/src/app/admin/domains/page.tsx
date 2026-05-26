@@ -390,7 +390,7 @@ export default function AdminDomainsPage() {
           {/* Header */}
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
             <div>
-              <h1 className="text-2xl font-bold text-white">Domain Management</h1>
+              <h1 className="text-2xl font-bold text-hos-text-secondary">Domain Management</h1>
               <p className="text-hos-text-secondary mt-1">Manage subdomains and custom domains for all sellers</p>
             </div>
             <DataExport data={filteredSellers} columns={exportColumns} filename="domains-export" />
@@ -404,7 +404,7 @@ export default function AdminDomainsPage() {
                 className={`bg-hos-bg-secondary rounded-lg shadow p-4 text-left hover:shadow-md transition-shadow ${statusFilter === 'ALL' ? 'ring-2 ring-hos-gold/50' : ''}`}
               >
                 <p className="text-sm text-hos-text-muted">Total Sellers</p>
-                <p className="text-2xl font-bold text-white">{stats.total}</p>
+                <p className="text-2xl font-bold text-hos-text-secondary">{stats.total}</p>
               </button>
               <button
                 onClick={() => setStatusFilter('SUBDOMAIN')}
@@ -483,7 +483,7 @@ export default function AdminDomainsPage() {
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   placeholder="Store name, email, domain..."
-                  className="w-full px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50"
+                  className="w-full px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50 bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none focus:border-hos-gold"
                 />
               </div>
               <div>
@@ -491,7 +491,7 @@ export default function AdminDomainsPage() {
                 <select
                   value={typeFilter}
                   onChange={(e) => setTypeFilter(e.target.value)}
-                  className="w-full px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50"
+                  className="w-full px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50 bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none focus:border-hos-gold"
                 >
                   <option value="ALL">All Types</option>
                   {sellerTypes.map(type => (
@@ -508,7 +508,7 @@ export default function AdminDomainsPage() {
                     setSortBy(field as any);
                     setSortOrder(order as any);
                   }}
-                  className="w-full px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50"
+                  className="w-full px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50 bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none focus:border-hos-gold"
                 >
                   <option value="name-asc">Name A-Z</option>
                   <option value="name-desc">Name Z-A</option>
@@ -595,7 +595,7 @@ export default function AdminDomainsPage() {
                         </td>
                         <td className="px-4 py-3">
                           <div>
-                            <p className="font-medium text-white">{seller.storeName}</p>
+                            <p className="font-medium text-hos-text-secondary">{seller.storeName}</p>
                             <p className="text-sm text-hos-text-muted">{seller.user.email}</p>
                           </div>
                         </td>
@@ -654,7 +654,7 @@ export default function AdminDomainsPage() {
                         <td className="px-4 py-3">
                           {seller.customDomain ? (
                             <div>
-                              <p className="text-sm font-medium text-white">{seller.customDomain}</p>
+                              <p className="text-sm font-medium text-hos-text-secondary">{seller.customDomain}</p>
                               <div className="flex items-center gap-2 mt-1">
                                 {seller.domainPackagePurchased && (
                                   <span className="text-xs text-green-400">✓ Package</span>
@@ -809,7 +809,7 @@ export default function AdminDomainsPage() {
                         value={customDomainForm.customDomain}
                         onChange={(e) => setCustomDomainForm({ ...customDomainForm, customDomain: e.target.value })}
                         placeholder="example.com"
-                        className="w-full px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50"
+                        className="w-full px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50 bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none focus:border-hos-gold"
                       />
                       <p className="text-xs text-hos-text-muted mt-1">Enter the full domain name (e.g., mystore.com)</p>
                     </div>

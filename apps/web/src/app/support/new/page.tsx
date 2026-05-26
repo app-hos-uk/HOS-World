@@ -82,7 +82,7 @@ export default function SubmitTicketPage() {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
               </svg>
             </div>
-            <h1 className="text-2xl font-bold text-white mb-2">Ticket Submitted</h1>
+            <h1 className="text-2xl font-bold text-hos-text-secondary mb-2">Ticket Submitted</h1>
             <p className="text-hos-text-secondary mb-6">
               Your support ticket has been created. We&apos;ll get back to you as soon as possible.
             </p>

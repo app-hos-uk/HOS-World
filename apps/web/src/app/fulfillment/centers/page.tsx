@@ -188,7 +188,7 @@ export default function FulfillmentCentersPage() {
             </button>
             <button
               onClick={openAddModal}
-              className="px-4 py-2 text-sm font-medium text-white bg-hos-gold rounded-lg hover:bg-hos-gold-hover transition-colors"
+              className="px-4 py-2 text-sm font-medium text-hos-text-secondary bg-hos-gold rounded-lg hover:bg-hos-gold-hover transition-colors"
             >
               + Add Center
             </button>
@@ -232,7 +232,7 @@ export default function FulfillmentCentersPage() {
                 className="bg-hos-bg-secondary border border-hos-border rounded-lg p-6 shadow-sm hover:shadow-md transition-shadow"
               >
                 <div className="flex items-start justify-between mb-3">
-                  <h3 className="text-lg font-semibold text-white flex-1 mr-2">{center.name}</h3>
+                  <h3 className="text-lg font-semibold text-hos-text-secondary flex-1 mr-2">{center.name}</h3>
                   <span
                     className={`px-2 py-1 text-xs font-medium rounded-full ${
                       isActive

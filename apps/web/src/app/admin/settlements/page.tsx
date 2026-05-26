@@ -337,9 +337,9 @@ export default function AdminSettlementsPage() {
       PROCESSING: 'bg-hos-gold/20 text-hos-gold',
       PAID: 'bg-green-500/15 text-green-300',
       FAILED: 'bg-red-500/15 text-red-300',
-      CANCELLED: 'bg-hos-bg-tertiary text-white',
+      CANCELLED: 'bg-hos-bg-tertiary text-hos-text-secondary',
     };
-    return <span className={`px-2 py-0.5 text-xs rounded-full ${styles[status] || 'bg-hos-bg-tertiary text-white'}`}>{status}</span>;
+    return <span className={`px-2 py-0.5 text-xs rounded-full ${styles[status] || 'bg-hos-bg-tertiary text-hos-text-secondary'}`}>{status}</span>;
   };
 
   const exportColumns = [
@@ -372,7 +372,7 @@ export default function AdminSettlementsPage() {
           {/* Header */}
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div>
-              <h1 className="text-2xl font-bold text-white">Settlements</h1>
+              <h1 className="text-2xl font-bold text-hos-text-secondary">Settlements</h1>
               <p className="text-hos-text-secondary mt-1">Manage seller payouts and settlements</p>
             </div>
             <div className="flex gap-2">
@@ -417,7 +417,7 @@ export default function AdminSettlementsPage() {
 
           {/* Chart */}
           <div className="bg-hos-bg-secondary rounded-lg shadow p-6">
-            <h3 className="text-lg font-semibold text-white mb-4">Payouts (Last 30 Days)</h3>
+            <h3 className="text-lg font-semibold text-hos-text-secondary mb-4">Payouts (Last 30 Days)</h3>
             <div className="h-64">
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={chartData}>
@@ -447,7 +447,7 @@ export default function AdminSettlementsPage() {
                   placeholder="Search by seller, ID, or reference..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="w-full px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50"
+                  className="w-full px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50 bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none focus:border-hos-gold"
                 />
               </div>
               <select
@@ -557,14 +557,14 @@ export default function AdminSettlementsPage() {
                           )}
                         </td>
                         <td className="px-4 py-3">
-                          <div className="text-sm font-medium text-white">{settlement.seller?.storeName || 'Unknown'}</div>
+                          <div className="text-sm font-medium text-hos-text-secondary">{settlement.seller?.storeName || 'Unknown'}</div>
                           <div className="text-xs text-hos-text-muted">{settlement.seller?.email}</div>
                         </td>
                         <td className="px-4 py-3 text-sm text-hos-text-secondary">
                           {new Date(settlement.periodStart).toLocaleDateString()} - {new Date(settlement.periodEnd).toLocaleDateString()}
                         </td>
                         <td className="px-4 py-3 text-sm text-hos-text-secondary">{settlement.ordersCount}</td>
-                        <td className="px-4 py-3 text-sm text-white">{formatPrice(settlement.amount)}</td>
+                        <td className="px-4 py-3 text-sm text-hos-text-secondary">{formatPrice(settlement.amount)}</td>
                         <td className="px-4 py-3 text-sm text-red-400">-{formatPrice(settlement.platformFee)}</td>
                         <td className="px-4 py-3 text-sm font-medium text-green-400">{formatPrice(settlement.netAmount)}</td>
                         <td className="px-4 py-3">{getStatusBadge(settlement.status)}</td>
@@ -610,7 +610,7 @@ export default function AdminSettlementsPage() {
                   <div className="space-y-6">
                     {/* Seller Info */}
                     <div className="bg-hos-bg-secondary rounded-lg p-4">
-                      <h3 className="font-semibold text-white mb-2">Seller Information</h3>
+                      <h3 className="font-semibold text-hos-text-secondary mb-2">Seller Information</h3>
                       <div className="grid grid-cols-2 gap-4 text-sm">
                         <div>
                           <p className="text-hos-text-muted">Store Name</p>
@@ -730,7 +730,7 @@ export default function AdminSettlementsPage() {
                     <select
                       value={createForm.sellerId}
                       onChange={(e) => setCreateForm({ ...createForm, sellerId: e.target.value })}
-                      className="w-full px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50"
+                      className="w-full px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50 bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none focus:border-hos-gold"
                     >
                       <option value="">Select a seller</option>
                       {sellers.map(s => (
@@ -745,7 +745,7 @@ export default function AdminSettlementsPage() {
                         type="date"
                         value={createForm.periodStart}
                         onChange={(e) => setCreateForm({ ...createForm, periodStart: e.target.value })}
-                        className="w-full px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50"
+                        className="w-full px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50 bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none focus:border-hos-gold"
                       />
                     </div>
                     <div>
@@ -754,7 +754,7 @@ export default function AdminSettlementsPage() {
                         type="date"
                         value={createForm.periodEnd}
                         onChange={(e) => setCreateForm({ ...createForm, periodEnd: e.target.value })}
-                        className="w-full px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50"
+                        className="w-full px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50 bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none focus:border-hos-gold"
                       />
                     </div>
                   </div>

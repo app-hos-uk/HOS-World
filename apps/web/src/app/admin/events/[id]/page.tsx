@@ -118,7 +118,7 @@ export default function AdminEventDetailPage() {
             <p className="text-red-400">Not found</p>
           ) : (
             <>
-              <h1 className="text-2xl font-semibold text-white">{event.title}</h1>
+              <h1 className="text-2xl font-semibold text-hos-text-secondary">{event.title}</h1>
               <p className="text-sm text-hos-text-secondary">
                 {event.status} · {event.slug} · {new Date(event.startsAt).toLocaleString()}
               </p>
@@ -160,7 +160,7 @@ export default function AdminEventDetailPage() {
                           toast.error(e instanceof Error ? e.message : 'Failed');
                         }
                       }}
-                      className="rounded bg-hos-bg-secondary text-white px-3 py-1.5"
+                      className="rounded bg-hos-bg-secondary text-hos-text-secondary px-3 py-1.5"
                     >
                       Complete
                     </button>
@@ -168,13 +168,13 @@ export default function AdminEventDetailPage() {
                   <div className="border-t pt-4 space-y-2">
                     <p className="font-medium">Staff check-in</p>
                     <input
-                      className="border rounded px-2 py-1 w-full max-w-xs"
+                      className="border rounded px-2 py-1 w-full max-w-xs bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none border-hos-border"
                       placeholder="User ID"
                       value={checkUserId}
                       onChange={(e) => setCheckUserId(e.target.value)}
                     />
                     <input
-                      className="border rounded px-2 py-1 w-full max-w-xs block"
+                      className="border rounded px-2 py-1 w-full max-w-xs block bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none border-hos-border"
                       placeholder="Ticket code"
                       value={checkTicket}
                       onChange={(e) => setCheckTicket(e.target.value)}

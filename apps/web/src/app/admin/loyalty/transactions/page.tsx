@@ -29,7 +29,7 @@ export default function AdminLoyaltyTransactionsPage() {
     <RouteGuard allowedRoles={['ADMIN']} showAccessDenied>
       <AdminLayout>
         <div className="mb-6">
-          <h1 className="text-2xl font-bold text-white">Points Transactions</h1>
+          <h1 className="text-2xl font-bold text-hos-text-secondary">Points Transactions</h1>
           <p className="text-hos-text-secondary mt-1">Recent loyalty point transactions across all members</p>
         </div>
 

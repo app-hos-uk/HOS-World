@@ -82,7 +82,7 @@ export default function AdminLoyaltyEarnRulesPage() {
       <AdminLayout>
         <div className="flex items-center justify-between mb-6">
           <div>
-            <h1 className="text-2xl font-bold text-white">Earn Rules</h1>
+            <h1 className="text-2xl font-bold text-hos-text-secondary">Earn Rules</h1>
             <p className="text-hos-text-secondary mt-1">Configure how customers earn loyalty points</p>
           </div>
           <button onClick={() => { resetForm(); setShowForm(true); }} className="px-4 py-2 bg-hos-gold text-[#1a1406] rounded-lg hover:bg-hos-gold-hover text-sm font-medium">
@@ -96,15 +96,15 @@ export default function AdminLoyaltyEarnRulesPage() {
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
               <div>
                 <label className="block text-sm font-medium text-hos-text-secondary mb-1">Action</label>
-                <input className="w-full border rounded-lg px-3 py-2" placeholder="e.g. PURCHASE, REVIEW, REFERRAL" value={form.action} onChange={(e) => setForm({ ...form, action: e.target.value.toUpperCase() })} />
+                <input className="w-full border rounded-lg px-3 py-2 bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none border-hos-border" placeholder="e.g. PURCHASE, REVIEW, REFERRAL" value={form.action} onChange={(e) => setForm({ ...form, action: e.target.value.toUpperCase() })} />
               </div>
               <div>
                 <label className="block text-sm font-medium text-hos-text-secondary mb-1">Points Awarded</label>
-                <input type="number" className="w-full border rounded-lg px-3 py-2" value={form.pointsAwarded} onChange={(e) => setForm({ ...form, pointsAwarded: parseInt(e.target.value) || 0 })} />
+                <input type="number" className="w-full border rounded-lg px-3 py-2 bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none border-hos-border" value={form.pointsAwarded} onChange={(e) => setForm({ ...form, pointsAwarded: parseInt(e.target.value) || 0 })} />
               </div>
               <div className="sm:col-span-2">
                 <label className="block text-sm font-medium text-hos-text-secondary mb-1">Description</label>
-                <input className="w-full border rounded-lg px-3 py-2" placeholder="What triggers this rule" value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} />
+                <input className="w-full border rounded-lg px-3 py-2 bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none border-hos-border" placeholder="What triggers this rule" value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} />
               </div>
               <div className="flex items-center gap-2">
                 <input type="checkbox" id="isActive" checked={form.isActive} onChange={(e) => setForm({ ...form, isActive: e.target.checked })} className="rounded" />
@@ -139,7 +139,7 @@ export default function AdminLoyaltyEarnRulesPage() {
               <tbody className="divide-y">
                 {rules.map((rule) => (
                   <tr key={rule.id} className="hover:bg-hos-bg-tertiary">
-                    <td className="px-4 py-3 font-medium text-white">{rule.action}</td>
+                    <td className="px-4 py-3 font-medium text-hos-text-secondary">{rule.action}</td>
                     <td className="px-4 py-3">{rule.pointsAwarded}</td>
                     <td className="px-4 py-3 text-hos-text-secondary">{rule.description || '—'}</td>
                     <td className="px-4 py-3">

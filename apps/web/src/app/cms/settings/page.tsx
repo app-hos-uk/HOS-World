@@ -67,7 +67,7 @@ export default function CMSSettingsPage() {
         <div className="space-y-6">
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-2xl font-bold text-white">CMS Settings</h1>
+              <h1 className="text-2xl font-bold text-hos-text-secondary">CMS Settings</h1>
               <p className="text-hos-text-secondary mt-1">Configure your CMS preferences</p>
             </div>
             <button
@@ -95,7 +95,7 @@ export default function CMSSettingsPage() {
                   type="text"
                   value={settings.siteName || ''}
                   onChange={(e) => handleChange('siteName', e.target.value)}
-                  className="w-full px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50"
+                  className="w-full px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50 bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none focus:border-hos-gold"
                   placeholder="Enter site name"
                 />
               </div>
@@ -107,7 +107,7 @@ export default function CMSSettingsPage() {
                 <textarea
                   value={settings.siteDescription || ''}
                   onChange={(e) => handleChange('siteDescription', e.target.value)}
-                  className="w-full px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50"
+                  className="w-full px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50 bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none focus:border-hos-gold"
                   rows={3}
                   placeholder="Enter site description"
                 />
@@ -120,7 +120,7 @@ export default function CMSSettingsPage() {
                 <select
                   value={settings.defaultLanguage || 'en'}
                   onChange={(e) => handleChange('defaultLanguage', e.target.value)}
-                  className="w-full px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50"
+                  className="w-full px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50 bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none focus:border-hos-gold"
                 >
                   <option value="en">English</option>
                   <option value="es">Spanish</option>

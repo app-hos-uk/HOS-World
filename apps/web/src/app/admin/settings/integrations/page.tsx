@@ -237,7 +237,7 @@ export default function IntegrationsPage() {
       case 'FAILED':
         return 'bg-red-500/15 text-red-300';
       default:
-        return 'bg-hos-bg-tertiary text-white';
+        return 'bg-hos-bg-tertiary text-hos-text-secondary';
     }
   };
 
@@ -448,7 +448,7 @@ export default function IntegrationsPage() {
                             setSelectedProvider(null);
                             setFormData({ ...formData, credentials: {} });
                           }}
-                          className="w-full px-3 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50"
+                          className="w-full px-3 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50 bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none focus:border-hos-gold"
                           required
                         >
                           <option value="">Select category...</option>
@@ -481,7 +481,7 @@ export default function IntegrationsPage() {
                                 });
                               }
                             }}
-                            className="w-full px-3 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50"
+                            className="w-full px-3 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50 bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none focus:border-hos-gold"
                             required
                           >
                             <option value="">Select provider...</option>
@@ -505,7 +505,7 @@ export default function IntegrationsPage() {
                               type="text"
                               value={formData.displayName}
                               onChange={(e) => setFormData({ ...formData, displayName: e.target.value })}
-                              className="w-full px-3 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50"
+                              className="w-full px-3 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50 bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none focus:border-hos-gold"
                               required
                             />
                           </div>
@@ -542,7 +542,7 @@ export default function IntegrationsPage() {
                                         credentials: { ...formData.credentials, [field]: e.target.value },
                                       })
                                     }
-                                    className="w-full px-3 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50"
+                                    className="w-full px-3 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50 bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none focus:border-hos-gold"
                                     required
                                   />
                                 </div>
@@ -561,7 +561,7 @@ export default function IntegrationsPage() {
                                         credentials: { ...formData.credentials, [field]: e.target.value },
                                       })
                                     }
-                                    className="w-full px-3 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50"
+                                    className="w-full px-3 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50 bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none focus:border-hos-gold"
                                   />
                                 </div>
                               ))}

@@ -110,13 +110,13 @@ export default function AdminSegmentDetailPage() {
               <Link href="/admin/segments" className="text-hos-gold hover:underline text-sm">
                 ← Segments
               </Link>
-              <h1 className="text-2xl font-semibold text-white mt-1">{seg.name}</h1>
+              <h1 className="text-2xl font-semibold text-hos-text-secondary mt-1">{seg.name}</h1>
               <p className="text-hos-text-secondary text-sm mt-1">{seg.description || '—'}</p>
             </div>
             <div className="flex gap-2 flex-wrap">
               <Link
                 href={`/admin/segments/${id}/edit`}
-                className="rounded-md border px-3 py-1.5 text-sm text-white"
+                className="rounded-md border px-3 py-1.5 text-sm text-hos-text-secondary"
               >
                 Edit
               </Link>
@@ -125,7 +125,7 @@ export default function AdminSegmentDetailPage() {
                   <button
                     type="button"
                     onClick={refresh}
-                    className="rounded-md bg-hos-gold px-3 py-1.5 text-sm text-white"
+                    className="rounded-md bg-hos-gold px-3 py-1.5 text-sm text-hos-text-secondary"
                   >
                     Refresh now
                   </button>
@@ -178,7 +178,7 @@ export default function AdminSegmentDetailPage() {
             <div className="space-y-3">
               <div className="flex gap-2 flex-wrap items-center">
                 <input
-                  className="border rounded px-3 py-1.5 text-sm"
+                  className="border rounded px-3 py-1.5 text-sm bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none border-hos-border"
                   placeholder="Search name / email"
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
@@ -262,7 +262,7 @@ export default function AdminSegmentDetailPage() {
               <label className="block text-sm">
                 Template slug
                 <input
-                  className="mt-1 w-full border rounded px-2 py-1"
+                  className="mt-1 w-full border rounded px-2 py-1 bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none border-hos-border"
                   value={templateSlug}
                   onChange={(e) => setTemplateSlug(e.target.value)}
                 />
@@ -270,7 +270,7 @@ export default function AdminSegmentDetailPage() {
               <label className="block text-sm">
                 Subject override
                 <input
-                  className="mt-1 w-full border rounded px-2 py-1"
+                  className="mt-1 w-full border rounded px-2 py-1 bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none border-hos-border"
                   value={subject}
                   onChange={(e) => setSubject(e.target.value)}
                 />
@@ -279,7 +279,7 @@ export default function AdminSegmentDetailPage() {
                 Limit
                 <input
                   type="number"
-                  className="mt-1 w-full border rounded px-2 py-1"
+                  className="mt-1 w-full border rounded px-2 py-1 bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none border-hos-border"
                   value={broadcastLimit}
                   onChange={(e) => setBroadcastLimit(Number(e.target.value))}
                 />

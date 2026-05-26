@@ -127,7 +127,7 @@ export default function OrderDetailPage() {
       case 'REFUNDED':
         return 'bg-red-500/15 text-red-300';
       default:
-        return 'bg-hos-bg-tertiary text-white';
+        return 'bg-hos-bg-tertiary text-hos-text-secondary';
     }
   };
 
@@ -207,7 +207,7 @@ export default function OrderDetailPage() {
             </Link>
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mt-4">
               <div>
-                <h1 className="text-2xl sm:text-3xl font-bold text-white">
+                <h1 className="text-2xl sm:text-3xl font-bold text-hos-text-secondary">
                   Order #{order.orderNumber || order.id.slice(0, 8)}
                 </h1>
                 <p className="text-hos-text-secondary mt-1">
@@ -232,7 +232,7 @@ export default function OrderDetailPage() {
               {/* Order Items */}
               <div className="bg-hos-bg-secondary rounded-lg shadow border border-hos-border">
                 <div className="p-4 sm:p-6 border-b border-hos-border">
-                  <h2 className="text-lg font-semibold text-white">Order Items</h2>
+                  <h2 className="text-lg font-semibold text-hos-text-secondary">Order Items</h2>
                 </div>
                 <div className="divide-y">
                   {order.items?.map((item, index) => {
@@ -258,7 +258,7 @@ export default function OrderDetailPage() {
                           <div className="flex-1 min-w-0">
                             <Link
                               href={`/products/${item.productId}`}
-                              className="font-medium text-white hover:text-hos-gold transition-colors block mb-1"
+                              className="font-medium text-hos-text-secondary hover:text-hos-gold transition-colors block mb-1"
                             >
                               {item.product?.name || 'Product'}
                             </Link>
@@ -266,7 +266,7 @@ export default function OrderDetailPage() {
                             <p className="text-sm text-hos-text-muted">Unit Price: {formatPrice(item.price, order.currency || 'USD')}</p>
                           </div>
                           <div className="text-right">
-                            <p className="font-semibold text-white">
+                            <p className="font-semibold text-hos-text-secondary">
                               {formatPrice(item.price * item.quantity, order.currency || 'USD')}
                             </p>
                             {['DELIVERED', 'COMPLETED'].includes(order.status.toUpperCase()) && (
@@ -288,14 +288,14 @@ export default function OrderDetailPage() {
               {/* Tracking Information */}
               {(order.trackingNumber || order.trackingCode) && (
                 <div className="bg-hos-bg-secondary rounded-lg shadow border border-hos-border p-4 sm:p-6">
-                  <h2 className="text-lg font-semibold text-white mb-4">Tracking Information</h2>
+                  <h2 className="text-lg font-semibold text-hos-text-secondary mb-4">Tracking Information</h2>
                   <div className="bg-hos-gold/10 rounded-lg p-4">
                     <p className="text-sm text-hos-text-secondary mb-1">Tracking Number</p>
                     <p className="font-mono text-lg font-semibold text-hos-gold">{order.trackingNumber || order.trackingCode}</p>
                     {order.estimatedDelivery && (
                       <>
                         <p className="text-sm text-hos-text-secondary mt-3 mb-1">Estimated Delivery</p>
-                        <p className="text-white">
+                        <p className="text-hos-text-secondary">
                           {new Date(order.estimatedDelivery).toLocaleDateString('en-US', {
                             day: 'numeric',
                             month: 'long',
@@ -317,7 +317,7 @@ export default function OrderDetailPage() {
               {/* Order Notes */}
               {order.notes && order.notes.length > 0 && (
                 <div className="bg-hos-bg-secondary rounded-lg shadow border border-hos-border p-4 sm:p-6">
-                  <h2 className="text-lg font-semibold text-white mb-4">Order Notes</h2>
+                  <h2 className="text-lg font-semibold text-hos-text-secondary mb-4">Order Notes</h2>
                   <div className="space-y-3">
                     {order.notes.filter(note => !note.internal).map((note) => (
                       <div key={note.id} className="border-l-4 border-hos-border-accent pl-4 py-2">
@@ -336,24 +336,24 @@ export default function OrderDetailPage() {
             <div className="space-y-6">
               {/* Order Summary */}
               <div className="bg-hos-bg-secondary rounded-lg shadow border border-hos-border p-4 sm:p-6">
-                <h2 className="text-lg font-semibold text-white mb-4">Order Summary</h2>
+                <h2 className="text-lg font-semibold text-hos-text-secondary mb-4">Order Summary</h2>
                 <div className="space-y-3">
                   {order.subtotal !== undefined && (
                     <div className="flex justify-between text-sm">
                       <span className="text-hos-text-secondary">Subtotal</span>
-                      <span className="text-white">{formatPrice(order.subtotal, order.currency || 'USD')}</span>
+                      <span className="text-hos-text-secondary">{formatPrice(order.subtotal, order.currency || 'USD')}</span>
                     </div>
                   )}
                   {(order.shippingCost || order.shippingAmount) ? (
                     <div className="flex justify-between text-sm">
                       <span className="text-hos-text-secondary">Shipping</span>
-                      <span className="text-white">{formatPrice(order.shippingCost || order.shippingAmount || 0, order.currency || 'USD')}</span>
+                      <span className="text-hos-text-secondary">{formatPrice(order.shippingCost || order.shippingAmount || 0, order.currency || 'USD')}</span>
                     </div>
                   ) : null}
                   {order.tax !== undefined && order.tax > 0 && (
                     <div className="flex justify-between text-sm">
                       <span className="text-hos-text-secondary">Tax</span>
-                      <span className="text-white">{formatPrice(order.tax, order.currency || 'USD')}</span>
+                      <span className="text-hos-text-secondary">{formatPrice(order.tax, order.currency || 'USD')}</span>
                     </div>
                   )}
                   {(order.discount || order.discountAmount) ? (
@@ -363,7 +363,7 @@ export default function OrderDetailPage() {
                     </div>
                   ) : null}
                   <div className="flex justify-between font-bold text-base pt-3 border-t">
-                    <span className="text-white">Total</span>
+                    <span className="text-hos-text-secondary">Total</span>
                     <span className="text-hos-gold">{formatPrice(order.total, order.currency || 'USD')}</span>
                   </div>
                 </div>
@@ -372,7 +372,7 @@ export default function OrderDetailPage() {
               {/* Shipping Address */}
               {order.shippingAddress && (
                 <div className="bg-hos-bg-secondary rounded-lg shadow border border-hos-border p-4 sm:p-6">
-                  <h2 className="text-lg font-semibold text-white mb-4">Shipping Address</h2>
+                  <h2 className="text-lg font-semibold text-hos-text-secondary mb-4">Shipping Address</h2>
                   <div className="text-sm text-hos-text-secondary space-y-1">
                     {order.shippingAddress.firstName && order.shippingAddress.lastName && (
                       <p className="font-medium">
@@ -400,7 +400,7 @@ export default function OrderDetailPage() {
               {/* Billing Address */}
               {order.billingAddress && formatAddress(order.billingAddress) !== formatAddress(order.shippingAddress) && (
                 <div className="bg-hos-bg-secondary rounded-lg shadow border border-hos-border p-4 sm:p-6">
-                  <h2 className="text-lg font-semibold text-white mb-4">Billing Address</h2>
+                  <h2 className="text-lg font-semibold text-hos-text-secondary mb-4">Billing Address</h2>
                   <div className="text-sm text-hos-text-secondary space-y-1">
                     {order.billingAddress.firstName && order.billingAddress.lastName && (
                       <p className="font-medium">
@@ -424,7 +424,7 @@ export default function OrderDetailPage() {
 
               {/* Actions */}
               <div className="bg-hos-bg-secondary rounded-lg shadow border border-hos-border p-4 sm:p-6">
-                <h2 className="text-lg font-semibold text-white mb-4">Actions</h2>
+                <h2 className="text-lg font-semibold text-hos-text-secondary mb-4">Actions</h2>
                 <div className="space-y-3">
                   {(order.trackingNumber || order.trackingCode) && (
                     <Link

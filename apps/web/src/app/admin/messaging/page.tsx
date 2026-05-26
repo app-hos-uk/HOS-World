@@ -37,10 +37,10 @@ export default function AdminMessagingLogsPage() {
     <RouteGuard allowedRoles={['ADMIN']}>
       <AdminLayout>
         <div className="p-6 max-w-6xl mx-auto">
-          <h1 className="text-2xl font-semibold text-white mb-4">Message logs</h1>
+          <h1 className="text-2xl font-semibold text-hos-text-secondary mb-4">Message logs</h1>
           <div className="flex flex-wrap gap-2 mb-4">
             <select
-              className="border rounded px-2 py-1 text-sm"
+              className="border rounded px-2 py-1 text-sm bg-hos-bg-secondary text-hos-text-secondary focus:outline-none border-hos-border"
               value={channel}
               onChange={(e) => setChannel(e.target.value)}
             >
@@ -52,7 +52,7 @@ export default function AdminMessagingLogsPage() {
               <option value="IN_APP">IN_APP</option>
             </select>
             <select
-              className="border rounded px-2 py-1 text-sm"
+              className="border rounded px-2 py-1 text-sm bg-hos-bg-secondary text-hos-text-secondary focus:outline-none border-hos-border"
               value={status}
               onChange={(e) => setStatus(e.target.value)}
             >

@@ -94,7 +94,7 @@ export default function AdminInfluencerCommissionsPage() {
       CANCELLED: 'bg-red-500/15 text-red-300',
       ADJUSTED: 'bg-hos-gold/20 text-hos-gold',
     };
-    return styles[status] || 'bg-hos-bg-tertiary text-white';
+    return styles[status] || 'bg-hos-bg-tertiary text-hos-text-secondary';
   };
 
   // Stats
@@ -107,7 +107,7 @@ export default function AdminInfluencerCommissionsPage() {
       <div className="space-y-6">
         {/* Header */}
         <div>
-          <h1 className="text-2xl font-bold text-white">Influencer Commissions</h1>
+          <h1 className="text-2xl font-bold text-hos-text-secondary">Influencer Commissions</h1>
           <p className="text-hos-text-secondary mt-1">
             Review and manage commission payouts
           </p>
@@ -117,7 +117,7 @@ export default function AdminInfluencerCommissionsPage() {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div className="bg-hos-bg-secondary rounded-lg p-4 shadow-sm">
             <p className="text-sm text-hos-text-muted">Total Commissions</p>
-            <p className="text-2xl font-bold text-white">{commissions.length}</p>
+            <p className="text-2xl font-bold text-hos-text-secondary">{commissions.length}</p>
           </div>
           <div className="bg-hos-bg-secondary rounded-lg p-4 shadow-sm">
             <p className="text-sm text-hos-text-muted">Pending Approval</p>
@@ -174,13 +174,13 @@ export default function AdminInfluencerCommissionsPage() {
                         {formatDate(commission.createdAt)}
                       </td>
                       <td className="px-6 py-4">
-                        <p className="font-medium text-white">{commission.influencer.displayName}</p>
+                        <p className="font-medium text-hos-text-secondary">{commission.influencer.displayName}</p>
                         <p className="text-sm text-hos-text-muted">{commission.influencer.referralCode}</p>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm font-mono text-white">
+                      <td className="px-6 py-4 whitespace-nowrap text-sm font-mono text-hos-text-secondary">
                         {commission.orderId.slice(0, 8)}...
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-white">
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-hos-text-secondary">
                         {formatCurrency(commission.orderTotal, commission.currency)}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-hos-text-muted">

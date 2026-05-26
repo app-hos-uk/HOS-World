@@ -96,7 +96,7 @@ export default function ShipmentDetailPage() {
       case 'REJECTED':
         return 'bg-red-500/15 text-red-300';
       default:
-        return 'bg-hos-bg-tertiary text-white';
+        return 'bg-hos-bg-tertiary text-hos-text-secondary';
     }
   };
 
@@ -153,7 +153,7 @@ export default function ShipmentDetailPage() {
               <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
                 <div>
                   <div className="flex items-center gap-3 mb-2">
-                    <h2 className="text-xl font-bold text-white">
+                    <h2 className="text-xl font-bold text-hos-text-secondary">
                       Shipment #{shipment.id?.slice(-8)?.toUpperCase() || shipmentId}
                     </h2>
                     <span className={`px-3 py-1 text-xs font-medium rounded-full ${getStatusBadgeColor(shipment.status)}`}>
@@ -279,10 +279,10 @@ export default function ShipmentDetailPage() {
                     <tbody>
                       {shipment.items.map((item: any, index: number) => (
                         <tr key={item.id || index} className="border-b border-hos-border hover:bg-hos-bg-tertiary">
-                          <td className="py-3 px-4 text-white">{item.name || item.productName || 'Unknown'}</td>
+                          <td className="py-3 px-4 text-hos-text-secondary">{item.name || item.productName || 'Unknown'}</td>
                           <td className="py-3 px-4 text-hos-text-muted">{item.sku || 'N/A'}</td>
-                          <td className="py-3 px-4 text-right text-white">{item.quantity || 1}</td>
-                          <td className="py-3 px-4 text-right text-white">
+                          <td className="py-3 px-4 text-right text-hos-text-secondary">{item.quantity || 1}</td>
+                          <td className="py-3 px-4 text-right text-hos-text-secondary">
                             {item.price != null ? `$${Number(item.price).toFixed(2)}` : 'N/A'}
                           </td>
                         </tr>
@@ -294,13 +294,13 @@ export default function ShipmentDetailPage() {
                 <div className="p-4 border border-hos-border rounded-lg">
                   <div className="flex items-center justify-between">
                     <div>
-                      <p className="font-medium text-white">{shipment.submission.productData.name}</p>
+                      <p className="font-medium text-hos-text-secondary">{shipment.submission.productData.name}</p>
                       {shipment.submission.productData.sku && (
                         <p className="text-sm text-hos-text-muted">SKU: {shipment.submission.productData.sku}</p>
                       )}
                     </div>
                     {shipment.submission.productData.price != null && (
-                      <p className="font-medium text-white">
+                      <p className="font-medium text-hos-text-secondary">
                         ${Number(shipment.submission.productData.price).toFixed(2)}
                       </p>
                     )}

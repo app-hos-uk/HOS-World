@@ -194,7 +194,7 @@ export default function AdminCustomerGroupsPage() {
       <AdminLayout>
         <div className="space-y-6">
           <div className="flex justify-between items-center">
-            <h1 className="text-2xl sm:text-3xl font-bold text-white">Customer Groups</h1>
+            <h1 className="text-2xl sm:text-3xl font-bold text-hos-text-secondary">Customer Groups</h1>
             <button
               onClick={() => setShowCreateModal(true)}
               className="px-4 py-2 bg-hos-gold text-[#1a1406] rounded-lg hover:bg-hos-gold-hover transition-colors font-medium"
@@ -263,7 +263,7 @@ export default function AdminCustomerGroupsPage() {
                     {filteredGroups.map((group) => (
                       <tr key={group.id} className="hover:bg-hos-bg-tertiary">
                         <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="text-sm font-medium text-white">{group.name}</div>
+                          <div className="text-sm font-medium text-hos-text-secondary">{group.name}</div>
                           {group.description && (
                             <div className="text-sm text-hos-text-muted">{group.description}</div>
                           )}
@@ -281,7 +281,7 @@ export default function AdminCustomerGroupsPage() {
                             className={`px-2 py-1 text-xs font-medium rounded-full ${
                               group.isActive
                                 ? 'bg-green-500/15 text-green-300'
-                                : 'bg-hos-bg-tertiary text-white'
+                                : 'bg-hos-bg-tertiary text-hos-text-secondary'
                             }`}
                           >
                             {group.isActive ? 'Active' : 'Inactive'}
@@ -325,7 +325,7 @@ export default function AdminCustomerGroupsPage() {
                       type="text"
                       value={createForm.name}
                       onChange={(e) => setCreateForm({ ...createForm, name: e.target.value })}
-                      className="w-full px-3 py-2 border border-hos-border rounded-lg focus:ring-hos-gold/50 focus:border-hos-gold"
+                      className="w-full px-3 py-2 border border-hos-border rounded-lg focus:ring-hos-gold/50 focus:border-hos-gold bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none focus:border-hos-gold"
                       placeholder="e.g., VIP Customers"
                     />
                   </div>
@@ -336,7 +336,7 @@ export default function AdminCustomerGroupsPage() {
                     <textarea
                       value={createForm.description}
                       onChange={(e) => setCreateForm({ ...createForm, description: e.target.value })}
-                      className="w-full px-3 py-2 border border-hos-border rounded-lg focus:ring-hos-gold/50 focus:border-hos-gold"
+                      className="w-full px-3 py-2 border border-hos-border rounded-lg focus:ring-hos-gold/50 focus:border-hos-gold bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none focus:border-hos-gold"
                       rows={3}
                       placeholder="Group description..."
                     />
@@ -348,7 +348,7 @@ export default function AdminCustomerGroupsPage() {
                     <select
                       value={createForm.type}
                       onChange={(e) => setCreateForm({ ...createForm, type: e.target.value })}
-                      className="w-full px-3 py-2 border border-hos-border rounded-lg focus:ring-hos-gold/50 focus:border-hos-gold"
+                      className="w-full px-3 py-2 border border-hos-border rounded-lg focus:ring-hos-gold/50 focus:border-hos-gold bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none focus:border-hos-gold"
                     >
                       {CUSTOMER_GROUP_TYPES.map((type) => (
                         <option key={type} value={type}>
@@ -401,7 +401,7 @@ export default function AdminCustomerGroupsPage() {
                       type="text"
                       value={editForm.name}
                       onChange={(e) => setEditForm({ ...editForm, name: e.target.value })}
-                      className="w-full px-3 py-2 border border-hos-border rounded-lg focus:ring-hos-gold/50 focus:border-hos-gold"
+                      className="w-full px-3 py-2 border border-hos-border rounded-lg focus:ring-hos-gold/50 focus:border-hos-gold bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none focus:border-hos-gold"
                     />
                   </div>
                   <div>
@@ -411,7 +411,7 @@ export default function AdminCustomerGroupsPage() {
                     <textarea
                       value={editForm.description}
                       onChange={(e) => setEditForm({ ...editForm, description: e.target.value })}
-                      className="w-full px-3 py-2 border border-hos-border rounded-lg focus:ring-hos-gold/50 focus:border-hos-gold"
+                      className="w-full px-3 py-2 border border-hos-border rounded-lg focus:ring-hos-gold/50 focus:border-hos-gold bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none focus:border-hos-gold"
                       rows={3}
                     />
                   </div>
@@ -422,7 +422,7 @@ export default function AdminCustomerGroupsPage() {
                     <select
                       value={editForm.type}
                       onChange={(e) => setEditForm({ ...editForm, type: e.target.value })}
-                      className="w-full px-3 py-2 border border-hos-border rounded-lg focus:ring-hos-gold/50 focus:border-hos-gold"
+                      className="w-full px-3 py-2 border border-hos-border rounded-lg focus:ring-hos-gold/50 focus:border-hos-gold bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none focus:border-hos-gold"
                     >
                       {CUSTOMER_GROUP_TYPES.map((type) => (
                         <option key={type} value={type}>

@@ -45,7 +45,7 @@ const ACTION_COLORS: Record<string, string> = {
   UPDATE: 'bg-hos-gold/20 text-hos-gold',
   DELETE: 'bg-red-500/15 text-red-300',
   LOGIN: 'bg-hos-gold/20 text-hos-gold',
-  LOGOUT: 'bg-hos-bg-tertiary text-white',
+  LOGOUT: 'bg-hos-bg-tertiary text-hos-text-secondary',
   VIEW: 'bg-cyan-500/15 text-cyan-300',
   EXPORT: 'bg-yellow-500/15 text-yellow-300',
   IMPORT: 'bg-hos-gold/20 text-hos-gold',
@@ -229,7 +229,7 @@ export default function AdminActivityPage() {
   };
 
   const getActionBadge = (action: string) => {
-    const color = ACTION_COLORS[action] || 'bg-hos-bg-tertiary text-white';
+    const color = ACTION_COLORS[action] || 'bg-hos-bg-tertiary text-hos-text-secondary';
     return <span className={`px-2 py-0.5 text-xs rounded-full ${color}`}>{action}</span>;
   };
 
@@ -269,7 +269,7 @@ export default function AdminActivityPage() {
           {/* Header */}
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div>
-              <h1 className="text-2xl font-bold text-white">Activity Logs</h1>
+              <h1 className="text-2xl font-bold text-hos-text-secondary">Activity Logs</h1>
               <p className="text-hos-text-secondary mt-1">Monitor platform activity and audit trail</p>
             </div>
             <div className="flex gap-2">
@@ -288,7 +288,7 @@ export default function AdminActivityPage() {
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               <div className="bg-hos-bg-secondary rounded-lg shadow p-4">
                 <p className="text-sm text-hos-text-muted">Total Logs</p>
-                <p className="text-2xl font-bold text-white">{stats.total.toLocaleString()}</p>
+                <p className="text-2xl font-bold text-hos-text-secondary">{stats.total.toLocaleString()}</p>
               </div>
               <div className="bg-hos-bg-secondary rounded-lg shadow p-4">
                 <p className="text-sm text-hos-text-muted">Today</p>
@@ -350,7 +350,7 @@ export default function AdminActivityPage() {
                   value={searchTerm}
                   onChange={(e) => { setSearchTerm(e.target.value); setPage(1); }}
                   placeholder="Action, entity, description, user..."
-                  className="w-full px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50"
+                  className="w-full px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50 bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none focus:border-hos-gold"
                 />
               </div>
               <div>
@@ -358,7 +358,7 @@ export default function AdminActivityPage() {
                 <select
                   value={entityFilter}
                   onChange={(e) => { setEntityFilter(e.target.value); setPage(1); }}
-                  className="w-full px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50"
+                  className="w-full px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50 bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none focus:border-hos-gold"
                 >
                   <option value="ALL">All Entities</option>
                   {uniqueEntities.map(entity => (
@@ -371,7 +371,7 @@ export default function AdminActivityPage() {
                 <select
                   value={dateFilter}
                   onChange={(e) => { setDateFilter(e.target.value); setPage(1); }}
-                  className="w-full px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50"
+                  className="w-full px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50 bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none focus:border-hos-gold"
                 >
                   <option value="1d">Last 24 Hours</option>
                   <option value="7d">Last 7 Days</option>
@@ -386,7 +386,7 @@ export default function AdminActivityPage() {
                   value={userFilter}
                   onChange={(e) => { setUserFilter(e.target.value); setPage(1); }}
                   placeholder="Filter by user..."
-                  className="w-full px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50"
+                  className="w-full px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50 bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none focus:border-hos-gold"
                 />
               </div>
             </div>
@@ -454,7 +454,7 @@ export default function AdminActivityPage() {
                             <div className="flex items-center gap-2">
                               <span>{getEntityIcon(log.entityType)}</span>
                               <div>
-                                <p className="text-sm font-medium text-white">{log.entityType}</p>
+                                <p className="text-sm font-medium text-hos-text-secondary">{log.entityType}</p>
                                 {log.entityId && (
                                   <p className="text-xs text-hos-text-muted font-mono">{log.entityId.substring(0, 8)}...</p>
                                 )}
@@ -467,7 +467,7 @@ export default function AdminActivityPage() {
                           <td className="px-4 py-3">
                             {log.user ? (
                               <div>
-                                <p className="text-sm font-medium text-white">
+                                <p className="text-sm font-medium text-hos-text-secondary">
                                   {log.user.firstName && log.user.lastName 
                                     ? `${log.user.firstName} ${log.user.lastName}` 
                                     : log.user.email}

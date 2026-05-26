@@ -97,7 +97,7 @@ export default function AdminLoyaltyCampaignsPage() {
       <AdminLayout>
         <div className="flex items-center justify-between mb-6">
           <div>
-            <h1 className="text-2xl font-bold text-white">Bonus Campaigns</h1>
+            <h1 className="text-2xl font-bold text-hos-text-secondary">Bonus Campaigns</h1>
             <p className="text-hos-text-secondary mt-1">Create double-points and multiplier campaigns</p>
           </div>
           <button onClick={() => { resetForm(); setShowForm(true); }} className="px-4 py-2 bg-hos-gold text-[#1a1406] rounded-lg hover:bg-hos-gold-hover text-sm font-medium">
@@ -111,23 +111,23 @@ export default function AdminLoyaltyCampaignsPage() {
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
               <div>
                 <label className="block text-sm font-medium text-hos-text-secondary mb-1">Name</label>
-                <input className="w-full border rounded-lg px-3 py-2" placeholder="e.g. Double Points Weekend" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
+                <input className="w-full border rounded-lg px-3 py-2 bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none border-hos-border" placeholder="e.g. Double Points Weekend" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
               </div>
               <div>
                 <label className="block text-sm font-medium text-hos-text-secondary mb-1">Multiplier</label>
-                <input type="number" step="0.5" className="w-full border rounded-lg px-3 py-2" value={form.multiplier} onChange={(e) => setForm({ ...form, multiplier: parseFloat(e.target.value) || 1 })} />
+                <input type="number" step="0.5" className="w-full border rounded-lg px-3 py-2 bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none border-hos-border" value={form.multiplier} onChange={(e) => setForm({ ...form, multiplier: parseFloat(e.target.value) || 1 })} />
               </div>
               <div>
                 <label className="block text-sm font-medium text-hos-text-secondary mb-1">Starts At</label>
-                <input type="datetime-local" className="w-full border rounded-lg px-3 py-2" value={form.startsAt} onChange={(e) => setForm({ ...form, startsAt: e.target.value })} />
+                <input type="datetime-local" className="w-full border rounded-lg px-3 py-2 bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none border-hos-border" value={form.startsAt} onChange={(e) => setForm({ ...form, startsAt: e.target.value })} />
               </div>
               <div>
                 <label className="block text-sm font-medium text-hos-text-secondary mb-1">Ends At</label>
-                <input type="datetime-local" className="w-full border rounded-lg px-3 py-2" value={form.endsAt} onChange={(e) => setForm({ ...form, endsAt: e.target.value })} />
+                <input type="datetime-local" className="w-full border rounded-lg px-3 py-2 bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none border-hos-border" value={form.endsAt} onChange={(e) => setForm({ ...form, endsAt: e.target.value })} />
               </div>
               <div className="sm:col-span-2">
                 <label className="block text-sm font-medium text-hos-text-secondary mb-1">Description</label>
-                <input className="w-full border rounded-lg px-3 py-2" value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} />
+                <input className="w-full border rounded-lg px-3 py-2 bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none border-hos-border" value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} />
               </div>
               <div className="flex items-center gap-2">
                 <input type="checkbox" id="campActive" checked={form.isActive} onChange={(e) => setForm({ ...form, isActive: e.target.checked })} className="rounded" />
@@ -156,7 +156,7 @@ export default function AdminLoyaltyCampaignsPage() {
                   <div className="flex items-start justify-between">
                     <div>
                       <div className="flex items-center gap-2 mb-1">
-                        <h3 className="font-semibold text-white">{c.name}</h3>
+                        <h3 className="font-semibold text-hos-text-secondary">{c.name}</h3>
                         <span className={`px-2 py-0.5 text-xs font-medium rounded-full ${status.cls}`}>{status.label}</span>
                       </div>
                       <p className="text-sm text-hos-text-secondary mb-2">{c.description || 'No description'}</p>

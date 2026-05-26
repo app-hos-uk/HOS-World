@@ -64,7 +64,7 @@ export default function PrivacyAuditPage() {
       case 'MARKETING': return 'bg-hos-gold/20 text-hos-gold';
       case 'ANALYTICS': return 'bg-hos-gold/20 text-hos-gold';
       case 'ESSENTIAL': return 'bg-green-500/15 text-green-300';
-      default: return 'bg-hos-bg-tertiary text-white';
+      default: return 'bg-hos-bg-tertiary text-hos-text-secondary';
     }
   };
 
@@ -150,7 +150,7 @@ export default function PrivacyAuditPage() {
                         })}
                       </td>
                       <td className="px-4 py-3">
-                        <div className="font-medium text-white">
+                        <div className="font-medium text-hos-text-secondary">
                           {entry.user ? `${entry.user.firstName} ${entry.user.lastName}` : 'Unknown'}
                         </div>
                         <div className="text-xs text-hos-text-muted">{entry.user?.email || entry.userId}</div>

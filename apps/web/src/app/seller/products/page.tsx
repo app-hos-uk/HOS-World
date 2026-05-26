@@ -169,11 +169,11 @@ export default function SellerProductsPage() {
     if (stock <= 0) return 'bg-red-500/15 text-red-300';
     switch (status) {
       case 'ACTIVE': return 'bg-green-500/15 text-green-300';
-      case 'INACTIVE': return 'bg-hos-bg-tertiary text-white';
+      case 'INACTIVE': return 'bg-hos-bg-tertiary text-hos-text-secondary';
       case 'PENDING':
       case 'PENDING_REVIEW':
       case 'DRAFT': return 'bg-yellow-500/15 text-yellow-300';
-      default: return 'bg-hos-bg-tertiary text-white';
+      default: return 'bg-hos-bg-tertiary text-hos-text-secondary';
     }
   };
 
@@ -189,7 +189,7 @@ export default function SellerProductsPage() {
           {/* Header */}
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div>
-              <h1 className="text-2xl sm:text-3xl font-bold text-white">My Products</h1>
+              <h1 className="text-2xl sm:text-3xl font-bold text-hos-text-secondary">My Products</h1>
               <p className="text-hos-text-secondary mt-1">Manage your product listings</p>
             </div>
             <div className="flex gap-2">
@@ -215,7 +215,7 @@ export default function SellerProductsPage() {
               className={`bg-hos-bg-secondary rounded-lg shadow p-4 text-left ${statusFilter === '' ? 'ring-2 ring-hos-gold/50' : ''}`}
             >
               <h3 className="text-xs font-medium text-hos-text-muted uppercase">Total</h3>
-              <p className="text-2xl font-bold text-white mt-1">{stats.total}</p>
+              <p className="text-2xl font-bold text-hos-text-secondary mt-1">{stats.total}</p>
             </button>
             <button
               onClick={() => setStatusFilter('ACTIVE')}
@@ -267,13 +267,13 @@ export default function SellerProductsPage() {
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   placeholder="Search products by name, category, or fandom..."
-                  className="w-full px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50 focus:border-transparent"
+                  className="w-full px-4 py-2 border border-hos-border rounded-lg bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:ring-2 focus:ring-hos-gold/50 focus:border-hos-gold focus:outline-none"
                 />
               </div>
               <select
                 value={sortBy}
                 onChange={(e) => setSortBy(e.target.value)}
-                className="px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50"
+                className="px-4 py-2 border border-hos-border rounded-lg bg-hos-bg-secondary text-hos-text-secondary focus:ring-2 focus:ring-hos-gold/50 focus:border-hos-gold focus:outline-none"
               >
                 <option value="newest">Newest First</option>
                 <option value="oldest">Oldest First</option>
@@ -352,7 +352,7 @@ export default function SellerProductsPage() {
                                 </div>
                               )}
                               <div>
-                                <div className="text-sm font-medium text-white">{product.name}</div>
+                                <div className="text-sm font-medium text-hos-text-secondary">{product.name}</div>
                                 <div className="text-sm text-hos-text-muted">{product.slug || (product._isSubmission ? 'Pending review' : '')}</div>
                               </div>
                             </div>
@@ -362,14 +362,14 @@ export default function SellerProductsPage() {
                               {product._isSubmission ? 'Pending review' : getDisplayStatus(product.status, product.stock || 0)}
                             </span>
                           </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-white">
+                          <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-hos-text-secondary">
                             ${Number(product.price || 0).toFixed(2)}
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap">
                             <span className={`text-sm font-medium ${
                               (product.stock || 0) <= 0 ? 'text-red-400' :
                               product.stock <= 5 ? 'text-orange-400' :
-                              'text-white'
+                              'text-hos-text-secondary'
                             }`}>
                               {product.stock || 0}
                             </span>

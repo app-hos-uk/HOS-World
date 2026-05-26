@@ -43,16 +43,16 @@ export default function AdminClickCollectListPage() {
     <RouteGuard allowedRoles={['ADMIN']}>
       <AdminLayout>
         <div className="p-6 max-w-6xl mx-auto">
-          <h1 className="text-2xl font-semibold text-white mb-4">Click &amp; collect</h1>
+          <h1 className="text-2xl font-semibold text-hos-text-secondary mb-4">Click &amp; collect</h1>
           <div className="flex flex-wrap gap-2 mb-4">
             <input
-              className="border rounded px-2 py-1 text-sm"
+              className="border rounded px-2 py-1 text-sm bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none border-hos-border"
               placeholder="Store ID (optional)"
               value={storeId}
               onChange={(e) => setStoreId(e.target.value)}
             />
             <select
-              className="border rounded px-2 py-1 text-sm"
+              className="border rounded px-2 py-1 text-sm bg-hos-bg-secondary text-hos-text-secondary focus:outline-none border-hos-border"
               value={status}
               onChange={(e) => setStatus(e.target.value)}
             >
@@ -66,7 +66,7 @@ export default function AdminClickCollectListPage() {
             </select>
             <button
               type="button"
-              className="text-sm px-3 py-1 rounded bg-hos-surface text-white"
+              className="text-sm px-3 py-1 rounded bg-hos-surface text-hos-text-secondary"
               onClick={() => load()}
             >
               Apply

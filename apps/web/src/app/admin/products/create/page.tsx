@@ -303,7 +303,7 @@ export default function ProductCreationPage() {
         <div className="space-y-6">
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-2xl font-bold text-white">Create Product</h1>
+              <h1 className="text-2xl font-bold text-hos-text-secondary">Create Product</h1>
               <p className="text-hos-text-secondary mt-2">Product creation interface for Catalog team. Products are created as DRAFT and require price management before activation.</p>
             </div>
             <button
@@ -356,7 +356,7 @@ export default function ProductCreationPage() {
                   required
                   value={formData.name}
                   onChange={(e) => setFormData((prev) => ({ ...prev, name: e.target.value }))}
-                  className="w-full px-3 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50"
+                  className="w-full px-3 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50 bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none focus:border-hos-gold"
                   placeholder="Product name"
                 />
               </div>
@@ -367,7 +367,7 @@ export default function ProductCreationPage() {
                   minLength={10}
                   value={formData.description}
                   onChange={(e) => setFormData((prev) => ({ ...prev, description: e.target.value }))}
-                  className="w-full px-3 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50"
+                  className="w-full px-3 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50 bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none focus:border-hos-gold"
                   rows={4}
                   placeholder="Product description (minimum 10 characters)"
                 />
@@ -379,7 +379,7 @@ export default function ProductCreationPage() {
                   type="text"
                   value={formData.shortDescription}
                   onChange={(e) => setFormData((prev) => ({ ...prev, shortDescription: e.target.value }))}
-                  className="w-full px-3 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50"
+                  className="w-full px-3 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50 bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none focus:border-hos-gold"
                   placeholder="Brief summary for listings and search"
                 />
               </div>
@@ -390,7 +390,7 @@ export default function ProductCreationPage() {
                     type="text"
                     value={formData.sku}
                     onChange={(e) => setFormData((prev) => ({ ...prev, sku: e.target.value }))}
-                    className="w-full px-3 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50"
+                    className="w-full px-3 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50 bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none focus:border-hos-gold"
                     placeholder="SKU"
                   />
                 </div>
@@ -400,7 +400,7 @@ export default function ProductCreationPage() {
                     type="text"
                     value={formData.barcode}
                     onChange={(e) => setFormData((prev) => ({ ...prev, barcode: e.target.value }))}
-                    className="w-full px-3 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50"
+                    className="w-full px-3 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50 bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none focus:border-hos-gold"
                     placeholder="Barcode"
                   />
                 </div>
@@ -410,7 +410,7 @@ export default function ProductCreationPage() {
                     type="text"
                     value={formData.ean}
                     onChange={(e) => setFormData((prev) => ({ ...prev, ean: e.target.value }))}
-                    className="w-full px-3 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50"
+                    className="w-full px-3 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50 bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none focus:border-hos-gold"
                     placeholder="EAN"
                   />
                 </div>
@@ -446,7 +446,7 @@ export default function ProductCreationPage() {
                   <select
                     value={formData.sellerId}
                     onChange={(e) => setFormData((prev) => ({ ...prev, sellerId: e.target.value }))}
-                    className="w-full px-3 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50"
+                    className="w-full px-3 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50 bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none focus:border-hos-gold"
                   >
                     <option value="">Select a seller</option>
                     {sellers.map((seller) => (
@@ -515,7 +515,7 @@ export default function ProductCreationPage() {
 
                 {formData.productType === 'VARIANT' && (
                   <div className="mt-4 p-4 border border-hos-border rounded-lg bg-hos-bg-secondary space-y-4">
-                    <h4 className="text-sm font-medium text-white">Product Variations</h4>
+                    <h4 className="text-sm font-medium text-hos-text-secondary">Product Variations</h4>
                     <p className="text-xs text-hos-text-secondary">
                       Add variation dimensions (e.g. Size, Color). For each dimension, add option values shown to customers. You can set optional price, stock, and image per option.
                     </p>
@@ -525,7 +525,7 @@ export default function ProductCreationPage() {
                         <p className="text-xs font-medium text-hos-text-secondary">Added variations</p>
                         {formData.variations.map((v, varIdx) => (
                           <div key={varIdx} className="flex items-center justify-between p-3 bg-hos-bg-secondary border border-hos-border rounded">
-                            <span className="font-medium text-white">{v.name}</span>
+                            <span className="font-medium text-hos-text-secondary">{v.name}</span>
                             <span className="text-xs text-hos-text-muted">
                               {v.options.map((o) => o.value).join(', ')}
                             </span>
@@ -700,7 +700,7 @@ export default function ProductCreationPage() {
                 <div className="p-4 border border-hos-border rounded-lg bg-hos-bg-secondary">
                   <div className="flex items-center justify-between gap-3 flex-wrap">
                     <div>
-                      <div className="font-medium text-white">Upload product images</div>
+                      <div className="font-medium text-hos-text-secondary">Upload product images</div>
                       <div className="text-xs text-hos-text-secondary">JPEG/PNG/GIF/WebP, max 5MB each, up to 4 images</div>
                     </div>
                     <label className="inline-flex items-center px-4 py-2 bg-hos-gold text-[#1a1406] rounded hover:bg-hos-gold-hover cursor-pointer">

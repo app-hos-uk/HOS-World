@@ -551,7 +551,7 @@ export default function AdminUsersPage() {
       SELLER: 'bg-hos-gold/20 text-hos-gold',
       B2C_SELLER: 'bg-hos-gold/20 text-hos-gold',
       WHOLESALER: 'bg-green-500/15 text-green-300',
-      CUSTOMER: 'bg-hos-bg-tertiary text-white',
+      CUSTOMER: 'bg-hos-bg-tertiary text-hos-text-secondary',
       PROCUREMENT: 'bg-hos-gold/20 text-hos-gold',
       FULFILLMENT: 'bg-yellow-500/15 text-yellow-300',
       CATALOG: 'bg-hos-gold/20 text-hos-gold',
@@ -559,7 +559,7 @@ export default function AdminUsersPage() {
       FINANCE: 'bg-emerald-500/15 text-emerald-300',
       CMS_EDITOR: 'bg-cyan-500/15 text-cyan-300',
     };
-    return colors[role] || 'bg-hos-bg-tertiary text-white';
+    return colors[role] || 'bg-hos-bg-tertiary text-hos-text-secondary';
   };
 
   const exportColumns = [
@@ -585,7 +585,7 @@ export default function AdminUsersPage() {
           {/* Header */}
           <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
             <div>
-              <h1 className="text-2xl sm:text-3xl font-bold text-white">User Management</h1>
+              <h1 className="text-2xl sm:text-3xl font-bold text-hos-text-secondary">User Management</h1>
               <p className="text-hos-text-secondary mt-1">Manage all platform users, roles, and permissions</p>
             </div>
             <div className="flex flex-wrap gap-2">
@@ -607,7 +607,7 @@ export default function AdminUsersPage() {
                 className={`bg-hos-bg-secondary rounded-lg shadow p-3 text-left hover:shadow-md transition-shadow ${roleFilter === 'ALL' && statusFilter === 'ALL' && !showNewThisMonth ? 'ring-2 ring-hos-gold/50' : ''}`}
               >
                 <p className="text-xs text-hos-text-muted">Total</p>
-                <p className="text-xl font-bold text-white">{stats.total}</p>
+                <p className="text-xl font-bold text-hos-text-secondary">{stats.total}</p>
               </button>
               <button
                 onClick={() => { setRoleFilter('ADMIN'); setShowNewThisMonth(false); }}
@@ -692,7 +692,7 @@ export default function AdminUsersPage() {
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   placeholder="Name, email, or store..."
-                  className="w-full px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50"
+                  className="w-full px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50 bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none focus:border-hos-gold"
                 />
               </div>
               <div>
@@ -700,7 +700,7 @@ export default function AdminUsersPage() {
                 <select
                   value={roleFilter}
                   onChange={(e) => setRoleFilter(e.target.value)}
-                  className="w-full px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50"
+                  className="w-full px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50 bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none focus:border-hos-gold"
                 >
                   <option value="ALL">All Roles</option>
                   <option value="SELLERS">All Sellers</option>
@@ -715,7 +715,7 @@ export default function AdminUsersPage() {
                 <select
                   value={statusFilter}
                   onChange={(e) => setStatusFilter(e.target.value)}
-                  className="w-full px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50"
+                  className="w-full px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50 bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none focus:border-hos-gold"
                 >
                   <option value="ALL">All Status</option>
                   <option value="ACTIVE">Active</option>
@@ -733,7 +733,7 @@ export default function AdminUsersPage() {
                     setSortBy(field as any);
                     setSortOrder(order as any);
                   }}
-                  className="w-full px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50"
+                  className="w-full px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50 bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none focus:border-hos-gold"
                 >
                   <option value="date-desc">Newest First</option>
                   <option value="date-asc">Oldest First</option>
@@ -854,7 +854,7 @@ export default function AdminUsersPage() {
                               )}
                             </div>
                             <div className="ml-3">
-                              <p className="text-sm font-medium text-white">
+                              <p className="text-sm font-medium text-hos-text-secondary">
                                 {user.firstName && user.lastName ? `${user.firstName} ${user.lastName}` : 'No Name'}
                               </p>
                               <p className="text-xs text-hos-text-muted">{user.email}</p>
@@ -1070,7 +1070,7 @@ export default function AdminUsersPage() {
                           type="text"
                           value={editForm.firstName}
                           onChange={(e) => setEditForm({ ...editForm, firstName: e.target.value })}
-                          className="w-full px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50"
+                          className="w-full px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50 bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none focus:border-hos-gold"
                         />
                       </div>
                       <div>
@@ -1079,7 +1079,7 @@ export default function AdminUsersPage() {
                           type="text"
                           value={editForm.lastName}
                           onChange={(e) => setEditForm({ ...editForm, lastName: e.target.value })}
-                          className="w-full px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50"
+                          className="w-full px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50 bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none focus:border-hos-gold"
                         />
                       </div>
                     </div>
@@ -1166,7 +1166,7 @@ export default function AdminUsersPage() {
                           type="text"
                           value={createForm.firstName}
                           onChange={(e) => setCreateForm({ ...createForm, firstName: e.target.value })}
-                          className="w-full px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50"
+                          className="w-full px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50 bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none focus:border-hos-gold"
                         />
                       </div>
                       <div>
@@ -1175,7 +1175,7 @@ export default function AdminUsersPage() {
                           type="text"
                           value={createForm.lastName}
                           onChange={(e) => setCreateForm({ ...createForm, lastName: e.target.value })}
-                          className="w-full px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50"
+                          className="w-full px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50 bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none focus:border-hos-gold"
                         />
                       </div>
                     </div>
@@ -1186,7 +1186,7 @@ export default function AdminUsersPage() {
                         type="email"
                         value={createForm.email}
                         onChange={(e) => setCreateForm({ ...createForm, email: e.target.value })}
-                        className="w-full px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50"
+                        className="w-full px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50 bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none focus:border-hos-gold"
                         placeholder="user@example.com"
                         required
                       />
@@ -1198,7 +1198,7 @@ export default function AdminUsersPage() {
                         type="tel"
                         value={createForm.phone}
                         onChange={(e) => setCreateForm({ ...createForm, phone: e.target.value })}
-                        className="w-full px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50"
+                        className="w-full px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50 bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none focus:border-hos-gold"
                         placeholder="+1234567890"
                       />
                     </div>
@@ -1210,7 +1210,7 @@ export default function AdminUsersPage() {
                           type="password"
                           value={createForm.password}
                           onChange={(e) => setCreateForm({ ...createForm, password: e.target.value })}
-                          className="w-full px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50"
+                          className="w-full px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50 bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none focus:border-hos-gold"
                           placeholder="Min 8 characters"
                           minLength={8}
                           required
@@ -1222,7 +1222,7 @@ export default function AdminUsersPage() {
                           type="password"
                           value={createForm.confirmPassword}
                           onChange={(e) => setCreateForm({ ...createForm, confirmPassword: e.target.value })}
-                          className="w-full px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50"
+                          className="w-full px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50 bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none focus:border-hos-gold"
                           placeholder="Confirm password"
                           minLength={8}
                           required
@@ -1235,7 +1235,7 @@ export default function AdminUsersPage() {
                       <select
                         value={createForm.role}
                         onChange={(e) => setCreateForm({ ...createForm, role: e.target.value })}
-                        className="w-full px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50"
+                        className="w-full px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50 bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none focus:border-hos-gold"
                       >
                         {ROLES.map((role) => (
                           <option key={role} value={role}>{role}</option>
@@ -1253,7 +1253,7 @@ export default function AdminUsersPage() {
                           <select
                             value={createForm.permissionRoleName}
                             onChange={(e) => setCreateForm({ ...createForm, permissionRoleName: e.target.value })}
-                            className="w-full px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50"
+                            className="w-full px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50 bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none focus:border-hos-gold"
                           >
                             <option value="">Full Admin (no restrictions)</option>
                             {permissionRoles.map((r) => (
@@ -1275,7 +1275,7 @@ export default function AdminUsersPage() {
                               type="text"
                               value={createForm.storeName}
                               onChange={(e) => setCreateForm({ ...createForm, storeName: e.target.value })}
-                              className="w-full px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50"
+                              className="w-full px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50 bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none focus:border-hos-gold"
                               placeholder="Your store name"
                               required
                             />
@@ -1286,7 +1286,7 @@ export default function AdminUsersPage() {
                               type="text"
                               value={createForm.companyName}
                               onChange={(e) => setCreateForm({ ...createForm, companyName: e.target.value })}
-                              className="w-full px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50"
+                              className="w-full px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50 bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none focus:border-hos-gold"
                               placeholder="Legal company name"
                             />
                           </div>
@@ -1298,7 +1298,7 @@ export default function AdminUsersPage() {
                               type="text"
                               value={createForm.vatNumber}
                               onChange={(e) => setCreateForm({ ...createForm, vatNumber: e.target.value })}
-                              className="w-full px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50"
+                              className="w-full px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50 bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none focus:border-hos-gold"
                               placeholder="GB123456789"
                             />
                           </div>
@@ -1308,7 +1308,7 @@ export default function AdminUsersPage() {
                               <select
                                 value={createForm.businessType}
                                 onChange={(e) => setCreateForm({ ...createForm, businessType: e.target.value })}
-                                className="w-full px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50"
+                                className="w-full px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50 bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none focus:border-hos-gold"
                               >
                                 <option value="">Select type</option>
                                 <option value="RETAIL">Retail</option>
@@ -1331,7 +1331,7 @@ export default function AdminUsersPage() {
                             <select
                               value={createForm.department}
                               onChange={(e) => setCreateForm({ ...createForm, department: e.target.value })}
-                              className="w-full px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50"
+                              className="w-full px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50 bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none focus:border-hos-gold"
                             >
                               <option value="">Select department</option>
                               <option value="OPERATIONS">Operations</option>
@@ -1348,7 +1348,7 @@ export default function AdminUsersPage() {
                               type="text"
                               value={createForm.employeeId}
                               onChange={(e) => setCreateForm({ ...createForm, employeeId: e.target.value })}
-                              className="w-full px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50"
+                              className="w-full px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50 bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none focus:border-hos-gold"
                               placeholder="EMP-001"
                             />
                           </div>
@@ -1438,7 +1438,7 @@ export default function AdminUsersPage() {
                         type="password"
                         value={resetPasswordForm.newPassword}
                         onChange={(e) => setResetPasswordForm({ ...resetPasswordForm, newPassword: e.target.value })}
-                        className="w-full px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50"
+                        className="w-full px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50 bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none focus:border-hos-gold"
                         placeholder="Min 8 characters"
                         minLength={8}
                       />
@@ -1449,7 +1449,7 @@ export default function AdminUsersPage() {
                         type="password"
                         value={resetPasswordForm.confirmPassword}
                         onChange={(e) => setResetPasswordForm({ ...resetPasswordForm, confirmPassword: e.target.value })}
-                        className="w-full px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50"
+                        className="w-full px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50 bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none focus:border-hos-gold"
                         placeholder="Confirm new password"
                         minLength={8}
                       />

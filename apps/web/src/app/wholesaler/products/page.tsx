@@ -8,12 +8,15 @@ import { getSellerMenuItems } from '@/lib/sellerMenu';
 import { useCurrency } from '@/contexts/CurrencyContext';
 import Link from 'next/link';
 import Image from 'next/image';
+import { PORTAL_INPUT_CLASS, PORTAL_SELECT_CLASS } from '@/lib/portalFieldClasses';
 
 export default function WholesalerProductsPage() {
   const { formatPrice } = useCurrency();
   const [products, setProducts] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [sortBy, setSortBy] = useState('newest');
 
   const menuItems = getSellerMenuItems(true);
 
@@ -37,13 +40,43 @@ export default function WholesalerProductsPage() {
     }
   };
 
+  const filteredProducts = products
+    .filter((p) => {
+      if (!searchTerm.trim()) return true;
+      const q = searchTerm.toLowerCase();
+      return (
+        p.name?.toLowerCase().includes(q) ||
+        p.slug?.toLowerCase().includes(q) ||
+        p.status?.toLowerCase().includes(q)
+      );
+    })
+    .sort((a, b) => {
+      switch (sortBy) {
+        case 'oldest':
+          return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
+        case 'name':
+          return (a.name || '').localeCompare(b.name || '');
+        case 'price-high':
+          return parseFloat(b.price || 0) - parseFloat(a.price || 0);
+        case 'price-low':
+          return parseFloat(a.price || 0) - parseFloat(b.price || 0);
+        case 'stock-high':
+          return (b.stock || 0) - (a.stock || 0);
+        case 'stock-low':
+          return (a.stock || 0) - (b.stock || 0);
+        case 'newest':
+        default:
+          return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+      }
+    });
+
   return (
     <RouteGuard allowedRoles={['WHOLESALER', 'ADMIN']} showAccessDenied={true}>
       <DashboardLayout role="WHOLESALER" menuItems={menuItems} title="Wholesaler">
         <div className="mb-6">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
             <div>
-              <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold">My Products</h1>
+              <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-hos-text-secondary">My Products</h1>
               <p className="text-hos-text-secondary mt-2">Manage your wholesale product listings</p>
             </div>
             <div className="flex flex-wrap gap-2 sm:gap-3">
@@ -62,6 +95,29 @@ export default function WholesalerProductsPage() {
             </div>
           </div>
         </div>
+
+        {!loading && !error && products.length > 0 && (
+          <div className="bg-hos-bg-secondary rounded-lg shadow p-4 mb-6">
+            <div className="flex flex-col sm:flex-row gap-4">
+              <input
+                type="text"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                placeholder="Search products by name or slug..."
+                className={PORTAL_INPUT_CLASS}
+              />
+              <select value={sortBy} onChange={(e) => setSortBy(e.target.value)} className={PORTAL_SELECT_CLASS}>
+                <option value="newest">Newest First</option>
+                <option value="oldest">Oldest First</option>
+                <option value="name">Name A-Z</option>
+                <option value="price-high">Price: High to Low</option>
+                <option value="price-low">Price: Low to High</option>
+                <option value="stock-high">Stock: High to Low</option>
+                <option value="stock-low">Stock: Low to High</option>
+              </select>
+            </div>
+          </div>
+        )}
 
         {loading && (
           <div className="flex items-center justify-center py-12">
@@ -83,23 +139,27 @@ export default function WholesalerProductsPage() {
 
         {!loading && !error && (
           <div className="bg-hos-bg-secondary rounded-lg shadow overflow-hidden">
-            {products.length === 0 ? (
+            {filteredProducts.length === 0 ? (
               <div className="text-center py-12">
-                <p className="text-hos-text-muted mb-4">No products found</p>
-                <div className="flex flex-wrap gap-3 justify-center">
-                  <Link
-                    href="/wholesaler/bulk"
-                    className="text-hos-gold-hover font-medium border border-hos-border-accent rounded-lg px-4 py-2 hover:bg-hos-gold/10"
-                  >
-                    Bulk upload (CSV) →
-                  </Link>
-                  <Link
-                    href="/wholesaler/submit-product"
-                    className="text-hos-gold hover:text-hos-gold-hover font-medium"
-                  >
-                    Add a single product →
-                  </Link>
-                </div>
+                <p className="text-hos-text-muted mb-4">
+                  {products.length === 0 ? 'No products found' : 'No products match your search'}
+                </p>
+                {products.length === 0 && (
+                  <div className="flex flex-wrap gap-3 justify-center">
+                    <Link
+                      href="/wholesaler/bulk"
+                      className="text-hos-gold-hover font-medium border border-hos-border-accent rounded-lg px-4 py-2 hover:bg-hos-gold/10"
+                    >
+                      Bulk upload (CSV) →
+                    </Link>
+                    <Link
+                      href="/wholesaler/submit-product"
+                      className="text-hos-gold hover:text-hos-gold-hover font-medium"
+                    >
+                      Add a single product →
+                    </Link>
+                  </div>
+                )}
               </div>
             ) : (
               <div className="overflow-x-auto">
@@ -127,7 +187,7 @@ export default function WholesalerProductsPage() {
                     </tr>
                   </thead>
                   <tbody className="bg-hos-bg-secondary divide-y divide-hos-border">
-                    {products.map((product) => (
+                    {filteredProducts.map((product) => (
                       <tr key={product.id} className="hover:bg-hos-bg-tertiary">
                         <td className="px-6 py-4 whitespace-nowrap">
                           <div className="flex items-center">
@@ -141,7 +201,7 @@ export default function WholesalerProductsPage() {
                               />
                             )}
                             <div>
-                              <div className="text-sm font-medium text-white">{product.name}</div>
+                              <div className="text-sm font-medium text-hos-text-secondary">{product.name}</div>
                               <div className="text-sm text-hos-text-muted">{product.slug}</div>
                             </div>
                           </div>
@@ -152,20 +212,20 @@ export default function WholesalerProductsPage() {
                               product.status === 'ACTIVE'
                                 ? 'bg-green-500/15 text-green-300'
                                 : product.status === 'INACTIVE'
-                                  ? 'bg-hos-bg-tertiary text-white'
+                                  ? 'bg-hos-bg-tertiary text-hos-text-secondary'
                                   : 'bg-yellow-500/15 text-yellow-300'
                             }`}
                           >
                             {product.status}
                           </span>
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-white">
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-hos-text-secondary">
                           {formatPrice(parseFloat(product.price || 0))}
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-white">
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-hos-text-secondary">
                           {product.stock ?? 0}
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-white">
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-hos-text-secondary">
                           {product.quantity || '—'}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-hos-text-muted">

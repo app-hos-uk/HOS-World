@@ -93,12 +93,12 @@ export function ProductCard({
         )}
 
         {displayBadge === 'sale' && (
-          <span className="absolute top-3 left-3 z-10 font-ui text-[11px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-md bg-hos-sale-red text-white">
+          <span className="absolute top-3 left-3 z-10 font-ui text-[11px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-md bg-hos-sale-red text-hos-text-secondary">
             Sale
           </span>
         )}
         {displayBadge === 'new' && (
-          <span className="absolute top-3 left-3 z-10 font-ui text-[11px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-md bg-hos-new-green text-white">
+          <span className="absolute top-3 left-3 z-10 font-ui text-[11px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-md bg-hos-new-green text-hos-text-secondary">
             New
           </span>
         )}

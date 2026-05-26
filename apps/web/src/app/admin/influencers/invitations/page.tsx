@@ -116,10 +116,10 @@ export default function AdminInfluencerInvitationsPage() {
     const styles: Record<string, string> = {
       PENDING: 'bg-yellow-500/15 text-yellow-300',
       ACCEPTED: 'bg-green-500/15 text-green-300',
-      EXPIRED: 'bg-hos-bg-tertiary text-white',
+      EXPIRED: 'bg-hos-bg-tertiary text-hos-text-secondary',
       CANCELLED: 'bg-red-500/15 text-red-300',
     };
-    return styles[status] || 'bg-hos-bg-tertiary text-white';
+    return styles[status] || 'bg-hos-bg-tertiary text-hos-text-secondary';
   };
 
   return (
@@ -129,7 +129,7 @@ export default function AdminInfluencerInvitationsPage() {
         {/* Header */}
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-bold text-white">Influencer Invitations</h1>
+            <h1 className="text-2xl font-bold text-hos-text-secondary">Influencer Invitations</h1>
             <p className="text-hos-text-secondary mt-1">
               Invite new influencers to join the program
             </p>
@@ -190,7 +190,7 @@ export default function AdminInfluencerInvitationsPage() {
                   {invitations.map((invitation) => (
                     <tr key={invitation.id} className="hover:bg-hos-bg-tertiary">
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <p className="font-medium text-white">{invitation.email}</p>
+                        <p className="font-medium text-hos-text-secondary">{invitation.email}</p>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-hos-text-muted">
                         {invitation.user.firstName} {invitation.user.lastName}
@@ -240,7 +240,7 @@ export default function AdminInfluencerInvitationsPage() {
             <div className="bg-hos-bg-secondary rounded-xl max-w-md w-full">
               <div className="p-6 border-b">
                 <div className="flex items-center justify-between">
-                  <h2 className="text-xl font-semibold text-white">Invite Influencer</h2>
+                  <h2 className="text-xl font-semibold text-hos-text-secondary">Invite Influencer</h2>
                   <button
                     onClick={() => setShowInviteModal(false)}
                     className="text-hos-text-muted hover:text-hos-text-secondary"
@@ -262,7 +262,7 @@ export default function AdminInfluencerInvitationsPage() {
                     required
                     value={inviteForm.email}
                     onChange={(e) => setInviteForm({ ...inviteForm, email: e.target.value })}
-                    className="w-full px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50"
+                    className="w-full px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50 bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none focus:border-hos-gold"
                     placeholder="influencer@example.com"
                   />
                 </div>
@@ -278,7 +278,7 @@ export default function AdminInfluencerInvitationsPage() {
                     step="1"
                     value={inviteForm.baseCommissionRate}
                     onChange={(e) => setInviteForm({ ...inviteForm, baseCommissionRate: e.target.value })}
-                    className="w-full px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50"
+                    className="w-full px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50 bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none focus:border-hos-gold"
                     placeholder="10 (default)"
                   />
                   <p className="text-xs text-hos-text-muted mt-1">Leave empty for default rate (10%)</p>
@@ -292,7 +292,7 @@ export default function AdminInfluencerInvitationsPage() {
                     value={inviteForm.message}
                     onChange={(e) => setInviteForm({ ...inviteForm, message: e.target.value })}
                     rows={3}
-                    className="w-full px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50"
+                    className="w-full px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50 bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none focus:border-hos-gold"
                     placeholder="Optional message to include in the invitation email..."
                   />
                 </div>

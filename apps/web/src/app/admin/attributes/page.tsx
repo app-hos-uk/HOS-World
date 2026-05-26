@@ -562,7 +562,7 @@ export default function AdminAttributesPage() {
           {/* Header */}
           <div className="flex justify-between items-center">
             <div>
-              <h1 className="text-2xl font-bold text-white">Product Attributes</h1>
+              <h1 className="text-2xl font-bold text-hos-text-secondary">Product Attributes</h1>
               <p className="text-hos-text-secondary mt-1">Define custom attributes for your products</p>
             </div>
             <button
@@ -628,13 +628,13 @@ export default function AdminAttributesPage() {
                   placeholder="Search attributes..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="w-full px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50"
+                  className="w-full px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50 bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none focus:border-hos-gold"
                 />
               </div>
               <select
                 value={typeFilter}
                 onChange={(e) => setTypeFilter(e.target.value)}
-                className="px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50"
+                className="px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50 bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none focus:border-hos-gold"
               >
                 <option value="ALL">All Types</option>
                 {ATTRIBUTE_TYPES.map(type => (
@@ -644,7 +644,7 @@ export default function AdminAttributesPage() {
               <select
                 value={scopeFilter}
                 onChange={(e) => setScopeFilter(e.target.value as any)}
-                className="px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50"
+                className="px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50 bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none focus:border-hos-gold"
               >
                 <option value="ALL">All Scopes</option>
                 <option value="GLOBAL">Global Only</option>
@@ -653,7 +653,7 @@ export default function AdminAttributesPage() {
               <select
                 value={sortBy}
                 onChange={(e) => setSortBy(e.target.value as any)}
-                className="px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50"
+                className="px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50 bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none focus:border-hos-gold"
               >
                 <option value="name">Sort by Name</option>
                 <option value="type">Sort by Type</option>
@@ -680,7 +680,7 @@ export default function AdminAttributesPage() {
                       required
                       value={formData.name}
                       onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                      className="w-full px-3 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50"
+                      className="w-full px-3 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50 bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none focus:border-hos-gold"
                       placeholder="e.g., Size, Color, Material"
                     />
                   </div>
@@ -690,7 +690,7 @@ export default function AdminAttributesPage() {
                       type="text"
                       value={formData.description}
                       onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                      className="w-full px-3 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50"
+                      className="w-full px-3 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50 bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none focus:border-hos-gold"
                       placeholder="Help text for this attribute"
                     />
                   </div>
@@ -702,7 +702,7 @@ export default function AdminAttributesPage() {
                     <select
                       value={formData.type}
                       onChange={(e) => setFormData({ ...formData, type: e.target.value as any })}
-                      className="w-full px-3 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50"
+                      className="w-full px-3 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50 bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none focus:border-hos-gold"
                     >
                       {ATTRIBUTE_TYPES.map(type => (
                         <option key={type.value} value={type.value}>
@@ -716,7 +716,7 @@ export default function AdminAttributesPage() {
                     <select
                       value={formData.isGlobal ? 'global' : 'category'}
                       onChange={(e) => setFormData({ ...formData, isGlobal: e.target.value === 'global' })}
-                      className="w-full px-3 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50"
+                      className="w-full px-3 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50 bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none focus:border-hos-gold"
                     >
                       <option value="global">Global (All Categories)</option>
                       <option value="category">Category-Specific</option>
@@ -743,7 +743,7 @@ export default function AdminAttributesPage() {
                       <select
                         value={formData.unit}
                         onChange={(e) => setFormData({ ...formData, unit: e.target.value })}
-                        className="w-full px-3 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50"
+                        className="w-full px-3 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50 bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none focus:border-hos-gold"
                       >
                         <option value="">No unit</option>
                         {COMMON_UNITS.map(group => (
@@ -762,7 +762,7 @@ export default function AdminAttributesPage() {
                         step="any"
                         value={formData.minValue}
                         onChange={(e) => setFormData({ ...formData, minValue: e.target.value })}
-                        className="w-full px-3 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50"
+                        className="w-full px-3 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50 bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none focus:border-hos-gold"
                         placeholder="0"
                       />
                     </div>
@@ -773,7 +773,7 @@ export default function AdminAttributesPage() {
                         step="any"
                         value={formData.maxValue}
                         onChange={(e) => setFormData({ ...formData, maxValue: e.target.value })}
-                        className="w-full px-3 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50"
+                        className="w-full px-3 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50 bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none focus:border-hos-gold"
                         placeholder="1000"
                       />
                     </div>
@@ -783,7 +783,7 @@ export default function AdminAttributesPage() {
                         type="text"
                         value={formData.placeholder}
                         onChange={(e) => setFormData({ ...formData, placeholder: e.target.value })}
-                        className="w-full px-3 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50"
+                        className="w-full px-3 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50 bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none focus:border-hos-gold"
                         placeholder="Enter value..."
                       />
                     </div>
@@ -799,7 +799,7 @@ export default function AdminAttributesPage() {
                         type="text"
                         value={formData.placeholder}
                         onChange={(e) => setFormData({ ...formData, placeholder: e.target.value })}
-                        className="w-full px-3 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50"
+                        className="w-full px-3 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50 bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none focus:border-hos-gold"
                         placeholder="Enter text..."
                       />
                     </div>
@@ -809,7 +809,7 @@ export default function AdminAttributesPage() {
                         type="text"
                         value={formData.validationPattern}
                         onChange={(e) => setFormData({ ...formData, validationPattern: e.target.value })}
-                        className="w-full px-3 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50"
+                        className="w-full px-3 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50 bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none focus:border-hos-gold"
                         placeholder="^[A-Za-z]+$"
                       />
                     </div>
@@ -819,7 +819,7 @@ export default function AdminAttributesPage() {
                         type="text"
                         value={formData.validationMessage}
                         onChange={(e) => setFormData({ ...formData, validationMessage: e.target.value })}
-                        className="w-full px-3 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50"
+                        className="w-full px-3 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50 bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none focus:border-hos-gold"
                         placeholder="Please enter only letters"
                       />
                     </div>
@@ -911,7 +911,7 @@ export default function AdminAttributesPage() {
                         <div className="flex-1">
                           <div className="flex items-center gap-2 flex-wrap">
                             <span className="text-xl">{getTypeIcon(attribute.type)}</span>
-                            <h3 className="text-lg font-medium text-white">{attribute.name}</h3>
+                            <h3 className="text-lg font-medium text-hos-text-secondary">{attribute.name}</h3>
                             <span className="text-xs bg-hos-gold/20 text-hos-gold px-2 py-0.5 rounded">
                               {attribute.type}
                             </span>
@@ -986,7 +986,7 @@ export default function AdminAttributesPage() {
                                   {attribute.values.slice(0, 10).map((val) => (
                                     <span
                                       key={val.id}
-                                      className="text-xs bg-hos-bg-tertiary text-white px-2 py-1 rounded flex items-center gap-1"
+                                      className="text-xs bg-hos-bg-tertiary text-hos-text-secondary px-2 py-1 rounded flex items-center gap-1"
                                     >
                                       {attribute.type === 'COLOR' && val.colorHex && (
                                         <span 
@@ -1090,7 +1090,7 @@ export default function AdminAttributesPage() {
                             handleAddValue(showValuesModal);
                           }
                         }}
-                        className="flex-1 px-3 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50"
+                        className="flex-1 px-3 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50 bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none focus:border-hos-gold"
                         placeholder="Enter value..."
                       />
                       <button

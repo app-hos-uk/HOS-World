@@ -435,7 +435,7 @@ export default function AdminCategoriesPage() {
               {/* Info */}
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2 flex-wrap">
-                  <span className="font-medium text-white truncate">{category.name}</span>
+                  <span className="font-medium text-hos-text-secondary truncate">{category.name}</span>
                   <span className="text-xs text-hos-text-muted">L{category.level}</span>
                   {category.isFeatured && (
                     <span className="text-xs bg-hos-gold/20 text-hos-gold-hover px-1.5 py-0.5 rounded">Featured</span>
@@ -539,7 +539,7 @@ export default function AdminCategoriesPage() {
             </div>
           )}
           <div className="flex-1 min-w-0">
-            <h3 className="font-medium text-white truncate">{category.name}</h3>
+            <h3 className="font-medium text-hos-text-secondary truncate">{category.name}</h3>
             <p className="text-xs text-hos-text-muted">{category.path}</p>
             {category.description && (
               <p className="text-sm text-hos-text-secondary mt-1 line-clamp-2">{category.description}</p>
@@ -594,7 +594,7 @@ export default function AdminCategoriesPage() {
           {/* Header */}
           <div className="flex justify-between items-center">
             <div>
-              <h1 className="text-2xl font-bold text-white">Fandoms</h1>
+              <h1 className="text-2xl font-bold text-hos-text-secondary">Fandoms</h1>
               <p className="text-hos-text-secondary mt-1">Fandom → Fandom → Sub-fandom hierarchy</p>
             </div>
             <button
@@ -665,7 +665,7 @@ export default function AdminCategoriesPage() {
                   placeholder="Search fandoms..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="w-full px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50"
+                  className="w-full px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50 bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none focus:border-hos-gold"
                 />
               </div>
               <label className="flex items-center gap-2">
@@ -719,7 +719,7 @@ export default function AdminCategoriesPage() {
                       required
                       value={formData.name}
                       onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                      className="w-full px-3 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50"
+                      className="w-full px-3 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50 bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none focus:border-hos-gold"
                       placeholder="Fandom name"
                     />
                   </div>
@@ -728,7 +728,7 @@ export default function AdminCategoriesPage() {
                     <select
                       value={formData.parentId}
                       onChange={(e) => setFormData({ ...formData, parentId: e.target.value })}
-                      className="w-full px-3 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50"
+                      className="w-full px-3 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50 bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none focus:border-hos-gold"
                     >
                       <option value="">None (Create as Fandom)</option>
                       {getAllCategoriesFlat(categories)
@@ -748,7 +748,7 @@ export default function AdminCategoriesPage() {
                   <textarea
                     value={formData.description}
                     onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                    className="w-full px-3 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50"
+                    className="w-full px-3 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50 bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none focus:border-hos-gold"
                     rows={2}
                     placeholder="Fandom description"
                   />
@@ -760,7 +760,7 @@ export default function AdminCategoriesPage() {
                     <select
                       value={formData.icon}
                       onChange={(e) => setFormData({ ...formData, icon: e.target.value })}
-                      className="w-full px-3 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50"
+                      className="w-full px-3 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50 bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none focus:border-hos-gold"
                     >
                       <option value="">No icon</option>
                       {CATEGORY_ICONS.map(icon => (
@@ -776,7 +776,7 @@ export default function AdminCategoriesPage() {
                       type="url"
                       value={formData.image}
                       onChange={(e) => setFormData({ ...formData, image: e.target.value })}
-                      className="w-full px-3 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50"
+                      className="w-full px-3 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50 bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none focus:border-hos-gold"
                       placeholder="https://..."
                     />
                   </div>
@@ -786,7 +786,7 @@ export default function AdminCategoriesPage() {
                       type="number"
                       value={formData.order}
                       onChange={(e) => setFormData({ ...formData, order: parseInt(e.target.value, 10) || 0 })}
-                      className="w-full px-3 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50"
+                      className="w-full px-3 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50 bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none focus:border-hos-gold"
                     />
                   </div>
                 </div>
@@ -798,7 +798,7 @@ export default function AdminCategoriesPage() {
                       type="text"
                       value={formData.metaTitle}
                       onChange={(e) => setFormData({ ...formData, metaTitle: e.target.value })}
-                      className="w-full px-3 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50"
+                      className="w-full px-3 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50 bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none focus:border-hos-gold"
                       placeholder="SEO meta title"
                     />
                   </div>
@@ -808,7 +808,7 @@ export default function AdminCategoriesPage() {
                       type="text"
                       value={formData.metaDescription}
                       onChange={(e) => setFormData({ ...formData, metaDescription: e.target.value })}
-                      className="w-full px-3 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50"
+                      className="w-full px-3 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50 bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none focus:border-hos-gold"
                       placeholder="SEO meta description"
                     />
                   </div>

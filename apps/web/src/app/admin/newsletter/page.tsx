@@ -69,7 +69,7 @@ export default function AdminNewsletterPage() {
       <AdminLayout>
         <div className="space-y-6">
           <div>
-            <h1 className="text-2xl font-bold text-white">Newsletter Subscriptions</h1>
+            <h1 className="text-2xl font-bold text-hos-text-secondary">Newsletter Subscriptions</h1>
             <p className="mt-1 text-sm text-hos-text-muted">
               View and manage newsletter subscribers. Visible to Admin, Marketing, and CMS Editor.
             </p>
@@ -130,7 +130,7 @@ export default function AdminNewsletterPage() {
                     <tbody className="divide-y divide-hos-border bg-hos-bg-secondary">
                       {subscriptions.map((sub) => (
                         <tr key={sub.id}>
-                          <td className="whitespace-nowrap px-4 py-3 text-sm text-white">
+                          <td className="whitespace-nowrap px-4 py-3 text-sm text-hos-text-secondary">
                             {sub.email}
                           </td>
                           <td className="whitespace-nowrap px-4 py-3">
@@ -138,7 +138,7 @@ export default function AdminNewsletterPage() {
                               className={`inline-flex rounded-full px-2 py-0.5 text-xs font-medium ${
                                 sub.status === 'subscribed'
                                   ? 'bg-green-500/15 text-green-300'
-                                  : 'bg-hos-bg-tertiary text-white'
+                                  : 'bg-hos-bg-tertiary text-hos-text-secondary'
                               }`}
                             >
                               {sub.status}

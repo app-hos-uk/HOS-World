@@ -72,7 +72,7 @@ export default function AdminStoreDetailPage() {
             <>
               <div className="flex justify-between items-start">
                 <div>
-                  <h1 className="text-2xl font-semibold text-white">{String(row.name)}</h1>
+                  <h1 className="text-2xl font-semibold text-hos-text-secondary">{String(row.name)}</h1>
                   <p className="text-sm text-hos-text-muted">
                     {String(row.code)} · {String(row.defaultRegionCode)} · active:{' '}
                     {String(row.isActive)}
@@ -115,7 +115,7 @@ export default function AdminStoreDetailPage() {
                 </ul>
                 <button
                   type="button"
-                  className="mt-3 text-sm px-3 py-1 rounded bg-hos-bg-tertiary text-white"
+                  className="mt-3 text-sm px-3 py-1 rounded bg-hos-bg-tertiary text-hos-text-secondary"
                   onClick={finishOnboarding}
                 >
                   Complete onboarding (all steps must be done)

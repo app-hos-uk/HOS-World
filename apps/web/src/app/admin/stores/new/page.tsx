@@ -66,14 +66,14 @@ export default function AdminStoreNewPage() {
           <Link href="/admin/stores" className="text-sm text-violet-400">
             ← Stores
           </Link>
-          <h1 className="text-2xl font-semibold text-white">New store</h1>
+          <h1 className="text-2xl font-semibold text-hos-text-secondary">New store</h1>
           <p className="text-xs text-hos-text-muted">
             Tenant ID defaults from your first existing store if available; override if needed.
           </p>
           <label className="block text-sm">
             <span className="text-hos-text-secondary">Tenant ID</span>
             <input
-              className="mt-1 w-full border rounded px-3 py-2 font-mono text-sm"
+              className="mt-1 w-full border rounded px-3 py-2 font-mono text-sm bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none border-hos-border"
               value={tenantId}
               onChange={(e) => setTenantId(e.target.value)}
             />
@@ -81,7 +81,7 @@ export default function AdminStoreNewPage() {
           <label className="block text-sm">
             <span className="text-hos-text-secondary">Name</span>
             <input
-              className="mt-1 w-full border rounded px-3 py-2"
+              className="mt-1 w-full border rounded px-3 py-2 bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none border-hos-border"
               value={name}
               onChange={(e) => setName(e.target.value)}
             />
@@ -89,7 +89,7 @@ export default function AdminStoreNewPage() {
           <label className="block text-sm">
             <span className="text-hos-text-secondary">Code</span>
             <input
-              className="mt-1 w-full border rounded px-3 py-2"
+              className="mt-1 w-full border rounded px-3 py-2 bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none border-hos-border"
               value={code}
               onChange={(e) => setCode(e.target.value)}
             />
@@ -97,7 +97,7 @@ export default function AdminStoreNewPage() {
           <label className="block text-sm">
             <span className="text-hos-text-secondary">Country</span>
             <input
-              className="mt-1 w-full border rounded px-3 py-2"
+              className="mt-1 w-full border rounded px-3 py-2 bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none border-hos-border"
               value={country}
               onChange={(e) => setCountry(e.target.value)}
             />
@@ -105,7 +105,7 @@ export default function AdminStoreNewPage() {
           <label className="block text-sm">
             <span className="text-hos-text-secondary">Currency</span>
             <input
-              className="mt-1 w-full border rounded px-3 py-2"
+              className="mt-1 w-full border rounded px-3 py-2 bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none border-hos-border"
               value={currency}
               onChange={(e) => setCurrency(e.target.value)}
             />
@@ -113,7 +113,7 @@ export default function AdminStoreNewPage() {
           <label className="block text-sm">
             <span className="text-hos-text-secondary">Default region code</span>
             <input
-              className="mt-1 w-full border rounded px-3 py-2"
+              className="mt-1 w-full border rounded px-3 py-2 bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none border-hos-border"
               value={region}
               onChange={(e) => setRegion(e.target.value)}
             />

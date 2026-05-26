@@ -84,7 +84,7 @@ export default function AdminLoyaltyRedemptionPage() {
       <AdminLayout>
         <div className="flex items-center justify-between mb-6">
           <div>
-            <h1 className="text-2xl font-bold text-white">Redemption Options</h1>
+            <h1 className="text-2xl font-bold text-hos-text-secondary">Redemption Options</h1>
             <p className="text-hos-text-secondary mt-1">Manage the rewards catalogue customers can redeem points for</p>
           </div>
           <button onClick={() => { resetForm(); setShowForm(true); }} className="px-4 py-2 bg-hos-gold text-[#1a1406] rounded-lg hover:bg-hos-gold-hover text-sm font-medium">
@@ -98,15 +98,15 @@ export default function AdminLoyaltyRedemptionPage() {
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
               <div>
                 <label className="block text-sm font-medium text-hos-text-secondary mb-1">Name</label>
-                <input className="w-full border rounded-lg px-3 py-2" placeholder="e.g. $5 Discount" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
+                <input className="w-full border rounded-lg px-3 py-2 bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none border-hos-border" placeholder="e.g. $5 Discount" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
               </div>
               <div>
                 <label className="block text-sm font-medium text-hos-text-secondary mb-1">Points Cost</label>
-                <input type="number" className="w-full border rounded-lg px-3 py-2" value={form.pointsCost} onChange={(e) => setForm({ ...form, pointsCost: parseInt(e.target.value) || 0 })} />
+                <input type="number" className="w-full border rounded-lg px-3 py-2 bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none border-hos-border" value={form.pointsCost} onChange={(e) => setForm({ ...form, pointsCost: parseInt(e.target.value) || 0 })} />
               </div>
               <div>
                 <label className="block text-sm font-medium text-hos-text-secondary mb-1">Type</label>
-                <select className="w-full border rounded-lg px-3 py-2" value={form.type} onChange={(e) => setForm({ ...form, type: e.target.value })}>
+                <select className="w-full border rounded-lg px-3 py-2 bg-hos-bg-secondary text-hos-text-secondary focus:outline-none border-hos-border" value={form.type} onChange={(e) => setForm({ ...form, type: e.target.value })}>
                   <option value="DISCOUNT">Discount</option>
                   <option value="FREE_SHIPPING">Free Shipping</option>
                   <option value="FREE_PRODUCT">Free Product</option>
@@ -115,11 +115,11 @@ export default function AdminLoyaltyRedemptionPage() {
               </div>
               <div>
                 <label className="block text-sm font-medium text-hos-text-secondary mb-1">Discount Value</label>
-                <input type="number" step="0.01" className="w-full border rounded-lg px-3 py-2" value={form.discountValue} onChange={(e) => setForm({ ...form, discountValue: parseFloat(e.target.value) || 0 })} />
+                <input type="number" step="0.01" className="w-full border rounded-lg px-3 py-2 bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none border-hos-border" value={form.discountValue} onChange={(e) => setForm({ ...form, discountValue: parseFloat(e.target.value) || 0 })} />
               </div>
               <div className="sm:col-span-2">
                 <label className="block text-sm font-medium text-hos-text-secondary mb-1">Description</label>
-                <input className="w-full border rounded-lg px-3 py-2" value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} />
+                <input className="w-full border rounded-lg px-3 py-2 bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none border-hos-border" value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} />
               </div>
               <div className="flex items-center gap-2">
                 <input type="checkbox" id="optActive" checked={form.isActive} onChange={(e) => setForm({ ...form, isActive: e.target.checked })} className="rounded" />
@@ -144,7 +144,7 @@ export default function AdminLoyaltyRedemptionPage() {
             {options.map((opt) => (
               <div key={opt.id} className="bg-hos-bg-secondary border rounded-lg p-5">
                 <div className="flex items-start justify-between mb-3">
-                  <h3 className="font-semibold text-white">{opt.name}</h3>
+                  <h3 className="font-semibold text-hos-text-secondary">{opt.name}</h3>
                   <span className={`px-2 py-0.5 text-xs font-medium rounded-full ${opt.isActive !== false ? 'bg-green-500/15 text-green-400' : 'bg-hos-bg-tertiary text-hos-text-secondary'}`}>
                     {opt.isActive !== false ? 'Active' : 'Inactive'}
                   </span>

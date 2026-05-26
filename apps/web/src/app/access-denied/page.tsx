@@ -87,7 +87,7 @@ export default function AccessDeniedPage() {
           <svg className="mx-auto h-16 w-16 text-red-500 mb-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
           </svg>
-          <h1 className="text-2xl font-bold text-white mb-4">Access Denied</h1>
+          <h1 className="text-2xl font-bold text-hos-text-secondary mb-4">Access Denied</h1>
           <p className="text-hos-text-secondary mb-6">You don&apos;t have permission to access this page.</p>
           <div className="flex flex-col gap-3">
             <Link href="/" className="px-6 py-3 bg-hos-gold text-[#1a1406] font-semibold rounded-lg hover:bg-hos-gold-hover transition-colors">Go to Home</Link>
@@ -122,7 +122,7 @@ export default function AccessDeniedPage() {
             </svg>
           </div>
 
-          <h1 className="text-3xl sm:text-4xl font-bold text-white mb-4">
+          <h1 className="text-3xl sm:text-4xl font-bold text-hos-text-secondary mb-4">
             Access Denied
           </h1>
 

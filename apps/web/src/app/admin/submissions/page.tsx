@@ -87,7 +87,7 @@ interface Stats {
 }
 
 const STATUSES = [
-  { value: 'SUBMITTED', label: 'Submitted', color: 'bg-hos-bg-tertiary text-white', chartColor: '#9ca3af' },
+  { value: 'SUBMITTED', label: 'Submitted', color: 'bg-hos-bg-tertiary text-hos-text-secondary', chartColor: '#9ca3af' },
   { value: 'UNDER_REVIEW', label: 'Under Review', color: 'bg-yellow-500/15 text-yellow-300', chartColor: '#fbbf24' },
   { value: 'PROCUREMENT_APPROVED', label: 'Procurement Approved', color: 'bg-hos-gold/20 text-hos-gold', chartColor: '#3b82f6' },
   { value: 'PROCUREMENT_REJECTED', label: 'Procurement Rejected', color: 'bg-red-500/15 text-red-300', chartColor: '#ef4444' },
@@ -317,7 +317,7 @@ export default function AdminSubmissionsPage() {
     raw.replace(/_/g, ' ').toLowerCase().replace(/\b\w/g, c => c.toUpperCase());
 
   const getStatusBadge = (status: string) => {
-    const statusInfo = STATUSES.find(s => s.value === status) || { label: formatStatusLabel(status), color: 'bg-hos-bg-tertiary text-white' };
+    const statusInfo = STATUSES.find(s => s.value === status) || { label: formatStatusLabel(status), color: 'bg-hos-bg-tertiary text-hos-text-secondary' };
     return <span className={`px-2 py-0.5 text-xs rounded-full ${statusInfo.color}`}>{statusInfo.label}</span>;
   };
 
@@ -341,7 +341,7 @@ export default function AdminSubmissionsPage() {
           {/* Header */}
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div>
-              <h1 className="text-2xl font-bold text-white">Product Submissions</h1>
+              <h1 className="text-2xl font-bold text-hos-text-secondary">Product Submissions</h1>
               <p className="text-hos-text-secondary mt-1">Review and manage seller product submissions</p>
             </div>
             <div className="flex items-center gap-2">
@@ -364,7 +364,7 @@ export default function AdminSubmissionsPage() {
                 className={`bg-hos-bg-secondary rounded-lg shadow p-3 text-left hover:shadow-md ${statusFilter === 'ALL' ? 'ring-2 ring-hos-gold/50' : ''}`}
               >
                 <p className="text-xs text-hos-text-muted">Total</p>
-                <p className="text-xl font-bold text-white">{stats.total}</p>
+                <p className="text-xl font-bold text-hos-text-secondary">{stats.total}</p>
               </button>
               <button
                 onClick={() => setStatusFilter('SUBMITTED')}
@@ -489,7 +489,7 @@ export default function AdminSubmissionsPage() {
                           aria-hidden
                         />
                         <span className="min-w-0 leading-snug">
-                          <span className="font-medium text-white">{d.name}</span>
+                          <span className="font-medium text-hos-text-secondary">{d.name}</span>
                           <span className="ml-1.5 tabular-nums text-hos-text-secondary">
                             {d.value}
                             <span className="text-hos-text-muted"> ({pct}%)</span>
@@ -520,7 +520,7 @@ export default function AdminSubmissionsPage() {
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   placeholder="Product, seller..."
-                  className="w-full px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50"
+                  className="w-full px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50 bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none focus:border-hos-gold"
                 />
               </div>
               <div>
@@ -528,7 +528,7 @@ export default function AdminSubmissionsPage() {
                 <select
                   value={statusFilter}
                   onChange={(e) => setStatusFilter(e.target.value)}
-                  className="w-full px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50"
+                  className="w-full px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50 bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none focus:border-hos-gold"
                 >
                   <option value="ALL">All Status</option>
                   {STATUSES.map(s => (
@@ -541,7 +541,7 @@ export default function AdminSubmissionsPage() {
                 <select
                   value={dateFilter}
                   onChange={(e) => setDateFilter(e.target.value)}
-                  className="w-full px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50"
+                  className="w-full px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50 bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none focus:border-hos-gold"
                 >
                   <option value="ALL">All Time</option>
                   <option value="7d">Last 7 Days</option>
@@ -558,7 +558,7 @@ export default function AdminSubmissionsPage() {
                     setSortBy(field as any);
                     setSortOrder(order as any);
                   }}
-                  className="w-full px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50"
+                  className="w-full px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50 bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none focus:border-hos-gold"
                 >
                   <option value="date-desc">Newest First</option>
                   <option value="date-asc">Oldest First</option>
@@ -618,7 +618,7 @@ export default function AdminSubmissionsPage() {
                                 );
                               })()}
                               <div>
-                                <p className="text-sm font-medium text-white">
+                                <p className="text-sm font-medium text-hos-text-secondary">
                                   {submission.productData?.name || submission.catalogEntry?.title || 'Untitled'}
                                 </p>
                                 <div className="flex items-center gap-1.5 flex-wrap">
@@ -640,10 +640,10 @@ export default function AdminSubmissionsPage() {
                             </div>
                           </td>
                           <td className="px-4 py-3">
-                            <p className="text-sm font-medium text-white">{submission.seller?.storeName || 'Unknown'}</p>
+                            <p className="text-sm font-medium text-hos-text-secondary">{submission.seller?.storeName || 'Unknown'}</p>
                             <p className="text-xs text-hos-text-muted">{submission.seller?.email || submission.user?.email}</p>
                           </td>
-                          <td className="px-4 py-3 text-sm text-white">
+                          <td className="px-4 py-3 text-sm text-hos-text-secondary">
                             {submission.productData?.price 
                               ? `${submission.productData.currency || 'USD'} ${Number(submission.productData.price).toFixed(2)}`
                               : 'N/A'}
@@ -680,7 +680,7 @@ export default function AdminSubmissionsPage() {
                                 <button
                                   onClick={() => handlePublish(submission)}
                                   disabled={publishLoading === submission.id}
-                                  className="px-2 py-1 text-sm text-white bg-green-600 hover:bg-green-700 rounded disabled:opacity-50"
+                                  className="px-2 py-1 text-sm text-hos-text-secondary bg-green-600 hover:bg-green-700 rounded disabled:opacity-50"
                                 >
                                   {publishLoading === submission.id ? 'Publishing...' : 'Publish'}
                                 </button>
@@ -832,7 +832,7 @@ export default function AdminSubmissionsPage() {
                             return (
                               <div key={dup.id || ep?.id} className="flex items-center justify-between p-3 bg-hos-bg-secondary rounded-lg border border-hos-border">
                                 <div className="min-w-0 flex-1">
-                                  <p className="text-sm font-medium text-white truncate">{ep?.name || 'Unknown product'}</p>
+                                  <p className="text-sm font-medium text-hos-text-secondary truncate">{ep?.name || 'Unknown product'}</p>
                                   <div className="flex flex-wrap gap-2 text-xs text-hos-text-muted mt-0.5">
                                     {ep?.sku && <span>SKU: {ep.sku}</span>}
                                     {ep?.barcode && <span>Barcode: {ep.barcode}</span>}
@@ -993,7 +993,7 @@ export default function AdminSubmissionsPage() {
                           value={actionNotes}
                           onChange={(e) => setActionNotes(e.target.value)}
                           rows={3}
-                          className="w-full px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50"
+                          className="w-full px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50 bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none focus:border-hos-gold"
                           placeholder="Add any notes for this approval..."
                         />
                       </div>
@@ -1004,7 +1004,7 @@ export default function AdminSubmissionsPage() {
                           value={rejectionReason}
                           onChange={(e) => setRejectionReason(e.target.value)}
                           rows={3}
-                          className="w-full px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50"
+                          className="w-full px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50 bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none focus:border-hos-gold"
                           placeholder="Please provide a reason for rejection..."
                           required
                         />

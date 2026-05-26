@@ -25,7 +25,7 @@ export default function Testimonials() {
   return (
     <section className="bg-hos-bg py-16">
       <div className="max-w-7xl mx-auto px-4">
-        <h2 className="font-display text-white text-2xl md:text-3xl font-bold">
+        <h2 className="font-display text-hos-text-secondary text-2xl md:text-3xl font-bold">
           Why fans shop with us
         </h2>
         <p className="text-hos-text-secondary text-sm mt-2 mb-10">

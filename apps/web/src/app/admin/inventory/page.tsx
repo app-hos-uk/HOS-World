@@ -154,7 +154,7 @@ export default function AdminInventoryDashboardPage() {
       case 'REJECTED':
         return 'bg-red-500/15 text-red-300';
       default:
-        return 'bg-hos-bg-tertiary text-white';
+        return 'bg-hos-bg-tertiary text-hos-text-secondary';
     }
   };
 
@@ -219,35 +219,35 @@ export default function AdminInventoryDashboardPage() {
 
               {/* Quick Actions */}
               <div className="bg-hos-bg-secondary rounded-lg shadow p-6">
-                <h2 className="text-xl font-semibold text-white mb-4">Quick Actions</h2>
+                <h2 className="text-xl font-semibold text-hos-text-secondary mb-4">Quick Actions</h2>
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                   <Link
                     href="/admin/warehouses"
                     className="p-4 border border-hos-border rounded-lg hover:bg-hos-gold/10 hover:border-hos-border-accent transition-colors text-center"
                   >
                     <div className="text-2xl mb-2">📦</div>
-                    <div className="text-sm font-medium text-white">Manage Warehouses</div>
+                    <div className="text-sm font-medium text-hos-text-secondary">Manage Warehouses</div>
                   </Link>
                   <Link
                     href="/admin/warehouses?action=transfer"
                     className="p-4 border border-hos-border rounded-lg hover:bg-hos-gold/10 hover:border-hos-border-accent transition-colors text-center"
                   >
                     <div className="text-2xl mb-2">🔄</div>
-                    <div className="text-sm font-medium text-white">Stock Transfers</div>
+                    <div className="text-sm font-medium text-hos-text-secondary">Stock Transfers</div>
                   </Link>
                   <Link
                     href="/admin/inventory?tab=movements"
                     className="p-4 border border-hos-border rounded-lg hover:bg-hos-gold/10 hover:border-hos-border-accent transition-colors text-center"
                   >
                     <div className="text-2xl mb-2">📊</div>
-                    <div className="text-sm font-medium text-white">Stock Movements</div>
+                    <div className="text-sm font-medium text-hos-text-secondary">Stock Movements</div>
                   </Link>
                   <Link
                     href="/admin/products"
                     className="p-4 border border-hos-border rounded-lg hover:bg-hos-gold/10 hover:border-hos-border-accent transition-colors text-center"
                   >
                     <div className="text-2xl mb-2">📋</div>
-                    <div className="text-sm font-medium text-white">Product Inventory</div>
+                    <div className="text-sm font-medium text-hos-text-secondary">Product Inventory</div>
                   </Link>
                 </div>
               </div>
@@ -257,7 +257,7 @@ export default function AdminInventoryDashboardPage() {
                 <div className="bg-hos-bg-secondary rounded-lg shadow overflow-hidden">
                   <div className="px-6 py-4 border-b border-hos-border bg-hos-bg-secondary">
                     <div className="flex justify-between items-center">
-                      <h2 className="text-lg font-semibold text-white">Pending Stock Transfers</h2>
+                      <h2 className="text-lg font-semibold text-hos-text-secondary">Pending Stock Transfers</h2>
                       <Link
                         href="/admin/warehouses?tab=transfers"
                         className="text-sm text-hos-gold hover:text-hos-gold"
@@ -276,7 +276,7 @@ export default function AdminInventoryDashboardPage() {
                         <div key={transfer.id} className="px-6 py-4 hover:bg-hos-bg-tertiary">
                           <div className="flex justify-between items-start mb-2">
                             <div className="flex-1">
-                              <div className="text-sm font-medium text-white">
+                              <div className="text-sm font-medium text-hos-text-secondary">
                                 {transfer.product.name}
                               </div>
                               <div className="text-xs text-hos-text-muted mt-1">
@@ -314,7 +314,7 @@ export default function AdminInventoryDashboardPage() {
                 <div className="bg-hos-bg-secondary rounded-lg shadow overflow-hidden">
                   <div className="px-6 py-4 border-b border-hos-border bg-hos-bg-secondary">
                     <div className="flex justify-between items-center">
-                      <h2 className="text-lg font-semibold text-white">Recent Stock Movements</h2>
+                      <h2 className="text-lg font-semibold text-hos-text-secondary">Recent Stock Movements</h2>
                       <Link
                         href="/admin/inventory?tab=movements"
                         className="text-sm text-hos-gold hover:text-hos-gold"
@@ -333,7 +333,7 @@ export default function AdminInventoryDashboardPage() {
                         <div key={movement.id} className="px-6 py-4 hover:bg-hos-bg-tertiary">
                           <div className="flex justify-between items-start">
                             <div className="flex-1">
-                              <div className="text-sm font-medium text-white">
+                              <div className="text-sm font-medium text-hos-text-secondary">
                                 {movement.product.name}
                               </div>
                               <div className="text-xs text-hos-text-muted mt-1">

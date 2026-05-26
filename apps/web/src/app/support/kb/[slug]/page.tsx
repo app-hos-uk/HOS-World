@@ -125,7 +125,7 @@ export default function KBArticlePage() {
                     </span>
                   )}
                 </div>
-                <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-white">
+                <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-hos-text-secondary">
                   {article.title}
                 </h1>
               </div>
@@ -177,7 +177,7 @@ export default function KBArticlePage() {
               {/* Related Articles */}
               {article.relatedArticles && article.relatedArticles.length > 0 && (
                 <div className="border-t border-hos-border pt-6">
-                  <h2 className="text-xl font-semibold text-white mb-4">Related Articles</h2>
+                  <h2 className="text-xl font-semibold text-hos-text-secondary mb-4">Related Articles</h2>
                   <div className="space-y-3">
                     {article.relatedArticles.map((related) => (
                       <Link
@@ -185,7 +185,7 @@ export default function KBArticlePage() {
                         href={`/support/kb/${related.slug}`}
                         className="block bg-hos-bg-secondary border border-hos-border rounded-lg p-4 hover:border-hos-border-accent hover:bg-hos-gold/10 transition-all"
                       >
-                        <h3 className="font-medium text-white">{related.title}</h3>
+                        <h3 className="font-medium text-hos-text-secondary">{related.title}</h3>
                         {related.excerpt && (
                           <p className="text-sm text-hos-text-secondary mt-1 line-clamp-1">{related.excerpt}</p>
                         )}

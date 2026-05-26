@@ -29,7 +29,7 @@ export function SectionCard({
       {(title || action) && (
         <div className="px-5 py-4 border-b border-hos-border flex items-center justify-between">
           <div>
-            {title && <h3 className="text-base font-semibold text-white">{title}</h3>}
+            {title && <h3 className="text-base font-semibold text-hos-text-secondary">{title}</h3>}
             {subtitle && <p className="text-sm text-hos-text-muted mt-0.5">{subtitle}</p>}
           </div>
           {action && (
@@ -77,7 +77,7 @@ export function ChartCard({
   return (
     <div className={`bg-hos-bg-secondary rounded-xl border border-hos-border shadow-sm p-5 ${className}`}>
       <div className="mb-4">
-        <h3 className="text-base font-semibold text-white">{title}</h3>
+        <h3 className="text-base font-semibold text-hos-text-secondary">{title}</h3>
         {subtitle && <p className="text-sm text-hos-text-muted mt-0.5">{subtitle}</p>}
       </div>
       <div className={height}>
@@ -113,7 +113,7 @@ export function ActivityItem({
         </div>
       )}
       <div className="flex-1 min-w-0">
-        <p className="text-sm font-medium text-white truncate">{title}</p>
+        <p className="text-sm font-medium text-hos-text-secondary truncate">{title}</p>
         {subtitle && <p className="text-xs text-hos-text-muted mt-0.5">{subtitle}</p>}
         {timestamp && <p className="text-xs text-hos-text-muted mt-1">{timestamp}</p>}
       </div>
@@ -143,7 +143,7 @@ export function EmptyState({
   return (
     <div className="text-center py-12">
       <span className="text-5xl block mb-4">{icon}</span>
-      <h3 className="text-lg font-medium text-white mb-2">{title}</h3>
+      <h3 className="text-lg font-medium text-hos-text-secondary mb-2">{title}</h3>
       {description && <p className="text-sm text-hos-text-muted mb-4 max-w-sm mx-auto">{description}</p>}
       {action && (
         action.href ? (

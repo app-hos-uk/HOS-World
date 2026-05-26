@@ -222,7 +222,7 @@ export default function CollectionDetailPage() {
                     className={`px-2 py-1 rounded text-xs shrink-0 ${
                       collection.isPublic
                         ? 'bg-green-500/15 text-green-300'
-                        : 'bg-hos-bg-tertiary text-white'
+                        : 'bg-hos-bg-tertiary text-hos-text-secondary'
                     }`}
                   >
                     {collection.isPublic ? 'Public' : 'Private'}
@@ -251,7 +251,7 @@ export default function CollectionDetailPage() {
                             isPublic: collection.isPublic,
                           });
                         }}
-                        className="px-4 py-2 bg-hos-bg-tertiary text-white rounded-lg hover:bg-hos-bg-tertiary transition-colors font-medium whitespace-nowrap"
+                        className="px-4 py-2 bg-hos-bg-tertiary text-hos-text-secondary rounded-lg hover:bg-hos-bg-tertiary transition-colors font-medium whitespace-nowrap"
                       >
                         Cancel
                       </button>

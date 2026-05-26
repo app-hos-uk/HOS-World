@@ -36,11 +36,11 @@ const STATUS_COLORS: Record<string, string> = {
   IN_PROGRESS: 'bg-hos-gold/20 text-hos-gold',
   WAITING_CUSTOMER: 'bg-yellow-500/15 text-yellow-300',
   RESOLVED: 'bg-green-500/15 text-green-300',
-  CLOSED: 'bg-hos-bg-tertiary text-white',
+  CLOSED: 'bg-hos-bg-tertiary text-hos-text-secondary',
 };
 
 const PRIORITY_COLORS: Record<string, string> = {
-  LOW: 'bg-hos-bg-tertiary text-white',
+  LOW: 'bg-hos-bg-tertiary text-hos-text-secondary',
   MEDIUM: 'bg-yellow-500/15 text-yellow-300',
   HIGH: 'bg-orange-500/15 text-orange-300',
   URGENT: 'bg-red-500/15 text-red-300',
@@ -320,7 +320,7 @@ export default function AdminSupportPage() {
         <div className="space-y-6">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div>
-              <h1 className="text-2xl font-bold text-white">Support Center</h1>
+              <h1 className="text-2xl font-bold text-hos-text-secondary">Support Center</h1>
               <p className="text-hos-text-secondary mt-1">Manage customer support tickets</p>
             </div>
             <button
@@ -338,7 +338,7 @@ export default function AdminSupportPage() {
               className={`bg-hos-bg-secondary rounded-lg shadow p-4 text-left ${filter === 'all' ? 'ring-2 ring-hos-gold/50' : ''}`}
             >
               <h3 className="text-xs font-medium text-hos-text-muted uppercase">Total Tickets</h3>
-              <p className="text-2xl font-bold text-white mt-1">{stats.total}</p>
+              <p className="text-2xl font-bold text-hos-text-secondary mt-1">{stats.total}</p>
             </button>
             <button
               onClick={() => setFilter('open')}
@@ -377,7 +377,7 @@ export default function AdminSupportPage() {
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               placeholder="Search by ticket number, subject, or customer email..."
-              className="w-full px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50"
+              className="w-full px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50 bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none focus:border-hos-gold"
             />
           </div>
 
@@ -410,7 +410,7 @@ export default function AdminSupportPage() {
                     filteredTickets.map((ticket) => (
                       <tr key={ticket.id} className="hover:bg-hos-bg-tertiary">
                         <td className="px-6 py-4">
-                          <div className="text-sm font-medium text-white">#{ticket.ticketNumber}</div>
+                          <div className="text-sm font-medium text-hos-text-secondary">#{ticket.ticketNumber}</div>
                           <div className="text-sm text-hos-text-muted truncate max-w-xs">{ticket.subject}</div>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-hos-text-muted">
@@ -421,7 +421,7 @@ export default function AdminSupportPage() {
                             value={ticket.priority}
                             onChange={(e) => handlePriorityUpdate(ticket.id, e.target.value)}
                             className={`text-xs font-semibold rounded-full px-2 py-1 border-0 cursor-pointer ${
-                              PRIORITY_COLORS[ticket.priority] || 'bg-hos-bg-tertiary text-white'
+                              PRIORITY_COLORS[ticket.priority] || 'bg-hos-bg-tertiary text-hos-text-secondary'
                             }`}
                           >
                             {TICKET_PRIORITIES.map((p) => (
@@ -434,7 +434,7 @@ export default function AdminSupportPage() {
                             value={ticket.status}
                             onChange={(e) => handleStatusUpdate(ticket.id, e.target.value)}
                             className={`text-xs font-semibold rounded-full px-2 py-1 border-0 cursor-pointer ${
-                              STATUS_COLORS[ticket.status] || 'bg-hos-bg-tertiary text-white'
+                              STATUS_COLORS[ticket.status] || 'bg-hos-bg-tertiary text-hos-text-secondary'
                             }`}
                           >
                             {TICKET_STATUSES.map((s) => (
@@ -469,7 +469,7 @@ export default function AdminSupportPage() {
                   <div className="flex justify-between items-start mb-6">
                     <div>
                       <div className="flex items-center gap-3">
-                        <h2 className="text-2xl font-bold text-white">
+                        <h2 className="text-2xl font-bold text-hos-text-secondary">
                           #{selectedTicket.ticketNumber}
                         </h2>
                         <span className={`px-2 py-1 text-xs font-semibold rounded-full ${
@@ -496,19 +496,19 @@ export default function AdminSupportPage() {
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
                     <div className="bg-hos-bg-secondary rounded-lg p-4">
                       <h3 className="text-sm font-medium text-hos-text-muted mb-1">Customer</h3>
-                      <p className="text-white">
+                      <p className="text-hos-text-secondary">
                         {selectedTicket.user?.firstName || ''} {selectedTicket.user?.lastName || ''}
                       </p>
                       <p className="text-sm text-hos-text-muted">{selectedTicket.user?.email || 'Unknown'}</p>
                     </div>
                     <div className="bg-hos-bg-secondary rounded-lg p-4">
                       <h3 className="text-sm font-medium text-hos-text-muted mb-1">Created</h3>
-                      <p className="text-white">{formatDate(selectedTicket.createdAt)}</p>
+                      <p className="text-hos-text-secondary">{formatDate(selectedTicket.createdAt)}</p>
                     </div>
                     {selectedTicket.assignedAgent && (
                       <div className="bg-hos-bg-secondary rounded-lg p-4">
                         <h3 className="text-sm font-medium text-hos-text-muted mb-1">Assigned To</h3>
-                        <p className="text-white">
+                        <p className="text-hos-text-secondary">
                           {selectedTicket.assignedAgent.firstName || ''} {selectedTicket.assignedAgent.lastName || ''}
                         </p>
                         <p className="text-sm text-hos-text-muted">{selectedTicket.assignedAgent.email}</p>
@@ -570,7 +570,7 @@ export default function AdminSupportPage() {
                                   <span className={`px-2 py-0.5 text-xs rounded-full ${
                                     message.sender === 'ADMIN' 
                                       ? 'bg-hos-gold/20 text-hos-gold' 
-                                      : 'bg-hos-bg-tertiary text-white'
+                                      : 'bg-hos-bg-tertiary text-hos-text-secondary'
                                   }`}>
                                     {message.sender}
                                   </span>
@@ -599,13 +599,13 @@ export default function AdminSupportPage() {
                       value={replyContent}
                       onChange={(e) => setReplyContent(e.target.value)}
                       placeholder="Type your response here..."
-                      className="w-full px-3 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50"
+                      className="w-full px-3 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50 bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none focus:border-hos-gold"
                       rows={4}
                     />
                     <div className="flex justify-end gap-3 mt-3">
                       <button
                         onClick={() => setShowDetailsModal(false)}
-                        className="px-4 py-2 text-hos-text-secondary hover:text-white"
+                        className="px-4 py-2 text-hos-text-secondary hover:text-hos-gold"
                       >
                         Close
                       </button>
@@ -643,7 +643,7 @@ export default function AdminSupportPage() {
                       type="text"
                       value={newTicket.subject}
                       onChange={(e) => setNewTicket({ ...newTicket, subject: e.target.value })}
-                      className="w-full px-3 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50"
+                      className="w-full px-3 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50 bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none focus:border-hos-gold"
                       placeholder="Brief description of the issue"
                     />
                   </div>
@@ -652,7 +652,7 @@ export default function AdminSupportPage() {
                     <textarea
                       value={newTicket.description}
                       onChange={(e) => setNewTicket({ ...newTicket, description: e.target.value })}
-                      className="w-full px-3 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50"
+                      className="w-full px-3 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50 bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none focus:border-hos-gold"
                       rows={4}
                       placeholder="Detailed description..."
                     />
@@ -663,7 +663,7 @@ export default function AdminSupportPage() {
                       <select
                         value={newTicket.priority}
                         onChange={(e) => setNewTicket({ ...newTicket, priority: e.target.value as 'HIGH' | 'MEDIUM' | 'LOW' | 'URGENT' })}
-                        className="w-full px-3 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50"
+                        className="w-full px-3 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50 bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none focus:border-hos-gold"
                       >
                         {TICKET_PRIORITIES.map((p) => (
                           <option key={p} value={p}>{p}</option>
@@ -675,7 +675,7 @@ export default function AdminSupportPage() {
                       <select
                         value={newTicket.category}
                         onChange={(e) => setNewTicket({ ...newTicket, category: e.target.value as typeof newTicket.category })}
-                        className="w-full px-3 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50"
+                        className="w-full px-3 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50 bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none focus:border-hos-gold"
                       >
                         <option value="OTHER">General / Other</option>
                         <option value="ORDER_INQUIRY">Order Inquiry</option>
@@ -690,7 +690,7 @@ export default function AdminSupportPage() {
                   <div className="flex justify-end gap-3 pt-4">
                     <button
                       onClick={() => setShowCreateModal(false)}
-                      className="px-4 py-2 text-hos-text-secondary hover:text-white"
+                      className="px-4 py-2 text-hos-text-secondary hover:text-hos-gold"
                     >
                       Cancel
                     </button>

@@ -190,7 +190,7 @@ export default function MarketingDashboardPage() {
                       >
                         <div className="flex items-start justify-between">
                           <div className="flex-1">
-                            <p className="font-medium text-white">
+                            <p className="font-medium text-hos-text-secondary">
                               {submission.productData?.name || 'Untitled Product'}
                             </p>
                             <p className="text-sm text-hos-text-muted mt-1">
@@ -241,7 +241,7 @@ export default function MarketingDashboardPage() {
                           )}
                         </div>
                         <div className="p-2">
-                          <p className="text-xs font-medium text-white truncate">
+                          <p className="text-xs font-medium text-hos-text-secondary truncate">
                             {material.submission?.productData?.name || 'Unknown'}
                           </p>
                           <p className="text-xs text-hos-text-muted">{material.type}</p>

@@ -26,7 +26,7 @@ export default function AdminAmbassadorDashboardPage() {
           <Link href="/admin/ambassadors" className="text-sm text-violet-400 mb-4 inline-block">
             ← All ambassadors
           </Link>
-          <h1 className="text-2xl font-semibold text-white mb-6">Ambassador program</h1>
+          <h1 className="text-2xl font-semibold text-hos-text-secondary mb-6">Ambassador program</h1>
           {error ? (
             <p className="text-red-400 text-sm">{error}</p>
           ) : loading ? (

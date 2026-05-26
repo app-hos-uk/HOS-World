@@ -55,7 +55,7 @@ export default function AdminAmbassadorDetailPage() {
             <>
               <div className="flex justify-between items-start mb-6">
                 <div>
-                  <h1 className="text-2xl font-semibold text-white">
+                  <h1 className="text-2xl font-semibold text-hos-text-secondary">
                     {String(row.displayName || 'Ambassador')}
                   </h1>
                   <p className="text-sm text-hos-text-muted">

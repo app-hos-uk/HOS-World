@@ -26,7 +26,7 @@ export default function AdminBrandPartnershipsDashboardPage() {
           <Link href="/admin/brand-partnerships" className="text-sm text-violet-400 mb-4 inline-block">
             ← Partners
           </Link>
-          <h1 className="text-2xl font-semibold text-white mb-6">Brand partnerships</h1>
+          <h1 className="text-2xl font-semibold text-hos-text-secondary mb-6">Brand partnerships</h1>
           {error ? (
             <p className="text-red-400 text-sm">{error}</p>
           ) : loading ? (

@@ -135,7 +135,7 @@ export default function OrdersPage() {
       case 'completed': return 'bg-green-500/15 text-green-300';
       case 'cancelled':
       case 'refunded': return 'bg-red-500/15 text-red-300';
-      default: return 'bg-hos-bg-tertiary text-white';
+      default: return 'bg-hos-bg-tertiary text-hos-text-secondary';
     }
   };
 
@@ -157,7 +157,7 @@ export default function OrdersPage() {
         <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 lg:py-12">
           {/* Header */}
           <div className="mb-8">
-            <h1 className="text-2xl sm:text-3xl font-bold text-white">My Orders</h1>
+            <h1 className="text-2xl sm:text-3xl font-bold text-hos-text-secondary">My Orders</h1>
             <p className="text-hos-text-secondary mt-1">Track and manage your orders</p>
           </div>
 
@@ -170,7 +170,7 @@ export default function OrdersPage() {
               }`}
             >
               <h3 className="text-xs font-medium text-hos-text-muted uppercase">All Orders</h3>
-              <p className="text-2xl font-bold text-white mt-1">{stats.total}</p>
+              <p className="text-2xl font-bold text-hos-text-secondary mt-1">{stats.total}</p>
             </button>
             <button
               onClick={() => setStatusFilter('PENDING')}
@@ -248,7 +248,7 @@ export default function OrdersPage() {
                     <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                       <div>
                         <div className="flex items-center gap-3">
-                          <h3 className="text-lg font-semibold text-white">
+                          <h3 className="text-lg font-semibold text-hos-text-secondary">
                             Order #{order.orderNumber || order.id.slice(0, 8)}
                           </h3>
                           <span className={`px-3 py-1 text-xs font-medium rounded-full ${getStatusColor(order.status)}`}>
@@ -357,7 +357,7 @@ export default function OrdersPage() {
               <div className="p-6 border-b sticky top-0 bg-hos-bg-secondary">
                 <div className="flex justify-between items-start">
                   <div>
-                    <h2 className="text-xl font-bold text-white">
+                    <h2 className="text-xl font-bold text-hos-text-secondary">
                       Order #{selectedOrder.orderNumber || selectedOrder.id.slice(0, 8)}
                     </h2>
                     <p className="text-sm text-hos-text-muted mt-1">
@@ -387,7 +387,7 @@ export default function OrdersPage() {
                 {/* Tracking Info */}
                 {(selectedOrder.trackingNumber || selectedOrder.trackingCode) && (
                   <div className="bg-hos-gold/10 rounded-lg p-4">
-                    <h3 className="font-medium text-white mb-2">Tracking Information</h3>
+                    <h3 className="font-medium text-hos-text-secondary mb-2">Tracking Information</h3>
                     <p className="text-sm text-hos-text-secondary">
                       Tracking Number: <span className="font-mono">{selectedOrder.trackingNumber || selectedOrder.trackingCode}</span>
                     </p>
@@ -402,7 +402,7 @@ export default function OrdersPage() {
                 {/* Shipping Address */}
                 {selectedOrder.shippingAddress && (
                   <div className="bg-hos-bg-secondary rounded-lg p-4">
-                    <h3 className="font-medium text-white mb-2">Shipping Address</h3>
+                    <h3 className="font-medium text-hos-text-secondary mb-2">Shipping Address</h3>
                     <p className="text-sm text-hos-text-secondary">
                       {selectedOrder.shippingAddress.street}<br />
                       {selectedOrder.shippingAddress.city}, {selectedOrder.shippingAddress.state} {selectedOrder.shippingAddress.postalCode}<br />
@@ -413,7 +413,7 @@ export default function OrdersPage() {
 
                 {/* Order Items */}
                 <div>
-                  <h3 className="font-medium text-white mb-3">Order Items</h3>
+                  <h3 className="font-medium text-hos-text-secondary mb-3">Order Items</h3>
                   <div className="border rounded-lg divide-y">
                     {selectedOrder.items?.map((item, index) => {
                       const imageUrl = getProductImage(item);
@@ -435,13 +435,13 @@ export default function OrdersPage() {
                           <div className="flex-1">
                             <Link
                               href={`/products/${item.productId}`}
-                              className="font-medium text-white hover:text-hos-gold"
+                              className="font-medium text-hos-text-secondary hover:text-hos-gold"
                             >
                               {item.product?.name || 'Product'}
                             </Link>
                             <p className="text-sm text-hos-text-muted">Qty: {item.quantity}</p>
                           </div>
-                          <p className="font-medium text-white">
+                          <p className="font-medium text-hos-text-secondary">
                             {formatPrice(item.price * item.quantity, selectedOrder.currency || 'USD')}
                           </p>
                         </div>
@@ -452,18 +452,18 @@ export default function OrdersPage() {
 
                 {/* Order Summary */}
                 <div className="bg-hos-bg-secondary rounded-lg p-4">
-                  <h3 className="font-medium text-white mb-3">Order Summary</h3>
+                  <h3 className="font-medium text-hos-text-secondary mb-3">Order Summary</h3>
                   <div className="space-y-2 text-sm">
                     {selectedOrder.subtotal && (
                       <div className="flex justify-between">
                         <span className="text-hos-text-muted">Subtotal</span>
-                        <span className="text-white">{formatPrice(selectedOrder.subtotal, selectedOrder.currency || 'USD')}</span>
+                        <span className="text-hos-text-secondary">{formatPrice(selectedOrder.subtotal, selectedOrder.currency || 'USD')}</span>
                       </div>
                     )}
                     {(selectedOrder.shippingCost || selectedOrder.shippingAmount) ? (
                       <div className="flex justify-between">
                         <span className="text-hos-text-muted">Shipping</span>
-                        <span className="text-white">{formatPrice(selectedOrder.shippingCost || selectedOrder.shippingAmount || 0, selectedOrder.currency || 'USD')}</span>
+                        <span className="text-hos-text-secondary">{formatPrice(selectedOrder.shippingCost || selectedOrder.shippingAmount || 0, selectedOrder.currency || 'USD')}</span>
                       </div>
                     ) : null}
                     {(selectedOrder.discount || selectedOrder.discountAmount) ? (
@@ -473,7 +473,7 @@ export default function OrdersPage() {
                       </div>
                     ) : null}
                     <div className="flex justify-between font-bold text-base pt-2 border-t">
-                      <span className="text-white">Total</span>
+                      <span className="text-hos-text-secondary">Total</span>
                       <span className="text-hos-gold">{formatPrice(selectedOrder.total, selectedOrder.currency || 'USD')}</span>
                     </div>
                   </div>

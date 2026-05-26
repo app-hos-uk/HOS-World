@@ -71,11 +71,11 @@ export default function AdminEventEditPage() {
             <p className="text-hos-text-muted">Loading…</p>
           ) : (
             <>
-              <h1 className="text-2xl font-semibold text-white">Edit event</h1>
+              <h1 className="text-2xl font-semibold text-hos-text-secondary">Edit event</h1>
               <label className="block text-sm">
                 <span className="text-hos-text-secondary">Title</span>
                 <input
-                  className="mt-1 w-full border rounded px-3 py-2"
+                  className="mt-1 w-full border rounded px-3 py-2 bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none border-hos-border"
                   value={title}
                   onChange={(e) => setTitle(e.target.value)}
                 />
@@ -83,7 +83,7 @@ export default function AdminEventEditPage() {
               <label className="block text-sm">
                 <span className="text-hos-text-secondary">Description</span>
                 <textarea
-                  className="mt-1 w-full border rounded px-3 py-2"
+                  className="mt-1 w-full border rounded px-3 py-2 bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none border-hos-border"
                   rows={4}
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
@@ -93,7 +93,7 @@ export default function AdminEventEditPage() {
                 <span className="text-hos-text-secondary">Min tier level</span>
                 <input
                   type="number"
-                  className="mt-1 w-full border rounded px-3 py-2"
+                  className="mt-1 w-full border rounded px-3 py-2 bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none border-hos-border"
                   value={minTierLevel}
                   onChange={(e) => setMinTierLevel(parseInt(e.target.value, 10) || 0)}
                 />
@@ -102,7 +102,7 @@ export default function AdminEventEditPage() {
                 <span className="text-hos-text-secondary">Attendance points</span>
                 <input
                   type="number"
-                  className="mt-1 w-full border rounded px-3 py-2"
+                  className="mt-1 w-full border rounded px-3 py-2 bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none border-hos-border"
                   value={attendancePoints}
                   onChange={(e) => setAttendancePoints(parseInt(e.target.value, 10) || 0)}
                 />

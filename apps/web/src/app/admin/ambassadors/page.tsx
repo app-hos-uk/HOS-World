@@ -60,16 +60,16 @@ export default function AdminAmbassadorsPage() {
     <RouteGuard allowedRoles={['ADMIN']}>
       <AdminLayout>
         <div className="p-6 max-w-6xl mx-auto">
-          <h1 className="text-2xl font-semibold text-white mb-4">Ambassadors</h1>
+          <h1 className="text-2xl font-semibold text-hos-text-secondary mb-4">Ambassadors</h1>
           <div className="flex flex-wrap gap-2 mb-4">
             <input
-              className="border rounded px-2 py-1 text-sm"
+              className="border rounded px-2 py-1 text-sm bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none border-hos-border"
               placeholder="Search"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
             />
             <select
-              className="border rounded px-2 py-1 text-sm"
+              className="border rounded px-2 py-1 text-sm bg-hos-bg-secondary text-hos-text-secondary focus:outline-none border-hos-border"
               value={status}
               onChange={(e) => setStatus(e.target.value)}
             >
@@ -79,7 +79,7 @@ export default function AdminAmbassadorsPage() {
               <option value="GRADUATED">GRADUATED</option>
             </select>
             <select
-              className="border rounded px-2 py-1 text-sm"
+              className="border rounded px-2 py-1 text-sm bg-hos-bg-secondary text-hos-text-secondary focus:outline-none border-hos-border"
               value={tier}
               onChange={(e) => setTier(e.target.value)}
             >
@@ -90,7 +90,7 @@ export default function AdminAmbassadorsPage() {
             </select>
             <button
               type="button"
-              className="text-sm px-3 py-1 rounded bg-hos-surface text-white"
+              className="text-sm px-3 py-1 rounded bg-hos-surface text-hos-text-secondary"
               onClick={() => load()}
             >
               Apply

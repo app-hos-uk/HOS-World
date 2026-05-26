@@ -159,7 +159,7 @@ export default function AdminReviewsPage() {
         <div className="space-y-6">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div>
-              <h1 className="text-2xl font-bold text-white">Product Reviews</h1>
+              <h1 className="text-2xl font-bold text-hos-text-secondary">Product Reviews</h1>
               <p className="text-hos-text-secondary mt-1">Manage and moderate customer reviews</p>
             </div>
           </div>
@@ -189,11 +189,11 @@ export default function AdminReviewsPage() {
               <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-4">
                 <div className="bg-hos-bg-secondary rounded-lg shadow p-4">
                   <h3 className="text-xs font-medium text-hos-text-muted uppercase">Total</h3>
-                  <p className="text-2xl font-bold text-white mt-1">{stats.totalReviews}</p>
+                  <p className="text-2xl font-bold text-hos-text-secondary mt-1">{stats.totalReviews}</p>
                 </div>
                 <div className="bg-hos-bg-secondary rounded-lg shadow p-4">
                   <h3 className="text-xs font-medium text-hos-text-muted uppercase">Average</h3>
-                  <p className="text-2xl font-bold text-white mt-1">
+                  <p className="text-2xl font-bold text-hos-text-secondary mt-1">
                     {stats.averageRating.toFixed(1)} ★
                   </p>
                 </div>
@@ -206,7 +206,7 @@ export default function AdminReviewsPage() {
                     }`}
                   >
                     <h3 className="text-xs font-medium text-hos-text-muted uppercase">{star} Star</h3>
-                    <p className="text-2xl font-bold text-white mt-1">
+                    <p className="text-2xl font-bold text-hos-text-secondary mt-1">
                       {star === 5 ? stats.fiveStars :
                        star === 4 ? stats.fourStars :
                        star === 3 ? stats.threeStars :
@@ -237,7 +237,7 @@ export default function AdminReviewsPage() {
               {!loading && !error && (
                 <div className="bg-hos-bg-secondary rounded-lg shadow overflow-hidden">
                   <div className="px-6 py-4 border-b border-hos-border flex items-center justify-between">
-                    <h2 className="text-lg font-semibold text-white">
+                    <h2 className="text-lg font-semibold text-hos-text-secondary">
                       Reviews {filterRating && `(${filterRating} stars only)`}
                     </h2>
                     {filterRating && (
@@ -270,7 +270,7 @@ export default function AdminReviewsPage() {
                                 )}
                               </div>
                               {review.title && (
-                                <h3 className="font-semibold text-white mb-1">{review.title}</h3>
+                                <h3 className="font-semibold text-hos-text-secondary mb-1">{review.title}</h3>
                               )}
                               <p className="text-hos-text-secondary text-sm mb-2">
                                 {review.comment || 'No comment provided'}

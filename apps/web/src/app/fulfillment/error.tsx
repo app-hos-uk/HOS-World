@@ -33,7 +33,7 @@ export default function FulfillmentError({
           </svg>
         </div>
 
-        <h1 className="text-2xl font-bold text-white font-[family-name:var(--font-ui)]">
+        <h1 className="text-2xl font-bold text-hos-text-secondary font-[family-name:var(--font-ui)]">
           Fulfillment Error
         </h1>
 

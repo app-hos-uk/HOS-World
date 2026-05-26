@@ -214,7 +214,7 @@ export default function ReturnsPage() {
       completed: 'bg-hos-gold/20 text-hos-gold',
       refunded: 'bg-green-500/15 text-green-300',
     };
-    return colors[(status || '').toLowerCase()] || 'bg-hos-bg-tertiary text-white';
+    return colors[(status || '').toLowerCase()] || 'bg-hos-bg-tertiary text-hos-text-secondary';
   };
 
   const canReturnOrder = (order: Order) => {
@@ -281,7 +281,7 @@ export default function ReturnsPage() {
                 <div key={order.id} className="bg-hos-bg-secondary border rounded-lg shadow-sm p-4 sm:p-6">
                   <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-4">
                     <div>
-                      <h3 className="text-lg font-semibold text-white">
+                      <h3 className="text-lg font-semibold text-hos-text-secondary">
                         Order #{order.orderNumber}
                       </h3>
                       <p className="text-sm text-hos-text-muted">
@@ -295,7 +295,7 @@ export default function ReturnsPage() {
                       <span className={`inline-block px-2 py-1 text-xs font-medium rounded-full ${
                         (order.status || '').toLowerCase() === 'delivered'
                           ? 'bg-green-500/15 text-green-300'
-                          : 'bg-hos-bg-tertiary text-white'
+                          : 'bg-hos-bg-tertiary text-hos-text-secondary'
                       }`}>
                         {order.status}
                       </span>
@@ -313,7 +313,7 @@ export default function ReturnsPage() {
                           className="object-cover rounded-md"
                         />
                         <div className="flex-grow">
-                          <p className="font-medium text-white">{item.product.name}</p>
+                          <p className="font-medium text-hos-text-secondary">{item.product.name}</p>
                           <p className="text-sm text-hos-text-muted">
                             Quantity: {item.quantity} × {formatPrice(item.price, order.currency || 'USD')}
                           </p>
@@ -353,7 +353,7 @@ export default function ReturnsPage() {
                   <div key={returnRequest.id} className="bg-hos-bg-secondary border rounded-lg shadow-sm p-4 sm:p-6">
                     <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-4">
                       <div>
-                        <h3 className="text-lg font-semibold text-white">
+                        <h3 className="text-lg font-semibold text-hos-text-secondary">
                           Return Request #{returnRequest.id.slice(0, 8)}
                         </h3>
                         {order && (
@@ -453,7 +453,7 @@ export default function ReturnsPage() {
                           className="object-cover rounded-md"
                         />
                         <div className="flex-grow">
-                          <p className="font-medium text-white">{item.product.name}</p>
+                          <p className="font-medium text-hos-text-secondary">{item.product.name}</p>
                           <p className="text-sm text-hos-text-muted">
                             Qty: {item.quantity} × {formatPrice(item.price, selectedOrder.currency || 'USD')}
                           </p>
@@ -470,7 +470,7 @@ export default function ReturnsPage() {
                   <select
                     value={returnForm.reason}
                     onChange={(e) => setReturnForm({ ...returnForm, reason: e.target.value })}
-                    className="w-full px-3 py-2 border border-hos-border rounded-lg focus:ring-hos-gold/50 focus:border-hos-gold"
+                    className="w-full px-3 py-2 border border-hos-border rounded-lg focus:ring-hos-gold/50 focus:border-hos-gold bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none focus:border-hos-gold"
                     required
                   >
                     <option value="">Select a reason</option>
@@ -490,7 +490,7 @@ export default function ReturnsPage() {
                   <textarea
                     value={returnForm.notes}
                     onChange={(e) => setReturnForm({ ...returnForm, notes: e.target.value })}
-                    className="w-full px-3 py-2 border border-hos-border rounded-lg focus:ring-hos-gold/50 focus:border-hos-gold"
+                    className="w-full px-3 py-2 border border-hos-border rounded-lg focus:ring-hos-gold/50 focus:border-hos-gold bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none focus:border-hos-gold"
                     rows={4}
                     placeholder="Please provide any additional details about your return..."
                   />

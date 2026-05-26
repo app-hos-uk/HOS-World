@@ -46,14 +46,14 @@ export default function AdminAmbassadorUgcPage() {
           <Link href="/admin/ambassadors" className="text-sm text-violet-400 mb-4 inline-block">
             ← Ambassadors
           </Link>
-          <h1 className="text-2xl font-semibold text-white mb-4">UGC review</h1>
+          <h1 className="text-2xl font-semibold text-hos-text-secondary mb-4">UGC review</h1>
           <div className="flex gap-2 mb-4">
             {['PENDING', 'APPROVED', 'REJECTED', 'FEATURED'].map((s) => (
               <button
                 key={s}
                 type="button"
                 className={`text-xs px-2 py-1 rounded ${
-                  status === s ? 'bg-hos-bg-tertiary text-white' : 'bg-hos-bg-tertiary'
+                  status === s ? 'bg-hos-bg-tertiary text-hos-text-secondary' : 'bg-hos-bg-tertiary'
                 }`}
                 onClick={() => setStatus(s)}
               >

@@ -49,14 +49,14 @@ export default function AdminClickCollectDetailPage() {
             <>
               <div className="flex justify-between items-start">
                 <div>
-                  <h1 className="text-2xl font-semibold text-white">Click &amp; collect</h1>
+                  <h1 className="text-2xl font-semibold text-hos-text-secondary">Click &amp; collect</h1>
                   <p className="text-sm text-hos-text-muted">{status}</p>
                 </div>
                 <div className="flex flex-wrap gap-2">
                   {status === 'PENDING' && (
                     <button
                       type="button"
-                      className="text-sm px-2 py-1 rounded bg-hos-surface text-white"
+                      className="text-sm px-2 py-1 rounded bg-hos-surface text-hos-text-secondary"
                       onClick={() => act(() => apiClient.adminMarkCCPreparing(id), 'Preparing')}
                     >
                       Preparing

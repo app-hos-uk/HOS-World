@@ -11,9 +11,30 @@ export type FooterNavSection = {
   links: NavLink[];
 };
 
+/** Maps department URL slugs to product category values in search/index */
+export const DEPARTMENT_CATEGORY_ALIASES: Record<string, string[]> = {
+  collectibles: ['Collectibles', 'collectibles', 'Collectables', 'Collectables & replicas'],
+  apparel: ['Apparel', 'apparel', 'Clothing & Apparel', 'Clothing', 'Robes'],
+  'home-gifts': ['Home & Gifts', 'Home & gifts', 'Gifts', 'Home', 'home-gifts', 'Home & Decor'],
+};
+
+export function expandDepartmentCategories(slugs: string[]): string[] {
+  const expanded = new Set<string>();
+  for (const slug of slugs) {
+    const key = slug.toLowerCase();
+    const aliases = DEPARTMENT_CATEGORY_ALIASES[key];
+    if (aliases) {
+      aliases.forEach((value) => expanded.add(value));
+    } else {
+      expanded.add(slug);
+    }
+  }
+  return [...expanded];
+}
+
 /** Primary storefront nav — shared by header and footer */
 export const STOREFRONT_NAV_LINKS: NavLink[] = [
-  { label: 'Deals of the Day', href: '/products' },
+  { label: 'Deals of the day', href: '/products?sort=newest' },
   { label: 'Shop by franchise', href: '/fandoms' },
   { label: 'Collectibles & replicas', href: '/products?category=collectibles' },
   { label: 'Apparel & robes', href: '/products?category=apparel' },

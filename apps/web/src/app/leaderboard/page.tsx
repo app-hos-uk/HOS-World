@@ -121,9 +121,9 @@ export default function LeaderboardPage() {
 
   const getRankBadge = (rank: number) => {
     switch (rank) {
-      case 1: return { emoji: '🥇', bg: 'bg-gradient-to-r from-yellow-400 to-yellow-600', text: 'text-white' };
-      case 2: return { emoji: '🥈', bg: 'bg-gradient-to-r from-gray-300 to-gray-400', text: 'text-white' };
-      case 3: return { emoji: '🥉', bg: 'bg-gradient-to-r from-orange-400 to-orange-600', text: 'text-white' };
+      case 1: return { emoji: '🥇', bg: 'bg-gradient-to-r from-yellow-400 to-yellow-600', text: 'text-hos-text-secondary' };
+      case 2: return { emoji: '🥈', bg: 'bg-gradient-to-r from-gray-300 to-gray-400', text: 'text-hos-text-secondary' };
+      case 3: return { emoji: '🥉', bg: 'bg-gradient-to-r from-orange-400 to-orange-600', text: 'text-hos-text-secondary' };
       default: return { emoji: '', bg: 'bg-hos-bg-tertiary', text: 'text-hos-text-secondary' };
     }
   };
@@ -150,7 +150,7 @@ export default function LeaderboardPage() {
       <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 lg:py-12">
         {/* Hero Section */}
         <div className="text-center mb-8">
-          <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-white mb-4">
+          <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-hos-text-secondary mb-4">
             🏆 Leaderboard
           </h1>
           <p className="text-hos-gold/30 text-lg max-w-2xl mx-auto">
@@ -164,18 +164,18 @@ export default function LeaderboardPage() {
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8 max-w-4xl mx-auto">
             <div className="bg-hos-bg-secondary/10 backdrop-blur-sm rounded-lg p-4 text-center">
               <p className="text-hos-gold/30 text-sm">Total Players</p>
-              <p className="text-3xl font-bold text-white">{stats.totalPlayers}</p>
+              <p className="text-3xl font-bold text-hos-text-secondary">{stats.totalPlayers}</p>
             </div>
             {stats.currentUserRank && (
               <div className="bg-hos-gold/20 backdrop-blur-sm rounded-lg p-4 text-center border-2 border-hos-gold/50">
                 <p className="text-hos-gold/30 text-sm">Your Rank</p>
-                <p className="text-3xl font-bold text-white">#{stats.currentUserRank}</p>
+                <p className="text-3xl font-bold text-hos-text-secondary">#{stats.currentUserRank}</p>
               </div>
             )}
             {stats.currentUserPoints !== undefined && (
               <div className="bg-hos-bg-secondary/10 backdrop-blur-sm rounded-lg p-4 text-center">
               <p className="text-hos-gold/30 text-sm">Your Points</p>
-               <p className="text-3xl font-bold text-white">{(stats.currentUserPoints ?? 0).toLocaleString()}</p>
+               <p className="text-3xl font-bold text-hos-text-secondary">{(stats.currentUserPoints ?? 0).toLocaleString()}</p>
              </div>
            )}
            <div className="bg-hos-bg-secondary/10 backdrop-blur-sm rounded-lg p-4 text-center">
@@ -196,7 +196,7 @@ export default function LeaderboardPage() {
                 className={`px-4 py-2 rounded-lg font-medium text-sm transition-all ${
                   timeframe === t
                     ? 'bg-hos-gold text-[#1a1406]'
-                    : 'text-hos-gold/30 hover:text-white'
+                    : 'text-hos-gold/30 hover:text-hos-gold'
                 }`}
               >
                 {t === 'all' ? 'All Time' : t === 'monthly' ? 'This Month' : 'This Week'}
@@ -213,7 +213,7 @@ export default function LeaderboardPage() {
                 className={`px-4 py-2 rounded-lg font-medium text-sm transition-all ${
                   category === c
                     ? 'bg-hos-gold text-[#1a1406]'
-                    : 'text-hos-gold/30 hover:text-white'
+                    : 'text-hos-gold/30 hover:text-hos-gold'
                 }`}
               >
                 {c === 'points' ? '⭐ Points' : c === 'quests' ? '🎯 Quests' : '🏅 Badges'}
@@ -255,7 +255,7 @@ export default function LeaderboardPage() {
                         {rankBadge.emoji}
                       </div>
                     </div>
-                    <p className="text-white font-bold text-center text-sm sm:text-base">{entry.displayName || entry.username}</p>
+                    <p className="text-hos-text-secondary font-bold text-center text-sm sm:text-base">{entry.displayName || entry.username}</p>
                     <p className="text-hos-gold/30 text-sm">{getCategoryValue(entry)} {getCategoryLabel()}</p>
                     <div className={`${rankBadge.bg} ${heightClass} w-full max-w-[100px] rounded-t-lg mt-2`} />
                   </div>
@@ -266,7 +266,7 @@ export default function LeaderboardPage() {
             {/* Full Leaderboard */}
             <div className="bg-hos-bg-secondary/10 backdrop-blur-sm rounded-lg overflow-hidden">
               <div className="px-6 py-4 border-b border-white/10">
-                <h2 className="text-lg font-semibold text-white">Full Rankings</h2>
+                <h2 className="text-lg font-semibold text-hos-text-secondary">Full Rankings</h2>
               </div>
               <div className="divide-y divide-white/10">
                 {leaderboard.map((entry) => {
@@ -295,7 +295,7 @@ export default function LeaderboardPage() {
                           )}
                         </div>
                         <div className="min-w-0">
-                          <p className="text-white font-medium truncate">
+                          <p className="text-hos-text-secondary font-medium truncate">
                             {entry.displayName || entry.username}
                             {entry.isCurrentUser && <span className="ml-2 text-hos-text-secondary text-sm">(You)</span>}
                           </p>
@@ -307,7 +307,7 @@ export default function LeaderboardPage() {
                       <div className="hidden sm:flex items-center gap-6 text-sm">
                         <div className="text-center">
                           <p className="text-hos-text-secondary">Quests</p>
-                          <p className="text-white font-semibold">{entry.questsCompleted}</p>
+                          <p className="text-hos-text-secondary font-semibold">{entry.questsCompleted}</p>
                         </div>
                         <div className="text-center">
                           <p className="text-hos-text-secondary">Badges</p>
@@ -338,7 +338,7 @@ export default function LeaderboardPage() {
                 </Link>
                 <Link
                   href="/profile"
-                  className="px-6 py-3 bg-hos-bg-secondary/10 text-white rounded-lg hover:bg-hos-bg-secondary/20 transition-colors font-medium border border-white/20"
+                  className="px-6 py-3 bg-hos-bg-secondary/10 text-hos-text-secondary rounded-lg hover:bg-hos-bg-secondary/20 transition-colors font-medium border border-white/20"
                 >
                   👤 View Profile
                 </Link>

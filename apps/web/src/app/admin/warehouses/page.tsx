@@ -284,7 +284,7 @@ export default function AdminWarehousesPage() {
                           </span>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="text-sm font-medium text-white">{warehouse.name}</div>
+                          <div className="text-sm font-medium text-hos-text-secondary">{warehouse.name}</div>
                           {warehouse.warehouseType && (
                             <span className="text-xs px-1.5 py-0.5 bg-hos-bg-tertiary text-hos-text-secondary rounded">
                               {warehouse.warehouseType.replace('_', ' ')}
@@ -295,7 +295,7 @@ export default function AdminWarehousesPage() {
                           )}
                         </td>
                         <td className="px-6 py-4">
-                          <div className="text-sm text-white">
+                          <div className="text-sm text-hos-text-secondary">
                             {warehouse.city}, {warehouse.state || ''} {warehouse.country}
                           </div>
                           <div className="text-xs text-hos-text-muted">{warehouse.address}</div>
@@ -304,7 +304,7 @@ export default function AdminWarehousesPage() {
                         <td className="px-6 py-4 whitespace-nowrap">
                           {warehouse.latitude != null && warehouse.longitude != null ? (
                             <div className="text-xs">
-                              <div className="text-white">{Number(warehouse.latitude).toFixed(4)}</div>
+                              <div className="text-hos-text-secondary">{Number(warehouse.latitude).toFixed(4)}</div>
                               <div className="text-hos-text-muted">{Number(warehouse.longitude).toFixed(4)}</div>
                             </div>
                           ) : (
@@ -314,7 +314,7 @@ export default function AdminWarehousesPage() {
                         <td className="px-6 py-4">
                           {warehouse.contactEmail || warehouse.contactPhone || warehouse.managerName ? (
                             <div className="text-xs">
-                              {warehouse.managerName && <div className="text-white font-medium">{warehouse.managerName}</div>}
+                              {warehouse.managerName && <div className="text-hos-text-secondary font-medium">{warehouse.managerName}</div>}
                               {warehouse.contactEmail && <div className="text-hos-text-secondary">{warehouse.contactEmail}</div>}
                               {warehouse.contactPhone && <div className="text-hos-text-muted">{warehouse.contactPhone}</div>}
                             </div>
@@ -327,7 +327,7 @@ export default function AdminWarehousesPage() {
                             className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
                               warehouse.isActive
                                 ? 'bg-green-500/15 text-green-300'
-                                : 'bg-hos-bg-tertiary text-white'
+                                : 'bg-hos-bg-tertiary text-hos-text-secondary'
                             }`}
                           >
                             {warehouse.isActive ? 'Active' : 'Inactive'}
@@ -390,7 +390,7 @@ export default function AdminWarehousesPage() {
                     <Dialog.Panel className="w-full max-w-2xl transform overflow-hidden rounded-2xl bg-hos-bg-secondary p-6 text-left align-middle shadow-xl transition-all max-h-[90vh] overflow-y-auto">
                       <Dialog.Title
                         as="h3"
-                        className="text-lg font-medium leading-6 text-white mb-4"
+                        className="text-lg font-medium leading-6 text-hos-text-secondary mb-4"
                       >
                         {isEditMode ? 'Edit Warehouse' : 'Create New Warehouse'}
                       </Dialog.Title>
@@ -615,7 +615,7 @@ export default function AdminWarehousesPage() {
                               onChange={(e) => setFormData({ ...formData, isActive: e.target.checked })}
                               className="h-4 w-4 text-hos-gold focus:ring-hos-gold/50 border-hos-border rounded"
                             />
-                            <label htmlFor="isActive" className="ml-2 block text-sm text-white">
+                            <label htmlFor="isActive" className="ml-2 block text-sm text-hos-text-secondary">
                               Active
                             </label>
                           </div>
@@ -632,7 +632,7 @@ export default function AdminWarehousesPage() {
                           <button
                             type="submit"
                             disabled={submitting}
-                            className="px-4 py-2 text-sm font-medium text-white bg-hos-gold rounded-md hover:bg-hos-gold-hover disabled:opacity-50"
+                            className="px-4 py-2 text-sm font-medium text-hos-text-secondary bg-hos-gold rounded-md hover:bg-hos-gold-hover disabled:opacity-50"
                           >
                             {submitting ? 'Saving...' : isEditMode ? 'Update' : 'Create'}
                           </button>

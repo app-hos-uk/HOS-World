@@ -262,7 +262,7 @@ export default function AdminPermissionsPage() {
                                 className="mt-1 h-4 w-4 text-hos-gold focus:ring-hos-gold/50 border-hos-border rounded"
                               />
                               <div className="flex-1">
-                                <div className="font-medium text-white">{perm.name}</div>
+                                <div className="font-medium text-hos-text-secondary">{perm.name}</div>
                                 <div className="text-sm text-hos-text-muted">{perm.description}</div>
                               </div>
                             </label>
@@ -332,7 +332,7 @@ export default function AdminPermissionsPage() {
                       }
                     }}
                     disabled={creatingRole || !newRoleName.trim()}
-                    className="px-4 py-2 text-sm font-medium text-white bg-hos-gold rounded-lg hover:bg-hos-gold-hover disabled:opacity-50"
+                    className="px-4 py-2 text-sm font-medium text-hos-text-secondary bg-hos-gold rounded-lg hover:bg-hos-gold-hover disabled:opacity-50"
                   >
                     {creatingRole ? 'Creating...' : 'Create Role'}
                   </button>

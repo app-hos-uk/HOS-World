@@ -149,7 +149,7 @@ export function Breadcrumbs({
                 {item.label}
               </Link>
             ) : (
-              <span className="text-white font-medium">{item.label}</span>
+              <span className="text-hos-text-secondary font-medium">{item.label}</span>
             )}
           </li>
         ))}

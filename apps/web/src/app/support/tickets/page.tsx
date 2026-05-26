@@ -86,8 +86,8 @@ export default function SupportTicketsPage() {
       case 'OPEN': return 'bg-yellow-500/15 text-yellow-300';
       case 'IN_PROGRESS': return 'bg-hos-gold/20 text-hos-gold';
       case 'RESOLVED': return 'bg-green-500/15 text-green-300';
-      case 'CLOSED': return 'bg-hos-bg-tertiary text-white';
-      default: return 'bg-hos-bg-tertiary text-white';
+      case 'CLOSED': return 'bg-hos-bg-tertiary text-hos-text-secondary';
+      default: return 'bg-hos-bg-tertiary text-hos-text-secondary';
     }
   };
 
@@ -100,7 +100,7 @@ export default function SupportTicketsPage() {
         <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 lg:py-12">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
             <div>
-              <h1 className="text-2xl sm:text-3xl font-bold text-white">My Support Tickets</h1>
+              <h1 className="text-2xl sm:text-3xl font-bold text-hos-text-secondary">My Support Tickets</h1>
               <p className="text-hos-text-secondary mt-1">View and manage your support requests</p>
             </div>
             <Link
@@ -187,7 +187,7 @@ export default function SupportTicketsPage() {
                           </Link>
                         </td>
                         <td className="px-6 py-4">
-                          <Link href={`/support/tickets/${ticket.id}`} className="text-white hover:text-hos-gold font-medium">
+                          <Link href={`/support/tickets/${ticket.id}`} className="text-hos-text-secondary hover:text-hos-gold font-medium">
                             {ticket.subject}
                           </Link>
                         </td>
@@ -221,7 +221,7 @@ export default function SupportTicketsPage() {
                     className="block bg-hos-bg-secondary rounded-lg shadow p-4 hover:shadow-md transition-shadow"
                   >
                     <div className="flex items-start justify-between gap-3 mb-2">
-                      <h3 className="font-medium text-white line-clamp-1">{ticket.subject}</h3>
+                      <h3 className="font-medium text-hos-text-secondary line-clamp-1">{ticket.subject}</h3>
                       <span className={`px-2.5 py-0.5 text-xs font-medium rounded-full whitespace-nowrap ${getStatusColor(ticket.status)}`}>
                         {formatStatus(ticket.status)}
                       </span>

@@ -160,7 +160,7 @@ export default function AdminStockTransfersPage() {
       case 'REJECTED':
         return 'bg-red-500/15 text-red-300';
       default:
-        return 'bg-hos-bg-tertiary text-white';
+        return 'bg-hos-bg-tertiary text-hos-text-secondary';
     }
   };
 
@@ -303,22 +303,22 @@ export default function AdminStockTransfersPage() {
                     transfers.map((transfer) => (
                       <tr key={transfer.id} className="hover:bg-hos-bg-tertiary">
                         <td className="px-6 py-4">
-                          <div className="text-sm font-medium text-white">{transfer.product.name}</div>
+                          <div className="text-sm font-medium text-hos-text-secondary">{transfer.product.name}</div>
                           {transfer.product.sku && (
                             <div className="text-sm text-hos-text-muted">SKU: {transfer.product.sku}</div>
                           )}
                         </td>
                         <td className="px-6 py-4">
-                          <div className="text-sm text-white">
+                          <div className="text-sm text-hos-text-secondary">
                             {transfer.fromWarehouse.name} ({transfer.fromWarehouse.code})
                           </div>
                           <div className="text-sm text-hos-text-muted">→</div>
-                          <div className="text-sm text-white">
+                          <div className="text-sm text-hos-text-secondary">
                             {transfer.toWarehouse.name} ({transfer.toWarehouse.code})
                           </div>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
-                          <span className="text-sm font-medium text-white">{transfer.quantity}</span>
+                          <span className="text-sm font-medium text-hos-text-secondary">{transfer.quantity}</span>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
                           <span
@@ -384,7 +384,7 @@ export default function AdminStockTransfersPage() {
                     <Dialog.Panel className="w-full max-w-md transform overflow-hidden rounded-2xl bg-hos-bg-secondary p-6 text-left align-middle shadow-xl transition-all">
                       <Dialog.Title
                         as="h3"
-                        className="text-lg font-medium leading-6 text-white mb-4"
+                        className="text-lg font-medium leading-6 text-hos-text-secondary mb-4"
                       >
                         Create Stock Transfer
                       </Dialog.Title>
@@ -493,7 +493,7 @@ export default function AdminStockTransfersPage() {
                           <button
                             type="submit"
                             disabled={submitting}
-                            className="px-4 py-2 text-sm font-medium text-white bg-hos-gold rounded-md hover:bg-hos-gold-hover disabled:opacity-50"
+                            className="px-4 py-2 text-sm font-medium text-hos-text-secondary bg-hos-gold rounded-md hover:bg-hos-gold-hover disabled:opacity-50"
                           >
                             {submitting ? 'Creating...' : 'Create Transfer'}
                           </button>

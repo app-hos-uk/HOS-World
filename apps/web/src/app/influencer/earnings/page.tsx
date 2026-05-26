@@ -74,7 +74,7 @@ export default function InfluencerEarningsPage() {
       CANCELLED: 'bg-red-500/15 text-red-300',
       ADJUSTED: 'bg-hos-gold/20 text-hos-gold',
     };
-    return styles[status] || 'bg-hos-bg-tertiary text-white';
+    return styles[status] || 'bg-hos-bg-tertiary text-hos-text-secondary';
   };
 
   if (loading) {
@@ -89,7 +89,7 @@ export default function InfluencerEarningsPage() {
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Header */}
         <div className="mb-8">
-          <h1 className="text-2xl font-bold text-white">Earnings</h1>
+          <h1 className="text-2xl font-bold text-hos-text-secondary">Earnings</h1>
           <p className="text-hos-text-secondary mt-1">
             Track your commission earnings and payment status
           </p>
@@ -120,7 +120,7 @@ export default function InfluencerEarningsPage() {
           </div>
           <div className="bg-hos-bg-secondary rounded-xl p-6 shadow-sm">
             <p className="text-hos-text-muted text-sm">Total Earned</p>
-            <p className="text-2xl font-bold text-white mt-1">
+            <p className="text-2xl font-bold text-hos-text-secondary mt-1">
               {formatCurrency(earnings?.total || 0)}
             </p>
             <p className="text-xs text-hos-text-muted mt-1">Lifetime earnings</p>
@@ -132,7 +132,7 @@ export default function InfluencerEarningsPage() {
           <select
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value)}
-            className="px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50"
+            className="px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50 bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none focus:border-hos-gold"
           >
             <option value="">All Status</option>
             <option value="PENDING">Pending</option>
@@ -145,7 +145,7 @@ export default function InfluencerEarningsPage() {
         {/* Commission History */}
         <div className="bg-hos-bg-secondary rounded-xl shadow-sm overflow-hidden">
           <div className="px-6 py-4 border-b">
-            <h2 className="text-lg font-semibold text-white">Commission History</h2>
+            <h2 className="text-lg font-semibold text-hos-text-secondary">Commission History</h2>
           </div>
           
           {commissions.length === 0 ? (
@@ -174,10 +174,10 @@ export default function InfluencerEarningsPage() {
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-hos-text-muted">
                         {formatDate(commission.createdAt)}
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm font-mono text-white">
+                      <td className="px-6 py-4 whitespace-nowrap text-sm font-mono text-hos-text-secondary">
                         {commission.orderId.slice(0, 8)}...
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-white">
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-hos-text-secondary">
                         {formatCurrency(commission.orderTotal, commission.currency)}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-hos-text-muted">

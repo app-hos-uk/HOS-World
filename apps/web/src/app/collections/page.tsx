@@ -133,7 +133,7 @@ export default function CollectionsPage() {
                       className={`px-2 py-1 rounded text-xs ${
                         collection.isPublic
                           ? 'bg-green-500/15 text-green-300'
-                          : 'bg-hos-bg-tertiary text-white'
+                          : 'bg-hos-bg-tertiary text-hos-text-secondary'
                       }`}
                     >
                       {collection.isPublic ? 'Public' : 'Private'}
@@ -205,7 +205,7 @@ export default function CollectionsPage() {
                       setShowCreateModal(false);
                       setFormData({ name: '', description: '', isPublic: false });
                     }}
-                    className="flex-1 px-4 py-2 bg-hos-bg-tertiary text-white rounded-lg hover:bg-hos-bg-tertiary transition-colors font-medium"
+                    className="flex-1 px-4 py-2 bg-hos-bg-tertiary text-hos-text-secondary rounded-lg hover:bg-hos-bg-tertiary transition-colors font-medium"
                   >
                     Cancel
                   </button>

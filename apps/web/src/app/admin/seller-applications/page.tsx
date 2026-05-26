@@ -111,11 +111,11 @@ export default function AdminSellerApplicationsPage() {
       case 'ACCEPTED':
         return 'bg-green-500/15 text-green-300';
       case 'EXPIRED':
-        return 'bg-hos-bg-tertiary text-white';
+        return 'bg-hos-bg-tertiary text-hos-text-secondary';
       case 'CANCELLED':
         return 'bg-red-500/15 text-red-300';
       default:
-        return 'bg-hos-bg-tertiary text-white';
+        return 'bg-hos-bg-tertiary text-hos-text-secondary';
     }
   };
 
@@ -132,7 +132,7 @@ export default function AdminSellerApplicationsPage() {
         <div className="space-y-6">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div>
-              <h1 className="text-2xl font-bold text-white">Seller Applications</h1>
+              <h1 className="text-2xl font-bold text-hos-text-secondary">Seller Applications</h1>
               <p className="text-hos-text-secondary mt-1">Manage seller applications and invitations</p>
             </div>
             <button
@@ -147,7 +147,7 @@ export default function AdminSellerApplicationsPage() {
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             <div className="bg-hos-bg-secondary rounded-lg shadow p-4">
               <h3 className="text-xs font-medium text-hos-text-muted uppercase">Total Invitations</h3>
-              <p className="text-2xl font-bold text-white mt-1">{stats.total}</p>
+              <p className="text-2xl font-bold text-hos-text-secondary mt-1">{stats.total}</p>
             </div>
             <button
               onClick={() => setStatusFilter(statusFilter === 'PENDING' ? '' : 'PENDING')}
@@ -199,7 +199,7 @@ export default function AdminSellerApplicationsPage() {
           {!loading && !error && (
             <div className="bg-hos-bg-secondary rounded-lg shadow overflow-hidden">
               <div className="px-6 py-4 border-b border-hos-border flex items-center justify-between">
-                <h2 className="text-lg font-semibold text-white">
+                <h2 className="text-lg font-semibold text-hos-text-secondary">
                   {statusFilter ? `${statusFilter} Invitations` : 'All Invitations'}
                 </h2>
                 {statusFilter && (
@@ -247,7 +247,7 @@ export default function AdminSellerApplicationsPage() {
                       {invitations.map((invitation) => (
                         <tr key={invitation.id} className="hover:bg-hos-bg-tertiary">
                           <td className="px-6 py-4 whitespace-nowrap">
-                            <div className="text-sm font-medium text-white">{invitation.email}</div>
+                            <div className="text-sm font-medium text-hos-text-secondary">{invitation.email}</div>
                             {invitation.invitedBy && (
                               <div className="text-xs text-hos-text-muted">
                                 Invited by: {invitation.invitedBy.firstName || invitation.invitedBy.email}
@@ -314,7 +314,7 @@ export default function AdminSellerApplicationsPage() {
             <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
               <div className="bg-hos-bg-secondary rounded-lg shadow-xl max-w-md w-full mx-4 p-6">
                 <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-lg font-semibold text-white">Invite Seller</h3>
+                  <h3 className="text-lg font-semibold text-hos-text-secondary">Invite Seller</h3>
                   <button
                     onClick={() => setShowInviteModal(false)}
                     className="text-hos-text-muted hover:text-hos-text-secondary"

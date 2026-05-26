@@ -63,7 +63,7 @@ export default function AmbassadorProfileEditPage() {
             <div>
               <label className="text-stone-500 block mb-1">Display name</label>
               <input
-                className="w-full rounded bg-stone-900 border border-stone-700 px-3 py-2"
+                className="w-full rounded bg-stone-900 border border-stone-700 px-3 py-2 bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none border-hos-border"
                 value={displayName}
                 onChange={(e) => setDisplayName(e.target.value)}
               />
@@ -71,7 +71,7 @@ export default function AmbassadorProfileEditPage() {
             <div>
               <label className="text-stone-500 block mb-1">Bio</label>
               <textarea
-                className="w-full rounded bg-stone-900 border border-stone-700 px-3 py-2"
+                className="w-full rounded bg-stone-900 border border-stone-700 px-3 py-2 bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none border-hos-border"
                 rows={4}
                 value={bio}
                 onChange={(e) => setBio(e.target.value)}
@@ -80,7 +80,7 @@ export default function AmbassadorProfileEditPage() {
             <div>
               <label className="text-stone-500 block mb-1">Profile image URL</label>
               <input
-                className="w-full rounded bg-stone-900 border border-stone-700 px-3 py-2"
+                className="w-full rounded bg-stone-900 border border-stone-700 px-3 py-2 bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none border-hos-border"
                 value={profileImage}
                 onChange={(e) => setProfileImage(e.target.value)}
               />

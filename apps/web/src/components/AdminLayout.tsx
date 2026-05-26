@@ -424,10 +424,10 @@ export function AdminLayout({ children }: AdminLayoutProps) {
         <div className="flex flex-col h-full">
           {/* Logo/Header */}
           <div className="flex items-center justify-between h-16 px-4 border-b border-hos-border bg-hos-bg-secondary border border-hos-border">
-            <h2 className="text-xl font-semibold text-white tracking-tight">Admin Panel</h2>
+            <h2 className="text-xl font-semibold text-hos-text-secondary tracking-tight">Admin Panel</h2>
             <button
               onClick={() => setSidebarOpen(false)}
-              className="lg:hidden text-white/80 hover:text-white"
+              className="lg:hidden text-white/80 hover:text-hos-gold"
             >
               ✕
             </button>

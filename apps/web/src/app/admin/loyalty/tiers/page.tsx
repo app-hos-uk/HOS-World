@@ -60,7 +60,7 @@ export default function AdminLoyaltyTiersPage() {
     <RouteGuard allowedRoles={['ADMIN']} showAccessDenied>
       <AdminLayout>
         <div className="mb-6">
-          <h1 className="text-2xl font-bold text-white">Loyalty Tiers</h1>
+          <h1 className="text-2xl font-bold text-hos-text-secondary">Loyalty Tiers</h1>
           <p className="text-hos-text-secondary mt-1">Configure tier thresholds, multipliers, and branding</p>
         </div>
 
@@ -77,19 +77,19 @@ export default function AdminLoyaltyTiersPage() {
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                       <div>
                         <label className="block text-sm font-medium text-hos-text-secondary mb-1">Name</label>
-                        <input className="w-full border rounded-lg px-3 py-2" value={String(form.name || '')} onChange={(e) => setForm({ ...form, name: e.target.value })} />
+                        <input className="w-full border rounded-lg px-3 py-2 bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none border-hos-border" value={String(form.name || '')} onChange={(e) => setForm({ ...form, name: e.target.value })} />
                       </div>
                       <div>
                         <label className="block text-sm font-medium text-hos-text-secondary mb-1">Level</label>
-                        <input type="number" className="w-full border rounded-lg px-3 py-2" value={Number(form.level || 0)} onChange={(e) => setForm({ ...form, level: parseInt(e.target.value) })} />
+                        <input type="number" className="w-full border rounded-lg px-3 py-2 bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none border-hos-border" value={Number(form.level || 0)} onChange={(e) => setForm({ ...form, level: parseInt(e.target.value) })} />
                       </div>
                       <div>
                         <label className="block text-sm font-medium text-hos-text-secondary mb-1">Min Points</label>
-                        <input type="number" className="w-full border rounded-lg px-3 py-2" value={Number(form.minPoints || 0)} onChange={(e) => setForm({ ...form, minPoints: parseInt(e.target.value) })} />
+                        <input type="number" className="w-full border rounded-lg px-3 py-2 bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none border-hos-border" value={Number(form.minPoints || 0)} onChange={(e) => setForm({ ...form, minPoints: parseInt(e.target.value) })} />
                       </div>
                       <div>
                         <label className="block text-sm font-medium text-hos-text-secondary mb-1">Multiplier</label>
-                        <input type="number" step="0.1" className="w-full border rounded-lg px-3 py-2" value={Number(form.multiplier || 1)} onChange={(e) => setForm({ ...form, multiplier: parseFloat(e.target.value) })} />
+                        <input type="number" step="0.1" className="w-full border rounded-lg px-3 py-2 bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none border-hos-border" value={Number(form.multiplier || 1)} onChange={(e) => setForm({ ...form, multiplier: parseFloat(e.target.value) })} />
                       </div>
                     </div>
                     <div className="flex gap-2">
@@ -106,7 +106,7 @@ export default function AdminLoyaltyTiersPage() {
                         {tier.icon || '🏆'}
                       </div>
                       <div>
-                        <h3 className="font-semibold text-white">{tier.name}</h3>
+                        <h3 className="font-semibold text-hos-text-secondary">{tier.name}</h3>
                         <p className="text-sm text-hos-text-muted">
                           Level {tier.level} &middot; {Number(tier.minPoints).toLocaleString()}+ pts &middot; {tier.multiplier}x multiplier
                         </p>

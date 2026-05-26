@@ -519,7 +519,7 @@ function LoginPageInner() {
                       value={resetEmail}
                       onChange={(e) => setResetEmail(e.target.value)}
                       required
-                      className="w-full px-4 py-2.5 bg-hos-bg-secondary border-2 border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50 focus:border-hos-gold text-white placeholder-hos-text-muted text-base"
+                      className="w-full px-4 py-2.5 bg-hos-bg-secondary border-2 border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50 focus:border-hos-gold text-hos-text-secondary placeholder-hos-text-muted text-base"
                       placeholder="your.email@example.com"
                       
                     />
@@ -585,7 +585,7 @@ function LoginPageInner() {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   required
-                  className="w-full px-4 py-2.5 bg-hos-bg-secondary border-2 border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50 focus:border-hos-gold text-white placeholder-hos-text-muted text-base"
+                  className="w-full px-4 py-2.5 bg-hos-bg-secondary border-2 border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50 focus:border-hos-gold text-hos-text-secondary placeholder-hos-text-muted text-base"
                   placeholder="your.email@example.com"
                   
                 />
@@ -618,7 +618,7 @@ function LoginPageInner() {
                     onChange={(e) => setPassword(e.target.value)}
                     required
                     minLength={8}
-                    className="w-full px-4 py-2.5 pr-10 bg-hos-bg-secondary border-2 border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50 focus:border-hos-gold text-white placeholder-hos-text-muted text-base"
+                    className="w-full px-4 py-2.5 pr-10 bg-hos-bg-secondary border-2 border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50 focus:border-hos-gold text-hos-text-secondary placeholder-hos-text-muted text-base"
                     placeholder="••••••••"
                     
                   />
@@ -663,7 +663,7 @@ function LoginPageInner() {
                           }
                         }}
                         maxLength={50}
-                        className="w-full px-4 py-2.5 bg-hos-bg-secondary border-2 border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50 focus:border-hos-gold text-white placeholder-hos-text-muted text-base"
+                        className="w-full px-4 py-2.5 bg-hos-bg-secondary border-2 border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50 focus:border-hos-gold text-hos-text-secondary placeholder-hos-text-muted text-base"
                         placeholder="John"
                         
                       />
@@ -685,7 +685,7 @@ function LoginPageInner() {
                           }
                         }}
                         maxLength={50}
-                        className="w-full px-4 py-2.5 bg-hos-bg-secondary border-2 border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50 focus:border-hos-gold text-white placeholder-hos-text-muted text-base"
+                        className="w-full px-4 py-2.5 bg-hos-bg-secondary border-2 border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50 focus:border-hos-gold text-hos-text-secondary placeholder-hos-text-muted text-base"
                         placeholder="Doe"
                         
                       />
@@ -748,7 +748,7 @@ function LoginPageInner() {
                           setCurrencyPreference(countryCurrencies[e.target.value] || 'USD');
                         }}
                         required
-                        className="w-full px-4 py-2.5 bg-hos-bg-secondary border-2 border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50 focus:border-hos-gold text-white text-base"
+                        className="w-full px-4 py-2.5 bg-hos-bg-secondary border-2 border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50 focus:border-hos-gold text-hos-text-secondary text-base"
                         
                       >
                         <option value="">Select your country</option>
@@ -796,7 +796,7 @@ function LoginPageInner() {
                           setWhatsappNumber(val);
                         }
                       }}
-                      className="w-full px-4 py-2.5 bg-hos-bg-secondary border-2 border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50 focus:border-hos-gold text-white placeholder-hos-text-muted text-base"
+                      className="w-full px-4 py-2.5 bg-hos-bg-secondary border-2 border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50 focus:border-hos-gold text-hos-text-secondary placeholder-hos-text-muted text-base"
                       placeholder="+1 555 123 4567"
                       
                     />
@@ -815,7 +815,7 @@ function LoginPageInner() {
                       value={preferredCommunicationMethod}
                       onChange={(e) => setPreferredCommunicationMethod(e.target.value as any)}
                       required
-                      className="w-full px-4 py-2.5 bg-hos-bg-secondary border-2 border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50 focus:border-hos-gold text-white text-base"
+                      className="w-full px-4 py-2.5 bg-hos-bg-secondary border-2 border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50 focus:border-hos-gold text-hos-text-secondary text-base"
                       
                     >
                       <option value="EMAIL">Email</option>

@@ -184,7 +184,7 @@ function VendorProductsContent() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-white">Vendor Products</h1>
+          <h1 className="text-2xl font-bold text-hos-text-secondary">Vendor Products</h1>
           <p className="text-sm text-hos-text-muted mt-1">
             Manage vendor product listings, approvals, and activations
           </p>
@@ -205,7 +205,7 @@ function VendorProductsContent() {
             onClick={card.onClick}
             className={`p-4 rounded-xl border text-left transition-all ${card.color} ${card.active ? 'ring-2 ring-hos-gold/50 shadow-sm' : 'hover:shadow-sm'}`}
           >
-            <div className="text-2xl font-bold text-white">{card.value}</div>
+            <div className="text-2xl font-bold text-hos-text-secondary">{card.value}</div>
             <div className="text-xs text-hos-text-secondary mt-1">{card.label}</div>
           </button>
         ))}
@@ -222,7 +222,7 @@ function VendorProductsContent() {
             placeholder="Search by product name, vendor, SKU..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-10 pr-4 py-2.5 border border-hos-border rounded-lg text-sm bg-hos-bg-secondary text-white placeholder-hos-text-muted focus:ring-hos-gold/50 focus:border-hos-gold"
+            className="w-full pl-10 pr-4 py-2.5 border border-hos-border rounded-lg text-sm bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:ring-hos-gold/50 focus:border-hos-gold"
           />
         </div>
         <select
@@ -248,7 +248,7 @@ function VendorProductsContent() {
           <svg className="w-12 h-12 text-hos-text-muted mx-auto mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
           </svg>
-          <h3 className="text-white font-medium">No vendor products found</h3>
+          <h3 className="text-hos-text-secondary font-medium">No vendor products found</h3>
           <p className="text-hos-text-muted text-sm mt-1">
             {statusFilter !== 'ALL' ? 'Try changing the filter' : 'Vendor listings will appear here once vendors submit products'}
           </p>
@@ -292,7 +292,7 @@ function VendorProductsContent() {
                           )}
                         </div>
                         <div className="min-w-0">
-                          <p className="text-sm font-medium text-white truncate max-w-[200px]">
+                          <p className="text-sm font-medium text-hos-text-secondary truncate max-w-[200px]">
                             {listing.product?.name || 'Unknown Product'}
                           </p>
                           <p className="text-xs text-hos-text-muted">{listing.product?.sku || listing.productId?.slice(0, 8)}</p>
@@ -300,24 +300,24 @@ function VendorProductsContent() {
                       </div>
                     </td>
                     <td className="px-4 py-3">
-                      <p className="text-sm text-white">{listing.seller?.storeName || 'Unknown Vendor'}</p>
+                      <p className="text-sm text-hos-text-secondary">{listing.seller?.storeName || 'Unknown Vendor'}</p>
                       <p className="text-xs text-hos-text-muted">{listing.seller?.user?.email}</p>
                     </td>
                     <td className="px-4 py-3">
                       <StatusBadge status={listing.status} />
                     </td>
-                    <td className="px-4 py-3 text-right text-sm text-white">
+                    <td className="px-4 py-3 text-right text-sm text-hos-text-secondary">
                       {formatPrice(Number(listing.vendorPrice))}
                     </td>
-                    <td className="px-4 py-3 text-right text-sm text-white">
+                    <td className="px-4 py-3 text-right text-sm text-hos-text-secondary">
                       {listing.platformPrice ? formatPrice(Number(listing.platformPrice)) : '—'}
                     </td>
                     <td className="px-4 py-3 text-right">
-                      <span className={`text-sm font-medium ${listing.vendorStock <= listing.lowStockThreshold ? 'text-orange-400' : 'text-white'}`}>
+                      <span className={`text-sm font-medium ${listing.vendorStock <= listing.lowStockThreshold ? 'text-orange-400' : 'text-hos-text-secondary'}`}>
                         {listing.vendorStock}
                       </span>
                     </td>
-                    <td className="px-4 py-3 text-right text-sm text-white">
+                    <td className="px-4 py-3 text-right text-sm text-hos-text-secondary">
                       {listing.totalUnitsSold}
                     </td>
                     <td className="px-4 py-3 text-center" onClick={(e) => e.stopPropagation()}>
@@ -327,14 +327,14 @@ function VendorProductsContent() {
                             <button
                               onClick={() => { setApproveModal(listing); setApproveForm({ platformPrice: String(listing.vendorPrice || ''), marginPercent: '' }); }}
                               disabled={actionLoading === listing.id}
-                              className="px-2.5 py-1 text-xs font-medium text-white bg-green-600 hover:bg-green-700 rounded-md transition-colors disabled:opacity-50"
+                              className="px-2.5 py-1 text-xs font-medium text-hos-text-secondary bg-green-600 hover:bg-green-700 rounded-md transition-colors disabled:opacity-50"
                             >
                               Approve
                             </button>
                             <button
                               onClick={() => setRejectModal(listing)}
                               disabled={actionLoading === listing.id}
-                              className="px-2.5 py-1 text-xs font-medium text-white bg-red-600 hover:bg-red-700 rounded-md transition-colors disabled:opacity-50"
+                              className="px-2.5 py-1 text-xs font-medium text-hos-text-secondary bg-red-600 hover:bg-red-700 rounded-md transition-colors disabled:opacity-50"
                             >
                               Reject
                             </button>
@@ -344,7 +344,7 @@ function VendorProductsContent() {
                           <button
                             onClick={() => handleActivate(listing.id)}
                             disabled={actionLoading === listing.id}
-                            className="px-2.5 py-1 text-xs font-medium text-white bg-hos-gold hover:bg-hos-gold-hover rounded-md transition-colors disabled:opacity-50"
+                            className="px-2.5 py-1 text-xs font-medium text-hos-text-secondary bg-hos-gold hover:bg-hos-gold-hover rounded-md transition-colors disabled:opacity-50"
                           >
                             Activate
                           </button>
@@ -374,7 +374,7 @@ function VendorProductsContent() {
       {selectedListing && (
         <div className="bg-hos-bg-secondary rounded-xl border border-hos-border p-6">
           <div className="flex items-start justify-between mb-4">
-            <h3 className="text-lg font-semibold text-white">Listing Details</h3>
+            <h3 className="text-lg font-semibold text-hos-text-secondary">Listing Details</h3>
             <button onClick={() => setSelectedListing(null)} className="text-hos-text-muted hover:text-hos-text-secondary">
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -440,7 +440,7 @@ function VendorProductsContent() {
         <div className="fixed inset-0 z-50 flex items-center justify-center">
           <div className="absolute inset-0 bg-black/40" onClick={() => setApproveModal(null)} />
           <div className="relative bg-hos-bg-secondary rounded-xl shadow-2xl p-6 w-full max-w-md mx-4">
-            <h3 className="text-lg font-semibold text-white mb-1">Approve Vendor Product</h3>
+            <h3 className="text-lg font-semibold text-hos-text-secondary mb-1">Approve Vendor Product</h3>
             <p className="text-sm text-hos-text-muted mb-4">
               {approveModal.product?.name} by {approveModal.seller?.storeName}
             </p>
@@ -479,7 +479,7 @@ function VendorProductsContent() {
               <button
                 onClick={handleApprove}
                 disabled={actionLoading === approveModal.id}
-                className="px-4 py-2 text-sm text-white bg-green-600 hover:bg-green-700 rounded-lg transition-colors disabled:opacity-50"
+                className="px-4 py-2 text-sm text-hos-text-secondary bg-green-600 hover:bg-green-700 rounded-lg transition-colors disabled:opacity-50"
               >
                 {actionLoading === approveModal.id ? 'Approving...' : 'Approve'}
               </button>
@@ -493,7 +493,7 @@ function VendorProductsContent() {
         <div className="fixed inset-0 z-50 flex items-center justify-center">
           <div className="absolute inset-0 bg-black/40" onClick={() => setRejectModal(null)} />
           <div className="relative bg-hos-bg-secondary rounded-xl shadow-2xl p-6 w-full max-w-md mx-4">
-            <h3 className="text-lg font-semibold text-white mb-1">Reject Vendor Product</h3>
+            <h3 className="text-lg font-semibold text-hos-text-secondary mb-1">Reject Vendor Product</h3>
             <p className="text-sm text-hos-text-muted mb-4">
               {rejectModal.product?.name} by {rejectModal.seller?.storeName}
             </p>
@@ -517,7 +517,7 @@ function VendorProductsContent() {
               <button
                 onClick={handleReject}
                 disabled={!rejectReason.trim() || actionLoading === rejectModal.id}
-                className="px-4 py-2 text-sm text-white bg-red-600 hover:bg-red-700 rounded-lg transition-colors disabled:opacity-50"
+                className="px-4 py-2 text-sm text-hos-text-secondary bg-red-600 hover:bg-red-700 rounded-lg transition-colors disabled:opacity-50"
               >
                 {actionLoading === rejectModal.id ? 'Rejecting...' : 'Reject'}
               </button>

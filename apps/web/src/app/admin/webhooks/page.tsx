@@ -365,7 +365,7 @@ export default function WebhooksPage() {
                       }`}
                     />
                     <div className="flex-1 min-w-0">
-                      <p className="font-medium text-white truncate font-mono text-sm">
+                      <p className="font-medium text-hos-text-secondary truncate font-mono text-sm">
                         {webhook.url}
                       </p>
                       <div className="flex flex-wrap gap-1.5 mt-2">

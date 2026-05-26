@@ -69,7 +69,7 @@ export function FeatureBanner({
         <p className="text-hos-gold text-[11px] uppercase tracking-wider font-semibold font-ui">
           {displayCategory}
         </p>
-        <h2 className="text-white text-lg font-bold font-ui mt-2">
+        <h2 className="text-hos-text-secondary text-lg font-bold font-ui mt-2">
           {title}
         </h2>
         <p className="text-hos-text-secondary text-sm mt-2 leading-relaxed">

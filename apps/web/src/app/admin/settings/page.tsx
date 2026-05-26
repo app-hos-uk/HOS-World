@@ -122,7 +122,7 @@ export default function AdminSettingsPage() {
           >
             <div className="flex items-center gap-3 mb-2">
               <span className="text-2xl">🔌</span>
-              <h3 className="font-semibold text-white group-hover:text-hos-gold-hover">Integrations</h3>
+              <h3 className="font-semibold text-hos-text-secondary group-hover:text-hos-gold-hover">Integrations</h3>
             </div>
             <p className="text-sm text-hos-text-secondary">
               Configure third-party services: shipping carriers, tax services, payment gateways
@@ -141,7 +141,7 @@ export default function AdminSettingsPage() {
           >
             <div className="flex items-center gap-3 mb-2">
               <span className="text-2xl">🚚</span>
-              <h3 className="font-semibold text-white group-hover:text-hos-gold-hover">Shipping Carriers</h3>
+              <h3 className="font-semibold text-hos-text-secondary group-hover:text-hos-gold-hover">Shipping Carriers</h3>
             </div>
             <p className="text-sm text-hos-text-secondary">
               USPS, FedEx, DHL - Generate labels and track shipments
@@ -160,7 +160,7 @@ export default function AdminSettingsPage() {
           >
             <div className="flex items-center gap-3 mb-2">
               <span className="text-2xl">📊</span>
-              <h3 className="font-semibold text-white group-hover:text-green-400">Tax Services</h3>
+              <h3 className="font-semibold text-hos-text-secondary group-hover:text-green-400">Tax Services</h3>
             </div>
             <p className="text-sm text-hos-text-secondary">
               Avalara, TaxJar - Automated tax calculation and compliance
@@ -218,7 +218,7 @@ export default function AdminSettingsPage() {
                         type="text"
                         value={settings.platformName}
                         onChange={(e) => updateSetting('platformName', e.target.value)}
-                        className="w-full px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50"
+                        className="w-full px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50 bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none focus:border-hos-gold"
                       />
                     </div>
                     <div>
@@ -229,7 +229,7 @@ export default function AdminSettingsPage() {
                         type="url"
                         value={settings.platformUrl}
                         onChange={(e) => updateSetting('platformUrl', e.target.value)}
-                        className="w-full px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50"
+                        className="w-full px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50 bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none focus:border-hos-gold"
                       />
                     </div>
                     <div className="flex items-center gap-2">
@@ -285,7 +285,7 @@ export default function AdminSettingsPage() {
                         value={settings.smtpHost}
                         onChange={(e) => updateSetting('smtpHost', e.target.value)}
                         placeholder="smtp.gmail.com"
-                        className="w-full px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50"
+                        className="w-full px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50 bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none focus:border-hos-gold"
                       />
                     </div>
                     <div className="grid grid-cols-2 gap-4">
@@ -295,7 +295,7 @@ export default function AdminSettingsPage() {
                           type="number"
                           value={settings.smtpPort}
                           onChange={(e) => updateSetting('smtpPort', parseInt(e.target.value))}
-                          className="w-full px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50"
+                          className="w-full px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50 bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none focus:border-hos-gold"
                         />
                       </div>
                       <div>
@@ -304,7 +304,7 @@ export default function AdminSettingsPage() {
                           type="text"
                           value={settings.smtpUser}
                           onChange={(e) => updateSetting('smtpUser', e.target.value)}
-                          className="w-full px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50"
+                          className="w-full px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50 bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none focus:border-hos-gold"
                         />
                       </div>
                     </div>
@@ -314,7 +314,7 @@ export default function AdminSettingsPage() {
                         type="email"
                         value={settings.smtpFrom}
                         onChange={(e) => updateSetting('smtpFrom', e.target.value)}
-                        className="w-full px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50"
+                        className="w-full px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50 bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none focus:border-hos-gold"
                       />
                     </div>
                     <div className="flex items-center gap-2">
@@ -370,7 +370,7 @@ export default function AdminSettingsPage() {
                       <select
                         value={settings.defaultCurrency}
                         onChange={(e) => updateSetting('defaultCurrency', e.target.value)}
-                        className="w-full px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50"
+                        className="w-full px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50 bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none focus:border-hos-gold"
                       >
                         <option value="USD">USD</option>
                         <option value="EUR">EUR</option>
@@ -387,7 +387,7 @@ export default function AdminSettingsPage() {
                         step="0.1"
                         min="0"
                         max="100"
-                        className="w-full px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50"
+                        className="w-full px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50 bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none focus:border-hos-gold"
                       />
                     </div>
                   </div>

@@ -55,7 +55,7 @@ export default function DoNotSellPage() {
     <div className="min-h-screen bg-hos-bg-secondary">
       <Header />
       <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12 max-w-2xl">
-        <h1 className="text-3xl sm:text-4xl font-bold mb-6 text-white">
+        <h1 className="text-3xl sm:text-4xl font-bold mb-6 text-hos-text-secondary">
           Do Not Sell or Share My Personal Information
         </h1>
 

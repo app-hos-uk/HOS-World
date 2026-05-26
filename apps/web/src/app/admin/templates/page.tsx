@@ -105,7 +105,7 @@ export default function AdminTemplatesPage() {
       <div className="space-y-6">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
-            <h1 className="text-2xl sm:text-3xl font-bold text-white">Notification Templates</h1>
+            <h1 className="text-2xl sm:text-3xl font-bold text-hos-text-secondary">Notification Templates</h1>
             <p className="text-hos-text-secondary mt-1">
               Manage email, WhatsApp, SMS, and in-app notification templates
             </p>
@@ -125,7 +125,7 @@ export default function AdminTemplatesPage() {
               }`}
             >
               <div className="text-2xl mb-1">{CHANNEL_ICONS[ch]}</div>
-              <div className="text-sm font-medium text-white">{ch.replace('_', '-')}</div>
+              <div className="text-sm font-medium text-hos-text-secondary">{ch.replace('_', '-')}</div>
               <div className="text-2xl font-bold text-hos-gold-hover">{channelCounts[ch] || 0}</div>
             </button>
           ))}
@@ -134,7 +134,7 @@ export default function AdminTemplatesPage() {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Template list */}
           <div className="lg:col-span-1 space-y-2">
-            <h2 className="text-lg font-semibold text-white mb-3">Templates</h2>
+            <h2 className="text-lg font-semibold text-hos-text-secondary mb-3">Templates</h2>
             {loading ? (
               <div className="text-center py-8 text-hos-text-muted">Loading...</div>
             ) : templates.length === 0 ? (
@@ -152,7 +152,7 @@ export default function AdminTemplatesPage() {
                     }`}
                   >
                     <div className="flex items-center justify-between mb-1">
-                      <span className="font-medium text-sm text-white">
+                      <span className="font-medium text-sm text-hos-text-secondary">
                         {t.slug.replace(/_/g, ' ')}
                       </span>
                       <span
@@ -188,7 +188,7 @@ export default function AdminTemplatesPage() {
               <div className="space-y-4">
                 <div className="bg-hos-bg-secondary rounded-xl border border-hos-border p-5">
                   <div className="flex items-center justify-between mb-3">
-                    <h2 className="text-lg font-bold text-white">
+                    <h2 className="text-lg font-bold text-hos-text-secondary">
                       {selectedTemplate.slug.replace(/_/g, ' ')}
                     </h2>
                     <span
@@ -209,7 +209,7 @@ export default function AdminTemplatesPage() {
                       <label className="block text-xs font-medium text-hos-text-muted mb-1">
                         Subject Line
                       </label>
-                      <div className="bg-hos-bg-secondary rounded-lg px-3 py-2 text-sm font-mono text-white">
+                      <div className="bg-hos-bg-secondary rounded-lg px-3 py-2 text-sm font-mono text-hos-text-secondary">
                         {selectedTemplate.subject}
                       </div>
                     </div>
@@ -234,7 +234,7 @@ export default function AdminTemplatesPage() {
 
                 {/* Test render form */}
                 <div className="bg-hos-bg-secondary rounded-xl border border-hos-border p-5">
-                  <h3 className="text-sm font-semibold text-white mb-3">
+                  <h3 className="text-sm font-semibold text-hos-text-secondary mb-3">
                     Test Render with Custom Variables
                   </h3>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-3">
@@ -267,7 +267,7 @@ export default function AdminTemplatesPage() {
                 {/* Preview pane */}
                 <div className="bg-hos-bg-secondary rounded-xl border border-hos-border overflow-hidden">
                   <div className="px-5 py-3 border-b border-hos-border bg-hos-bg-secondary">
-                    <h3 className="text-sm font-semibold text-white">
+                    <h3 className="text-sm font-semibold text-hos-text-secondary">
                       {testResult ? 'Custom Render' : 'Sample Preview'}
                     </h3>
                     {(testResult || previewHtml)?.subject && (
@@ -288,7 +288,7 @@ export default function AdminTemplatesPage() {
                         />
                       ) : (
                         <div className="bg-hos-bg-secondary rounded-lg p-4">
-                          <pre className="text-sm whitespace-pre-wrap text-white">
+                          <pre className="text-sm whitespace-pre-wrap text-hos-text-secondary">
                             {testResult.body}
                           </pre>
                         </div>
@@ -302,7 +302,7 @@ export default function AdminTemplatesPage() {
                         />
                       ) : (
                         <div className="bg-hos-bg-secondary rounded-lg p-4">
-                          <pre className="text-sm whitespace-pre-wrap text-white">
+                          <pre className="text-sm whitespace-pre-wrap text-hos-text-secondary">
                             {previewHtml.body}
                           </pre>
                         </div>
@@ -330,7 +330,7 @@ export default function AdminTemplatesPage() {
             ) : (
               <div className="bg-hos-bg-secondary rounded-xl border border-hos-border p-12 text-center">
                 <div className="text-4xl mb-3">📋</div>
-                <h3 className="text-lg font-semibold text-white">Select a Template</h3>
+                <h3 className="text-lg font-semibold text-hos-text-secondary">Select a Template</h3>
                 <p className="text-sm text-hos-text-muted mt-1">
                   Choose a template from the list to view its details, preview, and test with custom
                   variables.

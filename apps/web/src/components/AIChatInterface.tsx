@@ -191,7 +191,7 @@ export function AIChatInterface({ characterId, character, onClose }: AIChatInter
               className={`max-w-[80%] rounded-lg p-3 ${
                 message.role === 'user'
                   ? 'bg-hos-gold text-[#1a1406]'
-                  : 'bg-hos-bg-tertiary text-white'
+                  : 'bg-hos-bg-tertiary text-hos-text-secondary'
               }`}
             >
               <p className="text-sm whitespace-pre-wrap">{message.content}</p>

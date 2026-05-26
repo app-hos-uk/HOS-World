@@ -105,7 +105,7 @@ export default function ReturnDetailPage() {
                 <div>
                   <dt className="text-sm font-medium text-hos-text-muted">Status</dt>
                   <dd className="mt-1">
-                    <span className="px-2 py-1 text-xs font-medium rounded-full bg-hos-bg-tertiary text-white">
+                    <span className="px-2 py-1 text-xs font-medium rounded-full bg-hos-bg-tertiary text-hos-text-secondary">
                       {returnRequest.status || 'N/A'}
                     </span>
                   </dd>

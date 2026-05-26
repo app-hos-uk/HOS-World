@@ -504,7 +504,7 @@ export default function TaxIntegrationsPage() {
                             type="text"
                             value={formData.displayName}
                             onChange={(e) => setFormData({ ...formData, displayName: e.target.value })}
-                            className="w-full px-3 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50"
+                            className="w-full px-3 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50 bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none focus:border-hos-gold"
                             required
                           />
                         </div>
@@ -553,7 +553,7 @@ export default function TaxIntegrationsPage() {
                                   })
                                 }
                                 placeholder={editingIntegration ? '(unchanged)' : ''}
-                                className="w-full px-3 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50"
+                                className="w-full px-3 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50 bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none focus:border-hos-gold"
                                 required={!editingIntegration}
                               />
                             </div>

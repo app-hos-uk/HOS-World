@@ -63,7 +63,7 @@ const TYPE_COLORS: Record<string, string> = {
   VIDEO: 'bg-red-500/15 text-red-300',
   BANNER: 'bg-yellow-500/15 text-yellow-300',
   SOCIAL: 'bg-pink-500/15 text-pink-300',
-  OTHER: 'bg-hos-bg-tertiary text-white',
+  OTHER: 'bg-hos-bg-tertiary text-hos-text-secondary',
 };
 
 export default function AdminMarketingPage() {
@@ -264,7 +264,7 @@ export default function AdminMarketingPage() {
         <div className="space-y-6">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div>
-              <h1 className="text-2xl font-bold text-white">Marketing Dashboard</h1>
+              <h1 className="text-2xl font-bold text-hos-text-secondary">Marketing Dashboard</h1>
               <p className="text-hos-text-secondary mt-1">Manage product marketing materials and submissions</p>
             </div>
           </div>
@@ -334,7 +334,7 @@ export default function AdminMarketingPage() {
                         <div className="p-6">
                           <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
                             <div className="flex-1">
-                              <h3 className="text-lg font-semibold text-white">
+                              <h3 className="text-lg font-semibold text-hos-text-secondary">
                                 {submission.catalogEntry?.title || submission.productData?.name || 'Untitled Product'}
                               </h3>
                               <p className="text-sm text-hos-text-muted mt-1">
@@ -375,7 +375,7 @@ export default function AdminMarketingPage() {
                                     className="border rounded-lg p-3 relative group"
                                   >
                                     <span className={`px-2 py-0.5 text-xs rounded-full ${
-                                      TYPE_COLORS[material.type] || 'bg-hos-bg-tertiary text-white'
+                                      TYPE_COLORS[material.type] || 'bg-hos-bg-tertiary text-hos-text-secondary'
                                     }`}>
                                       {material.type}
                                     </span>
@@ -419,7 +419,7 @@ export default function AdminMarketingPage() {
                           value={searchTerm}
                           onChange={(e) => setSearchTerm(e.target.value)}
                           placeholder="Search by URL, product, or seller..."
-                          className="w-full px-3 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50"
+                          className="w-full px-3 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50 bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none focus:border-hos-gold"
                         />
                       </div>
                       <div>
@@ -427,7 +427,7 @@ export default function AdminMarketingPage() {
                         <select
                           value={typeFilter}
                           onChange={(e) => setTypeFilter(e.target.value)}
-                          className="w-full px-3 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50"
+                          className="w-full px-3 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50 bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none focus:border-hos-gold"
                         >
                           <option value="ALL">All Types</option>
                           {MATERIAL_TYPES.map((type) => (
@@ -463,13 +463,13 @@ export default function AdminMarketingPage() {
                             <tr key={material.id} className="hover:bg-hos-bg-tertiary">
                               <td className="px-6 py-4 whitespace-nowrap">
                                 <span className={`px-2 py-1 text-xs font-semibold rounded-full ${
-                                  TYPE_COLORS[material.type] || 'bg-hos-bg-tertiary text-white'
+                                  TYPE_COLORS[material.type] || 'bg-hos-bg-tertiary text-hos-text-secondary'
                                 }`}>
                                   {material.type}
                                 </span>
                               </td>
                               <td className="px-6 py-4">
-                                <div className="text-sm font-medium text-white">
+                                <div className="text-sm font-medium text-hos-text-secondary">
                                   {material.submission?.catalogEntry?.title || 'N/A'}
                                 </div>
                                 <div className="text-xs text-hos-text-muted">
@@ -538,7 +538,7 @@ export default function AdminMarketingPage() {
                     <select
                       value={materialForm.type}
                       onChange={(e) => setMaterialForm({ ...materialForm, type: e.target.value })}
-                      className="w-full px-3 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50"
+                      className="w-full px-3 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50 bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none focus:border-hos-gold"
                     >
                       {MATERIAL_TYPES.map((type) => (
                         <option key={type} value={type}>{type}</option>
@@ -552,14 +552,14 @@ export default function AdminMarketingPage() {
                       value={materialForm.url}
                       onChange={(e) => setMaterialForm({ ...materialForm, url: e.target.value })}
                       placeholder="https://..."
-                      className="w-full px-3 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50"
+                      className="w-full px-3 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50 bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none focus:border-hos-gold"
                     />
                     <p className="text-xs text-hos-text-muted mt-1">Enter the URL of the image, video, or asset</p>
                   </div>
                   <div className="flex justify-end gap-3 pt-4">
                     <button
                       onClick={() => setShowAddModal(false)}
-                      className="px-4 py-2 text-hos-text-secondary hover:text-white"
+                      className="px-4 py-2 text-hos-text-secondary hover:text-hos-gold"
                     >
                       Cancel
                     </button>
@@ -595,7 +595,7 @@ export default function AdminMarketingPage() {
                     <select
                       value={materialForm.type}
                       onChange={(e) => setMaterialForm({ ...materialForm, type: e.target.value })}
-                      className="w-full px-3 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50"
+                      className="w-full px-3 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50 bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none focus:border-hos-gold"
                     >
                       {MATERIAL_TYPES.map((type) => (
                         <option key={type} value={type}>{type}</option>
@@ -609,13 +609,13 @@ export default function AdminMarketingPage() {
                       value={materialForm.url}
                       onChange={(e) => setMaterialForm({ ...materialForm, url: e.target.value })}
                       placeholder="https://..."
-                      className="w-full px-3 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50"
+                      className="w-full px-3 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50 bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none focus:border-hos-gold"
                     />
                   </div>
                   <div className="flex justify-end gap-3 pt-4">
                     <button
                       onClick={() => setShowEditModal(false)}
-                      className="px-4 py-2 text-hos-text-secondary hover:text-white"
+                      className="px-4 py-2 text-hos-text-secondary hover:text-hos-gold"
                     >
                       Cancel
                     </button>

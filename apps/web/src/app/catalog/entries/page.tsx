@@ -272,7 +272,7 @@ function CatalogEntriesContent() {
               className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
                 activeTab === 'pending'
                   ? 'bg-hos-bg-secondary text-hos-gold-hover shadow-sm'
-                  : 'text-hos-text-secondary hover:text-white'
+                  : 'text-hos-text-secondary hover:text-hos-gold'
               }`}
             >
               Pending ({pendingSubmissions.length})
@@ -282,7 +282,7 @@ function CatalogEntriesContent() {
               className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
                 activeTab === 'in_progress'
                   ? 'bg-hos-bg-secondary text-yellow-400 shadow-sm'
-                  : 'text-hos-text-secondary hover:text-white'
+                  : 'text-hos-text-secondary hover:text-hos-gold'
               }`}
             >
               In Progress ({inProgressEntries.length})
@@ -292,7 +292,7 @@ function CatalogEntriesContent() {
               className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
                 activeTab === 'completed'
                   ? 'bg-hos-bg-secondary text-green-400 shadow-sm'
-                  : 'text-hos-text-secondary hover:text-white'
+                  : 'text-hos-text-secondary hover:text-hos-gold'
               }`}
             >
               Completed ({completedEntries.length})
@@ -330,7 +330,7 @@ function CatalogEntriesContent() {
                   >
                     <div className="flex flex-col sm:flex-row justify-between gap-4">
                       <div className="flex-1">
-                        <h3 className="text-lg font-semibold text-white">
+                        <h3 className="text-lg font-semibold text-hos-text-secondary">
                           {productData.name || 'Untitled Product'}
                         </h3>
                         <p className="text-sm text-hos-text-muted mt-1">
@@ -389,7 +389,7 @@ function CatalogEntriesContent() {
                   >
                     <div className="flex flex-col sm:flex-row justify-between gap-4">
                       <div className="flex-1">
-                        <h3 className="text-lg font-semibold text-white">
+                        <h3 className="text-lg font-semibold text-hos-text-secondary">
                           {entry.title || productData.name || 'Untitled Product'}
                         </h3>
                         <p className="text-sm text-hos-text-muted mt-1">
@@ -442,7 +442,7 @@ function CatalogEntriesContent() {
                   >
                     <div className="flex flex-col sm:flex-row justify-between gap-4">
                       <div className="flex-1">
-                        <h3 className="text-lg font-semibold text-white">
+                        <h3 className="text-lg font-semibold text-hos-text-secondary">
                           {entry.title || productData.name || 'Untitled Product'}
                         </h3>
                         <p className="text-sm text-hos-text-muted mt-1">
@@ -511,7 +511,7 @@ function CatalogEntriesContent() {
                         value={title}
                         onChange={(e) => setTitle(e.target.value)}
                         required
-                        className="w-full px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50"
+                        className="w-full px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50 bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none focus:border-hos-gold"
                         placeholder="Product title"
                       />
                     </div>
@@ -525,7 +525,7 @@ function CatalogEntriesContent() {
                         onChange={(e) => setDescription(e.target.value)}
                         required
                         rows={6}
-                        className="w-full px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50"
+                        className="w-full px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50 bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none focus:border-hos-gold"
                         placeholder="Product description"
                       />
                     </div>
@@ -545,7 +545,7 @@ function CatalogEntriesContent() {
                               addKeyword();
                             }
                           }}
-                          className="flex-1 px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50"
+                          className="flex-1 px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50 bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none focus:border-hos-gold"
                           placeholder="Add keyword"
                         />
                         <button
@@ -619,7 +619,7 @@ function CatalogEntriesContent() {
                               addImage();
                             }
                           }}
-                          className="flex-1 px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50"
+                          className="flex-1 px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50 bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none focus:border-hos-gold"
                           placeholder="https://..."
                         />
                         <button

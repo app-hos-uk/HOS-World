@@ -62,11 +62,11 @@ export default function AdminProductCampaignNewPage() {
           <Link href="/admin/product-campaigns" className="text-sm text-violet-400">
             ← Campaigns
           </Link>
-          <h1 className="text-2xl font-semibold text-white">New product campaign</h1>
+          <h1 className="text-2xl font-semibold text-hos-text-secondary">New product campaign</h1>
           <label className="block text-sm">
             <span className="text-hos-text-secondary">Name</span>
             <input
-              className="mt-1 w-full border rounded px-3 py-2"
+              className="mt-1 w-full border rounded px-3 py-2 bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none border-hos-border"
               value={name}
               onChange={(e) => setName(e.target.value)}
             />
@@ -75,7 +75,7 @@ export default function AdminProductCampaignNewPage() {
             <span className="text-hos-text-secondary">Bonus points (per qualifying unit)</span>
             <input
               type="number"
-              className="mt-1 w-full border rounded px-3 py-2"
+              className="mt-1 w-full border rounded px-3 py-2 bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none border-hos-border"
               value={bonusPoints}
               onChange={(e) => setBonusPoints(e.target.value)}
             />
@@ -84,7 +84,7 @@ export default function AdminProductCampaignNewPage() {
             <span className="text-hos-text-secondary">Starts (local)</span>
             <input
               type="datetime-local"
-              className="mt-1 w-full border rounded px-3 py-2"
+              className="mt-1 w-full border rounded px-3 py-2 bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none border-hos-border"
               value={startsAt}
               onChange={(e) => setStartsAt(e.target.value)}
             />
@@ -93,7 +93,7 @@ export default function AdminProductCampaignNewPage() {
             <span className="text-hos-text-secondary">Ends (local)</span>
             <input
               type="datetime-local"
-              className="mt-1 w-full border rounded px-3 py-2"
+              className="mt-1 w-full border rounded px-3 py-2 bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none border-hos-border"
               value={endsAt}
               onChange={(e) => setEndsAt(e.target.value)}
             />
@@ -101,7 +101,7 @@ export default function AdminProductCampaignNewPage() {
           <label className="block text-sm">
             <span className="text-hos-text-secondary">Fandom filter (comma-separated)</span>
             <input
-              className="mt-1 w-full border rounded px-3 py-2"
+              className="mt-1 w-full border rounded px-3 py-2 bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none border-hos-border"
               value={fandoms}
               onChange={(e) => setFandoms(e.target.value)}
               placeholder="Harry Potter"

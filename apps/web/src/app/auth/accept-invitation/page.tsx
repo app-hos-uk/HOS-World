@@ -242,7 +242,7 @@ function AcceptInvitationForm() {
     return (
       <div className="min-h-screen flex items-center justify-center bg-hos-bg-secondary">
         <div className="max-w-md w-full bg-hos-bg-secondary rounded-lg shadow p-6">
-          <h1 className="text-2xl font-bold text-white mb-4">Invalid Invitation</h1>
+          <h1 className="text-2xl font-bold text-hos-text-secondary mb-4">Invalid Invitation</h1>
           <p className="text-hos-text-secondary">{error || 'This invitation link is invalid or has expired.'}</p>
         </div>
       </div>
@@ -261,7 +261,7 @@ function AcceptInvitationForm() {
     <div className="min-h-screen flex items-center justify-center bg-hos-bg-secondary py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-md w-full space-y-8">
         <div>
-          <h2 className="mt-6 text-center text-3xl font-extrabold text-white">
+          <h2 className="mt-6 text-center text-3xl font-extrabold text-hos-text-secondary">
             {headingText}
           </h2>
           <p className="mt-2 text-center text-sm text-hos-text-secondary">
@@ -292,7 +292,7 @@ function AcceptInvitationForm() {
                 required
                 disabled
                 value={formData.email}
-                className="mt-1 appearance-none relative block w-full px-3 py-2 border border-hos-border bg-hos-bg-secondary text-hos-text-muted rounded-lg sm:text-sm"
+                className="mt-1 appearance-none relative block w-full px-3 py-2 border border-hos-border bg-hos-bg-secondary text-hos-text-muted rounded-lg sm:text-sm placeholder-hos-text-muted focus:outline-none"
                 placeholder="Email"
               />
               <p className="mt-1 text-xs text-hos-text-muted">Email is pre-filled from invitation</p>
@@ -310,7 +310,7 @@ function AcceptInvitationForm() {
                   required
                   value={formData.displayName}
                   onChange={(e) => setFormData({ ...formData, displayName: e.target.value })}
-                  className="mt-1 appearance-none relative block w-full px-3 py-2 border border-hos-border placeholder-hos-text-muted text-white rounded-lg focus:outline-none focus:ring-hos-gold/50 focus:border-hos-gold focus:z-10 sm:text-sm"
+                  className="mt-1 appearance-none relative block w-full px-3 py-2 border border-hos-border placeholder-hos-text-muted text-hos-text-secondary rounded-lg focus:outline-none focus:ring-hos-gold/50 focus:border-hos-gold focus:z-10 sm:text-sm"
                   placeholder="Your public display name"
                 />
               </div>
@@ -326,7 +326,7 @@ function AcceptInvitationForm() {
                   required
                   value={formData.storeName}
                   onChange={(e) => setFormData({ ...formData, storeName: e.target.value })}
-                  className="mt-1 appearance-none relative block w-full px-3 py-2 border border-hos-border placeholder-hos-text-muted text-white rounded-lg focus:outline-none focus:ring-hos-gold/50 focus:border-hos-gold focus:z-10 sm:text-sm"
+                  className="mt-1 appearance-none relative block w-full px-3 py-2 border border-hos-border placeholder-hos-text-muted text-hos-text-secondary rounded-lg focus:outline-none focus:ring-hos-gold/50 focus:border-hos-gold focus:z-10 sm:text-sm"
                   placeholder="Your store name"
                 />
               </div>
@@ -350,7 +350,7 @@ function AcceptInvitationForm() {
                       setFormData({ ...formData, firstName: val });
                     }
                   }}
-                  className="mt-1 appearance-none relative block w-full px-3 py-2 border border-hos-border placeholder-hos-text-muted text-white rounded-lg focus:outline-none focus:ring-hos-gold/50 focus:border-hos-gold focus:z-10 sm:text-sm"
+                  className="mt-1 appearance-none relative block w-full px-3 py-2 border border-hos-border placeholder-hos-text-muted text-hos-text-secondary rounded-lg focus:outline-none focus:ring-hos-gold/50 focus:border-hos-gold focus:z-10 sm:text-sm"
                   placeholder="First name"
                 />
               </div>
@@ -372,7 +372,7 @@ function AcceptInvitationForm() {
                       setFormData({ ...formData, lastName: val });
                     }
                   }}
-                  className="mt-1 appearance-none relative block w-full px-3 py-2 border border-hos-border placeholder-hos-text-muted text-white rounded-lg focus:outline-none focus:ring-hos-gold/50 focus:border-hos-gold focus:z-10 sm:text-sm"
+                  className="mt-1 appearance-none relative block w-full px-3 py-2 border border-hos-border placeholder-hos-text-muted text-hos-text-secondary rounded-lg focus:outline-none focus:ring-hos-gold/50 focus:border-hos-gold focus:z-10 sm:text-sm"
                   placeholder="Last name"
                 />
               </div>
@@ -391,7 +391,7 @@ function AcceptInvitationForm() {
                     required
                     value={formData.country}
                     onChange={(e) => setFormData({ ...formData, country: e.target.value })}
-                    className="mt-1 appearance-none relative block w-full px-3 py-2 border border-hos-border placeholder-hos-text-muted text-white rounded-lg focus:outline-none focus:ring-hos-gold/50 focus:border-hos-gold focus:z-10 sm:text-sm"
+                    className="mt-1 appearance-none relative block w-full px-3 py-2 border border-hos-border placeholder-hos-text-muted text-hos-text-secondary rounded-lg focus:outline-none focus:ring-hos-gold/50 focus:border-hos-gold focus:z-10 sm:text-sm"
                     placeholder="Country"
                   />
                 </div>
@@ -411,7 +411,7 @@ function AcceptInvitationForm() {
                         setFormData({ ...formData, whatsappNumber: val });
                       }
                     }}
-                    className="mt-1 appearance-none relative block w-full px-3 py-2 border border-hos-border placeholder-hos-text-muted text-white rounded-lg focus:outline-none focus:ring-hos-gold/50 focus:border-hos-gold focus:z-10 sm:text-sm"
+                    className="mt-1 appearance-none relative block w-full px-3 py-2 border border-hos-border placeholder-hos-text-muted text-hos-text-secondary rounded-lg focus:outline-none focus:ring-hos-gold/50 focus:border-hos-gold focus:z-10 sm:text-sm"
                     placeholder="+1 555 123 4567"
                   />
                 </div>
@@ -426,7 +426,7 @@ function AcceptInvitationForm() {
                     required
                     value={formData.preferredCommunicationMethod}
                     onChange={(e) => setFormData({ ...formData, preferredCommunicationMethod: e.target.value as any })}
-                    className="mt-1 appearance-none relative block w-full px-3 py-2 border border-hos-border text-white rounded-lg focus:outline-none focus:ring-hos-gold/50 focus:border-hos-gold focus:z-10 sm:text-sm"
+                    className="mt-1 appearance-none relative block w-full px-3 py-2 border border-hos-border text-hos-text-secondary rounded-lg focus:outline-none focus:ring-hos-gold/50 focus:border-hos-gold focus:z-10 sm:text-sm"
                   >
                     <option value="EMAIL">Email</option>
                     <option value="SMS">SMS</option>
@@ -448,7 +448,7 @@ function AcceptInvitationForm() {
                 required
                 value={formData.password}
                 onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                className="mt-1 appearance-none relative block w-full px-3 py-2 border border-hos-border placeholder-hos-text-muted text-white rounded-lg focus:outline-none focus:ring-hos-gold/50 focus:border-hos-gold focus:z-10 sm:text-sm"
+                className="mt-1 appearance-none relative block w-full px-3 py-2 border border-hos-border placeholder-hos-text-muted text-hos-text-secondary rounded-lg focus:outline-none focus:ring-hos-gold/50 focus:border-hos-gold focus:z-10 sm:text-sm"
                 placeholder="Password (min 8 characters)"
               />
             </div>
@@ -464,7 +464,7 @@ function AcceptInvitationForm() {
                 required
                 value={formData.confirmPassword}
                 onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}
-                className="mt-1 appearance-none relative block w-full px-3 py-2 border border-hos-border placeholder-hos-text-muted text-white rounded-lg focus:outline-none focus:ring-hos-gold/50 focus:border-hos-gold focus:z-10 sm:text-sm"
+                className="mt-1 appearance-none relative block w-full px-3 py-2 border border-hos-border placeholder-hos-text-muted text-hos-text-secondary rounded-lg focus:outline-none focus:ring-hos-gold/50 focus:border-hos-gold focus:z-10 sm:text-sm"
                 placeholder="Confirm password"
               />
             </div>
@@ -479,7 +479,7 @@ function AcceptInvitationForm() {
                 onChange={(e) => setFormData({ ...formData, gdprConsent: e.target.checked })}
                 className="h-4 w-4 text-hos-gold focus:ring-hos-gold/50 border-hos-border rounded"
               />
-              <label htmlFor="gdprConsent" className="ml-2 block text-sm text-white">
+              <label htmlFor="gdprConsent" className="ml-2 block text-sm text-hos-text-secondary">
                 I acknowledge the <a href="/privacy-policy" target="_blank" className="text-hos-gold hover:underline">Privacy Policy</a> and consent to data processing *
               </label>
             </div>

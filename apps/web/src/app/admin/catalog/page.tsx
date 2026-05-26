@@ -86,7 +86,7 @@ export default function AdminCatalogPage() {
         <div className="space-y-6">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div>
-              <h1 className="text-2xl font-bold text-white">Catalog Entries</h1>
+              <h1 className="text-2xl font-bold text-hos-text-secondary">Catalog Entries</h1>
               <p className="text-sm text-hos-text-muted mt-1">Pending submissions ready for catalog creation</p>
             </div>
             <div className="flex items-center gap-2">
@@ -99,7 +99,7 @@ export default function AdminCatalogPage() {
               </button>
               <Link
                 href="/catalog/entries"
-                className="px-4 py-2 text-sm font-medium text-white bg-hos-gold rounded-lg hover:bg-hos-gold-hover"
+                className="px-4 py-2 text-sm font-medium text-hos-text-secondary bg-hos-gold rounded-lg hover:bg-hos-gold-hover"
               >
                 Full Catalog Workflow →
               </Link>
@@ -143,7 +143,7 @@ export default function AdminCatalogPage() {
                     const completed = entry.completed ?? !!entry.catalogEntry;
                     return (
                       <tr key={entry.id || submissionId} className="hover:bg-hos-bg-tertiary">
-                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-white">
+                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-hos-text-secondary">
                           {submissionId ? `${String(submissionId).substring(0, 8)}...` : 'N/A'}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-hos-text-muted">

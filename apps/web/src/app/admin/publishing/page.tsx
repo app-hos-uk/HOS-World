@@ -118,7 +118,7 @@ export default function PublishingDashboardPage() {
           <button
             onClick={() => setTab('ready')}
             className={`flex-1 px-4 py-2 text-sm font-medium rounded-md transition-colors ${
-              tab === 'ready' ? 'bg-hos-bg-secondary text-hos-gold-hover shadow-sm' : 'text-hos-text-secondary hover:text-white'
+              tab === 'ready' ? 'bg-hos-bg-secondary text-hos-gold-hover shadow-sm' : 'text-hos-text-secondary hover:text-hos-gold'
             }`}
           >
             Ready ({readySubmissions.length})
@@ -126,7 +126,7 @@ export default function PublishingDashboardPage() {
           <button
             onClick={() => setTab('published')}
             className={`flex-1 px-4 py-2 text-sm font-medium rounded-md transition-colors ${
-              tab === 'published' ? 'bg-hos-bg-secondary text-hos-gold-hover shadow-sm' : 'text-hos-text-secondary hover:text-white'
+              tab === 'published' ? 'bg-hos-bg-secondary text-hos-gold-hover shadow-sm' : 'text-hos-text-secondary hover:text-hos-gold'
             }`}
           >
             Published ({publishedProducts.length})
@@ -199,7 +199,7 @@ export default function PublishingDashboardPage() {
                         className="mt-1 rounded border-hos-border text-hos-gold focus:ring-hos-gold/50"
                       />
                       <div className="flex-1 min-w-0">
-                        <p className="font-medium text-white truncate">{name}</p>
+                        <p className="font-medium text-hos-text-secondary truncate">{name}</p>
                         <p className="text-sm text-hos-text-muted mt-0.5">{seller}</p>
                         <div className="flex flex-wrap gap-3 mt-2 text-xs text-hos-text-muted">
                           {price && <span>Price: ${parseFloat(price).toFixed(2)}</span>}
@@ -243,7 +243,7 @@ export default function PublishingDashboardPage() {
                     <div key={product.id} className="p-4 hover:bg-hos-bg-tertiary transition-colors">
                       <div className="flex items-start justify-between">
                         <div className="flex-1 min-w-0">
-                          <p className="font-medium text-white truncate">{name}</p>
+                          <p className="font-medium text-hos-text-secondary truncate">{name}</p>
                           <div className="flex flex-wrap gap-3 mt-1 text-xs text-hos-text-muted">
                             {product.price && (
                               <span>Price: ${parseFloat(product.price).toFixed(2)}</span>

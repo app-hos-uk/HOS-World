@@ -178,7 +178,7 @@ export default function AdminMediaLibraryPage() {
           {/* Header */}
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
             <div>
-              <h1 className="text-2xl font-bold text-white">Media Library</h1>
+              <h1 className="text-2xl font-bold text-hos-text-secondary">Media Library</h1>
               <p className="text-hos-text-secondary mt-1">
                 Manage uploaded images and media assets ({total} total)
               </p>
@@ -306,7 +306,7 @@ export default function AdminMediaLibraryPage() {
                   {/* Info */}
                   <div className="p-2">
                     <p
-                      className="text-xs font-medium text-white truncate"
+                      className="text-xs font-medium text-hos-text-secondary truncate"
                       title={asset.filename}
                     >
                       {asset.filename}
@@ -401,7 +401,7 @@ export default function AdminMediaLibraryPage() {
                 <div className="p-6">
                   <div className="flex justify-between items-start mb-4">
                     <div>
-                      <h2 className="text-xl font-bold text-white">
+                      <h2 className="text-xl font-bold text-hos-text-secondary">
                         {previewAsset.filename}
                       </h2>
                       {previewAsset.productName && (

@@ -175,7 +175,7 @@ export default function DownloadsPage() {
       case 'limit_reached':
         return { text: 'Limit Reached', class: 'bg-yellow-500/15 text-yellow-300' };
       default:
-        return { text: status, class: 'bg-hos-bg-tertiary text-white' };
+        return { text: status, class: 'bg-hos-bg-tertiary text-hos-text-secondary' };
     }
   };
 
@@ -186,7 +186,7 @@ export default function DownloadsPage() {
         <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 lg:py-12">
           {/* Header */}
           <div className="mb-8">
-            <h1 className="text-2xl sm:text-3xl font-bold text-white">My Downloads</h1>
+            <h1 className="text-2xl sm:text-3xl font-bold text-hos-text-secondary">My Downloads</h1>
             <p className="text-hos-text-secondary mt-1">Access your purchased digital products</p>
           </div>
 
@@ -199,7 +199,7 @@ export default function DownloadsPage() {
               }`}
             >
               <h3 className="text-xs font-medium text-hos-text-muted uppercase">All Downloads</h3>
-              <p className="text-2xl font-bold text-white mt-1">{stats.total}</p>
+              <p className="text-2xl font-bold text-hos-text-secondary mt-1">{stats.total}</p>
             </button>
             <button
               onClick={() => setFilter('available')}
@@ -287,7 +287,7 @@ export default function DownloadsPage() {
                       {/* Info */}
                       <div className="flex-1 min-w-0">
                         <div className="flex flex-wrap items-start gap-2 mb-2">
-                          <h3 className="text-lg font-semibold text-white">{product.name}</h3>
+                          <h3 className="text-lg font-semibold text-hos-text-secondary">{product.name}</h3>
                           <span className={`px-2 py-0.5 text-xs font-medium rounded-full ${statusBadge.class}`}>
                             {statusBadge.text}
                           </span>
@@ -389,7 +389,7 @@ export default function DownloadsPage() {
 
           {/* Help Section */}
           <div className="mt-8 bg-hos-gold/10 rounded-lg p-6 text-center">
-            <h3 className="text-lg font-semibold text-white mb-2">Need Help?</h3>
+            <h3 className="text-lg font-semibold text-hos-text-secondary mb-2">Need Help?</h3>
             <p className="text-hos-text-secondary mb-4">
               Having trouble with your downloads? Contact our support team for assistance.
             </p>

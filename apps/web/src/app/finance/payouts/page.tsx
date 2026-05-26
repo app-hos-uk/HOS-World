@@ -158,7 +158,7 @@ export default function FinancePayoutsPage() {
             </button>
             <button
               onClick={() => setShowScheduleModal(true)}
-              className="px-4 py-2 text-sm font-medium text-white bg-hos-gold rounded-lg hover:bg-hos-gold-hover"
+              className="px-4 py-2 text-sm font-medium text-hos-text-secondary bg-hos-gold rounded-lg hover:bg-hos-gold-hover"
             >
               Schedule Payout
             </button>
@@ -250,7 +250,7 @@ export default function FinancePayoutsPage() {
                   {filteredPayouts.map((payout) => (
                     <tr key={payout.id} className="hover:bg-hos-bg-tertiary transition-colors">
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <p className="text-sm font-medium text-white">
+                        <p className="text-sm font-medium text-hos-text-secondary">
                           {payout.seller?.storeName || payout.sellerName || 'Unknown Seller'}
                         </p>
                         <div className="flex flex-wrap items-center gap-x-2 gap-y-1 mt-0.5">
@@ -276,7 +276,7 @@ export default function FinancePayoutsPage() {
                         </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <p className="text-sm font-semibold text-white">
+                        <p className="text-sm font-semibold text-hos-text-secondary">
                           ${(payout.amount || 0).toLocaleString(undefined, {
                             minimumFractionDigits: 2,
                             maximumFractionDigits: 2,
@@ -286,7 +286,7 @@ export default function FinancePayoutsPage() {
                       <td className="px-6 py-4 whitespace-nowrap">
                         <span
                           className={`px-2.5 py-1 text-xs font-medium rounded-full ${
-                            STATUS_STYLES[payout.status] || 'bg-hos-bg-tertiary text-white'
+                            STATUS_STYLES[payout.status] || 'bg-hos-bg-tertiary text-hos-text-secondary'
                           }`}
                         >
                           {payout.status}
@@ -300,7 +300,7 @@ export default function FinancePayoutsPage() {
                           <button
                             onClick={() => handleProcessPayout(payout.id)}
                             disabled={processingId === payout.id}
-                            className="px-3 py-1.5 text-xs font-medium text-white bg-green-600 rounded-lg hover:bg-green-700 disabled:opacity-50 transition-colors"
+                            className="px-3 py-1.5 text-xs font-medium text-hos-text-secondary bg-green-600 rounded-lg hover:bg-green-700 disabled:opacity-50 transition-colors"
                           >
                             {processingId === payout.id ? 'Processing...' : 'Process'}
                           </button>

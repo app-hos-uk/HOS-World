@@ -377,7 +377,7 @@ export default function AdminPricingPage() {
           {/* Header */}
           <div className="flex justify-between items-center">
             <div>
-              <h1 className="text-2xl font-bold text-white">Pricing Management</h1>
+              <h1 className="text-2xl font-bold text-hos-text-secondary">Pricing Management</h1>
               <p className="text-hos-text-secondary mt-1">Manage product pricing, stock, and tax rates</p>
             </div>
             <div className="flex gap-2">
@@ -445,7 +445,7 @@ export default function AdminPricingPage() {
                   placeholder="Search products..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="w-full px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50"
+                  className="w-full px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50 bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none focus:border-hos-gold"
                 />
               </div>
               <select
@@ -571,7 +571,7 @@ export default function AdminPricingPage() {
                           />
                         </td>
                         <td className="px-4 py-3">
-                          <div className="text-sm font-medium text-white truncate max-w-[200px]">
+                          <div className="text-sm font-medium text-hos-text-secondary truncate max-w-[200px]">
                             {product.name}
                           </div>
                           <div className="text-xs text-hos-text-muted">{product.sku || 'No SKU'}</div>
@@ -680,7 +680,7 @@ export default function AdminPricingPage() {
                         step="0.01"
                         value={editData.price}
                         onChange={(e) => setEditData({ ...editData, price: e.target.value })}
-                        className="w-full px-3 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50"
+                        className="w-full px-3 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50 bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none focus:border-hos-gold"
                       />
                     </div>
                     <div>
@@ -690,7 +690,7 @@ export default function AdminPricingPage() {
                         step="0.01"
                         value={editData.tradePrice}
                         onChange={(e) => setEditData({ ...editData, tradePrice: e.target.value })}
-                        className="w-full px-3 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50"
+                        className="w-full px-3 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50 bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none focus:border-hos-gold"
                       />
                     </div>
                   </div>
@@ -702,7 +702,7 @@ export default function AdminPricingPage() {
                         step="0.01"
                         value={editData.rrp}
                         onChange={(e) => setEditData({ ...editData, rrp: e.target.value })}
-                        className="w-full px-3 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50"
+                        className="w-full px-3 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50 bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none focus:border-hos-gold"
                       />
                     </div>
                     <div>
@@ -711,7 +711,7 @@ export default function AdminPricingPage() {
                         type="number"
                         value={editData.stock}
                         onChange={(e) => setEditData({ ...editData, stock: e.target.value })}
-                        className="w-full px-3 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50"
+                        className="w-full px-3 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50 bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none focus:border-hos-gold"
                       />
                     </div>
                   </div>
@@ -722,7 +722,7 @@ export default function AdminPricingPage() {
                       step="0.01"
                       value={editData.taxRate}
                       onChange={(e) => setEditData({ ...editData, taxRate: e.target.value })}
-                      className="w-full px-3 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50"
+                      className="w-full px-3 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50 bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none focus:border-hos-gold"
                       placeholder="e.g., 20"
                     />
                   </div>
@@ -785,7 +785,7 @@ export default function AdminPricingPage() {
                       step="0.01"
                       value={bulkValue}
                       onChange={(e) => setBulkValue(e.target.value)}
-                      className="w-full px-3 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50"
+                      className="w-full px-3 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50 bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none focus:border-hos-gold"
                       placeholder={bulkMode === 'percent' ? '10' : '0.00'}
                     />
                   </div>

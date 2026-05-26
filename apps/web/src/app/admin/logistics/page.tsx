@@ -122,7 +122,7 @@ export default function AdminLogisticsPage() {
       <AdminLayout>
         <div className="space-y-6">
           <div className="flex items-center justify-between">
-            <h1 className="text-2xl font-bold text-white">Logistics Partners</h1>
+            <h1 className="text-2xl font-bold text-hos-text-secondary">Logistics Partners</h1>
             <button
               onClick={() => setIsModalOpen(true)}
               className="px-4 py-2 bg-hos-gold text-[#1a1406] rounded-lg hover:bg-hos-gold-hover"
@@ -159,7 +159,7 @@ export default function AdminLogisticsPage() {
                 ) : (
                   partners.map((partner) => (
                     <tr key={partner.id} className="hover:bg-hos-bg-tertiary">
-                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-white">
+                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-hos-text-secondary">
                         {partner.name || 'N/A'}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-hos-text-muted">
@@ -170,7 +170,7 @@ export default function AdminLogisticsPage() {
                           className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
                             partner.active !== false
                               ? 'bg-green-500/15 text-green-300'
-                              : 'bg-hos-bg-tertiary text-white'
+                              : 'bg-hos-bg-tertiary text-hos-text-secondary'
                           }`}
                         >
                           {partner.active !== false ? 'Active' : 'Inactive'}
@@ -214,7 +214,7 @@ export default function AdminLogisticsPage() {
                   leaveTo="opacity-0 scale-95"
                 >
                   <Dialog.Panel className="w-full max-w-md transform overflow-hidden rounded-2xl bg-hos-bg-secondary p-6 text-left align-middle shadow-xl transition-all">
-                    <Dialog.Title as="h3" className="text-lg font-medium leading-6 text-white mb-4">
+                    <Dialog.Title as="h3" className="text-lg font-medium leading-6 text-hos-text-secondary mb-4">
                       Add Logistics Partner
                     </Dialog.Title>
                     <form onSubmit={handleSubmit} className="space-y-4">
@@ -279,7 +279,7 @@ export default function AdminLogisticsPage() {
                           onChange={(e) => setFormData({ ...formData, active: e.target.checked })}
                           className="h-4 w-4 text-hos-gold focus:ring-hos-gold/50 border-hos-border rounded"
                         />
-                        <label className="ml-2 block text-sm text-white">Active</label>
+                        <label className="ml-2 block text-sm text-hos-text-secondary">Active</label>
                       </div>
                       <div className="flex justify-end gap-3 mt-6">
                         <button
@@ -292,7 +292,7 @@ export default function AdminLogisticsPage() {
                         <button
                           type="submit"
                           disabled={submitting}
-                          className="px-4 py-2 text-sm font-medium text-white bg-hos-gold rounded-lg hover:bg-hos-gold-hover disabled:opacity-50"
+                          className="px-4 py-2 text-sm font-medium text-hos-text-secondary bg-hos-gold rounded-lg hover:bg-hos-gold-hover disabled:opacity-50"
                         >
                           {submitting ? 'Creating...' : 'Create Partner'}
                         </button>

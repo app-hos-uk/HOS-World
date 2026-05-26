@@ -92,7 +92,7 @@ const STATUS_COLORS: Record<string, string> = {
   shipped: 'bg-hos-gold/20 text-hos-gold',
   delivered: 'bg-green-500/15 text-green-300',
   cancelled: 'bg-red-500/15 text-red-300',
-  refunded: 'bg-hos-bg-tertiary text-white',
+  refunded: 'bg-hos-bg-tertiary text-hos-text-secondary',
 };
 
 export default function AdminOrdersPage() {
@@ -287,7 +287,7 @@ export default function AdminOrdersPage() {
         <div className="space-y-6">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div>
-              <h1 className="text-2xl font-bold text-white">Orders Management</h1>
+              <h1 className="text-2xl font-bold text-hos-text-secondary">Orders Management</h1>
               <p className="text-hos-text-secondary mt-1">View and manage all customer orders</p>
             </div>
             <DataExport
@@ -301,7 +301,7 @@ export default function AdminOrdersPage() {
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-8 gap-4">
             <div className="bg-hos-bg-secondary rounded-lg shadow p-4">
               <h3 className="text-xs font-medium text-hos-text-muted uppercase">Total Orders</h3>
-              <p className="text-2xl font-bold text-white mt-1">{stats.total}</p>
+              <p className="text-2xl font-bold text-hos-text-secondary mt-1">{stats.total}</p>
             </div>
             <div className="bg-hos-bg-secondary rounded-lg shadow p-4">
               <h3 className="text-xs font-medium text-hos-text-muted uppercase">Revenue</h3>
@@ -368,7 +368,7 @@ export default function AdminOrdersPage() {
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   placeholder="Order ID, customer email..."
-                  className="w-full px-3 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50"
+                  className="w-full px-3 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50 bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none focus:border-hos-gold"
                 />
               </div>
               <div>
@@ -376,7 +376,7 @@ export default function AdminOrdersPage() {
                 <select
                   value={statusFilter}
                   onChange={(e) => setStatusFilter(e.target.value)}
-                  className="w-full px-3 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50"
+                  className="w-full px-3 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50 bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none focus:border-hos-gold"
                 >
                   <option value="ALL">All Statuses</option>
                   <option value="PROCESSING">In progress (confirmed + processing)</option>
@@ -395,7 +395,7 @@ export default function AdminOrdersPage() {
                   type="date"
                   value={dateRange.start}
                   onChange={(e) => setDateRange({ ...dateRange, start: e.target.value })}
-                  className="w-full px-3 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50"
+                  className="w-full px-3 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50 bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none focus:border-hos-gold"
                 />
               </div>
               <div>
@@ -404,7 +404,7 @@ export default function AdminOrdersPage() {
                   type="date"
                   value={dateRange.end}
                   onChange={(e) => setDateRange({ ...dateRange, end: e.target.value })}
-                  className="w-full px-3 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50"
+                  className="w-full px-3 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50 bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none focus:border-hos-gold"
                 />
               </div>
             </div>
@@ -483,13 +483,13 @@ export default function AdminOrdersPage() {
                       paginatedOrders.map((order) => (
                         <tr key={order.id} className="hover:bg-hos-bg-tertiary">
                           <td className="px-6 py-4 whitespace-nowrap">
-                            <div className="text-sm font-medium text-white">
+                            <div className="text-sm font-medium text-hos-text-secondary">
                               #{order.orderNumber || order.id.substring(0, 8)}
                             </div>
                             <div className="text-xs text-hos-text-muted">{order.id.substring(0, 12)}...</div>
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap">
-                            <div className="text-sm text-white">
+                            <div className="text-sm text-hos-text-secondary">
                               {(order.user?.firstName || order.user?.lastName)
                                 ? `${order.user.firstName || ''} ${order.user.lastName || ''}`.trim()
                                 : order.user?.email || order.customer?.email || 'Guest'}
@@ -500,7 +500,7 @@ export default function AdminOrdersPage() {
                               </div>
                             )}
                           </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-white">
+                          <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-hos-text-secondary">
                             {order.currency || 'USD'} {Number(order.total || 0).toFixed(2)}
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap">
@@ -509,7 +509,7 @@ export default function AdminOrdersPage() {
                               onChange={(e) => handleStatusChange(order.id, e.target.value, order.orderNumber || order.id.substring(0, 8), order.status)}
                               disabled={updatingOrderId !== null}
                               className={`text-xs font-semibold rounded-full px-2 py-1 border-0 cursor-pointer ${
-                                STATUS_COLORS[order.status] || 'bg-hos-bg-tertiary text-white'
+                                STATUS_COLORS[order.status] || 'bg-hos-bg-tertiary text-hos-text-secondary'
                               } ${updatingOrderId !== null ? 'opacity-50' : ''}`}
                             >
                               {ORDER_STATUSES.map((status) => (
@@ -569,15 +569,15 @@ export default function AdminOrdersPage() {
           {confirmDialog && (
             <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
               <div className="bg-hos-bg-secondary rounded-lg max-w-md w-full p-6">
-                <h3 className="text-lg font-bold text-white mb-2">Confirm Status Change</h3>
+                <h3 className="text-lg font-bold text-hos-text-secondary mb-2">Confirm Status Change</h3>
                 <p className="text-sm text-hos-text-secondary mb-4">
                   Are you sure you want to change the status of order{' '}
                   <span className="font-semibold">#{confirmDialog.orderNumber}</span> from{' '}
-                  <span className={`inline-block px-2 py-0.5 text-xs font-semibold rounded-full ${STATUS_COLORS[confirmDialog.currentStatus] || 'bg-hos-bg-tertiary text-white'}`}>
+                  <span className={`inline-block px-2 py-0.5 text-xs font-semibold rounded-full ${STATUS_COLORS[confirmDialog.currentStatus] || 'bg-hos-bg-tertiary text-hos-text-secondary'}`}>
                     {confirmDialog.currentStatus}
                   </span>{' '}
                   to{' '}
-                  <span className={`inline-block px-2 py-0.5 text-xs font-semibold rounded-full ${STATUS_COLORS[confirmDialog.newStatus] || 'bg-hos-bg-tertiary text-white'}`}>
+                  <span className={`inline-block px-2 py-0.5 text-xs font-semibold rounded-full ${STATUS_COLORS[confirmDialog.newStatus] || 'bg-hos-bg-tertiary text-hos-text-secondary'}`}>
                     {confirmDialog.newStatus}
                   </span>?
                 </p>
@@ -606,7 +606,7 @@ export default function AdminOrdersPage() {
                 <div className="p-6">
                   <div className="flex justify-between items-start mb-6">
                     <div>
-                      <h2 className="text-2xl font-bold text-white">
+                      <h2 className="text-2xl font-bold text-hos-text-secondary">
                         Order #{selectedOrder.orderNumber || selectedOrder.id.substring(0, 8)}
                       </h2>
                       <p className="text-sm text-hos-text-muted mt-1">
@@ -624,7 +624,7 @@ export default function AdminOrdersPage() {
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
                     {/* Customer Info */}
                     <div className="bg-hos-bg-secondary rounded-lg p-4">
-                      <h3 className="font-semibold text-white mb-3">Customer Information</h3>
+                      <h3 className="font-semibold text-hos-text-secondary mb-3">Customer Information</h3>
                       <div className="space-y-2 text-sm">
                         <p>
                           <span className="text-hos-text-muted">Name:</span>{' '}
@@ -641,7 +641,7 @@ export default function AdminOrdersPage() {
 
                     {/* Shipping Address */}
                     <div className="bg-hos-bg-secondary rounded-lg p-4">
-                      <h3 className="font-semibold text-white mb-3">Shipping Address</h3>
+                      <h3 className="font-semibold text-hos-text-secondary mb-3">Shipping Address</h3>
                       {selectedOrder.shippingAddress ? (
                         <div className="text-sm space-y-1">
                           <p>{selectedOrder.shippingAddress.street}</p>
@@ -659,7 +659,7 @@ export default function AdminOrdersPage() {
 
                   {/* Order Status */}
                   <div className="bg-hos-bg-secondary rounded-lg p-4 mb-6">
-                    <h3 className="font-semibold text-white mb-3">Order Status</h3>
+                    <h3 className="font-semibold text-hos-text-secondary mb-3">Order Status</h3>
                     <div className="flex flex-wrap items-center gap-4">
                       <div>
                         <span className="text-sm text-hos-text-muted mr-2">Status:</span>
@@ -668,7 +668,7 @@ export default function AdminOrdersPage() {
                           onChange={(e) => handleStatusChange(selectedOrder.id, e.target.value, selectedOrder.orderNumber || selectedOrder.id.substring(0, 8), selectedOrder.status)}
                           disabled={updatingOrderId !== null}
                           className={`text-sm font-semibold rounded-full px-3 py-1 border-0 ${
-                            STATUS_COLORS[selectedOrder.status] || 'bg-hos-bg-tertiary text-white'
+                            STATUS_COLORS[selectedOrder.status] || 'bg-hos-bg-tertiary text-hos-text-secondary'
                           } ${updatingOrderId !== null ? 'opacity-50' : ''}`}
                         >
                           {ORDER_STATUSES.map((status) => (
@@ -693,7 +693,7 @@ export default function AdminOrdersPage() {
 
                   {/* Order Items */}
                   <div className="mb-6">
-                    <h3 className="font-semibold text-white mb-3">Order Items</h3>
+                    <h3 className="font-semibold text-hos-text-secondary mb-3">Order Items</h3>
                     {selectedOrder.items && selectedOrder.items.length > 0 ? (
                       <div className="border rounded-lg overflow-hidden">
                         <table className="min-w-full divide-y divide-hos-border">
@@ -731,7 +731,7 @@ export default function AdminOrdersPage() {
 
                   {/* Order Summary */}
                   <div className="bg-hos-bg-secondary rounded-lg p-4">
-                    <h3 className="font-semibold text-white mb-3">Order Summary</h3>
+                    <h3 className="font-semibold text-hos-text-secondary mb-3">Order Summary</h3>
                     <div className="space-y-2 text-sm">
                       {selectedOrder.subtotal !== undefined && (
                         <div className="flex justify-between">

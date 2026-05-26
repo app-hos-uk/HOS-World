@@ -141,7 +141,7 @@ export function GDPRConsentBanner() {
           // Simple Banner View
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
             <div className="flex-1">
-              <h3 className="text-base sm:text-lg font-semibold text-white mb-2">
+              <h3 className="text-base sm:text-lg font-semibold text-hos-text-secondary mb-2">
                 We value your privacy
               </h3>
               <p className="text-hos-text-secondary text-sm mb-2">
@@ -182,7 +182,7 @@ export function GDPRConsentBanner() {
           // Detailed Preferences View
           <div className="space-y-4">
             <div>
-              <h3 className="text-lg font-semibold text-white mb-2">
+              <h3 className="text-lg font-semibold text-hos-text-secondary mb-2">
                 Cookie & Privacy Preferences
               </h3>
               <p className="text-hos-text-secondary text-sm">
@@ -199,7 +199,7 @@ export function GDPRConsentBanner() {
               <div className="flex items-start justify-between p-3 bg-hos-bg rounded-lg border border-hos-border">
                 <div className="flex-1">
                   <div className="flex items-center gap-2 mb-1">
-                    <h4 className="font-medium text-white">Essential Cookies</h4>
+                    <h4 className="font-medium text-hos-text-secondary">Essential Cookies</h4>
                     <span className="px-2 py-0.5 bg-hos-new-green/20 text-hos-new-green text-xs rounded-full font-medium">
                       Required
                     </span>
@@ -223,7 +223,7 @@ export function GDPRConsentBanner() {
               {/* Marketing Cookies */}
               <div className="flex items-start justify-between p-3 bg-hos-bg border border-hos-border rounded-lg">
                 <div className="flex-1">
-                  <h4 className="font-medium text-white mb-1">Marketing Cookies</h4>
+                  <h4 className="font-medium text-hos-text-secondary mb-1">Marketing Cookies</h4>
                   <p className="text-hos-text-secondary text-sm">
                     These cookies are used to deliver personalized advertisements and track campaign performance.
                   </p>
@@ -246,7 +246,7 @@ export function GDPRConsentBanner() {
               {/* Analytics Cookies */}
               <div className="flex items-start justify-between p-3 bg-hos-bg border border-hos-border rounded-lg">
                 <div className="flex-1">
-                  <h4 className="font-medium text-white mb-1">Analytics Cookies</h4>
+                  <h4 className="font-medium text-hos-text-secondary mb-1">Analytics Cookies</h4>
                   <p className="text-hos-text-secondary text-sm">
                     These cookies help us understand how visitors interact with our website by collecting and reporting information anonymously.
                   </p>

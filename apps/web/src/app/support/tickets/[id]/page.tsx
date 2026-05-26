@@ -103,8 +103,8 @@ export default function TicketDetailPage() {
       case 'OPEN': return 'bg-yellow-500/15 text-yellow-300';
       case 'IN_PROGRESS': return 'bg-hos-gold/20 text-hos-gold';
       case 'RESOLVED': return 'bg-green-500/15 text-green-300';
-      case 'CLOSED': return 'bg-hos-bg-tertiary text-white';
-      default: return 'bg-hos-bg-tertiary text-white';
+      case 'CLOSED': return 'bg-hos-bg-tertiary text-hos-text-secondary';
+      default: return 'bg-hos-bg-tertiary text-hos-text-secondary';
     }
   };
 
@@ -146,7 +146,7 @@ export default function TicketDetailPage() {
               {/* Ticket Header */}
               <div className="bg-hos-bg-secondary rounded-lg shadow p-6">
                 <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 mb-4">
-                  <h1 className="text-xl sm:text-2xl font-bold text-white">{ticket.subject}</h1>
+                  <h1 className="text-xl sm:text-2xl font-bold text-hos-text-secondary">{ticket.subject}</h1>
                   <span className={`px-3 py-1 text-sm font-medium rounded-full whitespace-nowrap ${getStatusColor(ticket.status)}`}>
                     {formatStatus(ticket.status)}
                   </span>
@@ -155,11 +155,11 @@ export default function TicketDetailPage() {
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 text-sm">
                   <div>
                     <span className="text-hos-text-muted block">Ticket ID</span>
-                    <span className="font-mono font-medium text-white">{ticket.id.slice(0, 8)}...</span>
+                    <span className="font-mono font-medium text-hos-text-secondary">{ticket.id.slice(0, 8)}...</span>
                   </div>
                   <div>
                     <span className="text-hos-text-muted block">Category</span>
-                    <span className="font-medium text-white">{CATEGORY_LABELS[ticket.category] || ticket.category}</span>
+                    <span className="font-medium text-hos-text-secondary">{CATEGORY_LABELS[ticket.category] || ticket.category}</span>
                   </div>
                   <div>
                     <span className="text-hos-text-muted block">Priority</span>
@@ -169,7 +169,7 @@ export default function TicketDetailPage() {
                   </div>
                   <div>
                     <span className="text-hos-text-muted block">Created</span>
-                    <span className="font-medium text-white">
+                    <span className="font-medium text-hos-text-secondary">
                       {new Date(ticket.createdAt).toLocaleDateString('en-US', {
                         day: 'numeric',
                         month: 'short',
@@ -192,7 +192,7 @@ export default function TicketDetailPage() {
               {/* Messages Thread */}
               <div className="bg-hos-bg-secondary rounded-lg shadow">
                 <div className="p-4 sm:p-6 border-b border-hos-border">
-                  <h2 className="text-lg font-semibold text-white">Conversation</h2>
+                  <h2 className="text-lg font-semibold text-hos-text-secondary">Conversation</h2>
                 </div>
 
                 <div className="divide-y divide-hos-border">
@@ -209,7 +209,7 @@ export default function TicketDetailPage() {
                                 {own ? 'Y' : 'S'}
                               </div>
                               <div>
-                                <span className="font-medium text-white text-sm">
+                                <span className="font-medium text-hos-text-secondary text-sm">
                                   {msg.senderName || (own ? 'You' : 'Support')}
                                 </span>
                                 {msg.senderRole && !own && (

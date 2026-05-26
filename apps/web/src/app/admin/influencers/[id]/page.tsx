@@ -141,19 +141,19 @@ export default function InfluencerDetailPage() {
     const styles: Record<string, string> = {
       ACTIVE: 'bg-green-500/15 text-green-300',
       SUSPENDED: 'bg-red-500/15 text-red-300',
-      INACTIVE: 'bg-hos-bg-tertiary text-white',
+      INACTIVE: 'bg-hos-bg-tertiary text-hos-text-secondary',
     };
-    return styles[status] || 'bg-hos-bg-tertiary text-white';
+    return styles[status] || 'bg-hos-bg-tertiary text-hos-text-secondary';
   };
 
   const getTierBadge = (tier: string) => {
     const styles: Record<string, string> = {
-      PLATINUM: 'bg-hos-surface text-white',
+      PLATINUM: 'bg-hos-surface text-hos-text-secondary',
       GOLD: 'bg-yellow-500/15 text-yellow-300',
-      SILVER: 'bg-hos-bg-tertiary text-white',
+      SILVER: 'bg-hos-bg-tertiary text-hos-text-secondary',
       BRONZE: 'bg-orange-500/15 text-orange-300',
     };
-    return styles[tier] || 'bg-hos-bg-tertiary text-white';
+    return styles[tier] || 'bg-hos-bg-tertiary text-hos-text-secondary';
   };
 
   if (loading) {
@@ -173,7 +173,7 @@ export default function InfluencerDetailPage() {
       <RouteGuard allowedRoles={['ADMIN', 'MARKETING']} showAccessDenied={true}>
         <AdminLayout>
           <div className="text-center py-20">
-            <h2 className="text-2xl font-bold text-white mb-2">Influencer Not Found</h2>
+            <h2 className="text-2xl font-bold text-hos-text-secondary mb-2">Influencer Not Found</h2>
             <p className="text-hos-text-secondary mb-6">The influencer you are looking for does not exist or has been removed.</p>
             <Link
               href="/admin/influencers"
@@ -208,7 +208,7 @@ export default function InfluencerDetailPage() {
                 </svg>
               </button>
               <div>
-                <h1 className="text-2xl font-bold text-white">{influencer.displayName}</h1>
+                <h1 className="text-2xl font-bold text-hos-text-secondary">{influencer.displayName}</h1>
                 <p className="text-hos-text-muted">{influencer.user.email}</p>
               </div>
             </div>
@@ -232,7 +232,7 @@ export default function InfluencerDetailPage() {
           <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
             <div className="bg-hos-bg-secondary rounded-lg shadow-sm p-4">
               <p className="text-sm text-hos-text-muted">Total Clicks</p>
-              <p className="text-2xl font-bold text-white">{influencer.totalClicks}</p>
+              <p className="text-2xl font-bold text-hos-text-secondary">{influencer.totalClicks}</p>
             </div>
             <div className="bg-hos-bg-secondary rounded-lg shadow-sm p-4">
               <p className="text-sm text-hos-text-muted">Conversions</p>
@@ -244,7 +244,7 @@ export default function InfluencerDetailPage() {
             </div>
             <div className="bg-hos-bg-secondary rounded-lg shadow-sm p-4">
               <p className="text-sm text-hos-text-muted">Total Sales</p>
-              <p className="text-2xl font-bold text-white">{formatCurrency(influencer.totalSalesAmount)}</p>
+              <p className="text-2xl font-bold text-hos-text-secondary">{formatCurrency(influencer.totalSalesAmount)}</p>
             </div>
             <div className="bg-hos-bg-secondary rounded-lg shadow-sm p-4">
               <p className="text-sm text-hos-text-muted">Commission Earned</p>

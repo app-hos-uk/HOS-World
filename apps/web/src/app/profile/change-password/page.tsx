@@ -67,7 +67,7 @@ export default function ChangePasswordPage() {
                     value={formData.currentPassword}
                     onChange={(e) => setFormData({ ...formData, currentPassword: e.target.value })}
                     required
-                    className="w-full px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50"
+                    className="w-full px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50 bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none focus:border-hos-gold"
                     placeholder="Enter current password"
                   />
                 </div>
@@ -79,7 +79,7 @@ export default function ChangePasswordPage() {
                     onChange={(e) => setFormData({ ...formData, newPassword: e.target.value })}
                     required
                     minLength={8}
-                    className="w-full px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50"
+                    className="w-full px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50 bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none focus:border-hos-gold"
                     placeholder="Enter new password (min 8 characters)"
                   />
                 </div>
@@ -91,7 +91,7 @@ export default function ChangePasswordPage() {
                     onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}
                     required
                     minLength={8}
-                    className="w-full px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50"
+                    className="w-full px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50 bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none focus:border-hos-gold"
                     placeholder="Confirm new password"
                   />
                 </div>

@@ -34,7 +34,7 @@ export default function AdminProductCampaignsPage() {
       <AdminLayout>
         <div className="p-6 max-w-5xl mx-auto">
           <div className="flex justify-between items-center mb-4">
-            <h1 className="text-2xl font-semibold text-white">Product campaigns</h1>
+            <h1 className="text-2xl font-semibold text-hos-text-secondary">Product campaigns</h1>
             <Link
               href="/admin/product-campaigns/new"
               className="text-sm rounded-md bg-violet-700 px-3 py-2 text-white"
@@ -44,7 +44,7 @@ export default function AdminProductCampaignsPage() {
           </div>
           <div className="flex gap-2 mb-4">
             <select
-              className="border rounded px-2 py-1 text-sm"
+              className="border rounded px-2 py-1 text-sm bg-hos-bg-secondary text-hos-text-secondary focus:outline-none border-hos-border"
               value={status}
               onChange={(e) => setStatus(e.target.value)}
             >
@@ -56,7 +56,7 @@ export default function AdminProductCampaignsPage() {
             </select>
             <button
               type="button"
-              className="text-sm px-3 py-1 rounded bg-hos-surface text-white"
+              className="text-sm px-3 py-1 rounded bg-hos-surface text-hos-text-secondary"
               onClick={() => load()}
             >
               Apply

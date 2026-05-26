@@ -336,7 +336,7 @@ export default function SellerBulkProductsPage() {
                   type="file"
                   accept=".csv"
                   onChange={(e) => setSelectedFile(e.target.files?.[0] || null)}
-                  className="w-full px-4 py-2 border border-hos-border rounded-lg focus:outline-none focus:ring-2 focus:ring-hos-gold/50"
+                  className="w-full px-4 py-2 border border-hos-border rounded-lg bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none focus:ring-2 focus:ring-hos-gold/50 focus:border-hos-gold"
                   required
                 />
               </div>
@@ -427,7 +427,7 @@ export default function SellerBulkProductsPage() {
           
           <div className="space-y-4">
             <div>
-              <h4 className="font-medium text-white mb-2">Required Columns:</h4>
+              <h4 className="font-medium text-hos-text-secondary mb-2">Required Columns:</h4>
               <ul className="list-disc list-inside space-y-1 text-sm text-hos-text-secondary">
                 <li><code className="bg-hos-gold/20 px-1 rounded">name</code> - Product name (required for each row)</li>
                 <li><code className="bg-hos-gold/20 px-1 rounded">price</code> - Product price (number, e.g., 49.99)</li>
@@ -437,7 +437,7 @@ export default function SellerBulkProductsPage() {
             </div>
 
             <div>
-              <h4 className="font-medium text-white mb-2">Optional Columns:</h4>
+              <h4 className="font-medium text-hos-text-secondary mb-2">Optional Columns:</h4>
               <ul className="list-disc list-inside space-y-1 text-sm text-hos-text-secondary">
                 <li><code className="bg-hos-gold/20 px-1 rounded">sku</code> - Product SKU/identifier</li>
                 <li><code className="bg-hos-gold/20 px-1 rounded">currency</code> - Currency code (USD, GBP, EUR)</li>
@@ -450,7 +450,7 @@ export default function SellerBulkProductsPage() {
             </div>
 
             <div className="bg-hos-bg-secondary rounded-lg p-4 border border-hos-border-accent">
-              <h4 className="font-medium text-white mb-2">Example Row:</h4>
+              <h4 className="font-medium text-hos-text-secondary mb-2">Example Row:</h4>
               <div className="text-xs font-mono bg-hos-bg-tertiary p-3 rounded overflow-x-auto whitespace-nowrap">
                 &quot;Harry Potter Wand&quot;,&quot;Authentic wand replica&quot;,&quot;HP-001&quot;,&quot;49.99&quot;,&quot;100&quot;,&quot;USD&quot;,&quot;Collectibles&quot;,&quot;harry-potter&quot;,&quot;wand|replica&quot;,&quot;https://example.com/image.jpg&quot;,&quot;ACTIVE&quot;
               </div>

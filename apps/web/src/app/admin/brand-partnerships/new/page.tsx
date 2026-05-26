@@ -67,11 +67,11 @@ export default function AdminBrandPartnershipNewPage() {
           <Link href="/admin/brand-partnerships" className="text-violet-400 text-sm">
             ← Back
           </Link>
-          <h1 className="text-2xl font-semibold text-white">New brand partner</h1>
+          <h1 className="text-2xl font-semibold text-hos-text-secondary">New brand partner</h1>
           <label className="block text-sm">
             <span className="text-hos-text-secondary">Name <span className="text-red-500">*</span></span>
             <input
-              className={`mt-1 w-full border rounded px-3 py-2 ${nameError ? 'border-red-500/40 focus:border-red-500' : 'border-hos-border'}`}
+              className={`mt-1 w-full border rounded px-3 py-2 ${nameError ? 'border-red-500/40 focus:border-red-500' : 'border-hos-border'} bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none`}
               value={name}
               onChange={(e) => setName(sanitizeNameInput(e.target.value))}
               placeholder="Enter brand/partner name"
@@ -81,7 +81,7 @@ export default function AdminBrandPartnershipNewPage() {
           <label className="block text-sm">
             <span className="text-hos-text-secondary">Contact name</span>
             <input
-              className={`mt-1 w-full border rounded px-3 py-2 ${contactNameError ? 'border-red-500/40 focus:border-red-500' : 'border-hos-border'}`}
+              className={`mt-1 w-full border rounded px-3 py-2 ${contactNameError ? 'border-red-500/40 focus:border-red-500' : 'border-hos-border'} bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none`}
               value={contactName}
               onChange={(e) => setContactName(sanitizeNameInput(e.target.value))}
               placeholder="Enter contact person's name"
@@ -92,7 +92,7 @@ export default function AdminBrandPartnershipNewPage() {
             <span className="text-hos-text-secondary">Contact email</span>
             <input
               type="email"
-              className="mt-1 w-full border rounded px-3 py-2"
+              className="mt-1 w-full border rounded px-3 py-2 bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none border-hos-border"
               value={contactEmail}
               onChange={(e) => setContactEmail(e.target.value)}
             />
@@ -100,7 +100,7 @@ export default function AdminBrandPartnershipNewPage() {
           <label className="block text-sm">
             <span className="text-hos-text-secondary">Description</span>
             <textarea
-              className="mt-1 w-full border rounded px-3 py-2"
+              className="mt-1 w-full border rounded px-3 py-2 bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none border-hos-border"
               rows={3}
               value={description}
               onChange={(e) => setDescription(e.target.value)}
@@ -110,7 +110,7 @@ export default function AdminBrandPartnershipNewPage() {
             <span className="text-hos-text-secondary">Contract start</span>
             <input
               type="date"
-              className="mt-1 w-full border rounded px-3 py-2"
+              className="mt-1 w-full border rounded px-3 py-2 bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none border-hos-border"
               value={contractStart}
               onChange={(e) => setContractStart(e.target.value)}
             />
@@ -119,7 +119,7 @@ export default function AdminBrandPartnershipNewPage() {
             <span className="text-hos-text-secondary">Contract end</span>
             <input
               type="date"
-              className="mt-1 w-full border rounded px-3 py-2"
+              className="mt-1 w-full border rounded px-3 py-2 bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none border-hos-border"
               value={contractEnd}
               onChange={(e) => setContractEnd(e.target.value)}
             />
@@ -128,7 +128,7 @@ export default function AdminBrandPartnershipNewPage() {
             <span className="text-hos-text-secondary">Total budget</span>
             <input
               type="number"
-              className="mt-1 w-full border rounded px-3 py-2"
+              className="mt-1 w-full border rounded px-3 py-2 bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none border-hos-border"
               value={totalBudget}
               onChange={(e) => setTotalBudget(e.target.value)}
             />

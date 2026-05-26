@@ -267,7 +267,7 @@ export default function AdminReturnPoliciesPage() {
       <AdminLayout>
         <div className="space-y-6">
           <div className="flex justify-between items-center">
-            <h1 className="text-2xl sm:text-3xl font-bold text-white">Return Policies</h1>
+            <h1 className="text-2xl sm:text-3xl font-bold text-hos-text-secondary">Return Policies</h1>
             <button
               onClick={() => setShowCreateModal(true)}
               className="px-4 py-2 bg-hos-gold text-[#1a1406] rounded-lg hover:bg-hos-gold-hover transition-colors font-medium"
@@ -327,7 +327,7 @@ export default function AdminReturnPoliciesPage() {
                     {policies.map((policy) => (
                       <tr key={policy.id} className="hover:bg-hos-bg-tertiary">
                         <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="text-sm font-medium text-white">{policy.name}</div>
+                          <div className="text-sm font-medium text-hos-text-secondary">{policy.name}</div>
                           {policy.description && (
                             <div className="text-sm text-hos-text-muted">{policy.description}</div>
                           )}
@@ -348,7 +348,7 @@ export default function AdminReturnPoliciesPage() {
                             className={`px-2 py-1 text-xs font-medium rounded-full ${
                               policy.isActive
                                 ? 'bg-green-500/15 text-green-300'
-                                : 'bg-hos-bg-tertiary text-white'
+                                : 'bg-hos-bg-tertiary text-hos-text-secondary'
                             }`}
                           >
                             {policy.isActive ? 'Active' : 'Inactive'}
@@ -392,7 +392,7 @@ export default function AdminReturnPoliciesPage() {
                       type="text"
                       value={createForm.name}
                       onChange={(e) => setCreateForm({ ...createForm, name: e.target.value })}
-                      className="w-full px-3 py-2 border border-hos-border rounded-lg focus:ring-hos-gold/50 focus:border-hos-gold"
+                      className="w-full px-3 py-2 border border-hos-border rounded-lg focus:ring-hos-gold/50 focus:border-hos-gold bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none focus:border-hos-gold"
                       placeholder="e.g., Standard Return Policy"
                     />
                   </div>
@@ -403,7 +403,7 @@ export default function AdminReturnPoliciesPage() {
                     <textarea
                       value={createForm.description}
                       onChange={(e) => setCreateForm({ ...createForm, description: e.target.value })}
-                      className="w-full px-3 py-2 border border-hos-border rounded-lg focus:ring-hos-gold/50 focus:border-hos-gold"
+                      className="w-full px-3 py-2 border border-hos-border rounded-lg focus:ring-hos-gold/50 focus:border-hos-gold bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none focus:border-hos-gold"
                       rows={3}
                       placeholder="Policy description..."
                     />
@@ -417,7 +417,7 @@ export default function AdminReturnPoliciesPage() {
                         type="text"
                         value={createForm.sellerId}
                         onChange={(e) => setCreateForm({ ...createForm, sellerId: e.target.value, productId: '', categoryId: '' })}
-                        className="w-full px-3 py-2 border border-hos-border rounded-lg focus:ring-hos-gold/50 focus:border-hos-gold"
+                        className="w-full px-3 py-2 border border-hos-border rounded-lg focus:ring-hos-gold/50 focus:border-hos-gold bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none focus:border-hos-gold"
                         placeholder="Seller UUID"
                       />
                     </div>
@@ -429,7 +429,7 @@ export default function AdminReturnPoliciesPage() {
                         type="text"
                         value={createForm.productId}
                         onChange={(e) => setCreateForm({ ...createForm, productId: e.target.value, sellerId: '', categoryId: '' })}
-                        className="w-full px-3 py-2 border border-hos-border rounded-lg focus:ring-hos-gold/50 focus:border-hos-gold"
+                        className="w-full px-3 py-2 border border-hos-border rounded-lg focus:ring-hos-gold/50 focus:border-hos-gold bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none focus:border-hos-gold"
                         placeholder="Product UUID"
                       />
                     </div>
@@ -441,7 +441,7 @@ export default function AdminReturnPoliciesPage() {
                         type="text"
                         value={createForm.categoryId}
                         onChange={(e) => setCreateForm({ ...createForm, categoryId: e.target.value, sellerId: '', productId: '' })}
-                        className="w-full px-3 py-2 border border-hos-border rounded-lg focus:ring-hos-gold/50 focus:border-hos-gold"
+                        className="w-full px-3 py-2 border border-hos-border rounded-lg focus:ring-hos-gold/50 focus:border-hos-gold bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none focus:border-hos-gold"
                         placeholder="Category UUID"
                       />
                     </div>
@@ -456,7 +456,7 @@ export default function AdminReturnPoliciesPage() {
                         type="number"
                         value={createForm.returnWindowDays}
                         onChange={(e) => setCreateForm({ ...createForm, returnWindowDays: parseInt(e.target.value) || 30 })}
-                        className="w-full px-3 py-2 border border-hos-border rounded-lg focus:ring-hos-gold/50 focus:border-hos-gold"
+                        className="w-full px-3 py-2 border border-hos-border rounded-lg focus:ring-hos-gold/50 focus:border-hos-gold bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none focus:border-hos-gold"
                         min="1"
                       />
                     </div>
@@ -468,7 +468,7 @@ export default function AdminReturnPoliciesPage() {
                         type="number"
                         value={createForm.priority}
                         onChange={(e) => setCreateForm({ ...createForm, priority: parseInt(e.target.value) || 0 })}
-                        className="w-full px-3 py-2 border border-hos-border rounded-lg focus:ring-hos-gold/50 focus:border-hos-gold"
+                        className="w-full px-3 py-2 border border-hos-border rounded-lg focus:ring-hos-gold/50 focus:border-hos-gold bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none focus:border-hos-gold"
                       />
                     </div>
                   </div>
@@ -479,7 +479,7 @@ export default function AdminReturnPoliciesPage() {
                     <select
                       value={createForm.refundMethod}
                       onChange={(e) => setCreateForm({ ...createForm, refundMethod: e.target.value })}
-                      className="w-full px-3 py-2 border border-hos-border rounded-lg focus:ring-hos-gold/50 focus:border-hos-gold"
+                      className="w-full px-3 py-2 border border-hos-border rounded-lg focus:ring-hos-gold/50 focus:border-hos-gold bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none focus:border-hos-gold"
                     >
                       {REFUND_METHODS.map((method) => (
                         <option key={method} value={method}>
@@ -497,7 +497,7 @@ export default function AdminReturnPoliciesPage() {
                       step="0.01"
                       value={createForm.restockingFee}
                       onChange={(e) => setCreateForm({ ...createForm, restockingFee: e.target.value })}
-                      className="w-full px-3 py-2 border border-hos-border rounded-lg focus:ring-hos-gold/50 focus:border-hos-gold"
+                      className="w-full px-3 py-2 border border-hos-border rounded-lg focus:ring-hos-gold/50 focus:border-hos-gold bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none focus:border-hos-gold"
                       placeholder="0.00"
                     />
                   </div>
@@ -574,7 +574,7 @@ export default function AdminReturnPoliciesPage() {
                       type="text"
                       value={editForm.name}
                       onChange={(e) => setEditForm({ ...editForm, name: e.target.value })}
-                      className="w-full px-3 py-2 border border-hos-border rounded-lg focus:ring-hos-gold/50 focus:border-hos-gold"
+                      className="w-full px-3 py-2 border border-hos-border rounded-lg focus:ring-hos-gold/50 focus:border-hos-gold bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none focus:border-hos-gold"
                     />
                   </div>
                   <div>
@@ -584,7 +584,7 @@ export default function AdminReturnPoliciesPage() {
                     <textarea
                       value={editForm.description}
                       onChange={(e) => setEditForm({ ...editForm, description: e.target.value })}
-                      className="w-full px-3 py-2 border border-hos-border rounded-lg focus:ring-hos-gold/50 focus:border-hos-gold"
+                      className="w-full px-3 py-2 border border-hos-border rounded-lg focus:ring-hos-gold/50 focus:border-hos-gold bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none focus:border-hos-gold"
                       rows={3}
                     />
                   </div>
@@ -597,7 +597,7 @@ export default function AdminReturnPoliciesPage() {
                         type="text"
                         value={editForm.sellerId}
                         onChange={(e) => setEditForm({ ...editForm, sellerId: e.target.value, productId: '', categoryId: '' })}
-                        className="w-full px-3 py-2 border border-hos-border rounded-lg focus:ring-hos-gold/50 focus:border-hos-gold"
+                        className="w-full px-3 py-2 border border-hos-border rounded-lg focus:ring-hos-gold/50 focus:border-hos-gold bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none focus:border-hos-gold"
                       />
                     </div>
                     <div>
@@ -608,7 +608,7 @@ export default function AdminReturnPoliciesPage() {
                         type="text"
                         value={editForm.productId}
                         onChange={(e) => setEditForm({ ...editForm, productId: e.target.value, sellerId: '', categoryId: '' })}
-                        className="w-full px-3 py-2 border border-hos-border rounded-lg focus:ring-hos-gold/50 focus:border-hos-gold"
+                        className="w-full px-3 py-2 border border-hos-border rounded-lg focus:ring-hos-gold/50 focus:border-hos-gold bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none focus:border-hos-gold"
                       />
                     </div>
                     <div>
@@ -619,7 +619,7 @@ export default function AdminReturnPoliciesPage() {
                         type="text"
                         value={editForm.categoryId}
                         onChange={(e) => setEditForm({ ...editForm, categoryId: e.target.value, sellerId: '', productId: '' })}
-                        className="w-full px-3 py-2 border border-hos-border rounded-lg focus:ring-hos-gold/50 focus:border-hos-gold"
+                        className="w-full px-3 py-2 border border-hos-border rounded-lg focus:ring-hos-gold/50 focus:border-hos-gold bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none focus:border-hos-gold"
                       />
                     </div>
                   </div>
@@ -632,7 +632,7 @@ export default function AdminReturnPoliciesPage() {
                         type="number"
                         value={editForm.returnWindowDays}
                         onChange={(e) => setEditForm({ ...editForm, returnWindowDays: parseInt(e.target.value) || 30 })}
-                        className="w-full px-3 py-2 border border-hos-border rounded-lg focus:ring-hos-gold/50 focus:border-hos-gold"
+                        className="w-full px-3 py-2 border border-hos-border rounded-lg focus:ring-hos-gold/50 focus:border-hos-gold bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none focus:border-hos-gold"
                         min="1"
                       />
                     </div>
@@ -644,7 +644,7 @@ export default function AdminReturnPoliciesPage() {
                         type="number"
                         value={editForm.priority}
                         onChange={(e) => setEditForm({ ...editForm, priority: parseInt(e.target.value) || 0 })}
-                        className="w-full px-3 py-2 border border-hos-border rounded-lg focus:ring-hos-gold/50 focus:border-hos-gold"
+                        className="w-full px-3 py-2 border border-hos-border rounded-lg focus:ring-hos-gold/50 focus:border-hos-gold bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none focus:border-hos-gold"
                       />
                     </div>
                   </div>
@@ -655,7 +655,7 @@ export default function AdminReturnPoliciesPage() {
                     <select
                       value={editForm.refundMethod}
                       onChange={(e) => setEditForm({ ...editForm, refundMethod: e.target.value })}
-                      className="w-full px-3 py-2 border border-hos-border rounded-lg focus:ring-hos-gold/50 focus:border-hos-gold"
+                      className="w-full px-3 py-2 border border-hos-border rounded-lg focus:ring-hos-gold/50 focus:border-hos-gold bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none focus:border-hos-gold"
                     >
                       {REFUND_METHODS.map((method) => (
                         <option key={method} value={method}>
@@ -673,7 +673,7 @@ export default function AdminReturnPoliciesPage() {
                       step="0.01"
                       value={editForm.restockingFee}
                       onChange={(e) => setEditForm({ ...editForm, restockingFee: e.target.value })}
-                      className="w-full px-3 py-2 border border-hos-border rounded-lg focus:ring-hos-gold/50 focus:border-hos-gold"
+                      className="w-full px-3 py-2 border border-hos-border rounded-lg focus:ring-hos-gold/50 focus:border-hos-gold bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none focus:border-hos-gold"
                     />
                   </div>
                   <div className="space-y-2">

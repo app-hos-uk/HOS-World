@@ -134,7 +134,7 @@ export default function AdminSearchPage() {
     <RouteGuard allowedRoles={['ADMIN']}>
       <AdminLayout>
         <div className="space-y-6">
-          <h1 className="text-2xl font-bold text-white">Search Management</h1>
+          <h1 className="text-2xl font-bold text-hos-text-secondary">Search Management</h1>
 
           {error && (
             <div className="bg-red-500/10 border border-red-500/30 rounded-lg p-4">
@@ -174,17 +174,17 @@ export default function AdminSearchPage() {
             </div>
             <div className="bg-hos-bg-secondary rounded-lg shadow p-6">
               <h3 className="text-sm font-medium text-hos-text-muted">Total Documents</h3>
-              <p className="text-3xl font-bold text-white mt-2">
+              <p className="text-3xl font-bold text-hos-text-secondary mt-2">
                 {stats?.totalDocuments?.toLocaleString() ?? '—'}
               </p>
             </div>
             <div className="bg-hos-bg-secondary rounded-lg shadow p-6">
               <h3 className="text-sm font-medium text-hos-text-muted">Index Size</h3>
-              <p className="text-3xl font-bold text-white mt-2">{stats?.indexSize ?? '—'}</p>
+              <p className="text-3xl font-bold text-hos-text-secondary mt-2">{stats?.indexSize ?? '—'}</p>
             </div>
             <div className="bg-hos-bg-secondary rounded-lg shadow p-6">
               <h3 className="text-sm font-medium text-hos-text-muted">Last Updated</h3>
-              <p className="text-lg font-semibold text-white mt-2">
+              <p className="text-lg font-semibold text-hos-text-secondary mt-2">
                 {stats?.lastUpdate ? new Date(stats.lastUpdate).toLocaleString() : '—'}
               </p>
             </div>
@@ -192,12 +192,12 @@ export default function AdminSearchPage() {
 
           {/* Index Actions */}
           <div className="bg-hos-bg-secondary rounded-lg shadow p-6">
-            <h2 className="text-lg font-semibold text-white mb-4">Index Operations</h2>
+            <h2 className="text-lg font-semibold text-hos-text-secondary mb-4">Index Operations</h2>
             <div className="flex flex-wrap gap-4">
               <button
                 onClick={() => setConfirmAction('sync')}
                 disabled={syncing || rebuilding}
-                className="px-5 py-2.5 text-sm font-medium text-white bg-hos-gold rounded-lg hover:bg-hos-gold-hover disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                className="px-5 py-2.5 text-sm font-medium text-hos-text-secondary bg-hos-gold rounded-lg hover:bg-hos-gold-hover disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
               >
                 {syncing && <span className="animate-spin inline-block w-4 h-4 border-2 border-white border-t-transparent rounded-full" />}
                 {syncing ? 'Syncing...' : 'Sync Products'}
@@ -205,7 +205,7 @@ export default function AdminSearchPage() {
               <button
                 onClick={() => setConfirmAction('rebuild')}
                 disabled={syncing || rebuilding}
-                className="px-5 py-2.5 text-sm font-medium text-white bg-red-600 rounded-lg hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                className="px-5 py-2.5 text-sm font-medium text-hos-text-secondary bg-red-600 rounded-lg hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
               >
                 {rebuilding && <span className="animate-spin inline-block w-4 h-4 border-2 border-white border-t-transparent rounded-full" />}
                 {rebuilding ? 'Rebuilding...' : 'Rebuild Index'}
@@ -224,7 +224,7 @@ export default function AdminSearchPage() {
           {confirmAction && (
             <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
               <div className="bg-hos-bg-secondary rounded-lg shadow-xl p-6 max-w-sm w-full mx-4">
-                <h3 className="text-lg font-semibold text-white">
+                <h3 className="text-lg font-semibold text-hos-text-secondary">
                   {confirmAction === 'sync' ? 'Sync Products?' : 'Rebuild Index?'}
                 </h3>
                 <p className="mt-2 text-sm text-hos-text-secondary">
@@ -241,7 +241,7 @@ export default function AdminSearchPage() {
                   </button>
                   <button
                     onClick={confirmAction === 'sync' ? handleSync : handleRebuild}
-                    className={`px-4 py-2 text-sm font-medium text-white rounded-md ${
+                    className={`px-4 py-2 text-sm font-medium text-hos-text-secondary rounded-md ${
                       confirmAction === 'sync' ? 'bg-hos-gold hover:bg-hos-gold-hover' : 'bg-red-600 hover:bg-red-700'
                     }`}
                   >
@@ -254,7 +254,7 @@ export default function AdminSearchPage() {
 
           {/* Search Testing Tool */}
           <div className="bg-hos-bg-secondary rounded-lg shadow p-6">
-            <h2 className="text-lg font-semibold text-white mb-4">Search Testing</h2>
+            <h2 className="text-lg font-semibold text-hos-text-secondary mb-4">Search Testing</h2>
             <div className="flex gap-3">
               <input
                 type="text"
@@ -268,7 +268,7 @@ export default function AdminSearchPage() {
                 type="button"
                 onClick={() => handleSearch(1)}
                 disabled={searching || !searchQuery.trim()}
-                className="px-5 py-2.5 text-sm font-medium text-white bg-hos-gold rounded-lg hover:bg-hos-gold-hover disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                className="px-5 py-2.5 text-sm font-medium text-hos-text-secondary bg-hos-gold rounded-lg hover:bg-hos-gold-hover disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
               >
                 {searching && <span className="animate-spin inline-block w-4 h-4 border-2 border-white border-t-transparent rounded-full" />}
                 Search
@@ -278,7 +278,7 @@ export default function AdminSearchPage() {
             {searchCount !== null && (
               <div className="mt-4">
                 <p className="text-sm text-hos-text-secondary mb-3">
-                  Found <span className="font-semibold text-white">{searchCount}</span> result{searchCount !== 1 ? 's' : ''}
+                  Found <span className="font-semibold text-hos-text-secondary">{searchCount}</span> result{searchCount !== 1 ? 's' : ''}
                   {searchCount > 0 && (
                     <span className="text-hos-text-muted">
                       {' '}
@@ -304,7 +304,7 @@ export default function AdminSearchPage() {
                             <td className="px-4 py-3 text-sm text-hos-text-muted font-mono">
                               {String(item.id).slice(0, 8)}...
                             </td>
-                            <td className="px-4 py-3 text-sm font-medium text-white">
+                            <td className="px-4 py-3 text-sm font-medium text-hos-text-secondary">
                               {item.name || item.title || '—'}
                             </td>
                             <td className="px-4 py-3 text-sm text-hos-text-secondary text-right">
@@ -351,7 +351,7 @@ export default function AdminSearchPage() {
           {/* Index Details */}
           {stats?.indexes && stats.indexes.length > 0 && (
             <div className="bg-hos-bg-secondary rounded-lg shadow p-6">
-              <h2 className="text-lg font-semibold text-white mb-4">Index Details</h2>
+              <h2 className="text-lg font-semibold text-hos-text-secondary mb-4">Index Details</h2>
               <div className="overflow-x-auto">
                 <table className="min-w-full divide-y divide-hos-border">
                   <thead className="bg-hos-bg-secondary">
@@ -364,7 +364,7 @@ export default function AdminSearchPage() {
                   <tbody className="divide-y divide-hos-border">
                     {stats.indexes.map((idx: any, i: number) => (
                       <tr key={idx.uid || i} className="hover:bg-hos-bg-tertiary">
-                        <td className="px-6 py-4 text-sm font-medium text-white">{idx.uid || idx.name || `Index ${i + 1}`}</td>
+                        <td className="px-6 py-4 text-sm font-medium text-hos-text-secondary">{idx.uid || idx.name || `Index ${i + 1}`}</td>
                         <td className="px-6 py-4 text-sm text-hos-text-secondary text-right">{idx.numberOfDocuments?.toLocaleString() ?? '—'}</td>
                         <td className="px-6 py-4 text-sm text-hos-text-muted text-right">{idx.size ?? '—'}</td>
                       </tr>

@@ -115,7 +115,7 @@ export default function InfluencerStorefrontPage() {
         {/* Header */}
         <div className="flex items-center justify-between mb-8">
           <div>
-            <h1 className="text-2xl font-bold text-white">Storefront Editor</h1>
+            <h1 className="text-2xl font-bold text-hos-text-secondary">Storefront Editor</h1>
             <p className="text-hos-text-secondary mt-1">
               Customize how your public storefront looks
             </p>
@@ -148,7 +148,7 @@ export default function InfluencerStorefrontPage() {
           <div className="lg:col-span-2 space-y-6">
             {/* Theme Colors */}
             <div className="bg-hos-bg-secondary rounded-xl p-6 shadow-sm">
-              <h2 className="text-lg font-semibold text-white mb-4">Theme Colors</h2>
+              <h2 className="text-lg font-semibold text-hos-text-secondary mb-4">Theme Colors</h2>
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-hos-text-secondary mb-2">
@@ -231,7 +231,7 @@ export default function InfluencerStorefrontPage() {
 
             {/* Typography & Layout */}
             <div className="bg-hos-bg-secondary rounded-xl p-6 shadow-sm">
-              <h2 className="text-lg font-semibold text-white mb-4">Typography & Layout</h2>
+              <h2 className="text-lg font-semibold text-hos-text-secondary mb-4">Typography & Layout</h2>
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-hos-text-secondary mb-2">
@@ -266,7 +266,7 @@ export default function InfluencerStorefrontPage() {
 
             {/* Display Options */}
             <div className="bg-hos-bg-secondary rounded-xl p-6 shadow-sm">
-              <h2 className="text-lg font-semibold text-white mb-4">Display Options</h2>
+              <h2 className="text-lg font-semibold text-hos-text-secondary mb-4">Display Options</h2>
               <div className="space-y-4">
                 <label className="flex items-center gap-3">
                   <input
@@ -300,7 +300,7 @@ export default function InfluencerStorefrontPage() {
 
             {/* SEO Settings */}
             <div className="bg-hos-bg-secondary rounded-xl p-6 shadow-sm">
-              <h2 className="text-lg font-semibold text-white mb-4">SEO Settings</h2>
+              <h2 className="text-lg font-semibold text-hos-text-secondary mb-4">SEO Settings</h2>
               <div className="space-y-4">
                 <div>
                   <label className="block text-sm font-medium text-hos-text-secondary mb-2">
@@ -333,7 +333,7 @@ export default function InfluencerStorefrontPage() {
           {/* Preview Panel */}
           <div className="lg:col-span-1">
             <div className="sticky top-8">
-              <h3 className="text-lg font-semibold text-white mb-4">Preview</h3>
+              <h3 className="text-lg font-semibold text-hos-text-secondary mb-4">Preview</h3>
               <div
                 className="rounded-xl overflow-hidden shadow-lg border border-hos-border"
                 style={{

@@ -253,7 +253,7 @@ export function BulkSelectTable<T>({
                     {columns.map((column) => (
                       <td
                         key={column.key}
-                        className="px-6 py-4 whitespace-nowrap text-sm text-white"
+                        className="px-6 py-4 whitespace-nowrap text-sm text-hos-text-secondary"
                         onClick={() => onRowClick?.(item)}
                       >
                         {column.render

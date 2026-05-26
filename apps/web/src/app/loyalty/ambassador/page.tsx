@@ -130,7 +130,7 @@ export default function AmbassadorHubPage() {
                   <div>
                     <label className="text-stone-500 text-sm block mb-1">Display name</label>
                     <input
-                      className="w-full rounded bg-stone-900 border border-stone-700 px-3 py-2"
+                      className="w-full rounded bg-stone-900 border border-stone-700 px-3 py-2 bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none border-hos-border"
                       value={enrollName}
                       onChange={(e) => setEnrollName(e.target.value)}
                       required
@@ -139,7 +139,7 @@ export default function AmbassadorHubPage() {
                   <div>
                     <label className="text-stone-500 text-sm block mb-1">Bio (optional)</label>
                     <textarea
-                      className="w-full rounded bg-stone-900 border border-stone-700 px-3 py-2"
+                      className="w-full rounded bg-stone-900 border border-stone-700 px-3 py-2 bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none border-hos-border"
                       rows={3}
                       value={enrollBio}
                       onChange={(e) => setEnrollBio(e.target.value)}
@@ -236,7 +236,7 @@ export default function AmbassadorHubPage() {
                     <p className="text-amber-100/90 font-primary">Submit content</p>
                     <div className="flex flex-wrap gap-2">
                       <select
-                        className="bg-stone-900 border border-stone-700 rounded px-2 py-1"
+                        className="bg-stone-900 border border-stone-700 rounded px-2 py-1 bg-hos-bg-secondary text-hos-text-secondary focus:outline-none border-hos-border"
                         value={ugcType}
                         onChange={(e) => setUgcType(e.target.value)}
                       >
@@ -247,7 +247,7 @@ export default function AmbassadorHubPage() {
                         ))}
                       </select>
                       <input
-                        className="flex-1 min-w-[12rem] bg-stone-900 border border-stone-700 rounded px-2 py-1"
+                        className="flex-1 min-w-[12rem] bg-stone-900 border border-stone-700 rounded px-2 py-1 bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none border-hos-border"
                         placeholder="Title"
                         value={ugcTitle}
                         onChange={(e) => setUgcTitle(e.target.value)}

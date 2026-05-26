@@ -63,7 +63,7 @@ export default function CMSMediaPage() {
         <div className="space-y-6">
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-2xl font-bold text-white">Media Library</h1>
+              <h1 className="text-2xl font-bold text-hos-text-secondary">Media Library</h1>
               <p className="text-hos-text-secondary mt-1">Manage your media files</p>
             </div>
             <label className="px-6 py-3 bg-hos-gold text-[#1a1406] rounded-lg hover:bg-hos-gold-hover transition-colors font-medium cursor-pointer">
@@ -83,7 +83,7 @@ export default function CMSMediaPage() {
               <button
                 type="button"
                 onClick={fetchMedia}
-                className="inline-flex rounded-md bg-hos-gold px-4 py-2 text-sm font-medium text-white hover:bg-hos-gold-hover"
+                className="inline-flex rounded-md bg-hos-gold px-4 py-2 text-sm font-medium text-hos-text-secondary hover:bg-hos-gold-hover"
               >
                 Retry loading
               </button>
@@ -130,7 +130,7 @@ export default function CMSMediaPage() {
                     )}
                   </div>
                   <div className="p-3">
-                    <p className="text-sm font-medium text-white truncate">
+                    <p className="text-sm font-medium text-hos-text-secondary truncate">
                       {item.name || 'Untitled'}
                     </p>
                     <p className="text-xs text-hos-text-muted mt-1">

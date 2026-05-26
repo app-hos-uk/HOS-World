@@ -42,7 +42,7 @@ export default function AdminJourneysPage() {
       <AdminLayout>
         <div className="p-6 max-w-6xl mx-auto">
           <div className="flex justify-between items-center mb-6">
-            <h1 className="text-2xl font-semibold text-white">Marketing journeys</h1>
+            <h1 className="text-2xl font-semibold text-hos-text-secondary">Marketing journeys</h1>
             <Link
               href="/admin/journeys/new"
               className="rounded-md bg-hos-gold px-4 py-2 text-white text-sm hover:bg-hos-gold/100"

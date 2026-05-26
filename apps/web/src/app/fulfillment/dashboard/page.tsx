@@ -180,7 +180,7 @@ export default function FulfillmentDashboardPage() {
                       >
                         <div className="flex items-start justify-between">
                           <div className="flex-1">
-                            <p className="font-medium text-white">
+                            <p className="font-medium text-hos-text-secondary">
                               {shipment.submission?.productData?.name || 'Unknown Product'}
                             </p>
                             <p className="text-sm text-hos-text-muted mt-1">

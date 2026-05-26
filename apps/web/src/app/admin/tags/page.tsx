@@ -43,7 +43,7 @@ const CATEGORY_COLORS: Record<string, string> = {
   STYLE: 'bg-hos-gold/20 text-hos-gold border-hos-border-accent',
   CHARACTER: 'bg-green-500/15 text-green-300 border-green-500/30',
   FANDOM: 'bg-yellow-500/15 text-yellow-300 border-yellow-500/30',
-  CUSTOM: 'bg-hos-bg-tertiary text-white border-hos-border',
+  CUSTOM: 'bg-hos-bg-tertiary text-hos-text-secondary border-hos-border',
 };
 
 export default function AdminTagsPage() {
@@ -437,7 +437,7 @@ export default function AdminTagsPage() {
           {/* Header */}
           <div className="flex justify-between items-center">
             <div>
-              <h1 className="text-2xl font-bold text-white">Product Tags</h1>
+              <h1 className="text-2xl font-bold text-hos-text-secondary">Product Tags</h1>
               <p className="text-hos-text-secondary mt-1">Organize products with searchable tags</p>
             </div>
             <div className="flex gap-2">
@@ -535,13 +535,13 @@ export default function AdminTagsPage() {
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   placeholder="Search tags or synonyms..."
-                  className="w-full px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50"
+                  className="w-full px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50 bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none focus:border-hos-gold"
                 />
               </div>
               <select
                 value={sortBy}
                 onChange={(e) => setSortBy(e.target.value as any)}
-                className="px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50"
+                className="px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50 bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none focus:border-hos-gold"
               >
                 <option value="name">Sort by Name</option>
                 <option value="category">Sort by Category</option>
@@ -611,7 +611,7 @@ export default function AdminTagsPage() {
                       required
                       value={formData.name}
                       onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                      className="w-full px-3 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50"
+                      className="w-full px-3 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50 bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none focus:border-hos-gold"
                       placeholder="e.g., Harry Potter, Christmas, Vintage"
                     />
                   </div>
@@ -620,7 +620,7 @@ export default function AdminTagsPage() {
                     <select
                       value={formData.category}
                       onChange={(e) => setFormData({ ...formData, category: e.target.value as any })}
-                      className="w-full px-3 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50"
+                      className="w-full px-3 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50 bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none focus:border-hos-gold"
                     >
                       {TAG_CATEGORIES.map((cat) => (
                         <option key={cat.value} value={cat.value}>
@@ -636,7 +636,7 @@ export default function AdminTagsPage() {
                   <textarea
                     value={formData.description}
                     onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                    className="w-full px-3 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50"
+                    className="w-full px-3 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50 bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none focus:border-hos-gold"
                     rows={2}
                     placeholder="Optional description"
                   />
@@ -651,7 +651,7 @@ export default function AdminTagsPage() {
                       type="text"
                       value={formData.synonyms}
                       onChange={(e) => setFormData({ ...formData, synonyms: e.target.value })}
-                      className="w-full px-3 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50"
+                      className="w-full px-3 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50 bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none focus:border-hos-gold"
                       placeholder="e.g., HP, Potter, Wizarding World"
                     />
                     <p className="text-xs text-hos-text-muted mt-1">Alternative names for search</p>
@@ -669,7 +669,7 @@ export default function AdminTagsPage() {
                         type="text"
                         value={formData.color}
                         onChange={(e) => setFormData({ ...formData, color: e.target.value })}
-                        className="flex-1 px-3 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50"
+                        className="flex-1 px-3 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50 bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none focus:border-hos-gold"
                         placeholder="#6b7280"
                       />
                     </div>
@@ -752,7 +752,7 @@ export default function AdminTagsPage() {
                                   style={{ backgroundColor: tag.color }}
                                 />
                               )}
-                              <h3 className="font-medium text-white truncate">{tag.name}</h3>
+                              <h3 className="font-medium text-hos-text-secondary truncate">{tag.name}</h3>
                             </div>
                           </label>
                           {!tag.isActive && (
@@ -836,7 +836,7 @@ export default function AdminTagsPage() {
                     <select
                       value={bulkData.category}
                       onChange={(e) => setBulkData({ ...bulkData, category: e.target.value as any })}
-                      className="w-full px-3 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50"
+                      className="w-full px-3 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50 bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none focus:border-hos-gold"
                     >
                       {TAG_CATEGORIES.map((cat) => (
                         <option key={cat.value} value={cat.value}>{cat.icon} {cat.label}</option>
@@ -848,7 +848,7 @@ export default function AdminTagsPage() {
                     <textarea
                       value={bulkData.tags}
                       onChange={(e) => setBulkData({ ...bulkData, tags: e.target.value })}
-                      className="w-full px-3 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50"
+                      className="w-full px-3 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50 bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none focus:border-hos-gold"
                       rows={8}
                       placeholder="Harry Potter&#10;Hermione Granger&#10;Ron Weasley&#10;..."
                     />

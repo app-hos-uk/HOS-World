@@ -36,10 +36,10 @@ export default function AdminBrandCampaignsListPage() {
           <Link href="/admin/brand-partnerships" className="text-sm text-violet-400 mb-4 inline-block">
             ← Partners
           </Link>
-          <h1 className="text-2xl font-semibold text-white mb-4">Brand campaigns</h1>
+          <h1 className="text-2xl font-semibold text-hos-text-secondary mb-4">Brand campaigns</h1>
           <div className="flex gap-2 mb-4">
             <select
-              className="border rounded px-2 py-1 text-sm"
+              className="border rounded px-2 py-1 text-sm bg-hos-bg-secondary text-hos-text-secondary focus:outline-none border-hos-border"
               value={status}
               onChange={(e) => setStatus(e.target.value)}
             >
@@ -53,7 +53,7 @@ export default function AdminBrandCampaignsListPage() {
             </select>
             <button
               type="button"
-              className="text-sm px-3 py-1 rounded bg-hos-surface text-white"
+              className="text-sm px-3 py-1 rounded bg-hos-surface text-hos-text-secondary"
               onClick={() => load()}
             >
               Apply

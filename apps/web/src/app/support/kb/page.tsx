@@ -59,7 +59,7 @@ export default function KnowledgeBasePage() {
       <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 lg:py-12">
         <div className="max-w-3xl mx-auto">
           <div className="text-center mb-8">
-            <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-white mb-2">Knowledge Base</h1>
+            <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-hos-text-secondary mb-2">Knowledge Base</h1>
             <p className="text-hos-text-secondary">Find answers to common questions and guides</p>
           </div>
 
@@ -132,7 +132,7 @@ export default function KnowledgeBasePage() {
                 >
                   <div className="flex items-start justify-between gap-4">
                     <div className="flex-1 min-w-0">
-                      <h3 className="text-lg font-semibold text-white mb-1 hover:text-hos-gold">
+                      <h3 className="text-lg font-semibold text-hos-text-secondary mb-1 hover:text-hos-gold">
                         {article.title}
                       </h3>
                       {article.excerpt && (

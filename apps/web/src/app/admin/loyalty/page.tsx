@@ -48,7 +48,7 @@ export default function AdminLoyaltyDashboardPage() {
     <RouteGuard allowedRoles={['ADMIN']} showAccessDenied>
       <AdminLayout>
         <div className="mb-6">
-          <h1 className="text-2xl sm:text-3xl font-bold text-white">Loyalty Program Management</h1>
+          <h1 className="text-2xl sm:text-3xl font-bold text-hos-text-secondary">Loyalty Program Management</h1>
           <p className="text-hos-text-secondary mt-1">Manage tiers, earn rules, rewards, campaigns, and members</p>
         </div>
 
@@ -64,7 +64,7 @@ export default function AdminLoyaltyDashboardPage() {
                   <div className="flex items-center justify-between">
                     <div>
                       <p className="text-sm font-medium text-hos-text-muted">{c.label}</p>
-                      <p className="text-2xl font-bold text-white mt-1">{Number(c.value).toLocaleString()}</p>
+                      <p className="text-2xl font-bold text-hos-text-secondary mt-1">{Number(c.value).toLocaleString()}</p>
                     </div>
                     <div className={`w-12 h-12 rounded-lg flex items-center justify-center text-2xl ${colorMap[c.color]}`}>
                       {c.icon}
@@ -81,35 +81,35 @@ export default function AdminLoyaltyDashboardPage() {
                   <Link href="/admin/loyalty/tiers" className="flex items-center gap-3 p-3 rounded-lg hover:bg-hos-bg-tertiary transition-colors">
                     <span className="text-xl">🏆</span>
                     <div>
-                      <p className="font-medium text-white">Manage Tiers</p>
+                      <p className="font-medium text-hos-text-secondary">Manage Tiers</p>
                       <p className="text-sm text-hos-text-muted">Edit tier thresholds and multipliers</p>
                     </div>
                   </Link>
                   <Link href="/admin/loyalty/earn-rules" className="flex items-center gap-3 p-3 rounded-lg hover:bg-hos-bg-tertiary transition-colors">
                     <span className="text-xl">⚡</span>
                     <div>
-                      <p className="font-medium text-white">Earn Rules</p>
+                      <p className="font-medium text-hos-text-secondary">Earn Rules</p>
                       <p className="text-sm text-hos-text-muted">Configure how customers earn points</p>
                     </div>
                   </Link>
                   <Link href="/admin/loyalty/redemption-options" className="flex items-center gap-3 p-3 rounded-lg hover:bg-hos-bg-tertiary transition-colors">
                     <span className="text-xl">🎁</span>
                     <div>
-                      <p className="font-medium text-white">Redemption Options</p>
+                      <p className="font-medium text-hos-text-secondary">Redemption Options</p>
                       <p className="text-sm text-hos-text-muted">Manage the rewards catalogue</p>
                     </div>
                   </Link>
                   <Link href="/admin/loyalty/campaigns" className="flex items-center gap-3 p-3 rounded-lg hover:bg-hos-bg-tertiary transition-colors">
                     <span className="text-xl">🎯</span>
                     <div>
-                      <p className="font-medium text-white">Bonus Campaigns</p>
+                      <p className="font-medium text-hos-text-secondary">Bonus Campaigns</p>
                       <p className="text-sm text-hos-text-muted">Create double-points events</p>
                     </div>
                   </Link>
                   <Link href="/admin/loyalty/members" className="flex items-center gap-3 p-3 rounded-lg hover:bg-hos-bg-tertiary transition-colors">
                     <span className="text-xl">👥</span>
                     <div>
-                      <p className="font-medium text-white">Member Lookup</p>
+                      <p className="font-medium text-hos-text-secondary">Member Lookup</p>
                       <p className="text-sm text-hos-text-muted">Search members, adjust points</p>
                     </div>
                   </Link>
@@ -122,21 +122,21 @@ export default function AdminLoyaltyDashboardPage() {
                   <Link href="/admin/loyalty-analytics" className="flex items-center gap-3 p-3 rounded-lg hover:bg-hos-bg-tertiary transition-colors">
                     <span className="text-xl">💡</span>
                     <div>
-                      <p className="font-medium text-white">Program Health</p>
+                      <p className="font-medium text-hos-text-secondary">Program Health</p>
                       <p className="text-sm text-hos-text-muted">Overall loyalty KPIs and trends</p>
                     </div>
                   </Link>
                   <Link href="/admin/loyalty-analytics/tiers" className="flex items-center gap-3 p-3 rounded-lg hover:bg-hos-bg-tertiary transition-colors">
                     <span className="text-xl">📊</span>
                     <div>
-                      <p className="font-medium text-white">Tier Analysis</p>
+                      <p className="font-medium text-hos-text-secondary">Tier Analysis</p>
                       <p className="text-sm text-hos-text-muted">Member distribution across tiers</p>
                     </div>
                   </Link>
                   <Link href="/admin/loyalty-analytics/clv" className="flex items-center gap-3 p-3 rounded-lg hover:bg-hos-bg-tertiary transition-colors">
                     <span className="text-xl">👤</span>
                     <div>
-                      <p className="font-medium text-white">Customer Lifetime Value</p>
+                      <p className="font-medium text-hos-text-secondary">Customer Lifetime Value</p>
                       <p className="text-sm text-hos-text-muted">CLV distribution and top members</p>
                     </div>
                   </Link>

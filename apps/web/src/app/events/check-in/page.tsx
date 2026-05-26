@@ -49,7 +49,7 @@ export default function EventCheckInPage() {
           <label className="block text-sm mb-2">
             <span className="text-stone-400">Event ID</span>
             <input
-              className="mt-1 w-full rounded bg-stone-900 border border-stone-700 px-3 py-2 text-stone-100"
+              className="mt-1 w-full rounded bg-stone-900 border border-stone-700 px-3 py-2 text-stone-100 bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none border-hos-border"
               value={eventId}
               onChange={(e) => setEventId(e.target.value)}
               placeholder="UUID"
@@ -58,7 +58,7 @@ export default function EventCheckInPage() {
           <label className="block text-sm mb-4">
             <span className="text-stone-400">Ticket code (optional)</span>
             <input
-              className="mt-1 w-full rounded bg-stone-900 border border-stone-700 px-3 py-2 text-stone-100"
+              className="mt-1 w-full rounded bg-stone-900 border border-stone-700 px-3 py-2 text-stone-100 bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none border-hos-border"
               value={ticketCode}
               onChange={(e) => setTicketCode(e.target.value)}
               placeholder="8-character code"

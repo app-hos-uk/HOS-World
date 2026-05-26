@@ -110,7 +110,7 @@ export default function FinanceRevenuePage() {
           <button
             onClick={handleExport}
             disabled={exporting || loading}
-            className="px-4 py-2 text-sm font-medium text-white bg-green-600 rounded-lg hover:bg-green-700 disabled:opacity-50"
+            className="px-4 py-2 text-sm font-medium text-hos-text-secondary bg-green-600 rounded-lg hover:bg-green-700 disabled:opacity-50"
           >
             {exporting ? 'Exporting...' : 'Export CSV'}
           </button>
@@ -144,7 +144,7 @@ export default function FinanceRevenuePage() {
             <button
               onClick={() => fetchReport(true)}
               disabled={loading}
-              className="px-6 py-2 text-sm font-medium text-white bg-hos-gold rounded-lg hover:bg-hos-gold-hover disabled:opacity-50"
+              className="px-6 py-2 text-sm font-medium text-hos-text-secondary bg-hos-gold rounded-lg hover:bg-hos-gold-hover disabled:opacity-50"
             >
               {loading ? 'Loading...' : 'Apply'}
             </button>
@@ -258,19 +258,19 @@ export default function FinanceRevenuePage() {
                         const avg = row.averageOrderValue ?? (orders > 0 ? revenue / orders : 0);
                         return (
                           <tr key={row.period || idx} className="hover:bg-hos-bg-tertiary transition-colors">
-                            <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-white">
+                            <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-hos-text-secondary">
                               {row.period || row.date || `Period ${idx + 1}`}
                             </td>
-                            <td className="px-6 py-4 whitespace-nowrap text-sm text-white">
+                            <td className="px-6 py-4 whitespace-nowrap text-sm text-hos-text-secondary">
                               ${revenue.toLocaleString(undefined, {
                                 minimumFractionDigits: 2,
                                 maximumFractionDigits: 2,
                               })}
                             </td>
-                            <td className="px-6 py-4 whitespace-nowrap text-sm text-white">
+                            <td className="px-6 py-4 whitespace-nowrap text-sm text-hos-text-secondary">
                               {orders.toLocaleString()}
                             </td>
-                            <td className="px-6 py-4 whitespace-nowrap text-sm text-white">
+                            <td className="px-6 py-4 whitespace-nowrap text-sm text-hos-text-secondary">
                               ${avg.toLocaleString(undefined, {
                                 minimumFractionDigits: 2,
                                 maximumFractionDigits: 2,

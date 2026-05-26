@@ -211,7 +211,7 @@ export default function AdminSellerAnalyticsPage() {
         <div className="space-y-6">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div>
-              <h1 className="text-2xl font-bold text-white">Seller Analytics</h1>
+              <h1 className="text-2xl font-bold text-hos-text-secondary">Seller Analytics</h1>
               <p className="text-hos-text-secondary mt-1">Performance metrics and insights for all sellers</p>
             </div>
             <div className="flex gap-2">
@@ -258,7 +258,7 @@ export default function AdminSellerAnalyticsPage() {
                     <h3 className="text-sm font-medium text-hos-text-muted">Total Sellers</h3>
                     <span className="text-2xl">👥</span>
                   </div>
-                  <p className="text-3xl font-bold text-white mt-2">
+                  <p className="text-3xl font-bold text-hos-text-secondary mt-2">
                     {analytics.totalSellers}
                   </p>
                 </div>
@@ -285,7 +285,7 @@ export default function AdminSellerAnalyticsPage() {
                     <h3 className="text-sm font-medium text-hos-text-muted">Est. Total Revenue</h3>
                     <span className="text-2xl">💰</span>
                   </div>
-                  <p className="text-3xl font-bold text-white mt-2">
+                  <p className="text-3xl font-bold text-hos-text-secondary mt-2">
                     ${analytics.totalRevenue.toLocaleString()}
                   </p>
                 </div>
@@ -295,7 +295,7 @@ export default function AdminSellerAnalyticsPage() {
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 {/* Seller Growth Chart */}
                 <div className="bg-hos-bg-secondary rounded-lg shadow p-6">
-                  <h2 className="text-lg font-semibold text-white mb-4">Seller Growth</h2>
+                  <h2 className="text-lg font-semibold text-hos-text-secondary mb-4">Seller Growth</h2>
                   <div className="h-64">
                     <ResponsiveContainer width="100%" height="100%">
                       <LineChart data={analytics.sellerGrowth}>
@@ -320,7 +320,7 @@ export default function AdminSellerAnalyticsPage() {
 
                 {/* Sellers by Type */}
                 <div className="bg-hos-bg-secondary rounded-lg shadow p-6">
-                  <h2 className="text-lg font-semibold text-white mb-4">Sellers by Type</h2>
+                  <h2 className="text-lg font-semibold text-hos-text-secondary mb-4">Sellers by Type</h2>
                   <div className="h-64">
                     {analytics.sellersByType.length > 0 ? (
                       <ResponsiveContainer width="100%" height="100%">
@@ -354,7 +354,7 @@ export default function AdminSellerAnalyticsPage() {
 
               {/* Top Sellers */}
               <div className="bg-hos-bg-secondary rounded-lg shadow p-6">
-                <h2 className="text-lg font-semibold text-white mb-4">Top Sellers by Products</h2>
+                <h2 className="text-lg font-semibold text-hos-text-secondary mb-4">Top Sellers by Products</h2>
                 {analytics.topSellers.length > 0 ? (
                   <div className="h-64">
                     <ResponsiveContainer width="100%" height="100%">
@@ -380,7 +380,7 @@ export default function AdminSellerAnalyticsPage() {
               {/* Sellers Table */}
               <div className="bg-hos-bg-secondary rounded-lg shadow overflow-hidden">
                 <div className="px-6 py-4 border-b border-hos-border">
-                  <h2 className="text-lg font-semibold text-white">All Sellers</h2>
+                  <h2 className="text-lg font-semibold text-hos-text-secondary">All Sellers</h2>
                 </div>
                 <div className="overflow-x-auto">
                   <table className="min-w-full divide-y divide-hos-border">
@@ -421,7 +421,7 @@ export default function AdminSellerAnalyticsPage() {
                                   </span>
                                 </div>
                                 <div className="ml-4">
-                                  <div className="text-sm font-medium text-white">
+                                  <div className="text-sm font-medium text-hos-text-secondary">
                                     {seller.storeName || `${seller.firstName || ''} ${seller.lastName || ''}`.trim() || 'N/A'}
                                   </div>
                                   <div className="text-sm text-hos-text-muted">{seller.email}</div>
@@ -434,7 +434,7 @@ export default function AdminSellerAnalyticsPage() {
                                   ? 'bg-hos-gold/20 text-hos-gold' 
                                   : seller.role === 'B2C_SELLER'
                                   ? 'bg-green-500/15 text-green-300'
-                                  : 'bg-hos-bg-tertiary text-white'
+                                  : 'bg-hos-bg-tertiary text-hos-text-secondary'
                               }`}>
                                 {seller.role.replace('_', ' ')}
                               </span>

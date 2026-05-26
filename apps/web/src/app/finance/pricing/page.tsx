@@ -194,7 +194,7 @@ export default function FinancePricingPage() {
             className={`flex-1 py-2.5 px-4 rounded-md text-sm font-medium transition-all ${
               activeTab === 'pending'
                 ? 'bg-hos-bg-secondary text-hos-gold-hover shadow-sm'
-                : 'text-hos-text-secondary hover:text-white'
+                : 'text-hos-text-secondary hover:text-hos-gold'
             }`}
           >
             Pending Approvals {pendingSubmissions.length > 0 && `(${pendingSubmissions.length})`}
@@ -205,7 +205,7 @@ export default function FinancePricingPage() {
             className={`flex-1 py-2.5 px-4 rounded-md text-sm font-medium transition-all ${
               activeTab === 'history'
                 ? 'bg-hos-bg-secondary text-hos-gold-hover shadow-sm'
-                : 'text-hos-text-secondary hover:text-white'
+                : 'text-hos-text-secondary hover:text-hos-gold'
             }`}
           >
             Pricing History {pricingHistory.length > 0 && `(${pricingHistory.length})`}
@@ -245,7 +245,7 @@ export default function FinancePricingPage() {
                   >
                     <div className="flex flex-col sm:flex-row justify-between gap-4">
                       <div className="flex-1">
-                        <h3 className="text-lg font-semibold text-white">
+                        <h3 className="text-lg font-semibold text-hos-text-secondary">
                           {catalogEntry?.title || submission.product?.name || productData.name || 'Untitled Product'}
                         </h3>
                         <p className="text-sm text-hos-text-muted mt-1">
@@ -305,7 +305,7 @@ export default function FinancePricingPage() {
                 >
                   <div className="flex flex-col sm:flex-row justify-between gap-4">
                     <div className="flex-1">
-                      <h3 className="text-lg font-semibold text-white">
+                      <h3 className="text-lg font-semibold text-hos-text-secondary">
                         {item.product?.name || 'Unknown Product'}
                       </h3>
                       <div className="flex flex-wrap gap-4 mt-2 text-sm text-hos-text-secondary">
@@ -384,7 +384,7 @@ export default function FinancePricingPage() {
                           {selectedSubmission.productData?.price && (
                             <div>
                               <p className="text-sm font-medium text-hos-text-muted">Price</p>
-                              <p className="text-white">
+                              <p className="text-hos-text-secondary">
                                 {selectedSubmission.productData.currency || 'USD'}{' '}
                                 {parseFloat(selectedSubmission.productData.price).toFixed(2)}
                               </p>
@@ -393,7 +393,7 @@ export default function FinancePricingPage() {
                           {selectedSubmission.productData?.tradePrice && (
                             <div>
                               <p className="text-sm font-medium text-hos-text-muted">Trade Price</p>
-                              <p className="text-white">
+                              <p className="text-hos-text-secondary">
                                 {selectedSubmission.productData.currency || 'USD'}{' '}
                                 {parseFloat(selectedSubmission.productData.tradePrice).toFixed(2)}
                               </p>
@@ -438,7 +438,7 @@ export default function FinancePricingPage() {
                           min="0"
                           step="0.01"
                           required
-                          className="w-full px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50"
+                          className="w-full px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50 bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none focus:border-hos-gold"
                           placeholder="Enter margin percentage"
                         />
                       </div>
@@ -449,7 +449,7 @@ export default function FinancePricingPage() {
                         <select
                           value={visibilityLevel}
                           onChange={(e) => setVisibilityLevel(e.target.value)}
-                          className="w-full px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50"
+                          className="w-full px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50 bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none focus:border-hos-gold"
                         >
                           <option value="STANDARD">Standard</option>
                           <option value="PREMIUM">Premium</option>
@@ -464,7 +464,7 @@ export default function FinancePricingPage() {
                           value={notes}
                           onChange={(e) => setNotes(e.target.value)}
                           rows={4}
-                          className="w-full px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50"
+                          className="w-full px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50 bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none focus:border-hos-gold"
                           placeholder="Add notes about pricing..."
                         />
                       </div>
@@ -497,7 +497,7 @@ export default function FinancePricingPage() {
                           value={notes}
                           onChange={(e) => setNotes(e.target.value)}
                           rows={4}
-                          className="w-full px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50"
+                          className="w-full px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50 bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none focus:border-hos-gold"
                           placeholder="Add approval notes..."
                         />
                       </div>
@@ -531,7 +531,7 @@ export default function FinancePricingPage() {
                           onChange={(e) => setRejectReason(e.target.value)}
                           rows={4}
                           required
-                          className="w-full px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50"
+                          className="w-full px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50 bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none focus:border-hos-gold"
                           placeholder="Please provide a reason for rejection..."
                         />
                       </div>

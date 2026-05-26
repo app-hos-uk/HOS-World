@@ -266,7 +266,7 @@ export default function CustomerDashboardPage() {
       case 'CANCELLED':
         return 'bg-red-500/15 text-red-300';
       default:
-        return 'bg-hos-bg-tertiary text-white';
+        return 'bg-hos-bg-tertiary text-hos-text-secondary';
     }
   };
 
@@ -308,7 +308,7 @@ export default function CustomerDashboardPage() {
         <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
           {/* Header */}
           <div className="mb-6 sm:mb-8">
-            <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-white mb-2">
+            <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-hos-text-secondary mb-2">
               {stats?.totalOrders === 0 ? 'Welcome' : 'Welcome back'}{user?.firstName ? `, ${user.firstName}` : ''}! ✨
             </h1>
             <p className="text-hos-text-secondary text-sm sm:text-base">
@@ -354,7 +354,7 @@ export default function CustomerDashboardPage() {
               <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4 mb-6">
                 <div className="bg-hos-bg-secondary rounded-xl p-4 shadow-sm border border-hos-border">
                   <div className="text-3xl mb-2">📦</div>
-                  <p className="text-2xl font-bold text-white">{stats?.totalOrders || 0}</p>
+                  <p className="text-2xl font-bold text-hos-text-secondary">{stats?.totalOrders || 0}</p>
                   <p className="text-xs text-hos-text-muted">Total Orders</p>
                 </div>
                 <div className="bg-hos-bg-secondary rounded-xl p-4 shadow-sm border border-hos-border">
@@ -384,12 +384,12 @@ export default function CustomerDashboardPage() {
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
                 {/* Profile Summary */}
-                <div className="bg-gradient-to-br from-hos-bg-secondary to-hos-gold/30 rounded-xl p-6 text-white shadow-lg">
+                <div className="bg-gradient-to-br from-hos-bg-secondary to-hos-gold/30 rounded-xl p-6 text-hos-text-secondary shadow-lg">
                   <div className="flex items-center justify-between mb-4">
                     <h2 className="text-lg font-semibold">Your Profile</h2>
-                    <Link href="/profile" className="text-hos-gold/30 hover:text-white text-sm">
+                    <Link href="/profile" className="text-hos-gold/30 hover:text-hos-gold text-sm">
                       View →
                     </Link>
                   </div>
@@ -458,7 +458,7 @@ export default function CustomerDashboardPage() {
                 <div className="bg-gradient-to-br from-amber-600 to-amber-800 rounded-xl p-6 text-white shadow-lg">
                   <div className="flex items-center justify-between mb-4">
                     <h2 className="text-lg font-semibold">The Enchanted Circle</h2>
-                    <Link href="/loyalty" className="text-amber-200 hover:text-white text-sm">
+                    <Link href="/loyalty" className="text-amber-200 hover:text-hos-gold text-sm">
                       View →
                     </Link>
                   </div>
@@ -513,9 +513,9 @@ export default function CustomerDashboardPage() {
                 </div>
 
                 {/* Wishlist Preview */}
-                <div className="bg-hos-bg-secondary rounded-xl p-6 shadow-sm border border-hos-border">
+                <div className="bg-hos-bg-secondary rounded-xl p-6 shadow-sm border border-hos-border lg:col-span-2">
                   <div className="flex items-center justify-between mb-4">
-                    <h2 className="text-lg font-semibold text-white">Wishlist</h2>
+                    <h2 className="text-lg font-semibold text-hos-text-secondary">Wishlist</h2>
                     <Link href="/wishlist" className="text-hos-gold hover:text-hos-gold-hover text-sm font-medium">
                       View All →
                     </Link>
@@ -557,7 +557,7 @@ export default function CustomerDashboardPage() {
                                 </div>
                               )}
                             </div>
-                            <p className="text-xs font-medium text-white truncate">{product.name}</p>
+                            <p className="text-xs font-medium text-hos-text-secondary truncate">{product.name}</p>
                             <p className="text-xs text-hos-gold">{formatPrice(product.price)}</p>
                           </Link>
                         );
@@ -565,56 +565,56 @@ export default function CustomerDashboardPage() {
                     </div>
                   )}
                 </div>
+              </div>
 
-                {/* Quick Actions */}
-                <div className="space-y-4">
+              {/* Quick Actions — horizontal tiles */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 mb-6">
                   <Link
                     href="/orders"
-                    className="flex items-center gap-4 bg-hos-bg-secondary rounded-xl p-4 shadow-sm border border-hos-border hover:shadow-md hover:border-hos-border-accent transition-all"
+                    className="flex flex-col items-center text-center gap-2 bg-hos-bg-secondary rounded-xl p-4 shadow-sm border border-hos-border hover:shadow-md hover:border-hos-border-accent transition-all"
                   >
                     <div className="w-12 h-12 rounded-lg bg-hos-gold/20 flex items-center justify-center text-2xl">📋</div>
                     <div>
-                      <p className="font-semibold text-white">View All Orders</p>
-                      <p className="text-sm text-hos-text-muted">Track and manage your orders</p>
+                      <p className="font-semibold text-hos-text-secondary text-sm">View All Orders</p>
+                      <p className="text-xs text-hos-text-muted mt-0.5">Track orders</p>
                     </div>
                   </Link>
                   <Link
                     href="/cart"
-                    className="flex items-center gap-4 bg-hos-bg-secondary rounded-xl p-4 shadow-sm border border-hos-border hover:shadow-md hover:border-hos-border-accent transition-all"
+                    className="flex flex-col items-center text-center gap-2 bg-hos-bg-secondary rounded-xl p-4 shadow-sm border border-hos-border hover:shadow-md hover:border-hos-border-accent transition-all"
                   >
                     <div className="w-12 h-12 rounded-lg bg-amber-500/15 flex items-center justify-center text-2xl">🛒</div>
                     <div>
-                      <p className="font-semibold text-white">Shopping Cart</p>
-                      <p className="text-sm text-hos-text-muted">{stats?.cartItems || 0} items ready to checkout</p>
+                      <p className="font-semibold text-hos-text-secondary text-sm">Shopping Cart</p>
+                      <p className="text-xs text-hos-text-muted mt-0.5">{stats?.cartItems || 0} items</p>
                     </div>
                   </Link>
                   <Link
                     href="/loyalty"
-                    className="flex items-center gap-4 bg-hos-bg-secondary rounded-xl p-4 shadow-sm border border-hos-border hover:shadow-md hover:border-amber-500/30 transition-all"
+                    className="flex flex-col items-center text-center gap-2 bg-hos-bg-secondary rounded-xl p-4 shadow-sm border border-hos-border hover:shadow-md hover:border-amber-500/30 transition-all"
                   >
                     <div className="w-12 h-12 rounded-lg bg-amber-500/15 flex items-center justify-center text-2xl">✨</div>
                     <div>
-                      <p className="font-semibold text-white">Loyalty Rewards</p>
-                      <p className="text-sm text-hos-text-muted">Earn points &amp; unlock rewards</p>
+                      <p className="font-semibold text-hos-text-secondary text-sm">Loyalty Rewards</p>
+                      <p className="text-xs text-hos-text-muted mt-0.5">Earn points</p>
                     </div>
                   </Link>
                   <Link
                     href="/products"
-                    className="flex items-center gap-4 bg-hos-bg-secondary rounded-xl p-4 shadow-sm border border-hos-border hover:shadow-md hover:border-hos-border-accent transition-all"
+                    className="flex flex-col items-center text-center gap-2 bg-hos-bg-secondary rounded-xl p-4 shadow-sm border border-hos-border hover:shadow-md hover:border-hos-border-accent transition-all"
                   >
                     <div className="w-12 h-12 rounded-lg bg-green-500/15 flex items-center justify-center text-2xl">🔮</div>
                     <div>
-                      <p className="font-semibold text-white">Browse Products</p>
-                      <p className="text-sm text-hos-text-muted">Discover magical items</p>
+                      <p className="font-semibold text-hos-text-secondary text-sm">Browse Products</p>
+                      <p className="text-xs text-hos-text-muted mt-0.5">Discover items</p>
                     </div>
                   </Link>
-                </div>
               </div>
 
               {/* Recent Orders */}
               <div className="bg-hos-bg-secondary rounded-xl shadow-sm border border-hos-border">
                 <div className="p-6 border-b border-hos-border flex items-center justify-between">
-                  <h2 className="text-lg font-semibold text-white">Recent Orders</h2>
+                  <h2 className="text-lg font-semibold text-hos-text-secondary">Recent Orders</h2>
                   <Link href="/orders" className="text-hos-gold hover:text-hos-gold-hover text-sm font-medium">
                     View All →
                   </Link>
@@ -643,7 +643,7 @@ export default function CustomerDashboardPage() {
                             📦
                           </div>
                           <div>
-                            <p className="font-medium text-white">
+                            <p className="font-medium text-hos-text-secondary">
                               Order #{order.orderNumber || order.id.slice(0, 8)}
                             </p>
                             <p className="text-sm text-hos-text-muted">{formatDate(order.createdAt)}</p>
@@ -653,7 +653,7 @@ export default function CustomerDashboardPage() {
                           <span className={`inline-block px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(order.status)}`}>
                             {order.status}
                           </span>
-                          <p className="text-sm font-semibold text-white mt-1">{formatPrice(order.total)}</p>
+                          <p className="text-sm font-semibold text-hos-text-secondary mt-1">{formatPrice(order.total)}</p>
                         </div>
                       </Link>
                     ))
@@ -669,7 +669,7 @@ export default function CustomerDashboardPage() {
               {/* Order Stats */}
               <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
                 <div className="bg-hos-bg-secondary rounded-xl p-6 shadow-sm border border-hos-border text-center">
-                  <p className="text-3xl font-bold text-white">{stats?.totalOrders || 0}</p>
+                  <p className="text-3xl font-bold text-hos-text-secondary">{stats?.totalOrders || 0}</p>
                   <p className="text-sm text-hos-text-muted">Total Orders</p>
                 </div>
                 <div className="bg-hos-bg-secondary rounded-xl p-6 shadow-sm border border-yellow-500/30 text-center">
@@ -689,7 +689,7 @@ export default function CustomerDashboardPage() {
               {/* Orders List */}
               <div className="bg-hos-bg-secondary rounded-xl shadow-sm border border-hos-border">
                 <div className="p-6 border-b border-hos-border flex items-center justify-between">
-                  <h2 className="text-lg font-semibold text-white">All Orders</h2>
+                  <h2 className="text-lg font-semibold text-hos-text-secondary">All Orders</h2>
                   <Link href="/orders" className="text-hos-gold hover:text-hos-gold-hover text-sm font-medium">
                     View Full Page →
                   </Link>
@@ -718,7 +718,7 @@ export default function CustomerDashboardPage() {
                             📦
                           </div>
                           <div>
-                            <p className="font-medium text-white">
+                            <p className="font-medium text-hos-text-secondary">
                               Order #{order.orderNumber || order.id.slice(0, 8)}
                             </p>
                             <p className="text-sm text-hos-text-muted">
@@ -734,7 +734,7 @@ export default function CustomerDashboardPage() {
                           <span className={`inline-block px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(order.status)}`}>
                             {order.status}
                           </span>
-                          <p className="text-sm font-semibold text-white mt-1">{formatPrice(order.total)}</p>
+                          <p className="text-sm font-semibold text-hos-text-secondary mt-1">{formatPrice(order.total)}</p>
                         </div>
                       </Link>
                     ))
@@ -771,7 +771,7 @@ export default function CustomerDashboardPage() {
 
               {/* Spending Chart */}
               <div className="bg-hos-bg-secondary rounded-xl p-6 shadow-sm border border-hos-border">
-                <h3 className="text-lg font-semibold text-white mb-4">Spending Over Time (Last 6 Months)</h3>
+                <h3 className="text-lg font-semibold text-hos-text-secondary mb-4">Spending Over Time (Last 6 Months)</h3>
                 {spendingAnalytics.monthlySpending.length > 0 ? (
                   <div className="h-64">
                     <ResponsiveContainer width="100%" height="100%">
@@ -798,7 +798,7 @@ export default function CustomerDashboardPage() {
               {/* Order Status Breakdown — legend + fixed chart box avoids slice-label overflow misalignment */}
               <div className="grid grid-cols-1 gap-6 lg:grid-cols-2 lg:items-stretch">
                 <div className="flex min-h-[320px] flex-col rounded-xl border border-hos-border bg-hos-bg-secondary p-6 shadow-sm">
-                  <h3 className="mb-4 text-lg font-semibold text-white">Order Status Breakdown</h3>
+                  <h3 className="mb-4 text-lg font-semibold text-hos-text-secondary">Order Status Breakdown</h3>
                   {spendingAnalytics.categoryBreakdown.length > 0 ? (
                     <div className="flex min-h-0 flex-1 flex-col justify-center">
                       <div className="mx-auto h-[260px] w-full max-w-md">
@@ -847,15 +847,15 @@ export default function CustomerDashboardPage() {
                 </div>
 
                 <div className="flex min-h-[320px] flex-col rounded-xl border border-hos-border bg-hos-bg-secondary p-6 shadow-sm">
-                  <h3 className="mb-4 text-lg font-semibold text-white">Shopping Insights</h3>
+                  <h3 className="mb-4 text-lg font-semibold text-hos-text-secondary">Shopping Insights</h3>
                   <div className="flex flex-1 flex-col justify-center space-y-4">
                     <div className="flex items-center justify-between p-3 bg-hos-bg-secondary rounded-lg">
                       <span className="text-hos-text-secondary">Favorite Category</span>
-                      <span className="font-semibold text-white">🧙 Wizarding Items</span>
+                      <span className="font-semibold text-hos-text-secondary">🧙 Wizarding Items</span>
                     </div>
                     <div className="flex items-center justify-between p-3 bg-hos-bg-secondary rounded-lg">
                       <span className="text-hos-text-secondary">Most Active Month</span>
-                      <span className="font-semibold text-white">
+                      <span className="font-semibold text-hos-text-secondary">
                         {spendingAnalytics.monthlySpending.length > 0
                           ? spendingAnalytics.monthlySpending.reduce((a, b) => (a.amount > b.amount ? a : b)).month
                           : 'N/A'}
@@ -879,7 +879,7 @@ export default function CustomerDashboardPage() {
           {activeTab === 'activity' && (
             <div className="bg-hos-bg-secondary rounded-xl shadow-sm border border-hos-border">
               <div className="p-6 border-b border-hos-border">
-                <h2 className="text-lg font-semibold text-white">Recent Activity</h2>
+                <h2 className="text-lg font-semibold text-hos-text-secondary">Recent Activity</h2>
                 <p className="text-sm text-hos-text-muted">Your recent orders and wishlist updates</p>
               </div>
               <div className="divide-y divide-hos-border">
@@ -905,7 +905,7 @@ export default function CustomerDashboardPage() {
                         {activity.icon}
                       </div>
                       <div className="flex-1 min-w-0">
-                        <p className="font-medium text-white">{activity.title}</p>
+                        <p className="font-medium text-hos-text-secondary">{activity.title}</p>
                         <p className="text-sm text-hos-text-muted truncate">{activity.description}</p>
                       </div>
                       <div className="text-sm text-hos-text-muted">{formatDate(activity.date)}</div>

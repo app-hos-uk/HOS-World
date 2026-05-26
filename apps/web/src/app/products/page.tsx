@@ -8,6 +8,7 @@ import { apiClient } from '@/lib/api';
 import { useCurrency } from '@/contexts/CurrencyContext';
 import Link from 'next/link';
 import { SafeImage } from '@/components/SafeImage';
+import { expandDepartmentCategories } from '@/lib/storefrontNavigation';
 
 const ITEMS_PER_PAGE = 20;
 
@@ -36,7 +37,7 @@ interface SearchState {
 function parseSearchParams(params: URLSearchParams): SearchState {
   return {
     query: params.get('q') || '',
-    categories: params.getAll('category'),
+    categories: expandDepartmentCategories(params.getAll('category')),
     fandoms: params.getAll('fandom'),
     minPrice: params.get('minPrice') || '',
     maxPrice: params.get('maxPrice') || '',
@@ -301,13 +302,13 @@ function ProductsContent() {
 
       {/* Category filter */}
       <div>
-        <h3 className="text-sm font-semibold text-white mb-2">Category</h3>
+        <h3 className="text-sm font-semibold text-hos-text-secondary mb-2">Category</h3>
         <div className="space-y-1.5 max-h-48 overflow-y-auto">
           {facets.category && Object.entries(facets.category).length > 0 ? (
             Object.entries(facets.category)
               .sort(([, a], [, b]) => b - a)
               .map(([name, count]) => (
-                <label key={name} className="flex items-center gap-2 cursor-pointer text-sm text-hos-text-secondary hover:text-white">
+                <label key={name} className="flex items-center gap-2 cursor-pointer text-sm text-hos-text-secondary hover:text-hos-gold">
                   <input
                     type="checkbox"
                     checked={state.categories.includes(name)}
@@ -326,13 +327,13 @@ function ProductsContent() {
 
       {/* Fandom filter */}
       <div>
-        <h3 className="text-sm font-semibold text-white mb-2">Fandom</h3>
+        <h3 className="text-sm font-semibold text-hos-text-secondary mb-2">Fandom</h3>
         <div className="space-y-1.5 max-h-48 overflow-y-auto">
           {facets.fandom && Object.entries(facets.fandom).length > 0 ? (
             Object.entries(facets.fandom)
               .sort(([, a], [, b]) => b - a)
               .map(([name, count]) => (
-                <label key={name} className="flex items-center gap-2 cursor-pointer text-sm text-hos-text-secondary hover:text-white">
+                <label key={name} className="flex items-center gap-2 cursor-pointer text-sm text-hos-text-secondary hover:text-hos-gold">
                   <input
                     type="checkbox"
                     checked={state.fandoms.includes(name)}
@@ -351,7 +352,7 @@ function ProductsContent() {
 
       {/* Price range */}
       <div>
-        <h3 className="text-sm font-semibold text-white mb-2">Price Range</h3>
+        <h3 className="text-sm font-semibold text-hos-text-secondary mb-2">Price Range</h3>
         <div className="flex items-center gap-2">
           <input
             type="number"
@@ -375,7 +376,7 @@ function ProductsContent() {
 
       {/* Rating filter */}
       <div>
-        <h3 className="text-sm font-semibold text-white mb-2">Minimum Rating</h3>
+        <h3 className="text-sm font-semibold text-hos-text-secondary mb-2">Minimum Rating</h3>
         <StarRating
           rating={state.rating}
           interactive
@@ -431,7 +432,7 @@ function ProductsContent() {
       <Header />
       <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
         <div className="mb-6">
-          <h1 className="text-2xl sm:text-3xl font-bold text-white">
+          <h1 className="text-2xl sm:text-3xl font-bold text-hos-text-secondary">
             {state.query ? `Search results for "${state.query}"` : 'All Products'}
           </h1>
           <p className="text-hos-text-secondary mt-1">
@@ -534,7 +535,7 @@ function ProductsContent() {
                 <svg className="w-16 h-16 text-hos-text-muted mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                 </svg>
-                <h3 className="text-lg font-medium text-white mb-1">No products found</h3>
+                <h3 className="text-lg font-medium text-hos-text-secondary mb-1">No products found</h3>
                 <p className="text-hos-text-muted mb-4">Try adjusting your filters or search query</p>
                 {activeFilterCount > 0 && (
                   <button
@@ -594,7 +595,7 @@ function ProductsContent() {
                           </div>
                           <div className="p-3 sm:p-4 flex flex-col flex-1 gap-2 min-h-0 justify-between">
                             <h3
-                              className="font-semibold text-white group-hover:text-hos-gold transition-colors text-sm sm:text-base line-clamp-2 min-h-[2.5rem] leading-snug"
+                              className="font-semibold text-hos-text-secondary group-hover:text-hos-gold transition-colors text-sm sm:text-base line-clamp-2 min-h-[2.5rem] leading-snug"
                               dangerouslySetInnerHTML={{
                                 __html: sanitizeHighlight(highlighted?.name || product.name),
                               }}

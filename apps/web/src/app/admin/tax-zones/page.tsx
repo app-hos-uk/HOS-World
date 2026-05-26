@@ -296,7 +296,7 @@ export default function AdminTaxZonesPage() {
                     <div className="px-6 py-4 border-b border-hos-border bg-hos-bg-secondary">
                       <div className="flex justify-between items-start">
                         <div>
-                          <h3 className="text-lg font-semibold text-white">{zone.name}</h3>
+                          <h3 className="text-lg font-semibold text-hos-text-secondary">{zone.name}</h3>
                           <p className="text-sm text-hos-text-secondary mt-1">
                             {zone.city && `${zone.city}, `}
                             {zone.state && `${zone.state}, `}
@@ -309,7 +309,7 @@ export default function AdminTaxZonesPage() {
                             className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
                               zone.isActive
                                 ? 'bg-green-500/15 text-green-300'
-                                : 'bg-hos-bg-tertiary text-white'
+                                : 'bg-hos-bg-tertiary text-hos-text-secondary'
                             }`}
                           >
                             {zone.isActive ? 'Active' : 'Inactive'}
@@ -322,7 +322,7 @@ export default function AdminTaxZonesPage() {
                           </button>
                           <button
                             onClick={() => handleEditZone(zone)}
-                            className="text-sm text-hos-text-secondary hover:text-white"
+                            className="text-sm text-hos-text-secondary hover:text-hos-gold"
                           >
                             Edit
                           </button>
@@ -375,7 +375,7 @@ export default function AdminTaxZonesPage() {
                                     className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
                                       rate.isActive
                                         ? 'bg-green-500/15 text-green-300'
-                                        : 'bg-hos-bg-tertiary text-white'
+                                        : 'bg-hos-bg-tertiary text-hos-text-secondary'
                                     }`}
                                   >
                                     {rate.isActive ? 'Active' : 'Inactive'}
@@ -432,7 +432,7 @@ export default function AdminTaxZonesPage() {
                     <Dialog.Panel className="w-full max-w-lg transform overflow-hidden rounded-2xl bg-hos-bg-secondary p-6 text-left align-middle shadow-xl transition-all">
                       <Dialog.Title
                         as="h3"
-                        className="text-lg font-medium leading-6 text-white mb-4"
+                        className="text-lg font-medium leading-6 text-hos-text-secondary mb-4"
                       >
                         {isEditMode ? 'Edit Tax Zone' : 'Create New Tax Zone'}
                       </Dialog.Title>
@@ -545,7 +545,7 @@ export default function AdminTaxZonesPage() {
                               onChange={(e) => setZoneFormData({ ...zoneFormData, isActive: e.target.checked })}
                               className="h-4 w-4 text-hos-gold focus:ring-hos-gold/50 border-hos-border rounded"
                             />
-                            <label htmlFor="zoneIsActive" className="ml-2 block text-sm text-white">
+                            <label htmlFor="zoneIsActive" className="ml-2 block text-sm text-hos-text-secondary">
                               Active
                             </label>
                           </div>
@@ -562,7 +562,7 @@ export default function AdminTaxZonesPage() {
                           <button
                             type="submit"
                             disabled={submitting}
-                            className="px-4 py-2 text-sm font-medium text-white bg-hos-gold rounded-md hover:bg-hos-gold-hover disabled:opacity-50"
+                            className="px-4 py-2 text-sm font-medium text-hos-text-secondary bg-hos-gold rounded-md hover:bg-hos-gold-hover disabled:opacity-50"
                           >
                             {submitting ? 'Saving...' : isEditMode ? 'Update' : 'Create'}
                           </button>
@@ -604,7 +604,7 @@ export default function AdminTaxZonesPage() {
                     <Dialog.Panel className="w-full max-w-md transform overflow-hidden rounded-2xl bg-hos-bg-secondary p-6 text-left align-middle shadow-xl transition-all">
                       <Dialog.Title
                         as="h3"
-                        className="text-lg font-medium leading-6 text-white mb-4"
+                        className="text-lg font-medium leading-6 text-hos-text-secondary mb-4"
                       >
                         Add Tax Rate to {selectedZone?.name}
                       </Dialog.Title>
@@ -677,7 +677,7 @@ export default function AdminTaxZonesPage() {
                             }
                             className="h-4 w-4 text-hos-gold focus:ring-hos-gold/50 border-hos-border rounded"
                           />
-                          <label htmlFor="isInclusive" className="ml-2 block text-sm text-white">
+                          <label htmlFor="isInclusive" className="ml-2 block text-sm text-hos-text-secondary">
                             Tax-inclusive pricing (tax included in product price)
                           </label>
                         </div>
@@ -692,7 +692,7 @@ export default function AdminTaxZonesPage() {
                             }
                             className="h-4 w-4 text-hos-gold focus:ring-hos-gold/50 border-hos-border rounded"
                           />
-                          <label htmlFor="rateIsActive" className="ml-2 block text-sm text-white">
+                          <label htmlFor="rateIsActive" className="ml-2 block text-sm text-hos-text-secondary">
                             Active
                           </label>
                         </div>
@@ -708,7 +708,7 @@ export default function AdminTaxZonesPage() {
                           <button
                             type="submit"
                             disabled={submitting}
-                            className="px-4 py-2 text-sm font-medium text-white bg-hos-gold rounded-md hover:bg-hos-gold-hover disabled:opacity-50"
+                            className="px-4 py-2 text-sm font-medium text-hos-text-secondary bg-hos-gold rounded-md hover:bg-hos-gold-hover disabled:opacity-50"
                           >
                             {submitting ? 'Saving...' : 'Create Rate'}
                           </button>

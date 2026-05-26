@@ -55,7 +55,7 @@ const emptyForm: CampaignFormData = {
 };
 
 const STATUS_COLORS: Record<CampaignStatus, string> = {
-  DRAFT: 'bg-hos-bg-tertiary text-white',
+  DRAFT: 'bg-hos-bg-tertiary text-hos-text-secondary',
   ACTIVE: 'bg-green-500/15 text-green-300',
   PAUSED: 'bg-yellow-500/15 text-yellow-300',
   COMPLETED: 'bg-hos-gold/20 text-hos-gold',
@@ -388,7 +388,7 @@ function MarketingCampaignsPageContent() {
                   {filteredCampaigns.map((campaign) => (
                     <tr key={campaign.id} className="hover:bg-hos-bg-tertiary transition-colors">
                       <td className="px-4 py-3">
-                        <p className="font-medium text-white">{campaign.name}</p>
+                        <p className="font-medium text-hos-text-secondary">{campaign.name}</p>
                         <p className="text-xs text-hos-text-muted mt-0.5">
                           {campaign.influencer?.displayName ?? '—'} ({campaign.influencer?.referralCode ?? '—'})
                         </p>
@@ -407,9 +407,9 @@ function MarketingCampaignsPageContent() {
                         {campaign.startDate ? new Date(campaign.startDate).toLocaleDateString() : '—'} –{' '}
                         {campaign.endDate ? new Date(campaign.endDate).toLocaleDateString() : '—'}
                       </td>
-                      <td className="px-4 py-3 text-sm text-white">{campaign.totalClicks ?? 0}</td>
-                      <td className="px-4 py-3 text-sm text-white">{campaign.totalConversions ?? 0}</td>
-                      <td className="px-4 py-3 text-sm font-medium text-white">
+                      <td className="px-4 py-3 text-sm text-hos-text-secondary">{campaign.totalClicks ?? 0}</td>
+                      <td className="px-4 py-3 text-sm text-hos-text-secondary">{campaign.totalConversions ?? 0}</td>
+                      <td className="px-4 py-3 text-sm font-medium text-hos-text-secondary">
                         $
                         {Number(campaign.totalSales ?? 0).toLocaleString(undefined, {
                           minimumFractionDigits: 2,
@@ -429,7 +429,7 @@ function MarketingCampaignsPageContent() {
                               <button
                                 onClick={() => handleDelete(campaign.id)}
                                 disabled={deleteLoading}
-                                className="px-3 py-1.5 text-xs font-medium text-white bg-red-600 rounded-lg hover:bg-red-700 transition-colors disabled:opacity-50"
+                                className="px-3 py-1.5 text-xs font-medium text-hos-text-secondary bg-red-600 rounded-lg hover:bg-red-700 transition-colors disabled:opacity-50"
                               >
                                 {deleteLoading ? 'Deleting...' : 'Confirm'}
                               </button>

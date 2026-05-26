@@ -91,7 +91,7 @@ export default function FulfillmentShipmentsPage() {
       case 'IN_TRANSIT':
         return 'bg-hos-gold/20 text-hos-gold';
       default:
-        return 'bg-hos-bg-tertiary text-white';
+        return 'bg-hos-bg-tertiary text-hos-text-secondary';
     }
   };
 
@@ -157,7 +157,7 @@ export default function FulfillmentShipmentsPage() {
                       <div className="flex-1">
                         <div className="flex items-start justify-between mb-2">
                           <div>
-                            <h3 className="text-lg font-semibold text-white">
+                            <h3 className="text-lg font-semibold text-hos-text-secondary">
                               {productData.name || 'Unknown Product'}
                             </h3>
                             <p className="text-sm text-hos-text-muted mt-1">
@@ -250,7 +250,7 @@ export default function FulfillmentShipmentsPage() {
                   <div className="space-y-4">
                     <div>
                       <p className="text-sm font-medium text-hos-text-muted">Product</p>
-                      <p className="text-white">
+                      <p className="text-hos-text-secondary">
                         {selectedShipment.submission?.productData?.name || 'Unknown'}
                       </p>
                     </div>
@@ -262,7 +262,7 @@ export default function FulfillmentShipmentsPage() {
                       <select
                         value={verificationStatus}
                         onChange={(e) => setVerificationStatus(e.target.value)}
-                        className="w-full px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50"
+                        className="w-full px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50 bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none focus:border-hos-gold"
                       >
                         <option value="VERIFIED">Verified</option>
                         <option value="REJECTED">Rejected</option>
@@ -277,7 +277,7 @@ export default function FulfillmentShipmentsPage() {
                         type="text"
                         value={trackingNumber}
                         onChange={(e) => setTrackingNumber(e.target.value)}
-                        className="w-full px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50"
+                        className="w-full px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50 bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none focus:border-hos-gold"
                         placeholder="Enter tracking number"
                       />
                     </div>
@@ -290,7 +290,7 @@ export default function FulfillmentShipmentsPage() {
                         value={verificationNotes}
                         onChange={(e) => setVerificationNotes(e.target.value)}
                         rows={4}
-                        className="w-full px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50"
+                        className="w-full px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50 bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none focus:border-hos-gold"
                         placeholder="Add verification notes..."
                       />
                     </div>

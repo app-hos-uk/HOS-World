@@ -33,7 +33,7 @@ export default function ProductsError({
           </svg>
         </div>
 
-        <h1 className="text-2xl font-bold text-white font-[family-name:var(--font-display)]">
+        <h1 className="text-2xl font-bold text-hos-text-secondary font-[family-name:var(--font-display)]">
           Products Error
         </h1>
 

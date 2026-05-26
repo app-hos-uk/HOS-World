@@ -118,7 +118,7 @@ export default function AdminCustomerAnalyticsPage() {
       <AdminLayout>
         <div className="space-y-6">
           <div className="flex items-center justify-between">
-            <h1 className="text-2xl font-bold text-white">Customer Analytics</h1>
+            <h1 className="text-2xl font-bold text-hos-text-secondary">Customer Analytics</h1>
             <div className="flex gap-2">
               <button
                 onClick={() => handleExport('csv')}
@@ -148,7 +148,7 @@ export default function AdminCustomerAnalyticsPage() {
           <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
             <div className="bg-hos-bg-secondary rounded-lg shadow p-6">
               <h3 className="text-sm font-medium text-hos-text-muted">Total Customers</h3>
-              <p className="text-3xl font-bold text-white mt-2">{data?.totalCustomers || 0}</p>
+              <p className="text-3xl font-bold text-hos-text-secondary mt-2">{data?.totalCustomers || 0}</p>
             </div>
             <div className="bg-hos-bg-secondary rounded-lg shadow p-6">
               <h3 className="text-sm font-medium text-hos-text-muted">New Customers</h3>
@@ -160,7 +160,7 @@ export default function AdminCustomerAnalyticsPage() {
             </div>
             <div className="bg-hos-bg-secondary rounded-lg shadow p-6">
               <h3 className="text-sm font-medium text-hos-text-muted">Retention Rate</h3>
-              <p className="text-3xl font-bold text-white mt-2">
+              <p className="text-3xl font-bold text-hos-text-secondary mt-2">
                 {data?.retentionRate ? `${data.retentionRate.toFixed(1)}%` : '0%'}
               </p>
             </div>
@@ -169,7 +169,7 @@ export default function AdminCustomerAnalyticsPage() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="bg-hos-bg-secondary rounded-lg shadow p-6">
               <h3 className="text-sm font-medium text-hos-text-muted mb-2">Average Lifetime Value</h3>
-              <p className="text-4xl font-bold text-white">
+              <p className="text-4xl font-bold text-hos-text-secondary">
                 ${data?.averageLTV ? data.averageLTV.toFixed(2) : '0.00'}
               </p>
               <p className="text-sm text-hos-text-muted mt-2">
@@ -178,7 +178,7 @@ export default function AdminCustomerAnalyticsPage() {
             </div>
             <div className="bg-hos-bg-secondary rounded-lg shadow p-6">
               <h3 className="text-sm font-medium text-hos-text-muted mb-2">Average Order Frequency</h3>
-              <p className="text-4xl font-bold text-white">
+              <p className="text-4xl font-bold text-hos-text-secondary">
                 {data?.averageOrderFrequency ? data.averageOrderFrequency.toFixed(2) : '0.00'}
               </p>
               <p className="text-sm text-hos-text-muted mt-2">Orders per customer on average</p>
@@ -206,7 +206,7 @@ export default function AdminCustomerAnalyticsPage() {
           {pieData.length > 0 && (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="bg-hos-bg-secondary rounded-lg shadow p-6">
-                <h2 className="text-lg font-semibold text-white mb-4">
+                <h2 className="text-lg font-semibold text-hos-text-secondary mb-4">
                   Customer Distribution
                 </h2>
                 <ResponsiveContainer width="100%" height={300}>
@@ -232,7 +232,7 @@ export default function AdminCustomerAnalyticsPage() {
               </div>
 
               <div className="bg-hos-bg-secondary rounded-lg shadow p-6">
-                <h2 className="text-lg font-semibold text-white mb-4">Customer Metrics</h2>
+                <h2 className="text-lg font-semibold text-hos-text-secondary mb-4">Customer Metrics</h2>
                 <ResponsiveContainer width="100%" height={300}>
                   <BarChart data={metricsData}>
                     <CartesianGrid strokeDasharray="3 3" />

@@ -163,12 +163,12 @@ export default function AdminInfluencerCampaignsPage() {
 
   const getStatusBadge = (status: string) => {
     const styles: Record<string, string> = {
-      DRAFT: 'bg-hos-bg-tertiary text-white',
+      DRAFT: 'bg-hos-bg-tertiary text-hos-text-secondary',
       ACTIVE: 'bg-green-500/15 text-green-300',
       PAUSED: 'bg-yellow-500/15 text-yellow-300',
       COMPLETED: 'bg-hos-gold/20 text-hos-gold',
     };
-    return styles[status] || 'bg-hos-bg-tertiary text-white';
+    return styles[status] || 'bg-hos-bg-tertiary text-hos-text-secondary';
   };
 
   return (
@@ -178,7 +178,7 @@ export default function AdminInfluencerCampaignsPage() {
         {/* Header */}
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-bold text-white">Influencer Campaigns</h1>
+            <h1 className="text-2xl font-bold text-hos-text-secondary">Influencer Campaigns</h1>
             <p className="text-hos-text-secondary mt-1">
               Create and manage promotional campaigns with custom commission rates
             </p>
@@ -231,13 +231,13 @@ export default function AdminInfluencerCampaignsPage() {
                   {campaigns.map((campaign) => (
                     <tr key={campaign.id} className="hover:bg-hos-bg-tertiary">
                       <td className="px-6 py-4">
-                        <p className="font-medium text-white">{campaign.name}</p>
+                        <p className="font-medium text-hos-text-secondary">{campaign.name}</p>
                         {campaign.description && (
                           <p className="text-sm text-hos-text-muted truncate max-w-xs">{campaign.description}</p>
                         )}
                       </td>
                       <td className="px-6 py-4">
-                        <p className="font-medium text-white">{campaign.influencer.displayName}</p>
+                        <p className="font-medium text-hos-text-secondary">{campaign.influencer.displayName}</p>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-hos-text-muted">
                         {formatDate(campaign.startDate)} - {formatDate(campaign.endDate)}
@@ -302,7 +302,7 @@ export default function AdminInfluencerCampaignsPage() {
           <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4 overflow-y-auto">
             <div className="bg-hos-bg-secondary rounded-xl max-w-3xl w-full max-h-[90vh] overflow-y-auto my-8">
               <div className="p-6 border-b flex justify-between items-center sticky top-0 bg-hos-bg-secondary">
-                <h2 className="text-xl font-semibold text-white">Campaign results</h2>
+                <h2 className="text-xl font-semibold text-hos-text-secondary">Campaign results</h2>
                 <button
                   type="button"
                   onClick={closeAnalytics}
@@ -321,7 +321,7 @@ export default function AdminInfluencerCampaignsPage() {
                     <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
                       <div className="bg-hos-bg-secondary rounded-lg p-4">
                         <p className="text-xs text-hos-text-muted uppercase">Conversions</p>
-                        <p className="text-2xl font-bold text-white">{analyticsData.summary?.conversions ?? 0}</p>
+                        <p className="text-2xl font-bold text-hos-text-secondary">{analyticsData.summary?.conversions ?? 0}</p>
                       </div>
                       <div className="bg-hos-bg-secondary rounded-lg p-4">
                         <p className="text-xs text-hos-text-muted uppercase">Sales attributed</p>
@@ -343,7 +343,7 @@ export default function AdminInfluencerCampaignsPage() {
                       </div>
                     </div>
                     <div>
-                      <h3 className="font-semibold text-white mb-2">Daily conversions</h3>
+                      <h3 className="font-semibold text-hos-text-secondary mb-2">Daily conversions</h3>
                       {analyticsData.timeSeries?.length ? (
                         <div className="border rounded-lg overflow-hidden max-h-48 overflow-y-auto">
                           <table className="w-full text-sm">
@@ -370,7 +370,7 @@ export default function AdminInfluencerCampaignsPage() {
                       )}
                     </div>
                     <div>
-                      <h3 className="font-semibold text-white mb-2">Top products (by revenue)</h3>
+                      <h3 className="font-semibold text-hos-text-secondary mb-2">Top products (by revenue)</h3>
                       {analyticsData.topProducts?.length ? (
                         <ul className="border rounded-lg divide-y text-sm">
                           {analyticsData.topProducts.map((p: any) => (
@@ -398,7 +398,7 @@ export default function AdminInfluencerCampaignsPage() {
           <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
             <div className="bg-hos-bg-secondary rounded-xl max-w-md w-full">
               <div className="p-6 border-b">
-                <h2 className="text-xl font-semibold text-white">Create Campaign</h2>
+                <h2 className="text-xl font-semibold text-hos-text-secondary">Create Campaign</h2>
               </div>
               <form onSubmit={handleCreate} className="p-6 space-y-4">
                 <div>

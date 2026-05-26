@@ -199,19 +199,19 @@ export function Header() {
               {showAuthCustomerNav && !isDashboardPage && <CurrencySelector />}
               {isAuthenticated && user && <NotificationBell />}
               <Link href={accountHref} className="flex flex-col items-center gap-1 group">
-                <svg className="w-5 h-5 text-white group-hover:text-hos-gold transition-colors duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className="w-5 h-5 text-hos-text-secondary group-hover:text-hos-gold transition-colors duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                 </svg>
                 <span className="text-hos-text-muted text-[11px] group-hover:text-hos-gold transition-colors duration-200">{accountLabel}</span>
               </Link>
               <Link href="/wishlist" className="flex flex-col items-center gap-1 group">
-                <svg className="w-5 h-5 text-white group-hover:text-hos-gold transition-colors duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className="w-5 h-5 text-hos-text-secondary group-hover:text-hos-gold transition-colors duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
                 </svg>
                 <span className="text-hos-text-muted text-[11px] group-hover:text-hos-gold transition-colors duration-200">Wishlist</span>
               </Link>
               <Link href="/cart" className="relative flex flex-col items-center gap-1 group">
-                <svg className="w-5 h-5 text-white group-hover:text-hos-gold transition-colors duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className="w-5 h-5 text-hos-text-secondary group-hover:text-hos-gold transition-colors duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
                 </svg>
                 {cartItemCount > 0 && (
@@ -221,6 +221,19 @@ export function Header() {
                 )}
                 <span className="text-hos-text-muted text-[11px] group-hover:text-hos-gold transition-colors duration-200">Basket</span>
               </Link>
+              {showAuthCustomerNav && (
+                <button
+                  type="button"
+                  onClick={handleLogout}
+                  className="flex flex-col items-center gap-1 group"
+                  aria-label="Sign out"
+                >
+                  <svg className="w-5 h-5 text-hos-text-secondary group-hover:text-hos-sale-red transition-colors duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                  </svg>
+                  <span className="text-hos-text-muted text-[11px] group-hover:text-hos-sale-red transition-colors duration-200">Sign out</span>
+                </button>
+              )}
             </div>
           )}
 
@@ -246,7 +259,7 @@ export function Header() {
                   {impersonatedRole && user.role === 'ADMIN' && !isDashboardPage && (
                     <button
                       onClick={handleBackToAdmin}
-                      className="px-3 py-1.5 text-sm bg-hos-new-green hover:opacity-90 text-white font-medium rounded-lg transition-colors inline-flex items-center gap-1.5"
+                      className="px-3 py-1.5 text-sm bg-hos-new-green hover:opacity-90 text-hos-text-secondary font-medium rounded-lg transition-colors inline-flex items-center gap-1.5"
                       title="Return to Admin Dashboard"
                     >
                       <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -257,7 +270,7 @@ export function Header() {
                   )}
                   <button
                     onClick={handleLogout}
-                    className="px-3 py-1.5 text-sm bg-hos-sale-red hover:opacity-90 text-white font-medium rounded-lg transition-colors"
+                    className="px-3 py-1.5 text-sm bg-hos-sale-red hover:opacity-90 text-hos-text-secondary font-medium rounded-lg transition-colors"
                   >
                     Logout
                   </button>
@@ -297,14 +310,14 @@ export function Header() {
       {(showCustomerNav || (isAuthenticated && !isCustomerRole && !isDashboardPage && quickLinks.length > 0)) && (
         <div className="hidden md:block border-t border-hos-border bg-hos-bg">
           <div className="max-w-7xl mx-auto px-4">
-            <nav className="flex items-center justify-center gap-8 py-2.5 overflow-x-auto" role="navigation" aria-label="Main navigation">
+            <nav className="flex items-center justify-start gap-x-6 gap-y-2 py-2.5 overflow-x-auto scrollbar-thin px-1" role="navigation" aria-label="Main navigation">
               {showCustomerNav && (
                 <>
                   {STOREFRONT_NAV_LINKS.map((item) => (
                     <Link
                       key={item.href}
                       href={item.href}
-                      className="text-hos-text-secondary text-sm hover:text-hos-gold transition-colors duration-200 whitespace-nowrap"
+                      className="text-hos-text-secondary text-sm hover:text-hos-gold transition-colors duration-200 whitespace-nowrap shrink-0"
                     >
                       {item.label}
                     </Link>
@@ -314,17 +327,14 @@ export function Header() {
               {showAuthCustomerNav && (
                 <>
                   <NavDivider />
-                  <NavLink href="/wishlist" icon="❤️" label="Wishlist" currentPath={pathname} />
                   <NavLink href="/orders" icon="📦" label="My Orders" currentPath={pathname} />
                   <NavLink href="/loyalty" icon="✨" label="Rewards" currentPath={pathname} />
-                  <NavLink href="/cart" icon="🛒" label="Cart" currentPath={pathname} badge={cartItemCount > 0 ? (cartItemCount > 99 ? '99+' : String(cartItemCount)) : undefined} />
                 </>
               )}
               {showGuestNav && (
                 <>
                   <NavDivider />
                   <NavLink href="/loyalty" icon="✨" label="Rewards" currentPath={pathname} />
-                  <NavLink href="/cart" icon="🛒" label="Cart" currentPath={pathname} badge={cartItemCount > 0 ? (cartItemCount > 99 ? '99+' : String(cartItemCount)) : undefined} />
                 </>
               )}
               {isAuthenticated && !isCustomerRole && !isDashboardPage && quickLinks.length > 0 && (
@@ -367,6 +377,14 @@ export function Header() {
                     <CurrencySelector />
                   </div>
                 )}
+                <button
+                  type="button"
+                  onClick={() => { handleLogout(); setIsMobileMenuOpen(false); }}
+                  className="w-full px-3 py-2.5 text-sm text-hos-sale-red hover:bg-hos-bg-secondary rounded-lg transition-colors text-left flex items-center gap-3"
+                >
+                  <span className="w-6 text-center text-base leading-none shrink-0" aria-hidden>🚪</span>
+                  Sign out
+                </button>
               </>
             )}
             {showGuestNav && (
@@ -406,7 +424,7 @@ export function Header() {
                 {impersonatedRole && user.role === 'ADMIN' && !isDashboardPage && (
                   <button
                     onClick={() => { handleBackToAdmin(); setIsMobileMenuOpen(false); }}
-                    className="w-full px-3 py-2 text-sm bg-hos-new-green hover:opacity-90 text-white font-medium rounded-lg transition-colors text-center flex items-center justify-center gap-2"
+                    className="w-full px-3 py-2 text-sm bg-hos-new-green hover:opacity-90 text-hos-text-secondary font-medium rounded-lg transition-colors text-center flex items-center justify-center gap-2"
                   >
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -416,7 +434,7 @@ export function Header() {
                 )}
                 <button
                   onClick={() => { handleLogout(); setIsMobileMenuOpen(false); }}
-                  className="w-full px-3 py-2.5 text-sm bg-hos-sale-red hover:opacity-90 text-white font-medium rounded-lg transition-colors text-center"
+                  className="w-full px-3 py-2.5 text-sm bg-hos-sale-red hover:opacity-90 text-hos-text-secondary font-medium rounded-lg transition-colors text-center"
                 >
                   Logout
                 </button>

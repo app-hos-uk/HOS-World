@@ -151,7 +151,7 @@ export default function CMSBannersPage() {
       <CMSLayout>
         <div className="space-y-6">
           <div className="flex justify-between items-center">
-            <h1 className="text-2xl font-bold text-white">CMS Banners</h1>
+            <h1 className="text-2xl font-bold text-hos-text-secondary">CMS Banners</h1>
             <button
               onClick={() => setShowCreateForm(true)}
               className="px-4 py-2 bg-hos-gold text-[#1a1406] rounded-lg hover:bg-hos-gold-hover"
@@ -219,7 +219,7 @@ export default function CMSBannersPage() {
                     required
                     value={formData.title}
                     onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                    className="w-full px-3 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50"
+                    className="w-full px-3 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50 bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none focus:border-hos-gold"
                     placeholder="Banner title"
                   />
                 </div>
@@ -230,7 +230,7 @@ export default function CMSBannersPage() {
                     onChange={(e) =>
                       setFormData({ ...formData, type: e.target.value as any })
                     }
-                    className="w-full px-3 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50"
+                    className="w-full px-3 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50 bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none focus:border-hos-gold"
                   >
                     <option value="hero">Hero Banner</option>
                     <option value="promotional">Promotional Banner</option>
@@ -244,7 +244,7 @@ export default function CMSBannersPage() {
                     required
                     value={formData.image}
                     onChange={(e) => setFormData({ ...formData, image: e.target.value })}
-                    className="w-full px-3 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50"
+                    className="w-full px-3 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50 bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none focus:border-hos-gold"
                     placeholder="https://example.com/banner.jpg"
                   />
                 </div>
@@ -254,7 +254,7 @@ export default function CMSBannersPage() {
                     type="url"
                     value={formData.link}
                     onChange={(e) => setFormData({ ...formData, link: e.target.value })}
-                    className="w-full px-3 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50"
+                    className="w-full px-3 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50 bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none focus:border-hos-gold"
                     placeholder="https://example.com/page"
                   />
                 </div>
@@ -263,7 +263,7 @@ export default function CMSBannersPage() {
                   <textarea
                     value={formData.content}
                     onChange={(e) => setFormData({ ...formData, content: e.target.value })}
-                    className="w-full px-3 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50"
+                    className="w-full px-3 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50 bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none focus:border-hos-gold"
                     rows={3}
                     placeholder="Banner content or description"
                   />
@@ -320,7 +320,7 @@ export default function CMSBannersPage() {
                     required
                     value={formData.title}
                     onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                    className="w-full px-3 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50"
+                    className="w-full px-3 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50 bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none focus:border-hos-gold"
                     placeholder="Banner title"
                   />
                 </div>
@@ -331,7 +331,7 @@ export default function CMSBannersPage() {
                     onChange={(e) =>
                       setFormData({ ...formData, type: e.target.value as any })
                     }
-                    className="w-full px-3 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50"
+                    className="w-full px-3 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50 bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none focus:border-hos-gold"
                   >
                     <option value="hero">Hero Banner</option>
                     <option value="promotional">Promotional Banner</option>
@@ -345,7 +345,7 @@ export default function CMSBannersPage() {
                     required
                     value={formData.image}
                     onChange={(e) => setFormData({ ...formData, image: e.target.value })}
-                    className="w-full px-3 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50"
+                    className="w-full px-3 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50 bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none focus:border-hos-gold"
                     placeholder="https://example.com/banner.jpg"
                   />
                 </div>
@@ -355,7 +355,7 @@ export default function CMSBannersPage() {
                     type="url"
                     value={formData.link}
                     onChange={(e) => setFormData({ ...formData, link: e.target.value })}
-                    className="w-full px-3 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50"
+                    className="w-full px-3 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50 bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none focus:border-hos-gold"
                     placeholder="https://example.com/page"
                   />
                 </div>
@@ -364,7 +364,7 @@ export default function CMSBannersPage() {
                   <textarea
                     value={formData.content}
                     onChange={(e) => setFormData({ ...formData, content: e.target.value })}
-                    className="w-full px-3 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50"
+                    className="w-full px-3 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50 bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none focus:border-hos-gold"
                     rows={3}
                     placeholder="Banner content or description"
                   />
@@ -444,7 +444,7 @@ export default function CMSBannersPage() {
                       </div>
                       <div className="flex items-start justify-between mb-2">
                         <div className="flex-1">
-                          <h3 className="text-lg font-medium text-white">{banner.title}</h3>
+                          <h3 className="text-lg font-medium text-hos-text-secondary">{banner.title}</h3>
                           <span className="text-xs bg-hos-gold/20 text-hos-gold px-2 py-0.5 rounded mt-1 inline-block">
                             {banner.type}
                           </span>
@@ -454,7 +454,7 @@ export default function CMSBannersPage() {
                             Active
                           </span>
                         ) : (
-                          <span className="text-xs bg-hos-bg-tertiary text-white px-2 py-0.5 rounded">
+                          <span className="text-xs bg-hos-bg-tertiary text-hos-text-secondary px-2 py-0.5 rounded">
                             Inactive
                           </span>
                         )}

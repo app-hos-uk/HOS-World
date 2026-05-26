@@ -26,7 +26,7 @@ export default function NewsletterSignup() {
   return (
     <section className="bg-hos-bg-tertiary py-16">
       <div className="max-w-xl mx-auto px-4 text-center">
-        <h2 className="font-display text-white text-2xl md:text-3xl font-bold">
+        <h2 className="font-display text-hos-text-secondary text-2xl md:text-3xl font-bold">
           Subscribe to our missives
         </h2>
         <p className="text-hos-text-secondary text-sm mt-3 mb-8">

@@ -277,7 +277,7 @@ export default function SellerOnboardingPage() {
                       value={storeInfo.storeName}
                       onChange={(e) => setStoreInfo({ ...storeInfo, storeName: e.target.value })}
                       placeholder="My Awesome Store"
-                      className="w-full px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50"
+                      className="w-full px-4 py-2 border border-hos-border rounded-lg bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:ring-2 focus:ring-hos-gold/50 focus:border-hos-gold focus:outline-none"
                       required
                     />
                   </div>
@@ -289,7 +289,7 @@ export default function SellerOnboardingPage() {
                       onChange={(e) => setStoreInfo({ ...storeInfo, description: e.target.value })}
                       placeholder="Tell customers about your store..."
                       rows={4}
-                      className="w-full px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50"
+                      className="w-full px-4 py-2 border border-hos-border rounded-lg bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:ring-2 focus:ring-hos-gold/50 focus:border-hos-gold focus:outline-none"
                     />
                   </div>
 
@@ -300,14 +300,14 @@ export default function SellerOnboardingPage() {
                       value={storeInfo.logo}
                       onChange={(e) => setStoreInfo({ ...storeInfo, logo: e.target.value })}
                       placeholder="https://example.com/logo.png"
-                      className="w-full px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50"
+                      className="w-full px-4 py-2 border border-hos-border rounded-lg bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:ring-2 focus:ring-hos-gold/50 focus:border-hos-gold focus:outline-none"
                     />
                     <p className="text-xs text-hos-text-muted mt-1">You can upload a logo later</p>
                   </div>
 
                   {userRole === 'WHOLESALER' && (
                     <div className="space-y-4 border-t border-hos-border pt-6">
-                      <h3 className="text-lg font-semibold text-white">Business details (B2B)</h3>
+                      <h3 className="text-lg font-semibold text-hos-text-secondary">Business details (B2B)</h3>
                       <p className="text-sm text-hos-text-secondary">
                         Used for invoicing and wholesale verification.
                       </p>
@@ -321,7 +321,7 @@ export default function SellerOnboardingPage() {
                           onChange={(e) =>
                             setWholesalerB2b({ ...wholesalerB2b, companyName: e.target.value })
                           }
-                          className="w-full px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50"
+                          className="w-full px-4 py-2 border border-hos-border rounded-lg bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:ring-2 focus:ring-hos-gold/50 focus:border-hos-gold focus:outline-none"
                           placeholder="Registered company name"
                         />
                       </div>
@@ -334,7 +334,7 @@ export default function SellerOnboardingPage() {
                             onChange={(e) =>
                               setWholesalerB2b({ ...wholesalerB2b, vatNumber: e.target.value })
                             }
-                            className="w-full px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50"
+                            className="w-full px-4 py-2 border border-hos-border rounded-lg bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:ring-2 focus:ring-hos-gold/50 focus:border-hos-gold focus:outline-none"
                           />
                         </div>
                         <div>
@@ -347,7 +347,7 @@ export default function SellerOnboardingPage() {
                             onChange={(e) =>
                               setWholesalerB2b({ ...wholesalerB2b, businessRegNumber: e.target.value })
                             }
-                            className="w-full px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50"
+                            className="w-full px-4 py-2 border border-hos-border rounded-lg bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:ring-2 focus:ring-hos-gold/50 focus:border-hos-gold focus:outline-none"
                           />
                         </div>
                       </div>
@@ -360,7 +360,7 @@ export default function SellerOnboardingPage() {
                             setWholesalerB2b({ ...wholesalerB2b, businessType: e.target.value })
                           }
                           placeholder="e.g. DISTRIBUTOR, RETAIL"
-                          className="w-full px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50"
+                          className="w-full px-4 py-2 border border-hos-border rounded-lg bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:ring-2 focus:ring-hos-gold/50 focus:border-hos-gold focus:outline-none"
                         />
                       </div>
                     </div>
@@ -394,7 +394,7 @@ export default function SellerOnboardingPage() {
                       value={location.country}
                       onChange={(e) => setLocation({ ...location, country: e.target.value })}
                       placeholder="United States"
-                      className="w-full px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50"
+                      className="w-full px-4 py-2 border border-hos-border rounded-lg bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:ring-2 focus:ring-hos-gold/50 focus:border-hos-gold focus:outline-none"
                       required
                     />
                   </div>
@@ -407,7 +407,7 @@ export default function SellerOnboardingPage() {
                         value={location.city}
                         onChange={(e) => setLocation({ ...location, city: e.target.value })}
                         placeholder="London"
-                        className="w-full px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50"
+                        className="w-full px-4 py-2 border border-hos-border rounded-lg bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:ring-2 focus:ring-hos-gold/50 focus:border-hos-gold focus:outline-none"
                       />
                     </div>
                     <div>
@@ -417,7 +417,7 @@ export default function SellerOnboardingPage() {
                         value={location.region}
                         onChange={(e) => setLocation({ ...location, region: e.target.value })}
                         placeholder="England"
-                        className="w-full px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50"
+                        className="w-full px-4 py-2 border border-hos-border rounded-lg bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:ring-2 focus:ring-hos-gold/50 focus:border-hos-gold focus:outline-none"
                       />
                     </div>
                   </div>

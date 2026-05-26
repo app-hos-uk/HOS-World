@@ -18,7 +18,7 @@ export default function AdminReportsPage() {
       <AdminLayout>
         <div className="space-y-6">
           <div>
-            <h1 className="text-2xl font-bold text-white">Reports</h1>
+            <h1 className="text-2xl font-bold text-hos-text-secondary">Reports</h1>
             <p className="mt-1 text-sm text-hos-text-muted">Analytics and report dashboards</p>
           </div>
 
@@ -30,7 +30,7 @@ export default function AdminReportsPage() {
                 className="block rounded-lg border border-hos-border bg-hos-bg-secondary p-6 shadow-sm transition-shadow hover:shadow-md"
               >
                 <span className="text-3xl" role="img" aria-hidden>{item.icon}</span>
-                <h2 className="mt-3 text-lg font-semibold text-white">{item.title}</h2>
+                <h2 className="mt-3 text-lg font-semibold text-hos-text-secondary">{item.title}</h2>
                 <p className="mt-1 text-sm text-hos-text-muted">{item.description}</p>
                 <span className="mt-3 inline-block text-sm font-medium text-hos-gold">View report →</span>
               </Link>

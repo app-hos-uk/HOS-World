@@ -206,7 +206,7 @@ export default function AdminFulfillmentCentersPage() {
       <AdminLayout>
         <div className="space-y-6">
           <div className="flex items-center justify-between">
-            <h1 className="text-2xl font-bold text-white">Fulfillment Centers</h1>
+            <h1 className="text-2xl font-bold text-hos-text-secondary">Fulfillment Centers</h1>
             <button
               type="button"
               onClick={openAddModal}
@@ -251,13 +251,13 @@ export default function AdminFulfillmentCentersPage() {
                   centers.map((center) => (
                     <tr key={center.id} className="hover:bg-hos-bg-tertiary">
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm font-medium text-white">{center.name || 'N/A'}</div>
+                        <div className="text-sm font-medium text-hos-text-secondary">{center.name || 'N/A'}</div>
                         {center.capacity && (
                           <div className="text-xs text-hos-text-muted">Capacity: {center.capacity} units</div>
                         )}
                       </td>
                       <td className="px-6 py-4">
-                        <div className="text-sm text-white">{center.city}, {center.country}</div>
+                        <div className="text-sm text-hos-text-secondary">{center.city}, {center.country}</div>
                         <div className="text-xs text-hos-text-muted">{center.address}</div>
                         {center.postalCode && (
                           <div className="text-xs text-hos-text-muted">{center.postalCode}</div>
@@ -266,7 +266,7 @@ export default function AdminFulfillmentCentersPage() {
                       <td className="px-6 py-4 whitespace-nowrap">
                         {center.latitude != null && center.longitude != null ? (
                           <div className="text-xs">
-                            <div className="text-white">{Number(center.latitude).toFixed(4)}</div>
+                            <div className="text-hos-text-secondary">{Number(center.latitude).toFixed(4)}</div>
                             <div className="text-hos-text-muted">{Number(center.longitude).toFixed(4)}</div>
                           </div>
                         ) : (
@@ -276,7 +276,7 @@ export default function AdminFulfillmentCentersPage() {
                       <td className="px-6 py-4">
                         {center.contactEmail || center.contactPhone ? (
                           <div className="text-xs">
-                            {center.contactEmail && <div className="text-white">{center.contactEmail}</div>}
+                            {center.contactEmail && <div className="text-hos-text-secondary">{center.contactEmail}</div>}
                             {center.contactPhone && <div className="text-hos-text-muted">{center.contactPhone}</div>}
                           </div>
                         ) : (
@@ -288,7 +288,7 @@ export default function AdminFulfillmentCentersPage() {
                           className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
                             center.isActive !== false
                               ? 'bg-green-500/15 text-green-300'
-                              : 'bg-hos-bg-tertiary text-white'
+                              : 'bg-hos-bg-tertiary text-hos-text-secondary'
                           }`}
                         >
                           {center.isActive !== false ? 'Active' : 'Inactive'}
@@ -315,7 +315,7 @@ export default function AdminFulfillmentCentersPage() {
                             <button
                               type="button"
                               onClick={() => setDeleteConfirmId(null)}
-                              className="text-hos-text-secondary text-xs hover:text-white"
+                              className="text-hos-text-secondary text-xs hover:text-hos-gold"
                             >
                               Cancel
                             </button>
@@ -365,7 +365,7 @@ export default function AdminFulfillmentCentersPage() {
                   leaveTo="opacity-0 scale-95"
                 >
                   <Dialog.Panel className="w-full max-w-lg transform overflow-hidden rounded-2xl bg-hos-bg-secondary p-6 text-left align-middle shadow-xl transition-all max-h-[90vh] overflow-y-auto">
-                    <Dialog.Title as="h3" className="text-lg font-medium leading-6 text-white mb-4">
+                    <Dialog.Title as="h3" className="text-lg font-medium leading-6 text-hos-text-secondary mb-4">
                       {editingCenter ? 'Edit Fulfillment Center' : 'Add Fulfillment Center'}
                     </Dialog.Title>
                     <form onSubmit={handleSubmit} className="space-y-4">
@@ -493,7 +493,7 @@ export default function AdminFulfillmentCentersPage() {
                           onChange={(e) => setFormData({ ...formData, isActive: e.target.checked })}
                           className="h-4 w-4 text-hos-gold focus:ring-hos-gold/50 border-hos-border rounded"
                         />
-                        <label className="ml-2 block text-sm text-white">Active</label>
+                        <label className="ml-2 block text-sm text-hos-text-secondary">Active</label>
                       </div>
                       <div className="flex justify-end gap-3 mt-6">
                         <button
@@ -506,7 +506,7 @@ export default function AdminFulfillmentCentersPage() {
                         <button
                           type="submit"
                           disabled={submitting}
-                          className="px-4 py-2 text-sm font-medium text-white bg-hos-gold rounded-lg hover:bg-hos-gold-hover disabled:opacity-50"
+                          className="px-4 py-2 text-sm font-medium text-hos-text-secondary bg-hos-gold rounded-lg hover:bg-hos-gold-hover disabled:opacity-50"
                         >
                           {submitting ? 'Saving...' : editingCenter ? 'Save changes' : 'Create Center'}
                         </button>

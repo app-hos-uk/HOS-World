@@ -137,7 +137,7 @@ function TrackOrderContent() {
       <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 lg:py-12">
         {/* Header */}
         <div className="text-center mb-8">
-          <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-white">Track Your Order</h1>
+          <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-hos-text-secondary">Track Your Order</h1>
           <p className="text-hos-text-secondary mt-2">Enter your order number to see its current status</p>
         </div>
 
@@ -193,7 +193,7 @@ function TrackOrderContent() {
             <div className="bg-hos-bg-secondary rounded-lg shadow p-6">
               <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                 <div>
-                  <h2 className="text-xl font-bold text-white">
+                  <h2 className="text-xl font-bold text-hos-text-secondary">
                     Order #{order.orderNumber || order.id.slice(0, 8)}
                   </h2>
                   <p className="text-sm text-hos-text-muted mt-1">
@@ -219,7 +219,7 @@ function TrackOrderContent() {
 
             {/* Progress Tracker */}
             <div className="bg-hos-bg-secondary rounded-lg shadow p-6">
-              <h3 className="font-semibold text-white mb-6">Order Progress</h3>
+              <h3 className="font-semibold text-hos-text-secondary mb-6">Order Progress</h3>
               
               {/* Handle cancelled/refunded status */}
               {['cancelled', 'refunded'].includes((order.status || '').toLowerCase()) ? (
@@ -227,7 +227,7 @@ function TrackOrderContent() {
                   <div className="text-6xl mb-4">
                     {order.status.toLowerCase() === 'cancelled' ? '❌' : '💸'}
                   </div>
-                  <h4 className="text-xl font-bold text-white">
+                  <h4 className="text-xl font-bold text-hos-text-secondary">
                     Order {order.status.toLowerCase() === 'cancelled' ? 'Cancelled' : 'Refunded'}
                   </h4>
                   <p className="text-hos-text-secondary mt-2">
@@ -279,7 +279,7 @@ function TrackOrderContent() {
               <div className="bg-hos-gold/10 rounded-lg shadow p-6">
                 <div className="flex items-center justify-between flex-wrap gap-4">
                   <div>
-                    <h3 className="font-semibold text-white">Tracking Number</h3>
+                    <h3 className="font-semibold text-hos-text-secondary">Tracking Number</h3>
                     <p className="font-mono text-hos-gold mt-1">{order.trackingNumber || order.trackingCode}</p>
                   </div>
                   <button
@@ -297,7 +297,7 @@ function TrackOrderContent() {
 
             {/* Timeline */}
             <div className="bg-hos-bg-secondary rounded-lg shadow p-6">
-              <h3 className="font-semibold text-white mb-4">Tracking History</h3>
+              <h3 className="font-semibold text-hos-text-secondary mb-4">Tracking History</h3>
               <div className="space-y-4">
                 {generateTrackingEvents(order).map((event, index) => (
                   <div key={index} className="flex gap-4">
@@ -310,7 +310,7 @@ function TrackOrderContent() {
                       )}
                     </div>
                     <div className="pb-4">
-                      <p className="font-medium text-white">{event.description}</p>
+                      <p className="font-medium text-hos-text-secondary">{event.description}</p>
                       <p className="text-sm text-hos-text-muted">
                         {new Date(event.date).toLocaleString()}
                         {event.location && ` • ${event.location}`}
@@ -324,7 +324,7 @@ function TrackOrderContent() {
             {/* Shipping Address */}
             {order.shippingAddress && (
               <div className="bg-hos-bg-secondary rounded-lg shadow p-6">
-                <h3 className="font-semibold text-white mb-3">Shipping Address</h3>
+                <h3 className="font-semibold text-hos-text-secondary mb-3">Shipping Address</h3>
                 <p className="text-hos-text-secondary">
                   {order.shippingAddress.street}<br />
                   {order.shippingAddress.city}, {order.shippingAddress.state} {order.shippingAddress.postalCode}<br />
@@ -335,7 +335,7 @@ function TrackOrderContent() {
 
             {/* Order Items */}
             <div className="bg-hos-bg-secondary rounded-lg shadow p-6">
-              <h3 className="font-semibold text-white mb-4">Items in Order</h3>
+              <h3 className="font-semibold text-hos-text-secondary mb-4">Items in Order</h3>
               <div className="divide-y">
                 {order.items?.map((item, index) => {
                   const firstImage = item.product?.images?.[0];
@@ -359,10 +359,10 @@ function TrackOrderContent() {
                         </div>
                       )}
                       <div className="flex-1">
-                        <p className="font-medium text-white">{item.product?.name || 'Product'}</p>
+                        <p className="font-medium text-hos-text-secondary">{item.product?.name || 'Product'}</p>
                         <p className="text-sm text-hos-text-muted">Qty: {item.quantity}</p>
                       </div>
-                      <p className="font-medium text-white">
+                      <p className="font-medium text-hos-text-secondary">
                         {formatPrice(item.price * item.quantity, order.currency || 'USD')}
                       </p>
                     </div>

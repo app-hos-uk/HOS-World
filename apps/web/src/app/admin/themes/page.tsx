@@ -372,7 +372,7 @@ export default function AdminThemesPage() {
       case 'HOS': return 'bg-hos-gold/20 text-hos-gold';
       case 'SELLER': return 'bg-hos-gold/20 text-hos-gold';
       case 'CUSTOMER': return 'bg-green-500/15 text-green-300';
-      default: return 'bg-hos-bg-tertiary text-white';
+      default: return 'bg-hos-bg-tertiary text-hos-text-secondary';
     }
   };
 
@@ -393,7 +393,7 @@ export default function AdminThemesPage() {
           {/* Header */}
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
             <div>
-              <h1 className="text-2xl font-bold text-white">Theme Management</h1>
+              <h1 className="text-2xl font-bold text-hos-text-secondary">Theme Management</h1>
               <p className="text-hos-text-secondary mt-1">Upload, manage, and configure themes for sellers</p>
             </div>
             <div className="flex gap-2">
@@ -415,7 +415,7 @@ export default function AdminThemesPage() {
                 className={`bg-hos-bg-secondary rounded-lg shadow p-4 text-left hover:shadow-md transition-shadow ${filter === 'ALL' && statusFilter === 'ALL' ? 'ring-2 ring-hos-gold/50' : ''}`}
               >
                 <p className="text-sm text-hos-text-muted">Total Themes</p>
-                <p className="text-2xl font-bold text-white">{stats.total}</p>
+                <p className="text-2xl font-bold text-hos-text-secondary">{stats.total}</p>
               </button>
               <button
                 onClick={() => { setFilter('HOS'); setStatusFilter('ALL'); }}
@@ -518,7 +518,7 @@ export default function AdminThemesPage() {
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   placeholder="Search by name or description..."
-                  className="w-full px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50"
+                  className="w-full px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50 bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none focus:border-hos-gold"
                 />
               </div>
               <div>
@@ -530,7 +530,7 @@ export default function AdminThemesPage() {
                     setSortBy(field as any);
                     setSortOrder(order as any);
                   }}
-                  className="w-full px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50"
+                  className="w-full px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50 bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none focus:border-hos-gold"
                 >
                   <option value="date-desc">Newest First</option>
                   <option value="date-asc">Oldest First</option>
@@ -636,7 +636,7 @@ export default function AdminThemesPage() {
                       <span className={`px-2 py-1 text-xs font-medium rounded ${getTypeBadgeColor(theme.type)}`}>
                         {theme.type}
                       </span>
-                      <span className={`px-2 py-1 text-xs font-medium rounded ${theme.isActive ? 'bg-green-500/15 text-green-300' : 'bg-hos-bg-tertiary text-white'}`}>
+                      <span className={`px-2 py-1 text-xs font-medium rounded ${theme.isActive ? 'bg-green-500/15 text-green-300' : 'bg-hos-bg-tertiary text-hos-text-secondary'}`}>
                         {theme.isActive ? 'Active' : 'Inactive'}
                       </span>
                     </div>
@@ -649,7 +649,7 @@ export default function AdminThemesPage() {
 
                   {/* Theme Info */}
                   <div className="p-4">
-                    <h3 className="text-lg font-semibold text-white truncate">{theme.name}</h3>
+                    <h3 className="text-lg font-semibold text-hos-text-secondary truncate">{theme.name}</h3>
                     <p className="text-sm text-hos-text-muted mt-1">v{theme.versionString || theme.version}</p>
                     {theme.description && (
                       <p className="text-sm text-hos-text-secondary mt-2 line-clamp-2">{theme.description}</p>
@@ -727,7 +727,7 @@ export default function AdminThemesPage() {
                         value={uploadForm.name}
                         onChange={(e) => setUploadForm({ ...uploadForm, name: e.target.value })}
                         placeholder="Enter theme name"
-                        className="w-full px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50"
+                        className="w-full px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50 bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none focus:border-hos-gold"
                       />
                     </div>
 
@@ -736,7 +736,7 @@ export default function AdminThemesPage() {
                       <select
                         value={uploadForm.type}
                         onChange={(e) => setUploadForm({ ...uploadForm, type: e.target.value })}
-                        className="w-full px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50"
+                        className="w-full px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50 bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none focus:border-hos-gold"
                       >
                         <option value="SELLER">Seller Theme</option>
                         <option value="HOS">HOS Theme</option>
@@ -751,7 +751,7 @@ export default function AdminThemesPage() {
                         onChange={(e) => setUploadForm({ ...uploadForm, description: e.target.value })}
                         placeholder="Enter theme description"
                         rows={3}
-                        className="w-full px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50"
+                        className="w-full px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50 bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none focus:border-hos-gold"
                       />
                     </div>
 
@@ -793,7 +793,7 @@ export default function AdminThemesPage() {
                         type="text"
                         value={editForm.name}
                         onChange={(e) => setEditForm({ ...editForm, name: e.target.value })}
-                        className="w-full px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50"
+                        className="w-full px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50 bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none focus:border-hos-gold"
                       />
                     </div>
 
@@ -802,7 +802,7 @@ export default function AdminThemesPage() {
                       <select
                         value={editForm.type}
                         onChange={(e) => setEditForm({ ...editForm, type: e.target.value })}
-                        className="w-full px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50"
+                        className="w-full px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50 bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none focus:border-hos-gold"
                       >
                         <option value="SELLER">Seller Theme</option>
                         <option value="HOS">HOS Theme</option>
@@ -816,7 +816,7 @@ export default function AdminThemesPage() {
                         value={editForm.description}
                         onChange={(e) => setEditForm({ ...editForm, description: e.target.value })}
                         rows={3}
-                        className="w-full px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50"
+                        className="w-full px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50 bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none focus:border-hos-gold"
                       />
                     </div>
 

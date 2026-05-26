@@ -51,7 +51,7 @@ function FooterNavColumn({
 }) {
   return (
     <nav aria-label={ariaLabel}>
-      <h4 className="text-white text-sm font-bold font-ui mb-4">{title}</h4>
+      <h4 className="text-hos-text-secondary text-sm font-bold font-ui mb-4">{title}</h4>
       <ul className="space-y-2 text-hos-text-muted text-[13px]">
         {links.map((link) => (
           <li key={`${link.href}-${link.label}`}>
@@ -188,7 +188,7 @@ export function Footer() {
 
           {/* Visit us */}
           <div>
-            <h4 className="text-white text-sm font-bold font-ui mb-4">Visit us</h4>
+            <h4 className="text-hos-text-secondary text-sm font-bold font-ui mb-4">Visit us</h4>
             <div className="text-hos-text-muted text-[13px] leading-relaxed space-y-2">
               {FOOTER_STORE_LOCATIONS.map((store) => (
                 <p key={store.city}>

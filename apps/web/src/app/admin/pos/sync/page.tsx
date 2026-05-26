@@ -34,7 +34,7 @@ export default function AdminPosSyncPage() {
           <Link href="/admin/pos" className="text-sm text-hos-gold hover:text-hos-gold">
             ← POS home
           </Link>
-          <h1 className="text-2xl font-bold text-white">POS sync log</h1>
+          <h1 className="text-2xl font-bold text-hos-text-secondary">POS sync log</h1>
           <p className="text-hos-text-secondary">Recent external entity mappings (products, customers).</p>
 
           {loading ? (

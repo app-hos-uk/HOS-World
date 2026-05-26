@@ -106,7 +106,7 @@ export default function AdminSalesReportsPage() {
       <AdminLayout>
         <div className="space-y-6">
           <div className="flex items-center justify-between">
-            <h1 className="text-2xl font-bold text-white">Sales Reports</h1>
+            <h1 className="text-2xl font-bold text-hos-text-secondary">Sales Reports</h1>
             <div className="flex gap-2">
               <button
                 onClick={() => handleExport('csv')}
@@ -154,7 +154,7 @@ export default function AdminSalesReportsPage() {
           <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
             <div className="bg-hos-bg-secondary rounded-lg shadow p-6">
               <h3 className="text-sm font-medium text-hos-text-muted">Total Revenue</h3>
-              <p className="text-3xl font-bold text-white mt-2">
+              <p className="text-3xl font-bold text-hos-text-secondary mt-2">
                 ${Number(data?.totalRevenue || 0).toFixed(2)}
               </p>
               {data?.growthRate && (
@@ -168,7 +168,7 @@ export default function AdminSalesReportsPage() {
             </div>
             <div className="bg-hos-bg-secondary rounded-lg shadow p-6">
               <h3 className="text-sm font-medium text-hos-text-muted">Total Orders</h3>
-              <p className="text-3xl font-bold text-white mt-2">{data?.totalOrders || 0}</p>
+              <p className="text-3xl font-bold text-hos-text-secondary mt-2">{data?.totalOrders || 0}</p>
               {data?.periodComparison && (
                 <p className="text-sm text-hos-text-muted mt-1">
                   Previous: {data.periodComparison.previous.orders}
@@ -177,7 +177,7 @@ export default function AdminSalesReportsPage() {
             </div>
             <div className="bg-hos-bg-secondary rounded-lg shadow p-6">
               <h3 className="text-sm font-medium text-hos-text-muted">Average Order Value</h3>
-              <p className="text-3xl font-bold text-white mt-2">
+              <p className="text-3xl font-bold text-hos-text-secondary mt-2">
                 $
                 {data?.totalOrders > 0
                   ? (data.totalRevenue / data.totalOrders).toFixed(2)
@@ -196,11 +196,11 @@ export default function AdminSalesReportsPage() {
 
           {data?.periodComparison && (
             <div className="bg-hos-bg-secondary rounded-lg shadow p-6">
-              <h2 className="text-lg font-semibold text-white mb-4">Period Comparison</h2>
+              <h2 className="text-lg font-semibold text-hos-text-secondary mb-4">Period Comparison</h2>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <div>
                   <h3 className="text-sm font-medium text-hos-text-muted">Current Period</h3>
-                  <p className="text-2xl font-bold text-white mt-1">
+                  <p className="text-2xl font-bold text-hos-text-secondary mt-1">
                     ${Number(data.periodComparison.current.revenue).toFixed(2)}
                   </p>
                   <p className="text-sm text-hos-text-muted mt-1">
@@ -209,7 +209,7 @@ export default function AdminSalesReportsPage() {
                 </div>
                 <div>
                   <h3 className="text-sm font-medium text-hos-text-muted">Previous Period</h3>
-                  <p className="text-2xl font-bold text-white mt-1">
+                  <p className="text-2xl font-bold text-hos-text-secondary mt-1">
                     ${Number(data.periodComparison.previous.revenue).toFixed(2)}
                   </p>
                   <p className="text-sm text-hos-text-muted mt-1">
@@ -236,7 +236,7 @@ export default function AdminSalesReportsPage() {
           {chartData.length > 0 && (
             <>
               <div className="bg-hos-bg-secondary rounded-lg shadow p-6">
-                <h2 className="text-lg font-semibold text-white mb-4">Revenue Trends</h2>
+                <h2 className="text-lg font-semibold text-hos-text-secondary mb-4">Revenue Trends</h2>
                 <ResponsiveContainer width="100%" height={300}>
                   <LineChart data={chartData}>
                     <CartesianGrid strokeDasharray="3 3" />
@@ -287,7 +287,7 @@ export default function AdminSalesReportsPage() {
               </div>
 
               <div className="bg-hos-bg-secondary rounded-lg shadow p-6">
-                <h2 className="text-lg font-semibold text-white mb-4">Orders Volume</h2>
+                <h2 className="text-lg font-semibold text-hos-text-secondary mb-4">Orders Volume</h2>
                 <ResponsiveContainer width="100%" height={300}>
                   <BarChart data={chartData}>
                     <CartesianGrid strokeDasharray="3 3" />
@@ -301,7 +301,7 @@ export default function AdminSalesReportsPage() {
               </div>
 
               <div className="bg-hos-bg-secondary rounded-lg shadow p-6">
-                <h2 className="text-lg font-semibold text-white mb-4">Average Order Value</h2>
+                <h2 className="text-lg font-semibold text-hos-text-secondary mb-4">Average Order Value</h2>
                 <ResponsiveContainer width="100%" height={300}>
                   <LineChart data={chartData}>
                     <CartesianGrid strokeDasharray="3 3" />

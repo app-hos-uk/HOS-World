@@ -122,7 +122,7 @@ export default function AdminProductAnalyticsPage() {
       <AdminLayout>
         <div className="space-y-6">
           <div className="flex items-center justify-between">
-            <h1 className="text-2xl font-bold text-white">Product Performance</h1>
+            <h1 className="text-2xl font-bold text-hos-text-secondary">Product Performance</h1>
             <div className="flex gap-2">
               <button
                 onClick={() => handleExport('csv')}
@@ -165,28 +165,28 @@ export default function AdminProductAnalyticsPage() {
           <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
             <div className="bg-hos-bg-secondary rounded-lg shadow p-6">
               <h3 className="text-sm font-medium text-hos-text-muted">Total Products</h3>
-              <p className="text-3xl font-bold text-white mt-2">{data.length}</p>
+              <p className="text-3xl font-bold text-hos-text-secondary mt-2">{data.length}</p>
             </div>
             <div className="bg-hos-bg-secondary rounded-lg shadow p-6">
               <h3 className="text-sm font-medium text-hos-text-muted">Total Revenue</h3>
-              <p className="text-3xl font-bold text-white mt-2">
+              <p className="text-3xl font-bold text-hos-text-secondary mt-2">
                 ${totalRevenue.toFixed(2)}
               </p>
             </div>
             <div className="bg-hos-bg-secondary rounded-lg shadow p-6">
               <h3 className="text-sm font-medium text-hos-text-muted">Total Orders</h3>
-              <p className="text-3xl font-bold text-white mt-2">{totalOrders}</p>
+              <p className="text-3xl font-bold text-hos-text-secondary mt-2">{totalOrders}</p>
             </div>
             <div className="bg-hos-bg-secondary rounded-lg shadow p-6">
               <h3 className="text-sm font-medium text-hos-text-muted">Total Quantity</h3>
-              <p className="text-3xl font-bold text-white mt-2">{totalQuantity}</p>
+              <p className="text-3xl font-bold text-hos-text-secondary mt-2">{totalQuantity}</p>
             </div>
           </div>
 
           {chartData.length > 0 && (
             <>
               <div className="bg-hos-bg-secondary rounded-lg shadow p-6">
-                <h2 className="text-lg font-semibold text-white mb-4">Top Products by Revenue</h2>
+                <h2 className="text-lg font-semibold text-hos-text-secondary mb-4">Top Products by Revenue</h2>
                 <ResponsiveContainer width="100%" height={400}>
                   <BarChart data={chartData} layout="vertical">
                     <CartesianGrid strokeDasharray="3 3" />
@@ -200,7 +200,7 @@ export default function AdminProductAnalyticsPage() {
               </div>
 
               <div className="bg-hos-bg-secondary rounded-lg shadow p-6">
-                <h2 className="text-lg font-semibold text-white mb-4">Top Products by Orders</h2>
+                <h2 className="text-lg font-semibold text-hos-text-secondary mb-4">Top Products by Orders</h2>
                 <ResponsiveContainer width="100%" height={400}>
                   <BarChart data={chartData}>
                     <CartesianGrid strokeDasharray="3 3" />
@@ -216,7 +216,7 @@ export default function AdminProductAnalyticsPage() {
           )}
 
           <div className="bg-hos-bg-secondary rounded-lg shadow p-6">
-            <h2 className="text-lg font-semibold text-white mb-4">Product Performance Table</h2>
+            <h2 className="text-lg font-semibold text-hos-text-secondary mb-4">Product Performance Table</h2>
             <div className="overflow-x-auto">
               <table className="min-w-full divide-y divide-hos-border">
                 <thead className="bg-hos-bg-secondary">
@@ -244,22 +244,22 @@ export default function AdminProductAnalyticsPage() {
                 <tbody className="bg-hos-bg-secondary divide-y divide-hos-border">
                   {data.slice(0, limit).map((product: any) => (
                     <tr key={product.productId}>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-white">
+                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-hos-text-secondary">
                         {product.name}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-hos-text-muted">
                         {product.sku || '-'}
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-white">
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-hos-text-secondary">
                         ${Number(product.revenue || 0).toFixed(2)}
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-white">
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-hos-text-secondary">
                         {product.orders || 0}
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-white">
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-hos-text-secondary">
                         {product.quantity || 0}
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-white">
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-hos-text-secondary">
                         ${Number(product.averagePrice || 0).toFixed(2)}
                       </td>
                     </tr>

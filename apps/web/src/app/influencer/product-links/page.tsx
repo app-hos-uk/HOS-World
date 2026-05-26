@@ -133,7 +133,7 @@ export default function InfluencerProductLinksPage() {
         {/* Header */}
         <div className="flex items-center justify-between mb-8">
           <div>
-            <h1 className="text-2xl font-bold text-white">Product Links</h1>
+            <h1 className="text-2xl font-bold text-hos-text-secondary">Product Links</h1>
             <p className="text-hos-text-secondary mt-1">
               Create trackable links for products you want to promote
             </p>
@@ -155,7 +155,7 @@ export default function InfluencerProductLinksPage() {
             <svg className="w-16 h-16 text-hos-text-muted mx-auto mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
             </svg>
-            <h3 className="text-lg font-medium text-white mb-2">No product links yet</h3>
+            <h3 className="text-lg font-medium text-hos-text-secondary mb-2">No product links yet</h3>
             <p className="text-hos-text-muted mb-4">Create your first product link to start tracking referrals</p>
             <button
               onClick={() => setShowAddModal(true)}
@@ -186,7 +186,7 @@ export default function InfluencerProductLinksPage() {
                   )}
                 </div>
                 <div className="p-4">
-                  <h3 className="font-medium text-white mb-1 line-clamp-2">
+                  <h3 className="font-medium text-hos-text-secondary mb-1 line-clamp-2">
                     {link.product.name}
                   </h3>
                   <p className="text-hos-gold font-semibold mb-3">
@@ -242,7 +242,7 @@ export default function InfluencerProductLinksPage() {
             <div className="bg-hos-bg-secondary rounded-xl max-w-lg w-full max-h-[80vh] flex flex-col">
               <div className="p-6 border-b">
                 <div className="flex items-center justify-between">
-                  <h2 className="text-xl font-semibold text-white">Create Product Link</h2>
+                  <h2 className="text-xl font-semibold text-hos-text-secondary">Create Product Link</h2>
                   <button
                     onClick={() => setShowAddModal(false)}
                     className="text-hos-text-muted hover:text-hos-text-secondary"
@@ -306,7 +306,7 @@ export default function InfluencerProductLinksPage() {
                           </div>
                         )}
                         <div className="flex-1 min-w-0">
-                          <p className="font-medium text-white truncate">{product.name}</p>
+                          <p className="font-medium text-hos-text-secondary truncate">{product.name}</p>
                           <p className="text-sm text-hos-gold">{formatCurrency(product.price)}</p>
                         </div>
                         {selectedProductId === product.id && (

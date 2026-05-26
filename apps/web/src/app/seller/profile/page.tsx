@@ -277,7 +277,7 @@ export default function SellerProfilePage() {
           {/* Header */}
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div>
-              <h1 className="text-2xl sm:text-3xl font-bold text-white">Seller Profile</h1>
+              <h1 className="text-2xl sm:text-3xl font-bold text-hos-text-secondary">Seller Profile</h1>
               <p className="text-hos-text-secondary mt-1">Manage your business information and settings</p>
             </div>
             <div className="flex items-center gap-2">
@@ -294,7 +294,7 @@ export default function SellerProfilePage() {
           </div>
 
           {/* Store Overview */}
-          <div className="bg-hos-bg-secondary border border-hos-border rounded-lg p-6 text-white">
+          <div className="bg-hos-bg-secondary border border-hos-border rounded-lg p-6 text-hos-text-secondary">
             <div className="flex items-center gap-4">
               {profile?.logo ? (
                 <SafeImage src={profile.logo} alt={profile.storeName ?? ''} width={64} height={64} className="rounded-full object-cover bg-hos-bg-secondary" fallback="🏪" />
@@ -326,7 +326,7 @@ export default function SellerProfilePage() {
                   className={`px-4 sm:px-6 py-3 font-medium text-sm transition-colors ${
                     activeTab === tab.id
                       ? 'border-b-2 border-hos-gold text-hos-gold'
-                      : 'text-hos-text-secondary hover:text-white'
+                      : 'text-hos-text-secondary hover:text-hos-gold'
                   }`}
                 >
                   <span className="mr-2">{tab.icon}</span>
@@ -359,7 +359,7 @@ export default function SellerProfilePage() {
                         value={businessForm.storeName}
                         onChange={(e) => setBusinessForm({ ...businessForm, storeName: e.target.value })}
                         disabled={!editing}
-                        className="w-full px-4 py-2 border border-hos-border rounded-lg disabled:bg-hos-bg-tertiary"
+                        className="w-full px-4 py-2 border border-hos-border rounded-lg bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:ring-2 focus:ring-hos-gold/50 focus:border-hos-gold focus:outline-none disabled:bg-hos-bg-tertiary disabled:text-hos-text-muted"
                       />
                     </div>
                     <div>
@@ -370,7 +370,7 @@ export default function SellerProfilePage() {
                         onChange={(e) => setBusinessForm({ ...businessForm, legalBusinessName: sanitizeLabelInput(e.target.value, businessForm.legalBusinessName) })}
                         disabled={!editing}
                         placeholder="Registered company name"
-                        className={`w-full px-4 py-2 border rounded-lg disabled:bg-hos-bg-tertiary ${isLabelInvalid(businessForm.legalBusinessName) ? 'border-red-500/40 focus:border-red-500 focus:ring-red-200' : 'border-hos-border'}`}
+                        className={`w-full px-4 py-2 border rounded-lg bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:ring-2 focus:ring-hos-gold/50 focus:outline-none bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:ring-2 focus:ring-hos-gold/50 focus:outline-none disabled:bg-hos-bg-tertiary disabled:text-hos-text-muted ${isLabelInvalid(businessForm.legalBusinessName) ? 'border-red-500/40 focus:border-red-500 focus:ring-red-200' : 'border-hos-border'}`}
                       />
                       {isLabelInvalid(businessForm.legalBusinessName) && (
                         <p className="text-xs text-red-400 mt-1">Must include at least one letter</p>
@@ -384,7 +384,7 @@ export default function SellerProfilePage() {
                         onChange={(e) => setBusinessForm({ ...businessForm, companyName: e.target.value })}
                         disabled={!editing}
                         placeholder="Business trading name"
-                        className="w-full px-4 py-2 border border-hos-border rounded-lg disabled:bg-hos-bg-tertiary"
+                        className="w-full px-4 py-2 border border-hos-border rounded-lg bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:ring-2 focus:ring-hos-gold/50 focus:border-hos-gold focus:outline-none disabled:bg-hos-bg-tertiary disabled:text-hos-text-muted"
                       />
                     </div>
                     <div>
@@ -395,7 +395,7 @@ export default function SellerProfilePage() {
                         onChange={(e) => setBusinessForm({ ...businessForm, vatNumber: e.target.value })}
                         disabled={!editing}
                         placeholder="12-3456789"
-                        className="w-full px-4 py-2 border border-hos-border rounded-lg disabled:bg-hos-bg-tertiary"
+                        className="w-full px-4 py-2 border border-hos-border rounded-lg bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:ring-2 focus:ring-hos-gold/50 focus:border-hos-gold focus:outline-none disabled:bg-hos-bg-tertiary disabled:text-hos-text-muted"
                       />
                     </div>
                     <div>
@@ -404,7 +404,7 @@ export default function SellerProfilePage() {
                         value={businessForm.country}
                         onChange={(e) => setBusinessForm({ ...businessForm, country: e.target.value })}
                         disabled={!editing}
-                        className="w-full px-4 py-2 border border-hos-border rounded-lg disabled:bg-hos-bg-tertiary"
+                        className="w-full px-4 py-2 border border-hos-border rounded-lg bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:ring-2 focus:ring-hos-gold/50 focus:border-hos-gold focus:outline-none disabled:bg-hos-bg-tertiary disabled:text-hos-text-muted"
                       >
                         <option value="">Select country</option>
                         <option value="United States">United States</option>
@@ -419,7 +419,7 @@ export default function SellerProfilePage() {
                         value={businessForm.city}
                         onChange={(e) => setBusinessForm({ ...businessForm, city: sanitizeLabelInput(e.target.value, businessForm.city) })}
                         disabled={!editing}
-                        className={`w-full px-4 py-2 border rounded-lg disabled:bg-hos-bg-tertiary ${isLabelInvalid(businessForm.city) ? 'border-red-500/40 focus:border-red-500 focus:ring-red-200' : 'border-hos-border'}`}
+                        className={`w-full px-4 py-2 border rounded-lg bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:ring-2 focus:ring-hos-gold/50 focus:outline-none bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:ring-2 focus:ring-hos-gold/50 focus:border-hos-gold focus:outline-none disabled:bg-hos-bg-tertiary disabled:text-hos-text-muted ${isLabelInvalid(businessForm.city) ? 'border-red-500/40 focus:border-red-500 focus:ring-red-500/30' : 'border-hos-border'}`}
                       />
                       {isLabelInvalid(businessForm.city) && (
                         <p className="text-xs text-red-400 mt-1">Must include at least one letter</p>
@@ -433,7 +433,7 @@ export default function SellerProfilePage() {
                         disabled={!editing}
                         rows={3}
                         placeholder="Describe your store..."
-                        className="w-full px-4 py-2 border border-hos-border rounded-lg disabled:bg-hos-bg-tertiary"
+                        className="w-full px-4 py-2 border border-hos-border rounded-lg bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:ring-2 focus:ring-hos-gold/50 focus:border-hos-gold focus:outline-none disabled:bg-hos-bg-tertiary disabled:text-hos-text-muted"
                       />
                     </div>
                   </div>
@@ -485,7 +485,7 @@ export default function SellerProfilePage() {
                         value={bankForm.bankName}
                         onChange={(e) => setBankForm({ ...bankForm, bankName: sanitizeLabelInput(e.target.value, bankForm.bankName) })}
                         placeholder="e.g., Barclays, HSBC"
-                        className={`w-full px-4 py-2 border rounded-lg ${isLabelInvalid(bankForm.bankName) ? 'border-red-500/40 focus:border-red-500 focus:ring-red-200' : 'border-hos-border'}`}
+                        className={`w-full px-4 py-2 border rounded-lg bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:ring-2 focus:ring-hos-gold/50 focus:outline-none ${isLabelInvalid(bankForm.bankName) ? 'border-red-500/40 focus:border-red-500 focus:ring-red-200' : 'border-hos-border'}`}
                       />
                       {isLabelInvalid(bankForm.bankName) && (
                         <p className="text-xs text-red-400 mt-1">Must include at least one letter</p>
@@ -498,7 +498,7 @@ export default function SellerProfilePage() {
                         value={bankForm.accountHolder}
                         onChange={(e) => setBankForm({ ...bankForm, accountHolder: sanitizeLabelInput(e.target.value, bankForm.accountHolder) })}
                         placeholder="Name on the account"
-                        className={`w-full px-4 py-2 border rounded-lg ${isLabelInvalid(bankForm.accountHolder) ? 'border-red-500/40 focus:border-red-500 focus:ring-red-200' : 'border-hos-border'}`}
+                        className={`w-full px-4 py-2 border rounded-lg bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:ring-2 focus:ring-hos-gold/50 focus:outline-none ${isLabelInvalid(bankForm.accountHolder) ? 'border-red-500/40 focus:border-red-500 focus:ring-red-200' : 'border-hos-border'}`}
                       />
                       {isLabelInvalid(bankForm.accountHolder) && (
                         <p className="text-xs text-red-400 mt-1">Must include at least one letter</p>
@@ -512,7 +512,7 @@ export default function SellerProfilePage() {
                           value={bankForm.accountNumber}
                           onChange={(e) => setBankForm({ ...bankForm, accountNumber: e.target.value })}
                           placeholder="Enter new account number to update"
-                          className="w-full px-4 py-2 pr-12 border border-hos-border rounded-lg"
+                          className="w-full px-4 py-2 pr-12 border border-hos-border rounded-lg bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:ring-2 focus:ring-hos-gold/50 focus:outline-none"
                         />
                         <button
                           type="button"
@@ -541,7 +541,7 @@ export default function SellerProfilePage() {
                           value={bankForm.sortCode}
                           onChange={(e) => setBankForm({ ...bankForm, sortCode: e.target.value })}
                           placeholder="Enter new sort code to update"
-                          className="w-full px-4 py-2 pr-12 border border-hos-border rounded-lg"
+                          className="w-full px-4 py-2 pr-12 border border-hos-border rounded-lg bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:ring-2 focus:ring-hos-gold/50 focus:outline-none"
                         />
                         <button
                           type="button"
@@ -592,7 +592,7 @@ export default function SellerProfilePage() {
                         value={opsForm.opsContactName}
                         onChange={(e) => setOpsForm({ ...opsForm, opsContactName: sanitizeLabelInput(e.target.value, opsForm.opsContactName) })}
                         placeholder="Operations manager name"
-                        className={`w-full px-4 py-2 border rounded-lg ${isLabelInvalid(opsForm.opsContactName) ? 'border-red-500/40 focus:border-red-500 focus:ring-red-200' : 'border-hos-border'}`}
+                        className={`w-full px-4 py-2 border rounded-lg bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:ring-2 focus:ring-hos-gold/50 focus:outline-none ${isLabelInvalid(opsForm.opsContactName) ? 'border-red-500/40 focus:border-red-500 focus:ring-red-200' : 'border-hos-border'}`}
                       />
                       {isLabelInvalid(opsForm.opsContactName) && (
                         <p className="text-xs text-red-400 mt-1">Must include at least one letter</p>
@@ -605,7 +605,7 @@ export default function SellerProfilePage() {
                         value={opsForm.opsContactEmail}
                         onChange={(e) => setOpsForm({ ...opsForm, opsContactEmail: e.target.value })}
                         placeholder="operations@yourstore.com"
-                        className="w-full px-4 py-2 border border-hos-border rounded-lg"
+                        className="w-full px-4 py-2 border border-hos-border rounded-lg bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:ring-2 focus:ring-hos-gold/50 focus:border-hos-gold focus:outline-none"
                       />
                     </div>
                     <div>
@@ -622,7 +622,7 @@ export default function SellerProfilePage() {
                           })
                         }
                         placeholder="+1 555 123 4567"
-                        className="w-full px-4 py-2 border border-hos-border rounded-lg"
+                        className="w-full px-4 py-2 border border-hos-border rounded-lg bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:ring-2 focus:ring-hos-gold/50 focus:border-hos-gold focus:outline-none"
                       />
                     </div>
                   </div>
@@ -655,7 +655,7 @@ export default function SellerProfilePage() {
                         value={warehouseForm.street}
                         onChange={(e) => setWarehouseForm({ ...warehouseForm, street: e.target.value })}
                         placeholder="Warehouse street address"
-                        className="w-full px-4 py-2 border border-hos-border rounded-lg"
+                        className="w-full px-4 py-2 border border-hos-border rounded-lg bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:ring-2 focus:ring-hos-gold/50 focus:border-hos-gold focus:outline-none"
                       />
                     </div>
                     <div>
@@ -664,7 +664,7 @@ export default function SellerProfilePage() {
                         type="text"
                         value={warehouseForm.city}
                         onChange={(e) => setWarehouseForm({ ...warehouseForm, city: sanitizeLabelInput(e.target.value, warehouseForm.city) })}
-                        className={`w-full px-4 py-2 border rounded-lg ${isLabelInvalid(warehouseForm.city) ? 'border-red-500/40 focus:border-red-500 focus:ring-red-200' : 'border-hos-border'}`}
+                        className={`w-full px-4 py-2 border rounded-lg bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:ring-2 focus:ring-hos-gold/50 focus:outline-none ${isLabelInvalid(warehouseForm.city) ? 'border-red-500/40 focus:border-red-500 focus:ring-red-200' : 'border-hos-border'}`}
                       />
                       {isLabelInvalid(warehouseForm.city) && (
                         <p className="text-xs text-red-400 mt-1">Must include at least one letter</p>
@@ -676,7 +676,7 @@ export default function SellerProfilePage() {
                         type="text"
                         value={warehouseForm.state}
                         onChange={(e) => setWarehouseForm({ ...warehouseForm, state: sanitizeLabelInput(e.target.value, warehouseForm.state) })}
-                        className={`w-full px-4 py-2 border rounded-lg ${isLabelInvalid(warehouseForm.state) ? 'border-red-500/40 focus:border-red-500 focus:ring-red-200' : 'border-hos-border'}`}
+                        className={`w-full px-4 py-2 border rounded-lg bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:ring-2 focus:ring-hos-gold/50 focus:outline-none ${isLabelInvalid(warehouseForm.state) ? 'border-red-500/40 focus:border-red-500 focus:ring-red-200' : 'border-hos-border'}`}
                       />
                       {isLabelInvalid(warehouseForm.state) && (
                         <p className="text-xs text-red-400 mt-1">Must include at least one letter</p>
@@ -695,7 +695,7 @@ export default function SellerProfilePage() {
                             postalCode: sanitizePostalInput(e.target.value),
                           })
                         }
-                        className={`w-full px-4 py-2 border rounded-lg ${isPostalInvalid(warehouseForm.postalCode) ? 'border-red-500/40 focus:border-red-500 focus:ring-red-200' : 'border-hos-border'}`}
+                        className={`w-full px-4 py-2 border rounded-lg bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:ring-2 focus:ring-hos-gold/50 focus:outline-none ${isPostalInvalid(warehouseForm.postalCode) ? 'border-red-500/40 focus:border-red-500 focus:ring-red-200' : 'border-hos-border'}`}
                       />
                       {isPostalInvalid(warehouseForm.postalCode) && (
                         <p className="text-xs text-red-400 mt-1">Must include at least one digit</p>
@@ -706,7 +706,7 @@ export default function SellerProfilePage() {
                       <select
                         value={warehouseForm.country}
                         onChange={(e) => setWarehouseForm({ ...warehouseForm, country: e.target.value })}
-                        className="w-full px-4 py-2 border border-hos-border rounded-lg"
+                        className="w-full px-4 py-2 border border-hos-border rounded-lg bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:ring-2 focus:ring-hos-gold/50 focus:border-hos-gold focus:outline-none"
                       >
                         <option value="">Select country</option>
                         <option value="United States">United States</option>

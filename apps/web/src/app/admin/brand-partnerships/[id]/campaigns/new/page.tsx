@@ -69,11 +69,11 @@ export default function AdminBrandCampaignNewPage() {
           <Link href={`/admin/brand-partnerships/${partnershipId}`} className="text-violet-400 text-sm">
             ← Partner
           </Link>
-          <h1 className="text-2xl font-semibold text-white">New brand campaign</h1>
+          <h1 className="text-2xl font-semibold text-hos-text-secondary">New brand campaign</h1>
           <label className="block text-sm">
             <span className="text-hos-text-secondary">Name</span>
             <input
-              className="mt-1 w-full border rounded px-3 py-2"
+              className="mt-1 w-full border rounded px-3 py-2 bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none border-hos-border"
               value={name}
               onChange={(e) => setName(e.target.value)}
             />
@@ -81,7 +81,7 @@ export default function AdminBrandCampaignNewPage() {
           <label className="block text-sm">
             <span className="text-hos-text-secondary">Type</span>
             <select
-              className="mt-1 w-full border rounded px-3 py-2"
+              className="mt-1 w-full border rounded px-3 py-2 bg-hos-bg-secondary text-hos-text-secondary focus:outline-none border-hos-border"
               value={type}
               onChange={(e) => setType(e.target.value)}
             >
@@ -97,7 +97,7 @@ export default function AdminBrandCampaignNewPage() {
               <input
                 type="number"
                 step="0.1"
-                className="mt-1 w-full border rounded px-3 py-2"
+                className="mt-1 w-full border rounded px-3 py-2 bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none border-hos-border"
                 value={multiplier}
                 onChange={(e) => setMultiplier(e.target.value)}
               />
@@ -108,7 +108,7 @@ export default function AdminBrandCampaignNewPage() {
               <span className="text-hos-text-secondary">Bonus points</span>
               <input
                 type="number"
-                className="mt-1 w-full border rounded px-3 py-2"
+                className="mt-1 w-full border rounded px-3 py-2 bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none border-hos-border"
                 value={bonusPoints}
                 onChange={(e) => setBonusPoints(e.target.value)}
               />
@@ -118,7 +118,7 @@ export default function AdminBrandCampaignNewPage() {
             <span className="text-hos-text-secondary">Starts (local)</span>
             <input
               type="datetime-local"
-              className="mt-1 w-full border rounded px-3 py-2"
+              className="mt-1 w-full border rounded px-3 py-2 bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none border-hos-border"
               value={startsAt}
               onChange={(e) => setStartsAt(e.target.value)}
             />
@@ -127,7 +127,7 @@ export default function AdminBrandCampaignNewPage() {
             <span className="text-hos-text-secondary">Ends (local)</span>
             <input
               type="datetime-local"
-              className="mt-1 w-full border rounded px-3 py-2"
+              className="mt-1 w-full border rounded px-3 py-2 bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none border-hos-border"
               value={endsAt}
               onChange={(e) => setEndsAt(e.target.value)}
             />
@@ -135,7 +135,7 @@ export default function AdminBrandCampaignNewPage() {
           <label className="block text-sm">
             <span className="text-hos-text-secondary">Target fandoms (comma-separated)</span>
             <input
-              className="mt-1 w-full border rounded px-3 py-2"
+              className="mt-1 w-full border rounded px-3 py-2 bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none border-hos-border"
               value={targetFandoms}
               onChange={(e) => setTargetFandoms(e.target.value)}
               placeholder="Harry Potter, LOTR"
@@ -144,7 +144,7 @@ export default function AdminBrandCampaignNewPage() {
           <label className="block text-sm">
             <span className="text-hos-text-secondary">Target brands (comma-separated)</span>
             <input
-              className="mt-1 w-full border rounded px-3 py-2"
+              className="mt-1 w-full border rounded px-3 py-2 bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none border-hos-border"
               value={targetBrands}
               onChange={(e) => setTargetBrands(e.target.value)}
             />

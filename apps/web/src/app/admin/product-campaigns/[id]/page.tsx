@@ -49,7 +49,7 @@ export default function AdminProductCampaignDetailPage() {
             <>
               <div className="flex justify-between items-start">
                 <div>
-                  <h1 className="text-2xl font-semibold text-white">{String(row.name)}</h1>
+                  <h1 className="text-2xl font-semibold text-hos-text-secondary">{String(row.name)}</h1>
                   <p className="text-sm text-hos-text-muted">
                     {String(row.type)} · {st}
                   </p>
@@ -67,7 +67,7 @@ export default function AdminProductCampaignDetailPage() {
                   {st === 'ACTIVE' && (
                     <button
                       type="button"
-                      className="text-sm px-2 py-1 rounded bg-hos-surface text-white"
+                      className="text-sm px-2 py-1 rounded bg-hos-surface text-hos-text-secondary"
                       onClick={() => act(() => apiClient.adminCompleteProductCampaign(id), 'Completed')}
                     >
                       Complete

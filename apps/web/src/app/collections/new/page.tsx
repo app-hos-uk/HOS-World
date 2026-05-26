@@ -112,7 +112,7 @@ export default function NewCollectionPage() {
                   </button>
                   <Link
                     href="/collections"
-                    className="flex-1 px-4 py-2 bg-hos-bg-tertiary text-white rounded-lg hover:bg-hos-bg-tertiary transition-colors font-medium text-center"
+                    className="flex-1 px-4 py-2 bg-hos-bg-tertiary text-hos-text-secondary rounded-lg hover:bg-hos-bg-tertiary transition-colors font-medium text-center"
                   >
                     Cancel
                   </Link>

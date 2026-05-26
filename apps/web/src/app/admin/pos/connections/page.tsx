@@ -68,7 +68,7 @@ export default function AdminPosConnectionsPage() {
               <Link href="/admin/pos" className="text-sm text-hos-gold hover:text-hos-gold">
                 ← POS home
               </Link>
-              <h1 className="mt-2 text-2xl font-bold text-white">POS connections</h1>
+              <h1 className="mt-2 text-2xl font-bold text-hos-text-secondary">POS connections</h1>
             </div>
           </div>
 

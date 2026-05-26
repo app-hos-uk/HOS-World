@@ -1,12 +1,13 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { RouteGuard } from '@/components/RouteGuard';
 import { DashboardLayout } from '@/components/DashboardLayout';
 import { apiClient } from '@/lib/api';
 import { getSellerMenuItems } from '@/lib/sellerMenu';
 import { useToast } from '@/hooks/useToast';
 import Link from 'next/link';
+import { PORTAL_INPUT_CLASS, PORTAL_SELECT_CLASS } from '@/lib/portalFieldClasses';
 
 function canSellerEditSubmission(status: string): boolean {
   return ['SUBMITTED', 'UNDER_REVIEW', 'PROCUREMENT_REJECTED'].includes(status);
@@ -21,6 +22,7 @@ export default function WholesalerSubmissionsPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [statusFilter, setStatusFilter] = useState<string>('');
+  const [searchTerm, setSearchTerm] = useState('');
   const toast = useToast();
 
   const menuItems = getSellerMenuItems(true);
@@ -46,20 +48,31 @@ export default function WholesalerSubmissionsPage() {
     }
   };
 
+  const filteredSubmissions = useMemo(() => {
+    if (!searchTerm.trim()) return submissions;
+    const q = searchTerm.toLowerCase();
+    return submissions.filter((s) => {
+      const name = (s.productData?.name || '').toLowerCase();
+      const desc = (s.productData?.description || '').toLowerCase();
+      const status = (s.status || '').toLowerCase();
+      return name.includes(q) || desc.includes(q) || status.includes(q);
+    });
+  }, [submissions, searchTerm]);
+
   return (
     <RouteGuard allowedRoles={['WHOLESALER', 'ADMIN']} showAccessDenied={true}>
       <DashboardLayout role="WHOLESALER" menuItems={menuItems} title="Wholesaler">
         <div className="mb-6">
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold">Submissions</h1>
+              <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-hos-text-secondary">Submissions</h1>
               <p className="text-hos-text-secondary mt-2">Track your product submission status</p>
             </div>
             <div className="flex gap-4">
               <select
                 value={statusFilter}
                 onChange={(e) => setStatusFilter(e.target.value)}
-                className="px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50"
+                className={PORTAL_SELECT_CLASS}
               >
                 <option value="">All Status</option>
                 <option value="SUBMITTED">Submitted</option>
@@ -81,6 +94,18 @@ export default function WholesalerSubmissionsPage() {
           </div>
         </div>
 
+        {!loading && !error && submissions.length > 0 && (
+          <div className="bg-hos-bg-secondary rounded-lg shadow p-4 mb-6">
+            <input
+              type="text"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              placeholder="Search by product name or status..."
+              className={PORTAL_INPUT_CLASS}
+            />
+          </div>
+        )}
+
         {loading && (
           <div className="flex items-center justify-center py-12">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-hos-gold"></div>
@@ -101,15 +126,19 @@ export default function WholesalerSubmissionsPage() {
 
         {!loading && !error && (
           <div className="bg-hos-bg-secondary rounded-lg shadow overflow-hidden">
-            {submissions.length === 0 ? (
+            {filteredSubmissions.length === 0 ? (
               <div className="text-center py-12">
-                <p className="text-hos-text-muted mb-4">No submissions found</p>
-                <Link
-                  href="/wholesaler/submit-product"
-                  className="text-hos-gold hover:text-hos-gold-hover font-medium"
-                >
-                  Submit your first bulk product →
-                </Link>
+                <p className="text-hos-text-muted mb-4">
+                  {submissions.length === 0 ? 'No submissions found' : 'No submissions match your search'}
+                </p>
+                {submissions.length === 0 && (
+                  <Link
+                    href="/wholesaler/submit-product"
+                    className="text-hos-gold hover:text-hos-gold-hover font-medium"
+                  >
+                    Submit your first bulk product →
+                  </Link>
+                )}
               </div>
             ) : (
               <div className="overflow-x-auto">
@@ -137,20 +166,20 @@ export default function WholesalerSubmissionsPage() {
                     </tr>
                   </thead>
                   <tbody className="bg-hos-bg-secondary divide-y divide-hos-border">
-                    {submissions.map((submission) => (
+                    {filteredSubmissions.map((submission) => (
                       <tr key={submission.id} className="hover:bg-hos-bg-tertiary">
                         <td className="px-6 py-4">
-                          <div className="text-sm font-medium text-white">
+                          <div className="text-sm font-medium text-hos-text-secondary">
                             {submission.productData?.name || 'Untitled Product'}
                           </div>
                           <div className="text-sm text-hos-text-muted">
                             {submission.productData?.description?.substring(0, 50)}...
                           </div>
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-white">
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-hos-text-secondary">
                           {submission.productData?.stock ?? 'N/A'}
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-white">
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-hos-text-secondary">
                           {submission.productData?.quantity || '—'}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
@@ -190,7 +219,7 @@ export default function WholesalerSubmissionsPage() {
                             {canSellerEditSubmission(submission.status) && (
                               <Link
                                 href={`/wholesaler/submit-product?edit=${submission.id}`}
-                                className="text-hos-text-secondary hover:text-white"
+                                className="text-hos-text-secondary hover:text-hos-gold"
                               >
                                 Edit
                               </Link>

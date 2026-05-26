@@ -26,7 +26,7 @@ export default function BlogPreview() {
       <div className="max-w-7xl mx-auto px-4">
         <div className="flex items-end justify-between mb-8 gap-4">
           <div>
-            <h2 className="font-display text-white text-2xl md:text-3xl font-bold italic">
+            <h2 className="font-display text-hos-text-secondary text-2xl md:text-3xl font-bold italic">
               From the grimoire
             </h2>
             <p className="text-hos-text-secondary text-sm mt-1">
@@ -54,7 +54,7 @@ export default function BlogPreview() {
                 </span>
               </div>
               <Link href="/help">
-                <h3 className="text-white text-base font-semibold font-ui mt-2 hover:text-hos-gold transition-colors duration-200 cursor-pointer">
+                <h3 className="text-hos-text-secondary text-base font-semibold font-ui mt-2 hover:text-hos-gold transition-colors duration-200 cursor-pointer">
                   {post.title}
                 </h3>
               </Link>

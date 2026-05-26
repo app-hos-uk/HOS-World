@@ -183,7 +183,7 @@ export default function PriceManagementPage() {
         <div className="space-y-6">
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-2xl font-bold text-white">Price Management</h1>
+              <h1 className="text-2xl font-bold text-hos-text-secondary">Price Management</h1>
               <p className="text-hos-text-secondary mt-2">Manage product pricing, stock, and tax information. Products must be created first.</p>
             </div>
             <button
@@ -223,7 +223,7 @@ export default function PriceManagementPage() {
                 <select
                   value={statusFilter}
                   onChange={(e) => setStatusFilter(e.target.value as any)}
-                  className="w-full px-3 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50"
+                  className="w-full px-3 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50 bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none focus:border-hos-gold"
                 >
                   <option value="ALL">All Statuses</option>
                   <option value="DRAFT">Draft Only</option>
@@ -306,18 +306,18 @@ export default function PriceManagementPage() {
                     filteredProducts.map((product) => (
                       <tr key={product.id} className="hover:bg-hos-bg-tertiary">
                         <td className="px-6 py-4">
-                          <div className="text-sm font-medium text-white">
+                          <div className="text-sm font-medium text-hos-text-secondary">
                             {product.name}
                           </div>
                           <div className="text-sm text-hos-text-muted">{product.sku || 'No SKU'}</div>
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-white">
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-hos-text-secondary">
                           {product.currency || 'USD'} {Number(product.price || 0).toFixed(2)}
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-white">
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-hos-text-secondary">
                           {product.stock || 0}
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-white">
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-hos-text-secondary">
                           {product.taxClassId
                             ? getTaxClassDisplay(product.taxClassId)
                             : product.taxRate != null
@@ -331,7 +331,7 @@ export default function PriceManagementPage() {
                                 ? 'bg-green-500/15 text-green-300'
                                 : product.status === 'DRAFT'
                                 ? 'bg-yellow-500/15 text-yellow-300'
-                                : 'bg-hos-bg-tertiary text-white'
+                                : 'bg-hos-bg-tertiary text-hos-text-secondary'
                             }`}
                           >
                             {product.status || 'UNKNOWN'}
@@ -394,7 +394,7 @@ export default function PriceManagementPage() {
                           required
                           value={pricingData.price}
                           onChange={(e) => setPricingData({ ...pricingData, price: e.target.value })}
-                          className="w-full px-3 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50"
+                          className="w-full px-3 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50 bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none focus:border-hos-gold"
                           placeholder="0.00"
                         />
                       </div>
@@ -403,7 +403,7 @@ export default function PriceManagementPage() {
                         <select
                           value={pricingData.currency}
                           onChange={(e) => setPricingData({ ...pricingData, currency: e.target.value })}
-                          className="w-full px-3 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50"
+                          className="w-full px-3 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50 bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none focus:border-hos-gold"
                         >
                           <option value="USD">USD</option>
                           <option value="EUR">EUR</option>
@@ -419,7 +419,7 @@ export default function PriceManagementPage() {
                           min="0"
                           value={pricingData.tradePrice}
                           onChange={(e) => setPricingData({ ...pricingData, tradePrice: e.target.value })}
-                          className="w-full px-3 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50"
+                          className="w-full px-3 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50 bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none focus:border-hos-gold"
                           placeholder="Wholesale price"
                         />
                       </div>
@@ -431,7 +431,7 @@ export default function PriceManagementPage() {
                           min="0"
                           value={pricingData.rrp}
                           onChange={(e) => setPricingData({ ...pricingData, rrp: e.target.value })}
-                          className="w-full px-3 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50"
+                          className="w-full px-3 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50 bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none focus:border-hos-gold"
                           placeholder="MSRP"
                         />
                       </div>
@@ -445,7 +445,7 @@ export default function PriceManagementPage() {
                           required
                           value={pricingData.stock}
                           onChange={(e) => setPricingData({ ...pricingData, stock: e.target.value })}
-                          className="w-full px-3 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50"
+                          className="w-full px-3 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50 bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none focus:border-hos-gold"
                           placeholder="0"
                         />
                       </div>
@@ -454,7 +454,7 @@ export default function PriceManagementPage() {
                         <select
                           value={pricingData.taxClassId}
                           onChange={(e) => setPricingData({ ...pricingData, taxClassId: e.target.value })}
-                          className="w-full px-3 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50"
+                          className="w-full px-3 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50 bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none focus:border-hos-gold"
                         >
                           <option value="">No tax class (uses default rate)</option>
                           {taxClasses.map((tc) => {
@@ -482,7 +482,7 @@ export default function PriceManagementPage() {
                           max="1"
                           value={pricingData.taxRate}
                           onChange={(e) => setPricingData({ ...pricingData, taxRate: e.target.value })}
-                          className="w-full px-3 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50"
+                          className="w-full px-3 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50 bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none focus:border-hos-gold"
                           placeholder="e.g. 0.2 for 20%"
                         />
                         <p className="mt-1 text-xs text-hos-text-muted">Decimal 0–1. Leave empty when using a tax class.</p>

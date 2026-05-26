@@ -141,7 +141,7 @@ export default function SellerStorefrontClient() {
         <main className="container mx-auto px-4 py-12">
           <div className="text-center py-20">
             <div className="text-6xl mb-4">🏪</div>
-            <h1 className="text-2xl font-bold text-white mb-2">Store Not Found</h1>
+            <h1 className="text-2xl font-bold text-hos-text-secondary mb-2">Store Not Found</h1>
             <p className="text-hos-text-secondary mb-6">
               The store you are looking for does not exist or has been removed.
             </p>
@@ -246,7 +246,7 @@ export default function SellerStorefrontClient() {
         <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
           {/* Sort Bar */}
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
-            <h2 className="text-xl font-bold text-white">
+            <h2 className="text-xl font-bold text-hos-text-secondary">
               Products
               <span className="text-sm font-normal text-hos-text-muted ml-2">({products.length})</span>
             </h2>
@@ -307,7 +307,7 @@ export default function SellerStorefrontClient() {
 
                   {/* Product Info */}
                   <div className="p-4">
-                    <h3 className="font-medium text-white group-hover:text-hos-gold transition-colors line-clamp-2 text-sm">
+                    <h3 className="font-medium text-hos-text-secondary group-hover:text-hos-gold transition-colors line-clamp-2 text-sm">
                       {product.name}
                     </h3>
                     {product.shortDescription && (

@@ -96,7 +96,7 @@ export function RuleBuilder({
         <div className="flex flex-wrap items-center gap-2">
           <span className="text-xs text-hos-text-muted">Combine with</span>
           <select
-            className="text-sm border rounded px-2 py-1"
+            className="text-sm border rounded px-2 py-1 bg-hos-bg-secondary text-hos-text-secondary focus:outline-none border-hos-border"
             value={g.operator}
             onChange={(e) => setG({ ...g, operator: e.target.value as 'AND' | 'OR' })}
           >
@@ -110,7 +110,7 @@ export function RuleBuilder({
           return (
             <div key={rule._key} className="flex flex-wrap gap-2 items-center text-sm">
               <select
-                className="border rounded px-2 py-1 min-w-[160px]"
+                className="border rounded px-2 py-1 min-w-[160px] bg-hos-bg-secondary text-hos-text-secondary focus:outline-none border-hos-border"
                 value={rule.dimension}
                 onChange={(e) => {
                   const d = e.target.value;
@@ -142,7 +142,7 @@ export function RuleBuilder({
                 )}
               </select>
               <select
-                className="border rounded px-2 py-1"
+                className="border rounded px-2 py-1 bg-hos-bg-secondary text-hos-text-secondary focus:outline-none border-hos-border"
                 value={rule.operator}
                 onChange={(e) => {
                   const nextRules = [...g.rules];
@@ -241,7 +241,7 @@ function RuleValueInput({
   ) {
     return (
       <select
-        className="border rounded px-2 py-1 w-24"
+        className="border rounded px-2 py-1 w-24 bg-hos-bg-secondary text-hos-text-secondary focus:outline-none border-hos-border"
         value={String(rule.value)}
         onChange={(e) => onChange(e.target.value === 'true')}
       >
@@ -253,7 +253,7 @@ function RuleValueInput({
   if (rule.operator === 'in' || rule.operator === 'not_in') {
     return (
       <input
-        className="border rounded px-2 py-1 flex-1 min-w-[120px]"
+        className="border rounded px-2 py-1 flex-1 min-w-[120px] bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none border-hos-border"
         placeholder='comma list e.g. GB, US'
         value={Array.isArray(rule.value) ? (rule.value as string[]).join(', ') : String(rule.value ?? '')}
         onChange={(e) =>
@@ -273,14 +273,14 @@ function RuleValueInput({
       <span className="flex gap-1 items-center">
         <input
           type="number"
-          className="border rounded px-2 py-1 w-20"
+          className="border rounded px-2 py-1 w-20 bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none border-hos-border"
           value={arr[0]}
           onChange={(e) => onChange([Number(e.target.value), arr[1]])}
         />
         <span>—</span>
         <input
           type="number"
-          className="border rounded px-2 py-1 w-20"
+          className="border rounded px-2 py-1 w-20 bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none border-hos-border"
           value={arr[1]}
           onChange={(e) => onChange([arr[0], Number(e.target.value)])}
         />
@@ -294,7 +294,7 @@ function RuleValueInput({
   ) {
     return (
       <select
-        className="border rounded px-2 py-1"
+        className="border rounded px-2 py-1 bg-hos-bg-secondary text-hos-text-secondary focus:outline-none border-hos-border"
         value={String(rule.value)}
         onChange={(e) => onChange(e.target.value === 'true')}
       >
@@ -308,7 +308,7 @@ function RuleValueInput({
     return (
       <span className="flex gap-1 flex-wrap items-center">
         <input
-          className="border rounded px-2 py-1 w-32"
+          className="border rounded px-2 py-1 w-32 bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none border-hos-border"
           placeholder="Fandom key"
           value={v.fandom ?? ''}
           onChange={(e) => onChange({ ...v, fandom: e.target.value })}
@@ -316,7 +316,7 @@ function RuleValueInput({
         <input
           type="number"
           step="0.01"
-          className="border rounded px-2 py-1 w-20"
+          className="border rounded px-2 py-1 w-20 bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none border-hos-border"
           placeholder="score"
           value={v.score ?? ''}
           onChange={(e) => onChange({ ...v, score: Number(e.target.value) })}
@@ -338,7 +338,7 @@ function RuleValueInput({
     return (
       <input
         type="number"
-        className="border rounded px-2 py-1 w-28"
+        className="border rounded px-2 py-1 w-28 bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none border-hos-border"
         value={rule.value as number}
         onChange={(e) => onChange(Number(e.target.value))}
       />
@@ -346,7 +346,7 @@ function RuleValueInput({
   }
   return (
     <input
-      className="border rounded px-2 py-1 flex-1 min-w-[100px]"
+      className="border rounded px-2 py-1 flex-1 min-w-[100px] bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none border-hos-border"
       value={String(rule.value ?? '')}
       onChange={(e) => onChange(e.target.value)}
     />

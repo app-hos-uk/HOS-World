@@ -160,7 +160,7 @@ export function SubmissionViewMode({ submissionId }: { submissionId: string }) {
                 <div className="space-y-4">
                   <div>
                     <label className="block text-sm font-medium text-hos-text-muted">Product Name</label>
-                    <p className="mt-1 text-white font-medium text-lg">{productData.name || 'N/A'}</p>
+                    <p className="mt-1 text-hos-text-secondary font-medium text-lg">{productData.name || 'N/A'}</p>
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-hos-text-muted">Description</label>
@@ -170,19 +170,19 @@ export function SubmissionViewMode({ submissionId }: { submissionId: string }) {
                     {productData.sku && (
                       <div>
                         <label className="block text-sm font-medium text-hos-text-muted">SKU</label>
-                        <p className="mt-1 text-white">{productData.sku}</p>
+                        <p className="mt-1 text-hos-text-secondary">{productData.sku}</p>
                       </div>
                     )}
                     {productData.barcode && (
                       <div>
                         <label className="block text-sm font-medium text-hos-text-muted">Barcode</label>
-                        <p className="mt-1 text-white">{productData.barcode}</p>
+                        <p className="mt-1 text-hos-text-secondary">{productData.barcode}</p>
                       </div>
                     )}
                     {productData.ean && (
                       <div>
                         <label className="block text-sm font-medium text-hos-text-muted">EAN</label>
-                        <p className="mt-1 text-white">{productData.ean}</p>
+                        <p className="mt-1 text-hos-text-secondary">{productData.ean}</p>
                       </div>
                     )}
                   </div>
@@ -195,36 +195,36 @@ export function SubmissionViewMode({ submissionId }: { submissionId: string }) {
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                   <div>
                     <label className="block text-sm font-medium text-hos-text-muted">Price</label>
-                    <p className="mt-1 text-white font-semibold text-lg">
+                    <p className="mt-1 text-hos-text-secondary font-semibold text-lg">
                       {productData.currency || 'USD'} {Number(productData.price || 0).toFixed(2)}
                     </p>
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-hos-text-muted">Stock</label>
-                    <p className="mt-1 text-white font-semibold text-lg">{productData.stock ?? 'N/A'}</p>
+                    <p className="mt-1 text-hos-text-secondary font-semibold text-lg">{productData.stock ?? 'N/A'}</p>
                   </div>
                   {productData.tradePrice && (
                     <div>
                       <label className="block text-sm font-medium text-hos-text-muted">Trade Price</label>
-                      <p className="mt-1 text-white">{productData.currency || 'USD'} {Number(productData.tradePrice).toFixed(2)}</p>
+                      <p className="mt-1 text-hos-text-secondary">{productData.currency || 'USD'} {Number(productData.tradePrice).toFixed(2)}</p>
                     </div>
                   )}
                   {productData.rrp && (
                     <div>
                       <label className="block text-sm font-medium text-hos-text-muted">RRP</label>
-                      <p className="mt-1 text-white">{productData.currency || 'USD'} {Number(productData.rrp).toFixed(2)}</p>
+                      <p className="mt-1 text-hos-text-secondary">{productData.currency || 'USD'} {Number(productData.rrp).toFixed(2)}</p>
                     </div>
                   )}
                   {productData.taxRate !== undefined && productData.taxRate !== null && (
                     <div>
                       <label className="block text-sm font-medium text-hos-text-muted">Tax Rate</label>
-                      <p className="mt-1 text-white">{productData.taxRate}%</p>
+                      <p className="mt-1 text-hos-text-secondary">{productData.taxRate}%</p>
                     </div>
                   )}
                   {productData.quantity && (
                     <div>
                       <label className="block text-sm font-medium text-hos-text-muted">Quantity</label>
-                      <p className="mt-1 text-white">{productData.quantity}</p>
+                      <p className="mt-1 text-hos-text-secondary">{productData.quantity}</p>
                     </div>
                   )}
                 </div>
@@ -257,13 +257,13 @@ export function SubmissionViewMode({ submissionId }: { submissionId: string }) {
                     {productData.categoryId && (
                       <div>
                         <label className="block text-sm font-medium text-hos-text-muted">Category ID</label>
-                        <p className="mt-1 text-white">{productData.categoryId}</p>
+                        <p className="mt-1 text-hos-text-secondary">{productData.categoryId}</p>
                       </div>
                     )}
                     {productData.fandom && (
                       <div>
                         <label className="block text-sm font-medium text-hos-text-muted">Fandom</label>
-                        <p className="mt-1 text-white">{productData.fandom}</p>
+                        <p className="mt-1 text-hos-text-secondary">{productData.fandom}</p>
                       </div>
                     )}
                     {tags.length > 0 && (
@@ -289,7 +289,7 @@ export function SubmissionViewMode({ submissionId }: { submissionId: string }) {
                   <div className="space-y-3">
                     {variations.map((variation: any, index: number) => (
                       <div key={index} className="p-3 border border-hos-border rounded-lg">
-                        <p className="font-medium text-white">{variation.name}</p>
+                        <p className="font-medium text-hos-text-secondary">{variation.name}</p>
                         <div className="mt-2 flex flex-wrap gap-2">
                           {variation.options?.map((option: any, optIdx: number) => (
                             <span key={optIdx} className="px-2 py-1 bg-hos-gold/10 text-hos-gold-hover text-sm rounded">

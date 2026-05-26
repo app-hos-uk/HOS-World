@@ -142,7 +142,7 @@ export default function AdminDashboardPage() {
         {/* Page Header */}
         <div className="mb-8 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
-            <h1 className="text-2xl font-semibold text-white">Dashboard</h1>
+            <h1 className="text-2xl font-semibold text-hos-text-secondary">Dashboard</h1>
             <p className="text-sm text-hos-text-muted mt-1">Overview of platform operations and key metrics</p>
           </div>
           <button
@@ -223,7 +223,7 @@ export default function AdminDashboardPage() {
                 value={pendingApprovals}
                 icon={<span className="text-lg">⏳</span>}
                 iconBgColor="bg-orange-500/10"
-                valueColor={pendingApprovals > 0 ? 'text-orange-400' : 'text-white'}
+                valueColor={pendingApprovals > 0 ? 'text-orange-400' : 'text-hos-text-secondary'}
                 onClick={pendingApprovals > 0 ? () => window.location.href = '/admin/submissions' : undefined}
               />
             </div>
@@ -419,7 +419,7 @@ export default function AdminDashboardPage() {
                         <div className="flex items-center gap-3">
                           <StatusBadge status={item.status} />
                         </div>
-                        <span className="text-lg font-semibold text-white tabular-nums">{item._count}</span>
+                        <span className="text-lg font-semibold text-hos-text-secondary tabular-nums">{item._count}</span>
                       </div>
                     ))}
                   </div>
@@ -448,7 +448,7 @@ export default function AdminDashboardPage() {
                           />
                           <span className="text-sm font-medium text-hos-text-secondary">{item.status}</span>
                         </div>
-                        <span className="text-lg font-semibold text-white tabular-nums">{item._count}</span>
+                        <span className="text-lg font-semibold text-hos-text-secondary tabular-nums">{item._count}</span>
                       </div>
                     ))}
                   </div>

@@ -74,7 +74,7 @@ export function BannerCarousel({
                 </span>
               )}
               <div className="absolute bottom-0 left-0 right-0 p-2 sm:p-3 md:p-4">
-                <h3 className="text-white font-semibold text-xs sm:text-sm md:text-base font-ui group-hover:text-hos-gold transition-colors duration-200">
+                <h3 className="text-hos-text-secondary font-semibold text-xs sm:text-sm md:text-base font-ui group-hover:text-hos-gold transition-colors duration-200">
                   {banner.title}
                 </h3>
               </div>

@@ -209,7 +209,7 @@ export default function WishlistPage() {
           {/* Header */}
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
             <div>
-              <h1 className="text-2xl sm:text-3xl font-bold text-white">My Wishlist</h1>
+              <h1 className="text-2xl sm:text-3xl font-bold text-hos-text-secondary">My Wishlist</h1>
               <p className="text-hos-text-secondary mt-1">{stats.total} item{stats.total !== 1 ? 's' : ''} saved</p>
             </div>
             {wishlistItems.length > 0 && (
@@ -258,7 +258,7 @@ export default function WishlistPage() {
               <select
                 value={sortBy}
                 onChange={(e) => setSortBy(e.target.value as typeof sortBy)}
-                className="px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50"
+                className="px-4 py-2 border border-hos-border rounded-lg bg-hos-bg-secondary text-hos-text-secondary text-sm focus:ring-2 focus:ring-hos-gold/50 focus:border-hos-gold"
               >
                 <option value="newest">Newest Added</option>
                 <option value="price-low">Price: Low to High</option>
@@ -270,7 +270,7 @@ export default function WishlistPage() {
           {wishlistItems.length === 0 ? (
             <div className="bg-hos-bg-secondary rounded-lg shadow p-12 text-center">
               <div className="text-6xl mb-4">💜</div>
-              <h2 className="text-xl font-semibold text-white mb-2">Your wishlist is empty</h2>
+              <h2 className="text-xl font-semibold text-hos-text-secondary mb-2">Your wishlist is empty</h2>
               <p className="text-hos-text-secondary mb-6">Save items you love by clicking the heart icon on any product</p>
               <Link 
                 href="/products" 

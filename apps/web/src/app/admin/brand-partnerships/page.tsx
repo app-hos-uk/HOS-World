@@ -59,7 +59,7 @@ export default function AdminBrandPartnershipsPage() {
       <AdminLayout>
         <div className="p-6 max-w-6xl mx-auto">
           <div className="flex flex-wrap gap-4 justify-between items-center mb-6">
-            <h1 className="text-2xl font-semibold text-white">Brand partnerships</h1>
+            <h1 className="text-2xl font-semibold text-hos-text-secondary">Brand partnerships</h1>
             <div className="flex gap-2">
               <Link
                 href="/admin/brand-partnerships/new"
@@ -74,13 +74,13 @@ export default function AdminBrandPartnershipsPage() {
           </div>
           <div className="flex flex-wrap gap-2 mb-4">
             <input
-              className="border rounded px-2 py-1 text-sm"
+              className="border rounded px-2 py-1 text-sm bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none border-hos-border"
               placeholder="Search"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
             />
             <select
-              className="border rounded px-2 py-1 text-sm"
+              className="border rounded px-2 py-1 text-sm bg-hos-bg-secondary text-hos-text-secondary focus:outline-none border-hos-border"
               value={status}
               onChange={(e) => setStatus(e.target.value)}
             >
@@ -92,7 +92,7 @@ export default function AdminBrandPartnershipsPage() {
             </select>
             <button
               type="button"
-              className="text-sm px-3 py-1 rounded bg-hos-surface text-white"
+              className="text-sm px-3 py-1 rounded bg-hos-surface text-hos-text-secondary"
               onClick={() => load()}
             >
               Apply

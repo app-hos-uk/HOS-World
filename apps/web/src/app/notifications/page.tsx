@@ -160,7 +160,7 @@ export default function NotificationsPage() {
           {/* Page Header */}
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-8 gap-4">
             <div>
-              <h1 className="text-2xl sm:text-3xl font-bold text-white">Notifications</h1>
+              <h1 className="text-2xl sm:text-3xl font-bold text-hos-text-secondary">Notifications</h1>
               <p className="text-hos-text-secondary mt-1">
                 {unreadCount > 0
                   ? `You have ${unreadCount} unread notification${unreadCount !== 1 ? 's' : ''}`
@@ -192,7 +192,7 @@ export default function NotificationsPage() {
               className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
                 activeTab === 'all'
                   ? 'bg-hos-gold text-[#1a1406]'
-                  : 'text-hos-text-secondary hover:text-white hover:bg-hos-bg-tertiary'
+                  : 'text-hos-text-secondary hover:text-hos-gold hover:bg-hos-bg-tertiary'
               }`}
             >
               All ({notifications.length})
@@ -202,7 +202,7 @@ export default function NotificationsPage() {
               className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
                 activeTab === 'unread'
                   ? 'bg-hos-gold text-[#1a1406]'
-                  : 'text-hos-text-secondary hover:text-white hover:bg-hos-bg-tertiary'
+                  : 'text-hos-text-secondary hover:text-hos-gold hover:bg-hos-bg-tertiary'
               }`}
             >
               Unread ({unreadCount})
@@ -257,7 +257,7 @@ export default function NotificationsPage() {
                         <div className="flex-1 min-w-0">
                           <h3
                             className={`text-sm sm:text-base font-medium ${
-                              !notification.readAt ? 'text-white' : 'text-hos-text-secondary'
+                              !notification.readAt ? 'text-hos-text-secondary' : 'text-hos-text-secondary'
                             }`}
                           >
                             {notification.subject || notification.type.replace(/_/g, ' ')}

@@ -298,7 +298,7 @@ export default function InfluencerDashboardPage() {
         {/* Header */}
         <div className="flex items-center justify-between mb-8">
           <div>
-            <h1 className="text-3xl font-bold text-white">
+            <h1 className="text-3xl font-bold text-hos-text-secondary">
               Welcome back, {profile?.displayName}!
             </h1>
             <p className="text-hos-text-secondary mt-1">
@@ -307,9 +307,9 @@ export default function InfluencerDashboardPage() {
           </div>
           <div className="flex items-center gap-4">
             <span className={`px-3 py-1 rounded-full text-sm font-medium ${
-              profile?.tier === 'PLATINUM' ? 'bg-hos-surface text-white' :
+              profile?.tier === 'PLATINUM' ? 'bg-hos-surface text-hos-text-secondary' :
               profile?.tier === 'GOLD' ? 'bg-yellow-500/15 text-yellow-300' :
-              profile?.tier === 'SILVER' ? 'bg-hos-bg-tertiary text-white' :
+              profile?.tier === 'SILVER' ? 'bg-hos-bg-tertiary text-hos-text-secondary' :
               'bg-orange-500/15 text-orange-300'
             }`}>
               {profile?.tier} Tier
@@ -318,7 +318,7 @@ export default function InfluencerDashboardPage() {
         </div>
 
         {/* Referral Link Card */}
-        <div className="bg-hos-bg-secondary border border-hos-border rounded-2xl p-6 mb-8 text-white">
+        <div className="bg-hos-bg-secondary border border-hos-border rounded-2xl p-6 mb-8 text-hos-text-secondary">
           <div className="flex items-center justify-between">
             <div>
               <h2 className="text-lg font-semibold mb-2">Your Referral Link</h2>
@@ -366,7 +366,7 @@ export default function InfluencerDashboardPage() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-hos-text-muted text-sm">Total Clicks</p>
-                <p className="text-3xl font-bold text-white mt-1">
+                <p className="text-3xl font-bold text-hos-text-secondary mt-1">
                   {analytics?.totalClicks?.toLocaleString() || 0}
                 </p>
                 {weeklyGrowth.clicks !== 0 && (
@@ -396,7 +396,7 @@ export default function InfluencerDashboardPage() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-hos-text-muted text-sm">Conversions</p>
-                <p className="text-3xl font-bold text-white mt-1">
+                <p className="text-3xl font-bold text-hos-text-secondary mt-1">
                   {analytics?.totalConversions?.toLocaleString() || 0}
                 </p>
                 <p className="text-green-400 text-sm mt-1">
@@ -429,7 +429,7 @@ export default function InfluencerDashboardPage() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-hos-text-muted text-sm">Total Sales</p>
-                <p className="text-3xl font-bold text-white mt-1">
+                <p className="text-3xl font-bold text-hos-text-secondary mt-1">
                   {formatCurrency(analytics?.totalSalesAmount || 0)}
                 </p>
               </div>
@@ -445,7 +445,7 @@ export default function InfluencerDashboardPage() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-hos-text-muted text-sm">Total Earnings</p>
-                <p className="text-3xl font-bold text-white mt-1">
+                <p className="text-3xl font-bold text-hos-text-secondary mt-1">
                   {formatCurrency(analytics?.totalCommission || 0)}
                 </p>
               </div>
@@ -461,12 +461,12 @@ export default function InfluencerDashboardPage() {
         {/* Tier Progress Section */}
         <div className="bg-hos-bg-secondary rounded-xl p-6 shadow-sm mb-8">
           <div className="flex items-center justify-between mb-4">
-            <h3 className="text-lg font-semibold text-white">Tier Progress</h3>
+            <h3 className="text-lg font-semibold text-hos-text-secondary">Tier Progress</h3>
             <div className="flex items-center gap-2">
               <span className={`px-3 py-1 rounded-full text-sm font-medium ${
-                profile?.tier === 'PLATINUM' ? 'bg-hos-surface text-white' :
+                profile?.tier === 'PLATINUM' ? 'bg-hos-surface text-hos-text-secondary' :
                 profile?.tier === 'GOLD' ? 'bg-yellow-500/15 text-yellow-300' :
-                profile?.tier === 'SILVER' ? 'bg-hos-bg-tertiary text-white' :
+                profile?.tier === 'SILVER' ? 'bg-hos-bg-tertiary text-hos-text-secondary' :
                 'bg-orange-500/15 text-orange-300'
               }`}>
                 {profile?.tier || 'BRONZE'}
@@ -477,9 +477,9 @@ export default function InfluencerDashboardPage() {
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
                   </svg>
                   <span className={`px-3 py-1 rounded-full text-sm font-medium ${
-                    tierProgress.nextTier === 'PLATINUM' ? 'bg-hos-surface text-white' :
+                    tierProgress.nextTier === 'PLATINUM' ? 'bg-hos-surface text-hos-text-secondary' :
                     tierProgress.nextTier === 'GOLD' ? 'bg-yellow-500/15 text-yellow-300' :
-                    tierProgress.nextTier === 'SILVER' ? 'bg-hos-bg-tertiary text-white' :
+                    tierProgress.nextTier === 'SILVER' ? 'bg-hos-bg-tertiary text-hos-text-secondary' :
                     'bg-orange-500/15 text-orange-300'
                   }`}>
                     {tierProgress.nextTier}
@@ -497,7 +497,7 @@ export default function InfluencerDashboardPage() {
                   style={{ width: `${tierProgress.percentage}%` }}
                 />
                 <div className="absolute inset-0 flex items-center justify-center">
-                  <span className="text-xs font-medium text-white drop-shadow">
+                  <span className="text-xs font-medium text-hos-text-secondary drop-shadow">
                     {tierProgress.percentage.toFixed(0)}%
                   </span>
                 </div>
@@ -522,7 +522,7 @@ export default function InfluencerDashboardPage() {
         {chartData.length > 0 && (
           <div className="bg-hos-bg-secondary rounded-xl p-6 shadow-sm mb-8">
             <div className="flex items-center justify-between mb-6">
-              <h3 className="text-lg font-semibold text-white">Performance Trends</h3>
+              <h3 className="text-lg font-semibold text-hos-text-secondary">Performance Trends</h3>
               <div className="flex items-center gap-4 text-sm">
                 {weeklyGrowth.clicks !== 0 && (
                   <div className="flex items-center gap-1">
@@ -594,7 +594,7 @@ export default function InfluencerDashboardPage() {
         {/* Achievements Section */}
         <div className="bg-hos-bg-secondary rounded-xl p-6 shadow-sm mb-8">
           <div className="flex items-center justify-between mb-6">
-            <h3 className="text-lg font-semibold text-white">Achievements</h3>
+            <h3 className="text-lg font-semibold text-hos-text-secondary">Achievements</h3>
             <span className="text-sm text-hos-text-muted">
               {earnedAchievements.length} / {ACHIEVEMENTS.length} unlocked
             </span>
@@ -614,7 +614,7 @@ export default function InfluencerDashboardPage() {
                   <div className={`text-3xl mb-2 ${isEarned ? '' : 'grayscale'}`}>
                     {achievement.icon}
                   </div>
-                  <p className={`font-medium text-sm ${isEarned ? 'text-white' : 'text-hos-text-muted'}`}>
+                  <p className={`font-medium text-sm ${isEarned ? 'text-hos-text-secondary' : 'text-hos-text-muted'}`}>
                     {achievement.name}
                   </p>
                   <p className="text-xs text-hos-text-muted mt-1">{achievement.description}</p>
@@ -634,7 +634,7 @@ export default function InfluencerDashboardPage() {
         {/* Commission Breakdown */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
           <div className="bg-hos-bg-secondary rounded-xl p-6 shadow-sm">
-            <h3 className="text-lg font-semibold text-white mb-4">Commission Status</h3>
+            <h3 className="text-lg font-semibold text-hos-text-secondary mb-4">Commission Status</h3>
             <div className="space-y-4">
               <div className="flex items-center justify-between">
                 <span className="text-hos-text-secondary">Pending</span>
@@ -650,7 +650,7 @@ export default function InfluencerDashboardPage() {
               </div>
               <div className="flex items-center justify-between">
                 <span className="text-hos-text-secondary">Paid</span>
-                <span className="font-semibold text-white">
+                <span className="font-semibold text-hos-text-secondary">
                   {formatCurrency(analytics?.paidCommission || 0)}
                 </span>
               </div>
@@ -658,7 +658,7 @@ export default function InfluencerDashboardPage() {
           </div>
 
           <div className="lg:col-span-2 bg-hos-bg-secondary rounded-xl p-6 shadow-sm">
-            <h3 className="text-lg font-semibold text-white mb-4">Quick Actions</h3>
+            <h3 className="text-lg font-semibold text-hos-text-secondary mb-4">Quick Actions</h3>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               <Link
                 href="/influencer/product-links"

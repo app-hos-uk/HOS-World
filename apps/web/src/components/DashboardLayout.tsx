@@ -154,7 +154,7 @@ export function DashboardLayout({ children, role, menuItems, title, dashboardHre
               {adminBackHref && (
                 <Link
                   href={adminBackHref.href}
-                  className="text-sm font-medium text-hos-text-secondary hover:text-white hidden sm:inline"
+                  className="text-sm font-medium text-hos-text-secondary hover:text-hos-gold hidden sm:inline"
                 >
                   ← {adminBackHref.title}
                 </Link>
@@ -185,7 +185,7 @@ export function DashboardLayout({ children, role, menuItems, title, dashboardHre
         </div>
 
         {/* Page Content */}
-        <main className="p-4 sm:p-6 lg:p-8">{children}</main>
+        <main className="p-4 sm:p-6 lg:p-8 text-hos-text-secondary">{children}</main>
       </div>
     </div>
   );

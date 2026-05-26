@@ -56,11 +56,11 @@ export default function AdminEventNewPage() {
           <Link href="/admin/events" className="text-hos-gold hover:underline text-sm">
             ← Back
           </Link>
-          <h1 className="text-2xl font-semibold text-white">New event</h1>
+          <h1 className="text-2xl font-semibold text-hos-text-secondary">New event</h1>
           <label className="block text-sm">
             <span className="text-hos-text-secondary">Title</span>
             <input
-              className="mt-1 w-full border rounded px-3 py-2"
+              className="mt-1 w-full border rounded px-3 py-2 bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none border-hos-border"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
             />
@@ -68,7 +68,7 @@ export default function AdminEventNewPage() {
           <label className="block text-sm">
             <span className="text-hos-text-secondary">Type</span>
             <select
-              className="mt-1 w-full border rounded px-3 py-2"
+              className="mt-1 w-full border rounded px-3 py-2 bg-hos-bg-secondary text-hos-text-secondary focus:outline-none border-hos-border"
               value={type}
               onChange={(e) => setType(e.target.value)}
             >
@@ -84,7 +84,7 @@ export default function AdminEventNewPage() {
             <span className="text-hos-text-secondary">Starts (local)</span>
             <input
               type="datetime-local"
-              className="mt-1 w-full border rounded px-3 py-2"
+              className="mt-1 w-full border rounded px-3 py-2 bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none border-hos-border"
               value={startsAt}
               onChange={(e) => setStartsAt(e.target.value)}
             />
@@ -93,7 +93,7 @@ export default function AdminEventNewPage() {
             <span className="text-hos-text-secondary">Ends (local)</span>
             <input
               type="datetime-local"
-              className="mt-1 w-full border rounded px-3 py-2"
+              className="mt-1 w-full border rounded px-3 py-2 bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none border-hos-border"
               value={endsAt}
               onChange={(e) => setEndsAt(e.target.value)}
             />
@@ -102,7 +102,7 @@ export default function AdminEventNewPage() {
             <span className="text-hos-text-secondary">Min tier level (0 = any)</span>
             <input
               type="number"
-              className="mt-1 w-full border rounded px-3 py-2"
+              className="mt-1 w-full border rounded px-3 py-2 bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none border-hos-border"
               value={minTierLevel}
               onChange={(e) => setMinTierLevel(parseInt(e.target.value, 10) || 0)}
             />
@@ -111,7 +111,7 @@ export default function AdminEventNewPage() {
             <span className="text-hos-text-secondary">Attendance points</span>
             <input
               type="number"
-              className="mt-1 w-full border rounded px-3 py-2"
+              className="mt-1 w-full border rounded px-3 py-2 bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none border-hos-border"
               value={attendancePoints}
               onChange={(e) => setAttendancePoints(parseInt(e.target.value, 10) || 0)}
             />
@@ -119,7 +119,7 @@ export default function AdminEventNewPage() {
           <label className="block text-sm">
             <span className="text-hos-text-secondary">Store ID (optional)</span>
             <input
-              className="mt-1 w-full border rounded px-3 py-2 font-mono text-xs"
+              className="mt-1 w-full border rounded px-3 py-2 font-mono text-xs bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none border-hos-border"
               value={storeId}
               onChange={(e) => setStoreId(e.target.value)}
               placeholder="UUID"
@@ -128,7 +128,7 @@ export default function AdminEventNewPage() {
           <label className="block text-sm">
             <span className="text-hos-text-secondary">Description</span>
             <textarea
-              className="mt-1 w-full border rounded px-3 py-2"
+              className="mt-1 w-full border rounded px-3 py-2 bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none border-hos-border"
               rows={3}
               value={description}
               onChange={(e) => setDescription(e.target.value)}

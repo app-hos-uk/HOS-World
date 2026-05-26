@@ -24,7 +24,7 @@ export default function FandomTrendsPage() {
       <AdminLayout>
         <div className="p-6 max-w-5xl mx-auto space-y-4">
           <Link href="/admin/loyalty-analytics" className="text-sm text-violet-400">← Health</Link>
-          <h1 className="text-2xl font-semibold text-white">Fandom trends (30d)</h1>
+          <h1 className="text-2xl font-semibold text-hos-text-secondary">Fandom trends (30d)</h1>
           {loading ? <p className="text-hos-text-muted">Loading…</p> : error ? <p className="text-red-400 text-sm">{error}</p> : (
             <table className="min-w-full text-sm border rounded bg-hos-bg-secondary">
               <thead className="bg-hos-bg-secondary"><tr>

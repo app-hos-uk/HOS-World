@@ -236,7 +236,7 @@ export default function SellerThemesPage() {
         <div className="mb-8">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div>
-              <h1 className="text-2xl sm:text-3xl font-bold text-white">Theme Marketplace</h1>
+              <h1 className="text-2xl sm:text-3xl font-bold text-hos-text-secondary">Theme Marketplace</h1>
               <p className="text-hos-text-muted mt-1">Browse, preview, and install fandom-themed store designs</p>
             </div>
             <div className="flex items-center gap-3 text-sm">
@@ -257,7 +257,7 @@ export default function SellerThemesPage() {
 
         {/* Current Theme Banner */}
         {currentTheme?.theme && (
-          <div className="bg-hos-bg-secondary border border-hos-border rounded-xl p-6 mb-8 text-white">
+          <div className="bg-hos-bg-secondary border border-hos-border rounded-xl p-6 mb-8 text-hos-text-secondary">
             <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
               <div className="w-16 h-16 bg-hos-bg-secondary/20 rounded-lg overflow-hidden flex-shrink-0">
                 {currentTheme.theme.previewImages?.[0] ? (
@@ -305,7 +305,7 @@ export default function SellerThemesPage() {
                 placeholder="Search themes by name, fandom, or keyword..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-10 pr-4 py-2.5 border border-hos-border rounded-lg text-sm bg-hos-bg-secondary text-white placeholder-hos-text-muted focus:ring-hos-gold/50 focus:border-hos-gold"
+                className="w-full pl-10 pr-4 py-2.5 border border-hos-border rounded-lg text-sm bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:ring-hos-gold/50 focus:border-hos-gold"
               />
             </div>
 
@@ -362,7 +362,7 @@ export default function SellerThemesPage() {
         ) : filteredThemes.length === 0 ? (
           <div className="text-center py-16">
             <div className="text-5xl mb-4">🎨</div>
-            <h3 className="text-lg font-medium text-white mb-1">No themes found</h3>
+            <h3 className="text-lg font-medium text-hos-text-secondary mb-1">No themes found</h3>
             <p className="text-hos-text-muted text-sm">
               {searchQuery || fandomFilter !== 'ALL' || pricingFilter !== 'ALL'
                 ? 'Try adjusting your filters or search query'
@@ -415,7 +415,7 @@ export default function SellerThemesPage() {
 
                     {/* Overlay on hover */}
                     <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors flex items-center justify-center">
-                      <span className="opacity-0 group-hover:opacity-100 transition-opacity px-4 py-2 bg-hos-bg-secondary/90 text-white text-sm font-medium rounded-lg shadow-lg">
+                      <span className="opacity-0 group-hover:opacity-100 transition-opacity px-4 py-2 bg-hos-bg-secondary/90 text-hos-text-secondary text-sm font-medium rounded-lg shadow-lg">
                         Preview Theme
                       </span>
                     </div>
@@ -428,7 +428,7 @@ export default function SellerThemesPage() {
                         </span>
                       )}
                       {isPaid ? (
-                        <span className="px-2 py-0.5 text-xs font-semibold bg-amber-500/10 text-white rounded-md shadow-sm">
+                        <span className="px-2 py-0.5 text-xs font-semibold bg-amber-500/10 text-hos-text-secondary rounded-md shadow-sm">
                           ${price || 'Premium'}
                         </span>
                       ) : (
@@ -450,7 +450,7 @@ export default function SellerThemesPage() {
                   <div className="p-4">
                     <div className="flex items-start justify-between gap-2 mb-2">
                       <div className="min-w-0">
-                        <h3 className="font-semibold text-white truncate">{theme.name}</h3>
+                        <h3 className="font-semibold text-hos-text-secondary truncate">{theme.name}</h3>
                         {theme.metadata?.author && (
                           <p className="text-xs text-hos-text-muted">by {theme.metadata.author}</p>
                         )}
@@ -519,7 +519,7 @@ export default function SellerThemesPage() {
               {/* Preview Header */}
               <div className="sticky top-0 bg-hos-bg-secondary border-b border-hos-border px-6 py-4 flex items-center justify-between z-10">
                 <div>
-                  <h2 className="text-xl font-bold text-white">{previewTheme.name}</h2>
+                  <h2 className="text-xl font-bold text-hos-text-secondary">{previewTheme.name}</h2>
                   <p className="text-sm text-hos-text-muted">
                     v{previewTheme.versionString || previewTheme.version}
                     {previewTheme.metadata?.author && ` · by ${previewTheme.metadata.author}`}
@@ -565,18 +565,18 @@ export default function SellerThemesPage() {
                   {previewTheme.metadata?.fandom && (
                     <div>
                       <p className="text-xs text-hos-text-muted uppercase mb-1">Fandom</p>
-                      <p className="text-sm font-medium text-white">{previewTheme.metadata.fandom}</p>
+                      <p className="text-sm font-medium text-hos-text-secondary">{previewTheme.metadata.fandom}</p>
                     </div>
                   )}
                   <div>
                     <p className="text-xs text-hos-text-muted uppercase mb-1">Price</p>
-                    <p className="text-sm font-medium text-white">
+                    <p className="text-sm font-medium text-hos-text-secondary">
                       {previewTheme.metadata?.isPaid ? `$${previewTheme.metadata.price || '—'}` : 'Free'}
                     </p>
                   </div>
                   <div>
                     <p className="text-xs text-hos-text-muted uppercase mb-1">Version</p>
-                    <p className="text-sm font-medium text-white">{previewTheme.versionString || previewTheme.version}</p>
+                    <p className="text-sm font-medium text-hos-text-secondary">{previewTheme.versionString || previewTheme.version}</p>
                   </div>
                 </div>
 
@@ -660,7 +660,7 @@ export default function SellerThemesPage() {
               <div className="p-6">
                 <div className="flex justify-between items-start mb-6">
                   <div>
-                    <h2 className="text-xl font-bold text-white">Customize Theme</h2>
+                    <h2 className="text-xl font-bold text-hos-text-secondary">Customize Theme</h2>
                     <p className="text-sm text-hos-text-muted mt-1">{customizingTheme.name}</p>
                   </div>
                   <button onClick={() => setShowCustomizeModal(false)} className="p-1.5 hover:bg-hos-bg-tertiary rounded-full">

@@ -51,7 +51,7 @@ const STATUSES = [
   { value: 'OUT_FOR_DELIVERY', label: 'Out for Delivery', color: 'bg-cyan-500/15 text-cyan-300' },
   { value: 'DELIVERED', label: 'Delivered', color: 'bg-green-500/15 text-green-300' },
   { value: 'FAILED', label: 'Failed', color: 'bg-red-500/15 text-red-300' },
-  { value: 'RETURNED', label: 'Returned', color: 'bg-hos-bg-tertiary text-white' },
+  { value: 'RETURNED', label: 'Returned', color: 'bg-hos-bg-tertiary text-hos-text-secondary' },
 ];
 
 export default function AdminShipmentsPage() {
@@ -245,7 +245,7 @@ export default function AdminShipmentsPage() {
   };
 
   const getStatusBadge = (status: string) => {
-    const statusInfo = STATUSES.find(s => s.value === status) || { label: status, color: 'bg-hos-bg-tertiary text-white' };
+    const statusInfo = STATUSES.find(s => s.value === status) || { label: status, color: 'bg-hos-bg-tertiary text-hos-text-secondary' };
     return <span className={`px-2 py-0.5 text-xs rounded-full ${statusInfo.color}`}>{statusInfo.label}</span>;
   };
 
@@ -267,7 +267,7 @@ export default function AdminShipmentsPage() {
           {/* Header */}
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div>
-              <h1 className="text-2xl font-bold text-white">Shipments</h1>
+              <h1 className="text-2xl font-bold text-hos-text-secondary">Shipments</h1>
               <p className="text-hos-text-secondary mt-1">Track and manage order shipments</p>
             </div>
             <DataExport data={filteredShipments} columns={exportColumns} filename="shipments-export" />
@@ -281,7 +281,7 @@ export default function AdminShipmentsPage() {
                 className={`bg-hos-bg-secondary rounded-lg shadow p-3 text-left hover:shadow-md ${statusFilter === 'ALL' ? 'ring-2 ring-hos-gold/50' : ''}`}
               >
                 <p className="text-xs text-hos-text-muted">Total</p>
-                <p className="text-xl font-bold text-white">{stats.total}</p>
+                <p className="text-xl font-bold text-hos-text-secondary">{stats.total}</p>
               </button>
               <button
                 onClick={() => setStatusFilter('PENDING')}
@@ -365,7 +365,7 @@ export default function AdminShipmentsPage() {
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   placeholder="Order, tracking, customer..."
-                  className="w-full px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50"
+                  className="w-full px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50 bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none focus:border-hos-gold"
                 />
               </div>
               <div>
@@ -373,7 +373,7 @@ export default function AdminShipmentsPage() {
                 <select
                   value={statusFilter}
                   onChange={(e) => setStatusFilter(e.target.value)}
-                  className="w-full px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50"
+                  className="w-full px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50 bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none focus:border-hos-gold"
                 >
                   <option value="ALL">All Status</option>
                   {STATUSES.map(s => (
@@ -386,7 +386,7 @@ export default function AdminShipmentsPage() {
                 <select
                   value={carrierFilter}
                   onChange={(e) => setCarrierFilter(e.target.value)}
-                  className="w-full px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50"
+                  className="w-full px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50 bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none focus:border-hos-gold"
                 >
                   <option value="ALL">All Carriers</option>
                   {carriers.map(c => (
@@ -399,7 +399,7 @@ export default function AdminShipmentsPage() {
                 <select
                   value={dateFilter}
                   onChange={(e) => setDateFilter(e.target.value)}
-                  className="w-full px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50"
+                  className="w-full px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50 bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none focus:border-hos-gold"
                 >
                   <option value="ALL">All Time</option>
                   <option value="1d">Today</option>
@@ -443,11 +443,11 @@ export default function AdminShipmentsPage() {
                     ) : (
                       filteredShipments.map((shipment) => (
                         <tr key={shipment.id} className="hover:bg-hos-bg-tertiary">
-                          <td className="px-4 py-3 text-sm font-medium text-white">
+                          <td className="px-4 py-3 text-sm font-medium text-hos-text-secondary">
                             {shipment.id.substring(0, 8)}...
                           </td>
                           <td className="px-4 py-3">
-                            <div className="text-sm font-medium text-white">
+                            <div className="text-sm font-medium text-hos-text-secondary">
                               {shipment.order?.orderNumber || shipment.orderId.substring(0, 8)}
                             </div>
                             {shipment.order?.customer && (
@@ -628,7 +628,7 @@ export default function AdminShipmentsPage() {
                       <select
                         value={updateForm.status}
                         onChange={(e) => setUpdateForm({ ...updateForm, status: e.target.value })}
-                        className="w-full px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50"
+                        className="w-full px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50 bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none focus:border-hos-gold"
                       >
                         {STATUSES.map(s => (
                           <option key={s.value} value={s.value}>{s.label}</option>
@@ -642,7 +642,7 @@ export default function AdminShipmentsPage() {
                         value={updateForm.carrier}
                         onChange={(e) => setUpdateForm({ ...updateForm, carrier: e.target.value })}
                         placeholder="e.g., USPS, FedEx, DHL, UPS"
-                        className="w-full px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50"
+                        className="w-full px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50 bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none focus:border-hos-gold"
                       />
                     </div>
                     <div>
@@ -652,7 +652,7 @@ export default function AdminShipmentsPage() {
                         value={updateForm.trackingNumber}
                         onChange={(e) => setUpdateForm({ ...updateForm, trackingNumber: e.target.value })}
                         placeholder="Enter tracking number"
-                        className="w-full px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50"
+                        className="w-full px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50 bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none focus:border-hos-gold"
                       />
                     </div>
                     <div>
@@ -661,7 +661,7 @@ export default function AdminShipmentsPage() {
                         value={updateForm.notes}
                         onChange={(e) => setUpdateForm({ ...updateForm, notes: e.target.value })}
                         rows={3}
-                        className="w-full px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50"
+                        className="w-full px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50 bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none focus:border-hos-gold"
                         placeholder="Add any notes..."
                       />
                     </div>

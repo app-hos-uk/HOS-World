@@ -267,7 +267,7 @@ function MarketingMaterialsPageContent() {
                   >
                     <div className="flex flex-col sm:flex-row justify-between gap-4">
                       <div className="flex-1">
-                        <h3 className="text-lg font-semibold text-white">
+                        <h3 className="text-lg font-semibold text-hos-text-secondary">
                           {productData.name || 'Untitled Product'}
                         </h3>
                         <p className="text-sm text-hos-text-muted mt-1">
@@ -338,7 +338,7 @@ function MarketingMaterialsPageContent() {
                         </div>
                       )}
                     </div>
-                    <p className="text-sm font-medium text-white">
+                    <p className="text-sm font-medium text-hos-text-secondary">
                       {productData.name || 'Unknown Product'}
                     </p>
                     <p className="text-xs text-hos-text-muted mt-1">{material.type}</p>
@@ -379,7 +379,7 @@ function MarketingMaterialsPageContent() {
                   <div className="space-y-4">
                     <div>
                       <p className="text-sm font-medium text-hos-text-muted">Product</p>
-                      <p className="text-white">
+                      <p className="text-hos-text-secondary">
                         {selectedSubmission.productData?.name || 'Unknown'}
                       </p>
                     </div>
@@ -391,7 +391,7 @@ function MarketingMaterialsPageContent() {
                       <select
                         value={materialType}
                         onChange={(e) => setMaterialType(e.target.value)}
-                        className="w-full px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50"
+                        className="w-full px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50 bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none focus:border-hos-gold"
                       >
                         <option value="BANNER">Banner</option>
                         <option value="CREATIVE">Creative</option>
@@ -437,7 +437,7 @@ function MarketingMaterialsPageContent() {
                         value={materialUrl}
                         onChange={(e) => setMaterialUrl(e.target.value)}
                         required
-                        className="w-full px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50"
+                        className="w-full px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50 bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none focus:border-hos-gold"
                         placeholder="https://example.com/image.jpg"
                       />
                       {materialUrl && (

@@ -91,7 +91,7 @@ export default function AdminJourneyDetailPage() {
             <p className="text-red-400">Not found</p>
           ) : (
             <>
-              <h1 className="text-2xl font-semibold text-white">{journey.name}</h1>
+              <h1 className="text-2xl font-semibold text-hos-text-secondary">{journey.name}</h1>
               <p className="text-hos-text-secondary text-sm">{journey.description}</p>
 
               <div className="flex gap-2 border-b border-hos-border">
@@ -131,7 +131,7 @@ export default function AdminJourneyDetailPage() {
                     <h2 className="font-medium mb-2">Manual trigger</h2>
                     <div className="flex flex-wrap gap-2 items-center">
                       <input
-                        className="border rounded px-3 py-2 text-sm flex-1 min-w-[200px]"
+                        className="border rounded px-3 py-2 text-sm flex-1 min-w-[200px] bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none border-hos-border"
                         placeholder="User ID (UUID)"
                         value={userId}
                         onChange={(e) => setUserId(e.target.value)}

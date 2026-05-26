@@ -149,6 +149,26 @@ body {
   font-family: var(--font-body);
 }
 
+/* Default dark-theme form controls — prevents white-on-white inputs when pages omit explicit Tailwind bg/text classes */
+input:not([type='checkbox']):not([type='radio']):not([type='hidden']):not([type='submit']):not([type='button']):not([type='reset']):not([type='file']):not([type='image']):not([type='range']):not([type='color']),
+select,
+textarea {
+  background-color: var(--color-bg-secondary);
+  color: var(--color-text-primary);
+  color-scheme: dark;
+}
+
+input:not([type='checkbox']):not([type='radio'])::placeholder,
+textarea::placeholder {
+  color: var(--color-text-muted);
+  opacity: 1;
+}
+
+select option {
+  background-color: var(--color-bg-secondary);
+  color: var(--color-text-primary);
+}
+
 a {
   color: var(--color-accent-gold);
   text-decoration: none;
@@ -330,7 +350,7 @@ h6 {
   /* Input Styles */
   .input {
     @apply w-full px-4 py-2.5 border border-hos-border rounded-lg 
-           text-sm text-white bg-hos-bg-secondary placeholder-hos-text-muted
+           text-sm text-hos-text-secondary bg-hos-bg-secondary placeholder-hos-text-muted
            focus:outline-none focus:ring-2 focus:ring-hos-gold-ring focus:border-transparent
            transition-shadow;
   }
@@ -342,7 +362,7 @@ h6 {
   /* Select Styles */
   .select {
     @apply w-full px-4 py-2.5 border border-hos-border rounded-lg 
-           text-sm text-white bg-hos-bg-secondary
+           text-sm text-hos-text-secondary bg-hos-bg-secondary
            focus:outline-none focus:ring-2 focus:ring-hos-gold-ring focus:border-transparent
            transition-shadow cursor-pointer;
   }
@@ -368,7 +388,7 @@ h6 {
   }
   
   .chart-title {
-    @apply text-base font-semibold text-white mb-4;
+    @apply text-base font-semibold text-hos-text-secondary mb-4;
   }
   
   /* Modal Overlay */

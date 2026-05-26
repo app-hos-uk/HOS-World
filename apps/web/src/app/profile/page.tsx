@@ -400,7 +400,7 @@ function ProfilePageContent() {
         <Header />
         <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 lg:py-12">
           {/* Profile Header */}
-          <div className="bg-hos-bg-secondary border border-hos-border rounded-lg p-6 sm:p-8 mb-6 text-white">
+          <div className="bg-hos-bg-secondary border border-hos-border rounded-lg p-6 sm:p-8 mb-6 text-hos-text-secondary">
             <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 sm:gap-6">
               <div className="relative w-20 h-20 sm:w-24 sm:h-24 rounded-full bg-hos-bg-secondary bg-opacity-20 flex items-center justify-center text-4xl sm:text-5xl overflow-hidden">
                 {profile?.avatar ? (
@@ -450,7 +450,7 @@ function ProfilePageContent() {
                 className={`px-4 sm:px-6 py-3 font-medium text-sm sm:text-base transition-colors ${
                   activeTab === 'overview'
                     ? 'border-b-2 border-hos-gold text-hos-gold'
-                    : 'text-hos-text-secondary hover:text-white'
+                    : 'text-hos-text-secondary hover:text-hos-gold'
                 }`}
               >
                 Overview
@@ -460,7 +460,7 @@ function ProfilePageContent() {
                 className={`px-4 sm:px-6 py-3 font-medium text-sm sm:text-base transition-colors ${
                   activeTab === 'badges'
                     ? 'border-b-2 border-hos-gold text-hos-gold'
-                    : 'text-hos-text-secondary hover:text-white'
+                    : 'text-hos-text-secondary hover:text-hos-gold'
                 }`}
               >
                 Badges ({badges.length})
@@ -470,7 +470,7 @@ function ProfilePageContent() {
                 className={`px-4 sm:px-6 py-3 font-medium text-sm sm:text-base transition-colors ${
                   activeTab === 'collections'
                     ? 'border-b-2 border-hos-gold text-hos-gold'
-                    : 'text-hos-text-secondary hover:text-white'
+                    : 'text-hos-text-secondary hover:text-hos-gold'
                 }`}
               >
                 Collections ({collections.length})
@@ -480,7 +480,7 @@ function ProfilePageContent() {
                 className={`px-4 sm:px-6 py-3 font-medium text-sm sm:text-base transition-colors ${
                   activeTab === 'addresses'
                     ? 'border-b-2 border-hos-gold text-hos-gold'
-                    : 'text-hos-text-secondary hover:text-white'
+                    : 'text-hos-text-secondary hover:text-hos-gold'
                 }`}
               >
                 Addresses
@@ -490,7 +490,7 @@ function ProfilePageContent() {
                 className={`px-4 sm:px-6 py-3 font-medium text-sm sm:text-base transition-colors ${
                   activeTab === 'settings'
                     ? 'border-b-2 border-hos-gold text-hos-gold'
-                    : 'text-hos-text-secondary hover:text-white'
+                    : 'text-hos-text-secondary hover:text-hos-gold'
                 }`}
               >
                 Settings
@@ -636,7 +636,7 @@ function ProfilePageContent() {
                                   ? 'bg-yellow-500/15 text-yellow-300'
                                   : badge.rarity === 'EPIC'
                                   ? 'bg-hos-gold/20 text-hos-gold'
-                                  : 'bg-hos-bg-tertiary text-white'
+                                  : 'bg-hos-bg-tertiary text-hos-text-secondary'
                               }`}
                             >
                               {badge.rarity}
@@ -695,7 +695,7 @@ function ProfilePageContent() {
                             className={`px-2 py-1 rounded text-xs ${
                               collection.isPublic
                                 ? 'bg-green-500/15 text-green-300'
-                                : 'bg-hos-bg-tertiary text-white'
+                                : 'bg-hos-bg-tertiary text-hos-text-secondary'
                             }`}
                           >
                             {collection.isPublic ? 'Public' : 'Private'}
@@ -788,7 +788,7 @@ function ProfilePageContent() {
                                 firstName: sanitizeLatinPersonName(e.target.value),
                               })
                             }
-                            className="w-full px-4 py-2 border border-hos-border rounded-lg focus:outline-none focus:ring-2 focus:ring-hos-gold/50"
+                            className="w-full px-4 py-2 border border-hos-border rounded-lg focus:outline-none focus:ring-2 focus:ring-hos-gold/50 bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none focus:border-hos-gold"
                             placeholder="Recipient first name"
                             required
                           />
@@ -804,7 +804,7 @@ function ProfilePageContent() {
                                 lastName: sanitizeLatinPersonName(e.target.value),
                               })
                             }
-                            className="w-full px-4 py-2 border border-hos-border rounded-lg focus:outline-none focus:ring-2 focus:ring-hos-gold/50"
+                            className="w-full px-4 py-2 border border-hos-border rounded-lg focus:outline-none focus:ring-2 focus:ring-hos-gold/50 bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none focus:border-hos-gold"
                             placeholder="Recipient last name"
                             required
                           />
@@ -817,7 +817,7 @@ function ProfilePageContent() {
                             onChange={(e) =>
                               setAddressForm({ ...addressForm, phone: sanitizeTelInput(e.target.value) })
                             }
-                            className="w-full px-4 py-2 border border-hos-border rounded-lg focus:outline-none focus:ring-2 focus:ring-hos-gold/50"
+                            className="w-full px-4 py-2 border border-hos-border rounded-lg focus:outline-none focus:ring-2 focus:ring-hos-gold/50 bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none focus:border-hos-gold"
                             placeholder="+1 555 123 4567"
                           />
                         </div>
@@ -831,7 +831,7 @@ function ProfilePageContent() {
                             type="text"
                             value={addressForm.street}
                             onChange={(e) => setAddressForm({ ...addressForm, street: e.target.value })}
-                            className="w-full px-4 py-2 border border-hos-border rounded-lg focus:outline-none focus:ring-2 focus:ring-hos-gold/50"
+                            className="w-full px-4 py-2 border border-hos-border rounded-lg focus:outline-none focus:ring-2 focus:ring-hos-gold/50 bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none focus:border-hos-gold"
                             placeholder="House number and street name"
                             required
                           />
@@ -847,7 +847,7 @@ function ProfilePageContent() {
                                 city: sanitizeLatinCityOrState(e.target.value),
                               })
                             }
-                            className="w-full px-4 py-2 border border-hos-border rounded-lg focus:outline-none focus:ring-2 focus:ring-hos-gold/50"
+                            className="w-full px-4 py-2 border border-hos-border rounded-lg focus:outline-none focus:ring-2 focus:ring-hos-gold/50 bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none focus:border-hos-gold"
                             required
                           />
                         </div>
@@ -862,7 +862,7 @@ function ProfilePageContent() {
                                 state: sanitizeLatinCityOrState(e.target.value),
                               })
                             }
-                            className="w-full px-4 py-2 border border-hos-border rounded-lg focus:outline-none focus:ring-2 focus:ring-hos-gold/50"
+                            className="w-full px-4 py-2 border border-hos-border rounded-lg focus:outline-none focus:ring-2 focus:ring-hos-gold/50 bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none focus:border-hos-gold"
                           />
                         </div>
                         <div>
@@ -877,7 +877,7 @@ function ProfilePageContent() {
                               })
                             }
                             inputMode="numeric"
-                            className="w-full px-4 py-2 border border-hos-border rounded-lg focus:outline-none focus:ring-2 focus:ring-hos-gold/50"
+                            className="w-full px-4 py-2 border border-hos-border rounded-lg focus:outline-none focus:ring-2 focus:ring-hos-gold/50 bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none focus:border-hos-gold"
                             required
                           />
                         </div>
@@ -886,7 +886,7 @@ function ProfilePageContent() {
                           <select
                             value={addressForm.country}
                             onChange={(e) => setAddressForm({ ...addressForm, country: e.target.value })}
-                            className="w-full px-4 py-2 border border-hos-border rounded-lg focus:outline-none focus:ring-2 focus:ring-hos-gold/50"
+                            className="w-full px-4 py-2 border border-hos-border rounded-lg focus:outline-none focus:ring-2 focus:ring-hos-gold/50 bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none focus:border-hos-gold"
                             required
                           >
                             <option value="">Select country</option>
@@ -968,7 +968,7 @@ function ProfilePageContent() {
                                 <span className={`inline-block px-2 py-1 text-xs font-semibold rounded ${
                                   address.label === 'HOME' ? 'bg-hos-gold/20 text-hos-gold' :
                                   address.label === 'WORK' ? 'bg-green-500/15 text-green-300' :
-                                  'bg-hos-bg-tertiary text-white'
+                                  'bg-hos-bg-tertiary text-hos-text-secondary'
                                 }`}>
                                   {address.label === 'HOME' ? '🏠 Home' : address.label === 'WORK' ? '💼 Work' : '📍 Other'}
                                 </span>
@@ -1062,7 +1062,7 @@ function ProfilePageContent() {
                           type="email"
                           value={profile?.email || ''}
                           disabled
-                          className="w-full px-4 py-2 border border-hos-border rounded-lg bg-hos-bg-tertiary text-hos-text-secondary"
+                          className="w-full px-4 py-2 border border-hos-border rounded-lg bg-hos-bg-tertiary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none"
                         />
                         <p className="text-xs text-hos-text-muted mt-1">Email cannot be changed</p>
                       </div>
@@ -1228,7 +1228,7 @@ function ProfilePageContent() {
                                 anniversary: profile?.anniversary ? new Date(profile.anniversary).toISOString().split('T')[0] : '',
                               });
                             }}
-                            className="px-4 py-2 bg-hos-bg-tertiary text-white rounded-lg hover:bg-hos-bg-tertiary transition-colors font-medium"
+                            className="px-4 py-2 bg-hos-bg-tertiary text-hos-text-secondary rounded-lg hover:bg-hos-bg-tertiary transition-colors font-medium"
                           >
                             Cancel
                           </button>
@@ -1259,7 +1259,7 @@ function ProfilePageContent() {
                               setNewsletterLoading(false);
                             }
                           }}
-                          className="px-4 py-2 bg-hos-bg-tertiary text-white rounded-lg hover:bg-hos-bg-tertiary font-medium text-sm"
+                          className="px-4 py-2 bg-hos-bg-tertiary text-hos-text-secondary rounded-lg hover:bg-hos-bg-tertiary font-medium text-sm"
                         >
                           Check subscription status
                         </button>
@@ -1470,7 +1470,7 @@ function ProfilePageContent() {
                     <div className="bg-hos-bg-secondary rounded-lg p-4">
                       <Link
                         href="/profile/change-password"
-                        className="inline-block px-4 py-2 bg-hos-bg-tertiary text-white rounded-lg hover:bg-hos-bg-tertiary transition-colors font-medium"
+                        className="inline-block px-4 py-2 bg-hos-bg-tertiary text-hos-text-secondary rounded-lg hover:bg-hos-bg-tertiary transition-colors font-medium"
                       >
                         Change Password
                       </Link>

@@ -60,11 +60,11 @@ export default function AdminJourneyNewPage() {
           <Link href="/admin/journeys" className="text-hos-gold hover:underline text-sm">
             ← Back
           </Link>
-          <h1 className="text-2xl font-semibold text-white">New journey</h1>
+          <h1 className="text-2xl font-semibold text-hos-text-secondary">New journey</h1>
           <label className="block text-sm">
             <span className="text-hos-text-secondary">Slug</span>
             <input
-              className="mt-1 w-full border rounded px-3 py-2"
+              className="mt-1 w-full border rounded px-3 py-2 bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none border-hos-border"
               value={slug}
               onChange={(e) => setSlug(e.target.value)}
               placeholder="my-journey"
@@ -73,7 +73,7 @@ export default function AdminJourneyNewPage() {
           <label className="block text-sm">
             <span className="text-hos-text-secondary">Name</span>
             <input
-              className="mt-1 w-full border rounded px-3 py-2"
+              className="mt-1 w-full border rounded px-3 py-2 bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none border-hos-border"
               value={name}
               onChange={(e) => setName(e.target.value)}
             />
@@ -81,7 +81,7 @@ export default function AdminJourneyNewPage() {
           <label className="block text-sm">
             <span className="text-hos-text-secondary">Trigger event</span>
             <input
-              className="mt-1 w-full border rounded px-3 py-2"
+              className="mt-1 w-full border rounded px-3 py-2 bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none border-hos-border"
               value={triggerEvent}
               onChange={(e) => setTriggerEvent(e.target.value)}
             />
@@ -89,7 +89,7 @@ export default function AdminJourneyNewPage() {
           <label className="block text-sm">
             <span className="text-hos-text-secondary">Description</span>
             <textarea
-              className="mt-1 w-full border rounded px-3 py-2"
+              className="mt-1 w-full border rounded px-3 py-2 bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none border-hos-border"
               rows={2}
               value={description}
               onChange={(e) => setDescription(e.target.value)}
@@ -98,7 +98,7 @@ export default function AdminJourneyNewPage() {
           <label className="block text-sm">
             <span className="text-hos-text-secondary">Steps (JSON array)</span>
             <textarea
-              className="mt-1 w-full border rounded px-3 py-2 font-mono text-xs"
+              className="mt-1 w-full border rounded px-3 py-2 font-mono text-xs bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none border-hos-border"
               rows={14}
               value={stepsJson}
               onChange={(e) => setStepsJson(e.target.value)}

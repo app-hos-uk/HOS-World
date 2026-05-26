@@ -31,7 +31,7 @@ export default function LoyaltyAnalyticsPage() {
     <RouteGuard allowedRoles={['ADMIN']}>
       <AdminLayout>
         <div className="p-6 max-w-5xl mx-auto space-y-6">
-          <h1 className="text-2xl font-semibold text-white">Program health</h1>
+          <h1 className="text-2xl font-semibold text-hos-text-secondary">Program health</h1>
           {error ? (
             <p className="text-red-400 text-sm">{error}</p>
           ) : loading ? (

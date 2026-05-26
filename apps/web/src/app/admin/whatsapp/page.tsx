@@ -42,7 +42,7 @@ export default function AdminWhatsAppPage() {
     <RouteGuard allowedRoles={['ADMIN']}>
       <AdminLayout>
         <div className="space-y-6">
-          <h1 className="text-2xl font-bold text-white">WhatsApp Conversations</h1>
+          <h1 className="text-2xl font-bold text-hos-text-secondary">WhatsApp Conversations</h1>
 
           {loading ? (
             <div className="flex items-center justify-center h-64">
@@ -71,7 +71,7 @@ export default function AdminWhatsAppPage() {
                         <td className="px-6 py-4 whitespace-nowrap">
                           <span className={`px-2 py-1 text-xs rounded-full ${
                             conv.status === 'ACTIVE' ? 'bg-green-500/15 text-green-300' :
-                            conv.status === 'ARCHIVED' ? 'bg-hos-bg-tertiary text-white' :
+                            conv.status === 'ARCHIVED' ? 'bg-hos-bg-tertiary text-hos-text-secondary' :
                             'bg-red-500/15 text-red-300'
                           }`}>
                             {conv.status}

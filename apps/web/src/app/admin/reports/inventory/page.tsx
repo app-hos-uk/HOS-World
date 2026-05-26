@@ -104,7 +104,7 @@ export default function AdminInventoryAnalyticsPage() {
       <AdminLayout>
         <div className="space-y-6">
           <div className="flex items-center justify-between">
-            <h1 className="text-2xl font-bold text-white">Inventory Analytics</h1>
+            <h1 className="text-2xl font-bold text-hos-text-secondary">Inventory Analytics</h1>
             <div className="flex gap-2">
               <button
                 onClick={() => handleExport('csv')}
@@ -144,17 +144,17 @@ export default function AdminInventoryAnalyticsPage() {
           <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
             <div className="bg-hos-bg-secondary rounded-lg shadow p-6">
               <h3 className="text-sm font-medium text-hos-text-muted">Total Inventory Value</h3>
-              <p className="text-3xl font-bold text-white mt-2">
+              <p className="text-3xl font-bold text-hos-text-secondary mt-2">
                 ${data?.totalValue ? Number(data.totalValue).toFixed(2) : '0.00'}
               </p>
             </div>
             <div className="bg-hos-bg-secondary rounded-lg shadow p-6">
               <h3 className="text-sm font-medium text-hos-text-muted">Total Quantity</h3>
-              <p className="text-3xl font-bold text-white mt-2">{data?.totalQuantity || 0}</p>
+              <p className="text-3xl font-bold text-hos-text-secondary mt-2">{data?.totalQuantity || 0}</p>
             </div>
             <div className="bg-hos-bg-secondary rounded-lg shadow p-6">
               <h3 className="text-sm font-medium text-hos-text-muted">Warehouses</h3>
-              <p className="text-3xl font-bold text-white mt-2">{data?.warehouseCount || 0}</p>
+              <p className="text-3xl font-bold text-hos-text-secondary mt-2">{data?.warehouseCount || 0}</p>
             </div>
             <div className="bg-hos-bg-secondary rounded-lg shadow p-6">
               <h3 className="text-sm font-medium text-hos-text-muted">Low Stock Items</h3>
@@ -165,7 +165,7 @@ export default function AdminInventoryAnalyticsPage() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="bg-hos-bg-secondary rounded-lg shadow p-6">
               <h3 className="text-sm font-medium text-hos-text-muted mb-2">Turnover Rate</h3>
-              <p className="text-4xl font-bold text-white">
+              <p className="text-4xl font-bold text-hos-text-secondary">
                 {data?.turnoverRate ? data.turnoverRate.toFixed(2) : '0.00'}
               </p>
               <p className="text-sm text-hos-text-muted mt-2">
@@ -174,7 +174,7 @@ export default function AdminInventoryAnalyticsPage() {
             </div>
             <div className="bg-hos-bg-secondary rounded-lg shadow p-6">
               <h3 className="text-sm font-medium text-hos-text-muted mb-2">Average Days in Stock</h3>
-              <p className="text-4xl font-bold text-white">
+              <p className="text-4xl font-bold text-hos-text-secondary">
                 {data?.averageDaysInStock ? data.averageDaysInStock.toFixed(1) : '0.0'} days
               </p>
               <p className="text-sm text-hos-text-muted mt-2">Average time items stay in inventory</p>
@@ -183,7 +183,7 @@ export default function AdminInventoryAnalyticsPage() {
 
           {metricsData.length > 0 && (
             <div className="bg-hos-bg-secondary rounded-lg shadow p-6">
-              <h2 className="text-lg font-semibold text-white mb-4">Inventory Metrics</h2>
+              <h2 className="text-lg font-semibold text-hos-text-secondary mb-4">Inventory Metrics</h2>
               <ResponsiveContainer width="100%" height={300}>
                 <BarChart data={metricsData}>
                   <CartesianGrid strokeDasharray="3 3" />

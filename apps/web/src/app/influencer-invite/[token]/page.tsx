@@ -84,7 +84,7 @@ export default function AcceptInfluencerInvitePage() {
   if (loading) {
     return (
       <div className="min-h-screen bg-hos-bg flex items-center justify-center">
-        <div className="text-center text-white">
+        <div className="text-center text-hos-text-secondary">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-white mx-auto"></div>
           <p className="mt-4">Verifying invitation...</p>
         </div>
@@ -101,7 +101,7 @@ export default function AcceptInfluencerInvitePage() {
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
             </svg>
           </div>
-          <h1 className="text-2xl font-bold text-white mb-2">Invalid Invitation</h1>
+          <h1 className="text-2xl font-bold text-hos-text-secondary mb-2">Invalid Invitation</h1>
           <p className="text-hos-text-secondary mb-6">{error}</p>
           <a
             href="/"
@@ -125,7 +125,7 @@ export default function AcceptInfluencerInvitePage() {
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
           </div>
-          <h1 className="text-2xl font-bold text-white mb-2">Invitation Expired</h1>
+          <h1 className="text-2xl font-bold text-hos-text-secondary mb-2">Invitation Expired</h1>
           <p className="text-hos-text-secondary mb-6">
             This invitation has expired. Please contact the team for a new invitation.
           </p>
@@ -144,7 +144,7 @@ export default function AcceptInfluencerInvitePage() {
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
             </svg>
           </div>
-          <h1 className="text-2xl font-bold text-white">Join as an Influencer</h1>
+          <h1 className="text-2xl font-bold text-hos-text-secondary">Join as an Influencer</h1>
           <p className="text-hos-text-secondary mt-2">
             You&apos;ve been invited to join our influencer program
           </p>
@@ -179,7 +179,7 @@ export default function AcceptInfluencerInvitePage() {
                 required
                 value={form.firstName}
                 onChange={(e) => setForm({ ...form, firstName: e.target.value })}
-                className="w-full px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50"
+                className="w-full px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50 bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none focus:border-hos-gold"
               />
             </div>
             <div>
@@ -191,7 +191,7 @@ export default function AcceptInfluencerInvitePage() {
                 required
                 value={form.lastName}
                 onChange={(e) => setForm({ ...form, lastName: e.target.value })}
-                className="w-full px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50"
+                className="w-full px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50 bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none focus:border-hos-gold"
               />
             </div>
           </div>
@@ -206,7 +206,7 @@ export default function AcceptInfluencerInvitePage() {
               value={form.displayName}
               onChange={(e) => setForm({ ...form, displayName: e.target.value })}
               placeholder="How you want to appear on your storefront"
-              className="w-full px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50"
+              className="w-full px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50 bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none focus:border-hos-gold"
             />
           </div>
 
@@ -220,7 +220,7 @@ export default function AcceptInfluencerInvitePage() {
               minLength={8}
               value={form.password}
               onChange={(e) => setForm({ ...form, password: e.target.value })}
-              className="w-full px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50"
+              className="w-full px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50 bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none focus:border-hos-gold"
             />
           </div>
 
@@ -233,7 +233,7 @@ export default function AcceptInfluencerInvitePage() {
               required
               value={form.confirmPassword}
               onChange={(e) => setForm({ ...form, confirmPassword: e.target.value })}
-              className="w-full px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50"
+              className="w-full px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50 bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none focus:border-hos-gold"
             />
           </div>
 

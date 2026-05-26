@@ -85,7 +85,7 @@ export default function SellersPage() {
                       <span className="text-2xl">🏪</span>
                     </div>
                   )}
-                  <h3 className="font-semibold text-white group-hover:text-hos-gold transition-colors">
+                  <h3 className="font-semibold text-hos-text-secondary group-hover:text-hos-gold transition-colors">
                     {seller.storeName}
                   </h3>
                   {seller.country && (

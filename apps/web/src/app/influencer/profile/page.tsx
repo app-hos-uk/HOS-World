@@ -130,7 +130,7 @@ export default function InfluencerProfilePage() {
           Back to Dashboard
         </Link>
 
-        <h1 className="text-3xl font-bold text-white mb-2">Profile & Social Links</h1>
+        <h1 className="text-3xl font-bold text-hos-text-secondary mb-2">Profile & Social Links</h1>
         <p className="text-hos-text-secondary mb-8">
           Update your display info and social links. They appear on your public storefront when enabled.
         </p>
@@ -138,7 +138,7 @@ export default function InfluencerProfilePage() {
         <div className="space-y-8">
           {/* Basic profile */}
           <div className="bg-hos-bg-secondary rounded-xl shadow-sm p-6">
-            <h2 className="text-lg font-semibold text-white mb-4">Public profile</h2>
+            <h2 className="text-lg font-semibold text-hos-text-secondary mb-4">Public profile</h2>
             <div className="space-y-4">
               <div>
                 <label className="block text-sm font-medium text-hos-text-secondary mb-1">Display name</label>
@@ -185,7 +185,7 @@ export default function InfluencerProfilePage() {
 
           {/* Social links */}
           <div className="bg-hos-bg-secondary rounded-xl shadow-sm p-6">
-            <h2 className="text-lg font-semibold text-white mb-2">Social media links</h2>
+            <h2 className="text-lg font-semibold text-hos-text-secondary mb-2">Social media links</h2>
             <p className="text-sm text-hos-text-muted mb-4">
               Add full URLs. They will show on your storefront when &quot;Show social media links&quot; is on in Storefront settings.
             </p>

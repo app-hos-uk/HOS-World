@@ -695,7 +695,7 @@ export default function CheckoutPage() {
                   {cart.items.map((item: any) => (
                     <div key={item.id} className="flex justify-between items-center text-sm">
                       <div className="flex-1 min-w-0 mr-2">
-                        <p className="truncate text-white">{item.product?.name || 'Product'}</p>
+                        <p className="truncate text-hos-text-secondary">{item.product?.name || 'Product'}</p>
                         <p className="text-xs text-hos-text-muted">Qty: {item.quantity}</p>
                       </div>
                       <p className="text-sm font-medium whitespace-nowrap">{formatPrice(item.price * item.quantity)}</p>

@@ -135,7 +135,7 @@ export default function QuestsPage() {
       case 'MEDIUM': return 'bg-yellow-500/15 text-yellow-300';
       case 'HARD': return 'bg-orange-500/15 text-orange-300';
       case 'EPIC': return 'bg-hos-gold/20 text-hos-gold';
-      default: return 'bg-hos-bg-tertiary text-white';
+      default: return 'bg-hos-bg-tertiary text-hos-text-secondary';
     }
   };
 
@@ -236,7 +236,7 @@ export default function QuestsPage() {
           {/* Header */}
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
             <div>
-              <h1 className="text-2xl sm:text-3xl font-bold text-white">Quests</h1>
+              <h1 className="text-2xl sm:text-3xl font-bold text-hos-text-secondary">Quests</h1>
               <p className="text-hos-text-secondary mt-1">Complete quests to earn points and unlock badges</p>
             </div>
             <Link
@@ -313,7 +313,7 @@ export default function QuestsPage() {
                 className={`px-6 py-3 font-medium transition-colors ${
                   activeTab === 'available'
                     ? 'border-b-2 border-hos-gold text-hos-gold'
-                    : 'text-hos-text-secondary hover:text-white'
+                    : 'text-hos-text-secondary hover:text-hos-gold'
                 }`}
               >
                 Available ({availableQuests.length})
@@ -323,7 +323,7 @@ export default function QuestsPage() {
                 className={`px-6 py-3 font-medium transition-colors ${
                   activeTab === 'active'
                     ? 'border-b-2 border-hos-gold text-hos-gold'
-                    : 'text-hos-text-secondary hover:text-white'
+                    : 'text-hos-text-secondary hover:text-hos-gold'
                 }`}
               >
                 Active ({activeQuests.length})
@@ -333,7 +333,7 @@ export default function QuestsPage() {
                 className={`px-6 py-3 font-medium transition-colors ${
                   activeTab === 'completed'
                     ? 'border-b-2 border-hos-gold text-hos-gold'
-                    : 'text-hos-text-secondary hover:text-white'
+                    : 'text-hos-text-secondary hover:text-hos-gold'
                 }`}
               >
                 Completed ({completedQuests.length})

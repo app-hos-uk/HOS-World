@@ -563,7 +563,7 @@ export function SubmitProductForm({ editSubmissionId }: { editSubmissionId?: str
                 className={`flex-1 py-2.5 px-4 rounded-md text-sm font-medium transition-all ${
                   activeTab === 'browse'
                     ? 'bg-hos-bg-secondary text-hos-gold-hover shadow-sm'
-                    : 'text-hos-text-secondary hover:text-white'
+                    : 'text-hos-text-secondary hover:text-hos-gold'
                 }`}
               >
                 Browse Catalog
@@ -574,7 +574,7 @@ export function SubmitProductForm({ editSubmissionId }: { editSubmissionId?: str
                 className={`flex-1 py-2.5 px-4 rounded-md text-sm font-medium transition-all ${
                   activeTab === 'submit'
                     ? 'bg-hos-bg-secondary text-hos-gold-hover shadow-sm'
-                    : 'text-hos-text-secondary hover:text-white'
+                    : 'text-hos-text-secondary hover:text-hos-gold'
                 }`}
               >
                 Submit New Product
@@ -597,7 +597,7 @@ export function SubmitProductForm({ editSubmissionId }: { editSubmissionId?: str
                     <select
                       value={selectedFandom}
                       onChange={(e) => { setSelectedFandom(e.target.value); setCatalogPage(1); }}
-                      className="px-3 py-2 border border-hos-border rounded-lg text-sm focus:ring-2 focus:ring-hos-gold/50 focus:border-transparent"
+                      className="px-3 py-2 border border-hos-border rounded-lg text-sm bg-hos-bg-secondary text-hos-text-secondary focus:ring-2 focus:ring-hos-gold/50 focus:border-hos-gold focus:outline-none"
                     >
                       <option value="">All Fandoms</option>
                       {catalogFandoms.map((f) => (
@@ -609,7 +609,7 @@ export function SubmitProductForm({ editSubmissionId }: { editSubmissionId?: str
                       value={catalogSearch}
                       onChange={(e) => setCatalogSearch(e.target.value)}
                       placeholder="Search products (typo-tolerant)..."
-                      className="flex-1 px-3 py-2 border border-hos-border rounded-lg text-sm focus:ring-2 focus:ring-hos-gold/50 focus:border-transparent"
+                      className="flex-1 px-3 py-2 border border-hos-border rounded-lg text-sm bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:ring-2 focus:ring-hos-gold/50 focus:border-hos-gold focus:outline-none"
                     />
                     <button
                       type="submit"
@@ -665,12 +665,12 @@ export function SubmitProductForm({ editSubmissionId }: { editSubmissionId?: str
                               </div>
                             )}
                             <div className="min-w-0 flex-1">
-                              <h3 className="text-sm font-semibold text-white truncate">{product.name}</h3>
+                              <h3 className="text-sm font-semibold text-hos-text-secondary truncate">{product.name}</h3>
                               <p className="text-xs text-hos-text-muted mt-0.5">
                                 {product.sku ? `SKU: ${product.sku}` : ''}{product.fandom ? ` · ${product.fandom}` : ''}
                               </p>
                               <div className="flex items-center gap-2 mt-1">
-                                <span className="text-sm font-bold text-white">${Number(product.price || 0).toFixed(2)}</span>
+                                <span className="text-sm font-bold text-hos-text-secondary">${Number(product.price || 0).toFixed(2)}</span>
                                 <span className="text-xs text-hos-text-muted">·</span>
                                 <span className="text-xs text-hos-text-muted">{product.vendorCount} vendor{product.vendorCount !== 1 ? 's' : ''}</span>
                               </div>
@@ -731,7 +731,7 @@ export function SubmitProductForm({ editSubmissionId }: { editSubmissionId?: str
                   <button
                     type="button"
                     onClick={() => setActiveTab('submit')}
-                    className="px-6 py-2 bg-hos-bg-tertiary text-white rounded-lg text-sm font-medium hover:bg-hos-bg-secondary"
+                    className="px-6 py-2 bg-hos-bg-tertiary text-hos-text-secondary rounded-lg text-sm font-medium hover:bg-hos-bg-secondary"
                   >
                     Submit a New Product
                   </button>
@@ -838,7 +838,7 @@ export function SubmitProductForm({ editSubmissionId }: { editSubmissionId?: str
                       {duplicateWarnings.sellerActiveMatches.slice(0, 3).map((m: any) => (
                         <div key={m.id} className="flex items-center justify-between p-2.5 bg-red-500/10 rounded-lg mb-1.5 border border-red-500/30">
                           <div className="min-w-0">
-                            <p className="text-sm font-medium text-white truncate">{m.name}</p>
+                            <p className="text-sm font-medium text-hos-text-secondary truncate">{m.name}</p>
                             <p className="text-xs text-hos-text-muted">{m.sku ? `SKU: ${m.sku}` : ''} {m.reasons?.[0] || ''}</p>
                           </div>
                           <span className="ml-2 shrink-0 px-2 py-0.5 bg-red-200 text-red-300 rounded text-xs font-bold">{m.similarityScore}%</span>
@@ -853,7 +853,7 @@ export function SubmitProductForm({ editSubmissionId }: { editSubmissionId?: str
                       {duplicateWarnings.sellerPendingMatches.slice(0, 3).map((m: any) => (
                         <div key={m.id} className="flex items-center justify-between p-2.5 bg-orange-500/10 rounded-lg mb-1.5 border border-orange-500/30">
                           <div className="min-w-0">
-                            <p className="text-sm font-medium text-white truncate">{m.name}</p>
+                            <p className="text-sm font-medium text-hos-text-secondary truncate">{m.name}</p>
                             <p className="text-xs text-hos-text-muted">Status: {m.status?.replace(/_/g, ' ')} &middot; {m.reasons?.[0] || ''}</p>
                           </div>
                           <span className="ml-2 shrink-0 px-2 py-0.5 bg-orange-200 text-orange-300 rounded text-xs font-bold">{m.similarityScore}%</span>
@@ -868,7 +868,7 @@ export function SubmitProductForm({ editSubmissionId }: { editSubmissionId?: str
                       {duplicateWarnings.catalogueMatches.slice(0, 3).map((m: any) => (
                         <div key={m.id} className="flex items-center justify-between p-2.5 bg-amber-500/10 rounded-lg mb-1.5 border border-amber-500/30">
                           <div className="min-w-0">
-                            <p className="text-sm font-medium text-white truncate">{m.name}</p>
+                            <p className="text-sm font-medium text-hos-text-secondary truncate">{m.name}</p>
                             <p className="text-xs text-hos-text-muted">{m.sku ? `SKU: ${m.sku}` : ''} {m.reasons?.[0] || ''}</p>
                           </div>
                           <div className="flex items-center gap-2 ml-2 shrink-0">
@@ -919,7 +919,7 @@ export function SubmitProductForm({ editSubmissionId }: { editSubmissionId?: str
                       value={formData.name}
                       onChange={handleInputChange}
                       required
-                      className="w-full px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50 focus:border-transparent"
+                      className="w-full px-4 py-2 border border-hos-border rounded-lg bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:ring-2 focus:ring-hos-gold/50 focus:border-hos-gold focus:outline-none"
                       placeholder="Enter product name"
                     />
                   </div>
@@ -938,7 +938,7 @@ export function SubmitProductForm({ editSubmissionId }: { editSubmissionId?: str
                       onChange={handleInputChange}
                       required
                       rows={6}
-                      className="w-full px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50 focus:border-transparent"
+                      className="w-full px-4 py-2 border border-hos-border rounded-lg bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:ring-2 focus:ring-hos-gold/50 focus:border-hos-gold focus:outline-none"
                       placeholder="Enter product description"
                     />
                   </div>
@@ -954,7 +954,7 @@ export function SubmitProductForm({ editSubmissionId }: { editSubmissionId?: str
                         name="sku"
                         value={formData.sku}
                         onChange={handleInputChange}
-                        className="w-full px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50 focus:border-transparent"
+                        className="w-full px-4 py-2 border border-hos-border rounded-lg bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:ring-2 focus:ring-hos-gold/50 focus:border-hos-gold focus:outline-none"
                         placeholder="SKU"
                       />
                     </div>
@@ -972,7 +972,7 @@ export function SubmitProductForm({ editSubmissionId }: { editSubmissionId?: str
                         name="barcode"
                         value={formData.barcode}
                         onChange={handleInputChange}
-                        className="w-full px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50 focus:border-transparent"
+                        className="w-full px-4 py-2 border border-hos-border rounded-lg bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:ring-2 focus:ring-hos-gold/50 focus:border-hos-gold focus:outline-none"
                         placeholder="Barcode"
                       />
                     </div>
@@ -987,7 +987,7 @@ export function SubmitProductForm({ editSubmissionId }: { editSubmissionId?: str
                         name="ean"
                         value={formData.ean}
                         onChange={handleInputChange}
-                        className="w-full px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50 focus:border-transparent"
+                        className="w-full px-4 py-2 border border-hos-border rounded-lg bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:ring-2 focus:ring-hos-gold/50 focus:border-hos-gold focus:outline-none"
                         placeholder="EAN"
                       />
                     </div>
@@ -1016,7 +1016,7 @@ export function SubmitProductForm({ editSubmissionId }: { editSubmissionId?: str
                         required
                         min="0"
                         step="0.01"
-                        className="w-full px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50 focus:border-transparent"
+                        className="w-full px-4 py-2 border border-hos-border rounded-lg bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:ring-2 focus:ring-hos-gold/50 focus:border-hos-gold focus:outline-none"
                         placeholder="0.00"
                       />
                     </div>
@@ -1033,7 +1033,7 @@ export function SubmitProductForm({ editSubmissionId }: { editSubmissionId?: str
                         name="currency"
                         value={formData.currency}
                         onChange={handleInputChange}
-                        className="w-full px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50 focus:border-transparent"
+                        className="w-full px-4 py-2 border border-hos-border rounded-lg bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:ring-2 focus:ring-hos-gold/50 focus:border-hos-gold focus:outline-none"
                       >
                         <option value="USD">USD</option>
                         <option value="EUR">EUR</option>
@@ -1057,7 +1057,7 @@ export function SubmitProductForm({ editSubmissionId }: { editSubmissionId?: str
                         onChange={handleInputChange}
                         min="0"
                         step="0.01"
-                        className="w-full px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50 focus:border-transparent"
+                        className="w-full px-4 py-2 border border-hos-border rounded-lg bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:ring-2 focus:ring-hos-gold/50 focus:border-hos-gold focus:outline-none"
                         placeholder="0.00"
                       />
                     </div>
@@ -1074,7 +1074,7 @@ export function SubmitProductForm({ editSubmissionId }: { editSubmissionId?: str
                         onChange={handleInputChange}
                         min="0"
                         step="0.01"
-                        className="w-full px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50 focus:border-transparent"
+                        className="w-full px-4 py-2 border border-hos-border rounded-lg bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:ring-2 focus:ring-hos-gold/50 focus:border-hos-gold focus:outline-none"
                         placeholder="0.00"
                       />
                     </div>
@@ -1096,7 +1096,7 @@ export function SubmitProductForm({ editSubmissionId }: { editSubmissionId?: str
                         onChange={handleInputChange}
                         required
                         min="0"
-                        className="w-full px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50 focus:border-transparent"
+                        className="w-full px-4 py-2 border border-hos-border rounded-lg bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:ring-2 focus:ring-hos-gold/50 focus:border-hos-gold focus:outline-none"
                         placeholder="0"
                       />
                       <p className="text-xs text-hos-text-muted mt-1">Total units you have available to supply</p>
@@ -1118,7 +1118,7 @@ export function SubmitProductForm({ editSubmissionId }: { editSubmissionId?: str
                         min="0"
                         max="100"
                         step="0.01"
-                        className="w-full px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50 focus:border-transparent"
+                        className="w-full px-4 py-2 border border-hos-border rounded-lg bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:ring-2 focus:ring-hos-gold/50 focus:border-hos-gold focus:outline-none"
                         placeholder="0"
                       />
                     </div>
@@ -1139,7 +1139,7 @@ export function SubmitProductForm({ editSubmissionId }: { editSubmissionId?: str
                       value={formData.quantity}
                       onChange={handleInputChange}
                       min="1"
-                      className="w-full px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50 focus:border-transparent"
+                      className="w-full px-4 py-2 border border-hos-border rounded-lg bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:ring-2 focus:ring-hos-gold/50 focus:border-hos-gold focus:outline-none"
                       placeholder="Minimum order quantity for bulk buyers"
                     />
                     <p className="text-xs text-hos-text-muted mt-1">Minimum units a buyer must order at wholesale price</p>
@@ -1182,7 +1182,7 @@ export function SubmitProductForm({ editSubmissionId }: { editSubmissionId?: str
                       name="tags"
                       value={formData.tags}
                       onChange={handleInputChange}
-                      className="w-full px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50 focus:border-transparent"
+                      className="w-full px-4 py-2 border border-hos-border rounded-lg bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:ring-2 focus:ring-hos-gold/50 focus:border-hos-gold focus:outline-none"
                       placeholder="tag1, tag2, tag3"
                     />
                   </div>
@@ -1204,7 +1204,7 @@ export function SubmitProductForm({ editSubmissionId }: { editSubmissionId?: str
                   <div className="p-4 border border-hos-border rounded-lg bg-hos-bg-secondary">
                     <div className="flex items-center justify-between gap-3 flex-wrap">
                       <div>
-                        <div className="font-medium text-white">Upload images</div>
+                        <div className="font-medium text-hos-text-secondary">Upload images</div>
                         <div className="text-xs text-hos-text-secondary">JPEG/PNG/GIF/WebP, max 10MB each</div>
                       </div>
                       <label className="inline-flex items-center px-4 py-2 bg-hos-gold text-[#1a1406] rounded hover:bg-hos-gold-hover cursor-pointer">
@@ -1233,7 +1233,7 @@ export function SubmitProductForm({ editSubmissionId }: { editSubmissionId?: str
                               addImage();
                             }
                           }}
-                          className="flex-1 px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50 focus:border-transparent bg-hos-bg-secondary"
+                          className="flex-1 px-4 py-2 border border-hos-border rounded-lg bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:ring-2 focus:ring-hos-gold/50 focus:border-hos-gold focus:outline-none"
                           placeholder="https://example.com/image.jpg"
                         />
                         <button
@@ -1297,7 +1297,7 @@ export function SubmitProductForm({ editSubmissionId }: { editSubmissionId?: str
                         onChange={(e) =>
                           setCurrentVariation({ ...currentVariation, name: e.target.value })
                         }
-                        className="w-full px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50 focus:border-transparent"
+                        className="w-full px-4 py-2 border border-hos-border rounded-lg bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:ring-2 focus:ring-hos-gold/50 focus:border-hos-gold focus:outline-none"
                         placeholder="Variation name (e.g., Size, Color)"
                       />
 

@@ -149,7 +149,7 @@ export default function AdminInfluencerPayoutsPage() {
       PAID: 'bg-green-500/15 text-green-300',
       CANCELLED: 'bg-red-500/15 text-red-300',
     };
-    return styles[status] || 'bg-hos-bg-tertiary text-white';
+    return styles[status] || 'bg-hos-bg-tertiary text-hos-text-secondary';
   };
 
   return (
@@ -159,7 +159,7 @@ export default function AdminInfluencerPayoutsPage() {
         {/* Header */}
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-bold text-white">Influencer Payouts</h1>
+            <h1 className="text-2xl font-bold text-hos-text-secondary">Influencer Payouts</h1>
             <p className="text-hos-text-secondary mt-1">
               Create and track payout records
             </p>
@@ -215,7 +215,7 @@ export default function AdminInfluencerPayoutsPage() {
                         {formatDate(payout.createdAt)}
                       </td>
                       <td className="px-6 py-4">
-                        <p className="font-medium text-white">{payout.influencer.displayName}</p>
+                        <p className="font-medium text-hos-text-secondary">{payout.influencer.displayName}</p>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-hos-text-muted">
                         {formatDate(payout.periodStart)} - {formatDate(payout.periodEnd)}
@@ -267,7 +267,7 @@ export default function AdminInfluencerPayoutsPage() {
           <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
             <div className="bg-hos-bg-secondary rounded-xl max-w-md w-full">
               <div className="p-6 border-b">
-                <h2 className="text-xl font-semibold text-white">Create Payout</h2>
+                <h2 className="text-xl font-semibold text-hos-text-secondary">Create Payout</h2>
               </div>
               <form onSubmit={handleCreate} className="p-6 space-y-4">
                 <div>
@@ -341,7 +341,7 @@ export default function AdminInfluencerPayoutsPage() {
           <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
             <div className="bg-hos-bg-secondary rounded-xl max-w-md w-full">
               <div className="p-6 border-b">
-                <h2 className="text-xl font-semibold text-white">Mark Payout as Paid</h2>
+                <h2 className="text-xl font-semibold text-hos-text-secondary">Mark Payout as Paid</h2>
               </div>
               <div className="p-6 space-y-4">
                 <p className="text-hos-text-secondary">

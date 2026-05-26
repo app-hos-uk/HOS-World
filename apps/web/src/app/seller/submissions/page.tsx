@@ -53,14 +53,14 @@ export default function SellerSubmissionsPage() {
         <div className="mb-6">
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold">Product Submissions</h1>
+              <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-hos-text-secondary">Product Submissions</h1>
               <p className="text-hos-text-secondary mt-2">Track your product submission status</p>
             </div>
             <div className="flex gap-4">
               <select
                 value={statusFilter}
                 onChange={(e) => setStatusFilter(e.target.value)}
-                className="px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50"
+                className="px-4 py-2 border border-hos-border rounded-lg bg-hos-bg-secondary text-hos-text-secondary focus:ring-2 focus:ring-hos-gold/50 focus:border-hos-gold focus:outline-none"
               >
                 <option value="">All Status</option>
                 <option value="SUBMITTED">Submitted</option>
@@ -135,7 +135,7 @@ export default function SellerSubmissionsPage() {
                     {submissions.map((submission) => (
                       <tr key={submission.id} className="hover:bg-hos-bg-tertiary">
                         <td className="px-6 py-4">
-                          <div className="text-sm font-medium text-white">
+                          <div className="text-sm font-medium text-hos-text-secondary">
                             {submission.productData?.name || 'Untitled Product'}
                           </div>
                           <div className="text-sm text-hos-text-muted">
@@ -179,7 +179,7 @@ export default function SellerSubmissionsPage() {
                             {canSellerEditSubmission(submission.status) && (
                               <Link
                                 href={`/seller/submit-product?edit=${submission.id}`}
-                                className="text-hos-text-secondary hover:text-white"
+                                className="text-hos-text-secondary hover:text-hos-gold"
                               >
                                 Edit
                               </Link>

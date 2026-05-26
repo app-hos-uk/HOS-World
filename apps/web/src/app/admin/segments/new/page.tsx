@@ -55,11 +55,11 @@ export default function AdminSegmentNewPage() {
           <Link href="/admin/segments" className="text-hos-gold hover:underline text-sm">
             ← Segments
           </Link>
-          <h1 className="text-2xl font-semibold text-white">Create segment</h1>
+          <h1 className="text-2xl font-semibold text-hos-text-secondary">Create segment</h1>
           <label className="block text-sm">
             <span className="text-hos-text-secondary">Name</span>
             <input
-              className="mt-1 w-full border rounded px-3 py-2"
+              className="mt-1 w-full border rounded px-3 py-2 bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none border-hos-border"
               value={name}
               onChange={(e) => setName(e.target.value)}
             />
@@ -67,19 +67,19 @@ export default function AdminSegmentNewPage() {
           <label className="block text-sm">
             <span className="text-hos-text-secondary">Description</span>
             <textarea
-              className="mt-1 w-full border rounded px-3 py-2"
+              className="mt-1 w-full border rounded px-3 py-2 bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none border-hos-border"
               rows={2}
               value={description}
               onChange={(e) => setDescription(e.target.value)}
             />
           </label>
           <div>
-            <h2 className="text-sm font-medium text-white mb-2">Rules</h2>
+            <h2 className="text-sm font-medium text-hos-text-secondary mb-2">Rules</h2>
             <RuleBuilder value={rules} onChange={setRules} onPreview={runPreview} />
           </div>
           {preview && (
             <div className="rounded-lg border bg-hos-bg-secondary p-3 text-sm">
-              <p className="font-medium text-white">Preview: ~{preview.count} members</p>
+              <p className="font-medium text-hos-text-secondary">Preview: ~{preview.count} members</p>
               <ul className="mt-2 text-hos-text-secondary list-disc list-inside">
                 {(preview.sampleUsers || []).map((u: any) => (
                   <li key={u.id}>

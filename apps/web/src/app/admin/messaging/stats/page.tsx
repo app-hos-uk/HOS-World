@@ -26,7 +26,7 @@ export default function AdminMessagingStatsPage() {
       <AdminLayout>
         <div className="p-6 max-w-4xl mx-auto space-y-4">
           <div className="flex items-center justify-between">
-            <h1 className="text-2xl font-semibold text-white">Messaging stats (30 days)</h1>
+            <h1 className="text-2xl font-semibold text-hos-text-secondary">Messaging stats (30 days)</h1>
             <Link href="/admin/messaging" className="text-hos-gold text-sm hover:underline">
               Message logs
             </Link>

@@ -6,6 +6,7 @@ import { DashboardLayout } from '@/components/DashboardLayout';
 import { apiClient } from '@/lib/api';
 import { getSellerMenuItems } from '@/lib/sellerMenu';
 import { useToast } from '@/hooks/useToast';
+import { PORTAL_INPUT_CLASS } from '@/lib/portalFieldClasses';
 
 type JobStatus = 'queued' | 'processing' | 'completed' | 'failed';
 
@@ -301,13 +302,13 @@ export default function WholesalerBulkProductsPage() {
     <RouteGuard allowedRoles={['WHOLESALER', 'ADMIN']} showAccessDenied={true}>
       <DashboardLayout role="WHOLESALER" menuItems={menuItems} title="Wholesaler">
         <div className="mb-6">
-          <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold">Bulk Product Import/Export</h1>
+          <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-hos-text-secondary">Bulk Product Import/Export</h1>
           <p className="text-hos-text-secondary mt-2">Import or export wholesale products in bulk using CSV files</p>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div className="bg-hos-bg-secondary border border-hos-border rounded-lg p-6">
-            <h2 className="text-xl font-semibold mb-4">Export Products</h2>
+            <h2 className="text-xl font-semibold text-hos-text-secondary mb-4">Export Products</h2>
             <p className="text-hos-text-secondary mb-4">
               Download all your wholesale products as a CSV file. You can edit the file and re-import it.
             </p>
@@ -321,7 +322,7 @@ export default function WholesalerBulkProductsPage() {
           </div>
 
           <div className="bg-hos-bg-secondary border border-hos-border rounded-lg p-6">
-            <h2 className="text-xl font-semibold mb-4">Import Products</h2>
+            <h2 className="text-xl font-semibold text-hos-text-secondary mb-4">Import Products</h2>
             <p className="text-hos-text-secondary mb-4">
               Upload a CSV file to import wholesale products. Make sure the file follows the correct format.
             </p>
@@ -331,7 +332,7 @@ export default function WholesalerBulkProductsPage() {
                   type="file"
                   accept=".csv"
                   onChange={(e) => setSelectedFile(e.target.files?.[0] || null)}
-                  className="w-full px-4 py-2 border border-hos-border rounded-lg focus:outline-none focus:ring-2 focus:ring-hos-gold/50"
+                  className={PORTAL_INPUT_CLASS}
                   required
                 />
               </div>
@@ -350,7 +351,7 @@ export default function WholesalerBulkProductsPage() {
         {jobProgress && jobProgress.status !== 'completed' && (
           <div className="mt-6 bg-hos-bg-secondary border border-hos-border rounded-lg p-6">
             <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-semibold">Import Progress</h3>
+              <h3 className="text-lg font-semibold text-hos-text-secondary">Import Progress</h3>
               <span className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${STATUS_CONFIG[jobProgress.status].bg} ${STATUS_CONFIG[jobProgress.status].color}`}>
                 {STATUS_CONFIG[jobProgress.status].label}
               </span>
@@ -386,7 +387,7 @@ export default function WholesalerBulkProductsPage() {
 
         {importResults && (
           <div className="mt-6 bg-hos-bg-secondary border border-hos-border rounded-lg p-6">
-            <h3 className="text-lg font-semibold mb-4">Import Results</h3>
+            <h3 className="text-lg font-semibold text-hos-text-secondary mb-4">Import Results</h3>
             <div className="space-y-2">
               <p><span className="font-medium">Success:</span> {importResults.successCount || 0} products imported</p>
               <p><span className="font-medium">Errors:</span> {importResults.errorCount || 0}</p>
@@ -406,7 +407,7 @@ export default function WholesalerBulkProductsPage() {
 
         <div className="mt-6 bg-hos-gold/10 border border-hos-border-accent rounded-lg p-6">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-4">
-            <h3 className="text-lg font-semibold">CSV Format Instructions</h3>
+            <h3 className="text-lg font-semibold text-hos-text-secondary">CSV Format Instructions</h3>
             <button
               onClick={handleDownloadSampleCSV}
               className="px-4 py-2 bg-hos-gold text-[#1a1406] rounded-lg hover:bg-hos-gold-hover transition-colors font-medium text-sm flex items-center gap-2"
@@ -420,7 +421,7 @@ export default function WholesalerBulkProductsPage() {
           
           <div className="space-y-4">
             <div>
-              <h4 className="font-medium text-white mb-2">Required Columns:</h4>
+              <h4 className="font-medium text-hos-text-secondary mb-2">Required Columns:</h4>
               <ul className="list-disc list-inside space-y-1 text-sm text-hos-text-secondary">
                 <li><code className="bg-hos-gold/20 px-1 rounded">name</code> - Product name (required for each row)</li>
                 <li><code className="bg-hos-gold/20 px-1 rounded">price</code> - Product price (number, e.g., 49.99)</li>
@@ -430,7 +431,7 @@ export default function WholesalerBulkProductsPage() {
             </div>
 
             <div>
-              <h4 className="font-medium text-white mb-2">Optional Columns:</h4>
+              <h4 className="font-medium text-hos-text-secondary mb-2">Optional Columns:</h4>
               <ul className="list-disc list-inside space-y-1 text-sm text-hos-text-secondary">
                 <li><code className="bg-hos-gold/20 px-1 rounded">sku</code> - Product SKU/identifier</li>
                 <li><code className="bg-hos-gold/20 px-1 rounded">currency</code> - Currency code (USD, GBP, EUR)</li>
@@ -443,7 +444,7 @@ export default function WholesalerBulkProductsPage() {
             </div>
 
             <div className="bg-hos-bg-secondary rounded-lg p-4 border border-hos-border-accent">
-              <h4 className="font-medium text-white mb-2">Example Row:</h4>
+              <h4 className="font-medium text-hos-text-secondary mb-2">Example Row:</h4>
               <div className="text-xs font-mono bg-hos-bg-tertiary p-3 rounded overflow-x-auto whitespace-nowrap">
                 &quot;Harry Potter Wand&quot;,&quot;Authentic wand replica&quot;,&quot;HP-001&quot;,&quot;49.99&quot;,&quot;100&quot;,&quot;USD&quot;,&quot;Collectibles&quot;,&quot;harry-potter&quot;,&quot;wand|replica&quot;,&quot;https://example.com/image.jpg&quot;,&quot;ACTIVE&quot;
               </div>

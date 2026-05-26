@@ -160,19 +160,19 @@ export default function AdminQuizPage() {
               <h2 className="font-semibold text-stone-200">{editingId ? 'Edit quiz' : 'Create quiz'}</h2>
               <div className="grid grid-cols-2 gap-3">
                 <input
-                  className="bg-stone-800 border border-stone-700 rounded px-3 py-2 text-sm text-stone-100"
+                  className="bg-stone-800 border border-stone-700 rounded px-3 py-2 text-sm text-stone-100 bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none border-hos-border"
                   placeholder="Title"
                   value={formTitle}
                   onChange={(e) => setFormTitle(e.target.value)}
                 />
                 <input
-                  className="bg-stone-800 border border-stone-700 rounded px-3 py-2 text-sm text-stone-100"
+                  className="bg-stone-800 border border-stone-700 rounded px-3 py-2 text-sm text-stone-100 bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none border-hos-border"
                   placeholder="Fandom ID (UUID)"
                   value={formFandomId}
                   onChange={(e) => setFormFandomId(e.target.value)}
                 />
                 <select
-                  className="bg-stone-800 border border-stone-700 rounded px-3 py-2 text-sm text-stone-100"
+                  className="bg-stone-800 border border-stone-700 rounded px-3 py-2 text-sm text-stone-100 bg-hos-bg-secondary text-hos-text-secondary focus:outline-none border-hos-border"
                   value={formDifficulty}
                   onChange={(e) => setFormDifficulty(e.target.value)}
                 >
@@ -182,7 +182,7 @@ export default function AdminQuizPage() {
                 </select>
                 <input
                   type="number"
-                  className="bg-stone-800 border border-stone-700 rounded px-3 py-2 text-sm text-stone-100"
+                  className="bg-stone-800 border border-stone-700 rounded px-3 py-2 text-sm text-stone-100 bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none border-hos-border"
                   placeholder="Points reward"
                   value={formPoints}
                   onChange={(e) => setFormPoints(Number(e.target.value))}
@@ -209,7 +209,7 @@ export default function AdminQuizPage() {
                       )}
                     </div>
                     <input
-                      className="w-full bg-stone-800 border border-stone-700 rounded px-3 py-1.5 text-sm text-stone-100"
+                      className="w-full bg-stone-800 border border-stone-700 rounded px-3 py-1.5 text-sm text-stone-100 bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none border-hos-border"
                       placeholder="Question text"
                       value={q.question}
                       onChange={(e) => updateQuestion(qi, 'question', e.target.value)}
@@ -224,7 +224,7 @@ export default function AdminQuizPage() {
                           title="Mark as correct"
                         />
                         <input
-                          className="flex-1 bg-stone-800 border border-stone-700 rounded px-2 py-1 text-sm text-stone-100"
+                          className="flex-1 bg-stone-800 border border-stone-700 rounded px-2 py-1 text-sm text-stone-100 bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none border-hos-border"
                           placeholder={`Option ${oi + 1}`}
                           value={opt}
                           onChange={(e) => updateOption(qi, oi, e.target.value)}

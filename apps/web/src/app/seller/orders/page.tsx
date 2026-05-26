@@ -236,7 +236,7 @@ export default function SellerOrdersPage() {
       case 'delivered': return 'bg-green-500/15 text-green-300';
       case 'cancelled':
       case 'refunded': return 'bg-red-500/15 text-red-300';
-      default: return 'bg-hos-bg-tertiary text-white';
+      default: return 'bg-hos-bg-tertiary text-hos-text-secondary';
     }
   };
 
@@ -247,7 +247,7 @@ export default function SellerOrdersPage() {
           {/* Header */}
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div>
-              <h1 className="text-2xl sm:text-3xl font-bold text-white">Orders</h1>
+              <h1 className="text-2xl sm:text-3xl font-bold text-hos-text-secondary">Orders</h1>
               <p className="text-hos-text-secondary mt-1">Manage your customer orders</p>
             </div>
           </div>
@@ -259,7 +259,7 @@ export default function SellerOrdersPage() {
               className={`bg-hos-bg-secondary rounded-lg shadow p-4 text-left ${statusFilter === '' ? 'ring-2 ring-hos-gold/50' : ''}`}
             >
               <h3 className="text-xs font-medium text-hos-text-muted uppercase">Total</h3>
-              <p className="text-2xl font-bold text-white mt-1">{stats.total}</p>
+              <p className="text-2xl font-bold text-hos-text-secondary mt-1">{stats.total}</p>
             </button>
             <button
               onClick={() => setStatusFilter('PENDING')}
@@ -309,7 +309,7 @@ export default function SellerOrdersPage() {
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               placeholder="Search by order ID, customer name, or email..."
-              className="w-full px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50 focus:border-transparent"
+              className="w-full px-4 py-2 border border-hos-border rounded-lg bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:ring-2 focus:ring-hos-gold/50 focus:border-hos-gold focus:outline-none"
             />
           </div>
 
@@ -353,18 +353,18 @@ export default function SellerOrdersPage() {
                     <tbody className="bg-hos-bg-secondary divide-y divide-hos-border">
                       {filteredOrders.map((order) => (
                         <tr key={order.id} className="hover:bg-hos-bg-tertiary">
-                          <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-white">
+                          <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-hos-text-secondary">
                             #{order.orderNumber || order.id.slice(0, 8)}
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap">
-                            <div className="text-sm text-white">
+                            <div className="text-sm text-hos-text-secondary">
                               {order.user?.firstName} {order.user?.lastName}
                             </div>
                             <div className="text-sm text-hos-text-muted">
                               {order.user?.email || order.customer?.email}
                             </div>
                           </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-white">
+                          <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-hos-text-secondary">
                             ${Number(order.total || 0).toFixed(2)}
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap">
@@ -400,7 +400,7 @@ export default function SellerOrdersPage() {
               <div className="p-6 border-b">
                 <div className="flex justify-between items-start">
                   <div>
-                    <h2 className="text-xl font-bold text-white">
+                    <h2 className="text-xl font-bold text-hos-text-secondary">
                       Order #{selectedOrder.orderNumber || selectedOrder.id.slice(0, 8)}
                     </h2>
                     <p className="text-sm text-hos-text-muted mt-1">
@@ -496,17 +496,17 @@ export default function SellerOrdersPage() {
 
                 {/* Customer Info */}
                 <div className="bg-hos-bg-secondary rounded-lg p-4">
-                  <h3 className="font-medium text-white mb-2">Customer Information</h3>
+                  <h3 className="font-medium text-hos-text-secondary mb-2">Customer Information</h3>
                   <div className="grid grid-cols-2 gap-4 text-sm">
                     <div>
                       <span className="text-hos-text-muted">Name:</span>
-                      <span className="ml-2 text-white">
+                      <span className="ml-2 text-hos-text-secondary">
                         {selectedOrder.user?.firstName} {selectedOrder.user?.lastName}
                       </span>
                     </div>
                     <div>
                       <span className="text-hos-text-muted">Email:</span>
-                      <span className="ml-2 text-white">
+                      <span className="ml-2 text-hos-text-secondary">
                         {selectedOrder.user?.email || selectedOrder.customer?.email}
                       </span>
                     </div>
@@ -516,7 +516,7 @@ export default function SellerOrdersPage() {
                 {/* Shipping Address */}
                 {selectedOrder.shippingAddress && (
                   <div className="bg-hos-bg-secondary rounded-lg p-4">
-                    <h3 className="font-medium text-white mb-2">Shipping Address</h3>
+                    <h3 className="font-medium text-hos-text-secondary mb-2">Shipping Address</h3>
                     <p className="text-sm text-hos-text-secondary">
                       {selectedOrder.shippingAddress.street}<br />
                       {selectedOrder.shippingAddress.city}, {selectedOrder.shippingAddress.state} {selectedOrder.shippingAddress.postalCode}<br />
@@ -527,7 +527,7 @@ export default function SellerOrdersPage() {
 
                 {/* Order Items */}
                 <div>
-                  <h3 className="font-medium text-white mb-3">Order Items</h3>
+                  <h3 className="font-medium text-hos-text-secondary mb-3">Order Items</h3>
                   <div className="border rounded-lg divide-y">
                     {selectedOrder.items && selectedOrder.items.length > 0 ? (
                       selectedOrder.items.map((item, index) => (
@@ -542,12 +542,12 @@ export default function SellerOrdersPage() {
                             />
                           )}
                           <div className="flex-1">
-                            <p className="font-medium text-white">
+                            <p className="font-medium text-hos-text-secondary">
                               {item.product?.name || item.productName || 'Product'}
                             </p>
                             <p className="text-sm text-hos-text-muted">Qty: {item.quantity}</p>
                           </div>
-                          <p className="font-medium text-white">
+                          <p className="font-medium text-hos-text-secondary">
                             ${Number(item.price || 0).toFixed(2)}
                           </p>
                         </div>
@@ -562,23 +562,23 @@ export default function SellerOrdersPage() {
 
                 {/* Order Summary */}
                 <div className="bg-hos-bg-secondary rounded-lg p-4">
-                  <h3 className="font-medium text-white mb-3">Order Summary</h3>
+                  <h3 className="font-medium text-hos-text-secondary mb-3">Order Summary</h3>
                   <div className="space-y-2 text-sm">
                     {selectedOrder.subtotal && (
                       <div className="flex justify-between">
                         <span className="text-hos-text-muted">Subtotal</span>
-                        <span className="text-white">${Number(selectedOrder.subtotal).toFixed(2)}</span>
+                        <span className="text-hos-text-secondary">${Number(selectedOrder.subtotal).toFixed(2)}</span>
                       </div>
                     )}
                     {(selectedOrder.shippingCost || selectedOrder.shippingAmount) ? (
                       <div className="flex justify-between">
                         <span className="text-hos-text-muted">Shipping</span>
-                        <span className="text-white">${Number(selectedOrder.shippingCost || selectedOrder.shippingAmount || 0).toFixed(2)}</span>
+                        <span className="text-hos-text-secondary">${Number(selectedOrder.shippingCost || selectedOrder.shippingAmount || 0).toFixed(2)}</span>
                       </div>
                     ) : null}
                     <div className="flex justify-between font-medium text-base pt-2 border-t">
-                      <span className="text-white">Total</span>
-                      <span className="text-white">${Number(selectedOrder.total).toFixed(2)}</span>
+                      <span className="text-hos-text-secondary">Total</span>
+                      <span className="text-hos-text-secondary">${Number(selectedOrder.total).toFixed(2)}</span>
                     </div>
                   </div>
                 </div>
@@ -586,14 +586,14 @@ export default function SellerOrdersPage() {
                 {/* Tracking Number */}
                 {(['processing', 'fulfilled', 'shipped', 'delivered', 'confirmed'].includes(selectedOrder.status) || selectedOrder.trackingNumber || selectedOrder.trackingCode) && (
                   <div className="bg-hos-gold/10 rounded-lg p-4">
-                    <h3 className="font-medium text-white mb-2">Tracking Information</h3>
+                    <h3 className="font-medium text-hos-text-secondary mb-2">Tracking Information</h3>
                     <div className="flex gap-2">
                       <input
                         type="text"
                         value={trackingNumber}
                         onChange={(e) => setTrackingNumber(e.target.value)}
                         placeholder="Enter tracking number"
-                        className="flex-1 px-3 py-2 border border-hos-border rounded-lg text-sm focus:ring-2 focus:ring-hos-gold/50 focus:border-transparent"
+                        className="flex-1 px-3 py-2 border border-hos-border rounded-lg text-sm bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:ring-2 focus:ring-hos-gold/50 focus:border-hos-gold focus:outline-none"
                       />
                       <button
                         onClick={async () => {
@@ -625,7 +625,7 @@ export default function SellerOrdersPage() {
               <div className="p-6 border-t bg-hos-bg-secondary">
                 <button
                   onClick={() => setShowDetailsModal(false)}
-                  className="w-full px-4 py-2 bg-hos-bg-tertiary text-white rounded-lg hover:bg-hos-bg-tertiary"
+                  className="w-full px-4 py-2 bg-hos-bg-tertiary text-hos-text-secondary rounded-lg hover:bg-hos-bg-tertiary"
                 >
                   Close
                 </button>

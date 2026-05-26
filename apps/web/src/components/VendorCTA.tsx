@@ -8,7 +8,7 @@ export default function VendorCTA() {
       <div className="max-w-7xl mx-auto px-4">
         <div className="bg-hos-bg-secondary border border-hos-border rounded-2xl p-10 flex flex-col md:flex-row items-center justify-between gap-8">
           <div className="md:w-3/5">
-            <h2 className="font-display text-white text-2xl md:text-3xl font-bold">
+            <h2 className="font-display text-hos-text-secondary text-2xl md:text-3xl font-bold">
               Sell on House of Spells
             </h2>
             <p className="text-hos-text-secondary text-sm leading-relaxed mt-3">

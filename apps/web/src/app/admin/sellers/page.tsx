@@ -343,7 +343,7 @@ export default function AdminSellersPage() {
     const styles: Record<string, string> = {
       B2C_SELLER: 'bg-hos-gold/20 text-hos-gold',
       WHOLESALER: 'bg-green-500/15 text-green-300',
-      SELLER: 'bg-hos-bg-tertiary text-white',
+      SELLER: 'bg-hos-bg-tertiary text-hos-text-secondary',
     };
     const labels: Record<string, string> = {
       B2C_SELLER: 'B2C',
@@ -351,7 +351,7 @@ export default function AdminSellersPage() {
       SELLER: 'Legacy',
     };
     return (
-      <span className={`px-2 py-0.5 text-xs rounded-full ${styles[role] || 'bg-hos-bg-tertiary text-white'}`}>
+      <span className={`px-2 py-0.5 text-xs rounded-full ${styles[role] || 'bg-hos-bg-tertiary text-hos-text-secondary'}`}>
         {labels[role] || role}
       </span>
     );
@@ -397,7 +397,7 @@ export default function AdminSellersPage() {
           {/* Header */}
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div>
-              <h1 className="text-2xl font-bold text-white">Seller Management</h1>
+              <h1 className="text-2xl font-bold text-hos-text-secondary">Seller Management</h1>
               <p className="text-hos-text-secondary mt-1">Manage marketplace sellers and invitations</p>
             </div>
             <div className="flex gap-2">
@@ -419,7 +419,7 @@ export default function AdminSellersPage() {
                 className={`bg-hos-bg-secondary rounded-lg shadow p-3 text-left hover:shadow-md ${typeFilter === 'ALL' && statusFilter === 'ALL' ? 'ring-2 ring-hos-gold/50' : ''}`}
               >
                 <p className="text-xs text-hos-text-muted">Total Sellers</p>
-                <p className="text-xl font-bold text-white">{stats.totalSellers}</p>
+                <p className="text-xl font-bold text-hos-text-secondary">{stats.totalSellers}</p>
               </button>
               <button
                 onClick={() => setTypeFilter('B2C_SELLER')}
@@ -561,7 +561,7 @@ export default function AdminSellersPage() {
                       value={searchTerm}
                       onChange={(e) => setSearchTerm(e.target.value)}
                       placeholder="Store name, email..."
-                      className="w-full px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50"
+                      className="w-full px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50 bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none focus:border-hos-gold"
                     />
                   </div>
                   <div>
@@ -569,7 +569,7 @@ export default function AdminSellersPage() {
                     <select
                       value={typeFilter}
                       onChange={(e) => setTypeFilter(e.target.value)}
-                      className="w-full px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50"
+                      className="w-full px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50 bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none focus:border-hos-gold"
                     >
                       <option value="ALL">All Types</option>
                       <option value="B2C_SELLER">B2C Seller</option>
@@ -582,7 +582,7 @@ export default function AdminSellersPage() {
                     <select
                       value={statusFilter}
                       onChange={(e) => setStatusFilter(e.target.value)}
-                      className="w-full px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50"
+                      className="w-full px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50 bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none focus:border-hos-gold"
                     >
                       <option value="ALL">All Status</option>
                       <option value="ACTIVE">Active</option>
@@ -600,7 +600,7 @@ export default function AdminSellersPage() {
                         setSortBy(field as any);
                         setSortOrder(order as any);
                       }}
-                      className="w-full px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50"
+                      className="w-full px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50 bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none focus:border-hos-gold"
                     >
                       <option value="date-desc">Newest First</option>
                       <option value="date-asc">Oldest First</option>
@@ -657,7 +657,7 @@ export default function AdminSellersPage() {
                                     )}
                                   </div>
                                   <div className="ml-3">
-                                    <p className="text-sm font-medium text-white">{seller.storeName || seller.email || 'No Store Name'}</p>
+                                    <p className="text-sm font-medium text-hos-text-secondary">{seller.storeName || seller.email || 'No Store Name'}</p>
                                     <p className="text-xs text-hos-text-muted">{seller.email}</p>
                                   </div>
                                 </div>
@@ -675,7 +675,7 @@ export default function AdminSellersPage() {
                               </td>
                               <td className="px-4 py-3 text-sm text-hos-text-secondary">{seller.totalProducts || 0}</td>
                               <td className="px-4 py-3 text-sm text-hos-text-secondary">{seller.totalOrders || 0}</td>
-                              <td className="px-4 py-3 text-sm font-medium text-white">
+                              <td className="px-4 py-3 text-sm font-medium text-hos-text-secondary">
                                 {formatPrice(seller.totalRevenue || 0)}
                               </td>
                               <td className="px-4 py-3 text-sm text-hos-text-muted">
@@ -773,7 +773,7 @@ export default function AdminSellersPage() {
                     ) : (
                       invitations.map((inv) => (
                         <tr key={inv.id} className="hover:bg-hos-bg-tertiary">
-                          <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-white">{inv.email}</td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-hos-text-secondary">{inv.email}</td>
                           <td className="px-6 py-4 whitespace-nowrap text-sm">{getRoleBadge(inv.sellerType)}</td>
                           <td className="px-6 py-4 whitespace-nowrap">
                             <span className={`px-2 py-1 text-xs rounded-full ${
@@ -785,7 +785,7 @@ export default function AdminSellersPage() {
                                     ? 'bg-red-500/15 text-red-300'
                                     : invitationStatusNormalized(inv.status) === 'CANCELLED'
                                       ? 'bg-hos-bg-tertiary text-hos-text-secondary'
-                                      : 'bg-hos-bg-tertiary text-white'
+                                      : 'bg-hos-bg-tertiary text-hos-text-secondary'
                             }`}>
                               {invitationStatusNormalized(inv.status)}
                             </span>
@@ -840,7 +840,7 @@ export default function AdminSellersPage() {
                         required
                         value={inviteForm.email}
                         onChange={(e) => setInviteForm({ ...inviteForm, email: e.target.value })}
-                        className="w-full px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50"
+                        className="w-full px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50 bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none focus:border-hos-gold"
                         placeholder="seller@example.com"
                       />
                     </div>
@@ -849,7 +849,7 @@ export default function AdminSellersPage() {
                       <select
                         value={inviteForm.sellerType}
                         onChange={(e) => setInviteForm({ ...inviteForm, sellerType: e.target.value as any })}
-                        className="w-full px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50"
+                        className="w-full px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50 bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none focus:border-hos-gold"
                       >
                         <option value="B2C_SELLER">B2C Seller</option>
                         <option value="WHOLESALER">Wholesaler</option>
@@ -865,7 +865,7 @@ export default function AdminSellersPage() {
                       <textarea
                         value={inviteForm.message}
                         onChange={(e) => setInviteForm({ ...inviteForm, message: e.target.value })}
-                        className="w-full px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50"
+                        className="w-full px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50 bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none focus:border-hos-gold"
                         rows={3}
                         placeholder="Optional personalized message..."
                       />
@@ -931,11 +931,11 @@ export default function AdminSellersPage() {
                       <div className="rounded-lg border border-hos-border-accent bg-hos-gold/10/80 p-4">
                         <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2">
                           <div className="min-w-0 flex-1">
-                            <p className="text-sm font-medium text-white">Seller ID (payouts &amp; finance)</p>
+                            <p className="text-sm font-medium text-hos-text-secondary">Seller ID (payouts &amp; finance)</p>
                             <p className="text-xs text-hos-text-secondary mt-0.5">
                               Use this UUID in Finance → Process Payouts → Schedule Payout.
                             </p>
-                            <p className="mt-2 font-mono text-xs text-white break-all select-all">
+                            <p className="mt-2 font-mono text-xs text-hos-text-secondary break-all select-all">
                               {selectedSeller.sellerId}
                             </p>
                           </div>

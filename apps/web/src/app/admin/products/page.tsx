@@ -737,7 +737,7 @@ function AdminProductsContent() {
           {/* Header */}
           <div className="flex justify-between items-center">
             <div>
-              <h1 className="text-2xl font-bold text-white">Products</h1>
+              <h1 className="text-2xl font-bold text-hos-text-secondary">Products</h1>
               <p className="text-hos-text-secondary mt-1">Manage all products in the catalog</p>
             </div>
             <div className="flex gap-2">
@@ -842,7 +842,7 @@ function AdminProductsContent() {
                   placeholder="Search products..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="w-full px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50"
+                  className="w-full px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50 bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none focus:border-hos-gold"
                 />
               </div>
               <select
@@ -912,7 +912,7 @@ function AdminProductsContent() {
                 </button>
                 <button
                   onClick={() => { setBulkAction('inactive'); setShowBulkModal(true); }}
-                  className="px-4 py-2 bg-hos-bg-tertiary text-white rounded-lg hover:bg-hos-bg-secondary text-sm"
+                  className="px-4 py-2 bg-hos-bg-tertiary text-hos-text-secondary rounded-lg hover:bg-hos-bg-secondary text-sm"
                 >
                   Set Inactive
                 </button>
@@ -1020,7 +1020,7 @@ function AdminProductsContent() {
                               </div>
                             )}
                             <div className="min-w-0 flex-1">
-                              <div className="text-sm font-medium text-white truncate">
+                              <div className="text-sm font-medium text-hos-text-secondary truncate">
                                 {product.isFeatured && <span className="text-yellow-500 mr-1">★</span>}
                                 {product.name}
                               </div>
@@ -1028,7 +1028,7 @@ function AdminProductsContent() {
                             </div>
                           </div>
                         </td>
-                        <td className="px-4 py-3 align-middle text-right text-sm text-white tabular-nums whitespace-nowrap">
+                        <td className="px-4 py-3 align-middle text-right text-sm text-hos-text-secondary tabular-nums whitespace-nowrap">
                           {formatPrice(product.price)}
                         </td>
                         <td className="px-4 py-3 align-middle text-center">{getStockBadge(product.stock)}</td>
@@ -1122,7 +1122,7 @@ function AdminProductsContent() {
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div>
                         <label className="block text-sm font-medium text-hos-text-secondary mb-1">Product Name *</label>
-                        <input type="text" required value={formData.name} onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))} className="w-full px-3 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50" />
+                        <input type="text" required value={formData.name} onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))} className="w-full px-3 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50 bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none focus:border-hos-gold" />
                       </div>
                       <div className="grid grid-cols-2 gap-4">
                         <div>
@@ -1130,24 +1130,24 @@ function AdminProductsContent() {
                           {editingProduct?.productType === 'VARIANT' && formData.variations.length > 0 && (
                             <p className="text-xs text-amber-400 mb-1">For variable products, set price per variation option in the Variations section below (or when creating). Base price here is fallback.</p>
                           )}
-                          <input type="number" step="0.01" required value={formData.price} onChange={(e) => setFormData(prev => ({ ...prev, price: e.target.value }))} className="w-full px-3 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50" />
+                          <input type="number" step="0.01" required value={formData.price} onChange={(e) => setFormData(prev => ({ ...prev, price: e.target.value }))} className="w-full px-3 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50 bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none focus:border-hos-gold" />
                         </div>
                         <div>
                           <label className="block text-sm font-medium text-hos-text-secondary mb-1">Stock *</label>
                           {editingProduct?.productType === 'VARIANT' && formData.variations.length > 0 && (
                             <p className="text-xs text-amber-400 mb-1">For variable products, set stock per variation option in the Variations section below.</p>
                           )}
-                          <input type="number" required value={formData.stock} onChange={(e) => setFormData(prev => ({ ...prev, stock: e.target.value }))} className="w-full px-3 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50" />
+                          <input type="number" required value={formData.stock} onChange={(e) => setFormData(prev => ({ ...prev, stock: e.target.value }))} className="w-full px-3 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50 bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none focus:border-hos-gold" />
                         </div>
                       </div>
                     </div>
                     <div>
                       <label className="block text-sm font-medium text-hos-text-secondary mb-1">Description *</label>
-                      <textarea required value={formData.description} onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))} className="w-full px-3 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50" rows={3} />
+                      <textarea required value={formData.description} onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))} className="w-full px-3 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50 bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none focus:border-hos-gold" rows={3} />
                     </div>
                     <div>
                       <label className="block text-sm font-medium text-hos-text-secondary mb-1">Short Description</label>
-                      <input type="text" value={formData.shortDescription} onChange={(e) => setFormData(prev => ({ ...prev, shortDescription: e.target.value }))} className="w-full px-3 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50" placeholder="Brief summary for listing/customer view" />
+                      <input type="text" value={formData.shortDescription} onChange={(e) => setFormData(prev => ({ ...prev, shortDescription: e.target.value }))} className="w-full px-3 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50 bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none focus:border-hos-gold" placeholder="Brief summary for listing/customer view" />
                     </div>
 
                     {/* Variations (editable) */}
@@ -1387,7 +1387,7 @@ function AdminProductsContent() {
                       <button
                         onClick={handleSetInactiveFromDeleteModal}
                         disabled={deleteLoading}
-                        className="w-full px-6 py-2 bg-hos-bg-tertiary text-white rounded-lg hover:bg-hos-bg-secondary font-medium disabled:opacity-50"
+                        className="w-full px-6 py-2 bg-hos-bg-tertiary text-hos-text-secondary rounded-lg hover:bg-hos-bg-secondary font-medium disabled:opacity-50"
                       >
                         {deleteLoading ? 'Updating...' : 'Set to Inactive'}
                       </button>
@@ -1448,7 +1448,7 @@ function AdminProductsContent() {
                 <div className="flex gap-3">
                   <button 
                     onClick={handleBulkAction} 
-                    className={`flex-1 px-6 py-2 text-white rounded-lg font-medium ${
+                    className={`flex-1 px-6 py-2 text-hos-text-secondary rounded-lg font-medium ${
                       bulkAction === 'delete' ? 'bg-red-600 hover:bg-red-700' : 
                       bulkAction === 'inactive' ? 'bg-hos-bg-tertiary hover:bg-hos-bg-secondary' : 
                       'bg-hos-gold hover:bg-hos-gold-hover'

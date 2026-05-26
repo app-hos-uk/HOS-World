@@ -29,7 +29,7 @@ export default function AdminStoresPage() {
       <AdminLayout>
         <div className="p-6 max-w-6xl mx-auto">
           <div className="flex justify-between items-center mb-4">
-            <h1 className="text-2xl font-semibold text-white">Stores</h1>
+            <h1 className="text-2xl font-semibold text-hos-text-secondary">Stores</h1>
             <Link
               href="/admin/stores/new"
               className="text-sm rounded-md bg-violet-700 px-3 py-2 text-white"

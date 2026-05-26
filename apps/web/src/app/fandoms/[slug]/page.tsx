@@ -105,7 +105,7 @@ function FandomProducts({ fandomSlug, fandomName }: { fandomSlug: string; fandom
               )}
             </div>
             <div className="p-4">
-              <h3 className="font-semibold text-white group-hover:text-hos-gold transition-colors">
+              <h3 className="font-semibold text-hos-text-secondary group-hover:text-hos-gold transition-colors">
                 {product.name}
               </h3>
               <p className="text-sm text-hos-text-secondary mt-1 line-clamp-2">{product.description}</p>
@@ -178,7 +178,7 @@ export default function FandomDetailPage({ params }: FandomDetailPageProps) {
           <div className="mt-8 text-center">
             <Link
               href={`/products?fandom=${fandom.slug}`}
-              className="inline-flex items-center gap-2 px-8 py-3 bg-hos-bg-secondary border border-hos-border text-white text-lg font-bold rounded-xl hover:border-hos-gold hover:text-hos-gold transition-all shadow-lg hover:shadow-xl"
+              className="inline-flex items-center gap-2 px-8 py-3 bg-hos-bg-secondary border border-hos-border text-hos-text-secondary text-lg font-bold rounded-xl hover:border-hos-gold hover:text-hos-gold transition-all shadow-lg hover:shadow-xl"
             >
               Browse All {fandom.name} Products
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">

@@ -76,19 +76,19 @@ export default function AdminInfluencersPage() {
     const styles: Record<string, string> = {
       ACTIVE: 'bg-green-500/15 text-green-300',
       SUSPENDED: 'bg-red-500/15 text-red-300',
-      INACTIVE: 'bg-hos-bg-tertiary text-white',
+      INACTIVE: 'bg-hos-bg-tertiary text-hos-text-secondary',
     };
-    return styles[status] || 'bg-hos-bg-tertiary text-white';
+    return styles[status] || 'bg-hos-bg-tertiary text-hos-text-secondary';
   };
 
   const getTierBadge = (tier: string) => {
     const styles: Record<string, string> = {
-      PLATINUM: 'bg-hos-surface text-white',
+      PLATINUM: 'bg-hos-surface text-hos-text-secondary',
       GOLD: 'bg-yellow-500/15 text-yellow-300',
-      SILVER: 'bg-hos-bg-tertiary text-white',
+      SILVER: 'bg-hos-bg-tertiary text-hos-text-secondary',
       BRONZE: 'bg-orange-500/15 text-orange-300',
     };
-    return styles[tier] || 'bg-hos-bg-tertiary text-white';
+    return styles[tier] || 'bg-hos-bg-tertiary text-hos-text-secondary';
   };
 
   return (
@@ -98,7 +98,7 @@ export default function AdminInfluencersPage() {
         {/* Header */}
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-bold text-white">Influencers</h1>
+            <h1 className="text-2xl font-bold text-hos-text-secondary">Influencers</h1>
             <p className="text-hos-text-secondary mt-1">
               Manage influencer accounts and their performance
             </p>
@@ -122,7 +122,7 @@ export default function AdminInfluencersPage() {
               placeholder="Search by name, email, or code..."
               value={filters.search}
               onChange={(e) => setFilters({ ...filters, search: e.target.value })}
-              className="flex-1 min-w-64 px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50"
+              className="flex-1 min-w-64 px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50 bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none focus:border-hos-gold"
             />
             <select
               value={filters.status}
@@ -152,7 +152,7 @@ export default function AdminInfluencersPage() {
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
           <div className="bg-hos-bg-secondary rounded-lg p-4 shadow-sm">
             <p className="text-sm text-hos-text-muted">Total Influencers</p>
-            <p className="text-2xl font-bold text-white">{influencers.length}</p>
+            <p className="text-2xl font-bold text-hos-text-secondary">{influencers.length}</p>
           </div>
           <div className="bg-hos-bg-secondary rounded-lg p-4 shadow-sm">
             <p className="text-sm text-hos-text-muted">Active</p>
@@ -162,7 +162,7 @@ export default function AdminInfluencersPage() {
           </div>
           <div className="bg-hos-bg-secondary rounded-lg p-4 shadow-sm">
             <p className="text-sm text-hos-text-muted">Total Sales</p>
-            <p className="text-2xl font-bold text-white">
+            <p className="text-2xl font-bold text-hos-text-secondary">
               {formatCurrency(influencers.reduce((sum, i) => sum + i.totalSalesAmount, 0))}
             </p>
           </div>
@@ -206,7 +206,7 @@ export default function AdminInfluencersPage() {
                     <tr key={influencer.id} className="hover:bg-hos-bg-tertiary">
                       <td className="px-6 py-4">
                         <div>
-                          <p className="font-medium text-white">{influencer.displayName}</p>
+                          <p className="font-medium text-hos-text-secondary">{influencer.displayName}</p>
                           <p className="text-sm text-hos-text-muted">{influencer.user.email}</p>
                         </div>
                       </td>
@@ -236,7 +236,7 @@ export default function AdminInfluencersPage() {
                         </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="font-medium text-white">
+                        <div className="font-medium text-hos-text-secondary">
                           {formatCurrency(influencer.totalCommission)}
                         </div>
                         <div className="text-sm text-hos-text-muted">

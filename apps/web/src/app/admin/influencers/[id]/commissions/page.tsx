@@ -211,7 +211,7 @@ export default function InfluencerCommissionSettingsPage() {
               ←
             </button>
             <div>
-              <h1 className="text-2xl font-bold text-white">Commission settings</h1>
+              <h1 className="text-2xl font-bold text-hos-text-secondary">Commission settings</h1>
               <p className="text-hos-text-secondary">{influencerName || 'Influencer'}</p>
             </div>
           </div>

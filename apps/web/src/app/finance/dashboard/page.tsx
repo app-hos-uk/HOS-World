@@ -193,7 +193,7 @@ export default function FinanceDashboardPage() {
                       >
                         <div className="flex items-start justify-between">
                           <div className="flex-1">
-                            <p className="font-medium text-white">
+                            <p className="font-medium text-hos-text-secondary">
                               {approval.catalogEntry?.title ||
                                 approval.product?.name ||
                                 approval.productData?.name ||
@@ -244,7 +244,7 @@ export default function FinanceDashboardPage() {
                       >
                         <div className="flex items-start justify-between">
                           <div className="flex-1">
-                            <p className="font-medium text-white">
+                            <p className="font-medium text-hos-text-secondary">
                               {item.product?.name || 'Unknown Product'}
                             </p>
                             <p className="text-sm text-hos-text-muted mt-1">

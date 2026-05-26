@@ -46,7 +46,7 @@ export default function AdminBrandPartnershipDetailPage() {
             <>
               <div className="flex justify-between items-start">
                 <div>
-                  <h1 className="text-2xl font-semibold text-white">{String(row.name)}</h1>
+                  <h1 className="text-2xl font-semibold text-hos-text-secondary">{String(row.name)}</h1>
                   <p className="text-sm text-hos-text-muted">
                     {String(row.status)} · {String(row.slug)}
                   </p>

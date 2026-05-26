@@ -12,7 +12,7 @@ export default function AdminPosStoresPage() {
           <Link href="/admin/pos" className="text-sm text-hos-gold hover:text-hos-gold">
             ← POS home
           </Link>
-          <h1 className="text-2xl font-bold text-white">Outlet management</h1>
+          <h1 className="text-2xl font-bold text-hos-text-secondary">Outlet management</h1>
           <p className="max-w-2xl text-hos-text-secondary">
             HOS stores are defined in the platform tenant model. Link each store&apos;s{' '}
             <strong>code</strong> to your webhook path and set <strong>externalOutletId</strong> on the

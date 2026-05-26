@@ -199,7 +199,7 @@ export default function AdminFinancePage() {
         <div className="space-y-6">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div>
-              <h1 className="text-2xl font-bold text-white">Finance Dashboard</h1>
+              <h1 className="text-2xl font-bold text-hos-text-secondary">Finance Dashboard</h1>
               <p className="text-hos-text-secondary mt-1">Monitor revenue, transactions, and payouts</p>
             </div>
             <div className="flex gap-2">
@@ -269,7 +269,7 @@ export default function AdminFinancePage() {
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                     <div className="bg-hos-bg-secondary rounded-lg shadow p-4">
                       <h3 className="text-sm font-medium text-hos-text-muted">Seller Payouts</h3>
-                      <p className="text-xl font-bold text-white mt-1">${metrics.totalPayouts.toFixed(2)}</p>
+                      <p className="text-xl font-bold text-hos-text-secondary mt-1">${metrics.totalPayouts.toFixed(2)}</p>
                     </div>
                     <div className="bg-hos-bg-secondary rounded-lg shadow p-4">
                       <h3 className="text-sm font-medium text-hos-text-muted">Total Refunds</h3>
@@ -277,13 +277,13 @@ export default function AdminFinancePage() {
                     </div>
                     <div className="bg-hos-bg-secondary rounded-lg shadow p-4">
                       <h3 className="text-sm font-medium text-hos-text-muted">Avg Transaction</h3>
-                      <p className="text-xl font-bold text-white mt-1">
+                      <p className="text-xl font-bold text-hos-text-secondary mt-1">
                         ${isNaN(metrics.avgTransactionValue) ? '0.00' : metrics.avgTransactionValue.toFixed(2)}
                       </p>
                     </div>
                     <div className="bg-hos-bg-secondary rounded-lg shadow p-4">
                       <h3 className="text-sm font-medium text-hos-text-muted">Refund Rate</h3>
-                      <p className="text-xl font-bold text-white mt-1">
+                      <p className="text-xl font-bold text-hos-text-secondary mt-1">
                         {metrics.totalRevenue > 0 ? ((metrics.totalRefunds / metrics.totalRevenue) * 100).toFixed(1) : 0}%
                       </p>
                     </div>
@@ -291,7 +291,7 @@ export default function AdminFinancePage() {
 
                   {/* Revenue Chart */}
                   <div className="bg-hos-bg-secondary rounded-lg shadow p-6">
-                    <h3 className="text-lg font-semibold text-white mb-4">Revenue Trend</h3>
+                    <h3 className="text-lg font-semibold text-hos-text-secondary mb-4">Revenue Trend</h3>
                     <div className="h-80">
                       <ResponsiveContainer width="100%" height="100%">
                         <AreaChart data={revenueChartData}>
@@ -309,7 +309,7 @@ export default function AdminFinancePage() {
                   <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                     {/* Transaction Types */}
                     <div className="bg-hos-bg-secondary rounded-lg shadow p-6">
-                      <h3 className="text-lg font-semibold text-white mb-4">Revenue by Type</h3>
+                      <h3 className="text-lg font-semibold text-hos-text-secondary mb-4">Revenue by Type</h3>
                       {transactionTypeData.length > 0 ? (
                         <div className="h-64">
                           <ResponsiveContainer width="100%" height="100%">
@@ -341,7 +341,7 @@ export default function AdminFinancePage() {
 
                     {/* Payment Status */}
                     <div className="bg-hos-bg-secondary rounded-lg shadow p-6">
-                      <h3 className="text-lg font-semibold text-white mb-4">Transaction Status</h3>
+                      <h3 className="text-lg font-semibold text-hos-text-secondary mb-4">Transaction Status</h3>
                       {paymentStatusData.length > 0 ? (
                         <div className="h-64">
                           <ResponsiveContainer width="100%" height="100%">
@@ -468,7 +468,7 @@ export default function AdminFinancePage() {
                         safePayouts.map((payout) => (
                           <tr key={payout.id} className="hover:bg-hos-bg-tertiary">
                             <td className="px-6 py-4 text-sm">
-                              <p className="font-medium text-white">
+                              <p className="font-medium text-hos-text-secondary">
                                 {payout.seller?.storeName || 'Unknown seller'}
                               </p>
                               <p className="text-xs text-hos-text-muted font-mono mt-0.5">

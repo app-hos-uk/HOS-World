@@ -222,7 +222,7 @@ export default function SellerDashboardPage() {
                       >
                         <div className="flex items-start justify-between">
                           <div className="flex-1">
-                            <p className="font-medium text-white">
+                            <p className="font-medium text-hos-text-secondary">
                               {submission.productData?.name || 'Untitled Product'}
                             </p>
                             <p className="text-sm text-hos-text-muted mt-1">
@@ -280,7 +280,7 @@ export default function SellerDashboardPage() {
                       >
                         <div className="flex items-start justify-between">
                           <div className="flex-1">
-                            <p className="font-medium text-white">
+                            <p className="font-medium text-hos-text-secondary">
                               Order #{order.orderNumber || order.id.slice(0, 8)}
                             </p>
                             <p className="text-sm text-hos-text-muted mt-1">

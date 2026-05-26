@@ -41,7 +41,7 @@ export function RecentlyViewed() {
 
   return (
     <section>
-      <h2 className="font-display text-white text-2xl md:text-3xl font-bold mb-6">
+      <h2 className="font-display text-hos-text-secondary text-2xl md:text-3xl font-bold mb-6">
         Recently Viewed
       </h2>
 

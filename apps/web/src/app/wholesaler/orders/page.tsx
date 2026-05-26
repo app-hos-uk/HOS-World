@@ -1,11 +1,12 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { RouteGuard } from '@/components/RouteGuard';
 import { DashboardLayout } from '@/components/DashboardLayout';
 import { apiClient } from '@/lib/api';
 import { getSellerMenuItems } from '@/lib/sellerMenu';
 import { useCurrency } from '@/contexts/CurrencyContext';
+import { PORTAL_INPUT_CLASS, PORTAL_SELECT_CLASS } from '@/lib/portalFieldClasses';
 
 export default function WholesalerOrdersPage() {
   const { formatPrice } = useCurrency();
@@ -13,6 +14,7 @@ export default function WholesalerOrdersPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [statusFilter, setStatusFilter] = useState<string>('');
+  const [searchTerm, setSearchTerm] = useState('');
 
   const menuItems = getSellerMenuItems(true);
 
@@ -37,19 +39,30 @@ export default function WholesalerOrdersPage() {
     }
   };
 
+  const filteredOrders = useMemo(() => {
+    if (!searchTerm.trim()) return orders;
+    const q = searchTerm.toLowerCase();
+    return orders.filter((order) => {
+      const orderId = (order.orderNumber || order.id || '').toLowerCase();
+      const customer = `${order.user?.firstName || ''} ${order.user?.lastName || ''}`.toLowerCase();
+      const email = (order.user?.email || '').toLowerCase();
+      return orderId.includes(q) || customer.includes(q) || email.includes(q);
+    });
+  }, [orders, searchTerm]);
+
   return (
     <RouteGuard allowedRoles={['WHOLESALER', 'ADMIN']} showAccessDenied={true}>
       <DashboardLayout role="WHOLESALER" menuItems={menuItems} title="Wholesaler">
         <div className="mb-6">
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold">Bulk Orders</h1>
+              <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-hos-text-secondary">Bulk Orders</h1>
               <p className="text-hos-text-secondary mt-2">Manage your wholesale bulk orders</p>
             </div>
             <select
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value)}
-              className="px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50"
+              className={PORTAL_SELECT_CLASS}
             >
               <option value="">All Status</option>
               <option value="PENDING">Pending</option>
@@ -61,6 +74,18 @@ export default function WholesalerOrdersPage() {
             </select>
           </div>
         </div>
+
+        {!loading && !error && orders.length > 0 && (
+          <div className="bg-hos-bg-secondary rounded-lg shadow p-4 mb-6">
+            <input
+              type="text"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              placeholder="Search by order ID, customer name, or email..."
+              className={PORTAL_INPUT_CLASS}
+            />
+          </div>
+        )}
 
         {loading && (
           <div className="flex items-center justify-center py-12">
@@ -82,9 +107,11 @@ export default function WholesalerOrdersPage() {
 
         {!loading && !error && (
           <div className="bg-hos-bg-secondary rounded-lg shadow overflow-hidden">
-            {orders.length === 0 ? (
+            {filteredOrders.length === 0 ? (
               <div className="text-center py-12">
-                <p className="text-hos-text-muted">No bulk orders found</p>
+                <p className="text-hos-text-muted">
+                  {orders.length === 0 ? 'No bulk orders found' : 'No orders match your search'}
+                </p>
               </div>
             ) : (
               <div className="overflow-x-auto">
@@ -112,18 +139,18 @@ export default function WholesalerOrdersPage() {
                     </tr>
                   </thead>
                   <tbody className="bg-hos-bg-secondary divide-y divide-hos-border">
-                    {orders.map((order) => (
+                    {filteredOrders.map((order) => (
                       <tr key={order.id} className="hover:bg-hos-bg-tertiary">
-                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-white">
+                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-hos-text-secondary">
                           #{order.orderNumber || order.id.slice(0, 8)}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-hos-text-muted">
                           {order.user?.firstName} {order.user?.lastName}
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-white">
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-hos-text-secondary">
                           {formatPrice(parseFloat(order.total || 0))}
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-white">
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-hos-text-secondary">
                           {order.items?.reduce((sum: number, item: any) => sum + (item.quantity || 0), 0) || 0}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
@@ -136,7 +163,7 @@ export default function WholesalerOrdersPage() {
                                 if (['fulfilled', 'shipped'].includes(s)) return 'bg-hos-gold/20 text-hos-gold';
                                 if (s === 'delivered') return 'bg-green-500/15 text-green-300';
                                 if (['cancelled', 'refunded'].includes(s)) return 'bg-red-500/15 text-red-300';
-                                return 'bg-hos-bg-tertiary text-white';
+                                return 'bg-hos-bg-tertiary text-hos-text-secondary';
                               })()
                             }`}
                           >

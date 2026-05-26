@@ -42,7 +42,7 @@ export default function AdminDiscrepanciesPage() {
     <RouteGuard allowedRoles={['ADMIN']}>
       <AdminLayout>
         <div className="space-y-6">
-          <h1 className="text-2xl font-bold text-white">Discrepancy Reports</h1>
+          <h1 className="text-2xl font-bold text-hos-text-secondary">Discrepancy Reports</h1>
 
           {loading ? (
             <div className="flex items-center justify-center h-64">
@@ -74,7 +74,7 @@ export default function AdminDiscrepanciesPage() {
                             disc.severity === 'CRITICAL' ? 'bg-red-500/15 text-red-300' :
                             disc.severity === 'HIGH' ? 'bg-orange-500/15 text-orange-300' :
                             disc.severity === 'MEDIUM' ? 'bg-yellow-500/15 text-yellow-300' :
-                            'bg-hos-bg-tertiary text-white'
+                            'bg-hos-bg-tertiary text-hos-text-secondary'
                           }`}>
                             {disc.severity}
                           </span>
@@ -83,7 +83,7 @@ export default function AdminDiscrepanciesPage() {
                           <span className={`px-2 py-1 text-xs rounded-full ${
                             disc.status === 'RESOLVED' ? 'bg-green-500/15 text-green-300' :
                             disc.status === 'OPEN' ? 'bg-hos-gold/20 text-hos-gold' :
-                            'bg-hos-bg-tertiary text-white'
+                            'bg-hos-bg-tertiary text-hos-text-secondary'
                           }`}>
                             {disc.status}
                           </span>
