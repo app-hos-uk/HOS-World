@@ -32,13 +32,19 @@ FOCUS_BORDER_RE = re.compile(r"\bfocus:border-hos-gold\b")
 BORDER_HOS_RE = re.compile(r"\bborder-hos-border\b")
 LEGACY_BORDER_RE = re.compile(r"\bborder\b(?:\s+\bborder-\S+\b)?\s+\brounded")
 
-FORM_AUGMENT = [
+DARK_BG_CLASS_TOKENS = (
     "bg-hos-bg-secondary",
-    "text-hos-text-secondary",
-    "placeholder-hos-text-muted",
-    "focus:outline-none",
-    "focus:border-hos-gold",
-]
+    "bg-hos-bg-tertiary",
+    "bg-hos-surface",
+)
+
+BARE_FORM_REQUIRED = (
+    ("bg-hos-bg", "bg-hos-bg-secondary"),
+    ("text-hos-text", "text-hos-text-secondary"),
+    ("placeholder-hos-text-muted", "placeholder-hos-text-muted"),
+    ("focus:outline-none", "focus:outline-none"),
+    ("focus:border-hos-gold", "focus:border-hos-gold"),
+)
 
 # Table / data cell text (not buttons/badges)
 TABLE_TEXT_REPLACEMENTS = [
@@ -105,6 +111,34 @@ def _normalize_class(cls: str) -> str:
     return " ".join(cls.split())
 
 
+def _has_dark_bg_class(cls: str) -> bool:
+    parts = set(_normalize_class(cls).split())
+    return any(token in parts for token in DARK_BG_CLASS_TOKENS)
+
+
+def _replace_token_in_class_list(cls: str, old: str, new: str) -> str:
+    parts = _normalize_class(cls).split()
+    return " ".join(new if p == old else p for p in parts)
+
+
+def _upgrade_text_white_on_dark_bg(cls: str) -> tuple[str, int]:
+    """Replace text-white when dark hos background tokens are present (any order)."""
+    if "text-white" not in cls:
+        return cls, 0
+    if not _has_dark_bg_class(cls) and "border-hos-border" not in cls:
+        return cls, 0
+    return _replace_token_in_class_list(cls, "text-white", "text-hos-text-secondary"), 1
+
+
+def _missing_bare_form_suffix(cls: str) -> str:
+    """Return only the bare-form tokens that are not already present."""
+    missing: list[str] = []
+    for needle, token in BARE_FORM_REQUIRED:
+        if needle not in cls:
+            missing.append(token)
+    return " ".join(missing)
+
+
 def _augment_form_class(cls: str, tag: str) -> str:
     cls = _normalize_class(cls)
     if not cls or "PORTAL_" in cls or cls in {"input", "select"}:
@@ -124,7 +158,12 @@ def _augment_form_class(cls: str, tag: str) -> str:
     if not has_custom_bg and "bg-hos-bg-secondary" not in parts:
         parts.append("bg-hos-bg-secondary")
 
-    if not TEXT_RE.search(cls):
+    if "text-white" in parts:
+        parts = [
+            "text-hos-text-secondary" if p == "text-white" else p
+            for p in parts
+        ]
+    elif not TEXT_RE.search(cls):
         parts.append("text-hos-text-secondary")
 
     if tag.lower() != "select" and not PLACEHOLDER_RE.search(cls):
@@ -287,12 +326,37 @@ def process_table_and_heading_text(content: str) -> tuple[str, int]:
 def process_secondary_text_on_dark_bg(content: str) -> tuple[str, int]:
     """Replace text-white when paired with dark hos backgrounds (not colored CTAs)."""
     changes = 0
+
+    def fix_quoted_class(match: re.Match[str]) -> str:
+        nonlocal changes
+        template, braced, plain = match.group(1), match.group(2), match.group(3)
+        cls = template or braced or plain or ""
+        fixed, n = _upgrade_text_white_on_dark_bg(cls)
+        if n:
+            changes += n
+        else:
+            # Order-independent fixes for common non-bg pairings
+            if "text-white" in cls and "whitespace-pre-wrap" in cls:
+                fixed, n = _replace_token_in_class_list(cls, "text-white", "text-hos-text-secondary"), 1
+                changes += n
+            elif "text-white" in cls and "placeholder-hos-text-muted" in cls:
+                fixed, n = _replace_token_in_class_list(cls, "text-white", "text-hos-text-secondary"), 1
+                changes += n
+            else:
+                fixed = cls
+        if template is not None:
+            return f"className={{`{fixed}`}}"
+        if braced is not None:
+            return f'className={{"{fixed}"}}'
+        return f'className="{fixed}"'
+
+    content = re.sub(
+        r'className=(?:\{`([^`]*?)`\}|\{"([^"]*?)"\}|"([^"]*?)")',
+        fix_quoted_class,
+        content,
+    )
+
     replacements = [
-        (r"bg-hos-bg-secondary text-white", "bg-hos-bg-secondary text-hos-text-secondary"),
-        (r"bg-hos-surface text-white", "bg-hos-surface text-hos-text-secondary"),
-        (r"whitespace-pre-wrap text-white", "whitespace-pre-wrap text-hos-text-secondary"),
-        (r"placeholder-hos-text-muted text-white", "placeholder-hos-text-muted text-hos-text-secondary"),
-        (r"border border-hos-border text-white rounded-lg", "border border-hos-border text-hos-text-secondary rounded-lg"),
         (r"className=\"text-white hover:text-hos-gold", 'className="text-hos-text-secondary hover:text-hos-gold'),
         (r"'text-white' : 'text-hos-text-muted'", "'text-hos-text-secondary' : 'text-hos-text-muted'"),
         (r": 'text-white'", ": 'text-hos-text-secondary'"),
@@ -306,33 +370,26 @@ def process_secondary_text_on_dark_bg(content: str) -> tuple[str, int]:
     return content, changes
 
 
-BARE_FORM_SUFFIX = (
-    " bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted "
-    "focus:outline-none focus:border-hos-gold"
+BARE_FORM_CLASS_RE = re.compile(
+    r'className="((?:w-full |flex-1 )?[^"]*\bborder border-hos-border\b[^"]*)"'
 )
-
-BARE_FORM_PATTERNS = [
-    r'(className="(?:w-full |flex-1 )?[^"]*border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50)(?!"[^"]*bg-hos-bg)',
-    r'(className="(?:w-full |flex-1 )?[^"]*border border-hos-border rounded-lg focus:ring-hos-gold/50 focus:border-hos-gold)(?!"[^"]*bg-hos-bg)',
-    r'(className="(?:w-full |flex-1 )?[^"]*px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50)(?!"[^"]*bg-hos-bg)',
-    r'(className="w-full px-4 py-2 border border-hos-border rounded-lg focus:outline-none focus:ring-2 focus:ring-hos-gold/50)(?!"[^"]*bg-hos-bg)',
-    r'(className="w-full pl-10 pr-4 py-2\.5 border border-hos-border rounded-lg text-sm focus:ring-hos-gold/50 focus:border-hos-gold)(?!"[^"]*bg-hos-bg)',
-]
 
 
 def process_bare_form_class_strings(content: str) -> tuple[str, int]:
     changes = 0
-    for pat in BARE_FORM_PATTERNS:
 
-        def repl(m: re.Match[str]) -> str:
-            nonlocal changes
-            s = m.group(1)
-            if "bg-hos-bg" in s or "text-hos-text" in s:
-                return s + '"'
-            changes += 1
-            return s + BARE_FORM_SUFFIX + '"'
+    def repl(m: re.Match[str]) -> str:
+        nonlocal changes
+        cls = m.group(1)
+        if "focus:ring" not in cls and "focus:border-hos-gold" not in cls:
+            return m.group(0)
+        missing = _missing_bare_form_suffix(cls)
+        if not missing:
+            return m.group(0)
+        changes += 1
+        return f'className="{cls} {missing}"'
 
-        content = re.sub(pat + r'"', repl, content)
+    content = BARE_FORM_CLASS_RE.sub(repl, content)
     return content, changes
 
 
@@ -378,11 +435,74 @@ def _test_replace_class_in_attrs() -> None:
         assert got == expected, f"attrs={attrs!r}\nexpected={expected!r}\ngot={got!r}"
 
 
+def _test_upgrade_text_white_on_dark_bg() -> None:
+    cases = [
+        ("bg-hos-bg-secondary text-white", "bg-hos-bg-secondary text-hos-text-secondary"),
+        ("text-white bg-hos-bg-secondary", "text-hos-text-secondary bg-hos-bg-secondary"),
+        ("text-white border-hos-border", "text-hos-text-secondary border-hos-border"),
+        ("bg-red-600 text-white", "bg-red-600 text-white"),
+    ]
+    for raw, expected in cases:
+        got, n = _upgrade_text_white_on_dark_bg(raw)
+        assert got == expected, f"raw={raw!r}\nexpected={expected!r}\ngot={got!r}"
+        if raw != expected:
+            assert n == 1, f"expected 1 change for {raw!r}, got {n}"
+
+
+def _test_augment_form_class_text_white() -> None:
+    got = _augment_form_class(
+        "w-full px-4 py-2 border border-hos-border text-white focus:ring-2 focus:ring-hos-gold/50",
+        "input",
+    )
+    assert "text-hos-text-secondary" in got
+    assert "text-white" not in got.split()
+    assert "bg-hos-bg-secondary" in got
+
+
+def _test_missing_bare_form_suffix() -> None:
+    assert _missing_bare_form_suffix("border focus:ring") == (
+        "bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted "
+        "focus:outline-none focus:border-hos-gold"
+    )
+    assert _missing_bare_form_suffix(
+        "border text-hos-text-secondary focus:ring"
+    ) == "bg-hos-bg-secondary placeholder-hos-text-muted focus:outline-none focus:border-hos-gold"
+    assert _missing_bare_form_suffix(
+        "border bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted "
+        "focus:outline-none focus:border-hos-gold"
+    ) == ""
+
+
+def _test_process_bare_form_class_strings() -> None:
+    raw = (
+        'className="w-full px-3 py-2 border border-hos-border rounded-lg '
+        'focus:ring-2 focus:ring-hos-gold/50 text-hos-text-secondary"'
+    )
+    updated, n = process_bare_form_class_strings(raw)
+    assert n == 1
+    assert "bg-hos-bg-secondary" in updated
+    assert "text-hos-text-secondary" in updated
+    assert "placeholder-hos-text-muted" in updated
+
+
+def _test_process_secondary_text_on_dark_bg() -> None:
+    raw = 'className="text-white bg-hos-bg-secondary border rounded-lg"'
+    updated, n = process_secondary_text_on_dark_bg(raw)
+    assert n == 1
+    assert "text-hos-text-secondary" in updated
+    assert "text-white" not in updated
+
+
 def main() -> None:
     import sys
 
     if "--test" in sys.argv:
         _test_replace_class_in_attrs()
+        _test_upgrade_text_white_on_dark_bg()
+        _test_augment_form_class_text_white()
+        _test_missing_bare_form_suffix()
+        _test_process_bare_form_class_strings()
+        _test_process_secondary_text_on_dark_bg()
         print("form-field-sweep: all className replacement tests passed")
         return
     changed = 0
