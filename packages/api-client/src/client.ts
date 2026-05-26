@@ -91,6 +91,7 @@ export class ApiClient {
       const isAuthEndpoint =
         endpoint.startsWith('/auth/login') ||
         endpoint.startsWith('/auth/register') ||
+        endpoint.startsWith('/auth/guest-checkout') ||
         endpoint.startsWith('/auth/accept-invitation') ||
         endpoint.startsWith('/auth/refresh') ||
         endpoint.startsWith('/auth/forgot-password') ||
@@ -301,6 +302,25 @@ export class ApiClient {
 
   async login(data: { email: string; password: string }): Promise<ApiResponse<AuthResponse>> {
     return this.request<ApiResponse<AuthResponse>>('/auth/login', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async guestCheckout(data: {
+    email: string;
+    firstName: string;
+    lastName: string;
+    street: string;
+    city: string;
+    postalCode: string;
+    country: string;
+    state?: string;
+    phone?: string;
+    guestSessionId: string;
+    gdprConsent: boolean;
+  }): Promise<ApiResponse<AuthResponse>> {
+    return this.request<ApiResponse<AuthResponse>>('/auth/guest-checkout', {
       method: 'POST',
       body: JSON.stringify(data),
     });

@@ -2,8 +2,7 @@
 
 import Link from 'next/link';
 import Image from 'next/image';
-import { useMemo, useState } from 'react';
-import { apiClient } from '@/lib/api';
+import { useMemo } from 'react';
 import { REFERENCE_ASSETS } from '@/lib/referenceAssets';
 import {
   FOOTER_CONTACT_EMAIL,
@@ -77,10 +76,6 @@ function FooterNavColumn({
 }
 
 export function Footer() {
-  const [email, setEmail] = useState('');
-  const [status, setStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
-  const [message, setMessage] = useState('');
-
   const socialEntries = useMemo(() => {
     const out: SocialEntry[] = [];
     for (const social of SOCIAL_LINKS) {
@@ -96,29 +91,6 @@ export function Footer() {
     }
     return out;
   }, []);
-
-  const handleNewsletterSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!email.trim()) return;
-    setStatus('loading');
-    setMessage('');
-    try {
-      await apiClient.newsletterSubscribe({
-        email: email.trim(),
-        source: 'website',
-      });
-      setStatus('success');
-      setMessage('Thanks! You\'re subscribed.');
-      setEmail('');
-    } catch (err: unknown) {
-      setStatus('error');
-      const raw = err && typeof err === 'object' && 'message' in err ? String((err as { message: string }).message) : '';
-      const msg = raw && (raw.includes('already subscribed') || raw.includes('Already subscribed'))
-        ? 'This email is already subscribed.'
-        : raw || 'Subscription failed. Please try again.';
-      setMessage(msg);
-    }
-  };
 
   return (
     <footer className="w-full bg-hos-bg border-t border-hos-border" role="contentinfo">
@@ -156,34 +128,17 @@ export function Footer() {
               ))}
             </div>
 
-            <form onSubmit={handleNewsletterSubmit} className="mt-6 space-y-2">
-              <input
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="Your email"
-                required
-                disabled={status === 'loading'}
-                aria-label="Email address for newsletter"
-                className="w-full px-3 py-2 text-sm rounded-md bg-[#1A1A1A] border border-hos-border text-white placeholder:text-hos-text-muted focus:outline-none focus:border-hos-gold disabled:opacity-70"
-              />
-              <button
-                type="submit"
-                disabled={status === 'loading'}
-                className="w-full px-4 py-2 text-sm rounded-md font-semibold bg-hos-gold text-[#1a1406] hover:bg-hos-gold-hover transition-colors duration-200 disabled:opacity-70"
+            <div className="mt-6">
+              <Link
+                href="/#newsletter"
+                className="inline-flex items-center justify-center w-full px-4 py-2 text-sm rounded-md font-semibold bg-hos-gold text-[#1a1406] hover:bg-hos-gold-hover transition-colors duration-200"
               >
-                {status === 'loading' ? 'Subscribing…' : 'Subscribe'}
-              </button>
-              {message ? (
-                <p
-                  role="alert"
-                  aria-live="polite"
-                  className={`text-xs ${status === 'success' ? 'text-hos-new-green' : status === 'error' ? 'text-hos-sale-red' : 'text-hos-text-muted'}`}
-                >
-                  {message}
-                </p>
-              ) : null}
-            </form>
+                Subscribe to our newsletter
+              </Link>
+              <p className="text-xs text-hos-text-muted mt-2">
+                Marketplace updates, vendor spotlights, and exclusive offers.
+              </p>
+            </div>
           </div>
 
           {/* Visit us */}

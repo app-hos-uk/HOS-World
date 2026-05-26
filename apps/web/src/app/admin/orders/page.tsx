@@ -6,6 +6,8 @@ import { AdminLayout } from '@/components/AdminLayout';
 import { apiClient } from '@/lib/api';
 import { useToast } from '@/hooks/useToast';
 import { DataExport } from '@/components/DataExport';
+import { Modal } from '@/components/ui/Modal';
+import { PortalMobileCard } from '@/components/ui/PortalMobileCard';
 
 /** API returns lowercase; normalize so stats/filters work if casing differs */
 function normalizeOrderStatus(status: string | undefined): string {
@@ -447,7 +449,41 @@ export default function AdminOrdersPage() {
 
           {!loading && !error && (
             <div className="bg-hos-bg-secondary rounded-lg shadow overflow-hidden">
-              <div className="overflow-x-auto">
+              {paginatedOrders.length > 0 && (
+                <div className="md:hidden space-y-3 p-4">
+                  {paginatedOrders.map((order) => (
+                    <PortalMobileCard
+                      key={order.id}
+                      title={`Order #${order.orderNumber || order.id.substring(0, 8)}`}
+                      subtitle={order.user?.email || order.customer?.email}
+                      rows={[
+                        {
+                          label: 'Customer',
+                          value: (order.user?.firstName || order.user?.lastName)
+                            ? `${order.user?.firstName || ''} ${order.user?.lastName || ''}`.trim()
+                            : order.user?.email || order.customer?.email || 'Guest',
+                        },
+                        {
+                          label: 'Total',
+                          value: `${order.currency || 'USD'} ${Number(order.total || 0).toFixed(2)}`,
+                        },
+                        { label: 'Status', value: order.status },
+                        { label: 'Date', value: new Date(order.createdAt).toLocaleDateString() },
+                      ]}
+                      actions={
+                        <button
+                          type="button"
+                          onClick={() => openOrderDetails(order)}
+                          className="text-hos-gold hover:text-hos-gold-hover text-sm font-medium"
+                        >
+                          View Details
+                        </button>
+                      }
+                    />
+                  ))}
+                </div>
+              )}
+              <div className="hidden md:block overflow-x-auto">
                 <table className="min-w-full divide-y divide-hos-border">
                   <thead className="bg-hos-bg-secondary">
                     <tr>
@@ -599,29 +635,34 @@ export default function AdminOrdersPage() {
             </div>
           )}
 
-          {/* Order Details Modal */}
-          {showDetailsModal && selectedOrder && (
-            <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50 overflow-y-auto">
-              <div className="bg-hos-bg-secondary rounded-lg max-w-3xl w-full my-4 max-h-[90vh] overflow-y-auto">
-                <div className="p-6">
-                  <div className="flex justify-between items-start mb-6">
-                    <div>
-                      <h2 className="text-2xl font-bold text-hos-text-secondary">
-                        Order #{selectedOrder.orderNumber || selectedOrder.id.substring(0, 8)}
-                      </h2>
-                      <p className="text-sm text-hos-text-muted mt-1">
-                        Placed on {new Date(selectedOrder.createdAt).toLocaleString()}
-                      </p>
-                    </div>
-                    <button
-                      onClick={() => setShowDetailsModal(false)}
-                      className="text-hos-text-muted hover:text-hos-text-secondary text-2xl"
-                    >
-                      ×
-                    </button>
+          <Modal
+            open={showDetailsModal && !!selectedOrder}
+            onClose={() => setShowDetailsModal(false)}
+            titleId="admin-order-modal-title"
+            size="xl"
+          >
+            {selectedOrder && (
+              <div className="p-6">
+                <div className="flex justify-between items-start mb-6">
+                  <div>
+                    <h2 id="admin-order-modal-title" className="text-2xl font-bold text-hos-text-secondary">
+                      Order #{selectedOrder.orderNumber || selectedOrder.id.substring(0, 8)}
+                    </h2>
+                    <p className="text-sm text-hos-text-muted mt-1">
+                      Placed on {new Date(selectedOrder.createdAt).toLocaleString()}
+                    </p>
                   </div>
+                  <button
+                    type="button"
+                    onClick={() => setShowDetailsModal(false)}
+                    className="text-hos-text-muted hover:text-hos-text-secondary text-2xl"
+                    aria-label="Close order details"
+                  >
+                    ×
+                  </button>
+                </div>
 
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
                     {/* Customer Info */}
                     <div className="bg-hos-bg-secondary rounded-lg p-4">
                       <h3 className="font-semibold text-hos-text-secondary mb-3">Customer Information</h3>
@@ -773,9 +814,8 @@ export default function AdminOrdersPage() {
                     </button>
                   </div>
                 </div>
-              </div>
-            </div>
-          )}
+            )}
+          </Modal>
         </div>
       </AdminLayout>
     </RouteGuard>

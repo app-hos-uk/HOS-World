@@ -7,6 +7,7 @@ import { stashReferralFromQuery } from '@/lib/referralAttribution';
 import { CharacterSelector } from '@/components/CharacterSelector';
 import { FandomQuiz } from '@/components/FandomQuiz';
 import { getPublicApiBaseUrl } from '@/lib/apiBaseUrl';
+import { resolvePostAuthRedirect, resolvePostRegisterRedirect, getSafeReturnUrl, stashAuthReturnUrl } from '@/lib/authRedirect';
 
 function LoginPageInner() {
   const router = useRouter();
@@ -64,7 +65,15 @@ function LoginPageInner() {
     if (wantRegister === '1' || wantRegister === 'true') {
       setIsLogin(false);
     }
+    stashAuthReturnUrl(searchParams.get('returnUrl'));
   }, [isMounted, searchParams]);
+
+  const safeReturnUrl = getSafeReturnUrl(searchParams.get('returnUrl'));
+
+  const startOAuth = (provider: 'google' | 'facebook' | 'apple') => {
+    stashAuthReturnUrl(searchParams.get('returnUrl'));
+    window.location.href = `${oauthBaseUrl}/auth/${provider}`;
+  };
 
   // Detect country on mount (for registration)
   useEffect(() => {
@@ -183,27 +192,9 @@ function LoginPageInner() {
       // Mark login success to prevent onUnauthorized redirects
       markLoginSuccess();
 
-      // Get role from login response to determine redirect path
-      let redirectPath = '/';
       const user = response.data.user;
-      if (user?.role) {
-        // Map role to dashboard path
-        const roleDashboardMap: Record<string, string> = {
-          CUSTOMER: '/customer/dashboard',
-          WHOLESALER: '/wholesaler/dashboard',
-          B2C_SELLER: '/seller/dashboard',
-          SELLER: '/seller/dashboard',
-          ADMIN: '/admin/dashboard',
-          INFLUENCER: '/influencer/dashboard',
-          PROCUREMENT: '/procurement/dashboard',
-          FULFILLMENT: '/fulfillment/dashboard',
-          CATALOG: '/catalog/dashboard',
-          MARKETING: '/marketing/dashboard',
-          FINANCE: '/finance/dashboard',
-          CMS_EDITOR: '/cms/dashboard',
-        };
-        redirectPath = roleDashboardMap[user.role] || '/';
-      }
+      // Redirect to returnUrl or role-specific dashboard
+      const redirectPath = resolvePostAuthRedirect(user?.role, searchParams.get('returnUrl'));
 
       // Set redirect flag and stop auth check BEFORE redirect
       isRedirecting.current = true;
@@ -352,20 +343,12 @@ function LoginPageInner() {
         authRequestController.current = null;
       }
 
-      // Redirect based on role
-      if (user?.role && ['SELLER', 'B2C_SELLER', 'WHOLESALER'].includes(user.role)) {
-        // Redirect sellers to onboarding
-        if (typeof window !== 'undefined') {
-          window.location.replace('/seller/onboarding');
-        } else {
-          router.replace('/seller/onboarding');
-        }
+      const redirectPath = resolvePostRegisterRedirect(user?.role, searchParams.get('returnUrl'));
+
+      if (typeof window !== 'undefined') {
+        window.location.replace(redirectPath);
       } else {
-        if (typeof window !== 'undefined') {
-          window.location.replace('/customer/dashboard');
-        } else {
-          router.replace('/customer/dashboard');
-        }
+        router.replace(redirectPath);
       }
     } catch (err: any) {
       const msg = err.message || '';
@@ -557,6 +540,12 @@ function LoginPageInner() {
             <h2 className="text-xl sm:text-2xl font-bold text-center mb-4 sm:mb-6">
               {isLogin ? 'Welcome Back!' : 'Join the Magic'}
             </h2>
+
+            {isLogin && safeReturnUrl && (
+              <p className="mb-4 rounded-lg border border-hos-border bg-hos-bg-tertiary px-3 py-2 text-center text-xs text-hos-text-muted" role="status">
+                Sign in to continue where you left off.
+              </p>
+            )}
 
             <div aria-live="polite" aria-atomic="true">
               {error && (
@@ -968,19 +957,22 @@ function LoginPageInner() {
 
               <div className="mt-3 sm:mt-4 grid grid-cols-3 gap-2 sm:gap-3">
                 <button
-                  onClick={() => (window.location.href = `${oauthBaseUrl}/auth/google`)}
+                  type="button"
+                  onClick={() => startOAuth('google')}
                   className="flex items-center justify-center px-2 sm:px-4 py-2 border border-hos-border rounded-lg hover:bg-hos-bg-tertiary transition-colors"
                 >
                   <span className="text-xs sm:text-sm font-medium">Google</span>
                 </button>
                 <button
-                  onClick={() => (window.location.href = `${oauthBaseUrl}/auth/facebook`)}
+                  type="button"
+                  onClick={() => startOAuth('facebook')}
                   className="flex items-center justify-center px-2 sm:px-4 py-2 border border-hos-border rounded-lg hover:bg-hos-bg-tertiary transition-colors"
                 >
                   <span className="text-xs sm:text-sm font-medium">Facebook</span>
                 </button>
                 <button
-                  onClick={() => (window.location.href = `${oauthBaseUrl}/auth/apple`)}
+                  type="button"
+                  onClick={() => startOAuth('apple')}
                   className="flex items-center justify-center px-2 sm:px-4 py-2 border border-hos-border rounded-lg hover:bg-hos-bg-tertiary transition-colors"
                 >
                   <span className="text-xs sm:text-sm font-medium">Apple</span>

@@ -8,6 +8,7 @@ import { getSellerMenuItems } from '@/lib/sellerMenu';
 import { useCurrency } from '@/contexts/CurrencyContext';
 import Link from 'next/link';
 import Image from 'next/image';
+import { PortalMobileCard } from '@/components/ui/PortalMobileCard';
 import { PORTAL_INPUT_CLASS, PORTAL_SELECT_CLASS } from '@/lib/portalFieldClasses';
 
 export default function WholesalerProductsPage() {
@@ -162,7 +163,47 @@ export default function WholesalerProductsPage() {
                 )}
               </div>
             ) : (
-              <div className="overflow-x-auto">
+              <>
+              <div className="md:hidden space-y-3 p-4">
+                {filteredProducts.map((product) => (
+                  <PortalMobileCard
+                    key={product.id}
+                    title={product.name}
+                    subtitle={product.slug}
+                    rows={[
+                      {
+                        label: 'Status',
+                        value: (
+                          <span
+                            className={`inline-block px-2 py-0.5 text-xs font-medium rounded ${
+                              product.status === 'ACTIVE'
+                                ? 'bg-green-500/15 text-green-300'
+                                : product.status === 'INACTIVE'
+                                  ? 'bg-hos-bg-tertiary text-hos-text-secondary'
+                                  : 'bg-yellow-500/15 text-yellow-300'
+                            }`}
+                          >
+                            {product.status}
+                          </span>
+                        ),
+                      },
+                      { label: 'Price', value: formatPrice(parseFloat(product.price || 0)) },
+                      { label: 'Stock', value: product.stock ?? 0 },
+                      { label: 'Min. Order', value: product.quantity || '—' },
+                      { label: 'Created', value: new Date(product.createdAt).toLocaleDateString() },
+                    ]}
+                    actions={
+                      <Link
+                        href={`/products/${product.slug || product.id}`}
+                        className="text-hos-gold hover:text-hos-gold-hover text-sm font-medium"
+                      >
+                        View
+                      </Link>
+                    }
+                  />
+                ))}
+              </div>
+              <div className="hidden md:block overflow-x-auto">
                 <table className="min-w-full divide-y divide-hos-border">
                   <thead className="bg-hos-bg-secondary">
                     <tr>
@@ -183,6 +224,9 @@ export default function WholesalerProductsPage() {
                       </th>
                       <th className="px-6 py-3 text-left text-xs font-medium text-hos-text-muted uppercase tracking-wider">
                         Created
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-hos-text-muted uppercase tracking-wider">
+                        Actions
                       </th>
                     </tr>
                   </thead>
@@ -231,11 +275,20 @@ export default function WholesalerProductsPage() {
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-hos-text-muted">
                           {new Date(product.createdAt).toLocaleDateString()}
                         </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <Link
+                            href={`/products/${product.slug || product.id}`}
+                            className="text-hos-gold hover:text-hos-gold-hover text-sm font-medium"
+                          >
+                            View
+                          </Link>
+                        </td>
                       </tr>
                     ))}
                   </tbody>
                 </table>
               </div>
+              </>
             )}
           </div>
         )}

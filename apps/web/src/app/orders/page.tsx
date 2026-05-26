@@ -9,6 +9,7 @@ import { useToast } from '@/hooks/useToast';
 import { useCurrency } from '@/contexts/CurrencyContext';
 import Link from 'next/link';
 import Image from 'next/image';
+import { Modal } from '@/components/ui/Modal';
 
 interface OrderItem {
   id: string;
@@ -350,14 +351,17 @@ export default function OrdersPage() {
         </main>
         <Footer />
 
-        {/* Order Details Modal */}
-        {showDetailsModal && selectedOrder && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-            <div className="bg-hos-bg-secondary rounded-lg shadow-xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
-              <div className="p-6 border-b sticky top-0 bg-hos-bg-secondary">
+        <Modal
+          open={showDetailsModal && !!selectedOrder}
+          onClose={() => setShowDetailsModal(false)}
+          titleId="customer-order-modal-title"
+        >
+          {selectedOrder && (
+            <>
+              <div className="p-6 border-b border-hos-border sticky top-0 bg-hos-bg-secondary">
                 <div className="flex justify-between items-start">
                   <div>
-                    <h2 className="text-xl font-bold text-hos-text-secondary">
+                    <h2 id="customer-order-modal-title" className="text-xl font-bold text-hos-text-secondary">
                       Order #{selectedOrder.orderNumber || selectedOrder.id.slice(0, 8)}
                     </h2>
                     <p className="text-sm text-hos-text-muted mt-1">
@@ -365,8 +369,10 @@ export default function OrdersPage() {
                     </p>
                   </div>
                   <button
+                    type="button"
                     onClick={() => setShowDetailsModal(false)}
                     className="text-hos-text-muted hover:text-hos-text-secondary"
+                    aria-label="Close order details"
                   >
                     <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -502,9 +508,9 @@ export default function OrdersPage() {
                   Close
                 </button>
               </div>
-            </div>
-          </div>
-        )}
+            </>
+          )}
+        </Modal>
       </div>
     </RouteGuard>
   );

@@ -15,7 +15,10 @@ import { GeolocationService } from '../geolocation/geolocation.service';
 import { NotificationsService } from '../notifications/notifications.service';
 import { TemplatesService } from '../templates/templates.service';
 import { RegisterDto } from './dto/register.dto';
+import { GuestCheckoutDto } from './dto/guest-checkout.dto';
 import { LoginDto } from './dto/login.dto';
+import { CartService } from '../cart/cart.service';
+import { AddressesService } from '../addresses/addresses.service';
 import { slugify } from '@hos-marketplace/utils';
 import type { User, AuthResponse } from '@hos-marketplace/shared-types';
 
@@ -58,6 +61,8 @@ export class AuthService {
     private geolocationService: GeolocationService,
     private notificationsService: NotificationsService,
     private templatesService: TemplatesService,
+    private cartService: CartService,
+    private addressesService: AddressesService,
   ) {
     // Check if RefreshToken model is available on startup
     this.checkRefreshTokenAvailability();
@@ -327,6 +332,149 @@ export class AuthService {
 
     // Generate tokens
     const tokens = await this.generateTokens(user);
+
+    return {
+      user: user as User,
+      token: tokens.accessToken,
+      refreshToken: tokens.refreshToken,
+    };
+  }
+
+  async guestCheckout(
+    guestCheckoutDto: GuestCheckoutDto,
+    ipAddress?: string,
+    userAgent?: string,
+  ): Promise<AuthResponse> {
+    if (!guestCheckoutDto.gdprConsent) {
+      throw new BadRequestException(
+        'Privacy notice acknowledgement is required to continue checkout',
+      );
+    }
+
+    const email = guestCheckoutDto.email.trim().toLowerCase();
+
+    const existingUser = await this.prisma.user.findUnique({
+      where: { email },
+    });
+
+    if (existingUser) {
+      throw new ConflictException(
+        'An account with this email already exists. Please sign in.',
+      );
+    }
+
+    const countryCode = this.getCountryCode(guestCheckoutDto.country);
+    const currencyPreference = this.geolocationService.getCurrencyForCountry(countryCode) || 'USD';
+
+    const user = await this.prisma.user.create({
+      data: {
+        email,
+        password: null,
+        firstName: guestCheckoutDto.firstName,
+        lastName: guestCheckoutDto.lastName,
+        role: 'CUSTOMER',
+        country: guestCheckoutDto.country,
+        preferredCommunicationMethod: 'EMAIL',
+        currencyPreference,
+        gdprConsent: true,
+        gdprConsentDate: new Date(),
+        dataProcessingConsent: {},
+      },
+      select: {
+        id: true,
+        email: true,
+        firstName: true,
+        lastName: true,
+        role: true,
+        avatar: true,
+        createdAt: true,
+        updatedAt: true,
+      },
+    });
+
+    try {
+      await this.prisma.gDPRConsentLog.create({
+        data: {
+          userId: user.id,
+          consentType: 'PRIVACY_NOTICE_ACCEPTED',
+          granted: true,
+          grantedAt: new Date(),
+          ipAddress,
+          userAgent,
+        },
+      });
+    } catch (e: unknown) {
+      this.logger.warn(
+        `GDPR consent logging failed during guest checkout: ${e instanceof Error ? e.message : 'unknown'}`,
+      );
+    }
+
+    await this.prisma.customer.create({
+      data: {
+        userId: user.id,
+        country: guestCheckoutDto.country,
+        currencyPreference,
+      },
+    });
+
+    try {
+      let platformTenant = await this.prisma.tenant.findUnique({
+        where: { id: 'platform' },
+      });
+
+      if (!platformTenant) {
+        platformTenant = await this.prisma.tenant.create({
+          data: {
+            id: 'platform',
+            name: 'Platform',
+            subdomain: 'platform',
+            isActive: true,
+          },
+        });
+      }
+
+      await this.prisma.tenantUser.create({
+        data: {
+          tenantId: platformTenant.id,
+          userId: user.id,
+          role: 'CUSTOMER',
+          isActive: true,
+        },
+      });
+
+      await this.prisma.user.update({
+        where: { id: user.id },
+        data: { defaultTenantId: platformTenant.id },
+      });
+    } catch (error: any) {
+      this.logger.warn(
+        `Failed to create tenant membership for guest checkout user ${user.id}: ${error?.message}`,
+      );
+    }
+
+    await this.addressesService.create(user.id, {
+      firstName: guestCheckoutDto.firstName,
+      lastName: guestCheckoutDto.lastName,
+      street: guestCheckoutDto.street,
+      city: guestCheckoutDto.city,
+      state: guestCheckoutDto.state,
+      postalCode: guestCheckoutDto.postalCode,
+      country: guestCheckoutDto.country,
+      phone: guestCheckoutDto.phone,
+      isDefault: true,
+    });
+
+    await this.cartService.mergeGuestCart(guestCheckoutDto.guestSessionId, user.id);
+
+    const tokens = await this.generateTokens(user);
+
+    try {
+      await this.requestPasswordReset(email);
+    } catch (err: unknown) {
+      this.logger.warn(
+        `Failed to send set-password email after guest checkout for ${email}: ${err instanceof Error ? err.message : 'unknown'}`,
+      );
+    }
 
     return {
       user: user as User,

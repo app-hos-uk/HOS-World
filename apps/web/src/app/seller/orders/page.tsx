@@ -8,6 +8,10 @@ import { getSellerMenuItems } from '@/lib/sellerMenu';
 import { useToast } from '@/hooks/useToast';
 import Link from 'next/link';
 import Image from 'next/image';
+import { StatusBadge } from '@/components/ui/Badge';
+import { Modal } from '@/components/ui/Modal';
+import { PortalMobileCard } from '@/components/ui/PortalMobileCard';
+import { useCurrency } from '@/contexts/CurrencyContext';
 
 interface OrderItem {
   id: string;
@@ -54,6 +58,7 @@ interface Order {
 
 export default function SellerOrdersPage() {
   const toast = useToast();
+  const { formatPrice } = useCurrency();
   const [orders, setOrders] = useState<Order[]>([]);
   const [allOrders, setAllOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
@@ -106,7 +111,7 @@ export default function SellerOrdersPage() {
           // Apply client-side filtering to match stats aggregation
           if (filterValue === 'PROCESSING') {
             orderData = orderData.filter((o: Order) =>
-              ['confirmed', 'processing'].includes(o.status),
+              ['confirmed', 'processing', 'fulfilled'].includes(o.status),
             );
           } else if (filterValue === 'DELIVERED') {
             orderData = orderData.filter((o: Order) => o.status === 'delivered');
@@ -335,10 +340,41 @@ export default function SellerOrdersPage() {
             <div className="bg-hos-bg-secondary rounded-lg shadow overflow-hidden">
               {filteredOrders.length === 0 ? (
                 <div className="text-center py-12">
-                  <p className="text-hos-text-muted">No orders found</p>
+                  <p className="text-hos-text-muted mb-4">No orders found</p>
+                  <Link href="/seller/products" className="text-hos-gold hover:text-hos-gold-hover text-sm font-medium">
+                    View your products →
+                  </Link>
                 </div>
               ) : (
-                <div className="overflow-x-auto">
+                <>
+                <div className="md:hidden space-y-3 p-4">
+                  {filteredOrders.map((order) => (
+                    <PortalMobileCard
+                      key={order.id}
+                      title={`Order #${order.orderNumber || order.id.slice(0, 8)}`}
+                      subtitle={order.user?.email || order.customer?.email}
+                      rows={[
+                        {
+                          label: 'Customer',
+                          value: `${order.user?.firstName || ''} ${order.user?.lastName || ''}`.trim() || '—',
+                        },
+                        { label: 'Total', value: formatPrice(Number(order.total || 0)) },
+                        { label: 'Status', value: <StatusBadge status={order.status} /> },
+                        { label: 'Date', value: new Date(order.createdAt).toLocaleDateString() },
+                      ]}
+                      actions={
+                        <button
+                          type="button"
+                          onClick={() => openOrderDetails(order)}
+                          className="text-hos-gold hover:text-hos-gold-hover text-sm font-medium"
+                        >
+                          View Details
+                        </button>
+                      }
+                    />
+                  ))}
+                </div>
+                <div className="hidden md:block overflow-x-auto">
                   <table className="min-w-full divide-y divide-hos-border">
                     <thead className="bg-hos-bg-secondary">
                       <tr>
@@ -365,12 +401,10 @@ export default function SellerOrdersPage() {
                             </div>
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-hos-text-secondary">
-                            ${Number(order.total || 0).toFixed(2)}
+                            {formatPrice(Number(order.total || 0))}
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap">
-                            <span className={`px-2 py-1 text-xs font-medium rounded-full ${getStatusColor(order.status)}`}>
-                              {order.status}
-                            </span>
+                            <StatusBadge status={order.status} />
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap text-sm text-hos-text-muted">
                             {new Date(order.createdAt).toLocaleDateString()}
@@ -388,19 +422,23 @@ export default function SellerOrdersPage() {
                     </tbody>
                   </table>
                 </div>
+                </>
               )}
             </div>
           )}
         </div>
 
-        {/* Order Details Modal */}
-        {showDetailsModal && selectedOrder && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-            <div className="bg-hos-bg-secondary rounded-lg shadow-xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
-              <div className="p-6 border-b">
+        <Modal
+          open={showDetailsModal && !!selectedOrder}
+          onClose={() => setShowDetailsModal(false)}
+          titleId="seller-order-modal-title"
+        >
+          {selectedOrder && (
+            <>
+              <div className="p-6 border-b border-hos-border">
                 <div className="flex justify-between items-start">
                   <div>
-                    <h2 className="text-xl font-bold text-hos-text-secondary">
+                    <h2 id="seller-order-modal-title" className="text-xl font-bold text-hos-text-secondary">
                       Order #{selectedOrder.orderNumber || selectedOrder.id.slice(0, 8)}
                     </h2>
                     <p className="text-sm text-hos-text-muted mt-1">
@@ -408,8 +446,10 @@ export default function SellerOrdersPage() {
                     </p>
                   </div>
                   <button
+                    type="button"
                     onClick={() => setShowDetailsModal(false)}
                     className="text-hos-text-muted hover:text-hos-text-secondary"
+                    aria-label="Close order details"
                   >
                     <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -630,9 +670,9 @@ export default function SellerOrdersPage() {
                   Close
                 </button>
               </div>
-            </div>
-          </div>
-        )}
+            </>
+          )}
+        </Modal>
       </DashboardLayout>
     </RouteGuard>
   );

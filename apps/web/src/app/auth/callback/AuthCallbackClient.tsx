@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { apiClient, markLoginSuccess, mergeGuestCartAfterAuth } from '@/lib/api';
+import { consumeAuthReturnUrl, resolvePostAuthRedirect } from '@/lib/authRedirect';
 
 export function AuthCallbackClient() {
   const router = useRouter();
@@ -33,24 +34,9 @@ export function AuthCallbackClient() {
         await mergeGuestCartAfterAuth();
         markLoginSuccess();
         const me = await apiClient.getCurrentUser();
-        const role = me?.data?.role ? String(me.data.role).toUpperCase() : null;
-
-        const roleDashboardMap: Record<string, string> = {
-          CUSTOMER: '/customer/dashboard',
-          WHOLESALER: '/wholesaler/dashboard',
-          B2C_SELLER: '/seller/dashboard',
-          SELLER: '/seller/dashboard',
-          ADMIN: '/admin/dashboard',
-          INFLUENCER: '/influencer/dashboard',
-          PROCUREMENT: '/procurement/dashboard',
-          FULFILLMENT: '/fulfillment/dashboard',
-          CATALOG: '/catalog/dashboard',
-          MARKETING: '/marketing/dashboard',
-          FINANCE: '/finance/dashboard',
-          CMS_EDITOR: '/cms/dashboard',
-        };
-
-        router.replace(roleDashboardMap[role || ''] || '/');
+        const role = me?.data?.role ? String(me.data.role).toUpperCase() : undefined;
+        const returnUrl = consumeAuthReturnUrl();
+        router.replace(resolvePostAuthRedirect(role, returnUrl));
       } catch (e: any) {
         try {
           localStorage.removeItem('auth_token');

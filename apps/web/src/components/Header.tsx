@@ -286,6 +286,24 @@ export function Header() {
             </div>
           )}
 
+          {/* Mobile: cart + menu */}
+          {showCustomerNav && (
+            <Link
+              href="/cart"
+              className="md:hidden relative p-2 rounded-lg text-hos-gold hover:bg-hos-bg-secondary transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-hos-gold-ring"
+              aria-label={`Basket${cartItemCount > 0 ? `, ${cartItemCount} items` : ''}`}
+            >
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
+              </svg>
+              {cartItemCount > 0 && (
+                <span className="absolute -top-0.5 -right-0.5 min-w-[16px] h-4 flex items-center justify-center text-[10px] font-bold bg-hos-gold text-[#1a1406] rounded-full px-1 leading-none">
+                  {cartItemCount > 99 ? '99+' : cartItemCount}
+                </span>
+              )}
+            </Link>
+          )}
+
           {/* Mobile Menu Button */}
           <button
             onClick={toggleMobileMenu}
@@ -371,7 +389,7 @@ export function Header() {
                 <MobileNavLink href="/wishlist" icon="❤️" label="Wishlist" onClick={() => setIsMobileMenuOpen(false)} />
                 <MobileNavLink href="/orders" icon="📦" label="My Orders" onClick={() => setIsMobileMenuOpen(false)} />
                 <MobileNavLink href="/loyalty" icon="✨" label="Rewards" onClick={() => setIsMobileMenuOpen(false)} />
-                <MobileNavLink href="/cart" icon="🛒" label={`Cart${cartItemCount > 0 ? ` (${cartItemCount})` : ''}`} onClick={() => setIsMobileMenuOpen(false)} />
+                <MobileNavLink href="/cart" icon="🛒" label={`Basket${cartItemCount > 0 ? ` (${cartItemCount})` : ''}`} onClick={() => setIsMobileMenuOpen(false)} />
                 {!isDashboardPage && (
                   <div className="px-3 py-2">
                     <CurrencySelector />
@@ -391,7 +409,7 @@ export function Header() {
               <>
                 <div className="border-t border-hos-border my-2" />
                 <MobileNavLink href="/loyalty" icon="✨" label="Rewards" onClick={() => setIsMobileMenuOpen(false)} />
-                <MobileNavLink href="/cart" icon="🛒" label={`Cart${cartItemCount > 0 ? ` (${cartItemCount})` : ''}`} onClick={() => setIsMobileMenuOpen(false)} />
+                <MobileNavLink href="/cart" icon="🛒" label={`Basket${cartItemCount > 0 ? ` (${cartItemCount})` : ''}`} onClick={() => setIsMobileMenuOpen(false)} />
               </>
             )}
 

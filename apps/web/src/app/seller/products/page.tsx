@@ -6,8 +6,10 @@ import { DashboardLayout } from '@/components/DashboardLayout';
 import { apiClient } from '@/lib/api';
 import { getSellerMenuItems } from '@/lib/sellerMenu';
 import { useToast } from '@/hooks/useToast';
+import { useCurrency } from '@/contexts/CurrencyContext';
 import Link from 'next/link';
 import Image from 'next/image';
+import { PortalMobileCard } from '@/components/ui/PortalMobileCard';
 
 interface Product {
   id: string;
@@ -36,6 +38,7 @@ interface SubmissionItem {
 
 export default function SellerProductsPage() {
   const toast = useToast();
+  const { formatPrice } = useCurrency();
   const [products, setProducts] = useState<Product[]>([]);
   const [submissions, setSubmissions] = useState<SubmissionItem[]>([]);
   const [loading, setLoading] = useState(true);
@@ -321,7 +324,41 @@ export default function SellerProductsPage() {
                   )}
                 </div>
               ) : (
-                <div className="overflow-x-auto">
+                <>
+                <div className="md:hidden space-y-3 p-4">
+                  {filteredProducts.map((product) => (
+                    <PortalMobileCard
+                      key={product.id}
+                      title={product.name}
+                      subtitle={product.slug || (product._isSubmission ? 'Pending review' : '')}
+                      rows={[
+                        {
+                          label: 'Status',
+                          value: (
+                            <span className={`inline-block px-2 py-0.5 text-xs font-medium rounded-full ${product._isSubmission ? 'bg-amber-500/15 text-amber-300' : getStatusColor(product.status, product.stock || 0)}`}>
+                              {product._isSubmission ? 'Pending review' : getDisplayStatus(product.status, product.stock || 0)}
+                            </span>
+                          ),
+                        },
+                        { label: 'Price', value: formatPrice(Number(product.price || 0)) },
+                        { label: 'Stock', value: product.stock ?? 0 },
+                        { label: 'Fandom', value: product.category || product.fandom || '—' },
+                        { label: 'Created', value: new Date(product.createdAt).toLocaleDateString() },
+                      ]}
+                      actions={
+                        !product._isSubmission ? (
+                          <Link
+                            href={`/products/${product.slug || product.id}`}
+                            className="text-hos-gold hover:text-hos-gold-hover text-sm font-medium"
+                          >
+                            View
+                          </Link>
+                        ) : undefined
+                      }
+                    />
+                  ))}
+                </div>
+                <div className="hidden md:block overflow-x-auto">
                   <table className="min-w-full divide-y divide-hos-border">
                     <thead className="bg-hos-bg-secondary">
                       <tr>
@@ -331,6 +368,7 @@ export default function SellerProductsPage() {
                         <th className="px-6 py-3 text-left text-xs font-medium text-hos-text-muted uppercase">Stock</th>
                         <th className="px-6 py-3 text-left text-xs font-medium text-hos-text-muted uppercase">Fandom</th>
                         <th className="px-6 py-3 text-left text-xs font-medium text-hos-text-muted uppercase">Created</th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-hos-text-muted uppercase">Actions</th>
                       </tr>
                     </thead>
                     <tbody className="bg-hos-bg-secondary divide-y divide-hos-border">
@@ -363,7 +401,7 @@ export default function SellerProductsPage() {
                             </span>
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-hos-text-secondary">
-                            ${Number(product.price || 0).toFixed(2)}
+                            {formatPrice(Number(product.price || 0))}
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap">
                             <span className={`text-sm font-medium ${
@@ -383,11 +421,22 @@ export default function SellerProductsPage() {
                           <td className="px-6 py-4 whitespace-nowrap text-sm text-hos-text-muted">
                             {new Date(product.createdAt).toLocaleDateString()}
                           </td>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            {!product._isSubmission && (
+                              <Link
+                                href={`/products/${product.slug || product.id}`}
+                                className="text-hos-gold hover:text-hos-gold-hover text-sm font-medium"
+                              >
+                                View
+                              </Link>
+                            )}
+                          </td>
                         </tr>
                       ))}
                     </tbody>
                   </table>
                 </div>
+                </>
               )}
             </div>
           )}

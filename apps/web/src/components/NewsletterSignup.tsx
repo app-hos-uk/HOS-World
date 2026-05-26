@@ -14,7 +14,7 @@ export default function NewsletterSignup() {
     setErrorMessage('');
 
     try {
-      await apiClient.newsletterSubscribe({ email, source: 'homepage_footer' });
+      await apiClient.newsletterSubscribe({ email, source: 'homepage' });
       setStatus('success');
       setEmail('');
     } catch (err: any) {
@@ -24,7 +24,7 @@ export default function NewsletterSignup() {
   };
 
   return (
-    <section className="bg-hos-bg-tertiary py-16">
+    <section id="newsletter" className="bg-hos-bg-tertiary py-16 scroll-mt-24">
       <div className="max-w-xl mx-auto px-4 text-center">
         <h2 className="font-display text-hos-text-secondary text-2xl md:text-3xl font-bold">
           Subscribe to our missives

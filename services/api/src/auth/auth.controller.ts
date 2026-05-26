@@ -22,6 +22,7 @@ import {
 } from '@nestjs/swagger';
 import { AuthService } from './auth.service';
 import { RegisterDto } from './dto/register.dto';
+import { GuestCheckoutDto } from './dto/guest-checkout.dto';
 import { LoginDto } from './dto/login.dto';
 import { CharacterSelectionDto } from './dto/character-selection.dto';
 import { FandomQuizDto } from './dto/fandom-quiz.dto';
@@ -141,6 +142,39 @@ export class AuthController {
     return {
       data: result,
       message: 'User registered successfully',
+    };
+  }
+
+  @Public()
+  @Throttle({ default: { limit: 5, ttl: 60000 } })
+  @Post('guest-checkout')
+  @HttpCode(HttpStatus.CREATED)
+  @ApiOperation({
+    summary: 'Guest checkout with lazy account creation',
+    description:
+      'Creates a passwordless customer account from guest checkout details, merges the guest cart, and returns auth tokens.',
+  })
+  @ApiBody({ type: GuestCheckoutDto })
+  @SwaggerApiResponse({ status: 201, description: 'Guest account created and checkout session started' })
+  @SwaggerApiResponse({ status: 400, description: 'Invalid input data or missing GDPR consent' })
+  @SwaggerApiResponse({ status: 409, description: 'Account with this email already exists' })
+  async guestCheckout(
+    @Body() guestCheckoutDto: GuestCheckoutDto,
+    @Request() req: any,
+    @Res({ passthrough: true }) res: Response,
+  ): Promise<ApiResponse<AuthResponse>> {
+    const ipAddress =
+      req.headers['x-forwarded-for']?.split(',')[0] ||
+      req.headers['x-real-ip'] ||
+      req.ip ||
+      req.connection.remoteAddress;
+    const userAgent = req.headers['user-agent'];
+
+    const result = await this.authService.guestCheckout(guestCheckoutDto, ipAddress, userAgent);
+    setAuthCookies(res, result.token, result.refreshToken, this.configService);
+    return {
+      data: result,
+      message: 'Guest checkout account created successfully',
     };
   }
 

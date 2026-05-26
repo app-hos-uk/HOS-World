@@ -49,6 +49,17 @@ interface AdminDashboardData {
 
 const COLORS = ['#a855f7', '#06b6d4', '#10b981', '#f59e0b', '#ef4444', '#ec4899'];
 
+const DARK_CHART_TOOLTIP = {
+  backgroundColor: '#14141a',
+  border: '1px solid rgba(201, 162, 39, 0.22)',
+  borderRadius: '12px',
+  color: '#e8e4dc',
+  boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.3)',
+};
+
+const DARK_CHART_GRID = 'rgba(201, 162, 39, 0.12)';
+const DARK_CHART_AXIS = '#9a958a';
+
 const quickActions = [
   { title: 'Create Product', href: '/admin/products/create', icon: '➕', bgColor: 'bg-hos-gold/10 hover:bg-hos-gold/15', iconColor: 'text-hos-gold' },
   { title: 'View Orders', href: '/admin/orders', icon: '🛒', bgColor: 'bg-hos-gold/10 hover:bg-hos-gold/15', iconColor: 'text-hos-gold' },
@@ -120,21 +131,9 @@ export default function AdminDashboardPage() {
   const orderStatusData = dashboardData?.ordersByStatus?.map(item => ({
     name: item.status,
     value: item._count,
-  })) || [
-    { name: 'Pending', value: 12 },
-    { name: 'Processing', value: 8 },
-    { name: 'Shipped', value: 15 },
-    { name: 'Delivered', value: 45 },
-    { name: 'Cancelled', value: 3 },
-  ];
+  })) || [];
 
-  const topProductsData = dashboardData?.topProducts || [
-    { name: 'Harry Potter Wand', sales: 120, revenue: 3600 },
-    { name: 'Hogwarts Robe', sales: 85, revenue: 4250 },
-    { name: 'Time Turner', sales: 65, revenue: 1950 },
-    { name: 'Marauders Map', sales: 55, revenue: 1375 },
-    { name: 'Golden Snitch', sales: 45, revenue: 900 },
-  ];
+  const topProductsData = dashboardData?.topProducts || [];
 
   return (
     <RouteGuard allowedRoles={['ADMIN']} showAccessDenied={true}>
@@ -192,7 +191,7 @@ export default function AdminDashboardPage() {
                 value={`$${(stats.totalRevenue || 0).toLocaleString()}`}
                 icon={<span className="text-lg">💰</span>}
                 iconBgColor="bg-green-500/10"
-                trend={{ value: 12, label: 'vs last month', isPositive: true }}
+                trend={{ value: 0, label: 'from API', isPositive: true }}
               />
               <StatCard
                 label="Total Products"
@@ -235,16 +234,16 @@ export default function AdminDashboardPage() {
                 {salesTrendData.length > 0 ? (
                   <ResponsiveContainer width="100%" height="100%">
                     <LineChart data={salesTrendData}>
-                      <CartesianGrid strokeDasharray="3 3" stroke="#f3f4f6" />
+                      <CartesianGrid strokeDasharray="3 3" stroke={DARK_CHART_GRID} />
                       <XAxis 
                         dataKey="period" 
-                        stroke="#9ca3af" 
+                        stroke={DARK_CHART_AXIS} 
                         fontSize={12}
                         tickLine={false}
                         axisLine={false}
                       />
                       <YAxis 
-                        stroke="#9ca3af" 
+                        stroke={DARK_CHART_AXIS} 
                         fontSize={12}
                         tickLine={false}
                         axisLine={false}
@@ -255,12 +254,7 @@ export default function AdminDashboardPage() {
                         }
                       />
                       <Tooltip 
-                        contentStyle={{ 
-                          backgroundColor: '#fff', 
-                          border: '1px solid #e5e7eb', 
-                          borderRadius: '12px',
-                          boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)'
-                        }}
+                        contentStyle={DARK_CHART_TOOLTIP}
                         formatter={(value: number) => [`$${value.toLocaleString()}`, 'Revenue']}
                       />
                       <Line 
@@ -283,6 +277,7 @@ export default function AdminDashboardPage() {
 
               {/* Order Status Pie Chart */}
               <ChartCard title="Orders by Status" subtitle="Current order distribution">
+                {orderStatusData.length > 0 ? (
                 <ResponsiveContainer width="100%" height="100%">
                   <PieChart>
                     <Pie
@@ -301,16 +296,15 @@ export default function AdminDashboardPage() {
                         <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                       ))}
                     </Pie>
-                    <Tooltip 
-                      contentStyle={{ 
-                        backgroundColor: '#fff', 
-                        border: '1px solid #e5e7eb', 
-                        borderRadius: '12px',
-                        boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)'
-                      }}
-                    />
+                    <Tooltip contentStyle={DARK_CHART_TOOLTIP} />
                   </PieChart>
                 </ResponsiveContainer>
+                ) : (
+                  <div className="flex h-full flex-col items-center justify-center px-4 text-center text-hos-text-muted">
+                    <p className="text-sm font-medium text-hos-text-secondary">No order status data</p>
+                    <p className="mt-1 text-xs">Data will appear once orders are placed.</p>
+                  </div>
+                )}
               </ChartCard>
             </div>
 
@@ -318,6 +312,7 @@ export default function AdminDashboardPage() {
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               {/* Top Products Bar Chart */}
               <ChartCard title="Top Selling Products" subtitle="By number of sales">
+                {topProductsData.length > 0 ? (
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart
                     data={topProductsData}
@@ -325,14 +320,14 @@ export default function AdminDashboardPage() {
                     margin={{ top: 10, right: 12, left: 8, bottom: 56 }}
                     barCategoryGap="20%"
                   >
-                    <CartesianGrid strokeDasharray="3 3" stroke="#f3f4f6" vertical={false} />
+                    <CartesianGrid strokeDasharray="3 3" stroke={DARK_CHART_GRID} vertical={false} />
                     <XAxis
                       dataKey="name"
                       type="category"
-                      stroke="#9ca3af"
+                      stroke={DARK_CHART_AXIS}
                       fontSize={10}
                       tickLine={false}
-                      axisLine={{ stroke: '#e5e7eb' }}
+                      axisLine={{ stroke: DARK_CHART_GRID }}
                       interval={0}
                       height={56}
                       tickFormatter={(name: string) =>
@@ -343,22 +338,17 @@ export default function AdminDashboardPage() {
                     />
                     <YAxis
                       type="number"
-                      stroke="#9ca3af"
+                      stroke={DARK_CHART_AXIS}
                       fontSize={12}
                       tickLine={false}
-                      axisLine={{ stroke: '#e5e7eb' }}
+                      axisLine={{ stroke: DARK_CHART_GRID }}
                       domain={[0, 'auto']}
                       allowDecimals={false}
                       width={40}
                     />
                     <Tooltip
                       formatter={(value: number) => [`${value}`, 'Sales']}
-                      contentStyle={{
-                        backgroundColor: '#fff',
-                        border: '1px solid #e5e7eb',
-                        borderRadius: '12px',
-                        boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)',
-                      }}
+                      contentStyle={DARK_CHART_TOOLTIP}
                     />
                     <Bar
                       dataKey="sales"
@@ -370,6 +360,12 @@ export default function AdminDashboardPage() {
                     />
                   </BarChart>
                 </ResponsiveContainer>
+                ) : (
+                  <div className="flex h-full flex-col items-center justify-center px-4 text-center text-hos-text-muted">
+                    <p className="text-sm font-medium text-hos-text-secondary">No sales data yet</p>
+                    <p className="mt-1 text-xs">Top products will appear after sales are recorded.</p>
+                  </div>
+                )}
               </ChartCard>
 
               {/* Recent Activity */}

@@ -6,6 +6,7 @@ import { DashboardLayout } from '@/components/DashboardLayout';
 import { apiClient } from '@/lib/api';
 import { getSellerMenuItems } from '@/lib/sellerMenu';
 import { useCurrency } from '@/contexts/CurrencyContext';
+import { PortalMobileCard } from '@/components/ui/PortalMobileCard';
 import { PORTAL_INPUT_CLASS, PORTAL_SELECT_CLASS } from '@/lib/portalFieldClasses';
 
 export default function WholesalerOrdersPage() {
@@ -114,7 +115,45 @@ export default function WholesalerOrdersPage() {
                 </p>
               </div>
             ) : (
-              <div className="overflow-x-auto">
+              <>
+              <div className="md:hidden space-y-3 p-4">
+                {filteredOrders.map((order) => (
+                  <PortalMobileCard
+                    key={order.id}
+                    title={`Order #${order.orderNumber || order.id.slice(0, 8)}`}
+                    subtitle={`${order.user?.firstName || ''} ${order.user?.lastName || ''}`.trim() || undefined}
+                    rows={[
+                      { label: 'Total', value: formatPrice(parseFloat(order.total || 0)) },
+                      {
+                        label: 'Quantity',
+                        value: order.items?.reduce((sum: number, item: any) => sum + (item.quantity || 0), 0) || 0,
+                      },
+                      {
+                        label: 'Status',
+                        value: (
+                          <span
+                            className={`inline-block px-2 py-0.5 text-xs font-medium rounded-full ${
+                              (() => {
+                                const s = (order.status || '').toLowerCase();
+                                if (s === 'pending') return 'bg-yellow-500/15 text-yellow-300';
+                                if (['confirmed', 'processing', 'accepted'].includes(s)) return 'bg-hos-gold/20 text-hos-gold';
+                                if (['fulfilled', 'shipped'].includes(s)) return 'bg-hos-gold/20 text-hos-gold';
+                                if (s === 'delivered') return 'bg-green-500/15 text-green-300';
+                                if (['cancelled', 'refunded'].includes(s)) return 'bg-red-500/15 text-red-300';
+                                return 'bg-hos-bg-tertiary text-hos-text-secondary';
+                              })()
+                            }`}
+                          >
+                            {order.status}
+                          </span>
+                        ),
+                      },
+                      { label: 'Date', value: new Date(order.createdAt).toLocaleDateString() },
+                    ]}
+                  />
+                ))}
+              </div>
+              <div className="hidden md:block overflow-x-auto">
                 <table className="min-w-full divide-y divide-hos-border">
                   <thead className="bg-hos-bg-secondary">
                     <tr>
@@ -178,6 +217,7 @@ export default function WholesalerOrdersPage() {
                   </tbody>
                 </table>
               </div>
+              </>
             )}
           </div>
         )}

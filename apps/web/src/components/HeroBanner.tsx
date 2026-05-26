@@ -5,22 +5,12 @@ import Link from 'next/link';
 import { ChevronLeftIcon, ChevronRightIcon } from '@heroicons/react/24/outline';
 import { REFERENCE_ASSETS } from '@/lib/referenceAssets';
 
-/**
- * Hero Slide Interface
- * 
- * Image Requirements:
- * - Format: JPG or WebP (recommended)
- * - Size: 1920x1080px (16:9 aspect ratio)
- * - Max File Size: 500KB (optimized)
- * - Color Profile: sRGB
- * - Style: High quality, optimized for web
- */
 interface HeroSlide {
   id: number;
   title: string;
   subtitle: string;
   description?: string;
-  image: string; // Path to image: /hero/[name]-banner.jpg (1920x1080px)
+  image: string;
   link: string;
   buttonText: string;
   fandom?: string;
@@ -52,17 +42,6 @@ const TRUST_STRIP_ITEMS = [
   },
 ];
 
-/**
- * Default Hero Slides
- * 
- * Image Specifications:
- * - All images should be 1920x1080px (16:9 aspect ratio)
- * - Format: JPG or WebP
- * - Max file size: 500KB
- * - Place images in: /public/hero/
- * 
- * See: /public/IMAGE_SPECIFICATIONS.md for detailed requirements
- */
 const defaultSlides: HeroSlide[] = [
   {
     id: 1,
@@ -106,7 +85,17 @@ export function HeroBanner({
 }: HeroBannerProps) {
   const [currentSlide, setCurrentSlide] = useState(0);
   const [isAnimating, setIsAnimating] = useState(false);
+  const [isPaused, setIsPaused] = useState(false);
+  const [prefersReducedMotion, setPrefersReducedMotion] = useState(false);
   const timeoutIdsRef = useRef<Set<ReturnType<typeof setTimeout>>>(new Set());
+
+  useEffect(() => {
+    const mq = window.matchMedia('(prefers-reduced-motion: reduce)');
+    setPrefersReducedMotion(mq.matches);
+    const handler = (e: MediaQueryListEvent) => setPrefersReducedMotion(e.matches);
+    mq.addEventListener('change', handler);
+    return () => mq.removeEventListener('change', handler);
+  }, []);
 
   const schedule = useCallback((fn: () => void, delayMs: number) => {
     const id = setTimeout(() => {
@@ -126,20 +115,18 @@ export function HeroBanner({
   );
 
   useEffect(() => {
-    if (!autoPlay) return;
+    if (!autoPlay || isPaused || prefersReducedMotion) return;
 
     const interval = setInterval(() => {
       setCurrentSlide((prev) => {
         setIsAnimating(true);
-        schedule(() => {
-          setIsAnimating(false);
-        }, 300);
+        schedule(() => setIsAnimating(false), 300);
         return (prev + 1) % slides.length;
       });
     }, autoPlayInterval);
 
     return () => clearInterval(interval);
-  }, [autoPlay, autoPlayInterval, slides.length, schedule]);
+  }, [autoPlay, autoPlayInterval, slides.length, schedule, isPaused, prefersReducedMotion]);
 
   const nextSlide = () => {
     setIsAnimating(true);
@@ -156,10 +143,8 @@ export function HeroBanner({
   const goToSlide = (index: number) => {
     if (index === currentSlide) return;
     setIsAnimating(true);
-    schedule(() => {
-      setCurrentSlide(index);
-      setIsAnimating(false);
-    }, 300);
+    setCurrentSlide(index);
+    schedule(() => setIsAnimating(false), 300);
   };
 
   const getAnimationClass = () => {
@@ -180,43 +165,53 @@ export function HeroBanner({
 
   return (
     <>
-      <div className="relative w-full min-h-[420px] mx-4 my-6 max-w-7xl lg:mx-auto flex items-center overflow-hidden rounded-2xl border border-hos-border">
-        {/* Background Image */}
+      <div
+        className="relative w-full min-h-[420px] mx-4 my-6 max-w-7xl lg:mx-auto flex items-center overflow-hidden rounded-2xl border border-hos-border"
+        onMouseEnter={() => setIsPaused(true)}
+        onMouseLeave={() => setIsPaused(false)}
+        onFocusCapture={() => setIsPaused(true)}
+        onBlurCapture={() => setIsPaused(false)}
+      >
         <div
           className={`absolute inset-0 bg-cover bg-no-repeat transition-all duration-1000 ease-in-out ${getAnimationClass()}`}
           style={{
             backgroundImage: `linear-gradient(120deg, rgba(7, 7, 8, 0.88) 0%, rgba(7, 7, 8, 0.48) 42%, rgba(7, 7, 8, 0.93) 100%), url(${heroBackgroundImage})`,
             backgroundPosition: 'center 40%',
           }}
+          aria-hidden
         />
 
-        {/* Content */}
         <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-8 py-12 sm:py-16 w-full pointer-events-none">
-          <div className="max-w-xl pointer-events-auto">
+          <div
+            className="max-w-xl pointer-events-auto"
+            aria-live="polite"
+            aria-atomic="true"
+          >
             <p className="text-hos-gold text-xs tracking-[0.2em] uppercase font-ui font-semibold mb-3">
-              Fandom retail · Multi-vendor marketplace
+              {currentSlideData.subtitle}
             </p>
 
             <h1 className="font-display text-hos-gold-hover text-4xl md:text-5xl leading-tight mb-4 drop-shadow-[0_2px_24px_rgba(0,0,0,0.6)]">
-              Step inside the magic
+              {currentSlideData.title}
             </h1>
 
-            <p className="text-hos-text-muted text-lg leading-relaxed mb-7 max-w-md font-body">
-              Collectibles, replicas, apparel, and curios from the worlds you love — curated from official lines and trusted sellers, in one enchanted storefront.
-            </p>
+            {currentSlideData.description && (
+              <p className="text-hos-text-muted text-lg leading-relaxed mb-7 max-w-md font-body">
+                {currentSlideData.description}
+              </p>
+            )}
 
             <div className="flex flex-row flex-wrap gap-3">
-              <Link href="/products" className="btn-storefront-primary" prefetch={true}>
-                Shop trending deals
+              <Link href={currentSlideData.link} className="btn-storefront-primary" prefetch={true}>
+                {currentSlideData.buttonText}
               </Link>
-              <Link href="/fandoms" className="btn-storefront-ghost" prefetch={true}>
-                Browse franchises
+              <Link href="/products" className="btn-storefront-ghost" prefetch={true}>
+                Shop all products
               </Link>
             </div>
           </div>
         </div>
 
-        {/* Navigation */}
         {showArrows && (
           <>
             <button
@@ -225,7 +220,7 @@ export function HeroBanner({
                 e.stopPropagation();
                 prevSlide();
               }}
-              className="absolute left-2 sm:left-4 top-1/2 -translate-y-1/2 z-30 pointer-events-auto p-2 sm:p-3 bg-black/60 hover:bg-black/80 backdrop-blur-sm rounded-full text-hos-gold transition-all duration-300 hover:scale-110 border border-hos-border shadow-lg"
+              className="absolute left-2 sm:left-4 top-1/2 -translate-y-1/2 z-30 pointer-events-auto p-2 sm:p-3 bg-black/60 hover:bg-black/80 backdrop-blur-sm rounded-full text-hos-gold transition-all duration-300 hover:scale-110 border border-hos-border shadow-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-hos-gold-ring"
               aria-label="Previous slide"
             >
               <ChevronLeftIcon className="w-4 h-4 sm:w-6 sm:h-6" />
@@ -236,7 +231,7 @@ export function HeroBanner({
                 e.stopPropagation();
                 nextSlide();
               }}
-              className="absolute right-2 sm:right-4 top-1/2 -translate-y-1/2 z-30 pointer-events-auto p-2 sm:p-3 bg-black/60 hover:bg-black/80 backdrop-blur-sm rounded-full text-hos-gold transition-all duration-300 hover:scale-110 border border-hos-border shadow-lg"
+              className="absolute right-2 sm:right-4 top-1/2 -translate-y-1/2 z-30 pointer-events-auto p-2 sm:p-3 bg-black/60 hover:bg-black/80 backdrop-blur-sm rounded-full text-hos-gold transition-all duration-300 hover:scale-110 border border-hos-border shadow-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-hos-gold-ring"
               aria-label="Next slide"
             >
               <ChevronRightIcon className="w-4 h-4 sm:w-6 sm:h-6" />
@@ -244,21 +239,22 @@ export function HeroBanner({
           </>
         )}
 
-        {/* Indicators */}
         {showIndicators && (
           <div className="absolute bottom-5 left-0 right-0 z-20 flex justify-center pointer-events-none">
-            <div className="flex gap-2 pointer-events-auto">
-              {slides.map((_, index) => (
+            <div className="flex gap-2 pointer-events-auto" role="tablist" aria-label="Hero slides">
+              {slides.map((slide, index) => (
                 <button
-                  key={index}
+                  key={slide.id}
                   type="button"
+                  role="tab"
+                  aria-selected={index === currentSlide}
                   onClick={() => goToSlide(index)}
-                  className={`h-2 rounded-full transition-all duration-300 ${
+                  className={`h-2 rounded-full transition-all duration-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-hos-gold-ring ${
                     index === currentSlide
                       ? 'w-8 bg-hos-gold shadow-lg'
                       : 'w-2 bg-hos-bg-secondary/30 hover:bg-hos-bg-secondary/50'
                   }`}
-                  aria-label={`Go to slide ${index + 1}`}
+                  aria-label={`Go to slide ${index + 1}: ${slide.title}`}
                 />
               ))}
             </div>
@@ -266,7 +262,6 @@ export function HeroBanner({
         )}
       </div>
 
-      {/* Trust strip */}
       <div className="bg-hos-bg-secondary py-5 border-y border-hos-border">
         <div className="max-w-7xl mx-auto px-4 grid grid-cols-1 md:grid-cols-3 gap-6 md:divide-x divide-y md:divide-y-0 divide-hos-border">
           {TRUST_STRIP_ITEMS.map((item) => (
@@ -287,4 +282,3 @@ export function HeroBanner({
     </>
   );
 }
-

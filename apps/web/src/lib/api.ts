@@ -118,6 +118,9 @@ export const apiClient = ApiClient.create({
 /** localStorage key for anonymous cart session (X-Guest-Session). */
 export const GUEST_CART_SESSION_KEY = 'hos_guest_cart_session';
 
+/** sessionStorage flag set after lazy guest account creation at checkout. */
+export const GUEST_CHECKOUT_ACCOUNT_KEY = 'hos_guest_checkout_account';
+
 export function getOrCreateGuestCartSessionId(): string {
   if (typeof window === 'undefined') return '';
   let id = localStorage.getItem(GUEST_CART_SESSION_KEY);

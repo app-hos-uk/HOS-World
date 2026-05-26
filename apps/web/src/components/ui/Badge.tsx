@@ -69,6 +69,7 @@ const statusMap: Record<string, { variant: BadgeVariant; label?: string }> = {
   PENDING: { variant: 'warning' },
   CONFIRMED: { variant: 'info' },
   PROCESSING: { variant: 'info' },
+  FULFILLED: { variant: 'info', label: 'Fulfilled' },
   SHIPPED: { variant: 'primary' },
   IN_TRANSIT: { variant: 'primary' },
   OUT_FOR_DELIVERY: { variant: 'info' },
@@ -92,9 +93,17 @@ const statusMap: Record<string, { variant: BadgeVariant; label?: string }> = {
   DEFAULT: { variant: 'gray' },
 };
 
+function toTitleCase(str: string): string {
+  return str
+    .toLowerCase()
+    .replace(/_/g, ' ')
+    .replace(/\b\w/g, (c) => c.toUpperCase());
+}
+
 export function StatusBadge({ status, className = '' }: StatusBadgeProps) {
-  const config = statusMap[status] || statusMap.DEFAULT;
-  const label = config.label || status.replace(/_/g, ' ');
+  const normalized = status?.toUpperCase().replace(/\s+/g, '_') || 'DEFAULT';
+  const config = statusMap[normalized] || statusMap.DEFAULT;
+  const label = config.label || toTitleCase(normalized);
   
   return (
     <Badge variant={config.variant} dot className={className}>

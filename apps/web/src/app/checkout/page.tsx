@@ -2,12 +2,12 @@
 
 import { Header } from '@/components/Header';
 import { Footer } from '@/components/Footer';
-import { RouteGuard } from '@/components/RouteGuard';
 import { useState, useEffect, useMemo, useRef } from 'react';
 import { useRouter } from 'next/navigation';
-import { apiClient } from '@/lib/api';
+import { apiClient, getOrCreateGuestCartSessionId, clearGuestCartSessionId, markLoginSuccess, GUEST_CHECKOUT_ACCOUNT_KEY } from '@/lib/api';
 import { useCurrency } from '@/contexts/CurrencyContext';
 import { useCart } from '@/contexts/CartContext';
+import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/useToast';
 import Link from 'next/link';
 import type { ApiResponse } from '@hos-marketplace/shared-types';
@@ -25,6 +25,7 @@ export default function CheckoutPage() {
   const router = useRouter();
   const { formatPrice } = useCurrency();
   const { refreshCart } = useCart();
+  const { isAuthenticated, loading: authLoading, refreshUser } = useAuth();
   const toast = useToast();
   const [cart, setCart] = useState<any>(null);
   const [addresses, setAddresses] = useState<any[]>([]);
@@ -42,6 +43,22 @@ export default function CheckoutPage() {
   /**1=Address, 2=Shipping, 3=Review items, 4=Confirm & place order */
   const [checkoutStep, setCheckoutStep] = useState(1);
   const checkoutTrackedRef = useRef(false);
+  const [guestCartLoading, setGuestCartLoading] = useState(true);
+  const [guestSubmitting, setGuestSubmitting] = useState(false);
+  const [guestError, setGuestError] = useState<string | null>(null);
+  const [showGuestForm, setShowGuestForm] = useState(true);
+  const [guestForm, setGuestForm] = useState({
+    email: '',
+    firstName: '',
+    lastName: '',
+    street: '',
+    city: '',
+    state: '',
+    postalCode: '',
+    country: '',
+    phone: '',
+    gdprConsent: false,
+  });
   const checkoutSteps = useMemo(
     () => [
       { id: 1, label: 'Address' },
@@ -53,9 +70,36 @@ export default function CheckoutPage() {
   );
 
   useEffect(() => {
+    if (authLoading || !isAuthenticated) return;
     loadCheckoutData();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [isAuthenticated, authLoading]);
+
+  useEffect(() => {
+    if (authLoading) return;
+    if (isAuthenticated) {
+      setGuestCartLoading(false);
+      return;
+    }
+
+    const verifyGuestCart = async () => {
+      try {
+        const sid = getOrCreateGuestCartSessionId();
+        const response = await apiClient.getGuestCart(sid);
+        if (!response?.data?.items?.length) {
+          toast.error('Your cart is empty');
+          router.push('/cart');
+        }
+      } catch {
+        toast.error('Unable to load your basket');
+        router.push('/cart');
+      } finally {
+        setGuestCartLoading(false);
+      }
+    };
+
+    void verifyGuestCart();
+  }, [authLoading, isAuthenticated, router, toast]);
 
   useEffect(() => {
     if (shippingAddressId && cart?.items?.length > 0) {
@@ -316,6 +360,68 @@ export default function CheckoutPage() {
 
   const isCalculating = calculatingShipping || calculatingTax;
 
+  const handleGuestCheckout = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setGuestError(null);
+
+    if (!guestForm.gdprConsent) {
+      setGuestError('Please accept the privacy notice to continue.');
+      return;
+    }
+
+    if (!guestForm.country) {
+      setGuestError('Please select your country.');
+      return;
+    }
+
+    try {
+      setGuestSubmitting(true);
+      const guestSessionId = getOrCreateGuestCartSessionId();
+      const response = await apiClient.guestCheckout({
+        email: guestForm.email.trim(),
+        firstName: guestForm.firstName.trim(),
+        lastName: guestForm.lastName.trim(),
+        street: guestForm.street.trim(),
+        city: guestForm.city.trim(),
+        state: guestForm.state.trim() || undefined,
+        postalCode: guestForm.postalCode.trim(),
+        country: guestForm.country,
+        phone: guestForm.phone.trim() || undefined,
+        guestSessionId,
+        gdprConsent: true,
+      });
+
+      const authToken = response?.data?.token;
+      const refreshToken = response?.data?.refreshToken;
+
+      if (!authToken) {
+        throw new Error('No token received from server');
+      }
+
+      localStorage.setItem('auth_token', authToken);
+      if (refreshToken) {
+        localStorage.setItem('refresh_token', refreshToken);
+      }
+
+      clearGuestCartSessionId();
+      markLoginSuccess();
+      sessionStorage.setItem(GUEST_CHECKOUT_ACCOUNT_KEY, 'true');
+
+      await refreshUser();
+      toast.success('Account created. Continue checkout below.');
+    } catch (error: any) {
+      const message = error.message || 'Failed to continue as guest';
+      if (message.toLowerCase().includes('already exists')) {
+        setGuestError(message);
+        setShowGuestForm(false);
+      } else {
+        setGuestError(message);
+      }
+    } finally {
+      setGuestSubmitting(false);
+    }
+  };
+
   const handleCreateOrder = async () => {
     if (isSubmittingRef.current) return;
 
@@ -374,7 +480,15 @@ export default function CheckoutPage() {
         idempotencyKeyRef.current =
           typeof crypto !== 'undefined' ? crypto.randomUUID() : `${Date.now()}-${Math.random()}`;
         await refreshCart();
-        toast.success('Order created successfully!');
+        const isGuestCheckoutAccount =
+          typeof window !== 'undefined' &&
+          sessionStorage.getItem(GUEST_CHECKOUT_ACCOUNT_KEY) === 'true';
+        if (isGuestCheckoutAccount) {
+          sessionStorage.removeItem(GUEST_CHECKOUT_ACCOUNT_KEY);
+          toast.success('Order created! Check your email to set a password and track your orders anytime.');
+        } else {
+          toast.success('Order created successfully!');
+        }
         router.push(`/payment?orderId=${orderResponse.data.id}`);
       } else {
         throw new Error('Order creation failed - no data returned');
@@ -394,40 +508,301 @@ export default function CheckoutPage() {
     }
   };
 
-  if (loading) {
+  if (authLoading || (isAuthenticated && loading) || (!isAuthenticated && guestCartLoading)) {
     return (
-      <RouteGuard allowedRoles={['CUSTOMER', 'SELLER', 'B2C_SELLER', 'WHOLESALER', 'ADMIN', 'INFLUENCER']}>
-        <div className="min-h-screen bg-hos-bg-secondary">
-          <Header />
-          <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 lg:py-12">
-            <p className="text-sm sm:text-base">Loading checkout...</p>
-          </main>
-          <Footer />
-        </div>
-      </RouteGuard>
+      <div className="min-h-screen bg-hos-bg-secondary">
+        <Header />
+        <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 lg:py-12">
+          <p className="text-sm sm:text-base">Loading checkout...</p>
+        </main>
+        <Footer />
+      </div>
+    );
+  }
+
+  if (!isAuthenticated) {
+    const prefilledEmail = encodeURIComponent(guestForm.email.trim());
+    const signInHref = prefilledEmail
+      ? `/login?returnUrl=/checkout&email=${prefilledEmail}`
+      : '/login?returnUrl=/checkout';
+
+    return (
+      <div className="min-h-screen bg-hos-bg-secondary">
+        <Header />
+        <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-12 sm:py-16 lg:py-20">
+          <div className="max-w-2xl mx-auto">
+            <div className="text-center mb-8">
+              <h1 className="text-2xl sm:text-3xl font-bold mb-3 font-primary text-hos-gold">Checkout</h1>
+              <p className="text-hos-text-secondary">
+                Sign in to your account or continue as a guest. Your basket is saved.
+              </p>
+            </div>
+
+            <div className="grid gap-6 lg:grid-cols-2">
+              <div className="rounded-lg border border-hos-border bg-hos-bg-secondary p-6">
+                <h2 className="text-lg font-semibold text-hos-text-secondary mb-2">Already have an account?</h2>
+                <p className="text-sm text-hos-text-muted mb-4">
+                  Sign in to use saved addresses and complete your purchase faster.
+                </p>
+                <div className="flex flex-col gap-3">
+                  <Link href={signInHref} className="px-6 py-3 btn-gold text-center">
+                    Sign In
+                  </Link>
+                  <Link
+                    href="/login?register=1&returnUrl=/checkout"
+                    className="px-6 py-3 border border-hos-border rounded-lg text-hos-text-secondary hover:bg-hos-bg-tertiary text-center transition-colors"
+                  >
+                    Create Account
+                  </Link>
+                </div>
+              </div>
+
+              <div className="rounded-lg border border-hos-border bg-hos-bg-secondary p-6">
+                <div className="flex items-center justify-between mb-4">
+                  <h2 className="text-lg font-semibold text-hos-text-secondary">Continue as Guest</h2>
+                  {!showGuestForm && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setShowGuestForm(true);
+                        setGuestError(null);
+                      }}
+                      className="text-sm text-hos-gold hover:text-hos-gold-hover"
+                    >
+                      Use a different email
+                    </button>
+                  )}
+                </div>
+
+                {guestError && !showGuestForm && (
+                  <div role="alert" className="mb-4 rounded-lg border border-red-500/30 bg-red-500/10 px-3 py-2 text-sm text-red-400">
+                    {guestError}
+                  </div>
+                )}
+
+                {showGuestForm ? (
+                  <form onSubmit={handleGuestCheckout} className="space-y-4">
+                    {guestError && (
+                      <div role="alert" className="rounded-lg border border-red-500/30 bg-red-500/10 px-3 py-2 text-sm text-red-400">
+                        {guestError}
+                      </div>
+                    )}
+
+                    <div>
+                      <label htmlFor="guest-email" className="block text-sm font-medium text-hos-text-secondary mb-1">
+                        Email *
+                      </label>
+                      <input
+                        id="guest-email"
+                        type="email"
+                        autoComplete="email"
+                        required
+                        value={guestForm.email}
+                        onChange={(e) => setGuestForm({ ...guestForm, email: e.target.value })}
+                        className="w-full px-4 py-2 border border-hos-border rounded-lg bg-hos-bg-secondary text-hos-text-secondary focus:outline-none focus:ring-2 focus:ring-hos-gold/50"
+                      />
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <div>
+                        <label htmlFor="guest-first-name" className="block text-sm font-medium text-hos-text-secondary mb-1">
+                          First name *
+                        </label>
+                        <input
+                          id="guest-first-name"
+                          type="text"
+                          autoComplete="given-name"
+                          required
+                          value={guestForm.firstName}
+                          onChange={(e) => setGuestForm({ ...guestForm, firstName: e.target.value })}
+                          className="w-full px-4 py-2 border border-hos-border rounded-lg bg-hos-bg-secondary text-hos-text-secondary focus:outline-none focus:ring-2 focus:ring-hos-gold/50"
+                        />
+                      </div>
+                      <div>
+                        <label htmlFor="guest-last-name" className="block text-sm font-medium text-hos-text-secondary mb-1">
+                          Last name *
+                        </label>
+                        <input
+                          id="guest-last-name"
+                          type="text"
+                          autoComplete="family-name"
+                          required
+                          value={guestForm.lastName}
+                          onChange={(e) => setGuestForm({ ...guestForm, lastName: e.target.value })}
+                          className="w-full px-4 py-2 border border-hos-border rounded-lg bg-hos-bg-secondary text-hos-text-secondary focus:outline-none focus:ring-2 focus:ring-hos-gold/50"
+                        />
+                      </div>
+                    </div>
+
+                    <div>
+                      <label htmlFor="guest-street" className="block text-sm font-medium text-hos-text-secondary mb-1">
+                        Street address *
+                      </label>
+                      <input
+                        id="guest-street"
+                        type="text"
+                        autoComplete="street-address"
+                        required
+                        value={guestForm.street}
+                        onChange={(e) => setGuestForm({ ...guestForm, street: e.target.value })}
+                        className="w-full px-4 py-2 border border-hos-border rounded-lg bg-hos-bg-secondary text-hos-text-secondary focus:outline-none focus:ring-2 focus:ring-hos-gold/50"
+                      />
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <div>
+                        <label htmlFor="guest-city" className="block text-sm font-medium text-hos-text-secondary mb-1">
+                          City *
+                        </label>
+                        <input
+                          id="guest-city"
+                          type="text"
+                          autoComplete="address-level2"
+                          required
+                          value={guestForm.city}
+                          onChange={(e) => setGuestForm({ ...guestForm, city: e.target.value })}
+                          className="w-full px-4 py-2 border border-hos-border rounded-lg bg-hos-bg-secondary text-hos-text-secondary focus:outline-none focus:ring-2 focus:ring-hos-gold/50"
+                        />
+                      </div>
+                      <div>
+                        <label htmlFor="guest-state" className="block text-sm font-medium text-hos-text-secondary mb-1">
+                          State / Province
+                        </label>
+                        <input
+                          id="guest-state"
+                          type="text"
+                          autoComplete="address-level1"
+                          value={guestForm.state}
+                          onChange={(e) => setGuestForm({ ...guestForm, state: e.target.value })}
+                          className="w-full px-4 py-2 border border-hos-border rounded-lg bg-hos-bg-secondary text-hos-text-secondary focus:outline-none focus:ring-2 focus:ring-hos-gold/50"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <div>
+                        <label htmlFor="guest-postal" className="block text-sm font-medium text-hos-text-secondary mb-1">
+                          Postal code *
+                        </label>
+                        <input
+                          id="guest-postal"
+                          type="text"
+                          autoComplete="postal-code"
+                          required
+                          value={guestForm.postalCode}
+                          onChange={(e) => setGuestForm({ ...guestForm, postalCode: e.target.value })}
+                          className="w-full px-4 py-2 border border-hos-border rounded-lg bg-hos-bg-secondary text-hos-text-secondary focus:outline-none focus:ring-2 focus:ring-hos-gold/50"
+                        />
+                      </div>
+                      <div>
+                        <label htmlFor="guest-country" className="block text-sm font-medium text-hos-text-secondary mb-1">
+                          Country *
+                        </label>
+                        <select
+                          id="guest-country"
+                          autoComplete="country-name"
+                          required
+                          value={guestForm.country}
+                          onChange={(e) => setGuestForm({ ...guestForm, country: e.target.value })}
+                          className="w-full px-4 py-2 border border-hos-border rounded-lg bg-hos-bg-secondary text-hos-text-secondary focus:outline-none focus:ring-2 focus:ring-hos-gold/50"
+                        >
+                          <option value="">Select country</option>
+                          <option value="United States">United States</option>
+                          <option value="United Arab Emirates">United Arab Emirates</option>
+                          <option value="Germany">Germany</option>
+                          <option value="France">France</option>
+                          <option value="Italy">Italy</option>
+                          <option value="Spain">Spain</option>
+                          <option value="Netherlands">Netherlands</option>
+                          <option value="Belgium">Belgium</option>
+                          <option value="Austria">Austria</option>
+                          <option value="Portugal">Portugal</option>
+                          <option value="Ireland">Ireland</option>
+                          <option value="Greece">Greece</option>
+                          <option value="Finland">Finland</option>
+                          <option value="Saudi Arabia">Saudi Arabia</option>
+                          <option value="Kuwait">Kuwait</option>
+                          <option value="Qatar">Qatar</option>
+                          <option value="Bahrain">Bahrain</option>
+                          <option value="Oman">Oman</option>
+                        </select>
+                      </div>
+                    </div>
+
+                    <div>
+                      <label htmlFor="guest-phone" className="block text-sm font-medium text-hos-text-secondary mb-1">
+                        Phone (optional)
+                      </label>
+                      <input
+                        id="guest-phone"
+                        type="tel"
+                        autoComplete="tel"
+                        value={guestForm.phone}
+                        onChange={(e) => setGuestForm({ ...guestForm, phone: e.target.value })}
+                        className="w-full px-4 py-2 border border-hos-border rounded-lg bg-hos-bg-secondary text-hos-text-secondary focus:outline-none focus:ring-2 focus:ring-hos-gold/50"
+                      />
+                    </div>
+
+                    <label className="flex items-start gap-2 text-sm text-hos-text-secondary">
+                      <input
+                        type="checkbox"
+                        checked={guestForm.gdprConsent}
+                        onChange={(e) => setGuestForm({ ...guestForm, gdprConsent: e.target.checked })}
+                        className="mt-1 rounded border-hos-border text-hos-gold"
+                        required
+                      />
+                      <span>
+                        I acknowledge the privacy notice and agree to account creation so I can complete checkout and receive order updates.
+                      </span>
+                    </label>
+
+                    <button
+                      type="submit"
+                      disabled={guestSubmitting}
+                      className="w-full px-6 py-3 btn-gold disabled:opacity-50"
+                    >
+                      {guestSubmitting ? 'Creating account...' : 'Continue to Checkout'}
+                    </button>
+                  </form>
+                ) : (
+                  <p className="text-sm text-hos-text-muted">
+                    This email is already registered. Use Sign In on the left to access your saved basket and addresses.
+                  </p>
+                )}
+              </div>
+            </div>
+
+            <Link
+              href="/cart"
+              className="inline-block mt-8 text-sm text-hos-gold-hover hover:text-hos-gold"
+            >
+              ← Back to Basket
+            </Link>
+          </div>
+        </main>
+        <Footer />
+      </div>
     );
   }
 
   if (!cart || !cart.items || cart.items.length === 0) {
     return (
-      <RouteGuard allowedRoles={['CUSTOMER', 'SELLER', 'B2C_SELLER', 'WHOLESALER', 'ADMIN', 'INFLUENCER']}>
-        <div className="min-h-screen bg-hos-bg-secondary">
-          <Header />
-          <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 lg:py-12">
-            <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold mb-6 sm:mb-8">Checkout</h1>
-            <div className="bg-hos-bg-secondary rounded-lg p-6 sm:p-8 text-center">
-              <p className="text-base sm:text-lg text-hos-text-secondary mb-4 sm:mb-6">Your cart is empty</p>
-              <Link
-                href="/products"
-                className="inline-block px-5 sm:px-6 py-2.5 sm:py-3 text-sm sm:text-base bg-hos-gold hover:bg-hos-gold text-[#1a1406] font-semibold rounded-lg transition-all duration-300"
-              >
-                Browse Products
-              </Link>
-            </div>
-          </main>
-          <Footer />
-        </div>
-      </RouteGuard>
+      <div className="min-h-screen bg-hos-bg-secondary">
+        <Header />
+        <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 lg:py-12">
+          <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold mb-6 sm:mb-8">Checkout</h1>
+          <div className="bg-hos-bg-secondary rounded-lg p-6 sm:p-8 text-center">
+            <p className="text-base sm:text-lg text-hos-text-secondary mb-4 sm:mb-6">Your cart is empty</p>
+            <Link
+              href="/products"
+              className="inline-block px-5 sm:px-6 py-2.5 sm:py-3 text-sm sm:text-base bg-hos-gold hover:bg-hos-gold text-[#1a1406] font-semibold rounded-lg transition-all duration-300"
+            >
+              Browse Products
+            </Link>
+          </div>
+        </main>
+        <Footer />
+      </div>
     );
   }
 
@@ -437,7 +812,6 @@ export default function CheckoutPage() {
   const total = subtotal - discount + effectiveShippingCost + taxAmount;
 
   return (
-    <RouteGuard allowedRoles={['CUSTOMER', 'SELLER', 'B2C_SELLER', 'WHOLESALER', 'ADMIN', 'INFLUENCER']}>
     <div className="min-h-screen bg-hos-bg-secondary">
       <Header />
       <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 lg:py-12">
@@ -798,7 +1172,7 @@ export default function CheckoutPage() {
                   (shippingOptions.length > 0 && !selectedShippingMethod) ||
                   hasCriticalStockIssues
                 }
-                className="w-full px-6 py-3 bg-hos-gold hover:bg-hos-gold text-[#1a1406] font-semibold rounded-lg transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="w-full px-6 py-3 btn-gold transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {checkoutStep !== 4
                   ? 'Complete steps above to place order'
@@ -808,6 +1182,12 @@ export default function CheckoutPage() {
                       ? 'Stock Issues - Update Cart'
                       : 'Place Order'}
               </button>
+
+              {checkoutStep === 4 && (
+                <p className="text-xs text-hos-text-muted mt-3 text-center">
+                  Secure checkout · Billing address matches shipping unless updated in profile
+                </p>
+              )}
               
               {hasCriticalStockIssues && (
                 <p role="alert" className="text-center mt-2 text-sm text-red-400">
@@ -827,6 +1207,5 @@ export default function CheckoutPage() {
       </main>
       <Footer />
     </div>
-    </RouteGuard>
   );
 }

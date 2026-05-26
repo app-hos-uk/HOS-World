@@ -2,12 +2,12 @@
 
 import { Header } from '@/components/Header';
 import { Footer } from '@/components/Footer';
-import { RouteGuard } from '@/components/RouteGuard';
 import { useState, useEffect, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
-import { apiClient } from '@/lib/api';
+import { apiClient, getOrCreateGuestCartSessionId } from '@/lib/api';
 import { useCurrency } from '@/contexts/CurrencyContext';
 import { useCart } from '@/contexts/CartContext';
+import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/useToast';
 import Link from 'next/link';
 import Image from 'next/image';
@@ -39,6 +39,7 @@ export default function CartPage() {
   const router = useRouter();
   const { formatPrice } = useCurrency();
   const { syncCart } = useCart();
+  const { isAuthenticated } = useAuth();
   const toast = useToast();
   const [cart, setCart] = useState<Cart | null>(null);
   const [loading, setLoading] = useState(true);
@@ -52,18 +53,26 @@ export default function CartPage() {
   useEffect(() => {
     fetchCart();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [isAuthenticated]);
 
   const fetchCart = async () => {
     try {
       setLoading(true);
-      const response = await apiClient.getCart();
+      let response;
+      if (isAuthenticated) {
+        response = await apiClient.getCart();
+      } else {
+        const sid = getOrCreateGuestCartSessionId();
+        response = await apiClient.getGuestCart(sid);
+      }
       if (response?.data) {
         setCart(response.data);
       }
     } catch (error: any) {
       console.error('Error fetching cart:', error);
-      toast.error(error.message || 'Failed to load cart');
+      if (isAuthenticated) {
+        toast.error(error.message || 'Failed to load cart');
+      }
     } finally {
       setLoading(false);
     }
@@ -137,13 +146,18 @@ export default function CartPage() {
     setUpdatingQuantityItemId(itemId);
 
     try {
-      const response = await apiClient.updateCartItem(itemId, clamped);
+      let response;
+      if (isAuthenticated) {
+        response = await apiClient.updateCartItem(itemId, clamped);
+      } else {
+        const sid = getOrCreateGuestCartSessionId();
+        response = await apiClient.updateGuestCartItem(sid, itemId, clamped);
+      }
       if (response?.data) {
         setCart(response.data);
         syncCart(response.data);
       }
     } catch (error: any) {
-      // Revert on failure
       setCart((prev) =>
         prev
           ? {
@@ -172,14 +186,19 @@ export default function CartPage() {
     setRemovingItemId(itemId);
 
     try {
-      const response = await apiClient.removeCartItem(itemId);
+      let response;
+      if (isAuthenticated) {
+        response = await apiClient.removeCartItem(itemId);
+      } else {
+        const sid = getOrCreateGuestCartSessionId();
+        response = await apiClient.removeGuestCartItem(sid, itemId);
+      }
       if (response?.data) {
         setCart(response.data);
         syncCart(response.data);
         toast.success('Item removed from cart');
       }
     } catch (error: any) {
-      // Revert only this item: re-add it to current cart state so concurrent changes (coupon, other updates) are preserved
       setCart((prev) => {
         if (!prev) return null;
         if (prev.items.some((i) => i.id === itemId)) return prev;
@@ -238,6 +257,10 @@ export default function CartPage() {
       toast.error('Some items in your cart are out of stock or exceed available stock. Please update your cart.');
       return;
     }
+    if (!isAuthenticated) {
+      router.push('/login?returnUrl=/checkout');
+      return;
+    }
     router.push('/checkout');
   };
 
@@ -265,38 +288,34 @@ export default function CartPage() {
 
   if (loading) {
     return (
-      <RouteGuard allowedRoles={['CUSTOMER', 'SELLER', 'B2C_SELLER', 'WHOLESALER', 'ADMIN', 'INFLUENCER']}>
-        <div className="min-h-screen bg-hos-bg-secondary">
-          <Header />
-          <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 lg:py-12">
-            <p className="text-sm sm:text-base">Loading cart...</p>
-          </main>
-          <Footer />
-        </div>
-      </RouteGuard>
+      <div className="min-h-screen bg-hos-bg-secondary">
+        <Header />
+        <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 lg:py-12">
+          <p className="text-sm sm:text-base">Loading cart...</p>
+        </main>
+        <Footer />
+      </div>
     );
   }
 
   if (!cart || !cart.items || cart.items.length === 0) {
     return (
-      <RouteGuard allowedRoles={['CUSTOMER', 'SELLER', 'B2C_SELLER', 'WHOLESALER', 'ADMIN', 'INFLUENCER']}>
-        <div className="min-h-screen bg-hos-bg-secondary">
-          <Header />
-          <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 lg:py-12">
-            <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold mb-6 sm:mb-8 font-primary text-hos-gold">Shopping Cart</h1>
-            <div className="bg-hos-bg-secondary rounded-lg p-6 sm:p-8 text-center">
-              <p className="text-base sm:text-lg text-hos-text-secondary mb-4 sm:mb-6 font-secondary">Your cart is empty</p>
-              <Link 
-                href="/products" 
-                className="inline-block px-5 sm:px-6 py-2.5 sm:py-3 text-sm sm:text-base bg-hos-gold hover:bg-hos-gold-hover text-[#1a1406] font-semibold rounded-lg transition-all duration-300 font-primary"
-              >
-                Browse Products
-              </Link>
-            </div>
-          </main>
-          <Footer />
-        </div>
-      </RouteGuard>
+      <div className="min-h-screen bg-hos-bg-secondary">
+        <Header />
+        <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 lg:py-12">
+          <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold mb-6 sm:mb-8 font-primary text-hos-gold">Shopping Cart</h1>
+          <div className="bg-hos-bg-secondary rounded-lg p-6 sm:p-8 text-center">
+            <p className="text-base sm:text-lg text-hos-text-secondary mb-4 sm:mb-6 font-secondary">Your cart is empty</p>
+            <Link 
+              href="/products" 
+              className="inline-block px-5 sm:px-6 py-2.5 sm:py-3 text-sm sm:text-base bg-hos-gold hover:bg-hos-gold-hover text-[#1a1406] font-semibold rounded-lg transition-all duration-300 font-primary"
+            >
+              Browse Products
+            </Link>
+          </div>
+        </main>
+        <Footer />
+      </div>
     );
   }
 
@@ -307,7 +326,6 @@ export default function CartPage() {
   const total = Math.max(0, subtotal - discount + shipping + tax);
 
   return (
-    <RouteGuard allowedRoles={['CUSTOMER', 'SELLER', 'B2C_SELLER', 'WHOLESALER', 'ADMIN', 'INFLUENCER']}>
     <div className="min-h-screen bg-hos-bg-secondary">
       <Header />
       <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 lg:py-12">
@@ -390,19 +408,23 @@ export default function CartPage() {
                           </button>
                         </div>
                         <div className="flex items-center gap-2 ml-auto">
-                          <button
-                            onClick={() => handleMoveToWishlist(item)}
-                            disabled={isMoving}
-                            className="text-hos-gold hover:text-hos-gold-hover text-sm flex items-center gap-1 disabled:opacity-50"
-                          >
-                            {isMoving ? (
-                              <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-hos-gold"></div>
-                            ) : (
-                              '💜'
-                            )}
-                            <span className="hidden sm:inline">Save for Later</span>
-                          </button>
-                          <span className="text-hos-text-muted">|</span>
+                          {isAuthenticated && (
+                            <>
+                              <button
+                                onClick={() => handleMoveToWishlist(item)}
+                                disabled={isMoving}
+                                className="text-hos-gold hover:text-hos-gold-hover text-sm flex items-center gap-1 disabled:opacity-50"
+                              >
+                                {isMoving ? (
+                                  <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-hos-gold"></div>
+                                ) : (
+                                  '💜'
+                                )}
+                                <span className="hidden sm:inline">Save for Later</span>
+                              </button>
+                              <span className="text-hos-text-muted">|</span>
+                            </>
+                          )}
                           <button
                             onClick={() => handleRemoveItem(item.id)}
                             disabled={removingItemId === item.id}
@@ -425,7 +447,8 @@ export default function CartPage() {
               })}
             </div>
 
-            {/* Coupon Code Section */}
+            {/* Coupon Code Section (authenticated only) */}
+            {isAuthenticated && (
             <div className="bg-hos-bg-secondary rounded-lg shadow-sm border border-hos-border p-4 sm:p-6 mt-6">
               <h2 className="text-lg font-semibold mb-4">Have a coupon code?</h2>
               <div className="flex gap-2">
@@ -452,13 +475,14 @@ export default function CartPage() {
                   <button
                     onClick={handleApplyCoupon}
                     disabled={applyingCoupon || !couponCode.trim()}
-                    className="px-6 py-2 bg-hos-gold text-[#1a1406] rounded-lg hover:bg-hos-gold disabled:opacity-50"
+                    className="px-6 py-2 btn-gold disabled:opacity-50"
                   >
                     {applyingCoupon ? 'Applying...' : 'Apply'}
                   </button>
                 )}
               </div>
             </div>
+            )}
           </div>
 
           {/* Order Summary */}
@@ -528,10 +552,24 @@ export default function CartPage() {
               <button
                 onClick={handleCheckout}
                 disabled={hasOutOfStockItems}
-                className="w-full px-6 py-3 bg-hos-gold hover:bg-hos-gold text-[#1a1406] font-semibold rounded-lg transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="w-full px-6 py-3 btn-gold transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                {hasOutOfStockItems ? 'Update Stock Issues' : 'Proceed to Checkout'}
+                {hasOutOfStockItems
+                  ? 'Update Stock Issues'
+                  : !isAuthenticated
+                    ? 'Sign in to Checkout'
+                    : 'Proceed to Checkout'}
               </button>
+
+              {!isAuthenticated && (
+                <p className="text-xs text-hos-text-muted mt-3 text-center">
+                  Sign in or create an account to complete your purchase. Your basket is saved.
+                </p>
+              )}
+
+              <p className="text-xs text-hos-text-muted mt-3 text-center">
+                Secure checkout · Buyer protection on marketplace orders
+              </p>
 
               <Link
                 href="/products"
@@ -545,6 +583,5 @@ export default function CartPage() {
       </main>
       <Footer />
     </div>
-    </RouteGuard>
   );
 }

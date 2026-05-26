@@ -12,6 +12,8 @@ import { AdminModule } from '../admin/admin.module';
 import { GeolocationModule } from '../geolocation/geolocation.module';
 import { NotificationsModule } from '../notifications/notifications.module';
 import { TemplatesModule } from '../templates/templates.module';
+import { CartModule } from '../cart/cart.module';
+import { AddressesModule } from '../addresses/addresses.module';
 
 const logger = new Logger('AuthModule');
 
@@ -40,6 +42,8 @@ const logger = new Logger('AuthModule');
     GeolocationModule,
     NotificationsModule,
     TemplatesModule,
+    CartModule,
+    AddressesModule,
   ],
   controllers: [AuthController, AuthOAuthController],
   providers: [AuthService, JwtStrategy, LocalStrategy],

@@ -7,7 +7,7 @@
   --font-cormorant: 'Cormorant Garamond', Georgia, 'Times New Roman', serif;
   --font-figtree: 'Figtree', system-ui, sans-serif;
   --font-inter: 'Inter', system-ui, sans-serif;
-  --font-display: "Apple Chancery", "Snell Roundhand", "Zapfino", "Brush Script MT", "Segoe Script", var(--font-cormorant), cursive;
+  --font-display: var(--font-cormorant), Georgia, 'Times New Roman', serif;
   --font-body: var(--font-cormorant);
   --font-ui: var(--font-figtree);
   /* Legacy aliases */
@@ -87,7 +87,7 @@
   /* ═══ TEXT ═══ */
   --color-text-primary: #e8e4dc;
   --color-text-secondary: #9a958a;
-  --color-text-muted: #9a958a;
+  --color-text-muted: #6b6860;
 
   /* ═══ ACCENT (reference gold) ═══ */
   --color-accent-gold: #c9a227;
@@ -126,7 +126,7 @@
   pointer-events: none;
   opacity: 0.04;
   background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
-  z-index: 9999;
+  z-index: 1;
 }
 
 * {
@@ -456,7 +456,9 @@ h6 {
   .btn-storefront-primary {
     @apply inline-flex items-center justify-center gap-2 font-ui font-semibold text-sm px-6 py-3.5 rounded-full
            bg-gradient-to-b from-hos-gold-hover to-hos-gold text-[#1a1406]
-           shadow-[0_8px_28px_rgba(201,162,39,0.25)] hover:brightness-105 transition-all duration-200;
+           shadow-[0_8px_28px_rgba(201,162,39,0.25)] hover:brightness-110 hover:shadow-[0_10px_32px_rgba(201,162,39,0.35)]
+           focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-hos-gold-ring focus-visible:ring-offset-2 focus-visible:ring-offset-hos-bg
+           transition-all duration-200;
   }
 
   .btn-storefront-ghost {
@@ -525,4 +527,21 @@ h6 {
   100% {
     transform: scale(1);
   }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+.btn-gold {
+  @apply bg-hos-gold hover:bg-hos-gold-hover text-[#1a1406] font-semibold rounded-lg
+         focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-hos-gold-ring focus-visible:ring-offset-2 focus-visible:ring-offset-hos-bg
+         transition-colors duration-200;
 }

@@ -54,6 +54,7 @@ export default function ProductDetailClient() {
   const [reviewForm, setReviewForm] = useState({ rating: 5, comment: '', title: '' });
   /** Selected variation per dimension (e.g. { Size: 'M', Color: 'Red' }) for add-to-cart */
   const [selectedVariations, setSelectedVariations] = useState<Record<string, string>>({});
+  const [selectedImageIndex, setSelectedImageIndex] = useState(0);
   /** Track if user has navigation history to go back to */
   const [canGoBack, setCanGoBack] = useState(false);
 
@@ -84,6 +85,7 @@ export default function ProductDetailClient() {
           : await apiClient.getProductBySlug(productIdOrSlug);
         if (!cancelled && response?.data) {
           setProduct(response.data);
+          setSelectedImageIndex(0);
         }
       } catch (err: any) {
         if (!cancelled) {
@@ -199,11 +201,6 @@ export default function ProductDetailClient() {
   const handleAddToCart = async () => {
     if (!product) return;
 
-    if (!isAuthenticated) {
-      toast.error('Please login to add items to cart');
-      return;
-    }
-
     const hasVariations = product.variations && product.variations.length > 0;
     if (hasVariations) {
       const missing = (product.variations as any[]).find((v: any) => !selectedVariations[v.name]);
@@ -318,7 +315,7 @@ export default function ProductDetailClient() {
             {product.images && product.images.length > 0 ? (
               <div className="relative w-full aspect-square mb-4 bg-hos-bg-secondary rounded-lg overflow-hidden">
                 <SafeImage
-                  src={typeof product.images[0] === 'string' ? product.images[0] : product.images[0]?.url || product.images[0]}
+                  src={typeof product.images[selectedImageIndex] === 'string' ? product.images[selectedImageIndex] : product.images[selectedImageIndex]?.url || product.images[selectedImageIndex]}
                   alt={product.name}
                   fill
                   sizes="(max-width: 768px) 100vw, 50vw"
@@ -332,18 +329,28 @@ export default function ProductDetailClient() {
             )}
             {product.images && product.images.length > 1 && (
               <div className="grid grid-cols-4 gap-2">
-                {product.images.slice(1, 5).map((image: any, index: number) => {
+                {product.images.slice(0, 5).map((image: any, index: number) => {
                   const imageUrl = typeof image === 'string' ? image : image?.url || image;
+                  const isSelected = index === selectedImageIndex;
                   return (
-                    <div key={index} className="relative w-full h-20">
+                    <button
+                      key={index}
+                      type="button"
+                      onClick={() => setSelectedImageIndex(index)}
+                      aria-label={`View image ${index + 1}`}
+                      aria-pressed={isSelected}
+                      className={`relative w-full h-20 rounded-lg overflow-hidden border-2 transition-colors ${
+                        isSelected ? 'border-hos-gold' : 'border-transparent hover:border-hos-border'
+                      }`}
+                    >
                       <SafeImage
                         src={imageUrl}
-                        alt={`${product.name} ${index + 2}`}
+                        alt={`${product.name} ${index + 1}`}
                         fill
                         sizes="96px"
-                        className="object-cover rounded-lg"
+                        className="object-cover"
                       />
-                    </div>
+                    </button>
                   );
                 })}
               </div>
@@ -352,7 +359,7 @@ export default function ProductDetailClient() {
 
           {/* Product Details */}
           <div>
-            <h1 className="text-3xl font-bold mb-4">{product.name}</h1>
+            <h1 className="text-3xl font-bold mb-4 text-hos-text-primary">{product.name}</h1>
             
             {/* Rating Display */}
             <div className="mb-4 flex items-center gap-2">
@@ -612,7 +619,7 @@ export default function ProductDetailClient() {
         {product.description && (
           <div className="mt-12 border-t pt-8">
             <h2 className="text-2xl font-bold mb-4">Product Details</h2>
-            <div className="prose prose-gray max-w-none text-hos-text-secondary whitespace-pre-wrap">
+            <div className="prose prose-invert max-w-none text-hos-text-secondary whitespace-pre-wrap">
               {product.description}
             </div>
           </div>

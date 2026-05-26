@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, useCallback, Suspense } from 'react';
+import { useEffect, useState, useCallback, Suspense, useRef } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { Header } from '@/components/Header';
 import { Footer } from '@/components/Footer';
@@ -17,7 +17,7 @@ const SORT_OPTIONS = [
   { value: 'price_asc', label: 'Price: Low to High' },
   { value: 'price_desc', label: 'Price: High to Low' },
   { value: 'newest', label: 'Newest' },
-  { value: 'rating', label: 'Top Rated' },
+  { value: 'popular', label: 'Top Rated' },
   { value: 'name_asc', label: 'Name A-Z' },
   { value: 'name_desc', label: 'Name Z-A' },
 ] as const;
@@ -43,7 +43,7 @@ function parseSearchParams(params: URLSearchParams): SearchState {
     maxPrice: params.get('maxPrice') || '',
     rating: Number(params.get('rating')) || 0,
     inStock: params.get('inStock') === 'true',
-    sort: params.get('sort') || '',
+    sort: params.get('sortBy') || params.get('sort') || '',
     page: Number(params.get('page')) || 1,
   };
 }
@@ -57,7 +57,7 @@ function buildSearchParams(state: SearchState): string {
   if (state.maxPrice) params.set('maxPrice', state.maxPrice);
   if (state.rating > 0) params.set('rating', String(state.rating));
   if (state.inStock) params.set('inStock', 'true');
-  if (state.sort) params.set('sort', state.sort);
+  if (state.sort) params.set('sortBy', state.sort);
   if (state.page > 1) params.set('page', String(state.page));
   return params.toString();
 }
@@ -77,6 +77,7 @@ function StarRating({ rating, onClick, interactive = false }: {
           onClick={() => onClick?.(star)}
           className={`text-lg ${interactive ? 'cursor-pointer hover:scale-110 transition-transform' : 'cursor-default'}`}
           aria-label={`${star} star${star > 1 ? 's' : ''}`}
+          aria-pressed={interactive ? star <= rating : undefined}
         >
           <svg
             className={`w-5 h-5 ${star <= rating ? 'text-yellow-400' : 'text-hos-text-muted'}`}
@@ -124,8 +125,15 @@ function ProductsContent() {
   const [processingTimeMs, setProcessingTimeMs] = useState(0);
   const [facets, setFacets] = useState<Record<string, Record<string, number>>>({});
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
+  const [fetchError, setFetchError] = useState<string | null>(null);
+  const [priceDraft, setPriceDraft] = useState({ min: '', max: '' });
+  const priceDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const [state, setState] = useState<SearchState>(() => parseSearchParams(searchParams));
+
+  useEffect(() => {
+    setPriceDraft({ min: state.minPrice, max: state.maxPrice });
+  }, [state.minPrice, state.maxPrice]);
 
   // Sync state from URL when searchParams change (browser back/forward)
   useEffect(() => {
@@ -171,6 +179,7 @@ function ProductsContent() {
 
     const fetchProducts = async () => {
       setLoading(true);
+      setFetchError(null);
       try {
         const filters: Record<string, any> = {
           page: state.page,
@@ -231,6 +240,7 @@ function ProductsContent() {
           if (!cancelled) {
             console.error('Fallback also failed:', fallbackErr);
             setProducts([]);
+            setFetchError('Unable to load products. Please try again.');
           }
         }
       } finally {
@@ -354,22 +364,40 @@ function ProductsContent() {
       <div>
         <h3 className="text-sm font-semibold text-hos-text-secondary mb-2">Price Range</h3>
         <div className="flex items-center gap-2">
+          <label className="sr-only" htmlFor="min-price">Minimum price</label>
           <input
+            id="min-price"
             type="number"
             placeholder="Min"
             min={0}
-            value={state.minPrice}
-            onChange={(e) => updateState({ minPrice: e.target.value })}
-            className="w-full px-3 py-1.5 border border-hos-border rounded-md text-sm focus:ring-hos-gold/50 focus:border-hos-gold"
+            value={priceDraft.min}
+            onChange={(e) => {
+              const min = e.target.value;
+              setPriceDraft((prev) => ({ ...prev, min }));
+              if (priceDebounceRef.current) clearTimeout(priceDebounceRef.current);
+              priceDebounceRef.current = setTimeout(() => {
+                updateState({ minPrice: min });
+              }, 400);
+            }}
+            className="w-full px-3 py-1.5 border border-hos-border rounded-md text-sm bg-hos-bg-secondary text-hos-text-secondary focus:ring-hos-gold/50 focus:border-hos-gold"
           />
           <span className="text-hos-text-muted">-</span>
+          <label className="sr-only" htmlFor="max-price">Maximum price</label>
           <input
+            id="max-price"
             type="number"
             placeholder="Max"
             min={0}
-            value={state.maxPrice}
-            onChange={(e) => updateState({ maxPrice: e.target.value })}
-            className="w-full px-3 py-1.5 border border-hos-border rounded-md text-sm focus:ring-hos-gold/50 focus:border-hos-gold"
+            value={priceDraft.max}
+            onChange={(e) => {
+              const max = e.target.value;
+              setPriceDraft((prev) => ({ ...prev, max }));
+              if (priceDebounceRef.current) clearTimeout(priceDebounceRef.current);
+              priceDebounceRef.current = setTimeout(() => {
+                updateState({ maxPrice: max });
+              }, 400);
+            }}
+            className="w-full px-3 py-1.5 border border-hos-border rounded-md text-sm bg-hos-bg-secondary text-hos-text-secondary focus:ring-hos-gold/50 focus:border-hos-gold"
           />
         </div>
       </div>
@@ -489,27 +517,38 @@ function ProductsContent() {
 
           {/* Main content */}
           <div className="flex-1 min-w-0">
-            {/* Toolbar: sort, result count, search time */}
+            {fetchError && (
+              <div className="mb-4 px-4 py-3 bg-red-500/10 border border-red-500/30 text-red-300 rounded-lg text-sm" role="alert">
+                {fetchError}
+              </div>
+            )}
+            {/* Toolbar: sort, result count */}
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
               <div className="flex items-center gap-3 text-sm text-hos-text-secondary">
                 {(!loading || products.length > 0) && totalHits > 0 ? (
                   <span>
                     Showing {startIndex}-{endIndex} of {totalHits.toLocaleString()} results
-                    {processingTimeMs > 0 && (
-                      <span className="text-hos-text-muted ml-1">in {processingTimeMs}ms</span>
+                    {state.sort && (
+                      <span className="text-hos-text-muted ml-2">
+                        · Sorted by {SORT_OPTIONS.find(o => o.value === state.sort)?.label || state.sort}
+                      </span>
                     )}
                   </span>
                 ) : null}
               </div>
-              <select
-                value={state.sort}
-                onChange={(e) => updateState({ sort: e.target.value })}
-                className="px-3 py-2 border border-hos-border rounded-lg text-sm bg-hos-bg-secondary focus:ring-hos-gold/50 focus:border-hos-gold"
-              >
-                {SORT_OPTIONS.map(opt => (
-                  <option key={opt.value} value={opt.value}>{opt.label}</option>
-                ))}
-              </select>
+              <label className="flex items-center gap-2 text-sm text-hos-text-secondary">
+                <span className="sr-only sm:not-sr-only sm:inline">Sort by</span>
+                <select
+                  value={state.sort}
+                  onChange={(e) => updateState({ sort: e.target.value })}
+                  aria-label="Sort products"
+                  className="px-3 py-2 border border-hos-border rounded-lg text-sm bg-hos-bg-secondary text-hos-text-secondary focus:ring-hos-gold/50 focus:border-hos-gold"
+                >
+                  {SORT_OPTIONS.map(opt => (
+                    <option key={opt.value} value={opt.value}>{opt.label}</option>
+                  ))}
+                </select>
+              </label>
             </div>
 
             {/* Active filter chips */}

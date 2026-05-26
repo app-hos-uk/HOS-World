@@ -29,7 +29,7 @@ export default function EnchantedFinds() {
 
   const fetchProducts = async () => {
     try {
-      const response = await apiClient.getProducts({ sort: 'rating', limit: 5, status: 'ACTIVE' } as any);
+      const response = await apiClient.getProducts({ sortBy: 'popular', limit: 5, status: 'ACTIVE' } as any);
       const data = response?.data;
       const items = Array.isArray(data) ? data : (data as any)?.items || (data as any)?.data || [];
       const list = Array.isArray(items) ? items.slice(0, 5) : [];
@@ -63,15 +63,21 @@ export default function EnchantedFinds() {
           </p>
         </div>
         <Link
-          href="/products?sort=rating"
+          href="/products?sortBy=popular"
           className="text-hos-gold text-sm font-ui font-semibold hover:text-hos-gold-hover transition-colors shrink-0"
         >
           View collection →
         </Link>
       </div>
 
+      {usingDemo && !loading && (
+        <p className="mb-4 text-xs text-hos-text-muted bg-hos-bg-secondary border border-hos-border rounded-lg px-3 py-2" role="status">
+          Showing sample products while live listings load.
+        </p>
+      )}
+
       {loading ? (
-        <div className="flex gap-4 overflow-x-auto scrollbar-hide pb-4">
+        <div className="flex gap-4 overflow-x-auto pb-4">
           {Array.from({ length: 5 }).map((_, i) => (
             <div key={i} className="min-w-[200px] product-card-ref animate-pulse shrink-0">
               <div className="aspect-square bg-hos-bg-tertiary" />
@@ -80,25 +86,29 @@ export default function EnchantedFinds() {
           ))}
         </div>
       ) : (
-        <div className="flex gap-4 overflow-x-auto scrollbar-hide pb-4">
-          {products.map((product) => {
-            const p = product as any;
-            return (
-              <div key={product.id} className="min-w-[200px] max-w-[220px] shrink-0">
-                <ProductCard
-                  id={product.id}
-                  name={product.name}
-                  price={product.price}
-                  rrp={product.rrp}
-                  images={product.images}
-                  imageUrl={p.image}
-                  averageRating={product.averageRating ?? p.averageRating}
-                  vendor={product.seller?.storeName ?? p.vendor}
-                  demo={usingDemo}
-                />
-              </div>
-            );
-          })}
+        <div className="relative">
+          <div className="flex gap-4 overflow-x-auto pb-4 snap-x snap-mandatory">
+            {products.map((product) => {
+              const p = product as any;
+              return (
+                <div key={product.id} className="min-w-[200px] max-w-[220px] shrink-0 snap-start">
+                  <ProductCard
+                    id={product.id}
+                    name={product.name}
+                    price={product.price}
+                    rrp={product.rrp}
+                    images={product.images}
+                    imageUrl={p.image}
+                    averageRating={product.averageRating ?? p.averageRating}
+                    vendor={product.seller?.storeName ?? p.vendor}
+                    demo={usingDemo}
+                  />
+                </div>
+              );
+            })}
+          </div>
+          <div className="pointer-events-none absolute inset-y-0 right-0 w-12 bg-gradient-to-l from-hos-bg to-transparent" aria-hidden />
+          <p className="text-xs text-hos-text-muted mt-2 md:hidden">Swipe to see more →</p>
         </div>
       )}
     </section>
