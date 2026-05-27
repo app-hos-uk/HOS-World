@@ -146,7 +146,7 @@ export function Header() {
     <header className="w-full sticky top-0 z-50">
       {/* ROW 1 — Top utility bar */}
       {showCustomerNav && !isDashboardPage && (
-        <div className="hidden md:block w-full bg-gradient-to-b from-[#121218] to-[#0a0a0d] border-b border-hos-border h-8">
+        <div className="hidden lg:block w-full bg-gradient-to-b from-[#121218] to-[#0a0a0d] border-b border-hos-border h-8">
           <div className="max-w-7xl mx-auto px-4 h-full flex items-center justify-between">
             <p className="text-hos-gold text-xs truncate">
               Marketplace: Shop multiple vendors · Secure checkout · US shipping
@@ -184,9 +184,9 @@ export function Header() {
             </span>
           </Link>
 
-          {/* Search (Desktop) */}
+          {/* Search (Desktop/Tablet) */}
           {showCustomerNav && (
-            <div className="hidden md:block flex-1 max-w-2xl mx-4">
+            <div className="hidden md:block flex-1 max-w-xl lg:max-w-2xl mx-2 lg:mx-4">
               <Suspense fallback={<div className="w-full h-10 bg-hos-bg-secondary border border-hos-border rounded-lg animate-pulse" aria-hidden />}>
                 <SearchBar compact />
               </Suspense>
@@ -195,7 +195,7 @@ export function Header() {
 
           {/* Customer icon actions (Desktop) */}
           {showCustomerNav && (
-            <div className="hidden md:flex items-center gap-6 shrink-0">
+            <div className="hidden lg:flex items-center gap-4 xl:gap-6 shrink-0">
               {showAuthCustomerNav && !isDashboardPage && <CurrencySelector />}
               {isAuthenticated && user && <NotificationBell />}
               <Link href={accountHref} className="flex flex-col items-center gap-1 group">
@@ -237,9 +237,36 @@ export function Header() {
             </div>
           )}
 
+          {/* Tablet icon actions (md to lg) - simplified for tablets */}
+          {showCustomerNav && (
+            <div className="hidden md:flex lg:hidden items-center gap-3 shrink-0">
+              {isAuthenticated && user && <NotificationBell />}
+              <Link href={accountHref} className="p-2 rounded-lg text-hos-text-secondary hover:text-hos-gold hover:bg-hos-bg-secondary transition-colors" aria-label={accountLabel}>
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                </svg>
+              </Link>
+              <Link href="/wishlist" className="p-2 rounded-lg text-hos-text-secondary hover:text-hos-gold hover:bg-hos-bg-secondary transition-colors" aria-label="Wishlist">
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+                </svg>
+              </Link>
+              <Link href="/cart" className="relative p-2 rounded-lg text-hos-text-secondary hover:text-hos-gold hover:bg-hos-bg-secondary transition-colors" aria-label="Basket">
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
+                </svg>
+                {cartItemCount > 0 && (
+                  <span className="absolute -top-0.5 -right-0.5 min-w-[16px] h-4 flex items-center justify-center text-[10px] font-bold bg-hos-gold text-[#1a1406] rounded-full px-1 leading-none">
+                    {cartItemCount > 99 ? '99+' : cartItemCount}
+                  </span>
+                )}
+              </Link>
+            </div>
+          )}
+
           {/* Staff / admin actions (Desktop) */}
           {!showCustomerNav && (
-            <div className="hidden md:flex items-center gap-2 shrink-0">
+            <div className="hidden lg:flex items-center gap-2 shrink-0">
               {isAuthenticated && user ? (
                 <>
                   <NotificationBell />
@@ -286,7 +313,37 @@ export function Header() {
             </div>
           )}
 
-          {/* Mobile: cart + menu */}
+          {/* Tablet: staff/admin actions (md to lg) */}
+          {!showCustomerNav && (
+            <div className="hidden md:flex lg:hidden items-center gap-2 shrink-0">
+              {isAuthenticated && user ? (
+                <>
+                  <NotificationBell />
+                  <Link
+                    href={getDashboardLink()}
+                    className="p-2 rounded-lg text-hos-gold hover:bg-hos-bg-secondary transition-colors"
+                    aria-label="Dashboard"
+                  >
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
+                    </svg>
+                  </Link>
+                  <span className="px-2 py-0.5 text-xs font-semibold bg-hos-bg-secondary text-hos-gold border border-hos-border rounded-full">
+                    {ROLE_LABELS[currentRole as UserRole] || currentRole}
+                  </span>
+                </>
+              ) : (
+                <Link
+                  href="/login"
+                  className="px-4 py-2 text-sm bg-hos-gold hover:bg-hos-gold-hover text-[#1a1406] font-semibold rounded-lg transition-colors duration-200"
+                >
+                  Login
+                </Link>
+              )}
+            </div>
+          )}
+
+          {/* Mobile: cart + menu (visible below md) */}
           {showCustomerNav && (
             <Link
               href="/cart"
@@ -304,10 +361,10 @@ export function Header() {
             </Link>
           )}
 
-          {/* Mobile Menu Button */}
+          {/* Mobile Menu Button (visible below lg for customer, below md for staff) */}
           <button
             onClick={toggleMobileMenu}
-            className="md:hidden p-2 rounded-lg text-hos-gold hover:bg-hos-bg-secondary transition-colors duration-200"
+            className={`${showCustomerNav ? 'lg:hidden' : 'md:hidden'} p-2 rounded-lg text-hos-gold hover:bg-hos-bg-secondary transition-colors duration-200`}
             aria-label="Toggle menu"
             aria-expanded={isMobileMenuOpen}
           >
@@ -324,11 +381,11 @@ export function Header() {
         </div>
       </div>
 
-      {/* ROW 3 — Navigation links (Desktop) */}
+      {/* ROW 3 — Navigation links (Desktop/Tablet) */}
       {(showCustomerNav || (isAuthenticated && !isCustomerRole && !isDashboardPage && quickLinks.length > 0)) && (
-        <div className="hidden md:block border-t border-hos-border bg-hos-bg">
+        <div className="hidden lg:block border-t border-hos-border bg-hos-bg">
           <div className="max-w-7xl mx-auto px-4">
-            <nav className="flex items-center justify-start gap-x-6 gap-y-2 py-2.5 overflow-x-auto scrollbar-thin px-1" role="navigation" aria-label="Main navigation">
+            <nav className="flex items-center justify-start gap-x-4 xl:gap-x-6 gap-y-2 py-2.5 overflow-x-auto scrollbar-thin px-1" role="navigation" aria-label="Main navigation">
               {showCustomerNav && (
                 <>
                   {STOREFRONT_NAV_LINKS.map((item) => (
@@ -367,9 +424,9 @@ export function Header() {
         </div>
       )}
 
-      {/* Mobile Menu */}
+      {/* Mobile Menu (shown below lg for customers, below md for staff) */}
       {isMobileMenuOpen && (
-        <nav className="md:hidden border-t border-hos-border bg-hos-bg" role="navigation" aria-label="Mobile navigation">
+        <nav className={`${showCustomerNav ? 'lg:hidden' : 'md:hidden'} border-t border-hos-border bg-hos-bg`} role="navigation" aria-label="Mobile navigation">
           <div className="max-w-7xl mx-auto px-4 py-3 space-y-1" role="menu">
             {showCustomerNav && (
               <>
