@@ -290,7 +290,7 @@ export default function WishlistPage() {
                 return (
                   <div 
                     key={item.id} 
-                    className={`bg-hos-bg-secondary border rounded-lg overflow-hidden transition-all hover:shadow-lg ${
+                    className={`bg-hos-bg-secondary border rounded-lg overflow-hidden transition-all hover:shadow-lg flex flex-col h-full ${
                       isOutOfStock ? 'opacity-75' : ''
                     }`}
                   >
@@ -326,60 +326,60 @@ export default function WishlistPage() {
                         )}
                       </div>
                     </Link>
-                    <div className="p-4">
+                    <div className="p-4 flex flex-col flex-1">
                       <Link href={`/products/${item.productId}`}>
-                        <h3 className="font-semibold text-lg mb-2 hover:text-hos-gold transition-colors line-clamp-2">
+                        <h3 className="font-semibold text-lg mb-2 hover:text-hos-gold transition-colors line-clamp-2 min-h-[3.5rem]">
                           {item.product?.name || 'Product'}
                         </h3>
                       </Link>
-                     <div className="flex items-center gap-2 mb-4">
-                       <p className="text-hos-gold font-bold">
-                         {formatPrice(item.product?.price ?? 0, item.product?.currency || 'USD')}
-                       </p>
-                       {item.product?.originalPrice && item.product.originalPrice > (item.product?.price || 0) && (
-                         <p className="text-hos-text-muted line-through text-sm">
-                           {formatPrice(item.product.originalPrice, item.product?.currency || 'USD')}
-                         </p>
-                       )}
-                     </div>
-                      <div className="flex gap-2">
-                        <button
-                          onClick={() => handleMoveToCart(item.productId)}
-                          disabled={isOutOfStock || isAdding}
-                          className={`flex-1 px-4 py-2 rounded-lg transition-colors text-sm font-medium flex items-center justify-center gap-2 ${
-                            isOutOfStock
-                              ? 'bg-hos-bg-tertiary text-hos-text-muted cursor-not-allowed'
-                              : 'bg-hos-gold text-[#1a1406] hover:bg-hos-gold-hover'
-                          }`}
-                        >
-                          {isAdding ? (
-                            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                          ) : isOutOfStock ? (
-                            'Out of Stock'
-                          ) : (
-                            'Add to Cart'
-                          )}
-                        </button>
-                        <button
-                          onClick={() => handleRemoveFromWishlist(item.productId)}
-                          disabled={isRemoving}
-                          className="px-3 py-2 border border-hos-border rounded-lg hover:bg-red-500/10 hover:border-red-500/40 transition-colors text-sm flex items-center justify-center"
-                          title="Remove from wishlist"
-                        >
-                          {isRemoving ? (
-                            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-red-600"></div>
-                          ) : (
-                            <svg className="w-5 h-5 text-red-500" fill="currentColor" viewBox="0 0 24 24">
-                              <path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z" />
-                            </svg>
-                          )}
-                        </button>
-                      </div>
-                      {item.addedAt && (
-                        <p className="text-xs text-hos-text-muted mt-3">
-                          Added {new Date(item.addedAt).toLocaleDateString()}
+                      <div className="flex items-center gap-2 mb-4 min-h-[1.5rem]">
+                        <p className="text-hos-gold font-bold">
+                          {formatPrice(item.product?.price ?? 0, item.product?.currency || 'USD')}
                         </p>
-                      )}
+                        {item.product?.originalPrice && item.product.originalPrice > (item.product?.price || 0) && (
+                          <p className="text-hos-text-muted line-through text-sm">
+                            {formatPrice(item.product.originalPrice, item.product?.currency || 'USD')}
+                          </p>
+                        )}
+                      </div>
+                      <div className="mt-auto">
+                        <div className="flex gap-2">
+                          <button
+                            onClick={() => handleMoveToCart(item.productId)}
+                            disabled={isOutOfStock || isAdding}
+                            className={`flex-1 px-4 py-2 rounded-lg transition-colors text-sm font-medium flex items-center justify-center gap-2 ${
+                              isOutOfStock
+                                ? 'bg-hos-bg-tertiary text-hos-text-muted cursor-not-allowed'
+                                : 'bg-hos-gold text-[#1a1406] hover:bg-hos-gold-hover'
+                            }`}
+                          >
+                            {isAdding ? (
+                              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                            ) : isOutOfStock ? (
+                              'Out of Stock'
+                            ) : (
+                              'Add to Cart'
+                            )}
+                          </button>
+                          <button
+                            onClick={() => handleRemoveFromWishlist(item.productId)}
+                            disabled={isRemoving}
+                            className="px-3 py-2 border border-hos-border rounded-lg hover:bg-red-500/10 hover:border-red-500/40 transition-colors text-sm flex items-center justify-center"
+                            title="Remove from wishlist"
+                          >
+                            {isRemoving ? (
+                              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-red-600"></div>
+                            ) : (
+                              <svg className="w-5 h-5 text-red-500" fill="currentColor" viewBox="0 0 24 24">
+                                <path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z" />
+                              </svg>
+                            )}
+                          </button>
+                        </div>
+                        <p className="text-xs text-hos-text-muted mt-3 min-h-[1rem]">
+                          {item.addedAt ? `Added ${new Date(item.addedAt).toLocaleDateString()}` : '\u00A0'}
+                        </p>
+                      </div>
                     </div>
                   </div>
                 );
