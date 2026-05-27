@@ -653,9 +653,9 @@ function ProductsContent() {
                                   </div>
                                 )}
                               </div>
-                              {product.fandom && (
-                                <p className="text-xs text-hos-text-muted truncate min-h-[1rem]">{product.fandom}</p>
-                              )}
+                              <p className="text-xs text-hos-text-muted truncate min-h-[1rem]">
+                                {product.fandom || '\u00A0'}
+                              </p>
                             </div>
                           </div>
                         </div>
