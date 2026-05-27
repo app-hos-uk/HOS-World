@@ -505,6 +505,16 @@ export default function ProductDetailClient() {
           </div>
         </div>
 
+        {/* Full Product Description */}
+        {product.description && (
+          <div className="mt-12 border-t pt-8">
+            <h2 className="text-2xl font-bold mb-4">Product Details</h2>
+            <div className="prose prose-invert max-w-none text-hos-text-secondary whitespace-pre-wrap">
+              {product.description}
+            </div>
+          </div>
+        )}
+
         {/* Reviews Section */}
         <div className="mt-12 border-t pt-8">
           <div className="flex justify-between items-center mb-6">
@@ -614,16 +624,6 @@ export default function ProductDetailClient() {
             </div>
           )}
         </div>
-
-        {/* Full Product Description (long description, below reviews) */}
-        {product.description && (
-          <div className="mt-12 border-t pt-8">
-            <h2 className="text-2xl font-bold mb-4">Product Details</h2>
-            <div className="prose prose-invert max-w-none text-hos-text-secondary whitespace-pre-wrap">
-              {product.description}
-            </div>
-          </div>
-        )}
 
         {/* Additional Product Information */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-8">
