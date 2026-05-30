@@ -14,14 +14,15 @@
 html{scroll-behavior:smooth;-webkit-text-size-adjust:100%;}
 .landing-site{background:var(--ink);color:var(--text);font-family:'Cormorant Garamond',Georgia,serif;font-size:1.0625rem;line-height:1.65;overflow-x:hidden;cursor:auto;-webkit-font-smoothing:antialiased;}
 
-.skip-link{
-  position:absolute;left:16px;top:-120px;z-index:10050;
+.landing-site .skip-link{
+  position:fixed;left:16px;top:-120px;z-index:10050;
   padding:12px 22px;background:var(--gold);color:var(--ink);
   font-family:'Cinzel',serif;font-size:var(--type-ui-sm);letter-spacing:.18em;text-transform:uppercase;
   text-decoration:none;border-radius:2px;transition:top .2s ease;
   box-shadow:0 8px 24px rgba(0,0,0,.5);
+  clip:rect(0,0,0,0);overflow:hidden;width:1px;height:1px;
 }
-.skip-link:focus{top:16px;outline:2px solid var(--gold-l);outline-offset:3px;}
+.landing-site .skip-link:focus{top:16px;clip:auto;overflow:visible;width:auto;height:auto;outline:2px solid var(--gold-l);outline-offset:3px;}
 
 /* CURSOR — snappy GPU transform; only active with .use-magic-cursor */
 .cur,.cur-r{position:fixed;left:0;top:0;border-radius:50%;pointer-events:none;z-index:9999;will-change:transform;}
