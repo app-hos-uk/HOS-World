@@ -15,8 +15,7 @@ import PaymentIcons from '@/components/PaymentIcons';
 import NewsletterSignup from '@/components/NewsletterSignup';
 import { Footer } from '@/components/Footer';
 
-export default function HomePage() {
-  
+export default function ShopHomePage() {
   return (
     <div className="min-h-screen bg-hos-bg">
       <script
@@ -35,7 +34,6 @@ export default function HomePage() {
       />
       <Header />
       <main>
-        {/* 1. Hero Banner + Trust Strip */}
         <HeroBanner
           animationType="fade"
           autoPlay={true}
@@ -44,43 +42,31 @@ export default function HomePage() {
           showArrows={true}
         />
 
-        {/* 2. Shop by Franchise */}
         <FandomCollection limit={8} />
 
-        {/* 3. Browse by Department */}
         <BrowseByDepartment />
 
-        {/* 4. This Week on the Marketplace */}
         <WeeklyPicks />
 
-        {/* 5. Enchanted Finds */}
         <EnchantedFinds />
 
-        {/* 6. Featured Franchises */}
         <FeaturedFranchises />
 
-        {/* Recently Viewed (if any) */}
         <section className="max-w-7xl mx-auto px-4 py-6 sm:py-8">
           <RecentlyViewed />
         </section>
 
-        {/* 7. Testimonials */}
         <Testimonials />
 
-        {/* 8. Sell on HOS */}
         <VendorCTA />
 
-        {/* 9. Blog / From the Grimoire */}
         <BlogPreview />
 
-        {/* 10. Payment Icons */}
         <PaymentIcons />
 
-        {/* 11. Newsletter */}
         <NewsletterSignup />
       </main>
 
-      {/* 12. Footer */}
       <Footer />
     </div>
   );

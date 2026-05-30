@@ -14,7 +14,7 @@ async function fetchSlugs(endpoint: string, field: string): Promise<string[]> {
     const items = json?.data?.data ?? json?.data?.products ?? json?.data?.items ?? json?.data ?? [];
     if (!Array.isArray(items)) return [];
     return items
-      .map((item: any) => item[field])
+      .map((item: { [key: string]: string }) => item[field])
       .filter(Boolean)
       .slice(0, 500);
   } catch {
@@ -27,17 +27,43 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     process.env.NEXT_PUBLIC_SITE_URL ||
     'https://hos-marketplaceweb-production.up.railway.app';
 
-  const staticPages = [
-    '', '/products', '/fandoms', '/login', '/help', '/support/kb', '/shipping', '/returns',
-    '/gift-cards/purchase', '/about', '/privacy-policy', '/do-not-sell', '/loyalty', '/sellers',
+  const landingPages: Array<{ path: string; priority: number; changeFrequency: 'daily' | 'weekly' }> = [
+    { path: '', priority: 1, changeFrequency: 'daily' },
+    { path: '/universes', priority: 0.85, changeFrequency: 'weekly' },
+    { path: '/the-experience', priority: 0.85, changeFrequency: 'weekly' },
+    { path: '/founding-members', priority: 0.8, changeFrequency: 'weekly' },
   ];
 
-  const entries: MetadataRoute.Sitemap = staticPages.map((path) => ({
-    url: `${baseUrl}${path}`,
-    lastModified: new Date(),
-    changeFrequency: (path === '' ? 'daily' : 'weekly') as 'daily' | 'weekly',
-    priority: path === '' ? 1 : 0.8,
-  }));
+  const storefrontPages = [
+    '/shop',
+    '/products',
+    '/fandoms',
+    '/login',
+    '/help',
+    '/support/kb',
+    '/shipping',
+    '/returns',
+    '/gift-cards/purchase',
+    '/privacy-policy',
+    '/do-not-sell',
+    '/loyalty',
+    '/sellers',
+  ];
+
+  const entries: MetadataRoute.Sitemap = [
+    ...landingPages.map(({ path, priority, changeFrequency }) => ({
+      url: `${baseUrl}${path}`,
+      lastModified: new Date(),
+      changeFrequency,
+      priority,
+    })),
+    ...storefrontPages.map((path) => ({
+      url: `${baseUrl}${path}`,
+      lastModified: new Date(),
+      changeFrequency: (path === '/shop' ? 'daily' : 'weekly') as 'daily' | 'weekly',
+      priority: path === '/shop' ? 0.9 : 0.8,
+    })),
+  ];
 
   const [productSlugs, sellerSlugs] = await Promise.all([
     fetchSlugs('products?limit=500&status=ACTIVE', 'slug'),

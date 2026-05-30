@@ -8,7 +8,7 @@ import { CartProvider } from '@/contexts/CartContext';
 import { GDPRConsentBanner } from '@/components/GDPRConsentBanner';
 import { GoogleTags } from '@/components/analytics/GoogleTags';
 import { AnalyticsProvider } from '@/components/analytics/AnalyticsProvider';
-import { SiteStructuredData } from '@/components/analytics/StructuredData';
+import { ConditionalSiteStructuredData } from '@/components/analytics/ConditionalSiteStructuredData';
 import { Toaster } from '@/components/Toaster';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
 import { Suspense } from 'react';
@@ -75,9 +75,6 @@ export const metadata: Metadata = {
   verification: process.env.NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION
     ? { google: process.env.NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION }
     : undefined,
-  alternates: {
-    canonical: '/',
-  },
 };
 
 export default function RootLayout({
@@ -89,7 +86,7 @@ export default function RootLayout({
     <html lang="en-US">
       <body className={`${cormorant.variable} ${figtree.variable} ${inter.variable} storefront-theme antialiased`}>
         <GoogleTags />
-        <SiteStructuredData />
+        <ConditionalSiteStructuredData />
         <QueryProvider>
           <AuthProviderWrapper>
             <CurrencyProvider>
