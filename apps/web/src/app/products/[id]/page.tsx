@@ -37,19 +37,24 @@ export async function generateMetadata({
     return { title: 'House of Spells | Product' };
   }
 
-  const title = product.name || 'Product';
+  const title = product.metaTitle || product.name || 'Product';
   const description =
-    product.shortDescription || product.description?.slice(0, 160) || `Shop ${title} at House of Spells`;
+    product.metaDescription ||
+    product.shortDescription ||
+    product.description?.slice(0, 160) ||
+    `Shop ${title} at House of Spells`;
   const image = product.images?.[0]?.url;
+  const canonicalPath = `/products/${product.slug || id}`;
 
   return {
     title,
     description,
+    alternates: { canonical: canonicalPath },
     openGraph: {
       title,
       description,
       type: 'website',
-      url: `${SITE_URL}/products/${id}`,
+      url: `${SITE_URL}${canonicalPath}`,
       images: image ? [{ url: image, width: 800, height: 800, alt: title }] : [],
     },
     twitter: {
@@ -72,10 +77,11 @@ export default async function ProductDetailPage({
 }) {
   const { id } = await params;
   const product = await fetchProduct(id);
+  const structuredDataPath = product?.slug || id;
 
   return (
     <>
-      {product ? <ProductStructuredData product={product} pathId={id} /> : null}
+      {product ? <ProductStructuredData product={product} pathId={structuredDataPath} /> : null}
       <ProductDetailClient />
     </>
   );

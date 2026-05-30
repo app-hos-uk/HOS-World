@@ -98,7 +98,7 @@ export function Footer() {
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-10">
           {/* Brand */}
           <div className="sm:col-span-2 xl:col-span-1">
-            <Link href="/" className="inline-block">
+            <Link href="/shop" className="inline-block">
               <Image
                 src={REFERENCE_ASSETS.logo}
                 alt="House of Spells"

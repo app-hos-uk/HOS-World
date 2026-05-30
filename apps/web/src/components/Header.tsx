@@ -170,7 +170,7 @@ export function Header() {
       <div className="w-full bg-hos-bg border-b border-hos-border">
         <div className="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between gap-4">
           {/* Logo */}
-          <Link href="/" className="flex items-center gap-3 shrink-0 group">
+          <Link href="/shop" className="flex items-center gap-3 shrink-0 group">
             <Image
               src={REFERENCE_ASSETS.logo}
               alt="House of Spells"
