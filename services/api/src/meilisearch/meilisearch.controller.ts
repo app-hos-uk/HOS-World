@@ -273,7 +273,8 @@ export class MeilisearchController {
     };
   }
 
-  @Public()
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('ADMIN')
   @Get('stats')
   @ApiOperation({
     summary: 'Get search index statistics',

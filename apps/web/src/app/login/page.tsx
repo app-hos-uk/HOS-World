@@ -170,29 +170,15 @@ function LoginPageInner() {
         throw new Error('Invalid response from server');
       }
 
-      const { token: authToken, refreshToken } = response.data;
-
-      if (!authToken) {
-        throw new Error('No token received from server');
-      }
-
-      try {
-        localStorage.setItem('auth_token', authToken);
-        if (refreshToken) {
-          localStorage.setItem('refresh_token', refreshToken);
-        }
-        setToken(authToken);
-      } catch (e) {
-        console.error('Failed to save token:', e);
-        throw new Error('Failed to save authentication token');
+      const user = response.data.user;
+      if (!user) {
+        throw new Error('Login failed — no user profile returned');
       }
 
       await mergeGuestCartAfterAuth();
 
       // Mark login success to prevent onUnauthorized redirects
       markLoginSuccess();
-
-      const user = response.data.user;
       // Redirect to returnUrl or role-specific dashboard
       const redirectPath = resolvePostAuthRedirect(user?.role, searchParams.get('returnUrl'));
 
@@ -310,20 +296,9 @@ function LoginPageInner() {
       if (!response || !response.data) {
         throw new Error('Invalid response from server');
       }
-      const { token: authToken, refreshToken: regRefreshToken, user } = response.data;
-      if (!authToken) {
-        throw new Error('No authentication token received');
-      }
-
-      try {
-        localStorage.setItem('auth_token', authToken);
-        if (regRefreshToken) {
-          localStorage.setItem('refresh_token', regRefreshToken);
-        }
-        setToken(authToken);
-      } catch (e) {
-        console.error('Failed to save token:', e);
-        throw new Error('Failed to save authentication token');
+      const { user } = response.data;
+      if (!user) {
+        throw new Error('Registration failed — no user profile returned');
       }
 
       await mergeGuestCartAfterAuth();

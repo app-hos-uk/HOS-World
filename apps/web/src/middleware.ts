@@ -27,6 +27,8 @@ const PROTECTED_PREFIXES = [
   '/downloads',
   '/notifications',
   '/support/tickets',
+  '/payment',
+  '/gift-cards',
 ];
 
 // Root domains that should NOT be treated as seller subdomains
@@ -57,13 +59,13 @@ const BYPASS_PREFIXES = [
   '/profile',
   '/settings',
   '/returns',
+  '/gift-cards',
   '/track-order',
   '/help',
   '/privacy-policy',
   '/terms',
   '/fandoms',
   '/collections',
-  '/gift-cards',
   '/downloads',
   '/shipping',
   '/leaderboard',
@@ -98,15 +100,13 @@ export function middleware(request: NextRequest) {
   const hostname = request.headers.get('host') || '';
 
   // --- Auth Protection ---
-  // Check if route requires authentication via the `is_logged_in` cookie
-  // (set by the API on login/register alongside HttpOnly auth tokens)
+  // Require HttpOnly access_token cookie (not forgeable is_logged_in indicator)
   const isProtected = PROTECTED_PREFIXES.some((prefix) => pathname.startsWith(prefix));
 
   if (isProtected) {
-    const isLoggedIn = request.cookies.get('is_logged_in')?.value === 'true';
     const hasToken = !!request.cookies.get('access_token')?.value;
 
-    if (!isLoggedIn && !hasToken) {
+    if (!hasToken) {
       const loginUrl = request.nextUrl.clone();
       loginUrl.pathname = '/login';
       loginUrl.searchParams.set('redirect', pathname);

@@ -48,12 +48,7 @@ if (typeof window !== 'undefined') {
 
 export const apiClient = ApiClient.create({
   baseUrl: API_BASE_URL,
-  getToken: () => {
-    if (typeof window !== 'undefined') {
-      return localStorage.getItem('auth_token');
-    }
-    return null;
-  },
+  getToken: () => null,
   onUnauthorized: () => {
     if (typeof window !== 'undefined') {
       const currentPath = window.location.pathname;
@@ -67,7 +62,6 @@ export const apiClient = ApiClient.create({
       
       if (isPublicPage) {
         try {
-          localStorage.removeItem('auth_token');
           document.cookie = 'is_logged_in=; path=/; max-age=0';
         } catch (e) {
           // Ignore
@@ -77,7 +71,6 @@ export const apiClient = ApiClient.create({
       
       if (currentPath === '/login' || currentPath.includes('/login')) {
         try {
-          localStorage.removeItem('auth_token');
           document.cookie = 'is_logged_in=; path=/; max-age=0';
         } catch (e) {
           // Ignore
@@ -93,9 +86,6 @@ export const apiClient = ApiClient.create({
       }
       
       try {
-        localStorage.removeItem('auth_token');
-        localStorage.removeItem('refresh_token');
-        // Clear the non-HttpOnly session indicator cookie
         document.cookie = 'is_logged_in=; path=/; max-age=0';
         lastLoginTime = null;
         sessionStorage.removeItem('last_login_time');

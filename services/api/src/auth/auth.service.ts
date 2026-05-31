@@ -1081,11 +1081,15 @@ export class AuthService {
   // OAuth methods (delegate to OAuth service)
   async validateOrCreateOAuthUser(oauthData: any): Promise<any> {
     const { AuthOAuthService } = await import('./auth.service.oauth');
+    const { EncryptionService } = await import('../integrations/encryption.service');
+    const encryption = new EncryptionService(this.configService);
+    encryption.onModuleInit();
     const oauthService = new AuthOAuthService(
       this.prisma,
       this.jwtService,
       this.configService,
       (user) => this.generateTokens(user),
+      (value) => encryption.encrypt(value),
     );
     return oauthService.validateOrCreateOAuthUser(oauthData);
   }
@@ -1260,10 +1264,11 @@ export class AuthService {
 
     const crypto = await import('crypto');
     const token = crypto.randomBytes(32).toString('hex');
+    const tokenHash = crypto.createHash('sha256').update(token).digest('hex');
 
     await this.prisma.user.update({
       where: { id: userId },
-      data: { emailVerifyToken: token },
+      data: { emailVerifyToken: tokenHash },
     });
 
     const frontendUrl = this.configService.get<string>('FRONTEND_URL') || 'http://localhost:3000';
@@ -1293,8 +1298,11 @@ export class AuthService {
       throw new BadRequestException('Invalid verification token.');
     }
 
+    const crypto = await import('crypto');
+    const tokenHash = crypto.createHash('sha256').update(token).digest('hex');
+
     const user = await this.prisma.user.findFirst({
-      where: { emailVerifyToken: token },
+      where: { emailVerifyToken: tokenHash },
     });
 
     if (!user) {

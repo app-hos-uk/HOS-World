@@ -50,10 +50,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const fetchUser = useCallback(async () => {
     try {
-      const token = typeof window !== 'undefined' ? localStorage.getItem('auth_token') : null;
       const hasCookieSession = typeof document !== 'undefined' && document.cookie.includes('is_logged_in=true');
 
-      if (!token && !hasCookieSession) {
+      if (!hasCookieSession) {
         if (mountedRef.current) {
           setUser(null);
           setImpersonatedRole(null);
@@ -96,8 +95,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           setUser(null);
           setImpersonatedRole(null);
         }
-        localStorage.removeItem('auth_token');
-        localStorage.removeItem('refresh_token');
+        localStorage.removeItem('admin_impersonated_role');
         document.cookie = 'is_logged_in=; path=/; max-age=0';
       }
     } catch (error: any) {
@@ -106,8 +104,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setUser(null);
         setImpersonatedRole(null);
       }
-      localStorage.removeItem('auth_token');
-      localStorage.removeItem('refresh_token');
+      localStorage.removeItem('admin_impersonated_role');
       document.cookie = 'is_logged_in=; path=/; max-age=0';
     } finally {
       if (mountedRef.current) setLoading(false);
@@ -119,16 +116,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     fetchUser();
 
     const handleStorageChange = (e: StorageEvent) => {
-      if (e.key === 'auth_token') {
+      if (e.key === 'admin_impersonated_role') {
         fetchUser();
       }
     };
 
-    // Periodically check cookie-based session for cross-tab sync
     const cookieCheckInterval = setInterval(() => {
       const hasCookieSession = document.cookie.includes('is_logged_in=true');
-      const hasLocalToken = !!localStorage.getItem('auth_token');
-      if (!hasCookieSession && !hasLocalToken && user) {
+      if (!hasCookieSession && user) {
         fetchUser();
       }
     }, 5000);
@@ -187,8 +182,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     } catch (error) {
       console.error('Logout error:', error);
     }
-    localStorage.removeItem('auth_token');
-    localStorage.removeItem('refresh_token');
     localStorage.removeItem('admin_impersonated_role');
     document.cookie = 'is_logged_in=; path=/; max-age=0';
     setUser(null);

@@ -114,16 +114,23 @@ export class StorageService {
       throw new BadRequestException('No file provided');
     }
 
+    const safeFolder = this.sanitizeFolder(folder);
+
     switch (this.provider) {
       case StorageProvider.S3:
-        return this.uploadToS3(file, folder, options);
+        return this.uploadToS3(file, safeFolder, options);
       case StorageProvider.MINIO:
-        return this.uploadToMinIO(file, folder, options);
+        return this.uploadToMinIO(file, safeFolder, options);
       case StorageProvider.CLOUDINARY:
-        return this.uploadToCloudinary(file, folder, options);
+        return this.uploadToCloudinary(file, safeFolder, options);
       default:
-        return this.uploadLocal(file, folder);
+        return this.uploadLocal(file, safeFolder);
     }
+  }
+
+  private sanitizeFolder(folder: string): string {
+    const safe = (folder || 'uploads').replace(/[^a-zA-Z0-9_-]/g, '').substring(0, 50);
+    return safe || 'uploads';
   }
 
   async uploadMultipleFiles(

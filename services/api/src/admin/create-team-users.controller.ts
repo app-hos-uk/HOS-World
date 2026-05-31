@@ -1,4 +1,4 @@
-import { Controller, Post, ForbiddenException } from '@nestjs/common';
+import { Controller, Post, ForbiddenException, Headers, Request } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { ApiTags, ApiOperation, ApiResponse as SwaggerApiResponse } from '@nestjs/swagger';
 import { Public } from '../common/decorators/public.decorator';
@@ -69,6 +69,19 @@ export class CreateTeamUsersController {
     }
   }
 
+  private guardDevSeedSecret(req: { headers?: Record<string, string | string[] | undefined> }) {
+    this.guardDevelopmentOnly();
+    const expected = this.configService.get<string>('DEV_SEED_SECRET');
+    if (!expected) {
+      throw new ForbiddenException('DEV_SEED_SECRET is not configured');
+    }
+    const provided = req.headers?.['x-dev-seed-secret'];
+    const value = Array.isArray(provided) ? provided[0] : provided;
+    if (value !== expected) {
+      throw new ForbiddenException('Invalid dev seed secret');
+    }
+  }
+
   @Public()
   @Post('create-team-users')
   @ApiOperation({
@@ -77,8 +90,8 @@ export class CreateTeamUsersController {
       'Creates or updates team users (Admin, Procurement, Fulfillment, Catalog, Marketing, Finance, CMS Editor) with default password. Public endpoint for development/testing.',
   })
   @SwaggerApiResponse({ status: 201, description: 'Team users created/updated successfully' })
-  async createTeamUsers(): Promise<ApiResponse<any>> {
-    this.guardDevelopmentOnly();
+  async createTeamUsers(@Request() req: any): Promise<ApiResponse<any>> {
+    this.guardDevSeedSecret(req);
 
     // Generate password hash for "Test123!"
     const password = 'Test123!';
@@ -138,8 +151,8 @@ export class CreateTeamUsersController {
       'Creates or updates business users (Seller, B2C Seller, Wholesaler, Customer) with default password. Public endpoint for development/testing.',
   })
   @SwaggerApiResponse({ status: 201, description: 'Business users created/updated successfully' })
-  async createBusinessUsers(): Promise<ApiResponse<any>> {
-    this.guardDevelopmentOnly();
+  async createBusinessUsers(@Request() req: any): Promise<ApiResponse<any>> {
+    this.guardDevSeedSecret(req);
 
     // Generate password hash for "Test123!"
     const password = 'Test123!';
@@ -309,8 +322,8 @@ export class CreateTeamUsersController {
       'Creates or updates influencer@hos.test with password Test!123 and influencer profile. Public endpoint for development/testing.',
   })
   @SwaggerApiResponse({ status: 201, description: 'Influencer test user created/updated' })
-  async createInfluencerTestUser(): Promise<ApiResponse<any>> {
-    this.guardDevelopmentOnly();
+  async createInfluencerTestUser(@Request() req: any): Promise<ApiResponse<any>> {
+    this.guardDevSeedSecret(req);
 
     const email = 'influencer@hos.test';
     const password = 'Test!123';

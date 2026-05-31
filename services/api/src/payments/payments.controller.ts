@@ -10,6 +10,7 @@ import {
   Headers,
   RawBodyRequest,
 } from '@nestjs/common';
+import { Throttle } from '@nestjs/throttler';
 import {
   ApiTags,
   ApiOperation,
@@ -31,6 +32,7 @@ export class PaymentsController {
   constructor(private readonly paymentsService: PaymentsService) {}
 
   @UseGuards(JwtAuthGuard)
+  @Throttle({ default: { limit: 10, ttl: 60000 } })
   @Post('intent')
   @HttpCode(HttpStatus.CREATED)
   @ApiBearerAuth('JWT-auth')
@@ -56,6 +58,7 @@ export class PaymentsController {
   }
 
   @UseGuards(JwtAuthGuard)
+  @Throttle({ default: { limit: 10, ttl: 60000 } })
   @Post('confirm')
   @HttpCode(HttpStatus.OK)
   @ApiBearerAuth('JWT-auth')
@@ -97,6 +100,7 @@ export class PaymentsController {
   }
 
   @Public()
+  @Throttle({ default: { limit: 60, ttl: 60000 } })
   @Post('webhook')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({

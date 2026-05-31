@@ -23,18 +23,18 @@ const nextConfig = {
   images: {
     unoptimized: false,
     remotePatterns: [
-      { protocol: 'https', hostname: '**.placehold.co', pathname: '/**' },
       { protocol: 'https', hostname: 'res.cloudinary.com', pathname: '/**' },
-      { protocol: 'https', hostname: '**.amazonaws.com', pathname: '/**' },
-      { protocol: 'https', hostname: '**.railway.app', pathname: '/**' },
-      { protocol: 'https', hostname: '**.railway.internal', pathname: '/**' },
       { protocol: 'https', hostname: 'cdn.shopify.com', pathname: '/**' },
-      { protocol: 'https', hostname: '1drv.ms', pathname: '/**' },
-      { protocol: 'https', hostname: 'onedrive.live.com', pathname: '/**' },
-      { protocol: 'https', hostname: '**.1drv.com', pathname: '/**' },
-      { protocol: 'http', hostname: 'localhost', pathname: '/**' },
-      { protocol: 'https', hostname: 'localhost', pathname: '/**' },
-      { protocol: 'http', hostname: '127.0.0.1', pathname: '/**' },
+      { protocol: 'https', hostname: '*.amazonaws.com', pathname: '/**' },
+      { protocol: 'https', hostname: 'hos-marketplaceweb-production.up.railway.app', pathname: '/**' },
+      { protocol: 'https', hostname: 'hos-world-web.vercel.app', pathname: '/**' },
+      { protocol: 'https', hostname: '*.vercel.app', pathname: '/**' },
+      ...(process.env.NODE_ENV !== 'production'
+        ? [
+            { protocol: 'http', hostname: 'localhost', pathname: '/**' },
+            { protocol: 'http', hostname: '127.0.0.1', pathname: '/**' },
+          ]
+        : []),
     ],
   },
   eslint: {
@@ -57,6 +57,21 @@ const nextConfig = {
           {
             key: 'Strict-Transport-Security',
             value: 'max-age=63072000; includeSubDomains; preload',
+          },
+          {
+            key: 'Content-Security-Policy',
+            value: [
+              "default-src 'self'",
+              "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://js.stripe.com https://www.googletagmanager.com https://www.google-analytics.com",
+              "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
+              "img-src 'self' data: blob: https: http://localhost:* http://127.0.0.1:*",
+              "font-src 'self' https://fonts.gstatic.com data:",
+              "connect-src 'self' https: wss:",
+              "frame-src 'self' https://js.stripe.com https://hooks.stripe.com",
+              "object-src 'none'",
+              "base-uri 'self'",
+              "form-action 'self'",
+            ].join('; '),
           },
         ],
       },

@@ -172,11 +172,7 @@ function AcceptInvitationForm() {
           displayName: formData.displayName,
         });
 
-        if (infResponse?.data?.token) {
-          localStorage.setItem('auth_token', infResponse.data.token);
-          if (infResponse.data.refreshToken) {
-            localStorage.setItem('refresh_token', infResponse.data.refreshToken);
-          }
+        if (infResponse?.data?.user) {
           await mergeGuestCartAfterAuth();
           markLoginSuccess();
           toast.success('Account created successfully! Redirecting to dashboard...');
@@ -203,11 +199,7 @@ function AcceptInvitationForm() {
           gdprConsent: formData.gdprConsent,
         });
 
-        if (response?.data?.token) {
-          localStorage.setItem('auth_token', response.data.token);
-          if (response.data.refreshToken) {
-            localStorage.setItem('refresh_token', response.data.refreshToken);
-          }
+        if (response?.data?.user) {
           await mergeGuestCartAfterAuth();
           markLoginSuccess();
           toast.success('Account created successfully! Redirecting to dashboard...');

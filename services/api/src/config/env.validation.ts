@@ -154,6 +154,10 @@ export function validateEnvironmentVariables(
     warnings.push('STRIPE_WEBHOOK_SECRET should be set when using Stripe');
   }
 
+  if (config.NODE_ENV === 'production' && !config.INTEGRATION_ENCRYPTION_KEY) {
+    errors.push('INTEGRATION_ENCRYPTION_KEY is required in production');
+  }
+
   if (config.SMTP_HOST && (!config.SMTP_USER || !config.SMTP_PASS)) {
     warnings.push('SMTP_USER and SMTP_PASS should be set when SMTP_HOST is configured');
   }

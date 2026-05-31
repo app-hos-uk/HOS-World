@@ -1,4 +1,4 @@
-import { IsString, IsNotEmpty, IsNumber, IsOptional, Min } from 'class-validator';
+import { IsString, IsNotEmpty, IsOptional } from 'class-validator';
 
 export class CreatePaymentDto {
   @IsString()
@@ -9,11 +9,7 @@ export class CreatePaymentDto {
   @IsString()
   paymentMethod?: string;
 
-  @IsOptional()
-  @IsNumber()
-  @Min(0.01)
-  amount?: number;
-
+  /** Currency is informational only — payable amount is computed server-side from the order. */
   @IsOptional()
   @IsString()
   currency?: string;

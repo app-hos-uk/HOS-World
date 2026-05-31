@@ -25,6 +25,7 @@ import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../common/guards/roles.guard';
 import { Roles } from '../common/decorators/roles.decorator';
 import { Public } from '../common/decorators/public.decorator';
+import { Throttle } from '@nestjs/throttler';
 import type { ApiResponse } from '@hos-marketplace/shared-types';
 
 @ApiTags('gift-cards')
@@ -68,6 +69,7 @@ export class GiftCardsController {
   }
 
   @Public()
+  @Throttle({ default: { limit: 5, ttl: 60000 } })
   @Get('validate/:code')
   @ApiOperation({
     summary: 'Validate gift card',

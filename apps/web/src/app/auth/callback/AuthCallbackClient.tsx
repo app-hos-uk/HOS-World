@@ -1,34 +1,15 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 import { apiClient, markLoginSuccess, mergeGuestCartAfterAuth } from '@/lib/api';
 import { consumeAuthReturnUrl, resolvePostAuthRedirect } from '@/lib/authRedirect';
 
 export function AuthCallbackClient() {
   const router = useRouter();
-  const searchParams = useSearchParams();
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    // OAuth flow: tokens are now set as HttpOnly cookies by the backend redirect.
-    // Legacy flow: tokens may still arrive as query params for backward compat.
-    const urlToken = searchParams.get('token');
-    const urlRefreshToken = searchParams.get('refreshToken');
-
-    if (urlToken) {
-      // Legacy path: tokens in URL — store them and clean up the URL
-      try {
-        localStorage.setItem('auth_token', urlToken);
-        if (urlRefreshToken) {
-          localStorage.setItem('refresh_token', urlRefreshToken);
-        }
-        window.history.replaceState({}, '', window.location.pathname);
-      } catch {
-        // Cookies are set by backend anyway, continue
-      }
-    }
-
     (async () => {
       try {
         await mergeGuestCartAfterAuth();
@@ -38,16 +19,11 @@ export function AuthCallbackClient() {
         const returnUrl = consumeAuthReturnUrl();
         router.replace(resolvePostAuthRedirect(role, returnUrl));
       } catch (e: any) {
-        try {
-          localStorage.removeItem('auth_token');
-          localStorage.removeItem('refresh_token');
-        } catch {
-          // ignore
-        }
+        document.cookie = 'is_logged_in=; path=/; max-age=0';
         setError(e?.message || 'OAuth login failed.');
       }
     })();
-  }, [router, searchParams]);
+  }, [router]);
 
   if (!error) return null;
 

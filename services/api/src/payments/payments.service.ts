@@ -88,8 +88,7 @@ export class PaymentsService {
       throw new BadRequestException('Order is already paid');
     }
 
-    const paymentAmount =
-      createPaymentDto.amount !== undefined ? createPaymentDto.amount : Number(order.total);
+    const paymentAmount = await this.computePayableAmount(order.id, Number(order.total));
     const paymentCurrency = createPaymentDto.currency || order.currency;
 
     if (paymentAmount <= 0) {
@@ -156,6 +155,13 @@ export class PaymentsService {
     } catch (error: any) {
       this.logger.error(`Failed to create payment intent with ${providerName}:`, error);
       throw new BadRequestException('Failed to create payment intent. Please try again.');
+    }
+
+    if (paymentIntentId) {
+      await this.prisma.order.update({
+        where: { id: order.id },
+        data: { stripePaymentIntentId: paymentIntentId },
+      });
     }
 
     return {
@@ -227,6 +233,26 @@ export class PaymentsService {
         throw new BadRequestException(
           result.error || `Payment not successful. Status: ${result.status}`,
         );
+      }
+
+      const intentOrderId = result.metadata?.orderId;
+      if (!intentOrderId || intentOrderId !== orderId) {
+        throw new BadRequestException('Payment intent does not belong to this order');
+      }
+
+      const expectedAmount = await this.computePayableAmount(orderId, Number(order.total));
+      const expectedAmountBase =
+        order.currency === this.BASE_CURRENCY
+          ? expectedAmount
+          : await this.currencyService.convertBetween(
+              expectedAmount,
+              order.currency,
+              this.BASE_CURRENCY,
+            );
+      const expectedCents = Math.round(expectedAmountBase * 100);
+      const paidCents = Math.round((result.amount || 0) * 100);
+      if (Math.abs(paidCents - expectedCents) > 1) {
+        throw new BadRequestException('Payment amount does not match order total');
       }
 
       // Process payment (webhook may have already done this, but idempotent)
@@ -506,6 +532,19 @@ export class PaymentsService {
         data: { metadata: meta as object },
       });
     }
+  }
+
+  /**
+   * Compute the amount still owed on an order (after gift card redemptions).
+   */
+  private async computePayableAmount(orderId: string, orderTotal: number): Promise<number> {
+    const redemptions = await this.prisma.giftCardTransaction.findMany({
+      where: { orderId, type: 'REDEMPTION' },
+      select: { amount: true },
+    });
+    const redeemed = redemptions.reduce((sum, tx) => sum + Number(tx.amount), 0);
+    const payable = orderTotal - redeemed;
+    return Math.max(0, Math.round(payable * 100) / 100);
   }
 
   /**

@@ -82,6 +82,7 @@ export class ApiClient {
 
     const headers: Record<string, string> = {
       'Content-Type': 'application/json',
+      'X-Requested-With': 'XMLHttpRequest',
       ...(options.headers as Record<string, string> || {}),
     };
 
@@ -149,32 +150,38 @@ export class ApiClient {
           const msg = (errorData as any)?.message;
           errorMessage = Array.isArray(msg) ? msg.join(', ') : msg || errorMessage;
           if (!(response.status === 401 && this.unauthorizedHandled)) {
-            console.error('API Error Response:', {
-              status: response.status,
-              statusText: response.statusText,
-              error: errorData,
-              url,
-            });
+            if (process.env.NODE_ENV === 'development') {
+              console.error('API Error Response:', {
+                status: response.status,
+                statusText: response.statusText,
+                error: errorData,
+                url,
+              });
+            }
           }
         } catch (e) {
           try {
             const text = await response.text();
             if (text) errorMessage = text;
             if (!(response.status === 401 && this.unauthorizedHandled)) {
-              console.error('API Error (non-JSON):', {
-                status: response.status,
-                statusText: response.statusText,
-                text,
-                url,
-              });
+              if (process.env.NODE_ENV === 'development') {
+                console.error('API Error (non-JSON):', {
+                  status: response.status,
+                  statusText: response.statusText,
+                  text,
+                  url,
+                });
+              }
             }
           } catch (textError) {
             if (!(response.status === 401 && this.unauthorizedHandled)) {
-              console.error('API Error (unable to read response):', {
-                status: response.status,
-                statusText: response.statusText,
-                url,
-              });
+              if (process.env.NODE_ENV === 'development') {
+                console.error('API Error (unable to read response):', {
+                  status: response.status,
+                  statusText: response.statusText,
+                  url,
+                });
+              }
             }
           }
         }
@@ -195,12 +202,14 @@ export class ApiClient {
       // Enhanced error logging
       if (typeof window !== 'undefined') {
         if (!(this.unauthorizedHandled && (String(error?.message || '').toLowerCase().includes('invalid or expired token') || String(error?.message || '').toLowerCase().includes('please log in')))) {
-          console.error('API Request failed:', { 
-            url, 
-            method: options.method || 'GET',
-            error: error.message, 
-            stack: error.stack,
-          });
+          if (process.env.NODE_ENV === 'development') {
+            console.error('API Request failed:', { 
+              url, 
+              method: options.method || 'GET',
+              error: error.message, 
+              stack: error.stack,
+            });
+          }
         }
       }
       throw error;
@@ -234,40 +243,27 @@ export class ApiClient {
     if (typeof window === 'undefined') return false;
     if (!this.baseUrl) return false;
 
-    // Check for refresh token in localStorage (legacy) or cookie (is_logged_in)
-    const hasLegacyRefresh = !!localStorage.getItem('refresh_token');
+    // Cookie-based session only (HttpOnly tokens)
     const hasCookieSession = document.cookie.includes('is_logged_in=true');
-    if (!hasLegacyRefresh && !hasCookieSession) return false;
+    if (!hasCookieSession) return false;
 
     if (this.refreshInFlight) return await this.refreshInFlight;
 
     this.refreshInFlight = (async () => {
       try {
         const body: Record<string, string> = {};
-        const legacyToken = localStorage.getItem('refresh_token');
-        if (legacyToken) {
-          body.refreshToken = legacyToken;
-        }
         const res = await this.fetchWithTimeout(
           `${this.baseUrl}/auth/refresh`,
           {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: { 'Content-Type': 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
             credentials: 'include',
             body: JSON.stringify(body),
           },
           15000,
         );
         if (!res.ok) return false;
-        const json = await res.json();
-        const token = json?.data?.token;
-        const refreshToken = json?.data?.refreshToken;
-        if (!token) return false;
-        // Store in localStorage for backward compat during migration
-        localStorage.setItem('auth_token', token);
-        if (refreshToken) {
-          localStorage.setItem('refresh_token', refreshToken);
-        }
+        await res.json();
         this.unauthorizedHandled = false;
         return true;
       } catch {

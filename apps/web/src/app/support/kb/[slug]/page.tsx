@@ -7,6 +7,7 @@ import { Footer } from '@/components/Footer';
 import { apiClient } from '@/lib/api';
 import { useToast } from '@/hooks/useToast';
 import Link from 'next/link';
+import { sanitizeKbHtml } from '@/lib/sanitizeHtml';
 
 interface KBArticle {
   id: string;
@@ -24,14 +25,6 @@ interface KBArticle {
     slug: string;
     excerpt?: string;
   }>;
-}
-
-function sanitizeHtml(html: string): string {
-  let cleaned = html.replace(/<\s*(script|iframe|object|embed|form|input|textarea|button|select|applet|base|link|meta)\b[^>]*>[\s\S]*?<\/\s*\1\s*>/gi, '');
-  cleaned = cleaned.replace(/<\s*(script|iframe|object|embed|form|input|textarea|button|select|applet|base|link|meta)\b[^>]*\/?>/gi, '');
-  cleaned = cleaned.replace(/\s+on\w+\s*=\s*(?:"[^"]*"|'[^']*'|[^\s>]+)/gi, '');
-  cleaned = cleaned.replace(/href\s*=\s*(?:"javascript:[^"]*"|'javascript:[^']*')/gi, '');
-  return cleaned;
 }
 
 export default function KBArticlePage() {
@@ -137,7 +130,7 @@ export default function KBArticlePage() {
                   prose-a:text-hos-gold prose-a:no-underline hover:prose-a:underline
                   prose-img:rounded-lg
                   prose-code:text-hos-gold-hover prose-code:bg-hos-gold/10 prose-code:px-1 prose-code:py-0.5 prose-code:rounded"
-                dangerouslySetInnerHTML={{ __html: sanitizeHtml(article.content) }}
+                dangerouslySetInnerHTML={{ __html: sanitizeKbHtml(article.content) }}
               />
 
               {/* Helpful Section */}

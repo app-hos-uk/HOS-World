@@ -23,6 +23,8 @@ export type OAuthTokenGenerator = (user: {
   permissionRoleId?: string | null;
 }) => Promise<{ accessToken: string; refreshToken: string }>;
 
+export type OAuthTokenEncryptor = (value: string) => string;
+
 @Injectable()
 export class AuthOAuthService {
   constructor(
@@ -30,7 +32,13 @@ export class AuthOAuthService {
     private _jwtService: JwtService,
     private _configService: ConfigService,
     private generateTokensForUser: OAuthTokenGenerator,
+    private encryptSensitive?: OAuthTokenEncryptor,
   ) {}
+
+  private protectToken(value?: string | null): string | null | undefined {
+    if (!value) return value;
+    return this.encryptSensitive ? this.encryptSensitive(value) : value;
+  }
 
   /**
    * Validate or create user from OAuth provider
@@ -58,8 +66,8 @@ export class AuthOAuthService {
         await this.prisma.oAuthAccount.update({
           where: { id: existingOAuth.id },
           data: {
-            accessToken: oauthData.accessToken,
-            refreshToken: oauthData.refreshToken,
+            accessToken: this.protectToken(oauthData.accessToken),
+            refreshToken: this.protectToken(oauthData.refreshToken),
             updatedAt: new Date(),
           },
         });
@@ -84,8 +92,8 @@ export class AuthOAuthService {
           provider: oauthData.provider,
           providerId: oauthData.providerId,
           userId: existingUser.id,
-          accessToken: oauthData.accessToken,
-          refreshToken: oauthData.refreshToken,
+          accessToken: this.protectToken(oauthData.accessToken),
+          refreshToken: this.protectToken(oauthData.refreshToken),
         },
       });
       user = await this.prisma.user.findUnique({ where: { id: existingUser.id } });
@@ -105,8 +113,8 @@ export class AuthOAuthService {
             create: {
               provider: oauthData.provider,
               providerId: oauthData.providerId,
-              accessToken: oauthData.accessToken || null,
-              refreshToken: oauthData.refreshToken,
+              accessToken: this.protectToken(oauthData.accessToken) || null,
+              refreshToken: this.protectToken(oauthData.refreshToken),
             },
           },
           customerProfile: {

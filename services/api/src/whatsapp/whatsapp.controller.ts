@@ -7,7 +7,12 @@ import {
   Query,
   UseGuards,
   ParseUUIDPipe,
+  Req,
+  Headers,
+  UnauthorizedException,
 } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
+import { Request } from 'express';
 import {
   ApiTags,
   ApiOperation,
@@ -27,7 +32,10 @@ import type { ApiResponse } from '@hos-marketplace/shared-types';
 @ApiTags('whatsapp')
 @Controller('whatsapp')
 export class WhatsAppController {
-  constructor(private readonly whatsappService: WhatsAppService) {}
+  constructor(
+    private readonly whatsappService: WhatsAppService,
+    private readonly configService: ConfigService,
+  ) {}
 
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('ADMIN')
@@ -80,7 +88,26 @@ export class WhatsAppController {
   })
   @ApiBody({ description: 'Webhook payload from WhatsApp' })
   @SwaggerApiResponse({ status: 200, description: 'Webhook processed successfully' })
-  async handleWebhook(@Body() body: any): Promise<ApiResponse<any>> {
+  async handleWebhook(
+    @Req() req: Request,
+    @Body() body: any,
+    @Headers('x-twilio-signature') signature?: string,
+  ): Promise<ApiResponse<any>> {
+    const authToken = this.configService.get<string>('TWILIO_AUTH_TOKEN');
+    if (authToken) {
+      if (!signature) {
+        throw new UnauthorizedException('Missing Twilio signature');
+      }
+      const twilio = require('twilio');
+      const proto = (req.headers['x-forwarded-proto'] as string)?.split(',')[0]?.trim() || req.protocol;
+      const host = (req.headers['x-forwarded-host'] as string)?.split(',')[0]?.trim() || req.headers.host;
+      const webhookUrl = `${proto}://${host}/api/whatsapp/webhook`;
+      const isValid = twilio.validateRequest(authToken, signature, webhookUrl, body);
+      if (!isValid) {
+        throw new UnauthorizedException('Invalid Twilio webhook signature');
+      }
+    }
+
     const message = await this.whatsappService.handleWebhook(body);
     return {
       data: message,

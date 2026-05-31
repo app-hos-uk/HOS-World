@@ -31,7 +31,7 @@ export function GDPRConsentBanner() {
     try {
       const consentKey = 'gdpr_consent_given';
       const consentGiven = localStorage.getItem(consentKey);
-      const isLoggedIn = localStorage.getItem('auth_token') || document.cookie.includes('is_logged_in=true');
+      const isLoggedIn = document.cookie.includes('is_logged_in=true');
 
       if (consentGiven && isLoggedIn) {
         // Consent was given (possibly anonymously). Sync to server if not already synced.
@@ -91,7 +91,7 @@ export function GDPRConsentBanner() {
     try {
       setLoading(true);
       
-      const isLoggedIn = localStorage.getItem('auth_token') || document.cookie.includes('is_logged_in=true');
+      const isLoggedIn = document.cookie.includes('is_logged_in=true');
       if (isLoggedIn) {
         try {
           // Update consent via API for authenticated users

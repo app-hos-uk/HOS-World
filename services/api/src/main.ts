@@ -37,6 +37,10 @@ function validateEnvironment() {
     }
   }
 
+  if (process.env.NODE_ENV === 'production' && !process.env.INTEGRATION_ENCRYPTION_KEY) {
+    missing.push('INTEGRATION_ENCRYPTION_KEY');
+  }
+
   if (missing.length > 0) {
     logger.error(
       `Missing or invalid required environment variables: ${missing.join(', ')}`,
@@ -191,8 +195,9 @@ async function bootstrap() {
       }
 
       app = await NestFactory.create(AppModule, {
-        cors: false, // We handle CORS explicitly below so OPTIONS preflight gets correct origin (not * with credentials)
+        cors: false,
         logger: logger,
+        rawBody: true,
       });
       logger.info('✅ AppModule initialized successfully', 'Bootstrap');
 
@@ -256,14 +261,24 @@ async function bootstrap() {
       );
 
       // CSRF protection: verify Origin header on state-changing requests
-      // Reuses the top-level isOriginAllowed() so CORS and CSRF share a single source of truth.
       app.use((req: any, res: any, next: any) => {
         if (['GET', 'HEAD', 'OPTIONS'].includes(req.method)) return next();
         const origin = req.headers['origin'];
-        if (!origin) return next();
-        if (isOriginAllowed(origin) !== null) return next();
-        logger.warn(`CSRF: Blocked state-changing request from origin ${origin}`, 'Security');
-        return res.status(403).json({ error: 'Forbidden: origin not allowed' });
+        if (origin) {
+          if (isOriginAllowed(origin) !== null) return next();
+          logger.warn(`CSRF: Blocked state-changing request from origin ${origin}`, 'Security');
+          return res.status(403).json({ error: 'Forbidden: origin not allowed' });
+        }
+        // Requests without Origin (some mobile clients, curl): allow if not cookie-only
+        const hasAuthCookie = req.cookies?.access_token || req.cookies?.refresh_token;
+        const hasBearer = typeof req.headers.authorization === 'string' && req.headers.authorization.startsWith('Bearer ');
+        const hasApiKey = !!req.headers['x-api-key'];
+        const isXhr = req.headers['x-requested-with'] === 'XMLHttpRequest';
+        if (hasAuthCookie && !hasBearer && !hasApiKey && !isXhr) {
+          logger.warn('CSRF: Blocked cookie-authenticated request without Origin or X-Requested-With', 'Security');
+          return res.status(403).json({ error: 'Forbidden: missing CSRF protection header' });
+        }
+        return next();
       });
 
       logger.info('✅ Security headers + CSRF origin check configured', 'Bootstrap');
@@ -300,9 +315,12 @@ async function bootstrap() {
     // Enhanced CORS configuration for non-OPTIONS requests (must use same logic as OPTIONS handler)
     app.enableCors({
       origin: (origin, callback) => {
-        // Allow requests with no origin (like mobile apps or curl requests)
         if (!origin) {
-          logger.debug('CORS: Allowing request with no origin', 'CORS');
+          if (isProduction) {
+            logger.debug('CORS: Rejecting request with no origin in production', 'CORS');
+            return callback(new Error('Origin header required'));
+          }
+          logger.debug('CORS: Allowing request with no origin (non-production)', 'CORS');
           return callback(null, true);
         }
 

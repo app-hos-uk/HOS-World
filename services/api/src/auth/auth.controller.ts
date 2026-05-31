@@ -37,6 +37,8 @@ import { Public } from '../common/decorators/public.decorator';
 import { AdminSellersService } from '../admin/sellers.service';
 import { ConfigService } from '@nestjs/config';
 import { setAuthCookies, clearAuthCookies } from './cookie.utils';
+import { sanitizeAuthResponse } from '../common/utils/auth-response.util';
+import { VerifyEmailDto } from './dto/verify-email.dto';
 import type { ApiResponse, AuthResponse, User } from '@hos-marketplace/shared-types';
 
 @ApiTags('auth')
@@ -107,7 +109,7 @@ export class AuthController {
     const result = await this.authService.acceptInvitation(body.token, body.registerDto, ipAddress, userAgent);
     setAuthCookies(res, result.token, result.refreshToken, this.configService);
     return {
-      data: result,
+      data: sanitizeAuthResponse(result),
       message: 'Invitation accepted and account created successfully',
     };
   }
@@ -140,7 +142,7 @@ export class AuthController {
     const result = await this.authService.register(registerDto, ipAddress, userAgent);
     setAuthCookies(res, result.token, result.refreshToken, this.configService);
     return {
-      data: result,
+      data: sanitizeAuthResponse(result),
       message: 'User registered successfully',
     };
   }
@@ -173,7 +175,7 @@ export class AuthController {
     const result = await this.authService.guestCheckout(guestCheckoutDto, ipAddress, userAgent);
     setAuthCookies(res, result.token, result.refreshToken, this.configService);
     return {
-      data: result,
+      data: sanitizeAuthResponse(result),
       message: 'Guest checkout account created successfully',
     };
   }
@@ -194,7 +196,7 @@ export class AuthController {
       const result = await this.authService.login(loginDto);
       setAuthCookies(res, result.token, result.refreshToken, this.configService);
       return {
-        data: result,
+        data: sanitizeAuthResponse(result),
         message: 'Login successful',
       };
     } catch (error: any) {
@@ -222,7 +224,7 @@ export class AuthController {
     const result = await this.authService.refresh(token);
     setAuthCookies(res, result.token, result.refreshToken, this.configService);
     return {
-      data: result,
+      data: sanitizeAuthResponse(result),
       message: 'Token refreshed successfully',
     };
   }
@@ -325,6 +327,7 @@ export class AuthController {
   }
 
   @UseGuards(JwtAuthGuard)
+  @Throttle({ default: { limit: 5, ttl: 60000 } })
   @Post('change-password')
   @HttpCode(HttpStatus.OK)
   @ApiBearerAuth('JWT-auth')
@@ -388,7 +391,7 @@ export class AuthController {
   @ApiOperation({ summary: 'Verify email address with token' })
   @SwaggerApiResponse({ status: 200, description: 'Email verified successfully' })
   @SwaggerApiResponse({ status: 400, description: 'Invalid or expired token' })
-  async verifyEmail(@Body() body: { token: string }): Promise<ApiResponse<{ message: string }>> {
+  async verifyEmail(@Body() body: VerifyEmailDto): Promise<ApiResponse<{ message: string }>> {
     const result = await this.authService.verifyEmail(body.token);
     return { data: result, message: result.message };
   }

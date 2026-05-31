@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, ForbiddenException, UnauthorizedException } from '@nestjs/common';
 import { PrismaService } from '../database/prisma.service';
 import { GeminiService } from '../ai/gemini.service';
 
@@ -14,19 +14,26 @@ export class ChatbotService {
     sellerId?: string;
     message: string;
     conversationId?: string;
+    authenticatedUserId?: string;
     context?: {
       orderId?: string;
       productId?: string;
       ticketId?: string;
     };
   }) {
+    if ((data.context?.orderId || data.userId) && !data.authenticatedUserId) {
+      throw new UnauthorizedException('Authentication required for personalized support');
+    }
+
+    const effectiveUserId = data.authenticatedUserId;
+
     // Build context for the AI
     let contextPrompt =
       'You are a helpful customer support assistant for an e-commerce marketplace. ';
 
-    if (data.userId) {
+    if (effectiveUserId) {
       const user = await this.prisma.user.findUnique({
-        where: { id: data.userId },
+        where: { id: effectiveUserId },
         select: {
           email: true,
           firstName: true,
@@ -38,9 +45,9 @@ export class ChatbotService {
       }
     }
 
-    if (data.context?.orderId) {
-      const order = await this.prisma.order.findUnique({
-        where: { id: data.context.orderId },
+    if (data.context?.orderId && effectiveUserId) {
+      const order = await this.prisma.order.findFirst({
+        where: { id: data.context.orderId, userId: effectiveUserId },
         include: {
           items: {
             include: {

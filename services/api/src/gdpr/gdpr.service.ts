@@ -334,6 +334,10 @@ export class GDPRService {
     await this.prisma.userQuest.deleteMany({ where: { userId } });
     await this.prisma.wishlistItem.deleteMany({ where: { userId } });
 
+    // Revoke all active sessions and OAuth credentials
+    await this.prisma.refreshToken.deleteMany({ where: { userId } }).catch(() => {});
+    await this.prisma.oAuthAccount.deleteMany({ where: { userId } }).catch(() => {});
+
     this.logger.log(`User data anonymized for user ${userId}`);
   }
 }

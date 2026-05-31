@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, BadRequestException, Logger } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException, ForbiddenException, Logger } from '@nestjs/common';
 import { PrismaService } from '../database/prisma.service';
 import { CreateWebhookDto } from './dto/create-webhook.dto';
 import { ConfigService } from '@nestjs/config';
@@ -28,24 +28,61 @@ export class WebhooksService {
     // Generate secret if not provided
     const secret = createDto.secret || crypto.randomBytes(32).toString('hex');
 
-    return this.prisma.webhook.create({
-      data: {
-        url: createDto.url,
-        events: createDto.events,
-        secret,
-        isActive: createDto.isActive ?? true,
-        sellerId: createDto.sellerId,
-      },
-    });
+    return this.sanitizeWebhook(
+      await this.prisma.webhook.create({
+        data: {
+          url: createDto.url,
+          events: createDto.events,
+          secret,
+          isActive: createDto.isActive ?? true,
+          sellerId: createDto.sellerId,
+        },
+      }),
+      true,
+    );
+  }
+
+  private sanitizeWebhook(webhook: any, revealSecret = false) {
+    if (!webhook) return webhook;
+    const { secret, ...rest } = webhook;
+    return {
+      ...rest,
+      secret: revealSecret ? secret : undefined,
+      hasSecret: !!secret,
+    };
+  }
+
+  private async resolveSellerIdForUser(userId: string): Promise<string | null> {
+    const seller = await this.prisma.seller.findUnique({ where: { userId }, select: { id: true } });
+    return seller?.id ?? null;
+  }
+
+  async assertWebhookAccess(
+    webhookId: string,
+    user: { id: string; role: string },
+    action: 'read' | 'write' = 'read',
+  ) {
+    const webhook = await this.prisma.webhook.findUnique({ where: { id: webhookId } });
+    if (!webhook) {
+      throw new NotFoundException('Webhook not found');
+    }
+    if (user.role === 'ADMIN') {
+      return webhook;
+    }
+    const sellerId = await this.resolveSellerIdForUser(user.id);
+    if (!sellerId || webhook.sellerId !== sellerId) {
+      throw new ForbiddenException(`You do not have permission to ${action} this webhook`);
+    }
+    return webhook;
   }
 
   /**
    * Get all webhooks
    */
   async findAll(sellerId?: string) {
-    return this.prisma.webhook.findMany({
+    const webhooks = await this.prisma.webhook.findMany({
       where: {
-        ...(sellerId ? { sellerId } : { sellerId: null }), // Platform-wide or seller-specific
+        ...(sellerId ? { sellerId } : { sellerId: null }),
         isActive: true,
       },
       include: {
@@ -58,12 +95,17 @@ export class WebhooksService {
       },
       orderBy: { createdAt: 'desc' },
     });
+    return webhooks.map((w) => this.sanitizeWebhook(w));
   }
 
   /**
    * Get webhook by ID
    */
-  async findOne(id: string) {
+  async findOne(id: string, user?: { id: string; role: string }) {
+    if (user) {
+      await this.assertWebhookAccess(id, user, 'read');
+    }
+
     const webhook = await this.prisma.webhook.findUnique({
       where: { id },
       include: {
@@ -84,31 +126,41 @@ export class WebhooksService {
       throw new NotFoundException('Webhook not found');
     }
 
-    return webhook;
+    return this.sanitizeWebhook(webhook);
   }
 
   /**
    * Update webhook
    */
-  async update(id: string, updateDto: Partial<CreateWebhookDto>) {
-    await this.findOne(id);
+  async update(id: string, updateDto: Partial<CreateWebhookDto>, user?: { id: string; role: string }) {
+    if (user) {
+      await this.assertWebhookAccess(id, user, 'write');
+    } else {
+      await this.findOne(id);
+    }
 
     const updateData: any = { ...updateDto };
     if (updateDto.events) {
       updateData.events = updateDto.events;
     }
 
-    return this.prisma.webhook.update({
-      where: { id },
-      data: updateData,
-    });
+    return this.sanitizeWebhook(
+      await this.prisma.webhook.update({
+        where: { id },
+        data: updateData,
+      }),
+    );
   }
 
   /**
    * Delete webhook
    */
-  async delete(id: string) {
-    await this.findOne(id);
+  async delete(id: string, user?: { id: string; role: string }) {
+    if (user) {
+      await this.assertWebhookAccess(id, user, 'write');
+    } else {
+      await this.findOne(id);
+    }
 
     return this.prisma.webhook.delete({
       where: { id },
@@ -233,7 +285,7 @@ export class WebhooksService {
   /**
    * Retry failed webhook delivery
    */
-  async retryDelivery(deliveryId: string) {
+  async retryDelivery(deliveryId: string, user?: { id: string; role: string }) {
     const delivery = await this.prisma.webhookDelivery.findUnique({
       where: { id: deliveryId },
       include: {
@@ -243,6 +295,10 @@ export class WebhooksService {
 
     if (!delivery) {
       throw new NotFoundException('Webhook delivery not found');
+    }
+
+    if (user) {
+      await this.assertWebhookAccess(delivery.webhookId, user, 'write');
     }
 
     if (delivery.status === 'SUCCESS') {
@@ -266,7 +322,11 @@ export class WebhooksService {
   /**
    * Get webhook delivery history
    */
-  async getDeliveryHistory(webhookId: string, limit = 50) {
+  async getDeliveryHistory(webhookId: string, limit = 50, user?: { id: string; role: string }) {
+    if (user) {
+      await this.assertWebhookAccess(webhookId, user, 'read');
+    }
+
     return this.prisma.webhookDelivery.findMany({
       where: { webhookId },
       orderBy: { createdAt: 'desc' },

@@ -42,7 +42,7 @@ import { existsSync, mkdirSync } from 'fs';
 import { StorageProvider } from '../storage/storage.service';
 import { BadRequestException } from '@nestjs/common';
 
-const ALLOWED_FILE_EXTENSIONS = ['.jpg', '.jpeg', '.png', '.gif', '.webp', '.svg', '.pdf'];
+const ALLOWED_FILE_EXTENSIONS = ['.jpg', '.jpeg', '.png', '.gif', '.webp', '.pdf'];
 /** Must match uploads.service.ts and storefront copy (seller product images: up to 10MB each). */
 const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
 
@@ -52,7 +52,6 @@ const IMAGE_MIME_WHITELIST = [
   'image/png',
   'image/gif',
   'image/webp',
-  'image/svg+xml',
   'application/pdf',
 ];
 
@@ -216,7 +215,8 @@ export class UploadsController {
   }
 
   @Post('single')
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('ADMIN', 'SELLER', 'B2C_SELLER', 'WHOLESALER', 'CMS_EDITOR')
   @UseInterceptors(
     FileInterceptor('file', {
       storage: createStorage(),

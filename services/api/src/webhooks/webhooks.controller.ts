@@ -9,6 +9,7 @@ import {
   Query,
   UseGuards,
   Request,
+  ForbiddenException,
 } from '@nestjs/common';
 import {
   ApiTags,
@@ -44,14 +45,16 @@ export class WebhooksController {
     @Body() createDto: CreateWebhookDto,
     @Request() req: any,
   ): Promise<ApiResponse<any>> {
-    // If user is seller, automatically set sellerId
-    if (req.user.role === 'SELLER' || req.user.role === 'B2C_SELLER') {
+    // If user is seller/wholesaler, automatically set sellerId from their profile
+    if (req.user.role === 'SELLER' || req.user.role === 'B2C_SELLER' || req.user.role === 'WHOLESALER') {
       const seller = await this.webhooksService['prisma'].seller.findUnique({
         where: { userId: req.user.id },
       });
       if (seller) {
         createDto.sellerId = seller.id;
       }
+    } else if (req.user.role !== 'ADMIN') {
+      throw new ForbiddenException('Only sellers and admins can create webhooks');
     }
 
     const webhook = await this.webhooksService.create(createDto);
@@ -69,7 +72,7 @@ export class WebhooksController {
   @SwaggerApiResponse({ status: 200, description: 'Webhooks retrieved successfully' })
   async findAll(@Request() req: any): Promise<ApiResponse<any[]>> {
     let sellerId: string | undefined;
-    if (req.user.role === 'SELLER' || req.user.role === 'B2C_SELLER') {
+    if (req.user.role === 'SELLER' || req.user.role === 'B2C_SELLER' || req.user.role === 'WHOLESALER') {
       const seller = await this.webhooksService['prisma'].seller.findUnique({
         where: { userId: req.user.id },
       });
@@ -77,7 +80,7 @@ export class WebhooksController {
         sellerId = seller.id;
       }
     } else if (req.user.role !== 'ADMIN') {
-      sellerId = undefined; // Only platform-wide for non-sellers
+      sellerId = undefined;
     }
 
     const webhooks = await this.webhooksService.findAll(sellerId);
@@ -141,8 +144,8 @@ export class WebhooksController {
   @ApiParam({ name: 'id', description: 'Webhook UUID', type: String })
   @SwaggerApiResponse({ status: 200, description: 'Webhook retrieved successfully' })
   @SwaggerApiResponse({ status: 404, description: 'Webhook not found' })
-  async findOne(@Param('id') id: string): Promise<ApiResponse<any>> {
-    const webhook = await this.webhooksService.findOne(id);
+  async findOne(@Param('id') id: string, @Request() req: any): Promise<ApiResponse<any>> {
+    const webhook = await this.webhooksService.findOne(id, req.user);
     return {
       data: webhook,
       message: 'Webhook retrieved successfully',
@@ -159,8 +162,9 @@ export class WebhooksController {
   async update(
     @Param('id') id: string,
     @Body() updateDto: Partial<CreateWebhookDto>,
+    @Request() req: any,
   ): Promise<ApiResponse<any>> {
-    const webhook = await this.webhooksService.update(id, updateDto);
+    const webhook = await this.webhooksService.update(id, updateDto, req.user);
     return {
       data: webhook,
       message: 'Webhook updated successfully',
@@ -174,8 +178,8 @@ export class WebhooksController {
   })
   @ApiParam({ name: 'id', description: 'Webhook UUID', type: String })
   @SwaggerApiResponse({ status: 200, description: 'Webhook deleted successfully' })
-  async delete(@Param('id') id: string): Promise<ApiResponse<any>> {
-    await this.webhooksService.delete(id);
+  async delete(@Param('id') id: string, @Request() req: any): Promise<ApiResponse<any>> {
+    await this.webhooksService.delete(id, req.user);
     return {
       data: null,
       message: 'Webhook deleted successfully',
@@ -189,8 +193,8 @@ export class WebhooksController {
   })
   @ApiParam({ name: 'id', description: 'Delivery UUID', type: String })
   @SwaggerApiResponse({ status: 200, description: 'Webhook delivery retried' })
-  async retryDelivery(@Param('id') id: string): Promise<ApiResponse<any>> {
-    const result = await this.webhooksService.retryDelivery(id);
+  async retryDelivery(@Param('id') id: string, @Request() req: any): Promise<ApiResponse<any>> {
+    const result = await this.webhooksService.retryDelivery(id, req.user);
     return {
       data: result,
       message: 'Webhook delivery retried',
@@ -208,10 +212,12 @@ export class WebhooksController {
   async getDeliveryHistory(
     @Param('id') id: string,
     @Query('limit') limit?: string,
+    @Request() req?: any,
   ): Promise<ApiResponse<any[]>> {
     const deliveries = await this.webhooksService.getDeliveryHistory(
       id,
       limit ? parseInt(limit, 10) : 50,
+      req?.user,
     );
     return {
       data: deliveries,

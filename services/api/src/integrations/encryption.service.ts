@@ -29,6 +29,9 @@ export class EncryptionService implements OnModuleInit {
     const keyHex = this.configService.get<string>('INTEGRATION_ENCRYPTION_KEY');
 
     if (!keyHex) {
+      if (this.configService.get<string>('NODE_ENV') === 'production') {
+        throw new Error('INTEGRATION_ENCRYPTION_KEY is required in production');
+      }
       this.logger.warn(
         'INTEGRATION_ENCRYPTION_KEY not set. Generating a temporary key for development. ' +
           'Set this environment variable in production!',

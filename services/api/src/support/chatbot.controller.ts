@@ -1,4 +1,4 @@
-import { Controller, Post, Get, Body, Param, UseGuards, Request } from '@nestjs/common';
+import { Controller, Post, Get, Body, Param, UseGuards, Request, UnauthorizedException } from '@nestjs/common';
 import {
   ApiTags,
   ApiOperation,
@@ -61,9 +61,17 @@ export class ChatbotController {
     },
     @Request() req: any,
   ): Promise<ApiResponse<any>> {
+    const authenticatedUserId = req.user?.id;
+    if ((body.userId || body.context?.orderId) && !authenticatedUserId) {
+      throw new UnauthorizedException('Authentication required for personalized support');
+    }
+
     const result = await this.chatbotService.processMessage({
-      ...body,
-      userId: body.userId || req.user?.id,
+      message: body.message,
+      conversationId: body.conversationId,
+      sellerId: body.sellerId,
+      authenticatedUserId,
+      context: body.context,
     });
     return {
       data: result,
@@ -107,7 +115,7 @@ export class ChatbotController {
   ): Promise<ApiResponse<any>> {
     const result = await this.chatbotService.escalateToHuman({
       ...body,
-      userId: body.userId || req.user?.id,
+      userId: req.user.id,
     });
     return {
       data: result,

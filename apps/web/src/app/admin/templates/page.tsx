@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { AdminLayout } from '@/components/AdminLayout';
 import { RouteGuard } from '@/components/RouteGuard';
 import { apiClient } from '@/lib/api';
+import { sanitizeEmailPreviewHtml } from '@/lib/sanitizeHtml';
 
 interface TemplateDefinition {
   slug: string;
@@ -282,7 +283,8 @@ export default function AdminTemplatesPage() {
                     ) : testResult ? (
                       selectedTemplate.channel === 'EMAIL' ? (
                         <iframe
-                          srcDoc={testResult.body}
+                          srcDoc={sanitizeEmailPreviewHtml(testResult.body)}
+                          sandbox=""
                           className="w-full h-[400px] border-0 rounded-lg"
                           title="Custom render"
                         />
@@ -296,7 +298,8 @@ export default function AdminTemplatesPage() {
                     ) : previewHtml ? (
                       selectedTemplate.channel === 'EMAIL' ? (
                         <iframe
-                          srcDoc={previewHtml.body}
+                          srcDoc={sanitizeEmailPreviewHtml(previewHtml.body)}
+                          sandbox=""
                           className="w-full h-[400px] border-0 rounded-lg"
                           title="Email preview"
                         />

@@ -10,6 +10,7 @@ import {
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../database/prisma.service';
+import { canAccessAllOrders } from '../common/constants/order-access.constants';
 import { TaxService } from '../tax/tax.service';
 import { WarehouseRoutingService } from '../inventory/warehouse-routing.service';
 import { GeocodingService } from '../inventory/geocoding.service';
@@ -1038,8 +1039,10 @@ export class OrdersService {
           pagination: { page: 1, limit, total: 0, totalPages: 0 },
         };
       }
+    } else if (!canAccessAllOrders(role)) {
+      throw new ForbiddenException('You do not have permission to view orders');
     } else {
-      // Admin and other staff listing all marketplace orders — one logical checkout per row (aligned with dashboard).
+      // Staff roles (ADMIN, FINANCE, FULFILLMENT, PROCUREMENT) — one checkout per row
       where.parentOrderId = null;
     }
 
@@ -1185,6 +1188,8 @@ export class OrdersService {
       if (!isDirectSeller && !isChildSeller) {
         throw new ForbiddenException('You do not have permission to view this order');
       }
+    } else if (!canAccessAllOrders(role)) {
+      throw new ForbiddenException('You do not have permission to view this order');
     }
 
     const isSeller = role === 'SELLER' || role === 'B2C_SELLER' || role === 'WHOLESALER';

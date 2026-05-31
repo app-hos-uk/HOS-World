@@ -37,7 +37,7 @@ export function CurrencyProvider({ children }: { children: React.ReactNode }) {
         typeof window !== 'undefined'
           ? (() => {
               try {
-                return localStorage.getItem('auth_token') || document.cookie.includes('is_logged_in=true');
+                return document.cookie.includes('is_logged_in=true');
               } catch {
                 return false;
               }
@@ -97,7 +97,7 @@ export function CurrencyProvider({ children }: { children: React.ReactNode }) {
         typeof window !== 'undefined'
           ? (() => {
               try {
-                return localStorage.getItem('auth_token') || document.cookie.includes('is_logged_in=true');
+                return document.cookie.includes('is_logged_in=true');
               } catch {
                 return false;
               }

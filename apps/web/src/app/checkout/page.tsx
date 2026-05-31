@@ -391,16 +391,8 @@ export default function CheckoutPage() {
         gdprConsent: true,
       });
 
-      const authToken = response?.data?.token;
-      const refreshToken = response?.data?.refreshToken;
-
-      if (!authToken) {
-        throw new Error('No token received from server');
-      }
-
-      localStorage.setItem('auth_token', authToken);
-      if (refreshToken) {
-        localStorage.setItem('refresh_token', refreshToken);
+      if (!response?.data?.user) {
+        throw new Error('Guest checkout failed');
       }
 
       clearGuestCartSessionId();

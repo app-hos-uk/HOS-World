@@ -9,6 +9,7 @@ import { useCurrency } from '@/contexts/CurrencyContext';
 import Link from 'next/link';
 import { SafeImage } from '@/components/SafeImage';
 import { expandDepartmentCategories } from '@/lib/storefrontNavigation';
+import { sanitizeSearchHighlight } from '@/lib/sanitizeHtml';
 
 const ITEMS_PER_PAGE = 20;
 
@@ -107,10 +108,6 @@ function ActiveFilterChip({ label, onRemove }: { label: string; onRemove: () => 
       </button>
     </span>
   );
-}
-
-function sanitizeHighlight(html: string): string {
-  return html.replace(/<(?!\/?mark\b)[^>]*>/gi, '');
 }
 
 function ProductsContent() {
@@ -636,7 +633,7 @@ function ProductsContent() {
                             <h3
                               className="font-semibold text-hos-text-secondary group-hover:text-hos-gold transition-colors text-sm sm:text-base line-clamp-2 min-h-[2.5rem] leading-snug"
                               dangerouslySetInnerHTML={{
-                                __html: sanitizeHighlight(highlighted?.name || product.name),
+                                __html: sanitizeSearchHighlight(highlighted?.name || product.name),
                               }}
                             />
                             <div className="mt-auto flex flex-col gap-2">

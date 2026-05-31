@@ -1,13 +1,16 @@
-import { Controller, Post, Get, Body, Query, Request, HttpCode, HttpStatus } from '@nestjs/common';
-import { ApiTags, ApiOperation } from '@nestjs/swagger';
+import { Controller, Post, Get, Body, Query, Request, HttpCode, HttpStatus, UseGuards } from '@nestjs/common';
+import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 import { Throttle } from '@nestjs/throttler';
 import { Public } from '../common/decorators/public.decorator';
 import { Roles } from '../common/decorators/roles.decorator';
+import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
+import { RolesGuard } from '../common/guards/roles.guard';
 import { FoundingMembersService } from './founding-members.service';
 import { CreateFoundingMemberDto } from './dto/create-founding-member.dto';
 
 @ApiTags('Founding Members')
 @Controller('founding-members')
+@UseGuards(JwtAuthGuard, RolesGuard)
 export class FoundingMembersController {
   constructor(private readonly foundingMembersService: FoundingMembersService) {}
 
