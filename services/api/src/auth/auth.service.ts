@@ -1252,4 +1252,64 @@ export class AuthService {
 
     this.logger.log(`OAuth account unlinked: ${provider} for user ${userId}`);
   }
+
+  async sendVerificationEmail(userId: string): Promise<{ message: string }> {
+    const user = await this.prisma.user.findUnique({ where: { id: userId } });
+    if (!user) throw new NotFoundException('User not found');
+    if (user.emailVerified) return { message: 'Email is already verified.' };
+
+    const crypto = await import('crypto');
+    const token = crypto.randomBytes(32).toString('hex');
+
+    await this.prisma.user.update({
+      where: { id: userId },
+      data: { emailVerifyToken: token },
+    });
+
+    const frontendUrl = this.configService.get<string>('FRONTEND_URL') || 'http://localhost:3000';
+    const verifyLink = `${frontendUrl}/auth/verify-email?token=${token}`;
+    const customerName = [user.firstName, user.lastName].filter(Boolean).join(' ') || 'there';
+
+    try {
+      const rendered = await this.templatesService.render('email_verification', {
+        customerName,
+        verifyLink,
+      });
+      await this.notificationsService.sendNotificationToUser(
+        user.id,
+        'SYSTEM',
+        rendered?.subject || 'Verify your email — House of Spells',
+        rendered?.body || `<p>Hi ${customerName},</p><p>Please verify your email by clicking <a href="${verifyLink}">here</a>.</p>`,
+      );
+    } catch (err: any) {
+      this.logger.warn(`Failed to send verification email to ${user.email}: ${err?.message}`);
+    }
+
+    return { message: 'Verification email sent.' };
+  }
+
+  async verifyEmail(token: string): Promise<{ message: string }> {
+    if (!token || token.length < 32) {
+      throw new BadRequestException('Invalid verification token.');
+    }
+
+    const user = await this.prisma.user.findFirst({
+      where: { emailVerifyToken: token },
+    });
+
+    if (!user) {
+      throw new BadRequestException('Invalid or expired verification token.');
+    }
+
+    await this.prisma.user.update({
+      where: { id: user.id },
+      data: {
+        emailVerified: true,
+        emailVerifiedAt: new Date(),
+        emailVerifyToken: null,
+      },
+    });
+
+    return { message: 'Email verified successfully.' };
+  }
 }

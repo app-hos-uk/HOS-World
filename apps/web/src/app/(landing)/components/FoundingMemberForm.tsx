@@ -7,25 +7,50 @@ import { REG_GOOGLE_SCRIPT_URL } from '../lib/constants';
 
 const REG_MIN_HUMAN_FILL_MS = 1800;
 
-function postRegistrationPayload(data: Record<string, unknown>) {
-  const googleUrl = REG_GOOGLE_SCRIPT_URL.trim();
-  if (googleUrl.includes('script.google.com')) {
-    const jsonStr = JSON.stringify(data);
-    return fetch(googleUrl, {
+const API_BASE =
+  process.env.NEXT_PUBLIC_API_URL ||
+  (typeof window !== 'undefined' && window.location.hostname === 'localhost'
+    ? 'http://localhost:3001/api'
+    : 'https://hos-marketplaceapi-production.up.railway.app/api');
+
+async function postRegistrationPayload(data: Record<string, unknown>) {
+  // Primary: POST to platform API
+  try {
+    const res = await fetch(`${API_BASE}/founding-members`, {
       method: 'POST',
-      mode: 'no-cors',
-      cache: 'no-store',
-      keepalive: true,
-      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-      body: jsonStr,
-    })
-      .then(() => true)
-      .catch(() => {
-        if (navigator.sendBeacon?.(googleUrl, jsonStr)) return true;
-        throw new Error('google_script');
-      });
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        firstName: data.firstName,
+        lastName: data.lastName,
+        email: data.email,
+        phone: data.phone,
+        country: data.country,
+        fandoms: data.fandoms,
+        otherFranchises: data.otherFranchises,
+        source: data.source,
+        spendBracket: data.spend,
+      }),
+    });
+    if (res.ok) return true;
+    if (res.status === 409) return true; // Already registered — treat as success
+    throw new Error('api_error');
+  } catch {
+    // Fallback: Google Script (fire-and-forget for redundancy)
+    const googleUrl = REG_GOOGLE_SCRIPT_URL.trim();
+    if (googleUrl.includes('script.google.com')) {
+      const jsonStr = JSON.stringify(data);
+      fetch(googleUrl, {
+        method: 'POST',
+        mode: 'no-cors',
+        cache: 'no-store',
+        keepalive: true,
+        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+        body: jsonStr,
+      }).catch(() => {});
+      return true;
+    }
+    throw new Error('no_backend_config');
   }
-  return Promise.reject(new Error('no_backend_config'));
 }
 
 export function FoundingMemberForm() {

@@ -88,7 +88,7 @@ function StripeCardCheckout({
         toast.success('Payment successful!');
         trackPurchase(order);
         onClearStripe();
-        router.push(`/orders/${order.id}`);
+        router.push(`/order-confirmation?orderId=${order.id}`);
       } else {
         throw new Error('Payment confirmation failed');
       }
@@ -529,8 +529,8 @@ function PaymentForm({ order }: { order: any }) {
           if (finalAmountAfterRedemption <= 0) {
             toast.success('Payment successful with gift card!');
             trackPurchase(order);
-            setProcessing(false); // Reset processing state before redirect
-            router.push(`/orders/${order.id}`);
+            setProcessing(false);
+            router.push(`/order-confirmation?orderId=${order.id}`);
             return;
           }
           
@@ -608,11 +608,9 @@ function PaymentForm({ order }: { order: any }) {
           return;
         }
       } else {
-        // This should only be reached if no gift card was applied but finalAmount is 0
-        // (i.e., gift card fully covered the order, or order total is 0)
         toast.success('Payment successful!');
         trackPurchase(order);
-        router.push(`/orders/${order.id}`);
+        router.push(`/order-confirmation?orderId=${order.id}`);
       }
     } catch (err: any) {
       console.error('Payment processing error:', err);

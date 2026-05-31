@@ -368,4 +368,28 @@ export class AuthController {
       message: 'Fandom quiz completed successfully',
     };
   }
+
+  @UseGuards(JwtAuthGuard)
+  @Post('send-verification-email')
+  @HttpCode(HttpStatus.OK)
+  @ApiBearerAuth('JWT-auth')
+  @Throttle({ default: { limit: 3, ttl: 300000 } })
+  @ApiOperation({ summary: 'Send verification email to current user' })
+  @SwaggerApiResponse({ status: 200, description: 'Verification email sent' })
+  async sendVerificationEmail(@Request() req: any): Promise<ApiResponse<{ message: string }>> {
+    const result = await this.authService.sendVerificationEmail(req.user.id);
+    return { data: result, message: result.message };
+  }
+
+  @Public()
+  @Post('verify-email')
+  @HttpCode(HttpStatus.OK)
+  @Throttle({ default: { limit: 10, ttl: 60000 } })
+  @ApiOperation({ summary: 'Verify email address with token' })
+  @SwaggerApiResponse({ status: 200, description: 'Email verified successfully' })
+  @SwaggerApiResponse({ status: 400, description: 'Invalid or expired token' })
+  async verifyEmail(@Body() body: { token: string }): Promise<ApiResponse<{ message: string }>> {
+    const result = await this.authService.verifyEmail(body.token);
+    return { data: result, message: result.message };
+  }
 }

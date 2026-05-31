@@ -1,14 +1,33 @@
 import { NextRequest, NextResponse } from 'next/server';
 
 /**
- * Middleware to handle subdomain-based routing for seller storefronts.
- *
- * When a request arrives at `{store-slug}.houseofspells.com`, it rewrites
- * the URL internally to `/sellers/{store-slug}` so the storefront page
- * handles it.  The user still sees the subdomain URL in their browser.
- *
- * Static assets, API routes, and the main domain are left untouched.
+ * Middleware handles:
+ * 1. Auth protection — redirects unauthenticated users from protected routes
+ * 2. Subdomain routing — rewrites seller subdomains to /sellers/{slug}
  */
+
+// Routes that require authentication (server-side redirect to /login)
+const PROTECTED_PREFIXES = [
+  '/admin',
+  '/seller',
+  '/wholesaler',
+  '/influencer',
+  '/procurement',
+  '/fulfillment',
+  '/catalog',
+  '/marketing',
+  '/finance',
+  '/cms',
+  '/customer',
+  '/profile',
+  '/orders',
+  '/wishlist',
+  '/loyalty',
+  '/quests',
+  '/downloads',
+  '/notifications',
+  '/support/tickets',
+];
 
 // Root domains that should NOT be treated as seller subdomains
 const ROOT_DOMAINS = [
@@ -18,7 +37,7 @@ const ROOT_DOMAINS = [
   '127.0.0.1',
 ];
 
-// Prefixes that should never be rewritten (static files, API, Next internals)
+// Prefixes that skip subdomain rewrite logic
 const BYPASS_PREFIXES = [
   '/_next',
   '/api',
@@ -66,31 +85,48 @@ const BYPASS_PREFIXES = [
   '/wholesaler',
   '/influencer-invite',
   '/favicon.ico',
+  '/notifications',
+  '/support',
+  '/shop',
+  '/founding-members',
+  '/universes',
+  '/the-experience',
 ];
 
 export function middleware(request: NextRequest) {
-  const hostname = request.headers.get('host') || '';
   const { pathname } = request.nextUrl;
+  const hostname = request.headers.get('host') || '';
 
-  // Skip static and internal paths
+  // --- Auth Protection ---
+  // Check if route requires authentication via the `is_logged_in` cookie
+  // (set by the API on login/register alongside HttpOnly auth tokens)
+  const isProtected = PROTECTED_PREFIXES.some((prefix) => pathname.startsWith(prefix));
+
+  if (isProtected) {
+    const isLoggedIn = request.cookies.get('is_logged_in')?.value === 'true';
+    const hasToken = !!request.cookies.get('access_token')?.value;
+
+    if (!isLoggedIn && !hasToken) {
+      const loginUrl = request.nextUrl.clone();
+      loginUrl.pathname = '/login';
+      loginUrl.searchParams.set('redirect', pathname);
+      return NextResponse.redirect(loginUrl);
+    }
+  }
+
+  // --- Subdomain Routing ---
+  // Skip subdomain logic for paths handled by app routes
   if (BYPASS_PREFIXES.some((prefix) => pathname.startsWith(prefix))) {
     return NextResponse.next();
   }
 
-  // Skip if no hostname or it's a root domain
   if (!hostname) {
     return NextResponse.next();
   }
 
-  // Extract potential subdomain
-  // Handle patterns like: store-name.houseofspells.com
-  // Also handle: store-name.localhost:3000 for local dev
   let subdomain: string | null = null;
-
-  // Strip port for comparison
   const hostWithoutPort = hostname.split(':')[0];
 
-  // Check if this is a subdomain of a known root domain
   for (const root of ROOT_DOMAINS) {
     const rootWithoutPort = root.split(':')[0];
     if (
@@ -102,22 +138,16 @@ export function middleware(request: NextRequest) {
     }
   }
 
-  // Also handle localhost subdomains for development (e.g., store-name.localhost:3000)
   if (!subdomain && hostWithoutPort.endsWith('.localhost')) {
     subdomain = hostWithoutPort.replace('.localhost', '');
   }
 
-  // If we found a subdomain, rewrite to the seller storefront
   if (subdomain && subdomain !== 'www' && subdomain !== 'api') {
-    // Rewrite root to seller storefront
     if (pathname === '/' || pathname === '') {
       const url = request.nextUrl.clone();
       url.pathname = `/sellers/${subdomain}`;
       return NextResponse.rewrite(url);
     }
-
-    // For other paths on the subdomain, let them pass through
-    // (they might be product pages, etc.)
     return NextResponse.next();
   }
 
@@ -126,9 +156,6 @@ export function middleware(request: NextRequest) {
 
 export const config = {
   matcher: [
-    /*
-     * Match all paths except static files and images
-     */
-    '/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico|css|js|woff|woff2|ttf|eot)$).*)',
+    '/((?!_next/static|_next/image|favicon.ico|landing/|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico|css|js|woff|woff2|ttf|eot)$).*)',
   ],
 };

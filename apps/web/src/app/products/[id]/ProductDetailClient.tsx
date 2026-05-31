@@ -133,6 +133,25 @@ export default function ProductDetailClient() {
     if (!product?.id || viewedProductIdRef.current === product.id) return;
     viewedProductIdRef.current = product.id;
     trackViewItem(product);
+
+    try {
+      const MAX_RECENT = 12;
+      const stored = localStorage.getItem('recentlyViewed');
+      const items: Array<{ id: string; name: string; image: string; price: number; rrp?: number; averageRating?: number; vendor?: string }> = stored ? JSON.parse(stored) : [];
+      const filtered = items.filter((i) => i.id !== product.id);
+      const firstImage = product.images?.[0];
+      const imageUrl = typeof firstImage === 'string' ? firstImage : firstImage?.url || product.image || '';
+      filtered.unshift({
+        id: product.id,
+        name: product.name || product.title || '',
+        image: imageUrl,
+        price: product.price ?? 0,
+        rrp: product.rrp ?? product.compareAtPrice,
+        averageRating: product.averageRating,
+        vendor: product.seller?.storeName || product.vendor || '',
+      });
+      localStorage.setItem('recentlyViewed', JSON.stringify(filtered.slice(0, MAX_RECENT)));
+    } catch { /* localStorage quota or parse error — non-critical */ }
   }, [product]);
 
   useEffect(() => {
