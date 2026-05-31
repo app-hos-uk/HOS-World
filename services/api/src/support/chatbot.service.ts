@@ -21,7 +21,7 @@ export class ChatbotService {
       ticketId?: string;
     };
   }) {
-    if ((data.context?.orderId || data.userId) && !data.authenticatedUserId) {
+    if ((data.context?.orderId || data.context?.productId || data.context?.ticketId || data.userId) && !data.authenticatedUserId) {
       throw new UnauthorizedException('Authentication required for personalized support');
     }
 

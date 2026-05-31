@@ -62,7 +62,8 @@ export class ChatbotController {
     @Request() req: any,
   ): Promise<ApiResponse<any>> {
     const authenticatedUserId = req.user?.id;
-    if ((body.userId || body.context?.orderId) && !authenticatedUserId) {
+    const hasEntityContext = body.userId || body.context?.orderId || body.context?.productId || body.context?.ticketId;
+    if (hasEntityContext && !authenticatedUserId) {
       throw new UnauthorizedException('Authentication required for personalized support');
     }
 
