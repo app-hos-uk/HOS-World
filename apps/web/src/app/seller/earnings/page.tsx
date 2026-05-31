@@ -111,6 +111,11 @@ export default function SellerEarningsPage() {
                 <p className="text-2xl font-bold text-green-400 mt-1">{formatPrice(data.paidOut)}</p>
               </div>
             </div>
+            {data.payouts.some((p) => p.status === 'FAILED') && (
+              <p className="text-xs text-hos-text-muted -mt-4">
+                Note: Failed payouts are excluded from the totals above.
+              </p>
+            )}
 
             {/* Payout History */}
             <div>
@@ -132,7 +137,7 @@ export default function SellerEarningsPage() {
                     </thead>
                     <tbody>
                       {data.payouts.map((payout) => (
-                        <tr key={payout.id} className="border-b border-hos-border/50 hover:bg-hos-bg-secondary/50">
+                        <tr key={payout.id} className={`border-b border-hos-border/50 hover:bg-hos-bg-secondary/50${payout.status === 'FAILED' ? ' opacity-60' : ''}`}>
                           <td className="py-3 px-4 text-hos-text-muted">
                             {new Date(payout.processedDate || payout.createdAt).toLocaleDateString()}
                           </td>
