@@ -22,11 +22,10 @@
     "@hos-marketplace/shared-types": "workspace:*"
   },
   "devDependencies": {
+    "@types/node": "^20.19.30",
     "typescript": "^5.3.3"
   },
   "files": [
     "dist"
   ]
 }
-
-
