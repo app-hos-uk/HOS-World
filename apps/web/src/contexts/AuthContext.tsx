@@ -2,7 +2,7 @@
 
 import React, { createContext, useContext, useEffect, useState, useCallback, useRef } from 'react';
 import { useRouter } from 'next/navigation';
-import { apiClient, clearFrontendSessionCookie } from '@/lib/api';
+import { apiClient, clearFrontendSessionCookie, setFrontendSessionCookie } from '@/lib/api';
 import type { User, UserRole } from '@hos-marketplace/shared-types';
 
 interface AuthContextType {
@@ -51,8 +51,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const fetchUser = useCallback(async () => {
     try {
       const hasCookieSession = typeof document !== 'undefined' && document.cookie.includes('is_logged_in=true');
+      // Legacy check: user may have logged in before the cookie-based auth was deployed
+      const hasLegacyToken = typeof window !== 'undefined' && !!localStorage.getItem('auth_token');
 
-      if (!hasCookieSession) {
+      if (!hasCookieSession && !hasLegacyToken) {
         if (mountedRef.current) {
           setUser(null);
           setImpersonatedRole(null);
@@ -68,13 +70,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (!mountedRef.current) return;
       
       if (response?.data) {
-        // Normalize role to uppercase to match backend
+        // Session is valid — ensure the frontend-domain cookie exists so the
+        // Next.js middleware can detect the session on subsequent navigations.
+        setFrontendSessionCookie();
+        // Clean up legacy localStorage tokens (no longer needed)
+        if (hasLegacyToken) {
+          localStorage.removeItem('auth_token');
+          localStorage.removeItem('refresh_token');
+        }
+
         const normalizedUser = {
           ...response.data,
           role: response.data.role?.toUpperCase() as UserRole,
         };
         if (mountedRef.current) setUser(normalizedUser);
-        // Only restore impersonated role from localStorage for ADMIN users.
         if (mountedRef.current) {
           if (normalizedUser.role === 'ADMIN' && typeof window !== 'undefined') {
             const stored = localStorage.getItem('admin_impersonated_role');
@@ -96,6 +105,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           setImpersonatedRole(null);
         }
         localStorage.removeItem('admin_impersonated_role');
+        localStorage.removeItem('auth_token');
+        localStorage.removeItem('refresh_token');
         clearFrontendSessionCookie();
       }
     } catch (error: any) {
@@ -105,6 +116,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setImpersonatedRole(null);
       }
       localStorage.removeItem('admin_impersonated_role');
+      localStorage.removeItem('auth_token');
+      localStorage.removeItem('refresh_token');
       clearFrontendSessionCookie();
     } finally {
       if (mountedRef.current) setLoading(false);
