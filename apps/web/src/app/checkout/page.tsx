@@ -4,7 +4,7 @@ import { Header } from '@/components/Header';
 import { Footer } from '@/components/Footer';
 import { useState, useEffect, useMemo, useRef } from 'react';
 import { useRouter } from 'next/navigation';
-import { apiClient, getOrCreateGuestCartSessionId, clearGuestCartSessionId, markLoginSuccess, GUEST_CHECKOUT_ACCOUNT_KEY } from '@/lib/api';
+import { apiClient, getOrCreateGuestCartSessionId, clearGuestCartSessionId, markLoginSuccess, setFrontendSessionCookie, GUEST_CHECKOUT_ACCOUNT_KEY } from '@/lib/api';
 import { useCurrency } from '@/contexts/CurrencyContext';
 import { useCart } from '@/contexts/CartContext';
 import { useAuth } from '@/contexts/AuthContext';
@@ -396,6 +396,7 @@ export default function CheckoutPage() {
       }
 
       clearGuestCartSessionId();
+      setFrontendSessionCookie();
       markLoginSuccess();
       sessionStorage.setItem(GUEST_CHECKOUT_ACCOUNT_KEY, 'true');
 

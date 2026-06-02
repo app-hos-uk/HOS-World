@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { apiClient, markLoginSuccess, mergeGuestCartAfterAuth } from '@/lib/api';
+import { apiClient, markLoginSuccess, mergeGuestCartAfterAuth, setFrontendSessionCookie } from '@/lib/api';
 import { stashReferralFromQuery } from '@/lib/referralAttribution';
 import { CharacterSelector } from '@/components/CharacterSelector';
 import { FandomQuiz } from '@/components/FandomQuiz';
@@ -177,9 +177,8 @@ function LoginPageInner() {
 
       await mergeGuestCartAfterAuth();
 
-      // Mark login success to prevent onUnauthorized redirects
+      setFrontendSessionCookie();
       markLoginSuccess();
-      // Redirect to returnUrl or role-specific dashboard
       const redirectPath = resolvePostAuthRedirect(user?.role, searchParams.get('returnUrl'));
 
       // Set redirect flag and stop auth check BEFORE redirect
@@ -303,7 +302,7 @@ function LoginPageInner() {
 
       await mergeGuestCartAfterAuth();
 
-      // CRITICAL: Mark login success to prevent onUnauthorized redirects
+      setFrontendSessionCookie();
       markLoginSuccess();
 
       // CRITICAL: Set redirect flag and stop auth check BEFORE redirect

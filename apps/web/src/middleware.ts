@@ -100,13 +100,18 @@ export function middleware(request: NextRequest) {
   const hostname = request.headers.get('host') || '';
 
   // --- Auth Protection ---
-  // Require HttpOnly access_token cookie (not forgeable is_logged_in indicator)
+  // Check is_logged_in cookie set by the frontend after successful auth.
+  // In cross-origin deployments (API on railway.app, frontend on vercel.app),
+  // the HttpOnly access_token cookie is bound to the API domain and invisible
+  // to the Next.js middleware. The is_logged_in cookie is set on the frontend
+  // domain by client JS after a successful login/register response.
+  // Real auth validation happens API-side on every request via the JWT.
   const isProtected = PROTECTED_PREFIXES.some((prefix) => pathname.startsWith(prefix));
 
   if (isProtected) {
-    const hasToken = !!request.cookies.get('access_token')?.value;
+    const isLoggedIn = request.cookies.get('is_logged_in')?.value === 'true';
 
-    if (!hasToken) {
+    if (!isLoggedIn) {
       const loginUrl = request.nextUrl.clone();
       loginUrl.pathname = '/login';
       loginUrl.searchParams.set('redirect', pathname);

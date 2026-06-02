@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { apiClient, markLoginSuccess, mergeGuestCartAfterAuth } from '@/lib/api';
+import { apiClient, markLoginSuccess, mergeGuestCartAfterAuth, setFrontendSessionCookie, clearFrontendSessionCookie } from '@/lib/api';
 import { consumeAuthReturnUrl, resolvePostAuthRedirect } from '@/lib/authRedirect';
 
 export function AuthCallbackClient() {
@@ -13,13 +13,14 @@ export function AuthCallbackClient() {
     (async () => {
       try {
         await mergeGuestCartAfterAuth();
+        setFrontendSessionCookie();
         markLoginSuccess();
         const me = await apiClient.getCurrentUser();
         const role = me?.data?.role ? String(me.data.role).toUpperCase() : undefined;
         const returnUrl = consumeAuthReturnUrl();
         router.replace(resolvePostAuthRedirect(role, returnUrl));
       } catch (e: any) {
-        document.cookie = 'is_logged_in=; path=/; max-age=0';
+        clearFrontendSessionCookie();
         setError(e?.message || 'OAuth login failed.');
       }
     })();

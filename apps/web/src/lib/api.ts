@@ -61,20 +61,12 @@ export const apiClient = ApiClient.create({
                           currentPath.startsWith('/sellers/');
       
       if (isPublicPage) {
-        try {
-          document.cookie = 'is_logged_in=; path=/; max-age=0';
-        } catch (e) {
-          // Ignore
-        }
+        clearFrontendSessionCookie();
         return;
       }
       
       if (currentPath === '/login' || currentPath.includes('/login')) {
-        try {
-          document.cookie = 'is_logged_in=; path=/; max-age=0';
-        } catch (e) {
-          // Ignore
-        }
+        clearFrontendSessionCookie();
         return;
       }
       
@@ -86,11 +78,11 @@ export const apiClient = ApiClient.create({
       }
       
       try {
-        document.cookie = 'is_logged_in=; path=/; max-age=0';
+        clearFrontendSessionCookie();
         lastLoginTime = null;
         sessionStorage.removeItem('last_login_time');
       } catch (e) {
-        // Ignore localStorage errors
+        // Ignore
       }
       
       // Only redirect if we're not on login page, not on public page, and not in cooldown
@@ -104,6 +96,27 @@ export const apiClient = ApiClient.create({
     }
   },
 });
+
+/**
+ * Set the is_logged_in cookie on the FRONTEND domain so that:
+ * 1. AuthContext can detect the session via document.cookie
+ * 2. Next.js middleware can protect routes server-side
+ * 3. Token refresh logic knows to attempt refresh on 401
+ *
+ * The real auth tokens (access_token, refresh_token) are HttpOnly cookies
+ * set by the API on the API domain — they travel with credentials:'include'
+ * but are NOT readable by frontend JS or the Next.js middleware.
+ */
+export function setFrontendSessionCookie(): void {
+  if (typeof document === 'undefined') return;
+  const maxAge = 30 * 24 * 60 * 60; // 30 days (matches refresh token TTL)
+  document.cookie = `is_logged_in=true; path=/; max-age=${maxAge}; SameSite=Lax`;
+}
+
+export function clearFrontendSessionCookie(): void {
+  if (typeof document === 'undefined') return;
+  document.cookie = 'is_logged_in=; path=/; max-age=0';
+}
 
 /** localStorage key for anonymous cart session (X-Guest-Session). */
 export const GUEST_CART_SESSION_KEY = 'hos_guest_cart_session';

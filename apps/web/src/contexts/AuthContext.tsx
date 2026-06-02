@@ -2,7 +2,7 @@
 
 import React, { createContext, useContext, useEffect, useState, useCallback, useRef } from 'react';
 import { useRouter } from 'next/navigation';
-import { apiClient } from '@/lib/api';
+import { apiClient, clearFrontendSessionCookie } from '@/lib/api';
 import type { User, UserRole } from '@hos-marketplace/shared-types';
 
 interface AuthContextType {
@@ -96,7 +96,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           setImpersonatedRole(null);
         }
         localStorage.removeItem('admin_impersonated_role');
-        document.cookie = 'is_logged_in=; path=/; max-age=0';
+        clearFrontendSessionCookie();
       }
     } catch (error: any) {
       console.error('Failed to fetch user:', error);
@@ -105,7 +105,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setImpersonatedRole(null);
       }
       localStorage.removeItem('admin_impersonated_role');
-      document.cookie = 'is_logged_in=; path=/; max-age=0';
+      clearFrontendSessionCookie();
     } finally {
       if (mountedRef.current) setLoading(false);
     }
@@ -183,7 +183,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       console.error('Logout error:', error);
     }
     localStorage.removeItem('admin_impersonated_role');
-    document.cookie = 'is_logged_in=; path=/; max-age=0';
+    clearFrontendSessionCookie();
     setUser(null);
     setImpersonatedRole(null);
     router.push('/login');
