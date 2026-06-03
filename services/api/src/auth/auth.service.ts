@@ -718,17 +718,15 @@ export class AuthService {
         );
       }
 
-      // Reset failed login attempts on successful login
-      if (user.failedLoginAttempts > 0 || user.lockedUntil) {
-        await this.prisma.user.update({
-          where: { id: user.id },
-          data: { failedLoginAttempts: 0, lockedUntil: null },
-        });
-      }
-
+      // Reset failed login attempts and update lastLoginAt in a single query
       await this.prisma.user.update({
         where: { id: user.id },
-        data: { lastLoginAt: new Date() },
+        data: {
+          lastLoginAt: new Date(),
+          ...(user.failedLoginAttempts > 0 || user.lockedUntil
+            ? { failedLoginAttempts: 0, lockedUntil: null }
+            : {}),
+        },
       });
 
       // Remove password and lockout fields from response

@@ -96,7 +96,8 @@ export class ApiClient {
         endpoint.startsWith('/auth/accept-invitation') ||
         endpoint.startsWith('/auth/refresh') ||
         endpoint.startsWith('/auth/forgot-password') ||
-        endpoint.startsWith('/auth/reset-password');
+        endpoint.startsWith('/auth/reset-password') ||
+        endpoint === '/auth/me';
 
       const doFetch = async () => {
         const nextHeaders: Record<string, string> = { ...headers };

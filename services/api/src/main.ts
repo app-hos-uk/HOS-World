@@ -316,11 +316,8 @@ async function bootstrap() {
     app.enableCors({
       origin: (origin, callback) => {
         if (!origin) {
-          if (isProduction) {
-            logger.debug('CORS: Rejecting request with no origin in production', 'CORS');
-            return callback(new Error('Origin header required'));
-          }
-          logger.debug('CORS: Allowing request with no origin (non-production)', 'CORS');
+          // Allow requests without Origin (server-to-server, healthchecks, mobile apps, curl).
+          // CSRF protection is handled separately by the middleware above.
           return callback(null, true);
         }
 
