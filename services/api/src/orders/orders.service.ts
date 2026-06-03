@@ -307,37 +307,39 @@ export class OrdersService {
     if (cart.promotionFreeShipping) {
       resolvedShippingCost = new Decimal(0);
     } else if (this.shippingService && shippingAddress) {
-      const cartValue = Number(grandSubtotal);
-      const shippingOptions = await this.shippingService.getShippingOptions(
-        cart.items.map((item) => ({
-          productId: item.productId,
-          quantity: item.quantity,
-          weight: (item.product as any).weight ?? null,
-        })),
-        cartValue,
-        {
-          country: shippingAddress.country,
-          state: shippingAddress.state || undefined,
-          city: shippingAddress.city || undefined,
-          postalCode: shippingAddress.postalCode || undefined,
-        },
-      );
-      if (shippingOptions.length > 0) {
-        const selectedOption = createOrderDto.shippingMethodId
-          ? shippingOptions.find((o: any) => o.method?.id === createOrderDto.shippingMethodId)
-          : null;
-        const serverRate = new Decimal(selectedOption?.rate ?? shippingOptions[0]?.rate ?? 0);
-        resolvedShippingCost = serverRate;
-      } else {
-        // No options returned — fall back to the previously-quoted cart shipping value.
-        this.logger.warn(
-          `Shipping options empty for order address; falling back to cart.shipping=${cart.shipping}`,
+      try {
+        const cartValue = Number(grandSubtotal);
+        const shippingOptions = await this.shippingService.getShippingOptions(
+          cart.items.map((item) => ({
+            productId: item.productId,
+            quantity: item.quantity,
+            weight: (item.product as any).weight ?? null,
+          })),
+          cartValue,
+          {
+            country: shippingAddress.country,
+            state: shippingAddress.state || undefined,
+            city: shippingAddress.city || undefined,
+            postalCode: shippingAddress.postalCode || undefined,
+          },
         );
+        if (shippingOptions.length > 0) {
+          const selectedOption = createOrderDto.shippingMethodId
+            ? shippingOptions.find((o: any) => o.method?.id === createOrderDto.shippingMethodId)
+            : null;
+          const serverRate = new Decimal(selectedOption?.rate ?? shippingOptions[0]?.rate ?? 0);
+          resolvedShippingCost = serverRate;
+        } else {
+          this.logger.warn(
+            `Shipping options empty for order address; falling back to cart.shipping=${cart.shipping}`,
+          );
+          resolvedShippingCost = new Decimal(cart.shipping ?? 0);
+        }
+      } catch (err) {
+        this.logger.warn(`Shipping re-validation failed, falling back to cart.shipping: ${err}`);
         resolvedShippingCost = new Decimal(cart.shipping ?? 0);
       }
     } else if (!cart.promotionFreeShipping && shippingAddress) {
-      // Shipping service is unavailable — use the stored cart shipping value as a conservative fallback
-      // only if it was set by a previous server-side quote (never trust raw client input).
       resolvedShippingCost = new Decimal(cart.shipping ?? 0);
     }
 

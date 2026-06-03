@@ -37,7 +37,8 @@ export class SettlementsService {
       throw new NotFoundException('Seller not found');
     }
 
-    // Get all paid orders in the period
+    // Get all paid orders in the period, excluding orders already paid out via
+    // Stripe Connect split (platformFeeAmount > 0 indicates funds were routed to vendor at payment time).
     const orders = await this.prisma.order.findMany({
       where: {
         sellerId: seller.id,
@@ -47,8 +48,12 @@ export class SettlementsService {
           lte: periodEnd,
         },
         orderSettlements: {
-          none: {}, // Not yet settled
+          none: {},
         },
+        OR: [
+          { platformFeeAmount: null },
+          { platformFeeAmount: { lte: 0 } },
+        ],
       },
       include: {
         items: true,

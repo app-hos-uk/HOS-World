@@ -114,7 +114,7 @@ function TrackOrderContent() {
           createdAt: raw.createdAt,
           trackingCode: raw.trackingCode,
           items: (raw.items || []).map((it, idx) => ({
-            id: String(idx),
+            id: `${raw.orderNumber}-item-${idx}-${it.productName || 'unknown'}`,
             quantity: it.quantity,
             price: 0,
             product: { name: it.productName || 'Item' },
