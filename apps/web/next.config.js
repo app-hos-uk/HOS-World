@@ -65,7 +65,7 @@ const nextConfig = {
               "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
               "img-src 'self' data: blob: https://res.cloudinary.com https://*.cloudinary.com https://images.unsplash.com https://lh3.googleusercontent.com https://hos-world-web.vercel.app",
               "font-src 'self' https://fonts.gstatic.com data:",
-              "connect-src 'self' https://*.houseofspells.com https://api.stripe.com https://www.google-analytics.com https://www.googletagmanager.com wss://*.houseofspells.com",
+              "connect-src 'self' https://*.houseofspells.com https://*.up.railway.app https://api.stripe.com https://www.google-analytics.com https://www.googletagmanager.com wss://*.houseofspells.com",
               "frame-src 'self' https://js.stripe.com https://hooks.stripe.com",
               "object-src 'none'",
               "base-uri 'self'",
