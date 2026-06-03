@@ -231,6 +231,7 @@ export default function SellerThemesPage() {
         role={isWholesaler ? 'WHOLESALER' : 'SELLER'}
         menuItems={menuItems}
         title={isWholesaler ? 'Wholesaler' : 'Seller'}
+        backToHref={{ title: 'Admin Dashboard', href: '/admin/dashboard' }}
       >
         {/* Page Header */}
         <div className="mb-8">

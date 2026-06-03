@@ -4,21 +4,14 @@ import { useCallback, useEffect, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { FANDOMS, OTHER_UNIVERSE_NAME } from '../lib/fandoms';
 import { REG_GOOGLE_SCRIPT_URL } from '../lib/constants';
+import { getPublicApiBaseUrl } from '@/lib/apiBaseUrl';
 
 const REG_MIN_HUMAN_FILL_MS = 1800;
-
-const API_BASE =
-  process.env.NEXT_PUBLIC_API_URL ||
-  (typeof window !== 'undefined' && window.location.hostname === 'localhost'
-    ? 'http://localhost:3001/api'
-    : typeof window !== 'undefined' && process.env.NODE_ENV === 'production'
-      ? '/api/proxy'
-      : 'https://hos-marketplaceapi-production.up.railway.app/api');
 
 async function postRegistrationPayload(data: Record<string, unknown>) {
   // Primary: POST to platform API
   try {
-    const res = await fetch(`${API_BASE}/founding-members`, {
+    const res = await fetch(`${getPublicApiBaseUrl()}/founding-members`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({

@@ -18,7 +18,7 @@ export default function InfluencerLayout({
 }) {
   return (
     <RouteGuard allowedRoles={['INFLUENCER', 'ADMIN']} showAccessDenied={true}>
-      <DashboardLayout role="INFLUENCER" menuItems={menuItems} title="Influencer">
+      <DashboardLayout role="INFLUENCER" menuItems={menuItems} title="Influencer" backToHref={{ title: 'Admin Dashboard', href: '/admin/dashboard' }}>
         {children}
       </DashboardLayout>
     </RouteGuard>

@@ -197,13 +197,22 @@ export function CMSLayout({ children }: CMSLayoutProps) {
           </nav>
 
           {/* Footer */}
-          <div className="border-t border-hos-border p-4">
+          <div className="border-t border-hos-border p-4 space-y-1">
+            {user?.role === 'ADMIN' && (
+              <Link
+                href="/admin/dashboard"
+                className="flex items-center gap-2 px-3 py-2 text-sm text-hos-text-secondary hover:bg-hos-bg-tertiary rounded-lg transition-colors font-medium"
+              >
+                <span>←</span>
+                <span>Admin Dashboard</span>
+              </Link>
+            )}
             <Link
-              href="/cms/dashboard"
-              className="flex items-center gap-2 px-3 py-2 text-sm text-hos-gold hover:bg-hos-gold/10 rounded-lg transition-colors font-medium"
+              href="/"
+              className="flex items-center gap-2 px-3 py-2 text-sm text-hos-text-secondary hover:bg-hos-bg-tertiary rounded-lg transition-colors font-medium"
             >
-              <span>📊</span>
-              <span>Dashboard</span>
+              <span>🏠</span>
+              <span>View Store</span>
             </Link>
           </div>
         </div>

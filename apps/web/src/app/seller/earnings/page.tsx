@@ -85,7 +85,7 @@ export default function SellerEarningsPage() {
 
   return (
     <RouteGuard allowedRoles={['SELLER', 'B2C_SELLER', 'WHOLESALER']}>
-      <DashboardLayout role="SELLER" menuItems={menuItems} title="Earnings & Payouts">
+      <DashboardLayout role="SELLER" menuItems={menuItems} title="Earnings & Payouts" backToHref={{ title: 'Admin Dashboard', href: '/admin/dashboard' }}>
         {loading ? (
           <div className="flex items-center justify-center py-20">
             <div className="w-8 h-8 border-4 border-hos-gold border-t-transparent rounded-full animate-spin" />

@@ -6,15 +6,6 @@ import { usePathname } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import type { SellerMenuItem } from '@/lib/sellerMenu';
 
-/** Sidebar «Admin Dashboard» shortcuts are suppressed on these team shells (`/finance`, `/marketing`, …). */
-const TEAM_SHELL_ROLES = new Set([
-  'PROCUREMENT',
-  'FULFILLMENT',
-  'CATALOG',
-  'MARKETING',
-  'FINANCE',
-  'CMS_EDITOR',
-]);
 
 type MenuItem = SellerMenuItem & { badge?: number };
 
@@ -29,7 +20,7 @@ interface DashboardLayoutProps {
   title: string;
   /** Link for "Back to Dashboard" in sidebar footer. Defaults to first menu item href. */
   dashboardHref?: string;
-  /** Shown only for real ADMIN accounts outside ops shells (see TEAM_SHELL_ROLES). */
+  /** Shown for real ADMIN accounts — navigation back to admin panel. */
   backToHref?: { title: string; href: string };
 }
 
@@ -39,16 +30,10 @@ export function DashboardLayout({ children, role, menuItems, title, dashboardHre
   const pathname = usePathname();
   const { logout, user, impersonatedRole } = useAuth();
 
-  const layoutRole = role.toUpperCase();
-  const isTeamOpsShell = TEAM_SHELL_ROLES.has(layoutRole);
-
-  /** Real account role — not impersonation view (Fulfillment-only users never see `/admin` shortcuts). */
+  /** Show "Back to Admin" for actual ADMIN users (not impersonating a team role). */
   const accountRole = String(user?.role ?? '').toUpperCase();
   const adminBackHref =
-    backToHref &&
-    accountRole === 'ADMIN' &&
-    !impersonatedRole &&
-    !isTeamOpsShell
+    backToHref && accountRole === 'ADMIN' && !impersonatedRole
       ? backToHref
       : undefined;
 
@@ -107,7 +92,7 @@ export function DashboardLayout({ children, role, menuItems, title, dashboardHre
             </ul>
           </nav>
 
-          {/* Footer: Admin link when provided; role Dashboard only if not already first nav item (avoids 3x "Dashboard") */}
+          {/* Footer */}
           <div className="border-t border-hos-border p-4 space-y-1">
             {adminBackHref && (
               <Link
@@ -127,6 +112,13 @@ export function DashboardLayout({ children, role, menuItems, title, dashboardHre
                 <span>Dashboard</span>
               </Link>
             )}
+            <Link
+              href="/"
+              className="flex items-center gap-2 px-3 py-2 text-sm text-hos-text-secondary hover:bg-hos-bg-tertiary rounded-lg transition-colors font-medium"
+            >
+              <span>🏠</span>
+              <span>View Store</span>
+            </Link>
           </div>
         </div>
       </div>

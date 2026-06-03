@@ -257,6 +257,7 @@ export default function SellerProfilePage() {
           role={isWholesaler ? 'WHOLESALER' : 'SELLER'}
           menuItems={menuItems}
           title={isWholesaler ? 'Wholesaler' : 'Seller'}
+          backToHref={{ title: 'Admin Dashboard', href: '/admin/dashboard' }}
         >
           <div className="flex items-center justify-center py-12">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-hos-gold"></div>
@@ -272,6 +273,7 @@ export default function SellerProfilePage() {
         role={isWholesaler ? 'WHOLESALER' : 'SELLER'}
         menuItems={menuItems}
         title={isWholesaler ? 'Wholesaler' : 'Seller'}
+        backToHref={{ title: 'Admin Dashboard', href: '/admin/dashboard' }}
       >
         <div className="space-y-6">
           {/* Header */}
