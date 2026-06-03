@@ -28,7 +28,7 @@ export class TicketsService {
     priority?: 'LOW' | 'MEDIUM' | 'HIGH' | 'URGENT';
     initialMessage?: string;
     description?: string; // Frontend may send description instead of initialMessage
-  }) {
+  }, requestingUserId?: string, requestingUserRole?: string) {
     const ticketNumber = await this.generateTicketNumber();
 
     // Calculate SLA due date (24 hours for URGENT, 48 hours for HIGH, 72 hours for others)
@@ -76,17 +76,26 @@ export class TicketsService {
     if (data.userId) createData.userId = data.userId;
     if (data.sellerId) createData.sellerId = data.sellerId;
     if (data.orderId) {
-      const order = await this.prisma.order.findUnique({ where: { id: data.orderId }, select: { id: true } });
+      const order =
+        (await this.prisma.order.findUnique({
+          where: { id: data.orderId },
+          select: { id: true, userId: true },
+        })) ||
+        (await this.prisma.order.findFirst({
+          where: { orderNumber: data.orderId },
+          select: { id: true, userId: true },
+        }));
       if (!order) {
-        const orderByNumber = await this.prisma.order.findFirst({ where: { orderNumber: data.orderId }, select: { id: true } });
-        if (orderByNumber) {
-          createData.orderId = orderByNumber.id;
-        } else {
-          throw new BadRequestException(`Order not found: "${data.orderId}". Please use a valid Order ID or Order Number.`);
-        }
-      } else {
-        createData.orderId = data.orderId;
+        throw new BadRequestException(
+          `Order not found: "${data.orderId}". Please use a valid Order ID or Order Number.`,
+        );
       }
+      // Only allow linking an order the requester owns (admins may link any order).
+      const isAdmin = requestingUserRole === 'ADMIN';
+      if (!isAdmin && requestingUserId && order.userId && order.userId !== requestingUserId) {
+        throw new ForbiddenException('You can only link your own orders to a ticket');
+      }
+      createData.orderId = order.id;
     }
 
     const ticket = await this.prisma.supportTicket.create({
@@ -299,14 +308,22 @@ export class TicketsService {
       throw new NotFoundException('Ticket not found');
     }
 
+    const isAdmin = requestingUserRole === 'ADMIN';
+    const isAssignedAgent = ticket.assignedAgent?.id === requestingUserId;
+
     if (
       requestingUserId &&
       requestingUserRole &&
-      requestingUserRole !== 'ADMIN' &&
+      !isAdmin &&
       ticket.userId !== requestingUserId &&
-      ticket.assignedAgent?.id !== requestingUserId
+      !isAssignedAgent
     ) {
       throw new ForbiddenException('You do not have permission to view this ticket');
+    }
+
+    // Internal notes are only visible to admins and the assigned agent.
+    if (!isAdmin && !isAssignedAgent && Array.isArray(ticket.messages)) {
+      ticket.messages = ticket.messages.filter((m: any) => !m.isInternal);
     }
 
     return ticket;
@@ -374,14 +391,28 @@ export class TicketsService {
       isInternal?: boolean;
       attachments?: any;
     },
+    requestingUserRole?: string,
   ) {
     const ticket = await this.prisma.supportTicket.findUnique({
       where: { id: ticketId },
+      include: { assignedAgent: { select: { id: true } } },
     });
 
     if (!ticket) {
       throw new NotFoundException('Ticket not found');
     }
+
+    const isAdmin = requestingUserRole === 'ADMIN';
+    const isAssignedAgent =
+      !!data.userId && (ticket as any).assignedAgent?.id === data.userId;
+
+    // Only the ticket owner, the assigned agent, or an admin may post to a ticket.
+    if (!isAdmin && !isAssignedAgent && ticket.userId !== data.userId) {
+      throw new ForbiddenException('You do not have permission to post to this ticket');
+    }
+
+    // Internal notes may only be created by admins or the assigned agent.
+    const isInternal = (isAdmin || isAssignedAgent) ? data.isInternal || false : false;
 
     // Update ticket status if needed
     const statusUpdate: any = {};
@@ -395,7 +426,7 @@ export class TicketsService {
         ticketId,
         userId: data.userId,
         content: data.content,
-        isInternal: data.isInternal || false,
+        isInternal,
         attachments: data.attachments || {},
       },
     });

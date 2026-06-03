@@ -161,6 +161,11 @@ export class GiftCardsService {
       throw new BadRequestException('Gift card has been cancelled');
     }
 
+    // Only fully-activated (paid) cards are usable. PENDING/INACTIVE cards await payment.
+    if (giftCard.status !== 'ACTIVE') {
+      throw new BadRequestException('Gift card is not active');
+    }
+
     return {
       id: giftCard.id,
       code: giftCard.code,
@@ -207,11 +212,44 @@ export class GiftCardsService {
         throw new BadRequestException('Gift card has been cancelled');
       }
 
+      // Only fully-activated (paid) cards are redeemable.
+      if (giftCard.status !== 'ACTIVE') {
+        throw new BadRequestException('Gift card is not active');
+      }
+
       const currentBalance = Number(giftCard.balance);
       const redeemAmount = dto.amount;
 
       if (redeemAmount > currentBalance) {
         throw new BadRequestException(`Insufficient balance. Available: ${currentBalance}`);
+      }
+
+      // Cap total redemptions for an order to that order's outstanding total, and verify
+      // the order belongs to the redeeming user.
+      if (dto.orderId) {
+        const order = await (tx as any).order.findUnique({
+          where: { id: dto.orderId },
+          select: { id: true, userId: true, total: true, paymentStatus: true },
+        });
+        if (!order) {
+          throw new NotFoundException('Order not found');
+        }
+        if (order.userId && order.userId !== userId) {
+          throw new ForbiddenException('You do not own this order');
+        }
+        if (order.paymentStatus && order.paymentStatus !== 'PENDING') {
+          throw new BadRequestException('Order is not awaiting payment');
+        }
+        const priorRedemptions = await (tx as any).giftCardTransaction.aggregate({
+          where: { orderId: dto.orderId, type: 'REDEMPTION' },
+          _sum: { amount: true },
+        });
+        const alreadyRedeemed = Number(priorRedemptions?._sum?.amount ?? 0);
+        if (alreadyRedeemed + redeemAmount > Number(order.total)) {
+          throw new BadRequestException(
+            'Redemption exceeds the order total already covered by gift cards',
+          );
+        }
       }
 
       const newBalance = currentBalance - redeemAmount;

@@ -452,6 +452,21 @@ export class PaymentsService {
       typeof payload === 'string' ? JSON.parse(payload) : JSON.parse(payload.toString());
     this.logger.log(`Received ${providerName} webhook: ${event.type || 'unknown'}`);
 
+    // Only act on an explicit allow-list of event types. Loose substring matching
+    // ('includes("succeeded")') can misfire on unrelated events whose data.object is not a
+    // PaymentIntent, leading to incorrect order state changes.
+    const SUCCESS_EVENTS = new Set(['payment_intent.succeeded', 'charge.succeeded']);
+    const FAILURE_EVENTS = new Set([
+      'payment_intent.payment_failed',
+      'charge.failed',
+    ]);
+    const isSuccess = SUCCESS_EVENTS.has(event.type);
+    const isFailure = FAILURE_EVENTS.has(event.type);
+    if (!isSuccess && !isFailure) {
+      this.logger.log(`Ignoring unhandled webhook event type: ${event.type}`);
+      return;
+    }
+
     const result = await provider.processWebhook(event);
 
     if (result.processed && result.orderId) {
@@ -464,26 +479,52 @@ export class PaymentsService {
         return;
       }
 
-      // Handle based on event type
-      if (event.type?.includes('succeeded') || event.type?.includes('success')) {
-        await this.handlePaymentSuccess(order, result.paymentId || '', result.metadata);
-      } else if (event.type?.includes('failed') || event.type?.includes('failure')) {
+      // Defense-in-depth: ensure the payment intent's metadata orderId matches the order.
+      if (result.metadata?.orderId && result.metadata.orderId !== order.id) {
+        this.logger.error(
+          `Webhook orderId mismatch: intent=${result.metadata.orderId} order=${order.id}`,
+        );
+        return;
+      }
+
+      if (isSuccess) {
+        // Amount actually captured by Stripe, in the smallest unit of the base currency.
+        const paidCents = Number(event.data?.object?.amount_received ?? event.data?.object?.amount ?? 0);
+        await this.handlePaymentSuccess(order, result.paymentId || '', paidCents);
+      } else if (isFailure) {
         await this.handlePaymentFailure(order, result.paymentId || '');
       }
     }
   }
 
   /**
-   * Handle successful payment (webhook authoritative)
+   * Handle successful payment (webhook authoritative). Verifies the captured amount matches
+   * the server-computed payable amount before marking the order paid.
    */
   private async handlePaymentSuccess(
     order: any,
     paymentId: string,
-    metadata?: Record<string, any>,
+    paidCents: number,
   ): Promise<void> {
-    // Webhook is authoritative - mark as paid
-    const amount = metadata?.amount || Number(order.total);
-    await this.markPaymentAsPaid(order, paymentId, amount);
+    const expectedAmount = await this.computePayableAmount(order.id, Number(order.total));
+    const expectedAmountBase =
+      order.currency === this.BASE_CURRENCY
+        ? expectedAmount
+        : await this.currencyService.convertBetween(
+            expectedAmount,
+            order.currency,
+            this.BASE_CURRENCY,
+          );
+    const expectedCents = Math.round(expectedAmountBase * 100);
+
+    if (paidCents > 0 && Math.abs(paidCents - expectedCents) > 1) {
+      this.logger.error(
+        `Webhook amount mismatch for order ${order.id}: paid=${paidCents} expected=${expectedCents}`,
+      );
+      throw new BadRequestException('Webhook payment amount does not match order total');
+    }
+
+    await this.markPaymentAsPaid(order, paymentId, expectedAmountBase);
     this.logger.log(`Payment succeeded for order ${order.id} via webhook`);
   }
 
@@ -491,6 +532,14 @@ export class PaymentsService {
    * Handle failed payment
    */
   private async handlePaymentFailure(order: any, paymentId: string): Promise<void> {
+    // Never override an already-paid order with FAILED (out-of-order webhook delivery).
+    if (order.paymentStatus === 'PAID') {
+      this.logger.warn(
+        `Ignoring failure webhook for already-paid order ${order.id}`,
+      );
+      return;
+    }
+
     // Update order payment status to FAILED
     await this.prisma.order.update({
       where: { id: order.id },
@@ -499,20 +548,26 @@ export class PaymentsService {
       },
     });
 
-    // Create payment record with FAILED status
-    await this.prisma.payment.create({
-      data: {
-        orderId: order.id,
-        stripePaymentId: paymentId, // Store payment ID from any provider
-        amount: Number(order.total),
-        currency: this.BASE_CURRENCY,
-        status: 'FAILED',
-        paymentMethod: 'card',
-        metadata: {
-          failureReason: 'Payment failed',
-        } as any,
-      },
+    // Create payment record with FAILED status (idempotent: skip if one already exists
+    // for this provider payment id).
+    const existingFailure = await this.prisma.payment.findFirst({
+      where: { orderId: order.id, stripePaymentId: paymentId, status: 'FAILED' },
     });
+    if (!existingFailure) {
+      await this.prisma.payment.create({
+        data: {
+          orderId: order.id,
+          stripePaymentId: paymentId, // Store payment ID from any provider
+          amount: Number(order.total),
+          currency: this.BASE_CURRENCY,
+          status: 'FAILED',
+          paymentMethod: 'card',
+          metadata: {
+            failureReason: 'Payment failed',
+          } as any,
+        },
+      });
+    }
 
     this.logger.log(`Payment failed for order ${order.id} via webhook`);
   }

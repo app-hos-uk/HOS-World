@@ -94,7 +94,15 @@ export class WhatsAppController {
     @Headers('x-twilio-signature') signature?: string,
   ): Promise<ApiResponse<any>> {
     const authToken = this.configService.get<string>('TWILIO_AUTH_TOKEN');
-    if (authToken) {
+    const isProduction = this.configService.get<string>('NODE_ENV') === 'production';
+
+    // Fail closed: never accept unverified webhooks in production. If the auth token is not
+    // configured we cannot verify the signature, so we must reject rather than trust the body.
+    if (!authToken) {
+      if (isProduction) {
+        throw new UnauthorizedException('Webhook verification is not configured');
+      }
+    } else {
       if (!signature) {
         throw new UnauthorizedException('Missing Twilio signature');
       }

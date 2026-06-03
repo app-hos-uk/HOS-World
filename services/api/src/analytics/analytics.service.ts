@@ -55,6 +55,19 @@ export class AnalyticsService {
   constructor(private prisma: PrismaService) {}
 
   /**
+   * Resolve the Seller record id for a given user id. Used to scope analytics to the
+   * authenticated seller and prevent reading other sellers' data via a client-supplied id.
+   * Returns a non-matching sentinel when the user has no seller record so queries return empty.
+   */
+  async resolveSellerId(userId: string): Promise<string> {
+    const seller = await this.prisma.seller.findUnique({
+      where: { userId },
+      select: { id: true },
+    });
+    return seller?.id ?? '__no_seller__';
+  }
+
+  /**
    * Get sales trends with growth calculations
    */
   async getSalesTrends(filters: AnalyticsFilters): Promise<{

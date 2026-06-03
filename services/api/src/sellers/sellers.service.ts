@@ -18,8 +18,10 @@ export class SellersService {
   constructor(private prisma: PrismaService) {
     const key = process.env.ENCRYPTION_KEY;
     if (!key && process.env.NODE_ENV === 'production') {
-      this.logger.warn(
-        'ENCRYPTION_KEY is not set — using fallback. Set ENCRYPTION_KEY in Railway for production security.',
+      // Fail closed: a hardcoded fallback key offers no real protection for seller bank
+      // details and would make stored ciphertext trivially decryptable.
+      throw new Error(
+        'ENCRYPTION_KEY must be set in production for seller field encryption',
       );
     }
     this.encryptionKey = key || 'hos-default-key-change-in-production';

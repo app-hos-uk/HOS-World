@@ -47,13 +47,27 @@ export class PosAdminController {
     private discrepancies: DiscrepanciesService,
   ) {}
 
+  /**
+   * Strip encrypted credentials and webhook secrets from POS connection rows before returning
+   * them to the client. Only presence flags are exposed.
+   */
+  private sanitizeConnection(conn: any): any {
+    if (!conn || typeof conn !== 'object') return conn;
+    const { credentials, webhookSecret, ...rest } = conn;
+    return {
+      ...rest,
+      hasCredentials: !!credentials,
+      hasWebhookSecret: !!webhookSecret,
+    };
+  }
+
   @Get('connections')
   async listConnections(): Promise<ApiResponse<unknown>> {
     const data = await this.prisma.pOSConnection.findMany({
       include: { store: { select: { id: true, name: true, code: true, city: true } } },
       orderBy: { createdAt: 'desc' },
     });
-    return { data, message: 'OK' };
+    return { data: data.map((c) => this.sanitizeConnection(c)), message: 'OK' };
   }
 
   @Post('connections')
@@ -81,7 +95,7 @@ export class PosAdminController {
       },
       include: { store: true },
     });
-    return { data, message: 'Created' };
+    return { data: this.sanitizeConnection(data), message: 'Created' };
   }
 
   @Put('connections/:id')
@@ -104,7 +118,7 @@ export class PosAdminController {
       data: update as any,
       include: { store: true },
     });
-    return { data, message: 'Updated' };
+    return { data: this.sanitizeConnection(data), message: 'Updated' };
   }
 
   @Delete('connections/:id')

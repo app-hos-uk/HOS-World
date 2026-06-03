@@ -100,6 +100,7 @@ export class SettlementsController {
     };
   }
 
+  @Roles('ADMIN', 'FINANCE', 'SELLER', 'B2C_SELLER', 'WHOLESALER')
   @Get(':id')
   @ApiOperation({
     summary: 'Get settlement by ID',

@@ -24,7 +24,6 @@ import { CreateCatalogEntryDto, UpdateCatalogEntryDto } from './dto/create-catal
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../common/guards/roles.guard';
 import { Roles } from '../common/decorators/roles.decorator';
-import { Public } from '../common/decorators/public.decorator';
 import type { ApiResponse } from '@hos-marketplace/shared-types';
 
 @ApiTags('catalog')
@@ -34,11 +33,12 @@ export class CatalogController {
   constructor(private readonly catalogService: CatalogService) {}
 
   @Get('pending')
-  @Public()
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('CATALOG', 'PROCUREMENT', 'MARKETING', 'FINANCE', 'ADMIN')
   @ApiOperation({
     summary: 'Get pending catalog entries',
     description:
-      'Retrieves all pending catalog entries awaiting processing. No authentication required.',
+      'Retrieves all pending catalog entries awaiting processing. Internal staff access required.',
   })
   @SwaggerApiResponse({
     status: 200,
@@ -53,11 +53,12 @@ export class CatalogController {
   }
 
   @Get('submissions/:submissionId')
-  @Public()
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('CATALOG', 'PROCUREMENT', 'MARKETING', 'FINANCE', 'ADMIN')
   @ApiOperation({
     summary: 'Get catalog submission/entry by ID (alias for entries/:id)',
     description:
-      'Retrieves a catalog entry or submission by ID. Same as GET /catalog/entries/:id. No authentication required.',
+      'Retrieves a catalog entry or submission by ID. Same as GET /catalog/entries/:id. Internal staff access required.',
   })
   @ApiParam({ name: 'submissionId', description: 'Submission UUID', type: String })
   @SwaggerApiResponse({
@@ -76,11 +77,12 @@ export class CatalogController {
   }
 
   @Get('entries')
-  @Public()
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('CATALOG', 'PROCUREMENT', 'MARKETING', 'FINANCE', 'ADMIN')
   @ApiOperation({
     summary: 'Get all catalog entries',
     description:
-      'Retrieves all catalog entries with optional status filtering. No authentication required.',
+      'Retrieves all catalog entries with optional status filtering. Internal staff access required.',
   })
   @ApiQuery({
     name: 'status',
@@ -102,10 +104,12 @@ export class CatalogController {
   }
 
   @Get('entries/:submissionId')
-  @Public()
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('CATALOG', 'PROCUREMENT', 'MARKETING', 'FINANCE', 'ADMIN')
   @ApiOperation({
     summary: 'Get catalog entry by submission ID',
-    description: 'Retrieves a specific catalog entry by submission ID. No authentication required.',
+    description:
+      'Retrieves a specific catalog entry by submission ID. Internal staff access required.',
   })
   @ApiParam({ name: 'submissionId', description: 'Submission UUID', type: String })
   @SwaggerApiResponse({ status: 200, description: 'Catalog entry retrieved successfully' })
@@ -196,6 +200,8 @@ export class CatalogController {
   }
 
   @Get('dashboard/stats')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('CATALOG', 'PROCUREMENT', 'MARKETING', 'FINANCE', 'ADMIN')
   @ApiOperation({
     summary: 'Get catalog dashboard statistics',
     description:

@@ -79,7 +79,10 @@ export class AnalyticsController {
     const filters: AnalyticsFilters = {
       startDate: startDate ? new Date(startDate) : undefined,
       endDate: endDate ? new Date(endDate) : undefined,
-      sellerId: sellerId || (req.user.role !== 'ADMIN' ? req.user.id : undefined),
+      sellerId:
+        req.user.role === 'ADMIN'
+          ? sellerId || undefined
+          : await this.analyticsService.resolveSellerId(req.user.id),
       period: period || 'monthly',
       compareWithPrevious,
     };
@@ -111,12 +114,17 @@ export class AnalyticsController {
   })
   @SwaggerApiResponse({ status: 200, description: 'Customer metrics retrieved successfully' })
   async getCustomerMetrics(
+    @Request() req: any,
     @Query('startDate') startDate?: string,
     @Query('endDate') endDate?: string,
   ): Promise<ApiResponse<any>> {
     const filters: AnalyticsFilters = {
       startDate: startDate ? new Date(startDate) : undefined,
       endDate: endDate ? new Date(endDate) : undefined,
+      sellerId:
+        req.user.role === 'ADMIN'
+          ? undefined
+          : await this.analyticsService.resolveSellerId(req.user.id),
     };
 
     const data = await this.analyticsService.getCustomerMetrics(filters);
@@ -162,7 +170,10 @@ export class AnalyticsController {
     const filters: AnalyticsFilters = {
       startDate: startDate ? new Date(startDate) : undefined,
       endDate: endDate ? new Date(endDate) : undefined,
-      sellerId: sellerId || (req.user.role !== 'ADMIN' ? req.user.id : undefined),
+      sellerId:
+        req.user.role === 'ADMIN'
+          ? sellerId || undefined
+          : await this.analyticsService.resolveSellerId(req.user.id),
     };
 
     const data = await this.analyticsService.getProductPerformance(filters, limit);
@@ -174,9 +185,12 @@ export class AnalyticsController {
   }
 
   @Get('inventory/metrics')
+  @Roles('ADMIN')
   @ApiOperation({
-    summary: 'Get inventory metrics',
-    description: 'Retrieves inventory metrics including turnover rates and stock levels.',
+    summary: 'Get inventory metrics (admin only)',
+    description:
+      'Retrieves platform-wide inventory metrics including turnover rates and stock levels. ' +
+      'Restricted to ADMIN because the data is not seller-scoped.',
   })
   @ApiQuery({
     name: 'warehouseId',
@@ -217,10 +231,12 @@ export class AnalyticsController {
   }
 
   @Get('revenue/growth')
+  @Roles('ADMIN')
   @ApiOperation({
-    summary: 'Get revenue growth',
+    summary: 'Get revenue growth (admin only)',
     description:
-      'Retrieves revenue growth rate comparing current period with previous period (MoM or YoY).',
+      'Retrieves platform-wide revenue growth comparing current period with previous period ' +
+      '(MoM or YoY). Restricted to ADMIN because the data is not seller-scoped.',
   })
   @ApiQuery({
     name: 'startDate',
@@ -288,7 +304,10 @@ export class AnalyticsController {
     const filters: AnalyticsFilters = {
       startDate: startDate ? new Date(startDate) : undefined,
       endDate: endDate ? new Date(endDate) : undefined,
-      sellerId: req.user.role !== 'ADMIN' ? req.user.id : undefined,
+      sellerId:
+        req.user.role === 'ADMIN'
+          ? undefined
+          : await this.analyticsService.resolveSellerId(req.user.id),
     };
 
     let data: any;

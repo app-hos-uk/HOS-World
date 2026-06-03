@@ -9,13 +9,21 @@ import {
 export class LogisticsService {
   constructor(private prisma: PrismaService) {}
 
+  /** Remove the stored carrier apiKey before returning partner data to API clients. */
+  private sanitizePartner<T extends { apiKey?: string | null } | null>(partner: T): T {
+    if (!partner || typeof partner !== 'object') return partner;
+    const { apiKey, ...rest } = partner as any;
+    return { ...rest, hasApiKey: !!apiKey } as T;
+  }
+
   async createPartner(createDto: CreateLogisticsPartnerDto) {
-    return this.prisma.logisticsPartner.create({
+    const partner = await this.prisma.logisticsPartner.create({
       data: {
         ...createDto,
         contactInfo: createDto.contactInfo as any, // Cast to Json type
       },
     });
+    return this.sanitizePartner(partner);
   }
 
   async findAllPartners(activeOnly: boolean = false) {
@@ -24,7 +32,7 @@ export class LogisticsService {
       where.isActive = true;
     }
 
-    return this.prisma.logisticsPartner.findMany({
+    const partners = await this.prisma.logisticsPartner.findMany({
       where,
       orderBy: { name: 'asc' },
       include: {
@@ -34,6 +42,7 @@ export class LogisticsService {
         },
       },
     });
+    return partners.map((p) => this.sanitizePartner(p));
   }
 
   async findOnePartner(id: string) {
@@ -50,7 +59,7 @@ export class LogisticsService {
       throw new NotFoundException('Logistics partner not found');
     }
 
-    return partner;
+    return this.sanitizePartner(partner);
   }
 
   async updatePartner(id: string, updateDto: UpdateLogisticsPartnerDto) {
@@ -62,13 +71,14 @@ export class LogisticsService {
       throw new NotFoundException('Logistics partner not found');
     }
 
-    return this.prisma.logisticsPartner.update({
+    const updated = await this.prisma.logisticsPartner.update({
       where: { id },
       data: {
         ...updateDto,
         contactInfo: updateDto.contactInfo ? (updateDto.contactInfo as any) : undefined, // Cast to Json type
       },
     });
+    return this.sanitizePartner(updated);
   }
 
   async deletePartner(id: string) {

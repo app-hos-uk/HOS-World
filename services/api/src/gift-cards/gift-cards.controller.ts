@@ -48,18 +48,22 @@ export class GiftCardsController {
     };
   }
 
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('ADMIN')
   @Post()
   @ApiBearerAuth('JWT-auth')
   @ApiOperation({
-    summary: 'Create gift card',
+    summary: 'Issue gift card (admin only)',
     description:
-      'Creates a new gift card. Users can purchase gift cards for themselves or as gifts.',
+      'Issues a funded gift card. Restricted to ADMIN. Self-service customer purchase must go ' +
+      'through a payment-backed flow that only activates the card after a verified payment; ' +
+      'directly funding a card here without payment is not permitted for non-admins.',
   })
   @ApiBody({ type: CreateGiftCardDto })
   @SwaggerApiResponse({ status: 201, description: 'Gift card created successfully' })
   @SwaggerApiResponse({ status: 400, description: 'Invalid request data' })
   @SwaggerApiResponse({ status: 401, description: 'Unauthorized' })
+  @SwaggerApiResponse({ status: 403, description: 'Forbidden - Admin access required' })
   async create(@Request() req: any, @Body() dto: CreateGiftCardDto): Promise<ApiResponse<any>> {
     const giftCard = await this.giftCardsService.create(req.user.id, dto);
     return {

@@ -10,6 +10,7 @@ import {
 import { ChatbotService } from './chatbot.service';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { Public } from '../common/decorators/public.decorator';
+import { Throttle } from '@nestjs/throttler';
 import type { ApiResponse } from '@hos-marketplace/shared-types';
 
 @ApiTags('support')
@@ -18,6 +19,8 @@ export class ChatbotController {
   constructor(private readonly chatbotService: ChatbotService) {}
 
   @Public()
+  // This endpoint invokes an LLM (cost + abuse surface). Throttle aggressively per IP.
+  @Throttle({ default: { limit: 10, ttl: 60000 } })
   @Post('message')
   @ApiOperation({
     summary: 'Send chatbot message',

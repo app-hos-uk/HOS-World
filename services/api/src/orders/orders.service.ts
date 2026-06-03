@@ -556,13 +556,26 @@ export class OrdersService {
         );
       }
 
-      // Decrement stock for all items (both Product.stock and VendorProduct.vendorStock)
+      // Decrement stock for all items (both Product.stock and VendorProduct.vendorStock).
+      // Use a conditional updateMany (stock >= quantity) so the decrement is atomic at the
+      // row level; this prevents two concurrent checkouts from both passing the earlier
+      // read-only stock check and overselling / driving stock negative.
       for (const group of vendorGroups) {
         for (const item of group.items) {
-          await tx.product.update({
-            where: { id: item.productId },
+          const decremented = await tx.product.updateMany({
+            where: { id: item.productId, stock: { gte: item.quantity } },
             data: { stock: { decrement: item.quantity } },
           });
+          if (decremented.count === 0) {
+            const current = await tx.product.findUnique({
+              where: { id: item.productId },
+              select: { name: true, stock: true },
+            });
+            throw new BadRequestException(
+              `Insufficient stock for product: ${current?.name ?? item.productId}. ` +
+                `Available: ${current?.stock ?? 0}, Requested: ${item.quantity}`,
+            );
+          }
 
           // Also decrement vendor stock if this product is fulfilled by a vendor
           if (group.seller) {
@@ -1237,11 +1250,29 @@ export class OrdersService {
       this.validateStatusTransition(order.status, normalizedStatus);
     }
 
+    // paymentStatus must never be set by sellers, and may never be set to PAID via this
+    // generic update endpoint. PAID is only ever set by the verified payment flow
+    // (PaymentsService.markPaymentAsPaid / Stripe webhook). Admins may still set
+    // non-PAID statuses (e.g. REFUNDED/CANCELLED) for manual reconciliation.
+    let paymentStatusUpdate: PrismaPaymentStatus | undefined;
+    if (updateOrderDto.paymentStatus !== undefined) {
+      const requested = String(updateOrderDto.paymentStatus).toUpperCase();
+      if (role !== 'ADMIN') {
+        throw new ForbiddenException('You are not allowed to change the payment status');
+      }
+      if (requested === 'PAID') {
+        throw new ForbiddenException(
+          'Payment status cannot be set to PAID manually; it is set only after a verified payment',
+        );
+      }
+      paymentStatusUpdate = updateOrderDto.paymentStatus as PrismaPaymentStatus;
+    }
+
     const updated = await this.prisma.order.update({
       where: { id },
       data: {
         status: (normalizedStatus || undefined) as PrismaOrderStatus,
-        paymentStatus: updateOrderDto.paymentStatus as PrismaPaymentStatus,
+        paymentStatus: paymentStatusUpdate,
         trackingCode: updateOrderDto.trackingCode,
       },
       include: {

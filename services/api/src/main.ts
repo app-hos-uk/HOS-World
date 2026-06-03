@@ -130,8 +130,9 @@ async function bootstrap() {
       (a) => a && (normalized === a || normalized.startsWith(a + '/')),
     );
     if (allowed) return origin;
-    // Allow Vercel preview deployments (hos-world-web-*.vercel.app)
-    if (/^https:\/\/hos-world-web[\w-]*\.vercel\.app$/.test(normalized)) return origin;
+    // Preview deployments must be added explicitly via the CORS_ALLOWED_ORIGINS env var.
+    // A broad regex (e.g. *.vercel.app) combined with credentialed cookies would let any
+    // attacker-controlled deployment make authenticated cross-origin requests.
     return null;
   };
 
@@ -227,10 +228,9 @@ async function bootstrap() {
             res.setHeader('Access-Control-Max-Age', '86400');
             return res.status(204).end();
           } else {
-            // Origin is NOT allowed - still send CORS header so browser can see the 403
-            if (origin) res.setHeader('Access-Control-Allow-Origin', origin);
+            // Origin is NOT allowed - do not reflect the request origin back.
             logger.warn(`CORS blocked: ${origin}`, 'CORS');
-            return res.status(403).json({ error: 'Origin not allowed', origin });
+            return res.status(403).json({ error: 'Origin not allowed' });
           }
         }
         next();
@@ -327,10 +327,8 @@ async function bootstrap() {
         const isAllowed = allowedOrigins.some(
           (a) => a && (normalized === a || normalized.startsWith(a + '/')),
         );
-        // Also allow Vercel preview deployments
-        const isVercelPreview = /^https:\/\/hos-world-web[\w-]*\.vercel\.app$/.test(normalized);
 
-        if (isAllowed || isVercelPreview) {
+        if (isAllowed) {
           logger.debug(`CORS: Allowing origin: ${origin}`, 'CORS');
           callback(null, true);
         } else {

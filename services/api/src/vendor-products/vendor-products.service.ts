@@ -144,7 +144,7 @@ export class VendorProductsService {
     return this.findAll({ ...query, sellerId: seller.id });
   }
 
-  async findOne(id: string) {
+  async findOne(id: string, requestingUserId?: string, requestingUserRole?: string) {
     const vp = await this.prisma.vendorProduct.findUnique({
       where: { id },
       include: {
@@ -158,6 +158,7 @@ export class VendorProductsService {
         seller: {
           select: {
             id: true,
+            userId: true,
             storeName: true,
             slug: true,
             commissionRate: true,
@@ -166,6 +167,14 @@ export class VendorProductsService {
       },
     });
     if (!vp) throw new NotFoundException('Vendor product not found');
+
+    // Sellers may only view their own listings; staff roles (ADMIN/CATALOG/PROCUREMENT) see any.
+    const staffRoles = ['ADMIN', 'CATALOG', 'PROCUREMENT'];
+    if (requestingUserRole && !staffRoles.includes(requestingUserRole)) {
+      if (!requestingUserId || vp.seller?.userId !== requestingUserId) {
+        throw new ForbiddenException('You can only view your own listings');
+      }
+    }
     return vp;
   }
 

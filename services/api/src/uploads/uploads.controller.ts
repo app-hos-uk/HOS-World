@@ -273,7 +273,8 @@ export class UploadsController {
   }
 
   @Post('multiple')
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('ADMIN', 'SELLER', 'B2C_SELLER', 'WHOLESALER', 'CMS_EDITOR')
   @UseInterceptors(
     FilesInterceptor('files', 10, {
       storage: createStorage(),

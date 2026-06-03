@@ -7,6 +7,7 @@ import { Header } from '@/components/Header';
 import { Footer } from '@/components/Footer';
 import { MapPicker } from '@/components/MapPicker';
 import { apiClient } from '@/lib/api';
+import { getSafeReturnUrl } from '@/lib/authRedirect';
 import { useToast } from '@/hooks/useToast';
 import { useCurrency } from '@/contexts/CurrencyContext';
 import Link from 'next/link';
@@ -74,14 +75,7 @@ function ProfilePageContent() {
   const [loading, setLoading] = useState(true);
   const tabParam = searchParams.get('tab');
   const actionParam = searchParams.get('action');
-  const returnUrlRaw = searchParams.get('returnUrl');
-  const returnUrl =
-    returnUrlRaw &&
-    typeof returnUrlRaw === 'string' &&
-    returnUrlRaw.startsWith('/') &&
-    !returnUrlRaw.startsWith('//')
-      ? returnUrlRaw
-      : null;
+  const returnUrl = getSafeReturnUrl(searchParams.get('returnUrl'));
   const [activeTab, setActiveTab] = useState<'overview' | 'badges' | 'collections' | 'settings' | 'addresses'>(
     tabParam === 'addresses' ? 'addresses' : tabParam === 'settings' ? 'settings' : tabParam === 'badges' ? 'badges' : tabParam === 'collections' ? 'collections' : 'overview'
   );

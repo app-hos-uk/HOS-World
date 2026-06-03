@@ -83,11 +83,21 @@ export class TicketsController {
     },
     @Request() req: any,
   ): Promise<ApiResponse<any>> {
-    const ticket = await this.ticketsService.createTicket({
-      ...body,
-      category: body.category as any,
-      userId: body.userId || req.user?.id,
-    });
+    // Never trust client-supplied userId; the ticket owner is always the authenticated user.
+    const ticket = await this.ticketsService.createTicket(
+      {
+        sellerId: body.sellerId,
+        orderId: body.orderId,
+        subject: body.subject,
+        category: body.category as any,
+        priority: body.priority,
+        initialMessage: body.initialMessage,
+        description: body.description,
+        userId: req.user?.id,
+      },
+      req.user?.id,
+      req.user?.role,
+    );
     return {
       data: ticket,
       message: 'Ticket created successfully',
@@ -291,10 +301,16 @@ export class TicketsController {
     },
     @Request() req: any,
   ): Promise<ApiResponse<any>> {
-    const message = await this.ticketsService.addMessage(id, {
-      userId: req.user?.id,
-      ...body,
-    });
+    const message = await this.ticketsService.addMessage(
+      id,
+      {
+        userId: req.user?.id,
+        content: body.content,
+        isInternal: body.isInternal,
+        attachments: body.attachments,
+      },
+      req.user?.role,
+    );
     return {
       data: message,
       message: 'Message added successfully',

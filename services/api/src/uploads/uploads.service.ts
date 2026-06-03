@@ -190,9 +190,8 @@ export class UploadsService implements OnModuleInit {
       buffer[11] === 0x50
     )
       return true;
-    // SVG: <?xml or <svg
-    const start = buffer.slice(0, 200).toString('utf8').trim().toLowerCase();
-    if (start.startsWith('<?xml') || start.startsWith('<svg')) return true;
+    // SVG is intentionally NOT accepted: SVG files can embed scripts and are a stored-XSS
+    // vector when served inline from a trusted origin.
     return false;
   }
 
@@ -209,7 +208,6 @@ export class UploadsService implements OnModuleInit {
       'image/png',
       'image/gif',
       'image/webp',
-      'image/svg+xml',
     ];
 
     if (!allowedMimeTypes.includes(file.mimetype)) {

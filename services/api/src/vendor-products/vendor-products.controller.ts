@@ -111,8 +111,8 @@ export class VendorProductsController {
   @Get(':id')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('ADMIN', 'CATALOG', 'PROCUREMENT', 'SELLER', 'B2C_SELLER')
-  async findOne(@Param('id') id: string): Promise<VendorProductResponse> {
-    const result = await this.vendorProductsService.findOne(id);
+  async findOne(@Param('id') id: string, @Request() req): Promise<VendorProductResponse> {
+    const result = await this.vendorProductsService.findOne(id, req.user.id, req.user.role);
     return { data: result, message: 'Vendor product retrieved' };
   }
 

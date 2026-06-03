@@ -8,6 +8,7 @@ import {
   Query,
   UseGuards,
   Request,
+  Res,
   ParseUUIDPipe,
 } from '@nestjs/common';
 import {
@@ -19,18 +20,24 @@ import {
   ApiBody,
   ApiQuery,
 } from '@nestjs/swagger';
+import { Response } from 'express';
+import { ConfigService } from '@nestjs/config';
 import { InfluencerInvitationsService } from './influencer-invitations.service';
 import { CreateInfluencerInvitationDto } from './dto/create-invitation.dto';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../common/guards/roles.guard';
 import { Roles } from '../common/decorators/roles.decorator';
 import { Public } from '../common/decorators/public.decorator';
+import { setAuthCookies } from '../auth/cookie.utils';
 import type { ApiResponse } from '@hos-marketplace/shared-types';
 
 @ApiTags('influencer-invitations')
 @Controller()
 export class InfluencerInvitationsController {
-  constructor(private readonly invitationsService: InfluencerInvitationsService) {}
+  constructor(
+    private readonly invitationsService: InfluencerInvitationsService,
+    private readonly configService: ConfigService,
+  ) {}
 
   // ============================================
   // ADMIN ENDPOINTS
@@ -197,8 +204,11 @@ export class InfluencerInvitationsController {
   async accept(
     @Param('token') token: string,
     @Body() body: { password: string; firstName: string; lastName: string; displayName: string },
+    @Res({ passthrough: true }) res: Response,
   ): Promise<ApiResponse<any>> {
     const result = await this.invitationsService.accept(token, body);
+    // Issue session via HttpOnly cookies only; never return tokens in the JSON body.
+    setAuthCookies(res, result.token, result.refreshToken, this.configService);
     return {
       data: {
         user: {
@@ -208,8 +218,6 @@ export class InfluencerInvitationsController {
           lastName: result.user.lastName,
         },
         influencer: result.influencer,
-        token: result.token,
-        refreshToken: result.refreshToken,
       },
       message: 'Invitation accepted successfully.',
     };
