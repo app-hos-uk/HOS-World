@@ -6,7 +6,7 @@ import { apiClient, markLoginSuccess, mergeGuestCartAfterAuth, setFrontendSessio
 import { stashReferralFromQuery } from '@/lib/referralAttribution';
 import { CharacterSelector } from '@/components/CharacterSelector';
 import { FandomQuiz } from '@/components/FandomQuiz';
-import { getPublicApiBaseUrl } from '@/lib/apiBaseUrl';
+import { getDirectApiBaseUrl } from '@/lib/apiBaseUrl';
 import { resolvePostAuthRedirect, resolvePostRegisterRedirect, getSafeReturnUrl, stashAuthReturnUrl } from '@/lib/authRedirect';
 
 function LoginPageInner() {
@@ -49,7 +49,7 @@ function LoginPageInner() {
   const [currencyPreference, setCurrencyPreference] = useState('USD');
 
   // Backend OAuth endpoints
-  const oauthBaseUrl = getPublicApiBaseUrl() || 'https://hos-marketplaceapi-production.up.railway.app/api';
+  const oauthBaseUrl = getDirectApiBaseUrl() || 'https://hos-marketplaceapi-production.up.railway.app/api';
 
   // Set mounted state after hydration to prevent server/client mismatch
   useEffect(() => {

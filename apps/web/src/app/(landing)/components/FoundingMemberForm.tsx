@@ -11,7 +11,9 @@ const API_BASE =
   process.env.NEXT_PUBLIC_API_URL ||
   (typeof window !== 'undefined' && window.location.hostname === 'localhost'
     ? 'http://localhost:3001/api'
-    : 'https://hos-marketplaceapi-production.up.railway.app/api');
+    : typeof window !== 'undefined' && process.env.NODE_ENV === 'production'
+      ? '/api/proxy'
+      : 'https://hos-marketplaceapi-production.up.railway.app/api');
 
 async function postRegistrationPayload(data: Record<string, unknown>) {
   // Primary: POST to platform API

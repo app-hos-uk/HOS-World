@@ -40,17 +40,30 @@ export function normalizeApiBaseUrl(raw: string | undefined): string {
   return out;
 }
 
-export function getPublicApiBaseUrl(): string {
+/**
+ * Returns the direct (absolute) API URL — used for OAuth redirects (browser navigates
+ * to the API domain) and server-side calls where cookies aren't relevant.
+ */
+export function getDirectApiBaseUrl(): string {
   const envUrl = process.env.NEXT_PUBLIC_API_URL;
-
-  // Default to localhost in dev
   const fallback =
     process.env.NODE_ENV === 'production'
       ? 'https://hos-marketplaceapi-production.up.railway.app/api'
       : 'http://localhost:3001/api';
-
   const normalized = normalizeApiBaseUrl(envUrl || fallback);
-  // If env was set but invalid (e.g. whitespace), normalized can be ''; avoid broken API base
   return normalized || fallback;
+}
+
+/**
+ * Returns the API base URL for fetch calls.
+ * In production on the client, this returns the same-origin proxy path (`/api/proxy`)
+ * so that auth cookies are first-party and not blocked by browsers with strict
+ * third-party cookie policies (Chrome EU/UK, Safari ITP, Firefox ETP).
+ */
+export function getPublicApiBaseUrl(): string {
+  if (typeof window !== 'undefined' && process.env.NODE_ENV === 'production') {
+    return '/api/proxy';
+  }
+  return getDirectApiBaseUrl();
 }
 
