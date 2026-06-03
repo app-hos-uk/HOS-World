@@ -198,7 +198,7 @@ export class LoyaltyService {
       where: { userId },
       select: { fandomProfile: true },
     });
-    if (!m) throw new NotFoundException('Not enrolled');
+    if (!m) return {};
     return (m.fandomProfile as Record<string, number> | null) ?? {};
   }
 
@@ -224,7 +224,9 @@ export class LoyaltyService {
       where: { userId },
       include: { tier: true },
     });
-    if (!membership) throw new NotFoundException('Not enrolled');
+    if (!membership) {
+      return { enrolled: false, currentTier: null, nextTier: null, progressPercent: 0, pointsToNext: 0 };
+    }
 
     const next = await this.prisma.loyaltyTier.findFirst({
       where: {
