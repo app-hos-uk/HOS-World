@@ -27,6 +27,7 @@ import { AddOrderNoteDto } from './dto/add-order-note.dto';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../common/guards/roles.guard';
 import { Roles } from '../common/decorators/roles.decorator';
+import { Public } from '../common/decorators/public.decorator';
 import type { ApiResponse, Order } from '@hos-marketplace/shared-types';
 
 @ApiTags('orders')
@@ -83,24 +84,23 @@ export class OrdersController {
     };
   }
 
+  @Public()
   @Get('track/:orderNumber')
   @ApiOperation({
-    summary: 'Track order by order number',
+    summary: 'Track order by order number (public)',
     description:
-      'Retrieves an order by its human-readable order number (e.g. HOS-...) for tracking purposes.',
+      'Returns order status and line items without PII. Does not expose addresses, email, or payment details.',
   })
   @ApiParam({ name: 'orderNumber', description: 'Human-readable order number', type: String })
-  @SwaggerApiResponse({ status: 200, description: 'Order retrieved successfully' })
-  @SwaggerApiResponse({ status: 401, description: 'Unauthorized' })
+  @SwaggerApiResponse({ status: 200, description: 'Order tracking info retrieved successfully' })
   @SwaggerApiResponse({ status: 404, description: 'Order not found' })
   async findByOrderNumber(
-    @Request() req: any,
     @Param('orderNumber') orderNumber: string,
-  ): Promise<ApiResponse<Order>> {
-    const order = await this.ordersService.findByOrderNumber(orderNumber, req.user.id, req.user.role);
+  ): Promise<ApiResponse<any>> {
+    const tracking = await this.ordersService.getPublicOrderTracking(orderNumber);
     return {
-      data: order,
-      message: 'Order retrieved successfully',
+      data: tracking,
+      message: 'Order tracking retrieved successfully',
     };
   }
 

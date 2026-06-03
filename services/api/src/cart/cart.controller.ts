@@ -8,9 +8,11 @@ import {
   Body,
   UseGuards,
   Request,
+  Headers,
   ParseUUIDPipe,
   HttpCode,
   HttpStatus,
+  ForbiddenException,
 } from '@nestjs/common';
 import {
   ApiTags,
@@ -162,9 +164,17 @@ export class CartController {
   @SwaggerApiResponse({ status: 200, description: 'Guest cart merged successfully' })
   async mergeGuestCart(
     @Request() req: any,
+    @Headers('x-guest-session') headerSession: string | undefined,
     @Body() body: MergeGuestCartDto,
   ): Promise<ApiResponse<Cart>> {
-    const cart = await this.cartService.mergeGuestCart(body.guestSessionId, req.user.id);
+    const headerId = headerSession?.trim();
+    const bodyId = body.guestSessionId?.trim();
+    if (!headerId || !bodyId || headerId !== bodyId) {
+      throw new ForbiddenException(
+        'X-Guest-Session header must match the guest session id in the request body',
+      );
+    }
+    const cart = await this.cartService.mergeGuestCart(bodyId, req.user.id);
     return {
       data: cart,
       message: 'Guest cart merged successfully',

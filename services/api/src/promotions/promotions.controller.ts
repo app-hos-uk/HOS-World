@@ -55,18 +55,36 @@ export class PromotionsController {
   @Get()
   @Public()
   @ApiOperation({
-    summary: 'Get promotions',
+    summary: 'Get active promotions',
     description:
-      'Retrieves promotions. Pass activeOnly=false to include DRAFT and expired promotions (for admin pages).',
+      'Retrieves currently active promotions. Coupon codes are stripped from public responses. ' +
+      'Use admin endpoints for full promotion management.',
   })
   @ApiQuery({ name: 'sellerId', required: false, description: 'Filter by seller ID' })
-  @ApiQuery({
-    name: 'activeOnly',
-    required: false,
-    description: 'When false, returns all promotions regardless of status/date',
-  })
   @SwaggerApiResponse({ status: 200, description: 'Promotions retrieved successfully' })
   async findAll(
+    @Query('sellerId') sellerId?: string,
+  ): Promise<ApiResponse<any[]>> {
+    // Public callers always see only active promotions with coupon codes stripped.
+    const promotions = await this.promotionsService.findAll(sellerId, true);
+    return {
+      data: promotions.map((p: any) => this.sanitizePromotion(p)),
+      message: 'Promotions retrieved successfully',
+    };
+  }
+
+  @Get('admin/all')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('ADMIN', 'MARKETING')
+  @ApiBearerAuth('JWT-auth')
+  @ApiOperation({
+    summary: 'Get all promotions (Admin/Marketing)',
+    description: 'Retrieves all promotions including DRAFT and expired. Full coupon details included.',
+  })
+  @ApiQuery({ name: 'sellerId', required: false, description: 'Filter by seller ID' })
+  @ApiQuery({ name: 'activeOnly', required: false, description: 'When false, returns all promotions' })
+  @SwaggerApiResponse({ status: 200, description: 'Promotions retrieved successfully' })
+  async findAllAdmin(
     @Query('sellerId') sellerId?: string,
     @Query('activeOnly') activeOnly?: string,
   ): Promise<ApiResponse<any[]>> {
@@ -82,7 +100,7 @@ export class PromotionsController {
   @Public()
   @ApiOperation({
     summary: 'Get promotion by ID',
-    description: 'Retrieves a specific promotion by ID. Public endpoint.',
+    description: 'Retrieves a specific promotion by ID. Coupon codes stripped from public responses.',
   })
   @ApiParam({ name: 'id', description: 'Promotion UUID', type: String })
   @SwaggerApiResponse({ status: 200, description: 'Promotion retrieved successfully' })
@@ -90,8 +108,19 @@ export class PromotionsController {
   async findOne(@Param('id') id: string): Promise<ApiResponse<any>> {
     const promotion = await this.promotionsService.findOne(id);
     return {
-      data: promotion,
+      data: this.sanitizePromotion(promotion),
       message: 'Promotion retrieved successfully',
+    };
+  }
+
+  /** Strip coupon codes and internal fields from public promotion responses. */
+  private sanitizePromotion(promotion: any): any {
+    if (!promotion) return promotion;
+    const { coupons, ...rest } = promotion;
+    return {
+      ...rest,
+      hasCoupons: Array.isArray(coupons) && coupons.length > 0,
+      couponCount: Array.isArray(coupons) ? coupons.length : 0,
     };
   }
 

@@ -110,7 +110,9 @@ export const apiClient = ApiClient.create({
 export function setFrontendSessionCookie(): void {
   if (typeof document === 'undefined') return;
   const maxAge = 30 * 24 * 60 * 60; // 30 days (matches refresh token TTL)
-  document.cookie = `is_logged_in=true; path=/; max-age=${maxAge}; SameSite=Lax`;
+  const secure =
+    typeof window !== 'undefined' && window.location.protocol === 'https:' ? '; Secure' : '';
+  document.cookie = `is_logged_in=true; path=/; max-age=${maxAge}; SameSite=Lax${secure}`;
 }
 
 export function clearFrontendSessionCookie(): void {
@@ -124,10 +126,13 @@ export const GUEST_CART_SESSION_KEY = 'hos_guest_cart_session';
 /** sessionStorage flag set after lazy guest account creation at checkout. */
 export const GUEST_CHECKOUT_ACCOUNT_KEY = 'hos_guest_checkout_account';
 
+const GUEST_SESSION_UUID_V4 =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+
 export function getOrCreateGuestCartSessionId(): string {
   if (typeof window === 'undefined') return '';
   let id = localStorage.getItem(GUEST_CART_SESSION_KEY);
-  if (!id || id.length < 8) {
+  if (!id || !GUEST_SESSION_UUID_V4.test(id)) {
     id = crypto.randomUUID();
     localStorage.setItem(GUEST_CART_SESSION_KEY, id);
   }

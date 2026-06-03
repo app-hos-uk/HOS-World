@@ -11,12 +11,14 @@ import { StripeConnectService } from './stripe-connect/stripe-connect.service';
 import { StripeConnectController } from './stripe-connect/stripe-connect.controller';
 import { VendorLedgerModule } from '../vendor-ledger/vendor-ledger.module';
 import { NotificationsModule } from '../notifications/notifications.module';
+import { CacheModule } from '../cache/cache.module';
 
 @Module({
   imports: [
     DatabaseModule,
     CurrencyModule,
     PaymentProviderModule,
+    CacheModule,
     VendorLedgerModule,
     NotificationsModule,
     forwardRef(() => LoyaltyModule),

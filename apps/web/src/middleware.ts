@@ -114,7 +114,7 @@ export function middleware(request: NextRequest) {
     if (!isLoggedIn) {
       const loginUrl = request.nextUrl.clone();
       loginUrl.pathname = '/login';
-      loginUrl.searchParams.set('redirect', pathname);
+      loginUrl.searchParams.set('returnUrl', pathname);
       return NextResponse.redirect(loginUrl);
     }
   }

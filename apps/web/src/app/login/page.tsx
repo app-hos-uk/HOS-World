@@ -65,13 +65,25 @@ function LoginPageInner() {
     if (wantRegister === '1' || wantRegister === 'true') {
       setIsLogin(false);
     }
-    stashAuthReturnUrl(searchParams.get('returnUrl'));
+    const returnParam = searchParams.get('returnUrl') ?? searchParams.get('redirect');
+    stashAuthReturnUrl(returnParam);
+    try {
+      const checkoutEmail = sessionStorage.getItem('hos_checkout_email');
+      if (checkoutEmail) {
+        setEmail(checkoutEmail);
+        sessionStorage.removeItem('hos_checkout_email');
+      }
+    } catch {
+      /* ignore */
+    }
   }, [isMounted, searchParams]);
 
-  const safeReturnUrl = getSafeReturnUrl(searchParams.get('returnUrl'));
+  const safeReturnUrl = getSafeReturnUrl(
+    searchParams.get('returnUrl') ?? searchParams.get('redirect'),
+  );
 
   const startOAuth = (provider: 'google' | 'facebook' | 'apple') => {
-    stashAuthReturnUrl(searchParams.get('returnUrl'));
+    stashAuthReturnUrl(searchParams.get('returnUrl') ?? searchParams.get('redirect'));
     window.location.href = `${oauthBaseUrl}/auth/${provider}`;
   };
 

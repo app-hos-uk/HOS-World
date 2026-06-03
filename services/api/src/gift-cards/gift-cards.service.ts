@@ -143,7 +143,7 @@ export class GiftCardsService {
     });
 
     if (!giftCard) {
-      throw new NotFoundException('Gift card not found');
+      throw new BadRequestException('Invalid or inactive gift card');
     }
 
     // Check if expired
@@ -166,12 +166,10 @@ export class GiftCardsService {
       throw new BadRequestException('Gift card is not active');
     }
 
+    // Public validation must not reveal balance or the full code (enumeration aid).
     return {
-      id: giftCard.id,
-      code: giftCard.code,
-      balance: giftCard.balance,
+      valid: true,
       currency: giftCard.currency,
-      status: giftCard.status,
       expiresAt: giftCard.expiresAt,
     };
   }

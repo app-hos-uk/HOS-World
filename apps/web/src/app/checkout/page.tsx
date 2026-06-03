@@ -514,10 +514,15 @@ export default function CheckoutPage() {
   }
 
   if (!isAuthenticated) {
-    const prefilledEmail = encodeURIComponent(guestForm.email.trim());
-    const signInHref = prefilledEmail
-      ? `/login?returnUrl=/checkout&email=${prefilledEmail}`
-      : '/login?returnUrl=/checkout';
+    const signInHref = '/login?returnUrl=/checkout';
+    const stashCheckoutEmailForLogin = () => {
+      try {
+        const trimmed = guestForm.email.trim();
+        if (trimmed) sessionStorage.setItem('hos_checkout_email', trimmed);
+      } catch {
+        /* ignore */
+      }
+    };
 
     return (
       <div className="min-h-screen bg-hos-bg-secondary">
@@ -538,7 +543,11 @@ export default function CheckoutPage() {
                   Sign in to use saved addresses and complete your purchase faster.
                 </p>
                 <div className="flex flex-col gap-3">
-                  <Link href={signInHref} className="px-6 py-3 btn-gold text-center">
+                  <Link
+                    href={signInHref}
+                    onClick={stashCheckoutEmailForLogin}
+                    className="px-6 py-3 btn-gold text-center"
+                  >
                     Sign In
                   </Link>
                   <Link

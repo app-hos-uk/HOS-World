@@ -321,6 +321,14 @@ export class CartService {
     if (!id || id.length < 8 || id.length > 128) {
       throw new BadRequestException('Valid X-Guest-Session header is required');
     }
+    // Require UUID v4 format to prevent guessable/sequential session IDs
+    const uuidV4Regex =
+      /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+    if (!uuidV4Regex.test(id)) {
+      throw new BadRequestException(
+        'X-Guest-Session must be a valid UUID v4',
+      );
+    }
     return id;
   }
 
@@ -566,10 +574,7 @@ export class CartService {
    * Merge guest cart lines into the authenticated user's cart, then delete the guest cart.
    */
   async mergeGuestCart(guestSessionId: string, userId: string): Promise<Cart> {
-    const sid = guestSessionId?.trim();
-    if (!sid) {
-      return this.getCart(userId);
-    }
+    const sid = this.assertGuestSession(guestSessionId);
 
     const guestCart = await this.prisma.cart.findUnique({
       where: { guestSessionId: sid },

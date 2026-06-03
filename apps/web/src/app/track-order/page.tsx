@@ -84,12 +84,42 @@ function TrackOrderContent() {
     setSearched(true);
 
     try {
-      const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(numberToSearch);
-      const response = isUUID
-        ? await apiClient.getOrder(numberToSearch)
-        : await apiClient.trackOrderByNumber(numberToSearch);
+      const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(
+        numberToSearch,
+      );
+      if (isUUID) {
+        setError(
+          'Order IDs are private. Sign in to view your orders, or track using your order number (e.g. HOS-...).',
+        );
+        setLoading(false);
+        return;
+      }
+      const response = await apiClient.trackOrderByNumber(numberToSearch);
       if (response?.data) {
-        setOrder(response.data);
+        const raw = response.data as unknown as {
+          orderNumber: string;
+          status: string;
+          total: number;
+          currency?: string;
+          createdAt: string | Date;
+          trackingCode?: string;
+          items?: Array<{ quantity: number; productName?: string }>;
+        };
+        setOrder({
+          id: raw.orderNumber,
+          orderNumber: raw.orderNumber,
+          status: raw.status,
+          total: raw.total,
+          currency: raw.currency,
+          createdAt: raw.createdAt,
+          trackingCode: raw.trackingCode,
+          items: (raw.items || []).map((it, idx) => ({
+            id: String(idx),
+            quantity: it.quantity,
+            price: 0,
+            product: { name: it.productName || 'Item' },
+          })),
+        });
       } else {
         setError('Order not found. Please check the order number and try again.');
       }
@@ -150,7 +180,7 @@ function TrackOrderContent() {
                 value={orderNumber}
                 onChange={(e) => setOrderNumber(e.target.value)}
                 onKeyDown={(e) => e.key === 'Enter' && handleTrackOrder()}
-                placeholder="Enter order number or ID"
+                placeholder="Enter order number (e.g. HOS-...)"
                 className="flex-1 px-4 py-3 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50 focus:border-transparent"
               />
               <button

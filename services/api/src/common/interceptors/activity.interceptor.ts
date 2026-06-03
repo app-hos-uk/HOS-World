@@ -139,6 +139,14 @@ export class ActivityInterceptor implements NestInterceptor {
     'authorization',
     'creditCard',
     'cvv',
+    'firstName',
+    'lastName',
+    'street',
+    'postalCode',
+    'billingAddress',
+    'shippingAddress',
+    'accountNumber',
+    'sortCode',
   ]);
 
   private isDecimalLike(value: any): boolean {

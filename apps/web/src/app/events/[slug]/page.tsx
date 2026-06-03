@@ -7,6 +7,7 @@ import { Header } from '@/components/Header';
 import { Footer } from '@/components/Footer';
 import { apiClient } from '@/lib/api';
 import { useToast } from '@/hooks/useToast';
+import { toSafeExternalHref } from '@/lib/httpUrlValidation';
 
 export default function EventDetailPage() {
   const params = useParams();
@@ -73,9 +74,9 @@ export default function EventDetailPage() {
               <div className="prose prose-invert text-sm font-secondary whitespace-pre-wrap">{ev.description}</div>
             )}
             <p className="text-amber-200/90 text-sm">Earn {ev.attendancePoints} points when you attend.</p>
-            {ev.virtualUrl && (
+            {toSafeExternalHref(ev.virtualUrl) && (
               <p className="text-sm">
-                <a href={ev.virtualUrl} className="text-amber-400 underline" target="_blank" rel="noreferrer">
+                <a href={toSafeExternalHref(ev.virtualUrl)} className="text-amber-400 underline" target="_blank" rel="noopener noreferrer">
                   Join link
                 </a>
               </p>

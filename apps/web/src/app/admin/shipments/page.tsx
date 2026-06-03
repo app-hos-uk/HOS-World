@@ -6,6 +6,7 @@ import { AdminLayout } from '@/components/AdminLayout';
 import { apiClient } from '@/lib/api';
 import { useToast } from '@/hooks/useToast';
 import { DataExport } from '@/components/DataExport';
+import { toSafeExternalHref } from '@/lib/httpUrlValidation';
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer
 } from 'recharts';
@@ -461,9 +462,9 @@ export default function AdminShipmentsPage() {
                             {shipment.trackingNumber ? (
                               <div>
                                 <span className="text-sm font-mono">{shipment.trackingNumber}</span>
-                                {shipment.trackingUrl && (
+                                {toSafeExternalHref(shipment.trackingUrl) && (
                                   <a
-                                    href={shipment.trackingUrl}
+                                    href={toSafeExternalHref(shipment.trackingUrl)}
                                     target="_blank"
                                     rel="noopener noreferrer"
                                     className="ml-2 text-xs text-hos-gold hover:underline"
@@ -581,9 +582,9 @@ export default function AdminShipmentsPage() {
                       </div>
                     )}
 
-                    {selectedShipment.trackingUrl && (
+                    {toSafeExternalHref(selectedShipment.trackingUrl) && (
                       <a
-                        href={selectedShipment.trackingUrl}
+                        href={toSafeExternalHref(selectedShipment.trackingUrl)}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="inline-block px-4 py-2 bg-hos-gold text-[#1a1406] rounded-lg hover:bg-hos-gold-hover"

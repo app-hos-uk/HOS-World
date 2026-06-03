@@ -19,6 +19,7 @@ import {
   ApiBearerAuth,
 } from '@nestjs/swagger';
 import { MeilisearchService, SearchFilters } from './meilisearch.service';
+import { Throttle } from '@nestjs/throttler';
 import { Public } from '../common/decorators/public.decorator';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../common/guards/roles.guard';
@@ -44,6 +45,7 @@ export class MeilisearchController {
   constructor(private readonly meilisearchService: MeilisearchService) {}
 
   @Public()
+  @Throttle({ default: { limit: 60, ttl: 60000 } })
   @Get('search')
   @ApiOperation({
     summary: 'Search products with Meilisearch',
@@ -167,6 +169,7 @@ export class MeilisearchController {
   }
 
   @Public()
+  @Throttle({ default: { limit: 120, ttl: 60000 } })
   @Get('instant')
   @ApiOperation({
     summary: 'Instant search (lightweight)',
@@ -217,6 +220,7 @@ export class MeilisearchController {
   }
 
   @Public()
+  @Throttle({ default: { limit: 60, ttl: 60000 } })
   @Get('suggestions')
   @ApiOperation({
     summary: 'Get search suggestions (autocomplete)',
@@ -250,6 +254,7 @@ export class MeilisearchController {
   }
 
   @Public()
+  @Throttle({ default: { limit: 30, ttl: 60000 } })
   @Get('trending')
   @ApiOperation({
     summary: 'Get trending/popular search terms',

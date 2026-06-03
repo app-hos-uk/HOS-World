@@ -303,37 +303,42 @@ export class OrdersService {
     const grandSubtotal = vendorGroups.reduce((acc, g) => acc.add(g.subtotal), new Decimal(0));
     const grandTax = vendorGroups.reduce((acc, g) => acc.add(g.tax), new Decimal(0));
 
-    let resolvedShippingCost = new Decimal(createOrderDto.shippingCost ?? cart.shipping ?? 0);
+    let resolvedShippingCost = new Decimal(0);
     if (cart.promotionFreeShipping) {
       resolvedShippingCost = new Decimal(0);
     } else if (this.shippingService && shippingAddress) {
-      try {
-        const cartValue = Number(grandSubtotal);
-        const shippingOptions = await this.shippingService.getShippingOptions(
-          cart.items.map((item) => ({
-            productId: item.productId,
-            quantity: item.quantity,
-            weight: (item.product as any).weight ?? null,
-          })),
-          cartValue,
-          {
-            country: shippingAddress.country,
-            state: shippingAddress.state || undefined,
-            city: shippingAddress.city || undefined,
-            postalCode: shippingAddress.postalCode || undefined,
-          },
+      const cartValue = Number(grandSubtotal);
+      const shippingOptions = await this.shippingService.getShippingOptions(
+        cart.items.map((item) => ({
+          productId: item.productId,
+          quantity: item.quantity,
+          weight: (item.product as any).weight ?? null,
+        })),
+        cartValue,
+        {
+          country: shippingAddress.country,
+          state: shippingAddress.state || undefined,
+          city: shippingAddress.city || undefined,
+          postalCode: shippingAddress.postalCode || undefined,
+        },
+      );
+      if (shippingOptions.length > 0) {
+        const selectedOption = createOrderDto.shippingMethodId
+          ? shippingOptions.find((o: any) => o.method?.id === createOrderDto.shippingMethodId)
+          : null;
+        const serverRate = new Decimal(selectedOption?.rate ?? shippingOptions[0]?.rate ?? 0);
+        resolvedShippingCost = serverRate;
+      } else {
+        // No options returned — fall back to the previously-quoted cart shipping value.
+        this.logger.warn(
+          `Shipping options empty for order address; falling back to cart.shipping=${cart.shipping}`,
         );
-        if (shippingOptions.length > 0) {
-          const selectedOption = createOrderDto.shippingMethodId
-            ? shippingOptions.find((o: any) => o.method?.id === createOrderDto.shippingMethodId)
-            : null;
-          const serverRate = new Decimal(selectedOption?.rate ?? shippingOptions[0]?.rate ?? 0);
-          // Authoritative server quote — do not trust client-submitted shipping (prevents underpayment)
-          resolvedShippingCost = serverRate;
-        }
-      } catch (err) {
-        this.logger.warn(`Shipping re-validation failed, using client value: ${err}`);
+        resolvedShippingCost = new Decimal(cart.shipping ?? 0);
       }
+    } else if (!cart.promotionFreeShipping && shippingAddress) {
+      // Shipping service is unavailable — use the stored cart shipping value as a conservative fallback
+      // only if it was set by a previous server-side quote (never trust raw client input).
+      resolvedShippingCost = new Decimal(cart.shipping ?? 0);
     }
 
     const cartShipping = resolvedShippingCost;
@@ -654,8 +659,9 @@ export class OrdersService {
           appliedPromotionResult,
         );
       } catch (error: any) {
-        this.logger.warn(
-          `Failed to record promotion/coupon usages for order ${result.id}: ${error?.message ?? error}`,
+        // Order already committed — log for manual reconciliation; do not leave silent failures.
+        this.logger.error(
+          `CRITICAL: promotion/coupon usage not recorded for order ${result.id}: ${error?.message ?? error}`,
         );
       }
     }
@@ -1127,6 +1133,48 @@ export class OrdersService {
       throw new NotFoundException('Order not found');
     }
     return this.findOne(order.id, userId, role);
+  }
+
+  /**
+   * Public order tracking — no PII (addresses, email, payment identifiers).
+   */
+  async getPublicOrderTracking(orderNumber: string) {
+    const order = await this.prisma.order.findFirst({
+      where: { orderNumber: orderNumber.trim() },
+      include: {
+        items: {
+          include: {
+            product: {
+              select: { name: true },
+            },
+          },
+        },
+        seller: {
+          select: { storeName: true, slug: true },
+        },
+      },
+    });
+
+    if (!order) {
+      throw new NotFoundException('Order not found');
+    }
+
+    return {
+      orderNumber: order.orderNumber,
+      status: order.status,
+      paymentStatus: order.paymentStatus,
+      total: Number(order.total),
+      currency: order.currency,
+      createdAt: order.createdAt,
+      updatedAt: order.updatedAt,
+      trackingCode: order.trackingCode ?? undefined,
+      storeName: order.seller?.storeName,
+      storeSlug: order.seller?.slug,
+      items: (order.items || []).map((item: any) => ({
+        quantity: item.quantity,
+        productName: item.product?.name,
+      })),
+    };
   }
 
   async findOne(id: string, userId: string, role: string): Promise<Order> {
@@ -1649,28 +1697,75 @@ export class OrdersService {
       });
     });
 
-    // Issue actual Stripe refund for paid orders
+    // Issue actual Stripe refund for paid orders — only refund the card portion (not gift-card covered amount).
     if (order.paymentStatus === 'PAID' && order.stripePaymentIntentId) {
-      if (this.paymentProviderService?.isProviderAvailable('stripe')) {
+      const giftCardRedemptions = await this.prisma.giftCardTransaction.findMany({
+        where: { orderId: order.id, type: 'REDEMPTION' },
+        select: { amount: true },
+      });
+      const giftCardTotal = giftCardRedemptions.reduce(
+        (sum: number, tx: any) => sum + Number(tx.amount),
+        0,
+      );
+      const cardRefundAmount = Math.max(0, Number(order.total) - giftCardTotal);
+
+      if (cardRefundAmount > 0 && this.paymentProviderService?.isProviderAvailable('stripe')) {
         try {
           const provider = this.paymentProviderService.getProvider('stripe');
           const result = await provider.refundPayment({
             paymentId: order.stripePaymentIntentId,
-            amount: Number(order.total),
+            amount: cardRefundAmount,
             metadata: { currency: order.currency, reason: 'order_cancelled' },
           });
           if (result?.success) {
-            this.logger.log(`Stripe refund succeeded for cancelled order ${order.orderNumber}`);
+            this.logger.log(
+              `Stripe refund of ${cardRefundAmount} succeeded for cancelled order ${order.orderNumber}`,
+            );
           } else {
-            this.logger.warn(`Stripe refund returned non-success for order ${order.orderNumber}`);
+            this.logger.warn(
+              `Stripe refund returned non-success for order ${order.orderNumber} — manual refund required`,
+            );
           }
         } catch (err) {
           this.logger.error(`Failed to auto-refund cancelled order ${order.orderNumber}: ${err}`);
         }
-      } else {
+      } else if (cardRefundAmount > 0) {
         this.logger.warn(
-          `Stripe provider unavailable — refund for order ${order.orderNumber} must be processed manually`,
+          `Stripe provider unavailable — refund of ${cardRefundAmount} for order ${order.orderNumber} must be processed manually`,
         );
+      }
+
+      // Reverse gift-card redemptions back to their respective cards
+      if (giftCardTotal > 0) {
+        const allRedemptions = await this.prisma.giftCardTransaction.findMany({
+          where: { orderId: order.id, type: 'REDEMPTION' },
+          include: { giftCard: true },
+        });
+        for (const redemption of allRedemptions) {
+          try {
+            const newBalance = Number(redemption.giftCard.balance) + Number(redemption.amount);
+            await this.prisma.$transaction([
+              this.prisma.giftCard.update({
+                where: { id: redemption.giftCardId },
+                data: { balance: { increment: Number(redemption.amount) } },
+              }),
+              this.prisma.giftCardTransaction.create({
+                data: {
+                  giftCard: { connect: { id: redemption.giftCardId } },
+                  order: { connect: { id: order.id } },
+                  type: 'REFUND',
+                  amount: Number(redemption.amount),
+                  balanceAfter: newBalance,
+                  notes: `Auto-reversed on order cancel (${order.orderNumber})`,
+                },
+              }),
+            ]);
+          } catch (err) {
+            this.logger.error(
+              `Failed to reverse gift-card redemption for order ${order.orderNumber}: ${err}`,
+            );
+          }
+        }
       }
     }
 

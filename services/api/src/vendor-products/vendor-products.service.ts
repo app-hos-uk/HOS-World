@@ -6,6 +6,7 @@ import {
   BadRequestException,
 } from '@nestjs/common';
 import { PrismaService } from '../database/prisma.service';
+import { SellersService } from '../sellers/sellers.service';
 import { CreateVendorProductDto } from './dto/create-vendor-product.dto';
 import { UpdateVendorProductDto } from './dto/update-vendor-product.dto';
 import { ApproveVendorProductDto, RejectVendorProductDto } from './dto/approve-vendor-product.dto';
@@ -14,17 +15,13 @@ import { Decimal } from '@prisma/client/runtime/library';
 
 @Injectable()
 export class VendorProductsService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly sellersService: SellersService,
+  ) {}
 
   async create(sellerId: string, dto: CreateVendorProductDto) {
-    const seller = await this.prisma.seller.findUnique({
-      where: { userId: sellerId },
-    });
-    if (!seller) throw new NotFoundException('Seller profile not found');
-
-    if (seller.vendorStatus !== 'ACTIVE' && seller.vendorStatus !== 'APPROVED') {
-      throw new ForbiddenException('Your vendor account must be approved before listing products');
-    }
+    const seller = await this.sellersService.assertSellerCanOperate(sellerId);
 
     const product = await this.prisma.product.findUnique({
       where: { id: dto.productId },
@@ -179,6 +176,7 @@ export class VendorProductsService {
   }
 
   async update(id: string, userId: string, dto: UpdateVendorProductDto) {
+    await this.sellersService.assertSellerCanOperate(userId);
     const vp = await this.prisma.vendorProduct.findUnique({
       where: { id },
       include: { seller: true },
@@ -334,6 +332,7 @@ export class VendorProductsService {
   }
 
   async delete(id: string, userId: string) {
+    await this.sellersService.assertSellerCanOperate(userId);
     const vp = await this.prisma.vendorProduct.findUnique({
       where: { id },
       include: { seller: true },

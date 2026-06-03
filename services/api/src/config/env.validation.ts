@@ -158,6 +158,10 @@ export function validateEnvironmentVariables(
     errors.push('INTEGRATION_ENCRYPTION_KEY is required in production');
   }
 
+  if (config.NODE_ENV === 'production' && !config.REDIS_URL) {
+    errors.push('REDIS_URL is required in production for distributed rate limiting');
+  }
+
   if (config.SMTP_HOST && (!config.SMTP_USER || !config.SMTP_PASS)) {
     warnings.push('SMTP_USER and SMTP_PASS should be set when SMTP_HOST is configured');
   }

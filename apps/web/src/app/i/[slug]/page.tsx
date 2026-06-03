@@ -5,6 +5,7 @@ import { useParams } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
 import { apiClient } from '@/lib/api';
+import { toSafeExternalHref } from '@/lib/httpUrlValidation';
 import type {
   PublicInfluencerInfo,
   InfluencerStorefront,
@@ -210,11 +211,12 @@ export default function InfluencerStorefrontPage() {
             {/* Social Links */}
             {storefront?.showSocialLinks !== false && influencer.socialLinks && (
               <div className="flex gap-3">
-                {Object.entries(influencer.socialLinks).map(([platform, url]) => (
-                  url && (
+                {Object.entries(influencer.socialLinks).map(([platform, url]) => {
+                  const safeHref = toSafeExternalHref(url as string);
+                  return safeHref && (
                     <a
                       key={platform}
-                      href={url.startsWith('http') ? url : `https://${url}`}
+                      href={safeHref}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="w-10 h-10 rounded-full flex items-center justify-center transition-colors hover:opacity-80"
@@ -225,8 +227,8 @@ export default function InfluencerStorefrontPage() {
                     >
                       {getSocialIcon(platform)}
                     </a>
-                  )
-                ))}
+                  );
+                })}
               </div>
             )}
           </div>

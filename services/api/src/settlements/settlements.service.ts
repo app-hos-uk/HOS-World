@@ -5,6 +5,7 @@ import {
   Logger,
   Optional,
 } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../database/prisma.service';
 import { CreateSettlementDto, ProcessSettlementDto } from './dto/create-settlement.dto';
 import { SettlementStatus } from '@prisma/client';
@@ -16,12 +17,16 @@ import { StripeConnectService } from '../payments/stripe-connect/stripe-connect.
 export class SettlementsService {
   private readonly BASE_CURRENCY = 'USD';
   private readonly logger = new Logger(SettlementsService.name);
+  private readonly defaultFeeRate: number;
 
   constructor(
     private prisma: PrismaService,
     private currencyService: CurrencyService,
+    private configService: ConfigService,
     @Optional() private stripeConnectService?: StripeConnectService,
-  ) {}
+  ) {
+    this.defaultFeeRate = this.configService.get<number>('PLATFORM_FEE_RATE', 0.1);
+  }
 
   async calculateSettlement(sellerId: string, periodStart: Date, periodEnd: Date) {
     const seller = await this.prisma.seller.findUnique({
@@ -52,7 +57,9 @@ export class SettlementsService {
 
     let totalSales = new Decimal(0);
     let platformFees = new Decimal(0);
-    const platformFeeRate = new Decimal(0.1); // 10% platform fee (configurable)
+    const platformFeeRate = new Decimal(
+      (seller as any).commissionRate ?? this.defaultFeeRate,
+    );
 
     for (const order of orders) {
       let orderTotalBase: Decimal;
@@ -154,8 +161,13 @@ export class SettlementsService {
         },
       });
 
+      // Use the same fee rate from calculation (seller's commissionRate or configured default)
+      const feeRate = new Decimal(
+        (seller as any).commissionRate ?? this.defaultFeeRate,
+      );
+
       for (const { orderId, amountBase } of orderConversions) {
-        const orderFee = new Decimal(amountBase).mul(new Decimal(0.1));
+        const orderFee = new Decimal(amountBase).mul(feeRate);
         await tx.orderSettlement.create({
           data: {
             settlementId: settlement.id,
@@ -269,22 +281,66 @@ export class SettlementsService {
       throw new BadRequestException(`Cannot process settlement in status: ${settlement.status}`);
     }
 
-    // If marking as PAID, trigger Stripe Connect transfer
+    // If marking as PAID, trigger Stripe Connect transfer — but ONLY for orders that
+    // were NOT already paid out via Connect split (application_fee_amount) at checkout.
+    // Orders paid via Connect split already transferred funds to the vendor account at payment time;
+    // issuing a second transfer here would result in a double payout.
     if (processDto.status === 'PAID' && this.stripeConnectService) {
       const seller = settlement.seller;
       if (seller?.stripeConnectAccountId && seller.stripeConnectPayoutsEnabled) {
-        try {
-          await this.stripeConnectService.transferToVendor({
-            amount: Number(settlement.netAmount),
-            currency: settlement.currency.toLowerCase(),
-            vendorAccountId: seller.stripeConnectAccountId,
-            description: `Settlement ${id} payout`,
-            orderId: id,
-          });
-          this.logger.log(`Stripe transfer completed for settlement ${id}`);
-        } catch (error) {
-          this.logger.error(`Stripe transfer failed for settlement ${id}:`, error);
-          throw new BadRequestException('Stripe payout transfer failed. Settlement not processed.');
+        // Check how many settlement orders used Connect split (have platformFeeAmount > 0, indicating
+        // the platform took an application_fee and routed funds to the vendor at payment time).
+        const settlementOrders = await this.prisma.orderSettlement.findMany({
+          where: { settlementId: id },
+          include: {
+            order: {
+              select: {
+                id: true,
+                total: true,
+                platformFeeAmount: true,
+                stripePaymentIntentId: true,
+              },
+            },
+          },
+        });
+
+        // Only transfer for orders that were NOT paid via Connect split
+        let nonSplitTotal = new Decimal(0);
+        for (const so of settlementOrders) {
+          const usedConnectSplit =
+            Number(so.order.platformFeeAmount ?? 0) > 0 && so.order.stripePaymentIntentId;
+          if (!usedConnectSplit) {
+            nonSplitTotal = nonSplitTotal.add(new Decimal(so.amount));
+          }
+        }
+
+        // Apply same fee rate to get net payout for non-split orders
+        const feeRate = new Decimal(
+          (seller as any).commissionRate ?? this.defaultFeeRate,
+        );
+        const nonSplitFee = nonSplitTotal.mul(feeRate);
+        const transferAmount = Number(nonSplitTotal.sub(nonSplitFee));
+
+        if (transferAmount > 0) {
+          try {
+            await this.stripeConnectService.transferToVendor({
+              amount: transferAmount,
+              currency: settlement.currency.toLowerCase(),
+              vendorAccountId: seller.stripeConnectAccountId,
+              description: `Settlement ${id} payout (non-split orders only)`,
+              orderId: id,
+            });
+            this.logger.log(
+              `Stripe transfer of ${transferAmount} completed for settlement ${id} (skipped ${settlementOrders.length - settlementOrders.filter((so: any) => !Number(so.order.platformFeeAmount ?? 0)).length} Connect-split orders)`,
+            );
+          } catch (error) {
+            this.logger.error(`Stripe transfer failed for settlement ${id}:`, error);
+            throw new BadRequestException('Stripe payout transfer failed. Settlement not processed.');
+          }
+        } else {
+          this.logger.log(
+            `Settlement ${id}: all orders were paid via Connect split — no additional transfer needed`,
+          );
         }
       }
     }

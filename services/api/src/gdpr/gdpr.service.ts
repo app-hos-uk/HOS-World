@@ -257,20 +257,51 @@ export class GDPRService {
         country: user.country,
         createdAt: user.createdAt,
       },
-      addresses: user.addresses,
-      orders: user.orders.map((order) => ({
+      addresses: (user.addresses || []).map((a: any) => ({
+        id: a.id,
+        street: a.street,
+        city: a.city,
+        state: a.state,
+        postalCode: a.postalCode,
+        country: a.country,
+      })),
+      orders: (user.orders || []).map((order: any) => ({
         orderNumber: order.orderNumber,
         status: order.status,
         total: order.total,
         currency: order.currency,
         createdAt: order.createdAt,
-        items: order.items,
+        items: (order.items || []).map((item: any) => ({
+          quantity: item.quantity,
+          price: item.price,
+          productName: item.product?.name,
+          productSlug: item.product?.slug,
+        })),
       })),
-      reviews: user.reviews,
-      wishlist: user.wishlistItems,
-      collections: user.collections,
-      badges: user.userBadges,
-      quests: user.userQuests,
+      reviews: (user.reviews || []).map((r: any) => ({
+        id: r.id,
+        rating: r.rating,
+        comment: r.comment,
+        createdAt: r.createdAt,
+      })),
+      wishlist: (user.wishlistItems || []).map((w: any) => ({
+        productId: w.productId,
+        productName: w.product?.name,
+      })),
+      collections: (user.collections || []).map((c: any) => ({
+        id: c.id,
+        name: c.name,
+        createdAt: c.createdAt,
+      })),
+      badges: (user.userBadges || []).map((b: any) => ({
+        badgeName: b.badge?.name,
+        earnedAt: b.earnedAt,
+      })),
+      quests: (user.userQuests || []).map((q: any) => ({
+        questName: q.quest?.name,
+        status: q.status,
+        completedAt: q.completedAt,
+      })),
       gamification: {
         points: user.gamificationPoints,
         level: user.level,
@@ -309,7 +340,7 @@ export class GDPRService {
       },
     });
 
-    // Anonymize user data instead of hard delete (legal requirement for orders)
+    // Anonymize user record (legal retention requires keeping orders, but PII must be scrubbed)
     await this.prisma.user.update({
       where: { id: userId },
       data: {
@@ -323,8 +354,50 @@ export class GDPRService {
         ipAddress: null,
         gdprConsent: false,
         dataProcessingConsent: null,
+        country: null,
+        currencyPreference: null,
+        themePreference: null,
+        preferredCommunicationMethod: null,
+        characterAvatarId: null,
+        favoriteFandoms: null,
       },
     });
+
+    // Anonymize saved addresses (orders may still reference these rows for legal retention)
+    await this.prisma.address.updateMany({
+      where: { userId },
+      data: {
+        street: 'Redacted',
+        city: 'Redacted',
+        state: null,
+        postalCode: '00000',
+        country: 'XX',
+        phone: null,
+        firstName: 'Deleted',
+        lastName: 'User',
+      },
+    });
+
+    // Anonymize seller storefront profile if present
+    await this.prisma.seller
+      .updateMany({
+        where: { userId },
+        data: {
+          storeName: 'Deleted Store',
+          description: null,
+          logo: null,
+          customDomain: null,
+          subDomain: null,
+        },
+      })
+      .catch(() => {});
+
+    // Anonymize customer profile if it exists
+    try {
+      await this.prisma.customer.deleteMany({ where: { userId } });
+    } catch {
+      /* model may not be defined */
+    }
 
     // Delete non-essential data (but KEEP consent logs for audit compliance)
     await this.prisma.collection.deleteMany({ where: { userId } });

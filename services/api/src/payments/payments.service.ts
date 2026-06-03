@@ -19,6 +19,7 @@ import { NotificationsService } from '../notifications/notifications.service';
 import { LoyaltyService } from '../loyalty/loyalty.service';
 import { PosInventorySyncService } from '../pos/sync/inventory-sync.service';
 import { MarketingEventBus } from '../journeys/marketing-event.bus';
+import { RedisService } from '../cache/redis.service';
 
 @Injectable()
 export class PaymentsService {
@@ -39,6 +40,7 @@ export class PaymentsService {
     private posInventorySync?: PosInventorySyncService,
     @Optional() @Inject(forwardRef(() => MarketingEventBus))
     private marketingBus?: MarketingEventBus,
+    @Optional() private redisService?: RedisService,
   ) {
     this.logger.log('PaymentsService initialized with payment provider framework');
   }
@@ -91,8 +93,17 @@ export class PaymentsService {
     const paymentAmount = await this.computePayableAmount(order.id, Number(order.total));
     const paymentCurrency = createPaymentDto.currency || order.currency;
 
+    // If gift-card redemptions fully cover the order total, complete the order without
+    // creating a Stripe payment intent. This prevents orders from getting stuck in PENDING.
     if (paymentAmount <= 0) {
-      throw new BadRequestException('Payment amount must be greater than zero');
+      await this.markPaymentAsPaid(order, 'gift_card_full_coverage', 0);
+      this.logger.log(`Order ${order.id} fully covered by gift cards — marked PAID`);
+      return {
+        paid: true,
+        method: 'gift_card_full_coverage',
+        orderId: order.id,
+        message: 'Order fully covered by gift card balance — no card payment required.',
+      };
     }
 
     // Convert payment amount to base currency for processing
@@ -451,6 +462,17 @@ export class PaymentsService {
     const event =
       typeof payload === 'string' ? JSON.parse(payload) : JSON.parse(payload.toString());
     this.logger.log(`Received ${providerName} webhook: ${event.type || 'unknown'}`);
+
+    // Deduplicate by Stripe event id (retries / duplicate delivery).
+    const eventId = typeof event?.id === 'string' ? event.id : null;
+    if (eventId && this.redisService) {
+      const dedupeKey = `stripe:webhook:${eventId}`;
+      const isNew = await this.redisService.setNX(dedupeKey, '1', 7 * 24 * 60 * 60);
+      if (!isNew) {
+        this.logger.log(`Skipping duplicate webhook event ${eventId}`);
+        return;
+      }
+    }
 
     // Only act on an explicit allow-list of event types. Loose substring matching
     // ('includes("succeeded")') can misfire on unrelated events whose data.object is not a

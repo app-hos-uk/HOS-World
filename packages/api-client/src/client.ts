@@ -483,6 +483,7 @@ export class ApiClient {
   async mergeGuestCart(guestSessionId: string): Promise<ApiResponse<Cart>> {
     return this.request<ApiResponse<Cart>>('/cart/merge-guest', {
       method: 'POST',
+      headers: { 'X-Guest-Session': guestSessionId },
       body: JSON.stringify({ guestSessionId }),
     });
   }

@@ -27,6 +27,22 @@ export class SellersService {
     this.encryptionKey = key || 'hos-default-key-change-in-production';
   }
 
+  /**
+   * Ensures the seller account is approved/active before marketplace write operations.
+   */
+  async assertSellerCanOperate(userId: string) {
+    const seller = await this.prisma.seller.findUnique({ where: { userId } });
+    if (!seller) {
+      throw new NotFoundException('Seller profile not found');
+    }
+    if (seller.vendorStatus !== 'ACTIVE' && seller.vendorStatus !== 'APPROVED') {
+      throw new ForbiddenException(
+        'Your vendor account must be approved before performing this action',
+      );
+    }
+    return seller;
+  }
+
   private encryptField(value: string): string {
     const crypto = require('crypto');
     const key = crypto.scryptSync(this.encryptionKey, 'salt', 32);

@@ -20,7 +20,8 @@ const isProduction = process.env.NODE_ENV === 'production';
 const migrationControllersEnabled = process.env.ENABLE_ADMIN_MIGRATIONS === 'true';
 
 const coreControllers = [
-  CreateTeamUsersController,
+  // Dev seed controller is excluded in production — defense in depth alongside runtime guard.
+  ...(isProduction ? [] : [CreateTeamUsersController]),
   AdminUsersController,
   AdminController,
   AdminSellersController,
