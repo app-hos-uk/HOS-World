@@ -68,6 +68,8 @@ const BYPASS_PREFIXES = [
   '/collections',
   '/downloads',
   '/shipping',
+  '/refund-policy',
+  '/coming-soon',
   '/leaderboard',
   '/quests',
   '/access-denied',

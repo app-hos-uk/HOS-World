@@ -1,7 +1,6 @@
 'use client';
 
 import Link from 'next/link';
-import Image from 'next/image';
 import { useState, Suspense } from 'react';
 import { usePathname } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
@@ -11,7 +10,7 @@ import { CurrencySelector } from '@/components/CurrencySelector';
 import { NotificationBell } from '@/components/NotificationBell';
 import { SearchBar } from '@/components/SearchBar';
 import type { UserRole } from '@hos-marketplace/shared-types';
-import { REFERENCE_ASSETS } from '@/lib/referenceAssets';
+import { BrandLogo } from '@/components/BrandLogo';
 import { STOREFRONT_NAV_LINKS } from '@/lib/storefrontNavigation';
 
 const ROLE_QUICK_LINKS: Record<string, Array<{ title: string; href: string; icon: string }>> = {
@@ -169,20 +168,8 @@ export function Header() {
       {/* ROW 2 — Main header */}
       <div className="w-full bg-hos-bg border-b border-hos-border">
         <div className="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between gap-4">
-          {/* Logo */}
-          <Link href="/shop" className="flex items-center gap-3 shrink-0 group">
-            <Image
-              src={REFERENCE_ASSETS.logo}
-              alt="House of Spells"
-              width={180}
-              height={56}
-              className="h-10 w-auto object-contain"
-              priority
-            />
-            <span className="hidden sm:inline font-display text-hos-gold-hover text-lg group-hover:text-hos-gold transition-colors">
-              House of Spells
-            </span>
-          </Link>
+          {/* Logo — round emblem + wordmark (horizontal) */}
+          <BrandLogo variant="horizontal" linked href="/shop" priority />
 
           {/* Search (Desktop/Tablet) */}
           {showCustomerNav && (
@@ -204,6 +191,15 @@ export function Header() {
                 </svg>
                 <span className="text-hos-text-muted text-[11px] group-hover:text-hos-gold transition-colors duration-200">{accountLabel}</span>
               </Link>
+              {showAuthCustomerNav && (
+                <Link href="/profile" className="flex flex-col items-center gap-1 group">
+                  <svg className="w-5 h-5 text-hos-text-secondary group-hover:text-hos-gold transition-colors duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.066 2.573c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.573 1.066c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.066-2.573c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                  </svg>
+                  <span className="text-hos-text-muted text-[11px] group-hover:text-hos-gold transition-colors duration-200">Profile</span>
+                </Link>
+              )}
               <Link href="/wishlist" className="flex flex-col items-center gap-1 group">
                 <svg className="w-5 h-5 text-hos-text-secondary group-hover:text-hos-gold transition-colors duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
@@ -402,6 +398,7 @@ export function Header() {
               {showAuthCustomerNav && (
                 <>
                   <NavDivider />
+                  <NavLink href="/profile" icon="⚙️" label="Manage Profile" currentPath={pathname} />
                   <NavLink href="/orders" icon="📦" label="My Orders" currentPath={pathname} />
                   <NavLink href="/loyalty" icon="✨" label="Rewards" currentPath={pathname} />
                 </>
@@ -443,6 +440,7 @@ export function Header() {
             {showAuthCustomerNav && (
               <>
                 <div className="border-t border-hos-border my-2" />
+                <MobileNavLink href="/profile" icon="⚙️" label="Manage Profile" onClick={() => setIsMobileMenuOpen(false)} />
                 <MobileNavLink href="/wishlist" icon="❤️" label="Wishlist" onClick={() => setIsMobileMenuOpen(false)} />
                 <MobileNavLink href="/orders" icon="📦" label="My Orders" onClick={() => setIsMobileMenuOpen(false)} />
                 <MobileNavLink href="/loyalty" icon="✨" label="Rewards" onClick={() => setIsMobileMenuOpen(false)} />

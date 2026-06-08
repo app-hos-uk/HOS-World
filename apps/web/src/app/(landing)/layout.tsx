@@ -35,10 +35,11 @@ export const metadata: Metadata = {
   manifest: '/landing/site.webmanifest',
   icons: {
     icon: [
-      { url: '/landing/favicon-32.png', sizes: '32x32', type: 'image/png' },
-      { url: '/landing/favicon-192.png', sizes: '192x192', type: 'image/png' },
+      { url: '/favicon-32.png', sizes: '32x32', type: 'image/png' },
+      { url: '/favicon-192.png', sizes: '192x192', type: 'image/png' },
     ],
-    apple: [{ url: '/landing/apple-touch-icon.png', sizes: '180x180' }],
+    shortcut: '/favicon.ico',
+    apple: [{ url: '/apple-touch-icon.png', sizes: '180x180' }],
   },
 };
 

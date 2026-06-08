@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#1a1a2e"/>
+      <stop offset="100%" stop-color="#0f0f1a"/>
+    </linearGradient>
+  </defs>
+  <circle cx="100" cy="100" r="96" fill="url(#bg)" stroke="#8b7355" stroke-width="2"/>
+  <text x="100" y="75" text-anchor="middle" font-family="'Arial Black', sans-serif" font-size="22" font-weight="bold" fill="#c9a84c" letter-spacing="3">PEAKY</text>
+  <text x="100" y="115" text-anchor="middle" font-family="'Arial Black', sans-serif" font-size="22" font-weight="bold" fill="#f0d68a" letter-spacing="2">BLINDERS</text>
+  <line x1="50" y1="130" x2="150" y2="130" stroke="#8b7355" stroke-width="1.5"/>
+</svg>

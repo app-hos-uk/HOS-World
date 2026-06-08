@@ -1,13 +1,14 @@
 'use client';
 
 import Link from 'next/link';
-import Image from 'next/image';
-import { useMemo } from 'react';
-import { REFERENCE_ASSETS } from '@/lib/referenceAssets';
+import { useMemo, useState } from 'react';
+import { apiClient } from '@/lib/api';
+import { BrandLogo } from '@/components/BrandLogo';
 import {
-  FOOTER_CONTACT_EMAIL,
-  FOOTER_NAV_SECTIONS,
-  FOOTER_STORE_LOCATIONS,
+  FOOTER_ABOUT,
+  FOOTER_CONTACT,
+  FOOTER_POLICY_LINKS,
+  FOOTER_SHOP_LINKS,
   SOCIAL_LINKS,
   resolveSocialHref,
   type SocialPlatform,
@@ -75,6 +76,89 @@ function FooterNavColumn({
   );
 }
 
+function FooterNewsletter() {
+  const [email, setEmail] = useState('');
+  const [consent, setConsent] = useState(false);
+  const [status, setStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
+  const [errorMessage, setErrorMessage] = useState('');
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!consent) return;
+
+    setStatus('loading');
+    setErrorMessage('');
+
+    try {
+      await apiClient.newsletterSubscribe({ email, source: 'footer' });
+      setStatus('success');
+      setEmail('');
+      setConsent(false);
+    } catch (err: unknown) {
+      setStatus('error');
+      setErrorMessage(errorMessageFrom(err));
+    }
+  };
+
+  function errorMessageFrom(err: unknown): string {
+    if (err instanceof Error && err.message) return err.message;
+    return 'Something went wrong. Please try again.';
+  }
+
+  return (
+    <div>
+      <h4 className="text-hos-text-secondary text-sm font-bold font-ui mb-4">Newsletter</h4>
+      <p className="text-hos-text-muted text-[13px] leading-relaxed mb-3">
+        Get updates on new collections, vendor spotlights, and exclusive offers.
+      </p>
+
+      {status === 'success' ? (
+        <p className="text-sm text-hos-new-green">You&apos;re subscribed! Check your inbox to confirm.</p>
+      ) : (
+        <form onSubmit={handleSubmit} className="space-y-3">
+          <div className="flex flex-col sm:flex-row gap-2">
+            <input
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="you@example.com"
+              required
+              disabled={status === 'loading'}
+              className="flex-1 min-w-0 bg-hos-bg border border-hos-border rounded-md px-3 py-2 text-sm text-hos-text-secondary placeholder:text-hos-text-muted focus:outline-none focus:border-hos-gold disabled:opacity-50"
+              aria-label="Email address for newsletter"
+            />
+            <button
+              type="submit"
+              disabled={status === 'loading' || !consent}
+              className="shrink-0 px-4 py-2 text-sm font-semibold rounded-md bg-hos-gold text-[#1a1406] hover:bg-hos-gold-hover transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {status === 'loading' ? 'Submitting…' : 'Subscribe'}
+            </button>
+          </div>
+
+          <label className="flex items-start gap-2 cursor-pointer">
+            <input
+              type="checkbox"
+              checked={consent}
+              onChange={(e) => setConsent(e.target.checked)}
+              disabled={status === 'loading'}
+              required
+              className="mt-0.5 accent-hos-gold w-4 h-4 shrink-0"
+            />
+            <span className="text-hos-text-muted text-xs leading-snug">
+              I agree to receive marketing communications from House of Spells.
+            </span>
+          </label>
+
+          {status === 'error' && (
+            <p className="text-hos-sale-red text-xs">{errorMessage}</p>
+          )}
+        </form>
+      )}
+    </div>
+  );
+}
+
 export function Footer() {
   const socialEntries = useMemo(() => {
     const out: SocialEntry[] = [];
@@ -92,25 +176,16 @@ export function Footer() {
     return out;
   }, []);
 
+  const phoneHref = FOOTER_CONTACT.phone.replace(/[^\d+]/g, '');
+
   return (
     <footer className="w-full bg-hos-bg border-t border-hos-border" role="contentinfo">
       <div className="max-w-7xl mx-auto px-4 py-12">
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-10">
-          {/* Brand */}
-          <div className="sm:col-span-2 xl:col-span-1">
-            <Link href="/shop" className="inline-block">
-              <Image
-                src={REFERENCE_ASSETS.logo}
-                alt="House of Spells"
-                width={160}
-                height={50}
-                className="h-12 w-auto object-contain"
-              />
-            </Link>
-            <p className="text-hos-text-muted text-[13px] leading-relaxed mt-4">
-              An immersive fandom experience: franchises, collectibles, and unforgettable finds — online
-              and in our US stores.
-            </p>
+        {/* Row 1: brand, shop, policies, newsletter */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-10">
+          <div>
+            <BrandLogo variant="stacked" linked href="/shop" />
+            <p className="text-hos-text-muted text-[13px] leading-relaxed mt-4">{FOOTER_ABOUT}</p>
 
             <div className="flex flex-wrap gap-3 mt-4 text-hos-text-muted">
               {socialEntries.map(({ platform, ariaLabel, href, label }) => (
@@ -127,67 +202,53 @@ export function Footer() {
                 </a>
               ))}
             </div>
-
-            <div className="mt-6">
-              <Link
-                href="/#newsletter"
-                className="inline-flex items-center justify-center w-full px-4 py-2 text-sm rounded-md font-semibold bg-hos-gold text-[#1a1406] hover:bg-hos-gold-hover transition-colors duration-200"
-              >
-                Subscribe to our newsletter
-              </Link>
-              <p className="text-xs text-hos-text-muted mt-2">
-                Marketplace updates, vendor spotlights, and exclusive offers.
-              </p>
-            </div>
           </div>
 
-          {/* Visit us */}
-          <div>
-            <h4 className="text-hos-text-secondary text-sm font-bold font-ui mb-4">Visit us</h4>
-            <div className="text-hos-text-muted text-[13px] leading-relaxed space-y-2">
-              {FOOTER_STORE_LOCATIONS.map((store) => (
-                <p key={store.city}>
-                  <span className="text-hos-text-secondary">{store.city}</span>
-                  {' — '}
-                  {store.detail}
-                </p>
-              ))}
-              <p>
-                <Link href="/sellers" className="text-hos-gold hover:text-hos-gold-hover transition-colors duration-200">
-                  View all store locations
-                </Link>
-              </p>
-              <p>
-                <a
-                  href={`mailto:${FOOTER_CONTACT_EMAIL}`}
-                  className="text-hos-gold hover:text-hos-gold-hover transition-colors duration-200"
-                >
-                  {FOOTER_CONTACT_EMAIL}
-                </a>
-              </p>
-            </div>
-          </div>
+          <FooterNavColumn
+            title="Main Menu"
+            ariaLabel="Shop and main navigation"
+            links={FOOTER_SHOP_LINKS}
+          />
 
-          {FOOTER_NAV_SECTIONS.map((section) => (
-            <FooterNavColumn
-              key={section.id}
-              title={section.title}
-              ariaLabel={section.ariaLabel}
-              links={section.links}
-            />
-          ))}
+          <FooterNavColumn
+            title="Help & Policies"
+            ariaLabel="Help and policies"
+            links={FOOTER_POLICY_LINKS}
+          />
+
+          <FooterNewsletter />
         </div>
 
-        <div className="border-t border-hos-border mt-10 pt-5 flex flex-col md:flex-row justify-between items-center gap-3">
-          <p className="text-hos-text-muted text-[11px] text-center md:text-left">
-            © {new Date().getFullYear()} House of Spells Marketplace. All rights reserved.
-          </p>
-          <div className="flex flex-col sm:flex-row items-center gap-3 text-hos-text-muted text-[11px]">
-            <span>USD · English (US)</span>
-            <Link href="/do-not-sell" className="hover:text-hos-gold transition-colors duration-200">
-              Do Not Sell or Share My Personal Information
-            </Link>
+        {/* Row 2: contact details in a single line */}
+        <div className="border-t border-hos-border mt-10 pt-6">
+          <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-hos-text-muted text-[13px] text-center">
+            <span>{FOOTER_CONTACT.address}</span>
+            <span className="hidden sm:inline text-hos-border" aria-hidden>
+              |
+            </span>
+            <a
+              href={`tel:${phoneHref}`}
+              className="hover:text-hos-gold transition-colors duration-200"
+            >
+              {FOOTER_CONTACT.phone}
+            </a>
+            <span className="hidden sm:inline text-hos-border" aria-hidden>
+              |
+            </span>
+            <a
+              href={`mailto:${FOOTER_CONTACT.email}`}
+              className="hover:text-hos-gold transition-colors duration-200"
+            >
+              {FOOTER_CONTACT.email}
+            </a>
           </div>
+        </div>
+
+        {/* Subfooter */}
+        <div className="border-t border-hos-border mt-6 pt-5">
+          <p className="text-hos-text-muted text-[11px] text-center">
+            © {new Date().getFullYear()} House of Spells. All rights reserved.
+          </p>
         </div>
       </div>
     </footer>

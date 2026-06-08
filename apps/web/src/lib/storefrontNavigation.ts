@@ -42,86 +42,37 @@ export const STOREFRONT_NAV_LINKS: NavLink[] = [
   { label: 'Marketplace vendors', href: '/sellers' },
 ];
 
-export const FOOTER_NAV_SECTIONS: FooterNavSection[] = [
-  {
-    id: 'shop',
-    title: 'Shop',
-    ariaLabel: 'Shop',
-    links: [
-      ...STOREFRONT_NAV_LINKS,
-      { label: 'New arrivals', href: '/products?sortBy=newest' },
-      { label: 'On sale', href: '/products?sortBy=price_asc' },
-      { label: 'Top rated', href: '/products?sortBy=popular' },
-      { label: 'Gift cards', href: '/gift-cards' },
-      { label: 'Buy a gift card', href: '/gift-cards/purchase' },
-    ],
-  },
-  {
-    id: 'account',
-    title: 'Your account',
-    ariaLabel: 'Your account',
-    links: [
-      { label: 'Sign in', href: '/login' },
-      { label: 'My dashboard', href: '/customer/dashboard' },
-      { label: 'My orders', href: '/orders' },
-      { label: 'Track order', href: '/track-order' },
-      { label: 'Wishlist', href: '/wishlist' },
-      { label: 'Shopping cart', href: '/cart' },
-      { label: 'Profile & settings', href: '/profile' },
-      { label: 'Digital downloads', href: '/downloads' },
-    ],
-  },
-  {
-    id: 'community',
-    title: 'Community',
-    ariaLabel: 'Community',
-    links: [
-      { label: 'Loyalty program', href: '/loyalty' },
-      { label: 'Earn rewards', href: '/loyalty/rewards' },
-      { label: 'Ambassador program', href: '/loyalty/ambassador' },
-      { label: 'Quests', href: '/quests' },
-      { label: 'Leaderboard', href: '/leaderboard' },
-      { label: 'Knowledge base', href: '/support/kb' },
-    ],
-  },
-  {
-    id: 'support',
-    title: 'Help & policies',
-    ariaLabel: 'Help and policies',
-    links: [
-      { label: 'Help Center', href: '/help' },
-      { label: 'Contact support', href: '/support/new' },
-      { label: 'My support tickets', href: '/support/tickets' },
-      { label: 'Shipping & delivery', href: '/shipping' },
-      { label: 'Returns & refunds', href: '/returns' },
-      { label: 'Privacy policy', href: '/privacy-policy' },
-      { label: 'Do not sell my info', href: '/do-not-sell' },
-    ],
-  },
-  {
-    id: 'sell',
-    title: 'Sell with us',
-    ariaLabel: 'Sell with us',
-    links: [
-      { label: 'Become a vendor', href: '/seller/onboarding' },
-      { label: 'Vendor storefronts', href: '/sellers' },
-      { label: 'Store locations', href: '/sellers' },
-    ],
-  },
+/** Footer column: main shop / navigation links */
+export const FOOTER_SHOP_LINKS: NavLink[] = [
+  { label: 'Shop Now', href: '/fandoms' },
+  { label: 'On Sale', href: '/products' },
+  { label: 'Gift Cards', href: '/gift-cards' },
+  { label: 'My Account', href: '/customer/dashboard' },
+  { label: 'Loyalty Program', href: '/loyalty' },
+  { label: 'About Us', href: '/the-experience' },
+  { label: 'Contact Us', href: '/support/new' },
 ];
 
-export const FOOTER_STORE_LOCATIONS = [
-  {
-    city: 'New York',
-    detail: '123 Broadway, New York, NY 10007 · Mon–Sun 10:00–20:00',
-  },
-  {
-    city: 'Los Angeles',
-    detail: '8500 Melrose Ave, West Hollywood, CA 90069 · Mon–Sun 10:00–19:00',
-  },
-] as const;
+/** Footer column: help & policy links */
+export const FOOTER_POLICY_LINKS: NavLink[] = [
+  { label: 'Help Center', href: '/help' },
+  { label: 'Privacy Policy', href: '/privacy-policy' },
+  { label: 'Refund Policy', href: '/refund-policy' },
+  { label: 'Shipping Policy', href: '/shipping' },
+  { label: 'Terms of Service', href: '/terms' },
+  { label: 'FAQs', href: '/help#faqs' },
+];
 
 export const FOOTER_CONTACT_EMAIL = 'info@houseofspells.com';
+
+export const FOOTER_CONTACT = {
+  address: '123 Broadway, New York, NY 10007',
+  phone: process.env.NEXT_PUBLIC_FOOTER_PHONE?.trim() || '+1 (212) 555-0100',
+  email: FOOTER_CONTACT_EMAIL,
+} as const;
+
+export const FOOTER_ABOUT =
+  'An immersive fandom experience — franchises, collectibles, and unforgettable finds online and in our stores.';
 
 export type SocialPlatform = 'facebook' | 'instagram' | 'x';
 

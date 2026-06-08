@@ -1,6 +1,6 @@
-/** Landing-only asset paths — isolated under /public/landing */
-export const LANDING_LOGO = '/landing/hos-logo.jpg';
-export const LANDING_WORDMARK = '/landing/hos-wordmark.png';
+/** Official transparent brand marks (shared with storefront) */
+export const LANDING_LOGO = '/assets/logo-emblem.png';
+export const LANDING_WORDMARK = '/assets/logo-wordmark.png';
 
 /** Founding member registration (avoids conflict with e-commerce /register) */
 export const LANDING_REGISTER_PATH = '/founding-members';

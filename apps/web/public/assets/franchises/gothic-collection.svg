@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#1a0a1a"/>
+      <stop offset="100%" stop-color="#0a050a"/>
+    </linearGradient>
+  </defs>
+  <circle cx="100" cy="100" r="96" fill="url(#bg)" stroke="#8b008b" stroke-width="2"/>
+  <text x="100" y="78" text-anchor="middle" font-family="Georgia, serif" font-size="22" font-weight="bold" fill="#d4a5d4" letter-spacing="2">GOTHIC</text>
+  <text x="100" y="120" text-anchor="middle" font-family="Georgia, serif" font-size="16" fill="#b366b3" letter-spacing="1">COLLECTION</text>
+  <path d="M80 140 L100 130 L120 140 L100 155 Z" fill="#8b008b" opacity="0.7"/>
+</svg>

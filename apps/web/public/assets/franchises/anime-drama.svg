@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#1a0a2e"/>
+      <stop offset="100%" stop-color="#0d0518"/>
+    </linearGradient>
+  </defs>
+  <circle cx="100" cy="100" r="96" fill="url(#bg)" stroke="#ff6b35" stroke-width="2"/>
+  <text x="100" y="70" text-anchor="middle" font-family="'Arial Black', sans-serif" font-size="22" font-weight="bold" fill="#ff6b35" letter-spacing="2">ANIME</text>
+  <text x="100" y="100" text-anchor="middle" font-family="Arial, sans-serif" font-size="14" fill="#ccc">&amp;</text>
+  <text x="100" y="128" text-anchor="middle" font-family="'Arial Black', sans-serif" font-size="18" font-weight="bold" fill="#ffad85" letter-spacing="1">DRAMA</text>
+  <text x="100" y="150" text-anchor="middle" font-family="'Arial Black', sans-serif" font-size="14" font-weight="bold" fill="#ff6b35" letter-spacing="1">SERIES</text>
+</svg>

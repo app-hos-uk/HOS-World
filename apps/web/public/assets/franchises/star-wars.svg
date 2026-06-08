@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0a0a1a"/>
+      <stop offset="100%" stop-color="#000005"/>
+    </linearGradient>
+  </defs>
+  <circle cx="100" cy="100" r="96" fill="url(#bg)" stroke="#ffe81f" stroke-width="2"/>
+  <text x="100" y="75" text-anchor="middle" font-family="'Arial Black', sans-serif" font-size="24" font-weight="bold" fill="#ffe81f" letter-spacing="4">STAR</text>
+  <text x="100" y="118" text-anchor="middle" font-family="'Arial Black', sans-serif" font-size="28" font-weight="bold" fill="#ffe81f" letter-spacing="3">WARS</text>
+  <circle cx="100" cy="145" r="3" fill="#ffe81f"/>
+</svg>

@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#1a0a0a"/>
+      <stop offset="100%" stop-color="#0d0505"/>
+    </linearGradient>
+  </defs>
+  <circle cx="100" cy="100" r="96" fill="url(#bg)" stroke="#e91e63" stroke-width="2"/>
+  <text x="100" y="75" text-anchor="middle" font-family="'Arial Black', sans-serif" font-size="22" font-weight="bold" fill="#e91e63" letter-spacing="2">SQUID</text>
+  <text x="100" y="115" text-anchor="middle" font-family="'Arial Black', sans-serif" font-size="26" font-weight="bold" fill="#ff5c8d" letter-spacing="2">GAME</text>
+  <circle cx="70" cy="145" r="8" fill="none" stroke="#e91e63" stroke-width="2"/>
+  <polygon points="100,137 108,153 92,153" fill="none" stroke="#e91e63" stroke-width="2"/>
+  <rect x="122" y="137" width="16" height="16" fill="none" stroke="#e91e63" stroke-width="2"/>
+</svg>

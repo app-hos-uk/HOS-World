@@ -480,18 +480,19 @@ h6 {
   }
 
   .cat-card {
-    @apply relative aspect-square rounded-full border border-hos-border overflow-hidden
-           flex flex-col items-center justify-center text-center gap-3 p-4
-           bg-[radial-gradient(ellipse_120%_80%_at_50%_20%,rgba(201,162,39,0.12),var(--color-bg-secondary)_55%)]
-           hover:-translate-y-0.5 hover:border-hos-gold-dim hover:shadow-[0_12px_40px_rgba(0,0,0,0.45)]
+    @apply relative flex flex-col items-center justify-center text-center gap-2 p-3
+           hover:-translate-y-1 hover:scale-105
            transition-all duration-200 no-underline;
   }
 
   .cat-logo-slot {
-    @apply w-[86%] max-w-[200px] max-h-[60%] min-h-[96px] flex items-center justify-center
-           p-3 rounded-2xl bg-gradient-to-br from-[#fbf7ef] via-[#ece5d5] to-[#ddd3bf]
-           shadow-[inset_0_1px_0_rgba(255,255,255,0.75),0_10px_28px_rgba(0,0,0,0.4)]
-           border border-[rgba(74,58,28,0.22)];
+    @apply w-full aspect-square rounded-full flex items-center justify-center
+           p-2 overflow-hidden
+           bg-gradient-to-br from-[#1a1a2e] via-[#16162a] to-[#0f0f1a]
+           shadow-[0_8px_32px_rgba(0,0,0,0.5)]
+           border-2 border-hos-border
+           group-hover:border-hos-gold-dim group-hover:shadow-[0_12px_40px_rgba(201,162,39,0.2)]
+           transition-all duration-200;
   }
 
   .section-head h2 {

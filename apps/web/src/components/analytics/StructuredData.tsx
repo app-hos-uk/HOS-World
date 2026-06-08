@@ -8,7 +8,7 @@ export function SiteStructuredData() {
     '@type': 'Organization',
     name: 'House of Spells',
     url: SITE_URL,
-    logo: `${SITE_URL}/assets/logo.png`,
+    logo: `${SITE_URL}/assets/logo-emblem.png`,
     sameAs: [
       process.env.NEXT_PUBLIC_SOCIAL_FACEBOOK_URL,
       process.env.NEXT_PUBLIC_SOCIAL_INSTAGRAM_URL,

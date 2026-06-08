@@ -7,7 +7,7 @@ export function LandingStructuredData() {
       '@type': 'Organization',
       name: 'House of Spells',
       url: `${SITE_URL}/`,
-      logo: `${SITE_URL}/landing/hos-logo.jpg`,
+      logo: `${SITE_URL}/assets/logo-emblem.png`,
       sameAs: [
         'https://www.instagram.com/houseofspells/',
         'https://www.houseofspells.co.uk/',

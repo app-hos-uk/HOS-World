@@ -3,10 +3,10 @@
 import { useEffect, useState } from 'react';
 import { Header } from '@/components/Header';
 import { Footer } from '@/components/Footer';
+import { ProductCard } from '@/components/ProductCard';
 import { apiClient } from '@/lib/api';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
-import Image from 'next/image';
 
 interface FandomDetailPageProps {
   params: {
@@ -14,32 +14,71 @@ interface FandomDetailPageProps {
   };
 }
 
-// Fandom data - in production, this would come from an API
 const fandoms: Record<string, { name: string; description: string; slug: string }> = {
   'harry-potter': {
     name: 'Harry Potter',
     description: 'Discover magical items from the wizarding world of Harry Potter',
     slug: 'harry-potter',
   },
-  'lord-of-the-rings': {
-    name: 'Lord of the Rings',
-    description: 'Authentic replicas and collectibles from Middle-earth',
-    slug: 'lord-of-the-rings',
-  },
   'game-of-thrones': {
     name: 'Game of Thrones',
     description: 'Premium collectibles and merchandise from the Seven Kingdoms',
     slug: 'game-of-thrones',
   },
-  'marvel': {
-    name: 'Marvel',
-    description: 'Superhero merchandise and collectibles from the Marvel Universe',
-    slug: 'marvel',
+  'stranger-things': {
+    name: 'Stranger Things',
+    description: 'Collectibles from the Upside Down and Hawkins, Indiana',
+    slug: 'stranger-things',
+  },
+  'lord-of-the-rings': {
+    name: 'Lord of the Rings',
+    description: 'Authentic replicas and collectibles from Middle-earth',
+    slug: 'lord-of-the-rings',
+  },
+  hobbit: {
+    name: 'The Hobbit',
+    description: 'Treasures from the Shire and beyond',
+    slug: 'hobbit',
+  },
+  wednesday: {
+    name: 'Wednesday',
+    description: 'Dark and delightful merchandise from Nevermore Academy',
+    slug: 'wednesday',
+  },
+  friends: {
+    name: 'Friends',
+    description: 'Could there BE any more collectibles?',
+    slug: 'friends',
+  },
+  'peaky-blinders': {
+    name: 'Peaky Blinders',
+    description: 'By order of the Peaky Blinders — premium merchandise',
+    slug: 'peaky-blinders',
   },
   'star-wars': {
     name: 'Star Wars',
     description: 'Items from a galaxy far, far away',
     slug: 'star-wars',
+  },
+  'squid-game': {
+    name: 'Squid Game',
+    description: 'Collectibles from the deadly games',
+    slug: 'squid-game',
+  },
+  'anime-drama': {
+    name: 'Anime & Drama Series',
+    description: 'Merchandise from your favourite anime and drama titles',
+    slug: 'anime-drama',
+  },
+  'gothic-collection': {
+    name: 'Gothic Collection',
+    description: 'Dark aesthetic, Victorian-inspired collectibles and gifts',
+    slug: 'gothic-collection',
+  },
+  marvel: {
+    name: 'Marvel',
+    description: 'Superhero merchandise and collectibles from the Marvel Universe',
+    slug: 'marvel',
   },
   'dc-comics': {
     name: 'DC Comics',
@@ -80,43 +119,25 @@ function FandomProducts({ fandomSlug, fandomName }: { fandomSlug: string; fandom
   if (products.length === 0) {
     return (
       <div className="text-center text-sm sm:text-base text-hos-text-muted py-8 sm:py-12">
-        No products found for {fandomName}
+        No products found for {fandomName} yet. Check back soon!
       </div>
     );
   }
 
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6">
+    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-5">
       {products.map((product) => (
-        <Link key={product.id} href={`/products/${product.id}`} className="group">
-          <div className="bg-hos-bg-secondary border rounded-lg overflow-hidden hover:shadow-lg transition-shadow">
-            <div className="aspect-square bg-hos-bg-tertiary relative">
-              {product.images && product.images[0] ? (
-                <Image
-                  src={product.images[0].url}
-                  alt={product.name}
-                  fill
-                  className="object-cover"
-                />
-              ) : (
-                <div className="w-full h-full flex items-center justify-center text-hos-text-muted">
-                  No Image
-                </div>
-              )}
-            </div>
-            <div className="p-4">
-              <h3 className="font-semibold text-hos-text-secondary group-hover:text-hos-gold transition-colors">
-                {product.name}
-              </h3>
-              <p className="text-sm text-hos-text-secondary mt-1 line-clamp-2">{product.description}</p>
-              <div className="mt-2">
-                <span className="text-lg font-bold text-hos-gold">
-                  ${Number(product.price).toFixed(2)}
-                </span>
-              </div>
-            </div>
-          </div>
-        </Link>
+        <ProductCard
+          key={product.id}
+          id={product.id}
+          name={product.name}
+          price={Number(product.price)}
+          rrp={product.rrp ? Number(product.rrp) : undefined}
+          images={product.images}
+          averageRating={product.averageRating}
+          vendor={product.vendor?.businessName || product.vendorName}
+          fandom={fandomSlug}
+        />
       ))}
     </div>
   );

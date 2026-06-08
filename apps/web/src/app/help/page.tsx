@@ -10,7 +10,7 @@ export default function HelpPage() {
         <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold mb-6 sm:mb-8">Help Center</h1>
         <div className="max-w-3xl mx-auto space-y-6 sm:space-y-8">
           <section>
-            <h2 className="text-xl sm:text-2xl font-semibold mb-3 sm:mb-4">Frequently Asked Questions</h2>
+            <h2 id="faqs" className="text-xl sm:text-2xl font-semibold mb-3 sm:mb-4 scroll-mt-24">Frequently Asked Questions</h2>
             <div className="space-y-3 sm:space-y-4">
               <div>
                 <h3 className="text-lg sm:text-xl font-medium mb-2">How do I place an order?</h3>

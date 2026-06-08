@@ -20,6 +20,7 @@ interface FandomItem {
   image?: string;
   logo?: string;
   photo?: boolean;
+  hasProducts?: boolean;
 }
 
 function resolveImageUrl(src: string | null | undefined): string {
@@ -89,8 +90,8 @@ export function FandomCollection({ limit, showAllPage = false }: FandomCollectio
 
   const skeletonCount = showAllPage ? 12 : 8;
   const gridClass = showAllPage
-    ? 'grid grid-cols-2 sm:grid-cols-4 md:grid-cols-8 gap-3.5'
-    : 'grid grid-cols-2 sm:grid-cols-4 md:grid-cols-8 gap-3.5';
+    ? 'grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-5'
+    : 'grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-5';
 
   return (
     <section className={showAllPage ? undefined : 'max-w-7xl mx-auto px-4 py-12'}>
@@ -124,35 +125,38 @@ export function FandomCollection({ limit, showAllPage = false }: FandomCollectio
         <div className={gridClass}>
           {fandoms.map((fandom) => {
             const logoSrc = fandom.logo || fandom.image;
+            const fandomHref = fandom.hasProducts === false
+              ? `/coming-soon?franchise=${encodeURIComponent(fandom.name)}`
+              : `/fandoms/${fandom.slug}`;
             return (
               <Link
                 key={fandom.id}
-                href={`/fandoms/${fandom.slug}`}
+                href={fandomHref}
                 className="cat-card group"
                 prefetch={true}
               >
-                <span className={`cat-logo-slot ${fandom.photo ? 'py-2.5' : ''}`}>
+                <span className="cat-logo-slot">
                   {logoSrc ? (
                     <Image
                       src={logoSrc}
-                      alt=""
-                      width={172}
-                      height={76}
-                      className={`w-full max-w-[172px] h-auto object-contain object-center ${fandom.photo ? 'max-h-[58px]' : 'max-h-[76px]'}`}
+                      alt={fandom.name}
+                      width={200}
+                      height={200}
+                      className="w-full h-full object-contain object-center"
                     />
                   ) : fandom.image ? (
                     <SafeImage
                       src={fandom.image}
                       alt={fandom.name}
-                      width={172}
-                      height={76}
-                      className="w-full max-w-[172px] max-h-[76px] object-contain"
+                      width={200}
+                      height={200}
+                      className="w-full h-full object-contain"
                     />
                   ) : (
-                    <span className="text-xl text-hos-text-muted font-bold">{fandom.name.charAt(0)}</span>
+                    <span className="text-2xl text-hos-text-muted font-bold">{fandom.name.charAt(0)}</span>
                   )}
                 </span>
-                <span className="relative font-ui text-xs font-semibold text-hos-text-primary text-center leading-tight">
+                <span className="relative font-ui text-xs sm:text-sm font-semibold text-hos-text-primary text-center leading-tight">
                   {fandom.name}
                 </span>
               </Link>

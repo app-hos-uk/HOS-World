@@ -8,6 +8,8 @@ import { CharacterSelector } from '@/components/CharacterSelector';
 import { FandomQuiz } from '@/components/FandomQuiz';
 import { getDirectApiBaseUrl } from '@/lib/apiBaseUrl';
 import { resolvePostAuthRedirect, resolvePostRegisterRedirect, getSafeReturnUrl, stashAuthReturnUrl } from '@/lib/authRedirect';
+import { Header } from '@/components/Header';
+import { Footer } from '@/components/Footer';
 
 function LoginPageInner() {
   const router = useRouter();
@@ -411,23 +413,13 @@ function LoginPageInner() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-hos-bg to-hos-bg-secondary flex items-center justify-center p-4 sm:p-6 lg:p-8">
+    <div className="min-h-screen bg-hos-bg flex flex-col">
+      <Header />
+      <main className="flex-1 flex items-center justify-center p-4 sm:p-6 lg:p-8">
       <div className="max-w-md w-full space-y-6 sm:space-y-8">
-        {/* Logo/Brand */}
+        {/* Subtitle */}
         <div className="text-center">
-          <a href="/" className="inline-block">
-            <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-hos-gold mb-1 sm:mb-2 hover:text-hos-gold-hover transition-colors">House of Spells</h1>
-          </a>
           <p className="text-sm sm:text-base text-hos-text-secondary">Welcome to the magical marketplace</p>
-          <a
-            href="/"
-            className="inline-flex items-center gap-1 mt-2 text-sm text-hos-gold hover:text-hos-gold-hover hover:underline transition-colors"
-          >
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
-            </svg>
-            Back to Homepage
-          </a>
         </div>
 
         {/* Character Selector */}
@@ -968,6 +960,8 @@ function LoginPageInner() {
           </div>
         )}
       </div>
+      </main>
+      <Footer />
     </div>
   );
 }

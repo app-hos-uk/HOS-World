@@ -1,7 +1,14 @@
 /** Assets and demo content mirrored from lawngreen-cattle reference storefront */
 
+/** Official transparent brand marks (PNG) */
+export const BRAND_LOGOS = {
+  emblem: '/assets/logo-emblem.png',
+  wordmark: '/assets/logo-wordmark.png',
+  stacked: '/assets/logo-stacked.png',
+} as const;
+
 export const REFERENCE_ASSETS = {
-  logo: '/assets/logo.png',
+  logo: BRAND_LOGOS.stacked,
   heroBanner: '/assets/hero-banner.png',
   franchiseBanners: {
     'harry-potter': '/assets/banner-harry-potter.png',
@@ -10,25 +17,33 @@ export const REFERENCE_ASSETS = {
   },
   franchises: {
     'harry-potter': { name: 'Harry Potter', logo: '/assets/franchises/harry-potter.svg' },
-    'lord-of-the-rings': { name: 'Lord of the Rings', logo: '/assets/franchises/lotr.svg' },
     'game-of-thrones': { name: 'Game of Thrones', logo: '/assets/franchises/game-of-thrones.jpg', photo: true },
     'stranger-things': { name: 'Stranger Things', logo: '/assets/franchises/stranger-things.svg' },
+    'lord-of-the-rings': { name: 'Lord of the Rings', logo: '/assets/franchises/lotr.svg' },
+    hobbit: { name: 'The Hobbit', logo: '/assets/franchises/hobbit.svg' },
     wednesday: { name: 'Wednesday', logo: '/assets/franchises/wednesday.svg' },
-    'doctor-who': { name: 'Doctor Who', logo: '/assets/franchises/doctor-who.svg' },
     friends: { name: 'Friends', logo: '/assets/franchises/friends.svg' },
-    anime: { name: 'Anime & manga', logo: '/assets/franchises/anime-crunchyroll.svg' },
+    'peaky-blinders': { name: 'Peaky Blinders', logo: '/assets/franchises/peaky-blinders.svg' },
+    'star-wars': { name: 'Star Wars', logo: '/assets/franchises/star-wars.svg' },
+    'squid-game': { name: 'Squid Game', logo: '/assets/franchises/squid-game.svg' },
+    'anime-drama': { name: 'Anime & Drama Series', logo: '/assets/franchises/anime-drama.svg' },
+    'gothic-collection': { name: 'Gothic Collection', logo: '/assets/franchises/gothic-collection.svg' },
   },
 } as const;
 
 export const REFERENCE_FRANCHISE_ORDER = [
   'harry-potter',
-  'lord-of-the-rings',
   'game-of-thrones',
   'stranger-things',
+  'lord-of-the-rings',
+  'hobbit',
   'wednesday',
-  'doctor-who',
   'friends',
-  'anime',
+  'peaky-blinders',
+  'star-wars',
+  'squid-game',
+  'anime-drama',
+  'gothic-collection',
 ] as const;
 
 /** Demo products from reference site (Pexels) — used when API returns no items */

@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
 
-const DEFAULT_OG_IMAGE = '/landing/hos-logo.jpg';
+const DEFAULT_OG_IMAGE = '/assets/logo-emblem.png';
 
 export function landingPageMetadata(options: {
   title: string;
